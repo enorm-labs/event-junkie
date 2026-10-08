@@ -31,6 +31,7 @@ class Zimmer16ScrapersTest {
         bourbon.sourceUrl shouldBe "https://www.yesticket.org/event/de/claude-bourbon-erwachsene-10-10-26"
         bourbon.eventType shouldBe EventType.CONCERT.name
         bourbon.artists.map { it.name } shouldBe listOf("Claude Bourbon")
+        bourbon.imageUrl shouldBe "https://zimmer16.com/wp-json/yesticket/v1/picture/28683"
     }
 
     @Test
@@ -61,7 +62,7 @@ class Zimmer16ScrapersTest {
         enriched.endTime shouldBe LocalTime.of(22, 0)
         enriched.priceBoxOffice shouldBe BigDecimal("14.00")
         enriched.soldOut shouldBe false
-        enriched.imageUrl.shouldNotBeNull() shouldStartWith "https://cdn.yesticket.org/"
+        enriched.imageUrl shouldBe bourbon.imageUrl
         val text = enriched.description.shouldNotBeNull()
         text shouldStartWith "Es ist nicht einfach"
         text shouldContain "spanischer Gitarre."
