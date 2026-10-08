@@ -39,7 +39,7 @@ import {
   venuePin,
   venuePosition,
 } from '@/lib/mapPins'
-import { CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS, MAP_PANEL_CLASS } from '@/lib/utils'
 
 // MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
@@ -122,14 +122,15 @@ const eventPins = computed<MapPin[]>(() =>
   groups.value
     .map(({ venue, events: atVenue }) => {
       const live = atVenue.filter(isOnNow).length
+      const onNow = live ? `, ${t('map.pinOnNow', { count: live })}` : ''
       const label = t('map.pinLabel', { venue: venue.name ?? '', count: atVenue.length })
       // A lone "1" on most of 72 pins said nothing; one event keeps the pin's size, not the digit.
-      return venuePin(
-        venue,
-        live ? `${label}, ${t('map.pinOnNow', { count: live })}` : label,
-        atVenue.length > 1 ? String(atVenue.length) : '',
-        { live: live > 0, dimmed: !!near.value && !nearSlugs.value.has(venue.slug) },
-      )
+      return venuePin(venue, label + onNow, atVenue.length > 1 ? String(atVenue.length) : '', {
+        live: live > 0,
+        dimmed: !!near.value && !nearSlugs.value.has(venue.slug),
+        weight: atVenue.length,
+        note: t('map.eventCount', { count: atVenue.length }) + onNow,
+      })
     })
     .filter((pin): pin is MapPin => pin !== null),
 )
@@ -441,11 +442,7 @@ function distance(km: number): string {
     >
       <!-- Over the map, not below it: at 1280×900 the map ends near the fold, so a pin's events
            under it changed nothing a visitor could see (#2347). -->
-      <section
-        v-if="selectedVenue"
-        aria-live="polite"
-        class="absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96"
-      >
+      <section v-if="selectedVenue" aria-live="polite" :class="MAP_PANEL_CLASS">
         <div class="flex items-start gap-2">
           <div class="min-w-0 flex-1">
             <h2 class="truncate text-card-title font-bold tracking-tight">

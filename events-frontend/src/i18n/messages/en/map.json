@@ -19,6 +19,8 @@
   "gestureHelpMac": "Use ⌘ + scroll to zoom the map",
   "gestureHelpMobile": "Use two fingers to move the map",
   "pinOnNow": "{count} on now | {count} on now",
+  "groupLabel": "{count} venues: {venues}",
+  "groupHeading": "{count} venues here",
   "pinNothingOn": "{venue}: no events in this range",
   "nothingInRange": "No events in this range",
   "venuePage": "About this venue",

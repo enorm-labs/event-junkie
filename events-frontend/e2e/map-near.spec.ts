@@ -32,6 +32,11 @@ const events = [
   },
   { slug: 'far-show', title: 'Far Show', eventDate: '2026-08-15', startTime: '23:30', venue: FAR },
 ]
+/**
+ * Without the far venue the map frames Kreuzberg alone. Framed with Spandau, a phone draws Lido and
+ * Astra closer than a badge is wide, and they share one marker.
+ */
+const kreuzberg = events.filter((event) => event.venue !== FAR)
 
 function json(route: Route, body: unknown): Promise<void> {
   return route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -75,10 +80,7 @@ test('near me lists the venues within the radius, nearest first, and sends the p
 
   const heading = page.getByRole('heading', { level: 2, name: 'Within 2 km' })
   await expect(heading).toBeVisible()
-  await expect(page.getByRole('heading', { level: 3 })).toHaveText([
-    /Lido\s*50 m/,
-    /Astra\s*1 km/,
-  ])
+  await expect(page.getByRole('heading', { level: 3 })).toHaveText([/Lido\s*50 m/, /Astra\s*1 km/])
   await expect(page.locator('section', { has: heading }).getByText('Far Show')).toHaveCount(0)
 
   // A wider radius is a URL state; the position is not.
@@ -97,10 +99,7 @@ test('near a venue needs no permission', async ({ page }) => {
   await page.getByRole('combobox', { name: 'Near a venue…' }).selectOption('astra')
 
   await expect(page.getByText('Around Astra')).toBeVisible()
-  await expect(page.getByRole('heading', { level: 3 })).toHaveText([
-    /Astra\s*50 m/,
-    /Lido\s*1 km/,
-  ])
+  await expect(page.getByRole('heading', { level: 3 })).toHaveText([/Astra\s*50 m/, /Lido\s*1 km/])
 })
 
 test('on now keeps only what is running, and marks it', async ({ page }) => {
@@ -113,7 +112,10 @@ test('on now keeps only what is running, and marks it', async ({ page }) => {
 
   await expect(page).toHaveURL(/now=1/)
   // On now replaces the range, so the default Tonight no longer reads as pressed (#2605).
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
   // Astra's 23:00 show has not started; Lido's 21:00 one has, and its row says so.
   await expect(page.getByRole('heading', { level: 3 })).toHaveText([/Lido/])
   await expect(page.getByRole('link', { name: /Lido Show/ })).toContainText('On now')
@@ -143,7 +145,7 @@ test('a pin opens its venue over the map, three events deep, and closing returns
     startTime: '23:45',
     venue: LIDO,
   }))
-  await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, [...events, ...late]))
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, [...kreuzberg, ...late]))
   await page.goto('/en/map')
 
   // Five at Lido carry a count; Astra's single show keeps the pin's size without a digit.
@@ -172,6 +174,54 @@ test('a pin opens its venue over the map, three events deep, and closing returns
   await expect(pin).toBeFocused()
 })
 
+test('venues that share a door share one marker, which lists them and hands over to the venue', async ({
+  page,
+}) => {
+  await mockBff(page)
+  const annex = {
+    slug: 'lido-annex',
+    name: 'Lido Annex',
+    latitude: LIDO.latitude,
+    longitude: LIDO.longitude,
+  }
+  const annexShows = ['One', 'Two'].map((n, i) => ({
+    slug: `annex-${i}`,
+    title: `Annex ${n}`,
+    eventDate: '2026-08-15',
+    startTime: '23:15',
+    venue: annex,
+  }))
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) =>
+    json(route, [events[0], ...annexShows]),
+  )
+  await page.goto('/en/map')
+
+  // One marker for both, counting the events at either: 2 at the annex and 1 at Lido.
+  const marker = page.getByRole('button', { name: /^2 venues: / })
+  const unavailable = page.getByText(/cannot draw the map/)
+  await expect(marker.or(unavailable)).toBeVisible()
+  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await expect(marker).toHaveText('3')
+  await expect(page.getByRole('button', { name: /^Lido: / })).toHaveCount(0)
+
+  await marker.click()
+  const list = page.locator('section', {
+    has: page.getByRole('heading', { name: '2 venues here' }),
+  })
+  await expect(list.getByRole('listitem')).toHaveText([
+    /Lido Annex.*2 events/,
+    /Lido.*1 event, 1 on now/,
+  ])
+
+  await list.getByRole('button', { name: /^Lido Annex/ }).click()
+  await expect(list).toHaveCount(0)
+  const panel = page.locator('section', { has: page.getByRole('heading', { name: 'Lido Annex' }) })
+  await expect(panel.getByRole('heading', { level: 3 })).toHaveCount(2)
+
+  await panel.getByRole('button', { name: 'Close' }).click()
+  await expect(marker).toBeFocused()
+})
+
 test('with no dates in the URL the map shows today, so Tonight reads as pressed', async ({
   page,
 }) => {
@@ -179,7 +229,10 @@ test('with no dates in the URL the map shows today, so Tonight reads as pressed'
   await page.goto('/en/map')
   await expect(page.getByText('3 events at 3 venues')).toBeVisible()
 
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await expect(page.getByRole('button', { name: 'This weekend' })).toHaveAttribute(
     'aria-pressed',
     'false',
@@ -216,6 +269,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     test.skip(browserName === 'webkit', 'WebKit excludes buttons from the Tab order by default')
     await page.emulateMedia({ reducedMotion })
     await mockBff(page)
+    await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, kreuzberg))
     await page.goto('/en/map')
 
     const pin = page.getByRole('button', { name: 'Lido: 1 event, 1 on now', exact: true })

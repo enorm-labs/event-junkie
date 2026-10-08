@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 /**
  * A map of Berlin with one marker per pin. It knows venues and coordinates, not events: the view
- * decides what a pin says, and handles a selection through `v-model:selected`.
+ * decides what a pin says, and handles a selection through `v-model:selected`. Pins that would
+ * overlap on screen share one marker, which opens a list of its venues.
  *
  * Everything it loads is served from this site (`scripts/map-assets.sh`). A tile server elsewhere
  * would receive every visitor's address, and the privacy notice says no third party does.
  */
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Minus, Plus } from '@lucide/vue'
+import { Minus, Plus, X } from '@lucide/vue'
 import { layers, namedFlavor } from '@protomaps/basemaps'
 import {
   addProtocol,
@@ -21,11 +22,21 @@ import {
 } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Protocol } from 'pmtiles'
-import { markRaw, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import {
+  computed,
+  markRaw,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { circlePolygon, type Position } from '@/lib/geo'
-import type { MapPin } from '@/lib/mapPins'
+import { type MapPin, overlapGroups } from '@/lib/mapPins'
+import { CARD_LIST_CLASS, MAP_PANEL_CLASS } from '@/lib/utils'
 
 const props = defineProps<{
   pins: MapPin[]
@@ -46,6 +57,8 @@ const BERLIN: [[number, number], [number, number]] = [
   [13.8, 52.7],
 ]
 const MAX_FIT_ZOOM = 15
+/** Centres closer than a two-digit badge is wide draw one marker over another. */
+const OVERLAP_PX = 36
 const ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a> · <a href="https://protomaps.com">Protomaps</a>'
 
@@ -53,7 +66,18 @@ const { t, locale } = useI18n()
 const container = ref<HTMLElement | null>(null)
 const overlay = ref<HTMLElement | null>(null)
 const map = shallowRef<MapLibreMap | null>(null)
-const markers = new Map<string, { marker: Marker; element: HTMLButtonElement; pin: MapPin }>()
+/** One marker on the map: a single pin, or the pins that would overlap it at this zoom. */
+interface Placed {
+  marker: Marker
+  element: HTMLButtonElement
+  pins: MapPin[]
+}
+/** By the slugs a marker holds, so a regroup on zoom keeps the markers that did not change. */
+const placed = new Map<string, Placed>()
+const placedBySlug = new Map<string, Placed>()
+/** The pins of the group marker whose list is open. */
+const group = shallowRef<MapPin[] | null>(null)
+const groupKey = computed(() => (group.value ? keyOf(group.value) : null))
 let originMarker: Marker | null = null
 let nameMarker: Marker | null = null
 
@@ -91,7 +115,7 @@ function style(): StyleSpecification {
 // Focus is an outline: a `ring-*` is a box-shadow, which a live pin's pulse overrides (#2664).
 // `outline-solid` is needed because `outline-none` leaves `outline-2` reading a `none` style.
 const MARKER_CLASS =
-  'flex cursor-pointer items-center justify-center rounded-full border-2 border-background font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid'
+  'flex cursor-pointer items-center justify-center border-2 border-background font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid'
 /**
  * A pin with a count needs room for it; an empty badge is a plain disc still large enough to tap;
  * a pin without a badge is a dot, so 90 venues do not bury the map. The selected pin grows a step,
@@ -105,6 +129,8 @@ const SIZE_CLASSES = {
   disc: { rest: ['size-6'], selected: ['size-8'] },
   dot: { rest: ['size-4'], selected: ['size-6'] },
 }
+/** A group marker is square-cornered, so its number does not read as one venue's event count. */
+const SHAPE_CLASSES = { single: 'rounded-full', group: 'rounded-md' }
 /** The selected venue's name beside its pin; the panel says it to a screen reader. */
 const NAME_CLASS =
   'pointer-events-none rounded-sm bg-background/90 px-1.5 text-meta font-semibold whitespace-nowrap text-foreground'
@@ -121,11 +147,23 @@ const UNSELECTED_CLASSES = ['bg-primary', 'text-primary-foreground']
 // A venue with nothing in the range stays grey even while chosen: the accent would read as "on".
 const QUIET_CLASSES = { selected: ['bg-muted-foreground', 'z-10'], rest: ['bg-muted-foreground'] }
 
+function keyOf(pins: readonly MapPin[]): string {
+  return pins.map((pin) => pin.slug).join('|')
+}
+
+function isActive({ pins }: Placed): boolean {
+  if (pins.length > 1 && keyOf(pins) === groupKey.value) return true
+  return pins.some((pin) => pin.slug === selected.value)
+}
+
 // classList, never className: MapLibre positions a marker through classes of its own on the element.
-function styleMarker(element: HTMLButtonElement, pin: MapPin) {
-  const isSelected = pin.slug === selected.value
-  const size = SIZE_CLASSES[pin.badge === undefined ? 'dot' : pin.badge ? 'count' : 'disc']
-  const colour = pin.quiet
+function styleMarker(entry: Placed) {
+  const { element, pins } = entry
+  const isSelected = isActive(entry)
+  const badge = pins[0]?.badge
+  const size =
+    SIZE_CLASSES[pins.length > 1 || badge ? 'count' : badge === undefined ? 'dot' : 'disc']
+  const colour = pins.every((pin) => pin.quiet)
     ? QUIET_CLASSES
     : { selected: SELECTED_CLASSES, rest: UNSELECTED_CLASSES }
   element.classList.remove(
@@ -144,8 +182,9 @@ const NAME_OFFSET: [number, number] = [22, 0]
 
 function renderName() {
   const instance = map.value
-  const pin = selected.value ? markers.get(selected.value)?.pin : undefined
-  if (!instance || !pin?.name) {
+  const entry = selected.value ? placedBySlug.get(selected.value) : undefined
+  const pin = entry?.pins.find(({ slug }) => slug === selected.value)
+  if (!instance || !entry || !pin?.name) {
     nameMarker?.remove()
     nameMarker = null
     return
@@ -157,30 +196,73 @@ function renderName() {
     nameMarker = new Marker({ element, anchor: 'left', offset: NAME_OFFSET })
   }
   nameMarker.getElement().textContent = pin.name
-  nameMarker.setLngLat([pin.longitude, pin.latitude]).addTo(instance)
+  nameMarker.setLngLat(entry.marker.getLngLat()).addTo(instance)
 }
 
-function renderMarkers() {
+function place(instance: MapLibreMap, pins: MapPin[]): Placed {
+  const [first] = pins
+  const isGroup = pins.length > 1
+  const element = document.createElement('button')
+  element.type = 'button'
+  element.className = MARKER_CLASS
+  element.classList.add(isGroup ? SHAPE_CLASSES.group : SHAPE_CLASSES.single)
+  if (pins.every((pin) => pin.dimmed)) element.classList.add(DIMMED_CLASS)
+  if (pins.some((pin) => pin.live)) element.classList.add(LIVE_CLASS)
+  const label = isGroup
+    ? t('map.groupLabel', {
+        count: pins.length,
+        venues: pins.map((pin) => pin.label).join('; '),
+      })
+    : (first?.label ?? '')
+  element.title = label
+  element.setAttribute('aria-label', label)
+  element.textContent = isGroup
+    ? String(pins.reduce((sum, pin) => sum + (pin.weight ?? 1), 0))
+    : (first?.badge ?? '')
+  const longitude = pins.reduce((sum, pin) => sum + pin.longitude, 0) / pins.length
+  const latitude = pins.reduce((sum, pin) => sum + pin.latitude, 0) / pins.length
+  const marker = new Marker({ element }).setLngLat([longitude, latitude]).addTo(instance)
+  const entry = { marker, element, pins }
+  element.addEventListener('click', (event) => {
+    event.stopPropagation()
+    if (isGroup) {
+      group.value = keyOf(pins) === groupKey.value ? null : pins
+      selected.value = null
+    } else {
+      group.value = null
+      selected.value = selected.value === first?.slug ? null : (first?.slug ?? null)
+    }
+  })
+  styleMarker(entry)
+  return entry
+}
+
+function clearMarkers() {
+  for (const { marker } of placed.values()) marker.remove()
+  placed.clear()
+  placedBySlug.clear()
+}
+
+/**
+ * Groups the pins by where they land on screen at this zoom. A rebuild redraws every marker, for new
+ * pins; a regroup after a zoom keeps each marker whose pins did not change, and with it the focus.
+ */
+function renderMarkers(rebuild: boolean) {
   const instance = map.value
   if (!instance) return
-  for (const { marker } of markers.values()) marker.remove()
-  markers.clear()
-  for (const pin of props.pins) {
-    const element = document.createElement('button')
-    element.type = 'button'
-    element.className = MARKER_CLASS
-    if (pin.dimmed) element.classList.add(DIMMED_CLASS)
-    styleMarker(element, pin)
-    element.title = pin.label
-    element.setAttribute('aria-label', pin.label)
-    element.textContent = pin.badge ?? ''
-    if (pin.live) element.classList.add(LIVE_CLASS)
-    element.addEventListener('click', (event) => {
-      event.stopPropagation()
-      selected.value = selected.value === pin.slug ? null : pin.slug
-    })
-    const marker = new Marker({ element }).setLngLat([pin.longitude, pin.latitude]).addTo(instance)
-    markers.set(pin.slug, { marker, element, pin })
+  if (rebuild) clearMarkers()
+  const points = props.pins.map((pin) => instance.project([pin.longitude, pin.latitude]))
+  const next = new Map<string, Placed>()
+  for (const indexes of overlapGroups(points, OVERLAP_PX)) {
+    const pins = indexes.flatMap((index) => props.pins[index] ?? [])
+    const key = keyOf(pins)
+    next.set(key, placed.get(key) ?? place(instance, pins))
+    placed.delete(key)
+  }
+  clearMarkers()
+  for (const [key, entry] of next) {
+    placed.set(key, entry)
+    for (const pin of entry.pins) placedBySlug.set(pin.slug, entry)
   }
   renderName()
 }
@@ -280,14 +362,28 @@ function center(): Position | null {
 
 /** Moves focus to a pin, for a panel that closes under the keyboard. */
 function focusPin(slug: string) {
-  markers.get(slug)?.element.focus()
+  placedBySlug.get(slug)?.element.focus()
 }
 
 defineExpose({ center, focusPin })
 
 function restyleSelection() {
-  for (const { element, pin } of markers.values()) styleMarker(element, pin)
+  for (const entry of placed.values()) styleMarker(entry)
   renderName()
+}
+
+// The list goes with the click, so focus goes back to the marker that opened it.
+function closeGroup() {
+  const slug = group.value?.[0]?.slug
+  group.value = null
+  if (slug) focusPin(slug)
+}
+
+/** A venue from a group's list: the view's own panel takes over, and focus waits on the marker. */
+function choose(slug: string) {
+  group.value = null
+  selected.value = slug
+  focusPin(slug)
 }
 
 /** Room left between a pin and the overlay once the map has moved it clear. */
@@ -300,7 +396,11 @@ const REVEAL_MARGIN = 16
  */
 async function revealSelection() {
   await nextTick()
-  const element = selected.value ? markers.get(selected.value)?.element : undefined
+  const element = selected.value
+    ? placedBySlug.get(selected.value)?.element
+    : groupKey.value
+      ? placed.get(groupKey.value)?.element
+      : undefined
   const panel = overlay.value?.firstElementChild?.getBoundingClientRect()
   if (!map.value || !element || !panel) return
   const pin = element.getBoundingClientRect()
@@ -353,20 +453,28 @@ onMounted(() => {
   map.value.addControl(new AttributionControl({ compact: false }), 'bottom-right')
   map.value.on('click', (event) => {
     if (props.picking) emit('pick', { latitude: event.lngLat.lat, longitude: event.lngLat.lng })
-    else selected.value = null
+    else {
+      selected.value = null
+      group.value = null
+    }
   })
   map.value.on('style.load', addRadiusLayers)
-  renderMarkers()
+  map.value.on('zoomend', () => renderMarkers(false))
   renderOrigin()
   frame()
+  renderMarkers(true)
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 })
 
 watch(
   () => props.pins,
-  () => {
-    renderMarkers()
+  (pins) => {
     frame()
+    renderMarkers(true)
+    // The open list keeps the venues still on the map, under their new pins.
+    const slugs = new Set(group.value?.map((pin) => pin.slug))
+    const kept = pins.filter((pin) => slugs.has(pin.slug))
+    group.value = kept.length > 1 ? kept : null
   },
 )
 watch(
@@ -376,7 +484,7 @@ watch(
     frame()
   },
 )
-watch(selected, () => {
+watch([selected, group], () => {
   restyleSelection()
   void revealSelection()
 })
@@ -385,7 +493,8 @@ watch(locale, () => map.value?.setStyle(style(), { diff: false }))
 onBeforeUnmount(() => {
   themeObserver.disconnect()
   map.value?.remove()
-  markers.clear()
+  placed.clear()
+  placedBySlug.clear()
   originMarker = null
   nameMarker = null
 })
@@ -422,6 +531,39 @@ onBeforeUnmount(() => {
     <!-- Whatever the view lays over the map, such as the selected venue's panel. The wrapper is
          static, so its child still positions against the map. -->
     <div ref="overlay">
+      <section v-if="group" aria-live="polite" :class="MAP_PANEL_CLASS">
+        <div class="flex items-start gap-2">
+          <h2 class="min-w-0 flex-1 truncate text-card-title font-bold tracking-tight">
+            {{ t('map.groupHeading', { count: group.length }) }}
+          </h2>
+          <Button
+            :aria-label="t('map.closePanel')"
+            :title="t('map.closePanel')"
+            size="icon-xs"
+            type="button"
+            variant="ghost"
+            @click="closeGroup"
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+        <ul :class="CARD_LIST_CLASS">
+          <li v-for="pin in group" :key="pin.slug">
+            <button
+              class="w-full py-2 text-left hover:text-primary"
+              type="button"
+              @click="choose(pin.slug)"
+            >
+              <span class="block truncate text-body font-semibold">{{
+                pin.name ?? pin.label
+              }}</span>
+              <span v-if="pin.note" class="block truncate text-meta text-muted-foreground">
+                {{ pin.note }}
+              </span>
+            </button>
+          </li>
+        </ul>
+      </section>
       <slot />
     </div>
   </div>
