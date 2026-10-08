@@ -144,7 +144,8 @@ class SodaDetailPageScraper {
 
     /**
      * The value of the info box carrying [label] (`"Beginn"` → `"22:00 Uhr"`, `"Eintritt"` →
-     * `"15 €"`), or `null`. Each box pairs a `h4.title` value with a `p.description` label.
+     * `"15 €"`), or `null`. Each box pairs a `.title` value with a `p.description` label. The value
+     * is selected by class, not tag: the site renders it as `h4.title` or `span.title` (#2902).
      */
     private fun infoBoxValue(
         content: Element,
@@ -153,7 +154,7 @@ class SodaDetailPageScraper {
         content
             .select(".service .content")
             .firstOrNull { it.textAt("p.description").equals(label, ignoreCase = true) }
-            ?.textAt("h4.title")
+            ?.textAt(".title")
 
     /**
      * The blurb from `p.event-details`, keeping its `<br>`-delimited lines instead of the
