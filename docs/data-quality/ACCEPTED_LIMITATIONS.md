@@ -278,6 +278,8 @@ says so.
 | `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `PETER_EDEL`           | `PER_EVENT_PAGE`   | the title links straight to the ticket shop                                                                                                      | —     |
+| `PFEFFERBERG_HAUS_13`  | `END_TIME`         | the pages name doors and a start, no end                                                                                                         | —     |
+| `PFEFFERBERG_HAUS_13`  | `GENRE`            | no event names a style                                                                                                                           | —     |
 | `PRIVATCLUB`           | `PRICE`            | about half the nights print a genre line and a start time but no price                                                                           | —     |
 | `PUNCHLINE`            | `IMAGE`            | the date list carries no image                                                                                                                   | —     |
 | `PUNCHLINE`            | `TICKET_URL`       | the date list links no ticket shop; tickets sell on Ticketmaster                                                                                 | —     |

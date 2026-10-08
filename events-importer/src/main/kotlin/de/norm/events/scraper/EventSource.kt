@@ -252,6 +252,9 @@ enum class EventSource {
     /** Kulturhaus Peter Edel Berlin – the Weißensee Bildungs- und Kulturzentrum, mixing concerts, comedy, theatre, readings and dance teas. */
     PETER_EDEL,
 
+    /** Pfefferberg Haus 13 Berlin – a hall on the old brewery site, run with Pfefferwerk trainees, for rock and metal concerts and book premieres. */
+    PFEFFERBERG_HAUS_13,
+
     /** Privatclub Berlin – a club below the Markthalle near Schlesisches Tor, across soul, funk, indie, hip-hop and electronic music. */
     PRIVATCLUB,
 

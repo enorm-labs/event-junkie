@@ -97,6 +97,7 @@
 ###   PANDA platforma      — https://panda-platforma.berlin/wp-json/tribe/events/v1/events
 ###   Panke Culture        — https://www.pankeculture.com/programme/
 ###   Parkbühne Wuhlheide  — https://www.wuhlheide.de/programm
+###   Pfefferberg Haus 13  — https://haus13.pfefferwerk.de/veranstaltungen/
 ###   Privatclub           — https://privatclub-berlin.de/
 ###   PUNCH L!NE Club      — https://punchlineberlin.com/de/tickets
 ###   Quasimodo            — https://quasimodo.club/events
@@ -210,7 +211,6 @@
 ###   Paloma                         — https://www.palomabar.de/programm.php
 ###   Passionskirche                 — https://halle-luja.berlin/kommende-events
 ###   Pastiche                       — https://pasticheinternational.com/programme-1
-###   Pfefferberg Haus 13            — https://haus13.pfefferwerk.de/veranstaltungen/
 ###   Phantom Bar                    — https://ra.co/clubs/257171
 ###   PKH Warehouse                  — https://www.pkh.events/
 ###   Prachtwerk                     — https://www.prachtwerkberlin.com/live-music-events
@@ -7592,7 +7592,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Pfefferberg Haus 13 (Schönhauser Allee 176, Berlin-Prenzlauer Berg — not imported, #2766)
+### Pfefferberg Haus 13 (Schönhauser Allee 176, Berlin-Prenzlauer Berg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Pfefferberg Haus 13 venue ---
@@ -7614,13 +7614,45 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue"],
     "capacity": 180,
-    "programmeUrl": "https://haus13.pfefferwerk.de/veranstaltungen/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("pfefferberg_haus_13_venue_id", response.body.id);
     client.test("Pfefferberg Haus 13 venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Pfefferberg Haus 13 event source ---
+# Links the venue to the PfefferbergHaus13WebsiteImporter.
+# The sourceType "PFEFFERBERG_HAUS_13" matches EventSource.PFEFFERBERG_HAUS_13.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{pfefferberg_haus_13_venue_id}},
+    "name": "Pfefferberg Haus 13",
+    "url": "https://haus13.pfefferwerk.de/veranstaltungen/",
+    "sourceType": "PFEFFERBERG_HAUS_13",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Pfefferberg Haus 13 event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Pfefferberg Haus 13 import ---
+POST {{importer-host}}/api/admin/event-sources/pfefferberg-haus-13/import
+Accept: application/json
+
+> {%
+    client.test("Pfefferberg Haus 13 import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
