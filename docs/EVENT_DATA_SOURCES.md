@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   125 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    45 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   126 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -135,6 +135,7 @@ schema change.
 | Säälchen                         | https://www.holzmarkt.com/kalender                                       | Concert Hall | Drupal; shared calendar filtered by location              |
 | Scheinbar Varieté                | https://www.scheinbar.de/programm/                                       | Theater      | ProcessWire list by month; one show a night               |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                                        | Club         | Laravel; anchor-based events; genre inside title          |
+| Showfenster Theater              | https://www.showfenster-show.de/%C3%BCbersichtskalender                  | Theater      | Wix Events warmup JSON; Eventfrog path gives the type     |
 | silent green                     | https://www.silent-green.net/programm                                    | Concert Hall | TYPO3 news; month walk; a run listed per open day         |
 | Sisyphos                         | https://www.sisyphos-berlin.net/                                         | Techno Club  | Calendar JSON + shop + sisy.fan line-ups (ADR-038)        |
 | Slaughterhouse                   | https://slaughterhouse-berlin.de/konzerte/                               | Club         | Block-editor post; entries between hr rules               |
@@ -166,7 +167,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-124 importer classes cover 125 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+125 importer classes cover 126 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -187,7 +188,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-47 sources have a second language, 74 have none, and 4 are unknown. Eight translate the event text on a second page.
+47 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -305,6 +306,7 @@ the upsert stores none.
 | Säälchen                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Scheinbar Varieté                | No              | —                                                            | —                  |                                                                                                                                    |
 | Schokoladen                      | No              | —                                                            | —                  |                                                                                                                                    |
+| Showfenster Theater              | No              | —                                                            | —                  |                                                                                                                                    |
 | silent green                     | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.silent-green.net/en/programme                                                                                          |
 | Sisyphos                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Slaughterhouse                   | No              | —                                                            | —                  |                                                                                                                                    |
@@ -364,7 +366,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend                |
 | Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint       |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices        |
-| Showfenster-Theater      | https://www.showfenster-show.de/übersichtskalender        | Theater      | Medium   | Wix Events warmup JSON; 57 dates; `/events` is a 404         |
 | WABE                     | https://www.wabe-berlin.info/                             | Concert Hall | Medium   | Jimdo month pages (`/okt-2026/`); ~14 events a month         |
 | ausland                  | https://ausland.berlin/program/all                        | Club         | Medium   | TYPO3 list; date, time, artists and series per event         |
 | Kühlspot Social Club     | https://kuehlspot.com/                                    | Other        | Medium   | Home page section; dated nights with full line-ups           |
@@ -406,14 +407,13 @@ least as heavily as an RA count when the next batch is prioritised.
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
-**The 22 rows below Weltwirtschaft were opened on 2026-10-04.** The first 18 came from the
-[Unanalyzed](#-not-analyzed-yet) table. The last four, from Galiläakirche on, came from theclubmap.com. Four rows do
+**The 21 rows below Weltwirtschaft were opened on 2026-10-04.** The first 17 came from the
+[Unanalyzed](#-not-analyzed-yet) table. The last four, from Galiläakirche on, came from theclubmap.com. Three rows do
 not point at the venue's own page:
 
 - **Baiz** and **Jugendclub Café Köpenick** point at their radar.squat.net group, which `scraper/radar/` reads. Baiz's
   own programme page is one month of plain text. Café Köpenick's own domain is parked.
 - **Mad Monkey Room** points at its rausgegangen ticket shop. Its own Next.js site carries no dates.
-- **Showfenster-Theater** points at its overview calendar. Its `/events` page answers 404.
 
 **Promenaden Eck** renders in the browser. The page reads its events from a public Supabase table, with the anon key
 that the page itself ships. That is a JSON endpoint behind the page, like the Wix warmup data. Confirm that
