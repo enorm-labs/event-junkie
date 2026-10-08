@@ -2,6 +2,7 @@ package de.norm.events.scraper.delphi
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
@@ -10,6 +11,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -40,7 +42,11 @@ import java.time.LocalDateTime
  *
  * The venue's labels are **formats**, not musical genres — `Tanz`, `Theater`, `Dialog & Lesung`
  * — so they drive the event type. Only the two naming a genre ([MUSIC_GENRE_LABELS]) are also
- * stored as one.
+ * stored as one. A row without a label is typed from its title and teaser ([CONCERT_CUES]).
+ *
+ * A concert's line-up comes from its `p.stabText` credit line, where the row has one: the title
+ * there is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899). On a
+ * staged row the same line credits the company, so it is not read.
  *
  * @see DelphiProductionPageScraper for the per-production page (full description, bigger poster).
  * @see DelphiWebsiteImporter for the HTTP fetch orchestrator.
@@ -113,13 +119,19 @@ class DelphiProgrammePageScraper {
         val startTime = parseTime(row.textAt(".eventHeader p")?.substringBefore(CLOCK_SUFFIX)?.trim())
 
         val labels = labelsOf(row)
-        val eventType = labels.firstNotNullOfOrNull { mapEventType(it, DELPHI_CATEGORY_SYNONYMS) }
+        val teaser = row.textAt("p.teaserText")
+        val eventType =
+            if (labels.isEmpty()) {
+                unlabelledRowType(title, teaser)
+            } else {
+                labels.firstNotNullOfOrNull { mapEventType(it, DELPHI_CATEGORY_SYNONYMS) }
+            }
         // The record dump is keyed by the start time, so a row without a clock cannot be joined.
         val record = startTime?.let { records[delphiPerformanceKey(productionId, LocalDateTime.of(eventDate, it))] }
 
         return ScrapedEvent(
             title = title,
-            description = row.textAt("p.teaserText"),
+            description = teaser,
             eventType = eventType,
             eventDate = eventDate,
             startTime = startTime,
@@ -135,9 +147,29 @@ class DelphiProgrammePageScraper {
             pricePresale = record?.pricePresale,
             priceNote = record?.priceNote,
             free = record?.free == true,
-            artists = buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+            artists =
+                creditedActs(row, teaser).takeIf { eventType == EventType.CONCERT.name }.orEmpty().ifEmpty {
+                    buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                }
         )
     }
+
+    /**
+     * The acts a row's `p.stabText` credit line bills, in order: `Ensemble Utak | Hannah Dienes-Williams`.
+     * The line also credits the work's authors (`… | Johannes Brahms | F.W. Murnau`), so a name the
+     * [teaser] credits as one ([isCreditedAuthor]) is left out.
+     */
+    private fun creditedActs(
+        row: Element,
+        teaser: String?
+    ): List<ScrapedArtist> =
+        row
+            .textAt("p.stabText")
+            ?.split('|')
+            ?.map { it.replace(WHITESPACE, " ").trim() }
+            ?.filter { it.isNotBlank() && !isNonArtistName(it) && !isCreditedAuthor(it, teaser) }
+            ?.map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .orEmpty()
 
     /**
      * The venue's category labels for a row, `<br>`-separated in a single cell ("Musiktheater",
@@ -185,6 +217,36 @@ private val DELPHI_CATEGORY_SYNONYMS =
         "kammermusik" to EventType.CONCERT.name,
         "elektronische musik" to EventType.CONCERT.name
     )
+
+/**
+ * The type of a row the venue left unlabelled: [EventType.CONCERT] where its title or teaser names a
+ * concert cue ([CONCERT_CUES]), else [EventType.OTHER]. Not the shared title classifier, which reads
+ * the wrestling night's `größte Show des Jahres` as a [EventType.SHOW].
+ */
+private fun unlabelledRowType(
+    title: String,
+    teaser: String?
+): String {
+    val haystack = listOfNotNull(title, teaser).joinToString(" ").lowercase()
+    return if (CONCERT_CUES.any { it in haystack }) EventType.CONCERT.name else EventType.OTHER.name
+}
+
+/** The house's words for a concert in an unlabelled row: `Solo-Konzert`, `Songwriterin`, `Folksongs`. */
+private val CONCERT_CUES = listOf("konzert", "songwriter", "folk")
+
+/**
+ * Whether [teaser] credits [name] as an author of the work, not a performer: `mit Musik von
+ * Johannes Brahms`, `(1922, F.W. Murnau)`.
+ */
+internal fun isCreditedAuthor(
+    name: String,
+    teaser: String?
+): Boolean =
+    teaser != null &&
+        Regex(AUTHOR_CUE + Regex.escape(name) + "(?!\\p{L})", RegexOption.IGNORE_CASE).containsMatchIn(teaser)
+
+/** What precedes an author's name in a teaser: `Musik von`, `by`, or the year in `(1922, F.W. Murnau)`. */
+private const val AUTHOR_CUE = """(?:\bvon|\bby|\b\d{4},)\s+"""
 
 /**
  * The labels naming a musical genre rather than a staging format. Only these become genre
