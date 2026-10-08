@@ -318,6 +318,11 @@ says so.
 | `SPEAKEAZY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
+| `TAUSEND`              | `PER_EVENT_PAGE`   | every night points at its anchor on the lineup page                                                                                              | —     |
+| `TAUSEND`              | `PRICE`            | the lineup prints no admission                                                                                                                   | —     |
+| `TAUSEND`              | `GENRE`            | each night names its styles only in its prose                                                                                                    | —     |
+| `TAUSEND`              | `END_TIME`         | the page prints no closing time, and its schema.org end is 3 am on every night                                                                   | —     |
+| `TAUSEND`              | `TICKET_URL`       | a night links its Resident Advisor page only once that page is up                                                                                | —     |
 | `TEMPODROM`            | `PRICE`            | a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line                                                       | —     |
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
 | `THE_WALL`             | `DOORS_TIME`       | each producer states one time per show, doors for some and the start for others                                                                  | —     |

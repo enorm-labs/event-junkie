@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   112 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    58 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   113 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    57 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -51,6 +51,7 @@ schema change.
 | Astra Kulturhaus                 | https://www.astra-berlin.de/                                | Concert Hall | schema.org `MusicEvent`; presale + door prices            |
 | Badehaus                         | https://badehaus-berlin.com/                                | Club         | "AUSVERKAUFT"/"VERLEGT" labels; ticket + FB links         |
 | Bar jeder Vernunft               | https://www.bar-jeder-vernunft.de/de/programm/kalender.html | Bar          | Neos; per-date JSON-LD; one show page per run             |
+| Bar Tausend                      | https://tausendberlin.com/                                  | Bar          | Divi JSON-LD graph; full and EN text from blocks          |
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                     | Techno Club  | Server-rendered; list + detail                            |
 | Bi Nuu                           | https://binuu.de/                                           | Club         | No genre or prices on site; only via ticket link          |
 | Cassiopeia                       | https://cassiopeia-berlin.de/                               | Club         | Webflow; genre tags, badges; walks all pages              |
@@ -153,7 +154,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-111 importer classes cover 112 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+112 importer classes cover 113 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -368,7 +369,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ZK/U                           | https://www.zku-berlin.org/                                              | Other        | Low      | TYPO3 calendar; club nights among talks and markets          |
 | Paloma                         | https://www.palomabar.de/programm.php                                    | Bar          | Medium   | Custom PHP; programm.php, 15 dates in Oct; no year           |
 | KREUZWERK                      | https://kreuzwerk.club/events                                            | Techno Club  | Medium   | Ritter Butzke codebase; detail ld+json; 5 events             |
-| Tausend                        | https://tausendberlin.com/lineup/                                        | Bar          | High     | WordPress/Divi; /lineup/ one page, 18 nights; no year        |
 | The Door Club                  | https://thedoor.club/events/                                             | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat           |
 | The Cloud                      | https://thecloud.berlin/events/                                          | Bar          | Medium   | TEC REST API; 6 events to mid-Nov; no prices                 |
 | Kesselhaus                     | https://www.kesselhaus.net/de/calendar/topics/concerts                   | Concert Hall | High     | Angular SSR; /de/calendar items; filter by location          |
