@@ -115,6 +115,7 @@
 ###   SO36                 — https://www.so36.com/tickets
 ###   Soda Club            — https://www.soda-berlin.de/events
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
+###   Soulcat              — https://soulcat-berlin.com/wp-json/tribe/events/v1/events
 ###   Speakeazy            — https://www.speakeazyberlin.de/events
 ###   Supamolly            — https://www.supamolly.de/?p=programm
 ###   Tempodrom            — https://www.tempodrom.de/programm-und-tickets/
@@ -228,7 +229,6 @@
 ###   Sisyfass                       — https://ra.co/clubs/159864
 ###   Slaughterhouse                 — https://slaughterhouse-berlin.de/konzerte/
 ###   Solar                          — https://solar-berlin.de/event-types/dj/
-###   Soulcat                        — https://soulcat-berlin.com/
 ###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Spindler & Klatt               — https://www.spindlerklatt.com/club
 ###   Studio dB                      — https://ra.co/clubs/143430
@@ -8773,7 +8773,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Soulcat (Pannierstraße 53, Berlin-Neukölln — not imported, #2766)
+### Soulcat (Pannierstraße 53, Berlin-Neukölln)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Soulcat venue ---
@@ -8794,13 +8794,45 @@ Content-Type: application/json
     "descriptionAlt": "Eine Musikbar in Neukölln, in der ausschließlich Vinyl aus den 50er- und 60er-Jahren läuft: Gast-DJs legen R&B, Soul, Blues und Rock'n'Roll auf, bezahlt wird nur bar, Werder-Spiele laufen live.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar"],
-    "programmeUrl": "https://soulcat-berlin.com/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("soulcat_venue_id", response.body.id);
     client.test("Soulcat venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Soulcat event source ---
+# Links the venue to the SoulcatWebsiteImporter.
+# The sourceType "SOULCAT" matches EventSource.SOULCAT.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{soulcat_venue_id}},
+    "name": "Soulcat",
+    "url": "https://soulcat-berlin.com/wp-json/tribe/events/v1/events",
+    "sourceType": "SOULCAT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Soulcat event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Soulcat import ---
+POST {{importer-host}}/api/admin/event-sources/soulcat/import
+Accept: application/json
+
+> {%
+    client.test("Soulcat import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

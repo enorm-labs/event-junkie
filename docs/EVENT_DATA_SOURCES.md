@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   122 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    48 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   123 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    47 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -140,6 +140,7 @@ schema change.
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop              |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details            |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency             |
+| Soulcat                          | https://soulcat-berlin.com/                                 | Bar          | TEC REST API; title-only DJ nights, no Fussball           |
 | Speakeazy                        | https://www.speakeazyberlin.de/events                       | Bar          | Squarespace HTML, robots bars `?format=json`; door prices |
 | Supamolly                        | https://www.supamolly.de/?p=programm                        | Club         | Retro PHP; row id is the date stamp; no prices            |
 | Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/              | Concert Hall | JSON-LD listing; promoter per event page                  |
@@ -163,7 +164,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-121 importer classes cover 122 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+122 importer classes cover 123 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -184,7 +185,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-47 sources have a second language, 71 have none, and 4 are unknown. Eight translate the event text on a second page.
+47 sources have a second language, 72 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -305,6 +306,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | SO36                             | Yes             | One field: `(Deutsche Version unten)`                        | One field          | [captured page](../events-importer/src/test/resources/scraper/so36/so36-detail-tiers.html)                                         |
 | Soda Club                        | No              | `hreflang` `en` redirects to the German page                 | —                  |                                                                                                                                    |
 | Sonnenraum                       | No              | —                                                            | —                  |                                                                                                                                    |
+| Soulcat                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Speakeazy                        | Yes             | One field: German, `EN`, English                             | One field          | https://www.speakeazyberlin.de/events                                                                                              |
 | Supamolly                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Tempodrom                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.tempodrom.de/en/events-and-tickets/                                                                                    |
@@ -395,7 +397,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Weekend                        | https://www.weekendclub.berlin/upcoming                                  | Club         | Medium   | Squarespace /upcoming HTML; robots bars JSON                 |
 | Beate Uwe                      | https://beate-uwe.de/                                                    | Club         | Medium   | WordPress/Elementor; homepage list; RA links                 |
 | Backsteinboot                  | https://backsteinboot.org/program-(landing-page)-1                       | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
-| Soulcat                        | https://soulcat-berlin.com/                                              | Bar          | Medium   | TEC REST API; skip the "Fussball" rows                       |
 
 **The 8 rows from Slaughterhouse to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
