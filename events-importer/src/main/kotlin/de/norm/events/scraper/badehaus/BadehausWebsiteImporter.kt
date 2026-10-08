@@ -72,5 +72,10 @@ val BADEHAUS_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note"
-        )
+        ),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre"
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the promoter on its own nights, so the stored promoter is the venue")
     )

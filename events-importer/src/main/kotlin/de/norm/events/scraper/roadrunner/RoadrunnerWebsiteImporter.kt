@@ -42,5 +42,6 @@ val ROADRUNNER_LIMITATIONS =
             LimitedAspect.ARTISTS,
             "a night with no line-up label names only its title, which is as often a band battle as an act with its tour run on"
         ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the programme names the presale shop, never a figure"),
         houseGenre = "Rock"
     )

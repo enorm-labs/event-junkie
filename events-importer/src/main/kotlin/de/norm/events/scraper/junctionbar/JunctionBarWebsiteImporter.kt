@@ -170,5 +170,7 @@ val JUNCTION_BAR_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
             "the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the DJ programme page carries no picture per night; a live night carries one")
     )

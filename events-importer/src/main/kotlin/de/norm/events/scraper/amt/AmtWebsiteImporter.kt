@@ -42,5 +42,9 @@ class AmtWebsiteImporter(
 val AMT_LIMITATIONS =
     VenueLimitations(
         EventSource.AMT,
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "the month and event pages print a date but no clock time"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the month pages leave the price cell out, and the event pages print no figure"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the event page carries icons and one picture shared by every night, no poster of its own")
     )

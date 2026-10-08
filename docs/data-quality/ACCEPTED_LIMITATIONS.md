@@ -25,6 +25,10 @@ says so.
 | `ADMIRALSPALAST`       | `GENRE`            | the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere                                                     | —     |
 | `ADMIRALSPALAST`       | `PRICE`            | the house prints no figure; tickets are sold through an Eventim link                                                                             | —     |
 | `AMT`                  | `ARTISTS`          | the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably                                                   | —     |
+| `AMT`                  | `START_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
+| `AMT`                  | `DOORS_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
+| `AMT`                  | `PRICE`            | the month pages leave the price cell out, and the event pages print no figure                                                                    | —     |
+| `AMT`                  | `IMAGE`            | the event page carries icons and one picture shared by every night, no poster of its own                                                         | —     |
 | `ALTE_KANTINE`         | `PRICE`            | some nights leave the Eintritt field empty ("Eintritt: €"), so no figure is published                                                            | —     |
 | `ARCANOA`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `ARCANOA`              | `PRICE`            | a night is one line — a date, the act and a genre string — and the page prints no figure anywhere                                                | —     |
@@ -37,6 +41,7 @@ says so.
 | `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name, so only the genre words in it become the genre                                       | —     |
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
+| `ASTRA`                | `PRICE`            | some nights print no figure and only link the promoter's outside ticket shop                                                                     | —     |
 | `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
 | `BALLHAUS_WEDDING`     | `ARTISTS`          | the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act                                                           | —     |
 | `BALLHAUS_WEDDING`     | `IMAGE`            | only the entries with a Wix Events page have a poster; the programme has none                                                                    | —     |
@@ -48,6 +53,8 @@ says so.
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`             | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
+| `BADEHAUS`             | `GENRE`            | the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre                      | —     |
+| `BADEHAUS`             | `PROMOTERS`        | the venue credits itself as the promoter on its own nights, so the stored promoter is the venue                                                  | —     |
 | `BINUU`                | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
 | `BINUU`                | `PRICE`            | the payload carries no price field and the pages print no figure; tickets are sold through outside shops                                         | —     |
 | `BINUU`                | `GENRE`            | the payload and JSON-LD carry no genre; style appears only in the description                                                                    | —     |
@@ -170,6 +177,8 @@ says so.
 | `INSEL`                | `EVENT_TYPE`       | the venue publishes no category, so a title that is an event name rather than an act is minted as a concert                                      | —     |
 | `INSEL`                | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
 | `JUNCTION_BAR`         | `PER_EVENT_PAGE`   | the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link                       | —     |
+| `JUNCTION_BAR`         | `PRICE`            | the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one                                                | —     |
+| `JUNCTION_BAR`         | `IMAGE`            | the DJ programme page carries no picture per night; a live night carries one                                                                     | —     |
 | `KATER`                | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
@@ -308,6 +317,7 @@ says so.
 | `ROADRUNNER`           | `PER_EVENT_PAGE`   | the whole programme lives on one hand-coded page                                                                                                 | —     |
 | `ROADRUNNER`           | `EVENT_TYPE`       | the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert                                    | —     |
 | `ROADRUNNER`           | `ARTISTS`          | a night with no line-up label names only its title, which is as often a band battle as an act with its tour run on                               | —     |
+| `ROADRUNNER`           | `PRICE`            | the programme names the presale shop, never a figure                                                                                             | —     |
 | `ROSA`                 | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ROSA`                 | `DOORS_TIME`       | the site publishes an opening range, not a doors time                                                                                            | —     |
 | `ROSA`                 | `GENRE`            | the venue names no musical style anywhere; every night takes the club's Techno default                                                           | —     |
