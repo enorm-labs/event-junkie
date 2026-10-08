@@ -929,6 +929,48 @@ class ArtistNameMappingTest {
         stripArtistSuffix("The Notwist - VERTIGO DAYS TOUR") shouldBe "The Notwist"
     }
 
+    // #2882 — the live spellings: Quasimodo, Admiralspalast, Kesselhaus.
+    @Test
+    fun `headlinersFromTitle bills a tribute act without its descriptor`() {
+        mapOf(
+            "Always Amy – A tribute to Amy Winehouse" to "Always Amy",
+            "THREE SIDES – A Tribute to Genesis" to "THREE SIDES",
+            "The AC/DCs – Tribute Band" to "The AC/DCs",
+            "My'tallica Tribute Band" to "My'tallica"
+        ).forEach { (title, act) -> headlinersFromTitle(title).map { it.name } shouldBe listOf(act) }
+    }
+
+    @Test
+    fun `stripArtistSuffix strips a tribute descriptor after any dash and in any case`() {
+        stripArtistSuffix("Always Amy - A tribute to Amy Winehouse") shouldBe "Always Amy"
+        stripArtistSuffix("Always Amy — Tribute to Amy Winehouse") shouldBe "Always Amy"
+        stripArtistSuffix("THREE SIDES – A TRIBUTE TO GENESIS") shouldBe "THREE SIDES"
+        stripArtistSuffix("The AC/DCs - Tributeband") shouldBe "The AC/DCs"
+        stripArtistSuffix("The AC/DCs — TRIBUTE BAND") shouldBe "The AC/DCs"
+        stripArtistSuffix("MY'TALLICA TRIBUTE BAND") shouldBe "MY'TALLICA"
+        stripArtistSuffix("Always Amy – A tribute to Amy Winehouse, Back to Black and the Frank years 2003–2011 – Live in Berlin") shouldBe
+            "Always Amy"
+    }
+
+    @Test
+    fun `stripArtistSuffix keeps a tribute act's own name`() {
+        listOf(
+            "Tribute to Nothing",
+            "Nirvana Tribute",
+            "Luke Combs UK Tribute",
+            "MORGAN WALLEN TRIBUTE UK",
+            "Chris Stapleton Roadshow Tribute",
+            "A Tribute to Lemmy",
+            "Tribute Band",
+            "Rolling Stones Tribute Band \"Dirty Work\"",
+            // A dash with no space on one side is a name, as with every other dash tail.
+            "Tribute-Band",
+            "Mojo-Tribute Band"
+        ).forEach { stripArtistSuffix(it) shouldBe it }
+        // Already the act before the dash, through an older rule.
+        headlinersFromTitle("Heroes - David Bowie Tribute").map { it.name } shouldBe listOf("Heroes")
+    }
+
     @Test
     fun `stripArtistSuffix keeps a hyphenated name the shouted-tail rule must not cut`() {
         // Tail carries lowercase — it is a name, not a shouted tour title.

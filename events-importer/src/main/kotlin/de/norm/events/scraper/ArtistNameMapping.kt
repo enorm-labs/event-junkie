@@ -212,6 +212,8 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * a `– Zusatzshow` dash tail, and a work title in German quotes (`KARAT „45 Jahre Der blaue
  * Planet“`); straight quotes stay, because `Voodoo Jürgens und die "Ansa Panier"` names the band.
  *
+ * A tribute act's `– A tribute to <X>` or `Tribute Band` tail goes (#2882). A bare `<X> Tribute` is the name acts tour under.
+ *
  * The boundaries keep real names intact: hyphen tails need `<space>-<space>` and a marker
  * ("BAD COMPANY LEGACY - Dave Colwell" is left alone); the year is anchored at the end ("Blink -
  * 182", "Front 242"); "Live" needs a preceding whitespace boundary (the band Live); the bare
@@ -243,7 +245,10 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +
             """|\s+(?:mit|with)\s+(?:orchester|orchestra|band|ensemble|chor|choir|streichern?|strings)\s*$""" +
             """|^(?:nachholtermin|hochverlegung|verschoben|verlegt)\b\s*[-–—:]*\s*(?=\S)""" +
-            """|\s+[-–—]\s+\S.*!\s*$""",
+            """|\s+[-–—]\s+\S.*!\s*$""" +
+            """|\s+[-–—]\s+(?:a\s+)?tribute\s+to\s+\S.*$""" +
+            """|\s+[-–—]\s+tribute\s?band\s*$""" +
+            """|(?<=\S)\s+tribute\s+band\s*$""",
         RegexOption.IGNORE_CASE
     )
 
