@@ -126,5 +126,7 @@ git worktree remove ../event-junkie-tresor   # add --force if it still holds unc
 git worktree prune                            # drop metadata for directories deleted by hand
 ```
 
+[`/git-cleanup`](../.github/prompts/git-cleanup.prompt.md) finds every finished worktree and branch and removes the ones you confirm.
+
 `git worktree remove` deletes the directory but keeps the branch. Claude's own exit prompt for a `--worktree`
 session offers to remove the branch too, so **decline it unless the work is pushed or merged**. Sessions started with `-p` are never cleaned up automatically.
