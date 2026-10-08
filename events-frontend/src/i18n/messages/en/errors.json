@@ -19,6 +19,7 @@
     "calendar": "the calendar",
     "map": "the map",
     "promoters": "promoters",
-    "search": "the search results"
+    "search": "the search results",
+    "pastEvents": "past events"
   }
 }

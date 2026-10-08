@@ -12,7 +12,7 @@ import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { ImageCredit } from '@/lib/imageCredit'
-import { withoutUpcoming } from '@/lib/pastEvents'
+import type { PastEvents } from '@/composables/usePastEvents'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -49,10 +49,10 @@ const props = defineProps<{
   /** Copy shown when the events feed is empty. */
   emptyText: string
   /**
-   * The past-events feed, with no loading or error state: the section appears only once it has
-   * events.
+   * The past-events pager (`usePastEvents`). The section appears only once it has events, so the
+   * first page needs no loading or error state.
    */
-  pastEvents?: EventPage | null
+  past?: PastEvents | null
 }>()
 
 // The document title is not set here: each detail view owns its page meta, because the
@@ -60,7 +60,7 @@ const props = defineProps<{
 
 const localePath = useLocalePath()
 
-const past = computed(() => withoutUpcoming(props.pastEvents?.content, props.events?.content))
+const pastEvents = computed(() => props.past?.events ?? [])
 
 const { t } = useI18n()
 // The compact view is a global display preference — see `useCompactView`.
@@ -145,17 +145,32 @@ const { compact } = useCompactView()
 
       <!-- Collapsed and content-gated: history must not bury the forecast, and the depth
            caveat on an empty list would read as an excuse. -->
-      <details v-if="past.length">
+      <details v-if="past && pastEvents.length">
         <summary class="cursor-pointer">
-          <SectionLabel as="span">{{ t('common.pastEvents') }}</SectionLabel>
+          <SectionLabel as="span">
+            {{ t('common.pastEventsCount', { count: past.count }) }}
+          </SectionLabel>
         </summary>
         <p class="pt-3 text-body text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
         <div v-if="compact" :class="[CARD_LIST_CLASS, 'mt-3']">
-          <EventRow v-for="event in past" :key="event.slug" :event="event" />
+          <EventRow v-for="event in pastEvents" :key="event.slug" :event="event" />
         </div>
         <div v-else :class="[CARD_GRID_CLASS, 'pt-3']">
-          <EventCard v-for="event in past" :key="event.slug" :event="event" />
+          <EventCard v-for="event in pastEvents" :key="event.slug" :event="event" />
         </div>
+        <!-- A failed page keeps what is shown and the button, so the visitor can try again. -->
+        <p v-if="past.error" class="pt-3 text-body text-destructive">{{ past.error }}</p>
+        <Button
+          v-if="past.hasMore"
+          :disabled="past.loadingMore"
+          class="mt-3"
+          data-testid="past-show-more"
+          type="button"
+          variant="outline"
+          @click="past.loadMore"
+        >
+          {{ t('common.actions.showMore') }}
+        </Button>
       </details>
     </template>
   </main>

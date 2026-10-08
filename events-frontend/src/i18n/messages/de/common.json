@@ -33,7 +33,8 @@
     "website": "Website",
     "browseEvents": "Events durchstöbern",
     "browseCalendar": "Zum Kalender",
-    "backToHome": "Zurück zur Startseite"
+    "backToHome": "Zurück zur Startseite",
+    "showMore": "Mehr anzeigen"
   },
   "states": {
     "loading": "Wird aufgelegt …",
@@ -55,6 +56,7 @@
     "newest": "Zuletzt hinzugefügt"
   },
   "pastEvents": "Vergangene Events",
+  "pastEventsCount": "Vergangene Events · {count}",
   "pastEventsNote": "Unser Archiv beginnt an dem Tag, an dem wir angefangen haben mitzuschreiben. Was davor lief, steht nicht in den Büchern.",
   "locale": {
     "label": "Sprache"

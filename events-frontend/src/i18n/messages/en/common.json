@@ -33,7 +33,8 @@
     "website": "Website",
     "browseEvents": "Browse events",
     "browseCalendar": "Browse calendar",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "showMore": "Show more"
   },
   "states": {
     "loading": "Cueing it up…",
@@ -55,6 +56,7 @@
     "newest": "Newest added"
   },
   "pastEvents": "Past events",
+  "pastEventsCount": "Past events · {count}",
   "pastEventsNote": "Our archive starts when we started watching. Earlier nights never made it into the books.",
   "locale": {
     "label": "Language"
