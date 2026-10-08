@@ -39,7 +39,7 @@ class ImageFetcher(
         etag: String? = null,
         lastModified: String? = null
     ): ImageFetchResult {
-        val target = url.encodeLiteralSpaces()
+        val target = url.encodeForUri()
         validator.reject(target)?.let { return ImageFetchResult.Rejected(it) }
 
         return try {
@@ -165,14 +165,6 @@ class ImageFetcher(
         }
 
     private fun sha256(bytes: ByteArray): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
-
-    /**
-     * Percent-encodes literal spaces, and nothing else. A space is never legal in a URI, so encoding
-     * one cannot double-encode: nineteen Wild at Heart images are `R1783504681V8 Wankers.jpeg`,
-     * which a browser fetches and `URI` rejects. Other forbidden characters have not been seen in
-     * this corpus, and a general re-encoder would undo an already-escaped URL.
-     */
-    private fun String.encodeLiteralSpaces(): String = replace(" ", "%20")
 
     /** Whether this fault, or anything under it, is the codec refusing an oversized body. */
     private fun Throwable.isBufferLimit(): Boolean = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }.any { it is DataBufferLimitException }

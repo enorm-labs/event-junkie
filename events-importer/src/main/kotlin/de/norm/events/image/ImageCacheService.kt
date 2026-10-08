@@ -123,7 +123,7 @@ class ImageCacheService(
     }
 }
 
-private fun hostOf(url: String): String = runCatching { URI(url).host }.getOrNull() ?: "an unparseable URL"
+private fun hostOf(url: String): String = runCatching { URI(url.encodeForUri()).host }.getOrNull() ?: "an unparseable URL"
 
 /** What one pass did, split the way `UpsertOutcome` splits an import. */
 data class CacheOutcome(
