@@ -239,6 +239,12 @@ says so.
 | `MS_HOPPETOSSE`        | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `MS_HOPPETOSSE`        | `PRICE`            | the programme lists times and the line-up only, never an admission price                                                                         | —     |
 | `MS_HOPPETOSSE`        | `IMAGE`            | the programme is text only; the site's only images are its logos                                                                                 | —     |
+| `NACHTKLUB_808`        | `DOORS_TIME`       | the club names one opening hour per weekday, which is read as the start                                                                          | —     |
+| `NACHTKLUB_808`        | `PRICE`            | the page names no entry price per night                                                                                                          | —     |
+| `NACHTKLUB_808`        | `IMAGE`            | the programme is a text list with no posters                                                                                                     | —     |
+| `NACHTKLUB_808`        | `DESCRIPTION`      | each night is a name and a DJ list, with no text                                                                                                 | —     |
+| `NACHTKLUB_808`        | `GENRE`            | no night names a style                                                                                                                           | —     |
+| `NACHTKLUB_808`        | `PER_EVENT_PAGE`   | a night has no page of its own                                                                                                                   | —     |
 | `NEUE_ZUKUNFT`         | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `NEUE_ZUKUNFT`         | `PRICE`            | the calendar widget prints no figure; each show links out to an external ticket shop                                                             | —     |
 | `NEUE_ZUKUNFT`         | `GENRE`            | the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; every music night takes the house's Psychedelic              | —     |

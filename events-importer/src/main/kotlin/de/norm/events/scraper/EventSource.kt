@@ -225,6 +225,9 @@ enum class EventSource {
     /** MS Hoppetosse Berlin – the moored Spree salon boat that is Club der Visionäre's winter location, with a club floor and an upper-deck bar. */
     MS_HOPPETOSSE,
 
+    /** 808 Nachtklub Berlin – a weekend club in the Bikini Berlin building by the Zoo, with the Heartbreak party every Friday. */
+    NACHTKLUB_808,
+
     /** Neue Zukunft Berlin – a cultural venue and club on the Stralau peninsula, blending concerts, club nights and arts events. */
     NEUE_ZUKUNFT,
 
