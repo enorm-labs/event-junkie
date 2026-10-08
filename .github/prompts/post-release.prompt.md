@@ -53,11 +53,12 @@ stays unreviewed on purpose (`docs/licence-review/README.md` §6), and `--enable
 ```markdown
 - [ ] staging: run scripts/seed-sources.py --host http://localhost:18081 --apply --yes
 - [ ] staging: run scripts/apply-licence-review.py --host http://localhost:18081 --apply --yes
-- [ ] staging: run scripts/venue-images.py --host http://localhost:18081 --venue <Name> --apply
+- [ ] staging: run scripts/venue-images.py --host http://localhost:18081 --venue "<Name>" --apply
 - [ ] staging: run scripts/seed-sources.py --host http://localhost:18081 --enable --allow-unreviewed --yes
 - [ ] both: check <slug> imports SUCCESS on its first run, with acts and the fields the scraper reads
 ```
 
+The quotes around the name stay even for a one-word name: `run` passes the line to a shell, and an unquoted `Bar Tausend` gives argparse two words.
 The same four `run` lines again with `production:` and port `28081`. `--enable` refuses while any other source is unreviewed, so a refusal that names a
 new venue means the licence review ran from the wrong checkout.
 
