@@ -69,6 +69,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "metalcore" to "Metalcore",
         "melodichardcore" to "Melodic-Hardcore",
         "hc" to "Hardcore",
+        // Whole-token, so the three-word style passes the word-count gate; a bare `hardcore` key would split "Hardcore Techno".
+        "straightedgehardcore" to "Hardcore",
         // Delimiter-less compound label some venues write concatenated (Wild at Heart)
         "stonerpsychedelicmetal" to "Metal",
         // Electronic family
