@@ -150,18 +150,22 @@ class KesselhausCalendarScraper(
     }
 
     /**
-     * The acts a concert's subtitle lists after `mit`, when the title names none (#2851): `Tribute concert: In memory of
-     * Lemmy` is billed by `mit Motörblast & Nitrogods`. Only for an empty bill, because beside a named act the same
-     * `mit` introduces a guest. A festival's line-up stays unbilled, as for any festival.
+     * The acts a concert's subtitle bills when the title names none: the list after `mit` (#2851), or the one act before a
+     * trailing `& Gäste` (#2888). `Tribute concert: In memory of Lemmy` is billed by `mit Motörblast & Nitrogods`. Only for
+     * an empty bill, because beside a named act the same `mit` introduces a guest. A festival's line-up stays unbilled.
      */
     private fun subtitleBill(
         title: String,
         subtitle: String?,
         eventType: String
     ): List<ScrapedArtist> {
-        val acts = subtitle?.let { SUBTITLE_BILL.find(it.trim()) }?.groupValues?.get(1)
-        if (eventType != EventType.CONCERT.name || acts == null || isFestivalTitle(title)) return emptyList()
-        return splitSupportActs(acts)
+        val line = subtitle?.trim()
+        if (eventType != EventType.CONCERT.name || line == null || isFestivalTitle(title)) return emptyList()
+        val acts =
+            SUBTITLE_BILL.find(line)?.let { splitSupportActs(it.groupValues[1]) }
+                ?: SUBTITLE_ACT_AND_GUESTS.find(line)?.let { listOf(it.groupValues[1]) }
+        return acts
+            .orEmpty()
             .map(::stripArtistSuffix)
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = "HEADLINER") }
@@ -266,6 +270,9 @@ class KesselhausCalendarScraper(
 
         private val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
         private val SUBTITLE_BILL = Regex("""^mit\s+(.+)""", RegexOption.IGNORE_CASE)
+
+        /** One act and its unnamed guests, `Jonathan Blues Band & Gäste`; unsplit, because the act's own name can hold an `&`. */
+        private val SUBTITLE_ACT_AND_GUESTS = Regex("""^(.+?)\s+(?:&|und)\s+(?:Gäste|Gaeste|Friends)$""", RegexOption.IGNORE_CASE)
 
         /** The calendar's category labels beyond the shared ones. */
         private val CATEGORY_SYNONYMS =

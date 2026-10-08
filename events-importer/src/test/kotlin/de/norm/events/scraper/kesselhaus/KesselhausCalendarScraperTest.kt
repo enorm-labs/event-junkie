@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kesselhaus
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.buildArtistsForEventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -11,6 +12,8 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -102,6 +105,63 @@ class KesselhausCalendarScraperTest {
         events.first { it.title.startsWith("Dying Phoenix") }.artists.map { it.name } shouldBe listOf("Dying Phoenix")
     }
 
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "' Jonathan Blues Band & Gäste' | Jonathan Blues Band",
+            "Jonathan Blues Band und Gäste | Jonathan Blues Band",
+            "Jonathan Blues Band & Gaeste | Jonathan Blues Band",
+            "JONATHAN BLUES BAND & GÄSTE | JONATHAN BLUES BAND",
+            "jonathan blues band UND gäste | jonathan blues band",
+            "Jonathan Blues Band & Friends | Jonathan Blues Band",
+            "The Original Prenzlauer Berg Rhythm and Blues Revival Band & Gäste | The Original Prenzlauer Berg Rhythm and Blues Revival Band",
+            "Ina & The Blue Notes & Friends | Ina & The Blue Notes"
+        ]
+    )
+    fun `bills the one act a programme's subtitle names before its guests`(
+        subtitle: String,
+        act: String
+    ) {
+        val event = scrapeOne(title = "30. Traditioneller Neujahrs-Blues", subtitle = subtitle)
+
+        event.artists.map { it.name to it.role } shouldBe listOf(act to "HEADLINER")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Kein Zurück Tour",
+            "Berliner Jazztreff – Treffpunkt für die junge Jazzszene",
+            "Gäste",
+            "& Friends",
+            "Jonathan Blues Band & Gästeliste"
+        ]
+    )
+    fun `bills nothing from a tour or tagline subtitle under a programme name`(subtitle: String) {
+        scrapeOne(title = "30. Traditioneller Neujahrs-Blues", subtitle = subtitle).artists.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "The Hamburg Blues Band & Friends | feat. Chris Farlowe",
+            "Happy Dog Brown | Tim Kutschfreund & Friends",
+            "Jonathan Blues Band | Jonathan Blues Band & Gäste"
+        ]
+    )
+    fun `keeps the bill of a title that names an act`(
+        title: String,
+        subtitle: String
+    ) {
+        val event = scrapeOne(title = title, subtitle = subtitle)
+
+        event.artists.shouldNotBeEmpty()
+        event.artists shouldBe buildArtistsForEventType(title, subtitle, EventType.CONCERT.name)
+    }
+
     @Test
     fun `steps to the window after the last month shown and stops after an empty one`() {
         kesselhaus.nextPage(calendar, url) shouldBe "https://www.kesselhaus.net/de/calendar?part=2027-03"
@@ -142,6 +202,28 @@ class KesselhausCalendarScraperTest {
     @Test
     fun `returns nothing for a page without the transfer state`() {
         kesselhaus.scrape(Jsoup.parse("<html><body></body></html>", url), url).shouldBeEmpty()
+    }
+
+    /** One concert card on a calendar page of its own, with the transfer state the CMS writes, `&`-escaped as `&a;`. */
+    private fun scrapeOne(
+        title: String,
+        subtitle: String
+    ) = kesselhaus
+        .scrape(Jsoup.parse(calendarPage(title, subtitle), url), url)
+        .single()
+
+    private fun calendarPage(
+        title: String,
+        subtitle: String
+    ): String {
+        val base = """{"venue":"/venues//kesselhaus","start":"2027-01-09T19:00:00.000Z","topics":["/categories//event-topics//subs//concerts"]}"""
+        val text = """{"title":"$title","subtitle":"$subtitle"}"""
+        val state = """{"store.x.doc:/events//e1/meta:base/1":$base,"store.x.doc:/events//e1/meta:de/1":$text}"""
+        val escaped = state.replace("&", "&a;").replace("\"", "&q;")
+        return """
+            <div class="item" data-id="e1" data-use="default" data-part="2027-01"><span class="category">Konzert</span></div>
+            <script id="serverApp-state" type="application/json">$escaped</script>
+            """.trimIndent()
     }
 
     private fun fixture(name: String): String =
