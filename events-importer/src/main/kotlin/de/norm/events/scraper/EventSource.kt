@@ -315,6 +315,9 @@ enum class EventSource {
     /** Speakeazy Berlin – a former Schöneberg backyard theatre, now a 70-seat stage and recording studio for folk, rock, jazz and cabaret. */
     SPEAKEAZY,
 
+    /** Speiches Rock- und Blueskneipe Berlin – the Prenzlauer Berg blues pub of Monokel bassist Jörg "Speiche" Schütze, with free live blues. */
+    SPEICHES,
+
     /** Supamolly Berlin – a former squat turned collectively run venue near Traveplatz: punk, ska and hardcore concerts, theatre, film and socials. */
     SUPAMOLLY,
 
