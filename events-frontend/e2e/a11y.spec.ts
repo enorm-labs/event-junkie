@@ -328,6 +328,27 @@ test('the header language menu, open, has no detectable accessibility violations
   ).toEqual([])
 })
 
+test('the filter sheet on a phone, open, has no detectable accessibility violations', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 412, height: 915 })
+  await mockBff(page)
+  await page.goto('/en/events')
+  await page.getByRole('button', { name: 'Filters', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Filters' })).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
 /**
  * The two maps, each with a pin selected: the panel over the map is the markup a visitor reads, and
  * the pins are buttons MapLibre positions. Without WebGL the view shows its fallback instead, which

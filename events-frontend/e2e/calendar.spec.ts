@@ -1,5 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { openMoreFilters } from './filter-bar'
+import { closeFilterSheet, openMoreFilters } from './filter-bar'
 
 /**
  * Calendar view e2e tests with a mocked BFF. The calendar refetches
@@ -199,6 +199,7 @@ test('refetches the visible range with a filter from the shared filter bar', asy
 
   await openMoreFilters(page)
   await selectWithOption(page, 'All venues').selectOption('lido')
+  await closeFilterSheet(page)
 
   await expect(page).toHaveURL(/[?&]venue=lido\b/)
   await expect(page.getByRole('link', { name: /Lido Gig/ })).toBeVisible()
@@ -211,7 +212,9 @@ test('keeps the active filter when navigating to another month', async ({ page }
   // Deep-linking a filter proves the bar reads its state back out of the URL.
   await page.goto('/calendar?venue=lido')
   await expect(page.getByRole('link', { name: /Lido Gig/ })).toBeVisible()
+  await openMoreFilters(page)
   await expect(selectWithOption(page, 'All venues')).toHaveValue('lido')
+  await closeFilterSheet(page)
 
   const initialCount = froms.length
   await page.getByRole('button', { name: 'next' }).click()

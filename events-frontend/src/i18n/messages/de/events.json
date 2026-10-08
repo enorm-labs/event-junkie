@@ -60,7 +60,13 @@
     "hideSoldOut": "Ausverkaufte ausblenden",
     "freeOnly": "Nur kostenlose",
     "more": "Mehr Filter",
-    "moreCount": "Mehr Filter ({n})"
+    "moreCount": "Mehr Filter ({n})",
+    "filters": "Filter",
+    "filtersCount": "Filter ({n})",
+    "sheetTitle": "Filter",
+    "closeSheet": "Filter schließen",
+    "showResults": "Events anzeigen",
+    "showResultsCount": "{count} Event anzeigen | {count} Events anzeigen"
   },
   "card": {
     "soldOut": "Ausverkauft",

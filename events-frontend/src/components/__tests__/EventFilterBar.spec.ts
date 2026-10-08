@@ -148,3 +148,64 @@ describe('EventFilterBar time of night', () => {
     expect(router.currentRoute.value.query.timeOfDay).toEqual(['evening', 'late'])
   })
 })
+
+describe('EventFilterBar on a phone', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }))
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.unstubAllGlobals()
+  })
+
+  async function mountNarrow(path: string, props: Record<string, unknown> = {}) {
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:rest(.*)', component: Page }],
+    })
+    await router.push(path)
+    wrapper = mount(EventFilterBar, {
+      props,
+      global: { plugins: [router] },
+      attachTo: document.body,
+    })
+    await flushPromises()
+  }
+
+  const dialog = () => document.body.querySelector('[role="dialog"]')
+
+  it('keeps the second tier and the date inputs closed, even when the URL sets a filter', async () => {
+    await mountNarrow('/events?timeOfDay=late')
+    const toggle = button('Filters (1)')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(toggle.attributes('aria-haspopup')).toBe('dialog')
+    expect(wrapper!.find('#more-filters').exists()).toBe(false)
+    expect(document.body.querySelectorAll('input[type="date"]')).toHaveLength(0)
+    expect(dialog()).toBeNull()
+  })
+
+  it('opens the sheet with the date inputs and the panel, and closes it from its button', async () => {
+    await mountNarrow('/events', { resultCount: 12 })
+    await click('Filters')
+
+    const sheet = dialog()!
+    expect(sheet.textContent).toContain('Filters')
+    expect(sheet.querySelectorAll('input[type="date"]')).toHaveLength(2)
+    expect(sheet.querySelector('[aria-label="Filter by venue"]')).not.toBeNull()
+
+    const show = [...sheet.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Show 12 events',
+    )!
+    show.click()
+    await flushPromises()
+    expect(dialog()).toBeNull()
+    expect(button('Filters').attributes('aria-expanded')).toBe('false')
+  })
+})

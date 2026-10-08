@@ -105,9 +105,11 @@ for (const [label, path] of [
   test(`the events list does not move when its results and filters arrive${label}`, async ({
     page,
   }) => {
+    const venuesArrived = page.waitForResponse(/\/api\/venues/)
     await page.goto(path)
     await expect(page.getByRole('heading', { level: 2, name: 'Shift Gig 20' })).toBeVisible()
-    await expect(page.locator('option', { hasText: 'Ichiban Karaoke' })).toBeAttached()
+    // The response, not an option: below `sm` the venue select is in the closed sheet (#2890).
+    await (await venuesArrived).finished()
 
     expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
   })

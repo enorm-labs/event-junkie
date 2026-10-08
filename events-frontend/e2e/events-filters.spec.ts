@@ -21,6 +21,10 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 
 const slugify = (title: string) => title.toLowerCase().replace(/\s+/g, '-')
 
+// The filters' wiring to the URL and the BFF does not depend on the width; below `sm` the
+// panel is a modal sheet that hides the results it changes, and filter-sheet.spec.ts covers it.
+test.use({ viewport: { width: 1280, height: 900 } })
+
 /** Today in Berlin, the boundary the app treats as the start of "upcoming". */
 const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())

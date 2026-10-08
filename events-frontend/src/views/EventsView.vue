@@ -175,7 +175,7 @@ const mapLink = computed(() => ({
       <p class="text-body text-muted-foreground">{{ t('events.subtitle') }}</p>
     </header>
 
-    <EventFilterBar show-on-now />
+    <EventFilterBar :result-count="page?.totalElements" show-on-now />
 
     <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
