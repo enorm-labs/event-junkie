@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   113 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    57 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   115 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    55 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -88,6 +88,7 @@ schema change.
 | Kabarett-Theater DISTEL          | https://distel-berlin.de/spielplan/kalender/                | Theater      | Contao month calendar; ~7 MB pages of inline SVG          |
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/ | Concert Hall | Shares BERGHAIN importer                                  |
 | Kater                            | https://www.katerclub.de/                                   | Techno Club  | Homepage programme; ___ floor rules mark lineups          |
+| Kesselhaus                       | https://www.kesselhaus.net/de/calendar                      | Concert Hall | Angular transfer state; ?part= month windows              |
 | KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                 | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                          | Bar          | WordPress; ISO date in slug; ~10-day horizon              |
 | KØPI                             | https://koepi137.net/                                       | Club         | radar group API; bill read from the description           |
@@ -98,6 +99,7 @@ schema change.
 | Loge                             | https://www.loge-berlin.org/                                | Club         | Wix; tickets on-site; support via "+" in title            |
 | MAAYA                            | https://maaya.de/                                           | Club         | Elementor home page; year-less dates; `pm` half real      |
 | Madame Claude                    | https://madameclaude.de/                                    | Bar          | WordPress `event` REST API (ACF)                          |
+| Maschinenhaus                    | https://www.kesselhaus.net/de/calendar                      | Concert Hall | Shares the Kesselhaus calendar; room filter               |
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | WordPress; month pages walked; DJs + door prices          |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported                 |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                         | Club         | Wix Events warmup JSON; UTC dates; prices inline          |
@@ -154,10 +156,10 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-112 importer classes cover 113 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
-they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
-and Uber Arena with the Uber Eats Music Hall.
+114 importer classes cover 115 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
+they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
+The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
 
 ## 🌐 Second language
 
@@ -175,16 +177,16 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-42 sources have a second language, 66 have none, and 4 are unknown. Seven translate the event text on a second page.
+45 sources have a second language, 66 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
 becomes the publisher's second language. Each half must read as German or English, so a Russian half stays in the
 whole text.
 
-Five importers also read the page in the other language. They store its event text as the publisher's second language:
+Six importers also read the page in the other language. They store its event text as the publisher's second language:
 
-- Columbiahalle reads the English listing. This adds one request to each run.
+- Bar Tausend and Columbiahalle read the English listing. This adds one request to each run.
 - Bar jeder Vernunft and Theater im Delphi read the English page of each production. This adds one request for each
   production.
 - silent green reads the English page of each programme entry. This adds one request for each entry.
@@ -207,6 +209,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | Astra Kulturhaus                 | No              | —                                                            | —                  |                                                                                                                                    |
 | Badehaus                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://badehaus-berlin.com/en/                                                                                                    |
 | Bar jeder Vernunft               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.bar-jeder-vernunft.de/en/whats-on/calendar.html                                                                        |
+| Bar Tausend                      | Yes             | Separate page, `hreflang` on the link                        | Translated         | https://tausendberlin.com/en/lineup/                                                                                               |
 | Berghain / Panorama Bar          | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/                                                                                            |
 | Bi Nuu                           | Yes             | `/en` path, `hreflang`                                       | Not on the listing | https://binuu.de/en                                                                                                                |
 | Cassiopeia                       | No              | —                                                            | —                  |                                                                                                                                    |
@@ -243,6 +246,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | Kabarett-Theater DISTEL          | No              | —                                                            | —                  |                                                                                                                                    |
 | Kantine am Berghain              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/kantine-am-berghain/                                                                        |
 | Kater                            | No              | —                                                            | —                  |                                                                                                                                    |
+| Kesselhaus                       | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
 | KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Klunkerkranich                   | Yes             | One field: German, `[EN]`, English                           | One field          | https://klunkerkranich.org/events/2026-10-09-trauma-mia-presents-bass-island-w-clavd-frau-kaufmann-confred-trauma-mia-resi-regelt/ |
 | KØPI                             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -253,6 +257,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | Loge                             | Yes             | `/en` path, `hreflang`                                       | Unknown            | https://www.loge-berlin.org/en                                                                                                     |
 | MAAYA                            | Unknown         | The page sent a bot challenge (403)                          | —                  |                                                                                                                                    |
 | Madame Claude                    | No              | —                                                            | —                  |                                                                                                                                    |
+| Maschinenhaus                    | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
 | Matrix Club Berlin               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.matrix-berlin.de/en/                                                                                                   |
 | Max-Schmeling-Halle              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | Maxxim Club                      | No              | —                                                            | —                  |                                                                                                                                    |
@@ -371,8 +376,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | KREUZWERK                      | https://kreuzwerk.club/events                                            | Techno Club  | Medium   | Ritter Butzke codebase; detail ld+json; 5 events             |
 | The Door Club                  | https://thedoor.club/events/                                             | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat           |
 | The Cloud                      | https://thecloud.berlin/events/                                          | Bar          | Medium   | TEC REST API; 6 events to mid-Nov; no prices                 |
-| Kesselhaus                     | https://www.kesselhaus.net/de/calendar/topics/concerts                   | Concert Hall | High     | Angular SSR; /de/calendar items; filter by location          |
-| Maschinenhaus                  | https://www.kesselhaus.net/de/calendar/topics/concerts                   | Concert Hall | High     | Shares the Kesselhaus calendar; filter by location           |
 | Passionskirche                 | https://www.halle-luja.berlin/kommende-events                            | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"               |
 | Kallasch&                      | https://kallasch.berlin/programm/                                        | Bar          | Medium   | WordPress MEC; ?mec-ical-feed=1 iCal; expand RRULEs          |
 | M-BIA                          | https://www.m-bia.de/                                                    | Techno Club  | Low      | WordPress posts; post date is event date; RA links           |
