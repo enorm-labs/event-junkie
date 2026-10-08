@@ -30,6 +30,19 @@ describe('toCalendarInput', () => {
     expect(input.extendedProps).toEqual({ slug: 'astra-night', venue: 'Astra' })
   })
 
+  it('starts at the doors time when the venue publishes no start, but not at the assumed slot', () => {
+    expect(toInput(summary({ doorsTime: '20:00:00' })).start).toBe('2026-09-18T20:00:00')
+    const block = toInput(
+      summary({ doorsTime: '20:00:00', endDate: '2026-09-18', endTime: '23:00:00' }),
+    )
+    expect(block.start).toBe('2026-09-18T20:00:00')
+    expect(block.end).toBe('2026-09-18T23:00:00')
+    expect(toInput(summary({ startTime: '21:00:00', doorsTime: '20:00:00' })).start).toBe(
+      '2026-09-18T21:00:00',
+    )
+    expect(toInput(summary({ assumedStartTime: '20:00:00' })).start).toBe('2026-09-18')
+  })
+
   it('maps a timeless single day to an all-day entry', () => {
     const input = toInput(summary({}))
     expect(input.start).toBe('2026-09-18')

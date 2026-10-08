@@ -13,6 +13,7 @@ function dayAfter(isoDate: string): string {
 
 /**
  * The calendar's entry for an event. A span with both times is a timed block from start to end;
+ * the start falls back to the doors time, as the list does, but not to the assumed slot (#2927);
  * a span without is an all-day bar from the opening day through the closing day (#1405). Past
  * and live are the same classes EventCard uses, off the same Berlin clock. `localePath` is
  * `useLocalePath()`'s: the link is a real `href` a crawler follows, and an unprefixed path is a 404.
@@ -21,7 +22,8 @@ export function toCalendarInput(
   event: EventSummary,
   localePath: (path: string) => string,
 ): EventInput {
-  const timed = !!event.startTime && !!event.endTime
+  const startTime = event.startTime ?? event.doorsTime
+  const timed = !!startTime && !!event.endTime
   const end = timed
     ? `${event.endDate ?? event.eventDate}T${event.endTime}`
     : event.endDate
@@ -29,7 +31,7 @@ export function toCalendarInput(
       : undefined
   return {
     title: event.title ?? '',
-    start: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
+    start: startTime ? `${event.eventDate}T${startTime}` : event.eventDate,
     ...(end ? { end } : {}),
     url: localePath(`/events/${event.slug}`),
     // Paging back a month already returned past events; this is what tells them apart. An event
