@@ -108,7 +108,7 @@ class CrackBellmerOverviewPageScraperTest {
     fun `splits a comma-separated billing and marks the live act`() {
         val night = everything.on(LocalDate.of(2026, 8, 4), "BELLMER BALBOA")
         // "Practically Married Quartet (live)" — the marker sets the role and leaves the name.
-        night.artists.map { it.name to it.role } shouldContainExactly listOf("Practically Married Quartet" to "HEADLINER")
+        night.artists.map { it.name to it.role } shouldContainExactly listOf("Practically Married Quartet" to "LIVE")
     }
 
     @Test

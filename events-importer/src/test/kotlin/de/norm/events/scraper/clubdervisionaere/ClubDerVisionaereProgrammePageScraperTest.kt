@@ -102,7 +102,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
                 ScrapedArtist(name = "Serenne", role = "DJ", stage = "Main"),
                 ScrapedArtist(name = "Timur Basha", role = "DJ", stage = "Main"),
                 ScrapedArtist(name = "Yone-Ko", role = "DJ", stage = "Main"),
-                ScrapedArtist(name = "Lobanov K.", role = "HEADLINER", stage = "Chill Floor"),
+                ScrapedArtist(name = "Lobanov K.", role = "LIVE", stage = "Chill Floor"),
                 ScrapedArtist(name = "Masayuki Tomita", role = "DJ", stage = "Chill Floor")
             )
     }
@@ -144,7 +144,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
     }
 
     @Test
-    fun `bills a live-band section as headliners and drops an act repeated in a later section`() {
+    fun `bills a live-band section as live and drops an act repeated in a later section`() {
         val event = clubEvents.first { it.sourceId == "club_der_visionaere:41800" }
 
         event.title shouldBe "Remain In Love"
@@ -153,13 +153,13 @@ class ClubDerVisionaereProgrammePageScraperTest {
         // event_artist (event_id, artist_id) unique constraint, so the first billing wins.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Baby Vulture", role = "HEADLINER"),
-                ScrapedArtist(name = "Deadbeat", role = "HEADLINER"),
-                ScrapedArtist(name = "Hreno", role = "HEADLINER"),
-                ScrapedArtist(name = "Mike Shannon", role = "HEADLINER"),
-                ScrapedArtist(name = "The Mole", role = "HEADLINER"),
-                ScrapedArtist(name = "Tom Trago", role = "HEADLINER"),
-                ScrapedArtist(name = "Joli B", role = "HEADLINER"),
+                ScrapedArtist(name = "Baby Vulture", role = "LIVE"),
+                ScrapedArtist(name = "Deadbeat", role = "LIVE"),
+                ScrapedArtist(name = "Hreno", role = "LIVE"),
+                ScrapedArtist(name = "Mike Shannon", role = "LIVE"),
+                ScrapedArtist(name = "The Mole", role = "LIVE"),
+                ScrapedArtist(name = "Tom Trago", role = "LIVE"),
+                ScrapedArtist(name = "Joli B", role = "LIVE"),
                 ScrapedArtist(name = "Jonas “Stackhouse” Robinson", role = "DJ"),
                 ScrapedArtist(name = "Alex", role = "DJ"),
                 ScrapedArtist(name = "Laetitia Katapult", role = "DJ")
@@ -186,7 +186,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
         // on Monday 3 August (#2002). "// Guest DJs from 23:00" names no act at all. The earlier of
         // the two slot times stands in for the night's start, which the listing states no other way (#1687).
         event.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "HEADLINER", setStart = Instant.parse("2026-08-03T19:00:00Z")))
+            listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "LIVE", setStart = Instant.parse("2026-08-03T19:00:00Z")))
         event.startTime shouldBe LocalTime.of(21, 0)
     }
 

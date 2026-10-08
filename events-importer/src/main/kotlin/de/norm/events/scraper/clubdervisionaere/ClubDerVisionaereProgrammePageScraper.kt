@@ -220,10 +220,9 @@ class ClubDerVisionaereProgrammePageScraper(
     /**
      * One `// <act>` line into artist entries — usually one, two for a co-bill or `b2b` slot.
      *
-     * An act marked `LIVE` (or under a live-band section) is
-     * [HEADLINER][de.norm.events.event.ArtistRole.HEADLINER] rather than
-     * [DJ][de.norm.events.event.ArtistRole.DJ]: the venue's own statement that the act performs, and
-     * HEADLINER is the only performing role the model has. Everything else here is a DJ set. A
+     * An act marked `LIVE` (or under a live-band section) is [LIVE][de.norm.events.event.ArtistRole.LIVE]
+     * rather than [DJ][de.norm.events.event.ArtistRole.DJ]: the venue's own statement that the act
+     * performs. Everything else here is a DJ set. A
      * `from HH:mm` tail is the set's start; one before [NIGHT_ENDS] is already the next day.
      */
     private fun parseActLine(
@@ -242,7 +241,7 @@ class ClubDerVisionaereProgrammePageScraper(
                 .replace(SET_TIME_TAIL_PATTERN, "")
                 .replaceFirst(LINEUP_LABEL_PREFIX, "")
                 .trim()
-        val role = if (sectionIsLive || LIVE_MARKER_PATTERN.containsMatchIn(cleaned)) "HEADLINER" else "DJ"
+        val role = if (sectionIsLive || LIVE_MARKER_PATTERN.containsMatchIn(cleaned)) "LIVE" else "DJ"
         return splitActs(cleaned)
             .map(::stripArtistSuffix)
             .filterNot(::isUnannouncedAct)

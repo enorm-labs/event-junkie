@@ -122,7 +122,7 @@ class OhmOverviewPageScraperTest {
 
     // LA CASITA, 24/09 (#1756): the venue's brackets mark a live act and two credits that are not music.
     @Test
-    fun `bills a live act as headliner and drops painting and installation credits`() {
+    fun `bills a live act as live and drops painting and installation credits`() {
         val html =
             """
             <ul class="event-list"><li class="event-item">
@@ -148,7 +148,7 @@ class OhmOverviewPageScraperTest {
                 "CH3LO" to "DJ",
                 "DJ TOWER" to "DJ",
                 "Huamaniser" to "DJ",
-                "V. (OPERA live)" to "HEADLINER",
+                "V. (OPERA live)" to "LIVE",
                 "SPICY LAB (VCO & THIRTEEN DOZE)" to "DJ"
             )
     }
@@ -213,7 +213,7 @@ class OhmOverviewPageScraperTest {
                 "Asphalt DJ" to "DJ",
                 "Jesse G" to "DJ",
                 "DJ Heartbreak" to "DJ",
-                "Reduks (LIVE)" to "HEADLINER",
+                "Reduks (LIVE)" to "LIVE",
                 "Shuray & Walle" to "DJ",
                 "Naomi" to "DJ"
             )

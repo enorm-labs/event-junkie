@@ -422,7 +422,7 @@ Links events to artists with role and billing order to model the lineup. Each ap
 | `id`            | `BIGINT`      | No       | Auto-generated primary key                                                         | `12`                  |
 | `event_id`      | `BIGINT` FK   | No       | References `event.id`                                                              | `101`                 |
 | `artist_id`     | `BIGINT` FK   | No       | References `artist.id`                                                             | `7`                   |
-| `role`          | `TEXT`        | No       | `HEADLINER`, `SUPPORT`, or `DJ`                                                    | `HEADLINER`           |
+| `role`          | `TEXT`        | No       | `HEADLINER`, `SUPPORT`, `DJ`, or `LIVE`                                            | `HEADLINER`           |
 | `billing_order` | `INT`         | No       | Position in lineup (0 = top-billed)                                                | `0`                   |
 | `stage`         | `TEXT`        | Yes      | The room or floor of the set, on a lineup split across rooms; else `event.room`    | `Panorama Bar`        |
 | `title_derived` | `BOOLEAN`     | No       | The importer read the name from the event title, not from a lineup element (#1145) | `false`               |

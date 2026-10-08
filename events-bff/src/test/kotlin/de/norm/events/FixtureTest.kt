@@ -93,7 +93,9 @@ class FixtureTest : BaseControllerTest() {
                 .jsonPath("$.lineup[?(@.stage == 'Hauptbühne')]")
                 .value<List<*>> { assert(it.size == 2) }
                 .jsonPath("$.lineup[?(@.stage == 'Garten')]")
-                .value<List<*>> { assert(it.size == 1) }
+                .value<List<*>> { assert(it.size == 2) }
+                .jsonPath("$.lineup[3].role")
+                .isEqualTo("LIVE")
                 // The running order in Berlin time: a set past midnight, a start alone, and none (#2002).
                 .jsonPath("$.lineup[0].setStart")
                 .value<String> { assert(it.startsWith("${today.plusDays(10)}T22:00:00+0")) }

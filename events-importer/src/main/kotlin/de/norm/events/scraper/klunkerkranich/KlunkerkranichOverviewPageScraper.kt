@@ -202,7 +202,7 @@ class KlunkerkranichOverviewPageScraper(
         val role =
             when {
                 DJ_SECTION_LABEL.containsMatchIn(billing) -> "DJ"
-                LIVE_MARKER.containsMatchIn(billing) -> "HEADLINER"
+                LIVE_MARKER.containsMatchIn(billing) -> if (sectionRole == "DJ") "LIVE" else sectionRole
                 else -> sectionRole
             }
         val unmarked = billing.replaceFirst(DJ_SECTION_LABEL, "").replace(LIVE_MARKER, "").trim()

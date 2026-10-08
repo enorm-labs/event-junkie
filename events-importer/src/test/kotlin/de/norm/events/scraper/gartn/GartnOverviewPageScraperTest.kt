@@ -119,9 +119,9 @@ class GartnOverviewPageScraperTest {
     }
 
     @Test
-    fun `trims an inline live marker but keeps the act`() {
-        event("OEWERSAUSE").artists.map { it.name } shouldContainExactly
-            listOf("ÉLAA", "Kiki Kokolores", "Martha van Straaten", "Saraabb")
+    fun `trims an inline live marker, keeps the act and bills it live`() {
+        event("OEWERSAUSE").artists.map { it.name to it.role } shouldContainExactly
+            listOf("ÉLAA" to "DJ", "Kiki Kokolores" to "DJ", "Martha van Straaten" to "DJ", "Saraabb" to "LIVE")
     }
 
     @Test

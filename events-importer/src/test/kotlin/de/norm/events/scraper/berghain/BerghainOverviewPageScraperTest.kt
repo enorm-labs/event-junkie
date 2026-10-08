@@ -56,7 +56,7 @@ class BerghainOverviewPageScraperTest {
         // Each act is tagged with the floor (stage) it plays, and the one billed `Live` performs.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Hurricane Alexander", "HEADLINER", "Berghain"),
+                ScrapedArtist("Hurricane Alexander", "LIVE", "Berghain"),
                 ScrapedArtist("Amanda Mussi", "DJ", "Berghain"),
                 ScrapedArtist("Magna Pia", "DJ", "Berghain"),
                 ScrapedArtist("X TiN", "DJ", "Berghain")
@@ -138,7 +138,7 @@ class BerghainOverviewPageScraperTest {
         // Five performers on one floor, not three. The prose names all five, and KĀ is billed `Live`.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("KĀ", "HEADLINER", "Säule"),
+                ScrapedArtist("KĀ", "LIVE", "Säule"),
                 ScrapedArtist("Agata", "DJ", "Säule"),
                 ScrapedArtist("Cunt Remember", "DJ", "Säule"),
                 ScrapedArtist("Egregore", "DJ", "Säule"),
@@ -194,7 +194,7 @@ class BerghainOverviewPageScraperTest {
 
     // The marker is the venue saying the act performs, and it sits inside that act's wrapper (#1787).
     @Test
-    fun `bills an act marked Live as a headliner and leaves the rest of the floor DJs`() {
+    fun `bills an act marked Live as live and leaves the rest of the floor DJs`() {
         val html =
             """
             <html><body>
@@ -219,7 +219,7 @@ class BerghainOverviewPageScraperTest {
         // A band and a DJ on one bill, told apart by the only place the venue publishes it.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Krallice", "HEADLINER", "Berghain"),
+                ScrapedArtist("Krallice", "LIVE", "Berghain"),
                 ScrapedArtist("Marcel Dettmann", "DJ", "Berghain")
             )
     }
@@ -280,8 +280,8 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Nonn", "HEADLINER", "Berghain"),
-                ScrapedArtist("Ruhig", "HEADLINER", "Berghain"),
+                ScrapedArtist("Nonn", "LIVE", "Berghain"),
+                ScrapedArtist("Ruhig", "LIVE", "Berghain"),
                 ScrapedArtist("Sedef Adas\u0131", "DJ", "Berghain")
             )
     }
@@ -332,8 +332,8 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Agata", "HEADLINER", "Säule"),
-                ScrapedArtist("Cunt Remember", "HEADLINER", "Säule")
+                ScrapedArtist("Agata", "LIVE", "Säule"),
+                ScrapedArtist("Cunt Remember", "LIVE", "Säule")
             )
     }
 

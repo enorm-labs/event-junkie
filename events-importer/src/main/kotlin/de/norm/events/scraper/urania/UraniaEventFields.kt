@@ -42,8 +42,8 @@ internal fun uraniaEventType(
 internal fun isParticipationFormat(format: String?): Boolean = PARTICIPATION_MARKERS.any { marker -> format.orEmpty().contains(marker, ignoreCase = true) }
 
 /**
- * The speakers of a talk, from the `"A, B, C und D"` billing line, stored as headliners: the
- * roles are `HEADLINER`, `SUPPORT` and `DJ`, and a panellist is neither of the latter.
+ * The speakers of a talk, from the `"A, B, C und D"` billing line, stored as headliners: a
+ * panellist is no support act, no DJ and no live set.
  *
  * Two appended tails are removed rather than stored as people: a space-padded dash introducing
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
