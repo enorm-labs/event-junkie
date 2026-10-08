@@ -106,6 +106,8 @@ have their own edge, down parts one card's last line of text from the next card'
   ([#1246](https://github.com/enorm-labs/event-junkie/issues/1246)). Its poster box is 3:2, filled with `object-cover`, chosen by measuring crop loss across
   the real corpus (BRANDING §5.4).
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
+- **Below `sm` the filter bar is at most two rows: the search, then the presets.** "More filters" opens a bottom sheet with the second tier and the date inputs,
+  and nothing opens it by itself ([#2890](https://github.com/enorm-labs/event-junkie/issues/2890)). A control renders in one place at a time, never twice.
 - **An empty state offers a control**, not only a sentence ([#1266](https://github.com/enorm-labs/event-junkie/issues/1266)).
 - **A missing image is a designed poster**, never a grey rectangle. One upcoming event in nine has no flyer. `EventPoster` sets the date and the title
   large over an outline drawing, and `lib/posterArt.ts` picks the drawing and the `--poster-*` ground from the genre family, else the event type; a venue

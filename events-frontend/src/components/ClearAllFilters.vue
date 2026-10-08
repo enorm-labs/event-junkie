@@ -11,7 +11,14 @@ import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { MAP_KEYS } from '@/lib/mapPins'
 
-withDefaults(defineProps<{ emptyState?: boolean }>(), { emptyState: false })
+withDefaults(
+  defineProps<{
+    emptyState?: boolean
+    /** The icon alone, for a phone's first filter row (#2890); the name stays "Clear all". */
+    compact?: boolean
+  }>(),
+  { emptyState: false, compact: false },
+)
 
 /** How the page is shown, not what it shows: clearing keeps them, and they alone do not count. */
 const KEPT: readonly string[] = ['sort', 'view', ...MAP_KEYS]
@@ -35,6 +42,16 @@ function clearAll() {
   <template v-if="isFiltered">
     <Button v-if="emptyState" type="button" variant="outline" @click="clearAll">
       {{ t('common.actions.clearAllFilters') }}
+    </Button>
+    <Button
+      v-else-if="compact"
+      :aria-label="t('common.actions.clearAll')"
+      size="icon"
+      type="button"
+      variant="ghost"
+      @click="clearAll"
+    >
+      <X aria-hidden="true" />
     </Button>
     <Button v-else type="button" variant="ghost" @click="clearAll">
       <X aria-hidden="true" />

@@ -131,6 +131,7 @@ the first column. It fails in two cases:
 | `/api/meta`                        | Version and commit of the running backend, for the footer                   |
 | `home-feeds.spec.ts`               | e2e: Tonight and Upcoming                                                   |
 | `events-filters.spec.ts`           | e2e: the filter bar                                                         |
+| `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                      |
 | `calendar.spec.ts`                 | e2e: the calendar                                                           |
 | `map-near.spec.ts`                 | e2e: near me on the map                                                     |
 | `venues.spec.ts`                   | e2e: venues list, filters and map                                           |

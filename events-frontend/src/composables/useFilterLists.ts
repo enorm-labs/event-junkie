@@ -27,6 +27,14 @@ export function useFilterLists(): FilterLists {
 }
 
 /**
+ * The bar's lists, provided on to its panel when no view provided them, so the panel reads the
+ * loads the bar runs rather than an empty pair of its own.
+ */
+export function shareFilterLists(): FilterLists {
+  return inject(FILTER_LISTS, null) ?? provideFilterLists()
+}
+
+/**
  * The families the bar shows as chosen: the URL's, or, for a link from before families existed
  * carrying only `genre=`, the family of that style.
  */
