@@ -12,8 +12,6 @@ import kotlinx.coroutines.coroutineScope
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import java.time.Clock
-import java.time.LocalDate
 
 /**
  * Runs each module's own name search for one [term], so the header finds what the list pages find:
@@ -25,8 +23,7 @@ class SearchService(
     private val eventService: EventService,
     private val venueService: VenueService,
     private val artistService: ArtistService,
-    private val promoterService: PromoterService,
-    private val clock: Clock
+    private val promoterService: PromoterService
 ) {
     suspend fun search(
         term: String,
@@ -36,7 +33,7 @@ class SearchService(
             // Without a sort, venues, artists and promoters list the closest match first (#2694, #2704).
             val byRelevance = PageRequest.of(0, limit)
             val byDate = PageRequest.of(0, limit, Sort.by("eventDate"))
-            val events = async { eventService.search(EventFilter(from = LocalDate.now(clock), query = term), byDate, COUNT_CAP) }
+            val events = async { eventService.search(EventFilter(query = term), byDate, COUNT_CAP) }
             val venues = async { venueService.list(VenueFilter(query = term), byRelevance, COUNT_CAP) }
             val artists = async { artistService.list(term, byRelevance, COUNT_CAP) }
             val promoters = async { promoterService.list(term, byRelevance, COUNT_CAP) }

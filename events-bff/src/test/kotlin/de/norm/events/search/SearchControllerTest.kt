@@ -2,9 +2,11 @@ package de.norm.events.search
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.ClockConfiguration
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 class SearchControllerTest : BaseControllerTest() {
     @Test
@@ -111,6 +113,28 @@ class SearchControllerTest : BaseControllerTest() {
                 .isEqualTo(0)
                 .jsonPath("$.venues.total")
                 .isEqualTo(1)
+        }
+
+    @Test
+    fun `GET search finds an event that started before today and is still running, as the list does (#2853)`(): Unit =
+        runBlocking {
+            val venue = insertVenue("Gärten der Welt", "gaerten-der-welt")
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            insertEvent(venue, "Running Show", "running-show", today.minusDays(1), endDate = today.plusDays(1))
+            insertEvent(venue, "Running Overnight", "running-overnight", today.minusDays(1), startTime = LocalTime.of(23, 0), endDate = today)
+            insertEvent(venue, "Running Ended", "running-ended", today.minusDays(3), endDate = today.minusDays(1))
+
+            webTestClient
+                .get()
+                .uri("/search?q=running")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.events.total")
+                .isEqualTo(2)
+                .jsonPath("$.events.items[*].slug")
+                .value<List<String>> { it.shouldContainExactlyInAnyOrder("running-show", "running-overnight") }
         }
 
     @Test
