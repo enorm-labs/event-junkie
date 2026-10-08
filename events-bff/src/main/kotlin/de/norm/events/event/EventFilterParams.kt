@@ -77,6 +77,7 @@ data class EventFilterParams(
             from = from.takeUnless { running },
             to = to,
             runningFrom = from.takeIf { running },
+            runningCutoff = EventFilter.RUNNING_CUTOFF.takeIf { running && from != null },
             eventTypes = eventType.orEmpty().normalizedEventTypes(),
             venueSlug = venue,
             districts = district.orEmpty().normalizedSlugs(),
@@ -109,6 +110,7 @@ data class EventDateRangeParams(
     @field:Parameter(
         description =
             "When true, 'from' keeps every event still running on that day: one that ends on or after 'from' and starts on or before 'to'. " +
+                "An event that started before 'from' and ends on 'from' before 12:00 stays with the day it started. " +
                 "Without it, 'from' is the earliest start date. Defaults to false."
     )
     val running: Boolean = false
