@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Request body for creating or updating a venue.
@@ -114,5 +115,12 @@ data class VenueRequest(
         description = "When a person last confirmed the address, coordinates and opening. Null for a row nobody checked. Never set by an import.",
         example = "2026-10-06T18:00:00Z"
     )
-    val reviewedAt: Instant? = null
+    val reviewedAt: Instant? = null,
+    @Schema(
+        description =
+            "The last day the venue was open, when it closed for good. From the day after, the public lists and the map leave it out " +
+                "and its page says it closed (ADR-046). Null while it is open. Never set by an import.",
+        example = "2026-10-31"
+    )
+    val closedOn: LocalDate? = null
 ) : AttributableImage

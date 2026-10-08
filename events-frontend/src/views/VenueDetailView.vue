@@ -20,6 +20,7 @@ import { inCharacterOrder } from '@/lib/venueCharacters'
 import { districtLabel } from '@/lib/districts'
 import { venuePosition } from '@/lib/mapPins'
 import { programmeLink } from '@/lib/programmeLink'
+import { venueClosure } from '@/lib/venueClosure'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { withReferral } from '@/lib/referral'
 import type { Locale } from '@/i18n/locales'
@@ -98,8 +99,29 @@ const programmeSite = computed(() => {
   return { href, label }
 })
 
-const { formatEventType, formatFamily, formatVenueCharacter, formatVenueFacts, formatVenueType } =
-  useFormat()
+const {
+  formatDate,
+  formatEventType,
+  formatFamily,
+  formatMonthYear,
+  formatVenueCharacter,
+  formatVenueFacts,
+  formatVenueType,
+} = useFormat()
+
+/** "Closed for good in October 2026", or "Open until …" while the last day is still ahead (ADR-046). */
+const closureLine = computed(() => {
+  const closure = venueClosure(venue.value?.closedOn)
+  if (!closure) return null
+  return {
+    closed: closure.state === 'closed',
+    text:
+      closure.state === 'closed'
+        ? t('detail.venue.closed', { month: formatMonthYear(closure.lastDay) })
+        : t('detail.venue.closing', { date: formatDate(closure.lastDay) }),
+  }
+})
+
 // Only the capacity: the types are the table's first row.
 const capacity = computed(() => formatVenueFacts({ capacity: venue.value?.capacity }))
 
@@ -196,7 +218,13 @@ const programme = computed(() => {
     :past="past"
     :ready="Boolean(venue)"
   >
-    <template v-if="venue?.imported === false" #upcoming>
+    <template v-if="closureLine?.closed" #upcoming>
+      <section class="space-y-4" data-testid="venue-closed">
+        <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
+        <p class="text-body text-muted-foreground">{{ t('detail.venue.closedNoEvents') }}</p>
+      </section>
+    </template>
+    <template v-else-if="venue?.imported === false" #upcoming>
       <section class="space-y-4" data-testid="venue-not-imported">
         <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
         <p class="text-body text-muted-foreground">{{ t('detail.venue.notImported') }}</p>
@@ -215,6 +243,9 @@ const programme = computed(() => {
     </template>
 
     <template #meta>
+      <p v-if="closureLine" class="text-body font-medium" data-testid="venue-closure">
+        {{ closureLine.text }}
+      </p>
       <p v-if="addressLine || mapLink" class="text-body text-muted-foreground">
         {{ addressLine }}
         <template v-if="addressLine && mapLink">{{ ' · ' }}</template>

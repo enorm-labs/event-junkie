@@ -51,6 +51,7 @@ classDiagram
         List programmeEventTypes
         String? programmeUrl
         Instant? reviewedAt
+        LocalDate? closedOn
         Instant? createdAt
         Instant? updatedAt
     }
@@ -256,6 +257,7 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 | `programme_event_types`    | `TEXT[]`       | No       | `EventType` names, derived from the venue's events              | `{CONCERT,PARTY}`                                 |
 | `programme_url`            | `TEXT`         | Yes      | Where a venue we do not import publishes its programme          | `https://ra.co/clubs/185172`                      |
 | `reviewed_at`              | `TIMESTAMPTZ`  | Yes      | When a person last confirmed address, coordinates and opening   | `2026-10-06 18:00:00+00`                          |
+| `closed_on`                | `DATE`         | Yes      | The last day the venue is open, when it closes for good         | `2026-10-31`                                      |
 | `created_at`               | `TIMESTAMPTZ`  | No       | Record creation timestamp                                       |                                                   |
 | `updated_at`               | `TIMESTAMPTZ`  | No       | Last modification timestamp                                     |                                                   |
 
@@ -269,6 +271,11 @@ overwrites them.
 `imported` from the source rows, so the state changes when an importer lands. Such a venue has no events. Its page links
 to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
 venue's facts. An import never sets it. The check for closed venues in #2812 reads it.
+
+**A venue that closes for good keeps its row (ADR-046).** A person sets `closed_on`, the last day the venue is open,
+through the admin API or a data migration. From the day after, the BFF venue list leaves the venue out unless the request
+asks for `closed=true`. The page and the past events stay. A PUT without `closedOn` reopens the venue, because the admin
+API has no PATCH.
 
 The derivation reads the venue's events from 365 days back, plus all future events. Cancelled events do not count. A
 value counts when it is on at least 15 % of those events and on at least 3 of them. The top three values are kept, most

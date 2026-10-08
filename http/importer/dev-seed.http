@@ -4434,7 +4434,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Jonny Knüppel (Lilli-Henoch-Straße 10, Berlin-Prenzlauer Berg — not imported, #2766)
+### Jonny Knüppel (Lilli-Henoch-Straße 10, Berlin-Prenzlauer Berg — not imported, closes after 2026-10-31, ADR-046)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Jonny Knüppel venue ---
@@ -4455,8 +4455,8 @@ Content-Type: application/json
     "descriptionAlt": "Ein von Kollektiven getragener Club auf dem früheren Güterbahnhof Greifswalder Straße, seit 2018 Teil des diskoBabel-Geländes nach dem Aus auf der Lohmühleninsel, mit Partys bis zum Morgen, Open Airs und Solipartys.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "open-air"],
-    "programmeUrl": "https://jonnyknueppel.de/",
-    "reviewedAt": "2026-10-07T09:58:32Z"
+    "reviewedAt": "2026-10-07T09:58:32Z",
+    "closedOn": "2026-10-31"
 }
 
 > {%

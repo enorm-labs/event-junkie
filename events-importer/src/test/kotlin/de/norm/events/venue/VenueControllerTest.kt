@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
 import java.time.Instant
+import java.time.LocalDate
 
 class VenueControllerTest : BaseControllerTest() {
     /** Creates a venue via the API and returns the persisted [VenueResponse]. */
@@ -299,6 +300,23 @@ class VenueControllerTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.errors[?(@.field == 'programmeUrl')]")
             .exists()
+    }
+
+    @Test
+    fun `stores the last day of a closed venue, and a PUT without it reopens the venue`() {
+        val created = createVenue(VenueRequestFixtures.astra().copy(closedOn = LocalDate.of(2026, 10, 31)))
+        created.closedOn shouldBe LocalDate.of(2026, 10, 31)
+
+        webTestClient
+            .put()
+            .uri("/api/admin/venues/${created.id}")
+            .bodyValue(VenueRequestFixtures.astra())
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.closedOn")
+            .doesNotExist()
     }
 
     @Test

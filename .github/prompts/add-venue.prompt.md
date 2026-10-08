@@ -113,5 +113,5 @@ A borderline case is a question for the operator, not a call to make.
 ## Notes
 
 - **A venue that gets an importer later keeps its row.** `/scaffold-importer` § 6 reuses the block and adds only the source.
-- **A venue that closes** is #2731's question. Until it is answered, removal is a data migration, as V051 was.
+- **A venue that closes keeps its row** (ADR-046): set `closedOn` to its last day open, in the seed block and by a data migration for the clusters, as `V119` does for Jonny Knüppel.
 - **Why nothing here re-checks a venue**: that is #2812, a monthly probe of the venue sites and a quarterly review keyed on `reviewedAt`.

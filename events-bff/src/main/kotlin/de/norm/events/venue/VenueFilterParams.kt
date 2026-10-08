@@ -32,7 +32,9 @@ data class VenueFilterParams(
         description =
             "true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both."
     )
-    val imported: Boolean? = null
+    val imported: Boolean? = null,
+    @field:Parameter(description = "true lists only the venues closed for good. Omitted or false lists only the venues still open (ADR-046).")
+    val closed: Boolean? = null
 ) {
     /** Event types are upper-cased, so `party` and `PARTY` share a cache entry. */
     fun toFilter(): VenueFilter =
@@ -43,6 +45,7 @@ data class VenueFilterParams(
             families = VenueFilter.normalized(family),
             eventTypes = VenueFilter.normalized(eventType?.map { it.uppercase() }),
             characters = VenueFilter.normalized(character),
-            imported = imported
+            imported = imported,
+            closed = closed == true
         )
 }

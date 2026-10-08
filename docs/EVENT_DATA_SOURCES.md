@@ -570,7 +570,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Wendel                            | http://www.nstp.de/nstp/frameset-wendel.htm         | Bar          | Café one-pager, no programme; HTTPS handshake fails       | Site change                |
 | Funkhaus Berlin                   | https://www.funkhaus-berlin.net/                    | Concert Hall | Blogger site; the events archive ends in 2019             | Site change / promoter     |
 | Kraftwerk Berlin                  | https://kraftwerkberlin.de/de/programm              | Concert Hall | Programme page empty between festivals (Atonal, CONTRA)   | Site change / promoter     |
-| Jonny Knüppel                     | https://jonnyknueppel.de/                           | Bar          | Last season; leaves its site in October 2026              | Not importable (closing)   |
+| Jonny Knüppel                     | https://jonnyknueppel.de/                           | Bar          | Closes after 2026-10-31 (`closed_on`, ADR-046)            | Not importable (closing)   |
 | Œlgarten                          | https://www.oelgarten.com/en                        | Open Air     | Wix Events; two open-ended weekly series, no occurrences  | Havanna-style occurrences  |
 | Rough Trade Berlin                | https://www.roughtrade.com/en-de/events/berlin      | Other        | Next.js store; the events page carries no event data      | Headless browser           |
 | Rosie's Bar                       | —                                                   | Bar          | Bar of The Circus Hostel; no listing of its own           | Site change / manual entry |

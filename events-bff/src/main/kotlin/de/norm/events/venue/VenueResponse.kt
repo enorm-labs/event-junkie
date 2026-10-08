@@ -10,6 +10,7 @@ import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
+import java.time.LocalDate
 
 /**
  * Compact venue representation embedded in event responses.
@@ -127,7 +128,9 @@ data class VenueListItemResponse(
     @Schema(description = CHARACTER_TAGS_DESCRIPTION, example = "[\"queer\", \"awareness-team\"]")
     val characterTags: List<String>,
     @Schema(description = IMPORTED_DESCRIPTION, example = "true")
-    val imported: Boolean
+    val imported: Boolean,
+    @Schema(description = CLOSED_ON_DESCRIPTION, example = "2026-10-31")
+    val closedOn: LocalDate?
 ) {
     companion object {
         fun fromEntity(
@@ -159,7 +162,8 @@ data class VenueListItemResponse(
                 programmeFamilies = entity.programmeFamilies,
                 programmeEventTypes = entity.programmeEventTypes,
                 characterTags = characterTags,
-                imported = row.imported
+                imported = row.imported,
+                closedOn = entity.closedOn
             )
     }
 }
@@ -237,7 +241,9 @@ data class VenueDetailResponse(
                 "else a ticket platform. A plain outbound link. Null for an imported venue, and for one with no programme online.",
         example = "https://www.example-club.de/programm"
     )
-    val programmeUrl: String?
+    val programmeUrl: String?,
+    @Schema(description = CLOSED_ON_DESCRIPTION, example = "2026-10-31")
+    val closedOn: LocalDate?
 ) {
     companion object {
         fun fromEntity(
@@ -274,7 +280,8 @@ data class VenueDetailResponse(
                 programmeEventTypes = entity.programmeEventTypes,
                 characterTags = characterTags,
                 imported = imported,
-                programmeUrl = entity.programmeUrl
+                programmeUrl = entity.programmeUrl,
+                closedOn = entity.closedOn
             )
     }
 }
@@ -290,6 +297,9 @@ data class VenueCharacterTagResponse(
 
 private const val IMPORTED_DESCRIPTION =
     "Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme."
+private const val CLOSED_ON_DESCRIPTION =
+    "The last day the venue was open, when it closed for good or will close on a date it announced. Null while no closure is known. " +
+        "The venue lists leave a venue out from the day after."
 private const val VENUE_TYPES_DESCRIPTION = "What kind of place this is, as venue type slugs, curated by hand. Empty until curated."
 private const val CHARACTER_TAGS_DESCRIPTION =
     "What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it."

@@ -6,6 +6,7 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * R2DBC entity mapped to the `venue` table.
@@ -40,6 +41,7 @@ data class VenueEntity(
     val programmeEventTypes: List<String> = emptyList(),
     val programmeUrl: String? = null,
     val reviewedAt: Instant? = null,
+    val closedOn: LocalDate? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
@@ -69,6 +71,7 @@ data class VenueEntity(
             programmeEventTypes = programmeEventTypes,
             programmeUrl = programmeUrl,
             reviewedAt = reviewedAt,
+            closedOn = closedOn,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -100,6 +103,7 @@ data class VenueEntity(
                 programmeEventTypes = venue.programmeEventTypes,
                 programmeUrl = venue.programmeUrl,
                 reviewedAt = venue.reviewedAt,
+                closedOn = venue.closedOn,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt
             )

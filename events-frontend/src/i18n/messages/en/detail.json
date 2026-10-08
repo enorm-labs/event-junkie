@@ -16,7 +16,10 @@
     "notImported": "We don't list this venue's events yet.",
     "programmeOwn": "See the programme on its website",
     "programmeResidentAdvisor": "See the programme on Resident Advisor",
-    "programmePlatform": "See the programme on {platform}"
+    "programmePlatform": "See the programme on {platform}",
+    "closed": "Closed for good in {month}",
+    "closing": "Open until {date}, then closed for good",
+    "closedNoEvents": "No more nights here: the venue has closed."
   },
   "artist": {
     "kind": "Artist",

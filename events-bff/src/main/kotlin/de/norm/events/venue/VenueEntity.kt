@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Read-only R2DBC entity mapped to the `venue` table.
@@ -37,6 +38,7 @@ data class VenueEntity(
     val programmeFamilies: List<String> = emptyList(),
     val programmeEventTypes: List<String> = emptyList(),
     val programmeUrl: String? = null,
+    val closedOn: LocalDate? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

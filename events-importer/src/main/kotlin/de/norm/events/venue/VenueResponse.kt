@@ -3,6 +3,7 @@ package de.norm.events.venue
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Response DTO for a venue.
@@ -63,6 +64,8 @@ data class VenueResponse(
     val programmeUrl: String?,
     @Schema(description = "When a person last confirmed the address, coordinates and opening; null when nobody has")
     val reviewedAt: Instant?,
+    @Schema(description = "The last day the venue was open, when it closed for good; null while it is open", example = "2026-10-31")
+    val closedOn: LocalDate?,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -95,6 +98,7 @@ data class VenueResponse(
                 programmeEventTypes = venue.programmeEventTypes,
                 programmeUrl = venue.programmeUrl,
                 reviewedAt = venue.reviewedAt,
+                closedOn = venue.closedOn,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt
             )
