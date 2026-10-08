@@ -114,12 +114,13 @@ is a recurring night (§5).
 swamped the actual programme — the Arena concerts, the open-air cinema, the park festivals. It would present a concert
 venue as a tour operator. Each venue that mixes these into its programme has one predicate, on the signal its page gives:
 
-| Venue           | Predicate                                            | Signal                                                          |
-| --------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
-| Gärten der Welt | `GaertenDerWeltFieldMapping.isProgrammeCategory`     | The park's activity categories                                  |
-| Urania          | `UraniaEventFields.isParticipationFormat`            | The format names a `Workshop`, `Spaziergang` or `Rundgang`      |
-| Urban Spree     | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop` | The `Workshops` category, or a title that opens with `Workshop` |
-| silent green    | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`   |
+| Venue               | Predicate                                            | Signal                                                          |
+| ------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
+| Gärten der Welt     | `GaertenDerWeltFieldMapping.isProgrammeCategory`     | The park's activity categories                                  |
+| Urania              | `UraniaEventFields.isParticipationFormat`            | The format names a `Workshop`, `Spaziergang` or `Rundgang`      |
+| Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop` | The `Workshops` category, or a title that opens with `Workshop` |
+| silent green        | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`   |
+| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`        | The Eventfrog category `kurse-seminare`: the swing course       |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -170,6 +171,7 @@ Hall. Nothing on those pages marks a show for small children, and adults go to t
 | --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | ufaFabrik                   | `UfaFabrikMonthPageScraper.isChildrensShow`                    | A price per child, per Kita child or per Erzieher\*in                                            |
 | Peter Edel, Wühlmäuse, SO36 | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
+| Showfenster Theater         | `ShowfensterOverviewPageScraper.isOutOfScope`                  | The Eventfrog category `kinderveranstaltungen`, or `billsChildrensShow` on title + description   |
 
 `billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A
 new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it here.

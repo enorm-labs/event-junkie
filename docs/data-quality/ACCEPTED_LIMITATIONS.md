@@ -323,6 +323,10 @@ says so.
 | `SCHEINBAR`            | `GENRE`            | the house names no genre; an Open Stage night mixes comedy, magic, music and artistry                                                            | —     |
 | `SCHEINBAR`            | `PROMOTERS`        | the house presents every evening itself                                                                                                          | —     |
 | `SCHOKOLADEN`          | `PRICE`            | the venue prints doors, show time and a ticket link, never a figure                                                                              | —     |
+| `SHOWFENSTER`          | `SUBTITLE`         | the calendar gives each event a title and one short text                                                                                         | —     |
+| `SHOWFENSTER`          | `PRICE`            | prices are on the Eventfrog ticket shop, not on the venue's site                                                                                 | —     |
+| `SHOWFENSTER`          | `DOORS_TIME`       | the calendar gives a start and an end time, no doors time                                                                                        | —     |
+| `SHOWFENSTER`          | `ARTISTS`          | only a concert or comedy title names its act; a reading bills a duo by surnames, and shows and quizzes name none                                 | —     |
 | `SILENT_GREEN`         | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `SILENT_GREEN`         | `START_TIME`       | a multi-day festival entry prints its date span only and names no time                                                                           | —     |

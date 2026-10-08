@@ -110,6 +110,7 @@
 ###   Säälchen             — https://www.holzmarkt.com/kalender
 ###   Scheinbar Varieté    — https://www.scheinbar.de/programm/
 ###   Schokoladen          — https://www.schokoladen-mitte.de/
+###   Showfenster Theater  — https://www.showfenster-show.de/%C3%BCbersichtskalender
 ###   silent green         — https://www.silent-green.net/programm
 ###   Sisyphos             — https://www.sisyphos-berlin.net/collections/tickets/products.json
 ###   Slaughterhouse       — https://slaughterhouse-berlin.de/konzerte/
@@ -226,7 +227,6 @@
 ###   SaliGari Bar                   — https://www.yesticket.org/venue/Saligari-Bar/en/
 ###   Sameheads                      — https://ra.co/clubs/34420
 ###   Sensorium                      — https://ra.co/clubs/285963
-###   Showfenster Theater            — https://www.showfenster-show.de/übersichtskalender
 ###   Silverwings                    — https://silverwings.de/program.html
 ###   Sisyfass                       — https://ra.co/clubs/159864
 ###   Solar                          — https://solar-berlin.de/event-types/dj/
@@ -8613,7 +8613,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Showfenster Theater (Letteallee 94, Berlin-Reinickendorf — not imported, #2766)
+### Showfenster Theater (Letteallee 94, Berlin-Reinickendorf)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Showfenster Theater venue ---
@@ -8634,13 +8634,45 @@ Content-Type: application/json
     "descriptionAlt": "Theater in der Reinickendorfer Letteallee mit Altberliner Flair: die hauseigene Varieté-Show, Konzerte, Kabarett, Comedy und Zauberei, außerdem eine offene Bühne und ein Kneipenquiz.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["theatre", "live-venue"],
-    "programmeUrl": "https://www.showfenster-show.de/übersichtskalender",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("showfenster_venue_id", response.body.id);
     client.test("Showfenster Theater venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Showfenster Theater event source ---
+# Links the venue to the ShowfensterWebsiteImporter.
+# The sourceType "SHOWFENSTER" matches EventSource.SHOWFENSTER.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{showfenster_venue_id}},
+    "name": "Showfenster Theater",
+    "url": "https://www.showfenster-show.de/%C3%BCbersichtskalender",
+    "sourceType": "SHOWFENSTER",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Showfenster Theater event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Showfenster Theater import ---
+POST {{importer-host}}/api/admin/event-sources/showfenster-theater/import
+Accept: application/json
+
+> {%
+    client.test("Showfenster Theater import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

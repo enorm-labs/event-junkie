@@ -291,6 +291,9 @@ enum class EventSource {
     /** Schokoladen Mitte Berlin – a collectively run cultural venue with roots in the post-Wende squat scene: intimate concerts, readings and club nights. */
     SCHOKOLADEN,
 
+    /** Showfenster Theater Berlin – a Reinickendorf theatre with an old-Berlin interior and its own variety show, beside concerts, comedy and Kabarett. */
+    SHOWFENSTER,
+
     /** silent green Berlin – a Wedding cultural quarter in a 1911 crematorium: experimental concerts, exhibitions, film and talks across its halls. */
     SILENT_GREEN,
 
