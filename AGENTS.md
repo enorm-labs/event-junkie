@@ -214,6 +214,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
+- `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
 - `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut and `/post-release`, and runs the safe ones
