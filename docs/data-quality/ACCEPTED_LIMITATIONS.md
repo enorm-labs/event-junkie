@@ -161,6 +161,9 @@ says so.
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
 | `KATER`                | `IMAGE`            | the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link                                                  | —     |
+| `KESSELHAUS`           | `DOORS_TIME`       | the calendar states one time per event; only a few event texts add an Einlass time                                                               | —     |
+| `KESSELHAUS`           | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
+| `KESSELHAUS`           | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |
 | `KITKATCLUB`           | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `KITKATCLUB`           | `DOORS_TIME`       | the programme prints one opening time per night; only the weekend notes add a start after a warm-up                                              | —     |
 | `KITKATCLUB`           | `PRICE`            | the club prints no admission and refers to each night's organiser                                                                                | —     |
@@ -192,6 +195,9 @@ says so.
 | `MAAYA`                | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
 | `MAAYA`                | `EVENT_TYPE`       | the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER                                 | —     |
 | `MAAYA`                | `GENRE`            | the venue publishes no genre; every music night takes the house's Afrobeats, Latin                                                               | —     |
+| `MASCHINENHAUS`        | `DOORS_TIME`       | the calendar states one time per event; only a few event texts add an Einlass time                                                               | —     |
+| `MASCHINENHAUS`        | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
+| `MASCHINENHAUS`        | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |
 | `MAX_SCHMELING_HALLE`  | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `MEHRINGHOF`           | `DOORS_TIME`       | the programme states one time per performance                                                                                                    | —     |

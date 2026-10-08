@@ -156,6 +156,9 @@ enum class EventSource {
     /** Kater Berlin – the techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and weekend-spanning parties. */
     KATER,
 
+    /** Kesselhaus Berlin – the listed Schwechten boiler house of the Schultheiss brewery in the Kulturbrauerei, a concert hall since the early 1990s. */
+    KESSELHAUS,
+
     /** KitKatClub Berlin – the hedonistic dress-code club in Mitte with a pool, sex-positive techno nights and its Saturday CarneBall Bizarre. */
     KITKATCLUB,
 
@@ -179,6 +182,9 @@ enum class EventSource {
 
     /** Madame Claude Berlin – a cosy upside-down-themed bar and live venue near Schlesisches Tor, with free-entry concerts and DJ nights. */
     MADAME_CLAUDE,
+
+    /** Maschinenhaus Berlin – the former machine house of the Schultheiss brewery, the Kesselhaus's small sister stage in the Kulturbrauerei. */
+    MASCHINENHAUS,
 
     /** Matrix Berlin – a large multi-floor mainstream club in the arches at Warschauer Straße, open every night with resident DJs. */
     MATRIX,

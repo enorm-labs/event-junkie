@@ -63,6 +63,7 @@
 ###   Kabarett-Theater DISTEL — https://distel-berlin.de/spielplan/kalender/
 ###   Kantine am Berghain  — https://www.berghain.berlin/de/program/kantine-am-berghain/
 ###   Kater                — https://www.katerclub.de/
+###   Kesselhaus           — https://www.kesselhaus.net/de/calendar
 ###   KitKatClub           — https://kitkatclub.org/Home/Club/Index.html
 ###   Klunkerkranich       — https://klunkerkranich.org/events/
 ###   KØPI                 — https://koepi137.net/
@@ -73,6 +74,7 @@
 ###   Loge                 — https://www.loge-berlin.org/event-list
 ###   MAAYA                — https://maaya.de/
 ###   Madame Claude        — https://madameclaude.de/
+###   Maschinenhaus        — https://www.kesselhaus.net/de/calendar
 ###   Matrix               — https://www.matrix-berlin.de/party-in-berlin/
 ###   Max-Schmeling-Halle  — https://www.velomax.de/events
 ###   MAXXIM               — https://www.maxxim-berlin.de/partys
@@ -177,7 +179,6 @@
 ###   Jonny Knüppel                  — https://jonnyknueppel.de/
 ###   Kallasch&                      — https://kallasch.berlin/programm/
 ###   KAOS Berlin                    — https://kaosberlin.de/veranstaltungen/
-###   Kesselhaus                     — https://www.kesselhaus.net/de/calendar/topics/concerts
 ###   Komplex Berlin                 — https://ra.co/clubs/189040
 ###   Konrad Tönz Bar                — http://www.konradtoenzbar.de/#events
 ###   Kraftwerk Berlin               — https://kraftwerkberlin.de/de/programm
@@ -194,7 +195,6 @@
 ###   M-BIA                          — http://www.m-bia.de
 ###   Mad Monkey Room                — https://t.rausgegangen.de/tickets/shop/mad-monkey-2
 ###   Marmorbar                      — https://www.marmorbar.com/en/event-list
-###   Maschinenhaus                  — https://www.kesselhaus.net/en/calendar
 ###   Mein Freund Harvey             — https://www.berlin.de/en/tickets/search/venues/mein-freund-harvey-36688615-0905-494d-9c11-7de870337263/
 ###   Mena Berlin                    — https://ra.co/clubs/217616
 ###   Minimal Bar                    — https://ra.co/clubs/23370
@@ -4688,7 +4688,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Kesselhaus (Knaackstraße 97, Berlin-Prenzlauer Berg — not imported, #2766)
+### Kesselhaus (Knaackstraße 97, Berlin-Prenzlauer Berg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Kesselhaus venue ---
@@ -4710,13 +4710,45 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue"],
     "capacity": 776,
-    "programmeUrl": "https://www.kesselhaus.net/de/calendar/topics/concerts",
     "reviewedAt": "2026-10-07T09:58:32Z"
 }
 
 > {%
+    client.global.set("kesselhaus_venue_id", response.body.id);
     client.test("Kesselhaus venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Kesselhaus event source ---
+# Links the venue to the KesselhausWebsiteImporter.
+# The sourceType "KESSELHAUS" matches EventSource.KESSELHAUS.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{kesselhaus_venue_id}},
+    "name": "Kesselhaus",
+    "url": "https://www.kesselhaus.net/de/calendar",
+    "sourceType": "KESSELHAUS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Kesselhaus event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Kesselhaus import ---
+POST {{importer-host}}/api/admin/event-sources/kesselhaus/import
+Accept: application/json
+
+> {%
+    client.test("Kesselhaus import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
@@ -5807,7 +5839,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Maschinenhaus (Knaackstraße 97, Berlin-Prenzlauer Berg — not imported, #2766)
+### Maschinenhaus (Knaackstraße 97, Berlin-Prenzlauer Berg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Maschinenhaus venue ---
@@ -5829,13 +5861,45 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue"],
     "capacity": 200,
-    "programmeUrl": "https://www.kesselhaus.net/en/calendar",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("maschinenhaus_venue_id", response.body.id);
     client.test("Maschinenhaus venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Maschinenhaus event source ---
+# Links the venue to the MaschinenhausWebsiteImporter.
+# The sourceType "MASCHINENHAUS" matches EventSource.MASCHINENHAUS.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{maschinenhaus_venue_id}},
+    "name": "Maschinenhaus",
+    "url": "https://www.kesselhaus.net/de/calendar",
+    "sourceType": "MASCHINENHAUS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Maschinenhaus event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Maschinenhaus import ---
+POST {{importer-host}}/api/admin/event-sources/maschinenhaus/import
+Accept: application/json
+
+> {%
+    client.test("Maschinenhaus import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
