@@ -16,7 +16,10 @@
     "notImported": "Die Veranstaltungen dieser Location führen wir noch nicht.",
     "programmeOwn": "Zum Programm auf ihrer Website",
     "programmeResidentAdvisor": "Zum Programm bei Resident Advisor",
-    "programmePlatform": "Zum Programm bei {platform}"
+    "programmePlatform": "Zum Programm bei {platform}",
+    "closed": "Im {month} für immer geschlossen",
+    "closing": "Geöffnet bis {date}, danach für immer geschlossen",
+    "closedNoEvents": "Hier gibt es keine Abende mehr: Der Ort hat geschlossen."
   },
   "artist": {
     "kind": "Act",

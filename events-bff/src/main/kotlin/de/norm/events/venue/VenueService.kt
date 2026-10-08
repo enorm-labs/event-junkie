@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -55,7 +56,7 @@ class VenueService(
 
     /** For each character tag, how many venues match [filter] with that tag added (#2671). */
     @Transactional(readOnly = true)
-    suspend fun featureCounts(filter: VenueFilter): Map<String, Long> = venueSearchRepository.featureCounts(filter)
+    suspend fun featureCounts(filter: VenueFilter): Map<String, Long> = venueSearchRepository.featureCounts(filter, LocalDate.now(clock))
 
     /**
      * Finds a single venue by [slug].

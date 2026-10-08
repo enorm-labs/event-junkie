@@ -10,6 +10,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -24,7 +25,9 @@ data class VenueFilter(
     val eventTypes: List<String> = emptyList(),
     val characters: List<String> = emptyList(),
     /** `true` only imported venues, `false` only the others, `null` both (#2766). */
-    val imported: Boolean? = null
+    val imported: Boolean? = null,
+    /** `false` only the venues still open, `true` only those closed for good (ADR-046). */
+    val closed: Boolean = false
 ) {
     companion object {
         /** Blank values drop out; the rest are trimmed, de-duplicated and sorted. */
@@ -79,16 +82,20 @@ class VenueSearchRepository(
      * One query on the same pass the list takes: the grouping set `()` is the list's total, so a name search that only
      * matches by similarity counts those venues, as the list shows them.
      */
-    suspend fun featureCounts(filter: VenueFilter): Map<String, Long> =
+    suspend fun featureCounts(
+        filter: VenueFilter,
+        today: LocalDate
+    ): Map<String, Long> =
         TextSearch
-            .strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> featureCounts(filter, bySimilarity) }
+            .strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> featureCounts(filter, bySimilarity, today) }
             .counts
 
     private suspend fun featureCounts(
         filter: VenueFilter,
-        bySimilarity: Boolean
+        bySimilarity: Boolean,
+        today: LocalDate
     ): FeatureCounts {
-        val (where, params) = where(filter, bySimilarity)
+        val (where, params) = where(filter, bySimilarity, today)
         val rows =
             databaseClient
                 .sql(
@@ -116,19 +123,21 @@ class VenueSearchRepository(
         val counts: Map<String, Long>
     )
 
-    /** The WHERE clause for [filter] on one pass, and its bind values; `v` is the venue. */
+    /** The WHERE clause for [filter] on one pass, and its bind values; `v` is the venue. A venue is closed from the day after its `closed_on`. */
     private fun where(
         filter: VenueFilter,
-        bySimilarity: Boolean
+        bySimilarity: Boolean,
+        today: LocalDate
     ): Pair<String, Map<String, Any>> {
-        val params = mutableMapOf<String, Any>()
+        val params = mutableMapOf<String, Any>("openOn" to today)
         filter.query?.let { params += TextSearch.params(it, bySimilarity) }
         val conditions =
             listOfNotNull(
                 filter.query?.let { TextSearch.predicate("v.name", it, bySimilarity) },
                 "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() },
                 CHARACTER_FILTER.takeIf { filter.characters.isNotEmpty() },
-                filter.imported?.let { if (it) "EXISTS ($HAS_SOURCE)" else "NOT EXISTS ($HAS_SOURCE)" }
+                filter.imported?.let { if (it) "EXISTS ($HAS_SOURCE)" else "NOT EXISTS ($HAS_SOURCE)" },
+                if (filter.closed) CLOSED else "NOT $CLOSED"
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
                     values(filter).takeIf { it.isNotEmpty() }?.let {
@@ -141,7 +150,7 @@ class VenueSearchRepository(
             params["characters"] = filter.characters
             params["characterCount"] = filter.characters.size.toLong()
         }
-        return (if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}") to params
+        return "WHERE ${conditions.joinToString(" AND ")}" to params
     }
 
     @Suppress("LongParameterList") // The public search's four, plus the pass.
@@ -152,7 +161,7 @@ class VenueSearchRepository(
         pageable: Pageable,
         countCap: Int?
     ): VenueListPage {
-        val (where, params) = where(filter, bySimilarity)
+        val (where, params) = where(filter, bySimilarity, now.toLocalDate())
 
         val total =
             databaseClient
@@ -194,6 +203,9 @@ class VenueSearchRepository(
     companion object {
         /** A venue is imported while an `event_source` row points at it; there is no column for it (#2766). */
         private const val HAS_SOURCE = "SELECT 1 FROM $EVENTS_SCHEMA.event_source s WHERE s.venue_id = v.id"
+
+        /** `closed_on` is the last day open, so the venue is closed once today is past it. */
+        private const val CLOSED = "(v.closed_on IS NOT NULL AND v.closed_on < :openOn)"
 
         private const val UPCOMING_COUNT =
             "SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id AND e.event_date >= :today"

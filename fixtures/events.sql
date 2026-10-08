@@ -39,6 +39,11 @@ INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, 
 VALUES ('Hinterhof Bar', 'hinterhof-bar', 'Weserstraße 99', '12045', 'neukoelln', 52.487000, 13.432000, 'https://hinterhof.example', '{bar}',
         'https://hinterhof.example/programm', '2026-10-06 18:00:00+00');
 
+-- A venue that closed for good (ADR-046): it keeps its row and its page, and the venue lists leave it out.
+INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, venue_types, closed_on)
+VALUES ('Alter Güterbahnhof', 'alter-gueterbahnhof', 'Greifswalder Straße 200', '10405', 'prenzlauer-berg', 52.540000, 13.436000,
+        'https://gueterbahnhof.example', '{club}', '2026-08-30');
+
 INSERT INTO events.event_source (venue_id, name, slug, url, source_type, enabled)
 SELECT id, name, 'fixture-' || slug, website_url, 'A_TRANE', FALSE
 FROM events.venue

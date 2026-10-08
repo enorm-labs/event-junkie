@@ -78,7 +78,8 @@ class VenueService(
                 venueTypes = request.venueTypes.distinct().map { it.slug },
                 capacity = request.capacity,
                 programmeUrl = request.programmeUrl,
-                reviewedAt = request.reviewedAt
+                reviewedAt = request.reviewedAt,
+                closedOn = request.closedOn
             )
         val entity = VenueEntity.fromDomain(venue)
         val saved = venueRepository.save(entity)
@@ -128,7 +129,8 @@ class VenueService(
                 venueTypes = request.venueTypes.distinct().map { it.slug },
                 capacity = request.capacity,
                 programmeUrl = request.programmeUrl,
-                reviewedAt = request.reviewedAt
+                reviewedAt = request.reviewedAt,
+                closedOn = request.closedOn
             )
         val saved = venueRepository.save(updated)
         logger.info { "Updated venue '${saved.name}' (id=${saved.id})" }

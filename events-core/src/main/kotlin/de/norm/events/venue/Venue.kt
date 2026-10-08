@@ -2,6 +2,7 @@ package de.norm.events.venue
 
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Represents a physical venue where music events take place.
@@ -57,6 +58,8 @@ data class Venue(
     val programmeUrl: String? = null,
     /** When a person last confirmed the address, coordinates and opening. `null` when nobody has. Never set by an import. */
     val reviewedAt: Instant? = null,
+    /** The last day the venue was open, when it closed for good (ADR-046). `null` while it is open. Never set by an import. */
+    val closedOn: LocalDate? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */

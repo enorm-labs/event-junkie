@@ -43,6 +43,16 @@ export function formatDate(isoDate?: string | null, locale: string = 'en'): stri
   return dateFormatter(locale).format(new Date(year, month - 1, day))
 }
 
+/** The month and year alone — "October 2026" / "Oktober 2026" — for a venue's closure. */
+export function formatMonthYear(isoDate?: string | null, locale: string = 'en'): string {
+  if (!isoDate) return ''
+  const [year, month] = isoDate.split('-').map(Number)
+  if (!year || !month) return isoDate
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+    new Date(year, month - 1, 1),
+  )
+}
+
 /** The weekday alone — "Fri" / "Fr." — for the far end of a span that crosses more than one night. */
 export function formatWeekday(isoDate?: string | null, locale: string = 'en'): string {
   if (!isoDate) return ''

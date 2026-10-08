@@ -304,8 +304,8 @@ class FixtureTest : BaseControllerTest() {
                 "event" to "(t.source_id LIKE 'fixture-%' OR t.source_id LIKE 'dast-%')",
                 "venue" to
                     "(t.id IN (SELECT venue_id FROM events.event WHERE source_id LIKE 'fixture-%' OR source_id LIKE 'dast-%') " +
-                    // The one fixture venue with no events, because we do not import it (#2766).
-                    "OR t.slug = 'hinterhof-bar')",
+                    // The fixture venues with no events: one we do not import (#2766), one that closed (ADR-046).
+                    "OR t.slug IN ('hinterhof-bar', 'alter-gueterbahnhof'))",
                 "artist" to
                     "t.id IN (SELECT ea.artist_id FROM events.event_artist ea JOIN events.event e ON e.id = ea.event_id " +
                     "WHERE e.source_id LIKE 'fixture-%' OR e.source_id LIKE 'dast-%')"

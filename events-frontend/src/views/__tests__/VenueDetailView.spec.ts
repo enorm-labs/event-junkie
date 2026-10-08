@@ -135,6 +135,29 @@ describe('VenueDetailView', () => {
     expect(view.find('[data-testid="venue-programme-link"]').exists()).toBe(false)
   })
 
+  it('says a closed venue closed, and that no more nights come, whether or not we import it', async () => {
+    const view = await mountVenue({ ...kater, imported: false, closedOn: '2020-08-30' })
+    expect(view.find('[data-testid="venue-closure"]').text()).toBe('Closed for good in August 2020')
+    expect(view.find('[data-testid="venue-closed"]').text()).toContain(
+      'No more nights here: the venue has closed.',
+    )
+    expect(view.find('[data-testid="venue-not-imported"]').exists()).toBe(false)
+  })
+
+  it('names the last day of a venue that has announced its closure, and keeps its event list', async () => {
+    const view = await mountVenue({ ...kater, imported: true, closedOn: '2099-10-31' })
+    expect(view.find('[data-testid="venue-closure"]').text()).toBe(
+      'Open until Sat, 31 Oct 2099, then closed for good',
+    )
+    expect(view.find('[data-testid="venue-closed"]').exists()).toBe(false)
+    expect(view.text()).toContain('No upcoming nights here yet')
+  })
+
+  it('says nothing about a closure for an open venue', async () => {
+    const view = await mountVenue({ ...kater, closedOn: null })
+    expect(view.find('[data-testid="venue-closure"]').exists()).toBe(false)
+  })
+
   it('keeps the event list for an imported venue', async () => {
     const view = await mountVenue({ ...kater, imported: true })
     expect(view.find('[data-testid="venue-not-imported"]').exists()).toBe(false)

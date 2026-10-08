@@ -612,6 +612,7 @@ CREATE TABLE events.venue (
     name_search text GENERATED ALWAYS AS (events.search_text(name)) STORED,
     programme_url text,
     reviewed_at timestamp with time zone,
+    closed_on date,
     CONSTRAINT venue_capacity_check CHECK ((capacity > 0)),
     CONSTRAINT venue_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),
     CONSTRAINT venue_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),

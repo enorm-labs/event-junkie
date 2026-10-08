@@ -520,6 +520,12 @@ export interface components {
              * @example true
              */
             imported?: boolean;
+            /**
+             * Format: date
+             * @description The last day the venue was open, when it closed for good or will close on a date it announced. Null while no closure is known. The venue lists leave a venue out from the day after.
+             * @example 2026-10-31
+             */
+            closedOn?: string | null;
         };
         /** @description A character tag and the venue's own page that states it */
         VenueCharacterTagResponse: {
@@ -674,6 +680,12 @@ export interface components {
              * @example https://www.example-club.de/programm
              */
             programmeUrl?: string | null;
+            /**
+             * Format: date
+             * @description The last day the venue was open, when it closed for good or will close on a date it announced. Null while no closure is known. The venue lists leave a venue out from the day after.
+             * @example 2026-10-31
+             */
+            closedOn?: string | null;
         };
         /** @description Compact artist summary */
         ArtistSummaryResponse: {
@@ -1722,6 +1734,8 @@ export interface operations {
                 character?: string[];
                 /** @description true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both. */
                 imported?: boolean;
+                /** @description true lists only the venues closed for good. Omitted or false lists only the venues still open (ADR-046). */
+                closed?: boolean;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -1789,6 +1803,8 @@ export interface operations {
                 character?: string[];
                 /** @description true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both. */
                 imported?: boolean;
+                /** @description true lists only the venues closed for good. Omitted or false lists only the venues still open (ADR-046). */
+                closed?: boolean;
             };
             header?: never;
             path?: never;
