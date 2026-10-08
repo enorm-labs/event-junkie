@@ -164,7 +164,7 @@ def get_json(url, headers=None):
 
 def read_reviewed(only=None):
     with open(REVIEWED, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle, delimiter="\t"))
+        rows = list(csv.DictReader(handle, delimiter="\t", quoting=csv.QUOTE_NONE))
     confirmed = [r for r in rows if r["decision"] == "CONFIRMED"]
     if only:
         confirmed = [r for r in confirmed if fold(r["venue"]) == fold(only)]

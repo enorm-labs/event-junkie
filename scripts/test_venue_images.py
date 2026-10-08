@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Asserts that venue-images.py rewrites every venue field it does not set, so its PUT erases nothing.
 
+It also asserts that a REVIEWED.tsv cell keeps a leading quotation mark (#2932).
+
 Usage:
     python3 scripts/test_venue_images.py
 
 A plain script, not pytest: it counts its checks and exits non-zero on the first failed one.
-validate-python.yml runs it. Reaches no network and writes nothing.
+validate-python.yml runs it. Reaches no network and writes only a temporary file.
 """
 
 import argparse
@@ -13,6 +15,7 @@ import importlib.util
 import pathlib
 import re
 import sys
+import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 VENUE = HERE.parent / "events-importer/src/main/kotlin/de/norm/events/venue"
@@ -65,6 +68,16 @@ def main():
     )
     if problem or planned["venueTypes"] != venue["venueTypes"] or planned["imageUrl"] != "https://t":
         sys.exit(f"plan_one does not keep the venue's other fields: {problem or planned}")
+    checks += 1
+
+    # The default csv dialect strips a leading `"`, so FluxBau's file was asked for without it.
+    fluxbau = '"Fluxbau", Pfuelstrasse 5 in Berlin-Kreuzberg (2017).jpg'
+    with tempfile.TemporaryDirectory() as tmp:
+        module.REVIEWED = pathlib.Path(tmp) / "REVIEWED.tsv"
+        module.REVIEWED.write_text(f"venue\tdecision\tfile\nFluxBau\tCONFIRMED\t{fluxbau}\n", encoding="utf-8")
+        _, confirmed = module.read_reviewed()
+    if [r["file"] for r in confirmed] != [fluxbau]:
+        sys.exit(f"read_reviewed does not keep a cell's quotation marks: {confirmed}")
     checks += 1
 
     print(f"venue-images: {checks} checks passed")

@@ -97,7 +97,7 @@ def probe(name):
 
 def venues_without_a_picture(only=None):
     with open(REVIEWED, encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle, delimiter="\t"))
+        rows = list(csv.DictReader(handle, delimiter="\t", quoting=csv.QUOTE_NONE))
     names = [r["venue"] for r in rows if r["decision"] != "CONFIRMED"]
     if only:
         names = [n for n in names if fold(n) == fold(only)]
