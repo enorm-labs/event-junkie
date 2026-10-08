@@ -103,7 +103,7 @@ schema change.
 | MAAYA                            | https://maaya.de/                                           | Club         | Elementor home page; year-less dates; `pm` half real      |
 | Madame Claude                    | https://madameclaude.de/                                    | Bar          | WordPress `event` REST API (ACF)                          |
 | Maschinenhaus                    | https://www.kesselhaus.net/de/calendar                      | Concert Hall | Shares the Kesselhaus calendar; room filter               |
-| Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | WordPress; month pages walked; DJs + door prices          |
+| Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | Next.js; one page per night format; next date only        |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported                 |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                         | Club         | Wix Events warmup JSON; UTC dates; prices inline          |
 | Mehringhof-Theater               | https://www.mehringhoftheater.de/programm/                  | Theater      | IONOS month tables; tickettoaster JSON-LD                 |
@@ -202,7 +202,9 @@ Six importers also read the page in the other language. They store its event tex
 
 The importer finds the other page through the `hreflang` link of the page that it reads. When that page does not load,
 the run keeps the first language and stores no second language. The upsert stores a second text only when the two
-texts read as German and English. Club OST is not on this list, because none of its events has a description.
+texts read as German and English. Club OST is not on this list, because none of its events has a description. Matrix
+Club Berlin is not on this list either. Its English pages exist, but their text matches the German closely enough that
+the upsert stores none.
 
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
 | -------------------------------- | --------------- | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -269,7 +271,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | MAAYA                            | Unknown         | The page sent a bot challenge (403)                          | —                  |                                                                                                                                    |
 | Madame Claude                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Maschinenhaus                    | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
-| Matrix Club Berlin               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.matrix-berlin.de/en/                                                                                                   |
+| Matrix Club Berlin               | Yes             | `/en/` path, language buttons                                | Translated         | https://www.matrix-berlin.de/en/night/social                                                                                       |
 | Max-Schmeling-Halle              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | Maxxim Club                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Mehringhof-Theater               | No              | —                                                            | —                  |                                                                                                                                    |
