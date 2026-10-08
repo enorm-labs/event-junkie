@@ -62,6 +62,7 @@
 ###   House of Music Berlin — https://www.houseofmusic.berlin/
 ###   Humboldthain Club    — https://core.service.elfsight.com/p/boot/?w=<widgetId>
 ###   Huxleys Neue Welt    — https://huxleysneuewelt.de/events
+###   Jonny Knüppel        — https://jonnyknueppel.de/
 ###   Junction Bar         — https://www.junction-bar.de/
 ###   Kabarett-Theater DISTEL — https://distel-berlin.de/spielplan/kalender/
 ###   Kantine am Berghain  — https://www.berghain.berlin/de/program/kantine-am-berghain/
@@ -184,7 +185,6 @@
 ###   Ikii                           — https://ra.co/clubs/271542
 ###   interkosmos                    — https://www.interkosmos.cc/
 ###   Ipse                           — https://ra.co/clubs/278777
-###   Jonny Knüppel                  — https://jonnyknueppel.de/
 ###   Kallasch&                      — https://kallasch.berlin/programm/
 ###   KAOS Berlin                    — https://kaosberlin.de/veranstaltungen/
 ###   Komplex Berlin                 — https://ra.co/clubs/189040
@@ -4434,7 +4434,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Jonny Knüppel (Lilli-Henoch-Straße 10, Berlin-Prenzlauer Berg — not imported, closes after 2026-10-31, ADR-046)
+### Jonny Knüppel (Lilli-Henoch-Straße 10, Berlin-Prenzlauer Berg — closes after 2026-10-31, ADR-046)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Jonny Knüppel venue ---
@@ -4460,8 +4460,41 @@ Content-Type: application/json
 }
 
 > {%
+    client.global.set("jonny_knuppel_venue_id", response.body.id);
     client.test("Jonny Knüppel venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Jonny Knüppel event source ---
+# Links the venue to the JonnyKnuppelWebsiteImporter.
+# The sourceType "JONNY_KNUPPEL" matches EventSource.JONNY_KNUPPEL.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{jonny_knuppel_venue_id}},
+    "name": "Jonny Knüppel",
+    "url": "https://jonnyknueppel.de/",
+    "sourceType": "JONNY_KNUPPEL",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Jonny Knüppel event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Jonny Knüppel import ---
+POST {{importer-host}}/api/admin/event-sources/jonny-knuppel/import
+Accept: application/json
+
+> {%
+    client.test("Jonny Knüppel import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
