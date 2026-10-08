@@ -1,6 +1,8 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.splitSupportActs
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
@@ -41,6 +43,30 @@ internal fun descriptionRoster(
         .takeIf { it.size >= MIN_ROSTER }
         .orEmpty()
 }
+
+/**
+ * The support act a concert's description bills in a bold `Support:` line, for a page whose subtitle names none
+ * (#2865). The bold line after it spells an abbreviation out (`Support: MDK`, then `Mekanik Destrüktiw
+ * Komandöh`), and that name is taken only when its initials are the abbreviation.
+ */
+internal fun descriptionSupport(document: Document): List<String> {
+    val bold =
+        document
+            .selectFirst(".product_description")
+            ?.allElements
+            ?.filter { it.isBold() && it.parents().none { parent -> parent.isBold() } }
+            ?.map { it.text().replace(NBSP, ' ').trim() }
+            .orEmpty()
+    val index = bold.indexOfFirst { SUPPORT_ROLE_PREFIX.containsMatchIn(it) }
+    if (index < 0) return emptyList()
+    val tail = bold[index].replaceFirst(SUPPORT_ROLE_PREFIX, "").trim()
+    val spelledOut = bold.getOrNull(index + 1)?.takeIf { initials(it).equals(tail, ignoreCase = true) }
+    return (spelledOut?.let(::listOf) ?: splitSupportActs(tail).map { it.trim() })
+        .filter { it.isNotBlank() && !isNonArtistName(it) }
+}
+
+/** The first letter of each word: `Mekanik Destrüktiw Komandöh` is `MDK`. */
+private fun initials(name: String): String = name.split(WHITESPACE).mapNotNull { word -> word.firstOrNull(Char::isLetter) }.joinToString("")
 
 /**
  * Which night of a run this page is: the `Tag N` its subtitle names, else this date's rank among the dates the
@@ -93,6 +119,7 @@ private fun Element.isBold(): Boolean = tagName() in BOLD_TAGS || (tagName() == 
 
 private const val MIN_ROSTER = 2
 private const val NBSP = Typography.nbsp
+private val WHITESPACE = Regex("""\s+""")
 private val BOLD_TAGS = setOf("strong", "b")
 private val BOLD_STYLE = Regex("""font-weight:\s*(?:bold|[6-9]00)""", RegexOption.IGNORE_CASE)
 

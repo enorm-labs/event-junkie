@@ -166,6 +166,43 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads the support act from the description when the subtitle is a feat line`() {
+        // Subtitle "feat. Birte Volta mit Special-Guests"; the description bolds "Support: MDK", then the name (#2865).
+        val url = "https://www.so36.com/produkte/91753-tickets-kai-funky-von-ton-steine-scherben-so36-berlin-am-11-12-2026"
+        val event = scraper.scrape(fixture("so36-detail-feat-description-support.html", url), url)
+        event.shouldNotBeNull()
+
+        event.subtitle shouldBe "feat. Birte Volta mit Special-Guests"
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "Kai & Funky von TON STEINE SCHERBEN" to "HEADLINER",
+                "Mekanik Destrüktiw Komandöh" to "SUPPORT"
+            )
+    }
+
+    @Test
+    fun `keeps the support label's own name when the next bold line does not spell it out`() {
+        val document =
+            Jsoup.parse(
+                """
+                <div class="product_description">
+                  <p><strong>Support: MDK</strong></p>
+                  <p><strong>Tour 2026</strong></p>
+                </div>
+                """.trimIndent()
+            )
+
+        descriptionSupport(document) shouldBe listOf("MDK")
+    }
+
+    @Test
+    fun `bills no support from the description when its label names nobody`() {
+        val document = Jsoup.parse("""<div class="product_description"><p><b>Support: TBA</b></p></div>""")
+
+        descriptionSupport(document) shouldBe emptyList()
+    }
+
+    @Test
     fun `keeps a band with an ampersand in its name whole and splits a co-billed title`() {
         // The concert titles with "&" on the listing on 2026-10-03 (#2414).
         fun headliners(title: String): List<String> {
