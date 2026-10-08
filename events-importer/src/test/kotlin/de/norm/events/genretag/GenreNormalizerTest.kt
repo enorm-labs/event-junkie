@@ -31,6 +31,14 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `an unknown shouted genre is stored de-shouted, and a short acronym is kept`() {
+        normalizeGenre("TRANCE, HARDTECHNO, EBM").shouldContainExactly("Trance", "Hardtechno", "EBM")
+        normalizeGenre("EARLY HARDCORE").shouldContainExactly("Early Hardcore")
+        normalizeGenre("POST-HC").shouldContainExactly("Post-HC")
+        normalizeGenre("ElectroClash").shouldContainExactly("ElectroClash")
+    }
+
+    @Test
     fun `comma-separated genres are split and normalized`() {
         normalizeGenre("Pop Punk, Indie, Karaoke")
             .shouldContainExactlyInAnyOrder("Punk", "Indie", "Karaoke")

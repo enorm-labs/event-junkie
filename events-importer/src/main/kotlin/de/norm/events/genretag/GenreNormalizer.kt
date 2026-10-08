@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import de.norm.events.common.deshoutWord
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -407,10 +408,19 @@ private fun resolveGenreOrNull(token: String): List<String>? {
     logger.info { "No synonym match for genre token '$token', using as-is" }
     val titleCased =
         token.split(" ").joinToString(" ") { word ->
-            word.replaceFirstChar { it.uppercaseChar() }
+            word.split('-').joinToString("-") { it.deshoutGenrePart() }.replaceFirstChar { it.uppercaseChar() }
         }
     return listOf(titleCased)
 }
+
+/**
+ * De-shouts one hyphen part of a genre word, so VOID Club's `TRANCE` is stored as `Trance` (#2924).
+ * A part of [GENRE_ACRONYM_MAX_LEN] letters or fewer stays as written: EBM, NDH and the HC of
+ * `POST-HC` are acronyms far more often than shouted words.
+ */
+private fun String.deshoutGenrePart(): String = if (length <= GENRE_ACRONYM_MAX_LEN) this else deshoutWord()
+
+private const val GENRE_ACRONYM_MAX_LEN = 3
 
 /**
  * Heuristic gate for the [resolveGenre] fall-through. A token qualifies when it contains a
