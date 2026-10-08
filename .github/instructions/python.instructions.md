@@ -17,9 +17,8 @@ The scripts under `scripts/`, `deploy/alerts/` and `deploy/dashboards/`, plus `i
   `E`, `F`, `W`, `B`, `I`. The pin is `RUFF_VERSION` in `validate-python.yml`; the commit hook uses the `ruff` on `$PATH` (`brew install ruff`), the
   way ShellCheck does. Without one, `uvx ruff@<RUFF_VERSION>` runs the pinned release. **Not selected on purpose:** `UP031`, because `%`-formatting is
   deliberate in code that runs under whatever `python3` a node has, and `PLW1510`, because every `subprocess.run` here reads its own `returncode`.
-- **Tests are plain scripts, not pytest.** `deploy/alerts/test_diff_alerts.py`, `deploy/dashboards/test_lint_dashboard.py`,
-  `scripts/test_apply_licence_review.py` and `scripts/test_force_import.py` count checks and exit non-zero; `validate-python.yml` runs all four. Four
-  files do not justify a runner. The next test follows the same shape, and goes into that workflow. A sibling whose name has a hyphen loads through `importlib.util.spec_from_file_location`.
+- **Tests are plain scripts, not pytest.** Each `test_*.py` under `scripts/` and `deploy/` counts its checks and exits non-zero, and
+  `validate-python.yml` runs every one. A handful of files does not justify a runner. The next test follows the same shape, and goes into that workflow. A sibling whose name has a hyphen loads through `importlib.util.spec_from_file_location`.
 - **Importing a sibling from a test**: `sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))`, then the import with `# noqa: E402`. The
   files are run, not imported, so there is no package to make and no `__init__.py`.
 - **`--help` before anything else.** Every script under `scripts/` answers `-h` or `--help` with exit 0 before it touches a tool, a file or the network,
