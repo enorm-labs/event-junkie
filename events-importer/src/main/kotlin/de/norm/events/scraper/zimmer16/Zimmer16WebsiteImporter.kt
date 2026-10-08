@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component
  *
  * The homepage holds the date and the title; the event page adds the time, the price and the text. The
  * YesTicket organiser list has more nights, but it also lists the children's theatre, which is out of scope.
+ * The picture comes from the card, which serves it from the venue's own host; YesTicket's copy is robots-disallowed.
  *
  * @see Zimmer16OverviewPageScraper for the cards.
  * @see Zimmer16EventPageScraper for the event pages.
@@ -26,7 +27,7 @@ class Zimmer16WebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "ZIMMER 16", Zimmer16OverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.ZIMMER_16
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = Zimmer16EventPageScraper()::enrich
-    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.IMAGE, ScrapedField.START_TIME, ScrapedField.PRICES)
+    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.START_TIME, ScrapedField.PRICES)
 }
 
 val ZIMMER_16_LIMITATIONS =

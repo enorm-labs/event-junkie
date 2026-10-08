@@ -6,7 +6,9 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -35,6 +37,7 @@ class Zimmer16WebsiteImporterTest {
             result.events shouldHaveSize 20
             result.events.first { it.sourceUrl == bourbonUrl }.startTime shouldBe LocalTime.of(20, 0)
             result.events.count { it.detailUnavailable } shouldBe 19
+            result.events.forEach { it.imageUrl.shouldNotBeNull() shouldStartWith "https://zimmer16.com/wp-json/yesticket/v1/picture/" }
         }
 
     @Test
