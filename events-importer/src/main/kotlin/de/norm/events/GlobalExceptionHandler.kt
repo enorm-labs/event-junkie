@@ -5,11 +5,11 @@ import de.norm.events.artist.DuplicateArtistSlugException
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.UnknownPinnedFieldException
 import de.norm.events.genretag.GenreTagNotFoundException
+import de.norm.events.importing.EventSourceNotFoundException
+import de.norm.events.importing.InvalidSourceTypeException
+import de.norm.events.importing.ReservedSlugException
 import de.norm.events.promoter.DuplicatePromoterSlugException
 import de.norm.events.promoter.PromoterNotFoundException
-import de.norm.events.scraper.EventSourceNotFoundException
-import de.norm.events.scraper.InvalidSourceTypeException
-import de.norm.events.scraper.ReservedSlugException
 import de.norm.events.venue.DuplicateVenueSlugException
 import de.norm.events.venue.VenueNotFoundException
 import io.github.oshai.kotlinlogging.KotlinLogging

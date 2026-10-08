@@ -59,8 +59,8 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
 scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps are in [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API
   Communication.
 - **Metrics** (`micrometer-registry-prometheus`, `health,info,prometheus` exposed, #415), four decisions that fail silently if reversed:
-    - **Meter names are an interface.** Dashboards and alert rules are written against the exact strings in `ImporterMetrics` and `BffMetrics`, and the tests
-      assert the literals rather than the constants, so a rename fails the test instead of a panel.
+    - **Meter names are an interface.** Dashboards and alert rules are written against the exact strings in `ImporterMetrics`, `EnrichmentMetrics` and
+      `BffMetrics`, and the tests assert the literals rather than the constants, so a rename fails the test instead of a panel.
     - **Tag values are constants, never text from a venue's page** — a free-text tag is unbounded cardinality. `scrapeFailureReason()` enforces it; a test
       asserts no exception message reaches a tag.
     - **Gauges are refreshed on a schedule, not by a supplier.** A supplier that queried the database would block a Netty thread at scrape time;
@@ -102,6 +102,9 @@ scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps ar
   only (`EventImporter.fetchesBeyondEntryPage`, #2020). `EventSource` is the enum registry; each
   value's KDoc is **one line about the venue**, and everything else about a source — platform, pages read, traps, accepted limitations — lives on that
   venue's sub-package under `scraper/<venue>/`, the single home. A repairable defect is an issue (🔍 Importer / data defect), not KDoc.
+    - **Three modules.** `scraper` is the framework and the venue packages, and depends on `event`, `genretag`, `slug`, `licence` and `common` only.
+      `importing` is the pipeline: the sources, the run, the upsert, the sweeps, `ImporterMetrics`. `enrichment` is the MusicBrainz, Discogs and Wikipedia
+      lookups. `importing` depends on both, and neither depends on it (#2855). A new importer reads only `scraper`.
     - `EventImportService` orchestrates (RUNNING → SUCCESS/FAILED/MISCONFIGURED, concurrent under `app.import.max-concurrency`, 4) and delegates to
       `EventUpsertService` (dedupe, change detection, upsert, stale cleanup) and `AssociationSyncService` (artists and promoters by slug, created on
       `DataIntegrityViolationException` for concurrent safety, join tables diffed). Sources are rows created through `POST /api/admin/event-sources`, never

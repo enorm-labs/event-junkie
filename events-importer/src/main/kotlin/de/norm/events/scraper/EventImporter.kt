@@ -14,7 +14,7 @@ package de.norm.events.scraper
  * scraper testable against a saved snapshot.
  */
 interface EventImporter {
-    /** The event source this importer handles; [EventImportService] dispatches on it. */
+    /** The event source this importer handles; `EventImportService` dispatches on it. */
     val eventSource: EventSource
 
     /**
@@ -26,7 +26,7 @@ interface EventImporter {
 
     /**
      * Whether a run fetches anything past the entry page: detail pages, later listing pages, month
-     * pages. True makes [EventImportService] fetch unconditionally, because the entry page's ETag or
+     * pages. True makes `EventImportService` fetch unconditionally, because the entry page's ETag or
      * Last-Modified says nothing about those pages, and a 304 on it would skip them all (#2020).
      */
     val fetchesBeyondEntryPage: Boolean get() = false

@@ -1,7 +1,7 @@
 package de.norm.events.dataquality
 
-import de.norm.events.scraper.EventSourceEntity
-import de.norm.events.scraper.EventSourceRepository
+import de.norm.events.importing.EventSourceEntity
+import de.norm.events.importing.EventSourceRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk

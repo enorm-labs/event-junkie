@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventEntity
+import de.norm.events.importing.withGapsFromStored
 import de.norm.events.licence.SourceLicence
 import de.norm.events.licence.SourceLicences
 import io.kotest.assertions.throwables.shouldThrow

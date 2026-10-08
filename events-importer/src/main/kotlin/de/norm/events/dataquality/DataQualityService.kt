@@ -1,7 +1,7 @@
 package de.norm.events.dataquality
 
-import de.norm.events.scraper.EventQualityFlagRepository
-import de.norm.events.scraper.EventSourceRepository
+import de.norm.events.importing.EventQualityFlagRepository
+import de.norm.events.importing.EventSourceRepository
 import de.norm.events.scraper.isNonArtistName
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service

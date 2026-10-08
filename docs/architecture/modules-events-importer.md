@@ -12,9 +12,11 @@ flowchart TD
     common["common «open»"]
     dataquality["dataquality"]
     discogs["discogs"]
+    enrichment["enrichment"]
     event["event"]
     genretag["genretag"]
     image["image"]
+    importing["importing"]
     licence["licence"]
     musicbrainz["musicbrainz"]
     promoter["promoter"]
@@ -27,10 +29,15 @@ flowchart TD
     artist --> common
     artist --> slug
     dataquality --> event
+    dataquality --> importing
     dataquality --> scraper
     discogs --> artist
     discogs --> common
     discogs --> musicbrainz
+    enrichment --> artist
+    enrichment --> discogs
+    enrichment --> musicbrainz
+    enrichment --> wikimedia
     event --> artist
     event --> common
     event --> genretag
@@ -38,22 +45,28 @@ flowchart TD
     event --> slug
     event --> venue
     genretag --> common
+    importing --> artist
+    importing --> common
+    importing --> enrichment
+    importing --> event
+    importing --> genretag
+    importing --> licence
+    importing --> musicbrainz
+    importing --> promoter
+    importing --> scraper
+    importing --> slug
+    importing --> translation
+    importing --> venue
+    importing --> wikimedia
     musicbrainz --> artist
     musicbrainz --> common
     promoter --> common
     promoter --> slug
-    scraper --> artist
     scraper --> common
-    scraper --> discogs
     scraper --> event
     scraper --> genretag
     scraper --> licence
-    scraper --> musicbrainz
-    scraper --> promoter
     scraper --> slug
-    scraper --> translation
-    scraper --> venue
-    scraper --> wikimedia
     translation --> event
     venue --> common
     venue --> slug

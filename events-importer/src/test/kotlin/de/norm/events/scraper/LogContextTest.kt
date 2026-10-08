@@ -296,7 +296,7 @@ class LogContextTest {
     }
 
     /**
-     * `eventId` is the second key written two ways: as a payload by [EventUpsertService], as MDC by
+     * `eventId` is the second key written two ways: as a payload by `EventUpsertService`, as MDC by
      * [LogContext.forEvent] around the translation engine. Same tripwire as `url`.
      */
     @Nested

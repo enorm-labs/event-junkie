@@ -1,0 +1,520 @@
+package de.norm.events.importing
+
+import de.norm.events.event.EventContentStamp
+import de.norm.events.event.EventEntity
+import de.norm.events.event.EventRepository
+import de.norm.events.event.PinnedField
+import de.norm.events.licence.SourceLicences
+import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.LogFields
+import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dropPastEvents
+import de.norm.events.scraper.foldIntoRuns
+import de.norm.events.slug.SlugGenerator
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.flow.toList
+import org.springframework.stereotype.Service
+import java.time.Clock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+/**
+ * The persistence pipeline for scraped events: deduplication, upsert, stale cleanup.
+ * Association management is [AssociationSyncService]'s. Called within a transactional boundary
+ * managed by the caller.
+ */
+@Service
+@Suppress("TooManyFunctions") // One private function per step of the pipeline that upsertAndCleanup runs.
+class EventUpsertService(
+    private val eventRepository: EventRepository,
+    private val associationSyncService: AssociationSyncService,
+    /**
+     * Injected clock; Berlin in production, because a UTC "today" dropped last night one or two
+     * hours late and out of step with the BFF (#299).
+     */
+    private val clock: Clock = Clock.system(BERLIN),
+    private val performerTyping: PerformerTyping,
+    private val contentStamp: EventContentStamp
+) {
+    private val logger = KotlinLogging.logger {}
+
+    /**
+     * Deduplicates, upserts and cleans up stale events for one source, within the caller's
+     * transaction: drop events dated before today ([dropPastEvents]), deduplicate by generated slug,
+     * remove stale future events, upsert by `sourceId`, sync associations
+     * ([AssociationSyncService]).
+     *
+     * Cleanup before upsert, deliberately: `event.slug` is `UNIQUE` and derived from date + venue +
+     * title, not `sourceId`, so a stale row can sit on the slug an incoming row needs. SO36 listed a
+     * festival combi ticket (`so36:90006`) then a day-one ticket (`so36:93090`) with the same title
+     * and date; with the upsert first, the `INSERT` hit the old row's slug and the `executeMany`
+     * batch failed, taking all 111 SO36 events with it. Deleting first frees the slug, inside the
+     * same transaction.
+     *
+     * @param scrapedEvents the raw events from the scraper; may contain duplicates.
+     * @param staleCleanup how far [removeStaleEvents] reaches, or whether it runs at all.
+     * @return what the upsert did, split by operation. [UpsertOutcome.total] is what the source's
+     * `lastEventCount` records.
+     */
+    @Suppress("LongParameterList") // One parameter per fact about the source; a holder would exist for this one call.
+    suspend fun upsertAndCleanup(
+        scrapedEvents: List<ScrapedEvent>,
+        venueId: Long,
+        venueSlug: String,
+        eventSourceId: Long,
+        licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE,
+        staleCleanup: StaleCleanup = StaleCleanup.WINDOWED
+    ): UpsertOutcome {
+        // Before the stale cleanup, or the stored run is not in this scrape and is deleted.
+        val foldedEvents = foldIntoStoredRuns(scrapedEvents, eventSourceId)
+        val upcomingEvents = dropPastEvents(foldedEvents, eventSourceId)
+        val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
+        // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
+        removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
+        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
+            // Counted here rather than where they are dropped, because the tag needs the source slug and
+            // this service holds only the numeric id (#982).
+            .copy(
+                droppedPast = foldedEvents.size - upcomingEvents.size,
+                droppedDuplicate = upcomingEvents.size - uniqueEvents.size
+            )
+    }
+
+    /**
+     * Folds each day that names a stored run of this source ([ScrapedEvent.storedRunId]) into that
+     * run, before the stale cleanup could delete the run as unlisted (#2575).
+     */
+    private suspend fun foldIntoStoredRuns(
+        scrapedEvents: List<ScrapedEvent>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> {
+        val candidates = scrapedEvents.mapNotNullTo(mutableSetOf()) { it.storedRunId }
+        val storedRuns =
+            if (candidates.isEmpty()) {
+                emptySet()
+            } else {
+                eventRepository
+                    .findBySourceIdIn(candidates)
+                    .toList()
+                    .filter { it.eventSourceId == eventSourceId }
+                    .mapTo(mutableSetOf()) { it.sourceId }
+            }
+        if (storedRuns.isNotEmpty()) {
+            val days = scrapedEvents.count { it.storedRunId in storedRuns }
+            logger.info { "Folded $days day(s) into ${storedRuns.size} stored exhibition run(s) on event source $eventSourceId: their pages yielded nothing" }
+        }
+        return scrapedEvents.foldIntoRuns(storedRuns)
+    }
+
+    /**
+     * Drops scraped events dated before today. Calendar-style sources publish the whole standing
+     * programme, and [removeStaleEvents] never prunes past-dated rows, so re-importing would
+     * resurrect them every run. Same-day events are kept, matching the `tomorrow` lower bound used
+     * for cleanup. Existing past rows are untouched, simply not re-upserted.
+     */
+    private fun dropPastEvents(
+        scrapedEvents: List<ScrapedEvent>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> =
+        scrapedEvents.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from event source $eventSourceId" }
+        }
+
+    /**
+     * Upserts pre-deduplicated scraped events. An event whose `sourceId` exists is saved only when
+     * business-relevant fields changed, avoiding UPDATEs and inflated `updated_at`; new events are
+     * inserted. Associations are [AssociationSyncService]'s.
+     *
+     * @return inserted / updated / skipped. Not extra work: the split was already computed for the
+     * debug log, and `skipped` is the `unchanged` partition change detection produces (#415).
+     */
+    private suspend fun upsertEvents(
+        incomingEvents: List<ScrapedEvent>,
+        venueId: Long,
+        venueSlug: String,
+        eventSourceId: Long,
+        licences: SourceLicences
+    ): UpsertOutcome {
+        val existingBySourceId =
+            eventRepository
+                .findBySourceIdIn(incomingEvents.map { it.sourceId })
+                .toList()
+                .associateBy { it.sourceId }
+        val scrapedEvents = performerTyping.retype(keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId))
+
+        val discriminators = slugDiscriminators(scrapedEvents)
+        val fromSource = { scraped: ScrapedEvent, existing: EventEntity? ->
+            scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
+        }
+        val build = { scraped: ScrapedEvent, existing: EventEntity? -> PinnedField.keepPinned(fromSource(scraped, existing), existing) }
+        val sourceRows = scrapedEvents.map { scraped -> scraped to fromSource(scraped, existingBySourceId[scraped.sourceId]) }
+        val columnPinsKept = logger.keptColumnPins(sourceRows, existingBySourceId)
+        val candidates = sourceRows.map { (scraped, row) -> scraped to PinnedField.keepPinned(row, existingBySourceId[scraped.sourceId]) }
+        val resolved = resolveBySlug(candidates, existingBySourceId, eventSourceId, build)
+
+        val entities = resolved.kept
+        val (changed, unchanged) = partitionByChanged(entities, existingBySourceId, resolved.movedSourceIds)
+        val savedEvents =
+            if (changed.isNotEmpty()) {
+                eventRepository.saveAll(changed).toList() + unchanged
+            } else {
+                unchanged
+            }
+
+        val associations = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        // After the join tables, so the lineup is hashed as stored (#2768).
+        val contentChanged = contentStamp.restamp(savedEvents)
+        if (contentChanged > 0) logger.info { "Moved the content stamp of $contentChanged event(s) on event source $eventSourceId" }
+        val pinsKept = columnPinsKept + associations.pinsKept
+        if (pinsKept > 0) logger.info { "Kept $pinsKept pinned field(s) the source would have changed on event source $eventSourceId" }
+
+        // Only changed/new events are logged here; unchanged ones already are, in partitionByChanged.
+        var inserted = 0
+        changed.forEach { saved ->
+            // A row matched by slug existed too, under the `sourceId` it is being renamed away from.
+            val existed = existingBySourceId.containsKey(saved.sourceId) || saved.sourceId in resolved.movedSourceIds
+            if (!existed) inserted++
+            logger.at(Level.DEBUG) {
+                message = "${if (existed) "Updated" else "Created"} event '${saved.title}'"
+                payload = mapOf(LogFields.EVENT_ID to saved.id, LogFields.EVENT_SOURCE_ID to saved.sourceId)
+            }
+        }
+        return UpsertOutcome(
+            inserted = inserted,
+            updated = changed.size - inserted,
+            skipped = unchanged.size,
+            droppedSlugConflict = resolved.droppedSlugConflict,
+            pinsKept = pinsKept,
+            touchedArtistIds = associations.touchedArtistIds
+        )
+    }
+
+    /**
+     * Fills the empty fields of each [ScrapedEvent.detailUnavailable] row from its stored row. Runs
+     * before the entities are built, so the genre tags sync from the kept genre too (#2421).
+     */
+    private fun keepStoredDetail(
+        scrapedEvents: List<ScrapedEvent>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> {
+        val filled =
+            scrapedEvents.map { scraped ->
+                val stored = existingBySourceId[scraped.sourceId]?.takeIf { scraped.detailUnavailable }
+                if (stored != null) scraped.withGapsFromStored(stored) else scraped
+            }
+        val kept = scrapedEvents.count { it.detailUnavailable && it.sourceId in existingBySourceId }
+        if (kept > 0) {
+            logger.info { "Kept the stored detail fields of $kept event(s) on event source $eventSourceId: their detail page yielded nothing" }
+        }
+        return filled
+    }
+
+    /**
+     * Resolves the events that matched no `sourceId` against the second key, `event.slug`.
+     *
+     * `event.slug` is `UNIQUE` and carries date + venue + title, while a `sourceId` may carry a
+     * discriminator the slug does not — Velomax appends the session time, because one permalink
+     * serves several sittings. A venue that moves a published start time therefore moves the row's
+     * identity while its slug stands still, and the insert lands on the slug the old row holds. The
+     * stale sweep does not free it: [removeStaleEvents] starts tomorrow, and the identity of a
+     * same-day event moves while the event is still listed (#1719).
+     *
+     * A stored row of **this** source whose own `sourceId` this scrape does not claim is that event
+     * under a new identity: the entity is rebuilt on it, keeping `id` and `createdAt` and writing the
+     * **new** `sourceId`. Anything else — another source's row, or one this scrape already matched —
+     * cannot be taken, so the incoming event is dropped rather than left to fail the whole batch: one
+     * `executeMany` carries the run, and a violation inside it aborts the transaction.
+     *
+     * @param candidates each scraped event beside the entity built for it.
+     * @param build rebuilds one entity on a different existing row.
+     * @return the entities to save, which `sourceId`s arrived by a slug match, and how many events
+     * were refused.
+     */
+    private suspend fun resolveBySlug(
+        candidates: List<Pair<ScrapedEvent, EventEntity>>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long,
+        build: (ScrapedEvent, EventEntity?) -> EventEntity
+    ): SlugResolution {
+        val unmatched = candidates.filter { (scraped, _) -> scraped.sourceId !in existingBySourceId }
+        if (unmatched.isEmpty()) return SlugResolution(candidates.map { it.second })
+
+        val bySlug =
+            eventRepository
+                .findBySlugIn(unmatched.map { it.second.slug })
+                .toList()
+                .associateBy { it.slug }
+
+        val kept = mutableListOf<EventEntity>()
+        val moved = mutableSetOf<String>()
+        var dropped = 0
+        for ((scraped, entity) in candidates) {
+            val holder = if (scraped.sourceId in existingBySourceId) null else bySlug[entity.slug]
+            when {
+                holder == null -> {
+                    kept.add(entity)
+                }
+
+                // Its own row is claimed by another event of this scrape, so this one cannot have it.
+                holder.eventSourceId != eventSourceId || holder.sourceId in existingBySourceId -> {
+                    dropped++
+                    logger.at(Level.WARN) {
+                        message = "Skipping event '${scraped.title}' on ${scraped.eventDate}: slug '${entity.slug}' is held by another event"
+                        payload = mapOf(LogFields.EVENT_ID to holder.id, LogFields.EVENT_SOURCE_ID to holder.sourceId)
+                    }
+                }
+
+                else -> {
+                    moved.add(scraped.sourceId)
+                    kept.add(build(scraped, holder.copy(sourceId = scraped.sourceId)))
+                    logger.at(Level.INFO) {
+                        message = "Event '${scraped.title}' on ${scraped.eventDate} kept its slug and changed identity"
+                        payload = mapOf(LogFields.EVENT_ID to holder.id, LogFields.EVENT_SOURCE_ID to scraped.sourceId)
+                    }
+                }
+            }
+        }
+        return SlugResolution(kept, moved, dropped)
+    }
+
+    /** What [resolveBySlug] decided: the entities to save, the renamed ones, and the refused count. */
+    private data class SlugResolution(
+        val kept: List<EventEntity>,
+        val movedSourceIds: Set<String> = emptySet(),
+        val droppedSlugConflict: Int = 0
+    )
+
+    /**
+     * Removes duplicate events from the scraped list, keeping a second sitting. Keyed on date +
+     * title + start time (the venue is the same within one import). The start time separates the
+     * same event published twice (SO36's combi ticket beside its day-one ticket, 19:30 both, first
+     * wins) from two sittings of one production (Theater im Delphi's Schwanensee at 15:00 and
+     * 20:00, both kept, [slugDiscriminators] giving each its own slug). No start time collapses to
+     * one.
+     *
+     * A repeated `sourceId` collapses too, whatever the times say: `event.source_id` is `UNIQUE`,
+     * and several scrapers key on the show and date rather than the session (Admiralspalast:
+     * `admiralspalast:mamma-mia-…-2027-09-18`). Without this guard `saveAll` issues two UPDATEs to
+     * one row, last write wins, and the slug flips every import. Recovering those sittings re-keys
+     * that venue's whole history (#333).
+     */
+    private fun deduplicateScrapedEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
+        val seenIds = mutableSetOf<String>()
+        val seenKeys = mutableSetOf<String>()
+        return events.filter { event ->
+            val isNew = seenIds.add(event.sourceId) && seenKeys.add(dedupKey(event))
+            if (!isNew) {
+                logger.at(Level.WARN) {
+                    message = "Skipping duplicate event '${event.title}' on ${event.eventDate}"
+                    payload = mapOf(LogFields.EVENT_SOURCE_ID to event.sourceId)
+                }
+            }
+            isNew
+        }
+    }
+
+    /** Date + title + start time — see [deduplicateScrapedEvents] for why the time is in the key. */
+    private fun dedupKey(event: ScrapedEvent): String =
+        SlugGenerator.slugify("${event.eventDate}-${event.storedTitle()}") + "@" + event.startTime?.format(SLUG_TIME).orEmpty()
+
+    /**
+     * The slug discriminator each event needs, keyed by `sourceId`; absent for events that need
+     * none. `event.slug` is `UNIQUE` and built from date + venue + title, so two sittings collide on
+     * insert; only the full scrape can see the collision, so it is computed here and handed to
+     * [ScrapedEvent.toEventEntity]. Every member of a colliding group is suffixed, including the
+     * first: suffixing only the later ones would read as if one were the real event, and which got
+     * the bare slug would depend on page order, so a reordered listing would swap two public URLs.
+     */
+    private fun slugDiscriminators(events: List<ScrapedEvent>): Map<String, String> =
+        events
+            .groupBy { SlugGenerator.slugify("${it.eventDate}-${it.storedTitle()}") }
+            .filterValues { group -> group.size > 1 }
+            .values
+            .flatten()
+            .mapNotNull { event -> event.startTime?.let { event.sourceId to it.format(SLUG_TIME) } }
+            .toMap()
+
+    /**
+     * Removes future events previously imported from this source that are no longer listed. Past
+     * events are always preserved.
+     *
+     * The window starts tomorrow, not today: many venues stop listing an event once the day begins,
+     * so `today` would delete same-day events that are happening. A genuinely cancelled today-event
+     * stays for at most a few hours until it is past.
+     *
+     * The window ends at the latest scraped date, so events on pages we did not fetch survive. An
+     * [StaleCleanup.OPEN_ENDED] scrape has no such pages, and its window has no end: a far-future
+     * date the venue dropped would otherwise stay until it passed (#1974). A
+     * [StaleCleanup.SKIPPED] scrape lost a page that holds events, so an absence proves nothing
+     * (#1980).
+     *
+     * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
+     * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
+     */
+    private suspend fun removeStaleEvents(
+        scrapedEvents: List<ScrapedEvent>,
+        eventSourceId: Long,
+        staleCleanup: StaleCleanup
+    ) {
+        if (scrapedEvents.isEmpty()) return
+        if (staleCleanup == StaleCleanup.SKIPPED) {
+            logger.info { "Skipped the stale cleanup for event source $eventSourceId: the scrape is incomplete" }
+            return
+        }
+
+        val tomorrow = LocalDate.now(clock).plusDays(1)
+        val maxScrapedDate = scrapedEvents.maxOf { it.eventDate }
+        val scrapedSourceIds = scrapedEvents.map { it.sourceId }.toSet()
+
+        // All events from this source within the cleanup window, from tomorrow (KDoc).
+        val existingEvents =
+            if (staleCleanup == StaleCleanup.OPEN_ENDED) {
+                eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, tomorrow)
+            } else {
+                eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, fromDate = tomorrow, toDate = maxScrapedDate)
+            }.toList()
+
+        val staleEvents = existingEvents.filter { it.sourceId !in scrapedSourceIds }
+
+        if (staleEvents.isNotEmpty()) {
+            val staleIds = staleEvents.mapNotNull { it.id }
+            eventRepository.deleteByIdIn(staleIds)
+            staleEvents.forEach { event ->
+                logger.at(Level.INFO) {
+                    message = "Removed stale event '${event.title}' on ${event.eventDate}"
+                    payload = mapOf(LogFields.EVENT_ID to event.id, LogFields.EVENT_SOURCE_ID to event.sourceId)
+                }
+            }
+            val window = if (staleCleanup == StaleCleanup.OPEN_ENDED) "from $tomorrow, open-ended" else "from $tomorrow to $maxScrapedDate"
+            logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId ($window)" }
+        }
+    }
+
+    /**
+     * Partitions built entities into changed-or-new and identical to their database row, so only the
+     * former are saved.
+     *
+     * @param movedSourceIds the `sourceId`s [resolveBySlug] matched by slug rather than by identity.
+     * @return a pair of (changed/new entities, unchanged entities).
+     */
+    private fun partitionByChanged(
+        entities: List<EventEntity>,
+        existingBySourceId: Map<String, EventEntity>,
+        movedSourceIds: Set<String>
+    ): Pair<List<EventEntity>, List<EventEntity>> {
+        val changed = mutableListOf<EventEntity>()
+        val unchanged = mutableListOf<EventEntity>()
+
+        for (entity in entities) {
+            // A renamed row is always written: the new `sourceId` has to reach the database even when
+            // every other field stood still, or the next run matches it by slug again (#1719).
+            val existing = if (entity.sourceId in movedSourceIds) null else existingBySourceId[entity.sourceId]
+            if (existing == null || !entity.contentEquals(existing)) {
+                changed.add(entity)
+            } else {
+                unchanged.add(entity)
+                logger.debug { "Skipping unchanged event '${entity.title}' (sourceId=${entity.sourceId})" }
+            }
+        }
+
+        if (unchanged.isNotEmpty()) {
+            logger.info { "Skipped ${unchanged.size} unchanged event(s), saving ${changed.size} changed/new event(s)" }
+        }
+
+        return changed to unchanged
+    }
+
+    /**
+     * Whether this entity has the same business-relevant content as [other]: audit fields (`id`,
+     * `createdAt`, `updatedAt`) normalised, then data class `equals()`, so new fields are covered
+     * automatically. An extension in the scraper module rather than an override on [EventEntity],
+     * which would break Spring Data R2DBC identity semantics.
+     */
+    private fun EventEntity.contentEquals(other: EventEntity): Boolean = copy(id = other.id, createdAt = other.createdAt, updatedAt = other.updatedAt) == other
+
+    private companion object {
+        /** `20:00` → `2000`: colon-free so it survives slugification as one token, not two. */
+        val SLUG_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
+    }
+}
+
+/**
+ * What one source's upsert did, split the way `importer.events.written` is tagged. "42 events"
+ * is the same number whether the venue published a fresh programme or nothing changed, and
+ * telling those apart is the difference between a working importer and one silently scraping a
+ * redesigned page (#415, ADR-015). `skipped` is change detection reporting that it worked.
+ */
+data class UpsertOutcome(
+    /** Events that did not exist and were written. */
+    val inserted: Int,
+    /** Events that existed and whose content had changed. */
+    val updated: Int,
+    /** Events that existed and were byte-identical, so no UPDATE was issued. */
+    val skipped: Int,
+    /**
+     * Scraped events discarded as already past (#982). Carried out because `importer.events.dropped`
+     * is tagged by source slug, which `EventImportService` holds.
+     */
+    val droppedPast: Int = 0,
+    /** Scraped events discarded as duplicates within one scrape (#982). */
+    val droppedDuplicate: Int = 0,
+    /**
+     * Scraped events refused because another event already holds the slug they would need (#1719).
+     * Rare, and a real conflict: two different events on one date with one title, which the
+     * `event_slug_key` constraint exists to refuse.
+     */
+    val droppedSlugConflict: Int = 0,
+    /** Pinned fields the source would have changed, kept as the operator set them (ADR-042). */
+    val pinsKept: Int = 0,
+    /**
+     * The artist rows this run billed, created or found, for the MusicBrainz sweep that runs after
+     * the commit over what the import touched (#1567).
+     */
+    val touchedArtistIds: Set<Long> = emptySet()
+) {
+    /**
+     * Every event the run touched, what still reaches `event_source.last_event_count`.
+     */
+    val total: Int get() = inserted + updated + skipped
+
+    /**
+     * Everything the run threw away before writing. Not added to [total], which feeds
+     * `event_source.last_event_count`: a dropped event holds nothing.
+     */
+    val dropped: Int get() = droppedPast + droppedDuplicate + droppedSlugConflict
+}
+
+/**
+ * How many pinned columns the source would have changed on rows matched by `sourceId`, each
+ * logged at DEBUG (ADR-042). [sourceRows] are the rows as the source alone would write them.
+ */
+private fun KLogger.keptColumnPins(
+    sourceRows: List<Pair<ScrapedEvent, EventEntity>>,
+    existingBySourceId: Map<String, EventEntity>
+): Int =
+    sourceRows.sumOf { (scraped, row) ->
+        val stored = existingBySourceId[scraped.sourceId]
+        val overridden = stored?.let { PinnedField.of(it.pinnedFields).filter { field -> field.differs(row, it) } }.orEmpty()
+        overridden.forEach { field ->
+            at(Level.DEBUG) {
+                message = "Kept the pinned ${field.key} of event '${stored?.title}': the source would change it"
+                payload = mapOf(LogFields.EVENT_ID to stored?.id, LogFields.EVENT_SOURCE_ID to scraped.sourceId)
+            }
+        }
+        overridden.size
+    }
+
+/** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
+enum class StaleCleanup {
+    /** From tomorrow to the scrape's last date: pages the run did not fetch keep their events. */
+    WINDOWED,
+
+    /** From tomorrow, with no end: the scrape is the source's whole programme (#1974). */
+    OPEN_ENDED,
+
+    /** None: a page that holds events failed, so a missing event may still be listed (#1980). */
+    SKIPPED
+}
