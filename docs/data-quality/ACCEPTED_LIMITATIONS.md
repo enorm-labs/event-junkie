@@ -37,6 +37,12 @@ says so.
 | `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name, so only the genre words in it become the genre                                       | —     |
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
+| `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
+| `BALLHAUS_WEDDING`     | `ARTISTS`          | the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act                                                           | —     |
+| `BALLHAUS_WEDDING`     | `IMAGE`            | only the entries with a Wix Events page have a poster; the programme has none                                                                    | —     |
+| `BALLHAUS_WEDDING`     | `GENRE`            | nothing on the programme names a style                                                                                                           | —     |
+| `BALLHAUS_WEDDING`     | `DOORS_TIME`       | the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event                                          | —     |
+| `BALLHAUS_WEDDING`     | `END_TIME`         | only the Wix Events pages state an end                                                                                                           | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary                                              | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |

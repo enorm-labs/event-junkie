@@ -34,6 +34,9 @@ enum class EventSource {
     /** Astra Kulturhaus Berlin – a large concert venue on the RAW-Gelände hosting touring rock, pop, indie and electronic acts. */
     ASTRA,
 
+    /** Ballhaus Wedding Berlin – an 1899 back-courtyard ballroom with concerts, dance socials, slams, improv and variety evenings. */
+    BALLHAUS_WEDDING,
+
     /** Bar jeder Vernunft Berlin – a 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows. */
     BAR_JEDER_VERNUNFT,
 

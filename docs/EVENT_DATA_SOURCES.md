@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   117 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    53 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   118 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    52 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -50,6 +50,7 @@ schema change.
 | ART Stalker                      | https://art-stalker.reservix.de/                            | Bar          | Reservix shop root; robots bars `/events`, 25 events      |
 | Astra Kulturhaus                 | https://www.astra-berlin.de/                                | Concert Hall | schema.org `MusicEvent`; presale + door prices            |
 | Badehaus                         | https://badehaus-berlin.com/                                | Club         | "AUSVERKAUFT"/"VERLEGT" labels; ticket + FB links         |
+| Ballhaus Wedding                 | https://www.ballhauswedding.de/veranstaltungen              | Other        | Wix rich text; years by weekday vote; Wix Events          |
 | Bar jeder Vernunft               | https://www.bar-jeder-vernunft.de/de/programm/kalender.html | Bar          | Neos; per-date JSON-LD; one show page per run             |
 | Bar Tausend                      | https://tausendberlin.com/                                  | Bar          | Divi JSON-LD graph; full and EN text from blocks          |
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                     | Techno Club  | Server-rendered; list + detail                            |
@@ -158,7 +159,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-116 importer classes cover 117 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+117 importer classes cover 118 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -179,7 +180,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-46 sources have a second language, 67 have none, and 4 are unknown. Eight translate the event text on a second page.
+46 sources have a second language, 68 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -210,6 +211,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | ART Stalker                      | Yes             | `?_locale=en` on the Reservix shop                           | Not translated     | https://art-stalker.reservix.de/events?_locale=en                                                                                  |
 | Astra Kulturhaus                 | No              | —                                                            | —                  |                                                                                                                                    |
 | Badehaus                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://badehaus-berlin.com/en/                                                                                                    |
+| Ballhaus Wedding                 | No              | —                                                            | —                  |                                                                                                                                    |
 | Bar jeder Vernunft               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.bar-jeder-vernunft.de/en/whats-on/calendar.html                                                                        |
 | Bar Tausend                      | Yes             | Separate page, `hreflang` on the link                        | Translated         | https://tausendberlin.com/en/lineup/                                                                                               |
 | Berghain / Panorama Bar          | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/                                                                                            |
@@ -340,7 +342,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| Ballhaus Wedding               | https://www.ballhauswedding.de/veranstaltungen                           | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images   |
 | Richten25                      | https://richten25.de/events                                              | Other        | Medium   | Hostinger builder; ~25 dated titles in the page JSON         |
 | 808 Berlin                     | https://808.berlin/                                                      | Club         | Medium   | Astro one-pager; dated lineups; no times, prices, images     |
 | House of Music                 | https://www.houseofmusic.berlin/                                         | Concert Hall | Medium   | Wix Events warmup JSON; 11 upcoming; some quiz nights        |
@@ -408,13 +409,6 @@ not point at the venue's own page:
 **Promenaden Eck** renders in the browser. The page reads its events from a public Supabase table, with the anon key
 that the page itself ships. That is a JSON endpoint behind the page, like the Wix warmup data. Confirm that
 [ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) covers it before the importer is built.
-
-**The two rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
-handle:
-
-- **Ballhaus Wedding** is a small mixed stage. Music is one part of a programme with improv, readings and dance
-  socials. Its dates have no year, so take it from the month headings. Its entries have no fixed shape, so the parser
-  is brittle.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
