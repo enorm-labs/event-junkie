@@ -129,6 +129,7 @@
 ###   Zenner               — https://zenner.berlin/programm
 ###   Zig Zag Hall         — https://www.zigzag-jazzclub.berlin/programmneu
 ###   Zig Zag Jazz Club    — https://www.zigzag-jazzclub.berlin/programmneu
+###   Zimmer 16            — https://zimmer16.com/
 ###   Zitadelle            — https://citadel-music-festival.de/events
 ###   Zur Klappe           — https://zurklappe.org/events
 ###
@@ -252,7 +253,6 @@
 ###   YAAM                           — https://yaam.de/programm/
 ###   YSY                            — https://ra.co/clubs/253763
 ###   Zebrano-Theater                — https://www.zebrano-theater.de/programm.html
-###   Zimmer 16                      — https://zimmer16.com/
 ###   Zuckerzauber                   — https://ra.co/clubs/137711
 ###
 ### ============================================================
@@ -11134,7 +11134,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Zimmer 16 (Florastraße 16, Berlin-Pankow — not imported, #2766)
+### Zimmer 16 (Florastraße 16, Berlin-Pankow)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Zimmer 16 venue ---
@@ -11156,13 +11156,45 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "theatre"],
     "capacity": 60,
-    "programmeUrl": "https://zimmer16.com/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("zimmer16_venue_id", response.body.id);
     client.test("Zimmer 16 venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Zimmer 16 event source ---
+# Links the venue to the Zimmer16WebsiteImporter.
+# The sourceType "ZIMMER_16" matches EventSource.ZIMMER_16.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{zimmer16_venue_id}},
+    "name": "Zimmer 16",
+    "url": "https://zimmer16.com/",
+    "sourceType": "ZIMMER_16",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Zimmer 16 event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Zimmer 16 import ---
+POST {{importer-host}}/api/admin/event-sources/zimmer-16/import
+Accept: application/json
+
+> {%
+    client.test("Zimmer 16 import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

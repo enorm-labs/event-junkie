@@ -357,6 +357,9 @@ enum class EventSource {
     /** Zig Zag Jazz Club – a jazz club on Hauptstraße in Schöneberg, by Innsbrucker Platz, with a concert most nights and a weekly jam session. */
     ZIG_ZAG_JAZZ_CLUB,
 
+    /** ZIMMER 16 Berlin – MIKADO e.V.'s volunteer-run stage in a former Pankow cinema, with concerts, theatre, comedy and film evenings. */
+    ZIMMER_16,
+
     /** Zitadelle Spandau – the Renaissance fortress whose courtyard hosts the Citadel Music Festival, an open-air concert series each summer. */
     ZITADELLE,
 

@@ -387,6 +387,12 @@ says so.
 | `ZIG_ZAG_JAZZ_CLUB`    | `PROMOTERS`        | the club presents every night itself, in both houses                                                                                             | —     |
 | `ZIG_ZAG_JAZZ_CLUB`    | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `ZIG_ZAG_JAZZ_CLUB`    | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
+| `ZIMMER_16`            | `PAGINATION`       | the homepage shows the next 20 adult events, about four weeks                                                                                    | —     |
+| `ZIMMER_16`            | `EVENT_TYPE`       | the venue names no category, so a night without a format word is a concert, which mislabels a talk or a film night                               | —     |
+| `ZIMMER_16`            | `ARTISTS`          | the site has no line-up field; a title with a tagline or a programme name names nobody                                                           | —     |
+| `ZIMMER_16`            | `GENRE`            | nothing on the cards or the event pages names a style                                                                                            | —     |
+| `ZIMMER_16`            | `DOORS_TIME`       | each event states its start and end, no doors time                                                                                               | —     |
+| `ZIMMER_16`            | `PRICE_PRESALE`    | tickets are reserved on YesTicket and paid at the door                                                                                           | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
 | `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |
