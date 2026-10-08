@@ -2,6 +2,7 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -14,9 +15,11 @@ import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -45,9 +48,9 @@ import java.util.Locale
  * `Record Hop:` the night's rock'n'roll DJ (#2332). A block with a headliner label is a named
  * night ("40 Jahre Louisiana Rebs Berlin"), so its title is that name, read from the line in
  * front of the first label. A block without one keeps the first `Stil11` line as its title (see
- * [billing] for its acts). A block with no label at all bills no act, an accepted `ARTISTS`
- * limitation (#2369). `Special guests:` is not read: on the one page that used it, it named a
- * video artist and a DJ in one unseparated line.
+ * [billing] for its acts). A `LINEUP -` paragraph keeps the title (see [parseDashLineup]). A
+ * block with no label at all bills no act, an accepted `ARTISTS` limitation (#2369). `Special
+ * guests:` is not read: on the one page that used it, it named a video artist and a DJ in one line.
  *
  * The `sourceId` is the date plus the first `Stil11` line, which was the title before #2332. A
  * named night keeps the key it had when its act line was the title, so the change re-keys no row.
@@ -140,9 +143,10 @@ class RoadrunnerOverviewPageScraper(
         }
 
         val lineup = parseLineup(block)
-        val billedActs = lineup.flatMap { it.acts }
-        val hasHeadliner = billedActs.any { it.role == HEADLINER }
-        val nightName = if (hasHeadliner) parseNightName(block, dateLine, lineup) else null
+        val namesNight = lineup.any { entry -> entry.acts.any { it.role == HEADLINER } }
+        val nightName = if (namesNight) parseNightName(block, dateLine, lineup) else null
+        val billedActs = lineup.flatMap { it.acts } + parseDashLineup(block)
+        val credit = parseCredit(block, dateLine)
         val title = nightName?.text()?.trim() ?: keyLine
         val eventType = inferConcertVenueType(title)
 
@@ -156,7 +160,7 @@ class RoadrunnerOverviewPageScraper(
                 ?.attr("src")
                 ?.takeIf { it.isNotBlank() }
                 ?.let { runCatching { resolveUrl(baseUrl, it.replace(" ", "%20")) }.getOrNull() }
-        val lineupParagraphs = lineup.flatMap { it.paragraphs } + listOfNotNull(nightName)
+        val lineupParagraphs = lineup.flatMap { it.paragraphs } + listOfNotNull(nightName, credit)
         val description = parseDescription(block, dateLine, title, lineupParagraphs)
 
         return ScrapedEvent(
@@ -173,7 +177,8 @@ class RoadrunnerOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ROADRUNNER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(keyLine)}",
             ticketUrl = ticketUrl,
-            artists = billing(title, description, billedActs)
+            artists = billing(title, description, billedActs),
+            promoters = listOfNotNull(credit?.let { promoterFromCredit(it.text()) })
         )
     }
 
@@ -243,6 +248,33 @@ class RoadrunnerOverviewPageScraper(
         }
         return entries
     }
+
+    /**
+     * The acts a `LINEUP -` paragraph lists on its `- ` lines, as headliners in page order. Its label
+     * line is prose ("Following bands will send members …"), so only the dashed lines bill. A
+     * `LINE-UP:` with undashed lines (a burlesque cast) bills nothing. The paragraph stays in the
+     * description, which keeps its note on past line-ups.
+     */
+    private fun parseDashLineup(block: List<Element>): List<ScrapedArtist> {
+        val start = block.indexOfFirst { p -> p.textLines().firstOrNull()?.let { DASH_LINEUP_LABEL.containsMatchIn(it) } == true }
+        if (start < 0) return emptyList()
+        return (listOf(block[start].textLines().drop(1)) + block.drop(start + 1).map { it.textLines() })
+            .flatten()
+            .takeWhile { DASH_LINE.containsMatchIn(it) }
+            .map { it.replace(DASH_LINE, "").trimEnd('!') }
+            .flatMap { splitActs(it) }
+            .map { ScrapedArtist(name = it, role = HEADLINER) }
+    }
+
+    /** The `<name> presents:` paragraph between the date line and the title, if any. */
+    private fun parseCredit(
+        block: List<Element>,
+        dateLine: Element
+    ): Element? =
+        block
+            .drop(block.indexOfFirst { it === dateLine } + 1)
+            .takeWhile { titleElement(it) == null }
+            .firstOrNull { PRESENTS_LINE.matches(it.text().trim()) }
 
     /** A paragraph that can carry a bare label's acts: text that is no label, doors line, link, flyer or note. */
     private fun isActLine(p: Element): Boolean {
@@ -374,6 +406,15 @@ class RoadrunnerOverviewPageScraper(
 
         /** A line-up label at the start of a paragraph, capturing the label and the acts after its colon. */
         private val LINEUP_LABEL = Regex("""^(live|featuring|support|record\s+hop)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
+
+        /** A `LINEUP -` or `LINE-UP:` label opening a paragraph's first line. */
+        private val DASH_LINEUP_LABEL = Regex("""^line[\s-]?up\s*[:\-–]""", RegexOption.IGNORE_CASE)
+
+        /** The `- ` that opens one act's line under a [DASH_LINEUP_LABEL]. */
+        private val DASH_LINE = Regex("""^[-–]\s+""")
+
+        /** A promoter's credit line: `The David Watts Foundation presents:`. */
+        private val PRESENTS_LINE = Regex(""".+\s(?:$PRESENTS_WORDS)\s*:?""", RegexOption.IGNORE_CASE)
 
         /** The role each [LINEUP_LABEL] bills. A record hop is a rock'n'roll DJ set. */
         private val LINEUP_ROLES = mapOf("live" to HEADLINER, "featuring" to HEADLINER, "support" to SUPPORT, "record hop" to DJ)
