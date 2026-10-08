@@ -100,6 +100,7 @@
 ###   Quasimodo            — https://quasimodo.club/events
 ###   Quatsch Comedy Club  — https://quatsch-comedy-club.de/tickets/
 ###   Renate               — https://www.renate.cc/
+###   Richten25            — https://richten25.de/events
 ###   Ritter Butzke        — https://club.ritterbutzke.com/events
 ###   Roadrunner's Paradise — http://www.roadrunners-paradise.de/programm.html
 ###   ROSA                 — https://www.rosaclub.de/dates
@@ -217,7 +218,6 @@
 ###   Prisma                         — https://ra.co/clubs/233209
 ###   Promenadeneck                  — https://promenaden-eck-berlin.de/
 ###   Revier Südost                  — https://www.reviersuedost.de/programm
-###   Richten25                      — https://richten25.de/events
 ###   Rosie's Bar                    — https://ra.co/promoters/181571
 ###   RSO.Berlin                     — https://ra.co/clubs/185172
 ###   SaliGari Bar                   — https://www.yesticket.org/venue/Saligari-Bar/en/
@@ -8104,7 +8104,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Richten25 (Gerichtstraße 25, Berlin-Wedding — not imported, #2766)
+### Richten25 (Gerichtstraße 25, Berlin-Wedding)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Richten25 venue ---
@@ -8125,13 +8125,45 @@ Content-Type: application/json
     "descriptionAlt": "Ehrenamtlich getragener, gemeinnütziger Raum für experimentelle Musik und Kunst im Wedding, betrieben von Odamusik e.V. – mit mehreren Konzerten pro Woche und kuratierten Reihen zu Tanzimprovisation, grafischen Partituren und audiovisueller Kunst.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "cultural-centre"],
-    "programmeUrl": "https://richten25.de/events",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("richten25_venue_id", response.body.id);
     client.test("Richten25 venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Richten25 event source ---
+# Links the venue to the Richten25WebsiteImporter.
+# The sourceType "RICHTEN25" matches EventSource.RICHTEN25.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{richten25_venue_id}},
+    "name": "Richten25",
+    "url": "https://richten25.de/events",
+    "sourceType": "RICHTEN25",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Richten25 event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Richten25 import ---
+POST {{importer-host}}/api/admin/event-sources/richten25/import
+Accept: application/json
+
+> {%
+    client.test("Richten25 import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

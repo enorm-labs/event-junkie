@@ -261,6 +261,9 @@ enum class EventSource {
     /** Renate (Wilde Renate) Berlin – a warren of a techno club in a derelict Friedrichshain apartment house, with several floors and a summer garden. */
     RENATE,
 
+    /** Richten25 Berlin – a volunteer-run Wedding space for experimental music and art, kept by Odamusik e.V., with several concerts a week. */
+    RICHTEN25,
+
     /** Ritter Butzke Berlin – a long-running Kreuzberg techno club in a former factory, running several floors a night. */
     RITTER_BUTZKE,
 
