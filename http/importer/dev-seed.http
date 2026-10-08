@@ -15,6 +15,7 @@
 ###   deletes the venue, its source row and its one past event.
 ###
 ### Sources (alphabetical):
+###   808 Nachtklub Berlin — https://808.berlin/
 ###   A-Trane              — https://a-trane.de/programm/
 ###   Abstand              — https://radar.squat.net/en/node/1608
 ###   Admiralspalast       — https://www.admiralspalast.theater/veranstaltungsuebersicht.html
@@ -137,7 +138,6 @@
 ###
 ### Venues without an importer (alphabetical), #2766:
 ###   800A Bar & Cabaret             — https://www.800aberlin.com/
-###   808 Nachtklub Berlin           — https://808.berlin/
 ###   8MM Bar                        — https://www.8mmbar.de/program
 ###   ://about blank                 — https://aboutblank.li/next
 ###   ACUD MACHT NEU                 — https://acudmachtneu.de/programm/
@@ -290,7 +290,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### 808 Nachtklub Berlin (Budapester Straße 38-40, Berlin-Charlottenburg — not imported, #2766)
+### 808 Nachtklub Berlin (Budapester Straße 38-40, Berlin-Charlottenburg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create 808 Nachtklub Berlin venue ---
@@ -311,13 +311,45 @@ Content-Type: application/json
     "descriptionAlt": "Nachtclub im Bikini Berlin am Zoo, freitags und samstags geöffnet, mit der Reihe Heartbreak an jedem Freitag und buchbaren Lounges.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
-    "programmeUrl": "https://808.berlin/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("nachtklub_808_venue_id", response.body.id);
     client.test("808 Nachtklub Berlin venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create 808 Nachtklub Berlin event source ---
+# Links the venue to the Nachtklub808WebsiteImporter.
+# The sourceType "NACHTKLUB_808" matches EventSource.NACHTKLUB_808.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{nachtklub_808_venue_id}},
+    "name": "808 Nachtklub Berlin",
+    "url": "https://808.berlin/",
+    "sourceType": "NACHTKLUB_808",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("808 Nachtklub Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial 808 Nachtklub Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/808-nachtklub-berlin/import
+Accept: application/json
+
+> {%
+    client.test("808 Nachtklub Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

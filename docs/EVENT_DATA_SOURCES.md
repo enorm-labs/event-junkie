@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   119 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    51 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   120 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    50 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -40,6 +40,7 @@ schema change.
 
 | Name                             | URL                                                         | Type         | Comment                                                   |
 | -------------------------------- | ----------------------------------------------------------- | ------------ | --------------------------------------------------------- |
+| 808 Nachtklub Berlin             | https://808.berlin/                                         | Club         | Astro island props; opening hours from JSON-LD            |
 | A-Trane                          | https://a-trane.de/                                         | Club         | EventON cards: JSON-LD, style tags, ticket prices         |
 | Abstand                          | https://radar.squat.net/en/node/1608                        | Bar          | radar group API; bands only in prose                      |
 | ÆDEN                             | https://aedenberlin.com/                                    | Techno Club  | WordPress; /events → month pages; no prices               |
@@ -160,7 +161,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-118 importer classes cover 119 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+119 importer classes cover 120 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -181,7 +182,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-46 sources have a second language, 69 have none, and 4 are unknown. Eight translate the event text on a second page.
+47 sources have a second language, 69 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -202,6 +203,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
 | -------------------------------- | --------------- | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 808 Nachtklub Berlin             | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://808.berlin/en/                                                                                                             |
 | A-Trane                          | Yes             | One field: German, then `English`                            | One field          | https://a-trane.de/                                                                                                                |
 | Abstand                          | Unknown         | radar.squat.net sent a bot challenge                         | —                  |                                                                                                                                    |
 | ÆDEN                             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -344,7 +346,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| 808 Berlin                     | https://808.berlin/                                                      | Club         | Medium   | Astro one-pager; dated lineups; no times, prices, images     |
 | House of Music                 | https://www.houseofmusic.berlin/                                         | Concert Hall | Medium   | Wix Events warmup JSON; 11 upcoming; some quiz nights        |
 | Pfefferberg Haus 13            | https://haus13.pfefferwerk.de/veranstaltungen/                           | Concert Hall | Medium   | Event Organiser iCal; 8 upcoming; talks need a filter        |
 | Slaughterhouse                 | https://slaughterhouse-berlin.de/konzerte/                               | Club         | Medium   | Gutenberg paragraphs; 6 dated entries, unsorted              |
@@ -394,7 +395,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot                  | https://backsteinboot.org/program-(landing-page)-1                       | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
 | Soulcat                        | https://soulcat-berlin.com/                                              | Bar          | Medium   | TEC REST API; skip the "Fussball" rows                       |
 
-**The 11 rows from 808 Berlin to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
+**The 10 rows from House of Music to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 

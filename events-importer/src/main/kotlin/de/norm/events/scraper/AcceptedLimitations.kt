@@ -72,6 +72,7 @@ import de.norm.events.scraper.modus.MODUS_LIMITATIONS
 import de.norm.events.scraper.monarch.MONARCH_LIMITATIONS
 import de.norm.events.scraper.monsterronsons.MONSTER_RONSONS_LIMITATIONS
 import de.norm.events.scraper.morphine.MORPHINE_LIMITATIONS
+import de.norm.events.scraper.nachtklub808.NACHTKLUB_808_LIMITATIONS
 import de.norm.events.scraper.neuezukunft.NEUE_ZUKUNFT_LIMITATIONS
 import de.norm.events.scraper.ohm.OHM_LIMITATIONS
 import de.norm.events.scraper.orangerie.ORANGERIE_LIMITATIONS
@@ -194,6 +195,7 @@ object AcceptedLimitations {
             MONARCH_LIMITATIONS,
             MONSTER_RONSONS_LIMITATIONS,
             MORPHINE_LIMITATIONS,
+            NACHTKLUB_808_LIMITATIONS,
             NEUE_ZUKUNFT_LIMITATIONS,
             OHM_LIMITATIONS,
             ORANGERIE_LIMITATIONS,
