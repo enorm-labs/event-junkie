@@ -3,6 +3,7 @@ package de.norm.events.scraper.ufafabrik
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.parseIsoDate
@@ -93,7 +94,6 @@ class UfaFabrikMonthPageScraper {
     private fun Map<String, BigDecimal?>.labelled(label: String): BigDecimal? = entries.firstOrNull { it.key.equals(label, ignoreCase = true) }?.value
 
     private companion object {
-        const val ISO_DATE_LENGTH = 10
         const val ADMISSION_LABEL = "Eintritt"
         const val PRESALE_LABEL = "Vorverkauf"
         const val BOX_OFFICE_LABEL = "Abendkasse"

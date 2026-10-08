@@ -2,6 +2,7 @@ package de.norm.events.scraper.kesselhaus
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -24,7 +25,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneId
 import java.time.format.DateTimeParseException
 
 /**
@@ -223,8 +223,6 @@ class KesselhausCalendarScraper(
     }
 
     companion object {
-        private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-
         /** Five months per page, so a centre three past the last shown month leaves no gap. */
         private const val WINDOW_STEP_MONTHS = 3L
 
