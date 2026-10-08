@@ -243,6 +243,26 @@ test.describe('a past event', () => {
     await expect(page.getByText('DJ', { exact: true })).toHaveCount(2)
   })
 
+  test('a live act on a DJ night is labelled Live and printed at the DJs\' size', async ({ page }) => {
+    // Berghain's `Live` marker says the act plays live, not that it tops the bill (#2925).
+    const liveSet = {
+      ...eventBody,
+      lineup: [
+        { artist: { slug: 'dj-one', name: 'DJ One' }, role: 'DJ', billingOrder: 0 },
+        { artist: { slug: 'hansgod', name: 'Hansgod' }, role: 'LIVE', billingOrder: 1 },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, liveSet))
+
+    await page.goto('/en/events/mock-event')
+
+    await expect(page.getByText('Live', { exact: true })).toHaveCount(1)
+    await expect(page.getByText('Headliner', { exact: true })).toHaveCount(0)
+    const size = (name: string) =>
+      page.getByText(name, { exact: true }).evaluate((el) => getComputedStyle(el).fontSize)
+    expect(await size('Hansgod')).toBe(await size('DJ One'))
+  })
+
   test('keeps a gap between the poster and the description', async ({ page }) => {
     // `space-y-8` puts its margin on the element before the gap, and the cached-image <picture> is
     // `display: contents`, so without a wrapper the poster sat flush against the description.

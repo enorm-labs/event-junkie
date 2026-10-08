@@ -97,7 +97,7 @@ data class ScrapedEvent(
      */
     val statusNote: String? = null,
     /**
-     * Raw artist names with their role ("HEADLINER", "SUPPORT", "DJ"), resolved by the service layer.
+     * Raw artist names with their role ("HEADLINER", "SUPPORT", "DJ", "LIVE"), resolved by the service layer.
      */
     val artists: List<ScrapedArtist> = emptyList(),
     /**
@@ -486,7 +486,7 @@ private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
 data class ScrapedArtist(
     /** Artist or band name as it appears on the website. */
     val name: String,
-    /** Role in the lineup (e.g. "HEADLINER", "SUPPORT", "DJ"). Defaults to headliner. */
+    /** Role in the lineup (e.g. "HEADLINER", "SUPPORT", "DJ", "LIVE"). Defaults to headliner. */
     val role: String = "HEADLINER",
     /**
      * The room or floor the act plays (e.g. "Panorama Bar") when the lineup is split across rooms.

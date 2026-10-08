@@ -112,14 +112,14 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
-    fun `bills a Live line as headliners and every other line as DJs`() {
+    fun `bills a Live line as live and every other line as DJs`() {
         val jubilee = events.first { it.title == "20 Jahre MissVergnügen!" }
         jubilee.artists.map { it.name to it.role } shouldBe
             listOf(
                 "Coost Lardy Cake" to "DJ",
                 "MissVergnügen" to "DJ",
-                "Nostalgican" to "HEADLINER",
-                "ear def" to "HEADLINER"
+                "Nostalgican" to "LIVE",
+                "ear def" to "LIVE"
             )
     }
 

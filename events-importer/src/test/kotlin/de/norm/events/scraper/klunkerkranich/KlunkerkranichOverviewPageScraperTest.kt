@@ -163,8 +163,8 @@ class KlunkerkranichOverviewPageScraperTest {
         // The *live marker qualifies the whole billing, so both halves of the pairing are live acts.
         night.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "IBAAKU", role = "HEADLINER"),
-                ScrapedArtist(name = "K’BOKO", role = "HEADLINER")
+                ScrapedArtist(name = "IBAAKU", role = "LIVE"),
+                ScrapedArtist(name = "K’BOKO", role = "LIVE")
             )
     }
 
@@ -217,9 +217,9 @@ class KlunkerkranichOverviewPageScraperTest {
     }
 
     @Test
-    fun `bills a live act as a headliner and a DJ night's acts as DJs`() {
+    fun `bills a live act as live and a DJ night's acts as DJs`() {
         on(LocalDate.of(2026, 8, 13), "SOULJAM x KLUNKERKRANICH w. Soul Jam Collective *live").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Soul Jam Collective", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Soul Jam Collective", role = "LIVE"))
 
         on(LocalDate.of(2026, 8, 9), "TENDER MESH MUSIC w. Big Leg, MCRD").artists.map { it.role } shouldContainExactly listOf("DJ", "DJ")
     }
@@ -238,7 +238,7 @@ class KlunkerkranichOverviewPageScraperTest {
         val names = clique.artists.map { it.name }
         names shouldContainAll listOf("In Limbo Audio", "Sven Howland", "Niklas Gietmann", "Nicolai Toma", "Miz Kiara", "p.toile")
         names.none { it.contains(':') } shouldBe true
-        clique.artists.first { it.name == "Acua" }.role shouldBe "HEADLINER"
+        clique.artists.first { it.name == "Acua" }.role shouldBe "LIVE"
         clique.artists.first { it.name == "Sven Howland" }.role shouldBe "DJ"
     }
 

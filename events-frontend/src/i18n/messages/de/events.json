@@ -129,7 +129,8 @@
   "role": {
     "HEADLINER": "Headliner",
     "SUPPORT": "Support",
-    "DJ": "DJ"
+    "DJ": "DJ",
+    "LIVE": "Live"
   },
   "status": {
     "RELOCATED": "Verlegt",

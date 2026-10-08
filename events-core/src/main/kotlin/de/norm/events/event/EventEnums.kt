@@ -69,7 +69,10 @@ enum class ArtistRole {
     SUPPORT,
 
     /** DJ set, typically at aftershow parties or festivals */
-    DJ;
+    DJ,
+
+    /** A live set on a night of DJ sets: the venue marks the act live, which does not make it top-billed (#2925). */
+    LIVE;
 
     companion object {
         /** Safely parses [value] to an [ArtistRole], falling back to [HEADLINER] for unrecognized values. Case-insensitive, trims whitespace. */

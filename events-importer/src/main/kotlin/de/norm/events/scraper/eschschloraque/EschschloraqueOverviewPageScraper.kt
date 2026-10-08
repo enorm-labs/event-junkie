@@ -230,7 +230,7 @@ class EschschloraqueOverviewPageScraper {
             .flatMap { line ->
                 val text = line.text().trim()
                 val label = billingLabel(line)
-                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) "HEADLINER" else "DJ"
+                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) "LIVE" else "DJ"
                 val names = if (label != null) text.removePrefix(label).trim() else text.replaceFirst(BILLING_LABEL, "")
                 splitActs(names).map { ScrapedArtist(name = it, role = role) }
             }.distinctBy { it.name.lowercase() }

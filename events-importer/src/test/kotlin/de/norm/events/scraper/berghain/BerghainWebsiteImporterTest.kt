@@ -250,7 +250,7 @@ class BerghainWebsiteImporterTest {
 
             // The lineup is the programme's: its five acts, its roles, none of the running order's other names.
             artists.keys shouldBe setOf("Joline Scheffler", "Colin Benders", "nd_baumecker", "Jorkes", "Not On The Running Order")
-            artists.getValue("Colin Benders").role shouldBe "HEADLINER"
+            artists.getValue("Colin Benders").role shouldBe "LIVE"
             artists.getValue("Joline Scheffler").setStart shouldBe Instant.parse("2026-09-26T21:59:00Z")
             artists.getValue("Colin Benders").setEnd shouldBe Instant.parse("2026-09-27T06:30:00Z")
             artists.getValue("Jorkes").setStart shouldBe Instant.parse("2026-09-27T23:00:00Z")

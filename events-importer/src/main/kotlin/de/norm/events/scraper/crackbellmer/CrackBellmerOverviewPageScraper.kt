@@ -178,12 +178,12 @@ class CrackBellmerOverviewPageScraper(
                 .trim()
         )
 
-    /** `HEADLINER` for an act marked live or hosting, `DJ` for the rest of the billing. */
+    /** `HEADLINER` for the host, `LIVE` for an act marked live, `DJ` for the rest of the billing. */
     private fun roleOf(act: String): String =
-        if (LIVE_MARKER.containsMatchIn(act) || HOST_LABEL.containsMatchIn(act) || HOST_ANNOTATION.containsMatchIn(act)) {
-            "HEADLINER"
-        } else {
-            "DJ"
+        when {
+            HOST_LABEL.containsMatchIn(act) || HOST_ANNOTATION.containsMatchIn(act) -> "HEADLINER"
+            LIVE_MARKER.containsMatchIn(act) -> "LIVE"
+            else -> "DJ"
         }
 
     /** True when an act name is really one of the venue's lineup fillers — see [PROGRAMME_FILLER]. */

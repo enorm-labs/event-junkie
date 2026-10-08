@@ -134,7 +134,7 @@ class OhmOverviewPageScraper(
             .flatMap(::splitBackToBack)
             .map { it.replace(SET_LENGTH_NOTE, "").trim() }
             .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
-            .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
+            .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "LIVE" else "DJ") }
     }
 }
 

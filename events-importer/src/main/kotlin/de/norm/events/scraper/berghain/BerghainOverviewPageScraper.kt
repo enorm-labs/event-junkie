@@ -141,11 +141,11 @@ class BerghainOverviewPageScraper(
     /**
      * One floor's `<h4>` into acts. Each act is a leaf `<span>`.
      *
-     * **A `Live` marker is the venue saying the act performs** (#1787), so that act is billed
-     * [HEADLINER][de.norm.events.event.ArtistRole.HEADLINER] rather than
-     * [DJ][de.norm.events.event.ArtistRole.DJ] — the reading Klunkerkranich, OHM and Club der
-     * Visionäre already give their own live markers, HEADLINER being the only performing role the
-     * model has. The marker sits inside the act's wrapper span, after the name, so document order
+     * **A `Live` marker is the venue saying the act performs** (#1787), so on a club night that act
+     * is billed [LIVE][de.norm.events.event.ArtistRole.LIVE] rather than
+     * [DJ][de.norm.events.event.ArtistRole.DJ], as Klunkerkranich, OHM and Club der Visionäre bill
+     * theirs; on a concert night every act is a headliner already. The marker sits inside the act's
+     * wrapper span, after the name, so document order
      * is the pairing, and it marks every act the preceding name span produced:
      *
      * ```html
@@ -180,7 +180,7 @@ class BerghainOverviewPageScraper(
             val text = span.text().trim()
             if (span.hasClass(MARKER_CLASS)) {
                 if (text.equals(LIVE_MARKER, ignoreCase = true)) {
-                    for (i in marked) acts[i] = acts[i].copy(role = "HEADLINER")
+                    for (i in marked) acts[i] = acts[i].copy(role = if (role == "DJ") "LIVE" else role)
                 }
                 continue
             }

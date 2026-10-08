@@ -226,7 +226,8 @@ SELECT e.id, a.id, r.role, r.billing_order, r.stage,
 FROM events.event e
          CROSS JOIN (VALUES ('dj-uberdruck', 'HEADLINER', 0, 'Hauptbühne', INTERVAL '22 hours', INTERVAL '26 hours'),
                             ('dj-nachtfalter', 'DJ', 1, 'Garten', INTERVAL '18 hours', NULL::interval),
-                            ('rauhfaser', 'SUPPORT', 2, 'Hauptbühne', NULL::interval, NULL::interval))
+                            ('rauhfaser', 'SUPPORT', 2, 'Hauptbühne', NULL::interval, NULL::interval),
+                            ('mobius-trio', 'LIVE', 3, 'Garten', NULL::interval, NULL::interval))
     AS r(slug, role, billing_order, stage, starts_after, ends_after)
          JOIN events.artist a ON a.slug = r.slug
 WHERE e.source_id = 'fixture-festival';

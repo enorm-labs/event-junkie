@@ -54,8 +54,8 @@ import java.time.MonthDay
  * **"pre-sale sold out" does not mean sold out.** The venue pairs it with a "more tickets at
  * the door" note, so [ScrapedEvent.soldOut] is set only when no such note accompanies it; the
  * note becomes the price note, the only pricing on the page. An event is removed once passed,
- * so its identity is date plus slugified title, and every lineup entry is a `DJ`,
- * `ArtistRole` having no value for the page's `live` marker.
+ * so its identity is date plus slugified title. A lineup entry is a `DJ`, or `LIVE` when the
+ * venue marks it `live`.
  *
  * @see GARTN_LIMITATIONS for what the venue does not publish.
  * @see GartnWebsiteImporter for the HTTP fetch orchestrator.
@@ -157,8 +157,8 @@ class GartnOverviewPageScraper(
     /**
      * The night's DJs from its lineup paragraph, one act per `<br>`-separated line. A line is a
      * single billing — never two acts except via `b2b` — so no conjunction or comma splitting, and
-     * an act whose name contains `&` ("Caleesi & Kreis") survives whole. A trailing `live` is
-     * trimmed by [stripArtistSuffix], "TBA" dropped by [isNonArtistName], and an act billed twice
+     * an act whose name contains `&` ("Caleesi & Kreis") survives whole. A trailing `live` bills
+     * the act `LIVE` and is trimmed by [stripArtistSuffix], "TBA" dropped by [isNonArtistName], and an act billed twice
      * is deduplicated — two `event_artist` rows for one (event, artist) pair would hit the unique
      * constraint and fail the whole import.
      */
@@ -166,10 +166,9 @@ class GartnOverviewPageScraper(
         if (paragraph == null) return emptyList()
         return billingLines(paragraph)
             .flatMap { line -> if (line.isCast) splitSupportActs(line.text) else line.text.split(B2B_SEPARATOR) }
-            .map { stripArtistSuffix(it.trim()) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) }
-            .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = stripArtistSuffix(it.trim()), role = if (LIVE_TAIL.containsMatchIn(it)) "LIVE" else "DJ") }
+            .filter { it.name.isNotBlank() && !isNonArtistName(it.name) }
+            .distinctBy { it.name.lowercase() }
     }
 
     /**
@@ -237,6 +236,9 @@ class GartnOverviewPageScraper(
     }
 
     private companion object {
+        /** The venue's `<sup>live</sup>` marker, which ends the act's line. */
+        val LIVE_TAIL = Regex("""\blive\s*$""", RegexOption.IGNORE_CASE)
+
         /** An event block's date heading: a German weekday abbreviation and a `DD.MM.` date. */
         val DATE_HEADING = Regex("""(Mo|Di|Mi|Do|Fr|Sa|So)\s+(\d{1,2})\.(\d{1,2})\.?""", RegexOption.IGNORE_CASE)
 
