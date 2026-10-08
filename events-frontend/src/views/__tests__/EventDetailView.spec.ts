@@ -76,6 +76,38 @@ describe('EventDetailView', () => {
     expect(hrefOf(view, 'Event page')).toBe(`https://katerblau.de/programm?id=7&${TAG}`)
   })
 
+  it('offers no tickets for a cancelled night, but keeps the source page for refunds (#2916)', async () => {
+    const view = await mountEvent({ ...night, status: 'CANCELLED' })
+
+    expect(hrefOf(view, 'Buy tickets')).toBeUndefined()
+    expect(hrefOf(view, 'Event page')).toBeDefined()
+  })
+
+  // A postponed show's tickets usually stay valid for the new date.
+  for (const status of ['SCHEDULED', 'POSTPONED'] as const) {
+    it(`offers tickets for a ${status} night`, async () => {
+      const view = await mountEvent({ ...night, status })
+
+      expect(hrefOf(view, 'Buy tickets')).toBeDefined()
+    })
+  }
+
+  const priced: EventDetail = { ...night, pricePresale: 18, priceCurrency: 'EUR' }
+
+  it('shows no price block for a cancelled night (#2916)', async () => {
+    const view = await mountEvent({ ...priced, status: 'CANCELLED' })
+
+    expect(view.text()).not.toContain('Presale')
+  })
+
+  for (const status of ['SCHEDULED', 'POSTPONED'] as const) {
+    it(`shows the price block for a ${status} night`, async () => {
+      const view = await mountEvent({ ...priced, status })
+
+      expect(view.text()).toContain('Presale')
+    })
+  }
+
   it("leaves an artist's Bandcamp link untagged", async () => {
     const view = await mountEvent(night)
 
