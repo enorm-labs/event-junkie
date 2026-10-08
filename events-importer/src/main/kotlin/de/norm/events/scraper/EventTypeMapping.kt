@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // One small classifier per cue; the importers call each by what it decides.
+
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
@@ -55,10 +57,20 @@ fun mapEventType(
 private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus", "roncalli")
 
 /**
- * An ice show ([EventType.SHOW]): `on ice` as a phrase (Holiday on Ice, #2598), or an `Eisrevue`
- * / `Eisshow` word. Anchored at the start, so "Lemon Ice" and a "Preisshow" stay untouched.
+ * An ice show: `on ice` or `auf Eis` as a phrase (Holiday on Ice, "Musik-Show auf Eis"), or an
+ * `Eisrevue` / `Eisshow` word. Anchored on letters, so "Lemon Ice", a "Preisshow" and "auf Eisenbahn" stay untouched.
  */
-private val ICE_SHOW_TITLE_PATTERN = Regex("""\bon\s+ice\b|\beis(?:revue|show)""", RegexOption.IGNORE_CASE)
+private val ICE_SHOW_PATTERN =
+    Regex("""\bon\s+ice\b|(?<!\p{L})auf\s+eis(?!\p{L})|(?<!\p{L})eis(?:revue|show)""", RegexOption.IGNORE_CASE)
+
+/**
+ * Whether the [title] or the venue's format line ([subtitle]) bills an ice show ([EventType.SHOW]).
+ * Tempodrom names the format only in the subtitle: "Eiskönigin 1 & 2" / "Musik-Show auf Eis".
+ */
+fun isIceShow(
+    title: String,
+    subtitle: String? = null
+): Boolean = listOfNotNull(title, subtitle).any { ICE_SHOW_PATTERN.containsMatchIn(it) }
 
 /**
  * Title phrases marking a comedy night ([EventType.COMEDY]). A bare "comedy" is not one, nor a
@@ -190,7 +202,7 @@ private fun classifyByTitleKeyword(title: String): String? {
         COMEDY_TITLE_PATTERN.containsMatchIn(title) -> EventType.COMEDY.name
 
         SHOW_TITLE_KEYWORDS.any { it in haystack } ||
-            ICE_SHOW_TITLE_PATTERN.containsMatchIn(title) -> EventType.SHOW.name
+            isIceShow(title) -> EventType.SHOW.name
 
         isScreeningTitle(title) -> EventType.SCREENING.name
 
