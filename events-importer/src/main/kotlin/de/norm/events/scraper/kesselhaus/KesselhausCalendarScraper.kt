@@ -4,16 +4,21 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.isFestivalTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -140,8 +145,26 @@ class KesselhausCalendarScraper(
             soldOut = SOLD_OUT in notes,
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
-            artists = buildArtistsForEventType(title, subtitle, eventType)
+            artists = buildArtistsForEventType(title, subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
         )
+    }
+
+    /**
+     * The acts a concert's subtitle lists after `mit`, when the title names none (#2851): `Tribute concert: In memory of
+     * Lemmy` is billed by `mit Motörblast & Nitrogods`. Only for an empty bill, because beside a named act the same
+     * `mit` introduces a guest. A festival's line-up stays unbilled, as for any festival.
+     */
+    private fun subtitleBill(
+        title: String,
+        subtitle: String?,
+        eventType: String
+    ): List<ScrapedArtist> {
+        val acts = subtitle?.let { SUBTITLE_BILL.find(it.trim()) }?.groupValues?.get(1)
+        if (eventType != EventType.CONCERT.name || acts == null || isFestivalTitle(title)) return emptyList()
+        return splitSupportActs(acts)
+            .map(::stripArtistSuffix)
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = "HEADLINER") }
     }
 
     /** A night filed as a concert but tagged as a party and not as a concert is a DJ night. */
@@ -242,6 +265,7 @@ class KesselhausCalendarScraper(
         private val HEADING = Regex("""^#{1,6}\s+""")
 
         private val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
+        private val SUBTITLE_BILL = Regex("""^mit\s+(.+)""", RegexOption.IGNORE_CASE)
 
         /** The calendar's category labels beyond the shared ones. */
         private val CATEGORY_SYNONYMS =

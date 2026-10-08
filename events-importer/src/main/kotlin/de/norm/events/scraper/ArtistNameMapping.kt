@@ -149,13 +149,20 @@ fun isEventSegmentLabel(name: String): Boolean {
  * "Manifest" and "Sommerfest" stay safe. The anniversary marker is anchored to the title start,
  * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches. An
  * organiser credit is no act either: `Eine Veranstaltung des …`, `In Kooperation mit …` (#1843).
- * A sing-along names its format, not who leads it: `SingAlong – Das große Mitsing-Event` (#1902).
+ * A sing-along names its format, not who leads it: `SingAlong – Das große Mitsing-Event` (#1902),
+ * and so does a `…singen` compound (`Weihnachtssingen im Kiez`).
+ *
+ * A programme names its edition or its occasion, not its acts (#2851): a leading ordinal
+ * (`41. Berliner Jazztreff`), a `Vol. <n>` anywhere (`Anime Rap Revolution Vol. I`), and a
+ * `Tribute concert:` prefix. The ordinal needs its dot and a space, so `65daysofstatic` and
+ * `808 State` stay acts.
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
         """.*\bfest\b.*|.*\bfestival\b.*|.*\bfestivalticket\b.*""" +
             """|.*\bhoffest\b.*""" +
-            """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*""" +
+            """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*|.*\p{L}singen(?!\p{L}).*""" +
+            """|\d+\.\s+\S.*|.*\bvol\.\s*(?:\d+|[ivx]+)\b.*|tribute[\s-]?(?:concert|konzert)\s*:.*""" +
             """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""",
         RegexOption.IGNORE_CASE

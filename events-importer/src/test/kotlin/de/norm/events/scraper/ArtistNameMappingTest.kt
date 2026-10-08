@@ -5,8 +5,11 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTimedValue
 
 // Focused tests for ArtistNameMapping — one test per behaviour.
 @Suppress("LargeClass")
@@ -292,6 +295,48 @@ class ArtistNameMappingTest {
         // The word must stand alone: a name that merely contains the letters is kept.
         isNonArtistEvent("Singalongs") shouldBe false
         isNonArtistEvent("Sing Sing") shouldBe false
+    }
+
+    // #2851 — a programme names its edition or occasion. Real titles: Kesselhaus, plus two stored at other venues.
+    @Test
+    fun `headlinersFromTitle reads a numbered edition, a volume, a tribute concert and a singen compound as no act`() {
+        listOf(
+            "41. Berliner Jazztreff",
+            "30. Traditioneller Neujahrs-Blues",
+            "7. Berliner Demokratietag",
+            "Anime Rap Revolution Vol. I",
+            "Unholy Alliance Vol. VII",
+            "Tribute concert: In memory of Lemmy ",
+            "Weihnachtssingen im Kiez",
+            "Adventssingen"
+        ).forEach { headlinersFromTitle(it).shouldBeEmpty() }
+    }
+
+    @Test
+    fun `isNonArtistEvent keeps acts that start with a number, contain vol or sing, or name a tribute`() {
+        listOf(
+            "65daysofstatic",
+            "808 State",
+            "2raumwohnung",
+            "Blink-182",
+            "Volbeat",
+            "Vol. Dealers",
+            "Singen",
+            "Sing Sing",
+            "Rolling Stones Tribute Band \"Dirty Work\"",
+            "Heroes - David Bowie Tribute",
+            "A Tribute to Lemmy"
+        ).forEach { isNonArtistEvent(it) shouldBe false }
+    }
+
+    @Test
+    fun `isNonArtistEvent answers a long title without backtracking`() {
+        val long = "Berliner Jazztreff Vol ".repeat(400) + "and more singing"
+
+        val (matched, took) = measureTimedValue { isNonArtistEvent(long) }
+
+        matched shouldBe false
+        took shouldBeLessThan 1.seconds
     }
 
     // --- isScoreConcertTitle (#1829) ---
