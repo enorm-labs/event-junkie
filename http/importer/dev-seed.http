@@ -11025,7 +11025,6 @@ Content-Type: application/json
     "descriptionAlt": "Seit 1994 gibt es das vom gemeinnützigen KULT e.V. getragene YAAM, seit 2014 auf einem 8000 m² großen Gelände an der Spree, mit Strand, Reggae- und Hip-Hop-DJs, Open-Air-Events und Abendprogramm im Vereinsheim Cool Runnings.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["open-air", "cultural-centre", "bar"],
-    "capacity": 0,
     "programmeUrl": "https://yaam.de/programm/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }

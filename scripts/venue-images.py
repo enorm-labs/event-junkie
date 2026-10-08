@@ -188,7 +188,7 @@ def fetch_venues(host):
         url = f"{host}/api/admin/venues?page={page}&size={PAGE_SIZE}&sort=name,asc"
         body = get_json(url)
         venues.extend(body.get("content", []))
-        if body.get("last", True):
+        if page + 1 >= body.get("totalPages", 1):
             break
     return venues
 
