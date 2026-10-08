@@ -235,7 +235,7 @@ sealed interface FetchResult {
 
 /**
  * Thrown when an HTTP fetch returns 4xx/5xx; recorded as a failure on the source by
- * [EventImportService.importFromSource].
+ * `EventImportService.importFromSource`.
  */
 class HttpFetchException(
     /**

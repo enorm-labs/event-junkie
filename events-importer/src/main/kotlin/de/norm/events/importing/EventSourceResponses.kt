@@ -1,0 +1,180 @@
+package de.norm.events.importing
+
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.Instant
+
+/**
+ * Response DTO for event source status information.
+ */
+@Schema(description = "Event source configuration and status")
+data class EventSourceResponse(
+    @Schema(description = "Database ID of the event source", example = "1")
+    val id: Long,
+    @Schema(description = "Database ID of the associated venue", example = "42")
+    val venueId: Long,
+    @Schema(description = "Human-readable name of the event source", example = "Privatclub Website")
+    val name: String,
+    @Schema(description = "URL-friendly unique key", example = "privatclub")
+    val slug: String,
+    @Schema(description = "The event listing page URL being scraped", example = "https://privatclub-berlin.de/")
+    val url: String,
+    @Schema(description = "EventSource enum value identifying the importer", example = "CASSIOPEIA")
+    val sourceType: String,
+    @Schema(description = "Whether this source is actively scraped", example = "true")
+    val enabled: Boolean,
+    @Schema(description = "Import interval in minutes (1440 = daily)", example = "1440")
+    val importIntervalMinutes: Int,
+    @Schema(description = "Current import status", example = "SUCCESS")
+    val status: String,
+    @Schema(description = "Timestamp of the last completed import, successful or not")
+    val lastImportAt: Instant?,
+    @Schema(
+        description =
+            "Timestamp of the last import that succeeded. Differs from lastImportAt whenever the " +
+                "most recent run failed, which is when a steward needs it: how long this source has " +
+                "actually been broken."
+    )
+    val lastSuccessAt: Instant?,
+    @Schema(
+        description =
+            "Whether this source's own URL is permitted by its host's robots.txt, or null while " +
+                "no run has read the file yet. Null is meaningful: an unchecked source has to be " +
+                "visible as unchecked"
+    )
+    val robotsAllowed: Boolean?,
+    @Schema(description = "When the host's robots.txt was last read")
+    val robotsCheckedAt: Instant?,
+    @Schema(
+        description = "The robots.txt that answered, or null where the host serves none",
+        example = "https://example.com/robots.txt"
+    )
+    val robotsTxtUrl: String?,
+    @Schema(
+        description =
+            "What is known about republishing this source's descriptions, or null while nobody has " +
+                "reviewed it. Null and UNCLEAR are different states and both display",
+        example = "UNCLEAR"
+    )
+    val descriptionLicence: String?,
+    @Schema(description = "The same question for this source's images", example = "PROHIBITED")
+    val imageLicence: String?,
+    @Schema(
+        description = "Whether this source grants translation of its descriptions. Only PERMITTED allows it",
+        example = "PERMITTED"
+    )
+    val translationLicence: String?,
+    @Schema(description = "When the two above were last reviewed")
+    val licenceReviewedAt: Instant?,
+    @Schema(description = "The page the reviewer read", example = "https://example.com/presse")
+    val licenceSourceUrl: String?,
+    @Schema(description = "The sentence that decided it")
+    val licenceNote: String?,
+    @Schema(description = "Number of events imported in the last successful run", example = "12")
+    val lastEventCount: Int?,
+    @Schema(description = "Error message from the last failed import")
+    val lastError: String?,
+    @Schema(
+        description = "The class of the last failure (dns, timeout, http_forbidden, parse, …), null after a success",
+        example = "dns"
+    )
+    val lastFailureReason: String?,
+    @Schema(
+        description =
+            "When a run last found materially less of some field than this source normally " +
+                "publishes (#472), or null. Independent of status: a flagged source is one whose " +
+                "runs all SUCCEED — that is the failure being caught"
+    )
+    val flaggedAt: Instant?,
+    @Schema(
+        description = "Which fields dropped and by how much",
+        example = "genre 5% of 40 events, baseline 98%"
+    )
+    val flagReason: String?,
+    @Schema(description = "Number of consecutive failures", example = "0")
+    val retryCount: Int,
+    @Schema(description = "Maximum retry attempts before giving up", example = "3")
+    val maxRetries: Int
+) {
+    companion object {
+        fun fromEntity(entity: EventSourceEntity): EventSourceResponse =
+            EventSourceResponse(
+                id = requireNotNull(entity.id) { "Persisted entity must have an ID" },
+                venueId = entity.venueId,
+                name = entity.name,
+                slug = entity.slug,
+                url = entity.url,
+                sourceType = entity.sourceType,
+                enabled = entity.enabled,
+                importIntervalMinutes = entity.importIntervalMinutes,
+                status = entity.status,
+                lastImportAt = entity.lastImportAt,
+                lastSuccessAt = entity.lastSuccessAt,
+                robotsAllowed = entity.robotsAllowed,
+                robotsCheckedAt = entity.robotsCheckedAt,
+                robotsTxtUrl = entity.robotsTxtUrl,
+                descriptionLicence = entity.descriptionLicence,
+                imageLicence = entity.imageLicence,
+                translationLicence = entity.translationLicence,
+                licenceReviewedAt = entity.licenceReviewedAt,
+                licenceSourceUrl = entity.licenceSourceUrl,
+                licenceNote = entity.licenceNote,
+                lastEventCount = entity.lastEventCount,
+                lastError = entity.lastError,
+                lastFailureReason = entity.lastFailureReason,
+                flaggedAt = entity.flaggedAt,
+                flagReason = entity.flagReason,
+                retryCount = entity.retryCount,
+                maxRetries = entity.maxRetries
+            )
+    }
+}
+
+/**
+ * Response DTO for an import run result.
+ */
+@Schema(description = "Result of an import run for a single source")
+data class ImportResultResponse(
+    @Schema(description = "Slug of the event source", example = "privatclub")
+    val sourceSlug: String,
+    @Schema(description = "Whether the import was executed (false if page was not modified)", example = "true")
+    val imported: Boolean,
+    @Schema(description = "Number of events imported or updated", example = "12")
+    val eventCount: Int,
+    @Schema(description = "Error message if the import failed")
+    val error: String? = null
+)
+
+/**
+ * Response DTO acknowledging that an import was accepted and started in the background.
+ *
+ * Manual import triggers are fire-and-forget (HTTP `202 Accepted`): the import runs
+ * asynchronously so its duration is decoupled from the request. Poll the event source's
+ * status via `GET /api/admin/event-sources/{slug}` to observe progress and the outcome.
+ */
+@Schema(description = "Acknowledgement that a background import was accepted and started")
+data class ImportTriggeredResponse(
+    @Schema(description = "Human-readable acknowledgement message", example = "Import started for source 'privatclub'")
+    val message: String,
+    @Schema(description = "Slug of the triggered source, or null when all enabled sources were triggered", example = "privatclub")
+    val sourceSlug: String? = null
+)
+
+/**
+ * What one on-demand translation run did.
+ *
+ * `permitted` is the field to read first: a source without a grant reports zero for the same reason
+ * it always will, and that is not the same answer as a source with nothing stale (ADR-026).
+ */
+@Schema(description = "Result of an on-demand translation run for one event source")
+data class TranslationRunResponse(
+    @Schema(description = "The source this ran for", example = "klunkerkranich")
+    val sourceSlug: String,
+    @Schema(description = "Whether this source's licence grants translation. False means nothing ran", example = "false")
+    val permitted: Boolean,
+    @Schema(description = "Descriptions that were missing or stale before this run", example = "12")
+    val candidates: Int,
+    @Schema(description = "Descriptions translated and stored by this run", example = "12")
+    val translated: Int,
+    @Schema(description = "Which engine answered, or `none` when translation is switched off", example = "anthropic:claude-haiku-4-5")
+    val engine: String
+)

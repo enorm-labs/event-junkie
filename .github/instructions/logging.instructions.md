@@ -43,8 +43,8 @@ field list, the lower-cased query names, the full field table — is in
   [docs/LEGAL.md § 7.5](../../docs/LEGAL.md#75-logging) is the standing instruction, and a change to what is logged is a change to the privacy notice — see
   [AGENTS.md § Privacy & GDPR](../../AGENTS.md#privacy--gdpr--re-check-when-infrastructure-or-features-change).
 - **An alert reads a meter. A log line answers the question that comes after the alarm.** Every rule in `deploy/alerts/alerts.json` reads a metrics stream and
-  none reads a log level. A condition an operator must hear about gets a counter or a gauge (`ImporterMetrics`, `BffMetrics`) and a rule; the line beside it
-  carries what the rule cannot — the URL, the key, the id.
+  none reads a log level. A condition an operator must hear about gets a counter or a gauge (`ImporterMetrics`, `EnrichmentMetrics`, `BffMetrics`) and a
+  rule; the line beside it carries what the rule cannot — the URL, the key, the id.
 - **A line that is the deliverable is tested.** `LogContextTest` and `LogContextPropagationTest` show the shape: a Logback `ListAppender` on the logger, then
   assert the level, the MDC map and the key-value pairs. The access line, each payload field and each context boundary already have one; a new field, or a new
   line whose absence nobody would notice, gets the same.

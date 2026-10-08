@@ -36,7 +36,7 @@ git --no-pager log --since="$SINCE days ago" --format='%h %ad %s' --date=short -
   events-bff/src/main/kotlin/de/norm/events/NulByteFilter.kt \
   events-bff/src/main/kotlin/de/norm/events/event/EventSearchRepository.kt \
   events-bff/src/main/kotlin/de/norm/events/image \
-  events-importer/src/main/kotlin/de/norm/events/scraper/EventImportService.kt \
+  events-importer/src/main/kotlin/de/norm/events/importing/EventImportService.kt \
   'events-importer/src/main/kotlin/**/*Controller.kt' 'events-bff/src/main/kotlin/**/*Controller.kt'
 ```
 

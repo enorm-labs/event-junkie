@@ -158,7 +158,7 @@ shows a new revision at that minute.
 **Fix:** Not a scraper regression. A Flux rollout replaced the pod mid-import, and the stale-run reaper flipped the orphans to `FAILED` later. Re-run each
 source on the stable pod. Seen on 2026-09-03 with four sources at once.
 
-**Why:** the reaper in `events-importer/src/main/kotlin/de/norm/events/scraper/ScheduledImportService.kt`. No runbook records this yet. This entry is the record.
+**Why:** the reaper in `events-importer/src/main/kotlin/de/norm/events/importing/ScheduledImportService.kt`. No runbook records this yet. This entry is the record.
 
 ## The source wrote events the site does not show
 

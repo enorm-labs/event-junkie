@@ -42,7 +42,7 @@ data class ScrapedEvent(
     val eventType: String? = null,
     /**
      * [eventType] is the scraper's default, because the venue gave no cue for this night. A headliner
-     * whose stored occupation is comedy then types it `COMEDY` ([PerformerTyping], #2314).
+     * whose stored occupation is comedy then types it `COMEDY` (`PerformerTyping`, #2314).
      */
     val typeIsFallback: Boolean = false,
     val eventDate: LocalDate,
@@ -191,7 +191,7 @@ data class ScrapedEvent(
 
     /**
      * The genre as stored: null when it only repeats the title, which says nothing about the music.
-     * [AssociationSyncService] flags such a genre for the data-quality worklist (#320). The type
+     * `AssociationSyncService` flags such a genre for the data-quality worklist (#320). The type
      * classifier still reads the raw [genre].
      */
     fun storedGenre(): String? = genre?.takeUnless { genreRepeatsTitle() }
@@ -205,7 +205,7 @@ data class ScrapedEvent(
     /**
      * The type the event is stored with — the source's own, or the festival/format override
      * [resolveEventType] applies at the boundary. Scrapers build their artists before this is
-     * known; [AssociationSyncService] reads it to drop a headliner minted from a festival title (#300).
+     * known; `AssociationSyncService` reads it to drop a headliner minted from a festival title (#300).
      */
     fun resolvedEventType(): EventType = resolveEventType(eventType, storedTitle(), genre)
 
@@ -220,7 +220,7 @@ data class ScrapedEvent(
      * @param venueSlug the venue's slug, in the event slug for cross-venue uniqueness.
      * @param slugDiscriminator appended to separate two sittings of one production on one day. Only
      * the whole scrape can see a collision, so
-     * [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it. Null for the
+     * `EventUpsertService`[de.norm.events.scraper.EventUpsertService] computes it. Null for the
      * overwhelming majority.
      */
     @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -414,7 +414,7 @@ private fun resolveEventType(
  * over after its `endDate`, else after its date (ADR-029), and today counts as not over. Before
  * 06:00 on [clock], last night's event with no stated end is not over either when it started at
  * 22:00 or later, or names no start (#299); the BFF applies the same grace with the assumed
- * slot. [EventUpsertService] is the source of truth; a scraper applies the cutoff earlier only
+ * slot. `EventUpsertService` is the source of truth; a scraper applies the cutoff earlier only
  * to spare a detail-page fetch. The callback keeps the log at the call site.
  */
 fun List<ScrapedEvent>.dropPastEvents(

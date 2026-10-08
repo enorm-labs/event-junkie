@@ -8,7 +8,7 @@ import java.util.UUID
  * The context every log line emitted inside an import run carries (#380).
  *
  * **Set once, at the one funnel every import path goes through**, rather than passed at call sites.
- * [EventImportService.importFromSource] is that funnel — the scheduler's `importConcurrently`,
+ * `EventImportService.importFromSource` is that funnel — the scheduler's `importConcurrently`,
  * `importBySlug` and both of `ImportJobLauncher`'s fire-and-forget triggers all reach it — so a
  * single [forImportRun] there puts these fields on the output of all forty-odd scrapers without one
  * of them knowing this exists.
@@ -48,7 +48,7 @@ object LogContext {
 
     /**
      * The context for **one event's** translation, so the engine's lines name the event. Around the
-     * engine call only: [EventUpsertService] writes [LogFields.EVENT_ID] as a payload.
+     * engine call only: `EventUpsertService` writes [LogFields.EVENT_ID] as a payload.
      */
     fun forEvent(eventId: Long): MDCContext = MDCContext((MDC.getCopyOfContextMap() ?: emptyMap()) + mapOf(LogFields.EVENT_ID to eventId.toString()))
 

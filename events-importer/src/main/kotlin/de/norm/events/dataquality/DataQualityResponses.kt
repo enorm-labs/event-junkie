@@ -1,6 +1,6 @@
 package de.norm.events.dataquality
 
-import de.norm.events.scraper.EventQualityFlag
+import de.norm.events.importing.EventQualityFlag
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.time.LocalDate

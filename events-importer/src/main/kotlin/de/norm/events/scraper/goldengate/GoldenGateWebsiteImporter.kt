@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * [HtmlFetcher] fetches it conditionally, [GoldenGateOverviewPageScraper] parses the nights.
  *
  * Past nights stay on the page until the block rolls over and are dropped centrally at
- * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so a run late
+ * persistence by `EventUpsertService`[de.norm.events.scraper.EventUpsertService], so a run late
  * in the week legitimately stores fewer events than the page shows — as few as one.
  *
  * Between two blocks the source can hold no future night for days. That is not a

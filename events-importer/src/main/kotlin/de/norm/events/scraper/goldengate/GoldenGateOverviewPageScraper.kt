@@ -49,7 +49,7 @@ import kotlin.math.abs
  * weekday names only when that month fits the block.
  *
  * Passed nights stay on the page until the block rolls over; parsed here, dropped centrally at
- * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import
+ * persistence by `EventUpsertService`[de.norm.events.scraper.EventUpsertService], so an import
  * late in the week legitimately stores as little as one event.
  *
  * @see GoldenGateWebsiteImporter for the HTTP fetch orchestrator.

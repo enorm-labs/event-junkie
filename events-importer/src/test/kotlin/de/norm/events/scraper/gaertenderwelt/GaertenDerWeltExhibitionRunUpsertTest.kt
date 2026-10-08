@@ -2,12 +2,12 @@ package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
-import de.norm.events.scraper.AssociationSyncService
-import de.norm.events.scraper.EventUpsertService
+import de.norm.events.importing.AssociationSyncService
+import de.norm.events.importing.EventUpsertService
+import de.norm.events.importing.PerformerTyping
+import de.norm.events.importing.UpsertOutcome
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
-import de.norm.events.scraper.PerformerTyping
-import de.norm.events.scraper.UpsertOutcome
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
