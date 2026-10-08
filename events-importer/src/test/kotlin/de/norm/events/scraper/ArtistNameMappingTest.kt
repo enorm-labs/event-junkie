@@ -1819,6 +1819,25 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Some Act - Summer Tour", "Support: Other Act", "SHOW").map { it.name } shouldBe listOf("Some Act", "Other Act")
     }
 
+    // #2637 — an ice show's title names a production, whatever type the venue gives it.
+    @Test
+    fun `buildArtistsForEventType reads no act off an ice show's title`() {
+        buildArtistsForEventType("Disney On Ice präsentiert Mickys Magische Momente", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Holiday on Ice – Atlantis", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Disney On Ice: Mickys Magische Momente", null, "CONCERT").shouldBeEmpty()
+        buildArtistsForEventType("Eiskönigin 1 & 2", "Musik-Show auf Eis", "CONCERT").shouldBeEmpty()
+        buildArtistsForEventType("Holiday on Ice", null, null).shouldBeEmpty()
+    }
+
+    @Test
+    fun `buildArtistsForEventType keeps an ice show's support acts and every other show's solo bill`() {
+        buildArtistsForEventType("Holiday on Ice – Atlantis", "Support: Some Skater", "SHOW").map { it.name to it.role } shouldBe
+            listOf("Some Skater" to "SUPPORT")
+        buildArtistsForEventType("Farid Kahl – Die Magie Show", null, "SHOW").map { it.name } shouldBe listOf("Farid Kahl")
+        buildArtistsForEventType("Lemon Ice", null, "CONCERT").map { it.name } shouldBe listOf("Lemon Ice")
+        buildArtistsForEventType("Eisbrecher", "Kaiserwerk Tour 2026", "CONCERT").map { it.name } shouldBe listOf("Eisbrecher")
+    }
+
     // Provenance for #1145: only what was read off the title carries the flag.
     @Test
     fun `headlinersFromTitle marks every act it reads off the title as title-derived`() {
