@@ -14,6 +14,7 @@
     "events": "Events",
     "venues": "Locations",
     "artists": "Acts",
-    "promoters": "Veranstalter"
+    "promoters": "Veranstalter",
+    "past": "Vergangene Events"
   }
 }

@@ -989,6 +989,8 @@ export interface components {
             artists?: components["schemas"]["SearchGroupArtistSummaryResponse"];
             /** @description Promoters, best match first */
             promoters?: components["schemas"]["SearchGroupPromoterListItemResponse"];
+            /** @description Events that are over, latest first. Empty unless the request says `past=true` */
+            past?: components["schemas"]["SearchGroupEventSummaryResponse"];
         };
         /** @description Compact venue summary */
         VenueSummaryResponse: {
@@ -1839,6 +1841,8 @@ export interface operations {
                  * @example 5
                  */
                 limit?: number;
+                /** @description Also return the events that are over, in `past`. Leave it out for type-ahead: it is one more query. */
+                past?: boolean;
             };
             header?: never;
             path?: never;

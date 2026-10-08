@@ -11,6 +11,7 @@ import { useAsync } from '@/composables/useAsync'
 import { fetchSearch, MIN_SEARCH_LENGTH } from '@/composables/useGlobalSearch'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSearchDraft } from '@/composables/useSearchDraft'
+import { addDays, todayIso } from '@/lib/format'
 import { CARD_LIST_CLASS, PANEL_CLASS } from '@/lib/utils'
 
 /** Enough to scan; a longer list belongs to the kind's own page, which pages and filters. */
@@ -24,7 +25,7 @@ const q = computed(() => (typeof route.query.q === 'string' ? route.query.q.trim
 const searchable = computed(() => q.value.length >= MIN_SEARCH_LENGTH)
 
 const { data, error, loading, run } = useAsync(
-  () => fetchSearch(q.value, LIMIT),
+  () => fetchSearch(q.value, LIMIT, { past: true }),
   'errors.subject.search',
   () => `/api/search?${q.value}`,
 )
@@ -54,6 +55,8 @@ const sections = computed(() => {
     { key: 'events', group: r.events, more: `/events${listQuery.value}` },
     { key: 'artists', group: r.artists, more: undefined },
     { key: 'promoters', group: r.promoters, more: `/promoters${listQuery.value}` },
+    // Last, so a search for something coming up is not pushed down by years of history (#2854).
+    { key: 'past', group: r.past, more: `/events${listQuery.value}&to=${addDays(todayIso(), -1)}` },
   ]
     .map(({ key, group, more }) => ({ key, more, ...countOf(group) }))
     .filter((section) => section.total > 0)
@@ -63,6 +66,10 @@ const sections = computed(() => {
 function countOf(group?: { total?: number; totalCapped?: boolean }) {
   const total = group?.total ?? 0
   return { total, shown: group?.totalCapped ? `${total}+` : String(total) }
+}
+
+function eventsOf(key: string) {
+  return (key === 'past' ? data.value?.past?.items : data.value?.events?.items) ?? []
 }
 
 function linksOf(key: string): { to: string; name: string }[] {
@@ -123,8 +130,8 @@ function linksOf(key: string): { to: string; name: string }[] {
               <VenueRow :venue="venue" as="h3" />
             </li>
           </template>
-          <template v-else-if="section.key === 'events'">
-            <li v-for="event in data?.events?.items" :key="event.slug">
+          <template v-else-if="section.key === 'events' || section.key === 'past'">
+            <li v-for="event in eventsOf(section.key)" :key="event.slug">
               <EventRow :event="event" as="h3" />
             </li>
           </template>

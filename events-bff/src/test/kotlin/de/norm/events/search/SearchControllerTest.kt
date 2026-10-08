@@ -178,4 +178,90 @@ class SearchControllerTest : BaseControllerTest() {
                     .isBadRequest
             }
         }
+
+    @Test
+    fun `GET search with past lists the events that are over, latest first, and keeps them out of events`(): Unit =
+        runBlocking {
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val venue = insertVenue("Lido", "lido")
+            insertEvent(venue, "Lido Older", "lido-older", today.minusDays(10))
+            insertEvent(venue, "Lido Recent", "lido-recent", today.minusDays(2))
+            // Over midnight: it ended at 04:00 on the day before yesterday.
+            insertEvent(
+                venue,
+                "Lido Night",
+                "lido-night",
+                today.minusDays(3),
+                startTime = LocalTime.of(23, 0),
+                endDate = today.minusDays(2),
+                endTime = LocalTime.of(4, 0)
+            )
+            // A run that ended yesterday is over; one that still runs is not.
+            insertEvent(venue, "Lido Run", "lido-run", today.minusDays(5), endDate = today.minusDays(1))
+            insertEvent(venue, "Lido Festival", "lido-festival", today.minusDays(2), endDate = today.plusDays(1))
+            insertEvent(venue, "Lido Future", "lido-future", today.plusDays(1))
+
+            webTestClient
+                .get()
+                .uri("/search?q=lido&past=true")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.past.items[*].slug")
+                .isEqualTo(listOf("lido-recent", "lido-night", "lido-run", "lido-older"))
+                .jsonPath("$.past.total")
+                .isEqualTo(4)
+                .jsonPath("$.past.totalCapped")
+                .isEqualTo(false)
+                .jsonPath("$.events.items[?(@.slug == 'lido-recent')]")
+                .doesNotExist()
+                .jsonPath("$.events.items[?(@.slug == 'lido-future')]")
+                .exists()
+        }
+
+    @Test
+    fun `GET search without past leaves the past group empty`(): Unit =
+        runBlocking {
+            val venue = insertVenue("Lido", "lido")
+            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(ClockConfiguration.BERLIN).minusDays(1))
+
+            webTestClient
+                .get()
+                .uri("/search?q=lido")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.past.items.length()")
+                .isEqualTo(0)
+                .jsonPath("$.past.total")
+                .isEqualTo(0)
+                .jsonPath("$.past.totalCapped")
+                .isEqualTo(false)
+        }
+
+    @Test
+    fun `GET search caps the past group at limit and stops counting it at 100`(): Unit =
+        runBlocking {
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val venue = insertVenue("SO36", "so36")
+            repeat(101) { insertEvent(venue, "Archive Night $it", "archive-night-$it", today.minusDays(it + 1L)) }
+
+            webTestClient
+                .get()
+                .uri("/search?q=archive&past=true&limit=20")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.past.items.length()")
+                .isEqualTo(20)
+                .jsonPath("$.past.items[0].slug")
+                .isEqualTo("archive-night-0")
+                .jsonPath("$.past.total")
+                .isEqualTo(100)
+                .jsonPath("$.past.totalCapped")
+                .isEqualTo(true)
+        }
 }
