@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -29,6 +30,15 @@ class DelphiProgrammePageScraperTest {
         val html =
             javaClass.classLoader
                 .getResourceAsStream("scraper/delphi/delphi-programm.html")!!
+                .bufferedReader()
+                .readText()
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    }
+
+    private val credits: List<ScrapedEvent> by lazy {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/delphi/delphi-programm-credits.html")!!
                 .bufferedReader()
                 .readText()
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
@@ -86,10 +96,43 @@ class DelphiProgrammePageScraperTest {
     }
 
     @Test
-    fun `states no type where the venue labelled nothing`() {
-        // Two rows carry an empty label cell; the persistence boundary settles them as OTHER.
-        events.filter { it.eventType == null }.map { it.title } shouldBe
-            listOf("LISA O'NEILL", "Jake Xerxes Fussell")
+    fun `types an unlabelled row as a concert from its teaser`() {
+        // Both rows carry an empty label cell; the teasers name "Songwriterinnen" and "Folksongs" (#2899).
+        val lisa = event("theater_im_delphi:524/2026-10-09-20:00")
+        lisa.eventType shouldBe EventType.CONCERT.name
+        lisa.artists.map { it.name } shouldBe listOf("LISA O'NEILL")
+        val fussell = event("theater_im_delphi:519/2026-12-10-19:30")
+        fussell.eventType shouldBe EventType.CONCERT.name
+        fussell.artists.map { it.name } shouldBe listOf("Jake Xerxes Fussell")
+        events.none { it.eventType == null } shouldBe true
+    }
+
+    @Test
+    fun `leaves an unlabelled row with no concert cue as OTHER`() {
+        val wrestling = credits.single { it.title == "Odeum Pro Wrestling Catche Diem 2026" }
+        wrestling.eventType shouldBe EventType.OTHER.name
+        wrestling.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills a concert's credit line, not its programme title`() {
+        // The title names the programme; `p.stabText` names who plays it (#2899).
+        event("theater_im_delphi:512/2026-10-08-19:00").artists.map { it.name } shouldBe
+            listOf("Ensemble Utak", "Hannah Dienes-Williams", "R. Marino Arcaro")
+    }
+
+    @Test
+    fun `leaves the composer and the film's director off a credit line`() {
+        // The teaser credits "Musik von Johannes Brahms" and "(1922, F.W. Murnau)": authors, not performers.
+        val nosferatu = credits.single { it.title == "Nosferatu. Eine Symphonie des Grauens" }
+        nosferatu.eventType shouldBe EventType.CONCERT.name
+        nosferatu.artists.map { it.name } shouldBe listOf("Golden Star String Quartet", "Katarzyna Marek")
+        nosferatu.artists.map { it.role }.distinct() shouldBe listOf("HEADLINER")
+    }
+
+    @Test
+    fun `ignores a staged row's credit line, which names the company`() {
+        event("theater_im_delphi:531/2026-10-13-11:00").artists.map { it.name } shouldNotContain "FLUIDUM"
     }
 
     @Test
