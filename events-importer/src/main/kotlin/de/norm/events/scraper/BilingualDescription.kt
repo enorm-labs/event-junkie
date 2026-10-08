@@ -6,9 +6,6 @@ import io.github.oshai.kotlinlogging.Level
 
 private val logger = KotlinLogging.logger {}
 
-/** `description_alt_origin` of a second language the venue wrote itself, not a machine (ADR-026 rule 2). */
-const val PUBLISHER_ORIGIN = "PUBLISHER"
-
 /**
  * One description the venue wrote in German and in English, cut at its marker (ADR-026 rule 2,
  * #330). [original] is the half the venue put first, [alt] the other. A shared head (title lines, a

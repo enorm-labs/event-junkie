@@ -9,6 +9,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
+/** `description_alt_origin` of a second language the venue wrote itself, not a machine (ADR-026 rule 2). */
+const val PUBLISHER_ORIGIN = "PUBLISHER"
+
 /**
  * R2DBC entity mapped to the `event` table.
  *

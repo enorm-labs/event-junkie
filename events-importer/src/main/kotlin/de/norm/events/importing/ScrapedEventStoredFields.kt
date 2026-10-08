@@ -2,7 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
-import de.norm.events.scraper.PUBLISHER_ORIGIN
+import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.parseTitleStatus

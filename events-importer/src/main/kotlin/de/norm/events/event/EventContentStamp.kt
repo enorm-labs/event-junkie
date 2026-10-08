@@ -83,15 +83,16 @@ class EventContentStamp(
 
     companion object {
         /**
-         * SHA-256 of what the event page shows. In: the title, subtitle and description, the type, the
-         * status and where it moved to, the dates and times, the venue and room, the prices, the sold-out
-         * and free flags, the ticket link, the lineup with its roles, order, stages and set times, and
-         * the promoters.
+         * SHA-256 of what the event page shows. In: the title, subtitle and description, the second
+         * language the venue wrote itself, the type, the status and where it moved to, the dates and
+         * times, the venue and room, the prices, the sold-out and free flags, the ticket link, the lineup
+         * with its roles, order, stages and set times, and the promoters.
          *
-         * Out, on purpose: the image, whose URL some sources rotate while the picture stays; the
-         * translation, which is derived from the description and arrives after the import; the source
-         * and Facebook links; the genre, which is a filter more than page text. A changed field list
-         * changes every hash, so the migration that changes it sets `content_hash` to NULL.
+         * Out, on purpose: the machine translation, which is derived from the description and arrives
+         * after the import on its own schedule; the image, whose URL some sources rotate while the
+         * picture stays; the source and Facebook links; the genre, which is a filter more than page text.
+         * A changed field list changes every hash, so the migration that changes it sets `content_hash`
+         * to NULL (V120).
          */
         fun hash(
             event: EventEntity,
@@ -103,6 +104,7 @@ class EventContentStamp(
                     event.title,
                     event.subtitle,
                     event.description,
+                    event.descriptionAlt.takeIf { event.descriptionAltOrigin == PUBLISHER_ORIGIN },
                     event.eventType,
                     event.status,
                     event.relocatedTo,
