@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   116 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    54 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   117 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    53 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -154,10 +154,11 @@ schema change.
 | Zenner                           | https://zenner.berlin/programm                              | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive          |
 | Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu              | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
 | Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu              | Club         | Squarespace list + event pages; Hall items dropped        |
+| ZIMMER 16                        | https://zimmer16.com/                                       | Other        | YesTicket cards + event pages; next 20 only               |
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-115 importer classes cover 116 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+116 importer classes cover 117 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -178,7 +179,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-46 sources have a second language, 66 have none, and 4 are unknown. Eight translate the event text on a second page.
+46 sources have a second language, 67 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -313,6 +314,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | Zenner                           | Yes             | Script switch, no URL                                        | Unknown            | https://zenner.berlin/programm                                                                                                     |
 | Zig Zag Hall                     | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-hall-detail.html)                                      |
 | Zig Zag Jazz Club                | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-detail.html)                                           |
+| ZIMMER 16                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Zitadelle                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://citadel-music-festival.de/en/events/                                                                                       |
 | Zur Klappe                       | No              | —                                                            | —                  |                                                                                                                                    |
 
@@ -338,7 +340,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| ZIMMER 16                      | https://zimmer16.com/                                                    | Other        | Medium   | Divi + YesTicket cards; time and price on YesTicket          |
 | Ballhaus Wedding               | https://www.ballhauswedding.de/veranstaltungen                           | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images   |
 | Richten25                      | https://richten25.de/events                                              | Other        | Medium   | Hostinger builder; ~25 dated titles in the page JSON         |
 | 808 Berlin                     | https://808.berlin/                                                      | Club         | Medium   | Astro one-pager; dated lineups; no times, prices, images     |
@@ -411,9 +412,9 @@ that the page itself ships. That is a JSON endpoint behind the page, like the Wi
 **The two rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
-- **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
-  and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the more brittle of the two.
+- **Ballhaus Wedding** is a small mixed stage. Music is one part of a programme with improv, readings and dance
+  socials. Its dates have no year, so take it from the month headings. Its entries have no fixed shape, so the parser
+  is brittle.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
