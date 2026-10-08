@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import type { EventPage, EventSummary } from '@/api/types'
-import { todayIso, yesterdayIso } from '@/lib/format'
+import type { PastEvents } from '@/composables/usePastEvents'
 
 const stubs = {
   RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] },
@@ -16,7 +16,19 @@ function page(...content: EventSummary[]): EventPage {
   return { content }
 }
 
-function mountWith(events: EventPage, pastEvents: EventPage) {
+function pager(events: EventSummary[], more: Partial<PastEvents> = {}): PastEvents {
+  return {
+    events,
+    count: events.length,
+    hasMore: false,
+    loadingMore: false,
+    error: null,
+    loadMore: vi.fn<() => Promise<void>>(async () => {}),
+    ...more,
+  }
+}
+
+function mountWith(events: EventPage, past: PastEvents) {
   return mount(BaseDetailView, {
     props: {
       kind: 'Artist',
@@ -30,7 +42,7 @@ function mountWith(events: EventPage, pastEvents: EventPage) {
       eventsLoading: false,
       eventsError: null,
       emptyText: '',
-      pastEvents,
+      past,
     },
     global: { stubs },
   })
@@ -50,24 +62,53 @@ describe('BaseDetailView', () => {
     vi.useRealTimers()
   })
 
-  // The past query bounds the start date and the upcoming one the end date (#2560).
-  it('lists an event that started yesterday and ends today only under upcoming', () => {
-    const running: EventSummary = {
-      slug: 'heidegluhen-35',
-      eventDate: yesterdayIso(),
-      endDate: todayIso(),
-    }
+  it('keeps past events collapsed under a heading with their count', () => {
     const over: EventSummary = { slug: 'last-week', eventDate: '2026-09-27' }
 
-    const wrapper = mountWith(page(running), page(running, over))
+    const wrapper = mountWith(page(), pager([over], { count: 53 }))
 
-    expect(slugsIn(wrapper, 'section')).toEqual(['heidegluhen-35'])
+    const details = wrapper.get('details')
+    expect(details.attributes('open')).toBeUndefined()
+    expect(details.get('summary').text()).toBe('Past events · 53')
     expect(slugsIn(wrapper, 'details')).toEqual(['last-week'])
+  })
+
+  it('offers Show more while more past events exist, and loads them on click', async () => {
+    const past = pager([{ slug: 'last-week' }], { hasMore: true })
+    const wrapper = mountWith(page(), past)
+
+    const button = wrapper.get('[data-testid="past-show-more"]')
+    expect(button.text()).toBe('Show more')
+    await button.trigger('click')
+
+    expect(past.loadMore).toHaveBeenCalledOnce()
+  })
+
+  it('disables Show more while a page loads', () => {
+    const wrapper = mountWith(page(), pager([{ slug: 'a' }], { hasMore: true, loadingMore: true }))
+
+    expect(wrapper.get('[data-testid="past-show-more"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('keeps Show more beside the error after a failed page', () => {
+    const wrapper = mountWith(
+      page(),
+      pager([{ slug: 'a' }], { hasMore: true, error: "Couldn't load past events." }),
+    )
+
+    expect(wrapper.get('details').text()).toContain("Couldn't load past events.")
+    expect(wrapper.find('[data-testid="past-show-more"]').exists()).toBe(true)
+  })
+
+  it('drops Show more after the last page', () => {
+    const wrapper = mountWith(page(), pager([{ slug: 'a' }]))
+
+    expect(wrapper.find('[data-testid="past-show-more"]').exists()).toBe(false)
   })
 
   // The page starts where the header does; the profile keeps the reading measure (#2828).
   it('takes the listings width and keeps the profile at the reading measure, left-aligned', () => {
-    const wrapper = mountWith(page({ slug: 'wanda', eventDate: '2027-04-14' }), page())
+    const wrapper = mountWith(page({ slug: 'wanda', eventDate: '2027-04-14' }), pager([]))
 
     expect(wrapper.get('main').classes()).toEqual(expect.arrayContaining(['mx-auto', 'max-w-5xl']))
     const profile = wrapper.get('[data-testid="detail-profile"]')
@@ -76,21 +117,15 @@ describe('BaseDetailView', () => {
     expect(profile.find('h1').text()).toBe('Sesh Orka')
   })
 
-  it('hides the past section when every past event is still upcoming', () => {
-    const running: EventSummary = {
-      slug: 'heidegluhen-35',
-      eventDate: yesterdayIso(),
-      endDate: todayIso(),
-    }
-
-    const wrapper = mountWith(page(running), page(running))
+  it('hides the past section when no past event is left to show', () => {
+    const wrapper = mountWith(page({ slug: 'heidegluhen-35' }), pager([]))
 
     expect(wrapper.find('details').exists()).toBe(false)
   })
 
   // design.instructions.md §1 forbids an eyebrow above a page title (#2662).
   it('opens the header on the h1, with no kind label above it', () => {
-    const wrapper = mountWith(page(), page())
+    const wrapper = mountWith(page(), pager([]))
 
     const header = wrapper.find('header')
     expect(header.element.firstElementChild?.tagName).toBe('H1')

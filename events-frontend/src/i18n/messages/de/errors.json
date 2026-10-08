@@ -19,6 +19,7 @@
     "calendar": "der Kalenderdaten",
     "map": "der Kartendaten",
     "promoters": "der Veranstalter",
-    "search": "der Suchergebnisse"
+    "search": "der Suchergebnisse",
+    "pastEvents": "der vergangenen Events"
   }
 }

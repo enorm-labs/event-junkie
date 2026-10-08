@@ -7,7 +7,7 @@ import { usePageMeta } from '@/composables/usePageMeta'
 import { artistPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useArtist } from '@/composables/useArtist'
 import { useEventSearch } from '@/composables/useEvents'
-import { yesterdayIso } from '@/lib/format'
+import { usePastEvents } from '@/composables/usePastEvents'
 import { descriptionFor } from '@/lib/description'
 import { imageCredit, owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
 import type { Locale } from '@/i18n/locales'
@@ -28,13 +28,7 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ artist: slug.value, size: 50 }), 'errors.subject.artistEvents')
-// `to` with no `from` is every past event, newest first; the page size is what bounds it.
-const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
-  artist: slug.value,
-  to: yesterdayIso(),
-  size: 20,
-  sort: ['eventDate,desc'],
-}))
+const { past, run: loadPastEvents } = usePastEvents(() => ({ artist: slug.value }), events)
 
 const links = computed(() =>
   [
@@ -100,7 +94,7 @@ const descriptionCredit = computed(() =>
     :name="artist?.name"
     :not-found="notFound"
     :not-found-text="t('detail.artist.notFound')"
-    :past-events="pastEvents"
+    :past="past"
     :ready="Boolean(artist)"
   >
     <template #meta>

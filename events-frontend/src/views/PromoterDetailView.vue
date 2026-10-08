@@ -5,7 +5,7 @@ import BaseDetailView from '@/components/BaseDetailView.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { notFoundPageMeta, placeholderPageMeta, promoterPageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
-import { yesterdayIso } from '@/lib/format'
+import { usePastEvents } from '@/composables/usePastEvents'
 import { usePromoter } from '@/composables/usePromoter'
 import { imageCredit } from '@/lib/imageCredit'
 import { useI18n } from 'vue-i18n'
@@ -28,13 +28,7 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ promoter: slug.value, size: 50 }), 'errors.subject.promoterEvents')
-// `to` with no `from` is every past event, newest first; the page size is what bounds it.
-const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
-  promoter: slug.value,
-  to: yesterdayIso(),
-  size: 20,
-  sort: ['eventDate,desc'],
-}))
+const { past, run: loadPastEvents } = usePastEvents(() => ({ promoter: slug.value }), events)
 
 function reload() {
   loadPromoter()
@@ -83,7 +77,7 @@ const credit = computed(() => imageCredit(promoter.value))
     :name="promoter?.name"
     :not-found="notFound"
     :not-found-text="t('detail.promoter.notFound')"
-    :past-events="pastEvents"
+    :past="past"
     :ready="Boolean(promoter)"
   >
     <template #meta>

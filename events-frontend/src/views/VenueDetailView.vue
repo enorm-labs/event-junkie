@@ -9,7 +9,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
-import { yesterdayIso } from '@/lib/format'
+import { usePastEvents } from '@/composables/usePastEvents'
 import { useVenue } from '@/composables/useVenue'
 import { imageCredit } from '@/lib/imageCredit'
 import { useI18n } from 'vue-i18n'
@@ -34,13 +34,7 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ venue: slug.value, size: 50 }), 'errors.subject.venueEvents')
-// `to` with no `from` is every past event, newest first; the page size is what bounds it.
-const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
-  venue: slug.value,
-  to: yesterdayIso(),
-  size: 20,
-  sort: ['eventDate,desc'],
-}))
+const { past, run: loadPastEvents } = usePastEvents(() => ({ venue: slug.value }), events)
 
 /** "Holzmarktstr. 25 · Friedrichshain": a part the venue lacks drops out with its separator. */
 const addressLine = computed(() =>
@@ -199,7 +193,7 @@ const programme = computed(() => {
     :name="venue?.name"
     :not-found="notFound"
     :not-found-text="t('detail.venue.notFound')"
-    :past-events="pastEvents"
+    :past="past"
     :ready="Boolean(venue)"
   >
     <template v-if="venue?.imported === false" #upcoming>
