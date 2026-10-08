@@ -439,6 +439,12 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `Straight Edge Hardcore resolves to Hardcore while a bare Core stays dropped`() {
+        normalizeGenre("Straight Edge Hardcore, Core").shouldContainExactly("Hardcore")
+        nonGenreTokens("Straight Edge Hardcore, Core").shouldContainExactly("Core")
+    }
+
+    @Test
     fun `second spellings fold onto the tag that exists`() {
         normalizeGenre("Synthie-Pop").shouldContainExactly("Synthpop")
         normalizeGenre("Goth").shouldContainExactly("Gothic Rock")
