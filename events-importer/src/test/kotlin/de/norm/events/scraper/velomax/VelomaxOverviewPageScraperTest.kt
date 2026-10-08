@@ -95,6 +95,14 @@ class VelomaxOverviewPageScraperTest {
     }
 
     @Test
+    fun `mints no artist from an ice show's title`() {
+        // #2637: "Disney On Ice präsentiert …" names a production, not a performer.
+        val sessions = scrape(VelomaxHall.VELODROM).filter { it.title.startsWith("Disney On Ice") }
+        sessions shouldHaveSize 6
+        sessions.all { it.eventType == "SHOW" && it.artists.isEmpty() } shouldBe true
+    }
+
+    @Test
     fun `gives each session of a day its own sourceId`() {
         // The permalink is one page per show, so without the start-time suffix the three 13 March
         // sessions would share one id and `event.source_id`'s UNIQUE constraint would keep one.

@@ -134,6 +134,7 @@ class VelomaxWebsiteImportersTest {
                     .filter { it.title.startsWith("Disney On Ice") }
             sessions shouldHaveSize 6
             sessions.map { it.sourceId }.distinct() shouldHaveSize 6
+            sessions.all { it.artists.isEmpty() } shouldBe true
         }
 
     @Test

@@ -1646,7 +1646,8 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
  * Builds an artist list from the source's own event type, for venues with a clean `kind` label
  * (Astra, Lido): festivals and parties extract none; a show or comedy night with no support line
  * bills its solo act via [SOLO_BILL] (#315); concerts always add the title plus the subtitle's support acts;
- * unknown falls back to [buildArtistList].
+ * unknown falls back to [buildArtistList]. An ice show ([isIceShow]) of any type keeps only its
+ * support acts: its title names a production, never a performer.
  *
  * The `FESTIVAL`/`PARTY` guard is unconditional, and narrowing it is the trap: measured across
  * the seeded database, of the party and festival titles reaching here exactly one hid a
@@ -1672,14 +1673,15 @@ fun buildArtistsForEventType(
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
     val supportNames = extractSupportFromSubtitle(subtitle)
-    if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) return soloBillOf(title)
-    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
-
-    // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.
     val supportActs =
         supportNames
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
+    if (isIceShow(title, subtitle)) return supportActs
+    if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) return soloBillOf(title)
+    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
+
+    // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.
     // The subtitle goes in as well as being read for support: a `"<X> presents"` credit beside a
     // title that opens with `<X>` means the title is the label's night, not the act.
     return headlinersFromTitle(title, unpackWithFrame = unpackWithFrame, subtitle = subtitle, description = description) + supportActs
