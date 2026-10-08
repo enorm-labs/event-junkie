@@ -149,6 +149,13 @@ says so.
 | `HEIDEGLUEHEN`         | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |
 | `HEIDEGLUEHEN`         | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
 | `HOLE44`               | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim button                                                                           | —     |
+| `HOUSE_OF_MUSIC`       | `DOORS_TIME`       | the programme names one time per event                                                                                                           | —     |
+| `HOUSE_OF_MUSIC`       | `END_TIME`         | the venue hides the end on most events                                                                                                           | —     |
+| `HOUSE_OF_MUSIC`       | `PRICE`            | every event sells its tickets elsewhere, and the payload carries no price                                                                        | —     |
+| `HOUSE_OF_MUSIC`       | `IMAGE`            | the widget shows no images, and the events carry none                                                                                            | —     |
+| `HOUSE_OF_MUSIC`       | `DESCRIPTION`      | the events carry no text                                                                                                                         | —     |
+| `HOUSE_OF_MUSIC`       | `GENRE`            | the payload carries no category, and the titles name no style                                                                                    | —     |
+| `HOUSE_OF_MUSIC`       | `PER_EVENT_PAGE`   | the venue hides each event's own page                                                                                                            | —     |
 | `HUMBOLDTHAIN`         | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `HUMBOLDTHAIN`         | `PRICE`            | prices appear only in the prose, in too many spellings to parse                                                                                  | —     |
 | `HUMBOLDTHAIN`         | `SOLD_OUT`         | nothing in the payload marks a night sold out                                                                                                    | —     |

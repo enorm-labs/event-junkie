@@ -139,6 +139,9 @@ enum class EventSource {
     /** Hole 44 Berlin – a Neukölln concert hall geared towards touring rock, metal, punk and alternative bands. */
     HOLE44,
 
+    /** House of Music Berlin – a stage hall, 23 rehearsal rooms and a café-bar on the RAW grounds, with release concerts and jam sessions. */
+    HOUSE_OF_MUSIC,
+
     /** Humboldthain Club Berlin – a techno club in Wedding with an indoor floor and a large garden, running collective-booked nights. */
     HUMBOLDTHAIN,
 

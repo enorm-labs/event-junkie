@@ -59,6 +59,7 @@
 ###   Heideglühen          — https://heidegluehen.berlin/monatsvorschau/
 ###   Heimathafen Neukölln — https://heimathafen-neukoelln.de/wp-json/wp/v2/events
 ###   Hole 44              — https://hole-berlin.de/events/
+###   House of Music Berlin — https://www.houseofmusic.berlin/
 ###   Humboldthain Club    — https://core.service.elfsight.com/p/boot/?w=<widgetId>
 ###   Huxleys Neue Welt    — https://huxleysneuewelt.de/events
 ###   Junction Bar         — https://www.junction-bar.de/
@@ -175,7 +176,6 @@
 ###   Hafenbar                       — https://www.hafenbar-berlin.de/schlager-party-berlin/
 ###   Hamburger Bahnhof              — https://www.smb.museum/veranstaltungen/veranstaltungsreihe/berlin-beats/
 ###   Haus der Visionäre             — 
-###   House of Music Berlin          — https://www.houseofmusic.berlin/
 ###   Ikii                           — https://ra.co/clubs/271542
 ###   interkosmos                    — https://www.interkosmos.cc/
 ###   Ipse                           — https://ra.co/clubs/278777
@@ -4146,7 +4146,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### House of Music Berlin (Revaler Str. 99, Berlin-Friedrichshain — not imported, #2766)
+### House of Music Berlin (Revaler Str. 99, Berlin-Friedrichshain)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create House of Music Berlin venue ---
@@ -4168,13 +4168,45 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "bar"],
     "capacity": 150,
-    "programmeUrl": "https://www.houseofmusic.berlin/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("house_of_music_venue_id", response.body.id);
     client.test("House of Music Berlin venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create House of Music Berlin event source ---
+# Links the venue to the HouseOfMusicWebsiteImporter.
+# The sourceType "HOUSE_OF_MUSIC" matches EventSource.HOUSE_OF_MUSIC.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{house_of_music_venue_id}},
+    "name": "House of Music Berlin",
+    "url": "https://www.houseofmusic.berlin/",
+    "sourceType": "HOUSE_OF_MUSIC",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("House of Music Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial House of Music Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/house-of-music-berlin/import
+Accept: application/json
+
+> {%
+    client.test("House of Music Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

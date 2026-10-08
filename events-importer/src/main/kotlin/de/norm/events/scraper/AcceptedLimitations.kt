@@ -49,6 +49,7 @@ import de.norm.events.scraper.havanna.HAVANNA_LIMITATIONS
 import de.norm.events.scraper.heidegluehen.HEIDEGLUEHEN_LIMITATIONS
 import de.norm.events.scraper.heimathafen.HEIMATHAFEN_LIMITATIONS
 import de.norm.events.scraper.hole44.HOLE44_LIMITATIONS
+import de.norm.events.scraper.houseofmusic.HOUSE_OF_MUSIC_LIMITATIONS
 import de.norm.events.scraper.humboldthain.HUMBOLDTHAIN_LIMITATIONS
 import de.norm.events.scraper.huxleys.HUXLEYS_LIMITATIONS
 import de.norm.events.scraper.insel.INSEL_LIMITATIONS
@@ -171,6 +172,7 @@ object AcceptedLimitations {
             HEIDEGLUEHEN_LIMITATIONS,
             HEIMATHAFEN_LIMITATIONS,
             HOLE44_LIMITATIONS,
+            HOUSE_OF_MUSIC_LIMITATIONS,
             HUMBOLDTHAIN_LIMITATIONS,
             HUXLEYS_LIMITATIONS,
             INSEL_LIMITATIONS,
