@@ -355,7 +355,6 @@ private fun stripNoise(token: String): String {
             .replace(Regex("""\s+und\s+""", RegexOption.IGNORE_CASE), ", ")
             .trim()
 
-    // Strip "Floor" / "Disco Floor" suffixes (case-insensitive)
     for (suffix in NOISE_SUFFIXES) {
         if (cleaned.endsWith(suffix, ignoreCase = true)) {
             cleaned = cleaned.dropLast(suffix.length).trim()
@@ -378,7 +377,6 @@ private fun resolveGenre(token: String): List<String> =
 private fun resolveGenreOrNull(token: String): List<String>? {
     val lower = token.lowercase().trim()
 
-    // Skip tokens that are clearly not genre names
     if (lower.length < 2) return emptyList()
     if (lower.startsWith("all kinds of")) {
         val genre =
@@ -395,11 +393,8 @@ private fun resolveGenreOrNull(token: String): List<String>? {
     }
     if (lower.startsWith("from ")) return emptyList()
 
-    // Direct synonym match
     GENRE_SYNONYMS[lookupKey(lower)]?.let { return listOf(it) }
 
-    // Try matching individual words if the full token didn't match
-    // (handles compound freeform labels like "Superheavy Funky Soul & Boogaloo")
     val words = lower.split(Regex("""\s+"""))
     val matched = words.mapNotNull { GENRE_SYNONYMS[lookupKey(it)] }.distinct()
     if (matched.isNotEmpty()) return matched
