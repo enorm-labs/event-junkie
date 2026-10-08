@@ -26,6 +26,7 @@
 ###   Astra Kulturhaus     — https://www.astra-berlin.de/
 ###   Badehaus             — https://badehaus-berlin.com/events/
 ###   Bar jeder Vernunft   — https://www.bar-jeder-vernunft.de/de/programm/kalender.html
+###   Bar Tausend          — https://tausendberlin.com/lineup/
 ###   Berghain             — https://www.berghain.berlin/de/program/
 ###   Bi Nuu               — https://binuu.de/de/events
 ###   Cassiopeia           — https://cassiopeia-berlin.de/club
@@ -142,7 +143,6 @@
 ###   Ballhaus Berlin                — https://ballhaus-berlin.de/de/termine/
 ###   Ballhaus Wedding               — https://www.ballhauswedding.de/veranstaltungen
 ###   Bar Neun                       — https://ra.co/clubs/262552
-###   Bar Tausend                    — https://tausendberlin.com/lineup/
 ###   Beate Uwe                      — https://beate-uwe.de/#Programm
 ###   Birgit                         — https://ra.co/clubs/104289
 ###   BKA Theater                    — https://www.bka-theater.de/spielplan/
@@ -1310,7 +1310,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Bar Tausend (Schiffbauerdamm 11, Berlin-Mitte — not imported, #2766)
+### Bar Tausend (Schiffbauerdamm 11, Berlin-Mitte)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Bar Tausend venue ---
@@ -1331,13 +1331,45 @@ Content-Type: application/json
     "descriptionAlt": "Unter den S-Bahn-Bögen an der Friedrichstraße liegt diese Cocktailbar, mit House- und Electronica-DJs von Donnerstag bis Samstag und Live-Abenden.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar"],
-    "programmeUrl": "https://tausendberlin.com/lineup/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("tausend_venue_id", response.body.id);
     client.test("Bar Tausend venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Bar Tausend event source ---
+# Links the venue to the TausendWebsiteImporter.
+# The sourceType "TAUSEND" matches EventSource.TAUSEND.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{tausend_venue_id}},
+    "name": "Bar Tausend",
+    "url": "https://tausendberlin.com/lineup/",
+    "sourceType": "TAUSEND",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Bar Tausend event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Bar Tausend import ---
+POST {{importer-host}}/api/admin/event-sources/bar-tausend/import
+Accept: application/json
+
+> {%
+    client.test("Bar Tausend import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
