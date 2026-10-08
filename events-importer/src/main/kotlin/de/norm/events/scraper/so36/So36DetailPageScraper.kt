@@ -107,7 +107,7 @@ class So36DetailPageScraper {
                 if (eventType == EventType.FESTIVAL.name) {
                     descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)).map { ScrapedArtist(name = it, role = "HEADLINER") }
                 } else {
-                    parseArtists(title, subtitle, eventType)
+                    parseArtists(document, title, subtitle, eventType)
                 },
             promoters = listOfNotNull(document.parsePromoter())
         )
@@ -203,7 +203,8 @@ class So36DetailPageScraper {
 
     /**
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
-     * then support acts from the subtitle ([parseSupportActs]). A festival bills the acts of its
+     * then support acts from the subtitle ([parseSupportActs]), else from a bold `Support:` line in the
+     * description ([descriptionSupport]). A festival bills the acts of its
      * description ([descriptionRoster]); any other night (parties, shows, readings) carries no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
@@ -214,6 +215,7 @@ class So36DetailPageScraper {
      * line is `SADSVIT | Ticket`), so only the part before it is read.
      */
     private fun parseArtists(
+        document: Document,
         title: String,
         subtitle: String?,
         eventType: String?
@@ -221,7 +223,9 @@ class So36DetailPageScraper {
         if (eventType != EventType.CONCERT.name) return emptyList()
 
         val supportActs =
-            parseSupportActs(subtitle).map { ScrapedArtist(name = it, role = "SUPPORT") }
+            parseSupportActs(subtitle)
+                .ifEmpty { descriptionSupport(document) }
+                .map { ScrapedArtist(name = it, role = "SUPPORT") }
         return headlinersFromTitle(title.substringBefore(" | "), unpackWithFrame = true) + supportActs
     }
 
