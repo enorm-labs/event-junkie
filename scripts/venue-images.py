@@ -90,26 +90,16 @@ SPDX = {
     "Attribution": "LicenseRef-Commons-Attribution",
 }
 
-# Every field a venue PUT carries. The admin API has no PATCH, so anything missing here is erased
-# from the row it writes.
-VENUE_FIELDS = (
-    "name",
-    "address",
-    "city",
-    "postalCode",
-    "district",
-    "latitude",
-    "longitude",
-    "websiteUrl",
-    "imageUrl",
-    "imageAttribution",
-    "imageLicenceId",
-    "imageSourceUrl",
-    "description",
-    "descriptionLanguage",
-    "descriptionAlt",
-    "descriptionAltLanguage",
-)
+# What a venue GET returns that a PUT does not take: the id, the slug and the derived fields. The
+# admin API has no PATCH, so the PUT carries everything else the GET returned: a list of fields to
+# keep erases every field added after it. A new read-only field makes the PUT a 400, which stops the
+# run instead of erasing data.
+READ_ONLY_FIELDS = ("id", "slug", "createdAt", "updatedAt", "programmeFamilies", "programmeEventTypes")
+
+
+def venue_body(venue):
+    """The PUT body that rewrites [venue] unchanged: every field the GET returned but the read-only ones."""
+    return {field: value for field, value in venue.items() if field not in READ_ONLY_FIELDS}
 
 
 def fold(s):
@@ -290,7 +280,7 @@ def plan_one(row, venue):
         stated = file_info["artist"] or "nothing"
         return None, f"{archive} names no author, it states {stated[:60]!r}"
 
-    body = {field: venue.get(field) for field in VENUE_FIELDS}
+    body = venue_body(venue)
     body["imageUrl"] = file_info["thumb"]
     body["imageAttribution"] = f"{file_info['artist']}, via {archive}"
     body["imageLicenceId"] = spdx

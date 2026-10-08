@@ -13,6 +13,8 @@ on:
       - '**.py'
       - 'ruff.toml'
       - '.github/workflows/validate-python.yml'
+      # test_venue_images.py reads the venue request and response DTOs.
+      - 'events-importer/src/main/kotlin/de/norm/events/venue/Venue*.kt'
   pull_request:
     branches: [ main ]
     # `paths:` is present because this check is **not** required. **If it is ever made required, delete
@@ -21,6 +23,8 @@ on:
       - '**.py'
       - 'ruff.toml'
       - '.github/workflows/validate-python.yml'
+      # test_venue_images.py reads the venue request and response DTOs.
+      - 'events-importer/src/main/kotlin/de/norm/events/venue/Venue*.kt'
   workflow_dispatch:
 
 permissions:
@@ -69,6 +73,9 @@ jobs:
 
       - name: osm-venue-coordinates writes only an OpenStreetMap point it can trust
         run: python3 scripts/test_osm_venue_coordinates.py
+
+      - name: venue-images rewrites every venue field it does not set
+        run: python3 scripts/test_venue_images.py
 
       # Gated on the two steps it explains.
       - name: Explain the fix
