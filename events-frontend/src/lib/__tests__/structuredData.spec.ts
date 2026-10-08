@@ -167,6 +167,17 @@ describe('eventJsonLd', () => {
     expect(document.startDate).toBe('2026-06-12T20:00:00+02:00')
   })
 
+  it('drops offers for a cancelled event, because the page drops the ticket link (#2916)', () => {
+    const document = eventJsonLd({ ...event, status: 'CANCELLED' }, 'en')!
+    expect(document.offers).toBeUndefined()
+    expect(document.eventStatus).toBe('https://schema.org/EventCancelled')
+
+    expect(eventJsonLd({ ...event, status: 'SCHEDULED' }, 'en')!.offers).toMatchObject({
+      '@type': 'Offer',
+      price: 38,
+    })
+  })
+
   it('describes performers without claiming they are natural persons', () => {
     // §7.3 treats artist names as personal data; of the two types Google accepts for `performer`,
     // only one asserts personhood.

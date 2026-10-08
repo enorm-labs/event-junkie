@@ -116,9 +116,11 @@ const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLa
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
+// A cancelled night shows no price either: nothing is on sale (#2916).
 const hasTickets = computed(
   () =>
     !!event.value &&
+    event.value.status !== 'CANCELLED' &&
     !!(
       formatPrice(event.value.pricePresale, event.value.priceCurrency) ||
       formatPrice(event.value.priceBoxOffice, event.value.priceCurrency) ||
@@ -446,11 +448,15 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       </section>
 
       <!--
-        No ticket CTA once the night has happened, nor on the row a show left — the house it
-        moved to sells the tickets (#1551); source and Facebook stay honest. Share closes the row.
+        No ticket CTA once the night has happened, on a cancelled one (#2916), nor on the row a
+        show left — the house it moved to sells the tickets (#1551). The source page stays: it says
+        where refunds go. Share closes the row.
       -->
       <EventShareActions :event="event">
-        <Button v-if="event.ticketUrl && !isPast && !event.relocatedTo" as-child>
+        <Button
+          v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"
+          as-child
+        >
           <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.buyTickets')
           }}</a>
