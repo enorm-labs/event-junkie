@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quasimodo
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -117,6 +118,22 @@ class QuasimodoWebsiteImporterTest {
             otisKane.pricePresale shouldBe BigDecimal("30")
             otisKane.promoters shouldBe listOf("FKP Scorpio")
             otisKane.description!!.isNotBlank() shouldBe true
+        }
+
+    @Test
+    fun `keeps the detail page's cancellation over the listing's silence`() =
+        runTest {
+            val detailUrl = "https://quasimodo.club/events/otis-kane-7410"
+            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
+                Jsoup.parse(readFixture("quasimodo-detail-otis-kane-cancelled.html"), detailUrl)
+
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val otisKane = result.events.first { it.sourceId == "quasimodo:otis-kane-7410" }
+            otisKane.status shouldBe EventStatus.CANCELLED.name
+            otisKane.eventDate shouldBe LocalDate.of(2026, 10, 8)
+            result.events.filter { it.status != EventStatus.SCHEDULED.name }.map { it.sourceId } shouldBe
+                listOf("quasimodo:otis-kane-7410")
         }
 
     @Test

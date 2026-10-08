@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quasimodo
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -10,6 +11,7 @@ import de.norm.events.scraper.detailTableCell
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
@@ -29,6 +31,10 @@ import org.jsoup.nodes.Element
  * `<article>`. The venue marks DJ nights `party` and leaves most concerts untagged, and a night
  * can carry both (`Disco Inferno` is `concerts party`) — so `party` wins, and an untagged event
  * falls back to title inference rather than `OTHER`.
+ *
+ * A cancelled show keeps its card and its page; the page alone adds `.alert-danger` with
+ * `Achtung: Abgesagt!`. Only that alert sets the status. The description is not read, because a
+ * postponed show's text can quote an old cancellation.
  *
  * @see QuasimodoOverviewPageScraper for the listing parser (discovery, date, genre, thumbnail).
  * @see QuasimodoWebsiteImporter for the HTTP fetch orchestrator.
@@ -61,6 +67,7 @@ class QuasimodoDetailPageScraper {
             title = title,
             description = document.textAt(".panel-collapse.description"),
             eventType = eventType,
+            status = document.textAt(".alert-danger")?.let(::parseEventStatus) ?: EventStatus.SCHEDULED.name,
             // The listing's mobile block is the date source; the sentinel lets it backstop this page.
             eventDate = UNRESOLVED_EVENT_DATE,
             doorsTime = parseTime(document.detailTableCell(DOORS_LABEL)),
