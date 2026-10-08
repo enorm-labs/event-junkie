@@ -106,6 +106,24 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `isIceShow reads auf Eis as a phrase in the title or the subtitle`() {
+        isIceShow("Eiskönigin 1 & 2", subtitle = "Musik-Show auf Eis") shouldBe true
+        isIceShow("Märchen auf Eis") shouldBe true
+        isIceShow("Disney on Ice", subtitle = null) shouldBe true
+        inferConcertVenueType("Die Schöne und das Biest AUF EIS") shouldBe "SHOW"
+    }
+
+    @Test
+    fun `isIceShow leaves Eis inside another word untouched`() {
+        isIceShow("Eiskönigin 1 & 2") shouldBe false
+        isIceShow("Eisbrecher", subtitle = "Kaiserwerk Tour 2026") shouldBe false
+        isIceShow("Lauf Eis", subtitle = null) shouldBe false
+        isIceShow("Die Fahrt auf Eisenbahnschienen") shouldBe false
+        isIceShow("Konzert", subtitle = "Lieder auf Eisgrund") shouldBe false
+        isIceShow("Tanz auf Eiszapfen", subtitle = "Ein Abend mit Heiß und Eis") shouldBe false
+    }
+
+    @Test
     fun `inferConcertVenueType maps football and cinema formats to SCREENING`() {
         inferConcertVenueType("11FREUNDE WM-QUARTIER") shouldBe "SCREENING"
         inferConcertVenueType("Fußball Weltmeisterschaft") shouldBe "SCREENING"

@@ -136,8 +136,9 @@ class TempodromOverviewPageScraperTest {
     fun `derives the headliner from the title, not the placeholder performer`() {
         // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
         // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829), and
-        // three are the Roncalli gala with an orchestra, a show (#2833).
-        events.count { it.artists.isNotEmpty() } shouldBe 134
+        // three are the Roncalli gala with an orchestra, a show (#2833). Holiday on Ice and
+        // "Eiskönigin 1 & 2" are ice shows, which bill no act in the title.
+        events.count { it.artists.isNotEmpty() } shouldBe 133
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 
@@ -155,6 +156,16 @@ class TempodromOverviewPageScraperTest {
         holidayOnIce.eventType shouldBe "SHOW"
         holidayOnIce.typeIsFallback shouldBe false
         holidayOnIce.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types an ice show named only in the format line as SHOW`() {
+        // "Eiskönigin 1 & 2" carries no ice cue in its title; its description reads "Musik-Show auf Eis".
+        val eiskoenigin = event("eiskoenigin_1_und_2_2027-01-22_18")
+        eiskoenigin.subtitle shouldBe "Musik-Show auf Eis"
+        eiskoenigin.eventType shouldBe "SHOW"
+        eiskoenigin.typeIsFallback shouldBe false
+        eiskoenigin.artists.shouldBeEmpty()
     }
 
     @Test

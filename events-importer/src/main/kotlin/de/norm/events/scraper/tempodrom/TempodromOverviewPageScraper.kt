@@ -9,6 +9,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isIceShow
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.schemaDate
@@ -171,18 +172,19 @@ class TempodromOverviewPageScraper {
 }
 
 /**
- * [EventType.COMEDY] when the venue's format line says "comedy" as a word, else the shared
- * concert-hall rule on the title. Only a comedy cue is read from the subtitle: the line is also
- * a tour name, and "Die beste Wolfgang Petry Party" is a tribute show, not a party.
+ * [EventType.COMEDY] when the venue's format line says "comedy" as a word, [EventType.SHOW] when
+ * it bills an ice show ("Musik-Show auf Eis"), else the shared concert-hall rule on the title.
+ * No other cue is read from the subtitle: the line is also a tour name, and "Die beste Wolfgang
+ * Petry Party" is a tribute show, not a party.
  */
 internal fun tempodromEventType(
     title: String,
     subtitle: String?
 ): String =
-    if (subtitle != null && COMEDY_FORMAT.containsMatchIn(subtitle)) {
-        EventType.COMEDY.name
-    } else {
-        inferConcertVenueType(title)
+    when {
+        subtitle != null && COMEDY_FORMAT.containsMatchIn(subtitle) -> EventType.COMEDY.name
+        isIceShow(title, subtitle) -> EventType.SHOW.name
+        else -> inferConcertVenueType(title)
     }
 
 /**
