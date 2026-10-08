@@ -176,6 +176,15 @@ says so.
 | `INSEL`                | `PER_EVENT_PAGE`   | every event points at the programme page and takes its identity from its date plus its title                                                     | —     |
 | `INSEL`                | `EVENT_TYPE`       | the venue publishes no category, so a title that is an event name rather than an act is minted as a concert                                      | —     |
 | `INSEL`                | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
+| `JONNY_KNUPPEL`        | `PER_EVENT_PAGE`   | every night is an overlay on the homepage                                                                                                        | —     |
+| `JONNY_KNUPPEL`        | `IMAGE`            | the calendar shows no flyer                                                                                                                      | —     |
+| `JONNY_KNUPPEL`        | `TICKET_URL`       | the site links no ticket shop                                                                                                                    | —     |
+| `JONNY_KNUPPEL`        | `DOORS_TIME`       | the site prints one opening time per night                                                                                                       | —     |
+| `JONNY_KNUPPEL`        | `GENRE`            | the calendar names no style                                                                                                                      | —     |
+| `JONNY_KNUPPEL`        | `PRICE`            | only a few nights print an entry price                                                                                                           | —     |
+| `JONNY_KNUPPEL`        | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
+| `JONNY_KNUPPEL`        | `ARTISTS`          | about half the nights list no line-up                                                                                                            | —     |
+| `JONNY_KNUPPEL`        | `DESCRIPTION`      | about half the nights carry no blurb                                                                                                             | —     |
 | `JUNCTION_BAR`         | `PER_EVENT_PAGE`   | the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link                       | —     |
 | `JUNCTION_BAR`         | `PRICE`            | the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one                                                | —     |
 | `JUNCTION_BAR`         | `IMAGE`            | the DJ programme page carries no picture per night; a live night carries one                                                                     | —     |

@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   126 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   127 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
@@ -87,6 +87,7 @@ schema change.
 | House of Music Berlin            | https://www.houseofmusic.berlin/                                         | Concert Hall | Wix Events warmup JSON; acts from title shapes            |
 | Humboldthain Club                | https://www.humboldthain.com/                                            | Techno Club  | Elfsight widget API; weekly night expanded                |
 | Huxleys Neue Welt                | https://huxleysneuewelt.de/events                                        | Concert Hall | Events-Manager; ISO slug date; genre/promoter tags        |
+| Jonny Knüppel                    | https://jonnyknueppel.de/                                                | Club         | Astro one-pager; year from end stamp; closes 2026-10-31   |
 | Junction Bar                     | https://www.junction-bar.de/                                             | Bar          | Static monthly pages; show times vary by weekday          |
 | Kabarett-Theater DISTEL          | https://distel-berlin.de/spielplan/kalender/                             | Theater      | Contao month calendar; ~7 MB pages of inline SVG          |
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/              | Concert Hall | Shares BERGHAIN importer                                  |
@@ -167,7 +168,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-125 importer classes cover 126 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+126 importer classes cover 127 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -188,8 +189,8 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-47 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
-Ten put both languages in one field.
+48 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
+Eleven put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
 becomes the publisher's second language. Each half must read as German or English, so a Russian half stays in the
@@ -258,6 +259,7 @@ the upsert stores none.
 | House of Music Berlin            | No              | —                                                            | —                  |                                                                                                                                    |
 | Humboldthain Club                | Yes             | One field: `English version above`                           | One field          | [captured page](../events-importer/src/test/resources/scraper/humboldthain/humboldthain-api.json)                                  |
 | Huxleys Neue Welt                | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://huxleysneuewelt.de/en/events/                                                                                              |
+| Jonny Knüppel                    | Yes             | One field: English, then `DE`                                | One field          | [captured page](../events-importer/src/test/resources/scraper/jonnyknuppel/jonnyknuppel-overview.html)                             |
 | Junction Bar                     | No              | —                                                            | —                  |                                                                                                                                    |
 | Kabarett-Theater DISTEL          | No              | —                                                            | —                  |                                                                                                                                    |
 | Kantine am Berghain              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/kantine-am-berghain/                                                                        |
@@ -571,7 +573,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Wendel                            | http://www.nstp.de/nstp/frameset-wendel.htm         | Bar          | Café one-pager, no programme; HTTPS handshake fails       | Site change                |
 | Funkhaus Berlin                   | https://www.funkhaus-berlin.net/                    | Concert Hall | Blogger site; the events archive ends in 2019             | Site change / promoter     |
 | Kraftwerk Berlin                  | https://kraftwerkberlin.de/de/programm              | Concert Hall | Programme page empty between festivals (Atonal, CONTRA)   | Site change / promoter     |
-| Jonny Knüppel                     | https://jonnyknueppel.de/                           | Bar          | Closes after 2026-10-31 (`closed_on`, ADR-046)            | Not importable (closing)   |
 | Œlgarten                          | https://www.oelgarten.com/en                        | Open Air     | Wix Events; two open-ended weekly series, no occurrences  | Havanna-style occurrences  |
 | Rough Trade Berlin                | https://www.roughtrade.com/en-de/events/berlin      | Other        | Next.js store; the events page carries no event data      | Headless browser           |
 | Rosie's Bar                       | —                                                   | Bar          | Bar of The Circus Hostel; no listing of its own           | Site change / manual entry |

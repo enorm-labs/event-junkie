@@ -53,6 +53,7 @@ import de.norm.events.scraper.houseofmusic.HOUSE_OF_MUSIC_LIMITATIONS
 import de.norm.events.scraper.humboldthain.HUMBOLDTHAIN_LIMITATIONS
 import de.norm.events.scraper.huxleys.HUXLEYS_LIMITATIONS
 import de.norm.events.scraper.insel.INSEL_LIMITATIONS
+import de.norm.events.scraper.jonnyknuppel.JONNY_KNUPPEL_LIMITATIONS
 import de.norm.events.scraper.junctionbar.JUNCTION_BAR_LIMITATIONS
 import de.norm.events.scraper.kater.KATER_LIMITATIONS
 import de.norm.events.scraper.kesselhaus.KESSELHAUS_LIMITATIONS
@@ -181,6 +182,7 @@ object AcceptedLimitations {
             HUMBOLDTHAIN_LIMITATIONS,
             HUXLEYS_LIMITATIONS,
             INSEL_LIMITATIONS,
+            JONNY_KNUPPEL_LIMITATIONS,
             JUNCTION_BAR_LIMITATIONS,
             KATER_LIMITATIONS,
             KESSELHAUS_LIMITATIONS,
