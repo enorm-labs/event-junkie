@@ -84,6 +84,7 @@ import de.norm.events.scraper.punchline.PUNCHLINE_LIMITATIONS
 import de.norm.events.scraper.quasimodo.QUASIMODO_LIMITATIONS
 import de.norm.events.scraper.quatsch.QUATSCH_LIMITATIONS
 import de.norm.events.scraper.renate.RENATE_LIMITATIONS
+import de.norm.events.scraper.richten25.RICHTEN25_LIMITATIONS
 import de.norm.events.scraper.ritterbutzke.RITTER_BUTZKE_LIMITATIONS
 import de.norm.events.scraper.roadrunner.ROADRUNNER_LIMITATIONS
 import de.norm.events.scraper.rosa.ROSA_LIMITATIONS
@@ -205,6 +206,7 @@ object AcceptedLimitations {
             QUASIMODO_LIMITATIONS,
             QUATSCH_LIMITATIONS,
             RENATE_LIMITATIONS,
+            RICHTEN25_LIMITATIONS,
             RITTER_BUTZKE_LIMITATIONS,
             ROADRUNNER_LIMITATIONS,
             ROSA_LIMITATIONS,

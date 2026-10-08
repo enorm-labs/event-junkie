@@ -281,6 +281,13 @@ says so.
 | `RENATE`               | `START_TIME`       | a night with no opening time in any floor heading, as a CLUB-only night without one, has no start time                                           | —     |
 | `RENATE`               | `PRICE`            | the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so                                | —     |
 | `RENATE`               | `IMAGE`            | the programme rows carry no flyer, only icons and a Resident Advisor ticket link                                                                 | —     |
+| `RICHTEN25`            | `START_TIME`       | the programme names a date and a lineup, no time                                                                                                 | —     |
+| `RICHTEN25`            | `DOORS_TIME`       | the programme names a date and a lineup, no time                                                                                                 | —     |
+| `RICHTEN25`            | `PRICE`            | the page names no entry price                                                                                                                    | —     |
+| `RICHTEN25`            | `IMAGE`            | the programme is a text list with no posters                                                                                                     | —     |
+| `RICHTEN25`            | `DESCRIPTION`      | each night is one lineup line, with no text                                                                                                      | —     |
+| `RICHTEN25`            | `GENRE`            | the space is for experimental music, and no night names a style                                                                                  | —     |
+| `RICHTEN25`            | `PER_EVENT_PAGE`   | a night has no page of its own                                                                                                                   | —     |
 | `RITTER_BUTZKE`        | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ programme                                                                                  | —     |
 | `RITTER_BUTZKE`        | `PRICE`            | the club sells through a third party and prints no figure; a night is flagged free only when its title says so                                   | —     |
 | `ROADRUNNER`           | `PER_EVENT_PAGE`   | the whole programme lives on one hand-coded page                                                                                                 | —     |

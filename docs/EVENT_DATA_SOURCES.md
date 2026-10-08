@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   118 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    52 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   119 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    51 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -125,6 +125,7 @@ schema change.
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices         |
 | Quatsch Comedy Club              | https://quatsch-comedy-club.de/tickets/                     | Comedy Club  | Eventim calendar plugin; one admin-ajax POST per day      |
 | Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups and opening times   |
+| Richten25                        | https://richten25.de/events                                 | Other        | Hostinger; HTML embed in Astro props; lineups only        |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                        | Techno Club  | Modus codebase, own template; stale slug dates            |
 | Roadrunner's Paradise            | http://www.roadrunners-paradise.de/                         | Bar          | Retro HTML; rich data; year missing on some dates         |
 | ROSA                             | https://www.rosaclub.de/dates                               | Club         | Next.js; age-gate cookie; events in the flight payload    |
@@ -159,7 +160,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-117 importer classes cover 118 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+118 importer classes cover 119 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -180,7 +181,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-46 sources have a second language, 68 have none, and 4 are unknown. Eight translate the event text on a second page.
+46 sources have a second language, 69 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -286,6 +287,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | Quasimodo                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://quasimodo.club/en/events                                                                                                   |
 | Quatsch Comedy Club              | No              | —                                                            | —                  |                                                                                                                                    |
 | Renate                           | No              | —                                                            | —                  |                                                                                                                                    |
+| Richten25                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Ritter Butzke                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Roadrunner's Paradise            | No              | —                                                            | —                  |                                                                                                                                    |
 | ROSA                             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -342,7 +344,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| Richten25                      | https://richten25.de/events                                              | Other        | Medium   | Hostinger builder; ~25 dated titles in the page JSON         |
 | 808 Berlin                     | https://808.berlin/                                                      | Club         | Medium   | Astro one-pager; dated lineups; no times, prices, images     |
 | House of Music                 | https://www.houseofmusic.berlin/                                         | Concert Hall | Medium   | Wix Events warmup JSON; 11 upcoming; some quiz nights        |
 | Pfefferberg Haus 13            | https://haus13.pfefferwerk.de/veranstaltungen/                           | Concert Hall | Medium   | Event Organiser iCal; 8 upcoming; talks need a filter        |
@@ -393,7 +394,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot                  | https://backsteinboot.org/program-(landing-page)-1                       | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
 | Soulcat                        | https://soulcat-berlin.com/                                              | Bar          | Medium   | TEC REST API; skip the "Fussball" rows                       |
 
-**The 11 rows below Richten25 came from the [Clubcommission member list](https://www.clubcommission.de/members/)
+**The 11 rows from 808 Berlin to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
