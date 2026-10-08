@@ -245,6 +245,17 @@ class ImageFetcherTest {
         }
 
     @Test
+    fun `fetches a URL whose filename contains square brackets`() =
+        runTest {
+            server.enqueue(imageResponse(pngBytes(width = 8, height = 8)))
+            val bracketed = "${url().substringBefore("/poster.png")}/img/Kunstlieder_[no_text_3_2].jpg"
+
+            fetcher().fetch(bracketed).shouldBeInstanceOf<ImageFetchResult.Success>()
+
+            server.takeRequest().target shouldContain "Kunstlieder_%5Bno_text_3_2%5D.jpg"
+        }
+
+    @Test
     fun `refuses a body that is not an image at all`() =
         runTest {
             server.enqueue(imageResponse("<html><body>Not found</body></html>".toByteArray()))
