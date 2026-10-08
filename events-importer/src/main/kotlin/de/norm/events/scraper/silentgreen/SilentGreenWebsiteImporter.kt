@@ -24,9 +24,9 @@ import org.springframework.stereotype.Component
  * Website importer for silent green, the Wedding cultural quarter in a 1911 crematorium, whose
  * TYPO3 (`tx_news`) programme is published one month at a time. Implements [EventImporter]
  * directly rather than [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] for two reasons.
- * The month walk: the importer follows the page's own next-month link, and unlike Matrix the
- * venue never drops it, rendering an empty calendar arbitrarily far ahead, so the walk stops at
- * the first month with no entries, capped by [MAX_MONTH_PAGES]. Shared detail pages: a run is
+ * The month walk: the importer follows the page's own next-month link. The venue never drops
+ * it, rendering an empty calendar arbitrarily far ahead, so the walk stops at the first month
+ * with no entries, capped by [MAX_MONTH_PAGES]. Shared detail pages: a run is
  * listed once per open day, 92 rows over five months for 55 distinct pages, one exhibition
  * alone 23, so each page is fetched once and applied to every day ([SilentGreenEventDetails.applyTo]),
  * where a per-event fetch would be serialised by the politeness throttle; an exhibition's days

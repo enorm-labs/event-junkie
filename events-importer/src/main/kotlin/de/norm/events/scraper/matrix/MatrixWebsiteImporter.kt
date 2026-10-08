@@ -4,38 +4,36 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LogContext
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.attrAt
-import de.norm.events.scraper.matrix.MatrixWebsiteImporter.Companion.MAX_MONTH_PAGES
-import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Matrix Club Berlin — a WordPress club running a resident night every day
- * of the year, whose `/party-in-berlin/` programme is paginated one calendar month at a time
- * (`?get_month=<m>&get_year=<yyyy>`).
+ * Website importer for Matrix Club Berlin — a club open every night, with one recurring format per
+ * weekday. The site is a server-rendered Next.js app in German (`/de`), English (`/en`) and Spanish.
  *
- * The entry URL serves the **current** month, listing only the days still to come; the importer
- * follows the page's own next-month link to the first month that renders "Bisher keine Events
- * eingetragen". That page still offers a next link, to every month ahead, so the walk ends on the
- * marker and not on the link (#2319). Matrix is open every night, so an empty month is the end of
- * the programme, not a gap. [MAX_MONTH_PAGES] caps the walk regardless, so a self-referential link
- * cannot spin.
+ * The seeded `/party-in-berlin/` URL redirects to `/de`, which links one page per format,
+ * `/de/night/<format>`. The importer reads those links rather than a fixed list, so a new format is
+ * picked up. Each night page shows only the format's next date, so a run imports about seven
+ * nights, at most one week ahead. A page that shows no date yields no night. A page that fails
+ * costs that night only, and the run reports itself incomplete, so the stale cleanup keeps the
+ * stored row.
  *
- * Per-event `/parties/<date>-matrix-<weekday>/` pages exist but carry nothing the month view
- * lacks — walking ~4 month pages replaces ~90 detail fetches per run.
+ * The importer reads no second language: the English pages' text matches the German closely
+ * enough that the upsert stores none.
  *
- * Conditional requests are intentionally **not** used: the site sends neither ETag nor
- * Last-Modified, and a 304 on the entry page would say nothing about the later months. Every
- * run re-fetches and relies on idempotent `sourceId` upserts — [ImportResult.Success] with
- * `null` cache headers (no `NotModified` path).
+ * Conditional requests are not used: the site sends `Cache-Control: no-store` and neither ETag nor
+ * Last-Modified.
  *
- * @see MatrixOverviewPageScraper for the per-month parsing.
- * @see <a href="https://www.matrix-berlin.de/party-in-berlin/">Matrix programme page</a>
+ * @see MatrixNightPageScraper for the per-night parsing.
+ * @see <a href="https://www.matrix-berlin.de/de">Matrix home page</a>
  */
 @Component
 class MatrixWebsiteImporter(
@@ -45,51 +43,66 @@ class MatrixWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.MATRIX
 
-    private val overviewPageScraper = MatrixOverviewPageScraper()
+    override val fetchesBeyondEntryPage: Boolean get() = true
+
+    private val nightPageScraper = MatrixNightPageScraper()
 
     override suspend fun importEvents(
         url: String,
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val listing =
-            htmlFetcher.scrapeListingPages(
-                eventSource,
-                htmlFetcher.fetchDocument(url),
-                url,
-                MAX_MONTH_PAGES,
-                ::nextMonthUrl,
-                overviewPageScraper::scrape
-            )
-        logger.info { "Scraped ${listing.events.size} Matrix event(s) from $url" }
-        return ImportResult.Success(events = listing.events, etag = null, lastModified = null, complete = listing.complete)
+        val nightUrls = nightPageUrls(htmlFetcher.fetchDocument(url))
+        logger.info { "Found ${nightUrls.size} Matrix night page(s) on $url" }
+        val nights = nightUrls.map { readNight(it) }
+        val events = nights.mapNotNull { it?.event }
+        logger.info { "Scraped ${events.size} Matrix event(s) from ${nightUrls.size} night page(s)" }
+        return ImportResult.Success(
+            events = events,
+            etag = null,
+            lastModified = null,
+            complete = nightUrls.isNotEmpty() && nights.none { it == null }
+        )
     }
 
+    /** The distinct `/de/night/<format>` links on the home page, in page order. */
+    private fun nightPageUrls(home: Document): List<String> =
+        home
+            .select("a[href]")
+            .map { it.absUrl("href") }
+            .filter { NIGHT_PAGE.containsMatchIn(it) }
+            .distinct()
+
     /**
-     * The next-month link — the right-hand chevron in the month switcher — or null on the first
-     * month with no programme, where the walk stops.
+     * The page at [nightUrl], or null when the fetch or the parse throws; a failure logs one `WARN`.
+     * A page that loads but shows no date is a [NightPage] without an event, so the run stays complete.
      */
-    private fun nextMonthUrl(
-        document: Document,
-        pageUrl: String
-    ): String? =
-        if (document.selectFirst(EMPTY_MONTH) != null) {
+    @Suppress("TooGenericExceptionCaught") // Intentional: one broken night page must not fail the whole import
+    private suspend fun readNight(nightUrl: String): NightPage? =
+        try {
+            val document = htmlFetcher.fetchDocument(nightUrl)
+            NightPage(withContext(LogContext.forPage(nightUrl)) { nightPageScraper.scrape(document, nightUrl) })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.at(Level.WARN) {
+                message = "Failed to read a Matrix night page, skipping that night"
+                cause = e
+                payload = mapOf(LogFields.URL to nightUrl)
+            }
             null
-        } else {
-            document.attrAt("a:has(i.fa-chevron-right)", "href")?.let { resolveUrl(pageUrl, it) }
         }
 
     private companion object {
-        /**
-         * Upper bound on month pages per run. Matrix announces roughly three months ahead, so a
-         * runaway guard rather than a horizon — it bites only if next-month links stop terminating.
-         */
-        private const val MAX_MONTH_PAGES = 12
-
-        /** The heading a month without a programme renders in place of its nights. */
-        private const val EMPTY_MONTH = "h2:containsOwn(Bisher keine Events eingetragen)"
+        /** A format page, `https://www.matrix-berlin.de/de/night/social`. */
+        val NIGHT_PAGE = Regex("""/de/night/[^/?#]+/?$""")
     }
 }
+
+/** One night page as read: [event] is null when the page shows no next date. */
+private class NightPage(
+    val event: ScrapedEvent?
+)
 
 /** Nothing this source withholds needs declaring (#715). */
 val MATRIX_LIMITATIONS = VenueLimitations(EventSource.MATRIX)
