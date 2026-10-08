@@ -1,5 +1,9 @@
 package de.norm.events.scraper.voidclub
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -7,9 +11,11 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -177,6 +183,39 @@ class VoidClubOverviewPageScraperTest {
     }
 
     @Test
+    fun `takes the rendered date over an aria-label copied from another card`() {
+        // Live on 2026-10-08: the label was the 9 October INFECTED DNB card's, the spans the real 24 October. Both are
+        // self-consistent weekdays, so only the disagreement shows it.
+        val card = card(label = "Friday, October 9", day = "SAT", number = "24", month = "OCT")
+
+        val (parsed, warnings) = withScraperWarnings { scraper.scrape(Jsoup.parse(card, baseUrl), baseUrl) }
+
+        parsed.single().eventDate shouldBe LocalDate.of(2026, 10, 24)
+        parsed.single().sourceId shouldBe "void_club:2026-10-24-infected-dnb-pres-zigi-sc-album-tour"
+        val warning = warnings.single().formattedMessage
+        warning shouldContain "INFECTED DNB PRES. ZIGI SC ALBUM TOUR"
+        warning shouldContain "2026-10-24"
+        warning shouldContain "2026-10-09"
+    }
+
+    @Test
+    fun `keeps the aria-label's date when the rendered spans do not parse`() {
+        val card = card(label = "Friday, October 9", day = "SAT", number = "??", month = "OCT")
+
+        val (parsed, warnings) = withScraperWarnings { scraper.scrape(Jsoup.parse(card, baseUrl), baseUrl) }
+
+        parsed.single().eventDate shouldBe LocalDate.of(2026, 10, 9)
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `logs nothing when the label and the spans agree`() {
+        val (_, warnings) = withScraperWarnings { scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl) }
+
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
     fun `takes a teaser image only for the events the hero slider re-links`() {
         events.filter { it.imageUrl != null }.map { it.title } shouldContainExactly
             listOf("FREE PARTY", "TORQUE", "STOIC MUSIC X BREAKOUT DNB", "UPZET'S BDAY", "KINDER DER NACHT")
@@ -194,5 +233,39 @@ class VoidClubOverviewPageScraperTest {
     @Test
     fun `returns no events for a page without a programme`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    /** One card in the live markup, dated by [label] and by the three rendered spans. */
+    private fun card(
+        label: String,
+        day: String,
+        number: String,
+        month: String
+    ): String =
+        """
+        <article class="void-event-card">
+          <div class="void-event-date" aria-label="$label">
+            <span class="void-event-day">$day</span>
+            <span class="void-event-number">$number</span>
+            <span class="void-event-month">$month</span>
+          </div>
+          <div class="void-event-content">
+            <div class="void-event-meta"><span class="void-event-venue">VOID HALL</span></div>
+            <h3 class="void-event-title">INFECTED DNB PRES. ZIGI SC ALBUM TOUR</h3>
+          </div>
+        </article>
+        """.trimIndent()
+
+    /** Runs [block] and returns its result beside the `WARN` lines the scraper logged. */
+    private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(VoidClubOverviewPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == Level.WARN }
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
     }
 }

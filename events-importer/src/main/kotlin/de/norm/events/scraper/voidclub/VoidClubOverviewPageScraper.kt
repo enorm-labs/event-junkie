@@ -38,8 +38,9 @@ import java.util.Locale
  *
  * 1. **The date carries no year** and the programme runs across the turn of the year, so the
  * year comes from the stated weekday ([inferYearForWeekday]). The date is stated twice — an
- * `aria-label` on the calendar block and the rendered day/number/month spans — and the
- * accessible label is read first (ADR-007 puts ARIA above class names), the spans as fallback.
+ * `aria-label` on the calendar block and the rendered day/number/month spans — and the spans win
+ * when both parse. ADR-007 ranks ARIA above class names, but the venue copies a card with its
+ * label and corrects only the spans the visitor reads (see #2898). The label is the fallback.
  * 2. **`.void-event-lineup` is used for two things**: the DJ billing, introduced by a `WITH` /
  * `LINEUP` / `LINE-UP` label, and a standalone note naming what the night is part of ("RAVE
  * THE PLANET AFTER PARTY"). Only the labelled billing is read as acts; the note is the subtitle.
@@ -83,7 +84,7 @@ class VoidClubOverviewPageScraper(
         teasers: Map<String, String>
     ): ScrapedEvent? {
         val title = card.textAt(".void-event-title")?.let(::cleanEventTitle) ?: return null
-        val eventDate = parseCardDate(card)
+        val eventDate = parseCardDate(card, title)
         if (eventDate == null) {
             logger.warn { "No parseable date for VOID Club event '$title', skipping" }
             return null
@@ -130,14 +131,21 @@ class VoidClubOverviewPageScraper(
     private fun isBilling(paragraph: Element): Boolean = BILLING_LABEL.matches(paragraph.textAt(".void-event-label").orEmpty())
 
     /**
-     * The card's date, preferring the calendar block's `aria-label` ("Friday, August 7") over the
-     * rendered `FRI` / `07` / `AUG` spans. Both spell the same year-less date; the label is tried
-     * first because ADR-007 ranks an ARIA attribute above a class name, and the spans keep the
-     * scraper working if the label is ever dropped.
+     * The card's date from the rendered `FRI` / `07` / `AUG` spans, or from the calendar block's
+     * `aria-label` ("Friday, August 7") when the spans do not parse. A label that disagrees with the
+     * spans is a stale copy of another card, so it is logged and ignored.
      */
-    private fun parseCardDate(card: Element): LocalDate? =
-        parseWeekdayDate(card.attrAt(".void-event-date", "aria-label"), LABEL_DATE_FORMATTER)
-            ?: parseWeekdayDate(renderedDate(card), RENDERED_DATE_FORMATTER)
+    private fun parseCardDate(
+        card: Element,
+        title: String
+    ): LocalDate? {
+        val rendered = parseWeekdayDate(renderedDate(card), RENDERED_DATE_FORMATTER)
+        val labelled = parseWeekdayDate(card.attrAt(".void-event-date", "aria-label"), LABEL_DATE_FORMATTER)
+        if (rendered != null && labelled != null && rendered != labelled) {
+            logger.warn { "VOID Club event '$title' shows $rendered but its aria-label says $labelled, taking $rendered" }
+        }
+        return rendered ?: labelled
+    }
 
     /** The rendered calendar block re-joined into one `FRI 07 AUG` string, or `null` if a part is missing. */
     @Suppress("ReturnCount") // Guard clauses for the three missing parts are clearer than nesting
