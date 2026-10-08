@@ -6,6 +6,7 @@ import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.event.SpokenLanguage
 import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences

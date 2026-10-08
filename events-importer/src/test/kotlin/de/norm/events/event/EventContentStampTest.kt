@@ -98,6 +98,17 @@ class EventContentStampTest {
     }
 
     @Test
+    fun `the venue's own second-language text moves the hash, a machine translation does not`() {
+        val publisher = event.copy(descriptionAlt = "A night until morning.", descriptionAltLanguage = "en", descriptionAltOrigin = PUBLISHER_ORIGIN)
+        val machine = publisher.copy(descriptionAltOrigin = "MACHINE", descriptionAltEngine = "deepl")
+
+        hash(publisher) shouldNotBe hash()
+        hash(publisher.copy(descriptionAlt = "A night until dawn.")) shouldNotBe hash(publisher)
+        hash(machine) shouldBe hash()
+        hash(machine.copy(descriptionAlt = "A night until dawn.")) shouldBe hash()
+    }
+
+    @Test
     fun `no text passes for a null, and no field for two`() {
         hash(event.copy(subtitle = "-")) shouldNotBe hash()
         hash(event.copy(subtitle = "null")) shouldNotBe hash()

@@ -4,12 +4,14 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventStatus
+import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
+import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -179,4 +182,67 @@ class ContentStampIntegrationTest : BaseControllerTest() {
             after.contentHash.shouldNotBeNull()
             after.contentChangedAt shouldBe backfilled
         }
+
+    @Test
+    fun `a change to only the venue's own second-language text moves the stamp, and the same text again keeps it`(): Unit =
+        runBlocking {
+            import(bilingual(ENGLISH))
+            val before = stored()
+            before.descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
+
+            import(bilingual("$ENGLISH Doors open at eleven, and the music plays until the morning.")).updated shouldBe 1
+            val after = stored()
+            after.contentChangedAt.shouldNotBeNull() shouldBeGreaterThan before.contentChangedAt.shouldNotBeNull()
+
+            import(bilingual("$ENGLISH Doors open at eleven, and the music plays until the morning.")).skipped shouldBe 1
+            stored().contentChangedAt shouldBe after.contentChangedAt
+        }
+
+    @Test
+    fun `a machine translation written after the import keeps the stamp on the next import`(): Unit =
+        runBlocking {
+            import(published())
+            val before = stored()
+            databaseClient
+                .sql(
+                    "UPDATE events.event SET description_alt = 'A night until morning.', description_alt_language = 'en', " +
+                        "description_alt_origin = 'MACHINE' WHERE source_id = 'festsaal:nachtschicht'"
+                ).await()
+
+            import(published())
+            val after = stored()
+            after.descriptionAltOrigin shouldBe "MACHINE"
+            after.contentHash shouldBe before.contentHash
+            after.contentChangedAt shouldBe before.contentChangedAt
+        }
+
+    @Test
+    fun `V120 resets every hash, and the import after it moves no stamp`(): Unit =
+        runBlocking {
+            import(bilingual(ENGLISH), published("festsaal:zweite-nacht").copy(title = "Zweite Nacht"))
+            val before = listOf(stored(), stored("festsaal:zweite-nacht"))
+
+            // Unqualified, as Flyway runs it: the search path is Flyway's to set.
+            val migration = File("src/main/resources/db/migration/V120__reset_event_content_hash.sql").readText()
+            databaseClient.sql("SET search_path TO events;\n$migration\nRESET search_path;").await()
+            stored().contentHash.shouldBeNull()
+            stored().updatedAt shouldBe before.first().updatedAt
+
+            import(bilingual(ENGLISH), published("festsaal:zweite-nacht").copy(title = "Zweite Nacht"))
+            val after = listOf(stored(), stored("festsaal:zweite-nacht"))
+            after.forEach { it.contentHash.shouldNotBeNull() }
+            after.map { it.contentChangedAt } shouldBe before.map { it.contentChangedAt }
+        }
+
+    /** [published] with a German description and the venue's own English text beside it. */
+    private fun bilingual(english: String) = published().copy(description = GERMAN, descriptionAlt = english)
+
+    private companion object {
+        const val GERMAN =
+            "Die Nachtschicht ist eine Party, die seit vielen Jahren in Kreuzberg stattfindet und bei der die Musik " +
+                "bis zum Morgen nicht aufhört."
+        const val ENGLISH =
+            "Nachtschicht is a party that has taken place in Kreuzberg for many years, and the music does not stop " +
+                "until the morning."
+    }
 }
