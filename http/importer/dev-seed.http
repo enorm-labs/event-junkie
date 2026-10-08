@@ -89,6 +89,7 @@
 ###   MS Hoppetosse        — https://hoppetosse.berlin/program/
 ###   Neue Zukunft         — https://neue-zukunft.org/
 ###   OHM                  — https://ohmberlin.com/
+###   Orangerie Neukölln   — https://www.orangerie-nk.de/?lang=de
 ###   Orania.Berlin        — https://orania.berlin/concerts
 ###   PANDA platforma      — https://panda-platforma.berlin/wp-json/tribe/events/v1/events
 ###   Panke Culture        — https://www.pankeculture.com/programme/
@@ -202,7 +203,6 @@
 ###   Mom's Limousine Service        — https://linktr.ee/momslimousineservice
 ###   Musikbrauerei                  — https://musikbrauerei.com/events/
 ###   Œlgarten                       — https://www.oelgarten.com/en/event-list
-###   Orangerie Neukölln             — https://www.orangerie-nk.de/?lang=de#programm
 ###   ORWOhaus                       — https://www.orwohaus.de/veranstaltungen/
 ###   OXI                            — https://ra.co/clubs/184646
 ###   Paloma                         — https://www.palomabar.de/programm.php
@@ -7018,7 +7018,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Orangerie Neukölln (Schierker Str. 8, Berlin-Neukölln — not imported, #2766)
+### Orangerie Neukölln (Schierker Str. 8, Berlin-Neukölln)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Orangerie Neukölln venue ---
@@ -7039,13 +7039,45 @@ Content-Type: application/json
     "descriptionAlt": "In der neobarocken Orangerie des Körnerparks, 1912 bis 1916 nach Plänen von Reinhold Kiehl entstanden, liegt ein Café mit Bar, das Livebands bei den Parkside Sessions und DJ-Abende bei freiem Eintritt bietet.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar"],
-    "programmeUrl": "https://www.orangerie-nk.de/?lang=de#programm",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("orangerie_venue_id", response.body.id);
     client.test("Orangerie Neukölln venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Orangerie Neukölln event source ---
+# Links the venue to the OrangerieWebsiteImporter.
+# The sourceType "ORANGERIE_NEUKOELLN" matches EventSource.ORANGERIE_NEUKOELLN.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{orangerie_venue_id}},
+    "name": "Orangerie Neukölln",
+    "url": "https://www.orangerie-nk.de/?lang=de",
+    "sourceType": "ORANGERIE_NEUKOELLN",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Orangerie Neukölln event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Orangerie Neukölln import ---
+POST {{importer-host}}/api/admin/event-sources/orangerie-neukolln/import
+Accept: application/json
+
+> {%
+    client.test("Orangerie Neukölln import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
