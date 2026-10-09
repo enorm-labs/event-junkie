@@ -2,6 +2,8 @@ package de.norm.events
 
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.DuplicateArtistSlugException
+import de.norm.events.dataquality.EventSuggestionAlreadyAcceptedException
+import de.norm.events.dataquality.EventSuggestionNotFoundException
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.UnknownPinnedFieldException
 import de.norm.events.genretag.GenreTagNotFoundException
@@ -37,7 +39,8 @@ class GlobalExceptionHandler {
         PromoterNotFoundException::class,
         EventNotFoundException::class,
         EventSourceNotFoundException::class,
-        GenreTagNotFoundException::class
+        GenreTagNotFoundException::class,
+        EventSuggestionNotFoundException::class
     )
     fun handleNotFound(ex: RuntimeException): ProblemDetail {
         logger.debug { "Entity not found: ${ex.message}" }
@@ -55,14 +58,18 @@ class GlobalExceptionHandler {
      * Handles duplicate slug violations from the service-layer pre-check — these provide
      * a more descriptive error message than the generic DB constraint handler above,
      * identifying the entity type, conflicting slug, and the name that produced it.
+     *
+     * A dismissal of an accepted suggestion is a 409 for the same reason, and shares the handler:
+     * the request conflicts with what is stored, and its message says what.
      */
     @ExceptionHandler(
         DuplicateArtistSlugException::class,
         DuplicateVenueSlugException::class,
-        DuplicatePromoterSlugException::class
+        DuplicatePromoterSlugException::class,
+        EventSuggestionAlreadyAcceptedException::class
     )
     fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {
-        logger.debug { "Duplicate slug: ${ex.message}" }
+        logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "A record with the same slug already exists.")
     }
 

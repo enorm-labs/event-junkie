@@ -488,6 +488,39 @@ ALTER TABLE events.event_source ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 );
 
 --
+-- Name: event_suggestion; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_suggestion (
+    id bigint NOT NULL,
+    event_id bigint NOT NULL,
+    field text NOT NULL,
+    stored_value text,
+    proposed_value text NOT NULL,
+    evidence text NOT NULL,
+    confidence double precision NOT NULL,
+    check_name text NOT NULL,
+    model text,
+    status text DEFAULT 'OPEN'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_suggestion_confidence_check CHECK (((confidence >= (0)::double precision) AND (confidence <= (1)::double precision))),
+    CONSTRAINT event_suggestion_status_check CHECK ((status = ANY (ARRAY['OPEN'::text, 'DISMISSED'::text, 'ACCEPTED'::text])))
+);
+
+--
+-- Name: event_suggestion_id_seq; Type: SEQUENCE; Schema: events; Owner: -
+--
+
+ALTER TABLE events.event_suggestion ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME events.event_suggestion_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: genre_tag; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -788,6 +821,13 @@ ALTER TABLE ONLY events.event_source
     ADD CONSTRAINT event_source_slug_key UNIQUE (slug);
 
 --
+-- Name: event_suggestion event_suggestion_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_suggestion
+    ADD CONSTRAINT event_suggestion_pkey PRIMARY KEY (id);
+
+--
 -- Name: genre_tag genre_tag_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -963,6 +1003,18 @@ CREATE INDEX idx_event_source_venue_id ON events.event_source USING btree (venue
 --
 
 CREATE INDEX idx_event_subtitle_search_trgm ON events.event USING gin (replace(subtitle_search, ' '::text, ''::text) events.gin_trgm_ops);
+
+--
+-- Name: idx_event_suggestion_event; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_suggestion_event ON events.event_suggestion USING btree (event_id);
+
+--
+-- Name: idx_event_suggestion_status_created; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_suggestion_status_created ON events.event_suggestion USING btree (status, created_at DESC, id DESC);
 
 --
 -- Name: idx_event_title_search_trgm; Type: INDEX; Schema: events; Owner: -
@@ -1141,6 +1193,13 @@ ALTER TABLE ONLY events.event_quality_flag
 
 ALTER TABLE ONLY events.event_source
     ADD CONSTRAINT event_source_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id);
+
+--
+-- Name: event_suggestion event_suggestion_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_suggestion
+    ADD CONSTRAINT event_suggestion_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event event_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

@@ -129,3 +129,33 @@ Accept: application/json
 ### Not reachable on `importer-host`: actuator lives on the management port
 ### (9001 in the chart, 8081's sibling locally), which no Ingress routes.
 ### Locally: curl http://localhost:8081/actuator/prometheus | grep data_quality
+
+### ============================================================
+### Suggestions — Pillar 4's proposals, issue #474
+###
+### A check proposes a fix with its evidence; a person decides. Nothing here
+### writes to an event: apply a fix with events.http's
+### `PUT /api/admin/events/{id}`, which pins the field.
+### ============================================================
+
+### Open suggestions, newest first
+GET {{importer-host}}/api/admin/data-quality/suggestions?status=OPEN
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    if (response.body.content.length > 0) {
+        client.global.set("suggestionId", response.body.content[0].id);
+    }
+%}
+
+### The suggestions for one event
+GET {{importer-host}}/api/admin/data-quality/suggestions?eventId=1
+Accept: application/json
+
+### Dismiss one — run the list above first. A second dismissal is a no-op;
+### an accepted suggestion answers 409, an unknown id 404.
+POST {{importer-host}}/api/admin/data-quality/suggestions/{{suggestionId}}/dismiss
+Accept: application/json
