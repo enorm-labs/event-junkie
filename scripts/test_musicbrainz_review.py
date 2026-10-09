@@ -53,7 +53,7 @@ def main() -> int:
 
     def put(i, body):
         puts.append(body)
-        return {**body, "musicbrainzMatch": "EXACT", "updatedAt": "now"}
+        return {**store[i], **body, "musicbrainzMatch": "EXACT", "updatedAt": "now"}
 
     assert review.apply_rows([(1, "mbid-1")], get, put, write=False) == 0 and puts == [], "a dry run writes nothing"
     checks += 1
@@ -61,12 +61,13 @@ def main() -> int:
     assert review.apply_rows([(1, "mbid-1"), (2, "mbid-2")], get, put, write=True) == 0, "a clean write is no drift"
     assert len(puts) == 1, "a row no longer AMBIGUOUS is skipped"
     assert puts[0]["imageUrl"] == "https://img.test/p.jpg" and puts[0]["musicbrainzId"] == "mbid-1", (
-        "the PUT carries every field it read, plus the MBID"
+        "the PUT carries every request field it read, plus the MBID"
     )
-    checks += 3
+    assert set(puts[0]) == {*review.REQUEST_FIELDS, "musicbrainzId"}, "the PUT sends no field the request rejects"
+    checks += 4
 
     def put_losing_image(i, body):
-        return {**body, "imageUrl": None, "musicbrainzMatch": "EXACT"}
+        return {**store[i], **body, "imageUrl": None, "musicbrainzMatch": "EXACT"}
 
     assert review.apply_rows([(1, "mbid-1")], get, put_losing_image, write=True) == 1, "a field that moved is drift"
     checks += 1
