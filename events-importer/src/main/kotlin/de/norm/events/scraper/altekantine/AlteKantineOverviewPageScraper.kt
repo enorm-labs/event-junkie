@@ -84,7 +84,7 @@ class AlteKantineOverviewPageScraper(
         val title = link.text().trim().takeIf { it.isNotBlank() } ?: return null
         val subtitle = item.textAt(".pt-cv-ctf-veranstaltungsbeschreibung p")
         // No kind label on the overview, so classify from the title (mixed party/quiz venue → OTHER default).
-        val eventType = inferUnmarkedTitleType(title)
+        val eventType = alteKantineEventType(was = null, title = title)
 
         return ScrapedEvent(
             title = title,
@@ -138,16 +138,27 @@ internal fun extractPostId(url: String): String? =
         ?.takeIf { it.isNotBlank() }
 
 /**
- * The stored [EventType] name from the optional `Was:` kind label and [title]. The venue's
- * label wins when it maps to a known type ("Party" → `PARTY`, "Konzert" → `CONCERT`);
- * otherwise — a free-text label like "The Quiz Night Show", or the label-less overview — the
- * title is classified by keyword, defaulting to `OTHER` for this mixed party/quiz venue (never
- * `CONCERT`, so an unmarked party night is not minted as a headliner concert). Shared by both.
+ * A reading title: `lesung`, or a word ending in `lesen` — the weekly "Kantinenlesen" (#2969).
+ * "Auserlesene" does not match. `(?!\p{L})` rather than `\b`, which ends a word at an umlaut.
+ */
+private val READING_TITLE = Regex("""lesen(?!\p{L})|lesung""", RegexOption.IGNORE_CASE)
+
+/**
+ * The stored [EventType] name from the optional `Was:` kind label and [title]. A reading title
+ * wins first, because the venue labels its reading `Was: Vortrag`, which the shared table leaves
+ * unmapped. Then the venue's label wins when it maps to a known type ("Party" → `PARTY`,
+ * "Konzert" → `CONCERT`); otherwise — a free-text label like "The Quiz Night Show", or the
+ * label-less overview — the title is classified by keyword, defaulting to `OTHER` for this
+ * mixed party/quiz venue (never `CONCERT`, so an unmarked party night is not minted as a
+ * headliner concert). Shared by both.
  */
 internal fun alteKantineEventType(
     was: String?,
     title: String
-): String = mapEventType(was) ?: inferUnmarkedTitleType(title)
+): String =
+    EventType.READING.name.takeIf { READING_TITLE.containsMatchIn(title) }
+        ?: mapEventType(was)
+        ?: inferUnmarkedTitleType(title)
 
 /**
  * The artist list keyed off the resolved [eventType]:

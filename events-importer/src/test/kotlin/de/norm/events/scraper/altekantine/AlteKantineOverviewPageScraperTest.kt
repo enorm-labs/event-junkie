@@ -88,4 +88,17 @@ class AlteKantineOverviewPageScraperTest {
     fun `infers the current year for every listed date`() {
         events.map { it.eventDate.year }.toSet() shouldBe setOf(2026)
     }
+
+    @Test
+    fun `types the label-less Kantinenlesen as a reading from its title`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/altekantine/altekantine-overview-page-2.html")!!
+                .bufferedReader()
+                .readText()
+        val lesen = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single { it.sourceId == "alte_kantine:12466" }
+
+        lesen.title shouldBe "Kantinenlesen"
+        lesen.eventType shouldBe EventType.READING.name
+    }
 }
