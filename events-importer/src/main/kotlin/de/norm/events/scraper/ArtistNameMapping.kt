@@ -829,7 +829,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         // A duo that releases under the ` x ` join, so [splitCrossBilled] must leave it whole (#2365).
         "noah x petter",
         // A duo named for its two members, Tobi Stock and Manfred Pankow (Speakeazy).
-        "stock & pankow"
+        "stock & pankow",
+        // The folk-blues duo Issy Ferris and Archie Sylvester, billed by Monarch as its whole title (#2952).
+        "ferris & sylvester"
     )
 
 /**

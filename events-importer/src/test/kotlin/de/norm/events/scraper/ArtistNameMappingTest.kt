@@ -1427,6 +1427,8 @@ class ArtistNameMappingTest {
         splitHeadlinerTitle("BLOOD & SUN") shouldContainExactly listOf("BLOOD & SUN")
         // Huxleys bills the duo as its whole title (#2063).
         headlinersFromTitle("HAUTE & FREDDY").map { it.name } shouldContainExactly listOf("HAUTE & FREDDY")
+        // Monarch bills the duo as its whole title (#2952).
+        headlinersFromTitle("FERRIS & SYLVESTER").map { it.name } shouldContainExactly listOf("FERRIS & SYLVESTER")
         // SO36 bills the punk band as its whole title (#2414); the pin folds case, umlaut included.
         splitHeadlinerTitle("Pöbel & Gesocks") shouldContainExactly listOf("Pöbel & Gesocks")
         splitHeadlinerTitle("PÖBEL & GESOCKS") shouldContainExactly listOf("PÖBEL & GESOCKS")
