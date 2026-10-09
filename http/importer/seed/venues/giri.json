@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Giri",
+        "address": "Hermannstraße 14",
+        "city": "Berlin",
+        "postalCode": "12049",
+        "district": "neukoelln",
+        "latitude": 52.484204,
+        "longitude": 13.424386,
+        "websiteUrl": "https://giri.berlin/",
+        "description": "An independent room on Hermannstraße that calls itself something between club and bar, mixing music, food and community, with mostly donation-entry DJ nights, live jazz dinners and listening sessions midweek.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein unabhängiger Raum an der Hermannstraße zwischen Club und Bar, der Musik, Essen und Nachbarschaft verbindet, mit DJ-Abenden meist gegen Spende, Jazzkonzerten mit Abendessen und Listening Sessions unter der Woche.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://giri.berlin/programme/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

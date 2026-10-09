@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "MAAYA",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.507297,
+        "longitude": 13.452741,
+        "websiteUrl": "https://maaya.de",
+        "description": "An Afro-diasporic cultural venue on the RAW-Gelände built around a heated open-air pool, combining a gallery, garden, backyard market and a programme of club nights, concerts and workshops.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein afrodiasporischer Kulturort auf dem RAW-Gelände rund um ein beheiztes Freibecken, mit Galerie, Garten, Hofmarkt und einem Programm aus Clubnächten, Konzerten und Workshops.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "open-air", "gallery"]
+    },
+    "sources": [
+        {
+            "name": "MAAYA",
+            "url": "https://maaya.de/",
+            "sourceType": "MAAYA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

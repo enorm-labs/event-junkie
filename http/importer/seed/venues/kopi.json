@@ -1,0 +1,23 @@
+{
+    "venue": {
+        "name": "KØPI",
+        "address": "Köpenicker Straße 137",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.507695,
+        "longitude": 13.426116,
+        "websiteUrl": "https://koepi137.net",
+        "venueTypes": ["cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "KØPI",
+            "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=13&limit=500",
+            "sourceType": "KOEPI",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

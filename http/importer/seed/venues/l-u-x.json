@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "L.U.X",
+        "address": "Schlesische Str. 41",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.500415,
+        "longitude": 13.443730,
+        "websiteUrl": "https://www.lux-berlin.net/",
+        "description": "A Kreuzberg bar on Schlesische Straße that has no live music by design: vinyl DJs play, with free entry on many Thursdays.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar in der Schlesischen Straße, in der es bewusst keine Livemusik gibt: Hier legen Schallplatten-DJs auf, donnerstags oft bei freiem Eintritt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://www.lux-berlin.net/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Tempodrom",
+        "address": "Möckernstr. 10",
+        "city": "Berlin",
+        "postalCode": "10963",
+        "district": "kreuzberg",
+        "latitude": 52.501606,
+        "longitude": 13.381191,
+        "websiteUrl": "https://www.tempodrom.de",
+        "description": "A tented concert hall by the former Anhalter Bahnhof, with a Grosse and a Kleine Arena hosting concerts, comedy, shows and congresses.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Konzertzelt am früheren Anhalter Bahnhof, mit Großer und Kleiner Arena für Konzerte, Comedy, Shows und Kongresse.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["arena"],
+        "capacity": 4200
+    },
+    "sources": [
+        {
+            "name": "Tempodrom",
+            "url": "https://www.tempodrom.de/programm-und-tickets/",
+            "sourceType": "TEMPODROM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

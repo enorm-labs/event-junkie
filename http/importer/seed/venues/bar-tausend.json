@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Bar Tausend",
+        "address": "Schiffbauerdamm 11",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.520824,
+        "longitude": 13.384710,
+        "websiteUrl": "https://tausendberlin.com/",
+        "description": "A cocktail bar under the S-Bahn arches at Friedrichstraße, with house and electronica DJs Thursday to Saturday and live sets.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Unter den S-Bahn-Bögen an der Friedrichstraße liegt diese Cocktailbar, mit House- und Electronica-DJs von Donnerstag bis Samstag und Live-Abenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": [
+        {
+            "name": "Bar Tausend",
+            "url": "https://tausendberlin.com/lineup/",
+            "sourceType": "TAUSEND",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

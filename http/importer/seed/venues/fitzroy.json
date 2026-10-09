@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Fitzroy",
+        "address": "Holzmarktstr. 15-18",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.51310,
+        "longitude": 13.42312,
+        "websiteUrl": "https://fitzroy-berlin.de",
+        "description": "LARK's sister club, opened in 2018 in a former warehouse on the Spree: smoke-free, step-free, and booked largely by DIY collectives for club nights, concerts and fundraisers.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Schwesterclub des LARK, 2018 in einer ehemaligen Lagerhalle an der Spree eröffnet: rauchfrei, barrierefrei und vor allem von DIY-Kollektiven bespielt, mit Clubnächten, Konzerten und Benefizabenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Fitzroy",
+            "url": "https://fitzroy-berlin.de/wp-json/wp/v2/event",
+            "sourceType": "FITZROY",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Alte Kantine",
+        "address": "Knaackstr. 97",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.53899,
+        "longitude": 13.41300,
+        "websiteUrl": "https://alte-kantine.eu",
+        "description": "A club and concert space in the Kulturbrauerei in Prenzlauer Berg, with a programme spanning live gigs, club nights and themed parties across many styles.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club und Konzertraum in der Kulturbrauerei in Prenzlauer Berg, mit Livekonzerten, Clubnächten und Mottopartys quer durch viele Stile.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "capacity": 450
+    },
+    "sources": [
+        {
+            "name": "Alte Kantine",
+            "url": "https://alte-kantine.eu/",
+            "sourceType": "ALTE_KANTINE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

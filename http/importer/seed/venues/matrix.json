@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Matrix",
+        "address": "Warschauer Platz 18",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.50525,
+        "longitude": 13.44930,
+        "websiteUrl": "https://www.matrix-berlin.de",
+        "description": "A large multi-floor mainstream club in the railway arches at Warschauer Straße, open every night of the week with resident DJs playing hip hop, house, afrobeats, reggaeton and chart music.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein großer Mainstreamclub über mehrere Floors in den Bahnbögen an der Warschauer Straße, an jedem Abend geöffnet, mit Resident-DJs zwischen Hip-Hop, House, Afrobeats, Reggaeton und Charts.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Matrix",
+            "url": "https://www.matrix-berlin.de/party-in-berlin/",
+            "sourceType": "MATRIX",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

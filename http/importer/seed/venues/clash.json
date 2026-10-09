@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Clash",
+        "address": "Gneisenaustr. 2a",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.49196,
+        "longitude": 13.38856,
+        "websiteUrl": "https://clash-berlin.de",
+        "description": "A punk, ska and rock'n'roll bar and concert spot near Mehringdamm in Kreuzberg, hosting loud, no-frills live shows and DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Punk-, Ska- und Rock'n'Roll-Bar mit Konzerten nahe dem Mehringdamm in Kreuzberg, mit lauten Shows ohne Schnickschnack und DJ-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Clash",
+            "url": "https://clash-berlin.de/",
+            "sourceType": "CLASH",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Kühlspot Social Club",
+        "address": "Lehderstraße 74-79",
+        "city": "Berlin",
+        "postalCode": "13086",
+        "district": "weissensee",
+        "latitude": 52.550839,
+        "longitude": 13.435867,
+        "websiteUrl": "https://kuehlspot.com/",
+        "description": "A volunteer-run non-profit club in a listed commercial courtyard in Weißensee, presenting free jazz, improvised and contemporary music, performance and dance.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ehrenamtlich getragener Verein in einem denkmalgeschützten Gewerbehof in Weißensee, der Free Jazz, improvisierte und zeitgenössische Musik, Performance und Tanz zeigt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "programmeUrl": "https://kuehlspot.com/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

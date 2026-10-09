@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Studio dB",
+        "address": "Uferstraße 8-11",
+        "city": "Berlin",
+        "postalCode": "13357",
+        "district": "wedding",
+        "latitude": 52.551597,
+        "longitude": 13.373947,
+        "websiteUrl": "https://www.studiodb.berlin/",
+        "description": "A 285-square-metre multidisciplinary studio inside the Uferhallen on Uferstraße in Gesundbrunnen, hosting experimental concerts, performances, sound installations and club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein multidisziplinärer Raum von 285 Quadratmetern in den Uferhallen an der Uferstraße in Gesundbrunnen, in dem experimentelle Konzerte, Performances, Klanginstallationen und Clubnächte stattfinden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "cultural-centre"],
+        "programmeUrl": "https://ra.co/clubs/143430",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Zenner",
+        "address": "Alt-Treptow 14-17",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.48731,
+        "longitude": 13.47748,
+        "websiteUrl": "https://zenner.berlin",
+        "description": "A riverside venue in Treptower Park combining a historic ballroom (Saal), a club, a beer garden and a wine garden, programming electronic concerts, club nights and open-air day parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Ort am Wasser im Treptower Park aus historischem Saal, Club, Biergarten und Weingarten, mit elektronischen Konzerten, Clubnächten und Open-Air-Partys am Tag.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air", "live-venue"],
+        "capacity": 800
+    },
+    "sources": [
+        {
+            "name": "Zenner",
+            "url": "https://zenner.berlin/programm",
+            "sourceType": "ZENNER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

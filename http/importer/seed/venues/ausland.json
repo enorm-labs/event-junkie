@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "ausland",
+        "address": "Lychener Str. 60",
+        "city": "Berlin",
+        "postalCode": "10437",
+        "district": "prenzlauer-berg",
+        "latitude": 52.544839,
+        "longitude": 13.419479,
+        "websiteUrl": "https://ausland.berlin/",
+        "description": "An independent venue in the basement of the former Lychi 60 squat, open since 2002, for improvised and experimental music, film and performance, with at least half FLINTA people on stage and backstage at every event.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Unabhängiger Ort im Keller des einstigen besetzten Hauses Lychi 60, seit 2002 Adresse für improvisierte und experimentelle Musik, Film und Performance, mit mindestens 50 Prozent FLINTA auf und hinter der Bühne.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "programmeUrl": "https://ausland.berlin/program/all",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

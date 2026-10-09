@@ -503,12 +503,12 @@ and runs no challenge.
 ## 11b · Seeding the event sources — three steps, and the order is load-bearing
 
 A cluster with a certificate still serves an empty site. Nothing seeds the sources: no migration
-inserts a row, and `dev-seed.http` is written for a local run. Production ran green and empty for
+inserts a row, and the generated `dev-seed.http` is written for a local run. Production ran green and empty for
 nine days before anybody noticed (#876).
 
-`http/importer/dev-seed.http` is the source of truth for the 112 venues and their sources.
-`scripts/seed-sources.py` reads that file and writes it to any host, so there is no second copy to
-drift.
+`http/importer/seed/venues/` is the source of truth for the venues and their sources, one JSON file
+per venue (#2824). `scripts/seed-sources.py` reads that directory and writes it to any host, so there
+is no second copy to drift.
 
 **The admin API has no authentication, and the tunnel is what keeps it private.** The importer has
 no ingress backend on any cluster. So every command here goes through a port-forward
@@ -561,7 +561,7 @@ Omit `--apply` and nothing is written. The output names what the target is missi
 target holds that the file does not:
 
 ```
-http/importer/dev-seed.http: 112 venues, 112 event sources
+http/importer/seed/venues: 112 venues, 112 event sources
 http://localhost:18081 holds 112 venues and 112 sources
   to create: 0 venues, 0 sources
 ```

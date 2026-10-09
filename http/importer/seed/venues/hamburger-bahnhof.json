@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Hamburger Bahnhof",
+        "address": "Invalidenstraße 50",
+        "city": "Berlin",
+        "postalCode": "10557",
+        "district": "tiergarten",
+        "latitude": 52.528632,
+        "longitude": 13.371867,
+        "websiteUrl": "https://www.smb.museum/museen-einrichtungen/hamburger-bahnhof/home/",
+        "description": "Berlin's national gallery of contemporary art, housed in an 1840s railway terminus in Moabit, whose garden hosts Berlin Beats, a free summer series of twelve evenings with DJ sets and live concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Nationalgalerie der Gegenwart sitzt im einzigen erhaltenen spätklassizistischen Kopfbahnhof Berlins; im Sommer bringt die kostenlose Reihe Berlin Beats an zwölf Abenden DJs und Live-Konzerte in den Museumsgarten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "gallery"],
+        "programmeUrl": "https://www.smb.museum/veranstaltungen/veranstaltungsreihe/berlin-beats/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

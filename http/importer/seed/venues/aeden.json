@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "ÆDEN",
+        "address": "Schleusenufer 3",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.49731,
+        "longitude": 13.44952,
+        "websiteUrl": "https://aedenberlin.com",
+        "description": "A techno club on the Spree in Kreuzberg with two floors and a garden, programming house, techno and trance nights alongside queer and collective-run parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Technoclub an der Spree in Kreuzberg mit zwei Floors und Garten, mit House-, Techno- und Trance-Nächten neben queeren und kollektiv organisierten Partys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "ÆDEN",
+            "url": "https://aedenberlin.com/events/",
+            "sourceType": "AEDEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

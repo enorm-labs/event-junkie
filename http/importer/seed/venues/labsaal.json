@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "LabSaal",
+        "address": "Alt-Lübars 8",
+        "city": "Berlin",
+        "postalCode": "13469",
+        "district": "reinickendorf",
+        "latitude": 52.620149,
+        "longitude": 13.356334,
+        "websiteUrl": "https://labsaal.de/",
+        "description": "A late-19th-century dance hall beside the village inn on the Lübars green, run by a non-profit association since the late 1970s, with village discos, Irish and Celtic music, swing evenings and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der alte Tanzsaal des Lübarser Dorfkrugs am Anger, Ende des 19. Jahrhunderts gebaut und seit den späten 1970ern von einem Verein betrieben: mit Dorfdisco, irischer und keltischer Musik, Swing-Abenden und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"],
+        "capacity": 200,
+        "programmeUrl": "https://labsaal.de/events/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

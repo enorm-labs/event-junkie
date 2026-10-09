@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Galiläakirche",
+        "address": "Rigaer Straße 9",
+        "city": "Berlin",
+        "postalCode": "10247",
+        "district": "friedrichshain",
+        "latitude": 52.517884,
+        "longitude": 13.456148,
+        "websiteUrl": "https://galilaea-kirche.de/",
+        "description": "A brick Gothic Revival church from 1910 on Rigaer Straße that no longer holds services and now serves as an independent stage for concerts, film, theatre and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die backsteingotische Kirche von 1910 in der Rigaer Straße hält keine Gottesdienste mehr und ist heute ein unabhängiger Ort für Konzerte, Film, Theater und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "programmeUrl": "https://galilaea-kirche.de/programm/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

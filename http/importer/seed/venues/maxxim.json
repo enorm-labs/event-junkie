@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "MAXXIM",
+        "address": "Joachimsthaler Str. 15",
+        "city": "Berlin",
+        "postalCode": "10719",
+        "district": "charlottenburg",
+        "latitude": 52.501906,
+        "longitude": 13.330836,
+        "websiteUrl": "https://www.maxxim-berlin.de",
+        "description": "A party club off the Ku'damm, open every night since 2007 with a DJ programme built around disco, house and hip hop.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Partyclub abseits des Ku'damms, seit 2007 an jedem Abend geöffnet, mit einem DJ-Programm aus Disco, House und Hip-Hop.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "MAXXIM",
+            "url": "https://www.maxxim-berlin.de/partys",
+            "sourceType": "MAXXIM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

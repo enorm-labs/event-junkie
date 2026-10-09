@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Little Stage Bar",
+        "address": "Jonasstr. 1",
+        "city": "Berlin",
+        "postalCode": "12053",
+        "district": "neukoelln",
+        "latitude": 52.472396,
+        "longitude": 13.440593,
+        "websiteUrl": "https://littlestageclubneukoelln.wordpress.com/",
+        "description": "A small Neukölln bar with its own stage at Jonasstraße 1, run by the association Little Stage e.V., with Friday jazz concerts, jam sessions and band nights ranging from metal to world music.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kleine Neuköllner Bar mit eigener Bühne in der Jonasstraße, getragen vom Verein Little Stage e.V.: freitags Jazz, dazu Jamsessions und Bandabende zwischen Metal und Weltmusik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "programmeUrl": "https://littlestageclubneukoelln.wordpress.com/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

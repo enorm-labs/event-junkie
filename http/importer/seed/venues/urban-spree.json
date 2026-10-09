@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Urban Spree",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.507612,
+        "longitude": 13.451645,
+        "websiteUrl": "https://www.urbanspree.com",
+        "description": "An artist space on the RAW-Gelände combining a gallery, shop and beer garden with a concert hall, programming post-punk, dark wave, metal and indie shows alongside exhibitions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Künstlerort auf dem RAW-Gelände aus Galerie, Laden und Biergarten, dazu ein Konzertsaal mit Post-Punk, Dark Wave, Metal und Indie neben Ausstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["gallery", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Urban Spree",
+            "url": "https://www.urbanspree.com/program/",
+            "sourceType": "URBAN_SPREE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

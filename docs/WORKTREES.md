@@ -108,15 +108,29 @@ Everything that only touches files runs in parallel across as many worktrees as 
 One worktree = one venue = one PR (that is exactly the `/next-importer` contract). Every importer PR touches the same handful of shared files, so resolve these
 **deliberately** rather than accepting either side:
 
-| File                                         | What conflicts                                                                                               |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `docs/EVENT_DATA_SOURCES.md`                 | the status **count** table plus the moved row — recount after rebasing; both sides bump the same numbers     |
-| `http/importer/dev-seed.http`                | the alphabetical header list and the venue block — "keep both" can silently fuse two blocks; rebuild by hand |
-| `events-importer/.../scraper/EventSource.kt` | one new enum entry each                                                                                      |
-| _(none — file an issue)_                     | a smoke-test finding goes to the tracker, not to a file                                                      |
+| File                                         | What conflicts                                                                                           |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `docs/EVENT_DATA_SOURCES.md`                 | the status **count** table plus the moved row — recount after rebasing; both sides bump the same numbers |
+| `http/importer/dev-seed.http`                | generated: take either side, then run `scripts/dev-seed-parity.sh`; never resolve it by hand             |
+| `events-importer/.../scraper/EventSource.kt` | one new enum entry each                                                                                  |
+| _(none — file an issue)_                     | a smoke-test finding goes to the tracker, not to a file                                                  |
 
 **Rebase a feature branch onto `main`. Do not merge `main` into it** — PRs here are merged with "Rebase and merge",
 which a merge commit blocks.
+
+A venue is one file under `http/importer/seed/venues/` (#2824). Only the generated `dev-seed.http` can conflict, when two new venues sort next to
+each other. Regenerate it. **A branch from before #2824 edits `dev-seed.http` by hand**, so its rebase stops there. Convert its blocks into venue files:
+
+```bash
+git rebase origin/main                                         # stops on http/importer/dev-seed.http
+git show REBASE_HEAD:http/importer/dev-seed.http > temp/old-seed.http   # the branch's hand-written version
+python3 scripts/seed_venues.py split temp/old-seed.http        # writes a file for each venue that has none
+python3 scripts/seed_venues.py split temp/old-seed.http --venue "<Name>"  # and overwrites one the branch changed
+scripts/dev-seed-parity.sh                                     # regenerates dev-seed.http from the files
+git add http/importer/seed/venues http/importer/dev-seed.http && git rebase --continue
+```
+
+`split` changes an existing file only when `--venue` names it. The old file holds every other venue as it was when the branch started.
 
 ## 6. Clean up
 

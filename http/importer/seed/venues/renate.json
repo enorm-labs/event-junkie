@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Renate",
+        "address": "Alt-Stralau 70",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.49739,
+        "longitude": 13.46531,
+        "websiteUrl": "https://www.renate.cc",
+        "description": "A warren of a techno club in a derelict Friedrichshain apartment house, with several named floors and a garden that opens in summer.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein verwinkelter Technoclub in einem verfallenen Friedrichshainer Wohnhaus, mit mehreren benannten Floors und einem Garten, der im Sommer öffnet.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Renate",
+            "url": "https://www.renate.cc/",
+            "sourceType": "RENATE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

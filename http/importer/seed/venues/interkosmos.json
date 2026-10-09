@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "interkosmos",
+        "address": "Fanningerstraße 47",
+        "city": "Berlin",
+        "postalCode": "10365",
+        "district": "lichtenberg",
+        "latitude": 52.514069,
+        "longitude": 13.498525,
+        "websiteUrl": "https://www.interkosmos.cc/",
+        "description": "A café and bar near Lichtenberg station, run by three partners under the motto café, bar, utopia, hosting author readings in its BuchBar series, comedy nights and poetry evenings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Café und Bar nahe dem Bahnhof Lichtenberg, von drei Gesellschaftern unter dem Motto „café . bar . utopie“ betrieben, mit Lesungen in der Reihe BuchBar, Comedyabenden und Poesieabenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "cultural-centre"],
+        "programmeUrl": "https://www.interkosmos.cc/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

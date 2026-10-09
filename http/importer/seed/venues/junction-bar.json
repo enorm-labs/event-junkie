@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Junction Bar",
+        "address": "Gneisenaustr. 18",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.49149,
+        "longitude": 13.39325,
+        "websiteUrl": "https://www.junction-bar.de",
+        "description": "A basement live-music and DJ bar near Mehringdamm in Kreuzberg, offering nightly concerts and DJ sets across jazz, soul, funk, rock and pop.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Livemusik- und DJ-Bar im Keller nahe dem Mehringdamm in Kreuzberg, mit Konzerten und DJ-Sets an jedem Abend, von Jazz und Soul über Funk bis Rock und Pop.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Junction Bar",
+            "url": "https://www.junction-bar.de/index.html",
+            "sourceType": "JUNCTION_BAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

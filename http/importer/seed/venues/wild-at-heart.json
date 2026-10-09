@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Wild at Heart",
+        "address": "Wiener Str. 20",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.49749,
+        "longitude": 13.43111,
+        "websiteUrl": "https://www.wildatheartberlin.de",
+        "description": "A rock'n'roll bar and live club near Görlitzer Bahnhof in Kreuzberg, hosting raucous concerts and DJ nights spanning rockabilly, punk, garage and surf.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Rock'n'Roll-Bar und ein Liveclub nahe dem Görlitzer Bahnhof in Kreuzberg, mit lauten Konzerten und DJ-Nächten zwischen Rockabilly, Punk, Garage und Surf.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Wild at Heart",
+            "url": "https://www.wildatheartberlin.de/concerts.php",
+            "sourceType": "WILD_AT_HEART",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

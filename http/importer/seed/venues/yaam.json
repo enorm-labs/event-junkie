@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "YAAM",
+        "address": "An der Schillingbrücke 3",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.509166,
+        "longitude": 13.430718,
+        "websiteUrl": "https://yaam.de/",
+        "description": "A non-profit socio-cultural project on an 8,000 m² riverside site at Schillingbrücke since 2014, run by Kult e.V., with open-air reggae and hip-hop DJ days, festivals and evening events in its Cool Runnings clubhouse.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1994 gibt es das vom gemeinnützigen KULT e.V. getragene YAAM, seit 2014 auf einem 8000 m² großen Gelände an der Spree, mit Strand, Reggae- und Hip-Hop-DJs, Open-Air-Events und Abendprogramm im Vereinsheim Cool Runnings.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "cultural-centre", "bar"],
+        "programmeUrl": "https://yaam.de/programm/",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

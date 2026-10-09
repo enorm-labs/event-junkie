@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Zebrano-Theater",
+        "address": "Lenbachstraße 7A",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.505735,
+        "longitude": 13.466809,
+        "websiteUrl": "https://www.zebrano-theater.de/",
+        "description": "A 65-seat stage near Ostkreuz in a former puppet theatre, run by a volunteer association since 2005 and devoted to literary and musical cabaret, chanson, song recitals, readings and children's theatre.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die kleine Bühne nahe dem Ostkreuz mit 65 Plätzen in einem einstigen Puppentheater wird seit 2005 ehrenamtlich von einem Verein getragen und zeigt Kabarett, Chanson, Liederabende, Lesebühnen und Kindertheater.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "capacity": 65,
+        "programmeUrl": "https://www.zebrano-theater.de/programm.html",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Mad Monkey Room",
+        "address": "Danziger Str. 1",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.541115,
+        "longitude": 13.412710,
+        "websiteUrl": "https://mad-monkey.de/",
+        "description": "A stand-up comedy club near Eberswalder Straße, founded in 2017 by siblings Nina and Nico Böhm, with shows every night of the week on two stages: open mics, mixed line-ups, solo shows and specials.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Von den Geschwistern Nina und Nico Böhm 2017 gegründeter Stand-up-Club an der Danziger Straße, der an jedem Abend der Woche spielt – mit Open Mics, Mixed Shows, Soloprogrammen und Specials auf zwei Bühnen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "programmeUrl": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

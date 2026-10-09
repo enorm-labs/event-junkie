@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Speakeazy",
+        "address": "Kulmer Str. 20A",
+        "city": "Berlin",
+        "postalCode": "10783",
+        "district": "schoeneberg",
+        "latitude": 52.492183,
+        "longitude": 13.363712,
+        "websiteUrl": "https://www.speakeazyberlin.de",
+        "description": "A former backyard theatre in Schöneberg, rebuilt as a 70-seat live stage with its own recording studios, so every show can be recorded and filmed, with folk, rock, jazz and classical concerts, cabaret, theatre and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein ehemaliges Hinterhoftheater in Schöneberg, umgebaut zur Livebühne mit 70 Plätzen und eigenen Tonstudios, in denen jeder Auftritt aufgezeichnet und gefilmt werden kann, mit Folk-, Rock-, Jazz- und Klassikkonzerten, Kabarett, Theater und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 70
+    },
+    "sources": [
+        {
+            "name": "Speakeazy",
+            "url": "https://www.speakeazyberlin.de/events",
+            "sourceType": "SPEAKEAZY",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

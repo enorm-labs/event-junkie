@@ -39,13 +39,13 @@ Max-Schmeling-Halle via the VELOMAX listing). When you pick one of those, implem
 
 Announce which venue you picked and why before continuing.
 
-> The previous venue's PR is probably still open, so `main` won't have it. That's expected. Conflicts will be limited to the `dev-seed.http` header list and
-> the two `EVENT_DATA_SOURCES.md` rows, and are resolved at merge time.
+> The previous venue's PR is probably still open, so `main` won't have it. That's expected. Conflicts will be limited to the generated `dev-seed.http`
+> (re-run `scripts/dev-seed-parity.sh`) and the two `EVENT_DATA_SOURCES.md` rows, and are resolved at merge time.
 
 ### 2. Scaffold
 
 Run [`/scaffold-importer`](scaffold-importer.prompt.md) with the venue name and the URL from the table. It owns recon (robots.txt, JSON-API-first), the enum
-value, the scraper/importer classes, fixtures, unit tests, and the `dev-seed.http` block. Follow it fully — don't shortcut its checklist.
+value, the scraper/importer classes, fixtures, unit tests, and the seed venue file. Follow it fully — don't shortcut its checklist.
 
 If recon concludes the site is unscrapable as built (JS-only with no API, hard cookie wall), skip to step 7 **Blocked**.
 
@@ -88,7 +88,7 @@ In `docs/EVENT_DATA_SOURCES.md`:
   column as the _Comment_ the Imported table uses: platform + parsing quirks, ≤ 50 chars, not the "why/what it needs" phrasing.
 - Update the counts in the status table at the top (Imported +1, Ready −1) **and** the "N importer classes cover M sources" line under the Imported table.
   `scripts/sources-parity.sh` checks the status counts against the rows, again after a rebase; the prose line is yours to recount.
-- Check the `dev-seed.http` header comment lists the new source alphabetically (`/scaffold-importer` step 7 covers this — verify it happened).
+- Check the venue file under `http/importer/seed/venues/` holds the source and `scripts/dev-seed-parity.sh check` passes (`/scaffold-importer` § 6).
 
 ### 7. Ship, or stop
 

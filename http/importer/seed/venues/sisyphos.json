@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Sisyphos",
+        "address": "Hauptstr. 15",
+        "city": "Berlin",
+        "postalCode": "10317",
+        "district": "lichtenberg",
+        "latitude": 52.49333,
+        "longitude": 13.49190,
+        "websiteUrl": "https://www.sisyphos-berlin.net",
+        "description": "A sprawling garden club in a former dog-biscuit factory in Rummelsburg, running weekend-long techno and house parties across several floors and open-air areas.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein weitläufiger Gartenclub in einer ehemaligen Hundekuchenfabrik in Rummelsburg, mit Techno- und House-Partys über ganze Wochenenden auf mehreren Floors und Open-Air-Flächen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Sisyphos",
+            "url": "https://www.sisyphos-berlin.net/collections/tickets/products.json",
+            "sourceType": "SISYPHOS",
+            "enabled": true,
+            "importIntervalMinutes": 120,
+            "maxRetries": 3
+        }
+    ]
+}

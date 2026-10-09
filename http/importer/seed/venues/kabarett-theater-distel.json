@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Kabarett-Theater DISTEL",
+        "address": "Friedrichstr. 101",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.52077,
+        "longitude": 13.3889,
+        "websiteUrl": "https://distel-berlin.de",
+        "description": "Germany's largest ensemble Kabarett, playing political satire with live music for over seventy years in the front building of the Admiralspalast at Friedrichstraße station.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das größte Ensemble-Kabarett Deutschlands, seit über sieben Jahrzehnten mit politischer Satire und Live-Musik im Vorderhaus des Admiralspalasts am Bahnhof Friedrichstraße.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Kabarett-Theater DISTEL",
+            "url": "https://distel-berlin.de/spielplan/kalender/",
+            "sourceType": "DISTEL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Tiffany Club",
+        "address": "Rosmarinstr. 8",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.51617,
+        "longitude": 13.38987,
+        "websiteUrl": "https://tiffany-berlin.de",
+        "description": "A club behind Unter den Linden, five minutes from the Brandenburg Gate, with student, Latin and K-pop party nights alongside stand-up comedy and concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club hinter Unter den Linden, fünf Minuten vom Brandenburger Tor, mit Studenten-, Latin- und K-Pop-Partys sowie Stand-up-Comedy und Konzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "capacity": 650
+    },
+    "sources": [
+        {
+            "name": "Tiffany Club",
+            "url": "https://tiffany-berlin.de/upcoming-events/",
+            "sourceType": "TIFFANY_CLUB",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

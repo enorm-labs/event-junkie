@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "DNA. CLUB",
+        "address": "Adalbertstraße 98",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.499922,
+        "longitude": 13.417655,
+        "websiteUrl": "https://www.dna-artclub.com/",
+        "description": "A community art club at Kottbusser Tor, opened by the DNA. artist collective founded in 2022, with a 500 m² hall and terrace for dance classes, Thursday jam sessions and club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Kunstclub des 2022 gegründeten Kollektivs DNA. liegt am Kottbusser Tor: rund 500 m² Innenfläche und eine Terrasse für Tanzkurse, donnerstägliche Jamsessions, Konzerte und Clubnächte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "cultural-centre"],
+        "capacity": 500,
+        "programmeUrl": "https://www.dna-artclub.com/events",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

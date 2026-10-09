@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Surprise Club",
+        "address": "Potsdamer Str. 84",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "tiergarten",
+        "latitude": 52.503457,
+        "longitude": 13.365686,
+        "websiteUrl": "https://surprise-berlin.de/",
+        "description": "A nightclub on Potsdamer Straße given over to Black music, with weekend parties for Afrobeats, hip hop, RnB, dancehall and salsa.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Nachtclub an der Potsdamer Straße für Black Music: am Wochenende Partys mit Afrobeats, Hip-Hop, RnB, Dancehall und Salsa.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://surprise-berlin.de/events-programs.php",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

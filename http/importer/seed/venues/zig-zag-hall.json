@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zig Zag Hall",
+        "address": "EUREF-Campus 26",
+        "city": "Berlin",
+        "postalCode": "10829",
+        "district": "schoeneberg",
+        "latitude": 52.48021,
+        "longitude": 13.35459,
+        "websiteUrl": "https://www.zigzag-jazzclub.berlin",
+        "description": "The Zig Zag Jazz Club's concert hall on the EUREF-Campus, with seated concerts by international jazz, soul and gospel stars.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Konzertsaal des Zig Zag Jazz Club auf dem EUREF-Campus, mit bestuhlten Konzerten internationaler Jazz-, Soul- und Gospelstars.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Zig Zag Hall",
+            "url": "https://www.zigzag-jazzclub.berlin/programmneu",
+            "sourceType": "ZIG_ZAG_HALL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

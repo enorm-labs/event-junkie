@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Clärchens Ballhaus",
+        "address": "Auguststraße 24/25",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.526474,
+        "longitude": 13.396910,
+        "websiteUrl": "https://claerchensball.haus/",
+        "description": "A ballroom in Mitte, opened in 1913 and named after co-founder Clara Bühler, where tango, swing and party nights fill the historic mirrored hall upstairs above the Luna D'Oro restaurant.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1913 wird in diesem Ballhaus in der Auguststraße getanzt, heute im denkmalgeschützten Spiegelsaal im Obergeschoss mit Tango-Milongas, Swing, Tanzkursen, Konzerten und Partys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "programmeUrl": "https://claerchensball.haus/programm/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

@@ -55,7 +55,7 @@ inside round 1. It had a `P18` image, Commons names no author for it, and a titl
 
 | Column              | Meaning                                                                                                                     |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `venue`             | The venue name as `http/importer/dev-seed.http` seeds it                                                                    |
+| `venue`             | The venue name as its file in `http/importer/seed/venues/` seeds it                                                         |
 | `decision`          | `CONFIRMED` or `REJECTED`. Every venue has one                                                                              |
 | `file`              | How the archive names the picture: a Commons file name without the `File:` prefix, a Flickr photo id. Empty for a rejection |
 | `licence_at_review` | The licence as the archive stated it, worded the way the `SPDX` map in the script keys on                                   |

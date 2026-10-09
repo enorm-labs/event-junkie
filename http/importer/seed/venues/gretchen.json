@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Gretchen",
+        "address": "Obentrautstr. 19-21",
+        "city": "Berlin",
+        "postalCode": "10963",
+        "district": "kreuzberg",
+        "latitude": 52.49556,
+        "longitude": 13.38792,
+        "websiteUrl": "https://www.gretchen-club.de",
+        "description": "A club set in the vaulted former stables of a 19th-century barracks in Kreuzberg, known for bass-driven electronic nights — drum & bass, house, techno and hip-hop — plus live shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club in den Gewölbeställen einer Kaserne aus dem 19. Jahrhundert in Kreuzberg, bekannt für bassbetonte elektronische Nächte — Drum & Bass, House, Techno und Hip-Hop — dazu Livekonzerte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Gretchen",
+            "url": "https://www.gretchen-club.de/",
+            "sourceType": "GRETCHEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

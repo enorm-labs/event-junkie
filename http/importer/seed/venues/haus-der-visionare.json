@@ -1,0 +1,18 @@
+{
+    "venue": {
+        "name": "Haus der Visionäre",
+        "address": "Eichenstraße 4A",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.495970,
+        "longitude": 13.453975,
+        "description": "A group of glass-roofed halls in a former 1920s bus depot on the Arena Berlin grounds by the Spree, used for electronic club nights, concerts and festivals as well as art exhibitions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Im ehemaligen Busdepot aus den 1920er Jahren auf dem Gelände der Arena Berlin an der Spree liegen mehrere Hallen unter Glasdächern für elektronische Clubnächte, Konzerte, Festivals und Kunstausstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue", "gallery"],
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

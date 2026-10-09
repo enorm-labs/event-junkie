@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "MS Hoppetosse",
+        "address": "Eichenstr. 4",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.49751,
+        "longitude": 13.45476,
+        "websiteUrl": "https://hoppetosse.berlin",
+        "description": "A moored Spree salon boat run by Club der Visionäre as its winter location, with a lower-deck club floor and an upper-deck bar programming house and minimal techno.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein festgemachtes Salonschiff auf der Spree, das der Club der Visionäre als Winterort betreibt, mit Clubfloor im Unterdeck und Bar im Oberdeck, dazu House und Minimal Techno.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "MS Hoppetosse",
+            "url": "https://hoppetosse.berlin/program/",
+            "sourceType": "MS_HOPPETOSSE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

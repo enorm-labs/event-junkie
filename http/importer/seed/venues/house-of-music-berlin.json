@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "House of Music Berlin",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.506664,
+        "longitude": 13.453770,
+        "websiteUrl": "https://www.houseofmusic.berlin/",
+        "description": "A music hub on the RAW grounds that pairs a stage hall with 23 rehearsal rooms and a café-bar, programming album-release concerts, jam sessions and a regular quiz night.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Auf dem RAW-Gelände verbinden sich hier eine Bühnenhalle, 23 Proberäume und ein Café mit Bar; auf dem Programm stehen Releasekonzerte, Jam-Sessions und ein regelmäßiger Quizabend.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "bar"],
+        "capacity": 150,
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "House of Music Berlin",
+            "url": "https://www.houseofmusic.berlin/",
+            "sourceType": "HOUSE_OF_MUSIC",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

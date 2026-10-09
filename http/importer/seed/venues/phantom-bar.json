@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Phantom Bar",
+        "address": "Torstraße 230",
+        "city": "Berlin",
+        "postalCode": "10115",
+        "district": "mitte",
+        "latitude": 52.527106,
+        "longitude": 13.387920,
+        "description": "A bar in an old townhouse on Torstraße, with stucco ceilings, a small dancefloor and a courtyard bar in summer, hosting house and techno DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Bar in einem bröckelnden Altbau an der Torstraße, mit Stuckdecken, kleiner Tanzfläche, Hofbar im Sommer, wo DJs House und Techno auflegen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"],
+        "programmeUrl": "https://ra.co/clubs/257171",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

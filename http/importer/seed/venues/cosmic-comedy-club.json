@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Cosmic Comedy Club",
+        "address": "Schönhauser Allee 184",
+        "city": "Berlin",
+        "postalCode": "10119",
+        "district": "prenzlauer-berg",
+        "latitude": 52.5298,
+        "longitude": 13.41,
+        "websiteUrl": "https://comedyclubberlin.com",
+        "description": "One of Berlin's longest-running English-language stand-up clubs, running showcase and open-mic nights alongside touring comedy specials.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Einer der ältesten englischsprachigen Stand-up-Clubs Berlins, mit Showcase- und Open-Mic-Abenden sowie Comedy-Specials auf Tour.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Cosmic Comedy Club",
+            "url": "https://comedyclubberlin.com/wp-json/tribe/events/v1/events",
+            "sourceType": "COSMIC_COMEDY",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

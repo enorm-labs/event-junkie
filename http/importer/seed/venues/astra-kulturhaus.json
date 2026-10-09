@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Astra Kulturhaus",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.507383,
+        "longitude": 13.451895,
+        "websiteUrl": "https://www.astra-berlin.de",
+        "description": "One of Berlin's larger concert venues, set in a converted hall on the RAW-Gelände in Friedrichshain. It hosts touring rock, pop, indie and electronic acts alongside club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Einer der größeren Konzertorte Berlins, in einer umgebauten Halle auf dem RAW-Gelände in Friedrichshain. Hier spielen Rock-, Pop-, Indie- und Elektronik-Acts auf Tour, dazu kommen Clubnächte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Astra Kulturhaus",
+            "url": "https://www.astra-berlin.de/",
+            "sourceType": "ASTRA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "GöRE Comedy Club",
+        "address": "Palisadenstraße 48",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.518204,
+        "longitude": 13.439946,
+        "description": "A comedy club in an old industrial basement on Palisadenstraße near Weberwiese, staging stand-up several nights a week with a rotating line-up from the Berlin scene, plus early \"Frühschicht\" open-mic shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Comedyclub in einem alten Industriekeller an der Palisadenstraße nahe Weberwiese, mit Stand-up an mehreren Abenden pro Woche, wechselnden Comedians der Berliner Szene und frühen Open-Mic-Shows namens Frühschicht.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "bar", "club"],
+        "programmeUrl": "https://www.eventbrite.com/cc/gore-shows-4785723/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Badenscher Hof",
+        "address": "Badensche Straße 29",
+        "city": "Berlin",
+        "postalCode": "10715",
+        "district": "wilmersdorf",
+        "latitude": 52.486245,
+        "longitude": 13.327496,
+        "websiteUrl": "https://www.badenscher-hof.de/",
+        "description": "A Wilmersdorf jazz pub and restaurant open since 1985, with Cajun cooking, a gallery and a courtyard, presenting live jazz, blues, swing and world music on weekday evenings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1985 verbindet diese Jazzkneipe in Wilmersdorf Cajun-Küche, Galerie und Innenhof mit Konzerten an Werktagen, bei denen Jazz, Blues, Swing und Weltmusik auf der Bühne stehen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "programmeUrl": "https://www.badenscher-hof.de/#Konzerte",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

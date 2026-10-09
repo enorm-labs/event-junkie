@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Torte",
+        "address": "Brusendorfer Str. 12",
+        "city": "Berlin",
+        "postalCode": "12055",
+        "district": "neukoelln",
+        "latitude": 52.473064,
+        "longitude": 13.454652,
+        "description": "A Neukölln cocktail bar in a former cake bakery, built around a 360-degree green granite counter, with homemade drinks from 18:00 and a calendar running from drawing sessions to electronic music release nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Cocktailbar in einer ehemaligen Tortenbäckerei in Neukölln, deren Mittelpunkt ein runder Tresen aus grünem Granit ist, mit hausgemachten Drinks ab 18 Uhr sowie Zeichenabenden und Release-Partys elektronischer Musik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://ra.co/clubs/233311",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

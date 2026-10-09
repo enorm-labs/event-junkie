@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Berghain / Panorama Bar",
+        "address": "Am Wriezener Bahnhof",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.51110,
+        "longitude": 13.44290,
+        "websiteUrl": "https://www.berghain.berlin",
+        "description": "Berlin's most renowned techno institution, housed in a former power plant near Ostbahnhof. The main floor and the upstairs Panorama Bar host marathon weekend parties centred on techno and house.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Berlins bekannteste Techno-Institution, in einem früheren Heizkraftwerk am Ostbahnhof. Auf dem Hauptfloor und in der Panorama Bar darüber laufen Wochenendpartys im Marathonformat, vor allem Techno und House.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Berghain",
+            "url": "https://www.berghain.berlin/de/program/",
+            "sourceType": "BERGHAIN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Unkompress",
+        "address": "Fichtestraße 23",
+        "city": "Berlin",
+        "postalCode": "10967",
+        "district": "kreuzberg",
+        "latitude": 52.489455,
+        "longitude": 13.413672,
+        "websiteUrl": "https://www.unkompress.berlin/",
+        "description": "A vinyl-first listening bar in Kreuzberg, founded by Kevin Rodriguez after Japanese listening rooms, playing whole albums over tube amplification and Klipsch horn speakers, with DJ sessions, label takeovers and live podcast recordings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine 2023 eröffnete Listening-Bar in Kreuzberg nach dem Vorbild japanischer Hörräume, gegründet von Kevin Rodriguez, mit ganzen Vinyl-Alben über Röhrenverstärker und Klipsch-Hornlautsprecher, DJ-Sessions, Label-Takeovers und Live-Podcast-Aufnahmen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://ra.co/clubs/210972",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

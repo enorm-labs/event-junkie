@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "migas",
+        "address": "Lindower Str. 19",
+        "city": "Berlin",
+        "postalCode": "13347",
+        "district": "wedding",
+        "latitude": 52.54374,
+        "longitude": 13.36771,
+        "websiteUrl": "https://migas.berlin",
+        "description": "A listening bar in Wedding where booked selectors play records to a seated audience, alongside nights spent listening to a single album from start to finish.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Listening Bar in Wedding, in der eingeladene Gäste vor sitzendem Publikum Platten auflegen, dazu Abende, an denen ein einzelnes Album von vorn bis hinten läuft.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "migas",
+            "url": "https://migas.berlin/program/",
+            "sourceType": "MIGAS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

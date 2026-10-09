@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Sensorium",
+        "address": "Warschauer Platz 18",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.504693,
+        "longitude": 13.448857,
+        "description": "A techno and house club that took over the former AVA Club at Warschauer Platz in March 2026, after AVA's thirteen years there, and plays through a VOID sound system on Wednesday and weekend nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Techno- und House-Club übernahm im März 2026 die Räume des AVA Club am Warschauer Platz, der dort dreizehn Jahre lief, und spielt mittwochs und am Wochenende über ein VOID-Soundsystem.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "capacity": 400,
+        "programmeUrl": "https://ra.co/clubs/285963",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

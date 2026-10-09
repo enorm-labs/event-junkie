@@ -24,45 +24,26 @@ def check(name, got, want):
         failures.append(f"{name}: got {got!r}, want {want!r}")
 
 
-SEED = """### --- Create Imported venue ---
-POST {{importer-host}}/api/admin/venues
-Content-Type: application/json
-
-{
-    "name": "Imported",
-    "address": "Revaler Str. 99",
-    "latitude": 52.5,
-    "longitude": 13.4
-}
-
-> {%
-    client.global.set("imported_venue_id", response.body.id);
-%}
-
-### --- Create Not Imported venue ---
-POST {{importer-host}}/api/admin/venues
-Content-Type: application/json
-
-{
+NOT_IMPORTED = {
     "name": "Not Imported",
     "address": "Budapester Straße 38-40",
     "postalCode": "10787",
     "latitude": 52.505432,
     "longitude": 13.338769,
-    "websiteUrl": "https://www.example-club.de/"
+    "websiteUrl": "https://www.example-club.de/",
 }
-
-> {%
-    client.test("Not Imported venue created", function () {});
-%}
-"""
+ENTRIES = [
+    {"venue": {"name": "Imported", "address": "Revaler Str. 99"}, "sources": [{"name": "Imported"}], "path": None},
+    {"venue": NOT_IMPORTED, "sources": [], "path": None},
+]
+FILE = osm.seed_venues.venue_file_text(NOT_IMPORTED, [])
 
 
 def main():
     argparse.ArgumentParser(description=__doc__.splitlines()[0]).parse_args()
 
-    venues = list(osm.not_imported_venues(SEED))
-    check("only the block without a capture", [v[0] for v in venues], ["Not Imported"])
+    venues = list(osm.not_imported_venues(ENTRIES))
+    check("only the file without a source", [v[0] for v in venues], ["Not Imported"])
 
     check("range asks for the first number", osm.street_query("Budapester Straße 38-40"), "38 Budapester Straße")
     check("letter suffix is kept", osm.street_query("Schönhauser Allee 26A"), "26a Schönhauser Allee")
@@ -70,7 +51,7 @@ def main():
     check("text after a comma is dropped", osm.street_query("Eiswerderstraße 18, Gebäude 129"), "18 Eiswerderstraße")
     check("no number asks for the street", osm.street_query("Große Querallee"), "Große Querallee")
 
-    _, body, start, end = venues[0]
+    _, body, _ = venues[0]
     house = [{"lat": "52.5055", "lon": "13.3388", "address": {"house_number": "38"}}]
     street = [{"lat": "52.5055", "lon": "13.3388", "address": {"road": "Budapester Straße"}}]
     far = [{"lat": "52.5155", "lon": "13.3388", "address": {"house_number": "38"}}]
@@ -84,9 +65,13 @@ def main():
     check("website on the object is identity", osm.by_identity(body, own), (52.506, 13.339))
     check("another website is not", osm.by_identity(body, other), None)
 
-    edited = osm.apply_point(SEED, start, end, 52.5055, 13.3388)
+    edited = osm.apply_point(FILE, 0, len(FILE), 52.5055, 13.3388)
     check("only the two numbers change", edited.count("52.505500") + edited.count("13.338800"), 2)
-    check("the imported block is untouched", edited.split("### --- Create Not")[0], SEED.split("### --- Create Not")[0])
+
+    def others(text):
+        return [line for line in text.splitlines() if "itude" not in line]
+
+    check("every other line is untouched", others(edited), others(FILE))
     check("the other fields stay", '"websiteUrl": "https://www.example-club.de/"' in edited, True)
 
     total = 16

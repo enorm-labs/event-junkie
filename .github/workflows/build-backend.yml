@@ -109,6 +109,11 @@ jobs:
       - name: No two migrations share a version
         run: scripts/migration-versions.sh
 
+      # Seconds, before any Gradle. dev-seed.http is generated from http/importer/seed/venues/ (#2824);
+      # a venue file added without regenerating it would be missing from every "Run all".
+      - name: dev-seed.http matches the venue files
+        run: scripts/dev-seed-parity.sh check
+
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:

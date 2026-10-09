@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "LARK",
+        "address": "Holzmarktstr. 15-18",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.51302,
+        "longitude": 13.42278,
+        "websiteUrl": "https://larkberlin.com",
+        "description": "A live-music club in the railway arches on Holzmarktstrasse, programming indie, folk, pop and singer-songwriter shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Livemusik-Club in den Bahnbögen an der Holzmarktstraße, mit Indie-, Folk-, Pop- und Singer-Songwriter-Konzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"]
+    },
+    "sources": [
+        {
+            "name": "LARK",
+            "url": "https://larkberlin.com/wp-json/wp/v2/event",
+            "sourceType": "LARK",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

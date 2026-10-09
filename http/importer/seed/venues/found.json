@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "FOUND",
+        "address": "Bessemerstraße 2-14",
+        "city": "Berlin",
+        "postalCode": "12103",
+        "district": "schoeneberg",
+        "latitude": 52.466453,
+        "longitude": 13.365339,
+        "websiteUrl": "https://foundberlin.com/",
+        "description": "A large club and event space opened in June 2026 in the red-brick former Schultheiss malt factory known as the Malzfabrik, with indoor halls, a garden and covered dancefloors for club nights and concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein großer Club, der im Juni 2026 in der backsteinroten Malzfabrik der früheren Schultheiss-Brauerei eröffnete, mit Hallen, Garten und überdachten Tanzflächen für Clubnächte, Open-Air-Partys und Konzerte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "capacity": 500,
+        "programmeUrl": "https://ra.co/clubs/292292",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

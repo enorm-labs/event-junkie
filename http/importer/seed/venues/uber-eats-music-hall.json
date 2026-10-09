@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Uber Eats Music Hall",
+        "address": "Uber Platz 2",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.50410,
+        "longitude": 13.44251,
+        "websiteUrl": "https://www.uber-eats-music-hall.de",
+        "description": "Mid-size concert hall across Uber Platz from the Uber Arena, programming touring bands, comedy and staged shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein mittelgroßer Konzertsaal gegenüber der Uber Arena am Uber Platz, mit Bands auf Tour, Comedy und Bühnenshows.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["arena"],
+        "capacity": 4500
+    },
+    "sources": [
+        {
+            "name": "Uber Eats Music Hall",
+            "url": "https://www.uber-eats-music-hall.de/events/all",
+            "sourceType": "UBER_EATS_MUSIC_HALL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

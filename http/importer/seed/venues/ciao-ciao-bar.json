@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "ciao ciao Bar",
+        "address": "Falckensteinstraße 47/48",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.500630,
+        "longitude": 13.444625,
+        "description": "A high-ceilinged cocktail bar on Falckensteinstraße in Kreuzberg with a club-grade sound system, a queer-friendly crowd and regular DJ nights and parties listed on Resident Advisor.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Cocktailbar mit hohen Decken und Clubanlage in der Kreuzberger Falckensteinstraße, queerfreundlich und mit regelmäßigen DJ-Abenden und Partys, die auf Resident Advisor angekündigt werden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://ra.co/clubs/285073",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

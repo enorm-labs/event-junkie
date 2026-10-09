@@ -457,7 +457,7 @@ tasks.register("updateModuleDiagrams") {
 // the subdirectory in the argument whenever a scenario moves.
 //
 // **Two files under `http/importer/` are deliberately absent, and both for the same reason.**
-// `dev-seed.http` (86 import triggers) and `event-sources.http` (5) POST to `/import` and `/retry`,
+// `dev-seed.http` (generated, one import trigger per source) and `event-sources.http` (5) POST to `/import` and `/retry`,
 // which make the importer scrape live venue websites. A task people run on demand must not put
 // traffic on a venue's site — the same argument ADR-007 makes, and why `scripts/dev-env.sh` starts
 // the importer with scheduling off. Run those two by hand when that is what you want.

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "A-Trane",
+        "address": "Bleibtreustr. 1",
+        "city": "Berlin",
+        "postalCode": "10623",
+        "district": "charlottenburg",
+        "latitude": 52.50727,
+        "longitude": 13.31997,
+        "websiteUrl": "https://a-trane.de",
+        "description": "A jazz club near Savignyplatz, open since 1992, with a concert almost every night and a free Monday session hosted by pianist Andreas Schmidt.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Jazzclub nahe dem Savignyplatz, seit 1992 geöffnet, mit fast täglich einem Konzert und einer freien Montagssession mit dem Pianisten Andreas Schmidt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 100
+    },
+    "sources": [
+        {
+            "name": "A-Trane",
+            "url": "https://a-trane.de/programm/",
+            "sourceType": "A_TRANE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

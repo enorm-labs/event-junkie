@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Gärten der Welt",
+        "address": "Blumberger Damm 44",
+        "city": "Berlin",
+        "postalCode": "12685",
+        "district": "marzahn",
+        "latitude": 52.538103,
+        "longitude": 13.569622,
+        "websiteUrl": "https://www.gaertenderwelt.de",
+        "description": "Marzahn landscape park of international themed gardens, whose open-air Arena stages concerts, park festivals and open-air cinema.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Marzahner Landschaftspark mit internationalen Themengärten, dessen Open-Air-Arena Konzerte, Parkfestivals und Freiluftkino zeigt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air"],
+        "capacity": 5000
+    },
+    "sources": [
+        {
+            "name": "Gärten der Welt",
+            "url": "https://www.gaertenderwelt.de/events/veranstaltungen/",
+            "sourceType": "GAERTEN_DER_WELT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

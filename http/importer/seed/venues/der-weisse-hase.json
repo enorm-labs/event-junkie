@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Der Weiße Hase",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.507583,
+        "longitude": 13.454532,
+        "websiteUrl": "https://derweissehase.club",
+        "description": "A techno club on the RAW-Gelände on Revaler Straße, running raves, DJ nights and an open-air garden.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Technoclub auf dem RAW-Gelände an der Revaler Straße, mit Raves, DJ-Nächten und einem Open-Air-Garten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Der Weiße Hase",
+            "url": "https://derweissehase.club/events",
+            "sourceType": "DER_WEISSE_HASE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

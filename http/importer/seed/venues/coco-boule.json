@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Coco Boule",
+        "address": "Prinzenstraße 85 D-F",
+        "city": "Berlin",
+        "postalCode": "10969",
+        "district": "kreuzberg",
+        "latitude": 52.503346,
+        "longitude": 13.410208,
+        "websiteUrl": "https://cocoboule.com/",
+        "description": "A Bechstein Network venue at Moritzplatz built around a bistro-disco idea, moving from dinner to dancing across three combinable rooms with a Funktion-One sound system and a DJ booth.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Bistro-Disco-Konzept des Bechstein Network am Moritzplatz: erst wird gegessen, dann getanzt, in drei verbindbaren Räumen mit Funktion-One-Anlage, DJ-Pult und Straßenterrasse.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "capacity": 300,
+        "programmeUrl": "https://ra.co/clubs/253613",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Festsaal Kreuzberg",
+        "address": "Am Flutgraben 2",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.496823,
+        "longitude": 13.451556,
+        "websiteUrl": "https://festsaal-kreuzberg.de",
+        "description": "A concert hall and event space by the Flutgraben on the Spree in Treptow, with a wide-ranging programme of concerts, club nights and cultural events.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Konzertsaal und Veranstaltungsort am Flutgraben an der Spree in Treptow, mit einem weiten Programm aus Konzerten, Clubnächten und Kulturveranstaltungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"],
+        "capacity": 1500
+    },
+    "sources": [
+        {
+            "name": "Festsaal Kreuzberg",
+            "url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/",
+            "sourceType": "FESTSAAL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

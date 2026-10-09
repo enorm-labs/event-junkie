@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Urania",
+        "address": "An der Urania 17",
+        "city": "Berlin",
+        "postalCode": "10787",
+        "district": "schoeneberg",
+        "latitude": 52.50113,
+        "longitude": 13.34765,
+        "websiteUrl": "https://www.urania.de",
+        "description": "A science and culture house in Schöneberg, programming lectures, panel discussions and talks across its Humboldtsaal and Kleistsaal.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Haus für Wissenschaft und Kultur in Schöneberg, mit Vorträgen, Podiumsgesprächen und Talks im Humboldtsaal und im Kleistsaal.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "capacity": 866
+    },
+    "sources": [
+        {
+            "name": "Urania",
+            "url": "https://www.urania.de/kalender/",
+            "sourceType": "URANIA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

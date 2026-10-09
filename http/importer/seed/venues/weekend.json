@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Weekend",
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.523084,
+        "longitude": 13.416583,
+        "websiteUrl": "https://www.weekendclub.berlin/",
+        "description": "A club on the 15th floor of the former Haus des Reisens at Alexanderplatz since 2004, with a rooftop facing the TV tower, house on Fridays and changing Saturday themes.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club im 15. Stock des früheren Haus des Reisens am Alexanderplatz, seit 2004 in Betrieb, mit Dachterrasse und Blick auf den Fernsehturm, Housemusik am Freitag und wechselnden Samstagen zwischen Techno, Hip-Hop und Reggaeton.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "programmeUrl": "https://www.weekendclub.berlin/area/club",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

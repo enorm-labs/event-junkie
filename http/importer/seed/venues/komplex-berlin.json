@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Komplex Berlin",
+        "address": "Modersohnstraße 35–45",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.503575,
+        "longitude": 13.458529,
+        "websiteUrl": "https://komplex.berlin/",
+        "description": "An event site in a former Deutsche Bahn repair workshop in Friedrichshain's Rudolfkiez, with high-ceilinged halls and a beer garden, used for electronic music parties, food festivals and seasonal markets.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "In einer früheren Werkstatt der Deutschen Bahn im Friedrichshainer Rudolfkiez liegt dieser Veranstaltungsort mit hohen Hallen und Biergarten, genutzt für elektronische Partys, Food-Festivals und saisonale Märkte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "programmeUrl": "https://ra.co/clubs/189040",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

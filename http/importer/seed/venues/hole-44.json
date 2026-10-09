@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Hole 44",
+        "address": "Hermannstr. 146",
+        "city": "Berlin",
+        "postalCode": "12051",
+        "district": "neukoelln",
+        "latitude": 52.46435,
+        "longitude": 13.43338,
+        "websiteUrl": "https://hole-berlin.de",
+        "description": "A concert hall in Neukölln geared towards touring bands, with a programme leaning on rock, metal, punk and alternative live acts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Konzertsaal in Neukölln für Bands auf Tour, mit einem Programm aus Rock, Metal, Punk und Alternative.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 650
+    },
+    "sources": [
+        {
+            "name": "Hole 44",
+            "url": "https://hole-berlin.de/events/",
+            "sourceType": "HOLE44",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

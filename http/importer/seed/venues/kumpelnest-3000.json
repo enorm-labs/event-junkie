@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Kumpelnest 3000",
+        "address": "Lützowstraße 23",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "tiergarten",
+        "latitude": 52.503077,
+        "longitude": 13.366401,
+        "websiteUrl": "http://www.kumpelnest3000.com/",
+        "description": "A bar opened in 1987 by artist Mark Ernestus as his art-school thesis, left in the fittings of a former brothel and still a late-night bar today.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Mark Ernestus eröffnete die Bar 1987 als Abschlussarbeit an der Hochschule der Künste in einem kaum veränderten früheren Bordell, bis heute eine Bar für die späten Stunden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "The Cloud",
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.523084,
+        "longitude": 13.416583,
+        "websiteUrl": "https://thecloud.berlin/",
+        "description": "A rentable event space at Alexanderplatz with an 8 by 2.5 metre LED wall, hosting galas and private parties as well as weekend club nights and live shows by touring Arabic, African and Russian-language stars.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine mietbare Eventlocation am Alexanderplatz mit acht Meter breiter LED-Wand, in der neben Galas und Privatfeiern freitags und samstags Clubnächte und Live-Shows internationaler Stars aus arabischer, afrikanischer und russischsprachiger Musik stattfinden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "capacity": 1000,
+        "programmeUrl": "https://thecloud.berlin/events/",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

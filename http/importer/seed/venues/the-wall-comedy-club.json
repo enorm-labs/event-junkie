@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "The Wall Comedy Club",
+        "address": "Grünberger Str. 84",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.51088,
+        "longitude": 13.46135,
+        "websiteUrl": "https://thewallcomedy.com",
+        "description": "A stand-up club named as a tribute to the fall of the Berlin Wall, with English-language showcases, open mics and touring specials by comedians from around the world.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Stand-up-Club, benannt als Hommage an den Fall der Berliner Mauer, mit englischsprachigen Showcases, Open Mics und Tour-Specials von Comedians aus aller Welt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "bar"]
+    },
+    "sources": [
+        {
+            "name": "The Wall Comedy Club",
+            "url": "https://thewallcomedy.com/venues/thewallcomedy/events/",
+            "sourceType": "THE_WALL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

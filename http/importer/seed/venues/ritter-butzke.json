@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Ritter Butzke",
+        "address": "Ritterstr. 26",
+        "city": "Berlin",
+        "postalCode": "10969",
+        "district": "kreuzberg",
+        "latitude": 52.503012,
+        "longitude": 13.408136,
+        "websiteUrl": "https://club.ritterbutzke.com",
+        "description": "A long-running Kreuzberg techno club in a former factory, running several floors a night.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein alteingesessener Kreuzberger Technoclub in einer früheren Fabrik, mit mehreren Floors pro Nacht.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Ritter Butzke",
+            "url": "https://club.ritterbutzke.com/events",
+            "sourceType": "RITTER_BUTZKE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Downstairs Comedy Club",
+        "address": "Oranienburger Str. 67",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.52504,
+        "longitude": 13.39204,
+        "websiteUrl": "https://www.downstairscomedy.shop",
+        "description": "Felix Lobrecht's comedy club in Mitte, where the Downstairs Allstars showcase mixes established German-language comedians with newcomers most nights, beside an open mic and solo shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Comedy-Club von Felix Lobrecht in Mitte, in dem die Downstairs-Allstars-Show an den meisten Abenden etablierte deutschsprachige Comedians mit Newcomern mischt, dazu ein Open Mic und Soloshows.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "bar"]
+    },
+    "sources": [
+        {
+            "name": "Downstairs Comedy Club",
+            "url": "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list",
+            "sourceType": "DOWNSTAIRS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

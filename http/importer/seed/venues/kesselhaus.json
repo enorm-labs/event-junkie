@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Kesselhaus",
+        "address": "Knaackstraße 97",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.540292,
+        "longitude": 13.414078,
+        "websiteUrl": "https://www.kesselhaus.net/",
+        "description": "The former boiler house of the Schultheiss brewery, a listed Schwechten building in the Kulturbrauerei, has been a stage since the early 1990s and today hosts concerts, club nights, festivals, theatre and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Im einstigen Kesselhaus der Schultheiss-Brauerei, einem denkmalgeschützten Schwechten-Bau in der Kulturbrauerei, wird seit Anfang der 1990er gespielt, heute mit Konzerten, Clubreihen, Festivals, Theater und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 776,
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": [
+        {
+            "name": "Kesselhaus",
+            "url": "https://www.kesselhaus.net/de/calendar",
+            "sourceType": "KESSELHAUS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

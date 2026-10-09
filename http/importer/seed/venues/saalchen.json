@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Säälchen",
+        "address": "Holzmarktstr. 25",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.511725,
+        "longitude": 13.426338,
+        "websiteUrl": "https://www.holzmarkt.com",
+        "description": "The concert hall on the Holzmarkt riverside grounds, programming concerts and cultural events beside the Spree.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Konzertsaal auf dem Holzmarkt-Gelände am Ufer, mit Konzerten und Kulturveranstaltungen direkt an der Spree.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Säälchen",
+            "url": "https://www.holzmarkt.com/kalender",
+            "sourceType": "SAALCHEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

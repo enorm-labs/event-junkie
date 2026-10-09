@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Silverwings",
+        "address": "Columbiadamm 10",
+        "city": "Berlin",
+        "postalCode": "10965",
+        "district": "tempelhof",
+        "latitude": 52.484018,
+        "longitude": 13.391198,
+        "websiteUrl": "https://silverwings.de",
+        "description": "A club in the listed Tempelhof Airport building, opened by Americans over seventy years ago for GIs and young Berliners and run by Harmen de Keijzer since the 2000s, with concerts and party series.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Club im denkmalgeschützten Flughafengebäude Tempelhof entstand vor über siebzig Jahren als amerikanischer Treffpunkt für GIs und junge Berliner und zeigt heute unter Harmen de Keijzer Konzerte und Partyreihen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "programmeUrl": "https://silverwings.de/program.html",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

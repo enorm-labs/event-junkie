@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Mehringhof-Theater",
+        "address": "Gneisenaustr. 2a",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.49195,
+        "longitude": 13.38896,
+        "websiteUrl": "https://www.mehringhoftheater.de",
+        "description": "A 230-seat Kabarett theatre in the Mehringhof since 1985, a first address for German-language political Kabarett and stand-up that pairs established names with newcomers.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kabarett-Theater mit 230 Plätzen im Mehringhof seit 1985, eine erste Adresse für deutschsprachiges, politisches Kabarett und Stand-up, das bekannte Namen mit Neulingen zusammenbringt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "capacity": 230
+    },
+    "sources": [
+        {
+            "name": "Mehringhof-Theater",
+            "url": "https://www.mehringhoftheater.de/programm/",
+            "sourceType": "MEHRINGHOF",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "YSY",
+        "address": "Frankfurter Allee 23",
+        "city": "Berlin",
+        "postalCode": "10247",
+        "district": "friedrichshain",
+        "latitude": 52.515921,
+        "longitude": 13.459143,
+        "websiteUrl": "https://www.ysyberlin.de/",
+        "description": "A listening bar in a high-ceilinged historic building near Frankfurter Tor, built around a custom sound system, with record-led bar nights, a weekly Wednesday jazz session, DJ club nights and food pop-ups.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Listening-Bar mit eigens gebauter Anlage in einem Altbau mit hohen Decken an der Frankfurter Allee, mit Plattenabenden, Jazz jeden Mittwoch, DJ-Clubnächten und wechselnden Food-Pop-ups.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "capacity": 150,
+        "programmeUrl": "https://ra.co/clubs/253763",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

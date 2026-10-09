@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Sisyfass",
+        "address": "Wildenbruchstr. 7",
+        "city": "Berlin",
+        "postalCode": "12045",
+        "district": "neukoelln",
+        "latitude": 52.483028,
+        "longitude": 13.442069,
+        "description": "A Neukölln bar opened in August 2018 by the team behind the Sisyphos club, with Chesterfield sofas, a brick wall and a ball pit, hosting DJs, live jazz and quiz nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Neuköllner Bar eröffnete das Sisyphos-Team im August 2018, mit Chesterfield-Sofas vor Backsteinwand und einem Bällebad, dazu DJ-Abende, Live-Jazz und Quizrunden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://ra.co/clubs/159864",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

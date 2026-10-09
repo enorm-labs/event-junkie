@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "SO36",
+        "address": "Oranienstr. 190",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.500391,
+        "longitude": 13.422161,
+        "websiteUrl": "https://www.so36.com",
+        "description": "A legendary Kreuzberg club on Oranienstraße, central to Berlin's punk and new-wave history since the late 1970s. Today it runs a diverse programme of punk, rock, queer parties and club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein legendärer Kreuzberger Club an der Oranienstraße, seit den späten 1970ern zentral für Berlins Punk- und New-Wave-Geschichte. Heute läuft hier ein vielfältiges Programm aus Punk, Rock, queeren Partys und Clubnächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "SO36",
+            "url": "https://www.so36.com/tickets",
+            "sourceType": "SO36",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

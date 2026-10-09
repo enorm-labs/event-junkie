@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Arcanoa",
+        "address": "Am Tempelhofer Berg 8",
+        "city": "Berlin",
+        "postalCode": "10965",
+        "district": "kreuzberg",
+        "latitude": 52.488006,
+        "longitude": 13.386809,
+        "websiteUrl": "https://www.ssi-media.com/arcanoa/",
+        "description": "A tiny Kreuzberg bar near Platz der Luftbrücke, running since 1988 and billing itself as the discovery bar for musicians: independent live acts on Fridays and Saturdays plus open stages and jam sessions the rest of the week.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine winzige Kreuzberger Bar am Platz der Luftbrücke, seit 1988 in Betrieb und selbst erklärte Entdeckerbar für Musiker: freitags und samstags unabhängige Livekonzerte, in der übrigen Woche offene Bühnen und Jamsessions.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Arcanoa",
+            "url": "https://www.ssi-media.com/arcanoa/veranst.htm",
+            "sourceType": "ARCANOA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

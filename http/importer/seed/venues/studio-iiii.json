@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Studio IIII",
+        "address": "Potsdamer Straße 96",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "tiergarten",
+        "latitude": 52.502046,
+        "longitude": 13.364462,
+        "websiteUrl": "https://studioiiii.de/",
+        "description": "An art and social club on Potsdamer Straße that runs its own residency for moving-image and light artists, pairing exhibitions and artist talks with live audiovisual acts and DJ nights from Thursday to Saturday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kunst- und Social-Club an der Potsdamer Straße mit eigenem Residenzprogramm für Bewegtbild- und Lichtkunst, der Ausstellungen und Künstlergespräche mit audiovisuellen Live-Acts und DJ-Nächten von Donnerstag bis Samstag verbindet.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar", "gallery"],
+        "programmeUrl": "https://studioiiii.de/index#programme",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zur Klappe",
+        "address": "Yorckstr. 0",
+        "city": "Berlin",
+        "postalCode": "10965",
+        "district": "kreuzberg",
+        "latitude": 52.49305,
+        "longitude": 13.38715,
+        "websiteUrl": "https://zurklappe.org",
+        "description": "A former public toilet at the corner of Yorckstrasse and Mehringdamm, now a one-room club with a Funktion-One sound system, hosting club nights, live performances and art events.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine ehemalige öffentliche Toilette an der Ecke Yorckstraße und Mehringdamm, heute ein Club mit einem Raum und einer Funktion-One-Anlage, für Clubnächte, Live-Auftritte und Kunstveranstaltungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Zur Klappe",
+            "url": "https://zurklappe.org/events",
+            "sourceType": "ZUR_KLAPPE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

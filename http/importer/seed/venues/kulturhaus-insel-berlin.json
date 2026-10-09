@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Kulturhaus Insel Berlin",
+        "address": "Alt-Treptow 6",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.48741,
+        "longitude": 13.48136,
+        "websiteUrl": "https://www.inselberlin.de",
+        "description": "The concert house on the Insel der Jugend, a Spree island in Treptower Park, with a hall, a summer garden and a free Sunday matinee series.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Konzerthaus auf der Insel der Jugend, einer Spreeinsel im Treptower Park, mit Saal, Sommergarten und einer kostenlosen Matineereihe am Sonntag.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "open-air", "cultural-centre"],
+        "capacity": 250
+    },
+    "sources": [
+        {
+            "name": "Kulturhaus Insel Berlin",
+            "url": "https://www.inselberlin.de/",
+            "sourceType": "INSEL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

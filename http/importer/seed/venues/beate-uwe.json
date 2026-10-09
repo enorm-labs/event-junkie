@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Beate Uwe",
+        "address": "Schillingstraße 31",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.517481,
+        "longitude": 13.419024,
+        "websiteUrl": "https://beate-uwe.de/",
+        "description": "A small electronic club by Jannowitzbrücke with records covering its ceiling, playing house and techno on Friday and Saturday nights and slow downtempo on Sundays, when rugs go down for \"Beate Barfuß\".",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kleiner Club für elektronische Musik an der Jannowitzbrücke mit Schallplatten an der Decke: freitags und samstags House und Techno, sonntags bei „Beate Barfuß“ Downtempo auf ausgelegten bunten Teppichen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://beate-uwe.de/#Programm",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Kunstfabrik Schlot",
+        "address": "Invalidenstraße 117",
+        "city": "Berlin",
+        "postalCode": "10115",
+        "district": "mitte",
+        "latitude": 52.530281,
+        "longitude": 13.385162,
+        "websiteUrl": "https://kunstfabrik-schlot.de/",
+        "description": "A jazz club founded in 1993 in Prenzlauer Berg and since 2000 in the Edison-Höfe, where German light-bulb mass production began, with around 320 concerts a year across every style of jazz.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1993 bestehender Jazzclub, zuerst in Prenzlauer Berg, seit 2000 in den Edison-Höfen an der Invalidenstraße, wo in Deutschland die Massenfertigung von Glühbirnen begann, mit rund 320 Konzerten im Jahr.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 150,
+        "programmeUrl": "https://kunstfabrik-schlot.de/programm/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

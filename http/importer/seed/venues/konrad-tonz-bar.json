@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Konrad Tönz Bar",
+        "address": "Falckensteinstraße 30",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.497564,
+        "longitude": 13.441530,
+        "websiteUrl": "http://www.konradtoenzbar.de/",
+        "description": "A smokers' bar on Falckensteinstraße, open since December 1996 and named after Aktenzeichen XY presenter Konrad Toenz, where DJs play records from the 1950s to 1970s on portable mono turntables, plus a Sunday jazz night.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Raucherbar in der Falckensteinstraße, seit Dezember 1996 geöffnet und nach dem Aktenzeichen-XY-Moderator Konrad Toenz benannt: DJs legen Platten der 50er bis 70er auf tragbaren Mono-Plattenspielern auf, sonntags gibt es Jazz.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "http://www.konradtoenzbar.de/#events",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

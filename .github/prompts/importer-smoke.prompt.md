@@ -32,7 +32,7 @@ scripts/dev-env.sh up          # starts Postgres via bootRun + waits for /actuat
 If the database is down or in an unknown state, `scripts/dev-env.sh db-reset` first. Scheduling is disabled by default in `up`, so nothing imports behind your
 back — that is deliberate; don't re-enable it for a smoke test.
 
-For `--full`: `db-reset` → `up` → `seed-all` (runs `http/importer/dev-seed.http` via ijhttp; scrapes every venue, takes minutes), then skip to step 4.
+For `--full`: `db-reset` → `up` → `seed-all` (regenerates and runs `http/importer/dev-seed.http` via ijhttp; scrapes every venue, takes minutes), then skip to step 4.
 
 ### 2. Take a baseline snapshot
 
@@ -44,8 +44,8 @@ Per-source event counts before your change lands. This is the regression guard i
 
 ### 3. Register the source
 
-If the source already exists (a re-run), skip to step 4. Otherwise mirror the block you added to `http/importer/dev-seed.http` into two scratchpad JSON files
-and register them:
+If the source already exists (a re-run), skip to step 4. Otherwise split the venue file you added under `http/importer/seed/venues/` into two scratchpad JSON
+files, its `venue` and its one `sources` entry plus nothing else, and register them:
 
 ```bash
 # venue.json   → the POST /api/admin/venues body (name, address, city, postalCode, district, lat/lon, websiteUrl, description)

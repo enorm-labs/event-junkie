@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Wiener Blut",
+        "address": "Wiener Straße 14",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.498050,
+        "longitude": 13.429224,
+        "websiteUrl": "https://www.wienerblut.org/",
+        "description": "A Kreuzberg pub on Wiener Straße where DJs play almost every night, with football on screen, foosball tables, sofa corners and beer benches outside in summer.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kneipe in der Wiener Straße, in der fast jeden Abend DJs auflegen, mit Fußballübertragungen, Kickertischen, Sofaecken und im Sommer Bierbänken vor der Tür.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://www.wienerblut.org/event-list",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

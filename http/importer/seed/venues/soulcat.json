@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Soulcat",
+        "address": "Pannierstraße 53",
+        "city": "Berlin",
+        "postalCode": "12047",
+        "district": "neukoelln",
+        "latitude": 52.487959,
+        "longitude": 13.431806,
+        "websiteUrl": "https://soulcat-berlin.com/",
+        "description": "A cash-only music bar in Neukölln that plays nothing but 1950s and 1960s records on vinyl, with nightly R&B, soul, blues and rock'n'roll from guest DJs and Werder Bremen matches on screen.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Musikbar in Neukölln, in der ausschließlich Vinyl aus den 50er- und 60er-Jahren läuft: Gast-DJs legen R&B, Soul, Blues und Rock'n'Roll auf, bezahlt wird nur bar, Werder-Spiele laufen live.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": [
+        {
+            "name": "Soulcat",
+            "url": "https://soulcat-berlin.com/wp-json/tribe/events/v1/events",
+            "sourceType": "SOULCAT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

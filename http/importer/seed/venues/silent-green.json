@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "silent green",
+        "address": "Gerichtstr. 35",
+        "city": "Berlin",
+        "postalCode": "13347",
+        "district": "wedding",
+        "latitude": 52.54569,
+        "longitude": 13.36649,
+        "websiteUrl": "https://www.silent-green.net",
+        "description": "A cultural quarter in a 1912 crematorium in Wedding, programming experimental concerts, exhibitions, film and talks across its Kuppelhalle, Betonhalle and ateliers.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kulturquartier in einem Krematorium von 1912 in Wedding, mit experimentellen Konzerten, Ausstellungen, Film und Talks in Kuppelhalle, Betonhalle und Ateliers.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "silent green",
+            "url": "https://www.silent-green.net/programm",
+            "sourceType": "SILENT_GREEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

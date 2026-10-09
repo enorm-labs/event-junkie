@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Gestrandet",
+        "address": "Rolandufer 4",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.514901,
+        "longitude": 13.417388,
+        "websiteUrl": "https://strandhaus-berlin.de/gestrandet/",
+        "description": "A sandy beach bar on the Spree at Rolandufer, facing Jannowitzbrücke station and run as one of the Strandhaus locations, with weather-dependent summer open-airs of house, tech house and Latin nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Strandbar mit Sand am Rolandufer gegenüber dem Bahnhof Jannowitzbrücke, Teil der Strandhaus-Standorte, mit wetterabhängigen Open-Airs im Sommer zwischen House, Tech House und Salsa- und Bachata-Abenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "bar"],
+        "programmeUrl": "https://strandhaus-berlin.de/gestrandet/events",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

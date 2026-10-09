@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Bohnengold",
+        "address": "Reichenberger Straße 153",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.497563,
+        "longitude": 13.424255,
+        "description": "A Kreuzberg bar on Reichenberger Straße with a living-room feel, drinks at the front and a dance floor at the back for disco, indie and electronic nights, including a free indie party every Thursday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar in der Reichenberger Straße mit Wohnzimmeratmosphäre: vorne wird ausgeschenkt, hinten getanzt, zu Disco, Indie und Elektro, donnerstags bei der kostenlosen „Indietanzbar“.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://ra.co/clubs/13344",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

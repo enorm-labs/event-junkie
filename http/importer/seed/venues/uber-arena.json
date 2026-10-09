@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Uber Arena",
+        "address": "Mühlenstr. 12-30",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.506369,
+        "longitude": 13.443765,
+        "websiteUrl": "https://www.uber-arena.de",
+        "description": "Berlin's largest indoor arena on the Spree, hosting touring concerts, shows and comedy alongside its resident sport teams.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Berlins größte Halle an der Spree, mit Konzerten, Shows und Comedy auf Tour neben den Spielen der ansässigen Sportteams.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["arena"],
+        "capacity": 17000
+    },
+    "sources": [
+        {
+            "name": "Uber Arena",
+            "url": "https://www.uber-arena.de/events/all",
+            "sourceType": "UBER_ARENA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

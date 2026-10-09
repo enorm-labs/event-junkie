@@ -16,7 +16,7 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs   # blame skips the forma
 
 scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
 scripts/dev-env.sh seed-fixture           # the fixed dataset, no network — or the two lines below for real data
-scripts/dev-env.sh seed-all               # register all event sources (needs ijhttp)
+scripts/dev-env.sh seed-all               # register all event sources (needs ijhttp; see "The seed venues")
 scripts/dev-env.sh import <slug>          # import one source, polling until it settles
 scripts/dev-env.sh status                 # database / importer / bff / frontend
 scripts/dev-env.sh down all               # add --db to stop Postgres too
@@ -233,6 +233,18 @@ scripts/dev-env.sh down all     # add --db to stop Postgres too
 
 It also covers the importer workflow: `seed-fixture`, `seed-all`, `seed-one`, `import <slug>`, `snapshot`,
 `diff-snapshot`, `check <slug>` and `psql <sql>`.
+
+### The seed venues
+
+Every venue we seed is one file, `http/importer/seed/venues/<venue-slug>.json` (#2824): the
+`POST /api/admin/venues` body under `venue`, and under `sources` each `POST /api/admin/event-sources` body without
+its `venueId`. A venue we do not import has `"sources": []`. The file name is the slug `SlugGenerator` makes from
+the venue's name, and `SeedVenueFilesTest` fails on a wrong one. `scripts/seed_venues.py` documents the format and
+is the one Python reader. `seed-sources.py`, `geocode-venues.py` and `osm-venue-coordinates.py` import it.
+
+`http/importer/dev-seed.http` is generated from the directory, for IntelliJ's "Run all" and for `seed-all`. Never
+edit it: change or add a venue file, then run `scripts/dev-seed-parity.sh`. CI runs it with `check` and fails when
+the two disagree. A branch that still edits the old file rebases as `docs/WORKTREES.md` § 5 describes.
 
 ## Calling the APIs
 

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Sonnenraum",
+        "address": "Eichenstr. 4a",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.496224,
+        "longitude": 13.453188,
+        "websiteUrl": "https://clubdervisionaere.com/sonnenraum/",
+        "description": "Club der Visionäre's indoor concert room, home to a resident live-band night every Monday, with jazz concerts and label parties on other nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Innenkonzertraum des Club der Visionäre, Heimat einer Livebandnacht an jedem Montag, an anderen Abenden mit Jazzkonzerten und Labelpartys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Sonnenraum",
+            "url": "https://clubdervisionaere.com/programm/",
+            "sourceType": "SONNENRAUM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

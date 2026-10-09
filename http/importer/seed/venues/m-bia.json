@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "M-BIA",
+        "address": "Dircksenstraße 123",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.522632,
+        "longitude": 13.409227,
+        "websiteUrl": "http://www.m-bia.de",
+        "description": "A club for electronic music on Dircksenstraße in central Mitte, near Alexanderplatz, with weekend nights that run from psytrance and goa to techno, bass and Halloween specials.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Club für elektronische Musik liegt in der Dircksenstraße mitten in Berlin-Mitte und füllt die Wochenenden mit Nächten zwischen Goa, Psytrance, Techno und Bass.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "http://www.m-bia.de",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "WABE",
+        "address": "Danziger Straße 101",
+        "city": "Berlin",
+        "postalCode": "10405",
+        "district": "prenzlauer-berg",
+        "latitude": 52.537507,
+        "longitude": 13.430951,
+        "websiteUrl": "https://www.wabe-berlin.info/",
+        "description": "An octagonal hall built in 1986 on the former gasworks site in Ernst-Thälmann-Park, run by the Pankow district as a municipal venue for jazz, pop, blues, theatre and comedy, playing at Schönfließer Straße 7 in Prenzlauer Berg while the hall is renovated.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der achteckige Bau von 1986 auf dem früheren Gaswerksgelände im Ernst-Thälmann-Park ist eine kommunale Kulturstätte des Bezirks Pankow für Jazz, Pop, Blues, Theater und Comedy und spielt während der Sanierung in der Schönfließer Straße 7 in Prenzlauer Berg.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "programmeUrl": "https://www.wabe-berlin.info/vorschau/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

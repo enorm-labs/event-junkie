@@ -1,21 +1,19 @@
 package de.norm.events.slug
 
+import de.norm.events.venue.seedVenues
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
-import tools.jackson.databind.json.JsonMapper
 import java.io.File
 
-private val SEED_FILE = File("../http/importer/dev-seed.http")
 private val MIGRATION_DIR = File("src/main/resources/db/migration")
 
-private val VENUE_POST = Regex("""POST \{\{importer-host}}/api/admin/venues\s*""")
 private val SLUG_PREDICATE = Regex("""slug\s*=\s*'([^']*)'|slug\s+IN\s*\(([^)]*)\)""", RegexOption.IGNORE_CASE)
 private val QUOTED = Regex("'([^']*)'")
 private val STATEMENT_TABLE = Regex("""\b(?:UPDATE|DELETE\s+FROM|INSERT\s+INTO)\s+(\w+)""", RegexOption.IGNORE_CASE)
 
 /**
- * Venue slugs that `dev-seed.http` no longer creates, mapped to the reason each is still allowed.
+ * Venue slugs that the seed venue files no longer create, mapped to the reason each is still allowed.
  *
  * A rename or a removal leaves an older migration naming a venue that is gone. The entry records
  * that, where a reviewer sees it.
@@ -81,7 +79,8 @@ private data class SlugLiteral(
     val slug: String
 )
 
-private fun seedVenueSlugs(): Set<String> = venueNamesIn(SEED_FILE.readText()).mapTo(mutableSetOf(), SlugGenerator::slugify)
+/** The seed venue files are where a venue exists before it exists anywhere else (#876, #2824). */
+private fun seedVenueSlugs(): Set<String> = seedVenues().mapTo(mutableSetOf()) { SlugGenerator.slugify(it.name) }
 
 private fun migrationSlugLiterals(): List<SlugLiteral> =
     MIGRATION_DIR
@@ -111,34 +110,3 @@ private fun slugLiteralsIn(
                 }
             slugs.map { SlugLiteral(file, line, it) }
         }.toList()
-
-/**
- * Reads the venue names out of `dev-seed.http`, which is where a venue exists before it exists
- * anywhere else (#876).
- *
- * Only the bodies that follow a venue POST count. An event source carries a `name` too, so a bare
- * search for that field would accept a source name as a venue slug.
- */
-private fun venueNamesIn(http: String): List<String> {
-    val mapper = JsonMapper.builder().build()
-    val lines = http.lines()
-    val names = mutableListOf<String>()
-    var i = 0
-    while (i < lines.size) {
-        if (!VENUE_POST.matches(lines[i])) {
-            i++
-            continue
-        }
-        i++
-        while (i < lines.size && lines[i].isNotBlank()) {
-            i++
-        }
-        val body = mutableListOf<String>()
-        while (i < lines.size && !lines[i].startsWith("> {%") && !lines[i].startsWith("###")) {
-            body.add(lines[i])
-            i++
-        }
-        names.add(mapper.readTree(body.joinToString("\n")).get("name").asString())
-    }
-    return names
-}

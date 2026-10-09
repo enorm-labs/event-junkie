@@ -1,0 +1,22 @@
+{
+    "venue": {
+        "name": "Abstand",
+        "address": "Rigaer Straße 78",
+        "city": "Berlin",
+        "postalCode": "10247",
+        "district": "friedrichshain",
+        "latitude": 52.516843,
+        "longitude": 13.464298,
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Abstand",
+            "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1608&limit=500",
+            "sourceType": "ABSTAND",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

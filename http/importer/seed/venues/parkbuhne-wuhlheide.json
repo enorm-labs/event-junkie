@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Parkbühne Wuhlheide",
+        "address": "An der Wuhlheide 187",
+        "city": "Berlin",
+        "postalCode": "12459",
+        "district": "koepenick",
+        "latitude": 52.46234,
+        "longitude": 13.5454,
+        "websiteUrl": "https://www.wuhlheide.de",
+        "description": "A large open-air amphitheatre in the Wuhlheide park, running a seasonal summer programme of touring concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein großes Open-Air-Amphitheater im Park Wuhlheide, mit einem saisonalen Sommerprogramm aus Konzerten auf Tour.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "live-venue"],
+        "capacity": 17000
+    },
+    "sources": [
+        {
+            "name": "Parkbühne Wuhlheide",
+            "url": "https://www.wuhlheide.de/programm",
+            "sourceType": "WUHLHEIDE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Pastiche",
+        "address": "Weserstraße 46",
+        "city": "Berlin",
+        "postalCode": "12045",
+        "district": "neukoelln",
+        "latitude": 52.484411,
+        "longitude": 13.438526,
+        "websiteUrl": "https://pasticheinternational.com/",
+        "description": "A hi-fi listening room in Neukölln that is also a record shop, day café and record label, hosting curated listening sessions, live sets, workshops, talks, quiz nights and record fairs with DJs.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Hi-Fi-Hörraum an der Weserstraße, zugleich Plattenladen, Tagescafé und Label, mit kuratierten Listening-Sessions, Live-Sets, Workshops, Buchgesprächen, Quizabenden und Plattenbörsen samt DJ-Sets.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "gallery"],
+        "programmeUrl": "https://pasticheinternational.com/programme-1",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

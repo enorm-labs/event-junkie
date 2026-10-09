@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Hafenbar",
+        "address": "Karl-Liebknecht-Straße 11",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.521847,
+        "longitude": 13.407384,
+        "websiteUrl": "https://www.hafenbar-berlin.de/",
+        "description": "A maritime-themed dance hall that opened in East Berlin in 1967 and moved to Alexanderplatz in 2016, with the Schlager party Stimmen in Aspik every Friday since 1996 and pop and dance classics on Saturdays.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1967 eine Tanzgaststätte im Seefahrer-Stil, früher in der Chausseestraße und seit 2016 am Alexanderplatz; freitags läuft seit 1996 die Schlagerparty Stimmen in Aspik, samstags Pop und Dance-Klassiker.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"],
+        "programmeUrl": "https://www.hafenbar-berlin.de/schlager-party-berlin/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

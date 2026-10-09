@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Crack Bellmer",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.50759,
+        "longitude": 13.45477,
+        "websiteUrl": "https://www.crackbellmer.de",
+        "description": "A microclub and dance bar on the RAW-Gelände, programming house and techno nights alongside drag shows, swing dance parties and live jazz.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Mikroclub und eine Tanzbar auf dem RAW-Gelände, mit House- und Techno-Nächten neben Dragshows, Swing-Partys und Livejazz.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"]
+    },
+    "sources": [
+        {
+            "name": "Crack Bellmer",
+            "url": "https://www.crackbellmer.de/program/this-month",
+            "sourceType": "CRACK_BELLMER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

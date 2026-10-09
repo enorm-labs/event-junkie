@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "SaliGari Bar",
+        "address": "Simplonstraße 23",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.508303,
+        "longitude": 13.459267,
+        "description": "A small cocktail bar on Simplonstraße hosting English-language stand-up nights, improv jams and intimate blues and acoustic concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kleine Cocktailbar in der Simplonstraße mit englischsprachiger Stand-up-Comedy, Improv-Jams und kleinen Blues- und Akustikkonzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://www.yesticket.org/venue/Saligari-Bar/en/",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

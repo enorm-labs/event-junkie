@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Pfefferberg Haus 13",
+        "address": "Schönhauser Allee 176",
+        "city": "Berlin",
+        "postalCode": "10119",
+        "district": "prenzlauer-berg",
+        "latitude": 52.531610,
+        "longitude": 13.411969,
+        "websiteUrl": "https://haus13.pfefferwerk.de/",
+        "description": "A 160 m² hall with a fixed stage on the former Pfefferberg brewery site, where trainees of Pfefferwerk Stadtkultur learn event and stage work, hosting rock and metal concerts, book premieres and dance nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Saal mit fester Bühne auf dem Gelände der einstigen Brauerei Pfefferberg, in dem Auszubildende der Pfefferwerk Stadtkultur Veranstaltungen umsetzen – mit Rock- und Metalkonzerten, Buchpremieren und Tanzabenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 180,
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Pfefferberg Haus 13",
+            "url": "https://haus13.pfefferwerk.de/veranstaltungen/",
+            "sourceType": "PFEFFERBERG_HAUS_13",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "808 Nachtklub Berlin",
+        "address": "Budapester Straße 38-40",
+        "city": "Berlin",
+        "postalCode": "10787",
+        "district": "charlottenburg",
+        "latitude": 52.505420,
+        "longitude": 13.338855,
+        "websiteUrl": "https://808.berlin/",
+        "description": "A nightclub in the Bikini Berlin complex by the Zoo, open on Friday and Saturday nights, with the Heartbreak party every Friday and bookable booths.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Nachtclub im Bikini Berlin am Zoo, freitags und samstags geöffnet, mit der Reihe Heartbreak an jedem Freitag und buchbaren Lounges.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "808 Nachtklub Berlin",
+            "url": "https://808.berlin/",
+            "sourceType": "NACHTKLUB_808",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
