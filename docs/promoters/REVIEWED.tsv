@@ -20,8 +20,8 @@ Atoc Soundlab	atoc-soundlab	promoter	https://atocsoundlab.com/	ATOC Soundlab	ATO
 ATOK Berlin	atok-berlin	promoter	https://www.atokberlin.com/	ATOK Berlin	ATOK Berlin macht seit 2016 DIY-Booking für Newcomer- und Underground-Bands in Berlin und Deutschland, vor allem Metal, Hardcore und Punk. Die Shows laufen unter anderem im Kulturhaus Insel, Badehaus und Urban Spree.	ATOK Berlin has done DIY booking for newcomer and underground bands in Berlin and across Germany since 2016, mostly metal, hardcore and punk. Its shows run at Kulturhaus Insel, Badehaus and Urban Spree, among others.	6	site title: ATOK Booking & Events
 Atr Party Berlin	atr-party-berlin	party		Atr Party Berlin			1	Lido
 Audiolith	audiolith	promoter	https://audiolith.net/	Audiolith			3	label and booking
-Auf Die Gute Tour	auf-die-gute-tour	promoter	https://www.aufdiegutetour.de/	Auf die gute Tour			1	site lowercase
-Aufnahme + wiedergabe	aufnahme-wiedergabe	promoter	https://www.aufnahmeundwiedergabe.de/	aufnahme + wiedergabe	aufnahme + wiedergabe ist ein Berliner Label für Dark Wave, Post-Punk und Minimal Electro, gegründet 2011. Die Label-Konzerte laufen im Urban Spree.	aufnahme + wiedergabe is a Berlin label for dark wave, post-punk and minimal electro, founded in 2011. Its label shows run at Urban Spree.	7	label, one name
+Auf Die Gute Tour	auf-die-gute-tour	promoter	http://www.aufdiegutetour.de/	Auf die gute Tour			1	site lowercase; HTTPS serves a self-signed certificate, so http only (curl 2026-10-09, #2601)
+Aufnahme + wiedergabe	aufnahme-wiedergabe	promoter	http://www.aufnahmeundwiedergabe.de/	aufnahme + wiedergabe	aufnahme + wiedergabe ist ein Berliner Label für Dark Wave, Post-Punk und Minimal Electro, gegründet 2011. Die Label-Konzerte laufen im Urban Spree.	aufnahme + wiedergabe is a Berlin label for dark wave, post-punk and minimal electro, founded in 2011. Its label shows run at Urban Spree.	7	label, one name; HTTPS certificate does not name the domain, so http only (curl 2026-10-09, #2601)
 B-Come	b-come	unverified		B-Come			3	Frannz, Lido
 Bad Ideas	bad-ideas	unverified		Bad Ideas			1	Astra
 Badehaus	badehaus	venue	https://badehaus-berlin.com/	Badehaus			3	
@@ -32,10 +32,10 @@ Berlin En Salsa	berlin-en-salsa	party		Berlin En Salsa			1
 Berlin Folk Festival	berlin-folk-festival	promoter		Berlin Folk Festival			1	festival
 Berlin Pop Nights	berlin-pop-nights	party		Berlin Pop Nights			4	same organiser as Dancing With Myself (Eventbrite)
 Boese	boese-live	promoter	https://boese.live/	Boese Live			2	
-Boldt Berlin	boldt-berlin	promoter	https://www.ibb-booking.com/	Boldt Berlin			1	boldtberlin.de redirects to IBB Booking
+Boldt Berlin	boldt-berlin	promoter	none	Boldt Berlin			1	no site: boldtberlin.de and ibb-booking.com redirect to kante.live, Kante Booking (curl 2026-10-09, #2601)
 Book of Raw	book-of-raw	unverified		Book of Raw			1	Astra
 Bossa FM	bossa-fm	promoter	https://www.bossafm.com/	Bossa FM	Bossa FM ist eine Berliner Agentur für brasilianische Musik und Kultur in Europa, seit 2016 mit über 150 Veranstaltungen von Konzerten bis zu Festivals wie Psicotrópicos und LAPA. In Berlin laufen die Abende unter anderem im Badehaus, Gretchen und Lido.	Bossa FM is a Berlin agency for Brazilian music and culture in Europe, with more than 150 events since 2016, from concerts to festivals such as Psicotrópicos and LAPA. In Berlin its nights run at Badehaus, Gretchen and Lido, among others.	6	
-bricks	bricks	promoter	https://bricks-berlin.de/	BRICKS			2	
+bricks	bricks	promoter	none	BRICKS			2	no site: bricks-berlin.de is a housing project at the Schlachtensee, not this promoter (curl 2026-10-09, #2601)
 Brighter	brighter	promoter		Brighter			1	Brighter Agency, Schokoladen co-billing
 Bum	bum	junk		Bum			1	Badehaus; deleted by V026
 ByteFM	bytefm	media	https://www.byte.fm/	ByteFM	"ByteFM ist ein Internetradio aus Hamburg „für gute Musik"", werbefrei und getragen von seinen Hörer:innen. Der Sender präsentiert Konzerte, in Berlin vor allem im Columbia Theater."	"ByteFM is an internet radio station from Hamburg ""for good music"", ad-free and funded by its listeners. It presents concerts, in Berlin mostly at Columbia Theater."	6	
@@ -51,8 +51,8 @@ Concertbüro Zahlmann	concertburo-zahlmann	promoter	https://www.cbz.events/	Conc
 Contigo	contigo	unverified		Contigo			1	Cosmic Comedy
 Contra	contra	unverified		Contra			2	Columbia Theater
 Cornershop	cornershop	unverified		Cornershop			2	Cosmic Comedy
-Cosmic Comedy Berlin	cosmic-comedy-berlin	venue	https://www.cosmiccomedyclub.com/	Cosmic Comedy Berlin	Cosmic Comedy Berlin ist ein Comedy-Club für Stand-up auf Englisch. An mehreren Abenden pro Woche laufen Open Mics und Showcases, mit Pizza und Shots für das Publikum.	Cosmic Comedy Berlin is a comedy club for stand-up in English. Open mics and showcases run several nights a week, with pizza and shots for the crowd.	25	club own shows
-Cosmic Romance	cosmic-romance	promoter	https://cosmic-romance.com	Cosmic Romance			1	RA: https://ra.co/promoters/110970
+Cosmic Comedy Berlin	cosmic-comedy-berlin	venue	https://comedyclubberlin.com/	Cosmic Comedy Berlin	Cosmic Comedy Berlin ist ein Comedy-Club für Stand-up auf Englisch. An mehreren Abenden pro Woche laufen Open Mics und Showcases, mit Pizza und Shots für das Publikum.	Cosmic Comedy Berlin is a comedy club for stand-up in English. Open mics and showcases run several nights a week, with pizza and shots for the crowd.	25	club own shows; cosmiccomedyclub.com is parked; comedyclubberlin.com titles itself Cosmic Comedy Berlin (curl 2026-10-09, #2601)
+Cosmic Romance	cosmic-romance	promoter	none	Cosmic Romance			1	RA: https://ra.co/promoters/110970; no site: cosmic-romance.com redirects to www.cosmic-romance.com, which does not resolve (curl 2026-10-09, #2601)
 Crunch Tapes	crunch-tapes	promoter	https://www.crunchtapes.com/	Crunch Tapes			1	site writes CRUNCH TAPES
 Cyberfunk + Urban Spree	cyberfunk-urban-spree	party		Cyberfunk + Urban Spree			1	co-billing not split (+)
 d2mberlin	d2mberlin	promoter	https://d2mberlin.de/	d2mberlin			1	
@@ -94,7 +94,7 @@ Friendly Reminder	friendly-reminder	promoter	https://www.friendlyreminder.live/	
 Fritz	fritz	media	https://www.fritz.de/	Fritz			1	rbb radio
 Frontstage Magazine	frontstage-magazine	media	https://frontstage-magazine.de/	Frontstage Magazine			2	
 Full Contact Safari	full-contact-safari	unverified		Full Contact Safari			1	
-Fumie	fumie	unverified	https://www.fumie.de/	Fumie			1	site has no title
+Fumie	fumie	unverified	none	Fumie			1	no site: fumie.de is a parked page that redirects to /lander (curl 2026-10-09, #2601)
 Furiosa	furiosa	party		Furiosa			2	Lido
 Geisburg	geisburg	promoter		Geisburg			1	Geisburg Records, Schokoladen
 Girls Town Party	girls-town-party	party		Girls Town Party			1	
@@ -107,11 +107,11 @@ Heesen	heesen-konzerte	promoter	https://www.heesen-konzerte.de/	Heesen Konzerte	
 Helping Hands Allstars	helping-hands-allstars	artist		Helping Hands Allstars			1	
 Hockeypark Betriebs	hockeypark-betriebs	promoter		Hockeypark Betriebs			1	Hockeypark Betriebs GmbH, Mönchengladbach
 Hollywood Tramp	hollywood-tramp	party	https://www.hollywoodtramp.de/	Hollywood Tramp			1	
-Ibb	ibb-booking	promoter	https://www.ibb-booking.com/	IBB Booking			2	same site as Boldt Berlin
+Ibb	ibb-booking	promoter	none	IBB Booking			2	no site: ibb-booking.com redirects to kante.live, Kante Booking (curl 2026-10-09, #2601)
 Ilija Gabrilenko	ilija-gabrilenko	promoter		Ilija Gabrilenko			1	person, Urban Spree
 Impericon	impericon	promoter	https://www.impericon.com/	Impericon			1	
 Itd	itd-events	promoter		ITD Events			1	Hole 44 credits "ITD Events presents" (drag); no site found; the strip left "Itd" and V026 dropped it (#1361); V032 renames it
-Jb Freie	jb-freie-musik	promoter	https://www.jb-store.de/	JB Freie Musik			1	Joel Brandenstein's company (Ratingen); Huxleys credit read as Jb Freie until #307
+Jb Freie	jb-freie-musik	promoter	none	JB Freie Musik			1	Joel Brandenstein's company (Ratingen); Huxleys credit read as Jb Freie until #307; no site: jb-store.de does not resolve (curl 2026-10-09, #2601)
 Jm Audio	jm-audio-entertainment	promoter		JM Audio Entertainment			1	Huxleys credit read as Jm Audio until #307
 Join	join	unverified		Join			2	Max-Schmeling-Halle, rap
 Jungle World	jungle-world	media	https://jungle.world/	Jungle World			1	weekly
@@ -129,7 +129,7 @@ Kneipenabend	kneipenabend	junk		Kneipenabend			3	Schokoladen bar night; deleted 
 Kommune	kommune	unverified		Kommune			1	
 Kontramarka	kontramarka	promoter	https://www.kontramarka.de/	Kontramarka			1	Russian-language ticket agency
 Konzertbüro Schoneberg	konzertburo-schoneberg	promoter	https://www.schoneberg.de/	Konzertbüro Schoneberg	Das Konzertbüro Schoneberg veranstaltet Rock und Pop, Klassik, Kabarett und Comedy, mit Büros in Berlin, Hamburg, Köln, Frankfurt, München und Münster. In Berlin laufen die Shows unter anderem im Lido, Privatclub und Huxleys Neue Welt.	Konzertbüro Schoneberg promotes rock and pop, classical, cabaret and comedy, with offices in Berlin, Hamburg, Cologne, Frankfurt, Munich and Münster. In Berlin its shows run at Lido, Privatclub and Huxleys Neue Welt, among others.	18	
-Kulturalarm	kulturalarm	venue	https://kulturalarm.com/	kulturALARM	kulturALARM e.V. wurde 2008 gegründet, um Kunst, Nachwuchs und Musikkultur zu fördern, und betreibt seit 2010 das Kulturhaus Insel Berlin auf der Insel der Jugend in Treptow. Dort veranstaltet der Verein Konzerte und Festivals, darunter das Monkey Island Festival.	kulturALARM e.V. was founded in 2008 to support art, new talent and music culture, and has run Kulturhaus Insel Berlin on the Insel der Jugend in Treptow since 2010. It promotes concerts and festivals there, among them the Monkey Island Festival.	6	e.V. behind Kulturhaus Insel
+Kulturalarm	kulturalarm	venue	https://www.inselberlin.de/	kulturALARM	kulturALARM e.V. wurde 2008 gegründet, um Kunst, Nachwuchs und Musikkultur zu fördern, und betreibt seit 2010 das Kulturhaus Insel Berlin auf der Insel der Jugend in Treptow. Dort veranstaltet der Verein Konzerte und Festivals, darunter das Monkey Island Festival.	kulturALARM e.V. was founded in 2008 to support art, new talent and music culture, and has run Kulturhaus Insel Berlin on the Insel der Jugend in Treptow since 2010. It promotes concerts and festivals there, among them the Monkey Island Festival.	6	e.V. behind Kulturhaus Insel; kulturalarm.com fails TLS and over http redirects to inselberlin.de, the Kulturhaus Insel the association runs (curl 2026-10-09, #2601)
 Kulturnews	kulturnews	media	https://kulturnews.de/	kulturnews	kulturnews ist ein Kulturmagazin aus Hamburg mit täglichen Tipps zu Kino, Serien, Musik, Literatur, Kunst und Bühne. Es präsentiert Konzerte in Berlin, unter anderem in der Zitadelle, im Columbia Theater und im Frannz Club.	kulturnews is a culture magazine from Hamburg with daily tips on film, series, music, books, art and stage. It presents concerts in Berlin, at the Zitadelle, Columbia Theater and Frannz Club among others.	7	site lowercase
 Kunst&Krawall	kunst-krawall	promoter		Kunst&Krawall			1	Insel slam series
 Kuratorin Anika Meier	kuratorin-anika-meier	junk		Kuratorin Anika Meier			1	role + person; deleted by V026
@@ -150,7 +150,7 @@ Live Nation	live-nation	promoter	https://www.livenation.de/	Live Nation	Live Nat
 Local Advisor	local-advisor	unverified		Local Advisor			1	
 Loft Concerts	loft-concerts	promoter	https://loft.de/	Loft Concerts	Loft Concerts geht auf den Club „Loft“ zurück, den Monika Döring 1982 über dem Metropol am Nollendorfplatz gründete. Heute ist Loft eine Berliner Konzertagentur für Indie, Pop und Singer-Songwriter, mit Shows von der Kantine am Berghain bis zur Columbiahalle.	"Loft Concerts goes back to the ""Loft"", the club Monika Döring opened above the Metropol on Nollendorfplatz in 1982. Today Loft is a Berlin concert agency for indie, pop and singer-songwriters, with shows from Kantine am Berghain to the Columbiahalle."	68	
 Luv`n Musiq	luv-n-musiq	unverified		Luv`n Musiq			1	
-M-Art	m-art	promoter	https://www.m-art.de/	M-Art			1	site title Willkommen
+M-Art	m-art	promoter	none	M-Art			1	no site: m-art.de is a frame around a hosting parking page (curl 2026-10-09, #2601)
 Maelføy	maelfoy	artist		Maelføy			1	act
 Mailive	mailive	promoter		Mailive			1	Vanessa Mai
 malespace	malespace	party		malespace			1	
@@ -170,7 +170,7 @@ Milchsalon	milchsalon	promoter	https://milchsalon.de/	Milchsalon			1
 Miller-Zillmer Foundation	miller-zillmer-foundation	sponsor		Miller-Zillmer Foundation			3	site not found
 Mind Enterprises	mind-enterprises	promoter		Mind Enterprises			1	wrestling
 Morabeza	morabeza	party		Morabeza			1	
-More Zvukov	more-zvukov	promoter	https://morezvukov.nl	More Zvukov			1	RA lists it as More Zvukov Agency
+More Zvukov	more-zvukov	promoter	none	More Zvukov			1	RA lists it as More Zvukov Agency; no site: morezvukov.nl fails TLS and answers 500 Database Error over http (curl 2026-10-09, #2601)
 Mup	mup	junk		Mup			1	deleted by V026
 MusikBlog	musikblog	media	https://www.musikblog.de/	MusikBlog	MusikBlog ist ein Online-Magazin für neue Musik, Konzerttermine und Newcomer, mit Alben, Videos, Interviews und Ticketverlosungen. Es präsentiert Konzerte in Berlin, unter anderem im Columbia Theater, Bi Nuu und Frannz Club.	MusikBlog is an online magazine for new music, concert dates and newcomers, with albums, videos, interviews and ticket giveaways. It presents concerts in Berlin, at Columbia Theater, Bi Nuu and Frannz Club among others.	6	
 Musikexpress	musikexpress	media	https://www.musikexpress.de/	Musikexpress			1	
@@ -280,7 +280,7 @@ Volkssolidarität Berlin	volkssolidaritat-berlin	sponsor	https://www.volkssolida
 WallCityMusic	wallcitymusic	promoter		WallCityMusic			1	
 We Artists	we-artists	promoter	https://www.weartists.de/	We Artists			1	We Artists GmbH, Booking & Management; the venue writes it so
 Welterforscher Film und so weiter	welterforscher-film-und-so-weiter	promoter		Welterforscher Film und so weiter			1	
-Whiskeyrap	whiskeyrap	party	https://www.whiskeyrap.de/	Whiskeyrap			1	
+Whiskeyrap	whiskeyrap	party	https://whiskeyrap.de/	Whiskeyrap			1	www.whiskeyrap.de fails TLS; whiskeyrap.de serves the Whiskeyrap shop and tour page (curl 2026-10-09, #2601)
 Wisborg	wisborg	artist		Wisborg			1	band
 You've Got The Love	you-ve-got-the-love	party		You've Got The Love			1	
 Zart	z-art-agency	promoter	https://zart-agency.com/	Z|ART Agency			2	

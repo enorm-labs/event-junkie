@@ -16,6 +16,9 @@ image fields back unchanged. German is the description and English the alternate
 German is the site's authoritative language (ADR-013); a row with one language and not the
 other stores that one as the description.
 
+An empty `website` keeps the stored link. `none` means the promoter has no site, and clears the
+link: the PUT sends `websiteUrl: null` (#2601). Replacing or clearing a link needs `--force`.
+
 Every row in the table is a review, so every row the target holds under a matching name gets
 `reviewed_at` stamped with the time of the run, whether or not another field changes (#1336).
 A row already stamped and otherwise unchanged is left alone; `--restamp` moves the date on all.
@@ -38,6 +41,7 @@ import urllib.error
 import urllib.request
 
 REVIEWED = "docs/promoters/REVIEWED.tsv"
+NO_WEBSITE = "none"
 LOCAL_HOST = "http://localhost:18081"
 PAGE_SIZE = 100
 MAX_PAGES = 100
@@ -98,7 +102,9 @@ def changes(promoter, row, stamp, restamp=False):
     """The fields the row would change on [promoter], as {field: (current, wanted)}."""
     wanted = dict(described(promoter_as_row(promoter)))
     wanted.update(described(row))
-    if row["website"]:
+    if row["website"] == NO_WEBSITE:
+        wanted["websiteUrl"] = None
+    elif row["website"]:
         wanted["websiteUrl"] = row["website"]
     changed = {field: (promoter.get(field), value) for field, value in wanted.items() if promoter.get(field) != value}
     if changed or restamp or not promoter.get("reviewedAt"):
@@ -130,7 +136,9 @@ def main():
         print(f"no row in {REVIEWED}" + (f" for {args.promoter!r}" if args.promoter else ""))
         return 1
     described_rows = sum(1 for r in rows if r["description_de"] or r["description_en"])
-    print(f"{len(rows)} reviewed, {sum(1 for r in rows if r['website'])} with a website, {described_rows} described\n")
+    with_site = sum(1 for r in rows if r["website"] and r["website"] != NO_WEBSITE)
+    without_site = sum(1 for r in rows if r["website"] == NO_WEBSITE)
+    print(f"{len(rows)} reviewed, {with_site} with a website, {without_site} with none, {described_rows} described\n")
 
     try:
         promoters = fetch_promoters(args.host)
