@@ -84,7 +84,8 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
      * **A success is aged by `last_seen_at`, the last time the host was asked, not by `fetched_at`.**
      * A `304` moves only the former, so aging by the download left the oldest 200 rows due on every
      * pass, five minutes apart, and the rows behind them never came up (#2785). The success branch
-     * also skips a failed row, which waits out the retry cooldown even if it once downloaded.
+     * also skips a failed row, which waits out the retry cooldown even if it once downloaded. A `304`
+     * on that retry clears `failed_at`, or the retry branch would select the row on every pass (#2962).
      */
     @Query(
         """
