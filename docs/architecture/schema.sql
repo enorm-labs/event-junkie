@@ -734,6 +734,21 @@ ALTER TABLE events.venue ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: venue_site_check; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.venue_site_check (
+    venue_id bigint NOT NULL,
+    checked_at timestamp with time zone NOT NULL,
+    url text,
+    outcome text NOT NULL,
+    http_status integer,
+    consecutive_failures integer DEFAULT 0 NOT NULL,
+    failing_since timestamp with time zone,
+    CONSTRAINT venue_site_check_outcome CHECK ((outcome = ANY (ARRAY['OK'::text, 'HTTP'::text, 'DNS'::text, 'TLS'::text, 'TIMEOUT'::text, 'CONNECTION'::text, 'OTHER'::text, 'SKIPPED'::text])))
+);
+
+--
 -- Name: artist artist_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -956,6 +971,13 @@ ALTER TABLE ONLY events.venue_character_tag
 
 ALTER TABLE ONLY events.venue
     ADD CONSTRAINT venue_pkey PRIMARY KEY (id);
+
+--
+-- Name: venue_site_check venue_site_check_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.venue_site_check
+    ADD CONSTRAINT venue_site_check_pkey PRIMARY KEY (venue_id);
 
 --
 -- Name: venue venue_slug_key; Type: CONSTRAINT; Schema: events; Owner: -
@@ -1341,3 +1363,10 @@ ALTER TABLE ONLY events.import_run_field_stats
 
 ALTER TABLE ONLY events.venue_character_tag
     ADD CONSTRAINT venue_character_tag_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;
+
+--
+-- Name: venue_site_check venue_site_check_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.venue_site_check
+    ADD CONSTRAINT venue_site_check_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;

@@ -271,7 +271,7 @@ overwrites them.
 **A venue without an `event_source` row is one we know but do not import (#2766).** No column says so: the BFF derives
 `imported` from the source rows, so the state changes when an importer lands. Such a venue has no events. Its page links
 to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
-venue's facts. An import never sets it. The check for closed venues in #2812 reads it.
+venue's facts. An import never sets it. The site check in `venue_site_check` reads it.
 
 **A venue that closes for good keeps its row (ADR-046).** A person sets `closed_on`, the last day the venue is open,
 through the admin API or a data migration. From the day after, the BFF venue list leaves the venue out unless the request
@@ -309,6 +309,32 @@ source URL. **A tag goes on a venue only where the venue's own page states it.**
 not a source. A venue with an unclear page stays untagged. The admin API sets and removes tags under
 `/api/admin/venues/{id}/character-tags`. `scripts/venue-character-tags.py` writes the reviewed rows from
 `docs/venue-character-tags/PROPOSED.tsv`. There is no `open-air` tag, because the `open-air` venue type covers it.
+
+### venue_site_check (Side Table)
+
+The last monthly check of a venue without an importer (#2812). One row per venue, overwritten by each pass.
+
+| Field                  | Type          | Nullable | Description                                                             | Example                    |
+| ---------------------- | ------------- | -------- | ----------------------------------------------------------------------- | -------------------------- |
+| `venue_id`             | `BIGINT` FK   | No       | References `venue.id`. Deleting the venue deletes its row               | `42`                       |
+| `checked_at`           | `TIMESTAMPTZ` | No       | When the last pass checked the venue                                    |                            |
+| `url`                  | `TEXT`        | Yes      | The URL that decided the outcome: the first failure, else the first OK  | `https://funkloch.berlin/` |
+| `outcome`              | `TEXT`        | No       | `OK`, `HTTP`, `DNS`, `TLS`, `TIMEOUT`, `CONNECTION`, `OTHER`, `SKIPPED` | `DNS`                      |
+| `http_status`          | `INTEGER`     | Yes      | The status of an `HTTP` outcome, or the 403 or 429 of a `SKIPPED` one   | `404`                      |
+| `consecutive_failures` | `INTEGER`     | No       | Passes in a row that failed. `OK` resets it, `SKIPPED` leaves it        | `3`                        |
+| `failing_since`        | `TIMESTAMPTZ` | Yes      | When the current run of failures began. Null while the site answers     |                            |
+
+`VenueSiteCheckService` runs on the 1st of each month. It probes `website_url` and `programme_url` of every venue that
+has no `event_source` and no `closed_on`. It uses the scraper's client, so `robots.txt` and the per-host throttle apply.
+It never contacts Resident Advisor, Facebook, Instagram or Eventbrite: their terms forbid automated access (#356). Such a
+link, a `robots.txt` disallow, or a 403 or 429 is `SKIPPED`. A skip is not a failure: it neither adds to nor ends the
+run of failures. A 403 or 429 is bot protection or a rate limit refusing the client, not a dead site. The summary log
+line counts these refusals apart from the other skips. Any other 4xx or 5xx, and a DNS, TLS, connection or timeout
+fault, is a failure. Any URL that fails makes the venue fail.
+
+**A dead site is not a closed venue.** Three failures in a row log a `WARN` and put the venue on
+`GET /api/admin/venues/needs-review`. A `reviewed_at` later than `failing_since` takes it off the list. The pass writes
+neither `closed_on` nor `reviewed_at`: a person sets both. `POST /api/admin/venues/site-check` runs one pass now.
 
 ### Event
 
