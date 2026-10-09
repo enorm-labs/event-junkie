@@ -29,6 +29,8 @@ export interface EventSearchParams {
   free?: boolean
   /** Any of these slots (`TIMES_OF_DAY`); sent as a repeated parameter. */
   timeOfDay?: string[]
+  /** Any of these spoken-language codes; sent as a repeated parameter. An unknown language drops out. */
+  language?: string[]
   page?: number
   size?: number
   sort?: string[]
@@ -60,6 +62,7 @@ export type EventFilterValues = Pick<
   | 'excludeSoldOut'
   | 'free'
   | 'timeOfDay'
+  | 'language'
 >
 
 /** Today's events for the Home "Tonight" section. */

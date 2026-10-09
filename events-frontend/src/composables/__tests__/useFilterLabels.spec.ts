@@ -64,6 +64,10 @@ describe('filterLabels', () => {
     ])
   })
 
+  it('names the spoken language after the type', () => {
+    expect(labels()({ eventType: ['COMEDY'], language: ['en'] })).toEqual(['Comedy', 'English'])
+  })
+
   it('leaves prices and sold-out out of the name', () => {
     expect(labels()({ minPrice: 5, maxPrice: 20, excludeSoldOut: true })).toEqual([])
   })

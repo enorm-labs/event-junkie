@@ -18,6 +18,7 @@ import { shareFilterLists } from '@/composables/useFilterLists'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { useSearchDraft } from '@/composables/useSearchDraft'
 import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
+import { languageFilterApplies } from '@/lib/spokenLanguages'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
 
@@ -80,6 +81,7 @@ const moreCount = computed(
     [
       queryList('timeOfDay').length,
       queryList('eventType').length,
+      languageFilterApplies(queryList('eventType')) && queryList('language').length,
       queryList('family').length || queryString('genre'),
       queryString('venue'),
       queryList('district').length,
@@ -118,6 +120,14 @@ const moreLabel = computed(() => {
     : ['events.filters.more', 'events.filters.moreCount']
   return moreCount.value ? t(counted, { n: moreCount.value }) : t(plain)
 })
+
+/**
+ * The language filter leaves out every event whose listing does not name its language, so while it
+ * narrows the list a line says so outside the closed menu (#2524). Hidden with the control.
+ */
+const languageNarrows = computed(
+  () => languageFilterApplies(queryList('eventType')) && queryList('language').length > 0,
+)
 
 const showResults = computed(() =>
   props.resultCount === undefined
@@ -222,5 +232,10 @@ onMounted(() => {
         </div>
       </SheetContent>
     </Sheet>
+
+    <!-- Last in the bar, next to the results it narrows; it stays while the menu is closed. -->
+    <p v-if="languageNarrows" class="w-full text-body text-muted-foreground">
+      {{ t('events.filters.languageNarrows') }}
+    </p>
   </div>
 </template>

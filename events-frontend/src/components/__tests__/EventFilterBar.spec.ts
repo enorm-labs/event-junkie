@@ -12,6 +12,7 @@ vi.mock('@/api/client', async (importOriginal) => ({
 const { default: EventFilterBar } = await import('@/components/EventFilterBar.vue')
 const { default: MultiSelectFilter } = await import('@/components/MultiSelectFilter.vue')
 const { tonight } = await import('@/lib/dateRanges')
+const { i18n } = await import('@/i18n')
 
 const Page = defineComponent({ render: () => h('p') })
 
@@ -146,6 +147,112 @@ describe('EventFilterBar time of night', () => {
     timeFilter().vm.$emit('change', ['evening', 'late'])
     await flushPromises()
     expect(router.currentRoute.value.query.timeOfDay).toEqual(['evening', 'late'])
+  })
+})
+
+describe('EventFilterBar spoken language', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  function filter(label: string) {
+    return wrapper!
+      .findAllComponents(MultiSelectFilter)
+      .find((candidate) => candidate.props('label') === label)
+  }
+
+  const languageFilter = () => filter('Filter by spoken language')
+
+  it('is not offered for concerts, nor without a type', async () => {
+    await mountAt('/events?eventType=CONCERT')
+    expect(languageFilter()).toBeUndefined()
+    wrapper!.unmount()
+
+    await mountAt('/events')
+    expect(languageFilter()).toBeUndefined()
+    wrapper!.unmount()
+
+    await mountAt('/events?eventType=COMEDY&eventType=PARTY')
+    expect(languageFilter()).toBeUndefined()
+  })
+
+  it('is offered for comedy, reads the URL and says what drops out', async () => {
+    await mountAt('/events?eventType=COMEDY&language=en')
+    expect(languageFilter()!.props('selected')).toEqual(['en'])
+    expect(languageFilter()!.props('options')).toEqual([
+      { value: 'en', label: 'English' },
+      { value: 'de', label: 'German' },
+    ])
+    expect(languageFilter()!.props('hint')).toBe(
+      'Only events whose listing names the language. Events that do not say are left out.',
+    )
+    expect(button('More filters (2)').attributes('aria-expanded')).toBe('true')
+  })
+
+  it('writes the chosen languages to the URL', async () => {
+    await mountAt('/events?eventType=COMEDY')
+    languageFilter()!.vm.$emit('change', ['en', 'de'])
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ eventType: 'COMEDY', language: ['en', 'de'] })
+  })
+
+  it('drops the language when the type filter leaves the types that carry one', async () => {
+    await mountAt('/events?eventType=COMEDY&language=en')
+    filter('Filter by event type')!.vm.$emit('change', ['COMEDY', 'CONCERT'])
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ eventType: ['COMEDY', 'CONCERT'] })
+    expect(languageFilter()).toBeUndefined()
+  })
+
+  it('keeps the language when the types still carry one', async () => {
+    await mountAt('/events?eventType=COMEDY&language=en')
+    filter('Filter by event type')!.vm.$emit('change', ['READING', 'COMEDY'])
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({
+      eventType: ['READING', 'COMEDY'],
+      language: ['en'],
+    })
+  })
+})
+
+describe('EventFilterBar language note', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    i18n.global.locale.value = 'en'
+  })
+
+  const EN =
+    'Only events whose listing names the language are shown; those that do not say are left out.'
+  const DE =
+    'Es erscheinen nur Events, deren Ankündigung die Sprache nennt; Events ohne Angabe fallen weg.'
+
+  it('says what drops out while the language filter is set', async () => {
+    await mountAt('/events?eventType=COMEDY&language=en')
+    expect(wrapper!.text()).toContain(EN)
+  })
+
+  it('says it in German', async () => {
+    i18n.global.locale.value = 'de'
+    await mountAt('/events?eventType=COMEDY&language=en')
+    expect(wrapper!.text()).toContain(DE)
+  })
+
+  it('is gone without a language, and when the type filter hides the control', async () => {
+    await mountAt('/events?eventType=COMEDY')
+    expect(wrapper!.text()).not.toContain(EN)
+    wrapper!.unmount()
+
+    await mountAt('/events?eventType=CONCERT&language=en')
+    expect(wrapper!.text()).not.toContain(EN)
+  })
+
+  it('goes when the language is cleared', async () => {
+    await mountAt('/events?eventType=COMEDY&language=en')
+    await router.push('/events?eventType=COMEDY')
+    await flushPromises()
+    expect(wrapper!.text()).not.toContain(EN)
   })
 })
 

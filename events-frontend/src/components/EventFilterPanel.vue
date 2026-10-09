@@ -13,6 +13,7 @@ import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { activeFamilies as familiesShown, useFilterLists } from '@/composables/useFilterLists'
 import { useFilterOptions } from '@/composables/useFilterOptions'
+import { languageFilterApplies } from '@/lib/spokenLanguages'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -33,7 +34,22 @@ const {
   districtOptions,
   venueTypeOptions,
   timeOfDayOptions,
+  languageOptions,
 } = useFilterOptions()
+
+/**
+ * The language filter, offered only when the type filter selects only comedy, readings, quizzes or
+ * shows: the listings of other types never say (#2524). A type change that leaves those drops the
+ * language, so no hidden filter narrows the list.
+ */
+const languageShown = computed(() => languageFilterApplies(queryList('eventType')))
+
+function applyEventTypes(types: string[]) {
+  applyFilters({
+    eventType: types,
+    language: languageFilterApplies(types) ? queryList('language') : [],
+  })
+}
 
 const activeFamilies = computed(() =>
   familiesShown(queryList('family'), queryString('genre'), genres.data.value ?? []),
@@ -105,7 +121,20 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         :label="t('events.filters.byType')"
         :options="typeOptions"
         :selected="queryList('eventType')"
-        @change="applyFilters({ eventType: $event })"
+        @change="applyEventTypes"
+      />
+
+      <MultiSelectFilter
+        v-if="languageShown"
+        :all-label="t('events.filters.allLanguages')"
+        :class="SELECT_CLASS"
+        :clear-label="t('events.filters.clearLanguages')"
+        :count-label="(n) => t('events.filters.languagesSelected', { n })"
+        :hint="t('events.filters.languageHint')"
+        :label="t('events.filters.byLanguage')"
+        :options="languageOptions"
+        :selected="queryList('language')"
+        @change="applyFilters({ language: $event })"
       />
 
       <!--

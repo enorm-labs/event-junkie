@@ -37,6 +37,18 @@ describe('useEventFilters', () => {
     expect(filters.value.family).toEqual(['electronic', 'hip-hop'])
   })
 
+  it('sends the language only while the type filter selects only types that carry one', () => {
+    const { filters } = useEventFilters()
+    route.query = { language: 'en' }
+    expect(filters.value.language).toBeUndefined()
+
+    route.query = { eventType: ['COMEDY', 'CONCERT'], language: 'en' }
+    expect(filters.value.language).toBeUndefined()
+
+    route.query = { eventType: ['COMEDY', 'READING'], language: ['en', 'de'] }
+    expect(filters.value.language).toEqual(['en', 'de'])
+  })
+
   it('reads one venue type or a repeated one as a list', () => {
     const { filters } = useEventFilters()
     expect(filters.value.venueType).toBeUndefined()

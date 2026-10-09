@@ -2037,6 +2037,8 @@ export interface operations {
                 free?: boolean;
                 /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
+                /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
+                language?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -2169,6 +2171,8 @@ export interface operations {
                 free?: boolean;
                 /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
+                /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
+                language?: string[];
             };
             header?: never;
             path?: never;
@@ -2222,6 +2226,8 @@ export interface operations {
                 free?: boolean;
                 /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
+                /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
+                language?: string[];
             };
             header?: never;
             path?: never;
@@ -2281,6 +2287,8 @@ export interface operations {
                 free?: boolean;
                 /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
+                /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
+                language?: string[];
             };
             header?: never;
             path?: never;
