@@ -2,6 +2,7 @@ package de.norm.events.image
 
 import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
+import org.springframework.data.r2dbc.repository.Modifying
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
@@ -230,6 +231,11 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         """
     )
     suspend fun countNeedingDerivatives(expectedVariants: Int): Long
+
+    /** Here rather than on the variant repository, so the fetcher needs no seventh dependency. */
+    @Modifying
+    @Query("DELETE FROM $EVENTS_SCHEMA.cached_image_variant WHERE cached_image_id = :cachedImageId")
+    suspend fun deleteVariants(cachedImageId: Long): Long
 }
 
 /**
