@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { enableAutoUnmount, mount, type VueWrapper } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import { setI18nLocale } from '@/i18n'
 import AppFooter from '@/components/AppFooter.vue'
 import { CONTROLLER } from '@/lib/legal'
 import { REPOSITORY_URL } from '@/lib/links'
@@ -9,6 +12,9 @@ import { REPOSITORY_URL } from '@/lib/links'
 const stubs = {
   RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] },
 }
+
+// The week tests switch the locale, which re-renders every footer still mounted.
+enableAutoUnmount(afterEach)
 
 const mount_ = () => mount(AppFooter, { global: { stubs } })
 
@@ -92,5 +98,33 @@ describe('AppFooter', () => {
       return name
     })
     expect(names).toEqual(['Project', 'Legal', 'Language'])
+  })
+})
+
+describe('AppFooter week link', () => {
+  // A real router, so the link takes its locale from the URL as it does on the site.
+  async function mountAt(locale: 'en' | 'de') {
+    const Page = defineComponent({ render: () => h('p') })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:locale(en|de)/:rest(.*)*', component: Page }],
+    })
+    await router.push(`/${locale}`)
+    setI18nLocale(locale)
+    return mount(AppFooter, { global: { plugins: [router] } })
+  }
+
+  afterEach(() => setI18nLocale('en'))
+
+  it.each([
+    ['en', 'This week in Berlin'],
+    ['de', 'Diese Woche in Berlin'],
+  ] as const)('links this week in %s beside the feed', async (locale, label) => {
+    const wrapper = await mountAt(locale)
+    const week = wrapper.get(`a[href="/${locale}/week"]`)
+    expect(week.text()).toBe(label)
+    expect(week.get('svg').attributes('aria-hidden')).toBe('true')
+    // Same row as the feed link, so the two read as the visitor-facing pair.
+    expect(week.element.parentElement?.querySelector('a[type]')).not.toBeNull()
   })
 })

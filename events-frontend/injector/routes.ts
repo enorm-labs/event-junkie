@@ -1,8 +1,11 @@
 // Explicit `.ts` on every import here: the injector is type-checked under `tsconfig.node.json`
 // and bundled by `vite.injector.config.ts`, both following Node's ESM resolver (vite.config.ts).
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
-import { CALENDAR_PATH, FEED_PATH, INDEXABLE_PATHS } from '../src/lib/seo.ts'
+import { todayIso } from '../src/lib/format.ts'
+import { type IsoWeek, isoWeekOf, parseIsoWeek } from '../src/lib/isoWeek.ts'
+import { CALENDAR_PATH, FEED_PATH, INDEXABLE_PATHS, WEEKS_SITEMAP } from '../src/lib/seo.ts'
 import type { StaticPath } from '../src/lib/staticPages.ts'
+import { weekPath } from '../src/lib/weekPage.ts'
 
 /**
  * Which of the four data-driven route families a request is for: the slug to ask the BFF about,
@@ -68,6 +71,45 @@ export function matchStaticRoute(url: string): StaticRoute | null {
 
   const [, locale, path = ''] = match as unknown as [string, Locale, string | undefined]
   return isStaticPath(path) ? { locale, path } : null
+}
+
+export interface WeekRoute {
+  locale: Locale
+  week: IsoWeek
+  /** Locale-relative, `/week/2026-41`. */
+  path: string
+}
+
+const WEEK = new RegExp(`^/(${LOCALES.join('|')})/week/(\\d{4}-\\d{2})/?$`)
+const THIS_WEEK = new RegExp(`^/(${LOCALES.join('|')})/week/?$`)
+
+/** Parses a week page's URL (#2728). A week the year does not have, `2026-60`, is `null`. */
+export function matchWeekRoute(url: string): WeekRoute | null {
+  const pathname = url.split('#')[0]?.split('?')[0] ?? ''
+  const match = WEEK.exec(pathname)
+  const week = parseIsoWeek(match?.[2])
+  if (!match || !week) return null
+  return { locale: match[1] as Locale, week, path: weekPath(week) }
+}
+
+/** The locale of a `/week` request, which is redirected to this week's page, or `null`. */
+export function matchThisWeek(url: string): Locale | null {
+  const pathname = url.split('#')[0]?.split('?')[0] ?? ''
+  return (THIS_WEEK.exec(pathname)?.[1] as Locale | undefined) ?? null
+}
+
+/**
+ * Where `/week` redirects: this week's page. The prefix is a constant picked by the locale, so
+ * nothing from the request reaches the `location` header.
+ */
+export function thisWeekLocation(locale: Locale, today = todayIso()): string {
+  const prefix = locale === 'de' ? '/de' : '/en'
+  return `${prefix}${weekPath(isoWeekOf(today))}`
+}
+
+/** Whether the request is for the weeks sitemap, which the injector writes itself. */
+export function matchWeeksSitemap(url: string): boolean {
+  return (url.split('#')[0]?.split('?')[0] ?? '') === WEEKS_SITEMAP
 }
 
 const SITEMAP = new RegExp(`^/sitemap-(${ENTITY_KINDS.join('|')})\\.xml$`)

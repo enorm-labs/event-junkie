@@ -17,6 +17,7 @@ import search from './search.json'
 import venueCharacter from './venueCharacter.json'
 import venueType from './venueType.json'
 import venues from './venues.json'
+import week from './week.json'
 
 /**
  * The English catalogue, assembled from one file per feature.
@@ -50,4 +51,5 @@ export default {
   venueCharacter,
   venueType,
   venues,
+  week,
 }

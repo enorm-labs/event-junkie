@@ -12,8 +12,14 @@ import {
   matchFeed,
   matchSitemap,
   matchStaticRoute,
+  matchThisWeek,
+  matchWeekRoute,
+  matchWeeksSitemap,
+  thisWeekLocation,
 } from './routes.ts'
+import { urlsetXml } from '../src/lib/seo.ts'
 import { staticPathMeta } from '../src/lib/staticPages.ts'
+import { upcomingWeekPaths, weekPageMeta } from '../src/lib/weekPage.ts'
 
 /**
  * The meta-injection sidecar, ADR-014 §Decision 3's transport. nginx proxies the four detail
@@ -23,8 +29,8 @@ import { staticPathMeta } from '../src/lib/staticPages.ts'
  * shell, with the 404 kept and the 502 turned into 200, so every branch that is not the happy
  * path ends in `fail()`. It also forwards the detail sitemaps from the BFF, which nginx serves at
  * the root (#367), and the RSS feed (#368) and the calendar subscription (#2719) with their filter
- * query. Nothing about the visitor reaches
- * the BFF but that query, and nothing is logged per request. Two
+ * query. The week pages (#2728) and their sitemap need no BFF, and `/week` is redirected here.
+ * Nothing about the visitor reaches the BFF but that query, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
  * a busy group is fetched by every scraper at once.
  */
@@ -221,6 +227,17 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     return
   }
 
+  // The weeks sitemap needs no BFF: its five weeks follow from the date (#2728).
+  if (matchWeeksSitemap(url)) {
+    response
+      .writeHead(200, {
+        'content-type': 'application/xml; charset=utf-8',
+        'cache-control': 'public, max-age=3600',
+      })
+      .end(urlsetXml(upcomingWeekPaths()))
+    return
+  }
+
   for (const [polled, query] of [
     [FEED, matchFeed(url)],
     [CALENDAR, matchCalendar(url)],
@@ -230,6 +247,33 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       await proxyPolled(polled, query, request, response)
     } catch (error) {
       fail(response, 502, `${polled.name}: ${(error as Error).message}`)
+    }
+    return
+  }
+
+  // `/week` is this week's page, which changes every Monday, so the redirect is not cached.
+  const thisWeek = matchThisWeek(url)
+  if (thisWeek) {
+    response
+      .writeHead(302, {
+        location: thisWeekLocation(thisWeek),
+        'cache-control': 'no-store',
+      })
+      .end()
+    return
+  }
+
+  // A week page's head is the catalogue's, with the week's number and dates.
+  const weekPage = matchWeekRoute(url)
+  if (weekPage) {
+    try {
+      const meta = weekPageMeta(weekPage.week, weekPage.locale)
+      send(
+        response,
+        rewriteHead(await loadShell(), { meta, locale: weekPage.locale, path: weekPage.path }),
+      )
+    } catch (error) {
+      fail(response, 502, `${weekPage.locale}${weekPage.path}: ${(error as Error).message}`)
     }
     return
   }

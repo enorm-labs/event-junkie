@@ -48,6 +48,8 @@ lists what that includes and what it excludes.
 - Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.
 - Sort the events list by date, or by **newest added** to see the events we found most recently.
 - Plan a month ahead in the **calendar**.
+- Share or bookmark **a week** at `/week/2026-41`: each day's first 12 events, then a link to the rest.
+  **This week in Berlin** on the home page and in the footer opens the current week.
 - Find what is **near you** on the map. Pick a position, a 1, 2 or 5 km radius, and get the venues inside it,
   nearest first. The position stays in the browser.
 
@@ -95,6 +97,8 @@ the first column. It fails in two cases:
 | `/events`                          | The events list and its filter bar                                          |
 | `/events/:slug`                    | Event page: When block, line-up, set times, share, calendar, related events |
 | `/calendar`                        | Month calendar with the same filters                                        |
+| `/week`                            | Redirects to this week's page; linked from the home page and the footer     |
+| `/week/:isoWeek`                   | One week day by day, up to 12 events a day, to share or bookmark            |
 | `/map`                             | Events map, near me and On now                                              |
 | `/venues`                          | Venues list and venues map, with character-tag filters                      |
 | `/venues/:slug`                    | Venue page                                                                  |

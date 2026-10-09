@@ -1,0 +1,9 @@
+{
+  "thisWeek": "Diese Woche",
+  "filter": "Diese Woche filtern",
+  "past": "Diese Woche ist vorbei. Das war los.",
+  "navigation": "Andere Wochen",
+  "allEvents": "Alle {count} Veranstaltungen",
+  "empty": "Für diesen Tag ist nichts eingetragen.",
+  "weekLink": "Woche {week}"
+}

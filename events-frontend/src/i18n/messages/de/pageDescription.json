@@ -9,5 +9,6 @@
   "imprint": "Angaben gemäß § 5 DDG, Kontaktdaten sowie die Haftungs- und Urheberrechtshinweise für diese Seite.",
   "privacy": "Welche Daten Event Junkie verarbeitet und wozu: keine Cookies, keine Analyse-Tools, kein Tracking, und deine Rechte nach der DSGVO.",
   "notices": "Die Open-Source-Komponenten, auf denen Event Junkie aufbaut, nach Lizenz gruppiert und aus dem Build erzeugt.",
-  "forVenues": "Wie Event Junkie die Veranstaltungsseite einer Location liest, welche Rücksicht es dabei nimmt und wie eine Location ihre Einträge wieder loswird."
+  "forVenues": "Wie Event Junkie die Veranstaltungsseite einer Location liest, welche Rücksicht es dabei nimmt und wie eine Location ihre Einträge wieder loswird.",
+  "week": "{range}: Konzerte, Clubnächte und mehr in Berlin, Tag für Tag."
 }

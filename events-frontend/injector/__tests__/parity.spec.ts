@@ -12,6 +12,7 @@ import { artistPageMeta, eventPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { siteDescription, staticPathMeta } from '@/lib/staticPages'
 import { updateSeoTags } from '@/lib/seoTags'
 import { eventPageJsonLd, type JsonLd, venuePageJsonLd } from '@/lib/structuredData'
+import { weekPageMeta } from '@/lib/weekPage'
 import { rewriteHead } from '../rewrite.ts'
 
 /**
@@ -144,6 +145,20 @@ describe('the injector and the client write the same head', () => {
     expect(headState()).toEqual(served)
     expect(served.lang).toBe(locale)
     expect(served.canonical).toBe(`https://event-junkie.de/${locale}${path}`)
+  })
+
+  it('for a week page in German, with its number and dates (#2728)', () => {
+    const meta = weekPageMeta({ year: 2026, week: 41 }, 'de')
+    serve(rewriteHead(shell, { meta, locale: 'de', path: '/week/2026-41' }))
+    const served = headState()
+
+    applyPageMeta(meta)
+    updateSeoTags('de', '/week/2026-41')
+
+    expect(headState()).toEqual(served)
+    expect(served.title).toBe('Woche 41 in Berlin · Event Junkie')
+    expect(served.description).toMatch(/^5\. ?– ?11\. Oktober 2026: Konzerte/)
+    expect(served.canonical).toBe('https://event-junkie.de/de/week/2026-41')
   })
 
   it('leaves the client a real site default to fall back to', () => {

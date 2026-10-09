@@ -41,8 +41,9 @@ export const INDEXABLE_PATHS = [
 /**
  * Static routes intentionally out of the sitemap; the drift guard records a deliberate exclusion
  * here instead of being weakened. `/search` is one page per query, and its route meta says noindex.
+ * `/week` redirects to this week's page, which the weeks sitemap lists ({@link WEEKS_SITEMAP}).
  */
-export const NON_INDEXABLE_PATHS: readonly string[] = ['/search']
+export const NON_INDEXABLE_PATHS: readonly string[] = ['/search', '/week']
 
 /**
  * Open Graph wants `language_TERRITORY` with an underscore, neither the UI locale (`en`) nor the
@@ -175,7 +176,13 @@ export const DETAIL_SITEMAPS = [
 export const PAGES_SITEMAP = '/sitemap-pages.xml'
 
 /**
- * `/sitemap.xml`, a sitemap index: the static pages' sitemap and the four detail ones. An index
+ * The week pages' sitemap (#2728): this week and the next four, which depend on the date, so the
+ * injector writes it per request rather than the build.
+ */
+export const WEEKS_SITEMAP = '/sitemap-weeks.xml'
+
+/**
+ * `/sitemap.xml`, a sitemap index: the static pages' sitemap, the weeks' and the four detail ones. An index
  * rather than one `Sitemap:` line each in `robots.txt`, so Search Console reports on every child
  * under the one URL it was given.
  */
@@ -183,7 +190,7 @@ export function sitemapIndexXml(): string {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...[PAGES_SITEMAP, ...DETAIL_SITEMAPS].map(
+    ...[PAGES_SITEMAP, WEEKS_SITEMAP, ...DETAIL_SITEMAPS].map(
       (path) => `  <sitemap>\n    <loc>${SITE_URL}${path}</loc>\n  </sitemap>`,
     ),
     '</sitemapindex>',
@@ -202,8 +209,13 @@ export function sitemapIndexXml(): string {
  * sitemap carries `lastmod`, from the moment the event's content changed (#2768).
  */
 export function sitemapXml(): string {
+  return urlsetXml(INDEXABLE_PATHS)
+}
+
+/** A sitemap of locale-relative `paths`, each with a `<url>` per locale and the full alternate set. */
+export function urlsetXml(paths: readonly string[]): string {
   const entries = LOCALES.flatMap((locale) =>
-    INDEXABLE_PATHS.map((path) => {
+    paths.map((path) => {
       const alternates = alternatesFor(path)
         .map(
           (alt) =>
@@ -296,6 +308,7 @@ export function llmsTxt(): string {
     '',
     link('Sitemap index', '/sitemap.xml', 'every page below, in both languages'),
     link('Pages', PAGES_SITEMAP, 'the static pages'),
+    link('Weeks', WEEKS_SITEMAP, 'this week and the next four, day by day'),
     ...DETAIL_SITEMAPS.map((path) => {
       const kind = path.slice('/sitemap-'.length, -'.xml'.length)
       return link(kind[0]!.toUpperCase() + kind.slice(1), path, 'one URL per page and language')
