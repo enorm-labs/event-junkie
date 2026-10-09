@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -183,7 +184,7 @@ class OhmOverviewPageScraperTest {
 
     // BRAINDANCE, 03/10, and NICE 2 BE NICE, 17/10, as printed (#2417).
     @Test
-    fun `splits a back-to-back billing and drops a bracketed set note`() {
+    fun `a back-to-back billing splits at the import boundary, and a bracketed set note is dropped`() {
         val html =
             """
             <ul class="event-list"><li class="event-item">
@@ -207,8 +208,8 @@ class OhmOverviewPageScraperTest {
 
         val (braindance, nice) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        braindance.artists.map { it.name to it.role } shouldBe listOf("Makam" to "DJ", "Tafkamp" to "DJ")
-        nice.artists.map { it.name to it.role } shouldBe
+        braindance.artists.flatMap { splitBackToBack(it) }.map { it.name to it.role } shouldBe listOf("Makam" to "DJ", "Tafkamp" to "DJ")
+        nice.artists.flatMap { splitBackToBack(it) }.map { it.name to it.role } shouldBe
             listOf(
                 "Asphalt DJ" to "DJ",
                 "Jesse G" to "DJ",

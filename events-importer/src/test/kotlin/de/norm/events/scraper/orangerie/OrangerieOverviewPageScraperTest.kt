@@ -2,6 +2,7 @@ package de.norm.events.scraper.orangerie
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -59,8 +60,13 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
-    fun `splits a b2b bill and keeps an act whose name has 'and'`() {
-        events.first { it.title.endsWith("Bomchello b2b Terje") }.artists.map { it.name } shouldContainExactly listOf("Bomchello", "Terje")
+    fun `a b2b bill splits at the import boundary, and an act whose name has 'and' stays whole`() {
+        events
+            .first { it.title.endsWith("Bomchello b2b Terje") }
+            .artists
+            .flatMap { splitBackToBack(it) }
+            .map { it.name } shouldContainExactly
+            listOf("Bomchello", "Terje")
         events.first { it.title.endsWith("juan and only") }.artists.map { it.name } shouldContainExactly listOf("juan and only")
     }
 

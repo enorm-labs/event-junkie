@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
@@ -567,9 +569,49 @@ class ArtistNameMappingTest {
     @Test
     fun `splitBackToBack splits a b2b slot and keeps a bracketed duo whole`() {
         splitBackToBack("Sicion b2b Iman Janes") shouldBe listOf("Sicion", "Iman Janes")
-        splitBackToBack("Emira B2B Ayham") shouldBe listOf("Emira", "Ayham")
         splitBackToBack("Double Penetration (FLOWWW b2b Joe Cleen)") shouldBe listOf("Double Penetration (FLOWWW b2b Joe Cleen)")
         splitBackToBack("Ab2bc") shouldBe listOf("Ab2bc")
+        splitBackToBack("b2b") shouldBe listOf("b2b")
+    }
+
+    // #2966: every joined act production stored on 2026-10-09.
+    @Test
+    fun `splitBackToBack splits every joined act production stored`() {
+        val joined =
+            mapOf(
+                "Jens Schwan b2b Simon Berlin" to listOf("Jens Schwan", "Simon Berlin"),
+                "DJ Doorkeeper b2b Extravaganza" to listOf("DJ Doorkeeper", "Extravaganza"),
+                "alllone  b2b Karakara (GreyNote, Impulse Basskultur, hng.picnics /D)" to listOf("alllone", "Karakara"),
+                "Allynx b2b Sean Steinfeger" to listOf("Allynx", "Sean Steinfeger"),
+                "Survey  b2b Phonomat (Invisible, Recycle/D)" to listOf("Survey", "Phonomat"),
+                "Slimzee  b2b Grandmixxer (Tower Block, Rinse, SLSA/UK)" to listOf("Slimzee", "Grandmixxer"),
+                "Dash B2B Lennart" to listOf("Dash", "Lennart"),
+                "Sibil B2B Tau Car" to listOf("Sibil", "Tau Car"),
+                "Franz Scala B2B Giulia Gutterer" to listOf("Franz Scala", "Giulia Gutterer"),
+                "Woody92 B2B Floid" to listOf("Woody92", "Floid"),
+                "Emira B2B Ayham" to listOf("Emira", "Ayham"),
+                "Vaccaro B2B The Camel" to listOf("Vaccaro", "The Camel"),
+                "Anaté b2b Shira Kela" to listOf("Anaté", "Shira Kela"),
+                "Artness B2B Buyooo" to listOf("Artness", "Buyooo")
+            )
+        assertSoftly {
+            joined.forEach { (line, acts) -> withClue(line) { splitBackToBack(line) shouldBe acts } }
+        }
+    }
+
+    @Test
+    fun `splitBackToBack drops a marker with no DJ on one side`() {
+        splitBackToBack("B2B Alina Matini") shouldBe listOf("Alina Matini")
+        splitBackToBack("Michael Lane b2b") shouldBe listOf("Michael Lane")
+        splitBackToBack("Michael Lane\u00A0b2b") shouldBe listOf("Michael Lane")
+    }
+
+    @Test
+    fun `splitBackToBack keeps a bracket that belongs to one DJ`() {
+        splitBackToBack("DJ TC (Blactro) b2b DJ Gus") shouldBe listOf("DJ TC (Blactro)", "DJ Gus")
+        splitBackToBack("Makam b2b V. (OPERA live)") shouldBe listOf("Makam", "V. (OPERA live)")
+        splitBackToBack("A b2b B b2b C") shouldBe listOf("A", "B", "C")
+        splitBackToBack("Ohm (b2b set)") shouldBe listOf("Ohm (b2b set)")
     }
 
     @Test

@@ -422,4 +422,33 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             eventArtistRepository.findByEventIdIn(listOf(eventId)).first().titleDerived shouldBe true
         }
     }
+
+    // #2966: the split is central, so a venue that never calls splitBackToBack still bills two DJs.
+    @Test
+    fun `a b2b slot becomes two acts with the slot's role, stage and place in the billing`() {
+        runBlocking {
+            val sourceId = "b2b:1"
+            val event = persistEvent(sourceId)
+            val eventId = requireNotNull(event.id)
+            val lineup =
+                listOf(
+                    ScrapedArtist(name = "Funk@delic", role = "DJ"),
+                    ScrapedArtist(name = "Jens Schwan b2b Simon Berlin", role = "LIVE", stage = "Garten"),
+                    ScrapedArtist(name = "Bluesky", role = "DJ")
+                )
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = lineup)))
+
+            val rows = eventArtistRepository.findByEventIdIn(listOf(eventId)).toList().sortedBy { it.billingOrder }
+            val names = artistRepository.findAllById(rows.map { it.artistId }).toList().associate { it.id to it.name }
+            rows.map { Triple(names[it.artistId], it.role, it.stage) } shouldBe
+                listOf(
+                    Triple("Funk@delic", "DJ", null),
+                    Triple("Jens Schwan", "LIVE", "Garten"),
+                    Triple("Simon Berlin", "LIVE", "Garten"),
+                    Triple("Bluesky", "DJ", null)
+                )
+            rows.map { it.billingOrder } shouldBe listOf(0, 1, 2, 3)
+        }
+    }
 }

@@ -890,21 +890,46 @@ fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUNCTION_SE
  */
 val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
+/** A `b2b` token anywhere in a line, a leading or trailing one included. Jsoup turns `&nbsp;` into U+00A0, so that pads it too. */
+private val B2B_TOKEN = Regex("""(?<![^\s ])b2b(?![^\s ])""", RegexOption.IGNORE_CASE)
+
+/** A bracket that ends the line and lists labels or an origin: `(GreyNote, hng.picnics /D)`, `(Recycle/D)`. */
+private val TRAILING_LABEL_BRACKET = Regex("""\s*\([^()]*[/,][^()]*\)\s*$""")
+
 /**
- * Splits a lineup line at [B2B_SEPARATOR], because back-to-back is never one act (#1759, #1844).
- * A line with a bracket stays whole: the brackets hold a duo's members, as in
- * `Double Penetration (FLOWWW b2b Joe Cleen)`.
+ * Splits a lineup line at each `b2b` outside a bracket, because back-to-back is never one act
+ * (#1759, #1844). A `b2b` inside a bracket names a duo's members and keeps the line whole
+ * (`Double Penetration (FLOWWW b2b Joe Cleen)`). A label bracket that ends a split line describes
+ * the pair, not its last DJ, so it comes off. A stray marker at either end (`B2B Alina Matini`) leaves one act.
  */
-fun splitBackToBack(line: String): List<String> =
-    if ('(' in line) {
-        listOf(line)
-    } else {
-        line
-            .split(B2B_SEPARATOR)
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .ifEmpty { listOf(line) }
+fun splitBackToBack(line: String): List<String> {
+    val outsideBrackets = maskBracketed(line)
+    val markers = B2B_TOKEN.findAll(outsideBrackets).map { it.range }.toList()
+    if (markers.isEmpty()) return listOf(line)
+    val bounds = listOf(-1) + markers.flatMap { listOf(it.first, it.last) } + line.length
+    return bounds
+        .chunked(2)
+        .map { (end, start) -> line.substring(end + 1, start) }
+        .mapIndexed { index, part -> if (index == markers.size) part.replace(TRAILING_LABEL_BRACKET, "") else part }
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .ifEmpty { listOf(line) }
+}
+
+/** [splitBackToBack] on one billing: each DJ of a `b2b` slot keeps the slot's role, stage and set times. */
+fun splitBackToBack(artist: ScrapedArtist): List<ScrapedArtist> = splitBackToBack(artist.name).map { artist.copy(name = it) }
+
+/** [line] with every character inside a round bracket replaced, so a match in it is outside any. */
+private fun maskBracketed(line: String): String {
+    var depth = 0
+    return buildString {
+        line.forEach { char ->
+            if (char == ')' && depth > 0) depth--
+            append(if (depth > 0) '_' else char)
+            if (char == '(') depth++
+        }
     }
+}
 
 /**
  * Splits a title segment into acts at a ` x ` join ([splitCrossBilled]) and then at its

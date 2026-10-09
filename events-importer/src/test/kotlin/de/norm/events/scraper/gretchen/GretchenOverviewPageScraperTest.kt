@@ -2,6 +2,7 @@ package de.norm.events.scraper.gretchen
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -158,7 +159,7 @@ class GretchenOverviewPageScraperTest {
         @Test
         fun `drops host and visuals credits and member lists, keeps the opening DJ`() {
             // Trailing lineup mixes "Hosted by …", a "(Bass)/(Keys)/(Drums)" member list, and "Opening DJ-Set by …".
-            eventWithId("3531").artists shouldContainExactly
+            eventWithId("3531").artists.flatMap { splitBackToBack(it) } shouldContainExactly
                 listOf(
                     ScrapedArtist("Peter Somuah", "HEADLINER"),
                     ScrapedArtist("Skyline Sun", "SUPPORT"),
@@ -295,7 +296,7 @@ class GretchenOverviewPageScraperTest {
 
         // Production stored `Allynx b2b Sean Steinfeger` and `Slimzee b2b Grandmixxer` as one act each (#1844).
         @Test
-        fun `splits a back-to-back slot into two acts`() {
+        fun `a back-to-back slot splits into two acts at the import boundary`() {
             val html =
                 """
                 <div class="gig">
@@ -311,7 +312,31 @@ class GretchenOverviewPageScraperTest {
 
             val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
-            event.artists.map { it.name } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
+            event.artists.flatMap { splitBackToBack(it.name) } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
+        }
+
+        // detail.php?id=3587: production stored `alllone b2b Karakara` as one act and `+ more` as an act called "more" (#2966).
+        // The scraper strips the label bracket; the import boundary splits the slot.
+        @Test
+        fun `a back-to-back slot behind a label bracket splits at the boundary, and a more-to-come line is dropped`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Sa. <strong>14.11.2026</strong><br> Doors: 23.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Drum &amp; Bass<h2><a href="detail.php?id=3587">Impulse Basskultur</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p><b>Impulse Basskultur</b>Pulp Kitchen   (Greynote/AT)<br />alllone  b2b Karakara (GreyNote, Impulse Basskultur, hng.picnics /D)<br />Slimzee  b2b Grandmixxer (Tower Block, Rinse, SLSA/UK)<br />Double Penetration (FLOWWW b2b Joe Cleen)<br /></p></span>
+                        <span class="box"></span><span class="lineup">+ more<br /><br /><em>*Vorverkauf 12 €/ 15 €/ 18 € zzgl. Gebühren * Abendkasse 20 €*</em></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.flatMap { splitBackToBack(it.name) } shouldContainExactly
+                listOf("Pulp Kitchen", "alllone", "Karakara", "Slimzee", "Grandmixxer", "Double Penetration")
         }
 
         // Production stored `Marthe X Pilani Bubu` as one act; `NOAH X PETTER` is the duo's own credit (#2365).

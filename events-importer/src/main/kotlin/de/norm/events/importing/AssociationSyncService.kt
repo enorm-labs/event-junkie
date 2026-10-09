@@ -30,6 +30,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isSlugless
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitBracketedGuest
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
@@ -269,7 +270,8 @@ class AssociationSyncService(
      * slugs to nothing has escaped [isNonArtistName], and would take the empty slug every later one
      * collides with (#1553). A headliner read off a title the boundary resolves to a festival is the
      * festival's name, not an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a
-     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]).
+     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]), then a
+     * `b2b` slot into its DJs ([splitBackToBack]), for every source.
      *
      * **A title-derived name the same event credits as its promoter is the series, not an act**
      * (#1772): Astra's secret-lineup night is titled `UNRELEASED BERLIN` and credits `Unreleased
@@ -295,6 +297,7 @@ class AssociationSyncService(
                 event.sourceId to
                     event.artists
                         .flatMap { artist -> splitGuest(artist) }
+                        .flatMap { artist -> splitBackToBack(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
                         .filterNot { refusal(it.name) != null || (it.titleDerived && festival) }
             }
@@ -777,6 +780,7 @@ class AssociationSyncService(
         val artists =
             event.artists
                 .flatMap(::splitGuest)
+                .flatMap { artist -> splitBackToBack(artist) }
                 .mapNotNull { artist -> refusal(stripArtistSuffix(artist.name))?.let { it to artist.name.trim() } }
         val promoters = heldBack.map { QualityFlagKind.HELD_BACK_PROMOTER_NAME to it.name.trim() }
         val genre = event.genre?.takeIf { event.genreRepeatsTitle() }?.let { QualityFlagKind.GENRE_EQUALS_TITLE to it.trim() }
