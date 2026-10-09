@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
@@ -22,6 +23,7 @@ import org.jsoup.nodes.Element
  * | Field       | Source                                                                     |
  * |-------------|----------------------------------------------------------------------------|
  * | date + time | the `YYYY-MM-DD_HHmm` stamp in the detail `href` (see [parseEventPath])     |
+ * | end time    | `.time`'s range end (`17.30 – 21 Uhr`), rolled past midnight by [endOn]     |
  * | run         | `.date`, when an exhibition's cell is a range (see [parseDateRange])        |
  * | category    | `.category` — "Konzerte", "Führungen", "Open-Air Kino", … or empty          |
  * | title       | `h3.media-heading a`, occasionally badged ("AUSGEBUCHT: …")                 |
@@ -30,10 +32,9 @@ import org.jsoup.nodes.Element
  * | ticket shop | `a.ticket` — an absolute bookingkit / Eventim / Ticketfritz link, when sold |
  * | detail page | the `href` to `detail/<stamp>/<slug>/`                                      |
  *
- * The stamp carries the date and the start, so `.time` is not parsed (`17.30 – 21 Uhr`). `.date`
- * is read for one case: an exhibition lists once, its cell is the whole run (`01.09.2026 -
- * 01.11.2026`), and its href stamps only the next open day. The row then spans the range under
- * the stamp-less [gaertenDerWeltRunId], so each day's import updates one row. A multi-night show
+ * `.date` is read for one case: an exhibition lists once, its cell is the whole run (`01.09.2026 -
+ * 01.11.2026`), and its href stamps only the next open day. The row then spans the range under the
+ * stamp-less [gaertenDerWeltRunId], so each day's import updates one row. A multi-night show
  * (`22.10.2026 - 24.10.2026`, "Konzerte") keeps the stamped night: its nights are separate shows,
  * as in [collapseExhibitionRuns][de.norm.events.scraper.collapseExhibitionRuns].
  *
@@ -101,13 +102,16 @@ class GaertenDerWeltOverviewPageScraper {
         val title = cleanGaertenDerWeltTitle(rawTitle)
         val eventType = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS) ?: inferUnmarkedTitleType(title)
         val run = parseDateRange(row.textAt(".date"))?.takeIf { eventType == EventType.EXHIBITION.name }
+        // A run's `.time` is the daily opening hours, not when the run ends.
+        val endTime = if (run == null) parseEndClock(row.textAt(".time")) else null
         return ScrapedEvent(
             title = title,
             subtitle = row.textAt("p.textMedium"),
             eventType = eventType,
             eventDate = run?.start ?: path.date,
             startTime = path.startTime,
-            endDate = run?.endInclusive,
+            endDate = run?.endInclusive ?: endTime?.let { endOn(path.date, path.startTime, it) },
+            endTime = endTime,
             imageUrl = row.attrAt("figure img", "src")?.let { resolveUrl(baseUrl, it) },
             sourceUrl = sourceUrl,
             sourceId = if (run != null) gaertenDerWeltRunId(path) else "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${path.identity}",

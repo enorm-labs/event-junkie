@@ -85,7 +85,7 @@ class GaertenDerWeltWebsiteImporter(
 
     /**
      * Merges a parsed [detail] page over its listing [row]. The detail page owns the description,
-     * prices, doors time, promoter and full-size poster. The row wins on the dates and start time:
+     * prices, doors time, promoter and full-size poster. The row wins on the dates and times:
      * the detail page renders a year-less "Samstag, 08.08." (ADR-007 §"Selector Strategy"). It wins
      * on event type, the `.category` label the single view does not repeat, and on `sourceId`,
      * where a run's row carries the stamp-less id and the page URL names one day. Artists are built
@@ -101,6 +101,7 @@ class GaertenDerWeltWebsiteImporter(
             eventDate = row.eventDate,
             startTime = row.startTime,
             endDate = row.endDate,
+            endTime = row.endTime,
             eventType = row.eventType,
             artists = buildArtistsForEventType(detail.title, subtitle = subtitle, eventType = row.eventType)
         )

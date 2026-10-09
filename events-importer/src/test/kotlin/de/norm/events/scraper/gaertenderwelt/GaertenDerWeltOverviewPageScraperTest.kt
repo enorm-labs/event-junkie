@@ -73,8 +73,48 @@ class GaertenDerWeltOverviewPageScraperTest {
         gamesNight.eventType shouldBe EventType.OTHER.name
         gamesNight.eventDate shouldBe LocalDate.of(2026, 8, 14)
         gamesNight.startTime shouldBe LocalTime.of(17, 30)
+        // "17.30 – 21 Uhr": the stamp gives the start, the cell the end (#2970).
+        gamesNight.endDate shouldBe LocalDate.of(2026, 8, 14)
+        gamesNight.endTime shouldBe LocalTime.of(21, 0)
         gamesNight.subtitle shouldBe "Jeden 2. Freitag im Monat"
     }
+
+    @Test
+    fun `keeps no end for a row whose time cell is a single clock`() {
+        val screening = scraper.scrape(fixture("gaertenderwelt-overview-page2.html"), LISTING_URL).single { it.title.startsWith("Wanderkino") }
+
+        // "21.00 Uhr".
+        screening.endDate.shouldBeNull()
+        screening.endTime.shouldBeNull()
+    }
+
+    @Test
+    fun `rolls an end before the start to the next morning`() {
+        val lateNight = scraper.scrape(row(stamp = "2026-12-31_2200", time = "22 – 2 Uhr"), LISTING_URL).single()
+
+        lateNight.eventDate shouldBe LocalDate.of(2026, 12, 31)
+        lateNight.endDate shouldBe LocalDate.of(2027, 1, 1)
+        lateNight.endTime shouldBe LocalTime.of(2, 0)
+    }
+
+    private fun row(
+        stamp: String,
+        time: String
+    ): Document =
+        Jsoup.parse(
+            """
+            <html><body><div class="tx-events2"><div class="list">
+              <div class="eventWrapper">
+                <div class="category">Konzerte</div>
+                <div class="eventInner">
+                  <h3 class="media-heading"><a href="/events/veranstaltungen/detail/$stamp/silvester/">Silvester</a></h3>
+                  <div class="time">$time</div>
+                </div>
+              </div>
+            </div></div></body></html>
+            """.trimIndent(),
+            LISTING_URL
+        )
 
     @Test
     fun `stores the row teaser as the subtitle`() {
@@ -135,6 +175,7 @@ class GaertenDerWeltOverviewPageScraperTest {
         run.eventDate shouldBe LocalDate.of(2026, 9, 1)
         run.endDate shouldBe LocalDate.of(2026, 11, 1)
         run.startTime shouldBe LocalTime.of(9, 0)
+        run.endTime.shouldBeNull()
         run.sourceId shouldBe "gaerten_der_welt:zwischen-himmel-und-erde-ausstellung"
         run.sourceUrl shouldBe "$LISTING_URL/detail/2026-10-04_0900/zwischen-himmel-und-erde-ausstellung/"
     }
@@ -144,7 +185,7 @@ class GaertenDerWeltOverviewPageScraperTest {
         val gamesNight = scraper.scrape(fixture("gaertenderwelt-overview-runs.html"), LISTING_URL).single { it.title == "Spieleabend" }
 
         gamesNight.eventDate shouldBe LocalDate.of(2026, 10, 9)
-        gamesNight.endDate.shouldBeNull()
+        gamesNight.endDate shouldBe LocalDate.of(2026, 10, 9)
         gamesNight.sourceId shouldBe "gaerten_der_welt:2026-10-09_1730/spieleabend-1-1"
     }
 
@@ -155,7 +196,8 @@ class GaertenDerWeltOverviewPageScraperTest {
         // "22.10.2026 - 24.10.2026" under "Konzerte": each night is its own show.
         droneShow.eventType shouldBe EventType.CONCERT.name
         droneShow.eventDate shouldBe LocalDate.of(2026, 10, 22)
-        droneShow.endDate.shouldBeNull()
+        droneShow.endDate shouldBe LocalDate.of(2026, 10, 22)
+        droneShow.endTime shouldBe LocalTime.of(21, 0)
         droneShow.sourceId shouldBe "gaerten_der_welt:2026-10-22_2000/drone-art-show-harry-potter"
     }
 
