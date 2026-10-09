@@ -22,6 +22,18 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `an ARTIST_SLUG_OVERRIDES entry gives a second act its own slug, in any letter case`() {
+        assertSoftly {
+            artistSlugFor("Göre") shouldBe "goere"
+            artistSlugFor("GÖRE") shouldBe "goere"
+            // The act that held the slug first keeps it.
+            artistSlugFor("Gore") shouldBe "gore"
+            // A name without an entry slugs its canonical form, as before.
+            artistSlugFor("OXO86") shouldBe "oxo-86"
+        }
+    }
+
+    @Test
     fun `folds a backtick typed as an apostrophe`() {
         canonicalArtistName("Dingo`s Dream") shouldBe "Dingo's Dream"
     }

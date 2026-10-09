@@ -3,6 +3,7 @@ package de.norm.events.artist
 import de.norm.events.common.deshoutWord
 import de.norm.events.common.foldTypedApostrophes
 import de.norm.events.common.isShortInitialism
+import de.norm.events.slug.SlugGenerator
 
 // Artist-name canonicalization for the scraper pipeline.
 //
@@ -39,6 +40,31 @@ fun canonicalArtistName(raw: String): String {
         }
     return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
 }
+
+/**
+ * The slug an artist [name] resolves to: an [ARTIST_SLUG_OVERRIDES] entry, or the slug of its canonical name.
+ * Every place that turns an artist name into a slug goes through here, or the import and the admin API disagree.
+ */
+fun artistSlugFor(name: String): String {
+    val canonical = canonicalArtistName(name)
+    return ARTIST_SLUG_OVERRIDES[canonical.lowercase()] ?: SlugGenerator.slugify(canonical)
+}
+
+/**
+ * A second act whose name folds to a slug another act holds, mapped to a slug of its own (#2942).
+ *
+ * The key is the canonical name in lower case, accents kept. That is what separates `Göre` from `Gore`, which
+ * [SlugGenerator] folds to one slug. Names that are exactly identical cannot be keyed here (#2954).
+ *
+ * The act already stored keeps the plain slug, so no published URL moves. An entry names both acts' sources in its
+ * comment, and ships with a data migration that moves the stored links. Artists only: no promoter clash is known.
+ */
+private val ARTIST_SLUG_OVERRIDES: Map<String, String> =
+    mapOf(
+        // The German band Göre, billed by Monarch (kottimonarch.de). The US band Gore, billed by UFO im Velodrom
+        // beside I Prevail, keeps `gore`.
+        "göre" to "goere"
+    )
 
 /**
  * Known spelling/spacing variants of one act, keyed on the [normalizedKey] of the

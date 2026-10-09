@@ -92,6 +92,8 @@ scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps ar
   Without it `Kėkė Søl` → `keke-sl` and `Søl`/`Sæl` collide. **Do not switch to slugify's `locale()` bundles** — `no` rewrites `å`→`aa`, `de` turns `ö`→`oe`,
   changing slugs that are already correct. **Changing the map is a data migration in disguise**: `AssociationSyncService` resolves artists and promoters by
   slug, so an old spelling is missed and re-inserted as a duplicate.
+  **A second act whose name folds to a stored slug** (`Göre` beside `Gore`) gets a slug of its own from `ARTIST_SLUG_OVERRIDES`. Every artist
+  slug goes through `artistSlugFor`, in the import and in the admin API alike, and each entry ships with a migration for the stored links (#2942).
 - **Money is scale 2** (`normalizeMoneyScale()` in `events-core`, applied where prices enter `EventEntity`), because `BigDecimal.equals()` is scale-sensitive
   and `10.0 != 10.00` would defeat the scraper's change detection.
 - **Genre tags**: `genre` on an event is the raw text for display; `genre_tag` + `event_genre_tag` hold the normalised many-to-many. `GenreNormalizer` splits
