@@ -2,10 +2,12 @@ package de.norm.events.importing
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
+import de.norm.events.event.EventType
 import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.parseTitleStatus
+import java.time.LocalDate
 
 /**
  * This event with every empty field the detail page fills taken from [stored], for a row whose
@@ -116,3 +118,18 @@ private fun ScrapedEvent.withLinkAndPriceGapsFromStored(stored: EventEntity): Sc
         priceBoxOffice = priceBoxOffice ?: stored.priceBoxOffice,
         priceNote = priceNote ?: stored.priceNote
     )
+
+/**
+ * This exhibition run with the opening of [stored], when that opening is earlier and not after [today]. A listing drops a run's
+ * days once they are over, so the first listed day moves later on every import (#2940). A later opening before the run opens
+ * is the venue's change and stands, and a stored run that closed before this one opens is an earlier showing.
+ */
+fun ScrapedEvent.withStoredOpening(
+    stored: EventEntity,
+    today: LocalDate
+): ScrapedEvent {
+    val exhibition = EventType.EXHIBITION.name
+    val storedEnd = stored.endDate
+    val sameRun = eventType == exhibition && stored.eventType == exhibition && endDate != null && storedEnd != null && storedEnd >= eventDate
+    return if (sameRun && stored.eventDate < eventDate && stored.eventDate <= today) copy(eventDate = stored.eventDate) else this
+}

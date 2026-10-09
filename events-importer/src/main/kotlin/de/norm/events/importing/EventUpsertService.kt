@@ -142,7 +142,8 @@ class EventUpsertService(
                 .findBySourceIdIn(incomingEvents.map { it.sourceId })
                 .toList()
                 .associateBy { it.sourceId }
-        val scrapedEvents = performerTyping.retype(keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId))
+        val withStored = keepStoredOpenings(keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId), existingBySourceId, eventSourceId)
+        val scrapedEvents = performerTyping.retype(withStored)
 
         val discriminators = slugDiscriminators(scrapedEvents)
         val fromSource = { scraped: ScrapedEvent, existing: EventEntity? ->
@@ -210,6 +211,25 @@ class EventUpsertService(
             logger.info { "Kept the stored detail fields of $kept event(s) on event source $eventSourceId: their detail page yielded nothing" }
         }
         return filled
+    }
+
+    /**
+     * Keeps the stored opening of each exhibition run whose listing dropped the days already over
+     * ([withStoredOpening]). Runs before the entities are built, so the slug keeps its date too (#2940).
+     */
+    private fun keepStoredOpenings(
+        scrapedEvents: List<ScrapedEvent>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> {
+        val today = LocalDate.now(clock)
+        val kept =
+            scrapedEvents.map { scraped ->
+                existingBySourceId[scraped.sourceId]?.let { scraped.withStoredOpening(it, today) } ?: scraped
+            }
+        val moved = kept.zip(scrapedEvents).count { (keptEvent, scraped) -> keptEvent.eventDate != scraped.eventDate }
+        if (moved > 0) logger.info { "Kept the stored opening of $moved exhibition run(s) on event source $eventSourceId: the listing dropped their past days" }
+        return kept
     }
 
     /**
