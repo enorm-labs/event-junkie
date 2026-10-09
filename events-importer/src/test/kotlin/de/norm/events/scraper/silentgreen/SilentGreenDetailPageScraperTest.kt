@@ -104,6 +104,85 @@ class SilentGreenDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape reads a festival's daily hours from the blurb`() {
+        val details = parse("silentgreen-detail-festival-hours.html").shouldNotBeNull()
+
+        details.startTime.shouldBeNull()
+        // The highlights' "10. Oktober / 11 bis 18 Uhr" is one screening, not the opening hours.
+        details.dailyHours shouldBe
+            mapOf(
+                LocalDate.of(2026, 10, 8) to SilentGreenOpeningHours(LocalTime.of(19, 0), LocalTime.of(22, 0)),
+                LocalDate.of(2026, 10, 9) to SilentGreenOpeningHours(LocalTime.of(11, 0), LocalTime.of(22, 0)),
+                LocalDate.of(2026, 10, 10) to SilentGreenOpeningHours(LocalTime.of(11, 0), LocalTime.MIDNIGHT),
+                LocalDate.of(2026, 10, 11) to SilentGreenOpeningHours(LocalTime.of(11, 0), LocalTime.MIDNIGHT)
+            )
+    }
+
+    @Test
+    fun `scrape reads minutes, a hyphen, a day range and a month after the date block's`() {
+        val document =
+            Jsoup.parse(
+                """<div class="news-detail">
+                  <span class="event-detail-date-begin">Mi. 30.12.2026 -</span>
+                  <div class="ce-bodytext"><p><strong>30.–31. Dezember: 18:30-23 Uhr</strong><br>
+                  <strong>2. Januar: 12-24:00 Uhr</strong></p></div></div>""",
+                "https://www.silent-green.net/programm/detail/x"
+            )
+
+        scraper.scrape(document).shouldNotBeNull().dailyHours shouldBe
+            mapOf(
+                LocalDate.of(2026, 12, 30) to SilentGreenOpeningHours(LocalTime.of(18, 30), LocalTime.of(23, 0)),
+                LocalDate.of(2026, 12, 31) to SilentGreenOpeningHours(LocalTime.of(18, 30), LocalTime.of(23, 0)),
+                LocalDate.of(2027, 1, 2) to SilentGreenOpeningHours(LocalTime.NOON, LocalTime.MIDNIGHT)
+            )
+    }
+
+    @Test
+    fun `applyTo fills a festival day from its daily hours, ending past midnight on the next day`() {
+        val details =
+            SilentGreenEventDetails(
+                dailyHours =
+                    mapOf(
+                        LocalDate.of(2026, 10, 8) to SilentGreenOpeningHours(LocalTime.of(19, 0), LocalTime.of(22, 0)),
+                        LocalDate.of(2026, 10, 10) to SilentGreenOpeningHours(LocalTime.of(11, 0), LocalTime.MIDNIGHT)
+                    )
+            )
+
+        fun day(
+            date: LocalDate,
+            start: LocalTime? = null
+        ) = ScrapedEvent(
+            title = "9. Festival of Animation Berlin 2026",
+            eventType = "FESTIVAL",
+            eventDate = date,
+            startTime = start,
+            sourceUrl = "https://www.silent-green.net/programm/detail/9-festival-of-animation-berlin-2026",
+            sourceId = "silent_green:$date-9-festival-of-animation-berlin-2026"
+        )
+
+        val thursday = details.applyTo(day(LocalDate.of(2026, 10, 8)))
+        thursday.startTime shouldBe LocalTime.of(19, 0)
+        thursday.endDate shouldBe LocalDate.of(2026, 10, 8)
+        thursday.endTime shouldBe LocalTime.of(22, 0)
+
+        val saturday = details.applyTo(day(LocalDate.of(2026, 10, 10)))
+        saturday.startTime shouldBe LocalTime.of(11, 0)
+        saturday.endDate shouldBe LocalDate.of(2026, 10, 11)
+        saturday.endTime shouldBe LocalTime.MIDNIGHT
+
+        // A time the calendar row prints wins, and the blurb's end does not pair with it.
+        val printed = details.applyTo(day(LocalDate.of(2026, 10, 8), start = LocalTime.of(20, 0)))
+        printed.startTime shouldBe LocalTime.of(20, 0)
+        printed.endDate.shouldBeNull()
+        printed.endTime.shouldBeNull()
+
+        // So does the page's own start time.
+        val paged = details.copy(startTime = LocalTime.of(18, 0)).applyTo(day(LocalDate.of(2026, 10, 8)))
+        paged.startTime shouldBe LocalTime.of(18, 0)
+        paged.endTime.shouldBeNull()
+    }
+
+    @Test
     fun `scrape reads a single day as a start with no end`() {
         val details = parse("silentgreen-detail-konzert.html").shouldNotBeNull()
 
