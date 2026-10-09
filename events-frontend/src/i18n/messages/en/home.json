@@ -3,6 +3,8 @@
   "eventCount": "{count} event | {count} events",
   "tonightEmpty": "Nothing on tonight? In Berlin? Unlikely. Try the calendar.",
   "showAllTonight": "Show all {count} events tonight",
+  "surpriseMe": "Surprise me",
+  "surpriseMeHint": "A random event tonight at a venue for {capacity} people or fewer",
   "upcoming": "Upcoming",
   "seeAllUpcoming": "See all upcoming events",
   "upcomingEmpty": "Nothing upcoming right now. Check back soon.",

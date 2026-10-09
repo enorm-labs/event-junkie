@@ -1078,6 +1078,12 @@ export interface components {
              * @example 630
              */
             intrinsicHeight?: number | null;
+            /**
+             * Format: int32
+             * @description How many visitors the largest room holds, as the venue publishes it. Null where it does not.
+             * @example 250
+             */
+            capacity?: number | null;
         };
         /** @description A page of results with pagination metadata */
         PageResponsePromoterListItemResponse: {

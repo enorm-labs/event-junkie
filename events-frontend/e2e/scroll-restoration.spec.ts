@@ -20,7 +20,9 @@ const events = titles.map((title) => ({ slug: slugify(title), title, eventDate: 
 const opened = events[29]
 
 const eventsFeed = /\/api\/events(\?|$)/
-const eventDetail = /\/api\/events\/[^/?]+/
+// Not `/today`: Playwright tries the last route registered first, and a detail pattern that also
+// matched it served Tonight one event object instead of its list.
+const eventDetail = /\/api\/events\/(?!today\b)[^/?]+/
 
 const scrollY = (page: Page) => page.evaluate(() => window.scrollY)
 
