@@ -280,6 +280,7 @@ kubectl --context event-junkie-staging port-forward -n event-junkie svc/event-ju
 ```
 
 `scripts/ej.sh up staging` starts this forward, the BFF's and OpenObserve's together, on the same ports. The command above is what it runs.
+A `kubectl` forward stays attached to one pod. When a rollout replaces that pod, `ej.sh` starts a new forward within about 10 seconds.
 
 **`18081`, not `8081`.** The local importer from `scripts/dev-env.sh` owns `8081`. A forward that silently lands on a local stack is how you seed the wrong
 database and believe you seeded staging.
