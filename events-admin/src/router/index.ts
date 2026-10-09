@@ -10,6 +10,12 @@ const router = createRouter({
       component: () => import('@/views/SourcesView.vue'),
       meta: { title: 'Event sources' },
     },
+    {
+      path: '/worklist',
+      name: 'worklist',
+      component: () => import('@/views/WorklistView.vue'),
+      meta: { title: 'Data-quality worklist' },
+    },
   ],
 })
 
