@@ -117,6 +117,8 @@ class GaertenDerWeltWebsiteImporterTest {
             // The listing row keeps the date, start time and the type its category names.
             concert.eventDate shouldBe LocalDate.of(2026, 8, 15)
             concert.startTime shouldBe LocalTime.of(19, 0)
+            concert.endDate shouldBe LocalDate.of(2026, 8, 15)
+            concert.endTime shouldBe LocalTime.of(22, 0)
             concert.eventType shouldBe EventType.CONCERT.name
             concert.detailUnavailable shouldBe false
         }

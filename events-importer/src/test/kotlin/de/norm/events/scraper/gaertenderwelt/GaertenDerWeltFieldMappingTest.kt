@@ -134,6 +134,22 @@ class GaertenDerWeltFieldMappingTest {
     }
 
     @Test
+    fun `reads the end of a time range joined by a dash or a hyphen`() {
+        parseEndClock("17.30 – 21 Uhr") shouldBe LocalTime.of(21, 0)
+        parseEndClock("17.30 - 21 Uhr") shouldBe LocalTime.of(21, 0)
+        parseEndClock(" 11 – 12.30 Uhr ") shouldBe LocalTime.of(12, 30)
+        parseEndClock("10–11 Uhr") shouldBe LocalTime.of(11, 0)
+    }
+
+    @Test
+    fun `reads a single clock, an impossible end or no cell as no end`() {
+        parseEndClock("09.00 Uhr").shouldBeNull()
+        parseEndClock("17.30 – 25 Uhr").shouldBeNull()
+        parseEndClock("").shouldBeNull()
+        parseEndClock(null).shouldBeNull()
+    }
+
+    @Test
     fun `keys a run on the slug, without the day`() {
         val path = parseEventPath("https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-10-04_0900/zwischen-himmel-und-erde-ausstellung/")
 

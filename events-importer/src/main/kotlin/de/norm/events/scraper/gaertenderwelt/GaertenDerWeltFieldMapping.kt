@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.collapseExhibitionRuns
+import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -160,3 +161,13 @@ internal fun parseDateRange(text: String?): ClosedRange<LocalDate>? =
 
 /** Two dotted dates joined by a hyphen or a dash, as the listing renders a run. */
 private val DATE_RANGE_PATTERN = Regex("""(\d{1,2}\.\d{1,2}\.\d{4})\s*[-–—]\s*(\d{1,2}\.\d{1,2}\.\d{4})""")
+
+/**
+ * Reads the end of a listing row's `.time` range (`17.30 – 21 Uhr`, `10 - 11 Uhr`), or `null` for
+ * a single clock (`09.00 Uhr`). The start is not read here: the href stamp carries it.
+ */
+internal fun parseEndClock(text: String?): LocalTime? =
+    text?.let { TIME_RANGE_PATTERN.find(it) }?.destructured?.let { (hour, minute) -> parseClock("$hour:${minute.ifEmpty { "00" }}") }
+
+/** A clock range in the park's spelling, a bare or dotted hour on each side of a hyphen or dash. */
+private val TIME_RANGE_PATTERN = Regex("""\d{1,2}(?:[.:]\d{2})?\s*[-–—]\s*(\d{1,2})(?:[.:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
