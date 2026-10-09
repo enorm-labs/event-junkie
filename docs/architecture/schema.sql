@@ -376,6 +376,17 @@ CREATE TABLE events.event_enrichment (
 );
 
 --
+-- Name: event_feature; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_feature (
+    event_id bigint NOT NULL,
+    feature text NOT NULL,
+    matched_phrase text NOT NULL,
+    CONSTRAINT event_feature_matched_phrase_check CHECK ((matched_phrase <> ''::text))
+);
+
+--
 -- Name: event_genre_tag; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -442,7 +453,7 @@ CREATE TABLE events.event_quality_flag (
     event_id bigint NOT NULL,
     kind text NOT NULL,
     value text NOT NULL,
-    CONSTRAINT event_quality_flag_kind_check CHECK ((kind = ANY (ARRAY['SLUGLESS_ARTIST'::text, 'NON_ARTIST_NAME'::text, 'HELD_BACK_PROMOTER_NAME'::text, 'GENRE_EQUALS_TITLE'::text, 'NON_GENRE_TOKEN'::text])))
+    CONSTRAINT event_quality_flag_kind_check CHECK ((kind = ANY (ARRAY['SLUGLESS_ARTIST'::text, 'NON_ARTIST_NAME'::text, 'HELD_BACK_PROMOTER_NAME'::text, 'GENRE_EQUALS_TITLE'::text, 'NON_GENRE_TOKEN'::text, 'UNCERTAIN_PARTY_FEATURE'::text])))
 );
 
 --
@@ -773,6 +784,13 @@ ALTER TABLE ONLY events.event_enrichment
     ADD CONSTRAINT event_enrichment_pkey PRIMARY KEY (event_id, event_source_id);
 
 --
+-- Name: event_feature event_feature_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_feature
+    ADD CONSTRAINT event_feature_pkey PRIMARY KEY (event_id, feature);
+
+--
 -- Name: event_genre_tag event_genre_tag_event_id_genre_tag_id_key; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -985,6 +1003,12 @@ CREATE INDEX idx_event_event_date ON events.event USING btree (event_date);
 CREATE INDEX idx_event_event_source_id ON events.event USING btree (event_source_id);
 
 --
+-- Name: idx_event_feature_feature; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_feature_feature ON events.event_feature USING btree (feature);
+
+--
 -- Name: idx_event_featured_until; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1193,6 +1217,13 @@ ALTER TABLE ONLY events.event_enrichment
 
 ALTER TABLE ONLY events.event
     ADD CONSTRAINT event_event_source_id_fkey FOREIGN KEY (event_source_id) REFERENCES events.event_source(id) ON DELETE SET NULL;
+
+--
+-- Name: event_feature event_feature_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_feature
+    ADD CONSTRAINT event_feature_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_genre_tag event_genre_tag_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

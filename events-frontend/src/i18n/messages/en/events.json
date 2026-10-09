@@ -72,7 +72,12 @@
     "sheetTitle": "Filters",
     "closeSheet": "Close filters",
     "showResults": "Show events",
-    "showResultsCount": "Show {count} event | Show {count} events"
+    "showResultsCount": "Show {count} event | Show {count} events",
+    "allFeatures": "Any party",
+    "featuresSelected": "{n} features",
+    "clearFeatures": "Clear features",
+    "byFeature": "Filter by party features",
+    "featureHint": "As the event's own text states it. A party needs every feature chosen; what the venue says about itself does not count."
   },
   "card": {
     "ourPick": "Our pick",
@@ -132,7 +137,9 @@
       "google": "Google Calendar",
       "startEstimated": "The start time is our estimate.",
       "endEstimated": "The venue states no end time, so the calendar entry ends at our estimate."
-    }
+    },
+    "features": "Good to know",
+    "featuresNote": "As the event's own text states it."
   },
   "role": {
     "HEADLINER": "Headliner",

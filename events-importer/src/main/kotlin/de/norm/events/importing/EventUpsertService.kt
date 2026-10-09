@@ -26,7 +26,8 @@ import java.time.format.DateTimeFormatter
  * managed by the caller.
  */
 @Service
-@Suppress("TooManyFunctions") // One private function per step of the pipeline that upsertAndCleanup runs.
+// One private function per step of the pipeline that upsertAndCleanup runs; constructor injection, one parameter per collaborator.
+@Suppress("TooManyFunctions", "LongParameterList")
 class EventUpsertService(
     private val eventRepository: EventRepository,
     private val associationSyncService: AssociationSyncService,
@@ -38,7 +39,8 @@ class EventUpsertService(
     private val performerTyping: PerformerTyping,
     private val contentStamp: EventContentStamp,
     /** The fields enrichment sources filled, which this import keeps where it has none (ADR-043). */
-    private val enrichmentRepository: EventEnrichmentRepository
+    private val enrichmentRepository: EventEnrichmentRepository,
+    private val featureSync: EventFeatureSync
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -172,6 +174,8 @@ class EventUpsertService(
         val associations =
             associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents, keptEnrichedTables(existingBySourceId, enriched, ownFields))
         releaseEnriched(existingBySourceId, enriched, ownFields)
+        // After the associations, whose flag replace would drop the uncertain cues this adds (#2631).
+        featureSync.sync(savedEvents)
         // After the join tables, so the lineup is hashed as stored (#2768).
         val contentChanged = contentStamp.restamp(savedEvents)
         if (contentChanged > 0) logger.info { "Moved the content stamp of $contentChanged event(s) on event source $eventSourceId" }

@@ -494,6 +494,27 @@ The primary key is `(event_id, event_source_id)`. **An enrichment source fills o
 deletes an event.** It leaves a pinned field alone. The main source's import keeps a filled value where it has none of
 its own. When it has one, its value wins and the field leaves `fields`. A row with no field left is deleted.
 
+### event_feature (Side Table)
+
+What kind of night an event is, as its own text states it (#2631). One row per party feature on an event.
+
+| Field            | Type        | Nullable | Description                                                     | Example        |
+| ---------------- | ----------- | -------- | --------------------------------------------------------------- | -------------- |
+| `event_id`       | `BIGINT` FK | No       | References `event.id`. Deleting the event deletes its features  | `101`          |
+| `feature`        | `TEXT`      | No       | `PartyFeature` slug, such as `flinta-only` or `open-end`        | `flinta-only`  |
+| `matched_phrase` | `TEXT`      | No       | The words of the event's text that set the feature, on one line | `FLINTA* only` |
+
+The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `queer`, `sex-positive`, `dress-code`,
+`fetish-dress-code`, `no-photo-policy`, `open-end` and `day-party`. Where `venue_character_tag` has the same fact, the
+two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
+`PartyFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
+English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
+sets nothing. A cue the rules cannot settle sets no feature. Examples are a bare `FLINTA*` and a FLINTA* phrase
+about who plays ("open decks for FLINTA*", "Auflegen für FLINTA*"). Such a cue goes to `event_quality_flag`
+as `UNCERTAIN_PARTY_FEATURE`, which the data-quality worklist lists. `flinta-only` is a door rule: "FLINTA* only", "nur für
+FLINTA*", "Einlass nur für FLINTA*". The public API filters by
+`feature=` (every given feature must hold) and returns the slugs on the event detail.
+
 ## Design Decisions
 
 ### Idempotent Imports via `source_id`

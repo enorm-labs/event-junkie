@@ -206,7 +206,8 @@ class EventImportServiceTest {
                 clock = Clock.fixed(LocalDate.of(2026, 6, 15).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC),
                 performerTyping = PerformerTyping(mockk(), eventRepository),
                 contentStamp = mockk(relaxed = true),
-                enrichmentRepository = mockk(relaxed = true)
+                enrichmentRepository = mockk(relaxed = true),
+                featureSync = mockk(relaxed = true)
             )
 
         service =

@@ -102,7 +102,8 @@ data class SourceQualityMetrics(
     @Schema(
         description =
             "Events the import kept a value out of: an artist name it refused or held back, a genre " +
-                "that repeats the title, or a genre word that names no genre. The worklist entry names each value",
+                "that repeats the title, a genre word that names no genre, or a party-feature cue no clear phrase settles. " +
+                "The worklist entry names each value",
         example = "5"
     )
     val flaggedAtImport: Long
@@ -149,9 +150,15 @@ data class WorklistEntryResponse(
 /** One value the import kept out of an event. */
 @Schema(description = "A value the import's sync gate kept out of the event")
 data class WorklistFlagResponse(
-    @Schema(description = "Why: SLUGLESS_ARTIST, NON_ARTIST_NAME, HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE or NON_GENRE_TOKEN", example = "NON_ARTIST_NAME")
+    @Schema(
+        description = "Why: SLUGLESS_ARTIST, NON_ARTIST_NAME, HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE, NON_GENRE_TOKEN or UNCERTAIN_PARTY_FEATURE",
+        example = "NON_ARTIST_NAME"
+    )
     val kind: String,
-    @Schema(description = "The value as the venue published it", example = "Special Guest")
+    @Schema(
+        description = "The value as the venue published it. For UNCERTAIN_PARTY_FEATURE, the feature slug, a colon and the cue in its words",
+        example = "Special Guest"
+    )
     val value: String
 )
 

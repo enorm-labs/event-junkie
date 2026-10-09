@@ -35,6 +35,7 @@ const {
   venueTypeOptions,
   timeOfDayOptions,
   languageOptions,
+  featureOptions,
 } = useFilterOptions()
 
 /**
@@ -122,6 +123,19 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         :options="typeOptions"
         :selected="queryList('eventType')"
         @change="applyEventTypes"
+      />
+
+      <!-- What kind of night, as the event's own text says (#2631): every chosen feature must hold. -->
+      <MultiSelectFilter
+        :all-label="t('events.filters.allFeatures')"
+        :class="SELECT_CLASS"
+        :clear-label="t('events.filters.clearFeatures')"
+        :count-label="(n) => t('events.filters.featuresSelected', { n })"
+        :hint="t('events.filters.featureHint')"
+        :label="t('events.filters.byFeature')"
+        :options="featureOptions"
+        :selected="queryList('feature')"
+        @change="applyFilters({ feature: $event })"
       />
 
       <MultiSelectFilter

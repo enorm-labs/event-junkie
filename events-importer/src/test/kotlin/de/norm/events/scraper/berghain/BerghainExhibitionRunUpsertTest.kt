@@ -44,6 +44,7 @@ class BerghainExhibitionRunUpsertTest {
             clock,
             PerformerTyping(mockk(), eventRepository),
             mockk(relaxed = true),
+            mockk(relaxed = true),
             mockk(relaxed = true)
         )
 

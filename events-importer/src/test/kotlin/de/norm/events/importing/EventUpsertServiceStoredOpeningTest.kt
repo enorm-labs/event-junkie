@@ -81,6 +81,7 @@ class EventUpsertServiceStoredOpeningTest {
                 fixedClock,
                 PerformerTyping(mockk(), eventRepository),
                 mockk(relaxed = true),
+                mockk(relaxed = true),
                 mockk(relaxed = true)
             )
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()

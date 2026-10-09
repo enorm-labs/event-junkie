@@ -12,8 +12,14 @@ import { districtLabel } from '@/lib/districts'
  */
 export function useFilterLabels(lists: FilterLists = useFilterLists()) {
   const { t } = useI18n()
-  const { formatEventType, formatTimeOfDay, formatFamily, formatVenueType, formatSpokenLanguage } =
-    useFormat()
+  const {
+    formatEventType,
+    formatTimeOfDay,
+    formatFamily,
+    formatVenueType,
+    formatSpokenLanguage,
+    formatPartyFeature,
+  } = useFormat()
 
   function filterLabels(filters: EventFilterValues): string[] {
     const tags = lists.genres.data.value ?? []
@@ -26,6 +32,7 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
       ...(filters.eventType ?? []).map((type) => formatEventType(type)),
       ...(filters.language ?? []).map((code) => formatSpokenLanguage([code])),
       ...(filters.timeOfDay ?? []).map((slot) => formatTimeOfDay(slot).replace(/\s*\(.*\)$/, '')),
+      ...(filters.feature ?? []).map((slug) => formatPartyFeature(slug)),
       ...activeFamilies(filters.family ?? [], filters.genre, tags).map((family) =>
         formatFamily(family),
       ),

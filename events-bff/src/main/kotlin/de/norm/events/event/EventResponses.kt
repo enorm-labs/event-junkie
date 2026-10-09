@@ -281,7 +281,15 @@ data class EventDetailResponse(
             "The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page " +
                 "must link each one (ADR-036). Empty for almost every event."
     )
-    val enrichmentSources: List<EnrichmentSourceResponse> = emptyList()
+    val enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
+    @Schema(
+        description =
+            "What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, " +
+                "fetish-dress-code, no-photo-policy, open-end, day-party. Set only where the event's own title or description " +
+                "states it; the venue's character tags never fill it.",
+        example = "[\"open-end\", \"queer\"]"
+    )
+    val features: List<String>
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -291,6 +299,7 @@ data class EventDetailResponse(
             lineup: List<LineupEntryResponse>,
             promoters: List<PromoterSummaryResponse>,
             genreTags: List<String>,
+            features: List<String>,
             image: ServedImage,
             imageWithheld: Boolean,
             descriptionWithheld: Boolean,
@@ -339,7 +348,8 @@ data class EventDetailResponse(
                 lineup = lineup,
                 promoters = promoters,
                 genreTags = genreTags,
-                enrichmentSources = enrichmentSources
+                enrichmentSources = enrichmentSources,
+                features = features
             )
     }
 }

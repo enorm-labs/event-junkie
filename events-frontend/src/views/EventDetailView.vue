@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
+import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import EventCard from '@/components/EventCard.vue'
@@ -16,6 +17,7 @@ import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
+import { inFeatureOrder } from '@/lib/partyFeatures'
 import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -122,12 +124,21 @@ const {
   formatSpokenLanguage,
   formatRunState,
   formatWeekday,
+  formatPartyFeature,
 } = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
 // A fact block beside the venue and the tickets, not a word under the title (#2523).
 const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
+// What kind of night it is, as its own text says (#2631); each pill opens the list filtered by it.
+const features = computed(() =>
+  inFeatureOrder(event.value?.features ?? []).map((slug) => ({
+    slug,
+    label: formatPartyFeature(slug),
+    to: { path: localePath('/events'), query: { feature: slug } },
+  })),
+)
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
 // A cancelled night shows no price: nothing is on sale (#2916). Every other night says what is
@@ -351,6 +362,22 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           <p v-if="spokenLanguage" class="text-body">{{ spokenLanguage }}</p>
           <p v-if="subtitles" class="text-body text-muted-foreground">{{ subtitles }}</p>
         </div>
+      </section>
+
+      <!-- Every pill opens a filtered list, which makes it a control (design.instructions.md §1). -->
+      <section v-if="features.length" class="space-y-2" data-testid="event-features">
+        <SectionLabel>{{ t('events.detail.features') }}</SectionLabel>
+        <p class="flex flex-wrap gap-2">
+          <RouterLink
+            v-for="feature in features"
+            :key="feature.slug"
+            :to="feature.to"
+            class="rounded-full transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <BaseBadge variant="outline">{{ feature.label }}</BaseBadge>
+          </RouterLink>
+        </p>
+        <p class="text-meta text-muted-foreground">{{ t('events.detail.featuresNote') }}</p>
       </section>
 
       <!--

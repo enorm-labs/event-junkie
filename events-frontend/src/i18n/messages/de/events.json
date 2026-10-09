@@ -72,7 +72,12 @@
     "sheetTitle": "Filter",
     "closeSheet": "Filter schließen",
     "showResults": "Events anzeigen",
-    "showResultsCount": "{count} Event anzeigen | {count} Events anzeigen"
+    "showResultsCount": "{count} Event anzeigen | {count} Events anzeigen",
+    "allFeatures": "Jede Party",
+    "featuresSelected": "{n} Merkmale",
+    "clearFeatures": "Merkmale zurücksetzen",
+    "byFeature": "Nach Party-Merkmalen filtern",
+    "featureHint": "So, wie es im Text des Events steht. Eine Party braucht jedes gewählte Merkmal; was die Location über sich sagt, zählt nicht."
   },
   "card": {
     "ourPick": "Unser Tipp",
@@ -132,7 +137,9 @@
       "google": "Google Kalender",
       "startEstimated": "Die Startzeit ist unsere Schätzung.",
       "endEstimated": "Die Location nennt kein Ende, daher endet der Kalendereintrag zu unserer Schätzung."
-    }
+    },
+    "features": "Gut zu wissen",
+    "featuresNote": "So steht es im Text des Events."
   },
   "role": {
     "HEADLINER": "Headliner",
