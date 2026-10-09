@@ -77,10 +77,30 @@ class Zimmer16ScrapersTest {
     }
 
     @Test
+    fun `stores a free night at 0 euros but not a pay-what-you-want one`() {
+        val lesebuehne = events.first { it.title.startsWith("So noch nie") }
+
+        eventPage.enrich(lesebuehne, Jsoup.parse(zeroPricePage("Eintritt frei"), baseUrl)).shouldNotBeNull().free shouldBe true
+        val payWhatYouWant = eventPage.enrich(lesebuehne, Jsoup.parse(zeroPricePage("Eintritt frei, but pay what you want"), baseUrl)).shouldNotBeNull()
+        payWhatYouWant.free shouldBe false
+        payWhatYouWant.priceBoxOffice shouldBe lesebuehne.priceBoxOffice
+        payWhatYouWant.description shouldBe "Eintritt frei, but pay what you want"
+    }
+
+    @Test
     fun `yields nothing for an event page without its JSON-LD`() {
         eventPage.enrich(events.first(), Jsoup.parse("<html><body></body></html>", baseUrl)).shouldBeNull()
         Zimmer16OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    private fun zeroPricePage(text: String): String =
+        """
+        <script type="application/ld+json">
+        {"@context": "https://schema.org", "@type": "Event", "startDate": "2026-10-26T19:30:00",
+         "offers": {"@type": "Offer", "price": "0.00", "priceCurrency": "EUR"}}
+        </script>
+        <div class="spacer--C"><p>$text</p></div>
+        """.trimIndent()
 
     private fun fixture(name: String): String =
         javaClass.classLoader
