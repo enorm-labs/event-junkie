@@ -1,10 +1,11 @@
 package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.pageByName
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.stereotype.Service
 
 /**
@@ -14,7 +15,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class ArtistService(
-    private val artistRepository: ArtistRepository
+    private val artistRepository: ArtistRepository,
+    private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -25,15 +27,23 @@ class ArtistService(
      * resolves from `page`, `size`, and `sort` query parameters
      * (e.g. `?page=0&size=20&sort=name,asc`).
      *
-     * The total comes from a separate `count()`, which is exact because this listing takes no
-     * filter. It is what lets a caller tell one page from the whole table (#810).
+     * The total comes from a separate count over the same filter, so a caller can tell one page
+     * from the whole table (#810). [name] narrows to the rows whose name contains it, ignoring
+     * case (#2988); null or blank is the whole table.
      */
-    suspend fun findAll(pageable: Pageable): PageResponse<ArtistResponse> =
-        PageResponse.of(
-            artistRepository.findAllBy(pageable).map { ArtistResponse.fromDomain(it.toDomain()) }.toList(),
-            pageable,
-            artistRepository.count()
-        )
+    suspend fun findAll(
+        pageable: Pageable,
+        name: String? = null
+    ): PageResponse<ArtistResponse> {
+        val term = name?.trim().orEmpty()
+        val (rows, total) =
+            if (term.isEmpty()) {
+                artistRepository.findAllBy(pageable).toList() to artistRepository.count()
+            } else {
+                template.pageByName(ArtistEntity::class.java, term, pageable)
+            }
+        return PageResponse.of(rows.map { ArtistResponse.fromDomain(it.toDomain()) }, pageable, total)
+    }
 
     /**
      * Finds a single artist by [id].

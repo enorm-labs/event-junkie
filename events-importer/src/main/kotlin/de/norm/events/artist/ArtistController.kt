@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -29,11 +30,13 @@ class ArtistController(
     private val artistService: ArtistService
 ) {
     @GetMapping
-    @Operation(summary = "List all artists with pagination")
+    @Operation(summary = "List all artists with pagination; `name` narrows to the names that contain it, ignoring case")
     suspend fun findAll(
         @ParameterObject
-        @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
-    ): PageResponse<ArtistResponse> = artistService.findAll(pageable)
+        @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable,
+        @Parameter(description = "Part of the name, any letter case. Omit it to list all.", example = "adicts")
+        @RequestParam(required = false) name: String?
+    ): PageResponse<ArtistResponse> = artistService.findAll(pageable, name)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single artist by ID")

@@ -62,6 +62,36 @@ describe('toEventRequest', () => {
   })
 })
 
+describe('toEventRequest with a lineup and promoter edit', () => {
+  it('sends the edited lineup and promoters in place of the stored ones', () => {
+    const request = toEventRequest(adminEvent(), {
+      eventType: 'OTHER',
+      genre: '',
+      artists: [
+        { artistId: 3, role: 'SUPPORT', billingOrder: 0, stage: null },
+        { artistId: 12, role: 'HEADLINER', billingOrder: 1, stage: 'Panorama Bar' },
+      ],
+      promoterIds: [],
+    })
+
+    expect(request.artists).toEqual([
+      { artistId: 3, role: 'SUPPORT', billingOrder: 0, stage: null },
+      { artistId: 12, role: 'HEADLINER', billingOrder: 1, stage: 'Panorama Bar' },
+    ])
+    expect(request.promoterIds).toEqual([])
+    expect(request.title).toBe('Die Nerven')
+  })
+
+  it('sends the stored lineup and promoters when the edit leaves them out', () => {
+    const request = toEventRequest(adminEvent(), { eventType: 'OTHER', genre: '' })
+
+    expect(request.artists).toEqual([
+      { artistId: 3, role: 'HEADLINER', billingOrder: 0, stage: null },
+    ])
+    expect(request.promoterIds).toEqual([9])
+  })
+})
+
 describe('updateEvent', () => {
   it('PUTs the request as JSON to the event', async () => {
     const saved = adminEvent({ eventType: 'CONCERT', pinnedFields: ['eventType'] })
