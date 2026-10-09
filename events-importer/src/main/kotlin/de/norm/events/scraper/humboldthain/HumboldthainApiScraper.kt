@@ -20,7 +20,6 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
-import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -133,7 +132,7 @@ class HumboldthainApiScraper(
                 sourceId = "${EventSource.HUMBOLDTHAIN.sourceIdPrefix}$id-$date",
                 ticketUrl = ticketUrl(node.actions, description),
                 artists = artists
-            ).withBilingualDescriptionSplit()
+            )
         }
     }
 

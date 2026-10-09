@@ -99,7 +99,7 @@ class JonnyKnuppelOverviewPageScraperTest {
 
     @Test
     fun `cuts a blurb written in English, then German, at its DE heading`() {
-        val event = titled("Trippin Pharaohs - Midsommer Verglühen")
+        val event = titled("Trippin Pharaohs - Midsommer Verglühen").toEventEntity(venueId = 1L, venueSlug = "jonny-knuppel", eventSourceId = 1L)
 
         event.description!! shouldStartWith "Trippin Pharaohs are back"
         event.descriptionAlt!! shouldStartWith "Trippin Pharaohs sind zurück"

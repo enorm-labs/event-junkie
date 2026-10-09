@@ -1,5 +1,6 @@
 package de.norm.events.scraper.atrane
 
+import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -30,6 +31,10 @@ class ATraneProgrammePageScraperTest {
             .readText()
 
     private fun on(date: LocalDate): ScrapedEvent = events.single { it.eventDate == date }
+
+    /** The row the importer stores, where the description is cut in two (#2986). */
+    private fun stored(slug: String): EventEntity =
+        events.single { it.sourceId.contains(slug) }.toEventEntity(venueId = 1L, venueSlug = "a-trane", eventSourceId = 1L)
 
     @Test
     fun `parses every concert of the programme once`() {
@@ -178,7 +183,7 @@ class ATraneProgrammePageScraperTest {
     // The programme writes "Deutsch" and "English" headings into one description (#330).
     @Test
     fun `cuts a description in both languages at its headings, with the title lines and the line-up in both`() {
-        val kera = events.single { it.sourceId.contains("mfa-kera-and-black-heritage") }
+        val kera = stored("mfa-kera-and-black-heritage")
 
         val german = kera.description.shouldNotBeNull()
         val english = kera.descriptionAlt.shouldNotBeNull()
@@ -192,7 +197,7 @@ class ATraneProgrammePageScraperTest {
 
     @Test
     fun `keeps the venue's order, so a text that opens in English stays the description`() {
-        val bresler = events.single { it.sourceId.contains("amir-bresler") }
+        val bresler = stored("amir-bresler")
 
         bresler.description.shouldNotBeNull() shouldContain "Led by Amir Bresler"
         bresler.descriptionAlt.shouldNotBeNull() shouldContain "Unter der Leitung von Amir Bresler"
@@ -201,7 +206,7 @@ class ATraneProgrammePageScraperTest {
     // English press quotes inside the German half leave it no single language, so the text stays whole.
     @Test
     fun `stores a half that mixes in the other language as published`() {
-        val ruppnig = events.single { it.sourceId.contains("mathias-ruppnigfoam") }
+        val ruppnig = stored("mathias-ruppnigfoam")
 
         ruppnig.descriptionAlt.shouldBeNull()
         ruppnig.description.shouldNotBeNull() shouldContain "ENGLISH:"

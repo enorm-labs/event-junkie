@@ -12,7 +12,6 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
-import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -76,7 +75,7 @@ class JonnyKnuppelOverviewPageScraper {
             priceBoxOffice = priceBoxOffice,
             priceNote = priceNote,
             artists = detail?.let { sectionAfter(it, LINEUP_HEADING) }?.let(::lineup).orEmpty()
-        ).withBilingualDescriptionSplit()
+        )
     }
 
     private fun parseEnd(text: String): LocalDateTime? =
