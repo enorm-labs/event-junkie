@@ -29,13 +29,14 @@ afterEach(() => {
   getMock.mockReset()
 })
 
-// Each page passes its own filter to the shared past-events pager (#2860).
+// Each page passes its own filter to the shared past-events pager (#2860), and its own slug to
+// the upcoming feed and the report line, through `useDetailPage` (#2570).
 describe.each<[string, string, Component]>([
   ['venue', 'venues', VenueDetailView],
   ['artist', 'artists', ArtistDetailView],
   ['promoter', 'promoters', PromoterDetailView],
 ])('the %s page', (filter, segment, view) => {
-  it('asks for its own past events, newest first, 20 at a time', async () => {
+  async function mountPage() {
     getMock.mockImplementation((path: string) =>
       Promise.resolve(path === '/api/events' ? { content: [] } : { slug: 'kater', name: 'Kater' }),
     )
@@ -49,11 +50,26 @@ describe.each<[string, string, Component]>([
     await router.push(`/en/${segment}/kater`)
     wrapper = mount(view, { global: { plugins: [router] } })
     await flushPromises()
+    return wrapper
+  }
+
+  it('asks for its own past events, newest first, 20 at a time', async () => {
+    await mountPage()
 
     expect(getMock).toHaveBeenCalledWith('/api/events', {
       params: {
         query: { [filter]: 'kater', to: yesterdayIso(), size: 20, sort: ['eventDate,desc'] },
       },
     })
+  })
+
+  it('asks for its own upcoming events and names its own path in the report mail', async () => {
+    const page = await mountPage()
+
+    expect(getMock).toHaveBeenCalledWith('/api/events', {
+      params: { query: { [filter]: 'kater', size: 50 } },
+    })
+    const mail = page.findAll('a').find((a) => a.attributes('href')?.startsWith('mailto:'))
+    expect(decodeURIComponent(mail?.attributes('href') ?? '')).toContain(`/en/${segment}/kater`)
   })
 })

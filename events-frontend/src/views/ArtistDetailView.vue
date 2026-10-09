@@ -1,35 +1,17 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed } from 'vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
 import TextCreditLine from '@/components/TextCreditLine.vue'
-import { usePageMeta } from '@/composables/usePageMeta'
-import { artistPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useArtist } from '@/composables/useArtist'
-import { useEventSearch } from '@/composables/useEvents'
-import { usePastEvents } from '@/composables/usePastEvents'
-import { descriptionFor } from '@/lib/description'
-import { imageCredit, owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
-import type { Locale } from '@/i18n/locales'
+import { useDetailPage } from '@/composables/useDetailPage'
+import { owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
+import { artistPageMeta } from '@/lib/pageMeta'
 import { useI18n } from 'vue-i18n'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
-/** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
-const kind = computed(() => t('detail.artist.kind'))
-
-const route = useRoute()
-const slug = computed(() => String(route.params.slug))
-
-const { data: artist, error, notFound, loading, run: loadArtist } = useArtist(() => slug.value)
-const {
-  data: events,
-  error: eventsError,
-  loading: eventsLoading,
-  run: loadEvents,
-} = useEventSearch(() => ({ artist: slug.value, size: 50 }), 'errors.subject.artistEvents')
-const { past, run: loadPastEvents } = usePastEvents(() => ({ artist: slug.value }), events)
+const { entity: artist, description, detail } = useDetailPage('artist', useArtist, artistPageMeta)
 
 const links = computed(() =>
   [
@@ -51,55 +33,13 @@ const links = computed(() =>
 // Discogs' terms prescribe the wording, so the line stays English on the German page too.
 const discogsCredit = computed(() => owesDiscogsCredit(artist.value))
 
-function reload() {
-  loadArtist()
-  loadEvents()
-  loadPastEvents()
-}
-
-onMounted(reload)
-watch(slug, reload)
-
-// The same values the meta injector will need server-side later (ADR-014 §Decision 3).
-usePageMeta(() =>
-  artist.value
-    ? artistPageMeta(artist.value)
-    : notFound.value
-      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: kind.value }))
-      : placeholderPageMeta(kind.value),
-)
-
-const credit = computed(() => imageCredit(artist.value))
-const description = computed(() =>
-  artist.value ? descriptionFor(artist.value, locale.value as Locale) : null,
-)
 const descriptionCredit = computed(() =>
   description.value ? textCredit(artist.value, description.value.side) : null,
 )
 </script>
 
 <template>
-  <BaseDetailView
-    :empty-text="t('detail.artist.empty')"
-    :error="error"
-    :events="events"
-    :events-error="eventsError"
-    :events-loading="eventsLoading"
-    :image-url="artist?.imageUrl"
-    :credit="credit"
-    :image-sources="artist?.imageSources"
-    :intrinsic-width="artist?.intrinsicWidth"
-    :intrinsic-height="artist?.intrinsicHeight"
-    :kind="kind"
-    :loading="loading"
-    :name="artist?.name"
-    :not-found="notFound"
-    :not-found-text="t('detail.artist.notFound')"
-    :past="past"
-    :ready="Boolean(artist)"
-    :report-path="`/artists/${slug}`"
-    :report-text="t('detail.artist.report')"
-  >
+  <BaseDetailView v-bind="detail">
     <template #meta>
       <DetailLinks :links="links" />
       <p v-if="discogsCredit" class="mt-2 text-meta text-muted-foreground">
