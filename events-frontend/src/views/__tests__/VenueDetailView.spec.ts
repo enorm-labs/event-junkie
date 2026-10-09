@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
 import type { VenueDetail } from '@/api/types'
+import { i18n } from '@/i18n'
 
 const { getMock } = vi.hoisted(() => ({ getMock: vi.fn<(path: string) => Promise<unknown>>() }))
 
@@ -36,9 +37,11 @@ afterEach(() => {
   wrapper?.unmount()
   wrapper = undefined
   getMock.mockReset()
+  i18n.global.locale.value = 'en'
 })
 
-async function mountVenue(venue: VenueDetail) {
+async function mountVenue(venue: VenueDetail, locale: 'en' | 'de' = 'en') {
+  i18n.global.locale.value = locale
   getMock.mockImplementation((path: string) =>
     Promise.resolve(path === '/api/venues/{slug}' ? venue : { content: [] }),
   )
@@ -49,7 +52,7 @@ async function mountVenue(venue: VenueDetail) {
       { path: '/:locale(en|de)/:rest(.*)', component: Page },
     ],
   })
-  await router.push(`/en/venues/${venue.slug}`)
+  await router.push(`/${locale}/venues/${venue.slug}`)
   wrapper = mount(VenueDetailView, { global: { plugins: [router] } })
   await flushPromises()
   return wrapper
@@ -190,5 +193,50 @@ describe('VenueDetailView', () => {
     expect(website?.attributes('href')).toBe(
       'https://katerblau.de/?utm_source=event-junkie.de&utm_medium=referral',
     )
+  })
+
+  describe.each([
+    { locale: 'en' as const, website: 'Website' },
+    { locale: 'de' as const, website: 'Website' },
+  ])('in $locale', ({ locale, website }) => {
+    it('links Instagram and Facebook after the website, untagged (#2839)', async () => {
+      const view = await mountVenue(
+        {
+          ...kater,
+          instagramUrl: 'https://www.instagram.com/katerblau/',
+          facebookUrl: 'https://www.facebook.com/katerblau/',
+        },
+        locale,
+      )
+
+      const links = view.get('a[href^="https://katerblau.de"]').element.parentElement!
+      const anchors = [...links.querySelectorAll('a')]
+      expect(anchors.map((a) => a.textContent)).toEqual([website, 'Instagram', 'Facebook'])
+      expect(anchors.map((a) => a.getAttribute('href'))).toEqual([
+        'https://katerblau.de/?utm_source=event-junkie.de&utm_medium=referral',
+        'https://www.instagram.com/katerblau/',
+        'https://www.facebook.com/katerblau/',
+      ])
+      expect(anchors.every((a) => a.getAttribute('rel') === 'noopener noreferrer')).toBe(true)
+    })
+
+    it('links Instagram alone for a venue with no website and no Facebook page', async () => {
+      const view = await mountVenue(
+        {
+          ...kater,
+          websiteUrl: null,
+          facebookUrl: null,
+          instagramUrl: 'https://www.instagram.com/katerblau/',
+        },
+        locale,
+      )
+
+      const instagram = view.get('a[href="https://www.instagram.com/katerblau/"]')
+      expect(instagram.text()).toBe('Instagram')
+      expect(instagram.element.parentElement?.querySelectorAll('a')).toHaveLength(1)
+      expect(view.findAll('a').some((a) => a.text() === website || a.text() === 'Facebook')).toBe(
+        false,
+      )
+    })
   })
 })

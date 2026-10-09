@@ -303,6 +303,60 @@ class VenueControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `stores the Instagram and Facebook links, and a PUT without them clears both`() {
+        val created =
+            createVenue(
+                VenueRequestFixtures.astra().copy(
+                    instagramUrl = "https://www.instagram.com/astra_kulturhaus/",
+                    facebookUrl = "https://www.facebook.com/astrakulturhaus/"
+                )
+            )
+        created.instagramUrl shouldBe "https://www.instagram.com/astra_kulturhaus/"
+        created.facebookUrl shouldBe "https://www.facebook.com/astrakulturhaus/"
+
+        webTestClient
+            .put()
+            .uri("/api/admin/venues/${created.id}")
+            .bodyValue(VenueRequestFixtures.astra())
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.instagramUrl")
+            .doesNotExist()
+            .jsonPath("$.facebookUrl")
+            .doesNotExist()
+    }
+
+    @Test
+    fun `refuses a social link on the wrong host, without https, or with no profile path`() {
+        val refused =
+            listOf(
+                "instagramUrl" to VenueRequestFixtures.astra(name = "Swapped").copy(instagramUrl = "https://www.facebook.com/astra/"),
+                "facebookUrl" to VenueRequestFixtures.astra(name = "Swapped").copy(facebookUrl = "https://www.instagram.com/astra/"),
+                "instagramUrl" to VenueRequestFixtures.astra(name = "Plain").copy(instagramUrl = "http://www.instagram.com/astra/"),
+                "instagramUrl" to VenueRequestFixtures.astra(name = "Bare").copy(instagramUrl = "https://www.instagram.com/"),
+                "facebookUrl" to VenueRequestFixtures.astra(name = "Lookalike").copy(facebookUrl = "https://notfacebook.com/astra/"),
+                "facebookUrl" to VenueRequestFixtures.astra(name = "Script").copy(facebookUrl = "javascript:alert(1)")
+            )
+        refused.forEach { (field, request) ->
+            webTestClient
+                .post()
+                .uri("/api/admin/venues")
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isBadRequest
+                .expectBody()
+                .jsonPath("$.errors[?(@.field == '$field')]")
+                .exists()
+        }
+        // A mobile or localised Facebook host is still Facebook.
+        createVenue(VenueRequestFixtures.astra(name = "Mobile").copy(facebookUrl = "https://m.facebook.com/astrakulturhaus")).facebookUrl shouldBe
+            "https://m.facebook.com/astrakulturhaus"
+    }
+
+    @Test
     fun `stores the last day of a closed venue, and a PUT without it reopens the venue`() {
         val created = createVenue(VenueRequestFixtures.astra().copy(closedOn = LocalDate.of(2026, 10, 31)))
         created.closedOn shouldBe LocalDate.of(2026, 10, 31)

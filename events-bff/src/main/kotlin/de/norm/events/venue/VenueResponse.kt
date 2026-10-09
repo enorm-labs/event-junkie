@@ -199,6 +199,16 @@ data class VenueDetailResponse(
     val longitude: BigDecimal?,
     @Schema(description = "URL of the venue's official website")
     val websiteUrl: String?,
+    @Schema(
+        description = "URL of the venue's Instagram profile. A plain outbound link: nothing is embedded and nothing reaches Instagram before a click.",
+        example = "https://www.instagram.com/astra_kulturhaus/"
+    )
+    val instagramUrl: String?,
+    @Schema(
+        description = "URL of the venue's Facebook page. A plain outbound link: nothing is embedded and nothing reaches Facebook before a click.",
+        example = "https://www.facebook.com/astrakulturhaus/"
+    )
+    val facebookUrl: String?,
     @Schema(description = "URL of the venue's logo or photo")
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
@@ -266,6 +276,8 @@ data class VenueDetailResponse(
                 latitude = entity.latitude,
                 longitude = entity.longitude,
                 websiteUrl = entity.websiteUrl,
+                instagramUrl = entity.instagramUrl,
+                facebookUrl = entity.facebookUrl,
                 imageUrl = image.url,
                 imageAttribution = entity.imageAttribution,
                 imageLicenceId = entity.imageLicenceId,

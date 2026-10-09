@@ -590,6 +590,16 @@ export interface components {
             longitude?: number | null;
             /** @description URL of the venue's official website */
             websiteUrl?: string | null;
+            /**
+             * @description URL of the venue's Instagram profile. A plain outbound link: nothing is embedded and nothing reaches Instagram before a click.
+             * @example https://www.instagram.com/astra_kulturhaus/
+             */
+            instagramUrl?: string | null;
+            /**
+             * @description URL of the venue's Facebook page. A plain outbound link: nothing is embedded and nothing reaches Facebook before a click.
+             * @example https://www.facebook.com/astrakulturhaus/
+             */
+            facebookUrl?: string | null;
             /** @description URL of the venue's logo or photo */
             imageUrl?: string | null;
             /**

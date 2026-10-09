@@ -33,6 +33,10 @@ data class VenueResponse(
     val longitude: BigDecimal?,
     @Schema(description = "URL of the venue's official website", example = "https://www.astra-berlin.de")
     val websiteUrl: String?,
+    @Schema(description = "URL of the venue's Instagram profile; a plain link, never fetched", example = "https://www.instagram.com/astra_kulturhaus/")
+    val instagramUrl: String?,
+    @Schema(description = "URL of the venue's Facebook page; a plain link, never fetched", example = "https://www.facebook.com/astrakulturhaus/")
+    val facebookUrl: String?,
     @Schema(description = "URL of the venue's logo or photo", example = "https://example.com/astra-logo.jpg")
     val imageUrl: String?,
     @Schema(description = "Who to credit for `imageUrl`", example = "Photographer Name, via Wikimedia Commons")
@@ -84,6 +88,8 @@ data class VenueResponse(
                 latitude = venue.latitude,
                 longitude = venue.longitude,
                 websiteUrl = venue.websiteUrl,
+                instagramUrl = venue.instagramUrl,
+                facebookUrl = venue.facebookUrl,
                 imageUrl = venue.imageUrl,
                 imageAttribution = venue.imageAttribution,
                 imageLicenceId = venue.imageLicenceId,

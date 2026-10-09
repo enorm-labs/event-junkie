@@ -35,9 +35,12 @@ VALUES
 -- A venue we know but do not import (#2766): no event_source row, a programme link, a review date. The three
 -- above each get a source, disabled so no scheduler on a seeded stack ever fetches the example URLs, because
 -- "imported" means a source points at the venue. A real `EventSource` name, so the admin API can read the rows.
-INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, venue_types, programme_url, reviewed_at)
+-- Its Instagram and Facebook links (#2839) point at `.example` hosts too, so a spider that follows them leaves nothing.
+INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, venue_types, programme_url, reviewed_at,
+                          instagram_url, facebook_url)
 VALUES ('Hinterhof Bar', 'hinterhof-bar', 'Weserstraße 99', '12045', 'neukoelln', 52.487000, 13.432000, 'https://hinterhof.example', '{bar}',
-        'https://hinterhof.example/programm', '2026-10-06 18:00:00+00');
+        'https://hinterhof.example/programm', '2026-10-06 18:00:00+00', 'https://instagram.example/hinterhof_bar/',
+        'https://facebook.example/hinterhofbar/');
 
 -- A venue that closed for good (ADR-046): it keeps its row and its page, and the venue lists leave it out.
 INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, venue_types, closed_on)

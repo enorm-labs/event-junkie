@@ -37,6 +37,8 @@ classDiagram
         BigDecimal? latitude
         BigDecimal? longitude
         String? websiteUrl
+        String? instagramUrl
+        String? facebookUrl
         String? imageUrl
         String? imageAttribution
         String? imageLicenceId
@@ -244,6 +246,8 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 | `latitude`                 | `DECIMAL(9,6)` | Yes      | Geographic latitude                                             | `52.507242`                                       |
 | `longitude`                | `DECIMAL(9,6)` | Yes      | Geographic longitude                                            | `13.451803`                                       |
 | `website_url`              | `TEXT`         | Yes      | Venue's official website                                        | `https://www.astra-berlin.de`                     |
+| `instagram_url`            | `TEXT`         | Yes      | Instagram profile, a plain link entered by hand, never fetched  | `https://www.instagram.com/astra_kulturhaus/`     |
+| `facebook_url`             | `TEXT`         | Yes      | Facebook page, a plain link entered by hand, never fetched      | `https://www.facebook.com/astrakulturhaus/`       |
 | `image_url`                | `TEXT`         | Yes      | Venue logo or photo                                             | `https://example.com/astra.jpg`                   |
 | `image_attribution`        | `TEXT`         | Yes      | Who to credit for `image_url`. Null exactly when `image_url` is | `Photographer Name, via Wikimedia Commons`        |
 | `image_licence_id`         | `TEXT`         | Yes      | SPDX identifier of the image licence                            | `CC-BY-SA-4.0`                                    |
