@@ -246,4 +246,27 @@ class SilentGreenDetailPageScraperTest {
         festivalDay.eventDate shouldBe LocalDate.of(2026, 8, 14)
         festivalDay.endDate.shouldBeNull()
     }
+
+    @Test
+    fun `applyTo flags a run free only when its blurb says so without a ticket link or a price`() {
+        val row =
+            ScrapedEvent(
+                title = "FAB Dimensional 2026 – Animation Expanded",
+                eventType = "FESTIVAL",
+                eventDate = LocalDate.of(2026, 10, 10),
+                sourceUrl = "https://www.silent-green.net/programm/detail/fab-dimensional-2026",
+                sourceId = "silent_green:2026-10-10-fab-dimensional-2026"
+            )
+        val free = SilentGreenEventDetails(description = "Öffnungszeiten: Sa 10. Oktober: 11 – 22 Uhr\nEintritt frei")
+
+        free.applyTo(row).free shouldBe true
+        // A ticket shop sells something, so one free part does not make the run free.
+        free.applyTo(row.copy(ticketUrl = "https://fa-berlin.com/festival/tickets/")).free shouldBe false
+        // Nor does a free screening beside a priced one.
+        SilentGreenEventDetails(description = "10. Oktober / Eintritt frei\n10. Oktober / Tickets 10/8,50€").applyTo(row).free shouldBe false
+        SilentGreenEventDetails(description = "Eintritt freiwillig").applyTo(row).free shouldBe false
+        // The row's own blurb is the one read, and a free row stays free.
+        free.applyTo(row.copy(description = "Tickets an der Abendkasse")).free shouldBe false
+        SilentGreenEventDetails().applyTo(row.copy(free = true)).free shouldBe true
+    }
 }
