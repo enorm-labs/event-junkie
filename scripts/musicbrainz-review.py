@@ -13,7 +13,7 @@ second). The TSV has an empty `decision` and `mbid` column per artist; the JSON 
 same rows unflattened, for a reader that judges them.
 
 `apply` reads the rows marked `PROPOSE` with an `mbid`, and is a dry run unless given `--apply`.
-**The artist PUT replaces every request field**, so it sends the artist as read with the MBID added,
+**The artist PUT replaces every request field**, so it sends those fields as read with the MBID added,
 and then compares every other field: a row whose fields moved is reported as drift and fails the run.
 A row no longer AMBIGUOUS is skipped, because someone settled it since the file was written.
 
@@ -42,6 +42,25 @@ EXIT_DRIFT = 1
 EXIT_CANNOT_RUN = 2
 # A write moves these, and nothing else may move.
 WRITTEN_FIELDS = {"musicbrainzId", "musicbrainzMatch", "musicbrainzCheckedAt", "updatedAt"}
+# ArtistRequest's fields: the importer answers 400 to any other, such as the `id` a GET returns (#814).
+REQUEST_FIELDS = (
+    "name",
+    "description",
+    "imageUrl",
+    "imageAttribution",
+    "imageLicenceId",
+    "imageSourceUrl",
+    "websiteUrl",
+    "facebookUrl",
+    "instagramUrl",
+    "youtubeUrl",
+    "bandcampUrl",
+    "soundcloudUrl",
+    "discogsUrl",
+    "wikidataUrl",
+    "residentAdvisorUrl",
+    "spotifyUrl",
+)
 COLUMNS = ["decision", "artist_id", "slug", "name", "mbid", "candidates", "events"]
 
 
@@ -212,7 +231,7 @@ def apply_rows(rows: list, get, put, write: bool) -> int:
         if not write:
             print(f"{artist_id} {before['name']}: would store {mbid}")
             continue
-        after = put(artist_id, {**before, "musicbrainzId": mbid})
+        after = put(artist_id, {**{k: before.get(k) for k in REQUEST_FIELDS}, "musicbrainzId": mbid})
         drift = sorted(k for k in before if k not in WRITTEN_FIELDS and before[k] != after.get(k))
         stored = after.get("musicbrainzMatch") == "EXACT" and after.get("musicbrainzId") == mbid
         if drift or not stored:
