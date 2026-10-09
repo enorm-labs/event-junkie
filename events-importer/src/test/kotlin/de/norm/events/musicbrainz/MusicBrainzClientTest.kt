@@ -58,12 +58,15 @@ class MusicBrainzClientTest {
     @Test
     fun `asks the artist search with the trailing slash, a quoted phrase, JSON and ten candidates`() =
         runTest {
-            // Score, type and tags come along and are ignored; tags are the CC BY-NC-SA half.
+            // Score and tags come along and are ignored; tags are the CC BY-NC-SA half. Type, disambiguation,
+            // area and life span are read for the admin's review (#2946).
             server.enqueue(
                 json(
                     """
                     {"created": "now", "count": 1, "offset": 0, "artists": [
                       {"id": "abc", "name": "Accept", "sort-name": "Accept", "country": "DE", "score": 100, "type": "Group",
+                       "disambiguation": "German heavy metal band", "area": {"id": "x", "type": "Country", "name": "Germany"},
+                       "life-span": {"begin": "1976", "ended": null},
                        "tags": [{"name": "metal"}], "aliases": [{"name": "Akzept", "type": "Artist name"}]}
                     ]}
                     """.trimIndent()
@@ -73,7 +76,19 @@ class MusicBrainzClientTest {
             val candidates = client().search("Accept")
 
             candidates shouldBe
-                listOf(MusicBrainzCandidate(id = "abc", name = "Accept", sortName = "Accept", country = "DE", aliases = listOf(MusicBrainzAlias("Akzept"))))
+                listOf(
+                    MusicBrainzCandidate(
+                        id = "abc",
+                        name = "Accept",
+                        sortName = "Accept",
+                        country = "DE",
+                        aliases = listOf(MusicBrainzAlias("Akzept")),
+                        type = "Group",
+                        disambiguation = "German heavy metal band",
+                        area = MusicBrainzArea("Germany"),
+                        lifeSpan = MusicBrainzLifeSpan(begin = "1976")
+                    )
+                )
             val recorded = server.takeRequest()
             recorded.target shouldBe "/ws/2/artist/?query=artist%3A%22Accept%22&fmt=json&limit=10"
             recorded.headers["User-Agent"]!! shouldStartWith "event-junkie/dev ( https://github.com/enorm-labs/event-junkie )"

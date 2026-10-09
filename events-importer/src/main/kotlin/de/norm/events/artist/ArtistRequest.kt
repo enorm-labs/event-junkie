@@ -81,4 +81,4 @@ data class ArtistRequest(
 ) : AttributableImage
 
 /** A MusicBrainz id as the API writes it: a lowercase UUID. */
-private const val MBID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+internal const val MBID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"

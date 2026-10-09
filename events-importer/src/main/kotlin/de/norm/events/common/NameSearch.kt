@@ -24,7 +24,15 @@ suspend fun <T : Any> R2dbcEntityTemplate.pageByName(
 ): Pair<List<T>, Long> {
     val escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     val byName = Criteria.where("name").like("%$escaped%").ignoreCase(true)
-    val criteria = narrowedBy?.and(byName) ?: byName
+    return pageMatching(type, narrowedBy?.and(byName) ?: byName, pageable)
+}
+
+/** One page of the [type] rows that match [criteria], and the count of all of them. */
+suspend fun <T : Any> R2dbcEntityTemplate.pageMatching(
+    type: Class<T>,
+    criteria: Criteria,
+    pageable: Pageable
+): Pair<List<T>, Long> {
     val rows =
         select(type)
             .matching(Query.query(criteria).with(pageable))

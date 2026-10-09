@@ -27,7 +27,8 @@ data class MusicBrainzArtist(
 /** MusicBrainz's partial dates: `1986`, `1986-09` or `1986-09-06`. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class MusicBrainzLifeSpan(
-    val begin: String? = null
+    val begin: String? = null,
+    val end: String? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

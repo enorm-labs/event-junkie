@@ -16,6 +16,18 @@ data class MusicBrainzVerdict(
     }
 }
 
+/** How a candidate's names compare with a stored name, after [MusicBrainzMatcher.fold]. */
+enum class CandidateNameMatch {
+    /** The primary name is equal: the candidate counts for an EXACT verdict. */
+    NAME,
+
+    /** Only the sort name or an alias is equal, which alone is AMBIGUOUS. */
+    OTHER_NAME,
+
+    /** No name is equal. The search returned it for a similar name. */
+    NONE
+}
+
 /**
  * The match rule of ADR-031, exactly as `scripts/musicbrainz-match.py` measured it — pure, so
  * every case the spike found is a unit test with the candidates it saw.
@@ -60,6 +72,19 @@ object MusicBrainzMatcher {
         }
         val chosen = byName.singleOrNull() ?: byName.singleOrNull { it.country == GERMANY }
         return chosen?.let { MusicBrainzVerdict(MusicBrainzMatch.EXACT, it.id) } ?: MusicBrainzVerdict.AMBIGUOUS
+    }
+
+    /** Which of [candidate]'s names folds to the same form as [name]: what makes it count for rule 1, or only for AMBIGUOUS. */
+    fun nameMatch(
+        name: String,
+        candidate: MusicBrainzCandidate
+    ): CandidateNameMatch {
+        val wanted = fold(name)
+        return when {
+            fold(candidate.name) == wanted -> CandidateNameMatch.NAME
+            candidate.otherNames().any { fold(it) == wanted } -> CandidateNameMatch.OTHER_NAME
+            else -> CandidateNameMatch.NONE
+        }
     }
 
     /**
