@@ -11,11 +11,12 @@ after _n_ issues.
 ## Important
 
 - **The user is present, and every issue ends on their answer.** This is the opposite of `/afk`: a question is the point, not a failure. Ask with the
-  question tool where there is one, one issue per turn, and never two issues in one question.
+  question tool where there is one, **up to four issues per turn**, one question per issue, and never two issues in one question. Four per turn is
+  what the tool takes, and it keeps a 60-issue milestone to an afternoon.
 - **Invoking this command is permission to edit the issues in the queue**, after the user answers for that issue: the body, the labels `afk-ok`,
-  `blocked`, `needs-decision` and `size:*`, and the board's Status and Priority. Nothing else. **Never** close an issue, change its milestone, file a
-  new one, assign one, branch, commit or start the work. Propose those and leave them to the user, [`/new-issue`](new-issue.prompt.md) or
-  [`/milestone-plan`](milestone-plan.prompt.md).
+  `blocked`, `needs-decision` and `size:*`, and the board's Status and Priority. **Close an issue or file a follow-up only when the user's answer says
+  so**, with a comment that gives the reason and the proof. **Never** change a milestone, assign an issue, branch, commit or start the work: those are
+  [`/milestone-plan`](milestone-plan.prompt.md) and [`/start-issue`](start-issue.prompt.md).
 - **The `afk-ok` conditions are [`/new-issue`](new-issue.prompt.md) step 4.** Do not restate them here or loosen them. An issue that fails one after
   the user's answer does not get the label.
 - **Verify against the tree and the API, never against the issue text.** The five staleness checks are [`/milestone-plan`](milestone-plan.prompt.md)
@@ -23,6 +24,8 @@ after _n_ issues.
 - **The decision goes into the body.** `/afk`'s subagent reads the issue with `gh issue view`, which shows the body and not the comments. A choice
   settled only in a comment is a choice the run does not see.
 - **The state file is the state.** Write each outcome to `temp/refine-<scope>-<YYYY-MM-DD>.md` before the next issue. After a compaction, read it first.
+  **Keep it in the main checkout's `temp/`** (the first line of `git worktree list`), never in a worktree's: a worktree is removed when its branch merges,
+  and its `temp/` goes with it. The board batch file and the follow-up drafts live beside it.
 
 ## Steps
 
@@ -61,14 +64,18 @@ Read the issue in full: body, comments, the Links footer, and every file, functi
     | Human      | A condition fails for good: legal, privacy, irreversible, a cluster | "Leave it for a person?", or `needs-decision` |
     | Split      | `size:XL`, or the done-when holds two PRs                           | The parts, one line each                      |
     | Wrong      | The premise is false, or the work has landed                        | "Close it?", with the proof                   |
+    | Umbrella   | The work lives in sub-issues, or in a table or skill that tracks it | "Leave as umbrella?", with the corrected list |
 
-**Prepare the next issue while the user answers.** Start one background subagent (`Explore`, read-only) with steps 2.1 to 2.4 for the next issue in
-the queue, and have it return the outcome, the evidence and a draft question. Check its evidence before you ask: a subagent's verdict is a claim
-too.
+An umbrella never gets `afk-ok`. Its refined block lists the children and says what closes it.
+
+**Prepare the next batch while the user answers.** Start one background subagent (`Explore`, read-only) per three to five issues, with steps 2.1 to 2.4,
+and have it return each issue's outcome, the evidence and a draft question. Give it the decisions made earlier in the run that bear on its issues.
+Check its evidence before you ask: a subagent's verdict is a claim too.
 
 ### 3 · Ask
 
-One question per issue, at most three choices, the recommended one first. Above the question, in a few lines: the issue's number and title, the
+One question per issue, up to four issues per turn, at most three choices each, the recommended one first. Put a Human or Umbrella issue in the same
+turn as an Answerable one: it needs only a yes. Above the question, in a few lines: the issue's number and title, the
 outcome, the staleness findings, and the conditions that fail. Back each option with its effect: what `/afk` will then build, and for a product choice
 how many rows on production it touches (the public API answers that). Always offer **Skip** — the issue stays as it is, and the state file says so.
 
@@ -104,12 +111,16 @@ gh issue edit <n> --add-label afk-ok --remove-label blocked
   step 5.
 - Pace the edits: `sleep 0.45` between `gh` calls.
 
-Then write the outcome to the state file, `#<n> — afk-ok` or `#<n> — skipped: <reason>`, and go on to the next issue.
+Then write the outcome to the state file, `#<n> — afk-ok` or `#<n> — skipped: <reason>`, and go on to the next issue. A follow-up the answer calls for
+(a split-off part, a blocker for a person) goes to the state file's drafts list, not to the tracker yet.
 
 ### 5 · End
 
 - Stop at the end of the queue, at `max`, or when the user says stop.
-- `scripts/issue-board.sh batch temp/refine-board-<date>.txt`.
+- **File the drafts the user approved**, by [`/new-issue`](new-issue.prompt.md): one duplicate search for the set, then `gh issue create` per draft,
+  taking each number from its output. Attach each child as a real sub-issue (`gh api -X POST …/issues/<parent>/sub_issues -F sub_issue_id=<id>`;
+  an issue has one parent only), and write each number into its parent's refined block.
+- `scripts/issue-board.sh batch temp/refine-board-<date>.txt`, with the new issues in it.
 - Finish the state file with the counts, then `scripts/format-markdown.sh temp/refine-<scope>-<date>.md`. Delete `temp/refine-body-*.md`.
 - Report, in this order: the issues now `afk-ok` and their lanes, the ones proposed for closing or splitting, the ones left for a person, and the next
   command, `/afk`.
