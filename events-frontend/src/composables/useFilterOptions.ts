@@ -4,6 +4,7 @@ import { useFormat } from '@/composables/useFormat'
 import { DISTRICTS } from '@/lib/districts'
 import { EVENT_TYPES } from '@/lib/eventTypes'
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
+import { PARTY_FEATURES } from '@/lib/partyFeatures'
 import { FILTER_LANGUAGES } from '@/lib/spokenLanguages'
 import { TIMES_OF_DAY } from '@/lib/timesOfDay'
 import { VENUE_CHARACTERS } from '@/lib/venueCharacters'
@@ -14,6 +15,7 @@ export function useFilterOptions() {
   const {
     formatEventType,
     formatFamily,
+    formatPartyFeature,
     formatSpokenLanguage,
     formatTimeOfDay,
     formatVenueCharacter,
@@ -28,6 +30,9 @@ export function useFilterOptions() {
     ),
     languageOptions: computed<FilterOption[]>(() =>
       FILTER_LANGUAGES.map((code) => ({ value: code, label: formatSpokenLanguage([code]) })),
+    ),
+    featureOptions: computed<FilterOption[]>(() =>
+      PARTY_FEATURES.map((slug) => ({ value: slug, label: formatPartyFeature(slug) })),
     ),
     familyOptions: computed<FilterOption[]>(() =>
       GENRE_FAMILIES.map((family) => ({ value: family, label: formatFamily(family) })),

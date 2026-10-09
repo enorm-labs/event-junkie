@@ -79,6 +79,7 @@ class EventUpsertServiceDetailUnavailableTest {
                 fixedClock,
                 PerformerTyping(mockk(), eventRepository),
                 mockk(relaxed = true),
+                mockk(relaxed = true),
                 mockk(relaxed = true)
             )
         coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored).asFlow()

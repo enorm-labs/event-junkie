@@ -159,6 +159,21 @@ describe('EventDetailView', () => {
     expect((await mountEvent(night)).text()).not.toContain('Further details from')
   })
 
+  it('shows the features in display order, each a link to the list filtered by it (#2631)', async () => {
+    const view = await mountEvent({ ...night, features: ['open-end', 'flinta-only'] })
+
+    const section = view.get('[data-testid="event-features"]')
+    expect(section.findAll('a').map((link) => link.text())).toEqual(['FLINTA* only', 'Open end'])
+    expect(hrefOf(view, 'FLINTA* only')).toBe('/en/events?feature=flinta-only')
+    expect(section.text()).toContain("As the event's own text states it.")
+  })
+
+  it('shows no feature section for a night that states none', async () => {
+    const view = await mountEvent({ ...night, features: [] })
+
+    expect(view.find('[data-testid="event-features"]').exists()).toBe(false)
+  })
+
   it("leaves an artist's Bandcamp link untagged", async () => {
     const view = await mountEvent(night)
 

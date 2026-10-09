@@ -67,7 +67,13 @@ data class EventFilterParams(
             "Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. " +
                 "An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing."
     )
-    val language: List<String>? = null
+    val language: List<String>? = null,
+    @field:Parameter(
+        description =
+            "Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every " +
+                "given feature matches. The venue's character tags do not count. An unknown feature matches nothing."
+    )
+    val feature: List<String>? = null
 ) {
     /**
      * Combines these criteria with an optional date range into the repository-level [EventFilter].
@@ -98,7 +104,8 @@ data class EventFilterParams(
             excludeSoldOut = excludeSoldOut,
             onlyFree = free,
             timesOfDay = timeOfDay.orEmpty().map { it.lowercase() }.normalizedSlugs(),
-            spokenLanguages = language.orEmpty().map { it.lowercase() }.normalizedSlugs()
+            spokenLanguages = language.orEmpty().map { it.lowercase() }.normalizedSlugs(),
+            features = feature.orEmpty().map { it.lowercase() }.normalizedSlugs()
         )
 }
 

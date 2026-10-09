@@ -49,6 +49,17 @@ describe('useEventFilters', () => {
     expect(filters.value.language).toEqual(['en', 'de'])
   })
 
+  it('reads one party feature or a repeated one as a list, whatever the type filter says', () => {
+    const { filters } = useEventFilters()
+    expect(filters.value.feature).toBeUndefined()
+
+    route.query = { feature: 'queer' }
+    expect(filters.value.feature).toEqual(['queer'])
+
+    route.query = { eventType: 'CONCERT', feature: ['queer', '', 'open-end'] }
+    expect(filters.value.feature).toEqual(['queer', 'open-end'])
+  })
+
   it('reads one venue type or a repeated one as a list', () => {
     const { filters } = useEventFilters()
     expect(filters.value.venueType).toBeUndefined()

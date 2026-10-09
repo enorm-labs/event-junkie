@@ -68,6 +68,10 @@ describe('filterLabels', () => {
     expect(labels()({ eventType: ['COMEDY'], language: ['en'] })).toEqual(['Comedy', 'English'])
   })
 
+  it('names the party features', () => {
+    expect(labels()({ feature: ['flinta-only', 'open-end'] })).toEqual(['FLINTA* only', 'Open end'])
+  })
+
   it('leaves prices and sold-out out of the name', () => {
     expect(labels()({ minPrice: 5, maxPrice: 20, excludeSoldOut: true })).toEqual([])
   })

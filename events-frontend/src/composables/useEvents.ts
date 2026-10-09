@@ -31,6 +31,8 @@ export interface EventSearchParams {
   timeOfDay?: string[]
   /** Any of these spoken-language codes; sent as a repeated parameter. An unknown language drops out. */
   language?: string[]
+  /** Every one of these party features (`PARTY_FEATURES`); sent as a repeated parameter. */
+  feature?: string[]
   page?: number
   size?: number
   sort?: string[]
@@ -63,6 +65,7 @@ export type EventFilterValues = Pick<
   | 'free'
   | 'timeOfDay'
   | 'language'
+  | 'feature'
 >
 
 /** Today's events for the Home "Tonight" section. */

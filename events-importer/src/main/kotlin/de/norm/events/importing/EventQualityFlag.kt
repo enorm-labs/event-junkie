@@ -7,7 +7,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.stereotype.Repository
 
-/** Why the sync gate kept a value out of an event. The names are the `event_quality_flag.kind` CHECK values (V100). */
+/** Why the sync gate kept a value out of an event. The names are the `event_quality_flag.kind` CHECK values (V100, V132). */
 enum class QualityFlagKind {
     /** An artist name with nothing a slug can keep, such as `-` (#1553). */
     SLUGLESS_ARTIST,
@@ -22,7 +22,13 @@ enum class QualityFlagKind {
     GENRE_EQUALS_TITLE,
 
     /** A word in the genre field that names no genre, such as `Ausstellung`. */
-    NON_GENRE_TOKEN
+    NON_GENRE_TOKEN,
+
+    /**
+     * A cue for a party feature that no clear phrase settles, such as a bare `FLINTA*` (#2631). The
+     * value is the feature's slug, a colon and the cue in its words. Recorded by [EventFeatureSync].
+     */
+    UNCERTAIN_PARTY_FEATURE
 }
 
 /** One value the sync gate kept out of [eventId], as the venue published it. */
@@ -52,6 +58,14 @@ class EventQualityFlagRepository(
             .fetch()
             .rowsUpdated()
             .awaitFirstOrNull()
+        add(flags)
+    }
+
+    /**
+     * Adds [flags] beside the ones the events already have. Only for a writer that runs after
+     * [replaceFor] in the same import, so its rows are as fresh as the gate's.
+     */
+    suspend fun add(flags: Collection<EventQualityFlag>) {
         val rows = flags.distinct()
         if (rows.isEmpty()) return
         template.databaseClient

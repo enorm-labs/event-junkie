@@ -56,6 +56,10 @@ Accept: application/json
 GET {{bff-host}}/api/events?timeOfDay=late&timeOfDay=evening
 Accept: application/json
 
+### Filter by party feature, as the event's own text states it; repeat it and an event needs every one
+GET {{bff-host}}/api/events?feature=queer&feature=open-end
+Accept: application/json
+
 ### Filter by artist slug
 GET {{bff-host}}/api/events?artist=actors
 Accept: application/json

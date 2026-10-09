@@ -86,7 +86,8 @@ class EventUpsertServiceStaleCleanupTest {
                 clock = fixedClock,
                 performerTyping = PerformerTyping(mockk(), eventRepository),
                 contentStamp = mockk(relaxed = true),
-                enrichmentRepository = mockk(relaxed = true)
+                enrichmentRepository = mockk(relaxed = true),
+                featureSync = mockk(relaxed = true)
             )
 
         // Default stubs for the upsert pipeline (we're testing stale cleanup, not upsert)

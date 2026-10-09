@@ -68,7 +68,13 @@ data class EventFilter(
      * Any of these spoken-language codes (#2524); empty imposes no constraint. A row with no known
      * language never matches, and `subtitle_language` is not read. [EventFilterParams] normalizes them.
      */
-    val spokenLanguages: List<String> = emptyList()
+    val spokenLanguages: List<String> = emptyList(),
+    /**
+     * Every one of these party-feature slugs (#2631), because a feature is a requirement and not an
+     * alternative, as the venue list's character tags are (#2670). Empty imposes no constraint.
+     * [EventFilterParams] normalizes them.
+     */
+    val features: List<String> = emptyList()
 ) {
     companion object {
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
@@ -362,7 +368,7 @@ class EventSearchRepository(
     /**
      * Applies the many-to-many filters as `EXISTS` subqueries from one template parameterized by
      * [Association]; each correlates on `event_id = e.id`, so it tests membership without
-     * multiplying the outer rows.
+     * multiplying the outer rows. The party features are an `IN` over their own table.
      */
     private fun appendAssociationFilters(
         filter: EventFilter,
@@ -386,6 +392,14 @@ class EventSearchRepository(
         if (filter.familySlugs.isNotEmpty()) {
             conditions += Association.GENRE.existsClause(column = "family", param = "familySlugs")
             params["familySlugs"] = filter.familySlugs
+        }
+        // The key is (event_id, feature), so the count is of distinct features.
+        if (filter.features.isNotEmpty()) {
+            conditions +=
+                "e.id IN (SELECT ef.event_id FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.feature IN (:features) " +
+                "GROUP BY ef.event_id HAVING count(*) = :featureCount)"
+            params["features"] = filter.features
+            params["featureCount"] = filter.features.size.toLong()
         }
     }
 

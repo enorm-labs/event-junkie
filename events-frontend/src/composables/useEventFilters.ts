@@ -32,6 +32,7 @@ export function useEventFilters() {
     const districts = queryList('district')
     const venueTypes = queryList('venueType')
     const timesOfDay = queryList('timeOfDay')
+    const features = queryList('feature')
     // Sent only while the bar offers it, so a hidden control never narrows the list (#2524).
     const languages = languageFilterApplies(eventTypes) ? queryList('language') : []
     return {
@@ -48,6 +49,7 @@ export function useEventFilters() {
       free: queryString('free') === 'true' || undefined,
       timeOfDay: timesOfDay.length ? timesOfDay : undefined,
       language: languages.length ? languages : undefined,
+      feature: features.length ? features : undefined,
     }
   })
 

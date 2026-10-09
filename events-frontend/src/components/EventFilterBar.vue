@@ -81,6 +81,7 @@ const moreCount = computed(
     [
       queryList('timeOfDay').length,
       queryList('eventType').length,
+      queryList('feature').length,
       languageFilterApplies(queryList('eventType')) && queryList('language').length,
       queryList('family').length || queryString('genre'),
       queryString('venue'),
