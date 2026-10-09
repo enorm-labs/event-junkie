@@ -126,8 +126,8 @@ const router = createRouter({
           name: 'about',
           meta: { titleKey: 'pageTitle.about', descriptionKey: 'pageDescription.about' },
           component: localisedView({
-            en: () => import('../views/AboutView.en.vue'),
-            de: () => import('../views/AboutView.de.vue'),
+            en: () => import('../views/AboutView.en.md'),
+            de: () => import('../views/AboutView.de.md'),
           }),
         },
         // Legal pages under /legal/*, so later additions have a home. Lazy-loaded: read rarely.
@@ -165,8 +165,8 @@ const router = createRouter({
           name: 'forVenues',
           meta: { titleKey: 'pageTitle.forVenues', descriptionKey: 'pageDescription.forVenues' },
           component: localisedView({
-            en: () => import('../views/legal/ForVenuesView.en.vue'),
-            de: () => import('../views/legal/ForVenuesView.de.vue'),
+            en: () => import('../views/legal/ForVenuesView.en.md'),
+            de: () => import('../views/legal/ForVenuesView.de.md'),
           }),
         },
       ],

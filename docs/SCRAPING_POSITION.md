@@ -306,7 +306,7 @@ The description texts are our own prose (#328), so removing one takes nothing fr
 no reason asked. The events stay listed under the venue.
 
 **The site publishes this route.** `/{locale}/legal/for-venues` carries it in both languages, German authoritative,
-and the footer links it from every page. `ForVenuesView.de.vue` is the page. It also states in short form what §2 of
+and the footer links it from every page. `ForVenuesView.de.md` is the page. It also states in short form what §2 of
 this document describes. A change to the importer therefore reaches a venue operator, and not only this file.
 
 **Why this matters more than the arguments above.** Most disputes of this kind start with an annoyed operator and end

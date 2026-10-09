@@ -6,6 +6,9 @@
   // ops-page-css.mjs uses the two packages @tailwindcss/vite ships beside it at the same version, so
   // listing them would be a second pin to keep in step.
   "ignoreDependencies": ["@tailwindcss/node", "@tailwindcss/oxide"],
+  // The router imports `.md` pages (#471), which makes every `.md` a project file; these two are
+  // documentation, not pages.
+  "ignoreFiles": ["AGENTS.md", "README.md"],
   // A constant exported for its doc comment or a test does no harm while the file still uses it.
   "ignoreExportsUsedInFile": true,
   "ignoreIssues": {
