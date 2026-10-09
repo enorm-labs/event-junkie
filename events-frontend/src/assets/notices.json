@@ -1327,25 +1327,25 @@
         },
         {
           "name": "@intlify/core-base",
-          "version": "11.4.12",
+          "version": "11.4.13",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/devtools-types",
-          "version": "11.4.12",
+          "version": "11.4.13",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/message-compiler",
-          "version": "11.4.12",
+          "version": "11.4.13",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/shared",
-          "version": "11.4.12",
+          "version": "11.4.13",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
@@ -1915,7 +1915,7 @@
         },
         {
           "name": "vue-i18n",
-          "version": "11.4.12",
+          "version": "11.4.13",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
