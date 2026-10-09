@@ -311,6 +311,7 @@ class EventFieldMappingTest {
         parseTitleStatus("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe "CANCELLED"
         parseTitleStatus("The Act (verschoben)") shouldBe "POSTPONED"
         parseTitleStatus("Verlegt ins Bi Nuu – BRKN") shouldBe "RELOCATED"
+        parseTitleStatus("POSTPONED: Nina – Hallo hallo hallo Tour") shouldBe "POSTPONED"
     }
 
     @Test
@@ -446,11 +447,22 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `stripTitleStatusMarker removes a postponement and a marker wrapped in stars or dashes`() {
+        stripTitleStatusMarker("POSTPONED: Nina – Hallo hallo hallo Tour") shouldBe "Nina – Hallo hallo hallo Tour"
+        stripTitleStatusMarker("NEUNUNDNEUNZIG -Abgesagt-") shouldBe "NEUNUNDNEUNZIG"
+        stripTitleStatusMarker("MOLIY - *Abgesagt*") shouldBe "MOLIY"
+        stripTitleStatusMarker("*Cancelled* The Act") shouldBe "The Act"
+    }
+
+    @Test
     fun `stripTitleStatusMarker leaves a sentence that is the notice, and a marker-free title, alone`() {
         stripTitleStatusMarker("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe
             "Da Konzert von Scarfold und Los Mierda faellt leider aus!"
         stripTitleStatusMarker("Berliner Weisse") shouldBe "Berliner Weisse"
         stripTitleStatusMarker("Abgesagt") shouldBe "Abgesagt"
+        stripTitleStatusMarker("Cancelled") shouldBe "Cancelled"
+        stripTitleStatusMarker("Abgesagte Lesung") shouldBe "Abgesagte Lesung"
+        stripTitleStatusMarker("*Abgesagte* Lesung") shouldBe "*Abgesagte* Lesung"
     }
 
     // --- parseSchemaEventStatus ---

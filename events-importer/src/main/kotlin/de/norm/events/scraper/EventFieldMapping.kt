@@ -52,13 +52,14 @@ private val CANCELLED_TEXT = Regex("""abgesagt|absage|cancel|\b(?:f(?:ä|ae)llt\
 /**
  * A status word a venue writes into the title itself: Kantine am Berghain's `Olga Myko -
  * Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los Mierda faellt leider aus!`, Uber
- * Eats Music Hall's `ABSAGE: …` (#1560), Uber Arena's `VENUE ÄNDERUNG: …` (#1771).
+ * Eats Music Hall's `ABSAGE: …` (#1560), Uber Arena's `VENUE ÄNDERUNG: …` (#1771), Lark's
+ * `POSTPONED: …` (#2985).
  * Word-anchored, and the bare "cancel" of [parseEventStatus] is not accepted: "Cancel Culture"
  * is a film.
  */
 private val TITLE_STATUS_PATTERN =
     Regex(
-        """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt""" +
+        """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|postponed|verlegt""" +
             """|venue\s?(?:ä|ae)nderung)\b""",
         RegexOption.IGNORE_CASE
     )
@@ -71,15 +72,16 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
 
 /**
  * A status marker glued to the front or end of a title (`Olga Myko - Abgesagt`, `(cancelled) The
- * Act`, `The Act [ABGESAGT!]`, `VENUE ÄNDERUNG: Jazeek`) with its separator and brackets. Whole
+ * Act`, `The Act [ABGESAGT!]`, `MOLIY - *Abgesagt*`, `POSTPONED: Nina`, `VENUE ÄNDERUNG: Jazeek`)
+ * with its separator and its brackets, stars or dashes (#2985). Whole
  * words only: "Abgesagte Lesung" is a title, not a marker. A
  * "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a sentence that is the notice (Wild
  * at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]]?\s*[-–—:|]*\s*""" +
-            """|\s*[-–—:|]*\s*[(\[]?\s*\b(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*$""",
+        """^\s*[(\[*-]?\s*(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]*-]?\s*[-–—:|]*\s*""" +
+            """|\s*[-–—:|]*\s*[(\[*-]?\s*\b(?:abgesagt|absage|cancell?ed|postponed|venue\s?(?:ä|ae)nderung)!?\s*[)\]*-]?\s*$""",
         RegexOption.IGNORE_CASE
     )
 

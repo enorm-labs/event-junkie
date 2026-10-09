@@ -451,4 +451,25 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             rows.map { it.billingOrder } shouldBe listOf(0, 1, 2, 3)
         }
     }
+
+    // #2985: a status marker the title carried is no part of the act's name.
+    @Test
+    fun `a status marker comes off a billed name, and a band called Cancelled stays`() {
+        runBlocking {
+            val sourceId = "status:1"
+            val event = persistEvent(sourceId)
+            val lineup =
+                listOf(
+                    ScrapedArtist(name = "Postponed: Nina", titleDerived = true),
+                    ScrapedArtist(name = "Neunundneunzig -Abgesagt-"),
+                    ScrapedArtist(name = "Cancelled")
+                )
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = lineup)))
+
+            val rows = eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().sortedBy { it.billingOrder }
+            val names = artistRepository.findAllById(rows.map { it.artistId }).toList().associate { it.id to it.name }
+            rows.map { names[it.artistId] } shouldBe listOf("Nina", "Neunundneunzig", "Cancelled")
+        }
+    }
 }
