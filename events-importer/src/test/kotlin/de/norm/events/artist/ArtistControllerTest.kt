@@ -186,6 +186,27 @@ class ArtistControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `an act with an ARTIST_SLUG_OVERRIDES entry is created beside its namesake and keeps its slug on rename`() {
+        val gore = createArtist(ArtistRequestFixtures.create(name = "Gore"))
+        val goere = createArtist(ArtistRequestFixtures.create(name = "Göre"))
+
+        // A rename recomputes the slug; without the override it would be `gore` and answer 409 (#2942).
+        webTestClient
+            .put()
+            .uri("/api/admin/artists/${goere.id}")
+            .bodyValue(ArtistRequestFixtures.create(name = "GÖRE"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.slug")
+            .isEqualTo("goere")
+
+        deleteArtist(gore.id)
+        deleteArtist(goere.id)
+    }
+
+    @Test
     fun `PUT artist with blank name returns 400`() {
         val created = createArtist()
 

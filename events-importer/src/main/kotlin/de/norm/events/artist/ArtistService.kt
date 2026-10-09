@@ -1,7 +1,6 @@
 package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Service
 /**
  * Service encapsulating artist business logic.
  *
- * Slugs are always auto-generated from the artist name using [SlugGenerator].
+ * Slugs are always auto-generated from the artist name using [artistSlugFor], as the import derives them.
  */
 @Service
 class ArtistService(
@@ -48,7 +47,7 @@ class ArtistService(
      * (e.g. `"The Adicts"` → `"the-adicts"`).
      */
     suspend fun create(request: ArtistRequest): ArtistResponse {
-        val slug = SlugGenerator.slugify(request.name)
+        val slug = artistSlugFor(request.name)
         // Pre-check for slug uniqueness to provide a clear error message instead of
         // relying on the DB constraint, which would produce a generic 409 response.
         ensureSlugAvailable(request.name, slug)
@@ -95,7 +94,7 @@ class ArtistService(
             artistRepository.findById(id)
                 ?: throw ArtistNotFoundException(id)
 
-        val slug = SlugGenerator.slugify(request.name)
+        val slug = artistSlugFor(request.name)
         // Only check for conflicts if the slug actually changed — renaming to the same
         // effective slug (e.g. fixing capitalization) should not trigger a false positive.
         if (slug != existing.slug) {

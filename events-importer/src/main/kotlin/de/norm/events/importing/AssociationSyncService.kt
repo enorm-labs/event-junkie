@@ -3,6 +3,7 @@ package de.norm.events.importing
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.artist.artistSlugFor
 import de.norm.events.artist.canonicalArtistName
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventArtistRepository
@@ -37,6 +38,7 @@ import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.net.URI
+import java.text.Normalizer
 
 /**
  * Resolves artists, promoters and genre tags by slug, auto-creating unknown ones, and
@@ -237,7 +239,7 @@ class AssociationSyncService(
         // Canonicalize before slugging, as the promoter path does: a curated NAME_CORRECTIONS entry can
         // change the slug ("OXO86" resolves to "Oxo 86", `oxo-86`), and slugging the raw name would look
         // up a different row than resolveOrCreateArtist creates.
-        val allArtistSlugs = scrapedArtists.map { SlugGenerator.slugify(canonicalArtistName(it.name)) }.toSet()
+        val allArtistSlugs = scrapedArtists.map { artistSlugFor(it.name) }.toSet()
         val artistCache =
             artistRepository
                 .findBySlugIn(allArtistSlugs)
@@ -245,10 +247,12 @@ class AssociationSyncService(
                 .associateBy { it.slug }
                 .toMutableMap()
 
+        warnAboutAccentOnlyMatches(scrapedArtists, artistCache)
+
         // Auto-create only the artists not in the database, with the display name canonicalized first so
         // an act is not frozen SHOUTING by whichever venue imported it first.
         scrapedArtists
-            .distinctBy { SlugGenerator.slugify(canonicalArtistName(it.name)) }
+            .distinctBy { artistSlugFor(it.name) }
             .forEach { resolveOrCreateArtist(canonicalArtistName(it.name), artistCache) }
 
         return artistCache
@@ -377,7 +381,29 @@ class AssociationSyncService(
             }.toMap()
     }
 
-    private fun slugOf(name: String) = SlugGenerator.slugify(canonicalArtistName(name))
+    private fun slugOf(name: String) = artistSlugFor(name)
+
+    /**
+     * A billed name that reaches a stored row whose name differs only by accents may be a different act, as `Göre`
+     * reached the US band `Gore`. It may also be one act spelled two ways, so this warns and never splits (#2942).
+     */
+    private fun warnAboutAccentOnlyMatches(
+        scrapedArtists: List<ScrapedArtist>,
+        artistCache: Map<String, ArtistEntity>
+    ) {
+        scrapedArtists
+            .map { canonicalArtistName(it.name) }
+            .distinct()
+            .forEach { billed ->
+                val stored = artistCache[artistSlugFor(billed)] ?: return@forEach
+                if (differsOnlyByAccents(billed, stored.name)) {
+                    logger.warn {
+                        "Billed '$billed' resolved to artist '${stored.name}' (${stored.slug}): the names differ only by accents. " +
+                            "A different act needs an ARTIST_SLUG_OVERRIDES entry"
+                    }
+                }
+            }
+    }
 
     /** Resolves an artist by name from [artistCache], or auto-creates one. See [resolveOrCreate]. */
     private suspend fun resolveOrCreateArtist(
@@ -388,7 +414,8 @@ class AssociationSyncService(
             name = name,
             cache = artistCache,
             insertIfAbsent = { slug -> artistRepository.insertIfAbsent(name, slug) },
-            findBySlug = { slug -> artistRepository.findBySlug(slug) }
+            findBySlug = { slug -> artistRepository.findBySlug(slug) },
+            slug = artistSlugFor(name)
         )
 
     // -- Artist association syncing --
@@ -427,7 +454,7 @@ class AssociationSyncService(
             val desiredArtistIds = mutableSetOf<Long>()
 
             for ((index, scrapedArtist) in desiredArtists.withIndex()) {
-                val slug = SlugGenerator.slugify(canonicalArtistName(scrapedArtist.name))
+                val slug = artistSlugFor(scrapedArtist.name)
                 val artistId = requireNotNull(artistCache[slug]?.id) { "Artist '$slug' must be resolved before syncing associations" }
 
                 // `add` returns false when this artist is already desired for this event, as when a lineup
@@ -819,14 +846,15 @@ class AssociationSyncService(
      * @param cache mutable slug to entity map shared across the batch.
      * @param insertIfAbsent conflict-tolerant insert; returns rows inserted.
      * @param findBySlug fetches the entity by slug, always present after [insertIfAbsent].
+     * @param slug the row's slug; an artist passes [artistSlugFor], which can differ from the name's.
      */
     private suspend fun <T : Any> resolveOrCreate(
         name: String,
         cache: MutableMap<String, T>,
         insertIfAbsent: suspend (slug: String) -> Int,
-        findBySlug: suspend (slug: String) -> T?
+        findBySlug: suspend (slug: String) -> T?,
+        slug: String = SlugGenerator.slugify(name)
     ): T {
-        val slug = SlugGenerator.slugify(name)
         cache[slug]?.let { return it }
 
         val created = insertIfAbsent(slug) == 1
@@ -857,3 +885,13 @@ data class AssociationOutcome(
     /** Pinned join tables the source would have changed (ADR-042). */
     val pinsKept: Int = 0
 )
+
+/** Whether [a] and [b] are the same letters in any case once accents are removed, and differ with them kept. */
+internal fun differsOnlyByAccents(
+    a: String,
+    b: String
+): Boolean = !a.equals(b, ignoreCase = true) && stripAccents(a).equals(stripAccents(b), ignoreCase = true)
+
+private fun stripAccents(s: String): String = Normalizer.normalize(s, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
+
+private val COMBINING_MARKS = Regex("\\p{M}+")

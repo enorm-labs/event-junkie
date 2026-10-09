@@ -1,13 +1,12 @@
 package de.norm.events.importing
 
 import de.norm.events.artist.ArtistOccupationRepository
-import de.norm.events.artist.canonicalArtistName
+import de.norm.events.artist.artistSlugFor
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toSet
 import org.springframework.stereotype.Service
@@ -57,7 +56,7 @@ class PerformerTyping(
     private fun headlinerSlugs(event: ScrapedEvent): List<String> =
         event.artists
             .filter { it.role == ArtistRole.HEADLINER.name }
-            .map { SlugGenerator.slugify(canonicalArtistName(it.name)) }
+            .map { artistSlugFor(it.name) }
             .filter { it.isNotEmpty() }
 
     companion object {
