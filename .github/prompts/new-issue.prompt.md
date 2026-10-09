@@ -63,7 +63,8 @@ milestone and board fields.
         - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh` is
           the exception.
 
-        Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label.
+        Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label,
+        or [`/refine-issues`](refine-issues.prompt.md) can later.
 
     - **Milestone**: `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` is the path to launch; `Phase 2 — Coverage & polish` is post-launch;
       `Phase 3` / `Phase 4` hold epics. **No milestone is a valid answer** — it means unscheduled.
