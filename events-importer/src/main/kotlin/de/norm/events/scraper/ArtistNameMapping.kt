@@ -205,7 +205,7 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * Orchester`), which the conjunction split keeps attached, and a dash tail ending in `!`, which
  * is billing prose. A `: <night> 2027` tail is the year-ended tour rule again with a colon
  * (#305), and a `— more TBA` or bare `tba` tail is a placeholder glued to the act (#1564, #1843). A show
- * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761).
+ * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761), and so is `(Album Set)` (#2960).
  *
  * From #1841: a compound tour word after a dash (`Die Abschiedstour`), an anniversary without a
  * dash when it reads `<n> Years Of …` or `<n> Jahre Jubiläum` (`Mutabor 35 Jahre Jubiläum`), and
@@ -236,7 +236,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert""" +
-            """|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show|(?:all\s+)?vinyl(?:\s+(?:set|only))?)\)\s*$""" +
+            """|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set)\)\s*$""" +
             """|\s+(?:dj[\s-]?set|hybrid|(?:acoustic|akustik)[\s-]?set)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
@@ -831,7 +831,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         // A duo named for its two members, Tobi Stock and Manfred Pankow (Speakeazy).
         "stock & pankow",
         // The folk-blues duo Issy Ferris and Archie Sylvester, billed by Monarch as its whole title (#2952).
-        "ferris & sylvester"
+        "ferris & sylvester",
+        // A German metal band Neue Zukunft bills as the support after a `+` (#2958).
+        "prophet & flesh"
     )
 
 /**
@@ -1305,11 +1307,11 @@ private fun commaBillOf(
 /**
  * A leading series label: one ending in "#<n>:" ("OFF THE RAILS #5: …"), or a Berlin festival
  * named before a dash ("Jazzfest Berlin – Wendy Eisenberg", #1841), or a tribute's
- * "Celebrating <artist> –" frame; the acts follow. Non-greedy,
+ * "Celebrating <artist> –" frame, or the promoter series "Indie in Town –" (#2959); the acts follow. Non-greedy,
  * and a non-blank series name is required, so "9:3" or "H2:O" is untouched.
  */
 private val SERIES_PREFIX_PATTERN =
-    Regex("""^.+?#\s*\d+\s*:\s*|^(?i:\p{L}+fest(?:ival)?\s+berlin\s+[-–—]\s+)|^(?i:celebrating\s+[^-–—]+?\s+[-–—]\s+)""")
+    Regex("""^.+?#\s*\d+\s*:\s*|^(?i:\p{L}+fest(?:ival)?\s+berlin\s+[-–—]\s+)|^(?i:celebrating\s+[^-–—]+?\s+[-–—]\s+)|^(?i:indie\s+in\s+town\s+[-–—]\s+)""")
 
 /**
  * Strips a leading "<series> #<n>:" label: `"OFF THE RAILS #5: Blake Harley & Superior Motive"`

@@ -1429,6 +1429,9 @@ class ArtistNameMappingTest {
         headlinersFromTitle("HAUTE & FREDDY").map { it.name } shouldContainExactly listOf("HAUTE & FREDDY")
         // Monarch bills the duo as its whole title (#2952).
         headlinersFromTitle("FERRIS & SYLVESTER").map { it.name } shouldContainExactly listOf("FERRIS & SYLVESTER")
+        // Neue Zukunft bills the band as the support after a `+` (#2958).
+        headlinersFromTitle("Dazzling Killmen + Prophet & Flesh").map { it.name } shouldContainExactly
+            listOf("Dazzling Killmen", "Prophet & Flesh")
         // SO36 bills the punk band as its whole title (#2414); the pin folds case, umlaut included.
         splitHeadlinerTitle("Pöbel & Gesocks") shouldContainExactly listOf("Pöbel & Gesocks")
         splitHeadlinerTitle("PÖBEL & GESOCKS") shouldContainExactly listOf("PÖBEL & GESOCKS")
@@ -1602,6 +1605,13 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `headlinersFromTitle drops the Indie in Town series lead before the comma split`() {
+        // Urban Spree's title fused the series onto the first act as `Indie in Town - Vence` (#2959).
+        headlinersFromTitle("Indie in Town - Vence, M. Lucky, Mirrors For Princes, Yunni").map { it.name } shouldContainExactly
+            listOf("Vence", "M. Lucky", "Mirrors For Princes", "Yunni")
+    }
+
+    @Test
     fun `headlinersFromTitle keeps a name with a colon but no series edition marker`() {
         // No "#<n>:" marker, so nothing is stripped (guards a real "9:3"-style name).
         headlinersFromTitle("Bleech 9:3") shouldContainExactly
@@ -1615,6 +1625,7 @@ class ArtistNameMappingTest {
         stripSeriesPrefix("OFF THE RAILS #5: Blake Harley & Superior Motive") shouldBe "Blake Harley & Superior Motive"
         stripSeriesPrefix("Off the Rails #4: Some Act") shouldBe "Some Act"
         stripSeriesPrefix("Series # 12 : Act") shouldBe "Act"
+        stripSeriesPrefix("INDIE IN TOWN – Vence") shouldBe "Vence"
     }
 
     @Test
@@ -1622,6 +1633,7 @@ class ArtistNameMappingTest {
         stripSeriesPrefix("9:3") shouldBe "9:3"
         stripSeriesPrefix("H2:O") shouldBe "H2:O"
         stripSeriesPrefix("Just A Band") shouldBe "Just A Band"
+        stripSeriesPrefix("Indie in Town") shouldBe "Indie in Town"
     }
 
     @Test
@@ -1767,6 +1779,8 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Steve Norman (von Spandau Ballet) & The Sleevz") shouldBe "Steve Norman & The Sleevz"
         stripArtistSuffix("Paula Paula (Zusatzshow)") shouldBe "Paula Paula"
         stripArtistSuffix("DJ Hell (Vinyl Set)") shouldBe "DJ Hell"
+        stripArtistSuffix("Sonny Smiles (Album Set)") shouldBe "Sonny Smiles"
+        stripArtistSuffix("Aexhy & Sonny Smiles (album-set)") shouldBe "Aexhy & Sonny Smiles"
         stripArtistSuffix("Sean Steinfeger (OHSHITF*CKYES") shouldBe "Sean Steinfeger"
 
         stripArtistSuffix("Maynd (Chi)") shouldBe "Maynd (Chi)"
