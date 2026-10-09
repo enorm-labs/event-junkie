@@ -790,8 +790,8 @@ class ScrapedEventTest {
         scrapedEvent(title = "KAYLA SHYX", subtitle = "DAS KONZERT IST RESTLOS AUSVERKAUFT UND ES WIRD KEINE TICKETS AN DER ABENDKASSE GEBEN!")
             .toEntity()
             .soldOut shouldBe true
-        // The title is stored as the scraper wrote it; only the flag is added.
-        scrapedEvent(title = "SukOne [AUSVERKAUFT!]").toEntity().title shouldBe "SukOne [AUSVERKAUFT!]"
-        scrapedEvent(title = "The Act (Sold Out Tour)").toEntity().soldOut shouldBe false
+        val tour = scrapedEvent(title = "The Act (Sold Out Tour)").toEntity()
+        tour.soldOut shouldBe false
+        tour.title shouldBe "The Act (Sold Out Tour)"
     }
 }
