@@ -9,7 +9,7 @@ person decided about that promoter.
 | `stored_name`    | The display name the row had on staging before V023                                                                                                                                                                                                                                                         |
 | `slug`           | The row's slug after V023                                                                                                                                                                                                                                                                                   |
 | `kind`           | `promoter`, `media` (a magazine or station that presents), `venue` (a venue crediting itself), `sponsor`, `party` (a series with no company behind it), `artist` (an act credited as its own promoter), `junk` (a fragment a scraper put in the slot), or `unverified` (a single credit nothing else names) |
-| `website`        | The promoter's own site, opened and read. Empty where none was found, or none exists                                                                                                                                                                                                                        |
+| `website`        | The promoter's own site, opened and read. `none` where the promoter has no site; the script then clears the stored link. Empty keeps what is stored                                                                                                                                                         |
 | `name`           | The spelling that site uses. Where it differs from `stored_name`, `PromoterNormalizer` pins it and a data migration (V023 onward) renames the row                                                                                                                                                           |
 | `description_de` | One to three sentences on the promoter, in German: since when, what it books, where in Berlin. Our own prose, from the site's about page                                                                                                                                                                    |
 | `description_en` | The same text in English, written by hand                                                                                                                                                                                                                                                                   |
@@ -22,7 +22,8 @@ finds under a matching name, because a row in this table is a review (#1336). Th
 sets that column. So `GET /api/admin/promoters?reviewed=false` and
 `promoter-duplicates.py --unreviewed` list what an import minted since. Nothing else is written. German goes in as the
 description and English as the alternate, because German is the site's authoritative language
-(ADR-013). The `name` column reaches the database through the data migrations (V023, V025,
+(ADR-013). An empty `website` keeps the stored link, and `none` clears it: the script sends
+`websiteUrl: null` (#2601). Replacing or clearing a stored link needs `--force`. The `name` column reaches the database through the data migrations (V023, V025,
 V027, V029, V030) and the normalizer. A rename through the API changes the slug, and the next import would then mint
 the old row again.
 
