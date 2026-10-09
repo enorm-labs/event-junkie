@@ -147,6 +147,7 @@ the first column. It fails in two cases:
 | `legal.spec.ts`                    | e2e: legal pages                                                            |
 | `seo.spec.ts`                      | e2e: head tags, sitemaps, structured data                                   |
 | `a11y.spec.ts`                     | e2e quality check: accessibility, not a feature                             |
+| `keyboard-flows.spec.ts`           | e2e quality check: main flows by keyboard alone, not a feature              |
 | `layout-shift.spec.ts`             | e2e quality check: layout shift, not a feature                              |
 | `page-title.spec.ts`               | e2e quality check: page titles, not a feature                               |
 | `scroll-restoration.spec.ts`       | e2e quality check: scroll position, not a feature                           |
