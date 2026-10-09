@@ -16,6 +16,7 @@ it produces an alert that never fires rather than an error.
     a source that never worked     -> ej-source-never-succeeded   (#618)
     a source that emptied out      -> ej-source-emptied           (#700)
     a source quiet for a month     -> ej-source-quiet             (#1498)
+    a data-quality share regressed -> ej-data-quality-regression  (#2604)
     metrics being dropped          -> ej-ingest-shedding          (#625)
     translation failing open       -> ej-translations-failing      (#1301)
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
@@ -509,6 +510,37 @@ rule(
     period_minutes=10,
     frequency_minutes=5,
     silence_minutes=12 * 60,
+)
+
+# --- Data quality, against its own week (#2604) --------------------------------
+#
+# Pillar 2 of `docs/DATA_QUALITY_STRATEGY.md`. The importer's 03:00 snapshot compares
+# each source's `QualityIssue` shares with their median over the seven days before, in
+# `data_quality_snapshot`, and sets `data_quality_regression{source,metric}` to 1 for a
+# share more than ten points worse on a source with at least ten events
+# (`DataQualityRegressionCheck`). The comparison happens in the importer because the
+# baseline is the table; PromQL would need a week of gauge history, which a restart
+# empties until the next 03:00.
+#
+# The gauge holds its value until the next snapshot, so a regression fires once and
+# the 24h silence covers the rest of the day. `max by (source, metric)` collapses pod
+# generations; the `bool` keeps an all-zero day a 0 rather than an empty result
+# (trap 2). After a restart the series is absent until 03:00, and `--check` reports
+# NO DATA in that window.
+rule(
+    "ej-data-quality-regression",
+    "A source's data quality got worse overnight: one of its `QualityIssue` shares is more than "
+    "ten points above its own 7-day median, on a source with at least ten events. A scraper "
+    "that lost a field or a normalizer change is the usual cause. The importer's WARN line "
+    "`Data quality regressed` names the source, the metric and both numbers; "
+    "`GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` lists the events.",
+    "sum(max by (source, metric) (data_quality_regression) > bool 0)",
+    ">",
+    0,
+    stream_name="data_quality_regression",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
 )
 
 # --- The platform underneath --------------------------------------------------

@@ -50,6 +50,28 @@ class DataQualityMetrics(
             }.set(value)
     }
 
+    private val regressions = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
+
+    /**
+     * Sets `data_quality_regression{source,metric}` to 1 for each regressed verdict and to 0 for every
+     * other one (#2604).
+     *
+     * A series that today's check did not judge — a source that was deleted, a metric that was
+     * retired — goes back to 0 first. Otherwise yesterday's 1 would stay in the process until the
+     * next restart, and the alert would keep naming a source that is gone.
+     */
+    fun publishRegressions(verdicts: List<DataQualityRegressionCheck.Verdict>) {
+        regressions.values.forEach { it.set(0) }
+        verdicts.forEach { verdict ->
+            regressions
+                .computeIfAbsent(verdict.source to verdict.metric) { (s, m) ->
+                    val holder = AtomicLong(0)
+                    registry.gauge(REGRESSION_GAUGE, Tags.of(TAG_SOURCE, s, TAG_METRIC, m), holder) { it.get().toDouble() }
+                    holder
+                }.set(if (verdict.regressed) 1 else 0)
+        }
+    }
+
     companion object {
         /**
          * `data_quality{source="badehaus",metric="concertsWithoutArtist"}`.
@@ -59,6 +81,12 @@ class DataQualityMetrics(
          * became `db_events` and broke every rule written against the documented name (§7).
          */
         const val GAUGE = "data.quality"
+
+        /**
+         * `data_quality_regression{source,metric}`: 1 while today's share is more than ten points
+         * worse than the source's 7-day median, else 0. `ej-data-quality-regression` reads it.
+         */
+        const val REGRESSION_GAUGE = "data.quality.regression"
         const val TAG_SOURCE = "source"
         const val TAG_METRIC = "metric"
 

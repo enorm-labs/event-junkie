@@ -825,6 +825,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                        |
 | `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end       |
 | `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising          |
+| `data_quality_regression{source=…,metric=…}`   | Gauge                                 | 1/0 — a share over ten points above its 7-day median (#2604)                       |
 | `images.urls{state}`                           | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
 | `images.derivatives.backlog`                   | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
 | `images.fetch{outcome}`                        | Counter                               | fetched / unchanged / failed                                                       |

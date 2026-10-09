@@ -129,6 +129,7 @@ loses its silence window and can fire again immediately.
 | `ej-catalogue-emptying`        | future events fall below 500, from a normal ~3,000                                                                                                 | zero events        |
 | `ej-source-emptied`            | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700))       | zero events        |
 | `ej-source-quiet`              | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))           | zero events        |
+| `ej-data-quality-regression`   | a source's `QualityIssue` share is more than ten points above its 7-day median ([#2604](https://github.com/enorm-labs/event-junkie/issues/2604))   | —                  |
 | `ej-node-disk-filling`         | less than 15% of the node's filesystem is free                                                                                                     | disk filling       |
 | `ej-certificate-expiry`        | the soonest certificate is inside 14 days                                                                                                          | certificate expiry |
 | `ej-ingest-shedding`           | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                                    | —                  |
