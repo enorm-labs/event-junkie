@@ -32,6 +32,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isSlugless
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitBracketedGuest
+import de.norm.events.scraper.splitOnEmoji
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.slug.SlugGenerator
@@ -285,6 +286,8 @@ class AssociationSyncService(
      * after the commit, and the orphan sweep's grace day outlasts the next daily import. Then
      * [unglueSeriesTails].
      *
+     * An emoji run between two names separates two acts ([splitOnEmoji], #3038), so it is split before the `b2b` step.
+     *
      * @return the billed artists by `sourceId`, and the held-back names by `sourceId`.
      */
     private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Pair<Map<String, List<ScrapedArtist>>, Map<String, List<ScrapedArtist>>> {
@@ -300,6 +303,7 @@ class AssociationSyncService(
                     event.artists
                         .map { it.copy(name = stripTitleStatusMarker(it.name)) }
                         .flatMap { artist -> splitGuest(artist) }
+                        .flatMap { artist -> splitOnEmoji(artist) }
                         .flatMap { artist -> splitBackToBack(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
                         .filterNot { refusal(it.name) != null || (it.titleDerived && festival) }
@@ -784,6 +788,7 @@ class AssociationSyncService(
             event.artists
                 .map { it.copy(name = stripTitleStatusMarker(it.name)) }
                 .flatMap(::splitGuest)
+                .flatMap { artist -> splitOnEmoji(artist) }
                 .flatMap { artist -> splitBackToBack(artist) }
                 .mapNotNull { artist -> refusal(stripArtistSuffix(artist.name))?.let { it to artist.name.trim() } }
         val promoters = heldBack.map { QualityFlagKind.HELD_BACK_PROMOTER_NAME to it.name.trim() }
