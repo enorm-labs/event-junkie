@@ -38,7 +38,8 @@ import java.time.MonthDay
  *
  * **The prose is only sometimes a lineup, and the venue marks which.** A `____________` rule
  * introduces a floor (`HOPPER`, `ACID BOGEN`, `EXTRA`, sometimes suffixed `by <presenter>`)
- * and the lines beneath are that floor's DJs — what [ScrapedArtist.stage] is for. A summary
+ * and the lines beneath are that floor's DJs — what [ScrapedArtist.stage] is for. A `SPECIALS`
+ * block under the same rule is the night's side programme and bills nobody. A summary
  * with no rule is a description — a garden evening, a film night, a residency's schedule notes
  * — and yields **no** artists, rather than minting "free entry till 20:00" or a film synopsis.
  *
@@ -145,7 +146,8 @@ class KaterOverviewPageScraper(
                 }
 
                 expectFloorName -> {
-                    stage = line.replace(FLOOR_PRESENTER_SUFFIX, "").trim().takeIf { it.isNotBlank() }
+                    // A `SPECIALS` block lists the night's side programme, so no stage means its lines bill nobody (#2967).
+                    stage = line.replace(FLOOR_PRESENTER_SUFFIX, "").trim().takeIf { it.isNotBlank() && !SPECIALS_FLOOR.matches(it) }
                     expectFloorName = false
                 }
 
@@ -228,6 +230,9 @@ class KaterOverviewPageScraper(
 
         /** A `by <presenter>` tail on a floor name, dropped so the same floor groups across nights. */
         val FLOOR_PRESENTER_SUFFIX = Regex("""\s+by\s+.*$""", RegexOption.IGNORE_CASE)
+
+        /** The block heading for the night's side programme (`Katerobics`, `Chapeau Club`), never a DJ floor. */
+        val SPECIALS_FLOOR = Regex("""specials?\s*:?""", RegexOption.IGNORE_CASE)
 
         /**
          * A floor-block line that opens with a plus is a programme note, never an act, and one that

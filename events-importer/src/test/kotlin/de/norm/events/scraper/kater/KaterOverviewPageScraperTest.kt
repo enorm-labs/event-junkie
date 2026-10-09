@@ -120,6 +120,66 @@ class KaterOverviewPageScraperTest {
         artists.map { it.name } shouldContainExactly listOf("Nümphe", "Adri Tüde")
     }
 
+    // FOREVER 25 billed its `SPECIALS` block, `Chapeau Club` and `Katerobics`, as DJs (#2967); #event-1778 on 2026-10-09.
+    @Test
+    fun `bills nobody under a SPECIALS heading and keeps the EXTRA floors`() {
+        val html =
+            """
+            <article class="post-1778 event type-event" id="event-1778">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">09.10.</span><span class="date-title">FOREVER 25 curated by Enorm in Form</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Fr. 09.10 22:00 — Mo. 12.10 01:00</p>
+                    <p>__________________<br />
+                    EXTRA by Enorm in Form</p>
+                    <p>Revengedeko<br />
+                    __________________<br />
+                    EXTRAEXTRA by SUMPFKRÜGE</p>
+                    <p>Chief Torkel<br />
+                    __________________<br />
+                    SPECIALS</p>
+                    <p>Chapeau Club<br />
+                    GYMie Kater + Rave Olympiad<br />
+                    Katerobics</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
+
+        artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Revengedeko", "DJ", "EXTRA"),
+                ScrapedArtist("Chief Torkel", "DJ", "EXTRAEXTRA")
+            )
+    }
+
+    @Test
+    fun `reads a specials heading in any case, and bills the floor after it again`() {
+        val html =
+            """
+            <article class="post-2 event type-event" id="event-2">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">10.10.</span><span class="date-title">Night</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Sa. 10.10 22:00 — So. 11.10 10:00</p>
+                    <p>__________________<br />
+                      Specials:  </p>
+                    <p>Katerobics<br />
+                    __________________<br />
+                    HOPPER</p>
+                    <p>Mona Moore</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
+
+        artists shouldContainExactly listOf(ScrapedArtist("Mona Moore", "DJ", "HOPPER"))
+    }
+
     @Test
     fun `strips the presenter suffix so a floor groups across nights`() {
         // The rule reads "ACID BOGEN by Wabi-Sabi & Flirt Records" on this night and plain
