@@ -34,19 +34,11 @@ data class EventSummaryResponse(
     val eventType: EventType,
     @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
     val status: EventStatus,
-    @Schema(
-        description = "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status",
-        example = "Hole44"
-    )
+    @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
-    @Schema(
-        description =
-            "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
-                "never German by default. Not the language of the description.",
-        example = "[\"en\"]"
-    )
+    @Schema(description = SPOKEN_LANGUAGES_DESCRIPTION, example = "[\"en\"]")
     val spokenLanguages: List<String>? = null,
-    @Schema(description = "The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU", example = "de")
+    @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
     val subtitleLanguage: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
@@ -54,44 +46,21 @@ data class EventSummaryResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
-    @Schema(
-        description =
-            "Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender " +
-                "carries the Monday here, a run of weeks its closing day.",
-        example = "2026-06-15"
-    )
+    @Schema(description = END_DATE_DESCRIPTION, example = "2026-06-15")
     val endDate: LocalDate?,
-    @Schema(description = "Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.", example = "10:00")
+    @Schema(description = END_TIME_DESCRIPTION, example = "10:00")
     val endTime: LocalTime?,
-    @Schema(
-        description =
-            "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
-                "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.",
-        example = "23:00"
-    )
+    @Schema(description = ASSUMED_START_TIME_DESCRIPTION, example = "23:00")
     val assumedStartTime: LocalTime?,
-    @Schema(
-        description =
-            "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
-                "and the venue's own URL until then (ADR-019)."
-    )
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
-    @Schema(
-        description =
-            "Better formats of the same poster, best first, for a <picture> element. Empty when the image is not " +
-                "cached, in which case `imageUrl` is all there is."
-    )
+    @Schema(description = POSTER_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
     @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
-    @Schema(
-        description =
-            "True when a licence prohibition removed the image. False both when the venue " +
-                "published none and when one is shown — a placeholder renders either way.",
-        example = "false"
-    )
+    @Schema(description = IMAGE_WITHHELD_DESCRIPTION, example = "false")
     val imageWithheld: Boolean,
     @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
     val pricePresale: BigDecimal?,
@@ -198,19 +167,11 @@ data class EventDetailResponse(
     val eventType: EventType,
     @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
     val status: EventStatus,
-    @Schema(
-        description = "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status",
-        example = "Hole44"
-    )
+    @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
-    @Schema(
-        description =
-            "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
-                "never German by default. Not the language of the description.",
-        example = "[\"en\"]"
-    )
+    @Schema(description = SPOKEN_LANGUAGES_DESCRIPTION, example = "[\"en\"]")
     val spokenLanguages: List<String>? = null,
-    @Schema(description = "The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU", example = "de")
+    @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
     val subtitleLanguage: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
@@ -218,44 +179,21 @@ data class EventDetailResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
-    @Schema(
-        description =
-            "Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender " +
-                "carries the Monday here, a run of weeks its closing day.",
-        example = "2026-06-15"
-    )
+    @Schema(description = END_DATE_DESCRIPTION, example = "2026-06-15")
     val endDate: LocalDate?,
-    @Schema(description = "Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.", example = "10:00")
+    @Schema(description = END_TIME_DESCRIPTION, example = "10:00")
     val endTime: LocalTime?,
-    @Schema(
-        description =
-            "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
-                "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.",
-        example = "23:00"
-    )
+    @Schema(description = ASSUMED_START_TIME_DESCRIPTION, example = "23:00")
     val assumedStartTime: LocalTime?,
-    @Schema(
-        description =
-            "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
-                "and the venue's own URL until then (ADR-019)."
-    )
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
-    @Schema(
-        description =
-            "Better formats of the same poster, best first, for a <picture> element. Empty when the image is not " +
-                "cached, in which case `imageUrl` is all there is."
-    )
+    @Schema(description = POSTER_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
     @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
-    @Schema(
-        description =
-            "True when a licence prohibition removed the image. False both when the venue " +
-                "published none and when one is shown — a placeholder renders either way.",
-        example = "false"
-    )
+    @Schema(description = IMAGE_WITHHELD_DESCRIPTION, example = "false")
     val imageWithheld: Boolean,
     @Schema(
         description =
@@ -386,3 +324,31 @@ data class LineupEntryResponse(
     @Schema(description = "End of the set in Berlin time, or null", example = "2026-09-27T04:30:00+02:00")
     val setEnd: OffsetDateTime? = null
 )
+
+// The descriptions the summary and the detail response both carry, each stating a rule a client
+// acts on. Written once, so a correction cannot reach one response and miss the other.
+private const val RELOCATED_TO_DESCRIPTION =
+    "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status"
+private const val SPOKEN_LANGUAGES_DESCRIPTION =
+    "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
+        "never German by default. Not the language of the description."
+private const val SUBTITLE_LANGUAGE_DESCRIPTION = "The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU"
+private const val END_DATE_DESCRIPTION =
+    "Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender " +
+        "carries the Monday here, a run of weeks its closing day."
+private const val END_TIME_DESCRIPTION = "Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`."
+private const val ASSUMED_START_TIME_DESCRIPTION =
+    "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
+        "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess."
+private const val IMAGE_URL_DESCRIPTION =
+    "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
+        "and the venue's own URL until then (ADR-019)."
+
+// Not IMAGE_SOURCES_DESCRIPTION: that name holds the generic image wording in `image/`, and an
+// event's poster is described in its own words.
+private const val POSTER_SOURCES_DESCRIPTION =
+    "Better formats of the same poster, best first, for a <picture> element. Empty when the image is not " +
+        "cached, in which case `imageUrl` is all there is."
+private const val IMAGE_WITHHELD_DESCRIPTION =
+    "True when a licence prohibition removed the image. False both when the venue " +
+        "published none and when one is shown — a placeholder renders either way."
