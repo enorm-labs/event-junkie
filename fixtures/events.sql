@@ -363,6 +363,9 @@ SELECT e.id, a.id, 'HEADLINER', 0 FROM events.event e, events.artist a WHERE e.s
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-translated' AND g.slug = 'jazz';
 
+-- An operator's pick (#1262): it leads the first page of /events until the window passes, though its date puts it later.
+UPDATE events.event SET featured_until = now() + INTERVAL '14 days' WHERE source_id = 'fixture-translated';
+
 -- When each page last read differently: the event sitemap's `lastmod` (#2768). The importer hashes what the page shows,
 -- and any value stands in for that here.
 UPDATE events.event SET content_hash = 'fixture', content_changed_at = now() - INTERVAL '2 days'

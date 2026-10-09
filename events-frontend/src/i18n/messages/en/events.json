@@ -75,6 +75,7 @@
     "showResultsCount": "Show {count} event | Show {count} events"
   },
   "card": {
+    "ourPick": "Our pick",
     "soldOut": "Sold out",
     "free": "Free",
     "past": "Past",

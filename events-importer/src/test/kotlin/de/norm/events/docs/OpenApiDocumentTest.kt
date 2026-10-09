@@ -48,4 +48,19 @@ class OpenApiDocumentTest : BaseControllerTest() {
         described.shouldNotBeEmpty()
         undescribed.shouldBeEmpty()
     }
+
+    @Test
+    fun `the pick is a nullable date-time, not the Optional that carries its presence`() {
+        val featuredUntil =
+            document()
+                .path("components")
+                .path("schemas")
+                .path("EventRequest")
+                .path("properties")
+                .path("featuredUntil")
+
+        // OpenAPI 3.1 spells a nullable type as a list.
+        featuredUntil.path("type").values().map { it.asString() } shouldBe listOf("string", "null")
+        featuredUntil.path("format").asString() shouldBe "date-time"
+    }
 }

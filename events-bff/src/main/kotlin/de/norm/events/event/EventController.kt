@@ -1,6 +1,5 @@
 package de.norm.events.event
 
-import de.norm.events.common.PageResponse
 import de.norm.events.common.QueryParameters
 import de.norm.events.common.ResponseCache
 import io.swagger.v3.oas.annotations.Operation
@@ -40,7 +39,8 @@ class EventController(
         description =
             "Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` " +
                 "or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, " +
-                "the list holds only events that have not ended."
+                "the list holds only events that have not ended. The first page carries `lead`, the featured event that " +
+                "leads it, when one matches the filters."
     )
     suspend fun list(
         @ParameterObject
@@ -51,13 +51,15 @@ class EventController(
         @PageableDefault(size = 20, sort = ["eventDate"])
         pageable: Pageable,
         exchange: ServerWebExchange
-    ): PageResponse<EventSummaryResponse> {
+    ): EventListPage {
         SEARCH_PARAMS.rejectUnknownIn(exchange)
         val filter = filters.toFilter(from = range.from, to = range.to, running = range.running)
-        // The meter counts what is handed out, so it stays outside the cache.
-        return cache.get(SearchKey(filter, pageable)) { eventService.search(filter, pageable) }.also {
-            metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, it.content.size)
-        }
+        // The meter counts what is handed out, so it stays outside the cache. Only the first page has a
+        // lead (#1262): a pick on every page would lead each one.
+        return cache
+            .get(SearchKey(filter, pageable)) {
+                EventListPage.of(eventService.search(filter, pageable), if (pageable.pageNumber == 0) eventService.lead(filter) else null)
+            }.also { metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, it.content.size) }
     }
 
     @GetMapping("/today")

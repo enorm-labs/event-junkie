@@ -1,16 +1,23 @@
 <script lang="ts" setup>
+import { Sparkles } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
+import BaseBadge from '@/components/BaseBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
 import { useGenreFamilies } from '@/composables/useGenreFamilies'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
-import { CARD_CLASS, CARD_POSTER_CLASS } from '@/lib/utils'
+import {
+  CARD_CLASS,
+  CARD_LEAD_CLASS,
+  CARD_LEAD_POSTER_ASPECT,
+  CARD_POSTER_CLASS,
+} from '@/lib/utils'
 import { useViewportFocus } from '@/composables/useViewportFocus'
 
 const props = withDefaults(
@@ -25,8 +32,14 @@ const props = withDefaults(
     as?: 'h2' | 'h3' | 'h4'
     /** The first card of a list, whose poster is a likely LCP element: see `CachedImage`. */
     priority?: boolean
+    /**
+     * The curated pick that leads `/events` (#1262): both grid columns, a 2:1 poster, an "Our pick"
+     * pill on the poster and a larger title. The heading level stays `as`, because a bigger tile is not a
+     * higher rank in the outline.
+     */
+    lead?: boolean
   }>(),
-  { as: 'h3', priority: false },
+  { as: 'h3', priority: false, lead: false },
 )
 
 const { formatEventDates, formatEventTime, formatShortDate } = useFormat()
@@ -51,18 +64,26 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
 </script>
 
 <template>
-  <RouterLink :to="localePath(`/events/${event.slug}`)" :class="CARD_CLASS">
-    <div ref="posterEl" :data-focus="posterFocused || undefined" :class="CARD_POSTER_CLASS">
+  <RouterLink
+    :to="localePath(`/events/${event.slug}`)"
+    :class="[CARD_CLASS, lead && CARD_LEAD_CLASS]"
+  >
+    <div
+      ref="posterEl"
+      :data-focus="posterFocused || undefined"
+      :class="[CARD_POSTER_CLASS, 'relative']"
+    >
       <!-- `sizes` describes the real slot: the whole viewport below `sm`, about 474 px in the
-           two-column grid above. A wrong value silently downloads the wrong file. -->
+           two-column grid above, and both columns, 960 px, for the lead. A wrong value silently
+           downloads the wrong file. -->
       <CachedImage
         v-if="event.imageUrl"
         :src="event.imageUrl"
         :sources="event.imageSources"
         :alt="event.title ?? ''"
         :priority="priority"
-        aspect="aspect-poster"
-        sizes="(min-width: 640px) 474px, 100vw"
+        :aspect="lead ? CARD_LEAD_POSTER_ASPECT : 'aspect-poster'"
+        :sizes="lead ? '(min-width: 640px) 960px, 100vw' : '(min-width: 640px) 474px, 100vw'"
         img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
       />
       <EventPoster
@@ -71,7 +92,18 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         :eyebrow="posterDate"
         :event-type="event.eventType"
         :families="genreFamilies(event.genreTags)"
+        :aspect="lead ? CARD_LEAD_POSTER_ASPECT : undefined"
       />
+      <!-- The lead's pill says why this tile is larger: a person chose it (#1262). A sibling of the
+           image, not inside it, so it keeps its colour while the poster is grey. -->
+      <BaseBadge
+        v-if="lead"
+        variant="primary"
+        class="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 font-mono text-body tracking-eyebrow uppercase"
+      >
+        <Sparkles aria-hidden="true" class="size-4" />
+        {{ t('events.card.ourPick') }}
+      </BaseBadge>
     </div>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
@@ -89,7 +121,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         <component
           :is="as"
           :title="eventLabel(event.title, event.venue?.name)"
-          class="truncate text-lede font-semibold"
+          :class="['truncate font-semibold', lead ? 'text-section' : 'text-lede']"
         >
           {{ event.title }}
         </component>

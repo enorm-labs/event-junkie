@@ -84,6 +84,8 @@ data class EventEntity(
     val contentHash: String? = null,
     /** When [contentHash] last changed: the sitemap's `lastmod` (#2768). Unlike [updatedAt], an unchanged re-import keeps it. */
     val contentChangedAt: Instant? = null,
+    /** Until when an operator features the event on the events list (#1262); null when not. An import keeps it. */
+    val featuredUntil: Instant? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 )

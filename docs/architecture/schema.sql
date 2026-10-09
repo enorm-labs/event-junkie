@@ -175,6 +175,7 @@ CREATE TABLE events.event (
     description_alt_refused_hash text,
     content_hash text,
     content_changed_at timestamp with time zone,
+    featured_until timestamp with time zone,
     CONSTRAINT event_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL) AND (description_alt_origin IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL) AND (description_alt_origin IS NOT NULL)))),
     CONSTRAINT event_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT event_description_alt_origin_valid CHECK (((description_alt_origin IS NULL) OR (description_alt_origin = ANY (ARRAY['PUBLISHER'::text, 'MACHINE'::text])))),
@@ -961,6 +962,12 @@ CREATE INDEX idx_event_event_date ON events.event USING btree (event_date);
 --
 
 CREATE INDEX idx_event_event_source_id ON events.event USING btree (event_source_id);
+
+--
+-- Name: idx_event_featured_until; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_featured_until ON events.event USING btree (featured_until) WHERE (featured_until IS NOT NULL);
 
 --
 -- Name: idx_event_genre_tag_event_id; Type: INDEX; Schema: events; Owner: -

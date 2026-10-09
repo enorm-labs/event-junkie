@@ -46,6 +46,16 @@ export const CARD_POSTER_CLASS = 'group/poster -mx-4 sm:mx-0'
  */
 export const CARD_GRID_CLASS = 'grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2'
 
+/**
+ * The curated pick that leads `/events` (#1262): both columns of a {@link CARD_GRID_CLASS} from
+ * `sm` up. Its poster box is {@link CARD_LEAD_POSTER_ASPECT}, because a 3:2 box twice as wide is
+ * 640 px tall for one event at 1440 px.
+ */
+export const CARD_LEAD_CLASS = 'sm:col-span-2'
+
+/** The lead card's poster box, the `--aspect-lead` token: 480 px tall at 1440 px, 179 px at 390 px (#1247). */
+export const CARD_LEAD_POSTER_ASPECT = 'aspect-lead'
+
 /** The compact view's list of `EventRow`/`VenueRow` text rows: one column, hairlines between. */
 export const CARD_LIST_CLASS = 'divide-y divide-border border-y border-border'
 

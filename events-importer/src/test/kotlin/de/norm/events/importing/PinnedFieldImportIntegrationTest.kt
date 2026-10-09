@@ -24,8 +24,10 @@ import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Optional
 
 /**
  * ADR-042 through the admin API and the importer merge against a real PostgreSQL: a hand edit pins
@@ -162,6 +164,21 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
             unpin(id, "title")
         }
 
+    @Test
+    fun `an operator's pick pins nothing, and the next import keeps it, since no source knows of it`(): Unit =
+        runBlocking {
+            import(published())
+            val id = storedId()
+            val until = Instant.parse("2099-12-31T22:00:00Z")
+
+            put(id, get(id).toRequest().copy(featuredUntil = Optional.of(until))).pinnedFields shouldBe emptyList()
+            import(published(priceNote = "Box office only"))
+
+            val stored = get(id)
+            stored.priceNote shouldBe "Box office only"
+            stored.featuredUntil shouldBe until
+        }
+
     /** Runs [block] with both import loggers captured at DEBUG. */
     private suspend fun <T> capturingLogs(block: suspend () -> T): Pair<T, List<ILoggingEvent>> {
         val loggers = listOf(EventUpsertService::class, AssociationSyncService::class).map { LoggerFactory.getLogger(it.java) as Logger }
@@ -244,6 +261,7 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
             soldOut = soldOut,
             free = free,
             artists = artists.map { EventArtistRequest(it.artistId, it.role, it.billingOrder, it.stage) },
-            promoterIds = promoterIds
+            promoterIds = promoterIds,
+            featuredUntil = Optional.ofNullable(featuredUntil)
         )
 }

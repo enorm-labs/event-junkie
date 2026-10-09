@@ -100,7 +100,8 @@ class PinnedFieldTest {
 
     @Test
     fun `every editable request property is a pinnable column`() {
-        val notPinnable = setOf("sourceId", "artists", "promoterIds")
+        // No import writes the pick (#1262), so there is nothing to keep it from.
+        val notPinnable = setOf("sourceId", "artists", "promoterIds", "featuredUntil")
         val editable =
             EventRequest::class
                 .primaryConstructor!!

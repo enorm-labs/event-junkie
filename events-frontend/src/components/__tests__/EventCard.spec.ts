@@ -407,4 +407,52 @@ describe('EventCard', () => {
     })
     expect(wrapper.text()).toContain('Past')
   })
+
+  it('spans both columns as the lead, with a 2:1 poster and the same heading level', () => {
+    const withImage = {
+      ...event,
+      imageUrl: '/api/images/abc/192.jpg',
+      imageSources: [{ type: 'image/avif', srcset: '/api/images/abc/768.avif 768w' }],
+    }
+    const lead = mount(EventCard, {
+      props: { event: withImage, lead: true, as: 'h2' },
+      global: { stubs },
+    })
+    const card = mount(EventCard, { props: { event: withImage, as: 'h2' }, global: { stubs } })
+
+    // Twice the width: both columns of the two-column grid, from `sm` where the grid has two.
+    expect(lead.get('a').classes()).toContain('sm:col-span-2')
+    expect(card.get('a').classes()).not.toContain('sm:col-span-2')
+    expect(lead.get('picture').classes()).toContain('aspect-lead')
+    expect(lead.get('source').attributes('sizes')).toBe('(min-width: 640px) 960px, 100vw')
+    // A bigger tile is not a higher rank: axe's `heading-order` reads the element, not its size.
+    expect(lead.findAll('h2')).toHaveLength(1)
+    expect(lead.find('h1').exists()).toBe(false)
+    expect(lead.get('h2').classes()).toContain('text-section')
+  })
+
+  it('labels only the lead card as our pick', () => {
+    const lead = mount(EventCard, { props: { event, lead: true, as: 'h2' }, global: { stubs } })
+    const card = mount(EventCard, { props: { event, as: 'h2' }, global: { stubs } })
+
+    expect(lead.text()).toContain('Our pick')
+    expect(card.text()).not.toContain('Our pick')
+    // The label is a pill, not a heading: the card keeps exactly one, at the page's level.
+    expect(lead.findAll('h1, h2, h3, h4')).toHaveLength(1)
+    // A pill on the poster box, beside the image rather than inside it, so it keeps its colour
+    // while the image is grey. It stays inside the link, so the link's name still says it.
+    const poster = lead.get('a > div.relative')
+    const pill = poster.get('span.absolute.bg-primary')
+    expect(pill.text()).toBe('Our pick')
+    expect(pill.classes()).toEqual(expect.arrayContaining(['absolute', 'top-3', 'left-3']))
+    expect(pill.classes()).not.toContain('grayscale')
+    expect(pill.get('svg').attributes('aria-hidden')).toBe('true')
+    expect(card.find('span.absolute.bg-primary').exists()).toBe(false)
+  })
+
+  it('draws the lead poster 2:1 when the event has no image', () => {
+    const wrapper = mount(EventCard, { props: { event, lead: true }, global: { stubs } })
+
+    expect(wrapper.get('[aria-hidden="true"]').classes()).toContain('aspect-lead')
+  })
 })
