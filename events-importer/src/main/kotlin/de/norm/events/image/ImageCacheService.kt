@@ -99,6 +99,11 @@ class ImageCacheService(
                 // a month. Leaving no row means the next pass finds it again immediately.
                 if (storage.isEnabled() && stored == null) return CacheOutcome(failed = 1)
 
+                // Variant keys carry the hash. Kept under new bytes, they serve the old image until the sweep
+                // deletes the old hash's objects, then 404. Dropping them makes the derivative pass rebuild.
+                val rehashed = existing?.contentHash != null && existing.contentHash != result.contentHash
+                if (rehashed) existing.id?.let { repository.deleteVariants(it) }
+
                 repository.save(
                     base.copy(
                         contentHash = result.contentHash,

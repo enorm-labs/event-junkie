@@ -32,10 +32,12 @@ import org.testcontainers.containers.MinIOContainer
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.HexFormat
 import javax.imageio.ImageIO
 
 /**
@@ -48,6 +50,9 @@ import javax.imageio.ImageIO
 class ImageCacheServiceIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var repository: CachedImageRepository
+
+    @Autowired
+    private lateinit var variantRepository: CachedImageVariantRepository
 
     private val servers = mutableListOf<MockWebServer>()
     private val minio = MinIOContainer(MINIO_TEST_IMAGE)
@@ -268,6 +273,55 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             // A 304 moves the refresh clock, so the next pass asks about other images (#2785).
             dueNow().map { it.sourceUrl } shouldNotContain url
         }
+
+    @Test
+    fun `changed bytes drop the variants rendered from the old ones`(): Unit =
+        runBlocking {
+            // The variant keys carry the old hash. Kept, they served the old poster under the new
+            // hash until the sweep deleted the old objects, and then every size 404ed.
+            val url = refetchedImage(previousHash = "old")
+
+            val outcome = storingService().refreshBatch()
+
+            outcome.fetched shouldBe 1
+            val row = repository.findBySourceUrl(url)!!
+            row.contentHash shouldBe sha256Hex(pngBytes())
+            variantRepository.findByCachedImageId(row.id!!).toList() shouldBe emptyList()
+        }
+
+    @Test
+    fun `identical bytes keep the variants`(): Unit =
+        runBlocking {
+            val url = refetchedImage(previousHash = sha256Hex(pngBytes()))
+
+            storingService().refreshBatch()
+
+            val row = repository.findBySourceUrl(url)!!
+            variantRepository.findByCachedImageId(row.id!!).toList().map { it.storageKey } shouldBe listOf("staging/derived/kept/512.jpg")
+        }
+
+    /** A row due for refresh with one variant, behind a server that answers 200 with [pngBytes]. */
+    private suspend fun refetchedImage(previousHash: String): String {
+        val server = MockWebServer().also { it.start() }
+        servers += server
+        server.enqueue(
+            MockResponse
+                .Builder()
+                .code(200)
+                .setHeader("Content-Type", "image/png")
+                .body(Buffer().write(pngBytes()))
+                .build()
+        )
+        val url = server.url("/poster.png").toString()
+        val longAgo = Instant.now().minus(Duration.ofDays(400))
+        val row = repository.save(CachedImageEntity(sourceUrl = url, contentHash = previousHash, fetchedAt = longAgo, lastSeenAt = longAgo))
+        variantRepository.save(
+            CachedImageVariantEntity(cachedImageId = row.id!!, width = 512, format = "jpg", storageKey = "staging/derived/kept/512.jpg", byteSize = 1)
+        )
+        return url
+    }
+
+    private fun sha256Hex(bytes: ByteArray): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
     @Test
     fun `a success not asked about for the refresh window is due, oldest question first`(): Unit =
