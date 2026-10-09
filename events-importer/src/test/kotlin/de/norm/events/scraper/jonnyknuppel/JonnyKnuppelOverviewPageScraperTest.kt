@@ -2,6 +2,7 @@ package de.norm.events.scraper.jonnyknuppel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
@@ -88,8 +89,8 @@ class JonnyKnuppelOverviewPageScraperTest {
     }
 
     @Test
-    fun `splits a back-to-back into its acts`() {
-        val names = titled("astral.lab x Curiosity Pill x Speedgasm x vehemence").artists.map { it.name }
+    fun `a back-to-back splits into its acts at the import boundary`() {
+        val names = titled("astral.lab x Curiosity Pill x Speedgasm x vehemence").artists.flatMap { splitBackToBack(it) }.map { it.name }
 
         names shouldContain "AWHM"
         names shouldContain "dawnbreaker"

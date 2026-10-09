@@ -18,6 +18,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.isPlaceholderName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -26,7 +27,6 @@ import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -240,7 +240,7 @@ class GretchenOverviewPageScraper {
      * `<em>`, and `<b>` floor headers (`AFRO FLOOR`, `RECYCLE NEOSIGNAL`), which the source renders
      * flush against the first act with no `<br>`. Each line is then dropped if a credit or note
      * ([isCreditOrNoteLine]: "Hosted by …", "Live Visuals by …", "Ersatztermin vom …", an
-     * instrument-credited member list, a bare "+ guests"); stripped of a role prefix
+     * instrument-credited member list, a bare "+ guests" or "+ more"); stripped of a role prefix
      * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"); split on `feat.`/`ft.`
      * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); cleaned of country/`*live*`/`+tag`
      * decorations; split at a ` x ` co-bill ([splitCrossBilled]: "Marthe X Pilani Bubu"); stripped
@@ -267,7 +267,6 @@ class GretchenOverviewPageScraper {
                 .map { stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
-                .flatMap(::splitBackToBack)
                 .map(::cleanArtistName)
                 .flatMap(::splitCrossBilled)
                 .map(::stripArtistSuffix)
@@ -330,10 +329,12 @@ class GretchenOverviewPageScraper {
     /**
      * True when a line is a credit or note rather than an act: "Hosted by …" / "Live Visuals by …",
      * "Ersatztermin vom …", "verlegt vom <venue>", an instrument-credited member list ("… (Bass), …
-     * (Drums)"), a bare "+ (special) guests".
+     * (Drums)"), a bare "+ (special) guests", a "+ more" continuation ([isPlaceholderName]) —
+     * read before [cleanArtistName] strips the `+` and leaves "more", which is also a band's name.
      */
     private fun isCreditOrNoteLine(line: String): Boolean =
-        DROP_LINE_PATTERN.containsMatchIn(line) ||
+        isPlaceholderName(line) ||
+            DROP_LINE_PATTERN.containsMatchIn(line) ||
             INSTRUMENT_CREDIT_PATTERN.containsMatchIn(line) ||
             SCHEDULE_NOTE_PATTERN.containsMatchIn(line)
 

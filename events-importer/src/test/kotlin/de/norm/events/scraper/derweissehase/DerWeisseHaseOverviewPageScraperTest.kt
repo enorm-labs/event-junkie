@@ -2,6 +2,7 @@ package de.norm.events.scraper.derweissehase
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -138,6 +139,25 @@ class DerWeisseHaseOverviewPageScraperTest {
 
         val antrieb = events.single { it.eventDate == LocalDate.of(2026, 9, 4) }
         antrieb.artists.map { it.name }.last() shouldBe "Simple"
+    }
+
+    // Production stored `Jens Schwan b2b Simon Berlin` and `B2B Alina Matini` as one act each (#2966).
+    // The scraper hands each entry on whole; the import boundary splits it.
+    @Test
+    fun `a back-to-back slot and a b2b that opens an entry become single DJs at the boundary`() {
+        val night =
+            block(
+                """<p class="dater">Samstag 10.10.2026 23:00</p><h1>Klubnacht</h1><h4>LINE UP</h4>
+                   |<p>Funk@delic, Jens Schwan b2b Simon Berlin, Buda (Paris), Kalimanda, B2B Alina Matini, Drauf &amp; Dran DJ Team</p>
+                """.trimMargin()
+            )
+
+        scraper
+            .scrape(night, baseUrl)
+            .single()
+            .artists
+            .flatMap { splitBackToBack(it.name) } shouldContainExactly
+            listOf("Funk@delic", "Jens Schwan", "Simon Berlin", "Buda (Paris)", "Kalimanda", "Alina Matini", "Drauf & Dran DJ Team")
     }
 
     @Test

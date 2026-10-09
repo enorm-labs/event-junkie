@@ -10,7 +10,6 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
-import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import de.norm.events.slug.SlugGenerator
@@ -118,7 +117,7 @@ class OhmOverviewPageScraper(
      * A night in parts heads each part with its start (`Panel Talk [ 20:00 ]`, `Club [ 22:00 ]`).
      * A heading is never an act, and the lines under a talk heading are speakers, not DJs.
      *
-     * `Makam b2b Tafkamp` bills two DJs, so a line splits at `b2b`. A line wholly in square
+     * A line wholly in square
      * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
      * A set length in round brackets (`Pariah (4h set)`) comes off the act, or it mints a second one (#2439).
      */
@@ -131,7 +130,6 @@ class OhmOverviewPageScraper(
                 if (heading) inTalk = TALK_HEADING.containsMatchIn(line)
                 !heading && !inTalk
             }.filterNot { SET_NOTE.matches(it) }
-            .flatMap(::splitBackToBack)
             .map { it.replace(SET_LENGTH_NOTE, "").trim() }
             .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "LIVE" else "DJ") }

@@ -2,6 +2,7 @@ package de.norm.events.scraper.aeden
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -88,8 +89,8 @@ class AedenOverviewPageScraperTest {
         val event = julyEvents.first { it.eventDate == LocalDate.of(2026, 7, 15) && it.title == "LILITH" }
 
         // "&#038; SECRET ACT" is a decorative conjunction plus an unnamed slot — the "&" is stripped
-        // and "SECRET ACT" is dropped rather than minted as an artist. A b2b slot is two DJs (#1844).
-        event.artists shouldContainExactly
+        // and "SECRET ACT" is dropped rather than minted as an artist. A b2b slot is two DJs at the import boundary (#1844).
+        event.artists.flatMap { splitBackToBack(it) } shouldContainExactly
             listOf(
                 ScrapedArtist(name = "DANA NADA", role = "DJ"),
                 ScrapedArtist(name = "STEEZY", role = "DJ"),

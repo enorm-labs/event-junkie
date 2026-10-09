@@ -9,7 +9,6 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
-import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -121,7 +120,6 @@ class JonnyKnuppelOverviewPageScraper {
         list
             .select("> li")
             .map { it.text() }
-            .flatMap(::splitBackToBack)
             .map(::stripArtistSuffix)
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .distinct()

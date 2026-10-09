@@ -12,7 +12,6 @@ import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaTime
-import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
@@ -101,7 +100,7 @@ class OrangerieOverviewPageScraper {
     }
 
     /**
-     * The act after `w/` in `Naked Grapes w/ zodya`; a `b2b` bill is two DJs. A night without `w/` names its
+     * The act after `w/` in `Naked Grapes w/ zodya`. A night without `w/` names its
      * crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
      */
     private fun artists(
@@ -110,7 +109,7 @@ class OrangerieOverviewPageScraper {
     ): List<ScrapedArtist> {
         val act = name.substringAfter(WITH, "").trim().ifBlank { return emptyList() }
         val role = if (eventType == EventType.CONCERT) "HEADLINER" else "DJ"
-        return splitBackToBack(act).filterNot { isNonArtistName(it) }.map { ScrapedArtist(name = it, role = role) }
+        return if (isNonArtistName(act)) emptyList() else listOf(ScrapedArtist(name = act, role = role))
     }
 
     private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)

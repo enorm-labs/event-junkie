@@ -95,6 +95,22 @@ class AssociationSyncQualityFlagIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // The flags replay the billing's split, so they name the half the gate refused, not the slot.
+    @Test
+    fun `a refused half of a b2b slot is flagged on its own`() {
+        runBlocking {
+            val sourceId = "gate:b2b"
+            val event = persistEvent(sourceId)
+            val eventId = requireNotNull(event.id)
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = listOf("Die Nerven b2b TBA"), genre = null)))
+
+            val linked = eventArtistRepository.findByEventIdIn(listOf(eventId)).toList().map { it.artistId }
+            artistRepository.findAllById(linked).toList().map { it.name } shouldBe listOf("Die Nerven")
+            qualityFlagRepository.findByEventIds(listOf(eventId)) shouldBe listOf(EventQualityFlag(eventId, QualityFlagKind.NON_ARTIST_NAME, "TBA"))
+        }
+    }
+
     @Test
     fun `a held-back promoter name and a genre word that names no genre are flagged, not stored`() {
         runBlocking {

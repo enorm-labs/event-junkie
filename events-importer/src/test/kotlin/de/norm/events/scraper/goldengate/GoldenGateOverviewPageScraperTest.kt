@@ -4,6 +4,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -103,9 +104,14 @@ class GoldenGateOverviewPageScraperTest {
     }
 
     @Test
-    fun `splits a b2b slot into two DJs`() {
+    fun `a b2b slot reaches the import boundary whole, which splits it into two DJs`() {
         val parsed = scraper.scrape(headings("Do. 01. Oktober 2026 - 23:59", "Cura", "Thor Rixon<br>Anaté b2b Shira Kela"), baseUrl)
-        parsed.single().artists.map { it.name } shouldContainExactly listOf("Thor Rixon", "Anaté", "Shira Kela")
+        parsed.single().artists.map { it.name } shouldContainExactly listOf("Thor Rixon", "Anaté b2b Shira Kela")
+        parsed
+            .single()
+            .artists
+            .flatMap { splitBackToBack(it) }
+            .map { it.name } shouldContainExactly listOf("Thor Rixon", "Anaté", "Shira Kela")
     }
 
     @Test
