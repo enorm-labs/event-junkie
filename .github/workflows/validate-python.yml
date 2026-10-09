@@ -77,6 +77,9 @@ jobs:
       - name: venue-images rewrites every venue field it does not set
         run: python3 scripts/test_venue_images.py
 
+      - name: musicbrainz-review keeps billed AMBIGUOUS artists and writes nothing but the MBID
+        run: python3 scripts/test_musicbrainz_review.py
+
       # Gated on the two steps it explains.
       - name: Explain the fix
         if: failure() && (steps.check.outcome == 'failure' || steps.format.outcome == 'failure')

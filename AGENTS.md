@@ -217,10 +217,11 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
-- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut and `/post-release`, and runs the safe ones
+- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut, `/post-release` and the weekly `/musicbrainz-review`, and runs the safe ones
 - `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
 - `/improve-test-coverage` — find and fill coverage gaps
 - `/milestone-plan` — a milestone from a list of open issues to an ordered plan
+- `/musicbrainz-review [<env>]` — the AMBIGUOUS MusicBrainz matches of the next two weeks' artists, judged from the billing into a file of proposals; writes only on the operator's word
 - `/new-issue` — file an issue: duplicate check, the right form, labels, milestone, board fields
 - `/next-importer` — one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR; repeat, or run under `/loop`
 - `/next-issue` — what to work on next, and why
