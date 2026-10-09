@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 import vueI18n from '@intlify/unplugin-vue-i18n/vite'
+import markdown from 'unplugin-vue-markdown/vite'
 
 // Explicit `.ts`, unlike the rest of the repo: the npm scripts load this file with
 // `--configLoader native`, Node's own resolver, which follows ESM rules. Transitive, so
@@ -17,7 +18,29 @@ import { contentSecurityPolicy } from './scripts/csp.ts'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    // `.md` too: the About and For-venues pages are Markdown, compiled to components here (#471).
+    vue({ include: [/\.vue$/, /\.md$/] }),
+    // Build time only, so no Markdown renderer and no `v-html` reach the browser. Each page writes
+    // its own root element (`ProsePage`, `LegalPage`), hence no wrapper div. Typographer and linkify
+    // off, so the text renders as typed: no curly quotes the `.vue` version did not have.
+    markdown({
+      wrapperDiv: false,
+      markdownOptions: { typographer: false, linkify: false },
+      markdownSetup: (md) => {
+        // Off-site links open in a new tab, as every hand-written one on these pages did.
+        const render = md.renderer.rules.link_open
+        md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+          const token = tokens[idx]!
+          if (/^https?:\/\//.test(token.attrGet('href') ?? '')) {
+            token.attrSet('rel', 'noopener')
+            token.attrSet('target', '_blank')
+          }
+          return render
+            ? render(tokens, idx, options, env, self)
+            : self.renderToken(tokens, idx, options)
+        }
+      },
+    }),
     vueDevTools(),
     tailwindcss(),
     // Precompiles the message catalogues so the vue-i18n message compiler is not shipped to the
