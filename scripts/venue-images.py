@@ -30,14 +30,27 @@ any width, it is the same image under the same licence, and the originals run to
 `images.fetch.max-bytes` stops at 8 MiB. Flickr renders no thumbnail to order. It publishes a fixed
 ladder of sizes, and everything above 1024 px needs a signed secret, so 1024 is what is stored.
 
+A third source is ours: an `own-photograph` row names a local file instead of an archive page
+(ADR-028). The script uploads it to the public `-images-own` bucket and stores the bucket URL, so the
+importer fetches it the way it fetches a Commons thumbnail. Nobody else states its licence, so the
+licence is the one `licence_at_review` records, the credit names the operator, and `file_page` is
+the About page section that states both. The upload goes through the `aws` CLI with the Object
+Storage credentials from `infra/.envrc`, and only with `--apply`:
+
+    direnv exec infra python3 scripts/venue-images.py --venue Loge --apply
+
 Standard library only, and no key: neither archive needs one.
 """
 
 import argparse
 import csv
+import hashlib
 import html
 import json
+import mimetypes
+import pathlib
 import re
+import subprocess
 import sys
 import unicodedata
 import urllib.error
@@ -63,6 +76,14 @@ THUMB_WIDTH = 1600
 MAX_BYTES = 8 * 1024 * 1024
 
 HTTP_NOT_FOUND = 404
+
+# The public bucket `infra/bootstrap/storage.tf` declares for our own photographs (ADR-028), and the
+# endpoint `object_storage_endpoint` names there. Hetzner serves a bucket at its own host name.
+OWN_BUCKET = "event-junkie-images-own"
+OWN_ENDPOINT = "fsn1.your-objectstorage.com"
+
+# Who an own photograph credits: the operator the imprint names (`events-frontend/src/lib/legal.ts`).
+OPERATOR = "Norman Lange"
 
 # Commons publishes a licence as a template name. `image_licence_id` holds an SPDX identifier, so
 # the mapping is written out rather than derived: a pattern over "CC BY-…" also produces an
@@ -247,10 +268,59 @@ def flickr_photo(row):
     }, None
 
 
-# Which resolver answers for a row, and how the credit names the archive it came from.
+def own_photograph(row):
+    """Bucket URL, licence and credit for a photograph we took, from the file on this disk.
+
+    The object key holds a hash of the bytes, so a URL never serves a different picture than the one
+    a venue was given. Uploading the same file twice writes the same object.
+    """
+    path = pathlib.Path(row["file"]).expanduser()
+    if not row["file"] or not path.is_file():
+        return None, f"no file at {row['file']!r}"
+    if not row["file_page"]:
+        return None, "an own photograph needs file_page, the About section that states its licence"
+    content_type = mimetypes.guess_type(path.name)[0] or ""
+    if not content_type.startswith("image/"):
+        return None, f"{path.name} is not an image file"
+    data = path.read_bytes()
+    if len(data) > MAX_BYTES:
+        return None, f"the file is {len(data) // 1024 // 1024} MB, over the fetcher's cap"
+
+    slug = re.sub(r"[^a-z0-9]+", "-", fold(row["venue"])).strip("-")
+    key = f"{slug}-{hashlib.sha256(data).hexdigest()[:12]}{path.suffix.lower()}"
+    return {
+        "thumb": f"https://{OWN_BUCKET}.{OWN_ENDPOINT}/{key}",
+        "licence": row["licence_at_review"],
+        "artist": OPERATOR,
+        "page": row["file_page"],
+        "upload": {"path": str(path), "key": key, "content_type": content_type},
+    }, None
+
+
+def upload(file):
+    """Copy an own photograph to its bucket. The object ACL is public as well as the bucket's."""
+    command = [
+        "aws", "s3", "cp", file["path"], f"s3://{OWN_BUCKET}/{file['key']}",
+        "--endpoint-url", f"https://{OWN_ENDPOINT}",
+        "--acl", "public-read",
+        "--content-type", file["content_type"],
+        "--only-show-errors",
+    ]  # fmt: skip
+    try:
+        result = subprocess.run(command, capture_output=True, text=True)
+    except FileNotFoundError:
+        return "the aws CLI is not installed"
+    if result.returncode:
+        return f"upload failed: {(result.stderr or result.stdout).strip()[:160]}"
+    return None
+
+
+# Which resolver answers for a row, and how the credit names the archive it came from. An own
+# photograph names no archive: the credit is the photographer alone.
 ARCHIVES = (
     (("commons-", "wikidata-"), commons_file, "Wikimedia Commons"),
     (("openverse-flickr",), flickr_photo, "Flickr"),
+    (("own-photograph",), own_photograph, None),
 )
 
 
@@ -262,7 +332,7 @@ def archive_for(found_by):
 
 
 def plan_one(row, venue):
-    """What this venue would be written, or the reason it will not be."""
+    """What this venue would be written, and the file to upload first if any, or the reason it will not be."""
     resolver, archive = archive_for(row["found_by"])
     if not resolver:
         return None, f"no archive reads a {row['found_by']!r} row"
@@ -282,10 +352,10 @@ def plan_one(row, venue):
 
     body = venue_body(venue)
     body["imageUrl"] = file_info["thumb"]
-    body["imageAttribution"] = f"{file_info['artist']}, via {archive}"
+    body["imageAttribution"] = f"{file_info['artist']}, via {archive}" if archive else file_info["artist"]
     body["imageLicenceId"] = spdx
     body["imageSourceUrl"] = file_info["page"] or row["file_page"]
-    return body, None
+    return {"body": body, "upload": file_info.get("upload")}, None
 
 
 def put_venue(host, venue_id, body):
@@ -299,13 +369,13 @@ def put_venue(host, venue_id, body):
         return response.status
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Write the reviewed Commons images onto the venues.")
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Write the reviewed venue images onto the venues.")
     parser.add_argument("--host", default=LOCAL_HOST, help=f"importer admin API (default {LOCAL_HOST})")
     parser.add_argument("--apply", action="store_true", help="write; without it nothing is changed")
     parser.add_argument("--venue", help="only this venue, by name")
     parser.add_argument("--force", action="store_true", help="also replace an image a venue already has")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     rows, confirmed = read_reviewed(args.venue)
     if not confirmed:
@@ -335,13 +405,24 @@ def main():
             continue
 
         try:
-            body, problem = plan_one(row, venue)
+            plan, problem = plan_one(row, venue)
         except (urllib.error.URLError, OSError) as error:
-            body, problem = None, f"Commons unreachable: {error}"
+            plan, problem = None, f"the archive is unreachable: {error}"
         if problem:
             print(f"  STOP    {row['venue']:<26} {problem}")
             stopped += 1
             continue
+        body, file = plan["body"], plan["upload"]
+
+        if file and not args.apply:
+            print(f"  upload  {row['venue']:<26} {file['path']} -> {body['imageUrl']}")
+        if file and args.apply:
+            problem = upload(file)
+            if problem:
+                print(f"  STOP    {row['venue']:<26} {problem}")
+                stopped += 1
+                continue
+            print(f"  upload  {row['venue']:<26} {file['path']} -> {body['imageUrl']}")
 
         if not args.apply:
             print(f"  would   {row['venue']:<26} {body['imageLicenceId']:<16} {body['imageAttribution']}")
