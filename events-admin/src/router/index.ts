@@ -16,6 +16,12 @@ const router = createRouter({
       component: () => import('@/views/WorklistView.vue'),
       meta: { title: 'Data-quality worklist' },
     },
+    {
+      path: '/events/new',
+      name: 'new-event',
+      component: () => import('@/views/NewEventView.vue'),
+      meta: { title: 'New event' },
+    },
   ],
 })
 

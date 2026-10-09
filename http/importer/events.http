@@ -32,6 +32,33 @@ Accept: application/json
 GET {{importer-host}}/api/admin/events?page=0&size=10&sort=eventDate,desc
 Accept: application/json
 
+### List one venue's events on one date — the New event form's check before a save (#347)
+# `venueId` and `date` (ISO yyyy-MM-dd, matched against eventDate) are optional, alone or together.
+# An unknown venue is an empty page, not a 404.
+GET {{importer-host}}/api/admin/events?venueId={{venue_id}}&date=2026-06-12&sort=startTime,asc
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("every event is at that venue on that date", function () {
+        response.body.content.forEach(function (event) {
+            client.assert(event.eventDate === "2026-06-12", "Unexpected date " + event.eventDate);
+        });
+    });
+%}
+
+### List events with a date that is not ISO — 400 Problem Detail
+GET {{importer-host}}/api/admin/events?date=12.06.2026
+Accept: application/json
+
+> {%
+    client.test("status is 400", function () {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+%}
+
 ### Get event by ID
 GET {{importer-host}}/api/admin/events/1
 Accept: application/json

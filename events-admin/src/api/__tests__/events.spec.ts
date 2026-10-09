@@ -1,6 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { type AdminEvent, toEventRequest, unpinField, updateEvent } from '../events'
+import {
+  type AdminEvent,
+  createEvent,
+  emptyNewEventForm,
+  fetchEventsOn,
+  manualSourceId,
+  type NewEventForm,
+  parsePrice,
+  slugify,
+  toCreateRequest,
+  toEventRequest,
+  unpinField,
+  updateEvent,
+} from '../events'
 
 function adminEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
   return {
@@ -107,5 +120,201 @@ describe('unpinField', () => {
     )
 
     await expect(unpinField(418, 'x', fetchFn)).rejects.toThrow("Unknown pinned field 'x'")
+  })
+})
+
+describe('slugify', () => {
+  it('strips accents and keeps letters NFD cannot split, as SlugGenerator does', () => {
+    expect(slugify('Die Ärzte & Co.')).toBe('die-arzte-co')
+    expect(slugify('Kėkė Søl')).toBe('keke-sol')
+    expect(slugify('Revaler Straße')).toBe('revaler-strasse')
+    expect(slugify('  --Open Decks!!-- ')).toBe('open-decks')
+  })
+})
+
+describe('manualSourceId', () => {
+  it('is manual:<venueSlug>:<eventDate>-<title slug>', () => {
+    expect(manualSourceId('kulturhaus-x', '2026-11-14', 'Ørlög live')).toBe(
+      'manual:kulturhaus-x:2026-11-14-orlog-live',
+    )
+  })
+
+  it('stays within the 255 characters EventRequest allows', () => {
+    const id = manualSourceId('venue', '2026-11-14', 'a b '.repeat(200))
+    expect(id.length).toBeLessThanOrEqual(255)
+    expect(id).toMatch(/^manual:venue:2026-11-14-a-b-a/)
+    expect(id.endsWith('-')).toBe(false)
+  })
+})
+
+describe('parsePrice', () => {
+  it('reads a decimal comma or point, and blank as null', () => {
+    expect(parsePrice('12,50')).toBe(12.5)
+    expect(parsePrice(' 8 ')).toBe(8)
+    expect(parsePrice('')).toBeNull()
+  })
+
+  it('refuses text that is not a price', () => {
+    expect(() => parsePrice('ten')).toThrow('"ten" is not a price.')
+    expect(() => parsePrice('-3')).toThrow('"-3" is not a price.')
+  })
+})
+
+function newEventForm(overrides: Partial<NewEventForm> = {}): NewEventForm {
+  return {
+    ...emptyNewEventForm(),
+    venueId: 7,
+    title: ' Open Decks ',
+    eventDate: '2026-11-14',
+    ...overrides,
+  }
+}
+
+describe('toCreateRequest', () => {
+  it('builds a full EventRequest from the form', () => {
+    const request = toCreateRequest(
+      newEventForm({
+        doorsTime: '19:00',
+        startTime: '20:00',
+        eventType: 'PARTY',
+        genre: ' Techno ',
+        ticketUrl: 'https://tickets.example.org/1',
+        sourceUrl: 'https://www.instagram.com/p/abc/',
+        pricePresale: '10',
+        priceBoxOffice: '12,5',
+      }),
+      'kulturhaus-x',
+    )
+
+    expect(request).toEqual({
+      venueId: 7,
+      title: 'Open Decks',
+      subtitle: null,
+      description: null,
+      eventType: 'PARTY',
+      status: 'SCHEDULED',
+      eventDate: '2026-11-14',
+      doorsTime: '19:00',
+      startTime: '20:00',
+      imageUrl: null,
+      sourceUrl: 'https://www.instagram.com/p/abc/',
+      sourceId: 'manual:kulturhaus-x:2026-11-14-open-decks',
+      ticketUrl: 'https://tickets.example.org/1',
+      facebookEventUrl: null,
+      genre: 'Techno',
+      pricePresale: 10,
+      priceBoxOffice: 12.5,
+      priceCurrency: 'EUR',
+      priceNote: null,
+      soldOut: false,
+      free: false,
+      artists: [],
+      promoterIds: [],
+    })
+  })
+
+  it('sends blank optional fields as null', () => {
+    const request = toCreateRequest(newEventForm({ free: true }), 'kulturhaus-x')
+
+    expect(request).toMatchObject({
+      doorsTime: null,
+      startTime: null,
+      genre: null,
+      ticketUrl: null,
+      sourceUrl: null,
+      pricePresale: null,
+      priceBoxOffice: null,
+      free: true,
+    })
+  })
+
+  it('refuses a form without a venue, a title or a date', () => {
+    expect(() => toCreateRequest(newEventForm({ venueId: null }), 'x')).toThrow('Pick a venue.')
+    expect(() => toCreateRequest(newEventForm({ title: ' ' }), 'x')).toThrow('Enter a title.')
+    expect(() => toCreateRequest(newEventForm({ eventDate: '' }), 'x')).toThrow('Enter a date.')
+  })
+})
+
+describe('createEvent', () => {
+  const request = () => toCreateRequest(newEventForm(), 'kulturhaus-x')
+
+  it('POSTs the request as JSON', async () => {
+    const saved = adminEvent({ id: 9001 })
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(saved), { status: 201 }),
+    )
+
+    await expect(createEvent(request(), fetchFn)).resolves.toEqual(saved)
+
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(url).toBe('/api/admin/events')
+    expect(init?.method).toBe('POST')
+    expect(JSON.parse(String(init?.body))).toEqual(request())
+  })
+
+  it('names the detail of a 409', async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ detail: 'A record with the same source ID already exists.' }),
+          { status: 409 },
+        ),
+    )
+
+    await expect(createEvent(request(), fetchFn)).rejects.toThrow(
+      'POST /api/admin/events: HTTP 409 — A record with the same source ID already exists.',
+    )
+  })
+
+  it('lists the field errors of a failed validation', async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            detail: 'Validation failed',
+            errors: [{ field: 'title', message: 'Event title must not be blank' }],
+          }),
+          { status: 400 },
+        ),
+    )
+
+    await expect(createEvent(request(), fetchFn)).rejects.toThrow(
+      'HTTP 400 — Validation failed (title: Event title must not be blank)',
+    )
+  })
+})
+
+describe('fetchEventsOn', () => {
+  it('asks for one venue on one date and returns the page content', async () => {
+    const event = adminEvent()
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify({ content: [event], totalElements: 1 })),
+    )
+
+    const events = await fetchEventsOn(7, '2026-09-12', fetchFn)
+
+    expect(events).toEqual([event])
+    const url = new URL(String(fetchFn.mock.calls[0]![0]), 'http://admin.test')
+    expect(url.pathname).toBe('/api/admin/events')
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      venueId: '7',
+      date: '2026-09-12',
+      size: '100',
+      sort: 'startTime,asc',
+    })
+  })
+
+  it('throws the Problem Detail of a refused request', async () => {
+    const fetchFn = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ detail: "Invalid value '12.09.2026': expected a valid LocalDate." }),
+          { status: 400 },
+        ),
+    )
+
+    await expect(fetchEventsOn(7, '12.09.2026', fetchFn)).rejects.toThrow(
+      "GET /api/admin/events: HTTP 400 — Invalid value '12.09.2026'",
+    )
   })
 })
