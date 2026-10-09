@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Club OST",
+        "address": "Alt-Stralau 1-2",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.49707,
+        "longitude": 13.46503,
+        "websiteUrl": "https://clubost.de",
+        "description": "A techno and house club on the Spree at the Ostkreuz end of the Stralau peninsula, programming raves and club nights that run from late evening into the next morning.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Techno- und House-Club an der Spree am Ostkreuz-Ende der Halbinsel Stralau, mit Raves und Clubnächten vom späten Abend bis in den nächsten Morgen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Club OST",
+            "url": "https://clubost.de/",
+            "sourceType": "CLUB_OST",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

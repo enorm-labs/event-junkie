@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Kallasch&",
+        "address": "Unionstraße 2",
+        "city": "Berlin",
+        "postalCode": "10551",
+        "district": "tiergarten",
+        "latitude": 52.532961,
+        "longitude": 13.336516,
+        "websiteUrl": "https://kallasch.berlin/",
+        "description": "A Moabit programme pub opened in 2014 as a neighbourhood bar project out of the Musique Maudite festival, keeping drinks cheap and most events free, with Saturday concerts, a fortnightly jazz series and a monthly poetry slam.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Moabiter Programmkneipe entstand 2014 als Barprojekt aus dem Festival Musique Maudite, hält Getränke günstig und die meisten Abende kostenlos und bietet samstags Konzerte, eine Jazzreihe zweimal im Monat und einen monatlichen Poetry Slam.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "programmeUrl": "https://kallasch.berlin/programm/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

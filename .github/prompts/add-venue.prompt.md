@@ -31,7 +31,7 @@ A borderline case is a question for the operator, not a call to make.
 
 ## Steps
 
-1. **Check it is not there already.** `grep -n '"name": "<name>"' http/importer/dev-seed.http`, and the venue's row in `docs/EVENT_DATA_SOURCES.md`.
+1. **Check it is not there already.** `grep -rn '"name": "<name>"' http/importer/seed/venues/`, and the venue's row in `docs/EVENT_DATA_SOURCES.md`.
    A venue in ✅ Imported has a row. A venue whose site now publishes a dated programme belongs in 🔨 Ready, not here (#2810 has the list).
 
 2. **Look at the venue**, on its own site and in search results:
@@ -43,7 +43,7 @@ A borderline case is a question for the operator, not a call to make.
 
 3. **Coordinates come from OpenStreetMap; Google only detects.** Google's terms do not let us keep its points on a map that is not Google's, and
    OpenStreetMap's (ODbL) we may keep (LEGAL.md § 9.3). So a pin from Google Maps, the operator's included, is a hint and never the stored value.
-    - Write the block, then run `python3 scripts/osm-venue-coordinates.py --venue "<name>" --apply`. It asks Nominatim for the street address and
+    - Write the venue file (step 7), then run `python3 scripts/osm-venue-coordinates.py --venue "<name>" --apply`. It asks Nominatim for the street address and
       writes the point when OpenStreetMap matched the house number, or when a name search finds an object carrying the venue's own website.
     - Then run `python3 scripts/geocode-venues.py --not-imported --by-name`. Where Google finds the venue's name far from its address, the address
       is the suspect: put it to the operator.
@@ -63,40 +63,34 @@ A borderline case is a question for the operator, not a call to make.
 6. **Show the operator one table and stop.** Name, address, postal code, district, coordinates, types, programme link, the evidence it is open, and a
    photo candidate if any, and the two descriptions. Mark every cell you are unsure of. Write nothing until the operator confirms or corrects each row.
 
-7. **Write the confirmed venues** into `http/importer/dev-seed.http`, each as one block in alphabetical position, after the imported venues' style:
+7. **Write the confirmed venues**, each as its own file `http/importer/seed/venues/<venue-slug>.json` (#2824). The file name is the slug
+   `SlugGenerator` makes from the name (`Café Köpenick` → `cafe-kopenick.json`); `SeedVenueFilesTest` fails on a wrong one, and
+   `scripts/dev-seed-parity.sh` says which name it wants.
 
-    ```http
-    ### --- Create <Name> venue (not imported, #2766) ---
-    POST {{importer-host}}/api/admin/venues
-    Content-Type: application/json
-
+    ```json
     {
-        "name": "<Name>",
-        "address": "<street no>",
-        "city": "Berlin",
-        "postalCode": "<postal code>",
-        "district": "<district slug>",
-        "latitude": <lat>,
-        "longitude": <lon>,
-        "websiteUrl": "<homepage>",
-        "description": "<English sentence>",
-        "descriptionLanguage": "en",
-        "descriptionAlt": "<German sentence>",
-        "descriptionAltLanguage": "de",
-        "venueTypes": ["<type>"],
-        "programmeUrl": "<programme link>",
-        "reviewedAt": "<confirmation time, UTC ISO-8601>"
+        "venue": {
+            "name": "<Name>",
+            "address": "<street no>",
+            "city": "Berlin",
+            "postalCode": "<postal code>",
+            "district": "<district slug>",
+            "latitude": <lat>,
+            "longitude": <lon>,
+            "websiteUrl": "<homepage>",
+            "description": "<English sentence>",
+            "descriptionLanguage": "en",
+            "descriptionAlt": "<German sentence>",
+            "descriptionAltLanguage": "de",
+            "venueTypes": ["<type>"],
+            "programmeUrl": "<programme link>",
+            "reviewedAt": "<confirmation time, UTC ISO-8601>"
+        },
+        "sources": []
     }
-
-    > {%
-        client.test("<Name> venue created", function () {
-            client.assert(response.status === 201, "Expected 201 but got " + response.status);
-        });
-    %}
     ```
 
-    List the venue under `Venues without an importer (alphabetical)` in the file's header, as `Name — programme link`; the first batch adds that list
-    after the `Sources` one.
+    Then run `scripts/dev-seed-parity.sh` to regenerate `http/importer/dev-seed.http`, and commit both. Never edit `dev-seed.http` by hand.
 
 8. **Prove it locally.** Start the importer on an empty database (`COMPOSE_PROJECT_NAME=<own> POSTGRES_HOST_PORT=<free>`, never the shared one another
    checkout migrated), run `python3 scripts/seed-sources.py --host http://localhost:8081 --apply`, and check each `GET /api/venues/<slug>` answers

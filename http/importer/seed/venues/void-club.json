@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "VOID Club",
+        "address": "Wiesenweg 5",
+        "city": "Berlin",
+        "postalCode": "10365",
+        "district": "lichtenberg",
+        "latitude": 52.50754,
+        "longitude": 13.47581,
+        "websiteUrl": "https://www.void-club.de",
+        "description": "A multi-floor techno and bass club in a Lichtenberg backyard, open since 2015, programming drum & bass, hardtechno and trance nights across the VOID Club floors and the VOID Hall added in 2023.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Techno- und Bassclub über mehrere Floors in einem Lichtenberger Hinterhof, seit 2015 geöffnet, mit Drum & Bass, Hardtechno und Trance auf den VOID-Club-Floors und in der 2023 ergänzten VOID Hall.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "VOID Club",
+            "url": "https://www.void-club.de/",
+            "sourceType": "VOID_CLUB",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

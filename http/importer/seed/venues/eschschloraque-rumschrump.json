@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Eschschloraque Rümschrümp",
+        "address": "Rosenthaler Str. 39",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.52528,
+        "longitude": 13.40155,
+        "websiteUrl": "https://www.eschschloraque.de",
+        "description": "A Künstlerclub and bar in the Haus Schwarzenberg courtyard off Rosenthaler Straße, open daily from 14:00, with an evening programme of DJ nights, live sets and variety shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Künstlerclub und eine Bar im Hof des Haus Schwarzenberg an der Rosenthaler Straße, täglich ab 14 Uhr geöffnet, abends mit DJ-Nächten, Livesets und Varieté.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"]
+    },
+    "sources": [
+        {
+            "name": "Eschschloraque",
+            "url": "https://www.eschschloraque.de/",
+            "sourceType": "ESCHSCHLORAQUE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

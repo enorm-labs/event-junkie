@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Die Wühlmäuse",
+        "address": "Pommernallee 2-4",
+        "city": "Berlin",
+        "postalCode": "14052",
+        "district": "charlottenburg",
+        "latitude": 52.50887,
+        "longitude": 13.27075,
+        "websiteUrl": "https://wuehlmaeuse.de",
+        "description": "Dieter Hallervorden's Kabarett theatre at Theodor-Heuss-Platz, a 516-seat hall for touring Kabarett, comedy, magic and music shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Kabarett-Theater von Dieter Hallervorden am Theodor-Heuss-Platz, ein Saal mit 516 Plätzen für Kabarett, Comedy, Zauberei und Musikshows auf Tournee.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "capacity": 516
+    },
+    "sources": [
+        {
+            "name": "Die Wühlmäuse",
+            "url": "https://wuehlmaeuse.de/wp-json/wc/store/v1/products",
+            "sourceType": "WUEHLMAEUSE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

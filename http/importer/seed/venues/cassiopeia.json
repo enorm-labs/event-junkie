@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Cassiopeia",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.50730,
+        "longitude": 13.45414,
+        "websiteUrl": "https://cassiopeia-berlin.de",
+        "description": "A multi-room club and cultural venue on the RAW-Gelände in Friedrichshain, covering everything from reggae, hip-hop and drum & bass to indie and electronic nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club mit mehreren Räumen und ein Kulturort auf dem RAW-Gelände in Friedrichshain, von Reggae, Hip-Hop und Drum & Bass bis zu Indie- und Elektronik-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "capacity": 700
+    },
+    "sources": [
+        {
+            "name": "Cassiopeia",
+            "url": "https://cassiopeia-berlin.de/club",
+            "sourceType": "CASSIOPEIA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

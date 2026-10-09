@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Kulturhaus Spandau",
+        "address": "Mauerstraße 6",
+        "city": "Berlin",
+        "postalCode": "13597",
+        "district": "spandau",
+        "latitude": 52.535528,
+        "longitude": 13.202275,
+        "websiteUrl": "https://kulturhaus-spandau.de/",
+        "description": "The Spandau district's own arts centre on Mauerstraße, with a theatre hall, gallery and cinema, presenting classical concerts, operetta afternoons and the early-music festival SPAM, partly staged at the Zitadelle.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das bezirkseigene Kulturhaus in der Spandauer Altstadt vereint Theatersaal, Galerie und Kino und zeigt Klassikkonzerte, Operetten am Nachmittag sowie das Alte-Musik-Festival SPAM, auch auf der Zitadelle.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "theatre", "cinema", "gallery"],
+        "programmeUrl": "https://kulturhaus-spandau.de/programm/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

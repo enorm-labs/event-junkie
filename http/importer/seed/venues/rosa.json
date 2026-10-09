@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "ROSA",
+        "address": "Storkower Str. 121",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.53516,
+        "longitude": 13.45241,
+        "websiteUrl": "https://www.rosaclub.de",
+        "description": "A sex-positive club and cultural venue built around consent and community, with queer party nights and an 18+ door.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein sexpositiver Club und Kulturort, der um Konsens und Community herum gebaut ist, mit queeren Partynächten und Einlass ab 18.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "ROSA",
+            "url": "https://www.rosaclub.de/dates",
+            "sourceType": "ROSA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

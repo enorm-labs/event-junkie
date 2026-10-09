@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Tresor",
+        "address": "Köpenicker Str. 70",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.51083,
+        "longitude": 13.42056,
+        "websiteUrl": "https://tresorberlin.com",
+        "description": "The techno institution in a disused power plant on Koepenicker Strasse, with the Tresor vault floor, the Globus floor above it and the Aurora Bar.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Techno-Institution in einem stillgelegten Kraftwerk an der Köpenicker Straße, mit dem Tresor-Floor im Gewölbe, dem Globus darüber und der Aurora Bar.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "capacity": 700
+    },
+    "sources": [
+        {
+            "name": "Tresor",
+            "url": "https://tresorberlin.com/club/events/",
+            "sourceType": "TRESOR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

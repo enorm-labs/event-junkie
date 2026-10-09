@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Duncker Club",
+        "address": "Dunckerstr. 64",
+        "city": "Berlin",
+        "postalCode": "10439",
+        "district": "prenzlauer-berg",
+        "latitude": 52.54703,
+        "longitude": 13.42116,
+        "websiteUrl": "https://www.dunckerclub.de",
+        "description": "A club since 1989 in a listed red-brick building of 1914 by Ludwig Hoffmann in Prenzlauer Berg, with indie and alternative-rock dance nights on Fridays and Saturdays and the dark-wave Montagsduncker every Monday since 1993.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1989 ein Club in einem denkmalgeschützten Backsteinbau von Ludwig Hoffmann aus dem Jahr 1914 in Prenzlauer Berg, mit Indie- und Alternative-Rock-Tanznächten am Freitag und Samstag und seit 1993 jeden Montag mit dem Dark-Wave-Abend Montagsduncker.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "capacity": 250
+    },
+    "sources": [
+        {
+            "name": "Duncker Club",
+            "url": "https://www.dunckerclub.de/start.html",
+            "sourceType": "DUNCKER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

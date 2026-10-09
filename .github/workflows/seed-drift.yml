@@ -1,5 +1,5 @@
-# Compares http/importer/dev-seed.http with the venues the public site serves, and opens one issue
-# when they disagree (#1782). `SISYPHOS` and `ROSA` were complete scrapers, declared in `EventSource`,
+# Compares the seed venue files (http/importer/seed/venues/, #2824) with the venues the public site
+# serves, and opens one issue when they disagree (#1782). `SISYPHOS` and `ROSA` were complete scrapers, declared in `EventSource`,
 # listed in the docs and written into the seed file, and no cluster ever held either row.
 #
 # **Nothing reported that, and nothing could.** A source is a row created through the importer's
@@ -84,7 +84,8 @@ jobs:
             const report = fs.readFileSync('report.txt', 'utf8').trim();
 
             // One title, so a drift that lasts a week is one issue rather than seven. The names are in
-            // the body; the script named below answers for today.
+            // the body; the script named below answers for today. dev-seed.http is now generated from
+            // the venue files (#2824); the title keeps its words so an open issue is still found.
             const title = 'The public site does not serve every venue in dev-seed.http';
 
             // Listing, not search: the search index is eventually consistent. `listForRepo` returns

@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Ballhaus Berlin",
+        "address": "Chausseestraße 102",
+        "city": "Berlin",
+        "postalCode": "10115",
+        "district": "mitte",
+        "latitude": 52.532066,
+        "longitude": 13.380114,
+        "websiteUrl": "https://ballhaus-berlin.de/",
+        "description": "A ballroom on Chausseestraße, opened in 1905 and run by its current team since 2014, hosting swing and Latin dance nights, live dance bands, burlesque shows and themed balls.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das 1905 eröffnete Ballhaus an der Chausseestraße, seit 2014 unter heutiger Leitung, mit Swing- und Latin-Tanzabenden, Live-Tanzbands, Burlesque-Shows und Themenbällen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "capacity": 500,
+        "programmeUrl": "https://ballhaus-berlin.de/de/termine/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

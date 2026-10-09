@@ -23,8 +23,8 @@ Nominatim is a volunteer service with a usage policy: at most one request a seco
 User-Agent naming the caller. Both are enforced here. Responses cache in
 `temp/osm-geocode-cache.json`, so a re-run asks again only for what changed.
 
-Only venue blocks without a source capture are read: an imported venue's block sets
-`client.global.set(...)` for its event source, a venue we do not import has none.
+Only the venue files with an empty `sources` list are read (`http/importer/seed/venues/`, #2824).
+`--apply` rewrites the two numbers in each file and then regenerates `dev-seed.http`.
 """
 
 import argparse
@@ -38,44 +38,22 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import seed_venues  # noqa: E402  (the shared reader, beside this script)
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
-SEED_FILE = REPO / "http" / "importer" / "dev-seed.http"
+SEED_DIR = seed_venues.SEED_DIR
 CACHE_FILE = REPO / "temp" / "osm-geocode-cache.json"
 ENDPOINT = "https://nominatim.openstreetmap.org/search"
 AGENT = "event-junkie-venue-audit/1.0 (https://github.com/enorm-labs/event-junkie)"
 DELAY_SECONDS = 1.1
 
-VENUE_POST = re.compile(r"^POST \{\{importer-host\}\}/api/admin/venues\s*$")
 
-
-def not_imported_venues(text):
-    """Yield (name, body, body_start, body_end) for each venue block without a source capture."""
-    lines = text.splitlines(keepends=True)
-    offsets, pos = [], 0
-    for line in lines:
-        offsets.append(pos)
-        pos += len(line)
-    i = 0
-    while i < len(lines):
-        if not VENUE_POST.match(lines[i].rstrip("\n")):
-            i += 1
-            continue
-        i += 1
-        while i < len(lines) and lines[i].strip():
-            i += 1
-        start = i
-        while i < len(lines) and not lines[i].startswith("> {%") and not lines[i].startswith("###"):
-            i += 1
-        end = i
-        handler = []
-        while i < len(lines) and not lines[i].startswith("###"):
-            handler.append(lines[i])
-            i += 1
-        if any("client.global.set" in h for h in handler):
-            continue
-        body_text = "".join(lines[start:end])
-        body = json.loads(body_text)
-        yield body["name"], body, offsets[start], offsets[start] + len(body_text)
+def not_imported_venues(entries):
+    """Yield (name, body, path) for each venue file without an event source."""
+    for entry in entries:
+        if not entry["sources"]:
+            yield entry["venue"]["name"], entry["venue"], entry["path"]
 
 
 def street_query(address):
@@ -180,7 +158,10 @@ def judge(venue, result, threshold):
 
 
 def apply_point(text, body_start, body_end, lat, lon):
-    """Rewrite the latitude and longitude inside one body, leaving every other byte as it was."""
+    """Rewrite the latitude and longitude inside one body, leaving every other byte as it was.
+
+    The venue comes first in its file and a source carries no coordinates, so a whole file is one body.
+    """
     body = text[body_start:body_end]
     body = re.sub(r'"latitude": -?[\d.]+', f'"latitude": {lat:.6f}', body, count=1)
     body = re.sub(r'"longitude": -?[\d.]+', f'"longitude": {lon:.6f}', body, count=1)
@@ -201,20 +182,19 @@ def save_cache(cache):
 
 def main():
     p = argparse.ArgumentParser(description="Coordinates for the venues we do not import, from OpenStreetMap.")
-    p.add_argument("--apply", action="store_true", help="write the OSM points that agree into dev-seed.http")
+    p.add_argument("--apply", action="store_true", help="write the OSM points that agree into the venue files")
     p.add_argument("--venue", action="append", help="only this venue, by name; repeatable")
     p.add_argument("--threshold", type=float, default=100.0, help="metres OSM may differ from the stored point (100)")
     p.add_argument("--report", metavar="PATH", help="also write the table to a Markdown file")
     p.add_argument("--offline", action="store_true", help="use the cache only, ask Nominatim nothing")
     args = p.parse_args()
 
-    text = SEED_FILE.read_text(encoding="utf-8")
-    venues = [v for v in not_imported_venues(text) if not args.venue or v[0] in args.venue]
+    venues = [v for v in not_imported_venues(seed_venues.load()) if not args.venue or v[0] in args.venue]
     cache = load_cache()
-    print(f"{len(venues)} venues without a source in {SEED_FILE.relative_to(REPO)}, at most one request a second")
+    print(f"{len(venues)} venues without a source in {SEED_DIR.relative_to(REPO)}, at most one request a second")
     rows, edits = [], []
     try:
-        for name, body, start, end in venues:
+        for name, body, path in venues:
             street = street_query(body.get("address", ""))
             try:
                 result = lookup(street, body.get("postalCode", ""), cache, args.offline)
@@ -230,14 +210,16 @@ def main():
                     verdict, point, note = "ok-by-name", identity, f"name match carries {host(body['websiteUrl'])}"
             rows.append((name, body.get("address", ""), verdict, point, distance, note))
             if verdict in ("ok", "ok-by-name"):
-                edits.append((start, end, point))
+                edits.append((path, point))
     finally:
         save_cache(cache)
 
     if args.apply:
-        for start, end, (lat, lon) in sorted(edits, reverse=True):
-            text = apply_point(text, start, end, lat, lon)
-        SEED_FILE.write_text(text, encoding="utf-8")
+        for path, (lat, lon) in edits:
+            text = path.read_text(encoding="utf-8")
+            path.write_text(apply_point(text, 0, len(text), lat, lon), encoding="utf-8")
+        if edits:
+            seed_venues.parity(check=False)
 
     lines = ["| Venue | Address | Verdict | OSM point | Distance to stored | Note |", "|---|---|---|---|---|---|"]
     order = {"far": 0, "missing": 1, "street-only": 2, "error": 3, "ok-by-name": 4, "ok": 5}

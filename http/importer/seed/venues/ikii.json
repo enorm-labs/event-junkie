@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Ikii",
+        "address": "Herrfurthplatz 8",
+        "city": "Berlin",
+        "postalCode": "12049",
+        "district": "neukoelln",
+        "latitude": 52.476634,
+        "longitude": 13.421536,
+        "websiteUrl": "https://ikiiberlin.com/",
+        "description": "A small listening room on Herrfurthplatz in Neukölln's Schillerkiez, built around a high-fidelity sound system and pouring natural wine and sake, with listening sessions, DJ sets and live performances.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein kleiner Hörraum am Herrfurthplatz im Neuköllner Schillerkiez mit hochwertiger Anlage, Naturwein und Sake, in dem Listening Sessions, DJ-Sets und Live-Auftritte stattfinden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://ra.co/clubs/271542",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

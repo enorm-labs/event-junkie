@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "8MM Bar",
+        "address": "Schönhauser Allee 177b",
+        "city": "Berlin",
+        "postalCode": "10119",
+        "district": "prenzlauer-berg",
+        "latitude": 52.531337,
+        "longitude": 13.411236,
+        "websiteUrl": "https://www.8mmbar.de/",
+        "description": "A DIY music bar on Schönhauser Allee, founded in 2002 in the punk spirit and majority-owned by long-time staff since 2014, where bands keep all door money; open nightly until 4am.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die DIY-Musikbar an der Schönhauser Allee entstand 2002 aus der Punk-Szene, gehört seit 2014 mehrheitlich langjährigen Mitarbeitenden und überlässt Bands die gesamten Eintrittseinnahmen; Livekonzerte und Barbetrieb täglich bis 4 Uhr.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "programmeUrl": "https://www.8mmbar.de/program",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

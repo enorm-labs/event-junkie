@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Baiz",
+        "address": "Schönhauser Allee 26A",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.535951,
+        "longitude": 13.412688,
+        "websiteUrl": "https://www.baiz.info/",
+        "description": "A smokers' pub, so over-18s only, whose name stands for Berlin Informationszentrum, with talks, readings, a monthly poetry slam, quiz nights and the Reformbühne Heim und Welt reading stage every Sunday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Raucherkneipe mit Einlass ab 18, deren Name für Berlin-Informationszentrum steht: mit Vorträgen, Lesungen, einem monatlichen Poetry Slam, Quizabenden und jeden Sonntag der Lesebühne Reformbühne Heim und Welt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://baiz.info/programm",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

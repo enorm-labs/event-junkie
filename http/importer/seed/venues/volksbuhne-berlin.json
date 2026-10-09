@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Volksbühne Berlin",
+        "address": "Linienstraße 227",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.527024,
+        "longitude": 13.411917,
+        "websiteUrl": "https://www.volksbuehne-berlin.de/",
+        "description": "A modernist playhouse by architect Oskar Kaufmann on Rosa-Luxemburg-Platz, open since 1914, whose concert series fills its main stage and the Roter Salon alongside its theatre repertoire.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das 1914 eröffnete Schauspielhaus am Rosa-Luxemburg-Platz nach Plänen von Oskar Kaufmann gilt als erster Berliner Theaterbau der Moderne und bespielt neben dem Theaterrepertoire Große Bühne und Roten Salon mit Konzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"],
+        "capacity": 800,
+        "programmeUrl": "https://www.volksbuehne-berlin.de/konzerte/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

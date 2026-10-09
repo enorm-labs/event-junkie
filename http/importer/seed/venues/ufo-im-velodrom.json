@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "UFO im Velodrom",
+        "address": "Paul-Heyse-Str. 26",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.53056,
+        "longitude": 13.45111,
+        "websiteUrl": "https://www.ufo-velodrom.de",
+        "description": "The smaller hall configured inside the Velodrom, used for mid-sized concerts and listed as its own venue on the Velomax programme.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der kleinere Saal im Velodrom, genutzt für mittelgroße Konzerte und im Velomax-Programm als eigener Ort geführt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 5000
+    },
+    "sources": [
+        {
+            "name": "UFO im Velodrom",
+            "url": "https://www.velomax.de/events",
+            "sourceType": "UFO_IM_VELODROM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

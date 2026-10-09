@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Bar jeder Vernunft",
+        "address": "Schaperstr. 24",
+        "city": "Berlin",
+        "postalCode": "10719",
+        "district": "wilmersdorf",
+        "latitude": 52.49801,
+        "longitude": 13.32959,
+        "websiteUrl": "https://www.bar-jeder-vernunft.de",
+        "description": "A 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows around candlelit café tables.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Spiegelzelt von 1912 in Wilmersdorf mit Kabarett, Chanson, Musicalrevuen und Varieté an Tischen bei Kerzenlicht.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"],
+        "capacity": 300
+    },
+    "sources": [
+        {
+            "name": "Bar jeder Vernunft",
+            "url": "https://www.bar-jeder-vernunft.de/de/programm/kalender.html",
+            "sourceType": "BAR_JEDER_VERNUNFT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

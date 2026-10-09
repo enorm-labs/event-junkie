@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "BKA Theater",
+        "address": "Mehringdamm 34",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.493640,
+        "longitude": 13.387700,
+        "websiteUrl": "https://www.bka-theater.de/",
+        "description": "The Berliner Kabarett Anstalt has played on the fifth floor of a 1913 commercial building on Mehringdamm since 1988, with queer and political entertainment: cabaret, comedy, drag shows, improv theatre, musicals and concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1988 spielt die Berliner Kabarett Anstalt im fünften Stock eines Geschäftshauses von 1913 am Mehringdamm, mit queerem und politischem Programm aus Kabarett, Comedy, Drag, Impro, Musicals und Konzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"],
+        "programmeUrl": "https://www.bka-theater.de/spielplan/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

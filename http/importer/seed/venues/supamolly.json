@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Supamolly",
+        "address": "Jessnerstr. 41",
+        "city": "Berlin",
+        "postalCode": "10247",
+        "district": "friedrichshain",
+        "latitude": 52.510611,
+        "longitude": 13.471417,
+        "websiteUrl": "https://www.supamolly.de",
+        "description": "A former squat turned collectively run venue near Traveplatz in Friedrichshain, with a donation-based programme of punk, ska, hardcore and experimental concerts alongside theatre, film and neighbourhood socials.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein früher besetztes Haus, heute ein kollektiv geführter Ort nahe dem Traveplatz in Friedrichshain, mit einem Programm auf Spendenbasis aus Punk-, Ska-, Hardcore- und experimentellen Konzerten neben Theater, Film und Kiezabenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "bar", "cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "Supamolly",
+            "url": "https://www.supamolly.de/?p=programm",
+            "sourceType": "SUPAMOLLY",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

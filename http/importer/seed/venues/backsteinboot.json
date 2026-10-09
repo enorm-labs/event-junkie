@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Backsteinboot",
+        "address": "Eiswerderstraße 18, Gebäude 129 / Aufgang F",
+        "city": "Berlin",
+        "postalCode": "13585",
+        "district": "spandau",
+        "latitude": 52.548249,
+        "longitude": 13.218498,
+        "websiteUrl": "https://backsteinboot.org/",
+        "description": "An artist-run project space in the former Royal Fireworks Laboratory on Eiswerder island, run by the association Raum für Kunst with 37 studios, hosting club nights, exhibitions, workshops and talks.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Im ehemaligen Königlichen Feuerwerkslaboratorium auf der Insel Eiswerder betreibt der Verein Raum für Kunst Ateliers und einen Projektraum mit Clubnächten, Ausstellungen, Workshops und Gesprächsrunden bei freiem Eintritt oder Spende.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "club", "gallery"],
+        "capacity": 700,
+        "programmeUrl": "https://backsteinboot.org/program-(landing-page)-1",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

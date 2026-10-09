@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Promenadeneck",
+        "address": "Schillerpromenade 11",
+        "city": "Berlin",
+        "postalCode": "12049",
+        "district": "neukoelln",
+        "latitude": 52.475704,
+        "longitude": 13.422116,
+        "websiteUrl": "https://promenaden-eck-berlin.de/",
+        "description": "A dance bar on Schillerpromenade in Neukölln, open Thursday to Saturday, with queer open decks, music bingo and a monthly pub quiz.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Tanzbar an der Schillerpromenade in Neukölln, donnerstags bis samstags geöffnet – mit Queer Open Decks, Musik-Bingo und einem monatlichen Pub Quiz.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://promenaden-eck-berlin.de/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

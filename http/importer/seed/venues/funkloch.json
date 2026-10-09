@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Funkloch",
+        "address": "Wildenbruchstraße 68",
+        "city": "Berlin",
+        "postalCode": "12045",
+        "district": "neukoelln",
+        "latitude": 52.486352,
+        "longitude": 13.446077,
+        "description": "A Neukölln corner bar with a soundproofed event room and a basement, running jam sessions on weeknights and techno nights at weekends.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Kneipe in Neukölln mit einem schallisolierten Veranstaltungsraum und einem Kellergeschoss, in der unter der Woche Jamsessions und am Wochenende Technonächte laufen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "capacity": 100,
+        "programmeUrl": "https://goout.net/en/funkloch/vzakye/",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "PUNCH L!NE Club",
+        "address": "Marlene-Dietrich-Platz 1",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "mitte",
+        "latitude": 52.50722,
+        "longitude": 13.37212,
+        "websiteUrl": "https://punchlineberlin.com",
+        "description": "A comedy club at Potsdamer Platz that books German and international stand-up tours, mixed comedy nights and live concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Comedy-Club am Potsdamer Platz mit deutschen und internationalen Stand-up-Tourneen, Mixed-Comedy-Abenden und Live-Konzerten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "PUNCH L!NE Club",
+            "url": "https://punchlineberlin.com/de/tickets",
+            "sourceType": "PUNCHLINE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Comedy Café Berlin",
+        "address": "Roseggerstr. 17",
+        "city": "Berlin",
+        "postalCode": "12059",
+        "district": "neukoelln",
+        "latitude": 52.48024,
+        "longitude": 13.44689,
+        "websiteUrl": "https://www.comedycafeberlin.com",
+        "description": "A comedy theatre, school and bar run by Noah Telson and Leah Katz, with a soundproof 60-seat room for improv, stand-up, sketch and storytelling in English and German.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Comedy-Theater mit Schule und Bar, betrieben von Noah Telson und Leah Katz, mit einem schallisolierten Saal für 60 Gäste für Impro, Stand-up, Sketch und Storytelling auf Englisch und Deutsch.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "bar"],
+        "capacity": 60
+    },
+    "sources": [
+        {
+            "name": "Comedy Café Berlin",
+            "url": "https://www.comedycafeberlin.com/wp-json/tribe/events/v1/events",
+            "sourceType": "COMEDY_CAFE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

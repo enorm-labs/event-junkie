@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "West Germany",
+        "address": "Skalitzer Straße 133",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.499790,
+        "longitude": 13.420125,
+        "description": "A non-profit DIY space in a disused medical practice inside the Zentrum Kreuzberg block at Kottbusser Tor, hosting independent concerts, club nights, performance art and screenings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein gemeinnütziger DIY-Ort in einer leerstehenden Arztpraxis im Neuen Kreuzberger Zentrum am Kottbusser Tor, der Subkulturen eine Bühne gibt: mit unabhängigen Konzerten, Clubnächten, Performancekunst und Filmvorführungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue", "gallery"],
+        "programmeUrl": "https://ra.co/clubs/21423",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

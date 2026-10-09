@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Mikropol",
+        "address": "Nollendorfplatz 5",
+        "city": "Berlin",
+        "postalCode": "10777",
+        "district": "schoeneberg",
+        "latitude": 52.498979,
+        "longitude": 13.352977,
+        "websiteUrl": "https://mikropol-berlin.de",
+        "description": "A 250-capacity concert room and club opened in 2025 in the former carriage passage of the Metropol at Nollendorfplatz, with punk, rap and indie concerts, readings and house and techno nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Konzertraum und Club für 250 Leute, 2025 in der früheren Durchfahrt des Metropol am Nollendorfplatz eröffnet, mit Punk-, Rap- und Indiekonzerten, Lesungen sowie House- und Techno-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"],
+        "capacity": 250
+    },
+    "sources": [
+        {
+            "name": "Mikropol",
+            "url": "https://mikropol-berlin.de/events/",
+            "sourceType": "MIKROPOL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

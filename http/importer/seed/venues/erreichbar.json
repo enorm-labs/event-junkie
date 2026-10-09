@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Erreichbar",
+        "address": "Reichenberger Str. 63a",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.49492,
+        "longitude": 13.43044,
+        "websiteUrl": "https://radar.squat.net/en/node/6653",
+        "description": "A bar in a Kreuzberg back building, with a Punkrocktresen every second Thursday, a Wednesday Kufa with food and a free shop, and vegan soli brunches.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Kneipe im Kreuzberger Hinterhaus, mit Punkrocktresen jeden zweiten Donnerstag, einer Mittwochs-Kufa mit Essen und Umsonstladen und veganen Soli-Brunches.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Erreichbar",
+            "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=6653&limit=500",
+            "sourceType": "ERREICHBAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

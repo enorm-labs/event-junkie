@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Tipsy Bear",
+        "address": "Eberswalder Str. 21",
+        "city": "Berlin",
+        "postalCode": "10437",
+        "district": "prenzlauer-berg",
+        "latitude": 52.541013,
+        "longitude": 13.410605,
+        "websiteUrl": "https://www.tipsybearberlin.com/",
+        "description": "A community-led queer bar in Prenzlauer Berg, open since 2019 with a zero-tolerance policy on hate, staging drag shows, karaoke and game nights, then DJs from ten on Wednesdays and weekends.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 2019 eine gemeinschaftlich geführte queere Bar in Prenzlauer Berg, die keinerlei Diskriminierung duldet und Dragshows, Karaoke und Spieleabende zeigt, mittwochs und am Wochenende ab 22 Uhr mit DJs.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://www.tipsybearberlin.com/events",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

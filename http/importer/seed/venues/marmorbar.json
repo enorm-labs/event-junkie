@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Marmorbar",
+        "address": "Vor dem Schlesischen Tor 3",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.497225,
+        "longitude": 13.449328,
+        "websiteUrl": "https://www.marmorbar.com/en",
+        "description": "A bar and gallery in the brick former wheelhouse of a royal waterways office at the Schlesisches Tor, pairing cocktails with DJ nights, live acts and exhibitions on a Funktion-One sound system.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar und Galerie im Backsteinbau des einstigen Steuerhauses einer königlichen Wasserbauinspektion am Schlesischen Tor, mit Cocktails, DJ-Nächten, Live-Auftritten und Ausstellungen über eine Funktion-One-Anlage.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "gallery", "club"],
+        "capacity": 400,
+        "programmeUrl": "https://www.marmorbar.com/en/event-list",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

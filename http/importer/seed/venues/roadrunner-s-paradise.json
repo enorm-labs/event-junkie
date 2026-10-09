@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Roadrunner's Paradise",
+        "address": "Saarbrücker Str. 24",
+        "city": "Berlin",
+        "postalCode": "10405",
+        "district": "prenzlauer-berg",
+        "latitude": 52.52953,
+        "longitude": 13.41259,
+        "websiteUrl": "http://www.roadrunners-paradise.de",
+        "description": "A rock'n'roll club in the former boiler house of the old Königstadt brewery in Prenzlauer Berg, specialising in rockabilly, psychobilly, punk and garage live shows and parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Rock'n'Roll-Club im früheren Kesselhaus der alten Königstadt-Brauerei in Prenzlauer Berg, spezialisiert auf Rockabilly, Psychobilly, Punk und Garage, live und als Party.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "capacity": 350
+    },
+    "sources": [
+        {
+            "name": "Roadrunner's Paradise",
+            "url": "http://www.roadrunners-paradise.de/programm.html",
+            "sourceType": "ROADRUNNER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

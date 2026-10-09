@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "800A Bar & Cabaret",
+        "address": "Stettiner Straße 19",
+        "city": "Berlin",
+        "postalCode": "13357",
+        "district": "wedding",
+        "latitude": 52.553867,
+        "longitude": 13.387364,
+        "websiteUrl": "https://www.800aberlin.com/",
+        "description": "An international performance space in Wedding, open since 2017 and an official Tag der Clubkultur host in 2024, staging burlesque, drag, comedy, theatre, magic, poetry and live music.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine internationale Bar mit Kabarettbühne im Wedding, seit 2017 in Betrieb und 2024 offizieller Gastgeber beim Tag der Clubkultur, mit Burlesque, Drag, Comedy, Theater, Zauberei, Lyrik und Livemusik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "theatre"],
+        "programmeUrl": "https://www.800aberlin.com/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

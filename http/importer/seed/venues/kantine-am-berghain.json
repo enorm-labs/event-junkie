@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Kantine am Berghain",
+        "address": "Am Wriezener Bahnhof",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.51110,
+        "longitude": 13.44290,
+        "websiteUrl": "https://www.berghain.berlin",
+        "description": "The concert hall adjoining Berghain near Ostbahnhof in Friedrichshain, hosting live shows across a broad musical range, separate from the club's techno floors.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Konzertsaal neben dem Berghain am Ostbahnhof in Friedrichshain, mit Livekonzerten quer durch viele Stile, getrennt von den Technofloors des Clubs.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Kantine am Berghain",
+            "url": "https://www.berghain.berlin/de/program/kantine-am-berghain/",
+            "sourceType": "BERGHAIN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

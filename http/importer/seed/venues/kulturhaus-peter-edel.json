@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Kulturhaus Peter Edel",
+        "address": "Berliner Allee 125",
+        "city": "Berlin",
+        "postalCode": "13088",
+        "district": "weissensee",
+        "latitude": 52.55092,
+        "longitude": 13.46157,
+        "websiteUrl": "https://www.peteredel.de",
+        "description": "The Bildungs- und Kulturzentrum in Weissensee, programming concerts, comedy, theatre, readings, children's shows and dance teas.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Bildungs- und Kulturzentrum in Weißensee, mit Konzerten, Comedy, Theater, Lesungen, Kinderprogramm und Tanztees.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"],
+        "capacity": 350
+    },
+    "sources": [
+        {
+            "name": "Kulturhaus Peter Edel",
+            "url": "https://www.peteredel.de/events/",
+            "sourceType": "PETER_EDEL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

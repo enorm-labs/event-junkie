@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Columbia Theater",
+        "address": "Columbiadamm 9-11",
+        "city": "Berlin",
+        "postalCode": "10965",
+        "district": "tempelhof",
+        "latitude": 52.48473,
+        "longitude": 13.391437,
+        "websiteUrl": "https://columbia-theater.de",
+        "description": "A mid-sized concert hall at Tempelhofer Feld, next door to the Columbiahalle, programming touring rock, metal, hip hop and pop acts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein mittelgroßer Konzertsaal am Tempelhofer Feld, direkt neben der Columbiahalle, mit Rock, Metal, Hip-Hop und Pop auf Tour.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Columbia Theater",
+            "url": "https://columbia-theater.de/",
+            "sourceType": "COLUMBIA_THEATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

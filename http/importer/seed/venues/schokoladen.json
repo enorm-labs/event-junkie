@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Schokoladen",
+        "address": "Ackerstr. 169/170",
+        "city": "Berlin",
+        "postalCode": "10115",
+        "district": "mitte",
+        "latitude": 52.52974,
+        "longitude": 13.39718,
+        "websiteUrl": "https://www.schokoladen-mitte.de",
+        "description": "A historic, collectively run cultural venue in Mitte with roots in the post-Wende squat scene, hosting intimate concerts, readings and club nights across many styles.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein historischer, kollektiv geführter Kulturort in Mitte mit Wurzeln in der Hausbesetzerszene nach der Wende, mit intimen Konzerten, Lesungen und Clubnächten quer durch viele Stile.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "Schokoladen",
+            "url": "https://www.schokoladen-mitte.de/",
+            "sourceType": "SCHOKOLADEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

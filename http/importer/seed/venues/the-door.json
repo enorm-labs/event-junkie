@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "The Door",
+        "address": "Joachimsthaler Str. 25",
+        "city": "Berlin",
+        "postalCode": "10719",
+        "district": "charlottenburg",
+        "latitude": 52.500943,
+        "longitude": 13.331123,
+        "websiteUrl": "https://thedoor.club/",
+        "description": "A boutique club a few minutes from Kurfürstendamm, open since 2023, with a Kling & Freitag sound system, a strict door and VIP tables, playing house and Balearic sounds every Friday and Saturday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Boutique-Club wenige Gehminuten vom Kurfürstendamm, seit 2023 geöffnet, mit Soundsystem von Kling & Freitag, strenger Tür und VIP-Tischen, an dem freitags und samstags House und Balearic laufen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "capacity": 160,
+        "programmeUrl": "https://thedoor.club/events/",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

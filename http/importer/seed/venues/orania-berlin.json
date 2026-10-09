@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Orania.Berlin",
+        "address": "Oranienstr. 40",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.50206,
+        "longitude": 13.41690,
+        "websiteUrl": "https://orania.berlin",
+        "description": "A hotel bar in the 1912 Oranienpalast building, where pianist Matti Klein books Berlin musicians for free jazz, piano, soul and funk concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Hotelbar im Oranienpalast von 1912, in der der Pianist Matti Klein Berliner Musiker für kostenlose Jazz-, Piano-, Soul- und Funkkonzerte bucht.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Orania.Berlin",
+            "url": "https://orania.berlin/concerts",
+            "sourceType": "ORANIA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

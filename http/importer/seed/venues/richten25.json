@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Richten25",
+        "address": "Gerichtstraße 25",
+        "city": "Berlin",
+        "postalCode": "13347",
+        "district": "wedding",
+        "latitude": 52.544371,
+        "longitude": 13.371938,
+        "websiteUrl": "https://richten25.de/",
+        "description": "A non-profit space for experimental music and art in Wedding, kept going by volunteers of Odamusik e.V., with several concerts a week and curated series on dance improvisation, graphic scores and audiovisual work.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ehrenamtlich getragener, gemeinnütziger Raum für experimentelle Musik und Kunst im Wedding, betrieben von Odamusik e.V. – mit mehreren Konzerten pro Woche und kuratierten Reihen zu Tanzimprovisation, grafischen Partituren und audiovisueller Kunst.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Richten25",
+            "url": "https://richten25.de/events",
+            "sourceType": "RICHTEN25",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

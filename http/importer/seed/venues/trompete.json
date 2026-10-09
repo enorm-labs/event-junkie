@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Trompete",
+        "address": "Lützowplatz 9",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "tiergarten",
+        "latitude": 52.504355,
+        "longitude": 13.353555,
+        "websiteUrl": "https://www.trompete-berlin.de/",
+        "description": "A basement club on Lützowplatz that actor Ben Becker and Tresor co-founder Dimitri Hegemann opened in April 2000, known for its Thursday after-work party and its Saturday club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kellerclub am Lützowplatz, im April 2000 vom Schauspieler Ben Becker und Tresor-Mitgründer Dimitri Hegemann eröffnet, bekannt für die Afterwork-Party am Donnerstag und Clubnächte am Samstag.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"],
+        "programmeUrl": "https://www.trompete-berlin.de/",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

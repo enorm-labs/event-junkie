@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "ART Stalker",
+        "address": "Kaiser-Friedrich-Str. 67",
+        "city": "Berlin",
+        "postalCode": "10627",
+        "district": "charlottenburg",
+        "latitude": 52.50929,
+        "longitude": 13.30216,
+        "websiteUrl": "https://www.art-stalker.de/",
+        "description": "An event bar on Kaiser-Friedrich-Straße that doubles as a gallery where artists exhibit and sell their own work, with a stage for young and established acts: blues and rock concerts, a weekly open session, quizzes and poetry slams.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Event-Bar in der Kaiser-Friedrich-Straße, die zugleich Galerie ist, in der Künstler ihre Werke selbst ausstellen und verkaufen, mit einer Bühne für junge und etablierte Acts: Blues- und Rockkonzerte, eine wöchentliche offene Session, Quizabende und Poetry Slams.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "gallery"]
+    },
+    "sources": [
+        {
+            "name": "ART Stalker",
+            "url": "https://art-stalker.reservix.de/",
+            "sourceType": "ART_STALKER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

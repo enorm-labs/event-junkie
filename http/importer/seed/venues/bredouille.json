@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Bredouille",
+        "address": "Georgenstraße, S-Bahnbogen 199",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.520001,
+        "longitude": 13.389847,
+        "websiteUrl": "https://bredouille-bar.de/",
+        "description": "A cocktail bar in an S-Bahn arch on Georgenstraße, run by two former Torstraße bartenders, with after-work lounges during the week, DJs at weekends and invited collectives and listening sessions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Cocktailbar in einem S-Bahn-Bogen an der Georgenstraße, geführt von zwei Barleuten aus der Torstraße, mit Afterwork-Lounges unter der Woche, DJ-Abenden am Wochenende und Gastreihen von Kollektiven.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://bredouille-bar.de/upcomingevents-bredouille",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "FluxBau",
+        "address": "Pfuelstraße 5",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.502696,
+        "longitude": 13.440382,
+        "websiteUrl": "https://www.fluxfm.de/fluxbau",
+        "description": "The venue of radio station FluxFM, on the Spree at Schlesisches Tor, with a concert hall for about 200 guests, a river terrace, a free Wednesday Bergfest, parties and live concerts.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Veranstaltungsort des Radiosenders FluxFM liegt an der Spree beim Schlesischen Tor und bietet einen Konzertsaal für rund 200 Gäste, eine Terrasse am Wasser, Partys und Livekonzerte.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue", "bar"],
+        "capacity": 200,
+        "programmeUrl": "https://www.fluxfm.de/fluxbau",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

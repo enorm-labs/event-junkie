@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Heideglühen",
+        "address": "Seestraße 1",
+        "city": "Berlin",
+        "postalCode": "13353",
+        "district": "wedding",
+        "latitude": 52.53808,
+        "longitude": 13.32822,
+        "websiteUrl": "https://heidegluehen.berlin",
+        "description": "A house club by the Westhafen in Wedding with a large garden, running long Saturday-into-Sunday sessions through the season.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein House-Club am Westhafen in Wedding mit großem Garten, mit langen Sessions von Samstag bis Sonntag durch die Saison.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Heideglühen",
+            "url": "https://heidegluehen.berlin/monatsvorschau/",
+            "sourceType": "HEIDEGLUEHEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

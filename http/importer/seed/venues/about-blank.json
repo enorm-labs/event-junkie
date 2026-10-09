@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "://about blank",
+        "address": "Markgrafendamm 24c",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.502477,
+        "longitude": 13.466302,
+        "websiteUrl": "https://aboutblank.li/",
+        "description": "A collectively run techno club by Ostkreuz, open since 2010 and organised as a cooperative with equal hourly pay, hosting house and techno nights on two floors and a summer garden.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Technoclub am Ostkreuz wird seit 2010 von einem Kollektiv als Genossenschaft mit Einheitslohn geführt; zwei Floors für House und Techno, im Sommer der Garten als Sektgarten, dazu regelmäßige Solipartys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "programmeUrl": "https://aboutblank.li/next",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

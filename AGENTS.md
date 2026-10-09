@@ -199,7 +199,8 @@ Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. Infra, char
   before any `bootRun` or `dev-env.sh up`, or the worktree starts a second empty Postgres and `diff-snapshot` reports every source as `GONE`. Ports `8081` /
   `8080` / `5173` are fixed: `down` in the other checkout first, and the worktree that started the JVM is the code under test. Never import while another
   worktree is importing — `snapshot` counts the whole shared database. Every importer PR conflicts in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing),
-  `http/importer/dev-seed.http` (a "keep both" resolution fuses two blocks — rebuild by hand) and the `EventSource.kt` enum. Rebase onto `main`; never merge it in.
+  the generated `http/importer/dev-seed.http` (run `scripts/dev-seed-parity.sh`; a venue is its own file under `http/importer/seed/venues/`, #2824) and
+  the `EventSource.kt` enum. Rebase onto `main`; never merge it in.
 
 ## Project skills
 

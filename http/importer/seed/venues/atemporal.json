@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Atemporal",
+        "address": "Boxhagener Str. 96",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.511872,
+        "longitude": 13.462463,
+        "description": "A first-floor listening room in a Friedrichshain building on Boxhagener Straße, with a dedicated hi-fi sound system, hosting listening sessions, live sets, sound installations and art exhibitions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Hörraum im ersten Stock eines Hauses an der Boxhagener Straße in Friedrichshain, ausgestattet mit einer eigenen Hi-Fi-Anlage, für Listening Sessions, Live-Sets, Klanginstallationen und Kunstausstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["gallery", "club"],
+        "programmeUrl": "https://ra.co/clubs/287058",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

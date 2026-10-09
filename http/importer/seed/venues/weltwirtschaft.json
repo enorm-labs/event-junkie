@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Weltwirtschaft",
+        "address": "John-Foster-Dulles-Allee 10",
+        "city": "Berlin",
+        "postalCode": "10557",
+        "district": "tiergarten",
+        "latitude": 52.518788,
+        "longitude": 13.364836,
+        "websiteUrl": "https://weltwirtschaft.berlin/",
+        "description": "The restaurant, beer garden and rooftop kiosk of the Haus der Kulturen der Welt in Tiergarten, hosting DJ nights and small unplugged concerts on its terraces.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Restaurant, Biergarten und Dachkiosk im Haus der Kulturen der Welt im Tiergarten, mit DJ-Abenden und kleinen Unplugged-Konzerten auf den Terrassen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "open-air"],
+        "capacity": 300,
+        "programmeUrl": "https://weltwirtschaft.berlin/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

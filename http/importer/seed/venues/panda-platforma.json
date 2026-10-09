@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "PANDA platforma",
+        "address": "Knaackstr. 97",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.539837,
+        "longitude": 13.413374,
+        "websiteUrl": "https://panda-platforma.berlin",
+        "description": "A non-profit art space in the Kulturbrauerei, run since 2009 as a stage for Berlin's East European communities and their artists, with jazz, experimental and global music, theatre, readings, talks and exhibitions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein gemeinnütziger Kunstraum in der Kulturbrauerei, seit 2009 eine Bühne für Berlins osteuropäische Communitys und ihre Künstler, mit Jazz, experimenteller und globaler Musik, Theater, Lesungen, Gesprächen und Ausstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "live-venue"],
+        "capacity": 110
+    },
+    "sources": [
+        {
+            "name": "PANDA platforma",
+            "url": "https://panda-platforma.berlin/wp-json/tribe/events/v1/events",
+            "sourceType": "PANDA_PLATFORMA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

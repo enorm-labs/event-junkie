@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Badehaus",
+        "address": "Revaler Str. 99",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.507582,
+        "longitude": 13.45515,
+        "websiteUrl": "https://badehaus-berlin.com",
+        "description": "An intimate live-music venue and club on the RAW-Gelände in Friedrichshain, mixing concerts, singer-songwriter sessions and eclectic DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein intimer Livemusik-Ort und Club auf dem RAW-Gelände in Friedrichshain, mit Konzerten, Singer-Songwriter-Sessions und vielseitigen DJ-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"],
+        "capacity": 450
+    },
+    "sources": [
+        {
+            "name": "Badehaus",
+            "url": "https://badehaus-berlin.com/events/",
+            "sourceType": "BADEHAUS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

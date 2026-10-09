@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Modus Berlin",
+        "address": "Ritterstr. 24-27",
+        "city": "Berlin",
+        "postalCode": "10969",
+        "district": "kreuzberg",
+        "latitude": 52.50304,
+        "longitude": 13.407845,
+        "websiteUrl": "https://modus-berlin.de",
+        "description": "A Kreuzberg club and concert room on the Ritter Butzke grounds, programming touring acts and spoken-word nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kreuzberger Club und Konzertraum auf dem Gelände des Ritter Butzke, mit Acts auf Tour und Spoken-Word-Abenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Modus Berlin",
+            "url": "https://modus-berlin.de/events",
+            "sourceType": "MODUS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Register the venues and event sources from http/importer/dev-seed.http on a cluster (#876).
+"""Register the venues and event sources from http/importer/seed/venues/ on a cluster (#876).
 
 Dry run by default. The dry run is also the drift report: it names what the target is missing and
 what it holds that the file does not, so staging and production can be compared without writing.
@@ -8,8 +8,8 @@ what it holds that the file does not, so staging and production can be compared 
     python3 scripts/seed-sources.py --host http://localhost:18081      # compare a forwarded cluster
     python3 scripts/seed-sources.py --host http://localhost:18081 --apply --yes
 
-`dev-seed.http` is the source of truth and this reads it directly rather than carrying a second copy
-of the 86 venues. A second copy is the drift #876 is about.
+The venue files are the source of truth (one per venue, #2824), and this reads them directly rather
+than carrying a second copy. A second copy is the drift #876 is about.
 
 **Sources are created disabled, and that is not caution.** A source with no import history is always
 due, and the scheduler ticks every 60 seconds, so an enabled source is imported about a minute after
@@ -26,7 +26,7 @@ A venue that closes for good (ADR-046) keeps its source and stops importing:
 
     python3 scripts/seed-sources.py --host <host> --disable <slug> --yes
 
-**This never triggers an import.** The file's third request per venue does; it is dropped here.
+**This never triggers an import.** The generated `dev-seed.http` does, for a local run; this does not.
 Step 3 hands the sources to the scheduler, which picks them up on its next tick.
 
 **`--site` is the same comparison from outside the cluster**, against the public site rather than the
@@ -45,12 +45,15 @@ is created against its venue, and ROSA and Sisyphos were missing as pairs on bot
 
 import argparse
 import json
-import re
+import pathlib
 import sys
 import urllib.error
 import urllib.request
 
-SEED_FILE = "http/importer/dev-seed.http"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import seed_venues  # noqa: E402  (the shared reader, beside this script)
+
+SEED_DIR = str(seed_venues.SEED_DIR.relative_to(seed_venues.REPO))
 LOCAL_HOST = "http://localhost:8081"
 # `--site` only. 1 is an answer -- the file and the site disagree. Anything above it means no answer
 # was produced, which a scheduled check must not report as health.
@@ -59,47 +62,10 @@ EXIT_CANNOT_CHECK = 2
 PAGE_SIZE = 100
 MAX_PAGES = 100
 
-REQUEST = re.compile(r"^(POST|PUT|PATCH|GET) \{\{importer-host\}\}(\S+)")
-CAPTURE = re.compile(r'client\.global\.set\("(\w+)",\s*response\.body\.id\)')
-PLACEHOLDER = re.compile(r"\{\{(\w+)\}\}")
 
-
-def parse_seed(path):
-    """Pull (kind, name, body_text, capture_var) out of the .http file.
-
-    The file is written for a client that keeps state between requests: a venue's response id is
-    captured into a variable that the next request's body interpolates. Reproducing that is the
-    whole job, so the capture name is parsed rather than the venue name guessed.
-    """
-    with open(path, encoding="utf-8") as f:
-        lines = f.read().splitlines()
-
-    steps, i = [], 0
-    while i < len(lines):
-        m = REQUEST.match(lines[i])
-        if not m:
-            i += 1
-            continue
-        path_part = m.group(2)
-        i += 1
-        while i < len(lines) and lines[i].strip():  # headers
-            i += 1
-        body, handler = [], []
-        while i < len(lines) and not lines[i].startswith("> {%") and not REQUEST.match(lines[i]):
-            body.append(lines[i])
-            i += 1
-        if i < len(lines) and lines[i].startswith("> {%"):
-            while i < len(lines) and not lines[i].startswith("%}"):
-                handler.append(lines[i])
-                i += 1
-        text = "\n".join(body).strip()
-        cap = CAPTURE.search("\n".join(handler))
-        if path_part == "/api/admin/venues":
-            steps.append(("venue", text, cap.group(1) if cap else None))
-        elif path_part == "/api/admin/event-sources":
-            steps.append(("source", text, None))
-        # Anything else is an import trigger. Deliberately dropped -- see the module docstring.
-    return steps
+def read_seed(path):
+    """[(venue body, [source bodies])] from the venue files. A source body has no venueId yet."""
+    return [(v["venue"], v["sources"]) for v in seed_venues.load(path)]
 
 
 class ListingError(Exception):
@@ -224,12 +190,12 @@ def compare_site(args):
     """
     site = args.site.rstrip("/")
     try:
-        steps = parse_seed(args.seed)
-    except OSError as e:
+        seed = read_seed(args.seed)
+    except (OSError, ValueError, KeyError) as e:
         print(f"Cannot read {args.seed}: {e}", file=sys.stderr)
         return EXIT_CANNOT_CHECK
 
-    want = {json.loads(text)["name"] for kind, text, _ in steps if kind == "venue"}
+    want = {venue["name"] for venue, _ in seed}
     try:
         have = {v["name"] for v in fetch_all(site, "/api/venues")}
     except ListingError as e:
@@ -259,7 +225,7 @@ def compare_site(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default=LOCAL_HOST)
-    ap.add_argument("--seed", default=SEED_FILE)
+    ap.add_argument("--seed", default=SEED_DIR, help="the directory of venue files")
     ap.add_argument("--apply", action="store_true", help="actually create; omit for the drift report")
     ap.add_argument(
         "--yes",
@@ -312,10 +278,13 @@ def main():
         enable(args)
         return
 
-    steps = parse_seed(args.seed)
-    venues = [(t, c) for kind, t, c in steps if kind == "venue"]
-    sources = [t for kind, t, _ in steps if kind == "source"]
-    print(f"{args.seed}: {len(venues)} venues, {len(sources)} event sources\n")
+    try:
+        seed = read_seed(args.seed)
+    except (OSError, ValueError, KeyError) as e:
+        sys.exit(f"Cannot read {args.seed}: {e}")
+    want_venues = {venue["name"]: venue for venue, _ in seed}
+    want_sources = {source["name"]: (source, venue["name"]) for venue, sources in seed for source in sources}
+    print(f"{args.seed}: {len(want_venues)} venues, {len(want_sources)} event sources\n")
 
     try:
         have_venues = {v["name"]: v["id"] for v in fetch_all(args.host, "/api/admin/venues")}
@@ -324,12 +293,6 @@ def main():
         sys.exit(str(e))
     except (urllib.error.URLError, OSError) as e:
         sys.exit(f"Cannot reach the importer at {args.host}: {e}")
-
-    want_venues = {json.loads(t)["name"]: (t, c) for t, c in venues}
-    want_sources = {}
-    for t in sources:
-        name = json.loads(PLACEHOLDER.sub("0", t))["name"]
-        want_sources[name] = t
 
     new_venues = [n for n in want_venues if n not in have_venues]
     new_sources = [n for n in want_sources if n not in have_sources]
@@ -358,28 +321,19 @@ def main():
         )
 
     ids = dict(have_venues)
-    captured = {}
-    for name, (text, cap) in want_venues.items():
+    for name, venue in want_venues.items():
         if name in have_venues:
-            if cap:
-                captured[cap] = have_venues[name]
             continue
-        got = request(f"{args.host}/api/admin/venues", method="POST", body=json.loads(text))
+        got = request(f"{args.host}/api/admin/venues", method="POST", body=venue)
         ids[name] = got["id"]
-        if cap:
-            captured[cap] = got["id"]
         print(f"  venue  {got['id']:>4}  {name}")
 
     made, failed = 0, []
-    for name, text in want_sources.items():
+    for name, (source, venue_name) in want_sources.items():
         if name in have_sources:
             continue
-        missing = [v for v in PLACEHOLDER.findall(text) if v not in captured]
-        if missing:
-            failed.append((name, f"unresolved venue id for {', '.join(missing)}"))
-            continue
-        body = json.loads(PLACEHOLDER.sub(lambda m: str(captured[m.group(1)]), text))
-        # Overrides the file, which enables every source for a local run where that is what you
+        body = {"venueId": ids[venue_name], **source}
+        # Overrides the venue file, which enables every source for a local run where that is what you
         # want. Here it would start 86 imports before step 2 could write a single verdict.
         body["enabled"] = False
         try:

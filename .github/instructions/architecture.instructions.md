@@ -39,7 +39,7 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       `now()` comes after a time the JVM stamped for that write, so "changed since checked" reads true after every check (#1567). Such a check needs a column of its own, set by a trigger
       with a `WHEN` on the watched column, as `name_changed_at` is (V062, #2053).
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
-      it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from `dev-seed.http`; a renamed or
+      it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from a seed venue file (`http/importer/seed/venues/`); a renamed or
       removed venue goes into `RETIRED_VENUE_SLUGS` with a reason, and a second assertion deletes the entry once stale. Never `@Disabled` (#987).
     - **Promoter merges** name slugs no seed creates, so `MergeDuplicatePromotersMigrationTest` runs each against planted rows and asserts a survivor's slug is
       `slugify(name)` (V025 repaired that). Step 1 picks the smallest loser **that exists** (V023 left `tip-berlin` behind on production, #1343); step 3

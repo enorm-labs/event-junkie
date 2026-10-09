@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Passionskirche",
+        "address": "Marheinekeplatz 1",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.489482,
+        "longitude": 13.397178,
+        "websiteUrl": "https://halle-luja.berlin/",
+        "description": "A neo-Romanesque brick church on Marheinekeplatz, built 1905 to 1908 to plans by Theodor Astfalck, used for concerts since 1974, today rock, folk, jazz and gospel on a stage in its former altar area.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die neuromanische Backsteinkirche am Marheinekeplatz, 1905 bis 1908 von Theodor Astfalck erbaut, dient seit 1974 als Konzertort und heute mit umgebautem Altarraum als Konzertsaal für Rock, Folk, Jazz und Gospel, betreut von Halle-Luja Kulturmanagement.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 720,
+        "programmeUrl": "https://halle-luja.berlin/kommende-events",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

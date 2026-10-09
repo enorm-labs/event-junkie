@@ -1,15 +1,13 @@
 package de.norm.events.scraper
 
 import de.norm.events.slug.SlugGenerator
+import de.norm.events.venue.seedVenues
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
-import java.io.File
 
-private val SEED_FILE = File("../http/importer/dev-seed.http")
-
-/** The `name` of each event source the seed creates; its slug is what the gauges carry. */
-private val SOURCE_NAME = Regex("""POST \{\{importer-host}}/api/admin/event-sources[\s\S]*?"name"\s*:\s*"([^"]+)"""")
+/** The slug of each event source the seed venue files create, which is what the gauges carry. */
+private fun seededSourceSlugs(): Set<String> = seedVenues().flatMap { it.sources }.mapTo(mutableSetOf()) { SlugGenerator.slugify(it.get("name").asString()) }
 
 /**
  * A misspelt slug in [KNOWN_QUIET_SOURCES] or [KNOWN_BLOCKED_SOURCES] marks nothing, and the rule
@@ -18,7 +16,7 @@ private val SOURCE_NAME = Regex("""POST \{\{importer-host}}/api/admin/event-sour
 class KnownQuietSourcesTest {
     @Test
     fun `every known-quiet slug names a seeded source`() {
-        val seeded = SOURCE_NAME.findAll(SEED_FILE.readText()).map { SlugGenerator.slugify(it.groupValues[1]) }.toSet()
+        val seeded = seededSourceSlugs()
         seeded.shouldNotBeEmpty()
 
         KNOWN_QUIET_SOURCES.keys.filterNot { it in seeded } shouldBe emptyList()
@@ -26,7 +24,7 @@ class KnownQuietSourcesTest {
 
     @Test
     fun `every known-blocked slug names a seeded source`() {
-        val seeded = SOURCE_NAME.findAll(SEED_FILE.readText()).map { SlugGenerator.slugify(it.groupValues[1]) }.toSet()
+        val seeded = seededSourceSlugs()
 
         KNOWN_BLOCKED_SOURCES.keys.filterNot { it in seeded } shouldBe emptyList()
     }

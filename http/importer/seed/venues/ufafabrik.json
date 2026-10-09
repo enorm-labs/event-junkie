@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "ufaFabrik",
+        "address": "Viktoriastr. 10-18",
+        "city": "Berlin",
+        "postalCode": "12105",
+        "district": "tempelhof",
+        "latitude": 52.45468,
+        "longitude": 13.38180,
+        "websiteUrl": "https://ufafabrik.de/",
+        "description": "A live-and-work community that has run the former UFA film copying works in Tempelhof since 1979, with three stages in its international culture centre for concerts, cabaret, comedy, theatre and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Lebens- und Arbeitsprojekt, das seit 1979 die ehemaligen UFA-Kopierwerke in Tempelhof belebt, mit drei Bühnen im Internationalen Kulturcentrum für Konzerte, Kabarett, Comedy, Theater und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "theatre"],
+        "capacity": 500
+    },
+    "sources": [
+        {
+            "name": "ufaFabrik",
+            "url": "https://ufafabrik.de/spielplan.html",
+            "sourceType": "UFA_FABRIK",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

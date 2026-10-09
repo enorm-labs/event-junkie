@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Neue Zukunft",
+        "address": "Alt-Stralau 68",
+        "city": "Berlin",
+        "postalCode": "10245",
+        "district": "friedrichshain",
+        "latitude": 52.49842,
+        "longitude": 13.46674,
+        "websiteUrl": "https://neue-zukunft.org",
+        "description": "An arthouse cinema, pub and concert room next door to Renate on the Stralau peninsula in Friedrichshain, the successor of the Zukunft am Ostkreuz, with film, live music, theatre and a summer open-air cinema.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Programmkino, eine Kneipe und ein Konzertraum neben der Renate auf der Halbinsel Stralau in Friedrichshain, Nachfolger der Zukunft am Ostkreuz, mit Film, Livemusik, Theater und Freiluftkino im Sommer.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cinema", "bar", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Neue Zukunft",
+            "url": "https://core.service.elfsight.com/p/boot/?w=e767cbbe-0026-4173-a511-5aaa105ed563",
+            "sourceType": "NEUE_ZUKUNFT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

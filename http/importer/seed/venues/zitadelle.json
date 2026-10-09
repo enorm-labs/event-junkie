@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zitadelle",
+        "address": "Am Juliusturm 64",
+        "city": "Berlin",
+        "postalCode": "13599",
+        "district": "spandau",
+        "latitude": 52.54103,
+        "longitude": 13.21274,
+        "websiteUrl": "https://www.zitadelle-berlin.de",
+        "description": "Renaissance fortress in Spandau whose courtyard hosts the Citadel Music Festival, an open-air concert series running through the summer.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Renaissancefestung in Spandau, in deren Hof das Citadel Music Festival stattfindet, eine Open-Air-Konzertreihe durch den Sommer.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air"]
+    },
+    "sources": [
+        {
+            "name": "Zitadelle",
+            "url": "https://citadel-music-festival.de/events",
+            "sourceType": "ZITADELLE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

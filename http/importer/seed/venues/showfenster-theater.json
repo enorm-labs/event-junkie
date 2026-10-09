@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Showfenster Theater",
+        "address": "Letteallee 94",
+        "city": "Berlin",
+        "postalCode": "13409",
+        "district": "reinickendorf",
+        "latitude": 52.563389,
+        "longitude": 13.377280,
+        "websiteUrl": "https://www.showfenster-show.de/",
+        "description": "A theatre on Letteallee in Reinickendorf with an old-Berlin interior, staging its own variety show alongside concerts, cabaret, comedy and magic, plus an open stage and a pub quiz.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Theater in der Reinickendorfer Letteallee mit Altberliner Flair: die hauseigene Varieté-Show, Konzerte, Kabarett, Comedy und Zauberei, außerdem eine offene Bühne und ein Kneipenquiz.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Showfenster Theater",
+            "url": "https://www.showfenster-show.de/%C3%BCbersichtskalender",
+            "sourceType": "SHOWFENSTER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

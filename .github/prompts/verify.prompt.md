@@ -42,6 +42,7 @@ scripts/sources-parity.sh             # the status counts in EVENT_DATA_SOURCES.
 scripts/features-parity.sh            # PRODUCT_OVERVIEW.md § Surfaces ↔ routes, API paths, public files, e2e specs
 scripts/index-parity.sh               # scripts/README.md ↔ scripts/, every referenced script exists and answers --help
 scripts/migration-versions.sh         # no two Flyway migrations share a version (#2183); release.yml runs it before it builds
+scripts/dev-seed-parity.sh check      # dev-seed.http ↔ the venue files under http/importer/seed/venues/ it is generated from (#2824)
 ```
 
 Each takes under a second and reaches no network; `--help` on any of them says what it checks and why. `scripts/comment-density.sh` measures and gates nothing.

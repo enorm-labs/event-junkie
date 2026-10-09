@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "gART.n",
+        "address": "Blockdammweg 1",
+        "city": "Berlin",
+        "postalCode": "10317",
+        "district": "lichtenberg",
+        "latitude": 52.48358,
+        "longitude": 13.50151,
+        "websiteUrl": "https://www.gartn.xyz",
+        "description": "An open-air garden club on the Rummelsburger Bucht, running daytime techno and house parties on Saturdays and Sundays through the summer.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Open-Air-Gartenclub an der Rummelsburger Bucht, mit Techno- und House-Partys am Tag, samstags und sonntags durch den Sommer.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "club"]
+    },
+    "sources": [
+        {
+            "name": "gART.n",
+            "url": "https://www.gartn.xyz/",
+            "sourceType": "GARTN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

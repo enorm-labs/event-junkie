@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Metropol",
+        "address": "Nollendorfplatz 5",
+        "city": "Berlin",
+        "postalCode": "10777",
+        "district": "schoeneberg",
+        "latitude": 52.49894,
+        "longitude": 13.352705,
+        "websiteUrl": "https://metropol-berlin.de",
+        "description": "Built in 1906 as a theatre on Nollendorfplatz, later a cinema and a well-known 1980s disco, and now a concert hall for touring acts that also holds club parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "1906 als Theater am Nollendorfplatz erbaut, später Kino und in den 1980ern eine bekannte Diskothek, heute ein Konzertsaal für Tourneekonzerte, in dem auch Clubpartys stattfinden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"],
+        "capacity": 1298
+    },
+    "sources": [
+        {
+            "name": "Metropol",
+            "url": "https://metropol-berlin.de/events",
+            "sourceType": "METROPOL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

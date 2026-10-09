@@ -299,6 +299,8 @@ staging unchanged:
 cd http && ijhttp --env-file http-client.env.json --env staging importer/dev-seed.http
 ```
 
+`dev-seed.http` is generated from `http/importer/seed/venues/` by `scripts/dev-seed-parity.sh` (#2824).
+
 `bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik. The read path _does_ have an ingress, so there is no
 reason to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
 

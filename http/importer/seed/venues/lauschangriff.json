@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Lauschangriff",
+        "address": "Rigaer Straße 103",
+        "city": "Berlin",
+        "postalCode": "10247",
+        "district": "friedrichshain",
+        "latitude": 52.518256,
+        "longitude": 13.455257,
+        "websiteUrl": "http://www.lauschangriff-berlin.de",
+        "description": "An absinthe bar on Rigaer Straße in Friedrichshain, where weekly parties run from reggae and dancehall to drum and bass and techno.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Absinthbar in der Friedrichshainer Rigaer Straße lädt jede Woche zu Partys zwischen Reggae, Dancehall, Drum and Bass und Techno.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "capacity": 200,
+        "programmeUrl": "https://ra.co/clubs/22306",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

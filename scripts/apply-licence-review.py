@@ -27,7 +27,7 @@ import unicodedata
 import urllib.error
 import urllib.request
 
-# docs/EVENT_DATA_SOURCES.md name -> event_source.name, verified against http/importer/dev-seed.http.
+# docs/EVENT_DATA_SOURCES.md name -> event_source.name, verified against http/importer/seed/venues/.
 ALIASES = {
     "Alte Kantine Kulturbrauerei": "Alte Kantine",
     "Berghain / Panorama Bar": "Berghain",

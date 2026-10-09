@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Klunkerkranich",
+        "address": "Karl-Marx-Str. 66",
+        "city": "Berlin",
+        "postalCode": "12043",
+        "district": "neukoelln",
+        "latitude": 52.48196,
+        "longitude": 13.43277,
+        "websiteUrl": "https://klunkerkranich.org",
+        "description": "The rooftop culture garden above the Neukoelln Arcaden: a bar, stage and club running a nightly programme.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Dachgarten über den Neukölln Arcaden: Bar, Bühne und Club mit einem Programm an jedem Abend.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "club", "bar"]
+    },
+    "sources": [
+        {
+            "name": "Klunkerkranich",
+            "url": "https://klunkerkranich.org/events/",
+            "sourceType": "KLUNKERKRANICH",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Quatsch Comedy Club",
+        "address": "Friedrichstr. 107",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.52362,
+        "longitude": 13.38862,
+        "websiteUrl": "https://quatsch-comedy-club.de",
+        "description": "Thomas Hermanns' stand-up club in the former Kleine Revue under the Friedrichstadt-Palast, where Die Live Show has put four comedians and a host on stage for over 30 years, beside a newcomer night, a late-night show, guest solo shows and an open mic in the BAR92.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der Stand-up-Club von Thomas Hermanns in der ehemaligen Kleinen Revue im Souterrain des Friedrichstadt-Palasts, in dem die Live Show seit über 30 Jahren vier Comedians und eine Moderation auf die Bühne bringt, dazu eine Newcomer-Show, eine Late-Night-Show, Gastspiele und ein Open Mic in der BAR92.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "bar"],
+        "capacity": 300
+    },
+    "sources": [
+        {
+            "name": "Quatsch Comedy Club",
+            "url": "https://quatsch-comedy-club.de/tickets/",
+            "sourceType": "QUATSCH",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

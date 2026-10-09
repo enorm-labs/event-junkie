@@ -109,6 +109,14 @@ repos:
         files: ^(docs/EVENT_DATA_SOURCES\.md|scripts/sources-parity\.sh)$
         pass_filenames: false
 
+      # dev-seed.http is generated from the venue files (#2824); `check`, so the hook never writes.
+      - id: dev-seed-parity
+        name: dev-seed.http parity
+        entry: scripts/dev-seed-parity.sh check
+        language: system
+        files: ^(http/importer/(seed/venues/.*\.json|dev-seed\.http)|scripts/(seed_venues\.py|dev-seed-parity\.sh))$
+        pass_filenames: false
+
       # PRODUCT_OVERVIEW.md § Surfaces, against the routes, API paths, public files and e2e specs.
       - id: features-parity
         name: product overview parity

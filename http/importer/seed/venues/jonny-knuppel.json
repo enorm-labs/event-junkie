@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Jonny Knüppel",
+        "address": "Lilli-Henoch-Straße 10",
+        "city": "Berlin",
+        "postalCode": "10405",
+        "district": "prenzlauer-berg",
+        "latitude": 52.540869,
+        "longitude": 13.436365,
+        "websiteUrl": "https://jonnyknueppel.de/",
+        "description": "A collective-run club on the former Greifswalder Straße freight yard, part of the diskoBabel site since 2018 after leaving the Lohmühleninsel, with all-night parties, open airs and solidarity nights before the site closes.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein von Kollektiven getragener Club auf dem früheren Güterbahnhof Greifswalder Straße, seit 2018 Teil des diskoBabel-Geländes nach dem Aus auf der Lohmühleninsel, mit Partys bis zum Morgen, Open Airs und Solipartys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "reviewedAt": "2026-10-07T09:58:32Z",
+        "closedOn": "2026-10-31"
+    },
+    "sources": [
+        {
+            "name": "Jonny Knüppel",
+            "url": "https://jonnyknueppel.de/",
+            "sourceType": "JONNY_KNUPPEL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

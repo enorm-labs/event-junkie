@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Containerhafen",
+        "address": "Köpenicker Straße 18-20",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.505819,
+        "longitude": 13.432236,
+        "description": "An open-air club on the Spree bank beside Sage Beach, opened in May 2025 by the team behind the closed club Re:mise, hosting electronic parties of its own and joint events with Sage Beach.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Team des geschlossenen Clubs Re:mise betreibt seit Mai 2025 dieses Open-Air-Gelände am Spreeufer neben dem Sage Beach, mit eigenen Partys und gemeinsamen Veranstaltungen mit dem Nachbarn.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "club"],
+        "capacity": 500,
+        "programmeUrl": "https://ra.co/clubs/271054",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

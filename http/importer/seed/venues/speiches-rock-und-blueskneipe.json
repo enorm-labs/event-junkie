@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Speiches Rock- und Blueskneipe",
+        "address": "Raumerstr. 39",
+        "city": "Berlin",
+        "postalCode": "10437",
+        "district": "prenzlauer-berg",
+        "latitude": 52.543759,
+        "longitude": 13.416484,
+        "description": "Bassist Jörg \"Speiche\" Schütze of the GDR blues band Monokel opened this pub in 1992 in the band's old rehearsal room, with free live blues every weekend, Sunday jazz and a Monday open stage.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit 1992 im früheren Proberaum der DDR-Bluesband Monokel, gegründet von ihrem Bassisten Jörg „Speiche“ Schütze: Blues live am Wochenende bei freiem Eintritt, sonntags Oldtime-Jazz, montags offene Bühne.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Speiches Rock- und Blueskneipe",
+            "url": "http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php",
+            "sourceType": "SPEICHES",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

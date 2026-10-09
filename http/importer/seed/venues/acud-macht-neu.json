@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "ACUD MACHT NEU",
+        "address": "Veteranenstraße 21",
+        "city": "Berlin",
+        "postalCode": "10119",
+        "district": "mitte",
+        "latitude": 52.533659,
+        "longitude": 13.400815,
+        "websiteUrl": "https://acudmachtneu.de/",
+        "description": "An arts house in a once-abandoned Mitte apartment building that artists opened in 1991, saved from foreclosure in 2014, with club nights, concerts, exhibitions and readings across its club, studio and gallery.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Kunsthaus in einem 1991 von Kunstschaffenden bezogenen, zuvor leerstehenden Wohnhaus an der Veteranenstraße entging 2014 der Zwangsversteigerung; Club, Studio und Galerie zeigen Clubnächte, Konzerte, Ausstellungen und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "gallery", "cultural-centre"],
+        "programmeUrl": "https://acudmachtneu.de/programm/",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

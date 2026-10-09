@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Bulbul Berlin",
+        "address": "Skalitzer Straße 114",
+        "city": "Berlin",
+        "postalCode": "10999",
+        "district": "kreuzberg",
+        "latitude": 52.499358,
+        "longitude": 13.424252,
+        "websiteUrl": "https://www.bulbulberlin.de",
+        "description": "A small Kreuzberg club on Skalitzer Straße, open since 2019 in the rooms of the former Farbfernseher, with house, disco, funk and soul from local and visiting DJs from Thursday to Saturday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kleiner Club an der Skalitzer Straße, seit 2019 in den Räumen des früheren Farbfernsehers, mit House, Disco, Funk und Soul von Berliner und internationalen DJs, donnerstags bis samstags.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"],
+        "programmeUrl": "https://ra.co/clubs/175191",
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": []
+}

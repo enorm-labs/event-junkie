@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Max-Schmeling-Halle",
+        "address": "Falkplatz 1",
+        "city": "Berlin",
+        "postalCode": "10437",
+        "district": "prenzlauer-berg",
+        "latitude": 52.5448,
+        "longitude": 13.404494,
+        "websiteUrl": "https://www.max-schmeling-halle.de",
+        "description": "A multi-purpose arena at Falkplatz in Prenzlauer Berg, hosting arena concerts alongside the handball and volleyball fixtures that are not imported.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Mehrzweckarena am Falkplatz in Prenzlauer Berg, mit Arenakonzerten neben den Handball- und Volleyballspielen, die wir nicht importieren.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["arena"],
+        "capacity": 11900
+    },
+    "sources": [
+        {
+            "name": "Max-Schmeling-Halle",
+            "url": "https://www.velomax.de/events",
+            "sourceType": "MAX_SCHMELING_HALLE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

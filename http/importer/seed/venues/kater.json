@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Kater",
+        "address": "Holzmarktstr. 25",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.51139,
+        "longitude": 13.42528,
+        "websiteUrl": "https://www.katerclub.de",
+        "description": "A techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and long weekend-spanning parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Technoclub mit Garten an der Spree am Holzmarkt, früher Kater Blau, mit mehreren Floors und langen Partys über das Wochenende.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Kater",
+            "url": "https://www.katerclub.de/",
+            "sourceType": "KATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

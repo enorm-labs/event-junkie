@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Mom's Limousine Service",
+        "address": "Georgenstraße 184",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.520263,
+        "longitude": 13.393081,
+        "websiteUrl": "https://linktr.ee/momslimousineservice",
+        "description": "A red-lit bar, social club and creative space on Georgenstraße in Mitte, where DJs play disco and house strictly from vinyl, with a weekly Wednesday vinyl night and pop-up dinners.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine rot beleuchtete Bar in der Georgenstraße in Mitte, die sich als Social Club und Kreativraum versteht, mit Disco und House von Vinyl, einem wöchentlichen Plattenabend am Mittwoch und Pop-up-Dinners.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://linktr.ee/momslimousineservice",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Ballhaus Wedding",
+        "address": "Wriezener Str. 6",
+        "city": "Berlin",
+        "postalCode": "13359",
+        "district": "wedding",
+        "latitude": 52.556536,
+        "longitude": 13.388980,
+        "websiteUrl": "https://www.ballhauswedding.de/",
+        "description": "A ballroom finished in 1899 in a Gesundbrunnen back courtyard, with a Babelsberg film-studio parquet that Marlene Dietrich danced on in The Blue Angel, now staging concerts, 1920s dance parties, variety shows and dinner theatre.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ballsaal von 1899 in einem Hinterhof in Gesundbrunnen, mit einem Parkett aus dem Studio Babelsberg, auf dem Marlene Dietrich im „Blauen Engel“ tanzte, heute Bühne für Konzerte, Zwanzigerjahre-Tanzpartys, Varieté und Dinnertheater.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "theatre"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Ballhaus Wedding",
+            "url": "https://www.ballhauswedding.de/veranstaltungen",
+            "sourceType": "BALLHAUS_WEDDING",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

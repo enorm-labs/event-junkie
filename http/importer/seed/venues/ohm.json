@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "OHM",
+        "address": "Köpenicker Str. 70",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.51083,
+        "longitude": 13.42056,
+        "websiteUrl": "https://ohmberlin.com",
+        "description": "A small bass and techno club in the Tresor power-station complex, programming a short rolling window of DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein kleiner Bass- und Technoclub im Kraftwerkskomplex des Tresor, mit einem kurzen, rollierenden Fenster an DJ-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "OHM",
+            "url": "https://ohmberlin.com/",
+            "sourceType": "OHM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Panke Culture",
+        "address": "Gerichtstr. 23",
+        "city": "Berlin",
+        "postalCode": "13347",
+        "district": "wedding",
+        "latitude": 52.545,
+        "longitude": 13.37424,
+        "websiteUrl": "https://www.pankeculture.com",
+        "description": "A club, café and gallery in a Wedding backyard, programming club nights, live music, markets and exhibitions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club, Café und eine Galerie in einem Hinterhof in Wedding, mit Clubnächten, Livemusik, Märkten und Ausstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar", "gallery"]
+    },
+    "sources": [
+        {
+            "name": "Panke Culture",
+            "url": "https://www.pankeculture.com/programme/",
+            "sourceType": "PANKE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Kreuzwerk",
+        "address": "Lobeckstraße 30-35",
+        "city": "Berlin",
+        "postalCode": "10969",
+        "district": "kreuzberg",
+        "latitude": 52.503329,
+        "longitude": 13.407320,
+        "websiteUrl": "https://kreuzwerk.club/",
+        "description": "A Kreuzberg club near Moritzplatz built around queer and FLINTA* voices, with an awareness team and a strict no-photo, no-video floor, hosting techno, house and queer party series such as Power Dance Club.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club am Moritzplatz, der queere und FLINTA*-Stimmen in den Mittelpunkt stellt: Fotos und Videos sind tabu, ein Awareness-Team ist vor Ort, gefeiert wird bei Techno-, House- und queeren Partyreihen wie tracey.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://kreuzwerk.club/events",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Taff Club",
+        "address": "Pfalzburger Straße 10",
+        "city": "Berlin",
+        "postalCode": "10719",
+        "district": "wilmersdorf",
+        "latitude": 52.498100,
+        "longitude": 13.322529,
+        "websiteUrl": "https://www.taff-club.de/",
+        "description": "A small club bar on Pfalzburger Straße in Wilmersdorf, a short walk from the Kurfürstendamm, open on Thursday and Saturday nights with special events on Fridays and also hired out for private celebrations.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine kleine Clubbar in der Pfalzburger Straße in Wilmersdorf, wenige Minuten vom Kurfürstendamm, donnerstags und samstags bis drei Uhr geöffnet, freitags mit Sonderveranstaltungen und auch für private Feiern buchbar.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://www.taff-club.de/",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

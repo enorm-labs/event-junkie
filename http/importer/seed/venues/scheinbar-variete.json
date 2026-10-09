@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Scheinbar Varieté",
+        "address": "Monumentenstr. 9",
+        "city": "Berlin",
+        "postalCode": "10829",
+        "district": "schoeneberg",
+        "latitude": 52.48806,
+        "longitude": 13.36657,
+        "websiteUrl": "https://www.scheinbar.de",
+        "description": "Germany's smallest variety theatre, founded in 1984 and run as a non-profit, where professionals and newcomers try seven-minute acts of comedy, magic, music and artistry at the Open Stage.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das kleinste Varieté Deutschlands, 1984 gegründet und heute ein gemeinnütziger Verein, in dem Profis und Neulinge auf der Open Stage Sieben-Minuten-Nummern aus Comedy, Zauberei, Musik und Artistik zeigen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Scheinbar Varieté",
+            "url": "https://www.scheinbar.de/programm/",
+            "sourceType": "SCHEINBAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

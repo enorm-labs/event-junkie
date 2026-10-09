@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Prince Charles",
+        "address": "Prinzenstraße 85 B",
+        "city": "Berlin",
+        "postalCode": "10969",
+        "district": "kreuzberg",
+        "latitude": 52.503355,
+        "longitude": 13.408879,
+        "websiteUrl": "https://princecharlesberlin.com/",
+        "description": "A club and bar at Moritzplatz built into the former staff swimming pool of the Bechstein piano factory, hosting hip-hop and house parties, concerts and open-mic jam sessions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Club und Bar am Moritzplatz im ehemaligen Mitarbeiterschwimmbad der Klavierfabrik Bechstein, mit Hip-Hop- und House-Partys, Konzerten und offenen Jam-Sessions.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"],
+        "programmeUrl": "https://ra.co/clubs/52395",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

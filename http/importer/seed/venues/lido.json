@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Lido",
+        "address": "Cuvrystr. 7",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.49922,
+        "longitude": 13.44507,
+        "websiteUrl": "https://www.lido-berlin.de",
+        "description": "A former 1950s cinema turned concert venue in Kreuzberg's Wrangelkiez, staging touring indie, rock and electronic acts as well as club nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein früheres Kino der 1950er, heute Konzertort im Kreuzberger Wrangelkiez, mit Indie-, Rock- und Elektronik-Acts auf Tour sowie Clubnächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"]
+    },
+    "sources": [
+        {
+            "name": "Lido",
+            "url": "https://www.lido-berlin.de/",
+            "sourceType": "LIDO",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -11,7 +11,7 @@
 #   down [service…] [--db]       Stop service(s) (and with --db the database too)
 #   status                       Show database + service state
 #   seed-fixture                 Load fixtures/events.sql — the fixed dataset, no network (#272)
-#   seed-all                     Run http/importer/dev-seed.http via ijhttp (all sources)
+#   seed-all                     Regenerate and run http/importer/dev-seed.http via ijhttp (all sources)
 #   seed-one <venue.json> <source.json>
 #                                POST one venue + one event source, print the source slug
 #   import <slug> [timeout]      Trigger an import for one source, poll until it settles
@@ -327,6 +327,9 @@ cmd_seed_fixture() {
 cmd_seed_all() {
     need ijhttp
     importer_healthy || die "Importer is not running — run 'dev-env.sh up' first"
+    # Generated from http/importer/seed/venues/ (#2824); regenerated here so a venue file added
+    # without running scripts/dev-seed-parity.sh is seeded too.
+    python3 "$REPO_ROOT/scripts/seed_venues.py" fix || die "Cannot generate dev-seed.http from the venue files"
     log "Seeding all sources from http/importer/dev-seed.http (this scrapes every venue)"
     (cd "$REPO_ROOT/http" && ijhttp --env-file http-client.env.json --env local -L VERBOSE \
         importer/dev-seed.http)

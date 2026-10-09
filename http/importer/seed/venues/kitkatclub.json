@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "KitKatClub",
+        "address": "Köpenicker Str. 76",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.511407,
+        "longitude": 13.417013,
+        "websiteUrl": "https://kitkatclub.org",
+        "description": "A hedonistic techno club named after the club in the musical Cabaret, running since 1994 and now above U-Bahnhof Heinrich-Heine-Straße, with a strict dress code, a pool, its Saturday CarneBall Bizarre running into the Sunday afterhour, and Friday series by scene collectives.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein hedonistischer Technoclub, benannt nach dem Club aus dem Musical Cabaret, seit 1994 in Betrieb und heute über dem U-Bahnhof Heinrich-Heine-Straße, mit strengem Dresscode, Pool, dem samstäglichen CarneBall Bizarre, der in die Sonntags-Afterhour übergeht, und Freitagsreihen von Szenekollektiven.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "KitKatClub",
+            "url": "https://kitkatclub.org/Home/Club/Index.html",
+            "sourceType": "KITKATCLUB",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Golden Gate",
+        "address": "Dircksenstr. 77-78",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.51611,
+        "longitude": 13.41694,
+        "websiteUrl": "https://goldengate-berlin.de",
+        "description": "A small, long-running techno club in the S-Bahn arches at Jannowitzbrücke, open Thursday to Saturday with house and techno DJ nights and door-only entry.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein kleiner, alteingesessener Technoclub in den S-Bahn-Bögen an der Jannowitzbrücke, donnerstags bis samstags geöffnet, mit House- und Techno-Nächten und Eintritt nur an der Tür.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"]
+    },
+    "sources": [
+        {
+            "name": "Golden Gate",
+            "url": "https://goldengate-berlin.de/",
+            "sourceType": "GOLDEN_GATE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

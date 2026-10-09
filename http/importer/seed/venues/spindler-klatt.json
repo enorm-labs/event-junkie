@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Spindler & Klatt",
+        "address": "Köpenicker Straße 16/17",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.505691,
+        "longitude": 13.434884,
+        "websiteUrl": "https://www.spindlerklatt.com/",
+        "description": "An event location right on the Spree at the former East-West border, with a riverside terrace, whose club hosts themed party nights such as Ü30, Ü60 and 90s-and-2000s.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eventlocation direkt an der Spree auf der früheren Ost-West-Grenze, mit einer Terrasse am Fluss: Im Club laufen Themenpartys wie Ü30, Ü60 oder 90er und 2000er.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://www.spindlerklatt.com/club",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

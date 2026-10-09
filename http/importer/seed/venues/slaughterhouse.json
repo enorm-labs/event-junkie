@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Slaughterhouse",
+        "address": "Lehrter Str. 35",
+        "city": "Berlin",
+        "postalCode": "10557",
+        "district": "tiergarten",
+        "latitude": 52.534452,
+        "longitude": 13.360006,
+        "websiteUrl": "https://slaughterhouse-berlin.de/",
+        "description": "A volunteer-run club in the courtyard of the Kulturfabrik Moabit, a listed factory from 1911, open since 2000 with concerts by young bands and Factory, the monthly wave and gothic party.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Verein mit Ehrenamtlichen betreibt den Club seit 2000 im Hinterhof der denkmalgeschützten Kulturfabrik Moabit von 1911: Konzerte junger Berliner Bands, dazu monatlich die Wave- und Gothic-Party Factory.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue"],
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": [
+        {
+            "name": "Slaughterhouse",
+            "url": "https://slaughterhouse-berlin.de/konzerte/",
+            "sourceType": "SLAUGHTERHOUSE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

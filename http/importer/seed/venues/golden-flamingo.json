@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Golden Flamingo",
+        "address": "Stadtbahnbogen 157",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.522307,
+        "longitude": 13.398753,
+        "websiteUrl": "https://goldenflamingo.de/",
+        "description": "A restaurant and bar in an S-Bahn arch in James-Simon-Park, looking across the Spree to Museum Island, which turns into a dance floor for techno nights by Volume Berlin Records and others.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Restaurant und Bar in einem Stadtbahnbogen im James-Simon-Park mit Blick über die Spree zur Museumsinsel, wo Volume Berlin Records und andere Veranstalter Technonächte ausrichten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://ra.co/clubs/272183",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

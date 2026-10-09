@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Quasimodo",
+        "address": "Kantstr. 12a",
+        "city": "Berlin",
+        "postalCode": "10623",
+        "district": "charlottenburg",
+        "latitude": 52.50593,
+        "longitude": 13.32837,
+        "websiteUrl": "https://quasimodo.club",
+        "description": "Berlin's oldest jazz cellar, off the Ku'damm, programming jazz, blues and soul concerts alongside themed DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Berlins ältester Jazzkeller, abseits des Ku'damms, mit Jazz-, Blues- und Soulkonzerten sowie thematischen DJ-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"]
+    },
+    "sources": [
+        {
+            "name": "Quasimodo",
+            "url": "https://quasimodo.club/events",
+            "sourceType": "QUASIMODO",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

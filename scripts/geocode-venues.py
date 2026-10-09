@@ -2,10 +2,10 @@
 """Resolve venue addresses to coordinates with the Google Geocoding API (#357).
 
     python3 scripts/geocode-venues.py "Revaler Str. 99, 10245 Berlin"
-        One address, printed as a `dev-seed.http` venue block. The new-venue path.
+        One address, printed as the two lines of a venue file. The new-venue path.
 
     python3 scripts/geocode-venues.py
-        Audits the 86 venues in `http/importer/dev-seed.http` -- no database, no importer --
+        Audits the venues in `http/importer/seed/venues/` -- no database, no importer --
         and ranks them by how far each stored coordinate sits from Google's.
 
     python3 scripts/geocode-venues.py --by-name
@@ -56,15 +56,17 @@ import json
 import math
 import os
 import pathlib
-import re
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import seed_venues  # noqa: E402  (the shared reader, beside this script)
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SEED_FILE = os.path.join(REPO, "http", "importer", "dev-seed.http")
+SEED_DIR = os.path.join(REPO, "http", "importer", "seed", "venues")
 PRIVATE_ENV = os.path.join(REPO, "http", "http-client.private.env.json")
 CACHE_FILE = os.path.join(REPO, "temp", "geocode-cache.json")
 
@@ -77,8 +79,6 @@ CONFIDENT = ("ROOFTOP", "RANGE_INTERPOLATED")
 RETRY_STATUS = ("UNKNOWN_ERROR", "OVER_QUERY_LIMIT")
 PAGE_SIZE = 100
 MAX_PAGES = 100
-
-VENUE_POST = re.compile(r"^POST \{\{importer-host\}\}/api/admin/venues\s*$")
 
 
 def strip_json_comments(text):
@@ -155,33 +155,16 @@ def read_key(explicit):
 
 
 def venues_from_seed(path):
-    """Read the venue bodies out of dev-seed.http.
+    """Read the venue bodies out of the venue files.
 
-    The file is the source of truth for what a venue is before it exists anywhere (#876), so the
-    audit runs with no database and no importer. Every block is a plain JSON body; nothing here has
-    to reproduce the client's variable substitution, because a venue body interpolates nothing.
+    The files are the source of truth for what a venue is before it exists anywhere (#876, #2824),
+    so the audit runs with no database and no importer.
     """
-    with open(path, encoding="utf-8") as f:
-        lines = f.read().splitlines()
-    out, i = [], 0
-    while i < len(lines):
-        if not VENUE_POST.match(lines[i]):
-            i += 1
-            continue
-        i += 1
-        while i < len(lines) and lines[i].strip():  # headers
-            i += 1
-        body = []
-        while i < len(lines) and not lines[i].startswith("> {%") and not lines[i].startswith("###"):
-            body.append(lines[i])
-            i += 1
-        handler = []
-        while i < len(lines) and not lines[i].startswith("###"):
-            handler.append(lines[i])
-            i += 1
-        venue = json.loads("\n".join(body))
-        # An imported venue's block captures its id for the event source below it (#2766).
-        venue["_imported"] = any("client.global.set" in h for h in handler)
+    out = []
+    for entry in seed_venues.load(path):
+        venue = dict(entry["venue"])
+        # A venue we import has an event source in its file (#2766).
+        venue["_imported"] = bool(entry["sources"])
         out.append(venue)
     return out
 
@@ -589,7 +572,7 @@ def main():
         epilog="With no address, audits every venue. See the module docstring for the key and the licence.",
     )
     p.add_argument("address", nargs="?", help="A single address to geocode, e.g. 'Revaler Str. 99, 10245 Berlin'")
-    p.add_argument("--host", help="Audit a running importer's rows instead of dev-seed.http")
+    p.add_argument("--host", help="Audit a running importer's rows instead of the venue files")
     p.add_argument("--threshold", type=float, default=100.0, help="Metres before a row is worth checking (default 100)")
     p.add_argument("--sql", action="store_true", help="Emit UPDATE statements for the flagged rows; needs --host")
     p.add_argument("--report", metavar="PATH", help="Also write the ranked table to a Markdown file")
@@ -601,7 +584,7 @@ def main():
     p.add_argument(
         "--not-imported",
         action="store_true",
-        help="Only the venues without an event source in dev-seed.http, the ones /add-venue writes (#2766)",
+        help="Only the venues without an event source in their file, the ones /add-venue writes (#2766)",
     )
     p.add_argument("--verbose", action="store_true", help="Show the stored pair and Google's address for every row")
     p.add_argument("--no-cache", action="store_true", help="Re-fetch even where a cached response is still fresh")
@@ -627,8 +610,8 @@ def main():
             sys.exit(f"Cannot reach the importer at {args.host}: {e}")
         where = args.host
     else:
-        venues = venues_from_seed(SEED_FILE)
-        where = os.path.relpath(SEED_FILE, REPO)
+        venues = venues_from_seed(SEED_DIR)
+        where = os.path.relpath(SEED_DIR, REPO)
         if args.not_imported:
             venues = [v for v in venues if not v["_imported"]]
             where += ", without an event source"

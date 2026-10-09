@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Colosseum",
+        "address": "Gleimstraße 33",
+        "city": "Berlin",
+        "postalCode": "10437",
+        "district": "prenzlauer-berg",
+        "latitude": 52.54783,
+        "longitude": 13.41181,
+        "websiteUrl": "https://www.colosseumberlin.com",
+        "description": "A Prenzlauer Berg cinema of 1924 on Gleimstraße that still screens films, its halls also run as an event house for readings, book premieres, talks and live podcast recordings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kino von 1924 in der Gleimstraße in Prenzlauer Berg, das noch Filme zeigt. Seine Säle laufen zugleich als Eventhaus für Lesungen, Buchpremieren, Talks und Live-Podcasts.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cinema"]
+    },
+    "sources": [
+        {
+            "name": "Colosseum",
+            "url": "https://www.colosseumberlin.com/event",
+            "sourceType": "COLOSSEUM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

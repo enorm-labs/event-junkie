@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zig Zag Jazz Club",
+        "address": "Hauptstr. 89",
+        "city": "Berlin",
+        "postalCode": "12159",
+        "district": "schoeneberg",
+        "latitude": 52.47497,
+        "longitude": 13.33982,
+        "websiteUrl": "https://www.zigzag-jazzclub.berlin",
+        "description": "A jazz club by Innsbrucker Platz with international bands most nights from Tuesday to Sunday and a jam session every Tuesday.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Jazzclub am Innsbrucker Platz mit internationalen Bands an den meisten Abenden von Dienstag bis Sonntag und einer Jamsession an jedem Dienstag.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Zig Zag Jazz Club",
+            "url": "https://www.zigzag-jazzclub.berlin/programmneu",
+            "sourceType": "ZIG_ZAG_JAZZ_CLUB",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

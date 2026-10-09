@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Monster Ronson's Ichiban Karaoke",
+        "address": "Warschauer Str. 34",
+        "city": "Berlin",
+        "postalCode": "10243",
+        "district": "friedrichshain",
+        "latitude": 52.50519,
+        "longitude": 13.44842,
+        "websiteUrl": "https://www.karaokemonster.de",
+        "description": "A Friedrichshain karaoke bar with a big open stage and private karaoke boxes. Drag and cabaret MCs host a different singalong night every evening of the week.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Karaokebar in Friedrichshain mit großer offener Bühne und privaten Karaokeboxen. Drag- und Varieté-MCs moderieren an jedem Abend der Woche eine andere Singalong-Nacht.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "capacity": 75
+    },
+    "sources": [
+        {
+            "name": "Monster Ronson's Ichiban Karaoke",
+            "url": "https://www.karaokemonster.de/events",
+            "sourceType": "MONSTER_RONSONS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

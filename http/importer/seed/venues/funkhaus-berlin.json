@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Funkhaus Berlin",
+        "address": "Nalepastraße 18",
+        "city": "Berlin",
+        "postalCode": "12459",
+        "district": "koepenick",
+        "latitude": 52.479546,
+        "longitude": 13.500286,
+        "websiteUrl": "https://www.funkhaus-berlin.net/",
+        "description": "The former headquarters of East German state radio on the Spree, built 1951–1956 to plans by Franz Ehrlich, whose recording halls and studios now host concerts and festivals and are rented for productions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das einstige Funkhaus des DDR-Rundfunks an der Spree in Oberschöneweide, 1951 bis 1956 nach Plänen von Franz Ehrlich errichtet, vermietet heute Säle und Studios und ist Bühne für Konzerte und Festivals.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "cultural-centre"],
+        "capacity": 250,
+        "programmeUrl": "https://ra.co/clubs/20577",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

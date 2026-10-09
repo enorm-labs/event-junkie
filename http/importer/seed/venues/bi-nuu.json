@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Bi Nuu",
+        "address": "Schlesisches Tor",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.50083,
+        "longitude": 13.44192,
+        "websiteUrl": "https://binuu.de",
+        "description": "A live-music club beneath the U-Bahn viaduct at Schlesisches Tor in Kreuzberg, presenting concerts and club nights across indie, rock, hip-hop and electronic styles.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Livemusik-Club unter dem U-Bahn-Viadukt am Schlesischen Tor in Kreuzberg, mit Konzerten und Clubnächten zwischen Indie, Rock, Hip-Hop und Elektronik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"],
+        "capacity": 500
+    },
+    "sources": [
+        {
+            "name": "Bi Nuu",
+            "url": "https://binuu.de/de/events",
+            "sourceType": "BINUU",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

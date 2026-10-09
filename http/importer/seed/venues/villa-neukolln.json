@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Villa Neukölln",
+        "address": "Hermannstraße 233",
+        "city": "Berlin",
+        "postalCode": "12049",
+        "district": "neukoelln",
+        "latitude": 52.482064,
+        "longitude": 13.425089,
+        "websiteUrl": "http://www.villaneukoelln.de/",
+        "description": "A café-bar with a curtained stage in a former cinema on a Hermannstraße corner, hosting a live swing dance night every Thursday plus concerts, screenings and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Café-Bar mit Vorhangbühne in einem früheren Kino an einer Ecke der Hermannstraße, mit einer Swing-Tanznacht mit Liveband jeden Donnerstag sowie Konzerten, Filmabenden und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"],
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

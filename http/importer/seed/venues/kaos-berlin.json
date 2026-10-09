@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "KAOS Berlin",
+        "address": "Wilhelminenhofstr. 92",
+        "city": "Berlin",
+        "postalCode": "12459",
+        "district": "koepenick",
+        "latitude": 52.462400,
+        "longitude": 13.509995,
+        "websiteUrl": "https://kaosberlin.de/",
+        "description": "A creative collective in a Spree-side warehouse in Oberschöneweide, founded in 2013 by three friends and now about 100 members strong, with coworking and studios plus evening live gigs, improv comedy and a queer meet-up.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die Kreative Arbeitsgemeinschaft Oberschöneweide sitzt seit 2013 in einer Lagerhalle an der Spree; rund 100 Mitglieder teilen sich Coworking und Studios, abends gibt es Live-Konzerte, Impro-Comedy und einen queeren Treff.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "live-venue"],
+        "programmeUrl": "https://kaosberlin.de/veranstaltungen/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

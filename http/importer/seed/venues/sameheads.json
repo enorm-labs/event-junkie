@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Sameheads",
+        "address": "Richardstr. 10",
+        "city": "Berlin",
+        "postalCode": "12043",
+        "district": "neukoelln",
+        "latitude": 52.477885,
+        "longitude": 13.439388,
+        "websiteUrl": "https://www.sameheads.com",
+        "description": "A pub with a basement club in a former Neukölln copy shop, run by Nathan Dukes since the Dukes brothers' party collective settled here, with its own record label and house and experimental DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kneipe mit Kellerclub in einem ehemaligen Copyshop in Neukölln, betrieben von Nathan Dukes aus dem Partykollektiv der Dukes-Brüder, mit eigenem Plattenlabel und Clubnächten zwischen House und experimenteller Elektronik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "club"],
+        "programmeUrl": "https://ra.co/clubs/34420",
+        "reviewedAt": "2026-10-07T14:21:58Z"
+    },
+    "sources": []
+}

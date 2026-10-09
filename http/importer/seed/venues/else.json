@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Else",
+        "address": "An den Treptowers 10",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.495248,
+        "longitude": 13.462778,
+        "websiteUrl": "https://www.else.tv/",
+        "description": "An open-air club beneath the S-Bahn tracks at Treptower Park, right on the Spree, with a house and techno programme.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Open-Air-Club unter der S-Bahn-Trasse am Treptower Park, direkt an der Spree, mit einem Programm aus House und Techno.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "programmeUrl": "https://ra.co/clubs/79607",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

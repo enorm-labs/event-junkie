@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Heimathafen Neukölln",
+        "address": "Karl-Marx-Str. 141",
+        "city": "Berlin",
+        "postalCode": "12043",
+        "district": "neukoelln",
+        "latitude": 52.47702,
+        "longitude": 13.43992,
+        "websiteUrl": "https://heimathafen-neukoelln.de",
+        "description": "A Neukölln Saal and Studio venue in a historic ballroom, programming concerts, theatre, comedy, readings and its own productions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Neuköllner Veranstaltungsort mit Saal und Studio in einem historischen Ballhaus, mit Konzerten, Theater, Comedy, Lesungen und eigenen Produktionen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"],
+        "capacity": 800
+    },
+    "sources": [
+        {
+            "name": "Heimathafen Neukölln",
+            "url": "https://heimathafen-neukoelln.de/wp-json/wp/v2/events",
+            "sourceType": "HEIMATHAFEN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

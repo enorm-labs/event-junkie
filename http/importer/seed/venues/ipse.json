@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Ipse",
+        "address": "Vor dem Schlesischen Tor 2a",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.497348,
+        "longitude": 13.450797,
+        "description": "A riverside club by the Spree at Schlesisches Tor, mixing a warehouse room with a waterfront garden, where house and techno DJs play summer open airs and the beer garden hosts open-decks afternoons and markets.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Am Spreeufer nahe dem Schlesischen Tor verbindet dieser Club eine Lagerhalle mit einem Garten am Wasser, mit House- und Techno-Open-Airs im Sommer sowie Open-Decks-Nachmittagen und Märkten im Biergarten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "capacity": 500,
+        "programmeUrl": "https://ra.co/clubs/278777",
+        "reviewedAt": "2026-10-07T09:58:32Z"
+    },
+    "sources": []
+}

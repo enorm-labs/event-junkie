@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Velodrom",
+        "address": "Paul-Heyse-Str. 26",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.53075,
+        "longitude": 13.45112,
+        "websiteUrl": "https://www.velodrom.de",
+        "description": "A cycling arena at S-Bahnhof Landsberger Allee that doubles as one of Berlin's larger concert venues.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Radrennbahn am S-Bahnhof Landsberger Allee, die zugleich einer der größeren Konzertorte Berlins ist.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["arena"],
+        "capacity": 12000
+    },
+    "sources": [
+        {
+            "name": "Velodrom",
+            "url": "https://www.velomax.de/events",
+            "sourceType": "VELODROM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

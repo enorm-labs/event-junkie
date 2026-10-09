@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Theater im Delphi",
+        "address": "Gustav-Adolf-Str. 2",
+        "city": "Berlin",
+        "postalCode": "13086",
+        "district": "weissensee",
+        "latitude": 52.5519,
+        "longitude": 13.43116,
+        "websiteUrl": "https://theater-im-delphi.de",
+        "description": "A 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre, chamber music and talks.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Stummfilmkino von 1929 in Weißensee, heute Theater und Konzertsaal für Tanz, Musiktheater, Kammermusik und Gespräche.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Theater im Delphi",
+            "url": "https://theater-im-delphi.de/programm/",
+            "sourceType": "THEATER_IM_DELPHI",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

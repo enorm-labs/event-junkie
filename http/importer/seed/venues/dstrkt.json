@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "DSTRKT",
+        "address": "Storkower Straße 123",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.535365,
+        "longitude": 13.452978,
+        "websiteUrl": "https://www.dstrkt.de/",
+        "description": "An event location on Storkower Straße with a main floor on a Funktion-One sound system, the smaller Werkstatt room, a restaurant hall and a garden, used for club nights and booked events.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eventlocation an der Storkower Straße mit einem Main Floor samt Funktion-One-Anlage, der kleineren Werkstatt, einem Restaurantsaal und einem Garten – für Clubnächte und gebuchte Veranstaltungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://www.dstrkt.de/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

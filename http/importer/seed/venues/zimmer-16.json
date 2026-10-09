@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Zimmer 16",
+        "address": "Florastraße 16",
+        "city": "Berlin",
+        "postalCode": "13187",
+        "district": "pankow",
+        "latitude": 52.565479,
+        "longitude": 13.401365,
+        "websiteUrl": "https://zimmer16.com/",
+        "description": "A small stage kept going by volunteers in a former neighbourhood cinema in Pankow, operated by the association MIKADO e.V. since 2002, with about 300 concerts, theatre, comedy and film evenings a year.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die ehrenamtlich betriebene Kleinkunstbühne des Vereins MIKADO e.V. liegt seit 2002 in einem ehemaligen Pankower Kino und zeigt rund 300 Veranstaltungen im Jahr: Konzerte, Theater, Comedy, Film und Kindervorstellungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "theatre"],
+        "capacity": 60,
+        "reviewedAt": "2026-10-07T08:19:25Z"
+    },
+    "sources": [
+        {
+            "name": "Zimmer 16",
+            "url": "https://zimmer16.com/",
+            "sourceType": "ZIMMER_16",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

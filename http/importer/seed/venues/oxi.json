@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "OXI",
+        "address": "Wiesenweg 1-4",
+        "city": "Berlin",
+        "postalCode": "10365",
+        "district": "lichtenberg",
+        "latitude": 52.507253,
+        "longitude": 13.474697,
+        "description": "A techno and house club open since November 2021 in the brick building that once housed Kosmonaut and Polygon, with two indoor dance floors and an open-air garden, OXI Garten.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Seit November 2021 läuft in dem Backsteinbau am Wiesenweg, wo früher Kosmonaut und Polygon feierten, ein Club für Techno und House mit zwei Floors drinnen und dem Open-Air-Garten OXI Garten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"],
+        "programmeUrl": "https://ra.co/clubs/184646",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Mein Freund Harvey",
+        "address": "Kulmer Straße 20A",
+        "city": "Berlin",
+        "postalCode": "10783",
+        "district": "schoeneberg",
+        "latitude": 52.492167,
+        "longitude": 13.363588,
+        "websiteUrl": "https://www.meinfreundharvey.com/",
+        "description": "A retro cocktail bar near Kleistpark styled after the 1930s, where stand-up comedy in English fills the week, from open mics on Tuesdays and Fridays to longer professional sets on Saturdays.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Cocktailbar im Stil der 1930er-Jahre an der Kulmer Straße, deren Bühne der Stand-up-Comedy gehört: dienstags und freitags offene Mikrofone, samstags längere Auftritte erfahrener Comedians, meist auf Englisch.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://www.berlin.de/en/tickets/search/venues/mein-freund-harvey-36688615-0905-494d-9c11-7de870337263/",
+        "reviewedAt": "2026-10-07T12:38:29Z"
+    },
+    "sources": []
+}

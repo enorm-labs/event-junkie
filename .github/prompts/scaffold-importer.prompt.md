@@ -1,6 +1,6 @@
 # Scaffold a New Importer
 
-Add a new venue event importer to `events-importer`, end to end: enum value, parser + importer classes, fixtures, tests, dev-seed wiring — following ADR-007
+Add a new venue event importer to `events-importer`, end to end: enum value, parser + importer classes, fixtures, tests, seed venue file — following ADR-007
 and the importers already there.
 
 **Arguments**: `$ARGUMENTS` names the venue and its listing URL (`SO36 https://so36.com/programm/`). Ask if either is missing.
@@ -101,16 +101,31 @@ scraper infers the year.
 
 ## 6. Register the source
 
-Sources are runtime rows, not Flyway (ADR-007). In `http/importer/dev-seed.http`: a `POST /api/admin/venues` (with `district`, `venueTypes` and, where
-the venue publishes one, `capacity`) capturing the id, a
-`POST /api/admin/event-sources` with `"sourceType": "<VENUE>"` and the listing `url`, a `POST /api/admin/event-sources/<slug>/import`; the venue in the
-`Sources (alphabetical)` list at the top as `Name — URL`. The only comments in a block are the two naming the wiring. The import slug is derived from the
-source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
+Sources are runtime rows, not Flyway (ADR-007). Each venue is one file, `http/importer/seed/venues/<venue-slug>.json` (#2824): the
+`POST /api/admin/venues` body under `venue` (with `district`, `venueTypes` and, where the venue publishes one, `capacity`), and under `sources` the
+`POST /api/admin/event-sources` body with `"sourceType": "<VENUE>"` and the listing `url`, without `venueId`. The file name is the venue's slug
+(`Astra Kulturhaus` → `astra-kulturhaus.json`); `SeedVenueFilesTest` fails on a wrong one. Then run `scripts/dev-seed-parity.sh`: it regenerates
+`http/importer/dev-seed.http`, the "Run all" file, with the venue, source and import requests. Never edit that file by hand; CI fails when it drifts.
 
-**The venue may already have a row**, because a venue we know but do not import gets one with a `programmeUrl` (#2766). Search `dev-seed.http` for its
-name first. If the block exists, add no second `POST /api/admin/venues`: the slug would collide, and `scripts/seed-sources.py` matches venues by name. Add
-the source and import requests under the existing block, reuse its capture, and remove its `programmeUrl`. The row on a cluster keeps its value, which the
-site stops showing once the source exists.
+```json
+{
+    "venue": { "name": "Astra Kulturhaus", "address": "Revaler Str. 99", "...": "..." },
+    "sources": [
+        {
+            "name": "Astra Kulturhaus",
+            "url": "https://www.astra-berlin.de/",
+            "sourceType": "ASTRA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
+```
+
+**The venue may already have a file**, because a venue we know but do not import gets one with a `programmeUrl` and `"sources": []` (#2766). Look for
+`http/importer/seed/venues/<venue-slug>.json` first. If it exists, create no second venue: add the source to its `sources` list and remove its
+`programmeUrl`. The row on a cluster keeps its value, which the site stops showing once the source exists.
 
 **The venue's `description` and `descriptionAlt`** are our own prose, English and German, one sentence each. Take the facts from the venue's own About or
 history page, not from the listing. Open with what sets the venue apart — the building, its history, who programmes it, a house rule such as smoke-free —
@@ -144,7 +159,7 @@ Then `/verify`, then [`/importer-smoke`](importer-smoke.prompt.md) against the l
 - [ ] `sourceId` stable and prefixed; events validated before return
 - [ ] `<VENUE>_LIMITATIONS` at the foot of the importer, registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md` regenerated
 - [ ] Fixtures under `src/test/resources/scraper/<venue>/`; scraper + importer tests cover happy path, edge cases, NotModified, empty page
-- [ ] `dev-seed.http` updated, list at the top refreshed; a `docs/licence-review/RESULTS.tsv` row under the same name
+- [ ] The venue file under `http/importer/seed/venues/` holds the source; `scripts/dev-seed-parity.sh` run; a `docs/licence-review/RESULTS.tsv` row under the same name
 - [ ] Venue description read against the venue's own About page; opens with what sets it apart, no "the odd …" tail
 - [ ] `venueTypes` from the venue's own site, one or more; `capacity` only from a figure the venue or its operator publishes
 - [ ] `ktlintCheck`, detekt, `ModularityTests`, new tests green; `/verify` clean

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Admiralspalast",
+        "address": "Friedrichstr. 101",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.52077,
+        "longitude": 13.38890,
+        "websiteUrl": "https://www.admiralspalast.theater",
+        "description": "The Friedrichstrasse variety theatre — musicals, comedy, concerts and dance in an entertainment palace of 1911, a revue house since 1923.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Varietétheater in der Friedrichstraße — Musicals, Comedy, Konzerte und Tanz in einem Vergnügungspalast von 1911, seit 1923 ein Revuehaus.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"],
+        "capacity": 1737
+    },
+    "sources": [
+        {
+            "name": "Admiralspalast",
+            "url": "https://www.admiralspalast.theater/veranstaltungsuebersicht.html",
+            "sourceType": "ADMIRALSPALAST",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

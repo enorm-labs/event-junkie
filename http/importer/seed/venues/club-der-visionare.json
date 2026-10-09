@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Club der Visionäre",
+        "address": "Am Flutgraben 1",
+        "city": "Berlin",
+        "postalCode": "12435",
+        "district": "treptow",
+        "latitude": 52.49640,
+        "longitude": 13.45030,
+        "websiteUrl": "https://clubdervisionaere.com",
+        "description": "A tiny open-air shack and terrace on the Flutgraben canal, a long-running summer institution for house and minimal techno that runs from the afternoon into the next morning.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine winzige Open-Air-Hütte mit Terrasse am Flutgraben, seit vielen Jahren eine Sommerinstitution für House und Minimal Techno, vom Nachmittag bis in den nächsten Morgen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "open-air"]
+    },
+    "sources": [
+        {
+            "name": "Club der Visionaere",
+            "url": "https://clubdervisionaere.com/programm/",
+            "sourceType": "CLUB_DER_VISIONAERE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

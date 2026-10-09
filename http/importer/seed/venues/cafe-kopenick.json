@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Café Köpenick",
+        "address": "Seelenbinderstraße 54",
+        "city": "Berlin",
+        "postalCode": "12555",
+        "district": "koepenick",
+        "latitude": 52.455179,
+        "longitude": 13.582839,
+        "websiteUrl": "https://hdjk.de/",
+        "description": "A youth club run by Kreisjugendring Köpenick e.V. that calls itself a place of antifascist youth and culture work, with band concerts, parties, readings, a weekly open jam and rehearsal rooms.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der vom Kreisjugendring Köpenick e.V. getragene Jugendclub versteht sich als Ort antifaschistischer Jugend- und Kulturarbeit: mit Bandkonzerten, Partys, Lesungen, wöchentlicher Open Jam und Proberäumen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "live-venue", "cultural-centre"],
+        "programmeUrl": "https://hdjk.de/veranstaltungen-events/",
+        "reviewedAt": "2026-10-06T20:48:21Z"
+    },
+    "sources": []
+}

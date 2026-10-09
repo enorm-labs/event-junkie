@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Frannz Club",
+        "address": "Schönhauser Allee 36",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.538211,
+        "longitude": 13.412688,
+        "websiteUrl": "https://frannz.eu",
+        "description": "A club and concert venue in the Kulturbrauerei in Prenzlauer Berg, presenting live gigs and party nights across pop, indie, hip-hop and electronic music.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Club und Konzertort in der Kulturbrauerei in Prenzlauer Berg, mit Livekonzerten und Partynächten zwischen Pop, Indie, Hip-Hop und Elektronik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue", "club"]
+    },
+    "sources": [
+        {
+            "name": "Frannz Club",
+            "url": "https://frannz.eu/",
+            "sourceType": "FRANNZ",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
