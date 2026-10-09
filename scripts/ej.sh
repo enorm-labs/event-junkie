@@ -10,16 +10,19 @@
 #   scripts/ej.sh versions                      # what each cluster runs, and what Flux would resolve next
 #   scripts/ej.sh urls [staging|production]     # the local URLs the forwards serve
 #
-# Requires: wg-quick (with sudo), kubectl with both contexts, curl, python3; `versions` needs yq and
-# helm. Nothing here writes to a cluster — `kubectl get` and `port-forward` only.
+# Requires: wg-quick (with sudo), kubectl with both contexts, ssh, curl, python3, and pg_isready
+# (or nc) for the database check; `versions` needs yq and helm. Nothing here writes to a cluster —
+# `kubectl get`, `port-forward` and an SSH local forward only.
 #
-# Three forwards per environment, on ports that cannot collide with each other or with `dev-env.sh`'s
+# Four forwards per environment, on ports that cannot collide with each other or with `dev-env.sh`'s
 # 8080/8081; the `1` prefix is staging, `2` production (http/http-client.env.json's convention):
 #
 #   forward     staging   production   what is behind it
 #   importer    18081     28081        admin API and Swagger UI — no Ingress names it (ADR-023)
 #   bff         18080     28080        Swagger UI — /webjars/** is not under /api
 #   openobserve  5080     25080        logs, metrics, dashboards — ClusterIP, unrouted
+#   database    15432     15433        PostgreSQL, by SSH through the node — pg_hba refuses the tunnel
+#                                      address (CLUSTER_ACCESS.md §7)
 #
 # The tunnel state is read from what wg-quick writes (`/var/run/wireguard/<env>.name` on macOS, the
 # interface on Linux), not from a ping; the ping is the handshake check after `up`, because an
@@ -59,11 +62,21 @@ context_of() { echo "event-junkie-$1"; }
 host_of() { case "$1" in staging) echo staging.event-junkie.de ;; production) echo event-junkie.de ;; esac }
 prefix_of() { case "$1" in staging) echo 1 ;; production) echo 2 ;; esac }
 
-# forward_spec <env> <name> → "<local-port> <namespace> <service> <remote-port>"
+# The chart's own value, so a moved database node moves the tunnel too.
+database_host_of() {
+    awk '/^    database:/ { d = 1 } d && /^      host:/ { gsub(/"/, "", $2); print $2; exit }' \
+        "$REPO_ROOT/deploy/clusters/$1/helm-release.yaml"
+}
+
+# forward_spec <env> <name> → "<local-port> <namespace> <service> <remote-port>", or for the
+# database "<local-port> ssh <node> <host:port>"
 forward_spec() {
     local p
     p="$(prefix_of "$1")"
     case "$2" in
+        database)
+            if [ "$1" = staging ]; then echo "15432 ssh $(node_of "$1") $(database_host_of "$1"):5432"; else echo "15433 ssh $(node_of "$1") $(database_host_of "$1"):5432"; fi
+            ;;
         importer) echo "${p}8081 event-junkie event-junkie-importer 8081" ;;
         bff) echo "${p}8080 event-junkie event-junkie-bff 8080" ;;
         openobserve)
@@ -73,7 +86,7 @@ forward_spec() {
             ;;
     esac
 }
-FORWARDS=(importer bff openobserve)
+FORWARDS=(importer bff openobserve database)
 
 url_of() {
     local port
@@ -81,6 +94,7 @@ url_of() {
     case "$2" in
         importer | bff) echo "http://localhost:${port}/webjars/swagger-ui/index.html" ;;
         openobserve) echo "http://localhost:${port}/" ;;
+        database) echo "postgresql://events@127.0.0.1:${port}/events" ;;
     esac
 }
 
@@ -165,6 +179,31 @@ forward_pid() {
 
 port_answers() { curl -s -o /dev/null --max-time 2 "http://localhost:$1/" 2>/dev/null; }
 
+# An SSH listener accepts before the far end does, so a bare port check passes on a dead forward;
+# pg_isready asks PostgreSQL itself. nc is the fallback without a PostgreSQL client.
+database_answers() {
+    if command -v pg_isready >/dev/null; then
+        pg_isready -q -h 127.0.0.1 -p "$1" -t 3
+    else
+        nc -z -w 2 127.0.0.1 "$1"
+    fi
+}
+
+# forward_answers <name> <port>
+forward_answers() {
+    if [ "$1" = database ]; then database_answers "$2"; else port_answers "$2"; fi
+}
+
+# ExitOnForwardFailure makes a taken port an exit rather than a live ssh forwarding nothing, and
+# BatchMode a missing key an error rather than a prompt nobody sees. The key is CLUSTER_ACCESS.md's.
+ssh_forward() {
+    local port="$1" node="$2" target="$3" key="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
+    local -a id=()
+    [ -f "$key" ] && id=(-i "$key")
+    exec ssh -N ${id[@]+"${id[@]}"} -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
+        -L "$port:$target" "ops@$node"
+}
+
 forward_start() {
     local env="$1" name="$2" spec port ns svc remote pid
     spec="$(forward_spec "$env" "$name")"
@@ -175,18 +214,22 @@ forward_start() {
     fi
     # A k9s shell or a hand-typed `port-forward` may hold the port; binding would fail while the port
     # answers, which reads as success. Say whose it is and leave it alone.
-    if port_answers "$port"; then
+    if forward_answers "$name" "$port"; then
         echo "forward $env/$name: $port is already served by something this script did not start — using it; 'down' will not stop it"
         echo "forward $env/$name: $(url_of "$env" "$name")"
         return 0
     fi
     mkdir -p "$STATE_DIR"
-    kubectl --context "$(context_of "$env")" -n "$ns" port-forward "svc/$svc" "$port:$remote" \
-        >"$(logfile "$env" "$name")" 2>&1 &
+    if [ "$ns" = ssh ]; then
+        (ssh_forward "$port" "$svc" "$remote") >"$(logfile "$env" "$name")" 2>&1 </dev/null &
+    else
+        kubectl --context "$(context_of "$env")" -n "$ns" port-forward "svc/$svc" "$port:$remote" \
+            >"$(logfile "$env" "$name")" 2>&1 &
+    fi
     pid=$!
     echo "$pid" >"$(pidfile "$env" "$name")"
     for _ in $(seq 1 10); do
-        if port_answers "$port"; then
+        if forward_answers "$name" "$port"; then
             echo "forward $env/$name: $(url_of "$env" "$name")"
             return 0
         fi
@@ -255,7 +298,7 @@ write_status_js() {
             port="${spec%% *}"
             up=false
             managed=false
-            port_answers "$port" && up=true
+            forward_answers "$name" "$port" && up=true
             forward_pid "$env" "$name" >/dev/null && managed=true
             forwards+="$name $port $up $managed $(url_of "$env" "$name")"$'\n'
         done
@@ -359,8 +402,8 @@ cmd_status() {
             spec="$(forward_spec "$env" "$name")"
             port="${spec%% *}"
             if pid="$(forward_pid "$env" "$name")"; then
-                if port_answers "$port"; then echo "forward $env/$name: up on $port"; else echo "forward $env/$name: pid $pid alive, $port does not answer"; fi
-            elif port_answers "$port"; then
+                if forward_answers "$name" "$port"; then echo "forward $env/$name: up on $port"; else echo "forward $env/$name: pid $pid alive, $port does not answer"; fi
+            elif forward_answers "$name" "$port"; then
                 echo "forward $env/$name: $port answers, not started by this script"
             fi
         done

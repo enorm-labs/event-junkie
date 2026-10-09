@@ -136,6 +136,10 @@ class Env extends HTMLElement {
 
     if (env) {
       for (const [key, forward] of Object.entries(env.forwards)) {
+        if (key === "database") {
+          rows.appendChild(databaseRow(name, forward));
+          continue;
+        }
         const r = row(forward.url, FORWARD_LABELS[key] || key, link(forward.url, `localhost:${forward.port}`));
         if (forward.up && !forward.managed) r.querySelector("[data-value]").appendChild(el("span", "ml-2 text-xs text-zinc-500", "not started by ej.sh"));
         rows.appendChild(r);
@@ -162,6 +166,22 @@ function row(probeUrl, label, valueNode, title) {
   value.appendChild(valueNode);
   if (title) value.title = title;
   return tpl.firstElementChild;
+}
+
+// PostgreSQL speaks no HTTP, so the page cannot probe it. The dot is ej.sh's last pg_isready, and
+// the button copies a read-only psql session (CLUSTER_ACCESS.md §7).
+function databaseRow(envName, forward) {
+  const command =
+    `PGPASSWORD="$(kubectl --context event-junkie-${envName} get secret events-db -n event-junkie -o jsonpath='{.data.password}' | base64 -d)" ` +
+    `PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p ${forward.port} -U events -d events`;
+  const value = el("span", "flex items-center gap-2");
+  value.appendChild(el("code", "text-sm", `localhost:${forward.port}`));
+  value.appendChild(copyButton(command));
+  if (forward.up && !forward.managed) value.appendChild(el("span", "text-xs text-zinc-500", "not started by ej.sh"));
+  const r = row(null, "PostgreSQL", value, "copy: a read-only psql session");
+  r.firstElementChild.className = `inline-block h-2.5 w-2.5 shrink-0 rounded-full ${forward.up ? "bg-emerald-500" : "bg-red-500"}`;
+  r.firstElementChild.title = forward.up ? "answered pg_isready when status.js was written" : "no answer when status.js was written — run scripts/ej.sh up";
+  return r;
 }
 
 function link(href, text) {

@@ -1014,11 +1014,11 @@ window.EJ_LINKS = {
       "commands": [
         {
           "command": "scripts/ej.sh up staging",
-          "note": "tunnel, handshake check, and the three port-forwards"
+          "note": "tunnel, handshake check, three port-forwards and the database tunnel"
         },
         {
           "command": "scripts/ej.sh urls",
-          "note": "the Swagger UIs and OpenObserve, on localhost"
+          "note": "the Swagger UIs, OpenObserve and PostgreSQL, on localhost"
         },
         {
           "command": "kubectl --context event-junkie-staging get pods -A",
@@ -1201,24 +1201,20 @@ window.EJ_LINKS = {
       "heading": "Database",
       "commands": [
         {
-          "command": "# staging — PostgreSQL is on the k3s node",
+          "command": "PGPASSWORD=\"$(kubectl --context event-junkie-staging get secret events-db -n event-junkie \\\n  -o jsonpath='{.data.password}' | base64 -d)\" PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p 15432 -U events -d events",
+          "note": ""
+        },
+        {
+          "command": "PGPASSWORD=\"$(kubectl --context event-junkie-production get secret events-db -n event-junkie \\\n  -o jsonpath='{.data.password}' | base64 -d)\" PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p 15433 -U events -d events",
           "note": ""
         },
         {
           "command": "ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1",
-          "note": ""
-        },
-        {
-          "command": "PGPASSWORD=\"$(kubectl --context event-junkie-staging get secret events-db -n event-junkie \\\n  -o jsonpath='{.data.password}' | base64 -d)\" psql -h 127.0.0.1 -p 15432 -U events -d events",
-          "note": ""
+          "note": "staging"
         },
         {
           "command": "ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.20:5432 ops@10.10.0.1",
-          "note": ""
-        },
-        {
-          "command": "PGPASSWORD=\"$(kubectl --context event-junkie-production get secret events-db -n event-junkie \\\n  -o jsonpath='{.data.password}' | base64 -d)\" psql -h 127.0.0.1 -p 15433 -U events -d events",
-          "note": ""
+          "note": "production"
         },
         {
           "command": "ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo -u postgres psql -d events'",

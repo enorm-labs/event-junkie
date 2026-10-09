@@ -85,12 +85,16 @@ ej-venue() {
 
 # --- database ---------------------------------------------------------------------------------
 # Opens the forward, runs psql, closes the forward — an -f -N ssh left running is what holds port
-# 15432 three days later.
+# 15432 three days later. A forward `ej.sh up` started is used and left to `ej.sh down`.
 
 _ej_psql() {
     local ctx="$1" jump="$2" target="$3" port="$4"
     local pw
     pw="$(kubectl --context "$ctx" get secret events-db -n event-junkie -o jsonpath='{.data.password}' | base64 -d)" || return 1
+    if pg_isready -q -h 127.0.0.1 -p "$port" -t 2 2>/dev/null; then
+        PGPASSWORD="$pw" psql -h 127.0.0.1 -p "$port" -U events -d events
+        return
+    fi
     ssh -f -N -i "$EJ_SSH_KEY" -L "${port}:${target}:5432" "ops@${jump}" || return 1
     PGPASSWORD="$pw" psql -h 127.0.0.1 -p "$port" -U events -d events
     local rc=$?

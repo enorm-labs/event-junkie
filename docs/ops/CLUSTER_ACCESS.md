@@ -14,7 +14,8 @@ kubectl --context event-junkie-staging get nodes   # 2. work
 sudo wg-quick down ~/.wireguard/staging.conf       # 3. done
 ```
 
-For the database it is two hops rather than one: the tunnel, then an SSH forward. `pg_hba` does not admit the tunnel address (§7).
+For the database it is two hops rather than one: the tunnel, then an SSH forward. `pg_hba` does not admit the tunnel address (§7). `scripts/ej.sh up`
+opens both.
 
 Everything below is that, with the parts that go wrong explained.
 
@@ -357,6 +358,8 @@ be refused with `no pg_hba.conf entry for host`, which reads like a firewall pro
 fix. It widens who may reach the database in order to save one flag.
 
 **So the connection has to originate on the node.** An SSH local forward does that, needs no change to anything, and stops when you close it.
+`scripts/ej.sh up staging` opens it on `15432`, and `up production` on `15433`. It reads the target from `database.host` in the cluster's
+`helm-release.yaml`, and checks it with `pg_isready`. By hand, the same forward is:
 
 ```sh
 ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1
@@ -415,7 +418,7 @@ IntelliJ has its own SSH tunnel, so it does not need the `ssh -L` above — but 
 > **This is a real database.** It is staging, so there is no personal data and nothing irreplaceable. But the importer is writing to it, and a redeploy does
 > not undo a stray `UPDATE` in a query console. IntelliJ's read-only checkbox on the data source is a cheap seatbelt.
 
-Close the forward when you are done — it does not close itself:
+Close the forward when you are done — it does not close itself. `scripts/ej.sh down staging` stops the one it opened. A hand-typed one:
 
 ```sh
 pkill -f '15432:localhost:5432'
