@@ -4,7 +4,7 @@ One entry point for the maintenance loop: read where the loop stands, name the o
 run. The steps are the existing commands; this command only joins them.
 
 ```text
-/daily-check → file the drafts → /afk → /afk merge → cut a release → /post-release → (weekly) /musicbrainz-review → again
+/daily-check → file the drafts → (/refine-issues) → /afk → /afk merge → cut a release → /post-release → (weekly) /musicbrainz-review → again
 ```
 
 ## Important
@@ -50,18 +50,20 @@ The first row that holds decides. Each row names its evidence; report it with th
 | 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                | The cut, as two commands for the operator         | proposes     |
 | 7   | `after_deploy` has a released step whose `due` has come (below)                          | `/post-release`                                   | runs         |
 | 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up | `/musicbrainz-review production`                  | runs         |
-| 9   | None of the above                                                                        | "Nothing due", and the next date anything is due  | reports      |
+| 9   | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                   | `/refine-issues` on the next milestone            | proposes     |
+| 10  | None of the above                                                                        | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
   [`/daily-check`](daily-check.prompt.md) Step 6 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
 - **Stage 5**: "no session holds" is [`/start-issue`](start-issue.prompt.md) step 2's three signals: board Status, a remote branch, an open pull
   request. `/afk` checks them again; this row only decides whether starting it is worth a turn.
 - **Stage 6**: give `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`, and the subjects that make it a
-  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 9.
+  product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 10.
 - **Stage 7**: a step's `due` has come when it is `now`, a date on or before today, `deploy+<N>d` with N days passed since the change reached that
   environment, or a dark day that is today. [`/post-release`](post-release.prompt.md) § When a step is due says how to read each.
 - **Stage 8**: the review writes a file of proposals and applies nothing. Applying waits for the operator's word, as that prompt says.
-- **Stage 9**: the next date is the earliest future `due`, the day the MusicBrainz review is due again, or the next dark day of a `dark-day` step.
+- **Stage 9**: `/refine-issues` asks the operator a question per issue, so this command names it and does not run it.
+- **Stage 10**: the next date is the earliest future `due`, the day the MusicBrainz review is due again, or the next dark day of a `dark-day` step.
 
 ## Step 3 — Run or hand over
 
@@ -69,7 +71,7 @@ Run the step when the stage says _runs_, under its prompt. Then go back to Step 
 in the same invocation: the operator reads each result before the next one starts.
 
 Under `/loop /maintain`, a step that waits on something outside the session — CI, a rollout, a release window — ends the turn with a wakeup matched to it,
-not a poll. Stages 3 and 6 end the loop's turn with the question, and stage 9 sleeps until the next due date or the next morning, whichever comes first.
+not a poll. Stages 3, 6 and 9 end the loop's turn with the question, and stage 10 sleeps until the next due date or the next morning, whichever comes first.
 
 ## Step 4 — The report
 

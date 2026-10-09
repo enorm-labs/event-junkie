@@ -126,5 +126,7 @@ gh issue edit <n> --milestone '<title>'
   note you added an hour ago, revise it in place and say plainly that the earlier version was wrong — a chain of three corrections on one issue is unreadable.
 - **A milestone that shrinks is not a milestone that got easier.** Report what left, what arrived, and what the remaining large items are. "Sixteen instead of
   eighteen" says nothing if one of the two arrivals is a broken gate.
+- **Making the ordered issues workable unattended → [`/refine-issues`](refine-issues.prompt.md).** This skill orders; that one asks the question each
+  issue needs before `/afk` can take it.
 - **Findings that are not this milestone → `/new-issue`.** A pass like this reliably turns up defects nobody filed. File them; do not widen the plan.
 - **An issue that is simply wrong should be closed**, with an explanation, rather than carried and re-read every time. Say so and propose it.
