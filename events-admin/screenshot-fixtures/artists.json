@@ -1,0 +1,63 @@
+{
+  "content": [
+    {
+      "id": 4344,
+      "name": "Ben Bloodygrave",
+      "slug": "ben-bloodygrave"
+    },
+    {
+      "id": 3034,
+      "name": "Blood & Sun",
+      "slug": "blood-sun"
+    },
+    {
+      "id": 1869,
+      "name": "Blood Red Shoes",
+      "slug": "blood-red-shoes"
+    },
+    {
+      "id": 3256,
+      "name": "Blood Red Throne",
+      "slug": "blood-red-throne"
+    },
+    {
+      "id": 350,
+      "name": "Bloodred Hourglass",
+      "slug": "bloodred-hourglass"
+    },
+    {
+      "id": 3299,
+      "name": "Bloody Hawk",
+      "slug": "bloody-hawk"
+    },
+    {
+      "id": 1557,
+      "name": "Bloody Mary",
+      "slug": "bloody-mary"
+    },
+    {
+      "id": 7538,
+      "name": "Royal Blood",
+      "slug": "royal-blood"
+    },
+    {
+      "id": 2462,
+      "name": "Seven Blood",
+      "slug": "seven-blood"
+    },
+    {
+      "id": 4878,
+      "name": "The Blood Arm",
+      "slug": "the-blood-arm"
+    },
+    {
+      "id": 2761,
+      "name": "Youngblood Brass Band",
+      "slug": "youngblood-brass-band"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 11,
+  "totalPages": 1
+}

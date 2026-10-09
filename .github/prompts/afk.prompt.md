@@ -77,10 +77,11 @@ newest handover, without working any issue.
     >
     > Light lane: you are in your own worktree. First run `ln -s <main checkout>/events-frontend/node_modules events-frontend/node_modules`. Run no
     > Gradle task, no `scripts/dev-env.sh`, no dev server and no Playwright suite. If the work turns out to need one, stop and report "heavy".
-    > Two scripts are the exceptions: `scripts/pr-screenshots.sh` serves its own builds on free ports, and `scripts/readme-screenshots.sh` only reads
-    > production's public pages. A change a visitor can see gets its before and after screenshots on the PR, by `/open-pr` step 6, taken from a build
-    > of the branch. When production's API lacks a field the change adds, put a local proxy in front of it that fills the field, and say so in the PR.
-    > Do not leave them as an open question.
+    > Three scripts are the exceptions: `scripts/pr-screenshots.sh` serves its own builds on free ports, `scripts/admin-screenshots.sh` answers the
+    > admin API from fixtures on a free port, and `scripts/readme-screenshots.sh` only reads production's public pages. A change a visitor can see
+    > gets its before and after screenshots on the PR, by `/open-pr` step 6, taken from a build of the branch. When production's API lacks a field
+    > the change adds, put a local proxy in front of it that fills the field, and say so in the PR. Do not leave them as an open question. A change
+    > to `events-admin/` gets them from `scripts/admin-screenshots.sh`; symlink `events-admin/node_modules` too.
     >
     > Report: PR URL or "parked", the branch and its head sha, the migration version if any, the files it shares with other PRs of this run, the
     > decisions, the open questions, and the reason if parked.

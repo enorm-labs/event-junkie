@@ -62,6 +62,9 @@ This is the standard "ship it" flow — the manual equivalent of
       `./build/pr-screenshots/<file>.png` with `--attach`, from the repository root; `gh` uploads the file and rewrites the link. `--click` opens a menu,
       `--scroll` brings a list end into view, and `--label` keeps a second run from overwriting the first. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
+      A change to `events-admin/` gets them too, from `scripts/admin-screenshots.sh <path>...`: the same two builds, its API answered from the fixtures in
+      `events-admin/screenshot-fixtures/`, and `--click`, `--fill`, `--select` and `--wait` steps for a state such as an open panel or an error. Say in the PR
+      that the shots show fixture data.
     - **Say what has to happen after it deploys**, if anything: a forced import so a parser fix reaches stored rows, a check that a migration ran, a
       script to run. Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, one `- [ ]` line per step.
       A step that needs a window or a quiet day says when it is due: "over 3 days" becomes `production (3 days after deploy):`, and a re-key

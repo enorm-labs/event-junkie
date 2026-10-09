@@ -1,0 +1,32 @@
+{
+  "id": 2198,
+  "venueId": 43,
+  "title": "BRUCKNER",
+  "subtitle": "„Alles ist beschissen außer diese Tour 2026\" + Support: ERROR",
+  "description": null,
+  "eventType": "CONCERT",
+  "status": "SCHEDULED",
+  "slug": "2026-10-10-lido-bruckner",
+  "eventDate": "2026-10-10",
+  "doorsTime": "19:00:00",
+  "startTime": "20:00:00",
+  "imageUrl": null,
+  "sourceUrl": null,
+  "sourceId": "lido:2026-10-10-lido-bruckner",
+  "ticketUrl": null,
+  "facebookEventUrl": null,
+  "genre": "Punk",
+  "genreTags": [],
+  "pricePresale": 39.2,
+  "priceBoxOffice": null,
+  "priceCurrency": "EUR",
+  "priceNote": null,
+  "soldOut": false,
+  "free": false,
+  "artists": [],
+  "promoterIds": [],
+  "pinnedFields": [
+    "eventType",
+    "genre"
+  ]
+}

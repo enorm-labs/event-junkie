@@ -1,0 +1,87 @@
+{
+  "issue": "concertsWithoutArtist",
+  "source": null,
+  "count": 7,
+  "entries": [
+    {
+      "id": 2864,
+      "slug": "2026-10-13-so36-kiezbingo",
+      "title": "KIEZBINGO",
+      "eventDate": "2026-10-13",
+      "startTime": "20:00:00",
+      "venueId": 70,
+      "sourceSlug": "so36",
+      "flags": [
+        {
+          "kind": "NON_GENRE_TOKEN",
+          "value": "Bingo"
+        }
+      ]
+    },
+    {
+      "id": 1555,
+      "slug": "2026-10-13-festsaal-kreuzberg-blood-red-shoes",
+      "title": "Blood Red Shoes",
+      "eventDate": "2026-10-13",
+      "startTime": "20:00:00",
+      "venueId": 24,
+      "sourceSlug": "festsaal-kreuzberg",
+      "flags": [
+        {
+          "kind": "NON_ARTIST_NAME",
+          "value": "Support: tba"
+        }
+      ]
+    },
+    {
+      "id": 711,
+      "slug": "2026-10-13-huxleys-neue-welt-laibach",
+      "title": "Laibach",
+      "eventDate": "2026-10-13",
+      "startTime": "20:00:00",
+      "venueId": 35,
+      "sourceSlug": "huxleys-neue-welt",
+      "flags": []
+    },
+    {
+      "id": 2200,
+      "slug": "2026-10-11-lido-nails",
+      "title": "NAILS",
+      "eventDate": "2026-10-11",
+      "startTime": "19:40:00",
+      "venueId": 43,
+      "sourceSlug": "lido",
+      "flags": []
+    },
+    {
+      "id": 2198,
+      "slug": "2026-10-10-lido-bruckner",
+      "title": "BRUCKNER",
+      "eventDate": "2026-10-10",
+      "startTime": "20:00:00",
+      "venueId": 43,
+      "sourceSlug": "lido",
+      "flags": []
+    },
+    {
+      "id": 364,
+      "slug": "2026-10-10-frannz-club-slope",
+      "title": "Slope",
+      "eventDate": "2026-10-10",
+      "startTime": "19:30:00",
+      "venueId": 25,
+      "sourceSlug": "frannz-club",
+      "flags": []
+    },
+    {
+      "id": 4546,
+      "slug": "2026-10-10-cassiopeia-integrity",
+      "title": "Integrity",
+      "eventDate": "2026-10-10",
+      "startTime": "18:30:00",
+      "venueId": 12,
+      "sourceSlug": "cassiopeia",
+      "flags": []
+    }
+  ]
+}

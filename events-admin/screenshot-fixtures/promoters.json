@@ -1,0 +1,38 @@
+{
+  "content": [
+    {
+      "id": 21,
+      "name": "36 Concerts",
+      "slug": "36-concerts"
+    },
+    {
+      "id": 109,
+      "name": "Concert Concept",
+      "slug": "concert-concept"
+    },
+    {
+      "id": 466,
+      "name": "Concert Concept Veranstaltungs-GmbH Berlin",
+      "slug": "concert-concept-veranstaltungs-gmbh-berlin"
+    },
+    {
+      "id": 331,
+      "name": "Concert Productions Dresden",
+      "slug": "concert-productions-dresden"
+    },
+    {
+      "id": 23,
+      "name": "Concertbüro Zahlmann",
+      "slug": "concertburo-zahlmann"
+    },
+    {
+      "id": 330,
+      "name": "Concertbüro Zahlmann & Cocomico Theater",
+      "slug": "concertburo-zahlmann-cocomico-theater"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 6,
+  "totalPages": 1
+}
