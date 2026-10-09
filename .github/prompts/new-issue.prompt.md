@@ -60,8 +60,8 @@ milestone and board fields.
           open), or a confirmation from a person is not.
         - Nothing irreversible, no legal or product call, and no category from AGENTS.md § Privacy & GDPR.
         - A cluster is touched only after the merge, as unticked `- [ ] <env>: <verb>` lines the body asks the PR to carry under `## After deploy`.
-        - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh` is
-          the exception.
+        - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh` and
+          `scripts/readme-screenshots.sh` are the exceptions.
 
         Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label,
         or [`/refine-issues`](refine-issues.prompt.md) can later.
