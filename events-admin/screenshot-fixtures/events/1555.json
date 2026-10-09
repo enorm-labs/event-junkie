@@ -1,0 +1,31 @@
+{
+  "id": 1555,
+  "venueId": 24,
+  "title": "Blood Red Shoes",
+  "subtitle": null,
+  "description": null,
+  "eventType": "CONCERT",
+  "status": "SCHEDULED",
+  "slug": "2026-10-13-festsaal-kreuzberg-blood-red-shoes",
+  "eventDate": "2026-10-13",
+  "doorsTime": "19:00:00",
+  "startTime": "20:00:00",
+  "imageUrl": null,
+  "sourceUrl": null,
+  "sourceId": "festsaal-kreuzberg:2026-10-13-festsaal-kreuzberg-blood-red-shoes",
+  "ticketUrl": null,
+  "facebookEventUrl": null,
+  "genre": null,
+  "genreTags": [],
+  "pricePresale": null,
+  "priceBoxOffice": null,
+  "priceCurrency": "EUR",
+  "priceNote": null,
+  "soldOut": false,
+  "free": false,
+  "artists": [],
+  "promoterIds": [],
+  "pinnedFields": [
+    "startTime"
+  ]
+}

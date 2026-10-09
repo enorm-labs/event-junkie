@@ -1,0 +1,101 @@
+[
+  {
+    "method": "POST",
+    "path": "event-sources/cassiopeia/import",
+    "status": 202,
+    "body": {
+      "message": "Import started for source 'cassiopeia'",
+      "sourceSlug": "cassiopeia"
+    },
+    "then": {
+      "event-sources/cassiopeia": {
+        "status": "FAILED",
+        "lastImportAt": "$now",
+        "lastFailureReason": "parse",
+        "lastError": "No event rows matched the selector '.event-list article'",
+        "retryCount": 1
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "event-sources/{slug}/import",
+    "status": 202,
+    "body": {
+      "message": "Import started for source '{slug}'",
+      "sourceSlug": "{slug}"
+    },
+    "then": {
+      "event-sources/{slug}": {
+        "status": "RUNNING",
+        "lastImportAt": "$now"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "event-sources/{slug}/retry",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "status": "IDLE",
+      "retryCount": 0,
+      "lastError": null,
+      "lastFailureReason": null
+    },
+    "then": {
+      "event-sources/{slug}": {
+        "status": "IDLE",
+        "retryCount": 0,
+        "lastError": null,
+        "lastFailureReason": null
+      }
+    }
+  },
+  {
+    "method": "PATCH",
+    "path": "event-sources/{slug}",
+    "status": 200,
+    "body": "$merge"
+  },
+  {
+    "method": "PUT",
+    "path": "events/{id}",
+    "status": 200,
+    "body": "$merge"
+  },
+  {
+    "method": "DELETE",
+    "path": "events/{id}/pins/{field}",
+    "status": 204
+  },
+  {
+    "method": "POST",
+    "path": "events",
+    "when": {
+      "title": "BRUCKNER",
+      "eventDate": "2026-10-10"
+    },
+    "status": 409,
+    "body": {
+      "type": "about:blank",
+      "title": "Conflict",
+      "status": 409,
+      "detail": "A record with the same source ID already exists.",
+      "instance": "/api/admin/events"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "events",
+    "status": 201,
+    "body": "$merge",
+    "merge": {
+      "id": 9001,
+      "slug": "2026-10-24-manual-event",
+      "status": "SCHEDULED",
+      "genreTags": [],
+      "pinnedFields": []
+    }
+  }
+]

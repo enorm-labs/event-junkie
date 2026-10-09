@@ -1,0 +1,980 @@
+{
+  "content": [
+    {
+      "id": 115,
+      "name": "808 Nachtklub Berlin",
+      "slug": "808-nachtklub-berlin",
+      "city": "Berlin",
+      "address": "Budapester Straße 38-40",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 93,
+      "name": "A-Trane",
+      "slug": "a-trane",
+      "city": "Berlin",
+      "address": "Bleibtreustr. 1",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 90,
+      "name": "Abstand",
+      "slug": "abstand",
+      "city": "Berlin",
+      "address": "Rigaer Straße 78",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 1,
+      "name": "Admiralspalast",
+      "slug": "admiralspalast",
+      "city": "Berlin",
+      "address": "Friedrichstr. 101",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 3,
+      "name": "Alte Kantine",
+      "slug": "alte-kantine",
+      "city": "Berlin",
+      "address": "Knaackstr. 97",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 4,
+      "name": "AMT",
+      "slug": "amt",
+      "city": "Berlin",
+      "address": "Dircksenstr. 114",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 5,
+      "name": "Arcanoa",
+      "slug": "arcanoa",
+      "city": "Berlin",
+      "address": "Am Tempelhofer Berg 8",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 94,
+      "name": "ART Stalker",
+      "slug": "art-stalker",
+      "city": "Berlin",
+      "address": "Kaiser-Friedrich-Str. 67",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 7,
+      "name": "Astra Kulturhaus",
+      "slug": "astra-kulturhaus",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 8,
+      "name": "Badehaus",
+      "slug": "badehaus",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 125,
+      "name": "Ballhaus Wedding",
+      "slug": "ballhaus-wedding",
+      "city": "Berlin",
+      "address": "Wriezener Str. 6",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 9,
+      "name": "Bar jeder Vernunft",
+      "slug": "bar-jeder-vernunft",
+      "city": "Berlin",
+      "address": "Schaperstr. 24",
+      "district": "wilmersdorf",
+      "closedOn": null
+    },
+    {
+      "id": 127,
+      "name": "Bar Tausend",
+      "slug": "bar-tausend",
+      "city": "Berlin",
+      "address": "Schiffbauerdamm 11",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 10,
+      "name": "Berghain / Panorama Bar",
+      "slug": "berghain-panorama-bar",
+      "city": "Berlin",
+      "address": "Am Wriezener Bahnhof",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 11,
+      "name": "Bi Nuu",
+      "slug": "bi-nuu",
+      "city": "Berlin",
+      "address": "Schlesisches Tor",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 12,
+      "name": "Cassiopeia",
+      "slug": "cassiopeia",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 13,
+      "name": "Clash",
+      "slug": "clash",
+      "city": "Berlin",
+      "address": "Gneisenaustr. 2a",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 14,
+      "name": "Club der Visionäre",
+      "slug": "club-der-visionare",
+      "city": "Berlin",
+      "address": "Am Flutgraben 1",
+      "district": "treptow",
+      "closedOn": null
+    },
+    {
+      "id": 15,
+      "name": "Club OST",
+      "slug": "club-ost",
+      "city": "Berlin",
+      "address": "Alt-Stralau 1-2",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 16,
+      "name": "Colosseum",
+      "slug": "colosseum",
+      "city": "Berlin",
+      "address": "Gleimstraße 33",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 17,
+      "name": "Columbia Theater",
+      "slug": "columbia-theater",
+      "city": "Berlin",
+      "address": "Columbiadamm 9-11",
+      "district": "tempelhof",
+      "closedOn": null
+    },
+    {
+      "id": 18,
+      "name": "Columbiahalle",
+      "slug": "columbiahalle",
+      "city": "Berlin",
+      "address": "Columbiadamm 13-21",
+      "district": "tempelhof",
+      "closedOn": null
+    },
+    {
+      "id": 100,
+      "name": "Comedy Café Berlin",
+      "slug": "comedy-cafe-berlin",
+      "city": "Berlin",
+      "address": "Roseggerstr. 17",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 19,
+      "name": "Cosmic Comedy Club",
+      "slug": "cosmic-comedy-club",
+      "city": "Berlin",
+      "address": "Schönhauser Allee 184",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 20,
+      "name": "Crack Bellmer",
+      "slug": "crack-bellmer",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 21,
+      "name": "Der Weiße Hase",
+      "slug": "der-weisse-hase",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 101,
+      "name": "Die Wühlmäuse",
+      "slug": "die-wuhlmause",
+      "city": "Berlin",
+      "address": "Pommernallee 2-4",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 102,
+      "name": "Downstairs Comedy Club",
+      "slug": "downstairs-comedy-club",
+      "city": "Berlin",
+      "address": "Oranienburger Str. 67",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 91,
+      "name": "Drugstore",
+      "slug": "drugstore",
+      "city": "Berlin",
+      "address": "Buchberger Straße 6",
+      "district": "lichtenberg",
+      "closedOn": null
+    },
+    {
+      "id": 22,
+      "name": "Duncker Club",
+      "slug": "duncker-club",
+      "city": "Berlin",
+      "address": "Dunckerstr. 64",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 103,
+      "name": "Erreichbar",
+      "slug": "erreichbar",
+      "city": "Berlin",
+      "address": "Reichenberger Str. 63a",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 23,
+      "name": "Eschschloraque Rümschrümp",
+      "slug": "eschschloraque-rumschrump",
+      "city": "Berlin",
+      "address": "Rosenthaler Str. 39",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 24,
+      "name": "Festsaal Kreuzberg",
+      "slug": "festsaal-kreuzberg",
+      "city": "Berlin",
+      "address": "Am Flutgraben 2",
+      "district": "treptow",
+      "closedOn": null
+    },
+    {
+      "id": 95,
+      "name": "Fitzroy",
+      "slug": "fitzroy",
+      "city": "Berlin",
+      "address": "Holzmarktstr. 15-18",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 25,
+      "name": "Frannz Club",
+      "slug": "frannz-club",
+      "city": "Berlin",
+      "address": "Schönhauser Allee 36",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 26,
+      "name": "gART.n",
+      "slug": "gart-n",
+      "city": "Berlin",
+      "address": "Blockdammweg 1",
+      "district": "lichtenberg",
+      "closedOn": null
+    },
+    {
+      "id": 28,
+      "name": "Golden Gate",
+      "slug": "golden-gate",
+      "city": "Berlin",
+      "address": "Dircksenstr. 77-78",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 29,
+      "name": "Gretchen",
+      "slug": "gretchen",
+      "city": "Berlin",
+      "address": "Obentrautstr. 19-21",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 27,
+      "name": "Gärten der Welt",
+      "slug": "garten-der-welt",
+      "city": "Berlin",
+      "address": "Blumberger Damm 44",
+      "district": "marzahn",
+      "closedOn": null
+    },
+    {
+      "id": 30,
+      "name": "Havanna",
+      "slug": "havanna",
+      "city": "Berlin",
+      "address": "Hauptstr. 30",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
+      "id": 31,
+      "name": "Heideglühen",
+      "slug": "heidegluhen",
+      "city": "Berlin",
+      "address": "Seestraße 1",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 32,
+      "name": "Heimathafen Neukölln",
+      "slug": "heimathafen-neukolln",
+      "city": "Berlin",
+      "address": "Karl-Marx-Str. 141",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 33,
+      "name": "Hole 44",
+      "slug": "hole-44",
+      "city": "Berlin",
+      "address": "Hermannstr. 146",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 155,
+      "name": "House of Music Berlin",
+      "slug": "house-of-music-berlin",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 34,
+      "name": "Humboldthain Club",
+      "slug": "humboldthain-club",
+      "city": "Berlin",
+      "address": "Hochstr. 46",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 35,
+      "name": "Huxleys Neue Welt",
+      "slug": "huxleys-neue-welt",
+      "city": "Berlin",
+      "address": "Hasenheide 107-113",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 159,
+      "name": "Jonny Knüppel",
+      "slug": "jonny-knuppel",
+      "city": "Berlin",
+      "address": "Lilli-Henoch-Straße 10",
+      "district": "prenzlauer-berg",
+      "closedOn": "2026-10-31"
+    },
+    {
+      "id": 36,
+      "name": "Junction Bar",
+      "slug": "junction-bar",
+      "city": "Berlin",
+      "address": "Gneisenaustr. 18",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 104,
+      "name": "Kabarett-Theater DISTEL",
+      "slug": "kabarett-theater-distel",
+      "city": "Berlin",
+      "address": "Friedrichstr. 101",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 37,
+      "name": "Kantine am Berghain",
+      "slug": "kantine-am-berghain",
+      "city": "Berlin",
+      "address": "Am Wriezener Bahnhof",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 38,
+      "name": "Kater",
+      "slug": "kater",
+      "city": "Berlin",
+      "address": "Holzmarktstr. 25",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 162,
+      "name": "Kesselhaus",
+      "slug": "kesselhaus",
+      "city": "Berlin",
+      "address": "Knaackstraße 97",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 113,
+      "name": "KitKatClub",
+      "slug": "kitkatclub",
+      "city": "Berlin",
+      "address": "Köpenicker Str. 76",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 39,
+      "name": "Klunkerkranich",
+      "slug": "klunkerkranich",
+      "city": "Berlin",
+      "address": "Karl-Marx-Str. 66",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 40,
+      "name": "Kulturhaus Insel Berlin",
+      "slug": "kulturhaus-insel-berlin",
+      "city": "Berlin",
+      "address": "Alt-Treptow 6",
+      "district": "treptow",
+      "closedOn": null
+    },
+    {
+      "id": 41,
+      "name": "Kulturhaus Peter Edel",
+      "slug": "kulturhaus-peter-edel",
+      "city": "Berlin",
+      "address": "Berliner Allee 125",
+      "district": "weissensee",
+      "closedOn": null
+    },
+    {
+      "id": 92,
+      "name": "KØPI",
+      "slug": "kopi",
+      "city": "Berlin",
+      "address": "Köpenicker Straße 137",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 42,
+      "name": "LARK",
+      "slug": "lark",
+      "city": "Berlin",
+      "address": "Holzmarktstr. 15-18",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 43,
+      "name": "Lido",
+      "slug": "lido",
+      "city": "Berlin",
+      "address": "Cuvrystr. 7",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 44,
+      "name": "Loge",
+      "slug": "loge",
+      "city": "Berlin",
+      "address": "Kinzigstr. 9",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 45,
+      "name": "MAAYA",
+      "slug": "maaya",
+      "city": "Berlin",
+      "address": "Revaler Str. 99",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 46,
+      "name": "Madame Claude",
+      "slug": "madame-claude",
+      "city": "Berlin",
+      "address": "Lübbener Str. 19",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 179,
+      "name": "Maschinenhaus",
+      "slug": "maschinenhaus",
+      "city": "Berlin",
+      "address": "Knaackstraße 97",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 47,
+      "name": "Matrix",
+      "slug": "matrix",
+      "city": "Berlin",
+      "address": "Warschauer Platz 18",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 48,
+      "name": "Max-Schmeling-Halle",
+      "slug": "max-schmeling-halle",
+      "city": "Berlin",
+      "address": "Falkplatz 1",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 49,
+      "name": "MAXXIM",
+      "slug": "maxxim",
+      "city": "Berlin",
+      "address": "Joachimsthaler Str. 15",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 105,
+      "name": "Mehringhof-Theater",
+      "slug": "mehringhof-theater",
+      "city": "Berlin",
+      "address": "Gneisenaustr. 2a",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 50,
+      "name": "Metropol",
+      "slug": "metropol",
+      "city": "Berlin",
+      "address": "Nollendorfplatz 5",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
+      "id": 51,
+      "name": "migas",
+      "slug": "migas",
+      "city": "Berlin",
+      "address": "Lindower Str. 19",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 52,
+      "name": "Mikropol",
+      "slug": "mikropol",
+      "city": "Berlin",
+      "address": "Nollendorfplatz 5",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
+      "id": 53,
+      "name": "Modus Berlin",
+      "slug": "modus-berlin",
+      "city": "Berlin",
+      "address": "Ritterstr. 24-27",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 54,
+      "name": "Monarch",
+      "slug": "monarch",
+      "city": "Berlin",
+      "address": "Skalitzer Str. 134",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 55,
+      "name": "Monster Ronson's Ichiban Karaoke",
+      "slug": "monster-ronson-s-ichiban-karaoke",
+      "city": "Berlin",
+      "address": "Warschauer Str. 34",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 56,
+      "name": "Morphine Raum",
+      "slug": "morphine-raum",
+      "city": "Berlin",
+      "address": "Köpenicker Str. 147",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 57,
+      "name": "MS Hoppetosse",
+      "slug": "ms-hoppetosse",
+      "city": "Berlin",
+      "address": "Eichenstr. 4",
+      "district": "treptow",
+      "closedOn": null
+    },
+    {
+      "id": 58,
+      "name": "Neue Zukunft",
+      "slug": "neue-zukunft",
+      "city": "Berlin",
+      "address": "Alt-Stralau 68",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 59,
+      "name": "OHM",
+      "slug": "ohm",
+      "city": "Berlin",
+      "address": "Köpenicker Str. 70",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 187,
+      "name": "Orangerie Neukölln",
+      "slug": "orangerie-neukolln",
+      "city": "Berlin",
+      "address": "Schierker Str. 8",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 106,
+      "name": "Orania.Berlin",
+      "slug": "orania-berlin",
+      "city": "Berlin",
+      "address": "Oranienstr. 40",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 111,
+      "name": "PANDA platforma",
+      "slug": "panda-platforma",
+      "city": "Berlin",
+      "address": "Knaackstr. 97",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 60,
+      "name": "Panke Culture",
+      "slug": "panke-culture",
+      "city": "Berlin",
+      "address": "Gerichtstr. 23",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 61,
+      "name": "Parkbühne Wuhlheide",
+      "slug": "parkbuhne-wuhlheide",
+      "city": "Berlin",
+      "address": "An der Wuhlheide 187",
+      "district": "koepenick",
+      "closedOn": null
+    },
+    {
+      "id": 193,
+      "name": "Pfefferberg Haus 13",
+      "slug": "pfefferberg-haus-13",
+      "city": "Berlin",
+      "address": "Schönhauser Allee 176",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 62,
+      "name": "Privatclub",
+      "slug": "privatclub",
+      "city": "Berlin",
+      "address": "Skalitzer Str. 85-86",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 107,
+      "name": "PUNCH L!NE Club",
+      "slug": "punch-l-ne-club",
+      "city": "Berlin",
+      "address": "Marlene-Dietrich-Platz 1",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 63,
+      "name": "Quasimodo",
+      "slug": "quasimodo",
+      "city": "Berlin",
+      "address": "Kantstr. 12a",
+      "district": "charlottenburg",
+      "closedOn": null
+    },
+    {
+      "id": 108,
+      "name": "Quatsch Comedy Club",
+      "slug": "quatsch-comedy-club",
+      "city": "Berlin",
+      "address": "Friedrichstr. 107",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 64,
+      "name": "Renate",
+      "slug": "renate",
+      "city": "Berlin",
+      "address": "Alt-Stralau 70",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 201,
+      "name": "Richten25",
+      "slug": "richten25",
+      "city": "Berlin",
+      "address": "Gerichtstraße 25",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 65,
+      "name": "Ritter Butzke",
+      "slug": "ritter-butzke",
+      "city": "Berlin",
+      "address": "Ritterstr. 26",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 66,
+      "name": "Roadrunner's Paradise",
+      "slug": "roadrunner-s-paradise",
+      "city": "Berlin",
+      "address": "Saarbrücker Str. 24",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 87,
+      "name": "ROSA",
+      "slug": "rosa",
+      "city": "Berlin",
+      "address": "Storkower Str. 121",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 109,
+      "name": "Scheinbar Varieté",
+      "slug": "scheinbar-variete",
+      "city": "Berlin",
+      "address": "Monumentenstr. 9",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
+      "id": 68,
+      "name": "Schokoladen",
+      "slug": "schokoladen",
+      "city": "Berlin",
+      "address": "Ackerstr. 169/170",
+      "district": "mitte",
+      "closedOn": null
+    },
+    {
+      "id": 207,
+      "name": "Showfenster Theater",
+      "slug": "showfenster-theater",
+      "city": "Berlin",
+      "address": "Letteallee 94",
+      "district": "reinickendorf",
+      "closedOn": null
+    },
+    {
+      "id": 69,
+      "name": "silent green",
+      "slug": "silent-green",
+      "city": "Berlin",
+      "address": "Gerichtstr. 35",
+      "district": "wedding",
+      "closedOn": null
+    },
+    {
+      "id": 88,
+      "name": "Sisyphos",
+      "slug": "sisyphos",
+      "city": "Berlin",
+      "address": "Hauptstr. 15",
+      "district": "lichtenberg",
+      "closedOn": null
+    },
+    {
+      "id": 210,
+      "name": "Slaughterhouse",
+      "slug": "slaughterhouse",
+      "city": "Berlin",
+      "address": "Lehrter Str. 35",
+      "district": "tiergarten",
+      "closedOn": null
+    },
+    {
+      "id": 70,
+      "name": "SO36",
+      "slug": "so36",
+      "city": "Berlin",
+      "address": "Oranienstr. 190",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 71,
+      "name": "Soda Club",
+      "slug": "soda-club",
+      "city": "Berlin",
+      "address": "Schönhauser Allee 36",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 72,
+      "name": "Sonnenraum",
+      "slug": "sonnenraum",
+      "city": "Berlin",
+      "address": "Eichenstr. 4a",
+      "district": "treptow",
+      "closedOn": null
+    },
+    {
+      "id": 212,
+      "name": "Soulcat",
+      "slug": "soulcat",
+      "city": "Berlin",
+      "address": "Pannierstraße 53",
+      "district": "neukoelln",
+      "closedOn": null
+    },
+    {
+      "id": 112,
+      "name": "Speakeazy",
+      "slug": "speakeazy",
+      "city": "Berlin",
+      "address": "Kulmer Str. 20A",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
+      "id": 213,
+      "name": "Speiches Rock- und Blueskneipe",
+      "slug": "speiches-rock-und-blueskneipe",
+      "city": "Berlin",
+      "address": "Raumerstr. 39",
+      "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 73,
+      "name": "Supamolly",
+      "slug": "supamolly",
+      "city": "Berlin",
+      "address": "Jessnerstr. 41",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 67,
+      "name": "Säälchen",
+      "slug": "saalchen",
+      "city": "Berlin",
+      "address": "Holzmarktstr. 25",
+      "district": "friedrichshain",
+      "closedOn": null
+    },
+    {
+      "id": 74,
+      "name": "Tempodrom",
+      "slug": "tempodrom",
+      "city": "Berlin",
+      "address": "Möckernstr. 10",
+      "district": "kreuzberg",
+      "closedOn": null
+    },
+    {
+      "id": 2,
+      "name": "ÆDEN",
+      "slug": "aeden",
+      "city": "Berlin",
+      "address": "Schleusenufer 3",
+      "district": "kreuzberg",
+      "closedOn": null
+    }
+  ],
+  "totalElements": 108,
+  "totalPages": 2,
+  "size": 100,
+  "number": 0
+}
