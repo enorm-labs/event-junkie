@@ -24,6 +24,7 @@ flowchart TD
     slug["slug"]
     translation["translation"]
     venue["venue"]
+    venuecheck["venuecheck"]
     wikimedia["wikimedia"]
 
     artist --> common
@@ -71,6 +72,7 @@ flowchart TD
     translation --> event
     venue --> common
     venue --> slug
+    venuecheck --> scraper
     wikimedia --> common
 ```
 
