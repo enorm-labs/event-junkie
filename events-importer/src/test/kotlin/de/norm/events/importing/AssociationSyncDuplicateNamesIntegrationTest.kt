@@ -423,6 +423,34 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // #3038: an emoji run between names separates acts, for every source.
+    @Test
+    fun `an emoji-separated slot becomes one act per name with the slot's role, stage and place in the billing`() {
+        runBlocking {
+            val sourceId = "emoji:1"
+            val event = persistEvent(sourceId)
+            val eventId = requireNotNull(event.id)
+            val lineup =
+                listOf(
+                    ScrapedArtist(name = "🔥 Kopf & Hörer 🔥 🎤 Dr. Sheppat ⚡ EVOX ⚡", role = "DJ", stage = "Floor"),
+                    ScrapedArtist(name = "Bluesky", role = "LIVE")
+                )
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = lineup)))
+
+            val rows = eventArtistRepository.findByEventIdIn(listOf(eventId)).toList().sortedBy { it.billingOrder }
+            val names = artistRepository.findAllById(rows.map { it.artistId }).toList().associate { it.id to it.name }
+            rows.map { Triple(names[it.artistId], it.role, it.stage) } shouldBe
+                listOf(
+                    Triple("Kopf & Hörer", "DJ", "Floor"),
+                    Triple("Dr. Sheppat", "DJ", "Floor"),
+                    Triple("Evox", "DJ", "Floor"),
+                    Triple("Bluesky", "LIVE", null)
+                )
+            rows.map { it.billingOrder } shouldBe listOf(0, 1, 2, 3)
+        }
+    }
+
     // #2966: the split is central, so a venue that never calls splitBackToBack still bills two DJs.
     @Test
     fun `a b2b slot becomes two acts with the slot's role, stage and place in the billing`() {

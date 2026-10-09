@@ -614,6 +614,53 @@ class ArtistNameMappingTest {
         splitBackToBack("Ohm (b2b set)") shouldBe listOf("Ohm (b2b set)")
     }
 
+    // #3038: Der Weiße Hase's `Tanzen Hilft` line, as the venue billed it.
+    @Test
+    fun `splitOnEmoji splits an emoji-separated roster and keeps an ampersand name whole`() {
+        val line =
+            "🔥 Kopf & Hörer 🔥 🎤 Dr. Sheppat ⚡ EVOX ⚡ 🎶 Alice Rough 🎶 Kodex 🎶 Nico Brix 🎶 Emma (1) 🎶 kies 🎶 Kimstar 🎶 D!Hustler " +
+                "🎶 Chris Benzin 🎶 Epuls 🎶 JP Dixen 🎶 Tombish & Horn 🎶 Morris Fitch 🎶 Minimalist 🎶 Mayze 🎶 Dr. Q"
+        splitOnEmoji(line) shouldContainExactly
+            listOf(
+                "Kopf & Hörer",
+                "Dr. Sheppat",
+                "EVOX",
+                "Alice Rough",
+                "Kodex",
+                "Nico Brix",
+                "Emma (1)",
+                "kies",
+                "Kimstar",
+                "D!Hustler",
+                "Chris Benzin",
+                "Epuls",
+                "JP Dixen",
+                "Tombish & Horn",
+                "Morris Fitch",
+                "Minimalist",
+                "Mayze",
+                "Dr. Q"
+            )
+    }
+
+    @Test
+    fun `splitOnEmoji keeps a name with no emoji or a wrapping emoji whole`() {
+        splitOnEmoji("Drauf & Dran DJ Team") shouldBe listOf("Drauf & Dran DJ Team")
+        splitOnEmoji("🔥 One Name 🔥") shouldBe listOf("One Name")
+        splitOnEmoji("🔥🔥") shouldBe listOf("🔥🔥")
+    }
+
+    @Test
+    fun `splitOnEmoji takes a variation selector and a zero-width joiner as part of the run`() {
+        splitOnEmoji("Alpha ⚡️ Beta 👩‍🎤 Gamma") shouldBe listOf("Alpha", "Beta", "Gamma")
+    }
+
+    @Test
+    fun `splitOnEmoji keeps each act on the slot's role and stage`() {
+        val slot = ScrapedArtist(name = "A 🎶 B", role = "DJ", stage = "Floor")
+        splitOnEmoji(slot) shouldBe listOf(slot.copy(name = "A"), slot.copy(name = "B"))
+    }
+
     @Test
     fun `splitSegmentOnConjunctions splits guarded conjunctions but never a slash`() {
         splitSegmentOnConjunctions("Lichene & Neue K") shouldBe listOf("Lichene", "Neue K")

@@ -919,6 +919,24 @@ fun splitBackToBack(line: String): List<String> {
 /** [splitBackToBack] on one billing: each DJ of a `b2b` slot keeps the slot's role, stage and set times. */
 fun splitBackToBack(artist: ScrapedArtist): List<ScrapedArtist> = splitBackToBack(artist.name).map { artist.copy(name = it) }
 
+/** A run of pictographic emoji, with the variation selector and zero-width joiner that compose one. */
+private val EMOJI_RUN = Regex("""[\p{IsExtended_Pictographic}\x{FE0F}\x{200D}]+""")
+
+/**
+ * Splits a line at every run of emoji, because a venue that writes its roster as
+ * `🔥 Kopf & Hörer 🔥 🎤 Dr. Sheppat ⚡ EVOX ⚡` bills one act between each pair (#3038). An emoji
+ * that only wraps one name leaves it whole. A line that is nothing but emoji stays as it is.
+ */
+fun splitOnEmoji(line: String): List<String> =
+    line
+        .split(EMOJI_RUN)
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .ifEmpty { listOf(line) }
+
+/** [splitOnEmoji] on one billing: each act keeps the slot's role, stage and set times. */
+fun splitOnEmoji(artist: ScrapedArtist): List<ScrapedArtist> = splitOnEmoji(artist.name).map { artist.copy(name = it) }
+
 /** [line] with every character inside a round bracket replaced, so a match in it is outside any. */
 private fun maskBracketed(line: String): String {
     var depth = 0
