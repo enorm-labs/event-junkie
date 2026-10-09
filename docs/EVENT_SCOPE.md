@@ -57,8 +57,14 @@ is a health metric. If it climbs, a venue is using vocabulary nobody mapped.
 venue publishes. Tresor, Matrix and OHM bill their DJs as `PARTY`.
 
 One path discards artists for `PARTY`: `buildArtistsForEventType`, which reads artists from a title when the venue
-publishes no lineup. A party title names the night, not an act. That rule is tracked in
-[issue #332](https://github.com/enorm-labs/event-junkie/issues/332).
+publishes no lineup. A party title names the night, not an act. The same applies to `FESTIVAL`.
+
+**No new type for dance, theatre or talks.** Dance and theatre stay `SHOW`: Delphi, Admiralspalast and Kesselhaus map
+`tanz` and `theater` to `SHOW`. Talks and panels stay `READING` (Urania) or `OTHER`. On 2026-10-09, `OTHER` held 158
+of the 5,278 upcoming events on production (3.0%). Of the 86 `OTHER` events from 2026-10-09 to 2026-11-09, only 9 talks
+and 2 dance or theatre events fit no existing type. A type for 11 events in a month buys no useful filter. The other
+75 are mapping gaps into existing types. Among them are 24 club nights, 15 open stages and jams, 14 concerts and 5
+comedians. Issue #2992 fixes these mapping gaps (#332).
 
 **`EXHIBITION` is a _run_.** An event carries an optional end since ADR-029, and an exhibition uses it. It is one row
 from opening day to closing day, with `end_date` set and `end_time` empty. The vernissage time is its `start_time`
