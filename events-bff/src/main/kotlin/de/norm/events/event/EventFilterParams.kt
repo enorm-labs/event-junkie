@@ -61,7 +61,13 @@ data class EventFilterParams(
                 "else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left " +
                 "out. An unknown value matches nothing."
     )
-    val timeOfDay: List<String>? = null
+    val timeOfDay: List<String>? = null,
+    @field:Parameter(
+        description =
+            "Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. " +
+                "An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing."
+    )
+    val language: List<String>? = null
 ) {
     /**
      * Combines these criteria with an optional date range into the repository-level [EventFilter].
@@ -91,7 +97,8 @@ data class EventFilterParams(
             query = TextSearch.term(q),
             excludeSoldOut = excludeSoldOut,
             onlyFree = free,
-            timesOfDay = timeOfDay.orEmpty().map { it.lowercase() }.normalizedSlugs()
+            timesOfDay = timeOfDay.orEmpty().map { it.lowercase() }.normalizedSlugs(),
+            spokenLanguages = language.orEmpty().map { it.lowercase() }.normalizedSlugs()
         )
 }
 

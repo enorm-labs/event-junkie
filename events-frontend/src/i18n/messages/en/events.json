@@ -28,6 +28,12 @@
     "clearTimes": "Clear times",
     "byTime": "Filter by time of night",
     "timeHint": "An event matches every time it runs through; without an end, its start decides. Events with no time are left out.",
+    "allLanguages": "Any language",
+    "languagesSelected": "{n} languages",
+    "clearLanguages": "Clear languages",
+    "byLanguage": "Filter by spoken language",
+    "languageHint": "Only events whose listing names the language. Events that do not say are left out.",
+    "languageNarrows": "Only events whose listing names the language are shown; those that do not say are left out.",
     "timesOfDay": {
       "daytime": "Daytime (06:00–18:00)",
       "evening": "Evening (18:00–22:00)",

@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
+import { languageFilterApplies } from '@/lib/spokenLanguages'
 import type { EventDateRange, EventFilterValues } from './useEvents'
 
 /**
@@ -31,6 +32,8 @@ export function useEventFilters() {
     const districts = queryList('district')
     const venueTypes = queryList('venueType')
     const timesOfDay = queryList('timeOfDay')
+    // Sent only while the bar offers it, so a hidden control never narrows the list (#2524).
+    const languages = languageFilterApplies(eventTypes) ? queryList('language') : []
     return {
       q: queryString('q') || undefined,
       eventType: eventTypes.length ? eventTypes : undefined,
@@ -44,6 +47,7 @@ export function useEventFilters() {
       excludeSoldOut: queryString('excludeSoldOut') === 'true' || undefined,
       free: queryString('free') === 'true' || undefined,
       timeOfDay: timesOfDay.length ? timesOfDay : undefined,
+      language: languages.length ? languages : undefined,
     }
   })
 

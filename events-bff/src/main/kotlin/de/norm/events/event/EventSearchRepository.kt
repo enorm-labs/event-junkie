@@ -61,7 +61,12 @@ data class EventFilter(
     val excludeSoldOut: Boolean = false,
     val onlyFree: Boolean = false,
     /** Any of these [TimeOfDay] slugs; empty imposes no constraint. [EventFilterParams] normalizes them. */
-    val timesOfDay: List<String> = emptyList()
+    val timesOfDay: List<String> = emptyList(),
+    /**
+     * Any of these spoken-language codes (#2524); empty imposes no constraint. A row with no known
+     * language never matches, and `subtitle_language` is not read. [EventFilterParams] normalizes them.
+     */
+    val spokenLanguages: List<String> = emptyList()
 ) {
     companion object {
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
@@ -290,7 +295,7 @@ class EventSearchRepository(
         return "($notEnded$grace)"
     }
 
-    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type, time of night). */
+    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type, language, time of night). */
     private fun appendColumnFilters(
         filter: EventFilter,
         conditions: MutableList<String>,
@@ -318,6 +323,11 @@ class EventSearchRepository(
         }
         if (filter.onlyFree) {
             conditions += "e.free = TRUE"
+        }
+        // Overlap with a NULL array is NULL, so an event whose language is not known drops out.
+        if (filter.spokenLanguages.isNotEmpty()) {
+            conditions += "e.spoken_languages && :spokenLanguages"
+            params["spokenLanguages"] = filter.spokenLanguages.toTypedArray()
         }
         if (filter.timesOfDay.isNotEmpty()) {
             conditions += filter.timesOfDay.joinToString(" OR ", "(", ")") { TimeOfDay.bySlug(it)?.sql ?: "FALSE" }

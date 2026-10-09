@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.Test
 
 class EventFilterParamsTest {
@@ -52,5 +53,15 @@ class EventFilterParamsTest {
 
         first.timesOfDay shouldBe listOf("daytime", "late")
         first shouldBe second
+    }
+
+    @Test
+    fun `two orders and cases of the same languages are one filter, and two languages are two`() {
+        val first = EventFilterParams(language = listOf("en", " DE", "EN", "")).toFilter()
+        val second = EventFilterParams(language = listOf("de", "en")).toFilter()
+
+        first.spokenLanguages shouldBe listOf("de", "en")
+        first shouldBe second
+        EventFilterParams(language = listOf("en")).toFilter() shouldNotBe EventFilterParams(language = listOf("de")).toFilter()
     }
 }
