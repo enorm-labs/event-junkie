@@ -137,11 +137,11 @@ class DerWeisseHaseOverviewPageScraper {
     /** The time part of a `"Donnerstag 06.08.2026 23:00"` line — when the doors open and the night starts. */
     private fun parseStartTime(dateLine: String): LocalTime? = parseTime(DATE_LINE_PATTERN.find(dateLine)?.groupValues?.get(TIME_GROUP))
 
-    /** True when [element] is the `LINE UP` heading that introduces the roster. */
+    /** True when [element] is the [LINE_UP_HEADING] that introduces the roster. */
     private fun isLineUpHeading(element: Element): Boolean = LINE_UP_HEADING.matches(element.text().trim())
 
     /**
-     * The night's note — the club's lines between the title and the `LINE UP` heading. Written as a `<p>` ("free entry until midnight*") or another `<h4>`
+     * The night's note — the club's lines between the title and the roster heading. Written as a `<p>` ("free entry until midnight*") or another `<h4>`
      * ("Women & FLINTA free until 1 AM"), so taken by position rather than tag. The `&nbsp;` spacer
      * paragraph the CMS emits after every title reads as blank and is dropped.
      */
@@ -188,8 +188,11 @@ class DerWeisseHaseOverviewPageScraper {
         private const val DATE_GROUP = 2
         private const val TIME_GROUP = 3
 
-        /** The heading the club puts above every roster; matched whole and case-insensitively so `Line Up` works too. */
-        private val LINE_UP_HEADING = Regex("""line\s*-?\s*up:?""", RegexOption.IGNORE_CASE)
+        /**
+         * The heading the club puts above a roster: `LINE UP` on most nights, `Musikanten:` on some. Matched whole and
+         * case-insensitively, so a note written as an `<h4>` never opens the roster.
+         */
+        private val LINE_UP_HEADING = Regex("""(?:line\s*-?\s*up|musikanten):?""", RegexOption.IGNORE_CASE)
 
         /**
          * A note line about entry: "free entry until midnight*", "Women & FLINTA free until 1 AM",
