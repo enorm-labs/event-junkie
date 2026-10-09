@@ -478,6 +478,22 @@ Links events to their normalized genre tags (many-to-many).
 
 Unique constraint on `(event_id, genre_tag_id)` prevents duplicate tag-event associations.
 
+### event_enrichment (Side Table)
+
+Which fields of an event an enrichment source filled, and the page it read them from (ADR-043, #2593). A source is an
+enrichment source when `event_source.role` is `ENRICHMENT`. Every other source is `MAIN`.
+
+| Field             | Type        | Nullable | Description                                                            | Example                              |
+| ----------------- | ----------- | -------- | ---------------------------------------------------------------------- | ------------------------------------ |
+| `event_id`        | `BIGINT` FK | No       | References `event.id`. Deleting the event deletes the row              | `101`                                |
+| `event_source_id` | `BIGINT` FK | No       | References the enrichment source's `event_source.id`                   | `7`                                  |
+| `source_url`      | `TEXT`      | No       | The enrichment source's page for the event, credited on the event page | `https://puschen.example/alpha-band` |
+| `fields`          | `TEXT[]`    | No       | The fields it filled, by the names `pinned_fields` uses. Never empty   | `{genre,lineup}`                     |
+
+The primary key is `(event_id, event_source_id)`. **An enrichment source fills only empty fields and never creates or
+deletes an event.** It leaves a pinned field alone. The main source's import keeps a filled value where it has none of
+its own. When it has one, its value wins and the field leaves `fields`. A row with no field left is deleted.
+
 ## Design Decisions
 
 ### Idempotent Imports via `source_id`

@@ -194,6 +194,19 @@ describe('eventJsonLd', () => {
     expect(eventJsonLd(credited, 'en')!.performer).toBeUndefined()
   })
 
+  it('leaves out performers an enrichment source filled, and keeps them when it filled something else', () => {
+    const filledLineup = {
+      ...event,
+      enrichmentSources: [{ sourceUrl: 'https://puschen.example/a', fields: ['genre', 'lineup'] }],
+    }
+    const filledGenre = {
+      ...event,
+      enrichmentSources: [{ sourceUrl: 'https://puschen.example/a', fields: ['genre'] }],
+    }
+    expect(eventJsonLd(filledLineup, 'en')!.performer).toBeUndefined()
+    expect(eventJsonLd(filledGenre, 'en')!.performer).toHaveLength(1)
+  })
+
   it('names promoters as the organizer', () => {
     expect(eventJsonLd(event, 'en')!.organizer).toEqual([
       { '@type': 'Organization', name: 'Trinity Music' },

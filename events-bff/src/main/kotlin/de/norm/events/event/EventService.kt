@@ -47,7 +47,8 @@ class EventService(
     private val genreTagRepository: GenreTagRepository,
     private val sourceLicenceGate: SourceLicenceGate,
     private val cachedImageGate: CachedImageGate,
-    private val clock: Clock
+    private val clock: Clock,
+    private val eventEnrichmentRepository: EventEnrichmentRepository
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -199,7 +200,8 @@ class EventService(
             genreTags,
             images.serve(event.imageUrl, DETAIL_WIDTH),
             descriptionWithheld = licensed.descriptionWithheld,
-            imageWithheld = licensed.imageWithheld
+            imageWithheld = licensed.imageWithheld,
+            enrichmentSources = eventEnrichmentRepository.findByEventId(eventId)
         )
     }
 

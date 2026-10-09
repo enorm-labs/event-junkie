@@ -23,6 +23,7 @@ import de.norm.events.venue.VenueProgrammeStore
 import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -117,6 +118,9 @@ class EventImportServiceTest {
     /** Takes the touched artists; the lookups run on its own tick (#2051). */
     private val artistLookupSweep: ArtistLookupSweep = mockk(relaxed = true)
 
+    /** The enrichment import, stubbed: [EnrichmentSourceIntegrationTest] runs the real one. */
+    private val eventEnrichmentService: EventEnrichmentService = mockk(relaxed = true)
+
     /** Relaxed: the derivation itself is `VenueProgrammeStoreTest`'s. */
     private val venueProgrammeStore: VenueProgrammeStore = mockk(relaxed = true)
 
@@ -201,13 +205,15 @@ class EventImportServiceTest {
                 // Pin "today" to the fixtures' event date so the past-event cutoff keeps them.
                 clock = Clock.fixed(LocalDate.of(2026, 6, 15).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC),
                 performerTyping = PerformerTyping(mockk(), eventRepository),
-                contentStamp = mockk(relaxed = true)
+                contentStamp = mockk(relaxed = true),
+                enrichmentRepository = mockk(relaxed = true)
             )
 
         service =
             EventImportService(
                 eventSourceRepository = eventSourceRepository,
                 eventUpsertService = eventUpsertService,
+                eventEnrichmentService = eventEnrichmentService,
                 eventImporters = listOf(cassiopeiaImporter),
                 venueRepository = venueRepository,
                 transactionalOperator = transactionalOperator,
@@ -400,6 +406,7 @@ class EventImportServiceTest {
                     EventImportService(
                         eventSourceRepository = eventSourceRepository,
                         eventUpsertService = eventUpsertService,
+                        eventEnrichmentService = eventEnrichmentService,
                         eventImporters = emptyList(),
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,
@@ -586,6 +593,46 @@ class EventImportServiceTest {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name })
                     artistLookupSweep.queue(any())
                 }
+            }
+
+        @Test
+        fun `an enrichment source fills instead of upserting, and its run is counted by what became of its events`() =
+            runTest {
+                val src = source(slug = "puschen").copy(role = SourceRole.ENRICHMENT.name)
+                val events = listOf(scrapedEvent(title = "Show A", sourceId = "puschen:show-a"))
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns ImportResult.Success(events = events, etag = null, lastModified = null)
+                coEvery { eventEnrichmentService.enrich(any(), any(), any(), any(), any()) } returns
+                    EnrichmentOutcome(matched = 1, unmatched = 2, ambiguous = 0, fieldsFilled = 3, touchedArtistIds = setOf(7L))
+
+                val result = service.importFromSource(src)
+
+                result.imported shouldBe true
+                result.eventCount shouldBe 1
+                coVerify { eventEnrichmentService.enrich(any(), src.venueId, any(), 1L, any()) }
+                coVerify(exactly = 0) { eventRepository.saveAll(any<List<EventEntity>>()) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+                coVerify { artistLookupSweep.queue(setOf(7L)) }
+                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.lastEventCount == 1 }) }
+                registry
+                    .find("importer.enrichment.events")
+                    .tags("source", "puschen", "outcome", "unmatched")
+                    .counter()
+                    ?.count() shouldBe 2.0
+                registry
+                    .find("importer.enrichment.events")
+                    .tags("source", "puschen", "outcome", "matched")
+                    .counter()
+                    ?.count() shouldBe 1.0
+                registry
+                    .find("importer.enrichment.events")
+                    .tags("source", "puschen", "outcome", "ambiguous")
+                    .counter()
+                    .shouldBeNull()
+                registry
+                    .find("importer.enrichment.fields_filled")
+                    .tags("source", "puschen")
+                    .counter()
+                    ?.count() shouldBe 3.0
             }
     }
 
@@ -1386,6 +1433,7 @@ class EventImportServiceTest {
                     EventImportService(
                         eventSourceRepository = eventSourceRepository,
                         eventUpsertService = eventUpsertService,
+                        eventEnrichmentService = eventEnrichmentService,
                         eventImporters = listOf(ConcurrencyTrackingImporter(active, maxObserved)),
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,

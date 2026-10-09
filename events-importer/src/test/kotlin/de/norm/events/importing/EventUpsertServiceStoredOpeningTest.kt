@@ -74,7 +74,15 @@ class EventUpsertServiceStoredOpeningTest {
 
     @BeforeEach
     fun setUp() {
-        service = EventUpsertService(eventRepository, mockk(relaxed = true), fixedClock, PerformerTyping(mockk(), eventRepository), mockk(relaxed = true))
+        service =
+            EventUpsertService(
+                eventRepository,
+                mockk(relaxed = true),
+                fixedClock,
+                PerformerTyping(mockk(), eventRepository),
+                mockk(relaxed = true),
+                mockk(relaxed = true)
+            )
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) } returns emptyFlow()

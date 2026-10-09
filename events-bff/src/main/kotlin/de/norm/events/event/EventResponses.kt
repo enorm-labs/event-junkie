@@ -275,7 +275,13 @@ data class EventDetailResponse(
     @Schema(description = "Promoters or presenters responsible for this event")
     val promoters: List<PromoterSummaryResponse>,
     @Schema(description = "Normalized genre tags", example = "[\"Punk\"]")
-    val genreTags: List<String>
+    val genreTags: List<String>,
+    @Schema(
+        description =
+            "The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page " +
+                "must link each one (ADR-036). Empty for almost every event."
+    )
+    val enrichmentSources: List<EnrichmentSourceResponse> = emptyList()
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -287,7 +293,8 @@ data class EventDetailResponse(
             genreTags: List<String>,
             image: ServedImage,
             imageWithheld: Boolean,
-            descriptionWithheld: Boolean
+            descriptionWithheld: Boolean,
+            enrichmentSources: List<EnrichmentSourceResponse> = emptyList()
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -331,10 +338,25 @@ data class EventDetailResponse(
                 venue = venue,
                 lineup = lineup,
                 promoters = promoters,
-                genreTags = genreTags
+                genreTags = genreTags,
+                enrichmentSources = enrichmentSources
             )
     }
 }
+
+/** A source that filled empty fields of an event, and which fields, so the page can credit it (ADR-043). */
+@Schema(description = "A source that filled empty fields of an event, credited on its page")
+data class EnrichmentSourceResponse(
+    @Schema(description = "The page the fields were read from", example = "https://puschen.net/events/alpha-band")
+    val sourceUrl: String,
+    @Schema(
+        description =
+            "The fields it filled, by their admin API names: `lineup`, `promoters`, `genres` or a column such as " +
+                "`genre` or `doorsTime`",
+        example = "[\"genre\", \"lineup\"]"
+    )
+    val fields: List<String>
+)
 
 /**
  * A single entry in an event's lineup: the artist plus their role and billing position, and the

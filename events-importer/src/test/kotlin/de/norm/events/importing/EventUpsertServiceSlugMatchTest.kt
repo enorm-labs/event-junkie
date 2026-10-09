@@ -80,7 +80,15 @@ class EventUpsertServiceSlugMatchTest {
 
     @BeforeEach
     fun setUp() {
-        service = EventUpsertService(eventRepository, associationSyncService, fixedClock, PerformerTyping(mockk(), eventRepository), mockk(relaxed = true))
+        service =
+            EventUpsertService(
+                eventRepository,
+                associationSyncService,
+                fixedClock,
+                PerformerTyping(mockk(), eventRepository),
+                mockk(relaxed = true),
+                mockk(relaxed = true)
+            )
         coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) } returns emptyFlow()

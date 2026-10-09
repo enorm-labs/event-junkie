@@ -36,7 +36,9 @@ class EventUpsertService(
      */
     private val clock: Clock = Clock.system(BERLIN),
     private val performerTyping: PerformerTyping,
-    private val contentStamp: EventContentStamp
+    private val contentStamp: EventContentStamp,
+    /** The fields enrichment sources filled, which this import keeps where it has none (ADR-043). */
+    private val enrichmentRepository: EventEnrichmentRepository
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -146,13 +148,15 @@ class EventUpsertService(
         val scrapedEvents = performerTyping.retype(withStored)
 
         val discriminators = slugDiscriminators(scrapedEvents)
+        val enriched = enrichedFields(existingBySourceId.values)
         val fromSource = { scraped: ScrapedEvent, existing: EventEntity? ->
             scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
         }
-        val build = { scraped: ScrapedEvent, existing: EventEntity? -> PinnedField.keepPinned(fromSource(scraped, existing), existing) }
+        val keep = { row: EventEntity, existing: EventEntity? -> PinnedField.keepPinned(row, existing).keepEnriched(existing, enriched) }
+        val build = { scraped: ScrapedEvent, existing: EventEntity? -> keep(fromSource(scraped, existing), existing) }
         val sourceRows = scrapedEvents.map { scraped -> scraped to fromSource(scraped, existingBySourceId[scraped.sourceId]) }
         val columnPinsKept = logger.keptColumnPins(sourceRows, existingBySourceId)
-        val candidates = sourceRows.map { (scraped, row) -> scraped to PinnedField.keepPinned(row, existingBySourceId[scraped.sourceId]) }
+        val candidates = sourceRows.map { (scraped, row) -> scraped to keep(row, existingBySourceId[scraped.sourceId]) }
         val resolved = resolveBySlug(candidates, existingBySourceId, eventSourceId, build)
 
         val entities = resolved.kept
@@ -164,7 +168,10 @@ class EventUpsertService(
                 unchanged
             }
 
-        val associations = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        val ownFields = sourceRows.associate { (scraped, row) -> scraped.sourceId to scraped.setsOf(row) }
+        val associations =
+            associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents, keptEnrichedTables(existingBySourceId, enriched, ownFields))
+        releaseEnriched(existingBySourceId, enriched, ownFields)
         // After the join tables, so the lineup is hashed as stored (#2768).
         val contentChanged = contentStamp.restamp(savedEvents)
         if (contentChanged > 0) logger.info { "Moved the content stamp of $contentChanged event(s) on event source $eventSourceId" }
@@ -190,6 +197,46 @@ class EventUpsertService(
             pinsKept = pinsKept,
             touchedArtistIds = associations.touchedArtistIds
         )
+    }
+
+    /** The fields enrichment sources filled on [existing], by event id (ADR-043). Empty for almost every event. */
+    private suspend fun enrichedFields(existing: Collection<EventEntity>): Map<Long, Set<PinnedField>> =
+        enrichmentRepository
+            .findByEventIds(existing.mapNotNull { it.id })
+            .groupBy({ it.eventId }, { PinnedField.of(it.fields) })
+            .mapValues { (_, sets) -> sets.flatten().toSet() }
+
+    /**
+     * The join tables of each event that an enrichment source filled and this source leaves empty:
+     * they keep their stored rows (ADR-043), by `sourceId` as the association sync keys them.
+     */
+    private fun keptEnrichedTables(
+        existingBySourceId: Map<String, EventEntity>,
+        enriched: Map<Long, Set<PinnedField>>,
+        ownFields: Map<String, Set<PinnedField>>
+    ): Map<String, Set<PinnedField>> =
+        existingBySourceId
+            .mapValues { (sourceId, stored) ->
+                enriched[stored.id].orEmpty().filter { !it.isColumn && it !in ownFields[sourceId].orEmpty() }.toSet()
+            }.filterValues { it.isNotEmpty() }
+
+    /**
+     * Takes each enriched field that this source now sets off its record: the main source's value won,
+     * and the page stops crediting the enrichment source for it (ADR-043).
+     */
+    private suspend fun releaseEnriched(
+        existingBySourceId: Map<String, EventEntity>,
+        enriched: Map<Long, Set<PinnedField>>,
+        ownFields: Map<String, Set<PinnedField>>
+    ) {
+        existingBySourceId.forEach { (sourceId, stored) ->
+            val id = stored.id ?: return@forEach
+            val won = enriched[id].orEmpty().filter { it in ownFields[sourceId].orEmpty() }
+            if (won.isNotEmpty()) {
+                enrichmentRepository.release(id, won.mapTo(mutableSetOf()) { it.key })
+                logger.info { "The main source set ${won.joinToString { it.key }} on event $id, which an enrichment source had filled" }
+            }
+        }
     }
 
     /**
@@ -526,6 +573,33 @@ private fun KLogger.keptColumnPins(
         }
         overridden.size
     }
+
+/**
+ * [this] with each column an enrichment source filled on [stored] kept from it, where this row has
+ * none of its own (ADR-043). A value of its own wins.
+ */
+private fun EventEntity.keepEnriched(
+    stored: EventEntity?,
+    enriched: Map<Long, Set<PinnedField>>
+): EventEntity {
+    val fields = stored?.id?.let { enriched[it] } ?: return this
+    return fields.filter { it.isColumn && it.isEmptyOn(this) }.fold(this) { row, field -> field.takeFrom(row, stored) }
+}
+
+/**
+ * The enrichable fields this source sets itself on [row], the row it alone would write: a value in
+ * a column, a lineup, a promoter, a genre. These are the fields where its value wins (ADR-043).
+ */
+private fun ScrapedEvent.setsOf(row: EventEntity): Set<PinnedField> =
+    PinnedField.ENRICHABLE
+        .filter { field ->
+            when (field) {
+                PinnedField.LINEUP -> artists.isNotEmpty()
+                PinnedField.PROMOTERS -> promoters.isNotEmpty()
+                PinnedField.GENRES -> row.genre != null
+                else -> !field.isEmptyOn(row)
+            }
+        }.toSet()
 
 /** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
 enum class StaleCleanup {

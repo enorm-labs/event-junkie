@@ -54,7 +54,8 @@ import java.text.Normalizer
 @Service
 @Suppress(
     "TooManyFunctions", // Logically cohesive — groups artist, promoter, and genre tag association management
-    "LongParameterList" // One repository per table the sync writes
+    "LongParameterList", // One repository per table the sync writes
+    "LargeClass" // The enrichment fill reuses the private resolve and sync steps; a second class would duplicate them.
 )
 class AssociationSyncService(
     private val eventArtistRepository: EventArtistRepository,
@@ -74,11 +75,14 @@ class AssociationSyncService(
      *
      * @param savedEvents the persisted event entities (non-null IDs).
      * @param scrapedEvents the raw scraped events.
+     * @param keepStored the join tables of each `sourceId` that an enrichment source filled and this
+     *   source leaves empty. They keep their stored rows as a pinned one does, and count as no pin (ADR-043).
      * @return the artist rows for the MusicBrainz sweep, and how many pinned join tables the source would have changed.
      */
     suspend fun resolveAndSyncAssociations(
         savedEvents: List<EventEntity>,
-        scrapedEvents: List<ScrapedEvent>
+        scrapedEvents: List<ScrapedEvent>,
+        keepStored: Map<String, Set<PinnedField>> = emptyMap()
     ): AssociationOutcome {
         val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
         val (allBilled, heldBack) = billedArtists(events)
@@ -86,27 +90,81 @@ class AssociationSyncService(
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         val pins = AssociationPins(savedEvents, detailless)
         val pinsKept = keptPins(pins, allBilled, events)
+        val kept = { field: PinnedField -> pins.sourceIds(field) + keepStored.filterValues { field in it }.keys }
+        val synced = { field: PinnedField -> savedEvents.filterNot { it.sourceId in kept(field) } }
 
         // A pinned join table is neither resolved nor synced, so the source's names create no rows for it.
-        val lineupPinned = pins.sourceIds(PinnedField.LINEUP)
-        val promotersPinned = pins.sourceIds(PinnedField.PROMOTERS)
-        val genresPinned = pins.sourceIds(PinnedField.GENRES)
+        val lineupPinned = kept(PinnedField.LINEUP)
+        val promotersPinned = kept(PinnedField.PROMOTERS)
+        val genresPinned = kept(PinnedField.GENRES)
         val billed = allBilled.filterKeys { it !in lineupPinned }
         val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
-        syncArtistAssociations(pins.unpinned(PinnedField.LINEUP), billed, artistCache, detailless)
+        syncArtistAssociations(synced(PinnedField.LINEUP), billed, artistCache, detailless)
 
         val promoterEvents = events.map { if (it.sourceId in promotersPinned) it.copy(promoters = emptyList()) else it }
         val promoterCache = resolveAllPromoters(promoterEvents)
-        syncPromoterAssociations(pins.unpinned(PinnedField.PROMOTERS), promoterEvents, promoterCache, detailless)
+        syncPromoterAssociations(synced(PinnedField.PROMOTERS), promoterEvents, promoterCache, detailless)
 
         val genreEvents = events.map { if (it.sourceId in genresPinned) it.copy(genre = null) else it }
         val genreTagCache = resolveAllGenreTags(genreEvents)
-        syncGenreTagAssociations(pins.unpinned(PinnedField.GENRES), genreEvents, genreTagCache)
+        syncGenreTagAssociations(synced(PinnedField.GENRES), genreEvents, genreTagCache)
 
         // A pinned field ignores the source, so nothing the source published there is flagged.
         val flagEvents = genreEvents.map { if (it.sourceId in lineupPinned) it.copy(artists = emptyList()) else it }
         syncQualityFlags(savedEvents, flagEvents, heldBack.filterKeys { it !in lineupPinned })
         return AssociationOutcome(touchedArtistIds = artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }, pinsKept = pinsKept)
+    }
+
+    /**
+     * Fills the join tables an enrichment source may fill and [events] leave empty (ADR-043 rule 4):
+     * the lineup, the promoters, and the genre tags where the genre column was filled in the same run.
+     * A pinned table, or one that holds a row, is not touched, and the sync never deletes: it is
+     * given only events whose stored rows are none. The gate runs as for a main source, but writes no
+     * flags: those describe the main source's import of the event.
+     *
+     * @param events each stored main event beside the enrichment event that matched it, keyed by the
+     *   main event's `sourceId`.
+     * @param genreFilled the ids of the events whose genre column this run filled.
+     * @return the join tables filled per event id, and the artist rows for the MusicBrainz sweep.
+     */
+    suspend fun fillEmptyAssociations(
+        events: List<Pair<EventEntity, ScrapedEvent>>,
+        genreFilled: Set<Long>
+    ): AssociationFill {
+        val ids = events.mapNotNull { it.first.id }
+        if (ids.isEmpty()) return AssociationFill(emptyMap(), emptySet())
+        val withLineup = eventArtistRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
+        val withPromoters = eventPromoterRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
+        val withGenres = eventGenreTagRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
+        val open = { field: PinnedField, filled: Set<Long> ->
+            events.filter { (stored, _) -> stored.id !in filled && field.key !in stored.pinnedFields }
+        }
+
+        val lineupEvents = open(PinnedField.LINEUP, withLineup)
+        val (billed, heldBack) = billedArtists(lineupEvents.map { it.second })
+        val artistCache = resolveAllArtists(billed.values.flatten() + heldBack.values.flatten().distinctBy { slugOf(it.name) })
+        val lineupFilled = lineupEvents.filter { (stored, _) -> billed[stored.sourceId].orEmpty().isNotEmpty() }.map { it.first }
+        syncArtistAssociations(lineupFilled, billed, artistCache, emptySet())
+
+        val promoterEvents = open(PinnedField.PROMOTERS, withPromoters).filter { (_, scraped) -> scraped.promoterSlugs().isNotEmpty() }
+        val promoterCache = resolveAllPromoters(promoterEvents.map { it.second })
+        syncPromoterAssociations(promoterEvents.map { it.first }, promoterEvents.map { it.second }, promoterCache, emptySet())
+
+        val genreEvents =
+            open(PinnedField.GENRES, withGenres)
+                .filter { (stored, scraped) -> stored.id in genreFilled && normalizeGenre(scraped.storedGenre()).isNotEmpty() }
+        val genreTagCache = resolveAllGenreTags(genreEvents.map { it.second })
+        syncGenreTagAssociations(genreEvents.map { it.first }, genreEvents.map { it.second }, genreTagCache)
+
+        val filled =
+            listOf(
+                PinnedField.LINEUP to lineupFilled,
+                PinnedField.PROMOTERS to promoterEvents.map { it.first },
+                PinnedField.GENRES to genreEvents.map { it.first }
+            ).flatMap { (field, rows) -> rows.mapNotNull { it.id }.map { it to field } }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { it.value.toSet() }
+        return AssociationFill(filled, artistCache.values.mapNotNullTo(mutableSetOf()) { it.id })
     }
 
     // -- Pinned join tables (ADR-042) --
@@ -897,6 +955,14 @@ data class AssociationOutcome(
     val touchedArtistIds: Set<Long>,
     /** Pinned join tables the source would have changed (ADR-042). */
     val pinsKept: Int = 0
+)
+
+/** What [AssociationSyncService.fillEmptyAssociations] filled. */
+data class AssociationFill(
+    /** The join tables filled, by event id. */
+    val filled: Map<Long, Set<PinnedField>>,
+    /** The artist rows the fill billed or held back, for the MusicBrainz sweep after the commit (#1567). */
+    val touchedArtistIds: Set<Long>
 )
 
 /** Whether [a] and [b] are the same letters in any case once accents are removed, and differ with them kept. */

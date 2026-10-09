@@ -364,6 +364,18 @@ ALTER TABLE events.event_artist ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 );
 
 --
+-- Name: event_enrichment; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_enrichment (
+    event_id bigint NOT NULL,
+    event_source_id bigint NOT NULL,
+    source_url text NOT NULL,
+    fields text[] NOT NULL,
+    CONSTRAINT event_enrichment_fields_check CHECK ((cardinality(fields) > 0))
+);
+
+--
 -- Name: event_genre_tag; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -470,8 +482,10 @@ CREATE TABLE events.event_source (
     licence_note text,
     translation_licence text,
     last_failure_reason text,
+    role text DEFAULT 'MAIN'::text NOT NULL,
     CONSTRAINT event_source_description_licence_valid CHECK (((description_licence IS NULL) OR (description_licence = ANY (ARRAY['PERMITTED'::text, 'PROHIBITED'::text, 'UNCLEAR'::text])))),
     CONSTRAINT event_source_image_licence_valid CHECK (((image_licence IS NULL) OR (image_licence = ANY (ARRAY['PERMITTED'::text, 'PROHIBITED'::text, 'UNCLEAR'::text])))),
+    CONSTRAINT event_source_role_check CHECK ((role = ANY (ARRAY['MAIN'::text, 'ENRICHMENT'::text]))),
     CONSTRAINT event_source_translation_licence_valid CHECK (((translation_licence IS NULL) OR (translation_licence = ANY (ARRAY['PERMITTED'::text, 'PROHIBITED'::text, 'UNCLEAR'::text]))))
 );
 
@@ -750,6 +764,13 @@ ALTER TABLE ONLY events.event_artist
 
 ALTER TABLE ONLY events.event_artist
     ADD CONSTRAINT event_artist_pkey PRIMARY KEY (id);
+
+--
+-- Name: event_enrichment event_enrichment_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_enrichment
+    ADD CONSTRAINT event_enrichment_pkey PRIMARY KEY (event_id, event_source_id);
 
 --
 -- Name: event_genre_tag event_genre_tag_event_id_genre_tag_id_key; Type: CONSTRAINT; Schema: events; Owner: -
@@ -1151,6 +1172,20 @@ ALTER TABLE ONLY events.event_artist
 
 ALTER TABLE ONLY events.event_artist
     ADD CONSTRAINT event_artist_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event_enrichment event_enrichment_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_enrichment
+    ADD CONSTRAINT event_enrichment_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event_enrichment event_enrichment_event_source_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_enrichment
+    ADD CONSTRAINT event_enrichment_event_source_id_fkey FOREIGN KEY (event_source_id) REFERENCES events.event_source(id) ON DELETE CASCADE;
 
 --
 -- Name: event event_event_source_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

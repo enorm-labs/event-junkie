@@ -179,6 +179,15 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     ): Flow<EventEntity>
 
     /**
+     * The events of venue [venueId] on any of [dates]: the main events an enrichment source's
+     * events are matched against (ADR-043 rule 5).
+     */
+    fun findByVenueIdAndEventDateIn(
+        venueId: Long,
+        dates: Collection<LocalDate>
+    ): Flow<EventEntity>
+
+    /**
      * Bulk-deletes events by their IDs (used for stale event cleanup).
      *
      * Associated join table rows (`event_artist`, `event_promoter`) are cleaned up

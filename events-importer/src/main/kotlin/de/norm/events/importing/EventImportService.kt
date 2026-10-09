@@ -51,6 +51,8 @@ import kotlin.time.Duration.Companion.nanoseconds
 class EventImportService(
     private val eventSourceRepository: EventSourceRepository,
     private val eventUpsertService: EventUpsertService,
+    /** The import of an [SourceRole.ENRICHMENT] source, which fills and never writes an event (ADR-043). */
+    private val eventEnrichmentService: EventEnrichmentService,
     private val eventImporters: List<EventImporter>,
     private val venueRepository: VenueRepository,
     /** Programmatic transaction control rather than @Transactional, to avoid self-invocation issues. */
@@ -226,31 +228,7 @@ class EventImportService(
                 }
 
                 is ImportResult.Success -> {
-                    logger.info { "Scraped ${result.events.size} event(s) from '${runningSource.slug}'" }
-                    val scraped = result.copy(events = AcceptedLimitations.withHouseDefaults(importer.eventSource, result.events))
-
-                    // Look up the venue slug for inclusion in event slugs (ensures cross-venue uniqueness).
-                    val venue =
-                        venueRepository.findById(runningSource.venueId)
-                            ?: error("Venue with id ${runningSource.venueId} not found for source '${runningSource.slug}'")
-
-                    // PROHIBITED means the field is never stored (#807).
-                    val licences = runningSource.licences()
-                    val upsert = upsertInTransaction(runningSource, venue.slug, scraped.events, licences, staleCleanup(importer, scraped))
-
-                    afterCommit(runningSource, venue.name, scraped, upsert, licences)
-
-                    // Nothing is kept that this source will never send (#2020).
-                    val keepValidators = !importer.fetchesBeyondEntryPage
-                    markSuccess(
-                        runningSource,
-                        upsert.total,
-                        result.etag.takeIf { keepValidators },
-                        result.lastModified.takeIf { keepValidators }
-                    )
-                    afterSuccess(upsert)
-                    ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
-                        ImporterMetrics.RunOutcome.SUCCESS
+                    importScraped(runningSource, importer, result)
                 }
             }
         } catch (e: CancellationException) {
@@ -258,6 +236,46 @@ class EventImportService(
         } catch (e: Exception) {
             recordFailure(runningSource, e)
         }
+    }
+
+    /**
+     * A run whose scrape succeeded: upsert in one transaction, then everything after the commit, then
+     * close it. An [SourceRole.ENRICHMENT] source fills instead ([enrichFrom]).
+     */
+    private suspend fun importScraped(
+        runningSource: EventSourceEntity,
+        importer: EventImporter,
+        result: ImportResult.Success
+    ): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
+        logger.info { "Scraped ${result.events.size} event(s) from '${runningSource.slug}'" }
+        val scraped = result.copy(events = AcceptedLimitations.withHouseDefaults(importer.eventSource, result.events))
+
+        // Look up the venue slug for inclusion in event slugs (ensures cross-venue uniqueness).
+        val venue =
+            venueRepository.findById(runningSource.venueId)
+                ?: error("Venue with id ${runningSource.venueId} not found for source '${runningSource.slug}'")
+
+        // PROHIBITED means the field is never stored (#807).
+        val licences = runningSource.licences()
+        // Nothing is kept that this source will never send (#2020).
+        val keepValidators = !importer.fetchesBeyondEntryPage
+        if (runningSource.role == SourceRole.ENRICHMENT.name) {
+            val kept = if (keepValidators) scraped else scraped.copy(etag = null, lastModified = null)
+            return enrichFrom(runningSource, venue.slug, kept, licences) to ImporterMetrics.RunOutcome.SUCCESS
+        }
+        val upsert = upsertInTransaction(runningSource, venue.slug, scraped.events, licences, staleCleanup(importer, scraped))
+
+        afterCommit(runningSource, venue.name, scraped, upsert, licences)
+
+        markSuccess(
+            runningSource,
+            upsert.total,
+            result.etag.takeIf { keepValidators },
+            result.lastModified.takeIf { keepValidators }
+        )
+        afterSuccess(upsert)
+        return ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
+            ImporterMetrics.RunOutcome.SUCCESS
     }
 
     /**
@@ -290,6 +308,30 @@ class EventImportService(
             val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
             eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, staleCleanup)
         }
+
+    /**
+     * The successful run of an [SourceRole.ENRICHMENT] source (ADR-043): fill, in one transaction,
+     * then count and close. No stale cleanup, since it owns no event, and no translation pass, since
+     * it fills no description. [result] carries only the validators the source keeps (#2020). `lastEventCount` is the
+     * number of events it matched, the ones it can still add to.
+     */
+    private suspend fun enrichFrom(
+        source: EventSourceEntity,
+        venueSlug: String,
+        result: ImportResult.Success,
+        licences: SourceLicences
+    ): ImportResultResponse {
+        val outcome =
+            transactionalOperator.executeAndAwait {
+                val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
+                eventEnrichmentService.enrich(result.events, source.venueId, venueSlug, sourceId, licences)
+            }
+        metrics.recordEnrichmentOutcome(source.slug, outcome)
+        fieldCoverageService.record(source, result.events)
+        markSuccess(source, outcome.matched, result.etag, result.lastModified)
+        artistLookupSweep.queue(outcome.touchedArtistIds)
+        return ImportResultResponse(sourceSlug = source.slug, imported = true, eventCount = outcome.matched)
+    }
 
     /** An incomplete scrape wins over [EventImporter.listsWholeProgramme]: a failed page lists nothing. */
     private fun staleCleanup(
