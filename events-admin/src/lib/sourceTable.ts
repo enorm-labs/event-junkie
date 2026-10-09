@@ -34,6 +34,7 @@ export const columns = helper.columns([
   }),
   helper.accessor('sourceType', { header: 'Type' }),
   helper.accessor('enabled', { header: 'Enabled', sortDescFirst: true }),
+  helper.accessor('importIntervalMinutes', { header: 'Interval (min)', sortDescFirst: true }),
   helper.accessor('status', { header: 'Status' }),
   helper.accessor((s) => orNothing(s.lastImportAt), {
     id: 'lastImportAt',

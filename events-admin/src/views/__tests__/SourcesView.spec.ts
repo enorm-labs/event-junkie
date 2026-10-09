@@ -12,6 +12,8 @@ function source(overrides: Partial<EventSource>): EventSource {
     url: 'https://example.org',
     sourceType: 'X',
     enabled: true,
+    importIntervalMinutes: 1440,
+    maxRetries: 3,
     status: 'SUCCESS',
     lastImportAt: null,
     lastSuccessAt: null,
@@ -27,6 +29,7 @@ vi.mock('@/api/eventSources', () => ({
   retrySource: () => Promise.resolve(),
   // The first read ends the polling: SourceActions.spec.ts covers it.
   importEnded: () => true,
+  updateSource: () => Promise.reject(new Error('not used')),
   fetchSource: (slug: string) =>
     Promise.resolve(source({ slug, name: 'AMT', status: 'RUNNING', lastEventCount: 9 })),
   fetchAllSources: () =>

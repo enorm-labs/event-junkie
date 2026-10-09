@@ -9,6 +9,7 @@ import {
   retrySource,
   triggerImport,
 } from '@/api/eventSources'
+import SourceEditForm from '@/components/SourceEditForm.vue'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,6 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 
 const props = defineProps<{ source: EventSource }>()
 const emit = defineEmits<{ updated: [source: EventSource] }>()
@@ -32,6 +40,13 @@ const timedOut = ref(false)
 const error = ref<string | null>(null)
 let timer: ReturnType<typeof setTimeout> | undefined
 let unmounted = false
+const editing = ref(false)
+
+/** The PATCH answers the source as stored, so the row shows it without another read. */
+function saved(source: EventSource) {
+  editing.value = false
+  emit('updated', source)
+}
 
 // Retry resets a source to IDLE. That only means something for a failed source or a stuck run.
 const canRetry = computed(
@@ -105,7 +120,7 @@ onBeforeUnmount(() => {
         <DropdownMenuTrigger as-child>
           <Button
             :aria-label="`More actions for ${source.name}`"
-            :disabled="disabled"
+            :disabled="busy !== null"
             size="icon-xs"
             title="More actions"
             variant="ghost"
@@ -116,6 +131,7 @@ onBeforeUnmount(() => {
         <DropdownMenuContent align="end" class="w-64">
           <DropdownMenuItem
             :aria-label="`Force import ${source.name}`"
+            :disabled="disabled"
             class="flex-col items-start gap-0"
             @select="run('force')"
           >
@@ -128,6 +144,7 @@ onBeforeUnmount(() => {
           <DropdownMenuItem
             v-if="canRetry"
             :aria-label="`Retry ${source.name}`"
+            :disabled="disabled"
             class="flex-col items-start gap-0"
             @select="run('retry')"
           >
@@ -135,6 +152,10 @@ onBeforeUnmount(() => {
             <span class="text-xs text-muted-foreground">
               Reset to IDLE and clear the error. The scheduler imports it on its next tick.
             </span>
+          </DropdownMenuItem>
+          <!-- Edit stays open while the row polls: the form changes no import. -->
+          <DropdownMenuItem :aria-label="`Edit ${source.name}`" @select="editing = true">
+            Edit
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -158,5 +179,17 @@ onBeforeUnmount(() => {
     <p v-if="error" class="max-w-48 text-xs whitespace-normal text-destructive" role="alert">
       {{ error }}
     </p>
+    <Sheet v-model:open="editing">
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Edit {{ source.name }}</SheetTitle>
+          <SheetDescription>
+            The scheduler reads the new interval on its next tick. A disabled source is not
+            imported.
+          </SheetDescription>
+        </SheetHeader>
+        <SourceEditForm :source="source" @cancel="editing = false" @saved="saved" />
+      </SheetContent>
+    </Sheet>
   </div>
 </template>

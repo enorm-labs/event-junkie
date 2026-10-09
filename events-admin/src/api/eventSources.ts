@@ -9,6 +9,8 @@ export interface EventSource {
   url: string
   sourceType: string
   enabled: boolean
+  importIntervalMinutes: number
+  maxRetries: number
   status: string
   lastImportAt: string | null
   lastSuccessAt: string | null
@@ -60,8 +62,15 @@ async function ensureOk(response: Response, call: string): Promise<void> {
   if (response.ok) return
   let detail = ''
   try {
-    const body = (await response.json()) as { detail?: unknown }
+    const body = (await response.json()) as { detail?: unknown; errors?: unknown }
     if (typeof body.detail === 'string' && body.detail) detail = `: ${body.detail}`
+    // A validation 400 says only "Validation failed" in `detail`; the reasons are in `errors`.
+    if (Array.isArray(body.errors)) {
+      const reasons = body.errors
+        .map((e: { message?: unknown }) => e?.message)
+        .filter((m): m is string => typeof m === 'string' && m !== '')
+      if (reasons.length) detail += ` (${reasons.join('; ')})`
+    }
   } catch {
     // No JSON body: the status alone is the message.
   }
@@ -107,6 +116,30 @@ export async function triggerImport(
   const path = `${SOURCES}/${encodeURIComponent(slug)}/import${force ? '?force=true' : ''}`
   const response = await fetchFn(path, { method: 'POST', headers: { Accept: 'application/json' } })
   await ensureOk(response, `POST ${path}`)
+}
+
+/** The fields of `EventSourceUpdateRequest.kt` this app edits. A missing field stays unchanged. */
+export type SourceUpdate = Partial<
+  Pick<EventSource, 'enabled' | 'importIntervalMinutes' | 'maxRetries'>
+>
+
+/**
+ * Changes a source's configuration and answers the source as stored. The importer validates
+ * `importIntervalMinutes >= 1` and `maxRetries >= 0` and answers `400` otherwise.
+ */
+export async function updateSource(
+  slug: string,
+  update: SourceUpdate,
+  fetchFn: typeof fetch = fetch,
+): Promise<EventSource> {
+  const path = `${SOURCES}/${encodeURIComponent(slug)}`
+  const response = await fetchFn(path, {
+    method: 'PATCH',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(update),
+  })
+  await ensureOk(response, `PATCH ${path}`)
+  return (await response.json()) as EventSource
 }
 
 /**
