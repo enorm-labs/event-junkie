@@ -23,9 +23,14 @@ export const EVENT_TYPES = [
 
 export type EventType = (typeof EVENT_TYPES)[number]
 
-interface EventArtist {
+/** `ArtistRole` in `events-core`, in its order. */
+export const ARTIST_ROLES = ['HEADLINER', 'SUPPORT', 'DJ', 'LIVE'] as const
+
+export type ArtistRole = (typeof ARTIST_ROLES)[number]
+
+export interface EventArtist {
   artistId: number
-  role: string
+  role: ArtistRole
   billingOrder: number
   stage: string | null
 }
@@ -93,11 +98,16 @@ export interface EventEdit {
   eventType: EventType
   /** Blank clears the genre. */
   genre: string
+  /** The lineup to save. Left out, the stored lineup goes back. */
+  artists?: EventArtist[]
+  /** The promoters to save. Left out, the stored promoters go back. */
+  promoterIds?: number[]
 }
 
 /**
  * The full PUT body for [event] with [edit] applied. The lineup goes back with the four values
- * the importer compares, so an unchanged lineup pins nothing.
+ * the importer compares, so an unchanged lineup pins nothing; a changed one pins `lineup`, and
+ * changed promoters pin `promoters` (ADR-042).
  */
 export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest {
   const genre = edit.genre.trim()
@@ -123,13 +133,13 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
     priceNote: event.priceNote,
     soldOut: event.soldOut,
     free: event.free,
-    artists: event.artists.map(({ artistId, role, billingOrder, stage }) => ({
+    artists: (edit.artists ?? event.artists).map(({ artistId, role, billingOrder, stage }) => ({
       artistId,
       role,
       billingOrder,
       stage,
     })),
-    promoterIds: event.promoterIds,
+    promoterIds: edit.promoterIds ?? event.promoterIds,
   }
 }
 

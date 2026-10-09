@@ -2,7 +2,9 @@ package de.norm.events.artist
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.PageResponse
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.toList
@@ -122,6 +124,44 @@ class ArtistControllerTest : BaseControllerTest() {
         artists.content.map { it.id } shouldContain created.id
         // Everything created here fits on one page, so the total must equal what came back.
         artists.totalElements shouldBe artists.content.size.toLong()
+    }
+
+    // #2988: the admin's lineup picker finds an artist by part of the name.
+    @Test
+    fun `GET artists with name finds the names that contain it, ignoring case, and counts only those`() {
+        val adicts = createArtist(ArtistRequestFixtures.adicts())
+        val maid = createArtist(ArtistRequestFixtures.create(name = "Maid of Ace"))
+        val percent = createArtist(ArtistRequestFixtures.create(name = "100% Beat"))
+
+        // The name goes in as a URI variable, so `%` arrives encoded as `%25`.
+        fun search(name: String): PageResponse<ArtistResponse> =
+            webTestClient
+                .get()
+                .uri {
+                    it
+                        .path("/api/admin/artists")
+                        .queryParam("name", "{name}")
+                        .queryParam("size", 50)
+                        .build(name)
+                }.exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<PageResponse<ArtistResponse>>()
+                .returnResult()
+                .responseBody!!
+
+        assertSoftly {
+            search("ADICTS").content.map { it.id } shouldContainExactly listOf(adicts.id)
+            search("the adicts").totalElements shouldBe 1
+            search("of a").content.map { it.id } shouldContainExactly listOf(maid.id)
+            search("Bellmer").content shouldBe emptyList()
+            search("Bellmer").totalElements shouldBe 0
+            // `%` is a letter here, not a wildcard that matches every name.
+            search("%").content.map { it.id } shouldContainExactly listOf(percent.id)
+            search("_").content shouldBe emptyList()
+            // A blank name narrows nothing.
+            search(" ").totalElements shouldBe 3
+        }
     }
 
     @Test

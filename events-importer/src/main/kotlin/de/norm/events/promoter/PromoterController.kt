@@ -30,13 +30,19 @@ class PromoterController(
     private val promoterService: PromoterService
 ) {
     @GetMapping
-    @Operation(summary = "List all promoters with pagination; `reviewed=false` lists the rows nobody looked at yet")
+    @Operation(
+        summary =
+            "List all promoters with pagination; `reviewed=false` lists the rows nobody looked at yet, " +
+                "and `name` narrows to the names that contain it, ignoring case"
+    )
     suspend fun findAll(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable,
         @Parameter(description = "`false` lists the promoters nobody reviewed yet, `true` the reviewed ones. Omit it to list all.")
-        @RequestParam(required = false) reviewed: Boolean?
-    ): PageResponse<PromoterResponse> = promoterService.findAll(pageable, reviewed)
+        @RequestParam(required = false) reviewed: Boolean?,
+        @Parameter(description = "Part of the name, any letter case. Omit it to list all.", example = "concerts")
+        @RequestParam(required = false) name: String?
+    ): PageResponse<PromoterResponse> = promoterService.findAll(pageable, reviewed, name)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single promoter by ID")

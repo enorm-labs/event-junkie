@@ -1,11 +1,13 @@
 package de.norm.events.promoter
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.pageByName
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
 
 /**
@@ -15,7 +17,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class PromoterService(
-    private val promoterRepository: PromoterRepository
+    private val promoterRepository: PromoterRepository,
+    private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -28,20 +31,31 @@ class PromoterService(
      *
      * The total comes from a separate count over the same filter, so a caller can tell one page
      * from the whole table (#810). [reviewed] narrows to the rows a person reviewed, or to the
-     * rows nobody looked at yet (#1336); null is the whole table.
+     * rows nobody looked at yet (#1336); null is the whole table. [name] narrows further to the rows
+     * whose name contains it, ignoring case (#2988); null or blank narrows nothing.
      */
     suspend fun findAll(
         pageable: Pageable,
-        reviewed: Boolean? = null
+        reviewed: Boolean? = null,
+        name: String? = null
     ): PageResponse<PromoterResponse> {
+        val term = name?.trim().orEmpty()
         val (rows, total) =
-            when (reviewed) {
-                null -> promoterRepository.findAllBy(pageable) to promoterRepository.count()
-                true -> promoterRepository.findAllByReviewedAtIsNotNull(pageable) to promoterRepository.countByReviewedAtIsNotNull()
-                false -> promoterRepository.findAllByReviewedAtIsNull(pageable) to promoterRepository.countByReviewedAtIsNull()
+            when {
+                term.isNotEmpty() -> template.pageByName(PromoterEntity::class.java, term, pageable, reviewedCriteria(reviewed))
+                reviewed == null -> promoterRepository.findAllBy(pageable).toList() to promoterRepository.count()
+                reviewed -> promoterRepository.findAllByReviewedAtIsNotNull(pageable).toList() to promoterRepository.countByReviewedAtIsNotNull()
+                else -> promoterRepository.findAllByReviewedAtIsNull(pageable).toList() to promoterRepository.countByReviewedAtIsNull()
             }
-        return PageResponse.of(rows.map { PromoterResponse.fromDomain(it.toDomain()) }.toList(), pageable, total)
+        return PageResponse.of(rows.map { PromoterResponse.fromDomain(it.toDomain()) }, pageable, total)
     }
+
+    private fun reviewedCriteria(reviewed: Boolean?): Criteria? =
+        when (reviewed) {
+            null -> null
+            true -> Criteria.where("reviewedAt").isNotNull
+            false -> Criteria.where("reviewedAt").isNull
+        }
 
     /**
      * Finds a single promoter by [id].

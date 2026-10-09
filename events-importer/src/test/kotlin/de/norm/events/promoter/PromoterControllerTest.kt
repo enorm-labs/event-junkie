@@ -118,6 +118,36 @@ class PromoterControllerTest : BaseControllerTest() {
         }
     }
 
+    // #2988: the admin's promoter picker finds a promoter by part of the name.
+    @Test
+    fun `GET promoters with name finds the names that contain it, ignoring case, alone and with the review filter`() {
+        val concerts = createPromoter(PromoterRequestFixtures.create(name = "36 Concerts", reviewedAt = Instant.parse("2026-09-11T18:00:00Z")))
+        val trinity = createPromoter(PromoterRequestFixtures.create(name = "Trinity Music Concerts"))
+        val goodlive = createPromoter(PromoterRequestFixtures.create(name = "Goodlive"))
+
+        fun search(query: String): PageResponse<PromoterResponse> =
+            webTestClient
+                .get()
+                .uri("/api/admin/promoters?$query")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<PageResponse<PromoterResponse>>()
+                .returnResult()
+                .responseBody!!
+
+        assertSoftly {
+            search("name=CONCERTS").content.map { it.id } shouldContainExactly listOf(concerts.id, trinity.id)
+            search("name=concerts").totalElements shouldBe 2
+            search("name=goodLIVE").content.map { it.id } shouldContainExactly listOf(goodlive.id)
+            search("name=Bellmer").content shouldBe emptyList()
+            search("name=Bellmer").totalElements shouldBe 0
+            search("name=concerts&reviewed=true").content.map { it.id } shouldContainExactly listOf(concerts.id)
+            search("name=concerts&reviewed=false").content.map { it.id } shouldContainExactly listOf(trinity.id)
+            search("name=concerts&reviewed=false").totalElements shouldBe 1
+        }
+    }
+
     @Test
     fun `GET promoter by non-existent ID returns 404`() {
         webTestClient
