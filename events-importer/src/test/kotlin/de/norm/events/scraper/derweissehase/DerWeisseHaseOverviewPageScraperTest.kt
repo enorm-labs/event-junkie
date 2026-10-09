@@ -160,6 +160,24 @@ class DerWeisseHaseOverviewPageScraperTest {
             listOf("Funk@delic", "Jens Schwan", "Simon Berlin", "Buda (Paris)", "Kalimanda", "Alina Matini", "Drauf & Dran DJ Team")
     }
 
+    // Production stored the 30 Oct night with no act: its roster heading read `Musikanten:` (#2982).
+    @Test
+    fun `reads a roster under the Musikanten heading`() {
+        val night =
+            block(
+                """<p class="dater">Freitag 30.10.2026 23:00</p><h1>Techno Ihr Hasen / Detroit Connection</h1><p>&nbsp;</p>
+                   |<p class="text"><h4>Musikanten:</h4>
+                   |<p>Jason Garcia b2b T.Linder, Irving Vasquez Ixbalanke, Emanuel Eisbrenner , DAV3, Blue Sky, DAZA + Surprise Act</p></p>
+                """.trimMargin()
+            )
+
+        val parsed = scraper.scrape(night, baseUrl).single()
+        parsed.artists.map { it.name } shouldContainExactly
+            listOf("Jason Garcia b2b T.Linder", "Irving Vasquez Ixbalanke", "Emanuel Eisbrenner", "DAV3", "Blue Sky", "DAZA")
+        parsed.description.shouldBeNull()
+        parsed.priceNote.shouldBeNull()
+    }
+
     @Test
     fun `distinguishes a recurring night by its date`() {
         val straff = events.filter { it.title == "straff / thursday techno" }
