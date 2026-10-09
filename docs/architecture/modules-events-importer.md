@@ -28,6 +28,7 @@ flowchart TD
 
     artist --> common
     artist --> slug
+    dataquality --> common
     dataquality --> event
     dataquality --> importing
     dataquality --> scraper
