@@ -440,7 +440,8 @@ fun List<ScrapedEvent>.dropPastEvents(
  * that is not one day of a run, and every `EXHIBITION` row sharing a key becomes one event dated
  * from the first listed day to the last, built on the first day whose page answered. A row already
  * carrying a span widens the fold. A single day stays a single day; every other kind of event
- * passes through, since a festival's days differ in lineup.
+ * passes through, since a festival's days differ in lineup. A listing drops the days already over,
+ * so the upsert keeps an earlier stored opening (#2940).
  */
 fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): List<ScrapedEvent> {
     val runKey = { event: ScrapedEvent -> key(event)?.takeIf { event.eventType == EventType.EXHIBITION.name } }
