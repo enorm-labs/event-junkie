@@ -31,7 +31,10 @@ import java.time.ZoneId
  * venue, artist, promoter and genre tag associations for the whole page, as the importer does.
  */
 @Service
-@Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
+@Suppress(
+    "LongParameterList", // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
+    "TooManyFunctions" // One read per public shape, over the shared private hydration and licence helpers they all go through.
+)
 class EventService(
     private val eventRepository: EventRepository,
     private val eventSearchRepository: EventSearchRepository,
@@ -60,6 +63,14 @@ class EventService(
         val events = hydrateOrdered(page.ids)
         return PageResponse.of(summariesFor(events), pageable, page.total)
     }
+
+    /**
+     * The event that leads the list's first page for [filter] (#1262): the earliest-starting one an
+     * operator features until after now. Null when none matches, and the list stays even.
+     */
+    @Transactional(readOnly = true)
+    suspend fun lead(filter: EventFilter): EventSummaryResponse? =
+        eventSearchRepository.firstFeatured(filter, Instant.now(clock))?.let { summariesFor(hydrateOrdered(listOf(it))).firstOrNull() }
 
     /**
      * Tonight's events, everything on today including a weekender in its second night (ADR-029).

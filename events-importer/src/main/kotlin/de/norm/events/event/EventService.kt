@@ -167,7 +167,12 @@ class EventService(
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
         // Remap via the shared factory, then keep what the request never owns: identity, audit, and
         // the columns the importer derives (#2249).
-        val updated = request.toEventEntity(slug).keepingDerivedFrom(existing)
+        val updated =
+            request
+                .toEventEntity(slug)
+                .keepingDerivedFrom(existing)
+                // A body without `featuredUntil` keeps the pick; an explicit null clears it (#1262).
+                .let { if (request.featuredUntil == null) it.copy(featuredUntil = existing.featuredUntil) else it }
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
 
@@ -401,7 +406,8 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
         priceCurrency = priceCurrency,
         priceNote = priceNote,
         soldOut = soldOut,
-        free = free
+        free = free,
+        featuredUntil = featuredUntil?.orElse(null)
     )
 }
 

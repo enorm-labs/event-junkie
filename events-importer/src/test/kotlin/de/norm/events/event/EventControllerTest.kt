@@ -21,8 +21,15 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
 import org.springframework.test.web.reactive.server.expectBody
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.kotlinModule
+import java.time.Instant
+import java.time.OffsetDateTime
 
 class EventControllerTest : BaseControllerTest() {
+    private val jsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
+
     // -- Helper methods for seeding dependent entities --
 
     private fun createVenue(request: VenueRequest = VenueRequestFixtures.astra()): VenueResponse =
@@ -223,6 +230,57 @@ class EventControllerTest : BaseControllerTest() {
         row["relocated_to"] shouldBe "Hole44"
         row["description_withheld"] shouldBe true
     }
+
+    @Test
+    fun `PUT event sets the pick, a PUT without the field keeps it, and an explicit null clears it`() {
+        val venue = createVenue(VenueRequestFixtures.create(name = "Featured Venue"))
+        val request = EventRequestFixtures.create(venueId = venue.id, sourceId = "test:put-featured")
+        val created = createEvent(request)
+        val until = Instant.parse("2026-12-31T22:00:00Z")
+
+        putEvent(created.id, requestJson(request).put("featuredUntil", until.toString())).also {
+            it.featuredUntil shouldBe until
+            // A pick is no correction of the source's data, so it pins nothing.
+            it.pinnedFields shouldBe emptyList()
+        }
+        storedFeaturedUntil(created.id) shouldBe until
+
+        // The admin form (#3013) can save an event without knowing of the pick.
+        putEvent(created.id, requestJson(request).apply { remove("featuredUntil") }.put("title", "Edited")).featuredUntil shouldBe until
+        storedFeaturedUntil(created.id) shouldBe until
+
+        putEvent(created.id, requestJson(request).putNull("featuredUntil")).featuredUntil shouldBe null
+        storedFeaturedUntil(created.id) shouldBe null
+    }
+
+    /** The request as the wire carries it, so a test can tell a missing field from an explicit null. */
+    private fun requestJson(request: EventRequest): ObjectNode = jsonMapper.valueToTree(request)
+
+    private fun putEvent(
+        id: Long,
+        body: ObjectNode
+    ): EventResponse =
+        webTestClient
+            .put()
+            .uri("/api/admin/events/$id")
+            .bodyValue(body.toString())
+            .header("Content-Type", "application/json")
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<EventResponse>()
+            .returnResult()
+            .responseBody!!
+
+    private fun storedFeaturedUntil(id: Long): Instant? =
+        runBlocking {
+            databaseClient
+                .sql("SELECT featured_until FROM events.event WHERE id = $id")
+                .fetch()
+                .one()
+                .awaitSingle()["featured_until"]
+                ?.let { (it as OffsetDateTime).toInstant() }
+        }
 
     @Test
     fun `DELETE event removes it`() {

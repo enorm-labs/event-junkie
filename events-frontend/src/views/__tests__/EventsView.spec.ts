@@ -32,7 +32,10 @@ const lastNight: EventSummary = {
 }
 
 const stubs = {
-  EventCard: { template: '<article :data-slug="event.slug" />', props: ['event'] },
+  EventCard: {
+    template: '<article :data-slug="event.slug" :data-lead="lead || undefined" />',
+    props: { event: Object, lead: Boolean },
+  },
   EventRow: { template: '<article :data-slug="event.slug" />', props: ['event'] },
   EventFilterBar: true,
 }
@@ -216,6 +219,64 @@ describe('EventsView with a date range', () => {
     const folded = wrapper!.get('details').findAll('article')
     expect(folded.map((card) => card.attributes('data-slug'))).toEqual(['exhibition'])
     expect(slugs()).toEqual(['weekender', 'exhibition'])
+  })
+})
+
+describe('EventsView lead', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(NOW))
+    getMock.mockReset()
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.useRealTimers()
+  })
+
+  it('puts the pick first at lead size, and does not show it twice', async () => {
+    getMock.mockResolvedValue({
+      content: [started, later],
+      page: 0,
+      totalPages: 1,
+      totalElements: 2,
+      lead: later,
+    })
+
+    await mountAt('/en/events')
+
+    expect(slugs()).toEqual(['later', 'started'])
+    expect(wrapper!.get('[data-lead]').attributes('data-slug')).toBe('later')
+  })
+
+  it('leads with a pick from a later page as well', async () => {
+    const pick: EventSummary = { slug: 'pick', eventDate: '2026-10-20' }
+    getMock.mockResolvedValue({
+      content: [started, later],
+      page: 0,
+      totalPages: 3,
+      totalElements: 41,
+      lead: pick,
+    })
+
+    await mountAt('/en/events')
+
+    expect(slugs()).toEqual(['pick', 'started', 'later'])
+  })
+
+  it('keeps the grid even without a pick', async () => {
+    getMock.mockResolvedValue({
+      content: [started, later],
+      page: 0,
+      totalPages: 1,
+      totalElements: 2,
+    })
+
+    await mountAt('/en/events')
+
+    expect(slugs()).toEqual(['started', 'later'])
+    expect(wrapper!.find('[data-lead]').exists()).toBe(false)
   })
 })
 

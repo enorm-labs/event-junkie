@@ -6,11 +6,13 @@ import de.norm.events.common.TextSearch
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.domain.Pageable
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -90,7 +92,7 @@ data class EventIdPage(
  * the `NamingStrategy`.
  */
 @Repository
-@Suppress("TooManyFunctions") // One search in three shapes, a page, every row and the newest, over one shared WHERE builder.
+@Suppress("TooManyFunctions") // One search in four shapes, a page, every row, the newest and the lead, over one shared WHERE builder.
 class EventSearchRepository(
     private val databaseClient: DatabaseClient,
     private val clock: Clock
@@ -149,6 +151,29 @@ class EventSearchRepository(
                 .collectList()
                 .awaitSingle()
         }
+
+    /**
+     * The ID of the event that leads the list's first page (#1262): of the events matching [filter]
+     * whose `featured_until` is after [now], the earliest-starting, in the list's own order. Null when
+     * none is. A text query matches strictly only, so a pick the visitor did not type is never found
+     * by similarity alone.
+     */
+    suspend fun firstFeatured(
+        filter: EventFilter,
+        now: Instant
+    ): Long? {
+        val params = mutableMapOf<String, Any>()
+        val where = buildWhereClause(filter, params, bySimilarity = false)
+        params["featuredAt"] = now
+        // The date rule always adds a condition, so the clause is never empty.
+        return databaseClient
+            .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where AND e.featured_until > :featuredAt $DEFAULT_ORDER LIMIT 1")
+            .bindAll(params)
+            .bind("seed", tiebreakSeed())
+            .map { row: Readable -> row.requiredEventId() }
+            .one()
+            .awaitSingleOrNull()
+    }
 
     /**
      * The [limit] matching event IDs the importer first stored most recently, newest first, for the

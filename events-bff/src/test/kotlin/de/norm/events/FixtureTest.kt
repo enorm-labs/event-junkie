@@ -339,6 +339,16 @@ class FixtureTest : BaseControllerTest() {
     }
 
     @Test
+    fun `the featured album release leads the first page, and only the first`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            get("/events").jsonPath("$.lead.slug").isEqualTo(slug("translated", 13))
+            get("/events?page=1").jsonPath("$.lead").doesNotExist()
+            get("/events?eventType=PARTY").jsonPath("$.lead").doesNotExist()
+        }
+
+    @Test
     fun `the translated description is served with its origin, and the verified artist with its MBID`(): Unit =
         runBlocking {
             loadFixture()

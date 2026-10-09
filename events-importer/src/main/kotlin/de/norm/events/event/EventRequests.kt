@@ -1,13 +1,16 @@
 package de.norm.events.event
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Optional
 
 /**
  * Request body for creating or updating an event.
@@ -85,7 +88,23 @@ data class EventRequest(
     @Schema(description = "Artists performing at this event with their role and billing position")
     val artists: List<EventArtistRequest> = emptyList(),
     @Schema(description = "Database IDs of promoters associated with this event", example = "[3, 7]")
-    val promoterIds: List<Long> = emptyList()
+    val promoterIds: List<Long> = emptyList(),
+    /**
+     * A curated pick for the events list until this moment (#1262); an import never sets it. The
+     * outer null means the body left the field out, so an update keeps the stored pick. An explicit
+     * JSON `null` arrives as [Optional.empty] and clears it.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description =
+            "Feature the event on the events list until this moment. On an update, leaving the field out keeps the " +
+                "current pick, and null clears it",
+        type = "string",
+        format = "date-time",
+        nullable = true,
+        example = "2026-10-12T22:00:00Z"
+    )
+    val featuredUntil: Optional<Instant>? = null
 )
 
 /**

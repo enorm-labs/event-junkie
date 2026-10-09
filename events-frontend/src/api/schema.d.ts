@@ -192,7 +192,7 @@ export interface paths {
         };
         /**
          * Search events with optional filters and pagination
-         * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended.
+         * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
         get: operations["list_3"];
         put?: never;
@@ -1224,8 +1224,8 @@ export interface components {
              */
             family?: string | null;
         };
-        /** @description A page of results with pagination metadata */
-        PageResponseEventSummaryResponse: {
+        /** @description A page of the events list, with the curated pick that leads its first page */
+        EventListPage: {
             /** @description The items on this page */
             content?: components["schemas"]["EventSummaryResponse"][];
             /**
@@ -1252,6 +1252,8 @@ export interface components {
              * @example 7
              */
             totalPages?: number;
+            /** @description On the first page only: of the events matching the filters that an operator features, the earliest-starting. It may also be in `content`, or on a later page. Null when no matching event is featured. */
+            lead?: components["schemas"]["EventSummaryResponse"] | null;
         };
         /** @description Full event detail with embedded associations */
         EventDetailResponse: {
@@ -2058,7 +2060,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                    "*/*": components["schemas"]["EventListPage"];
                 };
             };
         };

@@ -95,6 +95,8 @@ Content-Type: application/json
 }
 
 ### Update event
+# `featuredUntil` makes the event the curated pick on /events until then (#1262).
+# Leave the field out to keep the current pick; send null to clear it.
 PUT {{importer-host}}/api/admin/events/{{event_id}}
 Content-Type: application/json
 
@@ -124,7 +126,8 @@ Content-Type: application/json
     ],
     "promoterIds": [
         {{promoter_id}}
-    ]
+    ],
+    "featuredUntil": "2026-06-12T22:00:00Z"
 }
 
 ### Remove a pin (ADR-042)

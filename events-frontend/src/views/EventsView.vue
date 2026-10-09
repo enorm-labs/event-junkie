@@ -137,6 +137,17 @@ function applySort(value: string) {
 const { compact } = useCompactView()
 
 /**
+ * The curated pick that leads the first page at double width (#1262). The BFF sends it only on the
+ * first page and only when it matches the filters; it is left out of the grid below so it does not
+ * show twice. The compact view is a plain list, so it keeps the page as it is.
+ */
+const lead = computed(() => (compact.value ? undefined : (page.value?.lead ?? undefined)))
+const withoutLead = <T extends { slug?: string }>(events: T[]) =>
+  lead.value ? events.filter((event) => event.slug !== lead.value?.slug) : events
+const gridCards = computed(() => withoutLead(listed.value.cards))
+const alsoRunning = computed(() => withoutLead(listed.value.alsoRunning))
+
+/**
  * The feed of new events for these filters (#368), a saved search a reader polls. The feed has
  * no dates, so the date range stays out of it.
  */
@@ -236,16 +247,18 @@ const mapLink = computed(() => ({
         <EventRow v-for="event in listed.cards" :key="event.slug" :event="event" as="h2" />
       </div>
       <div v-else :class="CARD_GRID_CLASS">
+        <!-- The lead keeps the cards' `h2`: a bigger tile is not a higher rank in the outline. -->
+        <EventCard v-if="lead" :key="`lead-${lead.slug}`" :event="lead" lead priority as="h2" />
         <EventCard
-          v-for="(event, index) in listed.cards"
+          v-for="(event, index) in gridCards"
           :key="event.slug"
           :event="event"
-          :priority="index === 0"
+          :priority="!lead && index === 0"
           as="h2"
         />
       </div>
 
-      <AlsoRunning :events="listed.alsoRunning" as="h2" />
+      <AlsoRunning :events="alsoRunning" as="h2" />
 
       <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>

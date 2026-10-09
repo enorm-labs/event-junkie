@@ -32,9 +32,9 @@ suppression carries its reason, as the one in `MultiSelectFilter.vue` does.
 | An arbitrary Tailwind value outside `components/ui/**`          | A built-in utility, then a `@theme` token. See the ladder in [vue](vue.instructions.md) | —                                                               |
 | A dependency whose classes nothing in `src/` uses               | Delete it                                                                               | [#1238](https://github.com/enorm-labs/event-junkie/issues/1238) |
 
-**A pill is a state that must stand out, or a small control. It is never a plain fact.** Three uses pass, and a fourth needs the same argument they carry: the
+**A pill is a state that must stand out, or a small control. It is never a plain fact.** Four uses pass, and a fifth needs the same argument they carry: the
 `beta` pill in the header, which is a link to its own explanation · the non-scheduled status pill on an event, which must not read as another word in a grey
-row · a filter link on a detail page, such as a venue's "Mostly plays", "Hosts" and "Features" rows, each opening the list filtered by it (#2379). On a card
+row · the lead card's "Our pick" on its poster (§5) · a filter link on a detail page, such as a venue's "Mostly plays", "Hosts" and "Features" rows, each opening the list filtered by it (#2379). On a card
 the same values stay words in the meta line: the card is already one link, and a pill row under a poster is what #1248 removed.
 
 ### How a rule leaves this list
@@ -105,6 +105,13 @@ have their own edge, down parts one card's last line of text from the next card'
 - **A card is an event tile or a venue tile, and nothing else.** It has no border, fill, shadow or radius: the poster is the card
   ([#1246](https://github.com/enorm-labs/event-junkie/issues/1246)). Its poster box is 3:2, filled with `object-cover`, chosen by measuring crop loss across
   the real corpus (BRANDING §5.4).
+- **One card may lead `/events` at double width, and only a curated pick earns it**
+  ([#1262](https://github.com/enorm-labs/event-junkie/issues/1262)). An operator sets `event.featured_until` through `PUT /api/admin/events/{id}`. On the
+  first page, the earliest-starting featured event that matches the filters comes first, with `lead`: both columns from `sm` up (`CARD_LEAD_CLASS`), a 2:1
+  poster (`aspect-lead`, since a 3:2 box twice as wide is 640 px tall), an "Our pick" pill on the poster's top-left corner (`BaseBadge` `primary`, outside the grayscale image, so it keeps its colour; [#1262](https://github.com/enorm-labs/event-junkie/issues/1262)) and a `text-section` title. The heading level stays the page's, as on every card. With
+  no matching pick, or on a later page, the grid stays even. Never lead with whichever event is first by date: that tile lands on an arbitrary night, which
+  is why [#1247](https://github.com/enorm-labs/event-junkie/issues/1247) was rejected. Not on the home page, where a lead under the hero stacks two large
+  images, and not in the compact view, which is a plain list.
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
 - **Below `sm` the filter bar is at most two rows: the search, then the presets.** "More filters" opens a bottom sheet with the second tier and the date inputs,
   and nothing opens it by itself ([#2890](https://github.com/enorm-labs/event-junkie/issues/2890)). A control renders in one place at a time, never twice.

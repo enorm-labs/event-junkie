@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import de.norm.events.artist.ArtistSummaryResponse
 import de.norm.events.common.AssumedStartTime
+import de.norm.events.common.PageResponse
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
@@ -122,6 +123,37 @@ data class EventSummaryResponse(
                 artistNames = artistNames,
                 genreTags = genreTags
             )
+    }
+}
+
+/**
+ * One page of the events list, and the curated pick that leads it (#1262). The paging fields are
+ * [PageResponse]'s, so the page reads like every other list; [lead] is the one addition.
+ */
+@Schema(description = "A page of the events list, with the curated pick that leads its first page")
+data class EventListPage(
+    @Schema(description = "The items on this page")
+    val content: List<EventSummaryResponse>,
+    @Schema(description = "Zero-based index of this page", example = "0")
+    val page: Int,
+    @Schema(description = "Requested page size", example = "20")
+    val size: Int,
+    @Schema(description = "Total number of matching items across all pages", example = "137")
+    val totalElements: Long,
+    @Schema(description = "Total number of pages", example = "7")
+    val totalPages: Int,
+    @Schema(
+        description =
+            "On the first page only: of the events matching the filters that an operator features, the earliest-starting. " +
+                "It may also be in `content`, or on a later page. Null when no matching event is featured."
+    )
+    val lead: EventSummaryResponse? = null
+) {
+    companion object {
+        fun of(
+            page: PageResponse<EventSummaryResponse>,
+            lead: EventSummaryResponse?
+        ): EventListPage = EventListPage(page.content, page.page, page.size, page.totalElements, page.totalPages, lead)
     }
 }
 

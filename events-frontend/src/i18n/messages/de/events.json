@@ -75,6 +75,7 @@
     "showResultsCount": "{count} Event anzeigen | {count} Events anzeigen"
   },
   "card": {
+    "ourPick": "Unser Tipp",
     "soldOut": "Ausverkauft",
     "free": "Kostenlos",
     "past": "Vorbei",

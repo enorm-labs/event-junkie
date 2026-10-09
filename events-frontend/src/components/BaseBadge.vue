@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
  * The small pill, for a state that must stand out or a small control: a non-scheduled status, the
- * `beta` link, and a filter link on a detail page. A plain fact is a word in a meta line (#1248):
+ * lead card's "Our pick" (#1262), the `beta` link, and a filter link on a detail page. A plain fact is a word in a meta line (#1248):
  * five pills under a title read as decoration even when each is true.
  *
  * Variants rather than per-call-site classes, so a new pill cannot invent its own colour.
@@ -17,6 +17,8 @@ const badgeVariants = cva('rounded-full px-2 py-0.5 text-meta font-medium', {
       outline: 'border border-border text-foreground/70',
       /** Cancelled, and the other non-scheduled statuses. */
       destructive: 'bg-destructive/10 text-destructive',
+      /** Solid, for a mark that sits on a poster and must hold its colour on a grey image. */
+      primary: 'bg-primary text-primary-foreground',
     },
   },
   defaultVariants: {
