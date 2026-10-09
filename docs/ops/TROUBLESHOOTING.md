@@ -21,6 +21,7 @@ Find the line that looks like your screen, and jump.
 | `/api/admin` answers `404`                                                        | [The admin API answers 404](#the-admin-api-answers-404)                                           |
 | A port-forward seeded the wrong database                                          | [The forward landed on the local stack](#the-forward-landed-on-the-local-stack)                   |
 | `ej.sh up` says a port is already served                                          | [A port is already served](#a-port-is-already-served)                                             |
+| `ej.sh status` says a forward does not answer                                     | [A forward answers nothing after a rollout](#a-forward-answers-nothing-after-a-rollout)           |
 | A source is `FAILED` with `stuck in RUNNING for >30 minutes`                      | [A source failed at the minute of a rollout](#a-source-failed-at-the-minute-of-a-rollout)         |
 | The run wrote 29 events and the site shows 0                                      | [The source wrote events the site does not show](#the-source-wrote-events-the-site-does-not-show) |
 | `flux get all --status-selector ready=false` shows nothing, the release is not up | [The ready filter shows nothing](#the-ready-filter-shows-nothing)                                 |
@@ -149,6 +150,15 @@ Every check below is read-only. **Nothing in this file writes to a cluster.** A 
 **Fix:** Nothing. `ej.sh` uses the forward it found and says so. `ej.sh down` leaves it alone, and you close it where you opened it.
 
 **Why:** the header of [`scripts/ej.sh`](../../scripts/ej.sh).
+
+## A forward answers nothing after a rollout
+
+**Check:** `scripts/ej.sh status` says `does not answer (restarting)`. A release or a merge just rolled the pods.
+
+**Fix:** Wait about 30 seconds. `ej.sh` probes each `kubectl` forward every 10 seconds and starts a new one when the probe fails. While no pod is Ready, it
+tries again after 5 seconds, then less often, up to once a minute. If it stays down, read `build/ej/<env>-<name>.log` and the pod's state.
+
+**Why:** A `kubectl` forward attaches to one pod, even through `svc/`. When a rollout replaces that pod, the old process forwards nothing (#2976).
 
 ## A source failed at the minute of a rollout
 

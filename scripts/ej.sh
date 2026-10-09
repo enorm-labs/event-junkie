@@ -28,6 +28,8 @@
 # interface on Linux), not from a ping; the ping is the handshake check after `up`, because an
 # interface appears whether or not UDP/51820 is open and a missing handshake is the only symptom.
 # Everything started is recorded under build/ej/ (gitignored); `down` kills only pids it wrote.
+# Each kubectl forward runs under a watchdog that starts a new one when a rollout replaces the pod
+# (#2976); `status` counts the restarts.
 # `up`, `status` and `versions` also write docs/ops/dashboard/status.js for the local operations page
 # (#1185), which can fetch nothing from file://.
 
@@ -204,6 +206,51 @@ ssh_forward() {
         -L "$port:$target" "ops@$node"
 }
 
+# A sleep a signal can cut short: bash runs a trap only after a foreground command returns, so a
+# plain `sleep 60` would keep `down` waiting, and the forward listening, for up to a minute.
+snooze() {
+    sleep "$1" &
+    wait $! || true
+}
+
+# A kubectl forward attaches to one pod, even through `svc/`. When a rollout replaces that pod the
+# process stays alive and listening, and forwards nothing (#2976). This loop owns the kubectl: it
+# probes the port every 10 s and starts a new one, which resolves the new pod, when the probe
+# fails. Until a pod is Ready it backs off from 5 s to a minute. Killing the loop stops its kubectl.
+forward_supervise() {
+    local env="$1" name="$2" port="$3" ns="$4" svc="$5" remote="$6" log child=0 backoff=5 up
+    log="$(logfile "$env" "$name")"
+    trap '[ "$child" -gt 0 ] && kill "$child" 2>/dev/null; exit 0' INT TERM
+    trap '[ "$child" -gt 0 ] && kill "$child" 2>/dev/null; true' EXIT
+    while :; do
+        kubectl --context "$(context_of "$env")" -n "$ns" port-forward "svc/$svc" "$port:$remote" >>"$log" 2>&1 &
+        child=$!
+        up=0
+        for _ in $(seq 1 10); do
+            if forward_answers "$name" "$port"; then
+                up=1
+                break
+            fi
+            kill -0 "$child" 2>/dev/null || break
+            snooze 1
+        done
+        if [ "$up" -eq 1 ]; then
+            backoff=5
+            while snooze 10 && kill -0 "$child" 2>/dev/null && forward_answers "$name" "$port"; do :; done
+        fi
+        echo "restarting: $port did not answer, $(date -u +%FT%TZ)" >>"$log"
+        kill "$child" 2>/dev/null || true
+        wait "$child" 2>/dev/null || true
+        child=0
+        if [ "$up" -eq 0 ]; then
+            snooze "$backoff"
+            backoff=$((backoff * 2 > 60 ? 60 : backoff * 2))
+        fi
+    done
+}
+
+forward_restarts() { grep -c '^restarting:' "$(logfile "$1" "$2")" 2>/dev/null || true; }
+
 forward_start() {
     local env="$1" name="$2" spec port ns svc remote pid
     spec="$(forward_spec "$env" "$name")"
@@ -223,8 +270,8 @@ forward_start() {
     if [ "$ns" = ssh ]; then
         (ssh_forward "$port" "$svc" "$remote") >"$(logfile "$env" "$name")" 2>&1 </dev/null &
     else
-        kubectl --context "$(context_of "$env")" -n "$ns" port-forward "svc/$svc" "$port:$remote" \
-            >"$(logfile "$env" "$name")" 2>&1 &
+        : >"$(logfile "$env" "$name")"
+        (forward_supervise "$env" "$name" "$port" "$ns" "$svc" "$remote") >/dev/null 2>&1 </dev/null &
     fi
     pid=$!
     echo "$pid" >"$(pidfile "$env" "$name")"
@@ -238,16 +285,27 @@ forward_start() {
     done
     echo "forward $env/$name: did not answer on $port — $(logfile "$env" "$name") says:" >&2
     tail -3 "$(logfile "$env" "$name")" >&2 || true
+    [ "$ns" = ssh ] || echo "forward $env/$name: retrying in the background until a pod answers; 'down $env' stops it" >&2
     return 1
 }
 
 forward_stop() {
-    local env="$1" name="$2" pid
+    local env="$1" name="$2" pid port ns listener
     if pid="$(forward_pid "$env" "$name")"; then
         kill "$pid" 2>/dev/null || true
         echo "forward $env/$name: stopped (pid $pid)"
     fi
     rm -f "$(pidfile "$env" "$name")"
+    read -r port ns _ <<<"$(forward_spec "$env" "$name")"
+    [ "$ns" = ssh ] && return 0
+    # The loop's trap stops its kubectl. One that outlived a `kill -9` of the loop still holds the
+    # port; stop it only when it is this env's port-forward, never a forward started by hand elsewhere.
+    sleep 1
+    for listener in $(lsof -nP -t -iTCP:"$port" -sTCP:LISTEN 2>/dev/null); do
+        if ps -o args= -p "$listener" | grep -q -- "--context $(context_of "$env") .*port-forward .* $port:"; then
+            kill "$listener" 2>/dev/null || true
+        fi
+    done
 }
 
 # --- versions ------------------------------------------------------------------------------------
@@ -389,7 +447,7 @@ cmd_urls() {
 # resources and those with no Ready condition yet are skipped.
 
 cmd_status() {
-    local env name spec port pid
+    local env name spec port ns pid restarts note
     for env in "${ENVS[@]}"; do
         if tunnel_up "$env"; then
             if node_answers "$env"; then echo "tunnel  $env: up"; else echo "tunnel  $env: interface up, $(node_of "$env") does not answer"; fi
@@ -400,9 +458,17 @@ cmd_status() {
     for env in "${ENVS[@]}"; do
         for name in "${FORWARDS[@]}"; do
             spec="$(forward_spec "$env" "$name")"
-            port="${spec%% *}"
+            read -r port ns _ <<<"$spec"
             if pid="$(forward_pid "$env" "$name")"; then
-                if forward_answers "$name" "$port"; then echo "forward $env/$name: up on $port"; else echo "forward $env/$name: pid $pid alive, $port does not answer"; fi
+                restarts="$(forward_restarts "$env" "$name")"
+                note=""
+                [ "${restarts:-0}" -gt 0 ] && note=" (restarted ${restarts}×)"
+                if forward_answers "$name" "$port"; then
+                    echo "forward $env/$name: up on $port$note"
+                else
+                    [ "$ns" = ssh ] || note=" (restarting)"
+                    echo "forward $env/$name: pid $pid alive, $port does not answer$note"
+                fi
             elif forward_answers "$name" "$port"; then
                 echo "forward $env/$name: $port answers, not started by this script"
             fi
