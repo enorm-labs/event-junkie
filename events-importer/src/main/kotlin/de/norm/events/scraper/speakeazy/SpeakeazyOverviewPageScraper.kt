@@ -16,7 +16,6 @@ import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
-import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -95,7 +94,7 @@ class SpeakeazyOverviewPageScraper {
             priceBoxOffice = priceBlocks.firstNotNullOfOrNull { parseLabelledPrices(it).boxOffice },
             soldOut = hasSoldOutMarker(title),
             artists = if (HOUSE_SESSION.containsMatchIn(title)) emptyList() else buildArtistsForEventType(title.substringBefore(": "), null, eventType)
-        ).withBilingualDescriptionSplit()
+        )
     }
 
     private companion object {

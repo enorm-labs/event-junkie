@@ -261,7 +261,12 @@ class InselApiScraperTest {
     // "[English below]" points, "// ENGLISH VERSION" cuts (#330).
     @Test
     fun `cuts a description at its English heading and drops the pointer from the title line`() {
-        val dead = events.single { it.sourceId == "insel:2026-10-16-aoxotoxoa-ch" }
+        val dead =
+            events.single { it.sourceId == "insel:2026-10-16-aoxotoxoa-ch" }.toEventEntity(
+                venueId = 1L,
+                venueSlug = "kulturhaus-insel",
+                eventSourceId = 1L
+            )
 
         val german = dead.description.shouldNotBeNull()
         german shouldStartWith "Grateful Dead Revival\nAoxoToxoA: Truckin' Cross Germany\nDie US-Amerikanische Band Grateful Dead"

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.humboldthain
 
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -37,6 +38,10 @@ class HumboldthainApiScraperTest {
     private val events: List<ScrapedEvent> by lazy { scraper.scrape(fixtureJson) }
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
+
+    /** The row the importer stores, where the description is cut in two (#2986). */
+    private fun stored(sourceId: String): EventEntity =
+        events.single { it.sourceId == sourceId }.toEventEntity(venueId = 1L, venueSlug = "humboldthain-club", eventSourceId = 1L)
 
     @Test
     fun `scrape returns every calendar entry plus the resident night's occurrences`() {
@@ -245,7 +250,7 @@ class HumboldthainApiScraperTest {
     // "EN" opens the English half, and the line-up after it belongs to both (#330).
     @Test
     fun `cuts a description at its EN line and gives the line-up to both halves`() {
-        val night = events.single { it.sourceId == "humboldthain:a1e3cc34-5a94-416a-910d-802c0a4dd5ac-2026-04-24" }
+        val night = stored("humboldthain:a1e3cc34-5a94-416a-910d-802c0a4dd5ac-2026-04-24")
 
         val german = night.description.shouldNotBeNull()
         val english = night.descriptionAlt.shouldNotBeNull()
@@ -259,7 +264,7 @@ class HumboldthainApiScraperTest {
 
     @Test
     fun `cuts a description at its version-above separator and drops both pointers`() {
-        val night = events.single { it.sourceId == "humboldthain:7bfd1477-34f3-49b9-894d-6c262303b0fa-2026-02-20" }
+        val night = stored("humboldthain:7bfd1477-34f3-49b9-894d-6c262303b0fa-2026-02-20")
 
         val english = night.description.shouldNotBeNull()
         val german = night.descriptionAlt.shouldNotBeNull()

@@ -101,7 +101,7 @@ class PandaPlatformaApiScraperTest {
     // Russian is neither of the two languages the schema stores, so the text stays as published (#330).
     @Test
     fun `stores a Russian and English description whole`() {
-        val sine = event("god-is-a-perfect-sine-d-arcangelo")
+        val sine = event("god-is-a-perfect-sine-d-arcangelo").toEventEntity(venueId = 1L, venueSlug = "panda-platforma", eventSourceId = 1L)
 
         sine.descriptionAlt.shouldBeNull()
         sine.description.shouldNotBeNull() shouldContain "[EN]"

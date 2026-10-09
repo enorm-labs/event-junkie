@@ -18,8 +18,7 @@ data class BilingualDescription(
 
 /**
  * This event with its description cut in two where the venue wrote both languages into it, else
- * unchanged. The scrapers of the one-field sources in `docs/EVENT_DATA_SOURCES.md` § Second language
- * call it.
+ * unchanged. [ScrapedEvent.toEventEntity] calls it for every source, so a scraper does not.
  */
 fun ScrapedEvent.withBilingualDescriptionSplit(): ScrapedEvent {
     if (descriptionAlt != null) return this

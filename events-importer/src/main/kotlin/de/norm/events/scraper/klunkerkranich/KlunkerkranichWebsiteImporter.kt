@@ -8,7 +8,6 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.withBilingualDescriptionSplit
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -73,7 +72,7 @@ class KlunkerkranichWebsiteImporter(
                 priceBoxOffice = priceBoxOffice,
                 priceNote = priceNote,
                 detailUnavailable = description == null
-            ).withBilingualDescriptionSplit()
+            )
     }
 }
 

@@ -192,9 +192,10 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
 48 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
-The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
-becomes the publisher's second language. Each half must read as German or English, so a Russian half stays in the
-whole text.
+The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
+it stores the row, and only when the scraper gave no second language. The second half becomes the publisher's second
+language. Each half must read as German or English, so a Russian half stays in the whole text. The SO36 and Zig Zag
+scrapers cut their own text first. Their cut reads line breaks or a pointer line that the stored text does not keep.
 
 Six importers also read the page in the other language. They store its event text as the publisher's second language:
 

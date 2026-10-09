@@ -233,6 +233,19 @@ data class ScrapedEvent(
         existing: EventEntity? = null,
         slugDiscriminator: String? = null,
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
+    ): EventEntity =
+        // Every source's description is cut before its language is detected, so the venue's own second
+        // language wins over a machine translation (#2986).
+        withBilingualDescriptionSplit().buildEventEntity(venueId, venueSlug, eventSourceId, existing, slugDiscriminator, licences)
+
+    @Suppress("LongParameterList") // The parameters of toEventEntity, passed through.
+    private fun buildEventEntity(
+        venueId: Long,
+        venueSlug: String,
+        eventSourceId: Long,
+        existing: EventEntity?,
+        slugDiscriminator: String?,
+        licences: SourceLicences
     ): EventEntity {
         // Doors ≤ start: a source listing them the wrong way round (SO36's "Einlass: 19:30, Beginn:
         // 19:00") has transposed the labels.
