@@ -8,6 +8,7 @@ import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 /**
  * Admin REST controller for managing events.
@@ -34,16 +37,29 @@ class EventController(
     private val eventPinService: EventPinService
 ) {
     /**
-     * Lists events with pagination. Returns a [List] instead of a `Flow` because
+     * Lists events with pagination, optionally narrowed to a venue and a date (#347). Returns a [List] instead of a `Flow` because
      * batch loading artist/promoter/genre tag associations requires all events in memory
      * to avoid N+1 queries (4 queries per page regardless of event count).
      */
     @GetMapping
-    @Operation(summary = "List all events with pagination")
+    @Operation(summary = "List events with pagination; `venueId` and `date` narrow the list to one venue, one date, or both")
     suspend fun findAll(
         @ParameterObject
-        @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable
-    ): PageResponse<EventResponse> = eventService.findAll(pageable)
+        @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable,
+        @Parameter(
+            description = "Database ID of a venue. An unknown ID gives an empty page, not a 404. Omit it to list every venue.",
+            example = "1"
+        )
+        @RequestParam(required = false) venueId: Long?,
+        @Parameter(
+            description =
+                "ISO date (`yyyy-MM-dd`) the event's `eventDate` must equal. An event over midnight matches the date it starts on. " +
+                    "Omit it to list every date.",
+            example = "2026-10-10"
+        )
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
+    ): PageResponse<EventResponse> = eventService.findAll(pageable, venueId, date)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

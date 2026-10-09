@@ -11,20 +11,24 @@ import de.norm.events.promoter.PromoterResponse
 import de.norm.events.venue.VenueRequest
 import de.norm.events.venue.VenueRequestFixtures
 import de.norm.events.venue.VenueResponse
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.test.web.reactive.server.expectBody
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class EventControllerTest : BaseControllerTest() {
@@ -643,5 +647,77 @@ class EventControllerTest : BaseControllerTest() {
             .exchange()
             .expectStatus()
             .isBadRequest
+    }
+
+    // #347: the New event form asks which events a venue already holds on a date before it saves.
+    @Test
+    fun `GET events filters by venue, by date, by both and by neither`() {
+        val lido = createVenue(VenueRequestFixtures.create(name = "Filter Lido"))
+        val astra = createVenue(VenueRequestFixtures.create(name = "Filter Astra"))
+        val friday = LocalDate.of(2026, 10, 9)
+        val saturday = LocalDate.of(2026, 10, 10)
+        val lidoFriday = createEvent(EventRequestFixtures.create(venueId = lido.id, sourceId = "test:lido-fri", eventDate = friday))
+        val lidoSaturday = createEvent(EventRequestFixtures.create(venueId = lido.id, sourceId = "test:lido-sat", eventDate = saturday))
+        val astraSaturday = createEvent(EventRequestFixtures.create(venueId = astra.id, sourceId = "test:astra-sat", eventDate = saturday))
+
+        fun idsWhere(query: String): Pair<List<Long>, Long> {
+            val page =
+                webTestClient
+                    .get()
+                    .uri("/api/admin/events?$query")
+                    .exchange()
+                    .expectStatus()
+                    .isOk
+                    .expectBody<PageResponse<EventResponse>>()
+                    .returnResult()
+                    .responseBody!!
+            return page.content.map { it.id } to page.totalElements
+        }
+
+        assertSoftly {
+            idsWhere("venueId=${lido.id}") shouldBe (listOf(lidoFriday.id, lidoSaturday.id) to 2L)
+            idsWhere("date=2026-10-10").first shouldContainExactlyInAnyOrder listOf(lidoSaturday.id, astraSaturday.id)
+            idsWhere("date=2026-10-10").second shouldBe 2L
+            idsWhere("venueId=${lido.id}&date=2026-10-10") shouldBe (listOf(lidoSaturday.id) to 1L)
+            idsWhere("size=50").first shouldContainExactlyInAnyOrder listOf(lidoFriday.id, lidoSaturday.id, astraSaturday.id)
+            idsWhere("venueId=${lido.id}&date=2026-10-11") shouldBe (emptyList<Long>() to 0L)
+        }
+    }
+
+    @Test
+    fun `GET events for an unknown venue returns an empty page, not 404`() {
+        val venue = createVenue(VenueRequestFixtures.create(name = "Filter Known Venue"))
+        createEvent(EventRequestFixtures.create(venueId = venue.id, sourceId = "test:known-venue"))
+
+        val page =
+            webTestClient
+                .get()
+                .uri("/api/admin/events?venueId=99999")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<PageResponse<EventResponse>>()
+                .returnResult()
+                .responseBody!!
+
+        page.content shouldHaveSize 0
+        page.totalElements shouldBe 0L
+    }
+
+    @Test
+    fun `GET events with a date that is not ISO returns a 400 Problem Detail`() {
+        webTestClient
+            .get()
+            .uri("/api/admin/events?date=10.10.2026")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectHeader()
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.status")
+            .isEqualTo(400)
+            .jsonPath("$.detail")
+            .value<String> { it shouldContain "10.10.2026" }
     }
 }

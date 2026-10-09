@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 /**
  * Event business logic. Create and update are transactional because they span `event`,
@@ -41,14 +42,37 @@ class EventService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Lists events with their associations, paged and sorted by [pageable]. Batch loading: the page
+     * Lists events with their associations, paged and sorted by [pageable]. [venueId] and [date]
+     * narrow the list; null means no filter, and an unknown venue is an empty page. Batch loading: the page
      * of events first, then artists, promoters and genre tags in three more queries, four per page
      * regardless of size.
      */
     @Transactional(readOnly = true)
-    suspend fun findAll(pageable: Pageable): PageResponse<EventResponse> {
-        val total = eventRepository.count()
-        val entities = eventRepository.findAllBy(pageable).toList()
+    suspend fun findAll(
+        pageable: Pageable,
+        venueId: Long? = null,
+        date: LocalDate? = null
+    ): PageResponse<EventResponse> {
+        val (rows, total) =
+            when {
+                venueId != null && date != null -> {
+                    eventRepository.findAllByVenueIdAndEventDate(venueId, date, pageable) to
+                        eventRepository.countByVenueIdAndEventDate(venueId, date)
+                }
+
+                venueId != null -> {
+                    eventRepository.findAllByVenueId(venueId, pageable) to eventRepository.countByVenueId(venueId)
+                }
+
+                date != null -> {
+                    eventRepository.findAllByEventDate(date, pageable) to eventRepository.countByEventDate(date)
+                }
+
+                else -> {
+                    eventRepository.findAllBy(pageable) to eventRepository.count()
+                }
+            }
+        val entities = rows.toList()
         if (entities.isEmpty()) return PageResponse.of(emptyList(), pageable, total)
 
         val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
