@@ -6,8 +6,8 @@ reasoning rather than restating it.
 ## The short version
 
 ```sh
-scripts/ej.sh up staging                           # tunnel, handshake check, and the three port-forwards
-scripts/ej.sh urls                                 # the Swagger UIs and OpenObserve, on localhost
+scripts/ej.sh up staging                           # tunnel, handshake check, three port-forwards and the database tunnel
+scripts/ej.sh urls                                 # the Swagger UIs, OpenObserve and PostgreSQL, on localhost
 kubectl --context event-junkie-staging get pods -A
 scripts/cluster-state.sh staging                   # one read-only verdict: is this environment whole
 scripts/ej.sh down staging                         # the forwards it started, then the tunnel
@@ -16,7 +16,7 @@ open docs/ops/dashboard/index.html                 # the operations page: every 
 ```
 
 `scripts/ej.sh` is the session. `up` is `wg-quick up` plus the handshake check and a look at `/etc/hosts`. Then it starts one `kubectl port-forward`
-each for the importer admin API, the BFF's Swagger UI and OpenObserve. The ports do not collide between the two environments or with `dev-env.sh`.
+each for the importer admin API, the BFF's Swagger UI and OpenObserve, and one SSH forward to PostgreSQL. The ports do not collide between the two environments or with `dev-env.sh`.
 `status` is one screen of both tunnels, both clusters and anything not Ready. `versions` is what each cluster runs beside what Flux would resolve next.
 `source scripts/shell-aliases.sh` gives every command below a short name.
 
@@ -185,19 +185,20 @@ curl -s -X POST localhost:8081/api/admin/images/sweep | jq
 
 ## Database
 
+`scripts/ej.sh up` opens the database tunnel: `15432` for staging, `15433` for production. Then connect read-only:
+
 ```sh
-# staging — PostgreSQL is on the k3s node
-ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1
 PGPASSWORD="$(kubectl --context event-junkie-staging get secret events-db -n event-junkie \
-  -o jsonpath='{.data.password}' | base64 -d)" psql -h 127.0.0.1 -p 15432 -U events -d events
+  -o jsonpath='{.data.password}' | base64 -d)" PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p 15432 -U events -d events
+PGPASSWORD="$(kubectl --context event-junkie-production get secret events-db -n event-junkie \
+  -o jsonpath='{.data.password}' | base64 -d)" PGOPTIONS='-c default_transaction_read_only=on' psql -h 127.0.0.1 -p 15433 -U events -d events
 ```
 
-Production's database is a **separate node** with no public inbound at all, reached through the k3s node:
+Without `ej.sh`, open the tunnel by hand. Production's database is a **separate node** with no public inbound, reached through the k3s node:
 
 ```sh
-ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.20:5432 ops@10.10.0.1
-PGPASSWORD="$(kubectl --context event-junkie-production get secret events-db -n event-junkie \
-  -o jsonpath='{.data.password}' | base64 -d)" psql -h 127.0.0.1 -p 15433 -U events -d events
+ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1     # staging
+ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.20:5432 ops@10.10.0.1     # production
 ```
 
 A superuser shell, for anything `CREATE ROLE`-shaped — the forward above connects as `events`, which cannot:
@@ -275,12 +276,12 @@ What it defines:
 
 |                                    |                                                                   |
 | ---------------------------------- | ----------------------------------------------------------------- |
-| `ej-up` / `ej-up-prod` / `ej-down` | `scripts/ej.sh up` and `down`: the tunnel and the three forwards  |
+| `ej-up` / `ej-up-prod` / `ej-down` | `scripts/ej.sh up` and `down`: the tunnel and the four forwards   |
 | `ejk` / `ejkp`                     | `kubectl` with `--context` already pinned to staging / production |
 | `ejf` / `ejfp`                     | the same for `flux`                                               |
 | `ej-site` / `ej-api`               | curl the staging site and API with the right `--resolve` and `-k` |
 | `ej-venue <slug>`                  | one venue end to end: the source row, then what the site serves   |
-| `ej-db` / `ej-db-prod`             | open the tunnel _and_ a `psql`, then close it again               |
+| `ej-db` / `ej-db-prod`             | a `psql`, on the `ej.sh` tunnel or on one it opens and closes     |
 | `ej-backups` / `ej-backups-prod`   | `walg check` on the right node                                    |
 | `ej-status` / `ej-versions`        | `scripts/ej.sh status` and `versions`                             |
 

@@ -323,7 +323,8 @@ before that needs the hand-applied fix.
 
 **Check:** `lsof -nP -iTCP:15432 -sTCP:LISTEN`. An `ssh -f -N` left running is what you find.
 
-**Fix:** Kill it. `ej-db` closes its own forward on exit, so a survivor came from a hand-typed command.
+**Fix:** If `scripts/ej.sh status` lists `staging/database` as up, `scripts/ej.sh down staging` stops it. Otherwise kill it. `ej-db` closes its own
+forward on exit, so a survivor came from a hand-typed command.
 
 **Why:** the database section of [`scripts/shell-aliases.sh`](../../scripts/shell-aliases.sh).
 
