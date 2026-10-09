@@ -273,18 +273,39 @@ private val TIME_LIMITED_FREE =
     )
 
 /**
+ * Entry against a donation or pay what you want: "Free Entry + Donation based", "Free entry with a
+ * 2 € donation", "Eintritt frei, pay what you want". The operator decided that such a night is
+ * not free (#3011), as "Eintritt freiwillig" is not. A bare "Spende", "Soli" or "donation"
+ * is not enough, so these stay free: "Eintritt frei – Quizteilnahme gegen Spende" (the donation is
+ * for the quiz), "Soli Mosh Berlin FREE ENTRY" (the event's name), "mit Soli und Duos" (solos).
+ */
+val PAY_WHAT_YOU_WANT =
+    Regex(
+        listOf(
+            """\bpay\s+what\s+you\s+(?:want|can)\b""",
+            """\bdonation[- ]based\b""",
+            """(?:\bwith|\+)\s*(?:an?\s+)?(?:\S+\s+){0,2}donation\b""",
+            """\bauf\s+spendenbasis\b""",
+            """\bhutkasse"""
+        ).joinToString("|"),
+        RegexOption.IGNORE_CASE
+    )
+
+/**
  * Whether [text] states free entry ([FREE_ENTRY_PHRASE]) for the whole night. A
  * [TIME_LIMITED_FREE] offer ("free entry for ladies until 0 Uhr") is removed first: everyone
- * arriving later pays.
+ * arriving later pays. A [PAY_WHAT_YOU_WANT] text is not free.
  */
-fun hasFreeEntryPhrase(text: String?): Boolean = text != null && FREE_ENTRY_PHRASE.containsMatchIn(text.replace(TIME_LIMITED_FREE, " "))
+fun hasFreeEntryPhrase(text: String?): Boolean =
+    text != null && !PAY_WHAT_YOU_WANT.containsMatchIn(text) && FREE_ENTRY_PHRASE.containsMatchIn(text.replace(TIME_LIMITED_FREE, " "))
 
 /**
  * Whether an event is free. A positive signal is required, since an absent price is unknown,
  * not free: an explicit €0 price, a [hasFreeEntryPhrase] match in the title or price note, or a
- * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker is not a signal. The price
- * note counts only when no positive price was parsed: beside a price, "free for transgender women"
- * or "Kinder frei" is a concession for one group, not free entry (#2789).
+ * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker or a [PAY_WHAT_YOU_WANT]
+ * note is not a signal. The price note counts only when no positive price was parsed: beside a
+ * price, "free for transgender women" or "Kinder frei" is a concession for one group, not free
+ * entry (#2789).
  */
 fun detectFree(
     pricePresale: BigDecimal? = null,
@@ -293,7 +314,8 @@ fun detectFree(
     title: String? = null
 ): Boolean {
     val hasZeroPrice = pricePresale?.signum() == 0 || priceBoxOffice?.signum() == 0
-    val tokenInNote = priceNote?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
+    val note = priceNote?.takeUnless { PAY_WHAT_YOU_WANT.containsMatchIn(it) }
+    val tokenInNote = note?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
     val hasPositivePrice = pricePresale?.signum() == 1 || priceBoxOffice?.signum() == 1
     return hasZeroPrice || hasFreeEntryPhrase(title) || (!hasPositivePrice && (hasFreeEntryPhrase(priceNote) || tokenInNote))
 }

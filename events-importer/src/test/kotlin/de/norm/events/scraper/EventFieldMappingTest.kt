@@ -128,6 +128,28 @@ class EventFieldMappingTest {
         hasFreeEntryPhrase(null) shouldBe false
     }
 
+    @Test
+    fun `hasFreeEntryPhrase rejects pay what you want and entry against a donation`() {
+        listOf(
+            "Free Entry + Donation based",
+            "Free entry with a 2 € donation",
+            "Eintritt frei, pay what you want",
+            "Eintritt frei, but pay what you can",
+            "Eintritt frei auf Spendenbasis",
+            "Eintritt frei, Hutkasse"
+        ).forEach { hasFreeEntryPhrase(it) shouldBe false }
+    }
+
+    @Test
+    fun `hasFreeEntryPhrase keeps a free night that only mentions a donation or a Soli`() {
+        listOf(
+            "Eintritt frei – Quizteilnahme gegen Spende",
+            "Soli Mosh Berlin FREE ENTRY",
+            "Eintritt frei. Klassik mit Soli und Duos",
+            "Eintritt frei"
+        ).forEach { hasFreeEntryPhrase(it) shouldBe true }
+    }
+
     // --- detectFree ---
 
     @Test
@@ -162,6 +184,15 @@ class EventFieldMappingTest {
         detectFree(title = "Freikörperkultur") shouldBe false
         detectFree(priceNote = "freestyle session") shouldBe false
         detectFree(pricePresale = BigDecimal("12.00"), priceBoxOffice = BigDecimal("15.00")) shouldBe false
+    }
+
+    @Test
+    fun `detectFree does not read a pay-what-you-want note as free`() {
+        detectFree(priceNote = "Free Entry + Donation based") shouldBe false
+        detectFree(priceNote = "free, pay what you want") shouldBe false
+        detectFree(priceNote = "Gratis, Hutkasse") shouldBe false
+        detectFree(priceNote = "Eintritt frei – Quizteilnahme gegen Spende") shouldBe true
+        detectFree(priceNote = "Eintritt frei") shouldBe true
     }
 
     @Test
