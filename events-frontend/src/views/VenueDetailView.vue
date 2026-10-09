@@ -1,22 +1,18 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks from '@/components/DetailLinks.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
-import { usePageMeta } from '@/composables/usePageMeta'
-import { notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
-import { useEventSearch } from '@/composables/useEvents'
-import { usePastEvents } from '@/composables/usePastEvents'
+import { useDetailPage } from '@/composables/useDetailPage'
+import { venuePageMeta } from '@/lib/pageMeta'
 import { useVenue } from '@/composables/useVenue'
-import { imageCredit } from '@/lib/imageCredit'
 import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { venuePageJsonLd } from '@/lib/structuredData'
-import { descriptionFor } from '@/lib/description'
 import { inCharacterOrder } from '@/lib/venueCharacters'
 import { districtLabel } from '@/lib/districts'
 import { venuePosition } from '@/lib/mapPins'
@@ -26,17 +22,9 @@ import SectionLabel from '@/components/SectionLabel.vue'
 import { withReferral } from '@/lib/referral'
 import type { Locale } from '@/i18n/locales'
 
-const route = useRoute()
-const slug = computed(() => String(route.params.slug))
+const { t, locale } = useI18n()
 
-const { data: venue, error, notFound, loading, run: loadVenue } = useVenue(() => slug.value)
-const {
-  data: events,
-  error: eventsError,
-  loading: eventsLoading,
-  run: loadEvents,
-} = useEventSearch(() => ({ venue: slug.value, size: 50 }), 'errors.subject.venueEvents')
-const { past, run: loadPastEvents } = usePastEvents(() => ({ venue: slug.value }), events)
+const { entity: venue, description, detail } = useDetailPage('venue', useVenue, venuePageMeta)
 
 /** "Holzmarktstr. 25 · Friedrichshain": a part the venue lacks drops out with its separator. */
 const addressLine = computed(() =>
@@ -50,41 +38,10 @@ const mapLink = computed(() =>
     : null,
 )
 
-function reload() {
-  loadVenue()
-  loadEvents()
-  loadPastEvents()
-}
-
-onMounted(reload)
-watch(slug, reload)
-
-const { t, locale } = useI18n()
-
-// The visitor's language where the venue has a text in it, and the other one otherwise. The same
-// rule the event page uses, from the same function (#1210).
-const description = computed(() =>
-  venue.value ? descriptionFor(venue.value, locale.value as Locale) : null,
-)
-
-/** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
-const kind = computed(() => t('detail.venue.kind'))
-
 // A MusicVenue carries the address and coordinates the page already displays. No rich result rides
 // on it the way it does for events, but it is accurate and it is what ties an event's `location`
 // to a real place. See lib/structuredData.ts.
 useStructuredData(() => (venue.value ? venuePageJsonLd(venue.value, locale.value as Locale) : []))
-
-// The same values the meta injector will need server-side later (ADR-014 §Decision 3).
-usePageMeta(() =>
-  venue.value
-    ? venuePageMeta(venue.value, locale.value as Locale)
-    : notFound.value
-      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: kind.value }))
-      : placeholderPageMeta(kind.value),
-)
-
-const credit = computed(() => imageCredit(venue.value))
 
 const links = computed(() =>
   venue.value?.websiteUrl
@@ -208,27 +165,7 @@ const programme = computed(() => {
 </script>
 
 <template>
-  <BaseDetailView
-    :empty-text="t('detail.venue.empty')"
-    :error="error"
-    :events="events"
-    :events-error="eventsError"
-    :events-loading="eventsLoading"
-    :image-url="venue?.imageUrl"
-    :credit="credit"
-    :image-sources="venue?.imageSources"
-    :intrinsic-width="venue?.intrinsicWidth"
-    :intrinsic-height="venue?.intrinsicHeight"
-    :kind="kind"
-    :loading="loading"
-    :name="venue?.name"
-    :not-found="notFound"
-    :not-found-text="t('detail.venue.notFound')"
-    :past="past"
-    :ready="Boolean(venue)"
-    :report-path="`/venues/${slug}`"
-    :report-text="t('detail.venue.report')"
-  >
+  <BaseDetailView v-bind="detail">
     <template v-if="closureLine?.closed" #upcoming>
       <section class="space-y-4" data-testid="venue-closed">
         <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
