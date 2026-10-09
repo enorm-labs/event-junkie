@@ -37,3 +37,6 @@ Each source row has an Import button and a row menu with Force import and, for a
 actions column sticks to the table's right edge. An import runs in the background, so after an action the row reads its source every 3 s until a run newer than
 the click has ended: `lastImportAt` is later and the status is not `RUNNING`. It stops after 10 minutes with a "reload later" note, on a read error and when the
 row unmounts.
+
+Edit, in the same row menu, opens a form for `enabled`, the import interval and max retries (`src/components/SourceEditForm.vue`). It PATCHes only the changed
+fields, and the row shows the source the importer answers. A new source still needs an `EventSource` value in code, so `http/importer/dev-seed.http` creates it.

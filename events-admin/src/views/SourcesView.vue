@@ -68,6 +68,7 @@ function statusVariant(status: unknown) {
 }
 
 const DATE_COLUMNS = new Set(['lastImportAt', 'lastSuccessAt', 'flaggedAt'])
+const NUMBER_COLUMNS = new Set(['importIntervalMinutes', 'lastEventCount'])
 
 // The actions stick to the table's right edge, so a wide table scrolls under them. A sticky cell
 // needs a solid background; on hover and with its menu open it mixes the row's tint, muted at 50 %.
@@ -146,7 +147,7 @@ onMounted(async () => {
                       : 'none'
               "
               :class="{
-                'text-right': header.column.id === 'lastEventCount',
+                'text-right': NUMBER_COLUMNS.has(header.column.id),
                 [STICKY_HEAD]: header.column.id === 'actions',
               }"
             >
@@ -180,7 +181,7 @@ onMounted(async () => {
               :class="{
                 'whitespace-normal': cell.column.id === 'name',
                 'font-mono': cell.column.id === 'slug' || cell.column.id === 'sourceType',
-                'text-right tabular-nums': cell.column.id === 'lastEventCount',
+                'text-right tabular-nums': NUMBER_COLUMNS.has(cell.column.id),
                 'max-w-xs whitespace-normal': cell.column.id === 'lastFailureReason',
                 [STICKY_CELL]: cell.column.id === 'actions',
               }"

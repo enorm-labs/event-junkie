@@ -7,6 +7,7 @@ import {
   PAGE_SIZE,
   retrySource,
   triggerImport,
+  updateSource,
 } from '../eventSources'
 
 function source(n: number): EventSource {
@@ -17,6 +18,8 @@ function source(n: number): EventSource {
     url: `https://example.com/${n}`,
     sourceType: 'EXAMPLE',
     enabled: true,
+    importIntervalMinutes: 1440,
+    maxRetries: 3,
     status: 'SUCCESS',
     lastImportAt: null,
     lastSuccessAt: null,
@@ -111,6 +114,42 @@ describe('one source', () => {
 
     await expect(triggerImport('gone', false, fetchFn)).rejects.toThrow(
       "POST /api/admin/event-sources/gone/import: HTTP 404: Event source not found: 'gone'",
+    )
+  })
+
+  it('patches only the given fields and returns the stored source', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json({ ...source(3), enabled: false, importIntervalMinutes: 720 }),
+    )
+
+    await expect(
+      updateSource('source-3', { enabled: false, importIntervalMinutes: 720 }, fetchFn),
+    ).resolves.toMatchObject({ enabled: false, importIntervalMinutes: 720 })
+    const [url, init] = fetchFn.mock.calls[0] ?? []
+    expect(String(url)).toBe('/api/admin/event-sources/source-3')
+    expect(init?.method).toBe('PATCH')
+    expect(JSON.parse(String(init?.body))).toEqual({ enabled: false, importIntervalMinutes: 720 })
+  })
+
+  it("adds a validation 400's field messages to its detail", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json(
+        {
+          status: 400,
+          detail: 'Validation failed',
+          errors: [
+            {
+              field: 'importIntervalMinutes',
+              message: 'Import interval must be at least 1 minute',
+            },
+          ],
+        },
+        400,
+      ),
+    )
+
+    await expect(updateSource('lido', { importIntervalMinutes: 0 }, fetchFn)).rejects.toThrow(
+      'PATCH /api/admin/event-sources/lido: HTTP 400: Validation failed (Import interval must be at least 1 minute)',
     )
   })
 

@@ -12,6 +12,8 @@ function source(overrides: Partial<EventSource> = {}): EventSource {
     url: 'https://example.org',
     sourceType: 'LIDO',
     enabled: true,
+    importIntervalMinutes: 1440,
+    maxRetries: 3,
     status: 'SUCCESS',
     lastImportAt: BEFORE,
     lastSuccessAt: null,
@@ -75,7 +77,7 @@ async function openMenu(wrapper: ReturnType<typeof mount>) {
 const menuItem = (label: string) =>
   document.body.querySelector<HTMLElement>(`[role="menuitem"][aria-label="${label} Lido"]`)
 
-/** Import is a button in the row; Force import and Retry are items of the row menu. */
+/** Import is a button in the row; Force import, Retry and Edit are items of the row menu. */
 async function click(wrapper: ReturnType<typeof mount>, label: string) {
   if (label === 'Import') {
     await wrapper.get(`button[aria-label="Import Lido"]`).trigger('click')
@@ -222,7 +224,19 @@ describe('SourceActions', () => {
     wrapper.unmount()
   })
 
-  it('keeps Import in the row and Force import and Retry in the menu', () => {
+  it('keeps Edit in the menu open while the row polls, and Force import and Retry not', async () => {
+    stubFetch(() => json({}, 202), [running])
+    const wrapper = mountActions({ source: source({ status: 'FAILED' }) })
+
+    await click(wrapper, 'Import')
+    await openMenu(wrapper)
+
+    expect(menuItem('Edit')!.hasAttribute('data-disabled')).toBe(false)
+    expect(menuItem('Force import')!.hasAttribute('data-disabled')).toBe(true)
+    expect(menuItem('Retry')!.hasAttribute('data-disabled')).toBe(true)
+  })
+
+  it('keeps Import in the row and the other actions in the menu', () => {
     const wrapper = mountActions({ source: source({ status: 'FAILED' }) })
 
     expect(wrapper.findAll('button').map((b) => b.attributes('aria-label'))).toEqual([
@@ -248,6 +262,25 @@ describe('SourceActions', () => {
     expect(calls(fetchFn)).toHaveLength(1)
     expect(wrapper.emitted('updated')).toBeUndefined()
     expect(wrapper.get('button[aria-label="Import Lido"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('Edit opens the form, and a save emits the PATCH answer without another read', async () => {
+    const stored = source({ maxRetries: 5 })
+    const fetchFn = vi.fn<typeof fetch>(async () => json(stored))
+    vi.stubGlobal('fetch', fetchFn)
+    const wrapper = mountActions({ source: source() })
+
+    await click(wrapper, 'Edit')
+    const retries = document.querySelector<HTMLInputElement>('input[name="maxRetries"]')
+    expect(retries).not.toBeNull()
+    retries!.value = '5'
+    retries!.dispatchEvent(new Event('input'))
+    document.querySelector('form')!.dispatchEvent(new Event('submit'))
+    await flushPromises()
+
+    expect(calls(fetchFn)).toEqual(['PATCH /api/admin/event-sources/lido'])
+    expect(wrapper.emitted('updated')).toEqual([[stored]])
+    wrapper.unmount()
   })
 
   it('disables every button while an action runs', async () => {
