@@ -184,7 +184,8 @@ private val TITLE_STATUS_TAIL =
 /**
  * Trailing noise that is no status: a "(ausverkauft)" / "-ausverkauft-" annotation, which would
  * split the act and its twin into two artists, and any stray trailing dash. Word- or
- * end-anchored, so "ausverkauften" mid-title is never touched.
+ * end-anchored, so "ausverkauften" mid-title is never touched. The stored title loses every marker
+ * shape through [stripSoldOutMarker]; this arm stays because scrapers key `sourceId` on the cleaned title.
  */
 private val TITLE_NOISE_PATTERN =
     Regex(

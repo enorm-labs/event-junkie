@@ -183,12 +183,13 @@ data class ScrapedEvent(
         )
 
     /**
-     * The title as stored: cleaned by [cleanEventTitle] for every source, then a status note or marker
-     * removed once [toEventEntity] has read the status off it (#2008). Dedup and slug collisions key
-     * on this too, so they agree with the stored slug. A scraper that builds `sourceId` or artists
-     * from the title still cleans it first, so that identity does not depend on this step.
+     * The title as stored: cleaned by [cleanEventTitle] for every source, then the sold-out marker and a
+     * status note removed once [toEventEntity] has read the flag and the status off it (#2008, #2971).
+     * Dedup and slug collisions key on this too, so they agree with the stored slug. A scraper that
+     * builds `sourceId` or artists from the title still cleans it first, so that identity does not
+     * depend on this step.
      */
-    fun storedTitle(): String = stripTitleStatusMarker(cleanEventTitle(title))
+    fun storedTitle(): String = stripTitleStatusMarker(stripSoldOutMarker(cleanEventTitle(title)))
 
     /**
      * The genre as stored: null when it only repeats the title, which says nothing about the music.
