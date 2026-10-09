@@ -346,7 +346,7 @@ says so.
 | `SHOWFENSTER`          | `PRICE`            | prices are on the Eventfrog ticket shop, not on the venue's site                                                                                 | —     |
 | `SHOWFENSTER`          | `DOORS_TIME`       | the calendar gives a start and an end time, no doors time                                                                                        | —     |
 | `SHOWFENSTER`          | `ARTISTS`          | only a concert or comedy title names its act; a reading bills a duo by surnames, and shows and quizzes name none                                 | —     |
-| `SILENT_GREEN`         | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
+| `SILENT_GREEN`         | `PRICE`            | the venue names no event price — a ticket shop link, an "Eintritt frei" in the blurb, or nothing                                                 | —     |
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `SILENT_GREEN`         | `START_TIME`       | a multi-day festival entry without daily hours in its blurb prints its date span only and names no time                                          | —     |
 | `SILENT_GREEN`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |

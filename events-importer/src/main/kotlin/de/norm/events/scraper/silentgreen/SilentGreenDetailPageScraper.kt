@@ -5,6 +5,8 @@ import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.endOn
+import de.norm.events.scraper.euroAmounts
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -199,6 +201,7 @@ data class SilentGreenEventDetails(
         val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart
         val hours = if (run) null else openingHours(event)
         return event.copy(
+            free = isFree(event),
             doorsTime = event.doorsTime ?: doorsTime,
             startTime = event.startTime ?: startTime ?: hours?.start,
             eventDate = if (run) runStart else event.eventDate,
@@ -207,6 +210,16 @@ data class SilentGreenEventDetails(
             description = event.description ?: description,
             imageUrl = event.imageUrl ?: imageUrl
         )
+    }
+
+    /**
+     * Whether the row is free, or the blurb's "Eintritt frei" covers the whole event: not when the
+     * row links a ticket shop or the blurb names a euro amount. The Festival of Animation does both,
+     * for one free screening.
+     */
+    private fun isFree(event: ScrapedEvent): Boolean {
+        val blurb = event.description ?: description
+        return event.free || (event.ticketUrl == null && hasFreeEntryPhrase(blurb) && euroAmounts(blurb).isEmpty())
     }
 
     /** The day's [dailyHours], unless a time cell already gives the start or the end. */

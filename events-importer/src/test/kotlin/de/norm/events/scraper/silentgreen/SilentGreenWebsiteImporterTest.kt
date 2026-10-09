@@ -167,6 +167,32 @@ class SilentGreenWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents flags a free festival free and keeps one with a ticket link paid`() =
+        runTest {
+            val novemberUrl = "https://www.silent-green.net/programm/2026/11"
+            val festivalUrl = detailUrl("9-festival-of-animation-berlin-2026")
+            val exhibitionUrl = detailUrl("fab-dimensional-2026")
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-october.html", entryUrl)
+            coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns fixture("silentgreen-month-empty.html", novemberUrl)
+            coEvery { htmlFetcher.fetchDocument(festivalUrl) } returns fixture("silentgreen-detail-festival-hours.html", festivalUrl)
+            coEvery { htmlFetcher.fetchDocument(exhibitionUrl) } returns fixture("silentgreen-detail-fab-dimensional.html", exhibitionUrl)
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            // FAB Dimensional ends its blurb with "Eintritt frei" and links no shop: all four days are free.
+            val fabDays = result.events.filter { it.sourceUrl == exhibitionUrl }
+            fabDays.map { it.eventDate } shouldBe (8..11).map { LocalDate.of(2026, 10, it) }
+            fabDays.forEach { it.free shouldBe true }
+            // The Festival of Animation names one free screening, but sells tickets for the rest.
+            val festivalDays = result.events.filter { it.sourceUrl == festivalUrl }
+            festivalDays.shouldNotBeEmpty()
+            festivalDays.forEach {
+                it.ticketUrl.shouldNotBeNull()
+                it.free shouldBe false
+            }
+        }
+
+    @Test
     fun `importEvents keeps the calendar data when a detail page fetch fails`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(detailUrl("htrk")) } throws RuntimeException("boom")
