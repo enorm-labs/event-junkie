@@ -1,5 +1,7 @@
 {
   "notFoundHeading": "{kind} nicht gefunden",
+  "reportSubject": "Fehler in den Daten: {title}",
+  "reportBody": "Seite: {url}\n\nWas stimmt nicht:\n",
   "venue": {
     "kind": "Location",
     "notFound": "Diese Location steht nicht in unserem kleinen schwarzen Buch.",
@@ -20,16 +22,19 @@
     "programmePlatform": "Zum Programm bei {platform}",
     "closed": "Im {month} für immer geschlossen",
     "closing": "Geöffnet bis {date}, danach für immer geschlossen",
-    "closedNoEvents": "Hier gibt es keine Abende mehr: Der Ort hat geschlossen."
+    "closedNoEvents": "Hier gibt es keine Abende mehr: Der Ort hat geschlossen.",
+    "report": "Stimmt bei dieser Location etwas nicht? Melde es per E-Mail:"
   },
   "artist": {
     "kind": "Act",
     "notFound": "Diesen Act haben wir nicht auf dem Radar.",
-    "empty": "Noch keine Termine auf dem Radar. Schau bald wieder vorbei."
+    "empty": "Noch keine Termine auf dem Radar. Schau bald wieder vorbei.",
+    "report": "Stimmt bei diesem Act etwas nicht? Melde es per E-Mail:"
   },
   "promoter": {
     "kind": "Veranstalter",
     "notFound": "Diesen Veranstalter haben wir nicht in den Büchern.",
-    "empty": "Noch nichts im Kalender. Schau bald wieder vorbei."
+    "empty": "Noch nichts im Kalender. Schau bald wieder vorbei.",
+    "report": "Stimmt bei diesem Veranstalter etwas nicht? Melde es per E-Mail:"
   }
 }

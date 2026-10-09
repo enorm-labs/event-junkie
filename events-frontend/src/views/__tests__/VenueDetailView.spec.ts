@@ -174,6 +174,15 @@ describe('VenueDetailView', () => {
     expect(view.text()).toContain('No upcoming nights here yet')
   })
 
+  it('offers a prefilled mail that names the venue page (#2963)', async () => {
+    const view = await mountVenue(kater)
+
+    const mail = view.findAll('a').find((link) => link.text() === 'hello@event-junkie.de')
+    const url = new URL(mail?.attributes('href') ?? '')
+    expect(url.searchParams.get('subject')).toBe(`Wrong data: ${kater.name}`)
+    expect(url.searchParams.get('body')).toContain('https://event-junkie.de/en/venues/kater')
+  })
+
   it('tags the website link as a referral from this site (#2770)', async () => {
     const view = await mountVenue(kater)
 

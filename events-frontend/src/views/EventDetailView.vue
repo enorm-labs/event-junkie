@@ -10,14 +10,12 @@ import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import ListenLinks from '@/components/ListenLinks.vue'
+import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
-import { feedbackMailto } from '@/lib/feedback'
-import { CONTROLLER } from '@/lib/legal'
-import { canonicalUrl } from '@/lib/seo'
 import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -116,16 +114,15 @@ const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLa
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
-// A cancelled night shows no price either: nothing is on sale (#2916).
-const hasTickets = computed(
-  () =>
-    !!event.value &&
-    event.value.status !== 'CANCELLED' &&
-    !!(
-      formatPrice(event.value.pricePresale, event.value.priceCurrency) ||
-      formatPrice(event.value.priceBoxOffice, event.value.priceCurrency) ||
-      event.value.priceNote
-    ),
+// A cancelled night shows no price: nothing is on sale (#2916). Every other night says what is
+// known about the price, also when that is nothing (#2963).
+const hasTickets = computed(() => !!event.value && event.value.status !== 'CANCELLED')
+const presale = computed(() => formatPrice(event.value?.pricePresale, event.value?.priceCurrency))
+const boxOffice = computed(() =>
+  formatPrice(event.value?.priceBoxOffice, event.value?.priceCurrency),
+)
+const priceUnknown = computed(
+  () => !presale.value && !boxOffice.value && !event.value?.free && !event.value?.priceNote,
 )
 // When, venue, tickets, language: three share a row, and four wrap to 2×2 rather than squeeze.
 const factColumns = computed(() => {
@@ -164,18 +161,6 @@ function stateItem(e: NonNullable<typeof event.value>): MetaItem | null {
   if (e.free) return { text: t('events.card.free'), class: 'font-medium text-success' }
   return null
 }
-
-// The page's URL in the body, so a report names its event without the visitor copying anything.
-const reportMailto = computed(() =>
-  event.value?.slug
-    ? feedbackMailto(
-        t('events.detail.reportSubject', { title: event.value.title ?? event.value.slug }),
-        t('events.detail.reportBody', {
-          url: canonicalUrl(locale.value as Locale, `/events/${event.value.slug}`),
-        }),
-      )
-    : null,
-)
 
 // The text for this locale, its language, and whether a machine wrote it, shared with the page
 // meta, the structured data and the injector (lib/description.ts). Below `useI18n()` as
@@ -307,6 +292,77 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         {{ t('events.detail.descriptionElsewhere') }}
       </p>
 
+      <!-- What a visitor needs to decide comes before the lineup (#2963). -->
+      <section :class="cn('grid grid-cols-1 gap-6', factColumns)">
+        <EventWhen :event="event" />
+
+        <div v-if="event.venue" class="space-y-1">
+          <SectionLabel>{{ t('events.detail.venue') }}</SectionLabel>
+          <RouterLink
+            v-if="event.venue.slug"
+            :to="localePath(`/venues/${event.venue.slug}`)"
+            class="text-body font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {{ event.venue.name }}
+          </RouterLink>
+          <p v-else class="text-body font-medium">{{ event.venue.name }}</p>
+          <p v-if="event.venue.address" class="text-body text-muted-foreground">
+            {{ event.venue.address
+            }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
+          </p>
+          <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="event.venue" /></p>
+        </div>
+
+        <div v-if="hasTickets" class="space-y-1">
+          <SectionLabel>{{ t('events.detail.tickets') }}</SectionLabel>
+          <p v-if="presale" class="text-body">{{ t('events.detail.presale') }}: {{ presale }}</p>
+          <p v-if="boxOffice" class="text-body">
+            {{ t('events.detail.boxOffice') }}: {{ boxOffice }}
+          </p>
+          <p v-if="event.free && !presale && !boxOffice" class="text-body font-medium text-success">
+            {{ t('events.detail.freeEntry') }}
+          </p>
+          <p v-if="priceUnknown" class="text-body text-muted-foreground">
+            {{ t('events.detail.priceUnknown') }}
+          </p>
+          <p v-if="event.priceNote" class="text-body text-muted-foreground">
+            {{ event.priceNote }}
+          </p>
+        </div>
+
+        <div v-if="spokenLanguage || subtitles" class="space-y-1">
+          <SectionLabel>{{ t('events.detail.language') }}</SectionLabel>
+          <p v-if="spokenLanguage" class="text-body">{{ spokenLanguage }}</p>
+          <p v-if="subtitles" class="text-body text-muted-foreground">{{ subtitles }}</p>
+        </div>
+      </section>
+
+      <!--
+        No ticket CTA once the night has happened, on a cancelled one (#2916), nor on the row a
+        show left — the house it moved to sells the tickets (#1551). The source page stays: it says
+        where refunds go. Share closes the row.
+      -->
+      <EventShareActions :event="event">
+        <Button
+          v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"
+          as-child
+        >
+          <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">{{
+            t('events.detail.buyTickets')
+          }}</a>
+        </Button>
+        <Button v-if="event.sourceUrl" as-child variant="outline">
+          <a :href="withReferral(event.sourceUrl)" rel="noopener noreferrer" target="_blank">{{
+            t('events.detail.eventPage')
+          }}</a>
+        </Button>
+        <Button v-if="event.facebookEventUrl" as-child variant="outline">
+          <a :href="event.facebookEventUrl" rel="noopener noreferrer" target="_blank">{{
+            t('events.detail.facebook')
+          }}</a>
+        </Button>
+      </EventShareActions>
+
       <section v-if="floors" class="space-y-3">
         <SectionLabel>{{ t('events.detail.runningOrder') }}</SectionLabel>
         <div v-for="floor in floors" :key="floor.stage ?? ''" class="space-y-1">
@@ -385,48 +441,6 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         >
       </p>
 
-      <section :class="cn('grid grid-cols-1 gap-6', factColumns)">
-        <EventWhen :event="event" />
-
-        <div v-if="event.venue" class="space-y-1">
-          <SectionLabel>{{ t('events.detail.venue') }}</SectionLabel>
-          <RouterLink
-            v-if="event.venue.slug"
-            :to="localePath(`/venues/${event.venue.slug}`)"
-            class="text-card-title font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {{ event.venue.name }}
-          </RouterLink>
-          <p v-else class="text-card-title font-medium">{{ event.venue.name }}</p>
-          <p v-if="event.venue.address" class="text-body text-muted-foreground">
-            {{ event.venue.address
-            }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
-          </p>
-          <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="event.venue" /></p>
-        </div>
-
-        <div v-if="hasTickets" class="space-y-1">
-          <SectionLabel>{{ t('events.detail.tickets') }}</SectionLabel>
-          <p v-if="formatPrice(event.pricePresale, event.priceCurrency)" class="text-body">
-            {{ t('events.detail.presale') }}:
-            {{ formatPrice(event.pricePresale, event.priceCurrency) }}
-          </p>
-          <p v-if="formatPrice(event.priceBoxOffice, event.priceCurrency)" class="text-body">
-            {{ t('events.detail.boxOffice') }}:
-            {{ formatPrice(event.priceBoxOffice, event.priceCurrency) }}
-          </p>
-          <p v-if="event.priceNote" class="text-body text-muted-foreground">
-            {{ event.priceNote }}
-          </p>
-        </div>
-
-        <div v-if="spokenLanguage || subtitles" class="space-y-1">
-          <SectionLabel>{{ t('events.detail.language') }}</SectionLabel>
-          <p v-if="spokenLanguage" class="text-body">{{ spokenLanguage }}</p>
-          <p v-if="subtitles" class="text-body text-muted-foreground">{{ subtitles }}</p>
-        </div>
-      </section>
-
       <section v-if="event.promoters?.length" class="space-y-1">
         <SectionLabel>{{ t('events.detail.promoters') }}</SectionLabel>
         <p class="flex flex-wrap gap-x-1 text-body">
@@ -447,39 +461,12 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         </p>
       </section>
 
-      <!--
-        No ticket CTA once the night has happened, on a cancelled one (#2916), nor on the row a
-        show left — the house it moved to sells the tickets (#1551). The source page stays: it says
-        where refunds go. Share closes the row.
-      -->
-      <EventShareActions :event="event">
-        <Button
-          v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"
-          as-child
-        >
-          <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.buyTickets')
-          }}</a>
-        </Button>
-        <Button v-if="event.sourceUrl" as-child variant="outline">
-          <a :href="withReferral(event.sourceUrl)" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.eventPage')
-          }}</a>
-        </Button>
-        <Button v-if="event.facebookEventUrl" as-child variant="outline">
-          <a :href="event.facebookEventUrl" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.facebook')
-          }}</a>
-        </Button>
-      </EventShareActions>
-
-      <!-- The address is the link text, so a visitor without a mail client can still copy it. -->
-      <p v-if="reportMailto" class="text-body text-muted-foreground">
-        {{ t('events.detail.reportWrong') }}
-        <a :href="reportMailto" class="text-foreground underline underline-offset-4">{{
-          CONTROLLER.email
-        }}</a>
-      </p>
+      <ReportLine
+        v-if="event.slug"
+        :path="`/events/${event.slug}`"
+        :text="t('events.detail.reportWrong')"
+        :title="event.title ?? event.slug"
+      />
     </article>
 
     <!-- Outside the article: these are other events, not facts about this one. -->

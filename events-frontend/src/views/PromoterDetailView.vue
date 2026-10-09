@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import DetailLinks from '@/components/DetailLinks.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { notFoundPageMeta, placeholderPageMeta, promoterPageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
@@ -58,6 +59,12 @@ usePageMeta(() =>
 )
 
 const credit = computed(() => imageCredit(promoter.value))
+
+const links = computed(() =>
+  promoter.value?.websiteUrl
+    ? [{ label: t('common.actions.website'), url: promoter.value.websiteUrl }]
+    : [],
+)
 </script>
 
 <template>
@@ -79,17 +86,11 @@ const credit = computed(() => imageCredit(promoter.value))
     :not-found-text="t('detail.promoter.notFound')"
     :past="past"
     :ready="Boolean(promoter)"
+    :report-path="`/promoters/${slug}`"
+    :report-text="t('detail.promoter.report')"
   >
     <template #meta>
-      <a
-        v-if="promoter?.websiteUrl"
-        :href="promoter.websiteUrl"
-        class="text-body text-primary underline-offset-4 hover:underline"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {{ t('common.actions.website') }}
-      </a>
+      <DetailLinks :links="links" />
     </template>
 
     <p

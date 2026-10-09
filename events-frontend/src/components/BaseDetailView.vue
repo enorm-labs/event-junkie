@@ -9,6 +9,7 @@ import CachedImage from '@/components/CachedImage.vue'
 import ImageCreditLine from '@/components/ImageCreditLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
+import ReportLine from '@/components/ReportLine.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { ImageCredit } from '@/lib/imageCredit'
@@ -53,6 +54,9 @@ const props = defineProps<{
    * first page needs no loading or error state.
    */
   past?: PastEvents | null
+  /** The report line's question and the page's path without the locale; no line without both. */
+  reportText?: string
+  reportPath?: string
 }>()
 
 // The document title is not set here: each detail view owns its page meta, because the
@@ -121,6 +125,13 @@ const { compact } = useCompactView()
         </header>
 
         <slot />
+
+        <ReportLine
+          v-if="reportText && reportPath && name"
+          :path="reportPath"
+          :text="reportText"
+          :title="name"
+        />
       </div>
 
       <!-- `upcoming` replaces the list for an entity whose events we do not import (#2766). -->
