@@ -1,5 +1,5 @@
 {
-  "componentCount": 356,
+  "componentCount": 355,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1303,25 +1303,25 @@
         },
         {
           "name": "@floating-ui/vue",
-          "version": "1.1.11",
+          "version": "2.0.1",
           "url": "https://github.com/floating-ui/floating-ui",
           "ecosystem": "frontend"
         },
         {
           "name": "@full-ui/headless-calendar",
-          "version": "7.1.0",
+          "version": "7.1.1",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/core",
-          "version": "7.1.0",
+          "version": "7.1.1",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/vue3",
-          "version": "7.1.0",
+          "version": "7.1.1",
           "url": "https://github.com/fullcalendar/fullcalendar-vue",
           "ecosystem": "frontend"
         },
@@ -1831,7 +1831,7 @@
         },
         {
           "name": "reka-ui",
-          "version": "2.10.5",
+          "version": "2.11.0",
           "url": "https://github.com/unovue/reka-ui",
           "ecosystem": "frontend"
         },
@@ -1908,12 +1908,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "vue-demi",
-          "version": "0.14.10",
-          "url": "https://github.com/antfu/vue-demi",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "vue-i18n",
           "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
@@ -1939,7 +1933,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.49.0",
+          "version": "1.52.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
@@ -2089,7 +2083,7 @@
         },
         {
           "name": "maplibre-gl",
-          "version": "6.11.2",
+          "version": "6.12.0",
           "url": "https://github.com/maplibre/maplibre-gl-js",
           "ecosystem": "frontend"
         },
