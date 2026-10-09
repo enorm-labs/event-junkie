@@ -1255,6 +1255,22 @@ export interface components {
             /** @description On the first page only: of the events matching the filters that an operator features, the earliest-starting. It may also be in `content`, or on a later page. Null when no matching event is featured. */
             lead?: components["schemas"]["EventSummaryResponse"] | null;
         };
+        /** @description A source that filled empty fields of an event, credited on its page */
+        EnrichmentSourceResponse: {
+            /**
+             * @description The page the fields were read from
+             * @example https://puschen.net/events/alpha-band
+             */
+            sourceUrl?: string;
+            /**
+             * @description The fields it filled, by their admin API names: `lineup`, `promoters`, `genres` or a column such as `genre` or `doorsTime`
+             * @example [
+             *       "genre",
+             *       "lineup"
+             *     ]
+             */
+            fields?: string[];
+        };
         /** @description Full event detail with embedded associations */
         EventDetailResponse: {
             /**
@@ -1446,6 +1462,8 @@ export interface components {
              *     ]
              */
             genreTags?: string[];
+            /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
+            enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {

@@ -116,6 +116,8 @@ function offers(event: EventDetail, url: string): JsonLd | undefined {
 function performers(event: EventDetail): JsonLd[] | undefined {
   // A lineup from someone else's page is shown only beside its credit, which JSON-LD cannot carry (ADR-036).
   if (event.lineupSourceUrl) return undefined
+  // The same for a lineup an enrichment source filled (ADR-043).
+  if (event.enrichmentSources?.some((source) => source.fields?.includes('lineup'))) return undefined
   const names = (event.lineup ?? [])
     .map((entry) => entry.artist?.name)
     .filter((name): name is string => Boolean(name))

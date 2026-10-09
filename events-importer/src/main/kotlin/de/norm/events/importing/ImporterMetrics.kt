@@ -151,6 +151,21 @@ class ImporterMetrics(
     }
 
     /**
+     * Every meter one enrichment run produces (ADR-043): its events by what became of them, and the
+     * fields it filled. The unmatched count is the evidence ADR-043's "When to revisit" asks for.
+     * Zero counts create no series, as for [recordUpsertOutcome].
+     */
+    fun recordEnrichmentOutcome(
+        sourceSlug: String,
+        outcome: EnrichmentOutcome
+    ) {
+        mapOf("matched" to outcome.matched, "unmatched" to outcome.unmatched, "ambiguous" to outcome.ambiguous).forEach { (result, count) ->
+            if (count > 0) registry.counter(ENRICHMENT_EVENTS, TAG_SOURCE, sourceSlug, TAG_OUTCOME, result).increment(count.toDouble())
+        }
+        if (outcome.fieldsFilled > 0) registry.counter(ENRICHMENT_FIELDS_FILLED, TAG_SOURCE, sourceSlug).increment(outcome.fieldsFilled.toDouble())
+    }
+
+    /**
      * Records a scrape failure with its cause, because a 403 is not a parse failure: one is the
      * venue blocking us, the other its markup having moved.
      */
@@ -395,6 +410,8 @@ class ImporterMetrics(
         const val EVENTS_WRITTEN = "importer.events.written"
         const val SCRAPE_FAILURES = "importer.scrape.failures"
         const val EVENTS_DROPPED = "importer.events.dropped"
+        const val ENRICHMENT_EVENTS = "importer.enrichment.events"
+        const val ENRICHMENT_FIELDS_FILLED = "importer.enrichment.fields_filled"
         const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
 
         /** `importer.translations{outcome}` — attempts and how many produced a text. See [recordTranslation]. */

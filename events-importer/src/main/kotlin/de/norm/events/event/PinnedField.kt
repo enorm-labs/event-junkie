@@ -49,7 +49,37 @@ enum class PinnedField(
         stored: EventEntity
     ): Boolean = valueOf != null && valueOf(edited) != valueOf(stored)
 
+    /** Whether [row] holds no value for this column, the gap an enrichment source may fill (ADR-043). Always false for a join table. */
+    fun isEmptyOn(row: EventEntity): Boolean = valueOf != null && valueOf(row) == null
+
+    /** [row] with this column, and what is derived from it, taken from [from]. A join table changes nothing. */
+    fun takeFrom(
+        row: EventEntity,
+        from: EventEntity
+    ): EventEntity = keep?.invoke(row, from) ?: row
+
     companion object {
+        /**
+         * The fields an enrichment source may fill (ADR-043 rule 4): the facts and the three join
+         * tables. The date, the title and the status are the main source's, and the flags have no
+         * empty value. The description and the image stay out: they are works, and their licence is
+         * the main source's to grant (#283), so the venue's page stays their only origin.
+         */
+        val ENRICHABLE: Set<PinnedField> =
+            setOf(
+                SUBTITLE,
+                DOORS_TIME,
+                START_TIME,
+                TICKET_URL,
+                GENRE,
+                PRICE_PRESALE,
+                PRICE_BOX_OFFICE,
+                PRICE_NOTE,
+                LINEUP,
+                PROMOTERS,
+                GENRES
+            )
+
         /** The columns `event.slug` is built from. A row that pins any of them keeps its slug. */
         private val SLUG_INPUTS = setOf(VENUE_ID, TITLE, EVENT_DATE)
 

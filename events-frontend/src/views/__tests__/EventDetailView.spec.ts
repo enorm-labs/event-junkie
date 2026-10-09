@@ -142,6 +142,23 @@ describe('EventDetailView', () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
   })
 
+  it('credits each source that filled a field, linked by its host, and no source on a plain event (#2593)', async () => {
+    const view = await mountEvent({
+      ...night,
+      enrichmentSources: [
+        { sourceUrl: 'https://puschen.example/alpha', fields: ['lineup'] },
+        { sourceUrl: 'https://fans.example/alpha', fields: ['genre'] },
+      ],
+    })
+
+    expect(view.text()).toContain('Further details from puschen.example, fans.example')
+    expect(hrefOf(view, 'puschen.example')).toBe('https://puschen.example/alpha')
+    expect(hrefOf(view, 'fans.example')).toBe('https://fans.example/alpha')
+    view.unmount()
+
+    expect((await mountEvent(night)).text()).not.toContain('Further details from')
+  })
+
   it("leaves an artist's Bandcamp link untagged", async () => {
     const view = await mountEvent(night)
 

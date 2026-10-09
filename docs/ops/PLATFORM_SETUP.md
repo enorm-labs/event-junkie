@@ -814,6 +814,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
 | `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
 | `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date / slug_conflict — **what a run threw away**     |
+| `importer.enrichment.events`                   | Counter, tagged `source`, `outcome`   | matched / unmatched / ambiguous — an enrichment source's events (ADR-043)          |
+| `importer.enrichment.fields_filled`            | Counter, tagged `source`              | Empty fields an enrichment source filled on the venue's own events                 |
 | `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
 | `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; also tagged `known_blocked` (#2201)                      |
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |

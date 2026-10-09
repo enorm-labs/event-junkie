@@ -43,6 +43,7 @@ class BerghainExhibitionRunUpsertTest {
             mockk<AssociationSyncService>(relaxed = true),
             clock,
             PerformerTyping(mockk(), eventRepository),
+            mockk(relaxed = true),
             mockk(relaxed = true)
         )
 

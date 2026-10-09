@@ -66,6 +66,22 @@ const lineupCredit = computed(() => {
   }
 })
 
+/**
+ * The hosts of the other sources that filled empty fields of this event, a promoter's page or a fan
+ * site, each linked (ADR-043). Their data is shown only beside this credit (ADR-036).
+ */
+const enrichmentCredits = computed(() =>
+  (event.value?.enrichmentSources ?? []).flatMap((source) => {
+    try {
+      return source.sourceUrl
+        ? [{ url: source.sourceUrl, host: new URL(source.sourceUrl).host }]
+        : []
+    } catch {
+      return []
+    }
+  }),
+)
+
 /** `Sun 08:30–12:30`: the weekday only where a new night begins, the end only where it is known. */
 function setTimeLabel(set: RunningOrderSet): string {
   const day = set.opensNight ? `${formatWeekday(set.opensNight)} ` : ''
@@ -438,6 +454,20 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           rel="noopener"
           target="_blank"
           >{{ lineupCredit.host }}</a
+        >
+      </p>
+
+      <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
+        {{ t('events.detail.detailsFrom') }}
+        <template v-for="(credit, index) in enrichmentCredits" :key="credit.url"
+          ><template v-if="index">, </template
+          ><a
+            class="underline underline-offset-2"
+            :href="credit.url"
+            rel="noopener"
+            target="_blank"
+            >{{ credit.host }}</a
+          ></template
         >
       </p>
 

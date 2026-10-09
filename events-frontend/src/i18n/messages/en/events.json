@@ -95,6 +95,7 @@
     "lineup": "Lineup",
     "runningOrder": "Running order",
     "lineupFrom": "Lineup and set times from",
+    "detailsFrom": "Further details from",
     "listenOn": "Listen to {act} on {service}",
     "venue": "Venue",
     "tickets": "Tickets",

@@ -102,6 +102,12 @@ data class EventSourceEntity(
     val flaggedAt: Instant? = null,
     /** Which fields dropped and by how much, in the shape a human reads without another query. */
     val flagReason: String? = null,
+    /**
+     * What this source does with its events, one of [SourceRole]'s names (ADR-043). `MAIN` for every
+     * source until a reviewed enrichment source is added; text, as [status] is, and a CHECK keeps it
+     * to the two values (V131).
+     */
+    val role: String = SourceRole.MAIN.name,
     /** Optimistic locking version — prevents lost updates from concurrent modifications. */
     @Version val version: Long? = null,
     @CreatedDate val createdAt: Instant? = null,
@@ -147,4 +153,16 @@ enum class ImportStatus {
         const val S_FAILED = "FAILED"
         const val S_MISCONFIGURED = "MISCONFIGURED"
     }
+}
+
+/** What a source does with the events it reads (ADR-043). */
+enum class SourceRole {
+    /** Creates, updates and removes the events of its venue. Every importer before ADR-043 is one. */
+    MAIN,
+
+    /**
+     * Fills empty fields on the events the venue's main source lists. Never inserts or deletes an
+     * event, and never changes a value the main source set ([EventEnrichmentService]).
+     */
+    ENRICHMENT
 }

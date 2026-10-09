@@ -6,7 +6,10 @@
 venue's events. An enrichment source, such as a promoter site or a fan site, fills empty fields on events that the main source lists. It never creates an
 event, and it never changes a value that the main source set. An enrichment event matches a main event on venue, date and a start time within one hour.**
 
-**Not implemented in general.** The Sisyphos importer already works this way for one venue ([ADR-038](ADR-038_SISYPHOS_PROGRAMME_FROM_THE_CLUB_CALENDAR.md)).
+**The mechanism is implemented, and no source uses it yet** ([#2593](https://github.com/enorm-labs/event-junkie/issues/2593)).
+`event_source.role` is `MAIN` or `ENRICHMENT`, and `EventEnrichmentService` runs an enrichment source's import. The first
+enrichment source needs its licence review and the promoter's permission first ([#3002](https://github.com/enorm-labs/event-junkie/issues/3002)).
+The Sisyphos importer already works this way inside one importer ([ADR-038](ADR-038_SISYPHOS_PROGRAMME_FROM_THE_CLUB_CALENDAR.md)).
 The club's calendar is the main source. The ticket shop and sisy.fan add fields.
 
 **Does not supersede anything.** [ADR-036](ADR-036_SISYPHOS_WEEKENDS_FROM_SISY_FAN.md) and ADR-038 stay as they are, and this ADR makes their pattern
@@ -54,7 +57,7 @@ The rules:
 3. **A venue with no own publication gets a substitute main source.** A promoter or a fan site can be the main source for that venue, with permission. One
    thin source per venue keeps only that venue's shows, and has its own `sourceId` prefix.
 4. **An enrichment source only fills empty fields.** It never creates an event and never removes one. It never changes a value that the main source set.
-5. **An enrichment event matches on venue, date and start time.** The start times are at most one hour apart. When two main events match, the title decides.
+5. **An enrichment event matches on venue, date and start time.** The start times are at most one hour apart. When two main events match, the title decides. When the titles tie too, neither event is filled (decided 2026-10-10).
    An event that matches nothing is dropped and counted in the run's summary.
 6. **Each enrichment source has permission and credit.** Its licence is reviewed like a main source's. An event page that shows its data links to it.
 
@@ -64,7 +67,7 @@ the venue's page the only authority on which events exist.
 ## Consequences
 
 - A show that a promoter lists and the venue's page omits is not imported. That gap is deliberate. Count the unmatched events per run before revisiting it.
-- A venue with a second show inside the same hour gets enrichment on the wrong event when the titles also tie. Rule 5 makes this rare, not impossible.
+- A venue with a second show inside the same hour gets no enrichment on either show when the titles also tie. The run counts such an event as ambiguous, in its log line and its metric. A skipped fill only leaves a field empty. A wrong fill would put one show's lineup or ticket link on the other.
 - An enrichment source is a new kind of import. It reads stored events instead of writing new ones. The importer needs a role on `event_source` for this,
   and a run summary that counts filled, unmatched and skipped fields.
 - A field that enrichment filled can later be set by the main source. The main source's value then wins at its next import.
