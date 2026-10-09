@@ -125,7 +125,7 @@ jobs:
             | tar -xz -C "${RUNNER_TEMP}"
           mv "${RUNNER_TEMP}/nuclei-templates-${NUCLEI_TEMPLATES_VERSION}" ~/nuclei-templates
           cp ~/nuclei-templates/.nuclei-ignore ~/.config/nuclei/.nuclei-ignore
-          nuclei -version 2>&1 | head -1
+          nuclei -version 2>&1 | sed -n 1p
 
       # The rehearsal script owns every k3d, helm and kubectl incantation; `down` at the end leaves nothing
       # behind. `flux-verify` asserts what was pulled: a snapshot, from GHCR, one tag, tests passed.
@@ -517,7 +517,7 @@ jobs:
             | tar -xz -C "${RUNNER_TEMP}"
           mv "${RUNNER_TEMP}/nuclei-templates-${NUCLEI_TEMPLATES_VERSION}" ~/nuclei-templates
           cp ~/nuclei-templates/.nuclei-ignore ~/.config/nuclei/.nuclei-ignore
-          nuclei -version 2>&1 | head -1
+          nuclei -version 2>&1 | sed -n 1p
 
       # The `dast-k3d` step against the public hostname: same templates and filters, the same red (a match
       # outside `.nuclei/waivers-production.tsv`). No `Host` header: the hostname is real here.
