@@ -148,6 +148,25 @@ class SilentGreenWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents gives each festival day the hours its blurb names`() =
+        runTest {
+            val novemberUrl = "https://www.silent-green.net/programm/2026/11"
+            val festivalUrl = detailUrl("9-festival-of-animation-berlin-2026")
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("silentgreen-month-october.html", entryUrl)
+            coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns fixture("silentgreen-month-empty.html", novemberUrl)
+            coEvery { htmlFetcher.fetchDocument(festivalUrl) } returns fixture("silentgreen-detail-festival-hours.html", festivalUrl)
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            val days = result.events.filter { it.sourceUrl == festivalUrl }.sortedBy { it.eventDate }
+            days.map { it.eventDate } shouldBe (8..11).map { LocalDate.of(2026, 10, it) }
+            days.map { it.startTime } shouldBe listOf(19, 11, 11, 11).map { LocalTime.of(it, 0) }
+            days.map { it.endTime } shouldBe listOf(LocalTime.of(22, 0), LocalTime.of(22, 0), LocalTime.MIDNIGHT, LocalTime.MIDNIGHT)
+            days.map { it.endDate } shouldBe listOf(8, 9, 11, 12).map { LocalDate.of(2026, 10, it) }
+            days.forEach { it.doorsTime.shouldBeNull() }
+        }
+
+    @Test
     fun `importEvents keeps the calendar data when a detail page fetch fails`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(detailUrl("htrk")) } throws RuntimeException("boom")
