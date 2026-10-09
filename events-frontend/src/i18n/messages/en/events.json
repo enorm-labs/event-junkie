@@ -103,12 +103,26 @@
     "detailsFrom": "Further details from",
     "listenOn": "Listen to {act} on {service}",
     "venue": "Venue",
+    "venueChange": "Moved from {from} to {to}",
     "tickets": "Tickets",
     "language": "Language",
     "when": {
       "label": "When",
       "start": "Start {time}",
-      "estimate": "our estimate"
+      "estimate": "our estimate",
+      "changesLabel": "Changes",
+      "change": {
+        "EVENT_DATE": "Date moved from {from} to {to}",
+        "START_TIME": "Start moved from {from} to {to}",
+        "END_DATE": "Last day moved from {from} to {to}",
+        "END_TIME": "End moved from {from} to {to}",
+        "STATUS": {
+          "CANCELLED": "Cancelled",
+          "POSTPONED": "Postponed",
+          "RELOCATED": "Relocated",
+          "SCHEDULED": "On again"
+        }
+      }
     },
     "promoters": "Promoters",
     "buyTickets": "Buy tickets",

@@ -364,6 +364,33 @@ ALTER TABLE events.event_artist ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 );
 
 --
+-- Name: event_change; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_change (
+    id bigint NOT NULL,
+    event_id bigint NOT NULL,
+    field text NOT NULL,
+    old_value text NOT NULL,
+    new_value text NOT NULL,
+    seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_change_field_check CHECK ((field = ANY (ARRAY['EVENT_DATE'::text, 'START_TIME'::text, 'END_DATE'::text, 'END_TIME'::text, 'STATUS'::text, 'VENUE'::text])))
+);
+
+--
+-- Name: event_change_id_seq; Type: SEQUENCE; Schema: events; Owner: -
+--
+
+ALTER TABLE events.event_change ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME events.event_change_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: event_enrichment; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -777,6 +804,13 @@ ALTER TABLE ONLY events.event_artist
     ADD CONSTRAINT event_artist_pkey PRIMARY KEY (id);
 
 --
+-- Name: event_change event_change_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_change
+    ADD CONSTRAINT event_change_pkey PRIMARY KEY (id);
+
+--
 -- Name: event_enrichment event_enrichment_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -991,6 +1025,12 @@ CREATE INDEX idx_event_artist_artist_id ON events.event_artist USING btree (arti
 CREATE INDEX idx_event_artist_event_id ON events.event_artist USING btree (event_id);
 
 --
+-- Name: idx_event_change_event_seen; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_change_event_seen ON events.event_change USING btree (event_id, seen_at DESC);
+
+--
 -- Name: idx_event_event_date; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1196,6 +1236,13 @@ ALTER TABLE ONLY events.event_artist
 
 ALTER TABLE ONLY events.event_artist
     ADD CONSTRAINT event_artist_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event_change event_change_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_change
+    ADD CONSTRAINT event_change_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_enrichment event_enrichment_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.event.EventChangeLog
 import de.norm.events.event.EventContentStamp
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
@@ -40,7 +41,8 @@ class EventUpsertService(
     private val contentStamp: EventContentStamp,
     /** The fields enrichment sources filled, which this import keeps where it has none (ADR-043). */
     private val enrichmentRepository: EventEnrichmentRepository,
-    private val featureSync: EventFeatureSync
+    private val featureSync: EventFeatureSync,
+    private val changeLog: EventChangeLog
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -170,6 +172,8 @@ class EventUpsertService(
                 unchanged
             }
 
+        recordChanges(changed, existingBySourceId, resolved.movedSourceIds, eventSourceId)
+
         val ownFields = sourceRows.associate { (scraped, row) -> scraped.sourceId to scraped.setsOf(row) }
         val associations =
             associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents, keptEnrichedTables(existingBySourceId, enriched, ownFields))
@@ -241,6 +245,26 @@ class EventUpsertService(
                 logger.info { "The main source set ${won.joinToString { it.key }} on event $id, which an enrichment source had filled" }
             }
         }
+    }
+
+    /**
+     * Logs what moved on the updated rows matched by `sourceId` (#2725), then prunes the source's
+     * spent changes. A new row and one matched by slug log nothing: the first has no stored row, and
+     * the second is the same event under a new identity, which is not news to a visitor.
+     */
+    private suspend fun recordChanges(
+        changed: List<EventEntity>,
+        existingBySourceId: Map<String, EventEntity>,
+        movedSourceIds: Set<String>,
+        eventSourceId: Long
+    ) {
+        val pairs =
+            changed.mapNotNull { written ->
+                existingBySourceId[written.sourceId]?.takeIf { written.sourceId !in movedSourceIds }?.let { it to written }
+            }
+        val recorded = changeLog.record(pairs)
+        if (recorded > 0) logger.info { "Logged $recorded change(s) to a date, time, status or venue on event source $eventSourceId" }
+        changeLog.prune(eventSourceId, LocalDate.now(clock))
     }
 
     /**

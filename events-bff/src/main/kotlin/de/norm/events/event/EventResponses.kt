@@ -289,7 +289,9 @@ data class EventDetailResponse(
                 "states it; the venue's character tags never fill it.",
         example = "[\"open-end\", \"queer\"]"
     )
-    val features: List<String>
+    val features: List<String>,
+    @Schema(description = CHANGES_DESCRIPTION)
+    val changes: List<EventChangeResponse> = emptyList()
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -303,7 +305,8 @@ data class EventDetailResponse(
             image: ServedImage,
             imageWithheld: Boolean,
             descriptionWithheld: Boolean,
-            enrichmentSources: List<EnrichmentSourceResponse> = emptyList()
+            enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
+            changes: List<EventChangeResponse> = emptyList()
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -349,7 +352,8 @@ data class EventDetailResponse(
                 promoters = promoters,
                 genreTags = genreTags,
                 enrichmentSources = enrichmentSources,
-                features = features
+                features = features,
+                changes = changes
             )
     }
 }
@@ -366,6 +370,23 @@ data class EnrichmentSourceResponse(
         example = "[\"genre\", \"lineup\"]"
     )
     val fields: List<String>
+)
+
+/** One move of a date, time, status or venue, as the importer or an operator saw it (#2725). */
+@Schema(description = "A change to when or where an event happens, or to whether it does")
+data class EventChangeResponse(
+    @Schema(description = "What changed", example = "START_TIME")
+    val field: EventChangeField,
+    @Schema(
+        description =
+            "The value before: an ISO date, an `HH:mm` time, an `EventStatus` name, or the venue's name for `VENUE`",
+        example = "22:00"
+    )
+    val from: String,
+    @Schema(description = "The value after, in the same form as `from`", example = "23:00")
+    val to: String,
+    @Schema(description = "When the change was seen, in Berlin time", example = "2026-10-07T03:12:00+02:00")
+    val seenAt: OffsetDateTime
 )
 
 /**
@@ -391,6 +412,9 @@ data class LineupEntryResponse(
 
 // The descriptions the summary and the detail response both carry, each stating a rule a client
 // acts on. Written once, so a correction cannot reach one response and miss the other.
+private const val CHANGES_DESCRIPTION =
+    "What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. " +
+        "Empty for a new event and for one that has not moved."
 private const val RELOCATED_TO_DESCRIPTION =
     "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status"
 private const val SPOKEN_LANGUAGES_DESCRIPTION =

@@ -184,7 +184,8 @@ de.norm.events
 ├── artist/
 │   └── Artist.kt         (Artist, ArtistType, MusicBrainzMatch)
 ├── event/
-│   └── EventEnums.kt     (EventType, EventStatus, ArtistRole)
+│   ├── EventEnums.kt     (EventType, EventStatus, ArtistRole)
+│   └── EventChangeField.kt
 ├── genretag/
 │   ├── GenreTag.kt
 │   └── GenreFamily.kt
@@ -447,6 +448,25 @@ Links events to their promoters/presenters.
 | `promoter_id` | `BIGINT` FK | No       | References `promoter.id` | `3`     |
 
 Composite primary key `(event_id, promoter_id)`.
+
+### event_change (Side Table)
+
+What moved on an event: its date, start, end, status or venue (#2725). The event page shows the last 14 days of it in the
+When block.
+
+| Field       | Type          | Nullable | Description                                                                               | Example      |
+| ----------- | ------------- | -------- | ----------------------------------------------------------------------------------------- | ------------ |
+| `id`        | `BIGINT` PK   | No       | Identity                                                                                  | `7`          |
+| `event_id`  | `BIGINT` FK   | No       | References `event.id`. Deleting the event deletes its changes                             | `101`        |
+| `field`     | `TEXT`        | No       | `EventChangeField`: `EVENT_DATE`, `START_TIME`, `END_DATE`, `END_TIME`, `STATUS`, `VENUE` | `START_TIME` |
+| `old_value` | `TEXT`        | No       | The value before: an ISO date, a time, an `EventStatus` name or a venue id                | `22:00`      |
+| `new_value` | `TEXT`        | No       | The value after, in the same form                                                         | `23:00`      |
+| `seen_at`   | `TIMESTAMPTZ` | No       | When the import or the admin edit wrote it                                                |              |
+
+The importer writes a row when it updates an event it matched by `source_id` and a tracked field differs. An admin edit
+writes one the same way. An insert writes nothing, and neither does a row matched by slug, so a new source or a re-keyed
+event logs no change. A null on either side is not a change: a lost start time is a scrape gap, and a new one was not
+published before. Each import deletes its source's rows of ended events and rows older than 14 days.
 
 ### GenreTag
 

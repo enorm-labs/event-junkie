@@ -152,6 +152,27 @@ export function yesterdayIso(): string {
   return addDays(todayIso(), -1)
 }
 
+/** The Berlin calendar date of an ISO instant, as `YYYY-MM-DD`. `en-CA` is the format (see {@link todayIso}). */
+export function berlinDateOf(isoInstant: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(
+    new Date(isoInstant),
+  )
+}
+
+/**
+ * How many Berlin days ago `isoInstant` was, in words: "today", "yesterday", "3 days ago" /
+ * "heute", "gestern", "vor 3 Tagen" (#2725). Whole days rather than hours, because a nightly import
+ * sees a change hours after the venue made it.
+ */
+export function formatDaysAgo(
+  isoInstant: string,
+  locale: string = 'en',
+  today: string = todayIso(),
+): string {
+  const days = Math.max(0, daysBetween(berlinDateOf(isoInstant), today))
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-days, 'day')
+}
+
 /** Adds whole calendar days to an ISO date. UTC arithmetic, so a DST shift can't move it. */
 export function addDays(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T00:00:00Z`)

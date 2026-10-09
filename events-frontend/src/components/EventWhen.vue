@@ -4,12 +4,14 @@ import { useI18n } from 'vue-i18n'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { EventDetail } from '@/api/types'
 import { formatTime } from '@/lib/format'
+import { useEventChanges } from '@/composables/useEventChanges'
 import { useFormat } from '@/composables/useFormat'
 
 const props = defineProps<{ event: EventDetail }>()
 
 const { t } = useI18n()
 const { formatEventDates, formatEventEnd } = useFormat()
+const { changeLines } = useEventChanges()
 
 const dates = computed(() => (props.event.eventDate ? formatEventDates(props.event) : ''))
 const doors = computed(() =>
@@ -30,6 +32,9 @@ const end = computed(() => {
   const text = formatEventEnd(props.event)
   return text ? t('events.card.until', { time: text }) : ''
 })
+
+// The venue change sits under the venue's name instead (#2725).
+const changes = computed(() => changeLines(props.event.changes, (field) => field !== 'VENUE'))
 </script>
 
 <template>
@@ -44,5 +49,11 @@ const end = computed(() => {
       >
     </p>
     <p v-if="end" class="text-body">{{ end }}</p>
+    <ul v-if="changes.length" :aria-label="t('events.detail.when.changesLabel')" class="pt-1">
+      <li v-for="(change, index) in changes" :key="index" class="text-body">
+        <span class="font-medium">{{ change.text }}</span
+        ><span class="text-muted-foreground"> · {{ change.ago }}</span>
+      </li>
+    </ul>
   </div>
 </template>

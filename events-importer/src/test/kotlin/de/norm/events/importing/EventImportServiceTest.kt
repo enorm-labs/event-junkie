@@ -207,7 +207,8 @@ class EventImportServiceTest {
                 performerTyping = PerformerTyping(mockk(), eventRepository),
                 contentStamp = mockk(relaxed = true),
                 enrichmentRepository = mockk(relaxed = true),
-                featureSync = mockk(relaxed = true)
+                featureSync = mockk(relaxed = true),
+                changeLog = mockk(relaxed = true)
             )
 
         service =

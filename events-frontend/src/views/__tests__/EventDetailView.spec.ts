@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
 import type { EventDetail } from '@/api/types'
+import { i18n } from '@/i18n'
 
 const { getMock } = vi.hoisted(() => ({ getMock: vi.fn<(path: string) => Promise<unknown>>() }))
 
@@ -39,12 +40,14 @@ const night: EventDetail = {
 let wrapper: VueWrapper | undefined
 
 afterEach(() => {
+  i18n.global.locale.value = 'en'
+  vi.useRealTimers()
   wrapper?.unmount()
   wrapper = undefined
   getMock.mockReset()
 })
 
-async function mountEvent(event: EventDetail) {
+async function mountEvent(event: EventDetail, locale: 'en' | 'de' = 'en') {
   getMock.mockImplementation((path: string) =>
     Promise.resolve(path === '/api/events/{slug}' ? event : []),
   )
@@ -55,7 +58,8 @@ async function mountEvent(event: EventDetail) {
       { path: '/:locale(en|de)/:rest(.*)', component: Page },
     ],
   })
-  await router.push(`/en/events/${event.slug}`)
+  i18n.global.locale.value = locale
+  await router.push(`/${locale}/events/${event.slug}`)
   wrapper = mount(EventDetailView, { global: { plugins: [router] } })
   await flushPromises()
   return wrapper
@@ -178,5 +182,43 @@ describe('EventDetailView', () => {
     const view = await mountEvent(night)
 
     expect(hrefOf(view, 'Bandcamp')).toBe('https://mock-artist.bandcamp.com/')
+  })
+
+  describe('venue change (#2725)', () => {
+    const moved: EventDetail = {
+      ...night,
+      venue: { slug: 'festsaal-kreuzberg', name: 'Festsaal Kreuzberg' },
+      changes: [
+        { field: 'START_TIME', from: '22:00', to: '23:00', seenAt: '2026-10-08T03:10:00+02:00' },
+        {
+          field: 'VENUE',
+          from: 'Lido',
+          to: 'Festsaal Kreuzberg',
+          seenAt: '2026-10-01T03:10:00+02:00',
+        },
+      ],
+    }
+
+    /** The fact block whose label is `label`, as text. */
+    function block(view: VueWrapper, label: string): string {
+      const found = view.findAll('section > div').find((div) => div.text().startsWith(label))
+      expect(found).toBeDefined()
+      return found!.text()
+    }
+
+    for (const [locale, venue, when, line] of [
+      ['en', 'Venue', 'When', 'Moved from Lido to Festsaal Kreuzberg · 8 days ago'],
+      ['de', 'Location', 'Wann', 'Verlegt von Lido nach Festsaal Kreuzberg · vor 8 Tagen'],
+    ] as const) {
+      it(`shows the move under the venue's name, not in the When block (${locale})`, async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-10-09T12:00:00+02:00'))
+        const view = await mountEvent(moved, locale)
+
+        expect(block(view, venue)).toContain(`Festsaal Kreuzberg${line}`)
+        expect(block(view, when)).not.toContain('Lido')
+        expect(block(view, when)).toContain('22:00')
+      })
+    }
   })
 })
