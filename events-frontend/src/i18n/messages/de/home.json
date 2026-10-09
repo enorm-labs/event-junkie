@@ -3,6 +3,8 @@
   "eventCount": "{count} Event | {count} Events",
   "tonightEmpty": "Heute Abend nichts los? In Berlin? Eher unwahrscheinlich. Schau in den Kalender.",
   "showAllTonight": "Alle {count} Events von heute Abend zeigen",
+  "surpriseMe": "Überrasch mich",
+  "surpriseMeHint": "Ein zufälliges Event heute Abend an einem Ort für höchstens {capacity} Leute",
   "upcoming": "Demnächst",
   "seeAllUpcoming": "Alle kommenden Events",
   "upcomingEmpty": "Gerade steht nichts an. Schau bald wieder vorbei.",

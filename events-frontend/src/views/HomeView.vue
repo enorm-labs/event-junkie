@@ -4,12 +4,14 @@ import { ref } from 'vue'
 // Module scope, not component state: going back from an event page remounts the view, and a list
 // that collapsed again would put #1111's restored scroll position past its end.
 const tonightExpanded = ref(false)
+// The last surprise, so the next press picks another. Memory only (#2722): never stored or sent.
+let lastSurprise: string | undefined
 </script>
 
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
-import { RouterLink } from 'vue-router'
-import { ArrowRight, CalendarDays, ChevronDown, Compass } from '@lucide/vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { ArrowRight, CalendarDays, ChevronDown, Compass, Dices } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
 import EventCard from '@/components/EventCard.vue'
@@ -18,9 +20,11 @@ import ClubStamp from '@/components/ClubStamp'
 import ClubkulturNotice from '@/components/ClubkulturNotice.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
+import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
 import { todayIso, tomorrowIso } from '@/lib/format'
 import { splitDayList } from '@/lib/longRuns'
+import { pickSurprise, SMALL_ROOM_CAPACITY, surpriseCandidates } from '@/lib/surpriseMe'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
@@ -63,6 +67,20 @@ const tonightVisible = computed(() =>
 
 /** The section heading style, at the size of the map's and the venues' `h2`. */
 const HEADING_CLASS = 'text-section font-bold tracking-tight'
+
+// One random event tonight in a small room (#2722), from the night's cards: a long run folded into
+// "Also running" has been on for weeks and is not a night out. The pick happens here, on the device.
+const surprises = computed(() => surpriseCandidates(tonightCards.value))
+const router = useRouter()
+// The header's icon size on a phone, so the button fits beside the heading.
+const narrow = useNarrowViewport()
+
+function surpriseMe() {
+  const pick = pickSurprise(surprises.value, lastSurprise)
+  if (!pick?.slug) return
+  lastSurprise = pick.slug
+  void router.push(localePath(`/events/${pick.slug}`))
+}
 
 const tonightList = useTemplateRef<HTMLElement>('tonightList')
 
@@ -118,11 +136,29 @@ async function expandTonight() {
     <!-- Headings by scale, not the mono eyebrow: at 14 px "Upcoming" sat in the grid's own rhythm
          and read as one more row of cards (#2347). The count stays outside the heading's name. -->
     <section class="space-y-4">
-      <div class="flex items-baseline gap-3">
-        <h2 :class="HEADING_CLASS">{{ t('home.tonight') }}</h2>
-        <span v-if="tonightTotal" class="text-body text-muted-foreground tabular-nums">
+      <!-- One line at every width: below `sm` the button is icon-only, and a long count truncates
+           before "Heute Abend" would wrap. -->
+      <div class="flex items-baseline gap-x-3">
+        <h2 :class="[HEADING_CLASS, 'shrink-0 whitespace-nowrap']">{{ t('home.tonight') }}</h2>
+        <span
+          v-if="tonightTotal"
+          class="min-w-0 truncate text-body text-muted-foreground tabular-nums"
+        >
           {{ t('home.eventCount', { count: tonightTotal }) }}
         </span>
+        <!-- Hidden when no small room qualifies, rather than a button that leads nowhere. -->
+        <Button
+          v-if="surprises.length"
+          class="ml-auto self-center"
+          :size="narrow ? 'icon' : 'sm'"
+          variant="outline"
+          :title="t('home.surpriseMeHint', { capacity: SMALL_ROOM_CAPACITY })"
+          @click="surpriseMe"
+        >
+          <Dices aria-hidden="true" />
+          <!-- Still the button's name below `sm`, where only the dice show. -->
+          <span class="sr-only sm:not-sr-only">{{ t('home.surpriseMe') }}</span>
+        </Button>
       </div>
       <p v-if="today.loading.value" class="text-body text-muted-foreground">
         {{ t('common.states.loading') }}

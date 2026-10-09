@@ -14,7 +14,7 @@ import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
-    /** The count, types and capacity show when the venue list sent them; an event's embedded venue has none. */
+    /** The count and types show when the venue list sent them; an event's embedded venue has neither. */
     venue: VenueSummary &
       Partial<
         Pick<
@@ -23,7 +23,6 @@ const props = withDefaults(
           | 'upcomingNext30DaysCount'
           | 'venueTypes'
           | 'characterTags'
-          | 'capacity'
           | 'programmeFamilies'
           | 'imported'
         >

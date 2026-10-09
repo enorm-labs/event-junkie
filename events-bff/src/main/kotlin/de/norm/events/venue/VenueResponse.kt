@@ -46,7 +46,9 @@ data class VenueSummaryResponse(
     @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
-    val intrinsicHeight: Int?
+    val intrinsicHeight: Int?,
+    @Schema(description = CAPACITY_DESCRIPTION, example = "250")
+    val capacity: Int?
 ) {
     companion object {
         fun fromEntity(
@@ -68,7 +70,8 @@ data class VenueSummaryResponse(
                 imageSourceUrl = entity.imageSourceUrl,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
-                intrinsicHeight = image.intrinsicHeight
+                intrinsicHeight = image.intrinsicHeight,
+                capacity = entity.capacity
             )
     }
 }

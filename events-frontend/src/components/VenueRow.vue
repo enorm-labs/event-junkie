@@ -19,7 +19,6 @@ const props = withDefaults(
           | 'upcomingNext30DaysCount'
           | 'venueTypes'
           | 'characterTags'
-          | 'capacity'
           | 'imported'
         >
       >
