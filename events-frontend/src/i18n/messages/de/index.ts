@@ -17,6 +17,7 @@ import search from './search.json'
 import venueCharacter from './venueCharacter.json'
 import venueType from './venueType.json'
 import venues from './venues.json'
+import week from './week.json'
 
 /**
  * The German catalogue. Mirrors the English one file for file — the key-parity test in
@@ -43,4 +44,5 @@ export default {
   venueCharacter,
   venueType,
   venues,
+  week,
 }

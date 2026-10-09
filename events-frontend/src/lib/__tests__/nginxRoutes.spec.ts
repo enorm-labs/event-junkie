@@ -17,12 +17,17 @@ const appLocations = [...conf.matchAll(/location ~ (\^\/\(en\|de\)\S*) \{/g)].ma
 )
 
 const localeSegment = `/:locale(${LOCALES.join('|')})`
+/** A value of the right shape for a parameter that is not a slug. */
+const SAMPLE_PARAMS: Record<string, string> = { isoWeek: '2026-41' }
 const routerPaths = router
   .getRoutes()
   .filter((route) => route.path.startsWith(localeSegment))
   .flatMap((route) =>
     LOCALES.map((locale) =>
-      `/${locale}${route.path.slice(localeSegment.length)}`.replace(/:[a-zA-Z]+/g, 'some-slug-1'),
+      `/${locale}${route.path.slice(localeSegment.length)}`.replace(
+        /:([a-zA-Z]+)/g,
+        (_, name: string) => SAMPLE_PARAMS[name] ?? 'some-slug-1',
+      ),
     ),
   )
 

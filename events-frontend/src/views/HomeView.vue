@@ -202,13 +202,21 @@ async function expandTonight() {
         <div v-else :class="CARD_GRID_CLASS">
           <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
         </div>
-        <!-- Same family as Tonight's expand button; the arrow says this one leaves the page. -->
-        <Button as-child variant="outline">
-          <RouterLink :to="localePath('/events')">
-            {{ t('home.seeAllUpcoming') }}
-            <ArrowRight aria-hidden="true" data-icon="inline-end" />
-          </RouterLink>
-        </Button>
+        <!-- Same family as Tonight's expand button; the arrow says these leave the page. -->
+        <div class="flex flex-wrap gap-3">
+          <Button as-child variant="outline">
+            <RouterLink :to="localePath('/events')">
+              {{ t('home.seeAllUpcoming') }}
+              <ArrowRight aria-hidden="true" data-icon="inline-end" />
+            </RouterLink>
+          </Button>
+          <Button as-child variant="outline">
+            <RouterLink :to="localePath('/week')">
+              {{ t('home.thisWeek') }}
+              <ArrowRight aria-hidden="true" data-icon="inline-end" />
+            </RouterLink>
+          </Button>
+        </div>
       </template>
     </section>
   </main>

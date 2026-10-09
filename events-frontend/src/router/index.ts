@@ -19,6 +19,7 @@ import { updateSeoTags } from '../lib/seoTags'
 import { waitForElement } from '../lib/waitForElement'
 import { i18n, setI18nLocale } from '../i18n'
 import { localisedView } from '../views/localisedView'
+import { currentIsoWeek, formatIsoWeek, parseIsoWeek } from '../lib/isoWeek'
 import HomeView from '../views/HomeView.vue'
 
 declare module 'vue-router' {
@@ -80,6 +81,22 @@ const router = createRouter({
           name: 'events',
           meta: { titleKey: 'pageTitle.events', descriptionKey: 'pageDescription.events' },
           component: () => import('../views/EventsView.vue'),
+        },
+        // The week page (#2728). `/week` is always this week, so it redirects rather than being a
+        // page; a week the calendar does not have goes there too (the guard below). The view sets
+        // its own head.
+        {
+          path: 'week',
+          name: 'this-week',
+          redirect: (to) => ({
+            name: 'week',
+            params: { locale: to.params.locale, isoWeek: formatIsoWeek(currentIsoWeek()) },
+          }),
+        },
+        {
+          path: 'week/:isoWeek',
+          name: 'week',
+          component: () => import('../views/WeekView.vue'),
         },
         {
           path: 'events/:slug',
@@ -211,6 +228,14 @@ router.beforeEach((to) => {
   const locale = localeOf(to)
   setI18nLocale(locale)
   rememberLocale(locale)
+})
+
+// A week the year does not have is this week. Here rather than in `beforeEnter`, which does not
+// run between two weeks: the same route with other params.
+router.beforeEach((to) => {
+  if (to.name === 'week' && !parseIsoWeek(to.params.isoWeek)) {
+    return { name: 'this-week', params: { locale: to.params.locale } }
+  }
 })
 
 // Static views get their title and description from route meta; detail views supply their own
