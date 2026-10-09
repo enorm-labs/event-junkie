@@ -133,4 +133,37 @@ class AlteKantineDetailPageScraperTest {
         // "DJ: Pubquiz" is a format label, not a performer, and a quiz has no act anyway.
         event.artists.shouldBeEmpty()
     }
+
+    @Test
+    fun `types the weekly Kantinenlesen as a reading although the venue labels it Vortrag`() {
+        val event =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        """
+                        <h2 class="heading-1">Kantinenlesen</h2>
+                        <div class="line-height-28"><p class="p1">Jeden Samstag um 20.00 Uhr beginnt eine Lesung der besonderen Art.</p></div>
+                        <ul class="list-style-6"><li><label>Wann:</label>10.10.</li><li><label> Beginn:</label>20:00 Uhr</li>
+                        <li><label> Eintritt:</label>13 €</li><li><label>Was:</label>Vortrag</li><li><label> DJ:</label></li></ul>
+                        """.trimIndent()
+                    ),
+                    "https://alte-kantine.eu/?p=12466"
+                ).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.READING.name
+        event.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a reading from the title before the Was label, and only then`() {
+        alteKantineEventType("Vortrag", "Kantinenlesen") shouldBe EventType.READING.name
+        alteKantineEventType("Party", "Kantinenlesen") shouldBe EventType.READING.name
+        alteKantineEventType(null, "Kantinenlesen") shouldBe EventType.READING.name
+        alteKantineEventType("Lesung", "Gipfeltreffen der Lesebühnen") shouldBe EventType.READING.name
+        // A Vortrag without a reading title stays OTHER: the shared table maps no `vortrag`.
+        alteKantineEventType("Vortrag", "Vortrag") shouldBe EventType.OTHER.name
+        // `lesen` inside a longer word is no reading.
+        alteKantineEventType("Party", "Auserlesene Hits") shouldBe EventType.PARTY.name
+        alteKantineEventType(null, "Auserlesene Hits") shouldBe EventType.OTHER.name
+    }
 }
