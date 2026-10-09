@@ -19,8 +19,11 @@ class VenueImportedTest : BaseControllerTest() {
             source(insertVenue("Astra", "astra"))
             hinterhofId = insertVenue("Hinterhof Bar", "hinterhof-bar")
             databaseClient
-                .sql("UPDATE events.venue SET programme_url = 'https://hinterhof.example/programm' WHERE slug = 'hinterhof-bar'")
-                .await()
+                .sql(
+                    "UPDATE events.venue SET programme_url = 'https://hinterhof.example/programm', " +
+                        "instagram_url = 'https://www.instagram.com/hinterhof_bar/', facebook_url = 'https://www.facebook.com/hinterhofbar/' " +
+                        "WHERE slug = 'hinterhof-bar'"
+                ).await()
         }
 
     @Test
@@ -48,7 +51,7 @@ class VenueImportedTest : BaseControllerTest() {
     }
 
     @Test
-    fun `the detail carries the state and the programme link`() {
+    fun `the detail carries the state, the programme link and the social links`() {
         webTestClient
             .get()
             .uri("/venues/hinterhof-bar")
@@ -58,6 +61,10 @@ class VenueImportedTest : BaseControllerTest() {
             .isEqualTo(false)
             .jsonPath("$.programmeUrl")
             .isEqualTo("https://hinterhof.example/programm")
+            .jsonPath("$.instagramUrl")
+            .isEqualTo("https://www.instagram.com/hinterhof_bar/")
+            .jsonPath("$.facebookUrl")
+            .isEqualTo("https://www.facebook.com/hinterhofbar/")
 
         webTestClient
             .get()
@@ -67,6 +74,10 @@ class VenueImportedTest : BaseControllerTest() {
             .jsonPath("$.imported")
             .isEqualTo(true)
             .jsonPath("$.programmeUrl")
+            .doesNotExist()
+            .jsonPath("$.instagramUrl")
+            .doesNotExist()
+            .jsonPath("$.facebookUrl")
             .doesNotExist()
     }
 

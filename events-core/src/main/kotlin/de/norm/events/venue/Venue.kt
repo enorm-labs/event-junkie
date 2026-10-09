@@ -27,6 +27,10 @@ data class Venue(
     /** Geographic longitude for map display. Example: `13.451803` */
     val longitude: BigDecimal? = null,
     val websiteUrl: String? = null,
+    /** The venue's Instagram profile, entered by a person and never fetched (#2839). */
+    val instagramUrl: String? = null,
+    /** The venue's Facebook page, entered by a person and never fetched (#2839). */
+    val facebookUrl: String? = null,
     /** URL of the venue's logo or photo. */
     val imageUrl: String? = null,
     /** Who to credit for [imageUrl], worded as the archive publishes it. Null exactly when [imageUrl] is. */

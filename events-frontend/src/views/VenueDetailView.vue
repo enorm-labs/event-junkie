@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
-import DetailLinks from '@/components/DetailLinks.vue'
+import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -43,10 +43,18 @@ const mapLink = computed(() =>
 // to a real place. See lib/structuredData.ts.
 useStructuredData(() => (venue.value ? venuePageJsonLd(venue.value, locale.value as Locale) : []))
 
+// The website carries the referral tag for the venue's analytics; the Instagram and Facebook links
+// stay plain, as on the artist page: they are Meta's analytics, not the venue's (#2839). The brand
+// labels stay as they are in both locales; only "Website" is a word.
 const links = computed(() =>
-  venue.value?.websiteUrl
-    ? [{ label: t('common.actions.website'), url: withReferral(venue.value.websiteUrl) }]
-    : [],
+  [
+    {
+      label: t('common.actions.website'),
+      url: venue.value?.websiteUrl ? withReferral(venue.value.websiteUrl) : null,
+    },
+    { label: 'Instagram', url: venue.value?.instagramUrl },
+    { label: 'Facebook', url: venue.value?.facebookUrl },
+  ].filter((link): link is DetailLink => Boolean(link.url)),
 )
 
 /** The link to the programme of a venue we do not import, labelled by where it points (#2766). */

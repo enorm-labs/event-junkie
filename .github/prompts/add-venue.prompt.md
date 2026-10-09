@@ -40,6 +40,9 @@ A borderline case is a question for the operator, not a call to make.
     - **Programme link**, in this order: the venue's own programme page; its Resident Advisor club or promoter page; a ticket platform it really sells
       on. None at all is allowed: the page then links the website.
     - **Type** as `VenueType` slugs, and **capacity** only where the venue publishes one.
+    - **Instagram and Facebook pages**, where the venue has one (#2839). Copy the URL from a link on the venue's own site or from a search snippet;
+      never open either host by script. The admin API takes only `https://` URLs on `instagram.com` and `facebook.com`, and the venue page shows them
+      beside "Website". Leave a field out when you find no account; a guessed handle is worse than none.
 
 3. **Coordinates come from OpenStreetMap; Google only detects.** Google's terms do not let us keep its points on a map that is not Google's, and
    OpenStreetMap's (ODbL) we may keep (LEGAL.md § 9.3). So a pin from Google Maps, the operator's included, is a hint and never the stored value.
@@ -60,7 +63,7 @@ A borderline case is a question for the operator, not a call to make.
    is `/scaffold-importer` § 6: open with what sets the venue apart, name its formats plainly, no hedged tail. Keep each fact's source URL for the
    operator.
 
-6. **Show the operator one table and stop.** Name, address, postal code, district, coordinates, types, programme link, the evidence it is open, and a
+6. **Show the operator one table and stop.** Name, address, postal code, district, coordinates, types, programme link, social links, the evidence it is open, and a
    photo candidate if any, and the two descriptions. Mark every cell you are unsure of. Write nothing until the operator confirms or corrects each row.
 
 7. **Write the confirmed venues**, each as its own file `http/importer/seed/venues/<venue-slug>.json` (#2824). The file name is the slug
@@ -78,6 +81,8 @@ A borderline case is a question for the operator, not a call to make.
             "latitude": <lat>,
             "longitude": <lon>,
             "websiteUrl": "<homepage>",
+            "instagramUrl": "<Instagram profile, or leave the line out>",
+            "facebookUrl": "<Facebook page, or leave the line out>",
             "description": "<English sentence>",
             "descriptionLanguage": "en",
             "descriptionAlt": "<German sentence>",

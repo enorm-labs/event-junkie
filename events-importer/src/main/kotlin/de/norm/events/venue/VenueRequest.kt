@@ -63,6 +63,22 @@ data class VenueRequest(
     @field:Size(max = 2048, message = "Website URL must not exceed 2048 characters")
     @Schema(description = "URL of the venue's official website", example = "https://www.astra-berlin.de")
     val websiteUrl: String? = null,
+    // Pinned to the host, so a Facebook URL in the Instagram field is a 400 rather than a link labelled wrong.
+    // Copied from the venue's own site or a search snippet: Meta's terms forbid fetching either host (#356).
+    @field:Size(max = 2048, message = "Instagram URL must not exceed 2048 characters")
+    @field:Pattern(regexp = INSTAGRAM_URL, message = "Instagram URL must be an https://www.instagram.com/ address")
+    @Schema(
+        description = "URL of the venue's Instagram profile, shown as a plain link beside the website. Entered by a person, never fetched.",
+        example = "https://www.instagram.com/astra_kulturhaus/"
+    )
+    val instagramUrl: String? = null,
+    @field:Size(max = 2048, message = "Facebook URL must not exceed 2048 characters")
+    @field:Pattern(regexp = FACEBOOK_URL, message = "Facebook URL must be an https://www.facebook.com/ address")
+    @Schema(
+        description = "URL of the venue's Facebook page, shown as a plain link beside the website. Entered by a person, never fetched.",
+        example = "https://www.facebook.com/astrakulturhaus/"
+    )
+    val facebookUrl: String? = null,
     @field:Size(max = 2048, message = "Image URL must not exceed 2048 characters")
     @Schema(description = "URL of the venue's logo or photo", example = "https://example.com/astra-logo.jpg")
     override val imageUrl: String? = null,
@@ -124,3 +140,9 @@ data class VenueRequest(
     )
     val closedOn: LocalDate? = null
 ) : AttributableImage
+
+/** `https://instagram.com/…` or `https://www.instagram.com/…`, with a path. */
+internal const val INSTAGRAM_URL = "https://(www\\.)?instagram\\.com/.+"
+
+/** `https://facebook.com/…`, or a subdomain of it such as `www.` or `m.`, with a path. */
+internal const val FACEBOOK_URL = "https://([a-z0-9-]+\\.)?facebook\\.com/.+"
