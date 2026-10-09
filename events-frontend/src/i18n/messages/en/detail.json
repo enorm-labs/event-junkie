@@ -1,5 +1,7 @@
 {
   "notFoundHeading": "{kind} not found",
+  "reportSubject": "Wrong data: {title}",
+  "reportBody": "Page: {url}\n\nWhat is wrong:\n",
   "venue": {
     "kind": "Venue",
     "notFound": "That venue isn't in our little black book.",
@@ -20,16 +22,19 @@
     "programmePlatform": "See the programme on {platform}",
     "closed": "Closed for good in {month}",
     "closing": "Open until {date}, then closed for good",
-    "closedNoEvents": "No more nights here: the venue has closed."
+    "closedNoEvents": "No more nights here: the venue has closed.",
+    "report": "Something wrong with this venue? Report it by email:"
   },
   "artist": {
     "kind": "Artist",
     "notFound": "This act isn't on our radar.",
-    "empty": "No dates on the radar yet. Check back soon."
+    "empty": "No dates on the radar yet. Check back soon.",
+    "report": "Something wrong with this act? Report it by email:"
   },
   "promoter": {
     "kind": "Promoter",
     "notFound": "This promoter isn't in our books.",
-    "empty": "Nothing on their calendar yet. Check back soon."
+    "empty": "Nothing on their calendar yet. Check back soon.",
+    "report": "Something wrong with this promoter? Report it by email:"
   }
 }

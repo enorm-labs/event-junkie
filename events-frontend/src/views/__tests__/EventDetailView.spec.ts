@@ -108,6 +108,40 @@ describe('EventDetailView', () => {
     })
   }
 
+  it('says the price is not announced when nothing is known (#2963)', async () => {
+    const view = await mountEvent(night)
+
+    expect(view.text()).toContain('Price not announced')
+  })
+
+  it('says free entry in the tickets block for a free night', async () => {
+    const view = await mountEvent({ ...night, free: true })
+
+    expect(view.text()).toContain('Free entry')
+    expect(view.text()).not.toContain('Price not announced')
+  })
+
+  it('shows a price note alone without claiming the price is unknown', async () => {
+    const view = await mountEvent({ ...night, priceNote: 'Pay what you can' })
+
+    expect(view.text()).toContain('Pay what you can')
+    expect(view.text()).not.toContain('Price not announced')
+  })
+
+  it('orders poster, description, facts, then lineup', async () => {
+    const view = await mountEvent({
+      ...night,
+      imageUrl: 'https://img.example/a.jpg',
+      description: 'A long night of records.',
+    })
+
+    const html = view.html()
+    const order = ['img.example', 'A long night of records.', 'Tickets', 'Mock Artist']
+    const positions = order.map((text) => html.indexOf(text))
+    expect(positions.every((at) => at >= 0)).toBe(true)
+    expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
   it("leaves an artist's Bandcamp link untagged", async () => {
     const view = await mountEvent(night)
 

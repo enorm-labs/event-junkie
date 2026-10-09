@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
 import TextCreditLine from '@/components/TextCreditLine.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { artistPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -44,7 +45,7 @@ const links = computed(() =>
     { label: 'Discogs', url: artist.value?.discogsUrl },
     { label: 'Resident Advisor', url: artist.value?.residentAdvisorUrl },
     { label: 'MusicBrainz', url: artist.value?.musicbrainzUrl },
-  ].filter((link): link is { label: string; url: string } => Boolean(link.url)),
+  ].filter((link): link is DetailLink => Boolean(link.url)),
 )
 
 // Discogs' terms prescribe the wording, so the line stays English on the German page too.
@@ -96,20 +97,11 @@ const descriptionCredit = computed(() =>
     :not-found-text="t('detail.artist.notFound')"
     :past="past"
     :ready="Boolean(artist)"
+    :report-path="`/artists/${slug}`"
+    :report-text="t('detail.artist.report')"
   >
     <template #meta>
-      <div v-if="links.length" class="flex flex-wrap gap-3 text-body">
-        <a
-          v-for="link in links"
-          :key="link.label"
-          :href="link.url"
-          class="text-primary underline-offset-4 hover:underline"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {{ link.label }}
-        </a>
-      </div>
+      <DetailLinks :links="links" />
       <p v-if="discogsCredit" class="mt-2 text-meta text-muted-foreground">
         <a
           class="underline underline-offset-2"

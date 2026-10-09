@@ -3,6 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import DetailLinks from '@/components/DetailLinks.vue'
 import DirectionsLink from '@/components/DirectionsLink.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -84,6 +85,12 @@ usePageMeta(() =>
 )
 
 const credit = computed(() => imageCredit(venue.value))
+
+const links = computed(() =>
+  venue.value?.websiteUrl
+    ? [{ label: t('common.actions.website'), url: withReferral(venue.value.websiteUrl) }]
+    : [],
+)
 
 /** The link to the programme of a venue we do not import, labelled by where it points (#2766). */
 const programmeSite = computed(() => {
@@ -219,6 +226,8 @@ const programme = computed(() => {
     :not-found-text="t('detail.venue.notFound')"
     :past="past"
     :ready="Boolean(venue)"
+    :report-path="`/venues/${slug}`"
+    :report-text="t('detail.venue.report')"
   >
     <template v-if="closureLine?.closed" #upcoming>
       <section class="space-y-4" data-testid="venue-closed">
@@ -261,16 +270,7 @@ const programme = computed(() => {
         </RouterLink>
         <template v-if="mapLink">{{ ' · ' }}<DirectionsLink :venue="venue" /></template>
       </p>
-      <p v-if="venue?.websiteUrl" class="text-body">
-        <a
-          :href="withReferral(venue.websiteUrl)"
-          class="text-primary underline-offset-4 hover:underline"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {{ t('common.actions.website') }}
-        </a>
-      </p>
+      <DetailLinks :links="links" />
     </template>
 
     <p
