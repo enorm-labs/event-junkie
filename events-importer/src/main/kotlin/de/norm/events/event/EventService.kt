@@ -35,7 +35,8 @@ class EventService(
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
     private val eventPinService: EventPinService,
-    private val contentStamp: EventContentStamp
+    private val contentStamp: EventContentStamp,
+    private val changeLog: EventChangeLog
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -179,6 +180,8 @@ class EventService(
                 .let { if (request.featuredUntil == null) it.copy(featuredUntil = existing.featuredUntil) else it }
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
+        // A hand edit moves the page as an import does, so the page says so either way (#2725).
+        changeLog.record(listOf(existing to saved))
 
         // Replace artist associations: delete existing, insert new with the importer-owned columns kept
         val previousLineup = eventArtistRepository.findByEventId(id).toList()

@@ -2,6 +2,7 @@ import { useI18n } from 'vue-i18n'
 
 import {
   daysBetween,
+  formatDaysAgo,
   formatDate,
   formatMonthYear,
   formatShortDate,
@@ -59,6 +60,9 @@ export function useFormat() {
 
     /** `formatWeekday` bound to the active locale — "Fri" / "Fr.". */
     formatWeekday: (isoDate?: string | null) => formatWeekday(isoDate, intlLocale()),
+
+    /** `formatDaysAgo` bound to the active locale — "2 days ago" / "vor 2 Tagen". */
+    formatDaysAgo: (isoInstant: string) => formatDaysAgo(isoInstant, intlLocale()),
 
     /**
      * What a running event says about its run: "Running since Fri" for a weekender, "Until Sun 1 Nov"

@@ -103,12 +103,26 @@
     "detailsFrom": "Weitere Angaben von",
     "listenOn": "{act} auf {service} anhören",
     "venue": "Location",
+    "venueChange": "Verlegt von {from} nach {to}",
     "tickets": "Tickets",
     "language": "Sprache",
     "when": {
       "label": "Wann",
       "start": "Beginn {time}",
-      "estimate": "unsere Schätzung"
+      "estimate": "unsere Schätzung",
+      "changesLabel": "Änderungen",
+      "change": {
+        "EVENT_DATE": "Termin verschoben von {from} auf {to}",
+        "START_TIME": "Beginn verschoben von {from} auf {to}",
+        "END_DATE": "Letzter Tag verschoben von {from} auf {to}",
+        "END_TIME": "Ende verschoben von {from} auf {to}",
+        "STATUS": {
+          "CANCELLED": "Abgesagt",
+          "POSTPONED": "Verschoben",
+          "RELOCATED": "Verlegt",
+          "SCHEDULED": "Findet wieder statt"
+        }
+      }
     },
     "promoters": "Veranstalter",
     "buyTickets": "Tickets kaufen",

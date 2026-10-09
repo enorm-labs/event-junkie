@@ -15,6 +15,7 @@ import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
+import { useEventChanges } from '@/composables/useEventChanges'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
 import { inFeatureOrder } from '@/lib/partyFeatures'
@@ -141,6 +142,10 @@ const features = computed(() =>
 )
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
+
+// A venue move reads under the venue's name, not in the When block (#2725).
+const { changeLines } = useEventChanges()
+const venueChanges = computed(() => changeLines(event.value?.changes, (field) => field === 'VENUE'))
 // A cancelled night shows no price: nothing is on sale (#2916). Every other night says what is
 // known about the price, also when that is nothing (#2963).
 const hasTickets = computed(() => !!event.value && event.value.status !== 'CANCELLED')
@@ -333,6 +338,10 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             {{ event.venue.name }}
           </RouterLink>
           <p v-else class="text-body font-medium">{{ event.venue.name }}</p>
+          <p v-for="(change, index) in venueChanges" :key="index" class="text-body">
+            <span class="font-medium">{{ change.text }}</span
+            ><span class="text-muted-foreground"> · {{ change.ago }}</span>
+          </p>
           <p v-if="event.venue.address" class="text-body text-muted-foreground">
             {{ event.venue.address
             }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>

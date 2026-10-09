@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   eventLabel,
   formatDate,
+  formatDaysAgo,
   formatShortDate,
   humaniseEventType,
   isPastEvent,
@@ -289,5 +290,23 @@ describe('isOnNow', () => {
 
     expect(isOnNow(on('2026-07-05', { endDate: '2026-07-08' }))).toBe(true)
     expect(isOnNow(on('2026-07-03', { endDate: '2026-07-06' }))).toBe(false)
+  })
+})
+
+describe('formatDaysAgo', () => {
+  it('counts Berlin days, not 24-hour spans', () => {
+    // 23:30 UTC on the 8th is 01:30 on the 9th in Berlin: today, not yesterday.
+    expect(formatDaysAgo('2026-10-08T23:30:00Z', 'en-GB', '2026-10-09')).toBe('today')
+    expect(formatDaysAgo('2026-10-08T21:30:00Z', 'en-GB', '2026-10-09')).toBe('yesterday')
+    expect(formatDaysAgo('2026-10-06T12:00:00+02:00', 'en-GB', '2026-10-09')).toBe('3 days ago')
+  })
+
+  it('speaks German', () => {
+    expect(formatDaysAgo('2026-10-08T12:00:00+02:00', 'de-DE', '2026-10-09')).toBe('gestern')
+    expect(formatDaysAgo('2026-10-05T12:00:00+02:00', 'de-DE', '2026-10-09')).toBe('vor 4 Tagen')
+  })
+
+  it('reads a change seen after today, by a skewed clock, as today', () => {
+    expect(formatDaysAgo('2026-10-10T12:00:00+02:00', 'en-GB', '2026-10-09')).toBe('today')
   })
 })

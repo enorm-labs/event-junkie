@@ -1277,6 +1277,31 @@ export interface components {
              */
             fields?: string[];
         };
+        /** @description A change to when or where an event happens, or to whether it does */
+        EventChangeResponse: {
+            /**
+             * @description What changed
+             * @example START_TIME
+             * @enum {string}
+             */
+            field?: "EVENT_DATE" | "START_TIME" | "END_DATE" | "END_TIME" | "STATUS" | "VENUE";
+            /**
+             * @description The value before: an ISO date, an `HH:mm` time, an `EventStatus` name, or the venue's name for `VENUE`
+             * @example 22:00
+             */
+            from?: string;
+            /**
+             * @description The value after, in the same form as `from`
+             * @example 23:00
+             */
+            to?: string;
+            /**
+             * Format: date-time
+             * @description When the change was seen, in Berlin time
+             * @example 2026-10-07T03:12:00+02:00
+             */
+            seenAt?: string;
+        };
         /** @description Full event detail with embedded associations */
         EventDetailResponse: {
             /**
@@ -1478,6 +1503,8 @@ export interface components {
              *     ]
              */
             features?: string[];
+            /** @description What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. Empty for a new event and for one that has not moved. */
+            changes?: components["schemas"]["EventChangeResponse"][];
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {

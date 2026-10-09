@@ -48,6 +48,7 @@ class EventService(
     private val eventFeatureRepository: EventFeatureRepository,
     private val sourceLicenceGate: SourceLicenceGate,
     private val cachedImageGate: CachedImageGate,
+    private val eventChangeRepository: EventChangeRepository,
     private val clock: Clock,
     private val eventEnrichmentRepository: EventEnrichmentRepository
 ) {
@@ -203,7 +204,8 @@ class EventService(
             images.serve(event.imageUrl, DETAIL_WIDTH),
             descriptionWithheld = licensed.descriptionWithheld,
             imageWithheld = licensed.imageWithheld,
-            enrichmentSources = eventEnrichmentRepository.findByEventId(eventId)
+            enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
+            changes = eventChangeRepository.recent(eventId)
         )
     }
 

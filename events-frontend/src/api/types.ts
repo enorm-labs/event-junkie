@@ -7,6 +7,7 @@ type Schemas = components['schemas']
 
 export type EventSummary = Schemas['EventSummaryResponse']
 export type EventDetail = Schemas['EventDetailResponse']
+export type EventChange = Schemas['EventChangeResponse']
 export type LineupEntry = Schemas['LineupEntryResponse']
 export type VenueSummary = Schemas['VenueSummaryResponse']
 export type VenueDetail = Schemas['VenueDetailResponse']
