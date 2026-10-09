@@ -11,7 +11,7 @@ Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) �
 ## The short version
 
 Four pillars, in order: **Measure**, **Prevent**, **Fix**, **Systematize** (§5). Pillar 1 shipped, so the numbers now
-exist per source. Nothing yet _fails_ when a metric regresses, and that gate is the next thing worth building.
+exist per source. Since #2604 a regression of a metric sets off an alert.
 
 The measuring came first on purpose, and §1.3 is why. This document asserted in prose that ~40% of concerts carried no
 artist. The first real query put it at **3.5%**. A strategy whose headline problem is ten times smaller than stated
@@ -44,7 +44,7 @@ resolve:
    refusals reach the worklist, the dropped non-genre tokens included. The curated lists still grow only when someone
    reads that worklist.
 3. **There is measurement and no gate.** `de.norm.events.dataquality` holds the numbers per source, with a `data_quality_snapshot` history. A trend is
-   visible. Nothing fails when a change regresses a metric. Quality is _observed_, not _enforced_.
+   visible. Since #2604 a regressed metric sets off an alert, but nothing stops the import that caused it.
 
 Measured against staging's 3,409 events, **3.5%** of concerts carry no artist (74 of 2,128). 119 events are typed `OTHER`. Title-as-headliner extraction
 runs in 49 scrapers.
@@ -219,8 +219,12 @@ they are excluded rather than counted as unreviewed.
     events, and each entry names the kind and the value. Each import replaces the flags of the events that it imports, so
     a fixed value leaves the queue.
 
-- **Regression gate.** A check that fails when a data-quality metric regresses. It needs a decision first, see
-  [#2604](https://github.com/enorm-labs/event-junkie/issues/2604).
+- **Regression gate** ([#2604](https://github.com/enorm-labs/event-junkie/issues/2604)). After the 03:00 snapshot,
+  `DataQualityRegressionCheck` compares the share of each `QualityIssue` per source with its median over the seven
+  days before, from `data_quality_snapshot`. The check needs at least ten events and three days of history. A share more
+  than ten points worse logs a WARN and sets `data_quality_regression{source,metric}` to 1. The
+  `ej-data-quality-regression` alert fires on it. The table is the baseline, so nobody maintains one. There is no CI
+  gate on fixtures: the golden tests of each scraper already fail on changed output.
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 

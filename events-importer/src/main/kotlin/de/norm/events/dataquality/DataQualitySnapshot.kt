@@ -44,4 +44,10 @@ data class DataQualitySnapshotEntity(
 interface DataQualitySnapshotRepository : CoroutineCrudRepository<DataQualitySnapshotEntity, Long> {
     /** Everything recorded for one day — used to make the daily write idempotent. */
     fun findBySnapshotDate(snapshotDate: LocalDate): kotlinx.coroutines.flow.Flow<DataQualitySnapshotEntity>
+
+    /** Every row from [from] to [to], both included — the baseline window of the regression check (#2604). */
+    fun findBySnapshotDateBetween(
+        from: LocalDate,
+        to: LocalDate
+    ): kotlinx.coroutines.flow.Flow<DataQualitySnapshotEntity>
 }

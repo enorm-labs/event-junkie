@@ -1,6 +1,8 @@
 package de.norm.events.dataquality
 
+import de.norm.events.scraper.LogContext
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
@@ -91,10 +93,42 @@ class DataQualityReportLogger(
                     "${overall.unreviewedLicence} from unreviewed sources (${overall.unreviewedLicencePct}%) — " +
                     "${rows.size} snapshot rows for $today across ${report.perSource.size} source(s)"
             }
+
+            checkForRegressions(today, rows)
         } catch (e: Exception) {
-            logger.warn(e) { "Could not write the data-quality snapshot; the series will have a gap for today" }
+            logger.warn(e) { "Could not write or check the data-quality snapshot; the series may have a gap for today" }
         }
     }
+
+    /**
+     * The Pillar 2 gate (#2604): today's shares against each source's own 7-day median.
+     *
+     * Runs after the write and the summary line, so a failure here still leaves today's rows in the
+     * table, and inside the same catch, so it cannot stop the scheduler either. One WARN per regressed source and metric:
+     * the alert says that something regressed, and this line says which source, which metric and by
+     * how much.
+     */
+    private suspend fun checkForRegressions(
+        today: LocalDate,
+        rows: List<DataQualitySnapshotEntity>
+    ) {
+        val history =
+            snapshots
+                .findBySnapshotDateBetween(DataQualityRegressionCheck.baselineStart(today), today.minusDays(1))
+                .toList()
+        val verdicts = DataQualityRegressionCheck.check(rows, history)
+        metrics.publishRegressions(verdicts)
+        verdicts.filter { it.regressed }.forEach { verdict ->
+            logger.at(Level.WARN) {
+                message =
+                    "Data quality regressed: ${verdict.metric} of ${verdict.source} is at ${pct(verdict.todayPct)}% " +
+                    "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% (${verdict.totalEvents} events)"
+                payload = mapOf(LogContext.SOURCE_SLUG to verdict.source)
+            }
+        }
+    }
+
+    private fun pct(value: Double): String = "%.1f".format(java.util.Locale.ROOT, value)
 
     /**
      * The metrics worth persisting, per source.

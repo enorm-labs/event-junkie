@@ -390,6 +390,36 @@
     ]
   },
   {
+    "name": "ej-data-quality-regression",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "data_quality_regression",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A source's data quality got worse overnight: one of its `QualityIssue` shares is more than ten points above its own 7-day median, on a source with at least ten events. A scraper that lost a field or a normalizer change is the usual cause. The importer's WARN line `Data quality regressed` names the source, the metric and both numbers; `GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` lists the events.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (source, metric) (data_quality_regression) > bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-node-disk-filling",
     "org_id": "default",
     "stream_type": "metrics",

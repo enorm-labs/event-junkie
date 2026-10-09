@@ -1,11 +1,16 @@
 package de.norm.events.dataquality
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
+import de.norm.events.scraper.LogContext
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
@@ -119,5 +124,56 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
             second.single { it.metric == "totalEvents" }.metricCount shouldBe 2L
             // The same rows, updated in place — not a second set for the same day.
             second.map { it.id }.toSet() shouldBe first.map { it.id }.toSet()
+        }
+
+    @Test
+    fun `a share ten points over the week's median sets the regression gauge and logs a WARN`(): Unit =
+        runBlocking {
+            seedOneImperfectEvent()
+            // Ten events: the least a source needs to be judged. None has a genre.
+            databaseClient
+                .sql(
+                    "INSERT INTO events.event (venue_id, event_source_id, title, slug, event_date, source_id) " +
+                        "SELECT e.venue_id, e.event_source_id, 'T' || n, 'alpha-t' || n, DATE '2026-09-01' + n, 'alpha-t' || n " +
+                        "FROM events.event e, generate_series(2, 10) n WHERE e.slug = 'alpha-t'"
+                ).await()
+            // Three earlier days at 0 % without a genre: the least history that makes a baseline.
+            snapshots
+                .saveAll(
+                    (1L..3L).map {
+                        DataQualitySnapshotEntity(
+                            snapshotDate = today.minusDays(it),
+                            sourceSlug = "alpha",
+                            metric = QualityIssue.MISSING_GENRE.key,
+                            metricCount = 0,
+                            totalEvents = 10
+                        )
+                    }
+                ).toList()
+
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            val logbackLogger = LoggerFactory.getLogger(DataQualityReportLogger::class.java) as Logger
+            logbackLogger.addAppender(appender)
+            try {
+                logger().snapshot()
+            } finally {
+                logbackLogger.detachAppender(appender)
+                appender.stop()
+            }
+
+            fun regression(metric: String) =
+                registry
+                    .find(DataQualityMetrics.REGRESSION_GAUGE)
+                    .tags(DataQualityMetrics.TAG_SOURCE, "alpha", DataQualityMetrics.TAG_METRIC, metric)
+                    .gauge()!!
+                    .value()
+            regression(QualityIssue.MISSING_GENRE.key) shouldBe 1.0
+            // No history for this one, so it is published as 0 rather than left absent.
+            regression(QualityIssue.CONCERTS_WITHOUT_ARTIST.key) shouldBe 0.0
+
+            val warning = appender.list.single { it.level == ch.qos.logback.classic.Level.WARN }
+            warning.formattedMessage shouldBe
+                "Data quality regressed: missingGenre of alpha is at 100.0% against a 7-day median of 0.0% (10 events)"
+            warning.keyValuePairs.single { it.key == LogContext.SOURCE_SLUG }.value shouldBe "alpha"
         }
 }
