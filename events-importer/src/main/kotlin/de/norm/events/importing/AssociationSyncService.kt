@@ -33,6 +33,7 @@ import de.norm.events.scraper.isSlugless
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitBracketedGuest
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -270,8 +271,9 @@ class AssociationSyncService(
      * slugs to nothing has escaped [isNonArtistName], and would take the empty slug every later one
      * collides with (#1553). A headliner read off a title the boundary resolves to a festival is the
      * festival's name, not an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a
-     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]), then a
-     * `b2b` slot into its DJs ([splitBackToBack]), for every source.
+     * published line-up stays. A status marker the title carried comes off first (`Postponed: Nina`,
+     * `Neunundneunzig -Abgesagt-`, [stripTitleStatusMarker], #2985), then a guest in a bracket
+     * ([splitBracketedGuest]), then a `b2b` slot into its DJs ([splitBackToBack]), for every source.
      *
      * **A title-derived name the same event credits as its promoter is the series, not an act**
      * (#1772): Astra's secret-lineup night is titled `UNRELEASED BERLIN` and credits `Unreleased
@@ -296,6 +298,7 @@ class AssociationSyncService(
                 val festival = event.resolvedEventType() == EventType.FESTIVAL
                 event.sourceId to
                     event.artists
+                        .map { it.copy(name = stripTitleStatusMarker(it.name)) }
                         .flatMap { artist -> splitGuest(artist) }
                         .flatMap { artist -> splitBackToBack(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
@@ -779,6 +782,7 @@ class AssociationSyncService(
     ): List<Pair<QualityFlagKind, String>> {
         val artists =
             event.artists
+                .map { it.copy(name = stripTitleStatusMarker(it.name)) }
                 .flatMap(::splitGuest)
                 .flatMap { artist -> splitBackToBack(artist) }
                 .mapNotNull { artist -> refusal(stripArtistSuffix(artist.name))?.let { it to artist.name.trim() } }
