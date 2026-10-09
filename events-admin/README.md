@@ -32,3 +32,8 @@ Take a block's files from `https://shadcn-vue.com/r/styles/new-york-v4/<block>.j
 Tables use TanStack Table v9: `src/lib/sourceTable.ts` declares the features and the columns.
 
 The admin API caps a page at 100 items. A list reads every page and shows an error for a partial listing (`src/api/eventSources.ts`).
+
+Each source row has an Import button and a row menu with Force import and, for a `FAILED` or `RUNNING` source, Retry (`src/components/SourceActions.vue`). The
+actions column sticks to the table's right edge. An import runs in the background, so after an action the row reads its source every 3 s until a run newer than
+the click has ended: `lastImportAt` is later and the status is not `RUNNING`. It stops after 10 minutes with a "reload later" note, on a read error and when the
+row unmounts.
