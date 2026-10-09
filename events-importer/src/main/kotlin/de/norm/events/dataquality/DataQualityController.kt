@@ -17,8 +17,8 @@ import org.springframework.web.server.ServerWebInputException
  * the internet (ADR-012, PLATFORM_SETUP §3.2). That matters more here than for most admin endpoints,
  * because a per-source quality report is a map of exactly where the data is weakest.
  *
- * **Read-only, and no bespoke frontend by design.** Stewards act through the existing
- * `PUT /api/admin/events/{id}`; dashboards come from an external BI tool reading
+ * **Read-only.** Stewards act through `PUT /api/admin/events/{id}`, from the admin app's worklist
+ * page (`events-admin/`, #345); dashboards come from an external BI tool reading
  * `data_quality_snapshot` or Prometheus (strategy §6). This endpoint's job is to expose the numbers
  * in a shape those consume.
  */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Database, ShieldCheck } from '@lucide/vue'
+import { Database, ListChecks, ShieldCheck } from '@lucide/vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import {
@@ -14,7 +14,10 @@ import {
 } from '@/components/ui/sidebar'
 
 // One entry per admin page. The pages #342, #343, #345 and #347 add go here.
-const NAV = [{ title: 'Sources', to: '/sources', icon: Database }]
+const NAV = [
+  { title: 'Sources', to: '/sources', icon: Database },
+  { title: 'Worklist', to: '/worklist', icon: ListChecks },
+]
 
 const route = useRoute()
 </script>
