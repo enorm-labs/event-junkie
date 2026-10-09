@@ -233,6 +233,28 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `inferConcertVenueType reads a subtitle only up to its after-show`() {
+        // Festsaal's party cues; its keyword map is private to the scraper.
+        val festsaal = DJ_SET_PARTY_KEYWORDS + mapOf("festa" to "PARTY", "legt auf" to "PARTY", "legen auf" to "PARTY")
+        inferConcertVenueType("Elena Rose", "+ Aftershow: Arnim legt auf", festsaal) shouldBe "CONCERT"
+        inferConcertVenueType("Elena Rose", "+ Aftershow: Party mit DJ Set", festsaal) shouldBe "CONCERT"
+        // Production subtitles from four venues, 2026-10-09: each bills a concert.
+        listOf(
+            "+ Aftershow: FISH'N'CANDY",
+            "Ska & Rocksteady Matinee ab 17 Uhr Warm Up mit DJ Selekta Bebek. 18 Uhr Buster Beat, 19 Uhr The Valkyrians. " +
+                "Aftershow w DJ Selekta Bebek",
+            "+ aftershow bar-dj-set w/ psychbergs very own Dark´s Second!",
+            "& Aftershow Party \"Rebel Yell Love the 80s -auf 3 Floors- \""
+        ).forEach { subtitle ->
+            inferConcertVenueType("Some Band", subtitle) shouldBe "CONCERT"
+            inferConcertVenueType("Some Band", subtitle, festsaal) shouldBe "CONCERT"
+        }
+        // A party cue before the after-show still types the night.
+        inferConcertVenueType("Flugmodus", "Arnim legt auf + Aftershow", festsaal) shouldBe "PARTY"
+        inferConcertVenueType("Some Night", "DJ Set", DJ_SET_PARTY_KEYWORDS) shouldBe "PARTY"
+    }
+
+    @Test
     fun `inferConcertVenueType keeps an act whose name merely ends in Club as a concert`() {
         // The trade made when the bare `club` keyword was dropped, stated as a test so it is a
         // decision rather than a drift. At a dedicated live-music venue a title ending in the word

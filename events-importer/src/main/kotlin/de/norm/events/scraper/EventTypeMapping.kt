@@ -236,8 +236,8 @@ fun inferConcertVenueType(title: String): String = classifyByTitleKeyword(title)
  *
  * The [subtitle] is a format note beside the name, so only a party or quiz cue in it types the
  * night: a market or show word there describes a real act's evening. A subtitle naming a tour
- * ("Indie Rave Tour 2026") is the act's tour title and types nothing, and an after-show there
- * ("+ Aftershow: FISH'N'CANDY") follows the concert without replacing it.
+ * ("Indie Rave Tour 2026") is the act's tour title and types nothing. An after-show there
+ * ("+ Aftershow: X legt auf") follows the concert, so the subtitle is read only up to it.
  */
 fun inferConcertVenueType(
     title: String,
@@ -249,7 +249,7 @@ fun inferConcertVenueType(
     return classify(title)
         ?: subtitle
             ?.takeUnless { TOUR_NAME.containsMatchIn(it) }
-            ?.let { classify(AFTER_PARTY.replace(it, "")) }
+            ?.let { classify(it.substringBeforeMatch(AFTER_PARTY)) }
             ?.takeIf { it in SUBTITLE_CUE_TYPES }
         ?: EventType.CONCERT.name
 }
@@ -263,8 +263,10 @@ private val SUBTITLE_CUE_TYPES = setOf(EventType.PARTY.name, EventType.QUIZ.name
 /** A tour named in a subtitle: "Indie Rave Tour 2026", "World Tour". */
 private val TOUR_NAME = Regex("""\btour\b""", RegexOption.IGNORE_CASE)
 
-/** An after-show or after-party named in a subtitle. */
+/** An after-show or after-party named in a subtitle; it and the rest of the line type nothing. */
 private val AFTER_PARTY = Regex("""after[\s-]?(?:show|party)""", RegexOption.IGNORE_CASE)
+
+private fun String.substringBeforeMatch(regex: Regex): String = regex.find(this)?.let { substring(0, it.range.first) } ?: this
 
 /**
  * Whether [text] holds [keyword] as a whole word. The boundary applies only on a side where the

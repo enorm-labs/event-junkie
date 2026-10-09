@@ -210,6 +210,24 @@ class FestsaalApiScraperTest {
     }
 
     @Test
+    fun `types a night whose subtitle says legt auf as PARTY and bills nobody`() {
+        val night = scraper.scrape(apiWithSubtitle("Flugmodus", "Arnim legt auf + illvibe + Marian + Martin")).single()
+
+        night.eventType shouldBe EventType.PARTY.name
+        night.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a concert whose subtitle names a tour or an after-show, with its headliner`() {
+        listOf("Indie Rave Tour 2026", "+ Aftershow: FISH'N'CANDY", "+ Aftershow: Arnim legt auf").forEach { subtitle ->
+            val concert = scraper.scrape(apiWithSubtitle("Elena Rose", subtitle)).single()
+
+            concert.eventType shouldBe EventType.CONCERT.name
+            concert.artists shouldContainExactly listOf(ScrapedArtist("Elena Rose", "HEADLINER", titleDerived = true))
+        }
+    }
+
+    @Test
     fun `types markets and open-air event series as OTHER with no artists`() {
         val market = event("festsaal:Japanmarkt-Dezember-26")
         market.eventType shouldBe "OTHER"
@@ -272,6 +290,16 @@ class FestsaalApiScraperTest {
         """
         {"items": [{"id": 1, "meta": {"slug": "holly-humberstone-2026"}, "title": "Holly Humberstone",
           "date": "2026-09-27", "status": "$status", "changed_date": null, "changed_text": ""}]}
+        """.trimIndent()
+
+    /** One scheduled event with [title] and [subtitle], and no genre. */
+    private fun apiWithSubtitle(
+        title: String,
+        subtitle: String
+    ): String =
+        """
+        {"items": [{"id": 1, "meta": {"slug": "night"}, "title": "$title", "sub_title": "$subtitle",
+          "date": "2026-09-13", "status": null}]}
         """.trimIndent()
 
     private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {

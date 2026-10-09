@@ -308,12 +308,20 @@ class FestsaalApiScraper {
         const val STATUS_CUSTOM = "custom"
 
         /**
-         * Festsaal's own cues beside the shared ones: a DJ set and the Brazilian `festa` ("Festa
-         * Junina") are parties, an open-air series ("Berlin Indie Open Air") names the event, not
-         * an act, and is `OTHER`.
+         * Festsaal's own cues beside the shared ones: a DJ set, the Brazilian `festa` ("Festa
+         * Junina") and a subtitle's `legt auf` / `legen auf` ("Arnim legt auf + illvibe", #3006)
+         * are parties, an open-air series ("Berlin Indie Open Air") names the event, not an act,
+         * and is `OTHER`. The DJs a `legt auf` line names are not billed: no Festsaal party bills
+         * its DJs.
          */
         val FESTSAAL_KEYWORDS =
-            DJ_SET_PARTY_KEYWORDS + mapOf("festa" to EventType.PARTY.name, "open air" to EventType.OTHER.name)
+            DJ_SET_PARTY_KEYWORDS +
+                mapOf(
+                    "festa" to EventType.PARTY.name,
+                    "legt auf" to EventType.PARTY.name,
+                    "legen auf" to EventType.PARTY.name,
+                    "open air" to EventType.OTHER.name
+                )
     }
 }
 
