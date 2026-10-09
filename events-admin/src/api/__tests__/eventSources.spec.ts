@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { type EventSource, fetchAllSources, PAGE_SIZE } from '../eventSources'
+import {
+  type EventSource,
+  fetchAllSources,
+  fetchSource,
+  PAGE_SIZE,
+  retrySource,
+  triggerImport,
+} from '../eventSources'
 
 function source(n: number): EventSource {
   return {
@@ -60,5 +67,58 @@ describe('fetchAllSources', () => {
     const fetchFn = vi.fn<typeof fetch>(async () => new Response('', { status: 502 }))
 
     await expect(fetchAllSources(fetchFn)).rejects.toThrow('HTTP 502')
+  })
+})
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+describe('one source', () => {
+  it('reads a source by its slug', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => json(source(7)))
+
+    await expect(fetchSource('source-7', fetchFn)).resolves.toMatchObject({ slug: 'source-7' })
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe('/api/admin/event-sources/source-7')
+  })
+
+  it('posts an import, with force=true only when asked', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => json({ message: 'started' }, 202))
+
+    await triggerImport('lido', false, fetchFn)
+    await triggerImport('lido', true, fetchFn)
+
+    expect(fetchFn.mock.calls.map(([url, init]) => [String(url), init?.method])).toEqual([
+      ['/api/admin/event-sources/lido/import', 'POST'],
+      ['/api/admin/event-sources/lido/import?force=true', 'POST'],
+    ])
+  })
+
+  it('posts a retry and returns the reset source', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => json({ ...source(3), status: 'IDLE' }))
+
+    await expect(retrySource('source-3', fetchFn)).resolves.toMatchObject({ status: 'IDLE' })
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe('/api/admin/event-sources/source-3/retry')
+    expect(fetchFn.mock.calls[0]?.[1]?.method).toBe('POST')
+  })
+
+  it("adds the importer's ProblemDetail detail to the HTTP status", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json({ status: 404, detail: "Event source not found: 'gone'" }, 404),
+    )
+
+    await expect(triggerImport('gone', false, fetchFn)).rejects.toThrow(
+      "POST /api/admin/event-sources/gone/import: HTTP 404: Event source not found: 'gone'",
+    )
+  })
+
+  it('reports the status alone when the error has no JSON body', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response('Bad Gateway', { status: 502 }))
+
+    await expect(retrySource('lido', fetchFn)).rejects.toThrow(
+      'POST /api/admin/event-sources/lido/retry: HTTP 502',
+    )
   })
 })

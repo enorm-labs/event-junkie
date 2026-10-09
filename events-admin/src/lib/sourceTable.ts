@@ -64,6 +64,8 @@ export const columns = helper.columns([
     sortDescFirst: true,
     sortUndefined: 'last',
   }),
+  // No accessor, so it cannot sort. `SourceActions.vue` renders the cell.
+  helper.display({ id: 'actions', header: 'Actions', enableHiding: false }),
 ])
 
 /** Type is the slug in capitals for nearly every source, so it starts hidden; the menu shows it. */

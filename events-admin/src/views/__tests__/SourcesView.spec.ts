@@ -23,6 +23,12 @@ function source(overrides: Partial<EventSource>): EventSource {
 }
 
 vi.mock('@/api/eventSources', () => ({
+  triggerImport: () => Promise.resolve(),
+  retrySource: () => Promise.resolve(),
+  // The first read ends the polling: SourceActions.spec.ts covers it.
+  importEnded: () => true,
+  fetchSource: (slug: string) =>
+    Promise.resolve(source({ slug, name: 'AMT', status: 'RUNNING', lastEventCount: 9 })),
   fetchAllSources: () =>
     Promise.resolve([
       source({ slug: 'neu', name: 'Neu' }),
@@ -79,6 +85,41 @@ describe('SourcesView', () => {
     await wrapper.get('input').setValue('aed')
     expect(slugs(wrapper)).toEqual(['aeden'])
     expect(wrapper.text()).toContain('1 of 3 sources')
+  })
+
+  it('swaps in the row an action read again and leaves the others', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.get('button[aria-label="Import AMT"]').trigger('click')
+    await flushPromises()
+
+    const amt = wrapper.findAll('tbody tr')[1]!
+    expect(amt.text()).toContain('RUNNING')
+    expect(amt.text()).toContain('9')
+    expect(wrapper.findAll('tbody tr')[0]!.text()).toContain('SUCCESS')
+  })
+
+  it('gives the actions column a plain header without a sort button', async () => {
+    const wrapper = await mountView()
+
+    const actions = wrapper.findAll('th').find((th) => th.text() === 'Actions')!
+    expect(actions.find('button').exists()).toBe(false)
+    expect(actions.attributes('aria-sort')).toBeUndefined()
+  })
+
+  it('sticks the actions column to the right edge, so a wide table scrolls under it', async () => {
+    const wrapper = await mountView()
+
+    const last = (cells: ReturnType<typeof wrapper.findAll>) => cells[cells.length - 1]!
+    expect(last(wrapper.findAll('th')).text()).toBe('Actions')
+    expect(last(wrapper.findAll('th')).classes()).toEqual(
+      expect.arrayContaining(['sticky', 'right-0', 'bg-muted']),
+    )
+    for (const row of wrapper.findAll('tbody tr')) {
+      const cell = last(row.findAll('td'))
+      expect(cell.find('button[aria-label^="Import "]').exists()).toBe(true)
+      expect(cell.classes()).toEqual(expect.arrayContaining(['sticky', 'right-0', 'bg-background']))
+    }
   })
 
   it('hides Type until the column menu shows it', async () => {
