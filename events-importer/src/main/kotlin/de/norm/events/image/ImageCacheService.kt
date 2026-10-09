@@ -74,7 +74,9 @@ class ImageCacheService(
 
         return when (val result = fetcher.fetch(url, etag = existing?.etag, lastModified = existing?.lastModified)) {
             is ImageFetchResult.NotModified -> {
-                repository.save(base.copy(lastSeenAt = now, updatedAt = now))
+                // The host confirmed the stored bytes, so a retried failure is a success again. Left
+                // set, `failed_at` kept the row in the retry branch and due on every pass (#2962).
+                repository.save(base.copy(failedAt = null, failureReason = null, lastSeenAt = now, updatedAt = now))
                 CacheOutcome(unchanged = 1)
             }
 

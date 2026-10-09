@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
@@ -333,6 +334,39 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             saveFetched("https://venue.test/asked.jpg", lastSeenAt = now.minus(Duration.ofDays(1)))
 
             dueNow().map { it.sourceUrl } shouldBe listOf(older.sourceUrl, old.sourceUrl)
+        }
+
+    @Test
+    fun `a 304 on a retried failure makes the row a success again`(): Unit =
+        runBlocking {
+            // The retry branch selects by `failed_at`, so a 304 that left it set made the row due on
+            // every pass after its cooldown, five minutes apart (#2962).
+            val server = MockWebServer().also { it.start() }
+            servers += server
+            server.enqueue(MockResponse.Builder().code(304).build())
+            val url = server.url("/back.png").toString()
+            val failedAt = Instant.now().minus(Duration.ofDays(8))
+            repository.save(
+                CachedImageEntity(
+                    sourceUrl = url,
+                    contentHash = "kept",
+                    contentType = "image/png",
+                    etag = "\"v1\"",
+                    fetchedAt = failedAt.minus(Duration.ofDays(30)),
+                    lastSeenAt = failedAt,
+                    failedAt = failedAt,
+                    failureReason = "HTTP 503"
+                )
+            )
+            dueNow().map { it.sourceUrl } shouldContain url
+
+            storingService().refreshBatch().unchanged shouldBe 1
+
+            val row = repository.findBySourceUrl(url)!!
+            row.failedAt.shouldBeNull()
+            row.failureReason.shouldBeNull()
+            row.contentHash shouldBe "kept"
+            dueNow().map { it.sourceUrl } shouldNotContain url
         }
 
     @Test
