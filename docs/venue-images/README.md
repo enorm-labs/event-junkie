@@ -60,7 +60,26 @@ inside round 1. It had a `P18` image, Commons names no author for it, and a titl
 | `file`              | How the archive names the picture: a Commons file name without the `File:` prefix, a Flickr photo id. Empty for a rejection |
 | `licence_at_review` | The licence as the archive stated it, worded the way the `SPDX` map in the script keys on                                   |
 | `file_page`         | The file's description page, which the rendered credit links to                                                             |
-| `found_by`          | Which search proposed it                                                                                                    |
+| `found_by`          | Which search proposed it, or `own-photograph` for a picture we took                                                         |
+
+## Our own photographs
+
+`found_by` is `own-photograph` for a picture we took ourselves ([ADR-028](../adr/ADR-028_OWN_PHOTOGRAPH_HOSTING.md)). Three columns then mean something
+else, because no archive stands behind the file:
+
+| Column              | For an own photograph                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `file`              | The path of the image on the disk of whoever runs the script. Under 8 MiB                                     |
+| `licence_at_review` | The licence chosen for this photograph, worded the way the `SPDX` map keys on. It is the licence, not a check |
+| `file_page`         | The Photographs section of the About page, which states who took the picture and under what licence           |
+
+The script uploads the file to the public `event-junkie-images-own` bucket and stores that URL. The object name is the venue and a hash of the bytes. A new photograph of a venue gets a new URL, and an upload of the same file writes the same object again. The credit is the operator's name and no archive. A dry run prints the upload. Only `--apply` uploads, through the `aws` CLI with the credentials in `infra/.envrc`:
+
+```sh
+direnv exec infra python3 scripts/venue-images.py --venue Loge --apply
+```
+
+The bucket keeps an object nobody references any more. Delete it by hand when a row changes its file.
 
 ## Asking the archive is what finds a dead picture
 
