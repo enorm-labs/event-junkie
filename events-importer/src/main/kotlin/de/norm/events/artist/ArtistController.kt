@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ServerWebInputException
 
 /**
  * Admin REST controller for managing artists.
@@ -30,13 +31,32 @@ class ArtistController(
     private val artistService: ArtistService
 ) {
     @GetMapping
-    @Operation(summary = "List all artists with pagination; `name` narrows to the names that contain it, ignoring case")
+    @Operation(
+        summary =
+            "List all artists with pagination; `name` narrows to the names that contain it, ignoring case, " +
+                "`musicbrainzMatch` to one verdict and `upcomingWithinDays` to the artists billed soon"
+    )
     suspend fun findAll(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable,
         @Parameter(description = "Part of the name, any letter case. Omit it to list all.", example = "adicts")
-        @RequestParam(required = false) name: String?
-    ): PageResponse<ArtistResponse> = artistService.findAll(pageable, name)
+        @RequestParam(required = false) name: String?,
+        @Parameter(description = "Only the artists with this MusicBrainz verdict. Omit it for every verdict.", example = "AMBIGUOUS")
+        @RequestParam(required = false) musicbrainzMatch: MusicBrainzMatch?,
+        @Parameter(
+            description =
+                "Only the artists billed on an event from today to this many days ahead, Berlin time, from 0 to " +
+                    "${ArtistService.MAX_UPCOMING_DAYS}. A festival counts on each of its days; a cancelled or postponed " +
+                    "event does not count. Omit it for every artist.",
+            example = "14"
+        )
+        @RequestParam(required = false) upcomingWithinDays: Int?
+    ): PageResponse<ArtistResponse> {
+        if (upcomingWithinDays != null && upcomingWithinDays !in 0..ArtistService.MAX_UPCOMING_DAYS) {
+            throw ServerWebInputException("upcomingWithinDays must be from 0 to ${ArtistService.MAX_UPCOMING_DAYS}")
+        }
+        return artistService.findAll(pageable, name, musicbrainzMatch, upcomingWithinDays)
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single artist by ID")
@@ -60,6 +80,18 @@ class ArtistController(
         @PathVariable id: Long,
         @Valid @RequestBody request: ArtistRequest
     ): ArtistResponse = artistService.update(id, request)
+
+    /**
+     * Stores a MusicBrainz id a person chose as the EXACT match, and changes no other field (#2946).
+     * [update] replaces every field, so a body with the id alone would clear the rest.
+     */
+    @PutMapping("/{id}/musicbrainz-id")
+    @Operation(summary = "Store a MusicBrainz id as the artist's EXACT match, leaving every other field as it is")
+    suspend fun setMusicBrainzId(
+        @Parameter(description = "Database ID of the artist.", example = "1")
+        @PathVariable id: Long,
+        @Valid @RequestBody request: MusicBrainzIdRequest
+    ): ArtistResponse = artistService.setMusicBrainzId(id, requireNotNull(request.musicbrainzId))
 
     /**
      * Removes the pin a hand edit set on the name (ADR-042). The next enrichment reads the row again

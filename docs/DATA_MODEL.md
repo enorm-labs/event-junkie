@@ -418,6 +418,11 @@ The MusicBrainz enrichment then keeps the name and logs the spelling that it did
 `DELETE /api/admin/artists/{id}/pins/name` removes the pin and queues the row for the enrichment again.
 The next read then writes MusicBrainz's letter case on an `EXACT` row.
 
+**A person decides an `AMBIGUOUS` name (#2946).** `GET /api/admin/artists?musicbrainzMatch=AMBIGUOUS&upcomingWithinDays=14` lists the rows to review.
+`GET /api/admin/artists/{id}/musicbrainz-candidates` returns what the MusicBrainz search finds for the name.
+The importer sends that request, on the same queue as the sweep.
+`PUT /api/admin/artists/{id}/musicbrainz-id` stores the chosen MBID as `EXACT` and changes no other field.
+
 ### Promoter
 
 Represents an event promoter or presenter. Shared across events and venues.

@@ -19,6 +19,15 @@ class MusicBrainzMatcherTest {
         aliases: List<String> = emptyList()
     ) = MusicBrainzCandidate(id = id, name = name, sortName = sortName, country = country, aliases = aliases.map(::MusicBrainzAlias))
 
+    // #2946: the admin's review says which name of each candidate made it count.
+    @Test
+    fun `nameMatch tells a primary name from a sort name or alias and from neither, folding case and accents`() {
+        MusicBrainzMatcher.nameMatch("Motorhead", candidate("Motörhead")) shouldBe CandidateNameMatch.NAME
+        MusicBrainzMatcher.nameMatch("Andy", candidate("Horace Andy", aliases = listOf("Andy"))) shouldBe CandidateNameMatch.OTHER_NAME
+        MusicBrainzMatcher.nameMatch("Beatles, The", candidate("The Beatles", sortName = "Beatles, The")) shouldBe CandidateNameMatch.OTHER_NAME
+        MusicBrainzMatcher.nameMatch("Pici", candidate("Pici Mazzei")) shouldBe CandidateNameMatch.NONE
+    }
+
     @Nested
     inner class Verdicts {
         @Test

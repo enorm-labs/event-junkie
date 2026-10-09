@@ -2,11 +2,15 @@ package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.pageByName
+import de.norm.events.common.pageMatching
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Service encapsulating artist business logic.
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service
 @Service
 class ArtistService(
     private val artistRepository: ArtistRepository,
+    private val upcomingArtistStore: UpcomingArtistStore,
     private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
@@ -29,20 +34,42 @@ class ArtistService(
      *
      * The total comes from a separate count over the same filter, so a caller can tell one page
      * from the whole table (#810). [name] narrows to the rows whose name contains it, ignoring
-     * case (#2988); null or blank is the whole table.
+     * case (#2988); null or blank is the whole table. [musicbrainzMatch] narrows to one verdict, and
+     * [upcomingWithinDays] to the artists billed on an event from today to that many days ahead,
+     * Berlin time (#2946); null narrows nothing.
      */
     suspend fun findAll(
         pageable: Pageable,
-        name: String? = null
+        name: String? = null,
+        musicbrainzMatch: MusicBrainzMatch? = null,
+        upcomingWithinDays: Int? = null
     ): PageResponse<ArtistResponse> {
         val term = name?.trim().orEmpty()
+        val billedIds = upcomingWithinDays?.let { billedWithin(it) }
+        if (billedIds != null && billedIds.isEmpty()) return PageResponse.of(emptyList(), pageable, 0)
+        val narrowedBy =
+            listOfNotNull(
+                musicbrainzMatch?.let { Criteria.where("musicbrainzMatch").`is`(it.name) },
+                billedIds?.let { Criteria.where("id").`in`(it) }
+            ).reduceOrNull(Criteria::and)
         val (rows, total) =
-            if (term.isEmpty()) {
-                artistRepository.findAllBy(pageable).toList() to artistRepository.count()
-            } else {
-                template.pageByName(ArtistEntity::class.java, term, pageable)
+            when {
+                term.isNotEmpty() -> template.pageByName(ArtistEntity::class.java, term, pageable, narrowedBy)
+                narrowedBy != null -> template.pageMatching(ArtistEntity::class.java, narrowedBy, pageable)
+                else -> artistRepository.findAllBy(pageable).toList() to artistRepository.count()
             }
         return PageResponse.of(rows.map { ArtistResponse.fromDomain(it.toDomain()) }, pageable, total)
+    }
+
+    /**
+     * The ids of the artists billed from today to [days] days ahead. A list of ids rather than a
+     * subquery, because the criteria API has none; [MAX_UPCOMING_DAYS] keeps it far below the
+     * driver's limit on bind parameters.
+     */
+    private suspend fun billedWithin(days: Int): List<Long> {
+        require(days in 0..MAX_UPCOMING_DAYS) { "upcomingWithinDays must be from 0 to $MAX_UPCOMING_DAYS" }
+        val today = LocalDate.now(BERLIN)
+        return upcomingArtistStore.idsBilledBetween(today, today.plusDays(days.toLong()))
     }
 
     /**
@@ -151,6 +178,20 @@ class ArtistService(
     }
 
     /**
+     * Stores [mbid] as the EXACT MusicBrainz match of artist [id], and changes no other field (#2946):
+     * the narrow write beside [update], which replaces every field the request carries.
+     *
+     * @throws ArtistNotFoundException if no artist with the given [id] exists.
+     */
+    suspend fun setMusicBrainzId(
+        id: Long,
+        mbid: String
+    ): ArtistResponse {
+        val existing = artistRepository.findById(id) ?: throw ArtistNotFoundException(id)
+        return ArtistResponse.fromDomain(storeHandSetMusicBrainzId(existing, mbid).toDomain())
+    }
+
+    /**
      * Stores a MusicBrainz id set by hand as an EXACT verdict, for a name MusicBrainz gives several artists (#2827).
      * A separate write after the save, so its database clock is later than a rename's `name_changed_at`, and the
      * sweep does not look the name up again. A null [mbid], or the one already stored, changes nothing.
@@ -205,5 +246,13 @@ class ArtistService(
         if (artistRepository.findBySlug(slug) != null) {
             throw DuplicateArtistSlugException(name, slug)
         }
+    }
+
+    companion object {
+        /** The widest window `upcomingWithinDays` accepts. */
+        const val MAX_UPCOMING_DAYS = 90
+
+        /** The events' own time zone, which decides what "today" is. */
+        private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }
