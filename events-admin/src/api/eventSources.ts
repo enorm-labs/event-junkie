@@ -58,7 +58,7 @@ export async function fetchAllSources(fetchFn: typeof fetch = fetch): Promise<Ev
  * Throws for a response that is not 2xx. The message names the call and the status, and adds the
  * importer's `ProblemDetail.detail` when the body carries one (`GlobalExceptionHandler.kt`).
  */
-async function ensureOk(response: Response, call: string): Promise<void> {
+export async function ensureOk(response: Response, call: string): Promise<void> {
   if (response.ok) return
   let detail = ''
   try {

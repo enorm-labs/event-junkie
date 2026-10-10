@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { fetchAllVenues } from '../venues'
+import { fetchAllVenues, fetchNeedsReview, reviewVenue, runSiteCheck } from '../venues'
 
 function venue(n: number) {
   return {
@@ -46,5 +46,76 @@ describe('fetchAllVenues', () => {
     const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 503 }))
 
     await expect(fetchAllVenues(fetchFn)).rejects.toThrow('GET /api/admin/venues page 0: HTTP 503')
+  })
+})
+
+describe('fetchNeedsReview', () => {
+  it('reads the list as the importer sends it', async () => {
+    const rows = [{ venueId: 1, slug: 'a', outcome: 'DNS' }]
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(rows)))
+
+    await expect(fetchNeedsReview(fetchFn)).resolves.toEqual(rows)
+    expect(fetchFn).toHaveBeenCalledWith('/api/admin/venues/needs-review', expect.anything())
+  })
+})
+
+describe('runSiteCheck', () => {
+  it('posts site-check and accepts the 202', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 202 }))
+
+    await runSiteCheck(fetchFn)
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      '/api/admin/venues/site-check',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('reports a refused start', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 500 }))
+
+    await expect(runSiteCheck(fetchFn)).rejects.toThrow(
+      'POST /api/admin/venues/site-check: HTTP 500',
+    )
+  })
+})
+
+describe('reviewVenue', () => {
+  it('reads the venue right before it writes, and sends no read-only field', async () => {
+    const stored = {
+      ...venue(7),
+      slug: 'venue-7',
+      programmeFamilies: ['rock'],
+      programmeEventTypes: ['CONCERT'],
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+    }
+    const fetchFn = vi.fn<typeof fetch>(async (_input, init) =>
+      init?.method === 'PUT'
+        ? new Response(String(init.body))
+        : new Response(JSON.stringify(stored)),
+    )
+
+    await reviewVenue(7, { closedOn: '2026-07-31' }, fetchFn)
+
+    expect(fetchFn.mock.calls.map(([input, init]) => `${init?.method ?? 'GET'} ${input}`)).toEqual([
+      'GET /api/admin/venues/7',
+      'PUT /api/admin/venues/7',
+    ])
+    const body = JSON.parse(String(fetchFn.mock.calls[1]![1]!.body))
+    expect(body).not.toHaveProperty('id')
+    expect(body).not.toHaveProperty('slug')
+    expect(body).not.toHaveProperty('programmeFamilies')
+    expect(body).not.toHaveProperty('createdAt')
+    expect(body.closedOn).toBe('2026-07-31')
+  })
+
+  it('writes nothing when the read fails', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 404 }))
+
+    await expect(reviewVenue(7, { reviewedAt: '2026-10-10T08:00:00Z' }, fetchFn)).rejects.toThrow(
+      'GET /api/admin/venues/7: HTTP 404',
+    )
+    expect(fetchFn).toHaveBeenCalledOnce()
   })
 })

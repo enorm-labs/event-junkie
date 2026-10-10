@@ -40,3 +40,8 @@ row unmounts.
 
 Edit, in the same row menu, opens a form for `enabled`, the import interval and max retries (`src/components/SourceEditForm.vue`). It PATCHes only the changed
 fields, and the row shows the source the importer answers. A new source still needs an `EventSource` value in code, so `http/importer/dev-seed.http` creates it.
+
+Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
+in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default
+day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.
+"Check now" starts one pass of the site check in the background.
