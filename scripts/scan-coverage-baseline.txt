@@ -28,7 +28,7 @@ flux-clusters-files	38
 flux-clusters-resources	173
 zizmor-ignored	18
 zizmor-suppressed	89
-zap-k3d-api-rules	118
+zap-k3d-api-rules	119
 zap-k3d-api-urls	40
 zap-k3d-full-rules	140
 zap-k3d-full-urls	60

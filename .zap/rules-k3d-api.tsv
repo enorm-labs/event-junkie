@@ -139,3 +139,5 @@
 100001	FAIL	(Unexpected Content-Type was returned)
 # 2026-10-06 — the calendar subscription (#2753) answers 200 with text/calendar by design, which this rule flags because it is neither JSON nor XML. Out of scope for that path only.
 100001	OUTOFSCOPE	.*/api/events/calendar\.ics.*
+# 2026-10-10 — the Swagger UI (#3072) answers 200 with text/html by design. Rule 100043, in the scan since 2026-10-09, probes Swagger paths and reaches it. Out of scope for that path only.
+100001	OUTOFSCOPE	.*/swagger-ui/.*
