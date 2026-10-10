@@ -79,7 +79,7 @@ when the window moved it; read the last commit's diff when it did not, and say `
   (`grep -rhoE 'uses: [^@]+@[^ ]+' .github/workflows | grep -vE '@[0-9a-f]{40}'` must print nothing), and the required checks on `main`
   (`gh api repos/{owner}/{repo}/rulesets --jq '.[] | select(.name=="main") | .id'`, then the ruleset's `required_status_checks`).
 - **Question:** is anything published unsigned, pulled unverified, pinned by tag, or waived without a date? Did the window add a workflow with `contents:
-write` or a new App to `merge-gate.yml`'s allow-list?
+  write` or a new App to `merge-gate.yml`'s allow-list?
 - **ZAP covers:** nothing.
 - **Finding shape:** the file and line, the command that shows it. Rows B6 and B9.
 

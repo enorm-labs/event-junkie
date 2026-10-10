@@ -21,7 +21,7 @@ which helper lives where — is not repeated; `grep` answers that.
   (ADR-004). The `NamingStrategy` bean in `R2dbcConfiguration` qualifies every derived query; without it Spring emits `INSERT INTO "venue"` against `public`.
 - **Migrations live in `events-importer` only** (ADR-005), `V001__…` closed, every change its own file, unqualified (Flyway sets `search_path`; a qualified
   migration pins itself to a schema the configuration no longer controls). **Editing an applied migration is a `FlywayValidateException: Migration checksum
-mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the release back, presenting as "the deploy reverted" two layers from the cause.
+  mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the release back, presenting as "the deploy reverted" two layers from the cause.
     - **A migration that changes the schema regenerates `docs/architecture/schema.sql`** with `./gradlew :events-importer:updateSchemaDump`, in the
       same pull request. `SchemaDumpTest` fails the build otherwise (#2477). The file is the current schema in one place, so read it before the migrations.
     - **Two branches can each take the next version**, and git conflicts only on one path, so rebase-and-merge lands both and Flyway refuses to start
@@ -56,7 +56,7 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
   associations at the entity level). ADR-003.
 - **Changing the BFF's public API means regenerating the frontend's types in the same PR** — `events-frontend/src/api/schema.d.ts` is generated from
   `/v3/api-docs`, and `build-backend.yml` fails when it is stale (#370). `./gradlew :events-bff:test --tests '*OpenApiDocumentTest' &&
-scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps are in [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API
+  scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps are in [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API
   Communication.
 - **Metrics** (`micrometer-registry-prometheus`, `health,info,prometheus` exposed, #415), four decisions that fail silently if reversed:
     - **Meter names are an interface.** Dashboards and alert rules are written against the exact strings in `ImporterMetrics`, `EnrichmentMetrics` and

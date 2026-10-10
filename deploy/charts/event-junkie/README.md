@@ -214,7 +214,7 @@ way. Two consequences belong here rather than there:
   `--timeout 5m` against a measured ~1-second gap, but the staging `HelmRelease` allows `3m` and that
   budget is now shared rather than two independent ones.
 - **A database outage drains the BFF from the Service**, after `periodSeconds: 10 × failureThreshold:
-3` — about 30 seconds of sustained failure. Traefik then answers `503` rather than every pod
+  3` — about 30 seconds of sustained failure. Traefik then answers `503` rather than every pod
   answering `200`-framed query errors. Those two probe numbers are load-bearing; `tests/probes_test.yaml`
   pins them so that changing one means reading ADR-018 first.
 
