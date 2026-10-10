@@ -616,6 +616,10 @@ class AssociationSyncService(
      * Fill-if-empty, never replace: the venue's link is as often the promoter's ticket shop, and a
      * reviewed `website_url` (docs/promoters/REVIEWED.tsv) must not lose to it (#1319). A link back
      * onto the venue's own host is the event page (#1362).
+     *
+     * A row with `reviewed_at` set is skipped even when its website is empty: a person recorded the
+     * website as absent on purpose (V028), and `scripts/promoter-websites.py` clears it for a `none`
+     * row, so an import must not write a venue's link back (#3027).
      */
     private suspend fun fillPromoterWebsites(
         scrapedEvents: List<ScrapedEvent>,
@@ -627,7 +631,7 @@ class AssociationSyncService(
                 .filterNot { (raw, url, sourceUrl) -> isNonPromoterName(raw) || url.hostOrNull() == sourceUrl.hostOrNull() }
                 .associate { (raw, url, _) -> SlugGenerator.slugify(canonicalPromoterName(raw)) to url }
         websitesBySlug
-            .mapNotNull { (slug, url) -> promoterCache[slug]?.takeIf { it.websiteUrl == null }?.let { it to url } }
+            .mapNotNull { (slug, url) -> promoterCache[slug]?.takeIf { it.websiteUrl == null && it.reviewedAt == null }?.let { it to url } }
             .forEach { (promoter, url) ->
                 promoterCache[promoter.slug] = promoterRepository.save(promoter.copy(websiteUrl = url))
                 logger.info { "Filled website of promoter '${promoter.slug}' from the venue's credit: $url" }
