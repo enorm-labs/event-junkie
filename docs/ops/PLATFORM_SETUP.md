@@ -479,7 +479,7 @@ secret, and not something CI ever holds.
 **Two repository settings block it, and neither is a token scope:**
 
 - **Deploy keys must be enabled for the organisation** — `deploy_keys_enabled_for_repositories`. Disabled, bootstrap fails at `422 Deploy keys are disabled for
-this repository`, and no PAT of any shape helps.
+  this repository`, and no PAT of any shape helps.
 - **Bootstrap pushes directly to `main`**, which the branch ruleset forbids. It has to be disabled for two pushes and re-enabled immediately. That window
   matters more than it sounds, because with Flux live, branch protection _is_ the control that replaces the kubeconfig (ADR-016).
 

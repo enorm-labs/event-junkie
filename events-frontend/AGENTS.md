@@ -159,7 +159,7 @@ npm run generate:notices                                   # … merged with npm
   ecosystem's declarations change (#1037). **Bot PRs repair themselves** (`fix-notices-on-bot-prs.yml`); that push stops Dependabot rebasing, so if `main`
   moves under one, close and reopen it.
 - **Licence policy is one policy in two files** — `npm run check:licenses` against `config/allowed-licenses-npm.json`, `./gradlew checkLicense
---no-configuration-cache` against `config/allowed-licenses-jvm.json` — because the ecosystems name licences differently. `dependency-review.yml` adds a
+  --no-configuration-cache` against `config/allowed-licenses-jvm.json` — because the ecosystems name licences differently. `dependency-review.yml` adds a
   deny-list on newly introduced dependencies. **Do not widen an allow-list to make a build pass**: AGPL, GPL without Classpath Exception, SSPL, BUSL,
   Elastic-2.0 are out ([LEGAL.md §9.2](../docs/LEGAL.md)); a genuine addition records why in the file's `_rationale`.
 

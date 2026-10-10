@@ -193,7 +193,7 @@ no `dry_run` because every run is one, no `issues: write` on the agent's job, AD
   build on the PR that changed the base image (#506); a SARIF upload before the publish left staging without a chart.
 - **Every scanner gate asserts a denominator as well as an exit code** (#1087) — `scripts/scan-coverage.sh` against `scripts/scan-coverage-baseline.txt`, the
   one place output formats are parsed, so an extraction that stops matching is an error. Three shapes: a floor that only moves up (zizmor, `flux schema
-validate`), a property (every rendered resource valid, none skipped, count positive), a floor of zero where an upstream database moves the count (Trivy,
+  validate`), a property (every rendered resource valid, none skipped, count positive), a floor of zero where an upstream database moves the count (Trivy,
   Dependency-Check — the tool `Dependencies Scanned: 0` happened to).
 - **Every step that writes to GitHub is guarded on `github.event.pull_request.head.repo.fork != true`** — coverage comments, SARIF uploads — or a fork PR goes
   red for a `403` its author did not cause. Add the guard in the same change as the step.
