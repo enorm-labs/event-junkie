@@ -128,10 +128,7 @@ class EventSearchRepository(
                         .bind("seed", tiebreakSeed())
                         .bind("limit", pageable.pageSize)
                         .bind("offset", pageable.offset)
-                        .map { row: Readable -> row.requiredEventId() }
-                        .all()
-                        .collectList()
-                        .awaitSingle()
+                        .eventIds()
                 EventIdPage(ids, total)
             }
         }
@@ -152,10 +149,7 @@ class EventSearchRepository(
                 .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER${if (limit == null) "" else " LIMIT :limit"}")
                 .bindAll(params)
                 .bind("seed", tiebreakSeed())
-                .map { row: Readable -> row.requiredEventId() }
-                .all()
-                .collectList()
-                .awaitSingle()
+                .eventIds()
         }
 
     /**
@@ -176,9 +170,7 @@ class EventSearchRepository(
             .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where AND e.featured_until > :featuredAt $DEFAULT_ORDER LIMIT 1")
             .bindAll(params)
             .bind("seed", tiebreakSeed())
-            .map { row: Readable -> row.requiredEventId() }
-            .one()
-            .awaitSingleOrNull()
+            .eventIdOrNull()
     }
 
     /**
@@ -197,10 +189,7 @@ class EventSearchRepository(
                 .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ORDER BY e.created_at DESC, e.id DESC LIMIT :limit")
                 .bindAll(params)
                 .bind("limit", limit)
-                .map { row: Readable -> row.requiredEventId() }
-                .all()
-                .collectList()
-                .awaitSingle()
+                .eventIds()
         }
 
     /**
@@ -233,10 +222,7 @@ class EventSearchRepository(
             ).bindAll(params)
             .bind("seed", tiebreakSeed())
             .bind("limit", limit)
-            .map { row: Readable -> row.requiredEventId() }
-            .all()
-            .collectList()
-            .awaitSingle()
+            .eventIds()
     }
 
     /** Assembles the `WHERE` clause for the present filters, registering bound values in [params]. */
@@ -554,3 +540,16 @@ class EventSearchRepository(
  * mapping have drifted, and the message says so rather than a bare `NullPointerException`.
  */
 private fun Readable.requiredEventId(): Long = requireNotNull(get(0, Long::class.javaObjectType)) { "Event id projection returned a null id" }
+
+/** Every event id this `SELECT e.id` projection returns, in the order the query asked for. */
+private suspend fun DatabaseClient.GenericExecuteSpec.eventIds(): List<Long> =
+    map { row: Readable -> row.requiredEventId() }
+        .all()
+        .collectList()
+        .awaitSingle()
+
+/** The single event id this `SELECT e.id` projection returns, or null when it matches no row. */
+private suspend fun DatabaseClient.GenericExecuteSpec.eventIdOrNull(): Long? =
+    map { row: Readable -> row.requiredEventId() }
+        .one()
+        .awaitSingleOrNull()
