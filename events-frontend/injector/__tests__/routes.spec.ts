@@ -155,9 +155,10 @@ describe('the week routes (#2728)', () => {
  */
 describe('the nginx location that proxies to the injector', () => {
   const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
-  const source = /location ~ (\^\/\(en\|de\)\S*) \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/.exec(
-    conf,
-  )?.[1]
+  const source =
+    /location ~ "?(\^\/\(en\|de\)[^\s"]*)"? \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/.exec(
+      conf,
+    )?.[1]
   const nginx = new RegExp(source ?? '(?!)')
 
   it('is found', () => {

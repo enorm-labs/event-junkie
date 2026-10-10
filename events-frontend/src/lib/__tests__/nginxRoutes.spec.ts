@@ -12,7 +12,7 @@ import router from '@/router'
  */
 
 const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
-const appLocations = [...conf.matchAll(/location ~ (\^\/\(en\|de\)\S*) \{/g)].map(
+const appLocations = [...conf.matchAll(/location ~ "?(\^\/\(en\|de\)[^\s"]*)"? \{/g)].map(
   ([, source]) => new RegExp(source ?? '(?!)'),
 )
 
@@ -39,6 +39,14 @@ describe('the nginx locations for the app routes', () => {
   it('name every route the router has, so none answers 404', () => {
     expect(
       routerPaths.filter((path) => !appLocations.some((location) => location.test(path))),
+    ).toEqual([])
+  })
+
+  // nginx reads an unquoted `{` as the start of the block and refuses the whole config, so the
+  // container exits and the release rolls back (#3085).
+  it('quote every regex that holds a brace', () => {
+    expect(
+      [...conf.matchAll(/location ~\*? ([^\s"]*\{[^\s"]*) \{/g)].map(([, source]) => source),
     ).toEqual([])
   })
 
