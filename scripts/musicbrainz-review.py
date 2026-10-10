@@ -13,14 +13,16 @@ second). The TSV has an empty `decision` and `mbid` column per artist; the JSON 
 same rows unflattened, for a reader that judges them.
 
 `apply` reads the rows marked `PROPOSE` with an `mbid`, and is a dry run unless given `--apply`.
-**The artist PUT replaces every request field**, so it sends those fields as read with the MBID added,
-and then compares every other field: a row whose fields moved is reported as drift and fails the run.
-A row no longer AMBIGUOUS is skipped, because someone settled it since the file was written.
+Both read each artist's match first and skip a row no longer AMBIGUOUS, because someone settled it
+since the file was written; a skip does not fail the run. For each other row, `--apply` sends one
+`PUT /api/admin/artists/{id}/musicbrainz-id` with the lowercase MBID, which stores it as the EXACT
+match and changes no other field. The read only decides the skip: nothing from it goes into the write.
+A row the importer refuses (404 for an unknown id, 400 for an MBID that is not a UUID) fails the run.
 
 Both talk to the forwards `scripts/ej.sh up <env>` starts, and `apply` refuses to write unless a
 `kubectl --context event-junkie-<env>` port-forward holds the importer port.
 
-Exit 0 on success, 1 when `apply` saw drift or a failed write, 2 when it could not run.
+Exit 0 on success, 1 when `apply` saw a failed write, 2 when it could not run.
 """
 
 import argparse
@@ -38,29 +40,8 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 PORTS = {"staging": (18081, 18080), "production": (28081, 28080)}
 PAGE_SIZE = 100
 MAX_PAGES = 200
-EXIT_DRIFT = 1
+EXIT_FAILED = 1
 EXIT_CANNOT_RUN = 2
-# A write moves these, and nothing else may move.
-WRITTEN_FIELDS = {"musicbrainzId", "musicbrainzMatch", "musicbrainzCheckedAt", "updatedAt"}
-# ArtistRequest's fields: the importer answers 400 to any other, such as the `id` a GET returns (#814).
-REQUEST_FIELDS = (
-    "name",
-    "description",
-    "imageUrl",
-    "imageAttribution",
-    "imageLicenceId",
-    "imageSourceUrl",
-    "websiteUrl",
-    "facebookUrl",
-    "instagramUrl",
-    "youtubeUrl",
-    "bandcampUrl",
-    "soundcloudUrl",
-    "discogsUrl",
-    "wikidataUrl",
-    "residentAdvisorUrl",
-    "spotifyUrl",
-)
 COLUMNS = ["decision", "artist_id", "slug", "name", "mbid", "candidates", "events"]
 
 
@@ -221,23 +202,31 @@ def proposals(tsv: pathlib.Path) -> list:
 
 
 def apply_rows(rows: list, get, put, write: bool) -> int:
-    """Stores each (artist id, MBID); returns how many rows drifted or failed."""
-    bad = 0
+    """Stores each (artist id, MBID) still AMBIGUOUS; returns how many rows failed. A skipped row is no failure."""
+    bad = skipped = 0
     for artist_id, mbid in rows:
-        before = get(artist_id)
-        if before["musicbrainzMatch"] != "AMBIGUOUS":
-            print(f"{artist_id} {before['name']}: skipped, now {before['musicbrainzMatch']}")
+        mbid = mbid.lower()
+        try:
+            current = get(artist_id)
+            match = current["musicbrainzMatch"]
+            if match != "AMBIGUOUS":
+                skipped += 1
+                print(f"skipped {artist_id}: no longer AMBIGUOUS ({match})")
+                continue
+            if not write:
+                print(f"{artist_id} {current['name']}: would store {mbid}")
+                continue
+            after = put(artist_id, {"musicbrainzId": mbid})
+        except urllib.error.HTTPError as error:
+            bad += 1
+            print(f"{artist_id}: NOT stored {mbid}, the importer answered {error.code}")
             continue
-        if not write:
-            print(f"{artist_id} {before['name']}: would store {mbid}")
-            continue
-        after = put(artist_id, {**{k: before.get(k) for k in REQUEST_FIELDS}, "musicbrainzId": mbid})
-        drift = sorted(k for k in before if k not in WRITTEN_FIELDS and before[k] != after.get(k))
         stored = after.get("musicbrainzMatch") == "EXACT" and after.get("musicbrainzId") == mbid
-        if drift or not stored:
+        if not stored:
             bad += 1
         state = "stored" if stored else f"NOT stored ({after.get('musicbrainzMatch')})"
-        print(f"{artist_id} {after['name']}: {state} {mbid}" + (f", DRIFT {','.join(drift)}" if drift else ""))
+        print(f"{artist_id} {after['name']}: {state} {mbid}")
+    print(f"{len(rows)} rows: {skipped} skipped, {bad} failed")
     return bad
 
 
@@ -251,12 +240,15 @@ def apply(args) -> int:
     base = f"http://localhost:{port}/api/admin/artists/"
     try:
         bad = apply_rows(
-            rows, lambda i: http("GET", f"{base}{i}"), lambda i, b: http("PUT", f"{base}{i}", b), args.apply
+            rows,
+            lambda i: http("GET", f"{base}{i}"),
+            lambda i, b: http("PUT", f"{base}{i}/musicbrainz-id", b),
+            args.apply,
         )
     except (urllib.error.URLError, OSError) as error:
         print(f"musicbrainz-review: the importer on {port} does not answer ({error})")
         return EXIT_CANNOT_RUN
-    return EXIT_DRIFT if bad else 0
+    return EXIT_FAILED if bad else 0
 
 
 def main() -> int:
