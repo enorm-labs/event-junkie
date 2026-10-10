@@ -24,7 +24,7 @@ is the map and the traps.
   `schema.d.ts` against the document `OpenApiDocumentTest` writes (#370), so an API change without the regeneration fails on its own PR, not after merge. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.
   `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), knip,
-  build, unit, the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
+  build, unit, `nginx -t` on `docker/nginx.conf` in the pinned base image (#3086), the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
   `@playwright/test` version so no `apt` install runs (#2309). Both build images on PRs only, since `release.yml` builds them on every push to `main`.
   `build-admin.yml` (#2635) — `events-admin` (ADR-045): `npm ci`, type-check, `check:lint`, `check:format`, `check:knip`, unit, `build-only`; no image, no
   coverage, no e2e, and `release.yml` does not wait for it, because nothing publishes the admin app. All three declare `workflow_dispatch`
