@@ -117,7 +117,8 @@ test('downloads an .ics file built in the browser', async ({ page }) => {
   expect(ics).toContain('SUMMARY:Mock Fest\r\n')
   expect(ics).toMatch(/DTSTART:\d{8}T\d{6}Z\r\n/)
   expect(ics.replace(/\r\n /g, '')).toContain('our estimate')
-  await expect(page.getByText(/ends at our estimate/)).toBeVisible()
+  await expect(page.getByText('End not announced')).toBeVisible()
+  await expect(page.getByText(/ends at our estimate/)).toHaveCount(0)
   // Nothing on another origin: the file is a Blob, not a request.
   const origin = new URL(page.url()).origin
   expect(requests.filter((url) => !url.startsWith(origin) && !url.startsWith('blob:'))).toEqual([])

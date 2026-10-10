@@ -152,7 +152,7 @@ export function eventLocation(
 }
 
 /** The notes that say which of the span's times are our estimate. */
-export function estimateNotes(
+function estimateNotes(
   span: CalendarSpan,
   texts: Pick<CalendarTexts, 'startEstimated' | 'endEstimated'>,
 ): string[] {
