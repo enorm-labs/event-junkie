@@ -75,6 +75,56 @@ describe('toEventRequest', () => {
   })
 })
 
+describe('toEventRequest with a subtitle and description edit', () => {
+  const edit = { eventType: 'OTHER', genre: '' } as const
+
+  it('sends the typed subtitle and description, trimmed', () => {
+    const request = toEventRequest(adminEvent(), {
+      ...edit,
+      subtitle: ' Support: Karies ',
+      description: '\nEin Abend mit Die Nerven.\n',
+    })
+
+    expect(request).toMatchObject({
+      subtitle: 'Support: Karies',
+      description: 'Ein Abend mit Die Nerven.',
+    })
+  })
+
+  it('sends a cleared subtitle and description as null', () => {
+    const request = toEventRequest(adminEvent(), { ...edit, subtitle: ' ', description: '' })
+
+    expect(request.subtitle).toBeNull()
+    expect(request.description).toBeNull()
+  })
+
+  // A stored text the operator did not touch goes back byte for byte: trimming it would change
+  // the value and pin the field (ADR-042).
+  it('sends unchanged text back as it was read, untrimmed', () => {
+    const event = adminEvent({ subtitle: 'Tour 2026 ', description: 'Noise rock.\n\n' })
+
+    const request = toEventRequest(event, {
+      ...edit,
+      subtitle: 'Tour 2026 ',
+      description: 'Noise rock.\n\n',
+    })
+
+    expect(request.subtitle).toBe('Tour 2026 ')
+    expect(request.description).toBe('Noise rock.\n\n')
+  })
+
+  it('keeps an empty stored text null when the field stays empty', () => {
+    const request = toEventRequest(adminEvent({ subtitle: null, description: null }), {
+      ...edit,
+      subtitle: '',
+      description: '',
+    })
+
+    expect(request.subtitle).toBeNull()
+    expect(request.description).toBeNull()
+  })
+})
+
 describe('toEventRequest with a lineup and promoter edit', () => {
   it('sends the edited lineup and promoters in place of the stored ones', () => {
     const request = toEventRequest(adminEvent(), {
@@ -243,6 +293,16 @@ describe('toCreateRequest', () => {
     })
   })
 
+  it('sends the subtitle and description, trimmed', () => {
+    const request = toCreateRequest(
+      newEventForm({ subtitle: ' Vinyl only ', description: ' Bring your records.\n' }),
+      'kulturhaus-x',
+    )
+
+    expect(request.subtitle).toBe('Vinyl only')
+    expect(request.description).toBe('Bring your records.')
+  })
+
   it('sends blank optional fields as null', () => {
     const request = toCreateRequest(newEventForm({ free: true }), 'kulturhaus-x')
 
@@ -250,6 +310,8 @@ describe('toCreateRequest', () => {
       doorsTime: null,
       startTime: null,
       genre: null,
+      subtitle: null,
+      description: null,
       ticketUrl: null,
       sourceUrl: null,
       pricePresale: null,

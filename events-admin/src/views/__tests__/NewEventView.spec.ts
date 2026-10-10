@@ -128,6 +128,35 @@ describe('NewEventView', () => {
     expect(field('title').value).toBe('Open Decks')
   })
 
+  it('POSTs the subtitle and the description', async () => {
+    api.createEvent.mockResolvedValue(saved())
+    await mountView()
+    await fill({ subtitle: 'Vinyl only', description: 'Bring your records.\nDecks from 21:00.' })
+
+    await submitWith('save')
+
+    expect(api.createEvent.mock.calls[0]![0]).toMatchObject({
+      subtitle: 'Vinyl only',
+      description: 'Bring your records.\nDecks from 21:00.',
+    })
+  })
+
+  it('POSTs an empty subtitle and description as null', async () => {
+    api.createEvent.mockResolvedValue(saved())
+    await mountView()
+
+    await submitWith('save')
+
+    expect(api.createEvent.mock.calls[0]![0]).toMatchObject({ subtitle: null, description: null })
+  })
+
+  it('tells the operator to write the description in their own words', async () => {
+    await mountView()
+
+    const hint = body().querySelector(`#${field('description').getAttribute('aria-describedby')}`)
+    expect(hint!.textContent).toContain('your own words')
+  })
+
   it('shows the detail of a refused request next to the form', async () => {
     api.createEvent.mockRejectedValue(
       new Error(
@@ -148,7 +177,13 @@ describe('NewEventView', () => {
   it('"Save and add another" clears every field except the venue and the date', async () => {
     api.createEvent.mockResolvedValue(saved())
     await mountView()
-    await fill({ eventType: 'PARTY', ticketUrl: 'https://t.example.org', doorsTime: '20:00' })
+    await fill({
+      eventType: 'PARTY',
+      ticketUrl: 'https://t.example.org',
+      doorsTime: '20:00',
+      subtitle: 'Vinyl only',
+      description: 'Bring your records.',
+    })
 
     await submitWith('saveAndAddAnother')
 
@@ -157,6 +192,8 @@ describe('NewEventView', () => {
     expect(field('eventDate').value).toBe('2026-11-14')
     for (const name of [
       'title',
+      'subtitle',
+      'description',
       'doorsTime',
       'startTime',
       'genre',

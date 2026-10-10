@@ -13,6 +13,7 @@ import {
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 const selectClass =
   'h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
@@ -163,6 +164,16 @@ async function save(addAnother: boolean) {
       <span class="text-sm font-medium">Title</span>
       <Input id="new-event-title" v-model="form.title" maxlength="255" name="title" required />
     </label>
+    <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-subtitle">
+      <span class="text-sm font-medium">Subtitle</span>
+      <Input
+        id="new-event-subtitle"
+        v-model="form.subtitle"
+        maxlength="500"
+        name="subtitle"
+        placeholder="No subtitle"
+      />
+    </label>
 
     <label class="flex flex-col gap-1.5" for="new-event-date">
       <span class="text-sm font-medium">Date</span>
@@ -226,6 +237,23 @@ async function save(addAnother: boolean) {
         placeholder="The Instagram post or flyer the event comes from"
         type="url"
       />
+    </label>
+
+    <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-description">
+      <span class="text-sm font-medium">Description</span>
+      <Textarea
+        id="new-event-description"
+        v-model="form.description"
+        aria-describedby="new-event-description-hint"
+        class="max-h-80"
+        maxlength="10000"
+        name="description"
+        rows="4"
+      />
+      <span id="new-event-description-hint" class="text-xs text-muted-foreground">
+        Write it in your own words. Do not paste the venue's text: its licence can forbid that or
+        ask for a credit.
+      </span>
     </label>
 
     <div class="flex flex-col gap-2 sm:col-span-2">

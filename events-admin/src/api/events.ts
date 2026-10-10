@@ -98,6 +98,10 @@ export interface EventEdit {
   eventType: EventType
   /** Blank clears the genre. */
   genre: string
+  /** The subtitle as typed. Blank clears it; left out, or as read, the stored value goes back. */
+  subtitle?: string
+  /** The description as typed. Blank clears it; left out, or as read, the stored value goes back. */
+  description?: string
   /** The lineup to save. Left out, the stored lineup goes back. */
   artists?: EventArtist[]
   /** The promoters to save. Left out, the stored promoters go back. */
@@ -114,8 +118,8 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
   return {
     venueId: event.venueId,
     title: event.title,
-    subtitle: event.subtitle,
-    description: event.description,
+    subtitle: editedText(edit.subtitle, event.subtitle),
+    description: editedText(edit.description, event.description),
     eventType: edit.eventType,
     status: event.status,
     eventDate: event.eventDate,
@@ -141,6 +145,16 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
     })),
     promoterIds: edit.promoterIds ?? event.promoterIds,
   }
+}
+
+/**
+ * The value to send for a text field shown as [stored] and typed as [typed]. Text the operator did
+ * not change goes back as it was read, untrimmed, so it pins nothing; changed text is trimmed, and
+ * blank is null.
+ */
+function editedText(typed: string | undefined, stored: string | null): string | null {
+  if (typed === undefined || typed === (stored ?? '')) return stored
+  return blankToNull(typed)
 }
 
 interface ProblemDetail {
@@ -251,6 +265,8 @@ export interface NewEventForm {
   startTime: string
   eventType: EventType
   genre: string
+  subtitle: string
+  description: string
   ticketUrl: string
   sourceUrl: string
   pricePresale: string
@@ -267,6 +283,8 @@ export function emptyNewEventForm(): NewEventForm {
     startTime: '',
     eventType: 'CONCERT',
     genre: '',
+    subtitle: '',
+    description: '',
     ticketUrl: '',
     sourceUrl: '',
     pricePresale: '',
@@ -290,8 +308,9 @@ export function parsePrice(value: string): number | null {
 }
 
 /**
- * The POST body for [form] at the venue with [venueSlug]. A hand-entered event has no
- * description, image, lineup or promoters: those wait for the name search of #345.
+ * The POST body for [form] at the venue with [venueSlug]. A hand-entered event has no image,
+ * lineup or promoters: the image needs a licence credit (ADR-036), and the lineup and promoters
+ * are set in the event editor (#345).
  */
 export function toCreateRequest(form: NewEventForm, venueSlug: string): EventRequest {
   if (form.venueId === null) throw new Error('Pick a venue.')
@@ -301,8 +320,8 @@ export function toCreateRequest(form: NewEventForm, venueSlug: string): EventReq
   return {
     venueId: form.venueId,
     title,
-    subtitle: null,
-    description: null,
+    subtitle: blankToNull(form.subtitle),
+    description: blankToNull(form.description),
     eventType: form.eventType,
     status: 'SCHEDULED',
     eventDate: form.eventDate,

@@ -146,6 +146,81 @@ describe('EventEditor', () => {
     expect(body().textContent).toContain('None.')
   })
 
+  describe('subtitle and description', () => {
+    const described: AdminEvent = {
+      ...stored,
+      subtitle: 'Wüst Tour 2026',
+      description: 'Noise rock from Stuttgart.\n',
+    }
+
+    /** Types [value] into the field [name], an input or a textarea. */
+    async function type(name: string, value: string) {
+      const field = body().querySelector<HTMLInputElement | HTMLTextAreaElement>(
+        `[name="${name}"]`,
+      )!
+      field.value = value
+      field.dispatchEvent(new Event('input'))
+      await flushPromises()
+    }
+
+    it('shows the stored subtitle and description', async () => {
+      await mountEditor(described)
+
+      expect(body().querySelector<HTMLInputElement>('input[name="subtitle"]')!.value).toBe(
+        'Wüst Tour 2026',
+      )
+      expect(body().querySelector<HTMLTextAreaElement>('textarea[name="description"]')!.value).toBe(
+        'Noise rock from Stuttgart.\n',
+      )
+    })
+
+    it('saves a set subtitle and description in the PUT body', async () => {
+      api.updateEvent.mockResolvedValue(described)
+      await mountEditor()
+
+      await type('subtitle', 'Wüst Tour 2026')
+      await type('description', 'Ein Abend mit Die Nerven aus Stuttgart.')
+      await submit()
+
+      expect(api.updateEvent.mock.calls[0]![1]).toMatchObject({
+        title: 'Die Nerven',
+        subtitle: 'Wüst Tour 2026',
+        description: 'Ein Abend mit Die Nerven aus Stuttgart.',
+      })
+    })
+
+    it('saves a cleared subtitle and description as null', async () => {
+      api.updateEvent.mockResolvedValue(stored)
+      await mountEditor(described)
+
+      await type('subtitle', '')
+      await type('description', '  ')
+      await submit()
+
+      expect(api.updateEvent.mock.calls[0]![1]).toMatchObject({ subtitle: null, description: null })
+    })
+
+    it('sends an untouched subtitle and description back as they were read', async () => {
+      api.updateEvent.mockResolvedValue(described)
+      await mountEditor(described)
+
+      await submit()
+
+      expect(api.updateEvent.mock.calls[0]![1]).toMatchObject({
+        subtitle: 'Wüst Tour 2026',
+        description: 'Noise rock from Stuttgart.\n',
+      })
+    })
+
+    it('tells the operator to write the description in their own words', async () => {
+      await mountEditor()
+
+      expect(body().querySelector('#edit-description-hint')!.textContent).toContain(
+        'your own words',
+      )
+    })
+  })
+
   describe('lineup and promoters', () => {
     const booked: AdminEvent = {
       ...stored,
