@@ -70,5 +70,7 @@ python3 scripts/musicbrainz-review.py apply <env> temp/musicbrainz-review-<env>-
 python3 scripts/musicbrainz-review.py apply <env> temp/musicbrainz-review-<env>-<date>.tsv --apply  # writes
 ```
 
-When the operator asks you to apply, run the dry run first and show it. Then run `--apply`. A `DRIFT` line means a field besides the MBID changed. Report it,
-because the artist PUT replaces every field it is sent.
+When the operator asks you to apply, run the dry run first and show it. Then run `--apply`. Both read each artist's match first and print
+`skipped <id>: no longer AMBIGUOUS (<match>)` for a row someone settled since the file was written; a skip does not fail the run. For each other row,
+`--apply` sends one `PUT /api/admin/artists/{id}/musicbrainz-id`, which stores the MBID as the EXACT match and changes no other field. A `NOT stored` line
+is a row the importer refused (404: no such artist, 400: not a lowercase UUID) or did not store. Report each skipped and each `NOT stored` row.
