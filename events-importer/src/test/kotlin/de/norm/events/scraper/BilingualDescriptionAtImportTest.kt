@@ -42,6 +42,29 @@ class BilingualDescriptionAtImportTest {
         row.descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
     }
 
+    // The rule the venue draws above its ENGLISH heading ends neither half (#3062).
+    @Test
+    fun `Eschschloraque Rümschrümp's German half ends with its text, not the rule above the heading`() {
+        val row = stored("eschschloraque-rumschrump-deep-thoughts.txt", "eschschloraque-rumschrump")
+
+        row.description!! shouldEndWith "Hauptsache, ihr seid bereit zum Abquizzen."
+        row.descriptionAlt!! shouldStartWith "DEEP THOUGHTS"
+    }
+
+    // Badehaus opens the text with a rule of tildes, in both languages, on production on 2026-10-10.
+    @Test
+    fun `Badehaus's description and second language lose the rule they open with`() {
+        val text = fixture("badehaus-call-me-maybe.txt")
+        val alt = text.replace("Tickets At The Door", "Tickets An Der Tür")
+
+        val row = scraped(text).toEventEntity(venueId = 1L, venueSlug = "badehaus", eventSourceId = 1L)
+
+        val description = row.description.shouldNotBeNull()
+        description shouldStartWith "„Hey, I just met you"
+        description shouldEndWith "made with love by Berlin Pop Nights"
+        trimEdgeRules(alt) shouldStartWith "„Hey, I just met you"
+    }
+
     // Spanish is neither of the two languages the schema stores (#330).
     @Test
     fun `SO36's Spanish and English text comes back unchanged`() {

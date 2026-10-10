@@ -70,7 +70,7 @@ private data class Cut(
         val confirmed = halves.size == 2 && halves.all { (language, lines) -> detect(lines) == language }
         if (!confirmed) return null
         val (first, second) = halves.keys.toList()
-        val compose = { language: DescriptionLanguage -> (head + halves.getValue(language) + tail).joinToString("\n") }
+        val compose = { language: DescriptionLanguage -> trimEdgeRules((head + halves.getValue(language) + tail).joinToString("\n")) }
         return BilingualDescription(original = compose(first), alt = compose(second))
     }
 
@@ -84,6 +84,22 @@ private data class Cut(
             sections to emptyList()
         }
     }
+}
+
+/**
+ * [text] without the rule lines (`____`, `~~~~`) and the blank lines beside them at its start and end.
+ * A rule between two paragraphs is the venue's layout and stays. A text of only rules is returned
+ * as it is.
+ */
+fun trimEdgeRules(text: String): String {
+    val lines = text.lines()
+    val first = lines.indexOfFirst { it.isNotBlank() && !RULE.matches(it) }
+    if (first < 0) return text
+    val last = lines.indexOfLast { it.isNotBlank() && !RULE.matches(it) }
+    // Only a side that holds a rule is trimmed, so a text with none comes back byte for byte.
+    val start = if (lines.subList(0, first).any { RULE.matches(it) }) first else 0
+    val end = if (lines.subList(last + 1, lines.size).any { RULE.matches(it) }) last + 1 else lines.size
+    return if (start == 0 && end == lines.size) text else lines.subList(start, end).joinToString("\n")
 }
 
 /** The cut at headings and separators, or null when the text has none. */
@@ -160,6 +176,9 @@ private val POINTER =
             """(?:english|german)(?:\s+version)?\s+below|deutsche\s+version\s+unten)\s*[\])]?""",
         RegexOption.IGNORE_CASE
     )
+
+/** A line drawn as a rule: three or more rule characters and nothing else. */
+private val RULE = Regex("""\s*[_\-–—*=~#•·]{3,}\s*""")
 
 /** Fewer trailing lines than this are the second half's own sign-off, not a shared line-up. */
 private const val MIN_TAIL_LINES = 2

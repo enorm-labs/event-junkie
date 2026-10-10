@@ -101,6 +101,29 @@ class BilingualDescriptionTest {
     }
 
     @Test
+    fun `a rule at the heading ends neither half`() {
+        val split = splitBilingualDescription("$GERMAN\n__________\nENGLISH:\n$ENGLISH\n~~~~~~").shouldNotBeNull()
+
+        split.original shouldBe GERMAN
+        split.alt shouldBe ENGLISH
+    }
+
+    @Test
+    fun `trimEdgeRules drops rules at the edges and keeps one between paragraphs`() {
+        trimEdgeRules("~~~~~~\n\n$ENGLISH\n\n=====\n***\n") shouldBe ENGLISH
+        // A spaced-out rule is not one: the line could be a row of separators between names.
+        trimEdgeRules("— — —\n$GERMAN\n•••") shouldBe "— — —\n$GERMAN"
+        trimEdgeRules("$GERMAN\n-----\n$ENGLISH") shouldBe "$GERMAN\n-----\n$ENGLISH"
+    }
+
+    @Test
+    fun `trimEdgeRules returns a text with no edge rule, or nothing but rules, unchanged`() {
+        trimEdgeRules("\n$GERMAN\n") shouldBe "\n$GERMAN\n"
+        trimEdgeRules("--\n$GERMAN\n##") shouldBe "--\n$GERMAN\n##"
+        trimEdgeRules("_____\n\n~~~~~") shouldBe "_____\n\n~~~~~"
+    }
+
+    @Test
     fun `withBilingualDescriptionSplit fills the alt text and leaves a scraper's own alone`() {
         val event =
             ScrapedEvent(
