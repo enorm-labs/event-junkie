@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EventWhen from '@/components/EventWhen.vue'
 import type { EventDetail } from '@/api/types'
+import { i18n } from '@/i18n'
 
 /** The event page's When block: one line per time the event has, and none for a time it lacks (#2565). */
 
@@ -14,11 +15,15 @@ function lines(event: EventDetail): string[] {
     .map((line) => line.text())
 }
 
+afterEach(() => {
+  i18n.global.locale.value = 'en'
+})
+
 describe('EventWhen', () => {
   it('shows the doors and no start when the venue published only the doors', () => {
     const shown = lines({ ...base, doorsTime: '19:00:00' })
 
-    expect(shown).toHaveLength(2)
+    expect(shown).toHaveLength(3)
     expect(shown[1]).toBe('Doors 19:00')
     expect(shown.join(' ')).not.toContain('Start')
   })
@@ -26,7 +31,7 @@ describe('EventWhen', () => {
   it('shows the start and no doors when the venue published only the start', () => {
     const shown = lines({ ...base, startTime: '21:00:00' })
 
-    expect(shown).toHaveLength(2)
+    expect(shown).toHaveLength(3)
     expect(shown[1]).toBe('Start 21:00')
     expect(shown.join(' ')).not.toContain('Doors')
   })
@@ -34,7 +39,7 @@ describe('EventWhen', () => {
   it('marks a start we estimated as our estimate', () => {
     const shown = lines({ ...base, assumedStartTime: '23:00:00' })
 
-    expect(shown).toHaveLength(2)
+    expect(shown).toHaveLength(3)
     expect(shown[1]).toBe('Start ~23:00 · our estimate')
   })
 
@@ -56,6 +61,55 @@ describe('EventWhen', () => {
 
   it('shows the date alone when no time was announced', () => {
     expect(lines(base)).toHaveLength(1)
+  })
+
+  it('says the end was not announced when the venue stated a start and no end', () => {
+    const shown = lines({ ...base, startTime: '23:00:00' })
+
+    expect(shown.slice(1)).toEqual(['Start 23:00', 'End not announced'])
+  })
+
+  it('says it in German on the German page', () => {
+    i18n.global.locale.value = 'de'
+
+    expect(lines({ ...base, startTime: '23:00:00' })).toContain('Ende nicht bekannt gegeben')
+  })
+
+  it('styles the line muted, like the estimate note', () => {
+    const line = mount(EventWhen, { props: { event: { ...base, startTime: '23:00:00' } } })
+      .findAll('p')
+      .find((p) => p.text() === 'End not announced')
+
+    expect(line?.classes()).toContain('text-muted-foreground')
+  })
+
+  it.each(['en', 'de'] as const)(
+    'says nothing about the end when the venue stated one (%s)',
+    (locale) => {
+      i18n.global.locale.value = locale
+      const shown = lines({
+        ...base,
+        startTime: '23:00:00',
+        endDate: '2026-06-13',
+        endTime: '06:00:00',
+      })
+
+      expect(shown.join(' ')).not.toMatch(/End not announced|Ende nicht bekannt gegeben/)
+    },
+  )
+
+  it.each(['en', 'de'] as const)(
+    'says nothing about the end of a run of whole days (%s)',
+    (locale) => {
+      i18n.global.locale.value = locale
+      const shown = lines({ ...base, endDate: '2026-06-14' })
+
+      expect(shown.join(' ')).not.toMatch(/End not announced|Ende nicht bekannt gegeben/)
+    },
+  )
+
+  it('says nothing about the end of a day with no time at all', () => {
+    expect(lines(base).join(' ')).not.toContain('End not announced')
   })
 
   describe('changes (#2725)', () => {

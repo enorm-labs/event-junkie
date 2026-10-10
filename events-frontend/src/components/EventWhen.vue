@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { EventDetail } from '@/api/types'
+import { eventCalendarSpan } from '@/lib/addToCalendar'
 import { formatTime } from '@/lib/format'
 import { useEventChanges } from '@/composables/useEventChanges'
 import { useFormat } from '@/composables/useFormat'
@@ -35,6 +36,11 @@ const end = computed(() => {
 
 // The venue change sits under the venue's name instead (#2725).
 const changes = computed(() => changeLines(props.event.changes, (field) => field !== 'VENUE'))
+// The calendar entry's own test, so the page and the entry never disagree; whole days get no line.
+const endNotAnnounced = computed(() => {
+  const span = eventCalendarSpan(props.event)
+  return !end.value && !!span && !span.allDay && span.endEstimated
+})
 </script>
 
 <template>
@@ -49,6 +55,9 @@ const changes = computed(() => changeLines(props.event.changes, (field) => field
       >
     </p>
     <p v-if="end" class="text-body">{{ end }}</p>
+    <p v-if="endNotAnnounced" class="text-body text-muted-foreground">
+      {{ t('events.detail.when.endNotAnnounced') }}
+    </p>
     <ul v-if="changes.length" :aria-label="t('events.detail.when.changesLabel')" class="pt-1">
       <li v-for="(change, index) in changes" :key="index" class="text-body">
         <span class="font-medium">{{ change.text }}</span

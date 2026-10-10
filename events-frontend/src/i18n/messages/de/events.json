@@ -122,7 +122,8 @@
           "RELOCATED": "Verlegt",
           "SCHEDULED": "Findet wieder statt"
         }
-      }
+      },
+      "endNotAnnounced": "Ende nicht bekannt gegeben"
     },
     "promoters": "Veranstalter",
     "buyTickets": "Tickets kaufen",

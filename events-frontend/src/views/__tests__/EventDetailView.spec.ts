@@ -184,6 +184,22 @@ describe('EventDetailView', () => {
     expect(hrefOf(view, 'Bandcamp')).toBe('https://mock-artist.bandcamp.com/')
   })
 
+  it('says the end was not announced in the When block, not under the buttons', async () => {
+    const view = await mountEvent({ ...night, startTime: '23:00:00' })
+
+    expect(view.text()).toContain('End not announced')
+    expect(view.text()).not.toContain('the calendar entry ends at our estimate')
+  })
+
+  it('marks an estimated start in the When block only, with no note under the buttons', async () => {
+    const view = await mountEvent({ ...night, assumedStartTime: '23:00:00' })
+
+    const when = view.findAll('p').map((p) => p.text())
+    expect(when).toContain('Start ~23:00 · our estimate')
+    expect(view.text()).not.toContain('The start time is our estimate.')
+    expect(view.text()).not.toContain('the calendar entry ends at our estimate')
+  })
+
   describe('venue change (#2725)', () => {
     const moved: EventDetail = {
       ...night,

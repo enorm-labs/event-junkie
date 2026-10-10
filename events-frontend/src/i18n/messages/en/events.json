@@ -122,7 +122,8 @@
           "RELOCATED": "Relocated",
           "SCHEDULED": "On again"
         }
-      }
+      },
+      "endNotAnnounced": "End not announced"
     },
     "promoters": "Promoters",
     "buyTickets": "Buy tickets",

@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { EventDetail } from '@/api/types'
 import {
-  estimateNotes,
   eventCalendarEntry,
   googleCalendarUrl,
   toIcs,
@@ -64,7 +63,8 @@ const calendarTexts = computed((): CalendarTexts => ({
   endEstimated: t('events.detail.share.endEstimated'),
 }))
 
-// A cancelled or postponed night, or one that is over, is nothing to put in a calendar.
+// A cancelled or postponed night, or one that is over, is nothing to put in a calendar. The
+// estimate notes go only into the entry; the page says them in the When block (EventWhen).
 const calendarEntry = computed((): CalendarEntry | null => {
   const event = props.event
   if (isPastEvent(event) || event.status === 'CANCELLED' || event.status === 'POSTPONED')
@@ -72,9 +72,6 @@ const calendarEntry = computed((): CalendarEntry | null => {
   return eventCalendarEntry(event, pageUrl.value, calendarTexts.value)
 })
 
-const notes = computed(() =>
-  calendarEntry.value ? estimateNotes(calendarEntry.value.span, calendarTexts.value) : [],
-)
 const googleUrl = computed(() =>
   calendarEntry.value ? googleCalendarUrl(calendarEntry.value) : null,
 )
@@ -130,7 +127,6 @@ function downloadIcs(): void {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-    <p v-if="notes.length" class="text-meta text-muted-foreground">{{ notes.join(' ') }}</p>
     <p class="text-body text-muted-foreground" role="status">{{ status }}</p>
   </section>
 </template>
