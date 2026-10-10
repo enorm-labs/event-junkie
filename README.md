@@ -192,7 +192,7 @@ the [ADRs](./docs/adr).
 
 With a service running, Swagger UI is at:
 
-- **events-bff** — <http://localhost:8080/webjars/swagger-ui/index.html>
+- **events-bff** — <http://localhost:8080/swagger-ui/index.html>
 - **events-importer** — <http://localhost:8081/webjars/swagger-ui/index.html>
 
 The OpenAPI document is at `/v3/api-docs` on each port. Request files for both services live in

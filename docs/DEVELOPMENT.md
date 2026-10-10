@@ -252,7 +252,7 @@ the two disagree. A branch that still edits the old file rebases as `docs/WORKTR
 
 With a service running:
 
-- **events-bff** — <http://localhost:8080/webjars/swagger-ui/index.html>
+- **events-bff** — <http://localhost:8080/swagger-ui/index.html>
 - **events-importer** — <http://localhost:8081/webjars/swagger-ui/index.html>
 
 The OpenAPI document (JSON) is at `/v3/api-docs` on each port. **The BFF's document is also the source of the

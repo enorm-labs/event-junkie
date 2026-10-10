@@ -1,6 +1,11 @@
 spring:
   application:
     name: events-bff
+  # The BFF serves JSON only. Boot's default catch-all resource handler logged a WARN for every scanner
+  # traversal probe before the 404 (#3075). Swagger UI is served by springdoc's own handler.
+  web:
+    resources:
+      add-mappings: false
   r2dbc:
     properties:
       schema: events

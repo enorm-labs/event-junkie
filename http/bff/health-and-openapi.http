@@ -21,7 +21,7 @@ GET {{bff-host}}/v3/api-docs
 Accept: application/json
 
 ### Swagger UI (open in browser)
-GET {{bff-host}}/webjars/swagger-ui/index.html
+GET {{bff-host}}/swagger-ui/index.html
 
 ### Hello endpoint (internal smoke test)
 GET {{bff-host}}/hello
