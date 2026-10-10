@@ -151,6 +151,10 @@ class EventService(
      * Replaces all fields and associations of an existing event, delete-and-reinsert within one
      * transaction.
      *
+     * The lineup is replaced too, but `event_artist.title_derived`, `set_start` and `set_end` are
+     * importer-owned: [EventArtistRequest] does not carry them, so each row takes them from the
+     * stored row of the same artist (#3026). An artist new to the lineup gets the defaults.
+     *
      * @throws EventNotFoundException if no event with the given [id] exists.
      * @throws VenueNotFoundException if the referenced venue does not exist.
      * @throws ArtistNotFoundException if any referenced artist does not exist.
@@ -176,9 +180,10 @@ class EventService(
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
 
-        // Replace artist associations: delete existing, insert new
+        // Replace artist associations: delete existing, insert new with the importer-owned columns kept
+        val previousLineup = eventArtistRepository.findByEventId(id).toList()
         eventArtistRepository.deleteByEventId(id)
-        val artistResponses = saveArtistAssociations(id, request.artists)
+        val artistResponses = saveArtistAssociations(id, request.artists, previousLineup)
 
         // Replace promoter associations: delete existing, insert new
         eventPromoterRepository.deleteByEventId(id)
@@ -209,11 +214,13 @@ class EventService(
 
     /**
      * Validates that all referenced artists exist in one [findAllById] query, persists the
-     * associations, and returns the [EventArtistResponse] list.
+     * associations with the importer-owned columns of [previousLineup] (see [toEventArtistEntity]),
+     * and returns the [EventArtistResponse] list.
      */
     private suspend fun saveArtistAssociations(
         eventId: Long,
-        artists: List<EventArtistRequest>
+        artists: List<EventArtistRequest>,
+        previousLineup: List<EventArtistEntity> = emptyList()
     ): List<EventArtistResponse> {
         if (artists.isEmpty()) return emptyList()
 
@@ -229,21 +236,10 @@ class EventService(
         if (missingIds.isNotEmpty()) throw ArtistNotFoundException(missingIds.first())
 
         // Batch-persist all associations in a single saveAll call
-        val entities =
-            artists.map { artistReq ->
-                EventArtistEntity(
-                    eventId = eventId,
-                    artistId = artistReq.artistId,
-                    role = artistReq.role.name,
-                    billingOrder = artistReq.billingOrder,
-                    stage = artistReq.stage
-                )
-            }
+        val entities = artists.map { it.toEventArtistEntity(eventId, previousLineup) }
         eventArtistRepository.saveAll(entities).toList()
 
-        return artists.map {
-            EventArtistResponse(artistId = it.artistId, role = it.role, billingOrder = it.billingOrder, stage = it.stage)
-        }
+        return entities.map { EventArtistResponse.fromEntity(it) }
     }
 
     /**
@@ -371,6 +367,30 @@ internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity 
         descriptionAltRefusedHash = existing.descriptionAltRefusedHash.takeIf { sameDescription },
         endDate = existing.endDate.takeIf { endStillValid },
         endTime = existing.endTime.takeIf { endStillValid }
+    )
+}
+
+/**
+ * This lineup row as an [EventArtistEntity] of event [eventId], with the importer-owned columns
+ * (`title_derived`, `set_start`, `set_end`) taken from the row of the same artist in
+ * [previousLineup] (#3026). An artist listed twice there is matched on its role as well; one not
+ * in it gets the column defaults.
+ */
+internal fun EventArtistRequest.toEventArtistEntity(
+    eventId: Long,
+    previousLineup: List<EventArtistEntity>
+): EventArtistEntity {
+    val sameArtist = previousLineup.filter { it.artistId == artistId }
+    val previous = sameArtist.singleOrNull() ?: sameArtist.firstOrNull { it.role == role.name }
+    return EventArtistEntity(
+        eventId = eventId,
+        artistId = artistId,
+        role = role.name,
+        billingOrder = billingOrder,
+        stage = stage,
+        titleDerived = previous?.titleDerived ?: false,
+        setStart = previous?.setStart,
+        setEnd = previous?.setEnd
     )
 }
 

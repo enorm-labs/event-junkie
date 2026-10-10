@@ -82,6 +82,102 @@ class EventControllerTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
+    private fun putEvent(
+        id: Long,
+        request: EventRequest
+    ) {
+        webTestClient
+            .put()
+            .uri("/api/admin/events/$id")
+            .bodyValue(request)
+            .exchange()
+            .expectStatus()
+            .isOk
+    }
+
+    // -- Helper methods for the importer-owned lineup columns (#3026) --
+
+    private data class DerivedColumns(
+        val titleDerived: Boolean,
+        val setStart: Instant?,
+        val setEnd: Instant?
+    )
+
+    private data class LineupRow(
+        val role: String,
+        val billingOrder: Int,
+        val derived: DerivedColumns
+    )
+
+    /** What the "import" below writes onto lineup row [index]: a distinct value per row, so a swap shows. */
+    private fun importedColumns(index: Int): DerivedColumns {
+        val start = Instant.parse("2026-10-03T22:00:00Z").plusSeconds(index * 3600L)
+        return DerivedColumns(titleDerived = true, setStart = start, setEnd = start.plusSeconds(3000))
+    }
+
+    /**
+     * An event with a headliner and a support act whose `title_derived`, `set_start` and `set_end`
+     * are set the way an import sets them; the admin API cannot write them.
+     */
+    private fun createEventWithImportedLineup(name: String): Triple<EventResponse, EventRequest, List<Long>> {
+        val venue = createVenue(VenueRequestFixtures.create(name = "Lineup Venue $name"))
+        val artists =
+            listOf(
+                createArtist(ArtistRequestFixtures.create(name = "Lineup Headliner $name")).id,
+                createArtist(ArtistRequestFixtures.create(name = "Lineup Support $name")).id
+            )
+        val request =
+            EventRequestFixtures.create(
+                venueId = venue.id,
+                sourceId = "test:put-lineup-$name",
+                artists =
+                    listOf(
+                        EventArtistRequest(artistId = artists[0], role = ArtistRole.HEADLINER, billingOrder = 0),
+                        EventArtistRequest(artistId = artists[1], role = ArtistRole.SUPPORT, billingOrder = 1)
+                    )
+            )
+        val created = createEvent(request)
+        runBlocking {
+            artists.forEachIndexed { index, artistId ->
+                val columns = importedColumns(index)
+                databaseClient
+                    .sql(
+                        "UPDATE events.event_artist SET title_derived = true, set_start = :start, set_end = :end " +
+                            "WHERE event_id = :event AND artist_id = :artist"
+                    ).bind("start", columns.setStart!!)
+                    .bind("end", columns.setEnd!!)
+                    .bind("event", created.id)
+                    .bind("artist", artistId)
+                    .await()
+            }
+        }
+        lineupRows(created.id).values.map { it.derived } shouldContainExactlyInAnyOrder listOf(importedColumns(0), importedColumns(1))
+        return Triple(created, request, artists)
+    }
+
+    private fun lineupRows(eventId: Long): Map<Long, LineupRow> =
+        runBlocking {
+            databaseClient
+                .sql("SELECT artist_id, role, billing_order, title_derived, set_start, set_end FROM events.event_artist WHERE event_id = :event")
+                .bind("event", eventId)
+                .fetch()
+                .all()
+                .collectList()
+                .awaitSingle()
+        }.associate { row ->
+            (row["artist_id"] as Number).toLong() to
+                LineupRow(
+                    role = row["role"] as String,
+                    billingOrder = (row["billing_order"] as Number).toInt(),
+                    derived =
+                        DerivedColumns(
+                            titleDerived = row["title_derived"] as Boolean,
+                            setStart = (row["set_start"] as OffsetDateTime?)?.toInstant(),
+                            setEnd = (row["set_end"] as OffsetDateTime?)?.toInstant()
+                        )
+                )
+        }
+
     private fun deleteEvent(id: Long) {
         webTestClient
             .delete()
@@ -229,6 +325,63 @@ class EventControllerTest : BaseControllerTest() {
         row["nights"] shouldBe 1
         row["relocated_to"] shouldBe "Hole44"
         row["description_withheld"] shouldBe true
+    }
+
+    @Test
+    fun `PUT event with the lineup unchanged keeps each row's title_derived and set times`() {
+        val (created, request, artists) = createEventWithImportedLineup("unchanged")
+
+        putEvent(created.id, request.copy(title = "Edited title"))
+
+        val rows = lineupRows(created.id)
+        rows.keys shouldBe artists.toSet()
+        artists.forEachIndexed { index, artistId -> rows.getValue(artistId).derived shouldBe importedColumns(index) }
+    }
+
+    @Test
+    fun `PUT event gives an added artist the defaults and drops the row of a removed one`() {
+        val (created, request, artists) = createEventWithImportedLineup("added-removed")
+        val added = createArtist(ArtistRequestFixtures.create(name = "Lineup Newcomer")).id
+
+        putEvent(
+            created.id,
+            request.copy(
+                artists =
+                    listOf(
+                        EventArtistRequest(artistId = artists[0], role = ArtistRole.HEADLINER, billingOrder = 0),
+                        EventArtistRequest(artistId = added, role = ArtistRole.SUPPORT, billingOrder = 1)
+                    )
+            )
+        )
+
+        val rows = lineupRows(created.id)
+        rows.keys shouldBe setOf(artists[0], added)
+        rows.getValue(artists[0]).derived shouldBe importedColumns(0)
+        rows.getValue(added).derived shouldBe DerivedColumns(titleDerived = false, setStart = null, setEnd = null)
+    }
+
+    @Test
+    fun `PUT event that changes an artist's role and billing order keeps its title_derived and set times`() {
+        val (created, request, artists) = createEventWithImportedLineup("reordered")
+
+        putEvent(
+            created.id,
+            request.copy(
+                artists =
+                    listOf(
+                        EventArtistRequest(artistId = artists[1], role = ArtistRole.HEADLINER, billingOrder = 0),
+                        EventArtistRequest(artistId = artists[0], role = ArtistRole.SUPPORT, billingOrder = 1)
+                    )
+            )
+        )
+
+        val rows = lineupRows(created.id)
+        rows.getValue(artists[1]).role shouldBe ArtistRole.HEADLINER.name
+        rows.getValue(artists[1]).billingOrder shouldBe 0
+        rows.getValue(artists[1]).derived shouldBe importedColumns(1)
+        rows.getValue(artists[0]).role shouldBe ArtistRole.SUPPORT.name
+        rows.getValue(artists[0]).billingOrder shouldBe 1
+        rows.getValue(artists[0]).derived shouldBe importedColumns(0)
     }
 
     @Test

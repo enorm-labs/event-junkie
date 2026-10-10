@@ -11,8 +11,8 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 /**
- * Unit tests for [keepingDerivedFrom], which keeps an admin update from resetting what the importer
- * derived (#2249).
+ * Unit tests for [keepingDerivedFrom] and [toEventArtistEntity], which keep an admin update from
+ * resetting what the importer derived on the event (#2249) and on its lineup rows (#3026).
  */
 class EventUpdateKeepsDerivedColumnsTest {
     private val stored =
@@ -116,12 +116,48 @@ class EventUpdateKeepsDerivedColumnsTest {
         unset shouldBe emptyList()
     }
 
+    @Test
+    fun `a lineup row keeps the stored row's importer-owned columns, matched on the artist`() {
+        val stored =
+            EventArtistEntity(id = 1, eventId = 7, artistId = 11, role = "HEADLINER", titleDerived = true, setStart = SET, setEnd = SET.plusSeconds(3600))
+
+        val row = EventArtistRequest(artistId = 11, role = ArtistRole.SUPPORT, billingOrder = 2).toEventArtistEntity(7, listOf(stored))
+
+        row shouldBe
+            EventArtistEntity(
+                eventId = 7,
+                artistId = 11,
+                role = "SUPPORT",
+                billingOrder = 2,
+                titleDerived = true,
+                setStart = SET,
+                setEnd = SET.plusSeconds(3600)
+            )
+    }
+
+    @Test
+    fun `an artist stored twice is matched on its role, and a new artist gets the defaults`() {
+        val headliner = EventArtistEntity(eventId = 7, artistId = 11, role = "HEADLINER", setStart = SET)
+        val support = EventArtistEntity(eventId = 7, artistId = 11, role = "SUPPORT", titleDerived = true, setStart = SET.plusSeconds(60))
+        val previous = listOf(headliner, support)
+
+        EventArtistRequest(artistId = 11, role = ArtistRole.SUPPORT).toEventArtistEntity(7, previous).setStart shouldBe SET.plusSeconds(60)
+        EventArtistRequest(artistId = 11, role = ArtistRole.HEADLINER).toEventArtistEntity(7, previous).setStart shouldBe SET
+
+        val newcomer = EventArtistRequest(artistId = 12).toEventArtistEntity(7, previous)
+        newcomer.titleDerived shouldBe false
+        newcomer.setStart.shouldBeNull()
+        newcomer.setEnd.shouldBeNull()
+    }
+
     private fun valueOf(
         entity: EventEntity,
         name: String
     ): Any? = EventEntity::class.memberProperties.single { it.name == name }.get(entity)
 
     private companion object {
+        val SET: Instant = Instant.parse("2026-10-03T22:00:00Z")
+
         /** Mapped by [EventRequest.toEventEntity]; the operator owns them. */
         val REQUEST_OWNED =
             setOf(
