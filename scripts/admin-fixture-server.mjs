@@ -61,6 +61,8 @@ async function resource(path) {
     found = parent?.content?.find((item) => item.slug === key || String(item.id) === key)
   }
   if (found === undefined) return undefined
+  // A bare array, such as venues/needs-review, has no items to overlay.
+  if (Array.isArray(found)) return found
   // A list shows the overlay of each item, so the row an action changed changes in it too.
   if (Array.isArray(found.content)) {
     found = { ...found, content: found.content.map((item) => ({ ...item, ...overlay.get(`${path}/${item.slug ?? item.id}`) })) }

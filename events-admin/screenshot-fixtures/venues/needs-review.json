@@ -1,0 +1,44 @@
+[
+  {
+    "venueId": 9101,
+    "slug": "funkloch",
+    "name": "Funkloch",
+    "websiteUrl": "https://funkloch.example/",
+    "programmeUrl": "https://funkloch.example/programm",
+    "reviewedAt": null,
+    "checkedAt": "2026-10-01T03:12:00Z",
+    "url": "https://funkloch.example/programm",
+    "outcome": "HTTP",
+    "httpStatus": 404,
+    "consecutiveFailures": 5,
+    "failingSince": "2026-06-01T03:05:00Z"
+  },
+  {
+    "venueId": 9102,
+    "slug": "kellerkind",
+    "name": "Kellerkind",
+    "websiteUrl": "https://kellerkind-berlin.example/",
+    "programmeUrl": null,
+    "reviewedAt": "2026-03-02T10:00:00Z",
+    "checkedAt": "2026-10-01T03:12:00Z",
+    "url": "https://kellerkind-berlin.example/",
+    "outcome": "DNS",
+    "httpStatus": null,
+    "consecutiveFailures": 4,
+    "failingSince": "2026-07-01T03:04:00Z"
+  },
+  {
+    "venueId": 9103,
+    "slug": "hinterhof-bar",
+    "name": "Hinterhof Bar",
+    "websiteUrl": "https://hinterhof-bar.example/",
+    "programmeUrl": "https://hinterhof-bar.example/events",
+    "reviewedAt": null,
+    "checkedAt": "2026-10-01T03:13:00Z",
+    "url": "https://hinterhof-bar.example/events",
+    "outcome": "TIMEOUT",
+    "httpStatus": null,
+    "consecutiveFailures": 3,
+    "failingSince": "2026-08-01T03:06:00Z"
+  }
+]

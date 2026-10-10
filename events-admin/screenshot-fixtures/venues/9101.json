@@ -1,0 +1,33 @@
+{
+  "id": 9101,
+  "name": "Funkloch",
+  "slug": "funkloch",
+  "address": "Revaler Str. 99",
+  "city": "Berlin",
+  "postalCode": "10245",
+  "district": "friedrichshain",
+  "latitude": 52.507242,
+  "longitude": 13.451803,
+  "websiteUrl": "https://funkloch.example/",
+  "instagramUrl": "https://www.instagram.com/funkloch.example/",
+  "facebookUrl": null,
+  "imageUrl": null,
+  "imageAttribution": null,
+  "imageLicenceId": null,
+  "imageSourceUrl": null,
+  "description": "A small club in a former bakery.",
+  "descriptionLanguage": "en",
+  "descriptionAlt": null,
+  "descriptionAltLanguage": null,
+  "venueTypes": [
+    "club"
+  ],
+  "capacity": 300,
+  "programmeFamilies": [],
+  "programmeEventTypes": [],
+  "programmeUrl": "https://funkloch.example/programm",
+  "reviewedAt": null,
+  "closedOn": null,
+  "createdAt": "2025-11-01T10:00:00Z",
+  "updatedAt": "2026-03-02T10:00:00Z"
+}

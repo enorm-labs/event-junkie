@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarPlus, Database, ListChecks, ShieldCheck } from '@lucide/vue'
+import { CalendarPlus, Database, GlobeX, ListChecks, ShieldCheck } from '@lucide/vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import {
@@ -17,6 +17,7 @@ import {
 const NAV = [
   { title: 'Sources', to: '/sources', icon: Database },
   { title: 'Worklist', to: '/worklist', icon: ListChecks },
+  { title: 'Venues to review', to: '/venues/review', icon: GlobeX },
   { title: 'New event', to: '/events/new', icon: CalendarPlus },
 ]
 

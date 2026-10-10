@@ -97,5 +97,16 @@
       "genreTags": [],
       "pinnedFields": []
     }
+  },
+  {
+    "method": "POST",
+    "path": "venues/site-check",
+    "status": 202
+  },
+  {
+    "method": "PUT",
+    "path": "venues/{id}",
+    "status": 200,
+    "body": "$merge"
   }
 ]

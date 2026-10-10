@@ -22,3 +22,14 @@ export function importerTarget(mode: string): string {
   }
   return `http://localhost:${IMPORTER_PORTS[mode]}`
 }
+
+/** The public site of each cluster, where a link to a venue page goes. */
+const PUBLIC_ORIGINS = {
+  staging: 'https://staging.event-junkie.de',
+  production: 'https://event-junkie.de',
+} as const
+
+/** The public site for [mode]. A build without a cluster, such as the screenshot fixtures, links production. */
+export function publicOrigin(mode: string): string {
+  return PUBLIC_ORIGINS[isEnvironment(mode) ? mode : 'production']
+}
