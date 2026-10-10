@@ -8,6 +8,7 @@ import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
 import de.norm.events.event.EventRepository
+import de.norm.events.promoter.PromoterEntity
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -123,6 +125,40 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                 listOf(scraped(sourceId, promoters = listOf("Wild Nights"), promoterWebsites = mapOf("Wild Nights" to "https://shop.example")))
             )
             promoterRepository.findBySlug("wild-nights")?.websiteUrl shouldBe "https://wild.example"
+        }
+    }
+
+    // #3027: `reviewed_at` means a person decided the promoter has no website (REVIEWED.tsv `none`).
+    @Test
+    fun `a venue's credit link does not fill a reviewed promoter that has no website`() {
+        runBlocking {
+            val sourceId = "promoter-reviewed:1"
+            val event = persistEvent(sourceId)
+            promoterRepository.save(PromoterEntity(name = "Boldt Berlin", slug = "boldt-berlin", reviewedAt = Instant.parse("2026-10-01T12:00:00Z")))
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, promoters = listOf("Boldt Berlin"), promoterWebsites = mapOf("Boldt Berlin" to "https://booking.example")))
+            )
+
+            promoterRepository.findBySlug("boldt-berlin")?.websiteUrl shouldBe null
+        }
+    }
+
+    // #3027: an existing row nobody reviewed keeps the #1319 fill-if-empty rule.
+    @Test
+    fun `a venue's credit link fills an unreviewed promoter that has no website`() {
+        runBlocking {
+            val sourceId = "promoter-unreviewed:1"
+            val event = persistEvent(sourceId)
+            promoterRepository.save(PromoterEntity(name = "Night Shift", slug = "night-shift"))
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, promoters = listOf("Night Shift"), promoterWebsites = mapOf("Night Shift" to "https://nightshift.example")))
+            )
+
+            promoterRepository.findBySlug("night-shift")?.websiteUrl shouldBe "https://nightshift.example"
         }
     }
 
