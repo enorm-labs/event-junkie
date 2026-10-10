@@ -61,5 +61,5 @@ because that is all the promoter has. No name disagreed. The `note` says which.
 
 **Bi Nuu, Lido and Astra link each promoter credit to its site.** The importer reads that link
 and writes it onto a promoter row that has none (#1319). A reviewed site in this table is never
-replaced by it, and a row reviewed as `none` stays without one: the importer skips every row with
-`reviewed_at` set (#3027).
+replaced by it. A row reviewed as `none` stays without a site too: the importer skips every row
+with `reviewed_at` set (#3027).
