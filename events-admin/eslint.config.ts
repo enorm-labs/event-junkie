@@ -29,6 +29,8 @@ export default defineConfigWithVueTs(
     files: ['src/components/ui/**/*.vue'],
     rules: {
       'vue/multi-word-component-names': 'off',
+      // A form control here is labelled where it is used: Textarea has no label of its own.
+      'vuejs-accessibility/form-control-has-label': 'off',
     },
   },
 

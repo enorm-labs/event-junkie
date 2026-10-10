@@ -17,6 +17,7 @@ import NamePicker from '@/components/NamePicker.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Sheet,
   SheetContent,
@@ -32,6 +33,8 @@ const emit = defineEmits<{ close: []; saved: [event: AdminEvent] }>()
 const event = ref<AdminEvent | null>(null)
 const eventType = ref<EventType>('OTHER')
 const genre = ref('')
+const subtitle = ref('')
+const description = ref('')
 const lineup = ref<EventArtist[]>([])
 const promoterIds = ref<number[]>([])
 /** Names by id, per kind. The event answer carries ids only. */
@@ -49,6 +52,8 @@ function show(loaded: AdminEvent) {
   event.value = loaded
   eventType.value = loaded.eventType
   genre.value = loaded.genre ?? ''
+  subtitle.value = loaded.subtitle ?? ''
+  description.value = loaded.description ?? ''
   lineup.value = [...loaded.artists]
     .sort((a, b) => a.billingOrder - b.billingOrder)
     .map(({ artistId, role, billingOrder, stage }) => ({ artistId, role, billingOrder, stage }))
@@ -133,6 +138,8 @@ function save() {
       toEventRequest(current, {
         eventType: eventType.value,
         genre: genre.value,
+        subtitle: subtitle.value,
+        description: description.value,
         artists: lineup.value,
         promoterIds: promoterIds.value,
       }),
@@ -169,6 +176,33 @@ function unpin(field: string) {
         <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
 
         <form v-if="event" class="flex flex-col gap-4" @submit.prevent="save">
+          <label class="flex flex-col gap-1.5" for="edit-subtitle">
+            <span class="text-sm font-medium">Subtitle</span>
+            <Input
+              id="edit-subtitle"
+              v-model="subtitle"
+              maxlength="500"
+              name="subtitle"
+              placeholder="No subtitle"
+            />
+          </label>
+          <label class="flex flex-col gap-1.5" for="edit-description">
+            <span class="text-sm font-medium">Description</span>
+            <Textarea
+              id="edit-description"
+              v-model="description"
+              aria-describedby="edit-description-hint"
+              class="max-h-80"
+              maxlength="10000"
+              name="description"
+              placeholder="No description"
+              rows="4"
+            />
+            <span id="edit-description-hint" class="text-xs text-muted-foreground">
+              Write it in your own words. Do not paste the venue's text: its licence can forbid that
+              or ask for a credit.
+            </span>
+          </label>
           <label class="flex flex-col gap-1.5" for="edit-event-type">
             <span class="text-sm font-medium">Event type</span>
             <select
