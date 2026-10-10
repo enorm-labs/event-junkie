@@ -19,6 +19,9 @@ import tools.jackson.databind.json.JsonMapper
 
 private const val EVENTS_KEY = "events"
 
+/** What the page renders in place of the list when the venue has no dates; the payload then has no [EVENTS_KEY]. */
+private const val EMPTY_STATE_TEXT = "No upcoming events."
+
 /**
  * Pure parser for Zur Klappe's programme, read from the Next.js flight payload of `/events`. The
  * cards print `SAT, 03 OCT` with no year, while the payload holds `date` as `DD.MM.YYYY`, the
@@ -36,7 +39,11 @@ class ZurKlappeOverviewPageScraper {
     ): List<ScrapedEvent> {
         val events = jsonArrayAt(nextFlightPayload(document), EVENTS_KEY)
         if (events == null) {
-            logger.warn { "No events array in Zur Klappe's flight payload" }
+            if (document.select("p").any { it.text() == EMPTY_STATE_TEXT }) {
+                logger.info { "Zur Klappe lists no upcoming events" }
+            } else {
+                logger.warn { "No events array in Zur Klappe's flight payload" }
+            }
             return emptyList()
         }
         return jsonMapper.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
