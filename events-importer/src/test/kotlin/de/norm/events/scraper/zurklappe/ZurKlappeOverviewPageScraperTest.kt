@@ -1,5 +1,9 @@
 package de.norm.events.scraper.zurklappe
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -7,6 +11,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,13 +26,28 @@ class ZurKlappeOverviewPageScraperTest {
     private val scraper = ZurKlappeOverviewPageScraper()
     private val baseUrl = "https://zurklappe.org/events"
 
-    private fun fixture() =
+    private fun fixture(name: String = "zurklappe-overview.html") =
         javaClass.classLoader
-            .getResourceAsStream("scraper/zurklappe/zurklappe-overview.html")!!
+            .getResourceAsStream("scraper/zurklappe/$name")!!
             .bufferedReader()
             .readText()
 
     private fun scrapeFixture() = scraper.scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
+
+    private fun scrapeHtml(html: String) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+    /** Runs [block] and returns its result beside every line the scraper logged. */
+    private fun <T> withScraperLog(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(ZurKlappeOverviewPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.toList()
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
+    }
 
     private fun scrapePayload(events: String) =
         JsonMapper.builder().build().writeValueAsString("""{"events":$events}""").let { chunk ->
@@ -98,6 +118,48 @@ class ZurKlappeOverviewPageScraperTest {
 
     @Test
     fun `scrape survives a page with no flight payload at all`() {
-        scraper.scrape(Jsoup.parse("<html><body><p>Soon</p></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+        scrapeHtml("<html><body><p>Soon</p></body></html>").shouldBeEmpty()
+    }
+
+    @Test
+    fun `scrape reads the empty-state page as an empty programme, not a broken payload`() {
+        val (events, lines) = withScraperLog { scrapeHtml(fixture("zurklappe-overview-empty.html")) }
+
+        events.shouldBeEmpty()
+        lines.map { it.level } shouldBe listOf(Level.INFO)
+        lines.single().formattedMessage shouldBe "Zur Klappe lists no upcoming events"
+    }
+
+    @Test
+    fun `scrape warns when the events array is missing and the page states no empty programme`() {
+        // The real empty page, minus its empty-state line: the payload alone cannot tell the two apart.
+        val html = fixture("zurklappe-overview-empty.html").replace("No upcoming events.", "Coming soon.")
+
+        val (events, lines) = withScraperLog { scrapeHtml(html) }
+
+        events.shouldBeEmpty()
+        lines.map { it.level } shouldBe listOf(Level.WARN)
+        lines.single().formattedMessage shouldBe "No events array in Zur Klappe's flight payload"
+    }
+
+    @Test
+    fun `scrape matches the empty-state text only as a whole paragraph`() {
+        val (_, lines) =
+            withScraperLog {
+                scrapeHtml("<html><body><p>No upcoming events. Check back soon for our winter season.</p></body></html>")
+            }
+
+        lines.map { it.level } shouldBe listOf(Level.WARN)
+    }
+
+    @Test
+    fun `scrape reads the events array even when the page also states the empty-state text`() {
+        val chunk = JsonMapper.builder().build().writeValueAsString("""{"events":[{"slug":"x","title":"X","date":"10.10.2026"}]}""")
+        val html = """<html><body><p>No upcoming events.</p><script>self.__next_f.push([1,$chunk])</script></body></html>"""
+
+        val (events, lines) = withScraperLog { scrapeHtml(html) }
+
+        events.single().title shouldBe "X"
+        lines.shouldBeEmpty()
     }
 }
