@@ -5,6 +5,10 @@
 spring:
   application:
     name: events-bff
+  # Repeated because this file shadows the main one. `StaticResourceHandlerTest` asserts the two agree.
+  web:
+    resources:
+      add-mappings: false
   r2dbc:
     properties:
       schema: events

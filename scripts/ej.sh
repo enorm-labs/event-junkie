@@ -19,7 +19,7 @@
 #
 #   forward     staging   production   what is behind it
 #   importer    18081     28081        admin API and Swagger UI — no Ingress names it (ADR-023)
-#   bff         18080     28080        Swagger UI — /webjars/** is not under /api
+#   bff         18080     28080        Swagger UI — /swagger-ui is not under /api
 #   openobserve  5080     25080        logs, metrics, dashboards — ClusterIP, unrouted
 #   database    15432     15433        PostgreSQL, by SSH through the node — pg_hba refuses the tunnel
 #                                      address (CLUSTER_ACCESS.md §7)
@@ -94,7 +94,8 @@ url_of() {
     local port
     port="$(forward_spec "$1" "$2" | cut -d' ' -f1)"
     case "$2" in
-        importer | bff) echo "http://localhost:${port}/webjars/swagger-ui/index.html" ;;
+        importer) echo "http://localhost:${port}/webjars/swagger-ui/index.html" ;;
+        bff) echo "http://localhost:${port}/swagger-ui/index.html" ;;
         openobserve) echo "http://localhost:${port}/" ;;
         database) echo "postgresql://events@127.0.0.1:${port}/events" ;;
     esac

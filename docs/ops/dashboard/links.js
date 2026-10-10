@@ -650,8 +650,8 @@ window.EJ_LINKS = {
           "statusText": ""
         },
         {
-          "url": "http://localhost:8080/webjars/swagger-ui/index.html",
-          "label": "localhost:8080/webjars/swagger-ui/index.html",
+          "url": "http://localhost:8080/swagger-ui/index.html",
+          "label": "localhost:8080/swagger-ui/index.html",
           "what": "<code>events-bff</code> Swagger UI",
           "whatText": "events-bff Swagger UI",
           "status": "",
