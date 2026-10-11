@@ -107,6 +107,26 @@ class LidoOverviewPageScraperTest {
             )
     }
 
+    // The XANDRIA subtitle on the 2026-10-11 overview (#3104).
+    @Test
+    fun `reads a support act from each subtitle line`() {
+        val html =
+            """
+            <html><body><article class="event-ticket" data-realdate="2026-10-12 20:00:00 +0200">
+              <div class="event-ticket__content__title"><a href="/events/2026-10-12-xandria">XANDRIA</a></div>
+              <div class="event-ticket__content__subtitle">+ Special Guest: SEVEN SPIRES<br>+ Support: SECRET RULE</div>
+            </article></body></html>
+            """.trimIndent()
+        val scraped = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        scraped.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("XANDRIA", "HEADLINER", titleDerived = true),
+                ScrapedArtist("SEVEN SPIRES", "SUPPORT"),
+                ScrapedArtist("SECRET RULE", "SUPPORT")
+            )
+    }
+
     @Test
     fun `types a public-viewing screening as SCREENING and extracts no artists`() {
         val publicViewing = event("WM 2026")

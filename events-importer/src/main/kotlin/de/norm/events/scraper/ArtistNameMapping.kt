@@ -54,12 +54,12 @@ private val SUPPORT_INTRO_PATTERN = Regex("""$SUPPORT_MARKER(.+)""", RegexOption
 private val FURTHER_SUPPORT_MARKER = Regex("""\s+$SUPPORT_MARKER""", RegexOption.IGNORE_CASE)
 
 /**
- * The subtitle line carrying a support-billing marker from already-split [lines], or `null`. A
- * venue that stacks a support line and an "ABGESAGT …" note across lines must isolate the
- * support line first, or `.text()` flattens the note into a support act. Pair with
+ * The subtitle lines carrying a support-billing marker from already-split [lines], joined with a
+ * newline, or `null` when none does. A line without a marker, such as an "ABGESAGT …" note, is
+ * dropped, or `.text()` flattens it into a support act. Pair with
  * [textLinesAt][de.norm.events.scraper.textLinesAt]. Shared by Astra and Lido.
  */
-fun supportSubtitleLine(lines: List<String>): String? = lines.firstOrNull { SUPPORT_INTRO_PATTERN.containsMatchIn(it) }
+fun supportSubtitleLines(lines: List<String>): String? = lines.filter { SUPPORT_INTRO_PATTERN.containsMatchIn(it) }.joinToString("\n").ifEmpty { null }
 
 /**
  * Placeholder names for an unannounced artist ("TBA", "TBD", "TBC", "N.N."), never artist rows.
