@@ -148,6 +148,13 @@ describe('EventWhen', () => {
       expect(mountWhen(postponed).findAll('p')[1]!.text()).toBe('Neuer Termin: Sa., 8. Mai 2027')
     })
 
+    it('strikes the date of a cancelled show and hides its times, with nothing about a new date', () => {
+      const when = mountWhen({ ...postponed, status: 'CANCELLED', postponedTo: undefined })
+
+      expect(when.find('del').text()).toBe('Fri, 12 Jun 2026')
+      expect(when.findAll('p').map((line) => line.text())).toEqual(['Fri, 12 Jun 2026'])
+    })
+
     it('strikes the old date and points to the venue when no new date is known', () => {
       const when = mountWhen({ ...postponed, postponedTo: undefined })
 
