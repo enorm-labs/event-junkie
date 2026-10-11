@@ -57,7 +57,6 @@ class EventSourceControllerTest : BaseControllerTest() {
     fun `POST, GET, PATCH, DELETE event source lifecycle`() {
         val venueId = createVenue().id
 
-        // Create
         val created = createSource(EventSourceRequestFixtures.cassiopeia(venueId = venueId))
 
         created.name shouldBe "Cassiopeia Website"
@@ -71,7 +70,6 @@ class EventSourceControllerTest : BaseControllerTest() {
 
         val slug = created.slug
 
-        // Read
         webTestClient
             .get()
             .uri("/api/admin/event-sources/$slug")
@@ -83,7 +81,6 @@ class EventSourceControllerTest : BaseControllerTest() {
                 result.responseBody!!.name shouldBe "Cassiopeia Website"
             }
 
-        // Update (PATCH)
         webTestClient
             .patch()
             .uri("/api/admin/event-sources/$slug")
@@ -100,7 +97,6 @@ class EventSourceControllerTest : BaseControllerTest() {
                 source.maxRetries shouldBe 3
             }
 
-        // Delete
         webTestClient
             .delete()
             .uri("/api/admin/event-sources/$slug")
@@ -108,7 +104,6 @@ class EventSourceControllerTest : BaseControllerTest() {
             .expectStatus()
             .isNoContent
 
-        // Verify deleted
         webTestClient
             .get()
             .uri("/api/admin/event-sources/$slug")

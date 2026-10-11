@@ -602,7 +602,6 @@ class AssociationSyncService(
                 .associateBy { it.slug }
                 .toMutableMap()
 
-        // Auto-create only the promoters not already in the database
         canonicalNames
             .distinctBy { SlugGenerator.slugify(it) }
             .forEach { resolveOrCreatePromoter(it, promoterCache) }
@@ -740,7 +739,6 @@ class AssociationSyncService(
                 .associateBy { it.slug }
                 .toMutableMap()
 
-        // Auto-create only the genre tags not already in the database
         allGenreNames
             .distinctBy { SlugGenerator.slugify(it) }
             .forEach { resolveOrCreateGenreTag(it, genreTagCache) }

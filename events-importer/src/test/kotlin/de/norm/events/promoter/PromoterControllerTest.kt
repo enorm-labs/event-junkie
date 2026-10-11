@@ -37,7 +37,6 @@ class PromoterControllerTest : BaseControllerTest() {
 
     @Test
     fun `POST, GET, PUT, DELETE promoter lifecycle`() {
-        // Create
         val created = createPromoter()
 
         created.name shouldBe "36 Concerts"
@@ -45,7 +44,6 @@ class PromoterControllerTest : BaseControllerTest() {
 
         val id = created.id
 
-        // Read
         webTestClient
             .get()
             .uri("/api/admin/promoters/$id")
@@ -63,7 +61,6 @@ class PromoterControllerTest : BaseControllerTest() {
                 promoter.descriptionAltLanguage shouldBe "de"
             }
 
-        // Update
         webTestClient
             .put()
             .uri("/api/admin/promoters/$id")
@@ -78,10 +75,8 @@ class PromoterControllerTest : BaseControllerTest() {
                 promoter.slug shouldBe "36-concerts-gmbh"
             }
 
-        // Delete
         deletePromoter(id)
 
-        // Verify deleted
         webTestClient
             .get()
             .uri("/api/admin/promoters/$id")

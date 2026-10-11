@@ -36,7 +36,6 @@ class VenueControllerTest : BaseControllerTest() {
 
     @Test
     fun `POST, GET, PUT, DELETE venue lifecycle`() {
-        // Create
         val created = createVenue()
 
         created.name shouldBe "Astra Kulturhaus"
@@ -44,7 +43,6 @@ class VenueControllerTest : BaseControllerTest() {
 
         val id = created.id
 
-        // Read
         webTestClient
             .get()
             .uri("/api/admin/venues/$id")
@@ -64,7 +62,6 @@ class VenueControllerTest : BaseControllerTest() {
                 venue.programmeFamilies shouldBe emptyList()
             }
 
-        // Update
         webTestClient
             .put()
             .uri("/api/admin/venues/$id")
@@ -79,10 +76,8 @@ class VenueControllerTest : BaseControllerTest() {
                 venue.slug shouldBe "astra-berlin"
             }
 
-        // Delete
         deleteVenue(id)
 
-        // Verify deleted
         webTestClient
             .get()
             .uri("/api/admin/venues/$id")
