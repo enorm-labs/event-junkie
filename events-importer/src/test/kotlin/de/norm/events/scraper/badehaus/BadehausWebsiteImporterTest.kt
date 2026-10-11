@@ -1,11 +1,16 @@
 package de.norm.events.scraper.badehaus
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalTime
 
 /**
@@ -33,6 +39,7 @@ class BadehausWebsiteImporterTest {
     private val sourceUrl = "https://badehaus-berlin.com/events/"
     private val donnerUrl = "https://badehaus-berlin.com/events/dominic-donner/"
     private val drunkenUrl = "https://badehaus-berlin.com/events/drunken-swallows/"
+    private val futurebaeUrl = "https://badehaus-berlin.com/events/futurebae/"
 
     private fun fixture(name: String): String =
         javaClass.classLoader
@@ -146,7 +153,6 @@ class BadehausWebsiteImporterTest {
     @Test
     fun `lets the detail page's category retype the night and drop the title as an act`() =
         runTest {
-            val futurebaeUrl = "https://badehaus-berlin.com/events/futurebae/"
             val before = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
             before.eventType shouldBe EventType.CONCERT.name
             before.artists.map { it.name } shouldNotBe emptyList<String>()
@@ -157,6 +163,40 @@ class BadehausWebsiteImporterTest {
             val after = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
             after.eventType shouldBe EventType.PARTY.name
             after.artists shouldHaveSize 0
+        }
+
+    // The venue files a dance workshop under Interactive; the card's inferred CONCERT billed its name as the act (#3100).
+    @Test
+    fun `types an Interactive night as other and bills no act`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns
+                Jsoup.parse(fixture("badehaus-detail-interactive.html"), futurebaeUrl)
+
+            val event = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
+            event.eventType shouldBe EventType.OTHER.name
+            event.artists shouldHaveSize 0
+        }
+
+    @Test
+    fun `logs an unknown category with the page's URL and keeps the card's type`() =
+        runTest {
+            val page = Jsoup.parse(fixture("badehaus-detail-interactive.html"), futurebaeUrl)
+            page.selectFirst(".post-meta a[rel~=category]").shouldNotBeNull().text("Lecture")
+            coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns page
+
+            val logger = LoggerFactory.getLogger(BadehausDetailPageScraper::class.java) as Logger
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            logger.addAppender(appender)
+            val event =
+                try {
+                    events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
+                } finally {
+                    logger.detachAppender(appender)
+                    appender.stop()
+                }
+
+            event.eventType shouldBe EventType.CONCERT.name
+            appender.list.single { it.level == Level.WARN }.mdcPropertyMap[LogFields.URL] shouldBe futurebaeUrl
         }
 
     @Test

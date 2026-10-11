@@ -1,5 +1,9 @@
 package de.norm.events.scraper.badehaus
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.withWeekdayWarnings
@@ -12,6 +16,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -34,6 +39,18 @@ class BadehausDetailPageScraperTest {
             .readText(),
         url
     )
+
+    private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(BadehausDetailPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == Level.WARN }
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
+    }
 
     @Test
     fun `parses description, start time and promoter from a detail page`() {
@@ -182,6 +199,27 @@ class BadehausDetailPageScraperTest {
         event.shouldNotBeNull()
 
         event.eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
+    fun `reads the venue's Interactive category as other`() {
+        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
+        val (event, warnings) = withScraperWarnings { scraper.scrape(fixture("badehaus-detail-interactive.html", url), url) }
+
+        event.shouldNotBeNull().eventType shouldBe EventType.OTHER.name
+        warnings shouldHaveSize 0
+    }
+
+    @Test
+    fun `logs an unknown category once and leaves the type to the overview`() {
+        val url = "https://badehaus-berlin.com/events/cafe-com-samba-berlin-2/"
+        val document = fixture("badehaus-detail-interactive.html", url)
+        document.selectFirst(".post-meta a[rel~=category]").shouldNotBeNull().text("Lecture")
+
+        val (event, warnings) = withScraperWarnings { scraper.scrape(document, url) }
+
+        event.shouldNotBeNull().eventType shouldBe null
+        warnings.single().formattedMessage shouldBe "Category 'Lecture' maps to no event type, the listing's type stays"
     }
 
     @Test
