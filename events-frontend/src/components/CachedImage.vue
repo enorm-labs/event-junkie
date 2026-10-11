@@ -20,7 +20,7 @@ const props = defineProps<{
   /** Goes on the `<img>`, never on the wrapper (the `contents` note in the template). */
   imgClass?: string
   /**
-   * The image's credit as one line of plain text, for a slot too small for `ImageCreditLine` (#1275).
+   * The image's credit as one line of plain text, for a slot too small for `CreditLine` (#1275).
    */
   title?: string | null
   /**
