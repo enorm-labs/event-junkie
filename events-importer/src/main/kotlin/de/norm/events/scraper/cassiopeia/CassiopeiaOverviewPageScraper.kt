@@ -126,7 +126,6 @@ class CassiopeiaOverviewPageScraper(
         // Prefer Finsweet CMS filter attributes for category and genre
         val category = item.textAt("[fs-cmsfilter-field=category]")
         val genreSlot = item.textAt("[fs-cmsfilter-field=genre]")
-        val presenter = presenterInGenreSlot(genreSlot)
         val imageUrl = parseImageUrl(item)
         val isSoldOut = item.hasVisibleWebflowFlag(FLAG_SELECTOR, "Sold-Out")
         val isCancelled = item.hasVisibleWebflowFlag(FLAG_SELECTOR, "Cancelled")
@@ -139,8 +138,8 @@ class CassiopeiaOverviewPageScraper(
             doorsTime = doorsTime,
             startTime = startTime,
             eventType = eventType,
-            genre = genreSlot.takeIf { presenter == null },
-            promoters = listOfNotNull(presenter),
+            genre = cassiopeiaGenre(genreSlot),
+            promoters = listOfNotNull(presenterInGenreSlot(genreSlot)),
             imageUrl = imageUrl,
             sourceUrl = eventUrl,
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",
