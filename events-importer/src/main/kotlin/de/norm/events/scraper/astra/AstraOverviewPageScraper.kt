@@ -15,7 +15,7 @@ import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.supportSubtitleLine
+import de.norm.events.scraper.supportSubtitleLines
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import de.norm.events.scraper.textLinesAt
@@ -128,12 +128,12 @@ class AstraOverviewPageScraper {
             sourceId = "${EventSource.ASTRA.sourceIdPrefix}${extractEventSlug(block.sourceUrl)}",
             soldOut = block.soldOut,
             status = block.status,
-            // Isolate the subtitle's "Support:" line so a note on a later <br> line (e.g. a cancellation
+            // Isolate the subtitle's "Support:" lines so a note on another <br> line (e.g. a cancellation
             // notice) is not taken for a support act.
             artists =
                 buildArtistsForEventType(
                     block.title,
-                    supportSubtitleLine(article.textLinesAt(".event__subtitle")),
+                    supportSubtitleLines(article.textLinesAt(".event__subtitle")),
                     eventType
                 )
         )

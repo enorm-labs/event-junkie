@@ -15,7 +15,7 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
-import de.norm.events.scraper.supportSubtitleLine
+import de.norm.events.scraper.supportSubtitleLines
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -128,12 +128,12 @@ class LidoOverviewPageScraper {
             status = block.status,
             promoters = block.promoters,
             promoterWebsites = block.promoterWebsites,
-            // Extract support only from the subtitle line carrying the "Support:" marker, so a note on a
-            // later <br> line (e.g. a cancellation notice) is not taken for a support act.
+            // Extract support only from the subtitle lines carrying a "Support:" marker, so a note on another
+            // <br> line (e.g. a cancellation notice) is not taken for a support act.
             artists =
                 buildArtistsForEventType(
                     block.title,
-                    supportSubtitleLine(article.textLinesAt(".event-ticket__content__subtitle")),
+                    supportSubtitleLines(article.textLinesAt(".event-ticket__content__subtitle")),
                     block.eventType
                 )
         )
