@@ -10,7 +10,7 @@ export interface MetaItem {
   class?: string
   /** A non-scheduled status, which must not read as a word in a grey row (#1248). */
   badge?: boolean
-  /** A date the event left, such as a postponed show's (#3093). */
+  /** A date the show does not happen on: postponed or cancelled (#3093). */
   struck?: boolean
 }
 

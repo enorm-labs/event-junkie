@@ -16,9 +16,10 @@ const { formatDate, formatEventDates, formatEventEnd } = useFormat()
 const localePath = useLocalePath()
 const { changeLines } = useEventChanges()
 
-// A postponed row is the date the show left (ADR-030): its date is struck and its times are not
-// the show's. The new date, if any, is another row.
+// A postponed or cancelled show does not happen on this date: the date is struck and its times
+// hidden. A postponed row's new date, if any, is another row (ADR-030).
 const postponed = computed(() => props.event.status === 'POSTPONED')
+const offDate = computed(() => postponed.value || props.event.status === 'CANCELLED')
 const dates = computed(() => (props.event.eventDate ? formatEventDates(props.event) : ''))
 const doors = computed(() =>
   props.event.doorsTime ? t('events.card.doors', { time: formatTime(props.event.doorsTime) }) : '',
@@ -51,7 +52,7 @@ const endNotAnnounced = computed(() => {
 <template>
   <div class="space-y-1">
     <SectionLabel>{{ t('events.detail.when.label') }}</SectionLabel>
-    <p v-if="dates && postponed" class="text-body text-muted-foreground">
+    <p v-if="dates && offDate" class="text-body text-muted-foreground">
       <del>{{ dates }}</del>
     </p>
     <p v-else-if="dates" class="text-body font-medium">{{ dates }}</p>
@@ -66,7 +67,7 @@ const endNotAnnounced = computed(() => {
     <p v-else-if="postponed" class="text-body text-muted-foreground">
       {{ t('events.detail.when.postponed') }}
     </p>
-    <template v-if="!postponed">
+    <template v-if="!offDate">
       <p v-if="doors" class="text-body">{{ doors }}</p>
       <p v-if="start" class="text-body">
         {{ start
