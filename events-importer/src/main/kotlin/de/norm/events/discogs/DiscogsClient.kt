@@ -1,9 +1,8 @@
 package de.norm.events.discogs
 
+import de.norm.events.common.PolitePace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -16,8 +15,6 @@ import org.springframework.web.util.UriBuilder
 import java.io.IOException
 import java.net.URI
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /** Discogs did not answer, or kept answering 429. A counter and a retry on the next sweep, never a failed source. */
 class DiscogsUnavailableException(
@@ -45,8 +42,7 @@ class DiscogsClient(
     private val properties: DiscogsProperties
 ) {
     private val logger = KotlinLogging.logger {}
-    private val pace = Mutex()
-    private var lastRequest: TimeMark? = null
+    private val pace = PolitePace(properties.politeDelayMillis.milliseconds)
 
     /** The candidates Discogs returns for [name], in its order; empty when it knows no such artist. */
     suspend fun search(name: String): List<DiscogsCandidate> =
@@ -123,8 +119,7 @@ class DiscogsClient(
         notFound: T?,
         read: suspend (ClientResponse) -> T
     ): T? =
-        pace.withLock {
-            waitForPace()
+        pace.next {
             val (result, remaining) =
                 webClient
                     .get()
@@ -160,13 +155,6 @@ class DiscogsClient(
             }
             result
         }
-
-    private suspend fun waitForPace() {
-        val since = lastRequest?.elapsedNow()
-        val gap = properties.politeDelayMillis.milliseconds
-        if (since != null && since < gap) delay(gap - since)
-        lastRequest = TimeSource.Monotonic.markNow()
-    }
 
     private companion object {
         const val CANDIDATES = 25
