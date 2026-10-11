@@ -29,6 +29,7 @@ import { districtLabel } from '@/lib/districts'
 import { tonight } from '@/lib/dateRanges'
 import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
+import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
 import {
   DEFAULT_RADIUS,
   groupByVenue,
@@ -280,18 +281,8 @@ function clearNear() {
   clearOrigin()
 }
 
-const originLabel = computed(() => {
-  if (!origin.value) return ''
-  if (origin.value.source === 'device') return t('map.near.yourLocation')
-  if (origin.value.source === 'map') return t('map.near.pickedPoint')
-  return origin.value.label ?? ''
-})
-
-/** A fix coarser than the radius can put "near" venues anywhere in it; the view says so. */
-const coarse = computed(() => {
-  const accuracy = origin.value?.accuracyKm
-  return accuracy && accuracy > radiusKm.value ? formatDistance(accuracy, locale.value) : null
-})
+const originLabel = computed(() => describeOrigin(origin.value, t))
+const coarse = computed(() => coarseAccuracy(origin.value, radiusKm.value, locale.value))
 
 const nearEventCount = computed(
   () => near.value?.reduce((sum, group) => sum + group.events.length, 0) ?? 0,

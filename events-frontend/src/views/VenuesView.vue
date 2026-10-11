@@ -30,6 +30,7 @@ import {
 import { districtLabel } from '@/lib/districts'
 import { feedbackMailto } from '@/lib/feedback'
 import { formatDistance, type Position } from '@/lib/geo'
+import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
 import { CONTROLLER } from '@/lib/legal'
 import {
   DEFAULT_RADIUS,
@@ -214,18 +215,8 @@ const pins = computed<MapPin[]>(() =>
     .filter((pin): pin is MapPin => pin !== null),
 )
 
-const originLabel = computed(() => {
-  if (!origin.value) return ''
-  if (origin.value.source === 'device') return t('map.near.yourLocation')
-  if (origin.value.source === 'map') return t('map.near.pickedPoint')
-  return origin.value.label ?? ''
-})
-
-/** A fix coarser than the radius can put "near" venues anywhere in it; the view says so. */
-const coarse = computed(() => {
-  const accuracy = origin.value?.accuracyKm
-  return accuracy && accuracy > radiusKm.value ? formatDistance(accuracy, locale.value) : null
-})
+const originLabel = computed(() => describeOrigin(origin.value, t))
+const coarse = computed(() => coarseAccuracy(origin.value, radiusKm.value, locale.value))
 
 function distance(km: number): string {
   return formatDistance(km, locale.value)
