@@ -28,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper
  * A schema.org `ItemList` of `Event`s carries the name, the dated start and the price, so it decides the rows.
  * The shared JSON-LD reader does not open an `ItemList`, so this one reads `itemListElement` itself. Each
  * `div.card` with the same `h3.card-title` adds the cover, the style tags and the Rausgegangen ticket link.
+ * A `tag-food` tag names a food pop-up, not a style, so it never reaches the genre.
  */
 class OrangerieOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -69,13 +70,18 @@ class OrangerieOverviewPageScraper {
             return null
         }
         val card = cards[name]
-        val tags =
+        val (foodTags, tags) =
             card
                 ?.select(".og-genres .event-tag")
-                ?.map { it.text().trim() }
-                ?.filter { it.isNotBlank() }
                 .orEmpty()
-        val eventType = if (tags.any { it.equals(CONCERT_TAG, ignoreCase = true) } || name.startsWith(LIVE_SERIES)) EventType.CONCERT else EventType.PARTY
+                .partition { it.hasClass(FOOD_TAG) }
+                .let { (food, style) -> food to style.map(::tagText).filter { it.isNotBlank() } }
+        val eventType =
+            when {
+                tags.any { it.equals(CONCERT_TAG, ignoreCase = true) } || name.startsWith(LIVE_SERIES) -> EventType.CONCERT
+                tags.isEmpty() && foodTags.isNotEmpty() -> EventType.OTHER
+                else -> EventType.PARTY
+            }
         val price = node.schemaOffers().firstNotNullOfOrNull { it.stringOrNull("price")?.toBigDecimalOrNull() }
         return ScrapedEvent(
             title = name,
@@ -112,12 +118,16 @@ class OrangerieOverviewPageScraper {
         return if (isNonArtistName(act)) emptyList() else listOf(ScrapedArtist(name = act, role = role))
     }
 
+    /** A bilingual tag holds a `lang="de"` and a `lang="en"` span, which `text()` would run together. */
+    private fun tagText(tag: Element): String = (tag.selectFirst("[lang=en]") ?: tag).text().trim()
+
     private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)
 
     private companion object {
         val mapper: JsonMapper = JsonMapper.builder().build()
         const val ITEM_LIST = "ItemList"
         const val CONCERT_TAG = "Concert"
+        const val FOOD_TAG = "tag-food"
         const val LIVE_SERIES = "Parkside Sessions"
         const val WITH = " w/ "
         val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
