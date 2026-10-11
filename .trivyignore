@@ -49,21 +49,23 @@
 # than a re-dating. The waiver was written to expire and it expired; that is the outcome this file
 # wants, and the reason every entry above is required to say what would end it.
 
-# 2026-10-09 — CVE-2026-78667 (net/http, a crafted Range header) and CVE-2026-97031 (crypto/tls,
-# repeated ECH outer extensions), both denial of service, in the Go 1.27.1 standard library compiled
-# into the imgproxy sidecar (ghcr.io/imgproxy/imgproxy, pinned by digest in the chart). Fixed in Go
-# 1.26.9 and 1.27.2, and no imgproxy build carries either: the pin is v4.0.17, the newest release
-# (2026-09-30), and `latest`, a rebuild of it 20 minutes later, also links Go 1.27.1 (scanned).
+# 2026-10-09 — CVE-2026-78667 (net/http, a crafted Range header), CVE-2026-97031 (crypto/tls,
+# repeated ECH outer extensions) and CVE-2026-78669 (HTTP/2, excessive SETTINGS frames, also in
+# golang.org/x/net v0.59.0), all denial of service, in the Go 1.27.1 standard library compiled into
+# the imgproxy sidecar (ghcr.io/imgproxy/imgproxy, pinned by digest in the chart). Fixed in Go
+# 1.26.9 and 1.27.2 (x/net 0.60.0), and no imgproxy build carries the fix: the pin is v4.0.17, the
+# newest release (2026-09-30), and `latest` (sha256:c0d8c00b, scanned 2026-10-11) links the same.
 #
 # Not reachable from outside: the sidecar answers on loopback inside the importer pod (ADR-020),
-# so only the importer can send it a Range header. It terminates no TLS; it is a TLS client only to
-# the origins `IMGPROXY_ALLOWED_SOURCES` lists.
+# so only the importer can send it a Range header or an HTTP/2 frame. It terminates no TLS; it is a
+# TLS client only to the origins `IMGPROXY_ALLOWED_SOURCES` lists.
 #
 # **Revisit on 2026-11-06, or sooner if imgproxy ships a release built with Go 1.27.2 or later.**
-# Releases came every two weeks in September (v4.0.15 to v4.0.17). Take the digest and delete both
-# lines then. See #2972.
+# Releases came every two weeks in September (v4.0.15 to v4.0.17). Take the digest and delete all
+# three lines then. See #2972, #3071.
 #
 # The second imgproxy episode, after #1273 (a different dependency). A third is the signal the note
 # above describes: the question becomes how imgproxy is built, not whether one finding is reachable.
 CVE-2026-78667
+CVE-2026-78669
 CVE-2026-97031
