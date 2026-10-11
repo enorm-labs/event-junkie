@@ -50,7 +50,8 @@ class EventService(
     private val cachedImageGate: CachedImageGate,
     private val eventChangeRepository: EventChangeRepository,
     private val clock: Clock,
-    private val eventEnrichmentRepository: EventEnrichmentRepository
+    private val eventEnrichmentRepository: EventEnrichmentRepository,
+    private val postponementRepository: PostponementRepository
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -205,7 +206,8 @@ class EventService(
             descriptionWithheld = licensed.descriptionWithheld,
             imageWithheld = licensed.imageWithheld,
             enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
-            changes = eventChangeRepository.recent(eventId)
+            changes = eventChangeRepository.recent(eventId),
+            postponedTo = postponementRepository.newDate(event)
         )
     }
 

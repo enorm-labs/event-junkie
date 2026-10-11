@@ -124,7 +124,8 @@
         }
       },
       "endNotAnnounced": "End not announced",
-      "postponed": "Not on this date. The venue's page has the new date, if there is one."
+      "postponed": "Not on this date. The venue's page has the new date, if there is one.",
+      "postponedTo": "New date:"
     },
     "promoters": "Promoters",
     "buyTickets": "Buy tickets",
@@ -169,7 +170,8 @@
     "POSTPONED": "Postponed",
     "movedTo": "Moved to {venue}",
     "movedFrom": "was {venue}",
-    "postponedNote": "Postponed: the venue names no new date yet."
+    "postponedNote": "Postponed: the venue names no new date yet.",
+    "postponedTo": "Postponed to {date}"
   },
   "alsoRunning": {
     "title": "Also running"

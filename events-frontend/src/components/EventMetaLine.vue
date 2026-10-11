@@ -10,6 +10,8 @@ export interface MetaItem {
   class?: string
   /** A non-scheduled status, which must not read as a word in a grey row (#1248). */
   badge?: boolean
+  /** A date the event left, such as a postponed show's (#3093). */
+  struck?: boolean
 }
 
 defineProps<{ items: MetaItem[] }>()
@@ -20,6 +22,7 @@ defineProps<{ items: MetaItem[] }>()
     <template v-for="(item, index) in items" :key="index">
       <span v-if="index > 0" aria-hidden="true" data-meta-separator>&nbsp;· </span>
       <BaseBadge v-if="item.badge" variant="destructive">{{ item.text }}</BaseBadge>
+      <del v-else-if="item.struck" :class="item.class">{{ item.text }}</del>
       <span v-else :class="item.class">{{ item.text }}</span>
     </template>
   </p>

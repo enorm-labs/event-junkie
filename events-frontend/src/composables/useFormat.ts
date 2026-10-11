@@ -218,13 +218,21 @@ export function useFormat() {
 
     /**
      * The one word for a status that changes whether the reader goes, `''` for `SCHEDULED`. A
-     * relocated event that knows where it went says so ("Moved to Hole44"). Same fallback as
-     * `formatEventType`.
+     * relocated or postponed event that knows where it went says so ("Moved to Hole44",
+     * "Postponed to Sat, 8 May 2027"). Same fallback as `formatEventType`.
      */
-    formatEventStatus: (status?: string | null, relocatedTo?: string | null) => {
+    formatEventStatus: (
+      status?: string | null,
+      relocatedTo?: string | null,
+      postponedTo?: string | null,
+    ) => {
       if (!status || status === 'SCHEDULED') return ''
       if (status === 'RELOCATED' && relocatedTo)
         return t('events.status.movedTo', { venue: relocatedTo })
+      if (status === 'POSTPONED' && postponedTo)
+        return t('events.status.postponedTo', {
+          date: formatDate(postponedTo, intlLocale()),
+        })
       const key = `events.status.${status}`
       return te(key) ? t(key) : humaniseEventType(status)
     },

@@ -119,6 +119,46 @@ describe('EventWhen', () => {
     expect(lines({ ...base, status: 'SCHEDULED' })).not.toContain(note)
   })
 
+  describe('a postponed show (#3093)', () => {
+    const stubs = { RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] } }
+    const postponed: EventDetail = {
+      ...base,
+      status: 'POSTPONED',
+      doorsTime: '19:00:00',
+      startTime: '20:00:00',
+      postponedTo: { slug: '2027-05-08-lido-alex-mofa-gang', eventDate: '2027-05-08' },
+    }
+
+    function mountWhen(event: EventDetail) {
+      return mount(EventWhen, { props: { event }, global: { stubs } })
+    }
+
+    it('strikes the old date, hides its times, and links the new date under it', () => {
+      const when = mountWhen(postponed)
+      const shown = when.findAll('p').map((line) => line.text())
+
+      expect(when.find('del').text()).toBe('Fri, 12 Jun 2026')
+      expect(shown).toEqual(['Fri, 12 Jun 2026', 'New date: Sat, 8 May 2027'])
+      expect(when.find('a').attributes('href')).toBe('/en/events/2027-05-08-lido-alex-mofa-gang')
+    })
+
+    it('says it in German on the German page', () => {
+      i18n.global.locale.value = 'de'
+
+      expect(mountWhen(postponed).findAll('p')[1]!.text()).toBe('Neuer Termin: Sa., 8. Mai 2027')
+    })
+
+    it('strikes the old date and points to the venue when no new date is known', () => {
+      const when = mountWhen({ ...postponed, postponedTo: undefined })
+
+      expect(when.find('del').exists()).toBe(true)
+      expect(when.findAll('p').map((line) => line.text())).toEqual([
+        'Fri, 12 Jun 2026',
+        "Not on this date. The venue's page has the new date, if there is one.",
+      ])
+    })
+  })
+
   describe('changes (#2725)', () => {
     beforeEach(() => {
       vi.useFakeTimers()
