@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
+import ListPage from '@/components/ListPage.vue'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -310,12 +311,7 @@ function distance(km: number): string {
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('map.title') }}</h1>
-      <p class="text-body text-muted-foreground">{{ t('map.subtitle') }}</p>
-    </header>
-
+  <ListPage :subtitle="t('map.subtitle')" :title="t('map.title')">
     <!-- With no dates in the URL the map shows today, so Tonight reads as pressed. -->
     <EventFilterBar :default-range="tonight()" show-on-now />
 
@@ -520,5 +516,5 @@ function distance(km: number): string {
         </div>
       </div>
     </section>
-  </main>
+  </ListPage>
 </template>

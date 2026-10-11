@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import EventRow from '@/components/EventRow.vue'
+import ListPage from '@/components/ListPage.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import VenueRow from '@/components/VenueRow.vue'
@@ -80,14 +81,10 @@ function linksOf(key: string): { to: string; name: string }[] {
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('pageTitle.search') }}</h1>
-      <p v-if="searchable" class="text-body text-muted-foreground">
-        {{ t('search.resultsFor', { q }) }}
-      </p>
-    </header>
-
+  <ListPage
+    :subtitle="searchable ? t('search.resultsFor', { q }) : undefined"
+    :title="t('pageTitle.search')"
+  >
     <div :class="PANEL_CLASS">
       <form class="w-full" role="search" @submit.prevent="applySearch">
         <SearchInput
@@ -149,5 +146,5 @@ function linksOf(key: string): { to: string; name: string }[] {
         </ul>
       </section>
     </template>
-  </main>
+  </ListPage>
 </template>

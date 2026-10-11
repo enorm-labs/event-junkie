@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
+import ListPage from '@/components/ListPage.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import PromoterCard from '@/components/PromoterCard.vue'
 import SortControl from '@/components/SortControl.vue'
@@ -31,12 +32,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('promoters.title') }}</h1>
-      <p class="text-body text-muted-foreground">{{ t('promoters.subtitle') }}</p>
-    </header>
-
+  <ListPage :subtitle="t('promoters.subtitle')" :title="t('promoters.title')">
     <ListFilterBar :placeholder="t('promoters.searchPlaceholder')" />
 
     <p v-if="loading" class="text-body text-muted-foreground">
@@ -71,5 +67,5 @@ const { t } = useI18n()
 
       <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>
-  </main>
+  </ListPage>
 </template>
