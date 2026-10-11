@@ -1,6 +1,7 @@
 package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
+import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
@@ -31,8 +32,8 @@ import java.time.LocalDate
  * printed in the English 12-hour form ("Start: 11:30 pm") keeps its meridiem (#1949).
  *
  * **The category** ("Categorised Party", a `rel="category"` link in the post meta) is the event
- * type when it is one [mapEventType] knows (#1950); the listing card carries none, so the
- * overview's inferred type is the fallback. The overview stays authoritative for what only it
+ * type when it is one [mapEventType] knows (#1950), or the venue's own `Interactive` (#3100).
+ * The listing card carries none, so the overview's inferred type is the fallback. The overview stays authoritative for what only it
  * exposes reliably — the sold-out flag (a CSS class on the card) and the subtitle. The card's `VERLEGT` class is one
  * flag for two changes, a date move and a house move; the notice the page opens with ("wurde
  * auf den 27.02.2027 verschoben", "vom Badehaus ins Mikropol verlegt") says which, so its first
@@ -77,7 +78,7 @@ class BadehausDetailPageScraper {
             status = status,
             statusNote = notice.takeIf { status != EventStatus.SCHEDULED.name },
             eventDate = eventDate,
-            eventType = mapEventType(document.selectFirst(".post-meta a[rel~=category]")?.text()),
+            eventType = parseEventType(document),
             doorsTime = labelledClock(metaText, DOORS_LABELS),
             startTime = labelledClock(metaText, START_LABELS),
             priceNote = description?.let(::parseDonationNote),
@@ -87,6 +88,19 @@ class BadehausDetailPageScraper {
             ticketUrl = event.selectFirst("a.ticketbtn")?.absUrl("href")?.takeIf { it.isNotBlank() },
             promoters = parsePromoters(event)
         )
+    }
+
+    /**
+     * The type the page's category names, or `null` when the page has none or names one the
+     * vocabulary does not know. An unknown category is logged, not guessed: a new music label
+     * read as `OTHER` would drop its artists silently (#3100).
+     */
+    private fun parseEventType(document: Document): String? {
+        val category = document.selectFirst(".post-meta a[rel~=category]")?.text()?.takeIf { it.isNotBlank() } ?: return null
+        val type = mapEventType(category, CATEGORY_TYPES)
+        // The page's URL reaches this line through the MDC that LogContext.forPage sets around the parse.
+        if (type == null) logger.warn { "Category '$category' maps to no event type, the listing's type stays" }
+        return type
     }
 
     /**
@@ -165,6 +179,9 @@ class BadehausDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     private companion object {
+        /** Badehaus's own labels, kept out of the shared vocabulary: `Interactive` is a workshop or a community day. */
+        private val CATEGORY_TYPES = mapOf("interactive" to EventType.OTHER.name)
+
         /** A meta line that states the doors time ("Einlass: 19:00", "Doors: 19:00h"), dropped from the description. */
         private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
 
