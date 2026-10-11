@@ -8,7 +8,8 @@ import org.springframework.modulith.ApplicationModule
  *
  * The same boundary as `musicbrainz`: it knows nothing about artist rows, imports or when a lookup
  * runs, which `scraper` owns. It reads `artist` for [de.norm.events.artist.DiscogsMatch], `common`
- * for the `User-Agent`, and `musicbrainz` for the one fold both indexes compare names with.
+ * for the `User-Agent` and the pace, and `musicbrainz` for the one fold both indexes compare names
+ * with.
  */
 @ApplicationModule(allowedDependencies = ["artist", "common", "musicbrainz"])
 class DiscogsModule

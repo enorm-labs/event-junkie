@@ -1,9 +1,7 @@
 package de.norm.events.wikimedia
 
+import de.norm.events.common.PolitePace
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -16,8 +14,6 @@ import tools.jackson.databind.JsonNode
 import java.io.IOException
 import java.net.URI
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /** Wikidata or Commons did not answer, or answered an error. A counter and a retry on the next sweep. */
 class WikimediaUnavailableException(
@@ -42,8 +38,7 @@ class WikimediaClient(
     private val properties: WikimediaProperties
 ) {
     private val logger = KotlinLogging.logger {}
-    private val pace = Mutex()
-    private var lastRequest: TimeMark? = null
+    private val pace = PolitePace(properties.politeDelayMillis.milliseconds)
 
     /** The largest file the image fetcher reads; a caller refuses a larger original before storing it. */
     val maxBytes: Long get() = properties.maxBytes
@@ -211,8 +206,7 @@ class WikimediaClient(
         missingIsNull: Boolean
     ): JsonNode? =
         try {
-            pace.withLock {
-                waitForPace()
+            pace.next {
                 webClient.get().uri(uri).awaitExchangeOrNull { response ->
                     val status = response.statusCode()
                     when {
@@ -227,13 +221,6 @@ class WikimediaClient(
         } catch (e: WebClientException) {
             throw WikimediaUnavailableException("$subject request failed", e)
         }
-
-    private suspend fun waitForPace() {
-        val since = lastRequest?.elapsedNow()
-        val gap = properties.politeDelayMillis.milliseconds
-        if (since != null && since < gap) delay(gap - since)
-        lastRequest = TimeSource.Monotonic.markNow()
-    }
 
     private fun JsonNode.textOrNull(): String? = asString(null)?.takeIf { it.isNotBlank() }
 
