@@ -59,6 +59,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "edm" to ELECTRONIC,
         "acid" to ELECTRONIC,
         "ambient" to ELECTRONIC,
+        "new-age" to ELECTRONIC,
         "deep" to ELECTRONIC,
         "hypnotic" to ELECTRONIC,
         "tribal" to ELECTRONIC,

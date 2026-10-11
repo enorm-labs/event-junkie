@@ -264,7 +264,7 @@ class HeimathafenApiScraper(
     /**
      * The genres among the venue's `events_tag-*` slugs, which `class_list` inlines beside the
      * category (#313). The vocabulary mixes genres with formats, rooms and access notes (`konzert`,
-     * `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows it — 48 of the
+     * `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows it — 49 of the
      * venue's 562 terms. The slug is lossy once: `rb` for R&B, mapped by hand. Resolving the
      * taxonomy would give the names but not the decision, at a request per import for the same 48 words.
      */
