@@ -47,6 +47,7 @@ concurrency:
 jobs:
   compact:
     name: Compact comments (agent)
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     # Longer than the others: the proof obligation is a full Gradle build.
     timeout-minutes: 60

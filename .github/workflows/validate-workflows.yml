@@ -16,6 +16,7 @@ on:
       # The audit-coverage floors. A baseline edited without a run lowers a floor unnoticed.
       - 'scripts/scan-coverage.sh'
       - 'scripts/scan-coverage-baseline.txt'
+      - 'scripts/schedule-guard-parity.sh'
   pull_request:
     branches: [ main ]
     # No `paths:` here (#443): these checks are **required**, and a required check that never runs stays
@@ -68,3 +69,7 @@ jobs:
         run: |
           scripts/scan-coverage.sh baseline zizmor-ignored "${RUNNER_TEMP}/zizmor.txt"
           scripts/scan-coverage.sh baseline zizmor-suppressed "${RUNNER_TEMP}/zizmor.txt"
+
+      # A fork with Actions enabled runs every cron it copied, against production (#3090).
+      - name: Scheduled jobs run only in this repository
+        run: scripts/schedule-guard-parity.sh

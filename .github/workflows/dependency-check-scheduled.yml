@@ -18,6 +18,7 @@ permissions:
 jobs:
   dependency-check:
     name: OWASP Dependency-Check (authoritative)
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
 
     steps:

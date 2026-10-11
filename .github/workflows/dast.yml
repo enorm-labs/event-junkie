@@ -88,7 +88,7 @@ jobs:
     # Measured: flux-up 2 minutes, the full scan 15, the API scan 3–7, Nuclei 4.
     timeout-minutes: 75
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
+      (github.event_name == 'schedule' && github.repository == 'enorm-labs/event-junkie' && github.event.schedule == '52 3 * * *')
       || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'k3d'))
 
     steps:
@@ -310,7 +310,7 @@ jobs:
     # Measured locally: flux-up 4 minutes, the suite 5 seconds. The margin is the cluster, not the tests.
     timeout-minutes: 30
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
+      (github.event_name == 'schedule' && github.repository == 'enorm-labs/event-junkie' && github.event.schedule == '52 3 * * *')
       || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'e2e'))
 
     steps:
@@ -429,7 +429,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '46 5 * * 0')
+      (github.event_name == 'schedule' && github.repository == 'enorm-labs/event-junkie' && github.event.schedule == '46 5 * * 0')
       || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'production'))
 
     steps:
@@ -491,11 +491,10 @@ jobs:
   nuclei-production:
     name: Nuclei against production
     runs-on: ubuntu-latest
-    # Measured at `-rate-limit 10`: 13,501 requests in 17 minutes, 13 a second. At 2 that is
-    # about 90 minutes.
+    # Measured at `-rate-limit 2`: 85 minutes.
     timeout-minutes: 150
     if: >-
-      (github.event_name == 'schedule' && github.event.schedule == '19 4 * * 0')
+      (github.event_name == 'schedule' && github.repository == 'enorm-labs/event-junkie' && github.event.schedule == '19 4 * * 0')
       || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'production'))
 
     steps:
@@ -522,8 +521,8 @@ jobs:
       # The `dast-k3d` step against the public hostname: same templates and filters, the same red (a match
       # outside `.nuclei/waivers-production.tsv`). No `Host` header: the hostname is real here.
       # The rate is set by `ej-4xx-flood` (more than 5 client errors a second over 30 minutes). Since unknown
-      # pages answer 404 (a1c357b8), almost every probe is a client error, and nuclei sends about 1.3 times
-      # its limit: at 10 the rule fired at 9.3/s. At 2 the scan peaks near 3/s on top of a 0.5/s background.
+      # pages answer 404 (a1c357b8), almost every probe is a client error. At 2 nuclei sends 1.6–2 requests a
+      # second on the wire, on top of a 0.5/s background. Its `-stats` `requests` count runs about 1.7 times higher.
       - name: Nuclei against the site
         run: |
           set -euo pipefail

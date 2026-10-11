@@ -36,6 +36,7 @@ env:
 jobs:
   lychee:
     name: lychee
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

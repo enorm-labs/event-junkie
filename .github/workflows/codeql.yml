@@ -43,6 +43,7 @@ jobs:
     # none)` — so a change to `build-mode` would silently rename a required check. By language alone the
     # contexts are the strings default setup produced.
     name: Analyze (${{ matrix.language }})
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     # java-kotlin builds the whole backend. Generous enough for a cold Gradle cache, tight enough that a
     # hung analysis does not hold a pull request for six hours.

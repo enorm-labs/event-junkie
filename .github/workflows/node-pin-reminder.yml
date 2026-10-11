@@ -32,6 +32,7 @@ concurrency:
 jobs:
   check:
     name: Check the node pins
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
