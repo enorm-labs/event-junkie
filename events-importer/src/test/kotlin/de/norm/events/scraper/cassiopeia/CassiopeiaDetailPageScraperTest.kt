@@ -223,4 +223,106 @@ class CassiopeiaDetailPageScraperTest {
     fun `leaves a genre alone`(slot: String) {
         presenterInGenreSlot(slot).shouldBeNull()
     }
+
+    @Test
+    fun `reads a festival's line-up list as headliners and drops its name from the genre`() {
+        // Crunch Tapes Fest, 11 October 2026: five bold heads after "Line-up:", three of them in one paragraph (#3102).
+        val url = "https://cassiopeia-berlin.de/event/crunch-tapes-fest-111635212"
+        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-lineup-list.html"), url), url).shouldNotBeNull()
+
+        event.eventType shouldBe "CONCERT"
+        event.artists shouldContainExactly
+            listOf("Sonic Death", "Shaemless", "Mud Grief", "Dusk Saffron", "Etsamoe").map { ScrapedArtist(name = it, role = "HEADLINER") }
+        event.genre.shouldBeNull()
+        event.promoters.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a headliner concert's genre and acts`() {
+        val url = "https://cassiopeia-berlin.de/event/pharmakon-123"
+        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-concert.html"), url), url).shouldNotBeNull()
+
+        event.genre shouldBe "Noise"
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "Aska", role = "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `reads only bold heads after the line-up label`() {
+        val html =
+            buildDetailHtml(
+                "Crunch Fest",
+                descriptionParagraphs =
+                    listOf(
+                        "**Before** — a head above the label is not an act.",
+                        "LINE UP",
+                        "We bring the **loudest** bands — and a market.",
+                        "**Sonic Death** – garage punk. **TBA** — more to come.",
+                        "Support: Aska"
+                    )
+            )
+        val url = "https://cassiopeia-berlin.de/event/crunch-fest-1"
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "Sonic Death", role = "HEADLINER"), ScrapedArtist(name = "Aska", role = "SUPPORT"))
+    }
+
+    @Test
+    fun `lists a title headliner who is also in the line-up once`() {
+        val html = buildDetailHtml("Sonic Death", descriptionParagraphs = listOf("Line-up:", "**Sonic Death** — garage punk.", "**Shaemless** — post-punk."))
+        val url = "https://cassiopeia-berlin.de/event/sonic-death-1"
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Sonic Death", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "Shaemless", role = "HEADLINER")
+            )
+    }
+
+    @Test
+    fun `reads no line-up at a party`() {
+        val html = buildDetailHtml("Crunch Party", category = "Party", descriptionParagraphs = listOf("Line-up:", "**DJ Crunch** — all night."))
+        val url = "https://cassiopeia-berlin.de/event/crunch-party-1"
+
+        scraper
+            .scrape(Jsoup.parse(html, url), url)
+            .shouldNotBeNull()
+            .artists
+            .shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    // Every genre slot of the 48 upcoming production rows on 11 October 2026, but the festival name.
+    @ValueSource(
+        strings = [
+            "80s, Disco & Hip Hop", "Indie Anthems, Alternative Pop", "Drag. Pop. Retro. Karaoke. Live-Acts", "post-punk / grunge rock",
+            "Kneipenquiz", "Doom Metal", "Metalcore", "80s, Rock, New Wave", "Deutschpunk", "Pop, Hip Hop, House", "80s All Out & Pop",
+            "Pop, Rock, Indie, Karaoke", "Post Punk", "Metal", "Queer Icons & Pop Hits", "Rock, Indie, Core, Live-Band", "Hardcore",
+            "Indie-Rock", "Pop Punk", "Hip-House, Club-Rap", "Throwback Indie, Twenty One Pilots, Ikkimel Party", "Alternative/Indie",
+            "Straight Edge Hardcore", "Dark Rock, NDH", "Beatdown Hardcore", "Dance \\ Electrionic \\ Rock", "Deutschrap",
+            "Deathcore, Modern Metal, Hardcore", "Punk, Rock", "Alternative Rock, Punk Rock, Heartland Rock", "Rock", "post-hardcore, emo",
+            "Darkwave", "Retro, Pop, House", "Modern Metalcore", "Bewegungs-Punk", "Rap", "electronic screamo", "Electro House", "Punk Rock",
+            "Folk Rock, Mittelalter Rock", "Noise", "Classic Indie"
+        ]
+    )
+    fun `keeps a genre slot that names a known style, as written`(slot: String) {
+        cassiopeiaGenre(slot) shouldBe slot
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Crunch Fest Berlin", "presented by ATOK Berlin", ""])
+    fun `drops a genre slot that names no style`(slot: String) {
+        cassiopeiaGenre(slot).shouldBeNull()
+    }
+
+    private fun fixture(name: String): String =
+        javaClass.classLoader
+            .getResourceAsStream("scraper/cassiopeia/$name")!!
+            .bufferedReader()
+            .readText()
 }

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
@@ -32,8 +33,8 @@ import java.time.LocalTime
  * tree. The Webflow template gives the genre no class of its own: it is the sibling after the
  * `.subheading.invert.gap` category, the one positional read and why the category selector must
  * stay exact. Artists for concerts only: where the category is "Konzert" the title is the
- * headliner and support acts are description paragraphs prefixed `"Support: "`; a party's title
- * is an event name.
+ * headliner, a festival's acts are `**Name** —` heads after a `Line-up:` paragraph, and support
+ * acts are description paragraphs prefixed `"Support: "`; a party's title is an event name.
  *
  * @see CassiopeiaOverviewPageScraper for the listing and the fallback fields.
  * @see CassiopeiaWebsiteImporter for the HTTP fetch orchestrator and the merge.
@@ -75,7 +76,6 @@ class CassiopeiaDetailPageScraper {
         val hasFlags = content.selectFirst(".flag-wrapper") != null
         val eventType = cassiopeiaEventType(content.textAt(".subheading.invert.gap"), title)
         val genreSlot = parseGenre(content)
-        val presenter = presenterInGenreSlot(genreSlot)
         val eventDate =
             parseEventDate(content) ?: run {
                 logger.warn { "Detail page has no parseable date, skipping" }
@@ -88,8 +88,8 @@ class CassiopeiaDetailPageScraper {
             doorsTime = parseTimeByLabel(content, DOORS_LABEL),
             startTime = parseTimeByLabel(content, START_LABEL),
             eventType = eventType,
-            genre = genreSlot.takeIf { presenter == null },
-            promoters = listOfNotNull(presenter),
+            genre = cassiopeiaGenre(genreSlot),
+            promoters = listOfNotNull(presenterInGenreSlot(genreSlot)),
             imageUrl = content.imgSrcAt("img.eventpage-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",
@@ -187,8 +187,9 @@ class CassiopeiaDetailPageScraper {
      * co-bills split, added unconditionally; event-name titles ("Grey City Fest Opener") and
      * placeholders are filtered by [isNonArtistName]. Support acts are paragraphs prefixed
      * "Support: " (`"Support: Aska"`) or "+ " (`"+ Dani Lia"`), after the headliner, and split by [splitSupportActs] (`"Support: deshielo +
-     * la haine"` is two acts, #2623). Non-concert
-     * events extract nothing, which also keeps a party's `+ free Kicker…` line out.
+     * la haine"` is two acts, #2623). A festival title names no act, so its bands come from
+     * [lineupHeadliners] (#3102). Non-concert events extract nothing, which also keeps a party's
+     * `+ free Kicker…` line out.
      */
     private fun parseArtists(
         title: String,
@@ -206,8 +207,24 @@ class CassiopeiaDetailPageScraper {
                 .filter { !isNonArtistName(it) }
                 .map { ScrapedArtist(name = it, role = "SUPPORT") }
 
-        return headlinersFromTitle(title) + supportActs
+        return (headlinersFromTitle(title) + lineupHeadliners(content)).distinctBy { it.name.lowercase() } + supportActs
     }
+
+    /**
+     * The acts a `Line-up:` paragraph introduces: each `**Sonic Death** — cult garage-punk…` head
+     * in the paragraphs after it, its description dropped. One paragraph can hold several heads
+     * apart by blank lines, which [Element.text] folds into spaces; the head pattern does not need
+     * them. The asterisks are literal text, and only a bold head counts, so prose mints no act.
+     */
+    private fun lineupHeadliners(content: Element): List<ScrapedArtist> =
+        content
+            .select(".paragraph-wrapper .paragraph.events")
+            .map { it.text().trim() }
+            .dropWhile { !LINEUP_LABEL.matches(it) }
+            .drop(1)
+            .flatMap { paragraph -> LINEUP_HEAD.findAll(paragraph).map { it.groupValues[1].trim() } }
+            .filter { it.isNotBlank() && !isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = "HEADLINER") }
 
     companion object {
         /** CSS selector for the main event content container on the detail page. */
@@ -227,6 +244,12 @@ class CassiopeiaDetailPageScraper {
 
         /** A description paragraph naming a support act: `Support: Aska`, `+ Dani Lia`. */
         private val SUPPORT_LINE = Regex("""(?:(?:$SUPPORT_LABELS):|\+)\s+(.+)""", RegexOption.IGNORE_CASE)
+
+        /** The paragraph that opens a festival's act list: `Line-up:`, `Lineup`, `LINE UP:`. */
+        private val LINEUP_LABEL = Regex("""line[- ]?up:?""", RegexOption.IGNORE_CASE)
+
+        /** An act's head in that list, `**Shaemless** — a Dutch trio…`: a bold name, then a dash. */
+        private val LINEUP_HEAD = Regex("""(?:^|\s)\*\*([^*]+)\*\*\s*[—–-]\s""")
     }
 }
 
@@ -241,6 +264,15 @@ internal fun presenterInGenreSlot(slot: String?): String? =
         ?.let { PRESENTER_CREDIT.find(it)?.groupValues?.get(1) }
         ?.trim()
         ?.takeIf { it.isNotBlank() }
+
+/**
+ * The genre a slot holds as written, or `null` when it holds a promoter credit or nothing
+ * [normalizeGenre] would tag. The venue sometimes writes a festival's name there ("Crunch Fest
+ * Berlin", #3102). The test is the tag gate, not the known vocabulary, because that vocabulary
+ * lacks styles the venue writes alone ("Hardcore", "Noise"). Both pages' genre slots pass through
+ * here, so the merge cannot refill the slot.
+ */
+internal fun cassiopeiaGenre(slot: String?): String? = slot?.takeIf { presenterInGenreSlot(it) == null && normalizeGenre(it).isNotEmpty() }
 
 /**
  * The type a [category] maps to, with the catch-all `Sonstiges` (OTHER) reclassified by the
