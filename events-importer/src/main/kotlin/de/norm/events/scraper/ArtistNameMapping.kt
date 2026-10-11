@@ -850,7 +850,7 @@ private val CONJUNCTION_TAIL_COLLECTIVES: Set<String> =
     setOf("friends", "guests", "gäste", "freunde", "band", "orchester", "orchestra", "ensemble", "chor", "choir")
 
 /** Right-hand-side opener words that keep a conjunction boundary joined — see the two source sets. */
-private val CONJUNCTION_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_ARTICLES + CONJUNCTION_TAIL_COLLECTIVES
+internal val CONJUNCTION_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_ARTICLES + CONJUNCTION_TAIL_COLLECTIVES
 
 /** Space-padded `/` or `+` — unambiguous co-bill separators once whitespace is required on both sides. */
 private val SAFE_TITLE_SEPARATOR = Regex("""\s+[/+]\s+""")

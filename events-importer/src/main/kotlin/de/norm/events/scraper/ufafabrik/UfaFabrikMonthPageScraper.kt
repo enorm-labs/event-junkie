@@ -2,12 +2,17 @@ package de.norm.events.scraper.ufafabrik
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.CONJUNCTION_TAIL_MARKERS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -81,7 +86,7 @@ class UfaFabrikMonthPageScraper {
             priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: prices[ADMISSION_LABEL],
             soldOut = row.selectFirst(".sold-out.event-banner") != null,
             status = if (row.selectFirst(".canceled.event-banner") != null) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
-            artists = buildArtistsForEventType(title, subtitle, eventType)
+            artists = ufaFabrikArtists(title, subtitle, eventType)
         )
     }
 
@@ -102,6 +107,50 @@ class UfaFabrikMonthPageScraper {
         val NODE_ID = Regex("""/veranstaltung/(\d+)/""")
     }
 }
+
+/**
+ * The acts of a row. A concert title bills people with the German `mit` and a mid-title `Special Guest`
+ * (#3106): `Ulla Meinecke mit Reinmar Henschke` is two acts, and the guest of `… – special guest: Dotschy
+ * Reinhardt` is support. Local, because at most venues `mit` opens a night's guests, which is why the shared
+ * `WITH_FRAME_PATTERN` is opt-in. `Lacrimosa mit Orchester` and `X mit seiner Band` stay one act.
+ */
+internal fun ufaFabrikArtists(
+    title: String,
+    subtitle: String?,
+    eventType: String
+): List<ScrapedArtist> {
+    if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle, eventType)
+    val cut = SPECIAL_GUEST.find(title)?.takeIf { it.range.first > 0 }
+    val billing = cut?.let { title.substring(0, it.range.first) } ?: title
+    val guests =
+        cut
+            ?.let { headlinersFromTitle(title.substring(it.range.last + 1)) }
+            .orEmpty()
+            .map { it.copy(role = "SUPPORT") }
+    val (fromTitle, fromSubtitle) = buildArtistsForEventType(billing, subtitle, eventType).partition { it.titleDerived }
+    return fromTitle.flatMap(::splitAtMit) + guests.flatMap(::splitAtMit) + fromSubtitle
+}
+
+private fun splitAtMit(artist: ScrapedArtist): List<ScrapedArtist> {
+    val cuts = MIT.findAll(artist.name).filterNot { it.groupValues[1].lowercase() in MIT_TAIL_MARKERS }.toList()
+    if (cuts.isEmpty()) return listOf(artist)
+    val bounds = listOf(0) + cuts.flatMap { listOf(it.range.first, it.range.last + 1 - it.groupValues[1].length) } + artist.name.length
+    return bounds
+        .chunked(2)
+        .map { (from, to) -> stripArtistSuffix(artist.name.substring(from, to)) }
+        .filterNot { it.isBlank() || isNonArtistName(it) }
+        .map { artist.copy(name = it) }
+}
+
+/** A mid-title guest credit, after a dash, `&`, `+`, a comma or `mit`; the guests follow. */
+private val SPECIAL_GUEST =
+    Regex("""\s*(?:(?:[-–—&+,]|\bmit\b)\s*)?\bspecial\s+guests?\b\s*:?\s*""", RegexOption.IGNORE_CASE)
+
+/** A ` mit ` between two acts; the group is the next word, which can keep the name whole. */
+private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)
+
+/** The shared band-tail words plus German possessives: `X mit seiner Band` is one act. */
+private val MIT_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_MARKERS + setOf("seiner", "seinem", "ihrer", "ihrem", "seinen", "ihren")
 
 /**
  * Whether a show is for children, which is out of scope (EVENT_SCOPE.md §3.5): the house prices
