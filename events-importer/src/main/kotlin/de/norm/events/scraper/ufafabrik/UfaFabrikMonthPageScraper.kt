@@ -2,6 +2,7 @@ package de.norm.events.scraper.ufafabrik
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.CONJUNCTION_TAIL_MARKERS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -68,8 +69,10 @@ class UfaFabrikMonthPageScraper {
         val prices = row.prices()
         val time = parseTime(row.textAt(".views-field-field-time"))
         val subtitle = row.textAt(".views-field-field-subtitle")
-        val genre = row.textAt(".views-field-field-genre")
-        val eventType = genreType(genre)
+        val label = row.textAt(".views-field-field-genre")
+        val eventType = genreType(label)
+        // The label names a format ("Theater", "Mitsing-Abend") more often than a style (#3107)
+        val genre = label?.takeIf(::isGenreLabel)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
