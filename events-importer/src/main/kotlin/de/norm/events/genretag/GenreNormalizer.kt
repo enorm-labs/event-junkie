@@ -82,6 +82,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "techno" to "Techno",
         "house" to "House",
         "ambient" to "Ambient",
+        "newage" to "New Age",
         "afrohouse" to "House",
         "latinhouse" to "House",
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)

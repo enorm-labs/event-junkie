@@ -26,6 +26,7 @@ class GenreFamiliesTest {
         genreFamily("hip-hop") shouldBe GenreFamily.HIP_HOP
         genreFamily("singer-songwriter") shouldBe GenreFamily.FOLK
         genreFamily("top40") shouldBe GenreFamily.CHARTS
+        genreFamily("new-age") shouldBe GenreFamily.ELECTRONIC
     }
 
     @Test

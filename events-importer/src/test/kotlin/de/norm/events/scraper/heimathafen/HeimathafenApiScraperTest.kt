@@ -357,6 +357,8 @@ class HeimathafenApiScraperTest {
         page.events.first { it.title == "BAC" }.genre shouldBe "pop, deutschrap, rap pop"
         // `-comedy` alone is a format, not a genre.
         page.events.first { it.title == "PATRICK SPICER" }.genre shouldBe null
+        // `-mantra, -new-age, -konzert, -kirtan`: kirtan and mantra are devotional practices (#3103).
+        page.events.first { it.title == "RADHIKA DAS" }.genre shouldBe "new age"
     }
 
     @Test

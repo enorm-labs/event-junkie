@@ -3,6 +3,7 @@ package de.norm.events.genretag
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 /**
@@ -96,6 +97,12 @@ class GenreNormalizerTest {
     fun `electronic variants are normalized`() {
         normalizeGenre("Elektro-Fusion, House,Techno")
             .shouldContainExactlyInAnyOrder("Electronic", "House", "Techno")
+    }
+
+    @Test
+    fun `new age is a genre in every spelling`() {
+        isGenreLabel("new age") shouldBe true
+        normalizeGenre("New Age, new-age, NEW AGE, Newage").shouldContainExactly("New Age")
     }
 
     @Test
