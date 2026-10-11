@@ -446,7 +446,7 @@ private fun readsAsWorkTitle(tail: String): Boolean {
 }
 
 /** Countries and cities a venue writes after an act in full, in the two languages the pages use. */
-private const val COUNTRY_NAMES =
+internal const val COUNTRY_NAMES =
     "germany|deutschland|austria|österreich|switzerland|schweiz|uk|england|scotland|schottland|wales|ireland|irland" +
         "|usa|canada|kanada|mexico|mexiko|brazil|brasilien|argentina|argentinien|chile|colombia|kolumbien|peru|cuba|kuba" +
         "|france|frankreich|italy|italien|spain|spanien|portugal|netherlands|niederlande|holland|belgium|belgien" +

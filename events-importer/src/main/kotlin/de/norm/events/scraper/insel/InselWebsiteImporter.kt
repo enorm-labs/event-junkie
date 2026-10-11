@@ -95,7 +95,7 @@ val INSEL_LIMITATIONS =
     VenueLimitations(
         EventSource.INSEL,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre, except a `/ <style> / <city>` title tail"),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
             "a night billed with a doors time only, as `Doors 19:00`, names no start, so it stores the doors time and no start"
