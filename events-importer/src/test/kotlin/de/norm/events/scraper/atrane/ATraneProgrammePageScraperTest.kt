@@ -136,11 +136,38 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `bills the guest a special-guest line names, and no sideman`() {
+        // #3105: "WITH: Thomas Stieger-Moritz Müller" stays unsplit in the subtitle; "FEATURING SPECIAL GUEST:" names one guest.
+        val night = on(LocalDate.of(2026, 10, 11))
+
+        night.artists.map { it.name to it.role } shouldBe listOf("Christian Frentzen" to "HEADLINER", "Nir Felder" to "SUPPORT")
+        night.subtitle shouldBe
+            "Roundrobyn Records Album Release Concert · WITH: Thomas Stieger-Moritz Müller · FEATURING SPECIAL GUEST: Nir Felder"
+    }
+
+    @Test
+    fun `bills a special guest under a sidemen line unsplit`() {
+        val night = session("BILL PETRY", "«CLOSE YOUR EYES»", "FEAT: Christian von der Goltz-Olaf Casimir-Tobias Backhaus", "SPECIAL GUEST: Irma Neumüller")
+
+        night.title shouldBe "BILL PETRY"
+        night.artists.map { it.name to it.role } shouldBe listOf("BILL PETRY" to "HEADLINER", "Irma Neumüller" to "SUPPORT")
+        night.subtitle shouldBe "«CLOSE YOUR EYES» · FEAT: Christian von der Goltz-Olaf Casimir-Tobias Backhaus · SPECIAL GUEST: Irma Neumüller"
+    }
+
+    @Test
+    fun `bills a special guest the title already names once`() {
+        val nights = events.filter { it.title.startsWith("Tony Hurdle") }
+
+        nights shouldHaveSize 2
+        nights.forEach { night -> night.artists.count { it.name.contains("TC THE 3RD", ignoreCase = true) } shouldBe 1 }
+    }
+
+    @Test
     fun `names the act without its quoted album title`() {
-        on(LocalDate.of(2026, 10, 11)).artists.map { it.name } shouldBe listOf("Christian Frentzen")
         on(LocalDate.of(2026, 12, 5)).artists.map { it.name } shouldBe listOf("MIKE RUSSELL")
         on(LocalDate.of(2026, 10, 7)).artists.map { it.name } shouldBe listOf("ENEMY")
         on(LocalDate.of(2026, 10, 11)).title shouldBe "Christian Frentzen «PULSES»"
+        on(LocalDate.of(2026, 10, 11)).artists.first().name shouldBe "Christian Frentzen"
     }
 
     @Test
