@@ -61,8 +61,12 @@ const endNotAnnounced = computed(() => {
     <ul v-if="changes.length" :aria-label="t('events.detail.when.changesLabel')" class="pt-1">
       <li v-for="(change, index) in changes" :key="index" class="text-body">
         <span class="font-medium">{{ change.text }}</span
-        ><span class="text-muted-foreground"> · {{ change.ago }}</span>
+        ><span v-if="change.ago" class="text-muted-foreground"> · {{ change.ago }}</span>
       </li>
     </ul>
+    <!-- A postponed row is the date the show left (ADR-030); the new date, if any, is another row. -->
+    <p v-if="event.status === 'POSTPONED'" class="text-body text-muted-foreground">
+      {{ t('events.detail.when.postponed') }}
+    </p>
   </div>
 </template>

@@ -112,6 +112,13 @@ describe('EventWhen', () => {
     expect(lines(base).join(' ')).not.toContain('End not announced')
   })
 
+  it('says a postponed show is not on its date, and says nothing for a scheduled one', () => {
+    const note = "Not on this date. The venue's page has the new date, if there is one."
+
+    expect(lines({ ...base, status: 'POSTPONED' })).toContain(note)
+    expect(lines({ ...base, status: 'SCHEDULED' })).not.toContain(note)
+  })
+
   describe('changes (#2725)', () => {
     beforeEach(() => {
       vi.useFakeTimers()
@@ -125,7 +132,7 @@ describe('EventWhen', () => {
         .map((line) => line.text())
     }
 
-    it('shows each time, date and status change in the order the BFF sent it, with how long ago it was seen', () => {
+    it('shows each change in the order the BFF sent it, a move with how long ago it was seen and a status without', () => {
       const shown = changeLines({
         ...base,
         eventDate: '2026-10-17',
@@ -153,7 +160,7 @@ describe('EventWhen', () => {
       })
 
       expect(shown).toEqual([
-        'Cancelled · today',
+        'Cancelled',
         'Start moved from 22:00 to 23:00 · yesterday',
         'Date moved from Fri 16 Oct to Sat 17 Oct · 2 days ago',
       ])

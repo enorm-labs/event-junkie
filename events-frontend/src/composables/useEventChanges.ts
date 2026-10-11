@@ -7,6 +7,7 @@ import { useFormat } from '@/composables/useFormat'
 /** One change as the event page shows it: "Start moved from 22:00 to 23:00", "2 days ago". */
 export interface ChangeLine {
   text: string
+  /** Empty for a status: "Postponed · today" read as postponed to today. */
   ago: string
 }
 
@@ -48,7 +49,8 @@ export function useEventChanges() {
         from: shown(change.field, change.from),
         to: shown(change.field, change.to),
       })
-      return [{ text, ago: formatDaysAgo(change.seenAt) }]
+      const ago = change.field === 'STATUS' ? '' : formatDaysAgo(change.seenAt)
+      return [{ text, ago }]
     })
   }
 

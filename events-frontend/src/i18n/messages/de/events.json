@@ -123,7 +123,8 @@
           "SCHEDULED": "Findet wieder statt"
         }
       },
-      "endNotAnnounced": "Ende nicht bekannt gegeben"
+      "endNotAnnounced": "Ende nicht bekannt gegeben",
+      "postponed": "Nicht an diesem Termin. Den neuen Termin, falls es einen gibt, nennt die Seite der Location."
     },
     "promoters": "Veranstalter",
     "buyTickets": "Tickets kaufen",

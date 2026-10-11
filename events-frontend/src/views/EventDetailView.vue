@@ -340,7 +340,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           <p v-else class="text-body font-medium">{{ event.venue.name }}</p>
           <p v-for="(change, index) in venueChanges" :key="index" class="text-body">
             <span class="font-medium">{{ change.text }}</span
-            ><span class="text-muted-foreground"> · {{ change.ago }}</span>
+            ><span v-if="change.ago" class="text-muted-foreground"> · {{ change.ago }}</span>
           </p>
           <p v-if="event.venue.address" class="text-body text-muted-foreground">
             {{ event.venue.address
