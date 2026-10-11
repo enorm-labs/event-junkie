@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import type { ImageSource } from '@/api/types'
 
 import CachedImage from '@/components/CachedImage.vue'
-import ImageCreditLine from '@/components/ImageCreditLine.vue'
+import CreditLine from '@/components/CreditLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import ReportLine from '@/components/ReportLine.vue'
@@ -114,7 +114,7 @@ const { compact } = useCompactView()
             sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
             img-class="block max-h-140 w-full object-cover"
           />
-          <ImageCreditLine v-if="credit" :credit="credit" overlay />
+          <CreditLine v-if="credit" :credit="credit" kind="photo" overlay />
         </div>
 
         <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void

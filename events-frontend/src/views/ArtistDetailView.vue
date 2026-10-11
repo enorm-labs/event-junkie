@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import DetailLinks, { type DetailLink } from '@/components/DetailLinks.vue'
-import TextCreditLine from '@/components/TextCreditLine.vue'
+import CreditLine from '@/components/CreditLine.vue'
 import { useArtist } from '@/composables/useArtist'
 import { useDetailPage } from '@/composables/useDetailPage'
 import { owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
@@ -61,7 +61,7 @@ const descriptionCredit = computed(() =>
       >
         {{ description.text }}
       </p>
-      <TextCreditLine v-if="descriptionCredit" :credit="descriptionCredit" />
+      <CreditLine v-if="descriptionCredit" :credit="descriptionCredit" kind="text" />
     </div>
   </BaseDetailView>
 </template>
