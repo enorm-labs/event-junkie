@@ -2,6 +2,7 @@ package de.norm.events.scraper.orangerie
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -77,8 +78,45 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a food pop-up OTHER and keeps its tag out of the genre`() {
+        val nights =
+            scrapeCards(
+                "Boca a Boca Empanada" to """<span class="event-tag tag-food">South-American empanadas with a twist</span>""",
+                "Boca a Boca" to """<span class="event-tag tag-food"><span lang="de">Food Pop-up</span><span lang="en">Food pop-up</span></span>""",
+                "Empanadas w/ Tobi Fries" to """<span class="event-tag tag-food">Empanadas</span><span class="event-tag tag-music">House</span>"""
+            )
+
+        nights.map { it.eventType } shouldContainExactly listOf(EventType.OTHER.name, EventType.OTHER.name, EventType.PARTY.name)
+        nights.map { it.genre } shouldContainExactly listOf(null, null, "House")
+    }
+
+    @Test
+    fun `reads one language of a bilingual tag`() {
+        val night =
+            scrapeCards("Slow Night" to """<span class="event-tag tag-music"><span lang="de">Langsame Lieder</span><span lang="en">Slow Jams</span></span>""")
+
+        night.single().genre shouldBe "Slow Jams"
+    }
+
+    @Test
     fun `returns nothing for a page without the programme list`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    /** A programme of 2026-10-11 nights, one card each, built from the live page's markup. */
+    private fun scrapeCards(vararg nights: Pair<String, String>): List<ScrapedEvent> {
+        val items =
+            nights.mapIndexed { i, (name, _) ->
+                """{"@type":"Event","name":"$name","startDate":"2026-10-1${i}T17:00:00+02:00"}"""
+            }
+        val cards =
+            nights.joinToString("") { (name, tags) ->
+                """<div class="card"><h3 class="card-title">$name</h3><span class="og-genres">$tags</span></div>"""
+            }
+        val html =
+            """<html><head><script type="application/ld+json">{"@type":"ItemList","itemListElement":[${items.joinToString(",")}]}</script></head>""" +
+                """<body>$cards</body></html>"""
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
     private fun fixture(name: String): String =
