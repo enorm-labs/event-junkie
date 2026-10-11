@@ -15,7 +15,7 @@
 #
 # WHAT THE SCRIPT GETS RIGHT THAT THE HAND RECIPE DID NOT (docs/screenshots/README.md):
 # - Dark is a first visit, with no stored theme; light sets `theme=light` before the first paint,
-#   because the toggle is the only other way in.
+#   because the display settings are the only other way in.
 # - The posters below the fold load lazily, so the page scrolls down and back and waits until every
 #   image in and just below the frame has settled. A card with no image shows the placeholder on purpose.
 # - 2x scale: 1400x900 becomes 2800x1800, and the 390x844 phone 780x1688.

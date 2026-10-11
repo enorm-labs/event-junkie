@@ -28,7 +28,7 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
   </picture>
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="./docs/screenshots/events-mobile-light.png" />
-    <img alt="The same events list on a phone: search and dates on top, one event per row" src="./docs/screenshots/events-mobile-dark.png" width="208" />
+    <img alt="The same events list on a phone: search and date presets on top, one event per row" src="./docs/screenshots/events-mobile-dark.png" width="208" />
   </picture>
 </p>
 
