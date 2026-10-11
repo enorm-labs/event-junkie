@@ -44,7 +44,7 @@ class UfaFabrikMonthPageScraperTest {
         val event = october.single { it.sourceId == "ufa_fabrik:40154-2026-10-01-2000" }
         event.title shouldBe "ELSA"
         event.eventType shouldBe EventType.CONCERT.name
-        event.genre shouldBe "Konzert"
+        event.genre.shouldBeNull()
         event.eventDate shouldBe LocalDate.of(2026, 10, 1)
         event.startTime shouldBe LocalTime.of(20, 0)
         event.room shouldBe "Varieté Salon"
@@ -108,6 +108,32 @@ class UfaFabrikMonthPageScraperTest {
         ufaFabrikArtists("Schalala - Das Mitsingding", null, EventType.SHOW.name) shouldBe
             de.norm.events.scraper
                 .buildArtistsForEventType("Schalala - Das Mitsingding", null, EventType.SHOW.name)
+    }
+
+    @Test
+    fun `keeps the label as the genre only where it names a style, and types the row by it either way`() {
+        val november = month("ufafabrik-program-202611.html")
+
+        fun row(title: String) = (october + november).first { it.title == title }
+
+        row("Bridge Markland: faust in the box").let {
+            it.genre.shouldBeNull()
+            it.eventType shouldBe EventType.SHOW.name
+        }
+        row("Schalala - Das Mitsingding").let {
+            it.genre.shouldBeNull()
+            it.eventType shouldBe EventType.SHOW.name
+        }
+        row("Magic Monday Leipzig").genre.shouldBeNull()
+        row("Ellen Esser & Band").let {
+            it.genre.shouldBeNull()
+            it.eventType shouldBe EventType.CONCERT.name
+        }
+        row("Herbstkonzert des Berliner JugendJazzOrchester").let {
+            it.genre shouldBe "Jazz Orchester"
+            it.eventType shouldBe EventType.CONCERT.name
+        }
+        row("Berlin Songwood Sessions").genre shouldBe "Singer-Songwriter"
     }
 
     @Test
