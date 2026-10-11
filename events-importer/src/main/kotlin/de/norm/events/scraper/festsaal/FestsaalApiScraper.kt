@@ -142,10 +142,13 @@ class FestsaalApiScraper {
 
         val subtitle = node.subTitle.blankToNull()
         val genreNode = node.genre?.title.blankToNull()
-        // The genre node is a musical genre, except when the house files a night under an event
-        // kind: "In The Mountains" is a queer art festival with `Festival` as its genre (#1952).
         val kindFromGenre = mapEventType(genreNode)?.takeIf { it != EventType.CONCERT.name }
-        val eventType = kindFromGenre ?: inferEventType(title, subtitle)
+        val kindWordInGenre = genreNode?.let(::eventKindWordIn)
+        val eventType =
+            kindFromGenre
+                ?: inferEventType(title, subtitle).takeUnless { it == EventType.CONCERT.name }
+                ?: kindWordInGenre
+                ?: EventType.CONCERT.name
 
         return ScrapedEvent(
             title = title,
@@ -162,7 +165,7 @@ class FestsaalApiScraper {
             sourceUrl = publicEventUrl(node.meta?.htmlUrl.blankToNull(), slug),
             sourceId = sourceId,
             ticketUrl = node.ticket.blankToNull()?.takeIf { it.startsWith("http") },
-            genre = genreNode.takeIf { kindFromGenre == null },
+            genre = genreNode.takeIf { kindFromGenre == null && kindWordInGenre == null },
             pricePresale = parsePrice(node.price.blankToNull()),
             soldOut = statusCode == STATUS_SOLD_OUT,
             status = mapStatus(statusCode, sourceId),
@@ -232,8 +235,8 @@ class FestsaalApiScraper {
 
     /**
      * Infers the event type from title/subtitle, since Festsaal exposes no category field
-     * (`genre` is a *musical* genre, not an event kind — the one exception, an event kind filed
-     * as the genre, is read before this runs).
+     * (`genre` is a *musical* genre, not an event kind — the exceptions, an event kind filed
+     * as the genre, are read around this: see [eventKindWordIn]).
      *
      * A live-music venue, so the shared concert-venue rule with [FESTSAAL_KEYWORDS]; a concert
      * whose title names a festival is a `FESTIVAL`. Flipping away from `CONCERT` also stops a
@@ -324,6 +327,22 @@ class FestsaalApiScraper {
                 )
     }
 }
+
+/**
+ * The event kind a `genre` node names by a whole word, or null for a musical genre. The house files
+ * some nights under a kind: `Markt`, `LIVE PODCAST`, `20er Jahre Party`, `Drag Show` (see #3097).
+ * An exact label such as `Festival` (#1952) or `Lesung` goes through [mapEventType] first and
+ * always wins. A word found here types only a night the title leaves a concert.
+ */
+private fun eventKindWordIn(genre: String): String? = GENRE_KIND_WORDS.entries.firstOrNull { (pattern, _) -> pattern.containsMatchIn(genre) }?.value
+
+/** `market` stays out of the shared title keywords: `Black Market Karma` is a band. */
+private val GENRE_KIND_WORDS: Map<Regex, String> =
+    mapOf(
+        Regex("""\b(?:markt|market)\b""", RegexOption.IGNORE_CASE) to EventType.OTHER.name,
+        Regex("""\bparty\b""", RegexOption.IGNORE_CASE) to EventType.PARTY.name,
+        Regex("""\b(?:show|podcast)\b""", RegexOption.IGNORE_CASE) to EventType.SHOW.name
+    )
 
 /**
  * The note [parseRelocation] reads a move's destination from: `changed_text`, the sentence under

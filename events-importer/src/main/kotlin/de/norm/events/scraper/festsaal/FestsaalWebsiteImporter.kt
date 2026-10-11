@@ -58,7 +58,7 @@ val FESTSAAL_LIMITATIONS =
         EventSource.FESTSAAL,
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the API exposes no category field; its `genre` node is a musical genre, and only an event kind filed there (Festival) types the night"
+            "the API exposes no category field; its `genre` node is a musical genre unless it names an event kind (Festival, Markt, Party, Show)"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the API names no figure; tickets are sold through a vvk.link shop")
     )
