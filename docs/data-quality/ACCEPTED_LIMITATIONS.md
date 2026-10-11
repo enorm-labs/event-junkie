@@ -238,8 +238,8 @@ says so.
 | `MEHRINGHOF`           | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `METROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |
 | `METROPOL`             | `GENRE`            | the detail page's TAGS field is empty, and its one category names the event type (Konzert, Party), not a style                                   | —     |
-| `MIGAS`                | `PRICE`            | entry arrangements are not stated on the site at all                                                                                             | —     |
-| `MIGAS`                | `TICKET_URL`       | entry arrangements are not stated on the site at all                                                                                             | —     |
+| `MIGAS`                | `PRICE`            | most events state no entry arrangements; a stated free entry is read                                                                             | —     |
+| `MIGAS`                | `TICKET_URL`       | the site links no ticket shop                                                                                                                    | —     |
 | `MIGAS`                | `DOORS_TIME`       | the listing carries no door time                                                                                                                 | —     |
 | `MIGAS`                | `SOLD_OUT`         | the listing carries no sold-out badge                                                                                                            | —     |
 | `MIGAS`                | `CANCELLATION`     | the listing carries no cancellation badge                                                                                                        | —     |

@@ -2,11 +2,13 @@ package de.norm.events.scraper.migas
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
@@ -41,6 +43,9 @@ import java.time.OffsetDateTime
  * idempotent upserts turn on; a second scheme — the WordPress post id, say — would re-key the
  * *whole* programme, inserting duplicates and letting stale-cleanup delete the originals.
  * Dropping with a warning is the safer failure.
+ *
+ * Most events state no entry arrangements. A description that states free entry ("There is no
+ * entrance fee.") sets `free`. Its "We open at 19:00" is the bar's opening hour, not a door time.
  *
  * One time per event, taken as `startTime`. The genre stays empty though the venue writes real
  * genre prose ("Somali funk, Ethio-jazz, Sudanese pop") into descriptions: its two categories
@@ -95,17 +100,19 @@ class MigasOverviewPageScraper {
 
         val category = item.textAt(CATEGORY_SELECTOR) ?: popup.textAt(POPUP_CATEGORY_SELECTOR)
         val (eventDate, startTime) = start
+        val description = popup.textAt(DESCRIPTION_SELECTOR)
 
         return ScrapedEvent(
             title = title,
-            description = popup.textAt(DESCRIPTION_SELECTOR),
+            description = description,
             eventType = mapEventType(category, EVENT_TYPE_SYNONYMS),
             eventDate = eventDate,
             startTime = startTime,
             imageUrl = popup.lazyImage(POPUP_IMAGE_SELECTOR) ?: item.lazyImage(ITEM_IMAGE_SELECTOR),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MIGAS.sourceIdPrefix}${extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)}",
-            artists = artistsFor(title)
+            artists = artistsFor(title),
+            free = hasFreeEntryPhrase(description)
         )
     }
 
@@ -142,9 +149,10 @@ class MigasOverviewPageScraper {
      * co-bills split by [headlinersFromTitle]). Everyone migas books plays records, so the role
      * is always `DJ`. An album-playback night ([isAlbumPlayback]) yields **no** artists: its
      * title names the record, and minting "Kyuss" would assert the band appears at the venue.
+     * A hosted session ([isHostedSession]) yields none either: its host leads it but plays nothing.
      */
     private fun artistsFor(title: String): List<ScrapedArtist> =
-        if (isAlbumPlayback(title)) {
+        if (isAlbumPlayback(title) || isHostedSession(title)) {
             emptyList()
         } else {
             headlinersFromTitle(title).map { it.copy(role = ARTIST_ROLE_DJ) }
@@ -202,5 +210,13 @@ class MigasOverviewPageScraper {
             Regex("""\s[–—-]\s.*\([^()]*\b(?:19|20)\d{2}\b[^()]*\)\s*$""")
 
         fun isAlbumPlayback(title: String): Boolean = ALBUM_PLAYBACK_PATTERN.containsMatchIn(title)
+
+        /**
+         * A topic title with a host tail: "The music of John Cage: …, presented by Jordan Elias".
+         * The comma keeps it off a bare guest name such as "modú".
+         */
+        val HOSTED_SESSION_PATTERN = Regex(""",\s*(?:$PRESENTED_BY_WORDS)\s+\S""", RegexOption.IGNORE_CASE)
+
+        fun isHostedSession(title: String): Boolean = HOSTED_SESSION_PATTERN.containsMatchIn(title)
     }
 }
