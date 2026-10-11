@@ -46,6 +46,7 @@ env:
 jobs:
   probe:
     name: Probe the public site
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

@@ -38,6 +38,7 @@ concurrency:
 jobs:
   review:
     name: OWASP Top 10 review (agent)
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     permissions:
       contents: read

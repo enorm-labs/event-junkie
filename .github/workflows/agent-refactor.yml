@@ -44,6 +44,7 @@ concurrency:
 jobs:
   refactor:
     name: Refactor (agent)
+    if: github.event_name != 'schedule' || github.repository == 'enorm-labs/event-junkie'
     runs-on: ubuntu-latest
     # The longest of the family: the prompt requires the suite after every concern, so several builds.
     timeout-minutes: 90

@@ -195,6 +195,9 @@ no `dry_run` because every run is one, no `issues: write` on the agent's job, AD
   one place output formats are parsed, so an extraction that stops matching is an error. Three shapes: a floor that only moves up (zizmor, `flux schema
   validate`), a property (every rendered resource valid, none skipped, count positive), a floor of zero where an upstream database moves the count (Trivy,
   Dependency-Check — the tool `Dependencies Scanned: 0` happened to).
+- **Every scheduled job runs only in `enorm-labs/event-junkie`**: its `if:` carries `github.repository == 'enorm-labs/event-junkie'` for the `schedule`
+  event. A fork with Actions enabled runs every cron in the copy it took, and a stale `dast.yml` in one scanned production beside ours (#3090). A
+  dispatch on a fork still runs. `scripts/schedule-guard-parity.sh` fails on a scheduled root job without the guard.
 - **Every step that writes to GitHub is guarded on `github.event.pull_request.head.repo.fork != true`** — coverage comments, SARIF uploads — or a fork PR goes
   red for a `403` its author did not cause. Add the guard in the same change as the step.
 
