@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EventCalendar from '@/components/EventCalendar.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
+import ListPage from '@/components/ListPage.vue'
 import { describeError } from '@/api/client'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { toCalendarInput } from '@/lib/calendarEvent'
@@ -62,14 +63,10 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('calendar.title') }}</h1>
-      <p class="text-body text-muted-foreground">{{ t('calendar.subtitle') }}</p>
-    </header>
+  <ListPage :subtitle="t('calendar.subtitle')" :title="t('calendar.title')">
     <!-- No date range here: FullCalendar's visible window already is the range. -->
     <EventFilterBar :show-date-range="false" />
     <p v-if="error" class="text-body text-destructive">{{ error }}</p>
     <EventCalendar :events="events" @dates-set="loadRange" @event-click="openEvent" />
-  </main>
+  </ListPage>
 </template>

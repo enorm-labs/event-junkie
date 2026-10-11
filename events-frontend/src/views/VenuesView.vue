@@ -7,6 +7,7 @@ import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
+import ListPage from '@/components/ListPage.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl from '@/components/SortControl.vue'
@@ -255,10 +256,8 @@ const localePath = useLocalePath()
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('venues.title') }}</h1>
-      <p class="text-body text-muted-foreground">{{ t('venues.subtitle') }}</p>
+  <ListPage :subtitle="t('venues.subtitle')" :title="t('venues.title')">
+    <template #header>
       <p class="text-body text-muted-foreground">
         {{ t('venues.missing') }}
         <a
@@ -267,7 +266,7 @@ const localePath = useLocalePath()
           >{{ CONTROLLER.email }}</a
         >
       </p>
-    </header>
+    </template>
 
     <ListFilterBar :more-count="moreCount" :placeholder="t('venues.searchPlaceholder')">
       <template #more>
@@ -553,5 +552,5 @@ const localePath = useLocalePath()
 
       <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>
-  </main>
+  </ListPage>
 </template>

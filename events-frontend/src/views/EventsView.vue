@@ -13,6 +13,7 @@ import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils
 import { todayIso } from '@/lib/format'
 import { splitDayList } from '@/lib/longRuns'
 import EventFilterBar from '@/components/EventFilterBar.vue'
+import ListPage from '@/components/ListPage.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import type { EventPage } from '@/api/types'
@@ -180,12 +181,7 @@ const mapLink = computed(() => ({
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
-    <header class="space-y-1">
-      <h1 class="text-page font-bold tracking-tight">{{ t('events.title') }}</h1>
-      <p class="text-body text-muted-foreground">{{ t('events.subtitle') }}</p>
-    </header>
-
+  <ListPage :subtitle="t('events.subtitle')" :title="t('events.title')">
     <EventFilterBar :result-count="page?.totalElements" show-on-now />
 
     <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
@@ -262,5 +258,5 @@ const mapLink = computed(() => ({
 
       <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>
-  </main>
+  </ListPage>
 </template>
