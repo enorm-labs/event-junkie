@@ -17,6 +17,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -172,27 +173,29 @@ class FestsaalApiScraper {
             artists = buildArtists(title, node.support.blankToNull(), eventType),
             description = parseDescription(node.layouts),
             statusNote = relocationNote(node.changedText, node.newLocation),
-            promoters = node.presenters.mapNotNull { it.name.blankToNull() }
+            promoters = promoters(node)
         )
     }
 
     /**
-     * The description from the page's `item_text` blocks (`layouts[].value.items[]`), one line per
-     * paragraph or heading. The `präsentiert von` heading above a partner logo names no text of its
-     * own and is dropped; the presenters themselves come from `presenters`.
+     * The description from the page's text blocks, one line per paragraph or heading. A presenter
+     * block is dropped: the bare `präsentiert von` heading above a partner logo, and the
+     * `präsentiert von <name>` credit line, which [promoters] reads.
      */
     private fun parseDescription(layouts: JsonNode?): String? =
-        layouts
-            ?.flatMap { layout -> layout.path("value").path("items") }
-            ?.filter { it.path("type").asString("") == TEXT_ITEM }
-            ?.flatMap { item ->
-                Jsoup
-                    .parseBodyFragment(item.path("value").path("text").asString(""))
-                    .select("p, h1, h2, h3, h4, h5, h6, li")
-                    .map { it.text().replace('\u00A0', ' ').trim() }
-            }?.filter { it.isNotBlank() && !PRESENTED_BY_HEADING.matches(it) }
-            ?.joinToString("\n")
+        textBlocks(layouts)
+            .filterNot { PRESENTER_BLOCK.matches(it) }
+            .joinToString("\n")
             .blankToNull()
+
+    /**
+     * The structured `presenters`, then the companies a `präsentiert von <name>` text block credits,
+     * deduplicated case-insensitively. Most credits are only text, see #3098.
+     */
+    private fun promoters(node: FestsaalEventNode): List<String> {
+        val credited = textBlocks(node.layouts).flatMap(::creditedPromoters)
+        return (node.presenters.mapNotNull { it.name.blankToNull() } + credited).distinctBy { it.lowercase() }
+    }
 
     /**
      * Maps the `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
@@ -413,5 +416,34 @@ private data class FestsaalImage(
 /** The Wagtail block type of a rich-text block inside a layout. */
 private const val TEXT_ITEM = "item_text"
 
-/** A heading that introduces the partner logos: `präsentiert von`, `presented by`. */
-private val PRESENTED_BY_HEADING = Regex("""(?:$PRESENTED_BY_WORDS)\s*:?""", RegexOption.IGNORE_CASE)
+/**
+ * A whole text block that credits a presenter: the bare heading over the partner logos
+ * (`präsentiert von`, `wird präsentiert von`), or a credit line whose group 1 names the companies
+ * (`präsentiert von Loft, Visions & ByteFM`).
+ */
+private val PRESENTER_BLOCK = Regex("""(?:wird\s+)?(?:$PRESENTED_BY_WORDS)\s*:?(?:\s+(.+))?""", RegexOption.IGNORE_CASE)
+
+/** What a credit joins several companies with: a comma, or a space-padded `&`, so `Kunst&Krawall` stays whole. */
+private val CO_PROMOTER_SEPARATOR = Regex("""\s*,\s*|\s+&\s+""")
+
+/** The companies a [PRESENTER_BLOCK] credit line names; none for a bare heading or any other block. */
+private fun creditedPromoters(block: String): List<String> {
+    val credit = PRESENTER_BLOCK.matchEntire(block)?.groupValues?.get(1)
+    return promoterFromCredit(credit)
+        ?.split(CO_PROMOTER_SEPARATOR)
+        .orEmpty()
+        .mapNotNull { it.trim().blankToNull() }
+}
+
+/** The page's `item_text` blocks (`layouts[].value.items[]`) as text, one entry per paragraph, heading or list item. */
+private fun textBlocks(layouts: JsonNode?): List<String> =
+    layouts
+        ?.flatMap { layout -> layout.path("value").path("items") }
+        ?.filter { it.path("type").asString("") == TEXT_ITEM }
+        ?.flatMap { item ->
+            Jsoup
+                .parseBodyFragment(item.path("value").path("text").asString(""))
+                .select("p, h1, h2, h3, h4, h5, h6, li")
+                .map { it.text().replace('\u00A0', ' ').trim() }
+        }.orEmpty()
+        .filter { it.isNotBlank() }

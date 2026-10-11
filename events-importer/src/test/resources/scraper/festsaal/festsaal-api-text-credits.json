@@ -1,0 +1,467 @@
+{
+  "meta": {
+    "total_count": 5
+  },
+  "items": [
+    {
+      "id": 672,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/672/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/Mal-Eleve/",
+        "slug": "Mal-Eleve",
+        "first_published_at": "2025-09-30T15:10:59.552875Z",
+        "locale": "de"
+      },
+      "title": "Mal Élevé",
+      "url": "/de/programm/Mal-Eleve/",
+      "preview_image": {
+        "id": 1063,
+        "title": "MalÉlevé2025_(c)_JamilaGrote2_quer",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/MalEleve2025_c_JamilaGrote2_quer.jpg"
+      },
+      "preview_text": "",
+      "sub_title": "„Résilience“-Tour 2026",
+      "date": "2026-10-21",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "",
+      "ticket": "https://www.ticket-heart.de/ticket-shop/mal-eleve/",
+      "price": null,
+      "genre": null,
+      "new_location": null,
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"czrgi\"><b>Im Herbst 2026 tourt Mal Élevé unter dem Motto „Résilience“ durch Deutschland und die Schweiz</b></p><p data-block-key=\"9dh17\">Mal Élevé lässt sich nicht unterkriegen. Auch angesichts der schlechten Nachrichten, die sich derzeit aus aller Welt überschlagen, gibt der Sänger und politische Aktivist nicht auf. Im Gegenteil. Mal Élevé erklärt die Widerstandsfähigkeit gegen all die Ungerechtigkeiten und Unmenschlichkeiten zu seiner Devise und geht im Oktober 2026 auf „Résilience“-Tour durch Deutschland und die Schweiz. Im Motto der Tour verschmelzen die beiden Pole, die Mal Élevé als Artist ausmachen: der ungebrochene politische Widerstandsgeist und die unbändige positive Energie, die seine ganz eigene Mischung von Reggae und Dancehall über Rap bis hin zu Punk versprüht. Denn widerstandfähig ist auf Dauer nur, wer den Optimismus nicht verliert. Diese Dualität aus Kopf hoch-Mentalität und Rebellion zeichnete bereits die Musik der Band Irie Révoltés aus, die Mal Élevé als Frontsänger entscheidend prägte. Irie Révoltés haben sich nach jahrelanger Pause 2025 zu einer IRIEUNION zusammengeschlossen, um noch einmal gemeinsam die großen Festival-Bühne zu stürmen und auf Tour zu gehen. Ein letztes Mal probt Mal Élevé mit seiner ehemaligen Band den Aufstand. Getragen von der unglaublichen Stimmung der IRIEUNION-Konzerte wird er 2026 mit umso mehr Energie zurückkommen. Mit der stimmgewaltigen Unterstützung des Sängers Osy und seiner Band wird Mal Élevé seine „Résilience“ gegen den weltweiten Rechtsruck, den zunehmenden Rassismus, die menschenverachtenden Kriege demonstrieren und alle mit seinen positiven Vibes anstecken. Und natürlich wird Mal Élevé auch neue Musik auf die Bühne bringen. Denn Aufgeben ist keine Option.</p>"
+                },
+                "id": "7c160bbb-4703-485e-90a2-0af4892765d4"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/DAE1GmunI3E?si=SjHv_JMI3mNcW5pB",
+                  "aspect_ratio": "video"
+                },
+                "id": "c1304fd7-dc44-42fb-b006-707f31539b95"
+              },
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<h4 data-block-key=\"2fa6u\">präsentiert von Wallcitymusic</h4>"
+                },
+                "id": "58b2ca2f-c936-4103-af8c-c6587e2c87ed"
+              }
+            ]
+          },
+          "id": "f2487cff-a185-4526-ab25-e80ad224f55d"
+        }
+      ],
+      "status": null,
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 752,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/752/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/Muff-Potter/",
+        "slug": "Muff-Potter",
+        "first_published_at": "2026-02-09T15:40:16.357094Z",
+        "locale": "de"
+      },
+      "title": "Muff Potter",
+      "url": "/de/programm/Muff-Potter/",
+      "preview_image": {
+        "id": 1187,
+        "title": "Muff Potter",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/MuffPotter_2026_Credit_ErikWeiss_VerenaBruning.jpg"
+      },
+      "preview_text": "",
+      "sub_title": "KLEPTO TOUR 2026",
+      "date": "2026-11-28",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "",
+      "ticket": "https://tickets.loft.de/event/muff-potter-rant4o",
+      "price": null,
+      "genre": {
+        "id": 1,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/1/"
+        },
+        "title": "Rock"
+      },
+      "new_location": null,
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"czrgi\"><br/>Die Gruppe Muff Potter hat ein neues Album aufgenommen. Es heißt KLEPTOund ist so gut wie fertig. KLEPTO ist das insgesamt neunte Studioalbum der 1993 im westfälischen Rheine gegründeten und seit vielen Jahren in Berlin ansässigen Band und das erste nach dem Comeback-Album »Bei aller Liebe«, das 2022 auf dem bandeigenen Label Hucks Plattenkiste erschien und auf Platz 8 der Deutschen Albumcharts einstieg. Sobald das Album fertig ist, wird es ein Cover und ein Veröffentlichungsdatum geben. Angepeilt ist, so viel sei schon mal verraten, das späte dritte Quartal 2026. Im November diesen Jahres wird die Band mit ihrem neuen Album auf Tour gehen. Nach zwei Shows zum 30-jährigen Bandjubiläum im Herbst 2023 sind MuffPotter in den letzten Jahren kaum live aufgetreten. Zum Jahresende 2025 spielte die Band ein kurzfristig anberaumtes Fundraiser-Konzert in der ausverkauften Neue Zukunft in Berlin-Stralau, bei dem auch zum ersten Malvier neue Stücke gespielt wurden. Auf ihrer KLEPTO TOUR 2026 machen Muff Potter Halt in zehn deutschen Städten sowie einer österreichischen Stadt. Der Vorverkauf startet am 10.02.2026, Tickets gibt es im lokalen Vorverkauf sowie im Muff Potter Bandshop</p>"
+                },
+                "id": "7c160bbb-4703-485e-90a2-0af4892765d4"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/8JhUt-KZE2M?si=fte5e5N-JLt52VOB",
+                  "aspect_ratio": "video"
+                },
+                "id": "c1304fd7-dc44-42fb-b006-707f31539b95"
+              }
+            ]
+          },
+          "id": "f2487cff-a185-4526-ab25-e80ad224f55d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"bqmcx\"><b>präsentiert von Loft, Visions &amp; ByteFM</b></p>"
+                },
+                "id": "027a89ec-a3a4-4256-af55-fe6e095646cd"
+              }
+            ]
+          },
+          "id": "db332c9c-f386-4635-9544-5ffd8ccc5fa9"
+        }
+      ],
+      "status": null,
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 850,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/850/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/Mach-One/",
+        "slug": "Mach-One",
+        "first_published_at": "2026-07-01T16:00:19.487000Z",
+        "locale": "de"
+      },
+      "title": "Mach One",
+      "url": "/de/programm/Mach-One/",
+      "preview_image": {
+        "id": 1319,
+        "title": "Mach One",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/Mach_One.jpg"
+      },
+      "preview_text": "",
+      "sub_title": "und Freunde. 29 Jahre.",
+      "date": "2026-11-29",
+      "doors": "19:00:00",
+      "start": "20:30:00",
+      "changed_date": "2027-01-08",
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "",
+      "ticket": "https://www.machi361.de/event-details/mach-one-und-freunde-29-jahre",
+      "price": null,
+      "genre": {
+        "id": 15,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/15/"
+        },
+        "title": "Hip-Hop"
+      },
+      "new_location": null,
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"x87xa\">Am 29. November 2026 versammelt MACH ONE seine legendären Weggefährten im Festsaal Kreuzberg, um all den wunderschönen Wahnsinn zu feiern,</p><p data-block-key=\"4v3gk\">den er in den letzten 29 Jahren mit ihnen geteilt ha</p><p data-block-key=\"170ba\">Sei dabei oder hör dir später an, was du verpasst hast.</p><p data-block-key=\"5v55d\">Wir feiern die goldene Zeit des Berliner Untergrund-Raps, gehen eigentlich aber viel tiefer und zelebrieren 29 Jahre Musikgeschichte.</p><p data-block-key=\"55fpd\">29 Jahre rund um einen Künstler, der mit seiner Arbeit ein deutschlandweites Umfeld gefördert, inspiriert, geprägt und verbunden hat wie kein Zweiter.</p><p data-block-key=\"4vfqb\">Es geht um den Meister aus Kreuzberg - vom ersten Freestyle bis zum Tag des Konzerts. Es geht um 29 Jahre MACH ONE.</p>"
+                },
+                "id": "6365e5a9-ff2d-4078-aba3-0db3ce9c2277"
+              }
+            ]
+          },
+          "id": "c6e22877-cd77-4c21-80e2-9668b3a4775e"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/6YVfrQQGJ70?si=wNBrpDiaZL2xaux7",
+                  "aspect_ratio": "video"
+                },
+                "id": "9598fe12-38d0-441f-9ac5-af86e1c6514e"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"gzwsu\">Präsentiert von <b>Wird Schon Records</b></p>"
+                },
+                "id": "45637c7b-2f9d-40cf-a65b-0c0362b7367e"
+              }
+            ]
+          },
+          "id": "839c2678-15c2-439b-a28b-16a7ac9e2a03"
+        }
+      ],
+      "status": "moved_date",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 733,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/733/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/karate-andi/",
+        "slug": "karate-andi",
+        "first_published_at": "2025-12-09T18:27:13.726399Z",
+        "locale": "de"
+      },
+      "title": "Karate Andi",
+      "url": "/de/programm/karate-andi/",
+      "preview_image": {
+        "id": 1145,
+        "title": "karate andi",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/PR_BILD_ANDI_2_1.jpeg"
+      },
+      "preview_text": "",
+      "sub_title": null,
+      "date": "2026-04-10",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": "2027-03-05",
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "Grüßt euch. Ich muss leider schweren Herzens meine Tour verschieben. Ich habe mich\r\nletztes Jahr einfach zeitlich komplett verzockt und dachte, dass ich es noch schaffe mein\r\nneues Album noch vor der Tour zu releasen. Da das ja offensichtlich leider nicht geklappt\r\nhat, hätte ich auf der Tour fast keine neuen Songs spielen können. Es tut mir wirklich für alle\r\nleid, die schon Pläne gemacht und auf die Shows gefreut haben. Als kleinen Trost kann ich\r\neuch aber verkünden, dass mein neues Album „Wendekreis des Jaguars“ dieses Jahr\r\nerscheinen wird und ihr schon bald mit den ersten Singles rechnen könnt.\r\n \r\nAlle bereits gekauften Tickets behalten ihre Gültigkeit für die jeweiligen Ersatztermine. Wenn\r\ndu dein/e Ticket/s online gekauft hast, erhältst du eine E-Mail von dem Ticketanbieter, bei\r\ndem du das/die Ticket/s gekauft hast, mit weiteren Informationen. Danke für eurer\r\nVerständnis!",
+      "ticket": "https://landstreicher-konzerte.de/konzerte/karate-andi-b-26",
+      "price": null,
+      "genre": {
+        "id": 16,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/16/"
+        },
+        "title": "Hip-Hop/Rap"
+      },
+      "new_location": null,
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"mteyg\">Wenn man bis jetzt über Touren durch den deutschsprachigen Raum gesprochen hat, wardas Ergebnis entweder blanker Hass oder pure Enttäuschung. All das hat bald keineRelevanz mehr, denn unser lieblings-Weltverbesserer Karate Andi geht 2026 endlich wieder auf große Europatour durch 13 Städte in Deutschland, Österreich und der Schweiz. Wernicht dumm ist sichert sich direkt ein paar Tickets um nicht das größte Spektakel seinesLebens zu verpassen. Euch erwartet eine kosmopolitische Abendunterhaltung der Extra Klasse an der sowohl Arthur Schoppenhauer als auch Mario Basler ihren Spaß gehabthätten.Wenn man bis jetzt über Touren durch den deutschsprachigen Raum gesprochen hat,war das Ergebnis entweder blanker Hass oder pure Enttäuschung. All das hat bald keineRelevanz mehr, denn unser lieblings-Weltverbesserer Karate Andi geht 2026 endlich wiederauf große Europatour durch 13 Städte in Deutschland, Österreich und der Schweiz. Wernicht dumm ist sichert sich direkt ein paar Tickets um nicht das größte Spektakel seinesLebens zu verpassen. Euch erwartet eine kosmopolitische Abendunterhaltung der ExtraKlasse an der sowohl Arthur Schoppenhauer als auch Mario Basler ihren Spaß gehabt hätten.</p>"
+                },
+                "id": "7c160bbb-4703-485e-90a2-0af4892765d4"
+              },
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/3Tu-APvkwj8?si=fVzNKy9YYny8ftNP",
+                  "aspect_ratio": "video"
+                },
+                "id": "4b2054dd-c58e-474b-b825-69f4757c40b5"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"n9lzm\"><b>wird präsentiert von</b></p>"
+                },
+                "id": "3146487d-2946-49d9-a861-7dd01b9a06ae"
+              },
+              {
+                "type": "item_partner",
+                "value": {
+                  "logo": {
+                    "title": "Landstreicher Logo",
+                    "id": 568,
+                    "alt": "Landstreicher Logo",
+                    "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-2100x2100.jpegquality-75.png",
+                    "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1450x1450.jpegquality-75.png",
+                    "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1000x1000.jpegquality-75.png",
+                    "width": 2525,
+                    "height": 3114,
+                    "focal": null
+                  },
+                  "link": ""
+                },
+                "id": "c9c46132-c4db-4946-8421-276bc0cf6c5e"
+              }
+            ]
+          },
+          "id": "0ac2dc64-5eab-4eec-9fa7-c7ed946cc0c0"
+        }
+      ],
+      "status": "moved_date",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 900,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/900/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/thundermother-2027/",
+        "slug": "thundermother-2027",
+        "first_published_at": "2024-04-08T13:42:24.900000Z",
+        "locale": "de"
+      },
+      "title": "Thundermother",
+      "url": "/de/programm/thundermother-2027/",
+      "preview_image": {
+        "id": 1382,
+        "title": "LandstreicherKonzerte_Thundermother",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/LandstreicherKonzerte_Thundermother.png"
+      },
+      "preview_text": "",
+      "sub_title": "Mothers of Thunder Tour 2027",
+      "date": "2027-03-20",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "",
+      "ticket": "https://tickets.vertikalconcerts.com/events/thundermother-mothers-of-thunder-tour-2027-festsaal-kreuzberg",
+      "price": null,
+      "genre": {
+        "id": 1,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/1/"
+        },
+        "title": "Rock"
+      },
+      "new_location": null,
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"czrgi\">Swedish hard rock queens THUNDERMOTHER are back with their Napalm Records studio debut, Mothers of Thunder, out on February 5, 2027. Their seventh album once again proves that the genre’s leading ladies can do everything men could—and maybe even better. Their rock’n’roll vibe comes in with dirty riffs and cheeky lines, the powerful delivery begging for energetic live shows. THUNDERMOTHER have previously proven to excel at just that: after opening for the legendary Scorpions and Judas Priest, playing at iconic festivals like Wacken Open Air, Summer Breeze, or Sweden Rock, and releasing their first live album, Live’n’Alive, in 2026, the four-piece is ready for a new era. Mothers of Thunder is high-energy encouragement for women as well as thrilling, head-bopping fun for everyone else.</p><p data-block-key=\"9sca7\"></p><p data-block-key=\"dpah1\">The somewhat self-titled opening title track, “Mothers of Thunder”, is an ode to all women as well as an invitation to join THUNDERMOTHER in their ride. Calling mothers, daughters, and sisters as well as girlfriends and wives, the Swedish band is paving the way with this speedy track for those whom the future belongs to. “Restless” is another emancipatory manifesto: Singer Linnéa Vikström Egg teams up with her father, THERION’s Thomas Vikström, for a daddy-daughter argument turned song—a parent’s concerns on the one side, a child’s longing for freedom on the other, this song is as authentic as can be with real family delivering the vocals. Following, “Time Is Never Wasted (When You’re Wasted All The Time)” gifts Mothers of Thunder an instant rock classic, best played at clubs, pubs, or on the road, whereas “Front Row Bangers” goes straight back to the aforementioned live shows. The singalong hymn goes out to their most dedicated fans and the love they pour into the musicians on stage: “We do the show, but you’re the stars” lovingly underlines the importance of their support. Mid-tempo, blues-infused hard rocker “The Wet Blues”, dealing with a certain lust and loneliness, continues THUNDERMOTHER’s track record of delivering highly contagious bangers with strong vocal performances, having “Stalker” kick extra hard afterwards. Featuring Wild West vibes, this scarily calm song deals with a harsh reality of being a woman—from the perpetrator’s perspective. “Bimbo Boost” has the quartet return to their genre’s roots, only to turn them on their head: Playing the epic riff to Deep Purple’s “Smoke On The Water” backwards, THUNDERMOTHER address the pressure on female artists to always look perfect when going on stage—an expectation that passes by male musicians. “Get Up” is another self-empowerment hymn for women, whereas “Perfectly Miserable” is slower song (not a ballad!) every good rock album needs. The question “Do I Need A Doctor” is easily answered with a song this infectious, and raw “Dirty Word” follows in its footsteps. Closing off the album, “Shake Your Money Maker” adds a certain feel-good summer feeling to Mothers of Thunder.</p><p data-block-key=\"1inte\"></p><p data-block-key=\"6d2th\">With their seventh album, THUNDERMOTHER take a step to become nothing less than rock goddesses. Mothers of Thunder is their time to shine, putting genre colleagues in their places with ease. The future belongs to THUNDERMOTHER!</p><p data-block-key=\"eouia\"></p>"
+                },
+                "id": "7c160bbb-4703-485e-90a2-0af4892765d4"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/G9udNTyn_QI?si=i2jZrLjpP3KZXs8d",
+                  "aspect_ratio": "video"
+                },
+                "id": "c1304fd7-dc44-42fb-b006-707f31539b95"
+              }
+            ]
+          },
+          "id": "f2487cff-a185-4526-ab25-e80ad224f55d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"bqmcx\"><b>präsentiert von Landstreicher</b></p>"
+                },
+                "id": "027a89ec-a3a4-4256-af55-fe6e095646cd"
+              }
+            ]
+          },
+          "id": "db332c9c-f386-4635-9544-5ffd8ccc5fa9"
+        }
+      ],
+      "status": null,
+      "support": "The Karma Effect",
+      "presenters": [
+        {
+          "id": 11,
+          "name": "Landstreicher",
+          "logo": {
+            "title": "Landstreicher Logo",
+            "id": 568,
+            "alt": "Landstreicher Logo",
+            "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-2100x2100.jpegquality-75.png",
+            "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1450x1450.jpegquality-75.png",
+            "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1000x1000.jpegquality-75.png",
+            "width": 2525,
+            "height": 3114,
+            "focal": null
+          },
+          "grayscale": true,
+          "inverted": false,
+          "more_contrast": false,
+          "website": "https://landstreicher-konzerte.de/konzerte"
+        }
+      ]
+    }
+  ]
+}
