@@ -182,6 +182,33 @@ class InselApiScraperTest {
     }
 
     @Test
+    fun `bills only the acts of a style-and-city title and stores the style as the genre`() {
+        val event = single("HKSPK (DE) + ALKHEMIA (FR) + MY LAMENT (BE)  / Black & Doom Metal / Berlin")
+        event.artists.map { it.name } shouldContainExactly listOf("HKSPK", "ALKHEMIA", "MY LAMENT")
+        event.genre shouldBe "Black & Doom Metal"
+        event.title shouldBe "HKSPK (DE) + ALKHEMIA (FR) + MY LAMENT (BE) / Black & Doom Metal / Berlin"
+    }
+
+    @Test
+    fun `keeps a two-segment slash co-bill as two acts and names no genre`() {
+        val event = single("Graupause / Waarz Up")
+        event.artists.map { it.name } shouldContainExactly listOf("Graupause", "Waarz Up")
+        event.genre.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps a three-act slash co-bill whose last act is not a place`() {
+        val event = single("Them Spirals / Painted Lox / AK In Control")
+        event.artists.map { it.name } shouldContainExactly listOf("Them Spirals", "Painted Lox", "AK In Control")
+        event.genre.shouldBeNull()
+    }
+
+    private fun single(name: String): ScrapedEvent {
+        val json = """{"data":{"allDatoCmsEvent":{"edges":[{"node":{"name":"$name","time":"2026-10-12T20:00:00+02:00"}}]}}}"""
+        return scraper.scrape(json, sourceUrl).shouldNotBeNull().single()
+    }
+
+    @Test
     fun `reads a support billing in both of the venue's colon spellings`() {
         val feePenafiel = events.single { it.title == "Fee Penafiel" }
         feePenafiel.subtitle shouldBe "+ support: Karwendel"

@@ -170,7 +170,7 @@ says so.
 | `HUXLEYS`              | `PRICE`            | most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one                                              | —     |
 | `HUXLEYS`              | `GENRE`            | about half the event pages carry no genre tag, and on those the style appears only in the prose                                                  | —     |
 | `INSEL`                | `PRICE`            | the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées                                                       | —     |
-| `INSEL`                | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `INSEL`                | `GENRE`            | the venue publishes no genre, except a `/ <style> / <city>` title tail                                                                           | —     |
 | `INSEL`                | `START_TIME`       | a night billed with a doors time only, as `Doors 19:00`, names no start, so it stores the doors time and no start                                | —     |
 | `INSEL`                | `CANCELLATION`     | a dropped show is removed from the CMS rather than flagged                                                                                       | —     |
 | `INSEL`                | `PER_EVENT_PAGE`   | every event points at the programme page and takes its identity from its date plus its title                                                     | —     |

@@ -2,6 +2,7 @@ package de.norm.events.scraper.insel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.COUNTRY_NAMES
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
@@ -62,6 +63,9 @@ import java.time.format.DateTimeParseException
  * private function is imported as `OTHER` with no artists, so the calendar shows the venue shut.
  * Sold out is prose only, a `!!SOLD OUT!!` / `!!AUSVERKAUFT!!` prefix or an "AUSVERKAUFT" line, and the prefix is
  * stripped so it stays out of the `sourceId`.
+ *
+ * A title framed `<acts> / <style> / <city>` bills only its acts; the style is the genre
+ * ([styleCityTail]).
  *
  * The venue writes "+ support pinkpool" beside "Support: Alles Karo", so only a colon or a
  * line-leading `support` separates a billing from prose. A handful of titles are event names the
@@ -158,12 +162,14 @@ class InselApiScraper(
         val eventType = resolveEventType(title, node.eventType?.eventType)
         val eventDate = start.toLocalDate()
         val (doors, startTime) = parseTimes(lines, start.toLocalTime(), node.wholeDay)
+        val styleCityTail = styleCityTail(title)
 
         return ScrapedEvent(
             title = title,
             subtitle = supportLine(lines),
             description = prose(lines, title),
             eventType = eventType,
+            genre = styleCityTail?.second,
             eventDate = eventDate,
             doorsTime = doors,
             startTime = startTime,
@@ -179,7 +185,7 @@ class InselApiScraper(
             free = lines.any(::hasFreeEntryPhrase),
             soldOut = SOLD_OUT_PREFIX.containsMatchIn(rawName) || lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
-            artists = buildArtists(title, supportNames, eventType)
+            artists = buildArtists(styleCityTail?.first ?: title, supportNames, eventType)
         )
     }
 
@@ -255,6 +261,29 @@ class InselApiScraper(
         const val BULLET_SEPARATOR = '•'
     }
 }
+
+/**
+ * Splits a `<acts> / <style> / <city>` title into its acts and its style:
+ * `HKSPK (DE) + ALKHEMIA (FR) / Black & Doom Metal / Berlin`. Only a place in the last of three or
+ * more segments marks the frame, so an `A / B` co-bill stays two acts. Null for any other title.
+ */
+private fun styleCityTail(title: String): Pair<String, String>? {
+    val segments = title.split(SPACED_SLASH).map { it.trim() }
+    val framed =
+        segments.size >= MIN_STYLE_CITY_SEGMENTS &&
+            segments.none { it.isBlank() } &&
+            PLACE_PATTERN.matches(segments.last())
+    return if (framed) segments.first() to segments.subList(1, segments.lastIndex).joinToString(" / ") else null
+}
+
+/** Acts, style and place: the fewest segments of a [styleCityTail] title. */
+private const val MIN_STYLE_CITY_SEGMENTS = 3
+
+/** The space-padded `/` between a title's segments; the bare `/` of `w/` does not match. */
+private val SPACED_SLASH = Regex("""\s+/\s+""")
+
+/** A whole segment that names a country or a city. */
+private val PLACE_PATTERN = Regex("(?:$COUNTRY_NAMES)", RegexOption.IGNORE_CASE)
 
 /** Lines longer than this are prose, not a one-line billing or metadata label. */
 private const val MAX_METADATA_LINE = 80
