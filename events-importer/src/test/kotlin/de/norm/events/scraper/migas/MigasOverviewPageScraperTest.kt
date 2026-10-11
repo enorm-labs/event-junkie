@@ -103,6 +103,29 @@ class MigasOverviewPageScraperTest {
     }
 
     @Test
+    fun `scrape mints no artist for a topic session presented by a host`() {
+        val session =
+            scrapeOne(
+                title = "The music of John Cage: chance and indeterminate composition, presented by Jordan Elias",
+                category = "listening session"
+            )
+
+        session.eventType shouldBe EventType.OTHER.name
+        session.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `scrape keeps billing a guest session named for its guest`() {
+        scrapeOne(title = "modú", category = "listening session").artists shouldContainExactly
+            listOf(ScrapedArtist(name = "modú", role = "DJ", titleDerived = true))
+    }
+
+    @Test
+    fun `scrape marks an event free when its description states no entrance fee`() {
+        scrapeOne(description = "There is no entrance fee. We do not take reservations. We open at 19:00.").free shouldBe true
+    }
+
+    @Test
     fun `scrape reads the lazy-loaded image rather than the inline svg placeholder`() {
         // Every img's src is a data URI until the theme's lazy-loader swaps in data-src.
         events.forEach { it.imageUrl!! shouldStartWith "https://migas.berlin/wp-content/uploads/" }
@@ -187,20 +210,33 @@ class MigasOverviewPageScraperTest {
         parsed.first().startTime.shouldBeNull()
     }
 
+    private fun scrapeOne(
+        title: String = "Probe",
+        category: String = "playing",
+        description: String = ""
+    ): ScrapedEvent =
+        scraper
+            .scrape(Jsoup.parse(popupFixture(title = title, category = category, description = description), baseUrl))
+            .single()
+
     /** A minimal anchor + modal pair mirroring the theme's markup, with the varying bits injected. */
     private fun popupFixture(
         startDate: String = "2026-09-01T20:00:00+02:00",
-        shareButton: String = """<button data-target="share" data-url="https://migas.berlin/event/probe/"></button>"""
+        shareButton: String = """<button data-target="share" data-url="https://migas.berlin/event/probe/"></button>""",
+        title: String = "Probe",
+        category: String = "playing",
+        description: String = ""
     ): String =
         """
         <div class="events-list">
           <a href="#" data-target="#popup-1" class="event-item floating-media">
-            <h5 class="event-item-title"><span>Probe</span></h5>
-            <div class="event-item-category"><span>playing</span></div>
+            <h5 class="event-item-title"><span>$title</span></h5>
+            <div class="event-item-category"><span>$category</span></div>
           </a>
           <div id="popup-1" class="event-popup">
             <div class="event-popup-body">
               <div class="event-popup-content">
+                <div class="wysiwyg"><p>$description</p></div>
                 <ul class="nav nav-inline">
                   <li><button data-target="add-to-calendar" data-start-date="$startDate"></button></li>
                   <li>$shareButton</li>

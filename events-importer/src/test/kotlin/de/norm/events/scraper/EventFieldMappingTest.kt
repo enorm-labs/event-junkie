@@ -112,7 +112,9 @@ class EventFieldMappingTest {
             "kostenfreier Eintritt",
             "FREE ENTRY",
             "Eintritt frei / Admission free!",
-            "free admission"
+            "free admission",
+            "There is no entrance fee.",
+            "No entry fee"
         ).forEach { hasFreeEntryPhrase(it) shouldBe true }
     }
 

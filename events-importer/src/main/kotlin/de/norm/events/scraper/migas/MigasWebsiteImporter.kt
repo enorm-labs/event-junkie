@@ -110,8 +110,8 @@ class MigasWebsiteImporter(
 val MIGAS_LIMITATIONS =
     VenueLimitations(
         EventSource.MIGAS,
-        AcceptedLimitation(LimitedAspect.PRICE, "entry arrangements are not stated on the site at all"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry arrangements are not stated on the site at all"),
+        AcceptedLimitation(LimitedAspect.PRICE, "most events state no entry arrangements; a stated free entry is read"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge")
