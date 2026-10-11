@@ -12,6 +12,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -55,6 +56,48 @@ class FestsaalApiScraperTest {
         byTitle.getValue("OK KID").description!! shouldStartWith "OK KID „Komm, wir bleiben stehen“ Tour 2026"
         // nand has only the heading over a partner logo: no description, and the heading is not one.
         byTitle.getValue("nand").description.shouldBeNull()
+    }
+
+    @Test
+    fun `reads the promoters a präsentiert von text block credits and drops the block from the description`() {
+        // Five events from the API on 2026-10-11, whose credits are text blocks (#3098).
+        val json =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/festsaal/festsaal-api-text-credits.json")!!
+                .bufferedReader()
+                .readText()
+        val byTitle = scraper.scrape(json).associateBy { it.title }
+
+        byTitle.getValue("Mal Élevé").promoters shouldBe listOf("Wallcitymusic")
+        byTitle.getValue("Mach One").promoters shouldBe listOf("Wird Schon Records")
+        byTitle.getValue("Muff Potter").promoters shouldBe listOf("Loft", "Visions", "ByteFM")
+        // A `presenters` entry and a text credit for the same company give one promoter.
+        byTitle.getValue("Thundermother").promoters shouldBe listOf("Landstreicher")
+        // `wird präsentiert von` is a bare heading over a logo here: no promoter, and no description line.
+        byTitle.getValue("Karate Andi").promoters shouldBe emptyList()
+        byTitle.values.mapNotNull { it.description }.joinToString("\n") shouldNotContain Regex("präsentiert von", RegexOption.IGNORE_CASE)
+    }
+
+    @Test
+    fun `splits a credit on commas and a space-padded ampersand only, and reads the wird präsentiert von spelling`() {
+        val parsed =
+            scraper.scrape(
+                apiWithText(
+                    "<p>Die Band spielt live.</p>" +
+                        "<p><b>wird präsentiert von Kunst&amp;Krawall, All Rooms Concerts &amp; EgoFM</b></p>"
+                )
+            )
+
+        parsed.single().promoters shouldBe listOf("Kunst&Krawall", "All Rooms Concerts", "EgoFM")
+        parsed.single().description shouldBe "Die Band spielt live."
+    }
+
+    @Test
+    fun `keeps a description paragraph that only mentions a presentation`() {
+        val parsed = scraper.scrape(apiWithText("<p>Ende des Jahres präsentiert Monchi sein Buch auf einer Lesetour.</p>"))
+
+        parsed.single().promoters shouldBe emptyList()
+        parsed.single().description shouldBe "Ende des Jahres präsentiert Monchi sein Buch auf einer Lesetour."
     }
 
     @Test
@@ -341,6 +384,13 @@ class FestsaalApiScraperTest {
         """
         {"items": [{"id": 1, "meta": {"slug": "night"}, "title": "$title", "date": "2026-10-11", "status": null,
           "genre": {"id": 7, "title": "$genre"}}]}
+        """.trimIndent()
+
+    /** One scheduled event whose single `item_text` block holds [html]. */
+    private fun apiWithText(html: String): String =
+        """
+        {"items": [{"id": 1, "meta": {"slug": "band"}, "title": "Band", "date": "2026-11-13",
+          "layouts": [{"type": "layout_simple", "value": {"items": [{"type": "item_text", "value": {"text": "$html"}}]}}]}]}
         """.trimIndent()
 
     private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
