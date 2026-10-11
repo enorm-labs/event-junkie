@@ -48,7 +48,6 @@ class ArtistControllerTest : BaseControllerTest() {
 
     @Test
     fun `POST, GET, PUT, DELETE artist lifecycle`() {
-        // Create
         val created = createArtist()
 
         created.name shouldBe "The Adicts"
@@ -57,7 +56,6 @@ class ArtistControllerTest : BaseControllerTest() {
 
         val id = created.id
 
-        // Read
         webTestClient
             .get()
             .uri("/api/admin/artists/$id")
@@ -69,7 +67,6 @@ class ArtistControllerTest : BaseControllerTest() {
                 result.responseBody!!.name shouldBe "The Adicts"
             }
 
-        // Update
         webTestClient
             .put()
             .uri("/api/admin/artists/$id")
@@ -85,10 +82,8 @@ class ArtistControllerTest : BaseControllerTest() {
                 artist.description shouldBe "Updated bio"
             }
 
-        // Delete
         deleteArtist(id)
 
-        // Verify deleted
         webTestClient
             .get()
             .uri("/api/admin/artists/$id")
