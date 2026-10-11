@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import PromoterCard from '@/components/PromoterCard.vue'
-import SortControl, { type SortOption } from '@/components/SortControl.vue'
+import SortControl from '@/components/SortControl.vue'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePromoterSearch, type PromoterSearchParams } from '@/composables/usePromoters'
 import { useI18n } from 'vue-i18n'
@@ -13,30 +13,11 @@ import { CARD_GRID_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
-const route = useRoute()
-const router = useRouter()
-
-// Filters live in the URL query so the list is shareable and survives back/forward.
-function queryString(key: string): string {
-  const value = route.query[key]
-  return typeof value === 'string' ? value : ''
-}
-
-/**
- * The two orders the page offers. A–Z stays out of the URL but is sent: without a sort the BFF
- * lists a search by relevance (#2694). The count order is `sort=upcomingEvents,desc` (#1349).
- */
-const SORT_NAME = 'name,asc'
-const SORT_NAME_DESC = 'name,desc'
-const SORT_UPCOMING = 'upcomingEvents,desc'
-const sort = computed(() => {
-  const requested = queryString('sort')
-  return requested === SORT_NAME_DESC || requested === SORT_UPCOMING ? requested : ''
-})
+const { queryString, applyFilters, sort, sortParam, sortOptions } = useListQuery()
 
 const params = computed<PromoterSearchParams>(() => ({
   q: queryString('q') || undefined,
-  sort: [sort.value || SORT_NAME],
+  sort: sortParam.value,
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
@@ -46,26 +27,7 @@ const { data: page, error, loading, run } = usePromoterSearch(() => params.value
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
-function applyFilters(patch: LocationQueryRaw) {
-  // Any filter change resets to the first page; empty values drop out of the URL.
-  const next: LocationQueryRaw = { ...route.query, ...patch, page: undefined }
-  for (const key of Object.keys(next)) {
-    if (next[key] === '' || next[key] === undefined) delete next[key]
-  }
-  router.push({ query: next })
-}
-
 const { t } = useI18n()
-
-const sortOptions = computed<SortOption[]>(() => [
-  {
-    directions: [
-      { value: '', ascending: true, label: t('common.sort.az') },
-      { value: SORT_NAME_DESC, ascending: false, label: t('common.sort.za') },
-    ],
-  },
-  { label: t('common.sort.upcoming'), value: SORT_UPCOMING },
-])
 </script>
 
 <template>
