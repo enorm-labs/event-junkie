@@ -129,7 +129,7 @@ says so.
 | `ESCHSCHLORAQUE`       | `CANCELLATION`     | the venue flags nothing cancelled, so every event stays scheduled                                                                                | —     |
 | `ESCHSCHLORAQUE`       | `EVENT_TYPE`       | the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere                                                          | —     |
 | `ESCHSCHLORAQUE`       | `DOORS_TIME`       | the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read                                 | —     |
-| `FESTSAAL`             | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre, and only an event kind filed there (Festival) types the night            | —     |
+| `FESTSAAL`             | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre unless it names an event kind (Festival, Markt, Party, Show)              | —     |
 | `FESTSAAL`             | `PRICE`            | the API names no figure; tickets are sold through a vvk.link shop                                                                                | —     |
 | `FITZROY`              | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `FITZROY`              | `PRICE`            | the venue prints no figure; tickets link to Resident Advisor                                                                                     | —     |

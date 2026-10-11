@@ -248,10 +248,41 @@ class FestsaalApiScraperTest {
     }
 
     @Test
-    fun `mints no artist for a denylisted party series despite accents and a Berlin suffix`() {
-        // "Bohème Sauvage Berlin" stays CONCERT (no keyword), but the shared denylist —
-        // now accent- and city-normalized — filters the title so no headliner is created.
-        event("festsaal:Bohème-Sauvage-Berlin").artists.shouldBeEmpty()
+    fun `types a night whose genre node names an event kind by that kind, with no genre and no artist`() {
+        val market = scraper.scrape(apiWithGenre("BIG QUEER MARKET", "Markt")).single()
+        market.eventType shouldBe EventType.OTHER.name
+        market.genre.shouldBeNull()
+        market.artists.shouldBeEmpty()
+
+        val podcast = event("festsaal:bohniger-wachmacher-2026")
+        podcast.eventType shouldBe EventType.SHOW.name
+        podcast.genre.shouldBeNull()
+        podcast.artists.shouldBeEmpty()
+
+        val twentiesParty = event("festsaal:Bohème-Sauvage-Berlin")
+        twentiesParty.eventType shouldBe EventType.PARTY.name
+        twentiesParty.genre.shouldBeNull()
+        twentiesParty.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `lets a festival title win over a show genre`() {
+        val festival = scraper.scrape(apiWithGenre("THE DRAG FESTIVAL BERLIN", "Drag Show")).single()
+
+        festival.eventType shouldBe EventType.FESTIVAL.name
+        festival.genre.shouldBeNull()
+        festival.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a concert whose genre names no event kind as a whole word`() {
+        listOf("Rock", "Showgaze", "Marktschreier Punk").forEach { genre ->
+            val concert = scraper.scrape(apiWithGenre("Black Market Karma", genre)).single()
+
+            concert.eventType shouldBe EventType.CONCERT.name
+            concert.genre shouldBe genre
+            concert.artists shouldContainExactly listOf(ScrapedArtist("Black Market Karma", "HEADLINER", titleDerived = true))
+        }
     }
 
     @Test
@@ -300,6 +331,16 @@ class FestsaalApiScraperTest {
         """
         {"items": [{"id": 1, "meta": {"slug": "night"}, "title": "$title", "sub_title": "$subtitle",
           "date": "2026-09-13", "status": null}]}
+        """.trimIndent()
+
+    /** One scheduled event with [title] and a `genre` node of [genre]. */
+    private fun apiWithGenre(
+        title: String,
+        genre: String
+    ): String =
+        """
+        {"items": [{"id": 1, "meta": {"slug": "night"}, "title": "$title", "date": "2026-10-11", "status": null,
+          "genre": {"id": 7, "title": "$genre"}}]}
         """.trimIndent()
 
     private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
