@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { Sparkles } from '@lucide/vue'
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
-import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
+import PosterCardShell from '@/components/PosterCardShell.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
@@ -12,13 +11,7 @@ import { useFormat } from '@/composables/useFormat'
 import { useGenreFamilies } from '@/composables/useGenreFamilies'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
-import {
-  CARD_CLASS,
-  CARD_LEAD_CLASS,
-  CARD_LEAD_POSTER_ASPECT,
-  CARD_POSTER_CLASS,
-} from '@/lib/utils'
-import { useViewportFocus } from '@/composables/useViewportFocus'
+import { CARD_LEAD_CLASS, CARD_LEAD_POSTER_ASPECT } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -58,42 +51,29 @@ const taxonomy = computed(() =>
 const localePath = useLocalePath()
 
 const { t } = useI18n()
-
-// Reveals the poster while the card passes the middle of a touch screen, where `:hover` is dead.
-const { el: posterEl, focused: posterFocused } = useViewportFocus()
 </script>
 
 <template>
-  <RouterLink
+  <PosterCardShell
     :to="localePath(`/events/${event.slug}`)"
-    :class="[CARD_CLASS, lead && CARD_LEAD_CLASS]"
+    :class="lead && CARD_LEAD_CLASS"
+    :image-url="event.imageUrl"
+    :image-sources="event.imageSources"
+    :alt="event.title ?? ''"
+    :priority="priority"
+    :aspect="lead ? CARD_LEAD_POSTER_ASPECT : undefined"
+    :sizes="lead ? '(min-width: 640px) 960px, 100vw' : undefined"
   >
-    <div
-      ref="posterEl"
-      :data-focus="posterFocused || undefined"
-      :class="[CARD_POSTER_CLASS, 'relative']"
-    >
-      <!-- `sizes` describes the real slot: the whole viewport below `sm`, about 474 px in the
-           two-column grid above, and both columns, 960 px, for the lead. A wrong value silently
-           downloads the wrong file. -->
-      <CachedImage
-        v-if="event.imageUrl"
-        :src="event.imageUrl"
-        :sources="event.imageSources"
-        :alt="event.title ?? ''"
-        :priority="priority"
-        :aspect="lead ? CARD_LEAD_POSTER_ASPECT : 'aspect-poster'"
-        :sizes="lead ? '(min-width: 640px) 960px, 100vw' : '(min-width: 640px) 474px, 100vw'"
-        img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
-      />
+    <template #fallback>
       <EventPoster
-        v-else
         :title="event.title"
         :eyebrow="posterDate"
         :event-type="event.eventType"
         :families="genreFamilies(event.genreTags)"
         :aspect="lead ? CARD_LEAD_POSTER_ASPECT : undefined"
       />
+    </template>
+    <template #overlay>
       <!-- The lead's pill says why this tile is larger: a person chose it (#1262). A sibling of the
            image, not inside it, so it keeps its colour while the poster is grey. -->
       <BaseBadge
@@ -104,7 +84,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         <Sparkles aria-hidden="true" class="size-4" />
         {{ t('events.card.ourPick') }}
       </BaseBadge>
-    </div>
+    </template>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
         <span v-if="isLive" class="relative flex size-2 shrink-0">
@@ -157,5 +137,5 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         </span>
       </p>
     </div>
-  </RouterLink>
+  </PosterCardShell>
 </template>
