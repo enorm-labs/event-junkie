@@ -1,6 +1,6 @@
 import { computed } from 'vue'
-import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { languageFilterApplies } from '@/lib/spokenLanguages'
+import { useQueryParams } from './useListQuery'
 import type { EventDateRange, EventFilterValues } from './useEvents'
 
 /**
@@ -10,21 +10,7 @@ import type { EventDateRange, EventFilterValues } from './useEvents'
  * them.
  */
 export function useEventFilters() {
-  const route = useRoute()
-  const router = useRouter()
-
-  /** The raw query value for `key`, or `''` when absent or repeated (`?q=a&q=b`). */
-  function queryString(key: string): string {
-    const value = route.query[key]
-    return typeof value === 'string' ? value : ''
-  }
-
-  /** Every non-empty value of `key`, whether it appears once or repeated (`?t=a&t=b`). */
-  function queryList(key: string): string[] {
-    const value = route.query[key]
-    const values = Array.isArray(value) ? value : [value]
-    return values.filter((v): v is string => typeof v === 'string' && v !== '')
-  }
+  const { queryString, queryList, applyFilters } = useQueryParams()
 
   const filters = computed<EventFilterValues>(() => {
     const eventTypes = queryList('eventType')
@@ -62,18 +48,6 @@ export function useEventFilters() {
     from: queryString('from') || undefined,
     to: queryString('to') || undefined,
   }))
-
-  function applyFilters(patch: LocationQueryRaw) {
-    // Any filter change resets to the first page; empty values and lists drop out of the URL.
-    const next: LocationQueryRaw = { ...route.query, ...patch, page: undefined }
-    for (const key of Object.keys(next)) {
-      const value = next[key]
-      if (value === '' || value === undefined || (Array.isArray(value) && !value.length)) {
-        delete next[key]
-      }
-    }
-    router.push({ query: next })
-  }
 
   return { queryString, queryList, filters, dateRange, applyFilters }
 }

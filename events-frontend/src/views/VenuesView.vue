@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { LocateFixed, X } from '@lucide/vue'
 import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch } from 'vue'
-import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import type { VenueListItem } from '@/api/types'
 import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
@@ -9,11 +9,12 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
-import SortControl, { type SortOption } from '@/components/SortControl.vue'
+import SortControl from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueFeaturesEmpty from '@/components/VenueFeaturesEmpty.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
+import { useListQuery } from '@/composables/useListQuery'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
@@ -55,30 +56,7 @@ const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: stri
 const route = useRoute()
 const router = useRouter()
 
-// Filters live in the URL query so the list is shareable and survives back/forward.
-function queryString(key: string): string {
-  const value = route.query[key]
-  return typeof value === 'string' ? value : ''
-}
-
-/**
- * A–Z stays out of the URL, as on the promoters list, but is sent: without a sort the BFF lists a
- * search by relevance, and the pressed A–Z would not be what the list shows (#2694).
- */
-const SORT_NAME = 'name,asc'
-const SORT_NAME_DESC = 'name,desc'
-const SORT_UPCOMING = 'upcomingEvents,desc'
-const sort = computed(() => {
-  const requested = queryString('sort')
-  return requested === SORT_NAME_DESC || requested === SORT_UPCOMING ? requested : ''
-})
-
-function queryList(key: string): string[] {
-  const value = route.query[key]
-  return (Array.isArray(value) ? value : [value]).filter(
-    (v): v is string => typeof v === 'string' && v !== '',
-  )
-}
+const { queryString, queryList, applyFilters, sort, sortParam, sortOptions } = useListQuery()
 
 /** The multi-value filters, undefined when empty so they drop out of the request. */
 function listParam(key: string): string[] | undefined {
@@ -100,7 +78,7 @@ const imported = computed(() => {
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
   district: listParam('district'),
-  sort: [sort.value || SORT_NAME],
+  sort: sortParam.value,
 
   type: listParam('type'),
   family: listParam('family'),
@@ -115,17 +93,6 @@ const { data: page, error, loading, run } = useVenueSearch(() => params.value)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
-
-function applyFilters(patch: LocationQueryRaw) {
-  // Any filter change resets to the first page; empty values drop out of the URL.
-  const next: LocationQueryRaw = { ...route.query, ...patch, page: undefined }
-  for (const key of Object.keys(next)) {
-    const value = next[key]
-    if (value === '' || value === undefined || (Array.isArray(value) && !value.length))
-      delete next[key]
-  }
-  router.push({ query: next })
-}
 
 /** A filter beyond the name search, so an empty list can name the filters as its cause. */
 const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType', 'listing']
@@ -200,16 +167,6 @@ watch(() => [showMap.value, JSON.stringify({ ...params.value, page: undefined })
 const { t, locale } = useI18n()
 
 const emptyText = computed(() => t(hasFilters.value ? 'venues.emptyFiltered' : 'venues.empty'))
-
-const sortOptions = computed<SortOption[]>(() => [
-  {
-    directions: [
-      { value: '', ascending: true, label: t('common.sort.az') },
-      { value: SORT_NAME_DESC, ascending: false, label: t('common.sort.za') },
-    ],
-  },
-  { label: t('common.sort.upcoming'), value: SORT_UPCOMING },
-])
 
 const {
   venueTypeOptions,
