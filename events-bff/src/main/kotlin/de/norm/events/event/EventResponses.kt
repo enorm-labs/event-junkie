@@ -291,7 +291,13 @@ data class EventDetailResponse(
     )
     val features: List<String>,
     @Schema(description = CHANGES_DESCRIPTION)
-    val changes: List<EventChangeResponse> = emptyList()
+    val changes: List<EventChangeResponse> = emptyList(),
+    @Schema(
+        description =
+            "For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every " +
+                "other status, and when no event or more than one matches."
+    )
+    val postponedTo: PostponedToResponse? = null
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -306,7 +312,8 @@ data class EventDetailResponse(
             imageWithheld: Boolean,
             descriptionWithheld: Boolean,
             enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
-            changes: List<EventChangeResponse> = emptyList()
+            changes: List<EventChangeResponse> = emptyList(),
+            postponedTo: PostponedToResponse? = null
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -353,7 +360,8 @@ data class EventDetailResponse(
                 genreTags = genreTags,
                 enrichmentSources = enrichmentSources,
                 features = features,
-                changes = changes
+                changes = changes,
+                postponedTo = postponedTo
             )
     }
 }
@@ -370,6 +378,15 @@ data class EnrichmentSourceResponse(
         example = "[\"genre\", \"lineup\"]"
     )
     val fields: List<String>
+)
+
+/** The event a postponed show moved to (#3093). */
+@Schema(description = "The new date of a postponed event, as its own event")
+data class PostponedToResponse(
+    @Schema(description = "The new date's event slug", example = "2027-05-08-lido-alex-mofa-gang")
+    val slug: String,
+    @Schema(description = "The new date", example = "2027-05-08")
+    val eventDate: LocalDate
 )
 
 /** One move of a date, time, status or venue, as the importer or an operator saw it (#2725). */

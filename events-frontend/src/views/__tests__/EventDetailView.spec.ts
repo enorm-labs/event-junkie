@@ -87,6 +87,20 @@ describe('EventDetailView', () => {
     expect(hrefOf(view, 'Event page')).toBeDefined()
   })
 
+  it('strikes the date of a postponed night in the hero, drops its time, and names the new date in the pill (#3093)', async () => {
+    const view = await mountEvent({
+      ...night,
+      status: 'POSTPONED',
+      startTime: '20:00:00',
+      postponedTo: { slug: '2100-05-08-a-night', eventDate: '2100-05-08' },
+    })
+    const hero = view.find('h1').element.parentElement!.textContent ?? ''
+
+    expect(view.find('del').text()).toBe('Fri, 12 Jun 2099')
+    expect(hero).toContain('Postponed to Sat, 8 May 2100')
+    expect(hero).not.toContain('20:00')
+  })
+
   // A postponed show's tickets usually stay valid for the new date.
   for (const status of ['SCHEDULED', 'POSTPONED'] as const) {
     it(`offers tickets for a ${status} night`, async () => {

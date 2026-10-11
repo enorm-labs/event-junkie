@@ -124,7 +124,8 @@
         }
       },
       "endNotAnnounced": "Ende nicht bekannt gegeben",
-      "postponed": "Nicht an diesem Termin. Den neuen Termin, falls es einen gibt, nennt die Seite der Location."
+      "postponed": "Nicht an diesem Termin. Den neuen Termin, falls es einen gibt, nennt die Seite der Location.",
+      "postponedTo": "Neuer Termin:"
     },
     "promoters": "Veranstalter",
     "buyTickets": "Tickets kaufen",
@@ -169,7 +170,8 @@
     "POSTPONED": "Verschoben",
     "movedTo": "Verlegt: {venue}",
     "movedFrom": "vorher {venue}",
-    "postponedNote": "Verschoben: Die Location nennt noch keinen neuen Termin."
+    "postponedNote": "Verschoben: Die Location nennt noch keinen neuen Termin.",
+    "postponedTo": "Verschoben auf {date}"
   },
   "alsoRunning": {
     "title": "Läuft außerdem"

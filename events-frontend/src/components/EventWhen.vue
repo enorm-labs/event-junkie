@@ -7,13 +7,18 @@ import { eventCalendarSpan } from '@/lib/addToCalendar'
 import { formatTime } from '@/lib/format'
 import { useEventChanges } from '@/composables/useEventChanges'
 import { useFormat } from '@/composables/useFormat'
+import { useLocalePath } from '@/composables/useLocalePath'
 
 const props = defineProps<{ event: EventDetail }>()
 
 const { t } = useI18n()
-const { formatEventDates, formatEventEnd } = useFormat()
+const { formatDate, formatEventDates, formatEventEnd } = useFormat()
+const localePath = useLocalePath()
 const { changeLines } = useEventChanges()
 
+// A postponed row is the date the show left (ADR-030): its date is struck and its times are not
+// the show's. The new date, if any, is another row.
+const postponed = computed(() => props.event.status === 'POSTPONED')
 const dates = computed(() => (props.event.eventDate ? formatEventDates(props.event) : ''))
 const doors = computed(() =>
   props.event.doorsTime ? t('events.card.doors', { time: formatTime(props.event.doorsTime) }) : '',
@@ -46,27 +51,39 @@ const endNotAnnounced = computed(() => {
 <template>
   <div class="space-y-1">
     <SectionLabel>{{ t('events.detail.when.label') }}</SectionLabel>
-    <p v-if="dates" class="text-body font-medium">{{ dates }}</p>
-    <p v-if="doors" class="text-body">{{ doors }}</p>
-    <p v-if="start" class="text-body">
-      {{ start
-      }}<span v-if="estimated" class="text-muted-foreground">
-        · {{ t('events.detail.when.estimate') }}</span
+    <p v-if="dates && postponed" class="text-body text-muted-foreground">
+      <del>{{ dates }}</del>
+    </p>
+    <p v-else-if="dates" class="text-body font-medium">{{ dates }}</p>
+    <p v-if="postponed && event.postponedTo" class="text-body font-medium">
+      {{ t('events.detail.when.postponedTo') }}
+      <RouterLink
+        :to="localePath(`/events/${event.postponedTo.slug}`)"
+        class="text-primary underline-offset-4 hover:underline"
+        >{{ formatDate(event.postponedTo.eventDate) }}</RouterLink
       >
     </p>
-    <p v-if="end" class="text-body">{{ end }}</p>
-    <p v-if="endNotAnnounced" class="text-body text-muted-foreground">
-      {{ t('events.detail.when.endNotAnnounced') }}
+    <p v-else-if="postponed" class="text-body text-muted-foreground">
+      {{ t('events.detail.when.postponed') }}
     </p>
+    <template v-if="!postponed">
+      <p v-if="doors" class="text-body">{{ doors }}</p>
+      <p v-if="start" class="text-body">
+        {{ start
+        }}<span v-if="estimated" class="text-muted-foreground">
+          · {{ t('events.detail.when.estimate') }}</span
+        >
+      </p>
+      <p v-if="end" class="text-body">{{ end }}</p>
+      <p v-if="endNotAnnounced" class="text-body text-muted-foreground">
+        {{ t('events.detail.when.endNotAnnounced') }}
+      </p>
+    </template>
     <ul v-if="changes.length" :aria-label="t('events.detail.when.changesLabel')" class="pt-1">
       <li v-for="(change, index) in changes" :key="index" class="text-body">
         <span class="font-medium">{{ change.text }}</span
         ><span v-if="change.ago" class="text-muted-foreground"> · {{ change.ago }}</span>
       </li>
     </ul>
-    <!-- A postponed row is the date the show left (ADR-030); the new date, if any, is another row. -->
-    <p v-if="event.status === 'POSTPONED'" class="text-body text-muted-foreground">
-      {{ t('events.detail.when.postponed') }}
-    </p>
   </div>
 </template>

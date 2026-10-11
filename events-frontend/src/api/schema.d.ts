@@ -1515,6 +1515,8 @@ export interface components {
             features?: string[];
             /** @description What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. Empty for a new event and for one that has not moved. */
             changes?: components["schemas"]["EventChangeResponse"][];
+            /** @description For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every other status, and when no event or more than one matches. */
+            postponedTo?: components["schemas"]["PostponedToResponse"] | null;
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {
@@ -1549,6 +1551,20 @@ export interface components {
              * @example 2026-09-27T04:30:00+02:00
              */
             setEnd?: string | null;
+        };
+        /** @description The new date of a postponed event, as its own event */
+        PostponedToResponse: {
+            /**
+             * @description The new date's event slug
+             * @example 2027-05-08-lido-alex-mofa-gang
+             */
+            slug?: string;
+            /**
+             * Format: date
+             * @description The new date
+             * @example 2027-05-08
+             */
+            eventDate?: string;
         };
         /** @description Compact promoter summary */
         PromoterSummaryResponse: {

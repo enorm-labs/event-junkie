@@ -167,11 +167,13 @@ const { t, te, locale } = useI18n()
 const metaItems = computed<MetaItem[]>(() => {
   const e = event.value
   if (!e) return []
-  const status = formatEventStatus(e.status, e.relocatedTo)
+  const status = formatEventStatus(e.status, e.relocatedTo, e.postponedTo?.eventDate)
+  // A postponed row's date is the one the show left, and its times are not the show's (#3093).
+  const postponed = e.status === 'POSTPONED'
   const items: (MetaItem | null)[] = [
-    { text: formatEventDates(e) },
-    { text: formatEventTime(e) },
-    timeHint.value ? { text: timeHint.value } : null,
+    { text: formatEventDates(e), struck: postponed },
+    postponed ? null : { text: formatEventTime(e) },
+    timeHint.value && !postponed ? { text: timeHint.value } : null,
     e.venue?.name ? { text: e.venue.name } : null,
     // The room as the venue names it (#316): a proper name, so never translated.
     e.room ? { text: e.room } : null,
