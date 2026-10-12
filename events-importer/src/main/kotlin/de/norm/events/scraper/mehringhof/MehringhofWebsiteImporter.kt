@@ -23,6 +23,12 @@ import org.springframework.stereotype.Component
  *
  * The listing keeps the title, the act and the date; the ticket page supplies the rest.
  *
+ * A row whose title links the theatre's own `/altprogramm/<show>/` page instead of the shop has no
+ * ticket page. `MehringhofProgrammPageScraper` reads only `a[href*=/produkte/]`, so such a row keeps
+ * the programme page as its source and only the listing fields. The show page has price, text and
+ * poster, but `robots.txt` disallows `/altprogramm/` and the importer obeys it (ADR-007), so it stays
+ * unread (#3101).
+ *
  * @see MehringhofProgrammPageScraper for the month table.
  * @see MehringhofTicketPageScraper for the ticket page.
  * @see <a href="https://www.mehringhoftheater.de/programm/">Mehringhof-Theater Programm</a>
@@ -70,5 +76,9 @@ val MEHRINGHOF_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme names no format; Kabarett, comedy, readings and song evenings share one table"),
         AcceptedLimitation(LimitedAspect.GENRE, "the programme names no genre"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
+        AcceptedLimitation(LimitedAspect.PRICE, "a show linking the theatre's own page, not the shop, has its price only there, and robots.txt closes it"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "a show linking the theatre's own page, not the shop, has its text only there, and robots.txt closes it"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "a show linking the theatre's own page, not the shop, has its poster only there, and robots.txt closes it"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a show linking the theatre's own page, not the shop, points at the programme: robots.txt closes it"),
         houseLanguage = SpokenLanguage.GERMAN
     )
