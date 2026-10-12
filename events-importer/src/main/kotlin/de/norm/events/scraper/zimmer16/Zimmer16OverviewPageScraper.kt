@@ -2,6 +2,7 @@ package de.norm.events.scraper.zimmer16
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
@@ -23,9 +24,11 @@ import java.time.LocalDate
  * which goes. The site names no category, so a night is a concert unless its title names the house's other
  * formats, the reading stage or a revue.
  *
- * There is no line-up field either. A title is billed as its act only when it is a bare name or a `+` co-bill.
- * A tagline, a programme name or an `&` (`Calum Baird – Scottish Singer-Songwriter Live`, `Kaléko - Friederike
+ * There is no line-up field either. A title is billed as its act only when it is a bare name, a `+` or `, ` co-bill,
+ * or `<programme> mit <act>`. A `<record> Release Tour` part names the record, not the act (#3164). A tagline,
+ * a programme name or an `&` (`Calum Baird – Scottish Singer-Songwriter Live`, `Kaléko - Friederike
  * Ziegler`, `Bossa Nova Duo Kommerell & Komoll`) puts the act in a different place each time, so it names nobody.
+ * Nor does the weekly `Offene Bühne`, whose stage is open to anyone.
  */
 class Zimmer16OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -65,8 +68,17 @@ class Zimmer16OverviewPageScraper {
             sourceUrl = url,
             ticketUrl = url,
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
-            artists = if (TAGLINE.containsMatchIn(title)) emptyList() else buildArtistsForEventType(title, subtitle, eventType)
+            artists = if (TAGLINE.containsMatchIn(title)) emptyList() else artistsOf(title, subtitle, eventType)
         )
+    }
+
+    private fun artistsOf(
+        title: String,
+        subtitle: String?,
+        eventType: String
+    ): List<ScrapedArtist> {
+        val billing = title.split(", ").filterNot { RELEASE_TOUR.containsMatchIn(it) }.joinToString(" + ")
+        return if (billing.isBlank()) emptyList() else buildArtistsForEventType(billing, subtitle, eventType, unpackWithFrame = true)
     }
 
     private fun cardDate(card: Element): LocalDate? {
@@ -85,9 +97,15 @@ class Zimmer16OverviewPageScraper {
         val AUDIENCE = Regex("""\s*\((?:Erwachsene|Kinder)\)\s*$""")
         val SUPPORT = Regex("""\s*\(support:\s*([^)]+)\)""", RegexOption.IGNORE_CASE)
         val TAGLINE = Regex("""[–—:"„“”]| - |&|\+\+""")
+        val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
         val BACKGROUND_URL = Regex("""background-image:\s*url\('?([^')]+)'?\)""")
 
         /** The house's own words for its formats beside concerts. */
-        val HOUSE_FORMATS = linkedMapOf("lesebühne" to EventType.READING.name, "revue" to EventType.SHOW.name)
+        val HOUSE_FORMATS =
+            linkedMapOf(
+                "lesebühne" to EventType.READING.name,
+                "revue" to EventType.SHOW.name,
+                "offene bühne" to EventType.OTHER.name
+            )
     }
 }

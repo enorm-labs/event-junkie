@@ -52,6 +52,23 @@ class Zimmer16ScrapersTest {
     }
 
     @Test
+    fun `bills a comma co-bill and the act after mit, but not a release tour or the open stage`() {
+        val billed =
+            Zimmer16OverviewPageScraper()
+                .scrape(Jsoup.parse(cards(PRODUCTION_TITLES), baseUrl), baseUrl)
+                .associate { it.title to (it.eventType to it.artists.map { artist -> artist.name to artist.role }) }
+
+        billed["Le Tomboy Release Tour, The Murk Prince"] shouldBe (EventType.CONCERT.name to listOf("The Murk Prince" to "HEADLINER"))
+        billed["Soundtrack to Sunset, Landmusik"] shouldBe
+            (EventType.CONCERT.name to listOf("Soundtrack to Sunset" to "HEADLINER", "Landmusik" to "HEADLINER"))
+        billed["Frühling im Späti mit Jens Ohrenblicker"] shouldBe (EventType.CONCERT.name to listOf("Jens Ohrenblicker" to "HEADLINER"))
+        billed["Offene Bühne"] shouldBe (EventType.OTHER.name to emptyList())
+        billed["Die offene Liederbühne – Singer-Songwriter-Forum"] shouldBe (EventType.CONCERT.name to emptyList())
+        billed.getValue("Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht").second.shouldBeEmpty()
+        billed.getValue("Lea Willms and MUD/O").second.map { it.first } shouldBe listOf("Lea Willms", "MUD/O")
+    }
+
+    @Test
     fun `adds the time, the end, the price and the full text from the event page`() {
         val bourbon = events.first { it.title == "Claude Bourbon" }
 
@@ -102,9 +119,36 @@ class Zimmer16ScrapersTest {
         <div class="spacer--C"><p>$text</p></div>
         """.trimIndent()
 
+    private fun cards(titles: List<String>): String =
+        titles.withIndex().joinToString("") { (day, title) ->
+            """
+            <a href="https://www.yesticket.org/event/de/card-${day + 1}-erwachsene/">
+              <div class="ytp-event-card">
+                <span class="ytp-event-card-month">Nov.</span><span class="ytp-event-card-day">${day + 1}</span>
+                <span class="ytp-event-card-year">2026</span>
+                <strong class="ytp-event-card-title">$title (Erwachsene)</strong>
+              </div>
+            </a>
+            """.trimIndent()
+        }
+
     private fun fixture(name: String): String =
         javaClass.classLoader
             .getResourceAsStream("scraper/zimmer16/$name")!!
             .bufferedReader()
             .readText()
+
+    private companion object {
+        /** Production titles from 2026-10-12 (#3164). */
+        val PRODUCTION_TITLES =
+            listOf(
+                "Le Tomboy Release Tour, The Murk Prince",
+                "Soundtrack to Sunset, Landmusik",
+                "Frühling im Späti mit Jens Ohrenblicker",
+                "Offene Bühne",
+                "Die offene Liederbühne – Singer-Songwriter-Forum",
+                "Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht",
+                "Lea Willms and MUD/O"
+            )
+    }
 }
