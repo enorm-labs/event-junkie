@@ -170,8 +170,11 @@ object PartyFeatureRules {
                     listOf(
                         "${B}after[\\s-]?hours?$E",
                         "$B(?:till|until|bis)\\s+(?:sunrise|dawn|sonnenaufgang|morgengrauen|the\\s+morning|in\\s+den\\s+(?:morgen|tag|vormittag))$E",
-                        "$B(?:24|36|48|72)[\\s-]*(?:h|hours?|stunden)$E"
-                    )
+                        // A bare duration is prose ("24 Stunden geöffnet", "24 hours in jail"); a party word after it is the night's length.
+                        "$B(?:24|36|48|72)[\\s-]*(?:h|hours?|stunden)[\\s-]+(?:of\\s+|non[\\s-]?stop\\s+)?" +
+                            "(?:$NIGHT|techno|house|music|musik|dancing|tanz(?:en)?)$E"
+                    ),
+                negations = listOf("$B(?:from\\s+)?dusk\\s+(?:till|until|to)\\s+dawn$E")
             ),
             Rule(
                 PartyFeature.DAY_PARTY,
@@ -186,7 +189,8 @@ object PartyFeatureRules {
                         "$B(?:daytime|tagsüber|daylight|tageslicht)$E",
                         "$B(?:sonntags?|sunday)[\\s-]?(?:party|rave|tanz|afternoon|nachmittag)",
                         "$B(?:sonntag|samstag|sunday|saturday)s?\\s+(?:ab|from)\\s+(?:1[0-6]|[6-9])(?:[:.]00)?\\s*(?:uhr|h|am|pm)?$E"
-                    )
+                    ),
+                negations = listOf("$B(?:kein(?:e[mnrs]?)?|ohne|no|without)\\s+(?:daylight|tageslicht)$E")
             )
         )
 
