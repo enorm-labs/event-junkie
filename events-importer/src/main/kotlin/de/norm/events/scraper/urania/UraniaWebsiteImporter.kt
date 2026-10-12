@@ -2,8 +2,10 @@ package de.norm.events.scraper.urania
 
 import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -53,4 +55,9 @@ class UraniaWebsiteImporter(
  * readings and workshops, and 26 of the 27 descriptions were German. The one English talk says "in
  * englischer Sprache", and that phrase wins over the default.
  */
-val URANIA_LIMITATIONS = VenueLimitations(EventSource.URANIA, houseLanguage = SpokenLanguage.GERMAN)
+val URANIA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.URANIA,
+        AcceptedLimitation(LimitedAspect.GENRE, "the house is a lecture hall, and its labels name formats, never a style"),
+        houseLanguage = SpokenLanguage.GERMAN
+    )

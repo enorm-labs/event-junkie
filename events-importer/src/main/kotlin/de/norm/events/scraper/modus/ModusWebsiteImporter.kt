@@ -31,5 +31,6 @@ class ModusWebsiteImporter(
 val MODUS_LIMITATIONS =
     VenueLimitations(
         EventSource.MODUS,
-        AcceptedLimitation(LimitedAspect.PRICE, "the event page prints no figure and sends buyers to the ticket shop")
+        AcceptedLimitation(LimitedAspect.PRICE, "the event page prints no figure and sends buyers to the ticket shop"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text")
     )

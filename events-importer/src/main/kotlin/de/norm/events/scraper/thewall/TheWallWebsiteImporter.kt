@@ -47,5 +47,6 @@ val THE_WALL_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each producer states one time per show, doors for some and the start for others"),
         AcceptedLimitation(LimitedAspect.PRICE, "most shows are pay-what-you-want, and a fixed price appears only in the prose"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "reservations run through the club's own Spotagig pages, which the event page is"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the showcases name no comedians, and a headliner appears only in the title")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the showcases name no comedians, and a headliner appears only in the title"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the club names no genre")
     )

@@ -56,7 +56,8 @@ val UFA_FABRIK_LIMITATIONS =
         EventSource.UFA_FABRIK,
         AcceptedLimitation(LimitedAspect.PAGINATION, "the calendar is one page per month, and only this month and the next are read"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the house publishes one time per show"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house names no promoter")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house names no promoter"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the genre label names a format (Comedy, Kabarett, Varieté) on most shows")
     )
 
 private val MONTH_PAGE_SCRAPER = UfaFabrikMonthPageScraper()

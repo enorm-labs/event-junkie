@@ -1,10 +1,12 @@
 package de.norm.events.scraper.delphi
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
@@ -83,5 +85,8 @@ class DelphiWebsiteImporter(
         }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val THEATER_IM_DELPHI_LIMITATIONS = VenueLimitations(EventSource.THEATER_IM_DELPHI)
+val THEATER_IM_DELPHI_LIMITATIONS =
+    VenueLimitations(
+        EventSource.THEATER_IM_DELPHI,
+        AcceptedLimitation(LimitedAspect.GENRE, "the labels are formats; only Kammermusik and Elektronische Musik name a style")
+    )

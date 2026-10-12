@@ -34,5 +34,6 @@ class Hole44WebsiteImporter(
 val HOLE44_LIMITATIONS =
     VenueLimitations(
         EventSource.HOLE44,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim button")
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim button"),
+        AcceptedLimitation(LimitedAspect.GENRE, "some event pages carry no `.event-tags` block")
     )

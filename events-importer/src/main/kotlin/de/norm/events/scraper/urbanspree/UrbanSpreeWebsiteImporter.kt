@@ -156,5 +156,6 @@ class UrbanSpreeWebsiteImporter(
 val URBAN_SPREE_LIMITATIONS =
     VenueLimitations(
         EventSource.URBAN_SPREE,
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the concert pages name no style")
     )
