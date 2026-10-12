@@ -38,7 +38,7 @@ val ZIMMER_16_LIMITATIONS =
             LimitedAspect.EVENT_TYPE,
             "the venue names no category, so a night without a format word is a concert, which mislabels a talk or a film night"
         ),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the site has no line-up field; a title with a tagline or a programme name names nobody"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the site has no line-up field; a title with a tagline, an & or a bare programme name names nobody"),
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the cards or the event pages names a style"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time"),
         AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved on YesTicket and paid at the door")
