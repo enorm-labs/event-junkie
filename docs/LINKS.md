@@ -32,9 +32,9 @@ point, such as INWX or the Hetzner status page. The obvious console URL is fille
 | <https://developer.mend.io/github/enorm-labs>                                               | Mend's Renovate console — job logs, and why a pull request was or was not opened |
 | <https://github.com/enorm-labs/event-junkie/security/code-scanning>                         | Code scanning alerts                                                             |
 | <https://github.com/orgs/enorm-labs/packages>                                               | GHCR packages — **each is private on first publish and needs one click to flip** |
-| <https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml>       | Public form: wrong or missing event data                                         |
-| <https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml>              | Public form: suggest a venue                                                     |
-| <https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml>                    | Public form: bug in the site or API                                              |
+| <https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml>     | Public form: wrong or missing event data                                         |
+| <https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml>            | Public form: suggest a venue                                                     |
+| <https://github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml>                  | Public form: bug in the site or API                                              |
 
 ### The published artifacts
 
