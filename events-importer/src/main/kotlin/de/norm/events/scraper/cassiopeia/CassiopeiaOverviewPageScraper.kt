@@ -139,7 +139,7 @@ class CassiopeiaOverviewPageScraper(
             startTime = startTime,
             eventType = eventType,
             genre = cassiopeiaGenre(genreSlot),
-            promoters = listOfNotNull(presenterInGenreSlot(genreSlot)),
+            promoters = listOfNotNull(presenterInCredit(genreSlot)),
             imageUrl = imageUrl,
             sourceUrl = eventUrl,
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",

@@ -89,7 +89,7 @@ class CassiopeiaDetailPageScraper {
             startTime = parseTimeByLabel(content, START_LABEL),
             eventType = eventType,
             genre = cassiopeiaGenre(genreSlot),
-            promoters = listOfNotNull(presenterInGenreSlot(genreSlot)),
+            promoters = (listOfNotNull(presenterInCredit(genreSlot)) + parseBodyPresenters(content)).distinct(),
             imageUrl = content.imgSrcAt("img.eventpage-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",
@@ -157,6 +157,19 @@ class CassiopeiaDetailPageScraper {
                 .filter { it.isNotBlank() }
         return paragraphs.joinToString("\n").takeIf { it.isNotBlank() }
     }
+
+    /**
+     * The promoters a description paragraph credits: `Präsentiert von Trinity Music`, or a list such
+     * as `präsentiert von: Kidnap Music, Audiolith Booking & ROSA e.V.` (#3166). Only a paragraph the
+     * credit opens counts, because a mid-sentence "presents" is usually the act presenting its record.
+     */
+    private fun parseBodyPresenters(content: Element): List<String> =
+        content
+            .select(".paragraph-wrapper .paragraph.events")
+            .mapNotNull { presenterInCredit(it.text()) }
+            .flatMap { it.split(CO_PRESENTER_SEPARATOR) }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
 
     /**
      * The ticket URL, by reliability: an `a.faq-link-wrapper` containing "Tickets", the Webflow
@@ -245,6 +258,9 @@ class CassiopeiaDetailPageScraper {
         /** A description paragraph naming a support act: `Support: Aska`, `+ Dani Lia`. */
         private val SUPPORT_LINE = Regex("""(?:(?:$SUPPORT_LABELS):|\+)\s+(.+)""", RegexOption.IGNORE_CASE)
 
+        /** What a credit list joins its promoters with: `Kidnap Music, Audiolith Booking & ROSA e.V.`. */
+        private val CO_PRESENTER_SEPARATOR = Regex("""\s*[,&]\s*""")
+
         /** The paragraph that opens a festival's act list: `Line-up:`, `Lineup`, `LINE UP:`. */
         private val LINEUP_LABEL = Regex("""line[- ]?up:?""", RegexOption.IGNORE_CASE)
 
@@ -254,13 +270,12 @@ class CassiopeiaDetailPageScraper {
 }
 
 /**
- * The promoter a genre slot credits, or `null` when the slot holds a genre. The venue sometimes
- * writes the credit where the genre goes ("presented by ATOK Berlin", #1951); read as a genre, it
- * hid the promoter and put a sentence in the genre column. Both pages' genre slots pass through
- * here, so the listing cannot put the credit back in the merge.
+ * The promoter a text credits when the credit opens it, or `null` otherwise. The venue writes one
+ * in a description paragraph and sometimes in the genre slot ("presented by ATOK Berlin", #1951).
+ * Both pages' genre slots pass through here, so the listing cannot put the credit back in the merge.
  */
-internal fun presenterInGenreSlot(slot: String?): String? =
-    slot
+internal fun presenterInCredit(text: String?): String? =
+    text
         ?.let { PRESENTER_CREDIT.find(it)?.groupValues?.get(1) }
         ?.trim()
         ?.takeIf { it.isNotBlank() }
@@ -272,7 +287,7 @@ internal fun presenterInGenreSlot(slot: String?): String? =
  * lacks styles the venue writes alone ("Hardcore", "Noise"). Both pages' genre slots pass through
  * here, so the merge cannot refill the slot.
  */
-internal fun cassiopeiaGenre(slot: String?): String? = slot?.takeIf { presenterInGenreSlot(it) == null && normalizeGenre(it).isNotEmpty() }
+internal fun cassiopeiaGenre(slot: String?): String? = slot?.takeIf { presenterInCredit(it) == null && normalizeGenre(it).isNotEmpty() }
 
 /**
  * The type a [category] maps to, with the catch-all `Sonstiges` (OTHER) reclassified by the
