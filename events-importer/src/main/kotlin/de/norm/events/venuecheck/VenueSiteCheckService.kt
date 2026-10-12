@@ -33,6 +33,7 @@ data class SiteCheckSummary(
 class VenueSiteCheckService(
     private val store: VenueSiteCheckStore,
     private val prober: VenueSiteProber,
+    private val metrics: VenueSiteCheckMetrics,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -48,12 +49,28 @@ class VenueSiteCheckService(
             return null
         }
         return try {
-            pass()
+            pass().also { metrics.markSucceeded(Instant.now(clock)) }
         } catch (e: Exception) {
             logger.error(e) { "Venue site check failed" }
             null
         } finally {
             running.unlock()
+        }
+    }
+
+    /** Starts the gauge from the newest stored check, so a restart does not hide the age until the next pass. */
+    @Suppress("TooGenericExceptionCaught") // A start must not fail on a gauge; the gauge stays at 0 and the line says why.
+    suspend fun seedLastSuccess() {
+        try {
+            val newest = store.newestCheckedAt()
+            if (newest == null) {
+                logger.info { "Venue site check gauge not seeded: no venue was checked yet" }
+                return
+            }
+            metrics.seed(newest)
+            logger.info { "Venue site check gauge seeded from the newest check at $newest" }
+        } catch (e: Exception) {
+            logger.warn(e) { "Venue site check gauge not seeded" }
         }
     }
 

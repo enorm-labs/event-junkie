@@ -4,6 +4,7 @@ import de.norm.events.EVENTS_SCHEMA
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
@@ -62,6 +63,14 @@ class VenueSiteCheckStore(
                 )
             }.flow()
             .toList()
+
+    /** The newest `checked_at` of any venue, or `null` before the first pass. */
+    suspend fun newestCheckedAt(): Instant? =
+        databaseClient
+            .sql("SELECT checked_at FROM $EVENTS_SCHEMA.venue_site_check ORDER BY checked_at DESC LIMIT 1")
+            .map { row, _ -> requireNotNull(row.get("checked_at", Instant::class.java)) }
+            .one()
+            .awaitSingleOrNull()
 
     /**
      * Stores [result] for [venueId] and returns the venue's run of failures after it. A failure adds one and

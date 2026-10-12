@@ -22,6 +22,7 @@ it produces an alert that never fires rather than an error.
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
     artist lookup tick stopped     -> ej-artist-lookup-tick-stale (#2059)
+    venue site check stopped       -> ej-venue-site-check-stale   (#3147)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -510,6 +511,28 @@ rule(
     period_minutes=10,
     frequency_minutes=5,
     silence_minutes=12 * 60,
+)
+
+# The venue site check runs once a month, at 05:15 UTC on the 1st, and a failed pass
+# leaves only an ERROR line. The gauge stamps a pass that finished, and the importer
+# seeds it at start from the newest stored check, so a rollout does not reset the age.
+# 33 days covers a 31-day month and the pass itself, so a pass that failed on the 1st
+# fires before the next one is due. `> bool 0` as in `ej-artist-lookup-tick-stale`.
+rule(
+    "ej-venue-site-check-stale",
+    "The monthly venue site check has not finished a pass in 33 days. It runs at 05:15 UTC "
+    "on the 1st, so that pass failed or did not start. Venues without an importer go unchecked "
+    "and none reaches the review list. Read the importer log for `Venue site check`; "
+    "`POST /api/admin/venues/site-check` runs a pass now.",
+    "((timestamp(max(importer_venues_site_check_last_success)) "
+    "- max(importer_venues_site_check_last_success)) / 3600) "
+    "* (max(importer_venues_site_check_last_success) > bool 0)",
+    ">",
+    33 * 24,
+    stream_name="importer_venues_site_check_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
 )
 
 # --- Data quality, against its own week (#2604) --------------------------------
