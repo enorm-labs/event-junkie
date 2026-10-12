@@ -1550,7 +1550,77 @@ class ArtistNameMappingTest {
         // A real co-bill alongside a collective tail still splits at the real boundary.
         splitHeadlinerTitle("Ann & the Band + Real Act") shouldContainExactly listOf("Ann & the Band", "Real Act")
         // A named act after "&" ("Jesko Band") is still a genuine second act, not a bare "& Band" tail.
-        splitHeadlinerTitle("Dennis & Jesko Band") shouldContainExactly listOf("Dennis", "Jesko Band")
+        splitHeadlinerTitle("Dennis & Jessie Band") shouldContainExactly listOf("Dennis", "Jessie Band")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps the duos production bills as their whole title`() {
+        // The #3159 worklist: each title is one act, and `&` / `und` is part of its name.
+        assertSoftly {
+            listOf(
+                "Dicht & Ergreifend",
+                "Dennis & Jesko Band",
+                "Anchors & Hearts",
+                "Maël & Jonas",
+                "Mael & Jonas",
+                "Nie und Nimmer"
+            ).forEach { title -> headlinersFromTitle(title).map { it.name } shouldContainExactly listOf(title) }
+        }
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps a German possessive tail with its act`() {
+        // `X und seine Freunde` is one billing, as `X & Friends` is (#3159).
+        headlinersFromTitle("OLAF SCHUBERT UND SEINE FREUNDE").map { it.name } shouldContainExactly
+            listOf("OLAF SCHUBERT UND SEINE FREUNDE")
+        splitHeadlinerTitle("Ina Müller und ihre Band") shouldContainExactly listOf("Ina Müller und ihre Band")
+        splitHeadlinerTitle("Max Mutzke & seinen Gästen") shouldContainExactly listOf("Max Mutzke & seinen Gästen")
+        splitHeadlinerTitle("Anna Loos und ihren Freunden") shouldContainExactly listOf("Anna Loos und ihren Freunden")
+        // A named second act still splits.
+        splitHeadlinerTitle("Olaf Schubert und Ina Müller") shouldContainExactly listOf("Olaf Schubert", "Ina Müller")
+    }
+
+    @Test
+    fun `headlinersFromTitle splits a meets co-bill into its two acts`() {
+        headlinersFromTitle("Pauken & Planeten meets Nevio Passaro").map { it.name } shouldContainExactly
+            listOf("Pauken & Planeten", "Nevio Passaro")
+        headlinersFromTitle("Roots Daughters meets La Comadre Soundsystem").map { it.name } shouldContainExactly
+            listOf("Roots Daughters", "La Comadre Soundsystem")
+        headlinersFromTitle("DESNEY BAILEY MEETS DES").map { it.name } shouldContainExactly listOf("DESNEY BAILEY", "DES")
+        headlinersFromTitle("CHRISTIAN VON DER GOLTZ MEETS RONJA ANDERSSON").map { it.name } shouldContainExactly
+            listOf("CHRISTIAN VON DER GOLTZ", "RONJA ANDERSSON")
+        // Beside a hard separator, each segment is asked on its own.
+        splitHeadlinerTitle("Roots Daughters meets La Comadre Soundsystem + Gomez") shouldContainExactly
+            listOf("Roots Daughters", "La Comadre Soundsystem", "Gomez")
+    }
+
+    @Test
+    fun `splitHeadlinerTitle leaves a meets title whole when it pairs genres, names a series or carries a tagline`() {
+        assertSoftly {
+            listOf(
+                // A genre on either side is a style pairing.
+                "Klassik meets Jazz",
+                "Alternative Rock meets Metal",
+                "SOUL MEETS R&B",
+                "Modern Jazz Meets African Groove",
+                "80s meets Antidepressiva",
+                // A one-word left side is the venue, a series or a show.
+                "Tresor meets DJ Stingray 313",
+                "FALCO MEETS AMADEUS",
+                "Rainbowbingo meets Wildbingo",
+                "Downstairs meets Music",
+                // A spaced dash marks the meets phrase as a tagline.
+                "Ballett meets Varieté - Premiere",
+                "Hogir Göregen - Piano meets Percussion",
+                // A dangling or a repeated meets.
+                "Two Words meets",
+                "Two Words meets Ab meets Cd",
+                // Inside a bracket it describes the act before it.
+                "Gomez Band (Roots Daughters meets La Comadre)"
+            ).forEach { title -> withClue(title) { splitHeadlinerTitle(title) shouldContainExactly listOf(title) } }
+        }
+        // `meets` inside a word is no separator.
+        splitHeadlinerTitle("Gomez Meetsville") shouldContainExactly listOf("Gomez Meetsville")
     }
 
     @Test
