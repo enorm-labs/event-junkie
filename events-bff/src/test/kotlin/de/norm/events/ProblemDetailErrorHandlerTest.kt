@@ -6,7 +6,6 @@ import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldNotContain
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -17,8 +16,9 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Every error that reaches Boot's handler is a problem, whatever the client accepts (#1446). The
- * routes below are the ones the API scan hit: a browser-style `Accept` on a route that does not
- * exist and on a parameter that does not bind. Both used to answer with the Whitelabel page.
+ * route below is the one the API scan hit: a browser-style `Accept` on a route that does not
+ * exist used to answer with the Whitelabel page. A parameter that does not bind is answered by
+ * [GlobalExceptionHandler], and `InvalidQueryParameterTest` pins it.
  *
  * The 5xx branch is asserted on the pure builder: since #1448 nothing from outside provokes a 500,
  * and a test that could would be a defect to fix rather than a fixture to keep.
@@ -44,26 +44,6 @@ class ProblemDetailErrorHandlerTest : BaseControllerTest() {
             .isEqualTo("/api/nothing-here")
             .jsonPath("$.requestId")
             .exists()
-    }
-
-    @Test
-    fun `a parameter that does not bind answered to a browser is a 400 problem`() {
-        val body =
-            webTestClient
-                .get()
-                .uri("/events?from=from")
-                .accept(MediaType.TEXT_HTML)
-                .exchange()
-                .expectStatus()
-                .isBadRequest
-                .expectHeader()
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .expectBody(String::class.java)
-                .returnResult()
-                .responseBody!!
-
-        body shouldNotContain "<html"
-        body shouldNotContain "Whitelabel"
     }
 
     @Test

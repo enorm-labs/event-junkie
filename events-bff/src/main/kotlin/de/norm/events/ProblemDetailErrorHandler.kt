@@ -19,11 +19,11 @@ import java.net.URI
 
 /**
  * Renders every error that reaches Boot's error handler as an RFC 9457 problem, whatever the
- * client accepts. [GlobalExceptionHandler] only sees exceptions thrown by a handler; a missing
- * route, a parameter that does not bind and anything a filter throws land here, where Boot
+ * client accepts. [GlobalExceptionHandler] only sees exceptions thrown by a handler or its
+ * argument resolution; a missing route and anything a filter throws land here, where Boot
  * answered `text/html` clients with the Whitelabel page (#1446). `detail` carries the exception
- * message for a 4xx and a fixed sentence for a 5xx. Boot's status resolution and logging are
- * inherited untouched.
+ * message for a 4xx and a fixed sentence for a 5xx, so a 4xx whose message names internals needs
+ * a handler there (#3145). Boot's status resolution and logging are inherited untouched.
  */
 class ProblemDetailErrorHandler(
     errorAttributes: ErrorAttributes,
