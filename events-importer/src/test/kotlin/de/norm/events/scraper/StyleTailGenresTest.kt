@@ -34,7 +34,7 @@ class StyleTailGenresTest {
     fun `reads the genre words out of a tagline and drops the prose`() {
         assertSoftly {
             mapOf(
-                "Jazz / Funk / Groove / Swing / Blues - Moderation Gaspare" to "Jazz, Funk, Blues",
+                "Jazz / Funk / Groove / Swing / Blues - Moderation Gaspare" to "Jazz, Funk, Swing, Blues",
                 "Blues, Rock, Pop, Funk für jeden was dabei!" to "Blues, Rock, Pop, Funk",
                 "Indie Pop/Rock - Ein Abend für alle, die wissen" to "Indie, Rock"
             ).forEach { (tail, genres) -> withClue(tail) { knownGenresInStyleTail(tail) shouldBe genres } }

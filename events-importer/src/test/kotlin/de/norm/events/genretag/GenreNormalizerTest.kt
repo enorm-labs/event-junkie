@@ -468,4 +468,34 @@ class GenreNormalizerTest {
         normalizeGenre("Acoustic-Guitar-Hasen-Liedermaching").shouldContainExactly("Singer-Songwriter")
         normalizeGenre("Liedermaching").shouldContainExactly("Singer-Songwriter")
     }
+
+    @Test
+    fun `a genre inside a long multi-word label still gives its tag`() {
+        normalizeGenre("Party Schlager").shouldContainExactly("Schlager")
+        normalizeGenre("Instrumental Trip Hop").shouldContainExactly("Trip-Hop")
+        normalizeGenre("Nu Acoustic Jazz-Groove-Songs").shouldContainExactly("Jazz")
+        normalizeGenre("1930s and 40s Swing Band").shouldContainExactly("Swing")
+        normalizeGenre("von Rock´n´Roll bis Ska").shouldContainExactly("Rock'n'Roll", "Ska")
+        normalizeGenre("Art-Pop, Digi Core").shouldContainExactly("Art-Pop", "Digicore")
+    }
+
+    @Test
+    fun `the labels around the new genres stay dropped`() {
+        normalizeGenre("Party").shouldBeEmpty()
+        normalizeGenre("Core").shouldBeEmpty()
+        nonGenreTokens("Party Schlager, Party").shouldContainExactly("Party")
+    }
+
+    @Test
+    fun `every Rock'n'Roll spelling folds onto one tag`() {
+        listOf("RocknRoll", "Rock'n Roll", "Rock´n`Roll", "Pure Rock`n`Roll").forEach { normalizeGenre(it).shouldContainExactly("Rock'n'Roll") }
+    }
+
+    @Test
+    fun `a hyphen part names a genre only when the whole token would be dropped`() {
+        normalizeGenre("Synth-Wave").shouldContainExactly("Synth-Wave")
+        normalizeGenre("Art-Pop").shouldContainExactly("Art-Pop")
+        normalizeGenre("Groove-Songs").shouldContainExactly("Groove-Songs")
+        normalizeGenre("Very Long Musik-Show").shouldBeEmpty()
+    }
 }

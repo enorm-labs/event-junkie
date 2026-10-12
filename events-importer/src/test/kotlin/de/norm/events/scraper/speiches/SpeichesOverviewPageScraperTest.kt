@@ -82,8 +82,7 @@ class SpeichesOverviewPageScraperTest {
         shallaras.free shouldBe true
 
         on("2026-10-12", "19:00").subtitle shouldBe "mit Martin Rose + Very Special Guest, Musicians Welcome! Folk,Blues,Soul,Jazz,Country,SingerSongwriter"
-        // The vocabulary has no rock'n'roll; the house genre fills the night that names nothing else.
-        shallaras.genre shouldBe null
+        shallaras.genre shouldBe "Rock'n'Roll"
     }
 
     @Test
