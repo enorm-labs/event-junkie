@@ -157,6 +157,9 @@ fun isEventSegmentLabel(name: String): Boolean {
  * (`41. Berliner Jazztreff`), a `Vol. <n>` anywhere (`Anime Rap Revolution Vol. I`), and a
  * `Tribute concert:` prefix. The ordinal needs its dot and a space, so `65daysofstatic` and
  * `808 State` stay acts.
+ *
+ * A gala named for its night is no act either (#3160): `Die Nacht der Musicals`, `Lange Nacht der
+ * …` and `Die Schlagernacht des Jahres`. Both forms are anchored to the title start.
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
@@ -165,7 +168,8 @@ private val NON_ARTIST_EVENT_PATTERN =
             """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*|.*\p{L}singen(?!\p{L}).*""" +
             """|\d+\.\s+\S.*|.*\bvol\.\s*(?:\d+|[ivx]+)\b.*|tribute[\s-]?(?:concert|konzert)\s*:.*""" +
             """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
-            """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""",
+            """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""" +
+            """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""",
         RegexOption.IGNORE_CASE
     )
 
@@ -559,7 +563,12 @@ private val NON_ARTIST_NAMES: Set<String> =
         // Festsaal's queer art festival, a Badehaus party the listing typed as a concert.
         "thrash talk",
         "in the mountains",
-        "rockstar girlfriends"
+        "rockstar girlfriends",
+        // Night and series names minted as acts (#3160): Quasimodo's `Jazz Night ft. <guests>`, the
+        // `Jam` of Badehaus's `Uats Live + Jam` and Mikropol's numbered `Im Kreise der Familia 3`.
+        "jazz night",
+        "jam",
+        "im kreise der familia"
     ) + BILLED_SERIES_NAMES
 
 /**
@@ -1479,14 +1488,17 @@ fun headlinersFromTitle(
     val (billing, guests) = splitFeaturedGuests(title.replace(VORPROGRAMM_MARKER, " + Support: "))
     presentsFrameActs(billing)?.let { return it + guests }
     coPresentedNightActs(billing)?.let { return it + guests }
-    return splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
-        .map { segment ->
-            // The role is decided from the *raw* segment, before its label is stripped: a title
-            // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
-            val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) "SUPPORT" else "HEADLINER"
-            stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
-        }.filterNot { (name, _) -> isNonArtistName(name) }
-        .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
+    val heads =
+        splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
+            .map { segment ->
+                // The role is decided from the *raw* segment, before its label is stripped: a title
+                // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
+                val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) "SUPPORT" else "HEADLINER"
+                stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
+            }.filterNot { (name, _) -> isNonArtistName(name) }
+            .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) }
+    // `Jazz Night ft. Flow Rea`: with the night's name dropped, the guests are the whole bill (#3160).
+    return if (heads.isEmpty()) guests.map { it.copy(role = "HEADLINER") } else heads + guests
 }
 
 /**

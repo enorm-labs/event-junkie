@@ -1912,6 +1912,33 @@ class ArtistNameMappingTest {
             listOf("Kraftklub" to "HEADLINER", "Tokio Hotel" to "SUPPORT", "Casper" to "SUPPORT")
     }
 
+    // #3160 — production titles: a night or series name is no act.
+    @Test
+    fun `headlinersFromTitle reads a gala night and a numbered series as no act`() {
+        listOf(
+            "Die Nacht der Filmmusik 2027",
+            "Die Nacht der Musicals",
+            "Nacht der Gitarren",
+            "Lange Nacht der Wissenschaft",
+            "Die Schlagernacht des Jahres",
+            "Im Kreise der Familia 3"
+        ).forEach { headlinersFromTitle(it).shouldBeEmpty() }
+        headlinersFromTitle("Uats Live + Jam").map { it.name to it.role } shouldBe listOf("Uats" to "HEADLINER")
+    }
+
+    @Test
+    fun `isNonArtistEvent keeps an act whose name only contains nacht`() {
+        listOf("Nachtblut", "Die Nacht", "Nacht", "Jazz Nacht Trio", "Nachtschatten des Jahres").forEach { isNonArtistEvent(it) shouldBe false }
+    }
+
+    // #3160 — with the night's name dropped, the `ft.` guests are the whole bill.
+    @Test
+    fun `headlinersFromTitle bills the featured guests of a dropped night name as headliners`() {
+        headlinersFromTitle("Jazz Night ft. Wonder Marino 4 & Silke Eberhard").map { it.name to it.role } shouldBe
+            listOf("Wonder Marino 4" to "HEADLINER", "Silke Eberhard" to "HEADLINER")
+        headlinersFromTitle("Jazz Night ft. Flow Rea (Est)").map { it.name to it.role } shouldBe listOf("Flow Rea" to "HEADLINER")
+    }
+
     // #314 — an origin tag comes off; a parenthesised alias stays.
     @Test
     fun `stripArtistSuffix drops an origin tag in codes or in full and keeps an alias`() {
