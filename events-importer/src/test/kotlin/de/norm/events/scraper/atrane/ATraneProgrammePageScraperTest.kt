@@ -91,9 +91,12 @@ class ATraneProgrammePageScraperTest {
         night.genre shouldBe "modern jazz"
     }
 
-    /** One weekly-session card whose JSON-LD name is [lines], `<br>`-separated. */
-    private fun session(vararg lines: String): ScrapedEvent {
-        val name = (listOf("A-TRANE PRÄSENTIERT:") + lines).joinToString("&lt;br&gt;") { it.replace("&", "&amp;") }
+    /** One weekly-session card whose JSON-LD name is the credit and [lines], `<br>`-separated. */
+    private fun session(vararg lines: String): ScrapedEvent = card(listOf("A-TRANE PRÄSENTIERT:") + lines)
+
+    /** One card whose JSON-LD name is [lines], `<br>`-separated. */
+    private fun card(lines: List<String>): ScrapedEvent {
+        val name = lines.joinToString("&lt;br&gt;") { it.replace("&", "&amp;") }
         val html =
             """
             <div class="eventon_list_event" data-event_id="1">
@@ -160,6 +163,27 @@ class ATraneProgrammePageScraperTest {
 
         nights shouldHaveSize 2
         nights.forEach { night -> night.artists.count { it.name.contains("TC THE 3RD", ignoreCase = true) } shouldBe 1 }
+    }
+
+    @Test
+    fun `drops a last-seats banner above the credit and bills the act below it`() {
+        // #3165: the 2026-10-10 night was stored with the banner as its title and its act.
+        val night = on(LocalDate.of(2026, 10, 10))
+
+        night.title shouldBe "DAVID HAYNES AND FRIENDS"
+        night.subtitle!! shouldStartWith "«SOULFUL FALL» · WITH SPECIAL GUESTS"
+        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES AND FRIENDS" to "HEADLINER")
+    }
+
+    @Test
+    fun `drops a sold-out banner in either language and a singular last-seat line`() {
+        listOf("AUSVERKAUFT", "SOLD OUT", "Ausverkauft / Sold out", "LETZTE PLÄTZE", "Letzte Plaetze an der Bar").forEach { banner ->
+            val night = card(listOf(banner, "A-TRANE PRÄSENTIERT:", "BILL PETRY", "«CLOSE YOUR EYES»"))
+
+            night.title shouldBe "BILL PETRY"
+            night.subtitle shouldBe "«CLOSE YOUR EYES»"
+            night.artists.map { it.name } shouldBe listOf("BILL PETRY")
+        }
     }
 
     @Test

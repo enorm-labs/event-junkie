@@ -37,6 +37,8 @@ import java.time.format.DateTimeParseException
  * that double-barrelled names also carry. A weekly session's guests (`HEUTE MIT: A- B`) are
  * billed, because they are split on a hyphen followed by a space only (#2706). A `SPECIAL GUEST:`
  * line names one guest, unsplit, who is billed unless the title already bills them (#3105).
+ * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) can head the lines; it is
+ * dropped like the credit (#3165).
  */
 class ATraneProgrammePageScraper {
     private val logger = KotlinLogging.logger {}
@@ -110,7 +112,7 @@ class ATraneProgrammePageScraper {
      * MIT:" label, and the label names the night's guests, or nothing and is dropped.
      */
     private fun billing(lines: List<String>): Billing? {
-        val body = lines.filterNot { PRESENTER.containsMatchIn(it) }
+        val body = lines.filterNot { PRESENTER.containsMatchIn(it) || BANNER.containsMatchIn(it) }
         val acts = body.map { it.replace(TONIGHT_WITH, "").trim() }
         val actIndex = body.indexOfFirst { TONIGHT_WITH.containsMatchIn(it) && it.replace(TONIGHT_WITH, "").isNotBlank() }
         val billing =
@@ -184,6 +186,7 @@ class ATraneProgrammePageScraper {
         val CLOSED = Regex("""geschlossen|closed""", RegexOption.IGNORE_CASE)
         val ELSEWHERE = Regex("""(?:präsentiert|presents)\s+(?:im|in|at)\s+(?!a-trane)""", RegexOption.IGNORE_CASE)
         val PRESENTER = Regex("""^a-trane\s+(?:präsentiert|presents)""", RegexOption.IGNORE_CASE)
+        val BANNER = Regex("""^letzten?\s+pl(?:ä|ae)tze\b|last\s+seats\b|ausverkauft|sold\s*out""", RegexOption.IGNORE_CASE)
         val TONIGHT_WITH = Regex("""^(?:tag\s*\d+\s+)?heute\b.*?\bmit:""", RegexOption.IGNORE_CASE)
         val GUESTS_LABEL = Regex("""^heute\s+mit:""", RegexOption.IGNORE_CASE)
         val SPECIAL_GUEST = Regex("""^(?:featuring\s+)?special\s+guests?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
