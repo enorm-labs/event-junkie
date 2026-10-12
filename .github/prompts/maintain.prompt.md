@@ -54,7 +54,7 @@ The first row that holds decides. Each row names its evidence; report it with th
 | 10  | None of the above                                                                        | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
-  [`/daily-check`](daily-check.prompt.md) Step 6 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
+  [`/daily-check`](daily-check.prompt.md) Step 7 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.
 - **Stage 5**: "no session holds" is [`/start-issue`](start-issue.prompt.md) step 2's three signals: board Status, a remote branch, an open pull
   request. `/afk` checks them again; this row only decides whether starting it is worth a turn.
 - **Stage 6**: give `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`, and the subjects that make it a
