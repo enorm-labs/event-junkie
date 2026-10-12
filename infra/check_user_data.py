@@ -42,7 +42,7 @@ SAMPLE_ENV = {
     "POD_CIDR": "10.42.0.0/16",
     "WIREGUARD_ADDRESS": "10.10.1.1/24",
     "WIREGUARD_PORT": "51820",
-    "K3S_VERSION": "v1.36.4+k3s1",
+    "K3S_VERSION": "v1.36.5+k3s1",
     "K3S_TLS_SANS": '"203.0.113.10 10.10.1.1 10.1.1.10 staging.event-junkie.internal"',
     "POSTGRES_VERSION": "18",
     "POSTGRES_LISTEN_IP": "10.1.1.10",
