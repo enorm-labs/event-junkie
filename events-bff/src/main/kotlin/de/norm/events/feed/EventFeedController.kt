@@ -3,7 +3,6 @@ package de.norm.events.feed
 import de.norm.events.common.QueryParameters
 import de.norm.events.common.ResponseCache
 import de.norm.events.common.Site
-import de.norm.events.common.WeakETag
 import de.norm.events.event.BffMetrics
 import de.norm.events.event.EventFilter
 import de.norm.events.event.EventFilterParams
@@ -17,17 +16,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.CacheControl
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
-import java.time.Duration
 
 /**
  * The RSS feed of new events (#368): the events the importer stored most recently, newest first.
@@ -43,8 +37,7 @@ class EventFeedController(
     private val cache: ResponseCache,
     @Value("\${app.api.cache.ttl-seconds}") ttlSeconds: Long
 ) {
-    /** Set here rather than by the filter, so a `304` keeps it: the filter gives a non-`2xx` answer `no-store`. */
-    private val cacheControl = CacheControl.maxAge(Duration.ofSeconds(ttlSeconds)).cachePublic()
+    private val cacheControl = PolledFeed.cacheControl(ttlSeconds)
 
     @GetMapping
     @Operation(summary = "Get the newest events as an RSS 2.0 feed, at most 50, leaving out those that are over")
@@ -62,21 +55,13 @@ class EventFeedController(
         exchange: ServerWebExchange
     ): ResponseEntity<String> {
         PARAMS.rejectUnknownIn(exchange)
-        if (locale !in Site.LOCALES) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'locale' must be one of ${Site.LOCALES.joinToString(", ")}")
-        }
+        PolledFeed.requireSupportedLocale(locale)
         val filter = filters.toFilter()
         val events = cache.get(FeedKey(filter)) { eventService.newest(filter, MAX_ITEMS) }
         metrics.recordServed(BffMetrics.ENDPOINT_FEED, events.size)
         val venueName = filter.venueSlug?.let { slug -> cache.get(FeedVenueKey(slug)) { FeedVenueName(venueService.nameOf(slug)) }.name }
         val body = EventFeedXml.render(locale, selfUrl(exchange), events, filter, venueName)
-        // A reader polls with If-None-Match; Spring answers 304 for a matching tag.
-        return ResponseEntity
-            .ok()
-            .cacheControl(cacheControl)
-            .eTag(WeakETag.of(body))
-            .contentType(MediaType.parseMediaType("${EventFeedXml.CONTENT_TYPE};charset=UTF-8"))
-            .body(body)
+        return PolledFeed.response(body, EventFeedXml.CONTENT_TYPE, cacheControl)
     }
 
     /** The public address of this request: the site's feed path, never the request's host or `/api` path. */
