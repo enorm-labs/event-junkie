@@ -8,6 +8,7 @@ import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTecPage
@@ -31,8 +32,13 @@ import java.math.BigDecimal
  * under both, and it is a reading.
  * - **A `PANDAgoes` night runs at another club** and names it as the event's `venue`, so only the
  * events at a venue record named for the house are kept.
- * - **A jazz night credits its players as `<strong>Name</strong> – instrument`**, often once per
- * language. Those lines are the lineup; other nights name nobody outside the prose.
+ * - **A concert credits its players one per line**, often once per language: `<strong>Name</strong> –
+ * instrument`, `<strong>Name</strong>: instrument`, `Name: instrument` or `Name – instrument`. A
+ * shape other than the first needs a name of two to four capitalised words, so `<strong>Incense</strong>:
+ * Frankincense` and `Credits: <photographer>` stay out. Those lines are the lineup.
+ * - **A concert without a credit line bills its title** (`Igr Titov (acoustic)`), unless the title
+ * holds a colon: `Peyvand #3: Iran Ava – …` names a series night, and its players are only in the prose.
+ * In `LLULL MACHINES PRESENT DEAR BOY` the act presents a work, so the work comes off.
  * - **`cost_details` holds one value, two for a range, `0` for free.**
  */
 class PandaPlatformaApiScraper {
@@ -76,7 +82,7 @@ class PandaPlatformaApiScraper {
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = hasSoldOutMarker(title),
-            artists = if (eventType == EventType.CONCERT.name) creditedPlayers(event) else emptyList(),
+            artists = if (eventType == EventType.CONCERT.name) concertActs(title, event) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { it.startsWith(HOUSE_NAME, ignoreCase = true) }
         )
@@ -92,15 +98,40 @@ class PandaPlatformaApiScraper {
             else -> null
         }
 
-    /** The players of a `<strong>Name</strong> – instrument` credit list, each once. */
-    private fun creditedPlayers(event: JsonNode): List<ScrapedArtist> =
-        PLAYER_CREDIT
-            .findAll(event.path("description").asString(""))
-            .map { decodeHtmlEntities(it.groupValues[1]).trim() }
+    /** The credited players, or the title's acts when no line credits one. */
+    private fun concertActs(
+        title: String,
+        event: JsonNode
+    ): List<ScrapedArtist> =
+        creditedPlayers(event.path("description").asString("")).ifEmpty {
+            if (':' in title) emptyList() else headlinersFromTitle(title.replace(PRESENTED_WORK, ""))
+        }
+
+    /** The players of a credit list, one per line, each once. */
+    private fun creditedPlayers(description: String): List<ScrapedArtist> =
+        description
+            .split(LINE_BREAK)
+            .mapNotNull(::creditedName)
+            .map { decodeHtmlEntities(it).trim() }
             .filterNot { it.isBlank() || isNonArtistName(it) }
             .distinctBy { it.lowercase() }
             .map { ScrapedArtist(name = it) }
-            .toList()
+
+    private fun creditedName(line: String): String? =
+        BOLD_DASH_CREDIT.find(line)?.groupValues?.get(1) ?: plainCreditedName(decodeHtmlEntities(line.replace(TAG, "")).replace('\u00A0', ' '))
+
+    /** A name that is not bold must look like a person's, two to four words opening in capitals. */
+    private fun plainCreditedName(text: String): String? =
+        PLAIN_CREDIT
+            .find(text.trim())
+            ?.takeIf { text.length <= MAX_CREDIT_LINE }
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
+            ?.takeIf { name ->
+                val words = name.split(WHITESPACE)
+                words.size in PERSON_NAME_WORDS && words.first().first().isUpperCase() && words.last().first().isUpperCase()
+            }
 
     private companion object {
         /** The house's name on its venue records, of which there are two; a `PANDAgoes` night names the club it visits. */
@@ -110,7 +141,22 @@ class PandaPlatformaApiScraper {
         val SERIES_PREFIX = Regex("""^PANDA\p{L}+:\s+""")
 
         /** One credited player: a bold name, a dash, then the instrument. */
-        val PLAYER_CREDIT = Regex("""<strong>([^<]{2,60})</strong>\s*(?:&#8211;|–|-)\s*\p{L}""")
+        val BOLD_DASH_CREDIT = Regex("""<strong>([^<]{2,60})</strong>\s*(?:&#8211;|–|-)\s*\p{L}""")
+
+        /** A credit with its tags gone: a name, then a colon or a spaced dash, then the instrument. */
+        val PLAIN_CREDIT = Regex("""^(\p{Lu}[^:–,\d]{1,58}?)\s*(?::\s*|\s[–-]\s+)\p{L}""")
+
+        /** The work an act presents, after the act: ` PRESENT DEAR BOY`. */
+        val PRESENTED_WORK = Regex("""\s+presents?\s+.+$""", RegexOption.IGNORE_CASE)
+
+        val LINE_BREAK = Regex("""<br\s*/?>|</p>|</div>|</li>|\n""")
+        val TAG = Regex("""<[^>]+>""")
+        val WHITESPACE = Regex("""\s+""")
+
+        /** Longer than any credit line seen; a longer one is prose that happens to hold a colon. */
+        const val MAX_CREDIT_LINE = 120
+
+        val PERSON_NAME_WORDS = 2..4
 
         val TEXT_CATEGORIES = setOf("pandatext", "pandapoetry")
         val MUSIC_CATEGORIES = setOf("pandamusic", "pandajazz", "pandaexperimental", "pandaglobal")

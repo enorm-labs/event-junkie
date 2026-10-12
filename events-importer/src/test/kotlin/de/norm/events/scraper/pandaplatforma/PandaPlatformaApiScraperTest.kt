@@ -9,6 +9,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -16,16 +18,32 @@ import java.time.LocalTime
 class PandaPlatformaApiScraperTest {
     private val scraper = PandaPlatformaApiScraper()
 
-    private val page by lazy {
-        scraper.scrapePage(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/pandaplatforma/pandaplatforma-events.json")!!
-                .bufferedReader()
-                .readText()
-        )
+    private val fixture by lazy {
+        javaClass.classLoader
+            .getResourceAsStream("scraper/pandaplatforma/pandaplatforma-events.json")!!
+            .bufferedReader()
+            .readText()
     }
 
+    private val page by lazy { scraper.scrapePage(fixture) }
+
     private fun event(slug: String) = page.events.single { it.sourceId == "panda_platforma:$slug" }
+
+    private fun names(slug: String) = event(slug).artists.map { it.name }
+
+    /** The fixture's `igr-titov` concert alone, with [title] and [description] in place of its own. */
+    private fun concert(
+        title: String,
+        description: String
+    ) = JsonMapper().let { mapper ->
+        val root = mapper.readTree(fixture) as ObjectNode
+        val events = root.withArray("events")
+        val night = events.first { it.path("slug").asString() == "igr-titov" } as ObjectNode
+        night.put("title", title).put("description", description)
+        events.removeAll()
+        events.add(night)
+        scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+    }
 
     @Test
     fun `reads every event except the night at another club`() {
@@ -84,8 +102,57 @@ class PandaPlatformaApiScraperTest {
     }
 
     @Test
-    fun `credits no players on a night without a credit list`() {
-        event("igr-titov").artists.shouldBeEmpty()
+    fun `credits players named before a colon, bold or not`() {
+        names("incense-of-music-76-under-the-voice") shouldContainExactly listOf("AJ Nilles", "Grégoire Simon", "Yodfat Miron")
+        names("trawy-i-kamienie") shouldContainExactly listOf("Emilia Niezbecka", "Zhenja Oks", "Stefan Ziemer")
+        names("pandajazz-ensemble-su") shouldContainExactly listOf("SO Sol-I", "Peter EHWALD", "KIM Bo-Sung", "SHIN Hyo Jin")
+    }
+
+    @Test
+    fun `credits players named before a dash without bold`() {
+        names("foaie-verde-virtuosic-world-music-from-budapest-across-the-balkans-to-the-black-sea") shouldContainExactly
+            listOf("Katalin Horvath", "Jordan Djevic", "Felix Borel", "Frank Wekenmann", "Veit Hübner")
+    }
+
+    @Test
+    fun `bills the title of a concert without a credit list`() {
+        val titov = event("igr-titov").artists
+        titov.map { it.name } shouldContainExactly listOf("Igr Titov")
+        titov.single().titleDerived shouldBe true
+        names("llull-machines-present-dear-boy") shouldContainExactly listOf("LLULL MACHINES")
+        names("god-is-a-perfect-sine-d-arcangelo") shouldContainExactly listOf("GOD IS A PERFECT SINE", "D’Arcangelo")
+    }
+
+    @Test
+    fun `bills nobody on a series night that names its players only in prose`() {
+        event("peyvand-3-iran-ava-iran-muss-man-h-ren").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `takes no label, photo credit or prose sentence for a player`() {
+        val night =
+            concert(
+                title = "Series: A Night",
+                description =
+                    "<p><strong>Incense</strong>: Frankincense from Yemen<br />Credits: Dovile Sermokas, Nicklas Koppe<br />" +
+                        "foto: manuel miethe<br />Text and performance: Alexander Delphinov<br />" +
+                        "Peter Ehwald: the saxophonist who won the German Jazz Prize for woodwinds this year brings his quartet " +
+                        "to the house for a night of new pieces</p>"
+            )
+
+        night.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a credit list split by paragraphs and named once per language`() {
+        val night =
+            concert(
+                title = "Some Title",
+                description = "<p>Anna Kaluza: altosax</p><p>Céline Voccia &#8211; piano</p><div>Anna Kaluza: Altsaxophon</div>"
+            )
+
+        night.artists.map { it.name } shouldContainExactly listOf("Anna Kaluza", "Céline Voccia")
+        night.artists.none { it.titleDerived } shouldBe true
     }
 
     @Test
