@@ -1060,6 +1060,14 @@ window.EJ_LINKS = {
         {
           "command": "gh pr list --state open",
           "note": "bot pull requests to read and merge, and your own"
+        },
+        {
+          "command": "scripts/new-artists.sh production",
+          "note": "artists created in the last day; a flag marks a name that looks like no act"
+        },
+        {
+          "command": "scripts/worklist.sh production --summary",
+          "note": "the data-quality worklist, one line per issue and venue"
         }
       ]
     },
