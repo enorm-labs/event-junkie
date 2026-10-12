@@ -66,7 +66,8 @@ class DataQualityServiceTest {
         unreviewedLicence = unreviewed,
         titleDerivedSingletons = titleDerived,
         titleDerivedUnmatched = 0,
-        flaggedAtImport = 0
+        flaggedAtImport = 0,
+        flaggedAtImportKeptOut = 0
     )
 
     /**

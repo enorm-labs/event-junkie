@@ -2,6 +2,7 @@ package de.norm.events.dataquality
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.event.EventEntity
+import de.norm.events.importing.QualityFlagKind.Companion.REVIEW_KINDS_SQL
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
@@ -61,7 +62,10 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
                 AND (SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_artist ea2 WHERE ea2.artist_id = a.id) = 1))
                                                                            AS title_derived_unmatched,
             COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f
-                WHERE f.event_id = e.id))                                  AS flagged_at_import
+                WHERE f.event_id = e.id))                                  AS flagged_at_import,
+            COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f
+                WHERE f.event_id = e.id AND f.kind NOT IN ($REVIEW_KINDS_SQL)))
+                                                                           AS flagged_at_import_kept_out
         FROM $EVENTS_SCHEMA.event e
         GROUP BY e.event_source_id
         """
@@ -105,7 +109,8 @@ data class SourceQualityRow(
     val unreviewedLicence: Long,
     val titleDerivedSingletons: Long,
     val titleDerivedUnmatched: Long,
-    val flaggedAtImport: Long
+    val flaggedAtImport: Long,
+    val flaggedAtImportKeptOut: Long
 )
 
 /** One `(source, artist name)` pair — see [DataQualityRepository.artistNamesPerSource]. */

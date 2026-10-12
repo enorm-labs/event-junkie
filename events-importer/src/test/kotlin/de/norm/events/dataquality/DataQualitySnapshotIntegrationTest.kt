@@ -81,8 +81,8 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
 
             val rows = snapshots.findBySnapshotDate(today).toList()
             rows.map { it.sourceSlug }.toSet() shouldBe setOf("alpha")
-            // totalEvents + every QualityIssue metric + suspectNonArtistTitles.
-            rows.size shouldBe QualityIssue.entries.size + 2
+            // totalEvents + every QualityIssue metric + flaggedAtImportKeptOut + suspectNonArtistTitles.
+            rows.size shouldBe QualityIssue.entries.size + 3
             rows.single { it.metric == "titleDerivedSingletons" }.metricCount shouldBe 0L
             rows.single { it.metric == "totalEvents" }.metricCount shouldBe 1L
             rows.single { it.metric == "concertsWithoutArtist" }.metricCount shouldBe 1L

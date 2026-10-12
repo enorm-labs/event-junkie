@@ -123,7 +123,8 @@ class DataQualityService(
         unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents),
         titleDerivedSingletons = row.titleDerivedSingletons,
         titleDerivedUnmatched = row.titleDerivedUnmatched,
-        flaggedAtImport = row.flaggedAtImport
+        flaggedAtImport = row.flaggedAtImport,
+        flaggedAtImportKeptOut = row.flaggedAtImportKeptOut
     )
 
     private fun rollUp(perSource: List<SourceQualityMetrics>): SourceQualityMetrics {
@@ -157,7 +158,8 @@ class DataQualityService(
             unreviewedLicencePct = pct(unreviewed, total),
             titleDerivedSingletons = perSource.sumOf { it.titleDerivedSingletons },
             titleDerivedUnmatched = perSource.sumOf { it.titleDerivedUnmatched },
-            flaggedAtImport = perSource.sumOf { it.flaggedAtImport }
+            flaggedAtImport = perSource.sumOf { it.flaggedAtImport },
+            flaggedAtImportKeptOut = perSource.sumOf { it.flaggedAtImportKeptOut }
         )
     }
 

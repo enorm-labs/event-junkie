@@ -54,7 +54,9 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             insertEvent(alpha, venueId, "alpha-no-artist", genre = "Rock", price = "12.00", startTime = "20:00")
 
             // Typed OTHER, and therefore NOT counted by concertsWithoutArtist even though it has none.
-            insertEvent(alpha, venueId, "alpha-other", eventType = "OTHER", genre = "Rock", price = "12.00", startTime = "20:00")
+            val other = insertEvent(alpha, venueId, "alpha-other", eventType = "OTHER", genre = "Rock", price = "12.00", startTime = "20:00")
+            // A review flag only: flagged at import, but nothing was kept out (#3148).
+            flag(other, "UNCERTAIN_PARTY_FEATURE", "flinta-only: FLINTA*")
 
             val betaOne = insertEvent(beta, venueId, "beta-one", startTime = "22:00")
             flag(betaOne, "NON_ARTIST_NAME", "Special Guest")
@@ -112,10 +114,13 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             alpha.titleDerivedSingletons shouldBe 0L
             report.overall.titleDerivedSingletons shouldBe 4L
 
-            // One event with two flags is one event to open.
+            // One event with two flags is one event to open. A review flag counts, but not as kept out.
             beta.flaggedAtImport shouldBe 1L
-            alpha.flaggedAtImport shouldBe 0L
-            report.overall.flaggedAtImport shouldBe 1L
+            beta.flaggedAtImportKeptOut shouldBe 1L
+            alpha.flaggedAtImport shouldBe 1L
+            alpha.flaggedAtImportKeptOut shouldBe 0L
+            report.overall.flaggedAtImport shouldBe 2L
+            report.overall.flaggedAtImportKeptOut shouldBe 1L
         }
 
     /**
@@ -174,8 +179,11 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
         runBlocking {
             val list = service.worklist(QualityIssue.FLAGGED_AT_IMPORT, source = null, limit = 50, offset = 0)
 
-            list.entries.map { it.slug } shouldBe listOf("beta-one")
-            list.entries.single().flags shouldBe
+            // The review flag stays on the worklist although the regression gate does not count it (#3148).
+            list.entries.map { it.slug }.toSet() shouldBe setOf("alpha-other", "beta-one")
+            list.entries.single { it.slug == "alpha-other" }.flags shouldBe
+                listOf(WorklistFlagResponse(kind = "UNCERTAIN_PARTY_FEATURE", value = "flinta-only: FLINTA*"))
+            list.entries.single { it.slug == "beta-one" }.flags shouldBe
                 listOf(
                     WorklistFlagResponse(kind = "NON_ARTIST_NAME", value = "Special Guest"),
                     WorklistFlagResponse(kind = "GENRE_EQUALS_TITLE", value = "beta-one")
