@@ -91,13 +91,42 @@ class MorphineFieldMappingTest {
         val title = "BNNT & Radwan Ghazi Moumneh / Maurice Louca & Ayman Asfour"
         morphineSetLineActs("Maurice Louca & Ayman Asfour - FERA", title) shouldBe listOf("Maurice Louca & Ayman Asfour")
         morphineSetLineActs("Maurice Louca & Ayman Asfour – Fera", title.uppercase()) shouldBe listOf("Maurice Louca & Ayman Asfour")
-        // A title that bills both segments keeps the pair for #302's head rule.
-        morphineSetLineActs("Raphael Rogiński – Qırım", "Raphael Rogiński – Qırım - Live Recording") shouldBe
-            listOf("Raphael Rogiński – Qırım")
+        // A title that bills both segments without a format tail keeps the pair for #302's head rule.
+        morphineSetLineActs("Raphael Rogiński – Qırım", "Raphael Rogiński – Qırım") shouldBe listOf("Raphael Rogiński – Qırım")
         // A head the title names only inside a longer word is not billed there.
         morphineSetLineActs("Ra - Fera", "Radwan Ghazi Moumneh") shouldBe listOf("Ra - Fera")
         // A title that bills neither segment decides nothing.
         morphineSetLineActs("Alister Spence – Within Without", "x") shouldBe listOf("Alister Spence – Within Without")
+    }
+
+    @Test
+    fun `a line that repeats a format-tailed title bills the title's head`() {
+        // #3163: the title bills `<act> – <work> – <format>`, as titleBilling reads it.
+        morphineSetLineActs("Fred Frith/Verena Marisa – Murmurations", "Fred Frith/Verena Marisa – Murmurations – Live Recording") shouldBe
+            listOf("Fred Frith", "Verena Marisa")
+        morphineSetLineActs("Fred Frith/Verena Marisa – Chirp Disturbance", "Fred Frith/Verena Marisa – Chirp Disturbance – Live Recording") shouldBe
+            listOf("Fred Frith", "Verena Marisa")
+        morphineSetLineActs("Alister Spence – Within Without", "Alister Spence – Within Without – Live Recording") shouldBe listOf("Alister Spence")
+        morphineSetLineActs("Raphael Rogiński – Qırım", "Raphael Rogiński – Qırım - Live Recording") shouldBe listOf("Raphael Rogiński")
+        // The title writes a pipe where the line writes a dash.
+        morphineSetLineActs("Daniele De Santis - Prepared Drums", "Daniele De Santis | Prepared Drums - live recording") shouldBe
+            listOf("Daniele De Santis")
+        // A slash between one-word names is part of the name.
+        morphineSetLineActs("AC/DC – Back in Black", "AC/DC – Back in Black – Live Recording") shouldBe listOf("AC/DC")
+        // A line that differs from the title, or a title without the tail, decides nothing here.
+        morphineSetLineActs("Fred Frith/Verena Marisa – Murmurations", "Murmurations – Live Recording") shouldBe
+            listOf("Fred Frith/Verena Marisa – Murmurations")
+        morphineSetLineActs("Gareth Psaltis - Temple Rat", "Gareth Psaltis - Temple Rat") shouldBe listOf("Gareth Psaltis - Temple Rat")
+    }
+
+    @Test
+    fun `a dash list whose dashes differ is an act and a subtitled work`() {
+        // #3163: the em dash joins the work to its subtitle, so neither is an act.
+        val line = "Antonio Raia - Σ [sigma] — Berlin Series I"
+        morphineSetLineActs(line, line) shouldBe listOf("Antonio Raia")
+        // A list with one dash throughout stays a list of acts.
+        morphineSetLineActs("Gareth Psaltis - Temple Rat - Jacob Stoy", "Gareth Psaltis - Temple Rat - Jacob Stoy") shouldBe
+            listOf("Gareth Psaltis", "Temple Rat", "Jacob Stoy")
     }
 
     @Test
