@@ -122,6 +122,25 @@ class PartyFeatureRulesTest {
             listOf(PartyFeature.QUEER, PartyFeature.NO_PHOTO_POLICY, PartyFeature.OPEN_END, PartyFeature.DAY_PARTY)
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("prose")
+    fun `a duration, a film title or a figure of speech in prose is no cue`(text: String) {
+        PartyFeatureRules.detect(text).uncertain.shouldBeEmpty()
+    }
+
+    @ParameterizedTest(name = "{0}: {1}")
+    @MethodSource("partyCues")
+    fun `a cue next to the night itself stays a cue`(
+        feature: PartyFeature,
+        text: String,
+        phrase: String
+    ) {
+        val uncertain = PartyFeatureRules.detect(text).uncertain.single()
+
+        uncertain.feature shouldBe feature
+        uncertain.phrase shouldContain phrase
+    }
+
     @Test
     fun `no text detects nothing`() {
         PartyFeatureRules.detect(null, " ").features.shouldBeEmpty()
@@ -170,6 +189,25 @@ class PartyFeatureRulesTest {
                 "Ein Auflegeworkshop nur für FLINTA*",
                 "The decks are exclusively for FLINTA* tonight",
                 "No cis men behind the DJ booth"
+            )
+
+        @JvmStatic
+        fun prose(): List<String> =
+            listOf(
+                "Er schläft im Laden ein, obwohl sein Späti bereits 24 Stunden geöffnet ist.",
+                "Fat Mike once spent 24 hours in Disneyland jail.",
+                "Er half, an „From Dusk Till Dawn“ (1995) mitzuarbeiten.",
+                "Wir feiern Songs, die lange kein Tageslicht mehr gesehen haben."
+            )
+
+        @JvmStatic
+        fun partyCues(): List<Arguments> =
+            listOf(
+                Arguments.of(PartyFeature.OPEN_END, "Der 24h Rave im Hof", "24h Rave"),
+                Arguments.of(PartyFeature.OPEN_END, "Die 36 Stunden Party zum Jubiläum", "36 Stunden Party"),
+                Arguments.of(PartyFeature.OPEN_END, "Join us for 48 hours of techno", "48 hours of techno"),
+                Arguments.of(PartyFeature.OPEN_END, "We dance till dawn", "till dawn"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Tanzen im Tageslicht auf der Terrasse", "Tageslicht")
             )
 
         @JvmStatic
