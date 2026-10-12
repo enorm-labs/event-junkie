@@ -103,5 +103,6 @@ val HEIDEGLUEHEN_LIMITATIONS =
             "the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno, House"
     )

@@ -29,5 +29,6 @@ val ORANGERIE_LIMITATIONS =
         EventSource.ORANGERIE_NEUKOELLN,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the one-pager has no page per event; each night links out to Rausgegangen"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each night states one start time"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "the programme prints no closing time")
+        AcceptedLimitation(LimitedAspect.END_TIME, "the programme prints no closing time"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -35,5 +35,6 @@ val TAUSEND_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the lineup prints no admission"),
         AcceptedLimitation(LimitedAspect.GENRE, "each night names its styles only in its prose"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the page prints no closing time, and its schema.org end is 3 am on every night"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links its Resident Advisor page only once that page is up")
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "a night links its Resident Advisor page only once that page is up"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

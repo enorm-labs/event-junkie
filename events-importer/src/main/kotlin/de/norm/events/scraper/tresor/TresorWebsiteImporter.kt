@@ -64,5 +64,6 @@ val TRESOR_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night"),
         AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
         houseGenre = "Techno"
     )

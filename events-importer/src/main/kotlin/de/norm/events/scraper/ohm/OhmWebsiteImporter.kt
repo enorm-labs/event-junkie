@@ -37,5 +37,6 @@ val OHM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no categories; every night is a DJ programme"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
         houseGenre = "Techno"
     )

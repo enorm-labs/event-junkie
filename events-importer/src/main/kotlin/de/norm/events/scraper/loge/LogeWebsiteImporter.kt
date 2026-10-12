@@ -54,5 +54,6 @@ val LOGE_LIMITATIONS =
         EventSource.LOGE,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue has no category field; a live-music venue, so an unmarked title defaults to a concert"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "a title without a + separator can be a band or an event name, so no act is derived from one"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Punk"
     )

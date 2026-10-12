@@ -49,5 +49,6 @@ val ARCANOA_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "a night is one line with no separator between the act and the night's name, so a billing like `Arcana A Night Of Flow` cannot be split"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

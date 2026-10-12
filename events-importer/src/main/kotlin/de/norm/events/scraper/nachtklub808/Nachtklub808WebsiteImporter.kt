@@ -29,5 +29,6 @@ val NACHTKLUB_808_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is a name and a DJ list, with no text"),
         AcceptedLimitation(LimitedAspect.GENRE, "no night names a style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
     )

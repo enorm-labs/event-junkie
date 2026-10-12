@@ -35,5 +35,6 @@ val SOULCAT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; only `FREE ENTRY` in a title says anything"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a bar with no tickets; `website` is empty"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the house nights (`Bartenders Choice`) name no DJ"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Soul"
     )

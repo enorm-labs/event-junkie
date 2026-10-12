@@ -34,5 +34,6 @@ val ERREICHBAR_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
         AcceptedLimitation(LimitedAspect.PRICE, "the bar names no entry price"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter"),
         houseGenre = "Punk"
     )

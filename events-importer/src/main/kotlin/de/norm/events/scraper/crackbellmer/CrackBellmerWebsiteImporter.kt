@@ -59,5 +59,6 @@ val CRACK_BELLMER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
         AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue links no ticket shop"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "a night without a CMS poster renders the Webflow placeholder, so it has no image")
+        AcceptedLimitation(LimitedAspect.IMAGE, "a night without a CMS poster renders the Webflow placeholder, so it has no image"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

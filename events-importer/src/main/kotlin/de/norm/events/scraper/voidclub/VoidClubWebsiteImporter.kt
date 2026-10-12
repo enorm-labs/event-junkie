@@ -39,5 +39,6 @@ val VOID_CLUB_LIMITATIONS =
             LimitedAspect.EVENT_TYPE,
             "the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "event cards carry no image; the hero slider shows other events than the listed nights")
+        AcceptedLimitation(LimitedAspect.IMAGE, "event cards carry no image; the hero slider shows other events than the listed nights"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
     )

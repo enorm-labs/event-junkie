@@ -38,5 +38,6 @@ val RITTER_BUTZKE_LIMITATIONS =
             LimitedAspect.PRICE,
             "the club sells through a third party and prints no figure; a night is flagged free only when its title says so"
         ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno, House"
     )

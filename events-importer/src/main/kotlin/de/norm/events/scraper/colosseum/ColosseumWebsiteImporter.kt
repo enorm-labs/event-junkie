@@ -81,5 +81,6 @@ val COLOSSEUM_LIMITATIONS =
             LimitedAspect.DESCRIPTION,
             "each event is cloned from an old one and its about text is never rewritten, so it is another act's biography, not the event's"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure")
+        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through Eventim, Dice or its promoter prints no figure"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

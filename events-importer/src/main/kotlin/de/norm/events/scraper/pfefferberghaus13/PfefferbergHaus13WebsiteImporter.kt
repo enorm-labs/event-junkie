@@ -58,5 +58,6 @@ val PFEFFERBERG_HAUS_13_LIMITATIONS =
     VenueLimitations(
         EventSource.PFEFFERBERG_HAUS_13,
         AcceptedLimitation(LimitedAspect.END_TIME, "the pages name doors and a start, no end"),
-        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style")
+        AcceptedLimitation(LimitedAspect.GENRE, "no event names a style"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

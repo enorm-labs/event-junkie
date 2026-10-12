@@ -36,5 +36,6 @@ val MAXXIM_LIMITATIONS =
     VenueLimitations(
         EventSource.MAXXIM,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Disco, Charts"
     )

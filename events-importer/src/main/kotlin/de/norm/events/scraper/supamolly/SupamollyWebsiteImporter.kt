@@ -34,5 +34,6 @@ val SUPAMOLLY_LIMITATIONS =
     VenueLimitations(
         EventSource.SUPAMOLLY,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
-        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop")
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -30,5 +30,6 @@ val DRUGSTORE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the youth centre sells no tickets online"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night, and the prose names the doors where it differs"),
-        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights")
+        AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
     )

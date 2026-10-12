@@ -45,5 +45,6 @@ val PANKE_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title")
     )

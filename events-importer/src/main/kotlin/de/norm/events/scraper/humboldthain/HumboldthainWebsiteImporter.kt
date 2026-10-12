@@ -50,5 +50,6 @@ val HUMBOLDTHAIN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, in too many spellings to parse"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing in the payload marks a night sold out"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the collective of a night is named only in its title"),
         houseGenre = "Techno, House"
     )

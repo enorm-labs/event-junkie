@@ -46,5 +46,6 @@ val GOLDEN_GATE_LIMITATIONS =
             "there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno, House"
     )
