@@ -72,12 +72,16 @@ class BerghainWebsiteImporter(
      * Fills what the detail page could not supply from the overview event. The detail page is
      * authoritative for everything it parses; the overview contributes only where it returned null
      * — and the lineup, which is the overview's, with the detail page's set times attached.
+     *
+     * The detail page types a club floor a party. When the overview's lineup made the night a
+     * concert, because every act is billed `Live` (#3151), the overview's type and its empty genre win.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.withGapsFrom(fallback).copy(
+    ): ScrapedEvent {
+        val concertByActs = primary.eventType == EventType.PARTY.name && fallback.eventType == EventType.CONCERT.name
+        return primary.withGapsFrom(fallback).copy(
             // The overview's floors decided the owning source; a detail page without floors must not move the night.
             sourceId = fallback.sourceId,
             // The overview's lineup is authoritative; the detail page's artists carry only set times.
@@ -89,8 +93,11 @@ class BerghainWebsiteImporter(
                     fallback.artists.withSetTimesFrom(primary.artists) {
                         logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" }
                     }
-                }
+                },
+            eventType = if (concertByActs) fallback.eventType else primary.eventType ?: fallback.eventType,
+            genre = if (concertByActs) fallback.genre else primary.genre ?: fallback.genre
         )
+    }
 
     /**
      * A Halle exhibition is listed once per open day, each day its own event page, so the days fold
@@ -151,7 +158,7 @@ val BERGHAIN_LIMITATIONS =
         EventSource.BERGHAIN,
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary"
+            "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights"
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block")
     )

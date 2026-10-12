@@ -1,5 +1,6 @@
 package de.norm.events.scraper.berghain
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
@@ -100,18 +101,21 @@ class BerghainOverviewPageScraper(
 
         val lineText = dateLine?.text().orEmpty()
         val floors = block.select("h3").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
-        val eventType = floorsToEventType(floors)
+        val floorType = floorsToEventType(floors)
+        val lineup = parseLineup(block, floorType)
+        val liveOnly = floorType == EventType.PARTY.name && lineup.isNotEmpty() && lineup.all { it.role == ArtistRole.LIVE.name }
 
         return ScrapedEvent(
             title = title,
-            eventType = eventType,
+            eventType = if (liveOnly) EventType.CONCERT.name else floorType,
             eventDate = eventDate,
             doorsTime = labelledClock(lineText, DOORS_LABELS),
             startTime = labelledClock(lineText, START_LABELS),
             sourceUrl = resolveUrl(sourceUrl, href),
             sourceId = berghainSourceId(floors, eventId),
-            genre = floorsToGenre(floors),
-            artists = parseLineup(block, eventType)
+            // A concert typed by its acts takes no club floor's default genre (#3151).
+            genre = if (liveOnly) null else floorsToGenre(floors),
+            artists = if (liveOnly) lineup.map { it.copy(role = ArtistRole.HEADLINER.name) } else lineup
         )
     }
 
@@ -120,6 +124,10 @@ class BerghainOverviewPageScraper(
      * headings with that floor's `<h4>` lineup, so a running scan pairs each act with the most
      * recent floor as its [stage][ScrapedArtist.stage]. Kantine lineups are headliners; a club
      * floor is DJ sets unless the venue says otherwise.
+     *
+     * **A club night whose every act is billed `Live` is a concert** (#3151), such as a band's
+     * debut in the Berghain hall. Its acts become headliners, as on a Kantine night, and it takes no
+     * floor genre. A night that mixes DJs and live acts stays a party.
      */
     private fun parseLineup(
         block: Element,

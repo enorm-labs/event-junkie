@@ -258,6 +258,28 @@ class BerghainWebsiteImporterTest {
             artists.getValue("Not On The Running Order").setStart.shouldBeNull()
         }
 
+    // The detail page types the club floor a party with its genre; the programme's all-Live lineup outranks it (#3151).
+    @Test
+    fun `a night of only live acts stays a concert after the detail page merges in`() =
+        runTest {
+            val overview =
+                """<html><body><a href="/de/event/80835/"><p>Samstag <span class="font-bold">04.07.2026</span> beginn 20:00</p>""" +
+                    """<h2>Krallice</h2><h3>Berghain</h3><h4><span><span>Krallice</span><span class="uppercase">Live</span>,</span>""" +
+                    """<span><span>Rashad Becker</span><span class="uppercase">Live</span></span></h4></a></body></html>"""
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
+
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single()
+
+            // The detail page still supplies what it owns.
+            event.imageUrl!!.shouldStartWith("https://cdn.berghain.berlin/")
+            event.eventType shouldBe EventType.CONCERT.name
+            event.genre.shouldBeNull()
+            event.artists.map { it.name to it.role } shouldBe listOf("Krallice" to "HEADLINER", "Rashad Becker" to "HEADLINER")
+        }
+
     @Test
     fun `eventSource matches the expected enum value`() {
         importer.eventSource shouldBe EventSource.BERGHAIN

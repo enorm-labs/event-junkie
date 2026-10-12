@@ -49,7 +49,7 @@ says so.
 | `BALLHAUS_WEDDING`     | `DOORS_TIME`       | the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event                                          | —     |
 | `BALLHAUS_WEDDING`     | `END_TIME`         | only the Wix Events pages state an end                                                                                                           | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
-| `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary                                              | —     |
+| `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`             | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
