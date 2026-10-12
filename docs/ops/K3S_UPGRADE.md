@@ -28,7 +28,7 @@ done
 # 4. On the node, as root. Staging first, production only after staging has held.
 #    `sudo sh -c` because the pipe runs as the caller otherwise, and the installer needs root.
 ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 \
-  "sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -'"
+  "sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.5+k3s1 INSTALL_K3S_EXEC=server sh -s -'"
 
 # 5. Verify, in this order. `10.10.1.1` is staging, `10.10.0.1` production — CLUSTER_ACCESS.md.
 ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 'k3s --version'
@@ -112,7 +112,8 @@ v1.31 and v1.32, where Traefik went from v2 to v3.
 `deploy/clusters/*/traefik-host-ports.yaml` sets `service.spec.type: ClusterIP`, which frees ports 80
 and 443 for Traefik's own `hostPort`. A chart release that stops reading that key brings svclb back,
 svclb takes the ports, and the site stops answering. **So compare the chart before upgrading, not
-after** — step 1 above. Identical output either side means the bump does not touch the ingress.
+after** — step 2 above. The part after `+up` is the upstream chart version, and k3s owns the part
+before it. The same upstream version either side means the values keys did not change.
 
 ## Why not `system-upgrade-controller`
 
