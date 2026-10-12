@@ -109,24 +109,24 @@ window.EJ_LINKS = {
           "statusText": ""
         },
         {
-          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml",
-          "label": "github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml",
+          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml",
+          "label": "github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml",
           "what": "Public form: wrong or missing event data",
           "whatText": "Public form: wrong or missing event data",
           "status": "",
           "statusText": ""
         },
         {
-          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml",
-          "label": "github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml",
+          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml",
+          "label": "github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml",
           "what": "Public form: suggest a venue",
           "whatText": "Public form: suggest a venue",
           "status": "",
           "statusText": ""
         },
         {
-          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml",
-          "label": "github.com/enorm-labs/event-junkie/issues/new?template=bug.yml",
+          "url": "https://github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml",
+          "label": "github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml",
           "what": "Public form: bug in the site or API",
           "whatText": "Public form: bug in the site or API",
           "status": "",
