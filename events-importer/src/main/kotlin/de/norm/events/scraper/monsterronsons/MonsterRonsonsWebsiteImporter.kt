@@ -112,5 +112,6 @@ val MONSTER_RONSONS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door; a night rarely links a ticket shop"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the BOXHOPPING poster is a GIF whose black first frame is rejected as blank (#2669)"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Karaoke"
     )

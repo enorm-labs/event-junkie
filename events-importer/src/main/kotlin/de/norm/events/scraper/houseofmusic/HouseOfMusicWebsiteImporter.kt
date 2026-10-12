@@ -30,5 +30,6 @@ val HOUSE_OF_MUSIC_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the widget shows no images, and the events carry none"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the events carry no text"),
         AcceptedLimitation(LimitedAspect.GENRE, "the payload carries no category, and the titles name no style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue hides each event's own page")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue hides each event's own page"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -37,5 +37,6 @@ val COLUMBIA_THEATER_LIMITATIONS =
     VenueLimitations(
         EventSource.COLUMBIA_THEATER,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim link"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre or category; style appears only in the description")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre or category; style appears only in the description"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the local promoter is an unnamed link, \"Örtlicher Veranstalter\"; only media presenters are named")
     )

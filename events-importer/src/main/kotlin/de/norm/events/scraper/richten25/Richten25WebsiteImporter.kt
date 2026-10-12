@@ -30,5 +30,6 @@ val RICHTEN25_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the programme is a text list with no posters"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "each night is one lineup line, with no text"),
         AcceptedLimitation(LimitedAspect.GENRE, "the space is for experimental music, and no night names a style"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "a night has no page of its own"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

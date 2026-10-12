@@ -50,14 +50,14 @@ class UraniaWebsiteImporter(
 }
 
 /**
- * Nothing this source withholds needs declaring (#715). German is the house language because the
- * programme is German in practice (#2584): on `2026-10-04` the production API listed 27 upcoming talks,
- * readings and workshops, and 26 of the 27 descriptions were German. The one English talk says "in
- * englischer Sprache", and that phrase wins over the default.
+ * German is the house language because the programme is German in practice (#2584): on `2026-10-04`
+ * the production API listed 27 upcoming talks, readings and workshops, and 26 of the 27 descriptions
+ * were German. The one English talk says "in englischer Sprache", and that phrase wins over the default.
  */
 val URANIA_LIMITATIONS =
     VenueLimitations(
         EventSource.URANIA,
         AcceptedLimitation(LimitedAspect.GENRE, "the house is a lecture hall, and its labels name formats, never a style"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseLanguage = SpokenLanguage.GERMAN
     )

@@ -114,5 +114,6 @@ val MATRIX_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the only ticket link is the club's Eventbrite organiser page, never a per-night one"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the night states one `Einlass ab` time, which is taken as the start"),
         AcceptedLimitation(LimitedAspect.GENRE, "a night listed only by its weekday (`Matrix - Monday`) has no night page, so no genre"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no door price; a night page carries at most a door offer, kept as the note")
+        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no door price; a night page carries at most a door offer, kept as the note"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

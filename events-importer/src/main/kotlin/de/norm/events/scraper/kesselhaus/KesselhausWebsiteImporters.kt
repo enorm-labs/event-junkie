@@ -61,6 +61,7 @@ val KESSELHAUS_LIMITATIONS =
             listOf(
                 AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar states one time per event; only a few event texts add an Einlass time"),
                 AcceptedLimitation(LimitedAspect.GENRE, "only some events carry a style topic; the others name a format such as festival or highlight"),
-                AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "most events list an online price and no box-office price")
+                AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "most events list an online price and no box-office price"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
             )
     )

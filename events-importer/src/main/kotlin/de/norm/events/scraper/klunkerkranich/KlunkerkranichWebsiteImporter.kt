@@ -99,5 +99,6 @@ val KLUNKERKRANICH_LIMITATIONS =
             LimitedAspect.PRICE,
             "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored"
         ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "House"
     )

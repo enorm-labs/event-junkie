@@ -62,5 +62,6 @@ val ALTE_KANTINE_LIMITATIONS =
     VenueLimitations(
         EventSource.ALTE_KANTINE,
         AcceptedLimitation(LimitedAspect.PRICE, "some nights leave the Eintritt field empty (\"Eintritt: €\"), so no figure is published"),
-        AcceptedLimitation(LimitedAspect.GENRE, "each post's labels name kind, price, date, time and DJ, never a style")
+        AcceptedLimitation(LimitedAspect.GENRE, "each post's labels name kind, price, date, time and DJ, never a style"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -101,7 +101,6 @@ class UberEatsMusicHallWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractAegVenueImporter(htmlFetcher, EventSource.UBER_EATS_MUSIC_HALL)
 
-/** Nothing this source withholds needs declaring (#715). */
 val AEG_LIMITATIONS =
     VenueLimitations(
         sources =
@@ -115,7 +114,8 @@ val AEG_LIMITATIONS =
                     LimitedAspect.PRICE,
                     "the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none"
                 ),
-                AcceptedLimitation(LimitedAspect.GENRE, "the platform files events only as Konzert, Comedy, Show or Sport, never a genre")
+                AcceptedLimitation(LimitedAspect.GENRE, "the platform files events only as Konzert, Comedy, Show or Sport, never a genre"),
+                AcceptedLimitation(LimitedAspect.PROMOTERS, "the arena page names no promoter")
             )
     )
 

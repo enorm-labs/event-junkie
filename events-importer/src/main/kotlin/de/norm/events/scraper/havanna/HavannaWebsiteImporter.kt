@@ -75,5 +75,6 @@ val HAVANNA_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.EVENT_DATE,
             "the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -49,5 +49,6 @@ val DER_WEISSE_HASE_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the club sells through Resident Advisor and the listing links off-site"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno"
     )

@@ -235,5 +235,6 @@ val SISYPHOS_LIMITATIONS =
             "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client"
         ),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "neither the calendar nor the shop marks a cancelled night"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno, House"
     )

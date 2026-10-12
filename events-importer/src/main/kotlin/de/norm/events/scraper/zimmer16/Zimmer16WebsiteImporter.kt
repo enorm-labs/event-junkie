@@ -41,5 +41,6 @@ val ZIMMER_16_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.ARTISTS, "the site has no line-up field; a title with a tagline, an & or a bare programme name names nobody"),
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the cards or the event pages names a style"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved on YesTicket and paid at the door")
+        AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved on YesTicket and paid at the door"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

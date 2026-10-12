@@ -58,5 +58,6 @@ val CLUB_OST_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the listing carries no price; tickets are sold on Resident Advisor"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the listing carries no lineup, though the CMS holds an empty div where one would go"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries one time per night and no doors time"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Techno"
     )

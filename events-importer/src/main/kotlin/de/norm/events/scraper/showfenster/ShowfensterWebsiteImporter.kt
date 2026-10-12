@@ -34,5 +34,6 @@ val SHOWFENSTER_LIMITATIONS =
             LimitedAspect.ARTISTS,
             "only a concert or comedy title names its act; a reading bills a duo by surnames, and shows and quizzes name none"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none")
+        AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

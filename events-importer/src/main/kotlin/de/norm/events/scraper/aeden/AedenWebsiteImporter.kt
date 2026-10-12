@@ -47,5 +47,6 @@ val AEDEN_LIMITATIONS =
     VenueLimitations(
         EventSource.AEDEN,
         AcceptedLimitation(LimitedAspect.PRICE, "the month page carries no prices"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the month page links no page per night")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the month page links no page per night"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )

@@ -30,5 +30,6 @@ val KOEPI_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue sells no tickets online"),
         AcceptedLimitation(LimitedAspect.PRICE, "radar carries no price for its concerts"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "radar names no promoter")
     )

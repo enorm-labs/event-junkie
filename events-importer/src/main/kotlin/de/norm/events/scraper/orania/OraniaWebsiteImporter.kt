@@ -54,5 +54,6 @@ val ORANIA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "entry is free to every concert"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is free and the venue sells no tickets"),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Jazz"
     )

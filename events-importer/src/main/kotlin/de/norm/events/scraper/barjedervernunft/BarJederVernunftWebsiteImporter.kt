@@ -113,5 +113,6 @@ val BAR_JEDER_VERNUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.BAR_JEDER_VERNUNFT,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one Beginn time and never an Einlass"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseLanguage = SpokenLanguage.GERMAN
     )

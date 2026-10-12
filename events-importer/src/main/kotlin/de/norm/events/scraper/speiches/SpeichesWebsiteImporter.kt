@@ -36,5 +36,6 @@ val SPEICHES_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a pub with free entry sells no tickets"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the table prints one time per night"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the open stage and the radio broadcasts name no act in a form that can be read"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Blues"
     )
