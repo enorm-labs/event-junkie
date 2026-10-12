@@ -222,6 +222,63 @@ class BerghainOverviewPageScraperTest {
                 ScrapedArtist("Krallice", "LIVE", "Berghain"),
                 ScrapedArtist("Marcel Dettmann", "DJ", "Berghain")
             )
+        // One DJ keeps it a club night, with the floor's genre.
+        event.eventType shouldBe EventType.PARTY.name
+        event.genre shouldBe "Techno"
+    }
+
+    // Every act billed `Live` is a concert on a club floor: a band's debut, not a Techno party (#3151).
+    @Test
+    fun `types a night of only live acts a concert with headliners and no floor genre`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/82270/">
+                <p>Dienstag <span class="font-bold">13.10.2026</span> tür 19:00 beginn 20:00</p>
+                <h2>Krallice</h2>
+                <h3>Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Krallice</span>
+                    <span class="text-sm font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Rashad Becker</span>
+                    <span class="text-sm font-bold uppercase">Live</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.genre.shouldBeNull()
+        event.sourceId shouldBe "berghain:82270"
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Krallice", "HEADLINER", "Berghain"),
+                ScrapedArtist("Rashad Becker", "HEADLINER", "Berghain")
+            )
+    }
+
+    // A night with no lineup has no act to type it by, so the floor decides.
+    @Test
+    fun `keeps a club night without a lineup a party`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/94003/">
+                <p>Samstag <span class="font-bold">25.07.2026</span> beginn 23:59</p>
+                <h2>Klubnacht</h2>
+                <h3>Panorama Bar</h3>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.genre shouldBe "House"
     }
 
     // The venue wrote five DJs of one night into a single name span; the span was stored as one act.
@@ -322,7 +379,10 @@ class BerghainOverviewPageScraperTest {
                 <h4>
                   <span class="font-bold">
                     <span class="xs:whitespace-no-wrap">Agata B2B Cunt Remember</span>
-                    <span class="text-sm font-bold uppercase">Live</span>
+                    <span class="text-sm font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Tama Sumo</span>
                   </span>
                 </h4>
               </a>
@@ -333,7 +393,8 @@ class BerghainOverviewPageScraperTest {
         event.artists shouldContainExactly
             listOf(
                 ScrapedArtist("Agata", "LIVE", "Säule"),
-                ScrapedArtist("Cunt Remember", "LIVE", "Säule")
+                ScrapedArtist("Cunt Remember", "LIVE", "Säule"),
+                ScrapedArtist("Tama Sumo", "DJ", "Säule")
             )
     }
 
