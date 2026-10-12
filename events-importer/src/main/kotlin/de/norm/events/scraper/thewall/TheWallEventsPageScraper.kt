@@ -28,6 +28,8 @@ import java.net.URI
  * showcases their start. The one clock is stored as the start.
  * - `url` points at spotagig.eu; the club's own domain serves the same slug under `/events/`.
  * - The club's own productions name it as organizer, and only a guest producer is kept as promoter.
+ * - The platform can name `localhost` as the `image` host (#3132). The same path is served from
+ * `spotagig.eu`, so the parser puts that host back.
  */
 class TheWallEventsPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -62,7 +64,7 @@ class TheWallEventsPageScraper {
             startTime = event.schemaTime("startDate"),
             endDate = endDate,
             endTime = endDate?.let { event.schemaTime("endDate") },
-            imageUrl = event.schemaImageUrl(),
+            imageUrl = event.schemaImageUrl()?.let(::withPlatformHost),
             sourceUrl = "$SITE/events/$slug/",
             sourceId = "${EventSource.THE_WALL.sourceIdPrefix}$slug",
             status = event.schemaStatus(),
@@ -70,8 +72,15 @@ class TheWallEventsPageScraper {
         )
     }
 
+    /** The image URL on the platform's real host when the JSON-LD names `localhost`; otherwise unchanged. */
+    private fun withPlatformHost(url: String): String {
+        val uri = URI(url)
+        return if (uri.host == "localhost") PLATFORM + uri.rawPath + uri.rawQuery?.let { "?$it" }.orEmpty() else url
+    }
+
     private companion object {
         const val SITE = "https://thewallcomedy.com"
+        const val PLATFORM = "https://spotagig.eu"
         const val HOUSE_ORGANIZER = "The Wall Comedy"
     }
 }

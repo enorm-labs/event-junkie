@@ -49,6 +49,21 @@ class TheWallEventsPageScraperTest {
     }
 
     @Test
+    fun `moves an image the platform names on localhost back to spotagig eu`() {
+        val html =
+            """
+            <script type="application/ld+json">
+            {"@context": "https://schema.org", "@type": "Event", "name": "Open Mic",
+             "url": "https://spotagig.eu/events/2026-10-14-open-mic/", "startDate": "2026-10-14T20:00:00+00:00",
+             "image": "https://localhost/media/user_3ad6d03b/1790690908.227793/event_image.jpg"}
+            </script>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, url), url).single().imageUrl shouldBe
+            "https://spotagig.eu/media/user_3ad6d03b/1790690908.227793/event_image.jpg"
+    }
+
+    @Test
     fun `reads the clock as Berlin time, ignoring the +00 00 offset`() {
         scrape("thewall-events.html").first { it.title == "Meanwhile in Berlin.." }.startTime shouldBe LocalTime.of(20, 45)
     }
