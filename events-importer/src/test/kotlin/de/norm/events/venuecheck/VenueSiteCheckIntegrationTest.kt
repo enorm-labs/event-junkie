@@ -9,10 +9,14 @@ import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.doubles.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
@@ -239,7 +243,46 @@ class VenueSiteCheckIntegrationTest : BaseControllerTest() {
                 .awaitSingle() shouldBe 0L
         }
 
-    private fun service() = VenueSiteCheckService(store, VenueSiteProber(testWebClient()))
+    @Test
+    fun `a pass that finishes stamps the gauge, and one that fails leaves it`(): Unit =
+        runBlocking {
+            val registry = SimpleMeterRegistry()
+            val metrics = VenueSiteCheckMetrics(registry)
+            lastSuccess(registry) shouldBe 0.0
+
+            val failing = mockk<VenueSiteProber>()
+            coEvery { failing.probeVenue(any()) } throws IllegalStateException("boom")
+            VenueSiteCheckService(store, failing, metrics).runOnce().shouldBeNull()
+            lastSuccess(registry) shouldBe 0.0
+
+            val before = Instant.now().epochSecond
+            VenueSiteCheckService(store, VenueSiteProber(testWebClient()), metrics).runOnce().shouldNotBeNull()
+            lastSuccess(registry).shouldNotBeNull() shouldBeGreaterThanOrEqual before.toDouble()
+        }
+
+    @Test
+    fun `the gauge starts from the newest stored check, and stays at 0 before the first`(): Unit =
+        runBlocking {
+            val registry = SimpleMeterRegistry()
+            val starting = VenueSiteCheckService(store, VenueSiteProber(testWebClient()), VenueSiteCheckMetrics(registry))
+            starting.seedLastSuccess()
+            lastSuccess(registry) shouldBe 0.0
+
+            service().runOnce()
+            val newest = Instant.parse("2026-09-01T05:20:00Z")
+            databaseClient.sql("UPDATE events.venue_site_check SET checked_at = '2026-08-01T05:20:00Z'").await()
+            databaseClient
+                .sql("UPDATE events.venue_site_check SET checked_at = :newest WHERE venue_id = (SELECT id FROM events.venue WHERE slug = 'dead-club')")
+                .bind("newest", newest)
+                .await()
+
+            starting.seedLastSuccess()
+            lastSuccess(registry) shouldBe newest.epochSecond.toDouble()
+        }
+
+    private fun service() = VenueSiteCheckService(store, VenueSiteProber(testWebClient()), VenueSiteCheckMetrics(SimpleMeterRegistry()))
+
+    private fun lastSuccess(registry: SimpleMeterRegistry) = registry.find("importer.venues.site_check.last_success").gauge()?.value()
 
     private fun url(path: String) = server.url(path).toString()
 

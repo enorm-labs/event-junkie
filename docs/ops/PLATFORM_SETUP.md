@@ -841,6 +841,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.discogs.lookups{state}`              | Counter                               | exact / ambiguous / none / inactive / error — MusicBrainz `NONE` rows only         |
 | `importer.discogs.unchecked`                   | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                |
 | `importer.artists.lookup_tick.last_success`    | Gauge                                 | Epoch seconds of the last finished lookup tick; 0 while off                        |
+| `importer.venues.site_check.last_success`      | Gauge                                 | Epoch seconds of the last finished site check; seeded at start from the table      |
 | `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
 | `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
 | `bff.images.served{outcome}`                   | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |

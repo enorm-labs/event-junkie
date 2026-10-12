@@ -140,6 +140,7 @@ loses its silence window and can fire again immediately.
 | `ej-discogs-failing`           | more than a quarter of 24 hours' Discogs lookups failed ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                          | —                  |
 | `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                      | —                  |
 | `ej-artist-lookup-tick-stale`  | the artist lookup tick has not finished in an hour ([#2059](https://github.com/enorm-labs/event-junkie/issues/2059))                               | —                  |
+| `ej-venue-site-check-stale`    | the monthly venue site check has not finished a pass in 33 days ([#3147](https://github.com/enorm-labs/event-junkie/issues/3147))                  | —                  |
 | `ej-rate-limit-storm`          | Traefik's rate limits rejected more than 100 requests in 15 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455))              | —                  |
 | `ej-4xx-flood`                 | client errors other than 429 and 499 average more than 5 a second for 30 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455)) | —                  |
 
