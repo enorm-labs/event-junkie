@@ -105,7 +105,9 @@ class So36DetailPageScraper {
             status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name,
             artists =
                 if (eventType == EventType.FESTIVAL.name) {
-                    descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)).map { ScrapedArtist(name = it, role = "HEADLINER") }
+                    dayLineup(subtitle)
+                        .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
+                        .map { ScrapedArtist(name = it, role = "HEADLINER") }
                 } else {
                     parseArtists(document, title, subtitle, eventType)
                 },
@@ -294,6 +296,7 @@ private const val VENUE_NAME = "SO36"
  * the real format: a `Punk- und Hardcore-Festival`, a `Tattoo Convention`, a `PANEL:`, a live
  * `Qualitätspodcast`. A support line is never read this way, so `+ Festival Band` stays a concert.
  * A title that names a festival ([isFestivalTitle]) is one here already, so its roster is read (#2829).
+ * A subtitle that bills one night of a run (`TAG 1 MIT …`, [dayLineup]) makes the night a festival too.
  */
 private fun refineBySubtitle(
     eventType: String,
@@ -305,7 +308,7 @@ private fun refineBySubtitle(
         eventType != EventType.CONCERT.name -> eventType
         isFestivalTitle(title) -> EventType.FESTIVAL.name
         isSupportLine(line) -> eventType
-        FESTIVAL_WORD.containsMatchIn(line) -> EventType.FESTIVAL.name
+        FESTIVAL_WORD.containsMatchIn(line) || DAY_LINEUP.containsMatchIn(line) -> EventType.FESTIVAL.name
         PODCAST_WORD.containsMatchIn(line) -> EventType.SHOW.name
         CONVENTION_WORD.containsMatchIn(line) || PANEL_PREFIX.containsMatchIn(title) -> EventType.OTHER.name
         else -> eventType
@@ -317,6 +320,24 @@ private fun isSupportLine(line: String): Boolean = line.firstOrNull() in SUPPORT
 
 /** A festival named in the subtitle: `Punk- und Hardcore-Festival - Tag 1`. */
 private val FESTIVAL_WORD = Regex("""festival\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * The acts a festival night bills in its subtitle: `TAG 1 MIT SOIFASS / NONCHALANT / BIERTOIFEL`. The title is
+ * then only the festival's name (`GROSSSTADTWAHNSINN 2026 | TAG 1`). A name the venue cut short (`MIKE AND THE…`)
+ * is dropped, because the full name is unknown.
+ */
+private fun dayLineup(subtitle: String?): List<String> {
+    val line = subtitle.orEmpty()
+    val frame = DAY_LINEUP.find(line) ?: return emptyList()
+    return line
+        .substring(frame.range.last + 1)
+        .split('/')
+        .map { it.replace(Typography.nbsp, ' ').trim() }
+        .filter { it.isNotBlank() && !it.endsWith("…") && !it.endsWith("...") && !isNonArtistName(it) }
+}
+
+/** One night of a run and its acts: `TAG 1 MIT …`, `Day 2 with …`. */
+private val DAY_LINEUP = Regex("""^\s*(?:tag|day)\s*\d+\s+(?:mit|with)\s+""", RegexOption.IGNORE_CASE)
 
 /** A live podcast recording: `Qualitätspodcast mit Till Reiners und Moritz Neumeier`. */
 private val PODCAST_WORD = Regex("""podcast\b""", RegexOption.IGNORE_CASE)

@@ -289,6 +289,18 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `bills a festival night's acts from a TAG N MIT subtitle and not the festival's name`() {
+        val url = "https://www.so36.com/produkte/102037-tickets-grossstadtwahnsinn-2026-tag-2-so36-berlin-am-07-11-2026"
+        val event = scraper.scrape(fixture("so36-detail-festival-day-lineup.html", url), url).shouldNotBeNull()
+
+        event.title shouldBe "GROSSSTADTWAHNSINN 2026 | TAG 2"
+        event.eventType shouldBe EventType.FESTIVAL.name
+        // The venue cut `MIKE AND THE…` short, so that act is dropped.
+        event.artists.map { it.name to it.role } shouldBe
+            listOf("ULTIMO ASALTO", "VIOLENT TIMES", "TELEKOMA", "UNDERDOGZ", "GEWOHNHEITSTRINKER").map { it to "HEADLINER" }
+    }
+
+    @Test
     fun `bills nobody when a festival's day cannot be told or its bold text names no origin`() {
         fun roster(html: String) = descriptionRoster(Jsoup.parse("""<div class="product_description">$html</div>"""), day = null)
 
