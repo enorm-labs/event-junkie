@@ -36,5 +36,6 @@ class ZitadelleWebsiteImporter(
 val ZITADELLE_LIMITATIONS =
     VenueLimitations(
         EventSource.ZITADELLE,
-        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style")
+        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the festival pages print no figure; tickets sell through Eventim")
     )

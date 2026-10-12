@@ -73,5 +73,6 @@ val BALLHAUS_WEDDING_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the programme names a style"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event"),
         AcceptedLimitation(LimitedAspect.END_TIME, "only the Wix Events pages state an end"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "an entry without a Wix Events page exists only on the programme page")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "an entry without a Wix Events page exists only on the programme page"),
+        AcceptedLimitation(LimitedAspect.PRICE, "a concert prints a price line; a dance social or a hired night prints none")
     )

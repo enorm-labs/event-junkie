@@ -122,5 +122,6 @@ val GAERTEN_DER_WELT_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.GENRE,
             "the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through an outside ticket shop prints no figure on its page")
     )

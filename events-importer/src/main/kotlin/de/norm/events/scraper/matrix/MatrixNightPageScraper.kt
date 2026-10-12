@@ -117,8 +117,7 @@ class MatrixNightPageScraper {
     /**
      * The door offer as the price note, only where it names a € amount (`Nur 5 € Eintritt für Ladies &
      * Studenten bis 0 Uhr!`). One naming none (`Freier Eintritt für Ladies bis 0 Uhr!`) is left out:
-     * in the note, `detectFree` would mark a paid night free. Matrix publishes no door price, so
-     * the offer is never priced.
+     * in the note, `detectFree` would mark a paid night free. The offer is never priced; see [MATRIX_LIMITATIONS].
      */
     private fun priceNote(document: Document): String? = document.textAt("p.nd-deal")?.takeIf { euroAmounts(it).isNotEmpty() }
 

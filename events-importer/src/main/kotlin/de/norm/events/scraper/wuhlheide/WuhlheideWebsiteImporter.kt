@@ -52,5 +52,6 @@ val WUHLHEIDE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUHLHEIDE,
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style")
+        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style"),
+        AcceptedLimitation(LimitedAspect.PRICE, "a show its promoter sells, or a sold-out one, has no `Preis` row")
     )

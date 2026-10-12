@@ -41,5 +41,9 @@ val PANKE_LIMITATIONS =
             LimitedAspect.DOORS_TIME,
             "only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose"
+        )
     )
