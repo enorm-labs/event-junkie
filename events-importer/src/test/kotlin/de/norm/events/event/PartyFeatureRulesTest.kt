@@ -175,6 +175,12 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Dress code: rubber, leather or latex", "Dress code: rubber"),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Fotografieren ist streng verboten.", "Fotografieren ist streng verboten"),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "We put stickers on your phone cameras at the door.", "stickers on your phone"),
+                Arguments.of(
+                    PartyFeature.NO_PHOTO_POLICY,
+                    "Fester Bestandteil der Shows ist auch diesmal die No Phones Policy. Bei This Never Happened-Events",
+                    "No Phones Policy"
+                ),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Strictly NO phones in the club allowed.", "Strictly NO phones"),
                 Arguments.of(PartyFeature.OPEN_END, "Ab 23 Uhr bis Ende offen", "Ende offen"),
                 Arguments.of(PartyFeature.OPEN_END, "From 23:00 till open end", "open end"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Die Tagesparty im Garten", "Tagesparty"),
@@ -207,7 +213,12 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.OPEN_END, "Die 36 Stunden Party zum Jubiläum", "36 Stunden Party"),
                 Arguments.of(PartyFeature.OPEN_END, "Join us for 48 hours of techno", "48 hours of techno"),
                 Arguments.of(PartyFeature.OPEN_END, "We dance till dawn", "till dawn"),
-                Arguments.of(PartyFeature.DAY_PARTY, "Tanzen im Tageslicht auf der Terrasse", "Tageslicht")
+                Arguments.of(PartyFeature.DAY_PARTY, "Tanzen im Tageslicht auf der Terrasse", "Tageslicht"),
+                Arguments.of(
+                    PartyFeature.NO_PHOTO_POLICY,
+                    "Ihr benutzt bitte keine Handys oder ähnliche Hilfsmittel, sonst macht das Quiz keinen Spaß.",
+                    "keine Handys"
+                )
             )
 
         @JvmStatic

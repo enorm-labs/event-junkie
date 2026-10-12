@@ -156,6 +156,9 @@ object PartyFeatureRules {
                             "(?:not\\s+allowed|prohibited|forbidden|banned|verboten|untersagt|nicht\\s+erlaubt|nicht\\s+gestattet)$E",
                         "$B(?:foto|fotografier|photo|kamera|handy)verbot$E",
                         "${B}no[\\s-]?photo(?:s|graphy)?[\\s-]+policy$E",
+                        // A bare "keine Handys" stays a cue: a quiz night writes it as a game rule (#3156).
+                        "${B}no[\\s-]?phones?[\\s-]+policy$E",
+                        "${B}strictly\\s+no\\s+(?:phones?|handys?)$E",
                         "$B(?:stickers?|aufkleber)\\s+(?:on|over|auf|über)\\s+(?:your\\s+|eure\\s+|deine\\s+|die\\s+|the\\s+)?" +
                             "(?:phones?|handys?|cameras?|kameras?)",
                         "$B(?:kameras?|cameras?|handy[\\s-]?kameras?|phone\\s+cameras?)\\s+(?:werden\\s+|will\\s+be\\s+|get\\s+|are\\s+)?" +
