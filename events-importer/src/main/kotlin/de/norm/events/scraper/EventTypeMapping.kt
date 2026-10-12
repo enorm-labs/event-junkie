@@ -56,6 +56,9 @@ fun mapEventType(
 /** Title keywords marking a non-music variety show (mapped to [EventType.SHOW]). */
 private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus", "roncalli")
 
+/** Whether [title] names a wrestling, burlesque or circus night ([SHOW_TITLE_KEYWORDS]) or an ice show. */
+fun billsVarietyShow(title: String): Boolean = SHOW_TITLE_KEYWORDS.any { it in title.lowercase() } || isIceShow(title)
+
 /**
  * An ice show: `on ice` or `auf Eis` as a phrase (Holiday on Ice, "Musik-Show auf Eis"), or an
  * `Eisrevue` / `Eisshow` word. Anchored on letters, so "Lemon Ice", a "Preisshow" and "auf Eisenbahn" stay untouched.
@@ -201,8 +204,7 @@ private fun classifyByTitleKeyword(title: String): String? {
 
         COMEDY_TITLE_PATTERN.containsMatchIn(title) -> EventType.COMEDY.name
 
-        SHOW_TITLE_KEYWORDS.any { it in haystack } ||
-            isIceShow(title) -> EventType.SHOW.name
+        billsVarietyShow(title) -> EventType.SHOW.name
 
         isScreeningTitle(title) -> EventType.SCREENING.name
 

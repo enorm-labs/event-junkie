@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.billsTradeFairOrConference
+import de.norm.events.scraper.billsVarietyShow
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
@@ -205,7 +206,8 @@ class DelphiProgrammePageScraper {
 /**
  * The format labels mapped onto the model's types. No dance or theatre type exists, so a
  * staged performance of either kind is a [EventType.SHOW] — the call the AEG venues make for
- * their ballet. `Dialog & Lesung` is a talk or reading; the two music labels are concerts.
+ * their ballet — and so are `Varieté` and `Performance`. `Dialog & Lesung` is a talk or
+ * reading; the two music labels are concerts.
  */
 private val DELPHI_CATEGORY_SYNONYMS =
     mapOf(
@@ -213,6 +215,8 @@ private val DELPHI_CATEGORY_SYNONYMS =
         "theater" to EventType.SHOW.name,
         "musiktheater" to EventType.SHOW.name,
         "musical & show" to EventType.SHOW.name,
+        "varieté" to EventType.SHOW.name,
+        "performance" to EventType.SHOW.name,
         "dialog & lesung" to EventType.READING.name,
         "kammermusik" to EventType.CONCERT.name,
         "elektronische musik" to EventType.CONCERT.name
@@ -220,15 +224,20 @@ private val DELPHI_CATEGORY_SYNONYMS =
 
 /**
  * The type of a row the venue left unlabelled: [EventType.CONCERT] where its title or teaser names a
- * concert cue ([CONCERT_CUES]), else [EventType.OTHER]. Not the shared title classifier, which reads
- * the wrestling night's `größte Show des Jahres` as a [EventType.SHOW].
+ * concert cue ([CONCERT_CUES]), [EventType.SHOW] where the title bills a wrestling, burlesque or circus
+ * night ([billsVarietyShow]), else [EventType.OTHER]. Not the whole shared title classifier: its party
+ * and screening keywords are written for club and concert listings, not a theatre's.
  */
 private fun unlabelledRowType(
     title: String,
     teaser: String?
 ): String {
     val haystack = listOfNotNull(title, teaser).joinToString(" ").lowercase()
-    return if (CONCERT_CUES.any { it in haystack }) EventType.CONCERT.name else EventType.OTHER.name
+    return when {
+        CONCERT_CUES.any { it in haystack } -> EventType.CONCERT.name
+        billsVarietyShow(title) -> EventType.SHOW.name
+        else -> EventType.OTHER.name
+    }
 }
 
 /** The house's words for a concert in an unlabelled row: `Solo-Konzert`, `Songwriterin`, `Folksongs`. */
