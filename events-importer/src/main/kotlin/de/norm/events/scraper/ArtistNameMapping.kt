@@ -3,6 +3,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.slug.SlugGenerator
 import java.text.Normalizer
 import java.util.Locale
@@ -833,18 +834,26 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         // The folk-blues duo Issy Ferris and Archie Sylvester, billed by Monarch as its whole title (#2952).
         "ferris & sylvester",
         // A German metal band Neue Zukunft bills as the support after a `+` (#2958).
-        "prophet & flesh"
+        "prophet & flesh",
+        // Duos billed as their whole title (#3159): Heimathafen, Festsaal Kreuzberg, Privatclub, Frannz Club, Columbia Theater.
+        "dicht & ergreifend",
+        "dennis & jesko band",
+        "anchors & hearts",
+        "pauken & planeten",
+        "maël & jonas",
+        "mael & jonas",
+        "nie & nimmer"
     )
 
 /**
  * Leading words marking the right-hand side of a conjunction as a band-name tail, unioned in
  * [CONJUNCTION_TAIL_MARKERS]: articles/possessives opening a backing band ("X & the Ys", "X
- * and his Ys", "X und die Ys"), and collectives naming an unnamed cast ("X & Friends", "X &
- * Guests", "X & Gäste", "X & Band", "Lacrimosa mit Orchester"). The same set keeps a
- * [WITH_FRAME_PATTERN] tail from being read as the acts.
+ * and his Ys", "X und die Ys", "X und seine Freunde"), and collectives naming an unnamed cast
+ * ("X & Friends", "X & Guests", "X & Gäste", "X & Band", "Lacrimosa mit Orchester"). The same set
+ * keeps a [WITH_FRAME_PATTERN] tail from being read as the acts.
  */
 private val CONJUNCTION_TAIL_ARTICLES: Set<String> =
-    setOf("the", "his", "her", "their", "los", "las", "die", "der", "das", "el", "la")
+    setOf("the", "his", "her", "their", "seine", "seinen", "ihre", "ihren", "los", "las", "die", "der", "das", "el", "la")
 
 private val CONJUNCTION_TAIL_COLLECTIVES: Set<String> =
     setOf("friends", "guests", "gäste", "freunde", "band", "orchester", "orchestra", "ensemble", "chor", "choir")
@@ -1265,7 +1274,8 @@ fun splitSupportActs(text: String): List<String> =
  * Splits a headliner title into co-billed acts (`TOTAL CHAOS + RUMKICKS + THE DOLLHEADS`,
  * `LAGWAGON / THE VIRGINMARYS`, `BLACK STAR RIDERS & TYKETTO`) on space-padded separators only,
  * which protects `AC/DC` and `dance/electronic`; `" & "` / `" and "` / `" und "` per boundary
- * via [splitSegmentOnConjunctions], never for a [KNOWN_SINGLE_ACTS] title. A bullet delimits only
+ * via [splitSegmentOnConjunctions], never for a [KNOWN_SINGLE_ACTS] title; a `meets` co-bill via
+ * [splitOnMeets]. A bullet delimits only
  * in the one shape [bulletCoBill] recognises. No separator returns the trimmed title alone. Every
  * case is asserted in `ArtistNameMappingTest`.
  *
@@ -1315,11 +1325,35 @@ fun splitHeadlinerTitle(
 
     val acts =
         cutAt(trimmed, hardCuts)
+            .flatMap(::splitOnMeets)
             .flatMap { segment -> commaBillOf(segment, description) ?: splitSegmentOnConjunctions(segment) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
 
     return acts.ifEmpty { listOf(trimmed) }
+}
+
+/** A space-padded `meets` joining two co-billed acts: `Roots Daughters meets La Comadre Soundsystem` (#3159). */
+private val MEETS_SEPARATOR = Regex("""\s+meets\s+""", RegexOption.IGNORE_CASE)
+
+/**
+ * Splits [segment] at a [MEETS_SEPARATOR] when both sides look like acts, or returns it whole.
+ * A genre side is a style pairing (`Klassik meets Jazz`). A one-word left side is a venue, a series or a show
+ * (`Tresor meets ENIGMA`, `FALCO MEETS AMADEUS`), and a spaced dash marks a tagline (`… - Piano meets Percussion`).
+ */
+private fun splitOnMeets(segment: String): List<String> {
+    val cuts =
+        MEETS_SEPARATOR
+            .findAll(segment)
+            .filter { !isInsideBrackets(segment, it.range.first) }
+            .map { it.range }
+            .toList()
+    val sides = cutAt(segment, cuts).map { it.trim() }
+    val coBill =
+        sides.size == 2 &&
+            sides.none { it.isEmpty() || isGenreLabel(it) || DASH_SEPARATOR.containsMatchIn(it) } &&
+            sides.first().split(WHITESPACE).size >= 2
+    return if (coBill) sides else listOf(segment)
 }
 
 /**
