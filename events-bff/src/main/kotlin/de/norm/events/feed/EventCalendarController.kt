@@ -3,7 +3,6 @@ package de.norm.events.feed
 import de.norm.events.common.QueryParameters
 import de.norm.events.common.ResponseCache
 import de.norm.events.common.Site
-import de.norm.events.common.WeakETag
 import de.norm.events.event.BffMetrics
 import de.norm.events.event.EventFilter
 import de.norm.events.event.EventFilterParams
@@ -16,18 +15,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.CacheControl
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
 import java.time.Clock
-import java.time.Duration
 import java.time.LocalDate
 
 /**
@@ -44,8 +38,7 @@ class EventCalendarController(
     private val clock: Clock,
     @Value("\${app.api.cache.ttl-seconds}") ttlSeconds: Long
 ) {
-    /** Set here rather than by the filter, so a `304` keeps it: the filter gives a non-`2xx` answer `no-store`. */
-    private val cacheControl = CacheControl.maxAge(Duration.ofSeconds(ttlSeconds)).cachePublic()
+    private val cacheControl = PolledFeed.cacheControl(ttlSeconds)
 
     @GetMapping
     @Operation(
@@ -73,22 +66,14 @@ class EventCalendarController(
         exchange: ServerWebExchange
     ): ResponseEntity<String> {
         PARAMS.rejectUnknownIn(exchange)
-        if (locale !in Site.LOCALES) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'locale' must be one of ${Site.LOCALES.joinToString(", ")}")
-        }
+        PolledFeed.requireSupportedLocale(locale)
         val filter = filters.toFilter()
         val today = LocalDate.now(clock)
         val last = today.plusDays(DAYS - 1)
         val events = cache.get(CalendarKey(filter, today)) { eventService.upcoming(filter, today, last, MAX_EVENTS) }
         metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR_FEED, events.size)
         val body = EventCalendarIcs.render(locale, events, name)
-        // A client polls with If-None-Match; Spring answers 304 for a matching tag.
-        return ResponseEntity
-            .ok()
-            .cacheControl(cacheControl)
-            .eTag(WeakETag.of(body))
-            .contentType(MediaType.parseMediaType("${EventCalendarIcs.CONTENT_TYPE};charset=UTF-8"))
-            .body(body)
+        return PolledFeed.response(body, EventCalendarIcs.CONTENT_TYPE, cacheControl)
     }
 
     private companion object {
