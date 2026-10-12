@@ -3,6 +3,7 @@ package de.norm.events.scraper.admiralspalast
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
@@ -46,6 +47,9 @@ import java.time.format.DateTimeFormatter
  *
  * The date is split across two spans with a German month abbreviation, so it is assembled, not
  * parsed as one string; the weekday span carries the start time after the comma.
+ *
+ * [billedActs] reads the act from the title alone. Two show titles carry no cue and bill a wrong act:
+ * `Kosmos & Orchester` (performers only in prose) and `Jahresausklang - Wo die Lerche singt` (#3150).
  *
  * @see AdmiralspalastListingPageScraper for discovery and the genre categories.
  * @see AdmiralspalastWebsiteImporter for the HTTP fetch orchestrator.
@@ -141,13 +145,48 @@ class AdmiralspalastDetailPageScraper {
             sourceId =
                 "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate" +
                     startTime?.format(SOURCE_ID_TIME)?.let { "-$it" }.orEmpty(),
-            // No lineup is billed, so the act is whatever the production title names. The subtitle is
-            // not offered as a support-act source: it only ever carries the reschedule note, which would
-            // be minted as a performer.
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType),
+            artists = billedActs(title, eventType),
             promoters = promoters
         )
     }
+
+    /**
+     * The acts a production title bills. The subtitle is not a support-act source: it only ever
+     * carries the reschedule note, which would be minted as a performer.
+     *
+     * A concert title bills its act before the dash, without the house's act tails, and a tribute
+     * or score frame bills none but an ensemble named after it. These rules stay here and out of
+     * the shared lists, which other venues read (#3150).
+     */
+    @Suppress("ReturnCount") // One guard per title shape reads better than a nested when
+    private fun billedActs(
+        title: String,
+        eventType: String
+    ): List<ScrapedArtist> {
+        if (SLAM.containsMatchIn(title)) return emptyList()
+        if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+        TRIBUTE_FRAME.find(title)?.let { frame -> return ensembleAfter(title.substring(frame.range.last + 1)) }
+        // The shared builder still decides on the whole title whether it bills anyone: `Top Gun: Maverick – in Concert`.
+        val asWritten = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+        if (asWritten.isEmpty() || LEADING_FRAME.containsMatchIn(title)) return asWritten
+        val act =
+            title
+                .split(PROGRAMME_DASH, limit = 2)
+                .first()
+                .replace(ACT_TAIL, "")
+                .trim()
+        return if (act == title) asWritten else buildArtistsForEventType(act, subtitle = null, eventType = eventType)
+    }
+
+    /** The ensemble a tribute frame names after a closing `&`: `… to Billy Joel & St. Konrad Gospelchor Berlin`. */
+    private fun ensembleAfter(rest: String): List<ScrapedArtist> =
+        listOfNotNull(
+            rest
+                .substringAfterLast(" & ", missingDelimiterValue = "")
+                .trim()
+                .takeIf { ENSEMBLE.containsMatchIn(it) }
+                ?.let { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        )
 
     /**
      * The site root a poster path is relative to. Contao writes every asset path relative
@@ -209,6 +248,33 @@ class AdmiralspalastDetailPageScraper {
 
         /** The label in front of the promoter's name. */
         val PROMOTER_LABEL = Regex("""^\s*Veranstalter(?:\*in)?\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A slam names a format, not a performer: `Comedy Champions Slam - Kiezpoeten Berlin`. */
+        val SLAM = Regex("""\bslam\b""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A tribute or score production: `The Sounds of Vangelis`, `The Magic of Hans Zimmer`, `A Tribute
+         * Concert to Billy Joel`, `The Robbie Williams Show`, or a `- Das Konzert` tail. A bare `A Tribute to
+         * <X>` tail stays an act's, as in the shared suffix list: `THREE SIDES – A Tribute to Genesis`.
+         */
+        val TRIBUTE_FRAME =
+            Regex(
+                """\bthe\s+(?:sounds?|music|magic)\s+of\b|\btribute\s+(?:concert|show)\b|\bthe\s+(?:\S+\s+){1,3}?show\b""" +
+                    """|\s[-–—]\s+(?:the|das)\s+(?:concert|konzert)\s*$""",
+                RegexOption.IGNORE_CASE
+            )
+
+        /** A word that names a performing group, so the name after a tribute frame's `&` is an act. */
+        val ENSEMBLE = Regex("""chor\b|choir|orchest|ensemble|philharmon|\bband\b""", RegexOption.IGNORE_CASE)
+
+        /** The dash between the act and its programme: `Soweto Gospel Choir - JOY!`. */
+        val PROGRAMME_DASH = Regex("""\s+[-–—]\s+""")
+
+        /** The house's act tails: `Helmut Lotti goes Classic`, `Alexander Eder Unplugged`, `Karat 50+1`. */
+        val ACT_TAIL = Regex("""\s+(?:goes\s+classic|unplugged|\d+\+\d+)\s*$""", RegexOption.IGNORE_CASE)
+
+        /** A frame whose acts follow the dash, which the shared builder already reads: `Celebrating Meat Loaf' - …`. */
+        val LEADING_FRAME = Regex("""^celebrating\s""", RegexOption.IGNORE_CASE)
 
         /** What the ticket cell says instead of a link once a performance has sold out. */
         val SOLD_OUT = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)
