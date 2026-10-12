@@ -202,9 +202,9 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * is asserted in `ArtistNameMappingTest`.
  *
  * Hyphen tails: a tour name, "<n> Years/Jahre", "<n> Sets", an edition ending in a four-digit
- * year, "Releaseshow". Trailing tails: "Live" / "Live in <city>" / "live <year>", a format annotation
+ * year, "Releaseshow". Trailing tails: "Live" / "Live in <city>" / "in Berlin" (not "Made in Berlin") / "live <year>", a format annotation
  * parenthesized or a bare "DJ-Set", "Nachholtermin vom <date>" / "Hochverlegung", "singt
- * <repertoire>", "<Album/EP/…> Release" / "Release Party", a record title spelled letter by
+ * <repertoire>", "<Album/EP/…> Release" / "Release Party" / "Releaseshow", a record title spelled letter by
  * letter after a dash (`KAT FRANKIE - B O D I E S`), which the shouted-tail rule cannot reach
  * because its head is shouted too (#1533), and from #1580 the act's own backing (`Lacrimosa mit
  * Orchester`), which the conjunction split keeps attached, and a dash tail ending in `!`, which
@@ -246,7 +246,8 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
             """|\s+(?:album|ep|single|mixtape|record|tape)\s+release(?:\s+(?:party|show|special))?$""" +
-            """|\s+release\s+(?:party|show)$""" +
+            """|\s+release(?:\s+party|\s?show)$""" +
+            """|(?<=\S)(?<!\bmade)\s+in\s+berlin$""" +
             """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +
             """|\s+(?:mit|with)\s+(?:orchester|orchestra|band|ensemble|chor|choir|streichern?|strings)\s*$""" +
             """|^(?:nachholtermin|hochverlegung|verschoben|verlegt)\b\s*[-–—:]*\s*(?=\S)""" +

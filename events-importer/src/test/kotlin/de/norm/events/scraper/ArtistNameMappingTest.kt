@@ -1098,8 +1098,28 @@ class ArtistNameMappingTest {
     fun `stripArtistSuffix recovers the act from a hyphenated Releaseshow tail`() {
         stripArtistSuffix("Sinem - Hatun - Releaseshow") shouldBe "Sinem - Hatun"
         stripArtistSuffix("Some Band - Release Show") shouldBe "Some Band"
-        // Without the dash it is left alone — "Releaseshow" could be part of a name.
+        // A whole name is left alone — "Releaseshow" could be the act.
         stripArtistSuffix("Releaseshow") shouldBe "Releaseshow"
+    }
+
+    @Test
+    fun `stripArtistSuffix recovers the act from a bare Releaseshow tail`() {
+        // Urban Spree, production 2026-11-13 (#3161).
+        stripArtistSuffix("FRIBERTY Releaseshow") shouldBe "FRIBERTY"
+        stripArtistSuffix("Some Band Release Show") shouldBe "Some Band"
+        stripArtistSuffix("Some Band Release Party") shouldBe "Some Band"
+    }
+
+    @Test
+    fun `stripArtistSuffix recovers the act from an in Berlin tail`() {
+        // Columbia Theater, production 2026-11-17 (#3161).
+        stripArtistSuffix("Evgeny Khavtan in Berlin") shouldBe "Evgeny Khavtan"
+        headlinersFromTitle("Evgeny Khavtan in Berlin").map { it.name } shouldBe listOf("Evgeny Khavtan")
+        // No "in", or a show named "Made in Berlin": the name stays whole.
+        stripArtistSuffix("Isolation Berlin") shouldBe "Isolation Berlin"
+        stripArtistSuffix("Berlin Berlin") shouldBe "Berlin Berlin"
+        stripArtistSuffix("Samba Made in Berlin") shouldBe "Samba Made in Berlin"
+        stripArtistSuffix("in Berlin") shouldBe "in Berlin"
     }
 
     @Test
