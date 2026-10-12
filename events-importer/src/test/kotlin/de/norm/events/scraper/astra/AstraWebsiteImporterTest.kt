@@ -97,7 +97,7 @@ class AstraWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 7
+            result.events shouldHaveSize 10
             result.etag shouldBe "\"astra-etag\""
             result.lastModified shouldBe "Sat, 13 Jun 2026 10:00:00 GMT"
         }
@@ -136,7 +136,7 @@ class AstraWebsiteImporterTest {
             coEvery { htmlFetcher.fetchDocument(teaserUrl) } returns Jsoup.parse(EMPTY_DETAIL, sourceUrl)
 
             val events = events(importer.importEvents(sourceUrl))
-            events shouldHaveSize 6
+            events shouldHaveSize 9
             events.none { it.title == "BERLIN BREAKOUT! 2026" } shouldBe true
             events.none { it.eventDate == UNRESOLVED_EVENT_DATE } shouldBe true
         }
