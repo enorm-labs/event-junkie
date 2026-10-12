@@ -10,6 +10,19 @@ node booted with. A rebuild destroys the cluster, Flux, the six hand-made Secret
 [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ is that procedure, for when one is
 happening anyway.
 
+## The short version
+
+```sh
+# On the node, staging first. <target> is the new pin, e.g. v1.36.5+k3s1.
+sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=<target> INSTALL_K3S_EXEC=server sh -s -'
+kubectl -n kube-system wait --for=condition=complete job/helm-install-traefik --timeout=180s
+kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'   # ClusterIP, and no svclb pods
+```
+
+- Read the release notes and compare the Traefik chart **before** the upgrade.
+- Bump `k3s_version` in the same change, or the next rebuild downgrades the node.
+- Production only after staging passes every check.
+
 ## The sequence
 
 ```sh
@@ -114,6 +127,18 @@ and 443 for Traefik's own `hostPort`. A chart release that stops reading that ke
 svclb takes the ports, and the site stops answering. **So compare the chart before upgrading, not
 after** — step 2 above. The part after `+up` is the upstream chart version, and k3s owns the part
 before it. The same upstream version either side means the values keys did not change.
+
+**A `helm-install-traefik` pod in `Error` right after the restart is expected.** On both nodes in
+#2733 the first attempt failed seconds after the restart, probably before the API was ready. The job
+retried without help and upgraded the chart, and a new Traefik pod followed. Wait for that pod
+before the Traefik checks, or they read the old one:
+
+```sh
+kubectl -n kube-system wait --for=condition=complete job/helm-install-traefik --timeout=180s
+kubectl -n kube-system rollout status deploy/traefik --timeout=180s
+```
+
+An `Error` that is still there after these commands time out is a real failure. Read the job's log.
 
 ## Why not `system-upgrade-controller`
 
