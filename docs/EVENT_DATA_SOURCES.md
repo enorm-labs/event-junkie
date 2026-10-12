@@ -120,7 +120,7 @@ schema change.
 | OHM                              | https://ohmberlin.com/                                                   | Techno Club  | Year-less dd/MM; only 1–3 nights listed at a time         |
 | Orangerie Neukölln               | https://www.orangerie-nk.de/                                             | Bar          | Static one-pager; JSON-LD ItemList plus cards             |
 | Orania.Berlin                    | https://orania.berlin/concerts                                           | Bar          | TYPO3 Calendarize; three pages of ten; always free        |
-| PANDA platforma                  | https://panda-platforma.berlin/veranstaltungen-in-berlin/                | Other        | TEC REST API; series type the night; jazz credits players |
+| PANDA platforma                  | https://panda-platforma.berlin/veranstaltungen-in-berlin/                | Other        | TEC REST API; series type the night; credits, else title  |
 | Panke Culture                    | https://www.pankeculture.com/programme/                                  | Club         | WordPress/Divi; upcoming list only; no event pages        |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                                        | Open Air     | October CMS; ISO date in URL; seasonal, sold-out          |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
