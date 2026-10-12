@@ -39,6 +39,19 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `bills the act of an act and work set line, never the work`() {
+        // #3163: the three shapes the production worklist found stored glued or split into three.
+        fun names(
+            fixture: String,
+            slug: String
+        ) = parse(fixture, "http://www.morphinerecords.com/events/$slug").shouldNotBeNull().artists.map { it.name }
+
+        names("morphine-detail-act-work-slash.html", "murmurations") shouldBe listOf("Fred Frith", "Verena Marisa")
+        names("morphine-detail-act-work-pipe.html", "daniele-de-santis-prepared") shouldBe listOf("Daniele De Santis")
+        names("morphine-detail-act-subtitled-work.html", "sigma-berlin-series-i") shouldBe listOf("Antonio Raia")
+    }
+
+    @Test
     fun `parses all detail fields for a fully populated night`() {
         val url = "http://www.morphinerecords.com/events/sardy-fardy-live-recording"
         val event = parse("morphine-detail-simple.html", url).shouldNotBeNull()

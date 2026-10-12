@@ -45,7 +45,8 @@ import java.time.LocalTime
  * far as a structural signal allows: a `/`-separated co-bill without spaces stays one name,
  * because [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] requires the padding
  * that protects `AC/DC`, and a `– <project>` tail stays attached for want of anything separating
- * it from a hyphenated act name. Both need a curated vocabulary, not a Morphine-local rule; see #302.
+ * it from a hyphenated act name. A title with a format tail is that signal ([morphineSetLineActs],
+ * #3163). Otherwise both need a curated vocabulary, not a Morphine-local rule; see #302.
  *
  * @see MORPHINE_LIMITATIONS for what the source does not publish.
  * @see MorphineOverviewPageScraper for overview parsing (discovery, date, fallback).
