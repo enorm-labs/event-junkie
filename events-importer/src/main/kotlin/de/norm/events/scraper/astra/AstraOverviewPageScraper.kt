@@ -2,11 +2,13 @@ package de.norm.events.scraper.astra
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -15,6 +17,7 @@ import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.supportSubtitleLines
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -128,17 +131,43 @@ class AstraOverviewPageScraper {
             sourceId = "${EventSource.ASTRA.sourceIdPrefix}${extractEventSlug(block.sourceUrl)}",
             soldOut = block.soldOut,
             status = block.status,
-            // Isolate the subtitle's "Support:" lines so a note on another <br> line (e.g. a cancellation
-            // notice) is not taken for a support act.
-            artists =
-                buildArtistsForEventType(
-                    block.title,
-                    supportSubtitleLines(article.textLinesAt(".event__subtitle")),
-                    eventType
-                )
+            artists = artistsOf(block.title, article.textLinesAt(".event__subtitle"), eventType)
         )
     }
 }
+
+/**
+ * The acts of one overview article: the title's headliners, then a concert's [subtitleLineup], then the
+ * `Support:` acts. Only the `Support:` lines feed [buildArtistsForEventType], so a note on another
+ * `<br>` line, such as a cancellation, is not taken for an act.
+ */
+internal fun artistsOf(
+    title: String,
+    subtitleLines: List<String>,
+    eventType: String?
+): List<ScrapedArtist> {
+    val artists = buildArtistsForEventType(title, supportSubtitleLines(subtitleLines), eventType)
+    val billed = artists.mapTo(mutableSetOf()) { it.name.lowercase() }
+    val lineup = if (eventType == EventType.CONCERT.name) subtitleLineup(subtitleLines).filter { billed.add(it.lowercase()) } else emptyList()
+    if (lineup.isEmpty()) return artists
+    val (fromTitle, support) = artists.partition { it.titleDerived }
+    // A tour or fest title bills no act, so the line-up's first act heads the bill (#3154).
+    val lineupArtists = lineup.mapIndexed { i, name -> ScrapedArtist(name = name, role = if (i == 0 && fromTitle.isEmpty()) "HEADLINER" else "SUPPORT") }
+    return fromTitle + lineupArtists + support
+}
+
+/**
+ * The acts of a subtitle line that bills the whole night: `feat. FRANK TURNER + CHUCK RAGAN` under
+ * `THE REVIVAL TOUR`, `Live: SLIME + FOCUS.` under `GROBES FEST 2026`. `Live` needs its colon, so a
+ * line such as `Live in Berlin` names no act.
+ */
+internal fun subtitleLineup(subtitleLines: List<String>): List<String> =
+    subtitleLines
+        .mapNotNull { LINEUP_LINE.find(it.trim())?.groupValues?.get(1) }
+        .flatMap(::splitSupportActs)
+        .filterNot(::isNonArtistName)
+
+private val LINEUP_LINE = Regex("""^(?:featuring|feat\b\.?|live\s*:)\s*(.+)$""", RegexOption.IGNORE_CASE)
 
 /**
  * Common fields from the `.event__*` markup shared by overview articles and the detail header.

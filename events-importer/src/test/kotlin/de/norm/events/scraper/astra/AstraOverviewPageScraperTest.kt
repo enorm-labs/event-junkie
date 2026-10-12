@@ -17,8 +17,8 @@ import java.time.LocalDate
  *
  * Uses a static HTML fixture with a representative mix of articles: a dateless
  * festival teaser, a plain concert, an empty-kind concert with support acts,
- * a sold-out event, and a three-day festival whose last day Astra mislabeled
- * as a concert.
+ * a sold-out event, a three-day festival whose last day Astra mislabeled
+ * as a concert, and three tour or fest nights that bill their line-up in the subtitle.
  */
 class AstraOverviewPageScraperTest {
     private val scraper = AstraOverviewPageScraper()
@@ -39,7 +39,7 @@ class AstraOverviewPageScraperTest {
 
     @Test
     fun `extracts all articles from the fixture`() {
-        events shouldHaveSize 7
+        events shouldHaveSize 10
     }
 
     @Test
@@ -109,6 +109,61 @@ class AstraOverviewPageScraperTest {
         days shouldHaveSize 3
         days.map { it.eventType }.toSet() shouldBe setOf("FESTIVAL")
         days.forEach { it.artists.shouldBeEmpty() }
+    }
+
+    @Test
+    fun `bills a tour's feat line-up when the title names no act`() {
+        event("Revival Tour").artists shouldContainExactly
+            listOf(
+                ScrapedArtist("FRANK TURNER", "HEADLINER"),
+                ScrapedArtist("CHUCK RAGAN", "SUPPORT"),
+                ScrapedArtist("TIM BARRY", "SUPPORT"),
+                ScrapedArtist("BEN NICHOLS", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `bills a fest's Live line-up when the title names no act`() {
+        event("Grobes Fest").artists shouldContainExactly
+            listOf(
+                ScrapedArtist("SLIME", "HEADLINER"),
+                ScrapedArtist("FOCUS.", "SUPPORT"),
+                ScrapedArtist("RANTANPLAN", "SUPPORT"),
+                ScrapedArtist("KNOCHENFABRIK", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `puts a Live line-up between the title's act and the Support acts`() {
+        event("Monsters Of Punk").artists.map { it.name to it.role } shouldContainExactly
+            listOf(
+                "MONSTERS OF PUNK" to "HEADLINER",
+                "THE EXPLOITED" to "SUPPORT",
+                "DISCHARGE" to "SUPPORT",
+                "CONFLICT" to "SUPPORT",
+                "VARUKERS" to "SUPPORT",
+                "HASS" to "SUPPORT",
+                "DEZERTER" to "SUPPORT",
+                "SHELL SHOCKED" to "SUPPORT",
+                "MANEGE FREI" to "SUPPORT"
+            )
+    }
+
+    @Test
+    fun `does not bill a title's act twice when the Live line repeats it`() {
+        artistsOf("SLIME", listOf("Live: Slime + Rantanplan", "+ Support: Focus."), "CONCERT") shouldContainExactly
+            listOf(
+                ScrapedArtist("SLIME", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Rantanplan", "SUPPORT"),
+                ScrapedArtist("Focus.", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `reads no line-up from a line without the marker, a Live without its colon, or a non-concert`() {
+        subtitleLineup(listOf("Live in Berlin", "„Support Real Artists Tour '26\"", "+ Q&A w/ El Hefe")).shouldBeEmpty()
+        subtitleLineup(listOf("featuring Kate NV", "LIVE: A, B")) shouldContainExactly listOf("Kate NV", "A", "B")
+        artistsOf("GROBES FEST 2026", listOf("Live: SLIME + FOCUS."), "FESTIVAL").shouldBeEmpty()
     }
 
     @Test
