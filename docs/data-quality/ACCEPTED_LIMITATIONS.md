@@ -16,6 +16,7 @@ says so.
 | `A_TRANE`              | `TICKET_URL`       | tickets sell in a shop inside the venue's own event card                                                                                         | —     |
 | `A_TRANE`              | `PROMOTERS`        | the club presents every night itself                                                                                                             | —     |
 | `A_TRANE`              | `SOLD_OUT`         | the sold-out line is printed on every night, booked out or not                                                                                   | —     |
+| `A_TRANE`              | `ARTISTS`          | the sidemen lines (`Feat:`, `WITH:`) bill no artists: double-barrelled names share their hyphens                                                 | —     |
 | `ABSTAND`              | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
 | `ABSTAND`              | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
 | `ABSTAND`              | `TICKET_URL`       | the bar sells no tickets online                                                                                                                  | —     |
@@ -48,6 +49,7 @@ says so.
 | `BALLHAUS_WEDDING`     | `GENRE`            | nothing on the programme names a style                                                                                                           | —     |
 | `BALLHAUS_WEDDING`     | `DOORS_TIME`       | the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event                                          | —     |
 | `BALLHAUS_WEDDING`     | `END_TIME`         | only the Wix Events pages state an end                                                                                                           | —     |
+| `BALLHAUS_WEDDING`     | `PER_EVENT_PAGE`   | an entry without a Wix Events page exists only on the programme page                                                                             | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
@@ -92,6 +94,7 @@ says so.
 | `CRACK_BELLMER`        | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
 | `CRACK_BELLMER`        | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `CRACK_BELLMER`        | `TICKET_URL`       | the venue links no ticket shop                                                                                                                   | —     |
+| `CRACK_BELLMER`        | `IMAGE`            | a night without a CMS poster renders the Webflow placeholder, so it has no image                                                                 | —     |
 | `DER_WEISSE_HASE`      | `PRICE`            | the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note                                    | —     |
 | `DER_WEISSE_HASE`      | `GENRE`            | the club publishes no genre; every night takes the club's Techno default                                                                         | —     |
 | `DER_WEISSE_HASE`      | `DOORS_TIME`       | the club publishes no doors time                                                                                                                 | —     |
@@ -229,6 +232,8 @@ says so.
 | `MASCHINENHAUS`        | `DOORS_TIME`       | the calendar states one time per event; only a few event texts add an Einlass time                                                               | —     |
 | `MASCHINENHAUS`        | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
 | `MASCHINENHAUS`        | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |
+| `MATRIX`               | `TICKET_URL`       | the only ticket link is the club's Eventbrite organiser page, never a per-night one                                                              | —     |
+| `MATRIX`               | `DOORS_TIME`       | the night states one `Einlass ab` time, which is taken as the start                                                                              | —     |
 | `MAX_SCHMELING_HALLE`  | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `MEHRINGHOF`           | `DOORS_TIME`       | the programme states one time per performance                                                                                                    | —     |
@@ -258,6 +263,8 @@ says so.
 | `MONSTER_RONSONS`      | `PRICE`            | the price lives in prose and is often a time-banded tariff, which the model has no field for                                                     | —     |
 | `MONSTER_RONSONS`      | `GENRE`            | the venue publishes no genre; every night takes the house's Karaoke                                                                              | —     |
 | `MONSTER_RONSONS`      | `ARTISTS`          | the venue bills no lineup beyond the host named in the title                                                                                     | —     |
+| `MONSTER_RONSONS`      | `TICKET_URL`       | entry is paid at the door; a night rarely links a ticket shop                                                                                    | —     |
+| `MONSTER_RONSONS`      | `IMAGE`            | the BOXHOPPING poster is a GIF whose black first frame is rejected as blank (#2669)                                                              | —     |
 | `MORPHINE`             | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `MORPHINE`             | `SOLD_OUT`         | the venue flags nothing sold out                                                                                                                 | —     |
 | `MORPHINE`             | `CANCELLATION`     | a dropped night is removed from the listing rather than flagged                                                                                  | —     |
@@ -476,4 +483,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`HEIMATHAFEN`, `MADAME_CLAUDE`, `MATRIX`, `QUASIMODO`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`
+`HEIMATHAFEN`, `MADAME_CLAUDE`, `QUASIMODO`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`
