@@ -37,5 +37,6 @@ val COMEDY_CAFE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.ARTISTS, "an improv night bills a team or a format, and its performers appear only in prose"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the API carries no ticket link; the shop is a widget on each event page"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the bar sells leftover tickets at a surcharge the site states once for every show"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club organises every show itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the club organises every show itself"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the club names no genre")
     )

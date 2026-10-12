@@ -1,8 +1,10 @@
 package de.norm.events.scraper.zitadelle
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
@@ -31,5 +33,8 @@ class ZitadelleWebsiteImporter(
     override val listsWholeProgramme: Boolean = true
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val ZITADELLE_LIMITATIONS = VenueLimitations(EventSource.ZITADELLE)
+val ZITADELLE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ZITADELLE,
+        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style")
+    )

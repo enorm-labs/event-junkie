@@ -46,5 +46,6 @@ class SchokoladenWebsiteImporter(
 val SCHOKOLADEN_LIMITATIONS =
     VenueLimitations(
         EventSource.SCHOKOLADEN,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints doors, show time and a ticket link, never a figure")
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints doors, show time and a ticket link, never a figure"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the genre comes only from a per-act `(genre, origin)` note; readings, parties and acts without one carry none")
     )

@@ -114,5 +114,6 @@ val MIGAS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the site links no ticket shop"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the two categories are formats; the style is only in the text")
     )

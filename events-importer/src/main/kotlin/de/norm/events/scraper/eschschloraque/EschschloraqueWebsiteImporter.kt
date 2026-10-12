@@ -41,5 +41,6 @@ val ESCHSCHLORAQUE_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
             "the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text")
     )

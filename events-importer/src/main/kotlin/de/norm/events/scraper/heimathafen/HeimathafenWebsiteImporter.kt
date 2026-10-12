@@ -1,9 +1,11 @@
 package de.norm.events.scraper.heimathafen
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.walkWpRestPages
@@ -88,5 +90,8 @@ class HeimathafenWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val HEIMATHAFEN_LIMITATIONS = VenueLimitations(EventSource.HEIMATHAFEN)
+val HEIMATHAFEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HEIMATHAFEN,
+        AcceptedLimitation(LimitedAspect.GENRE, "only a few `events_tag-*` slugs name a style, so shows and readings carry none")
+    )

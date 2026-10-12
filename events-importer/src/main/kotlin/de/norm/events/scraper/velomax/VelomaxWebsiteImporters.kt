@@ -90,7 +90,8 @@ val VELOMAX_LIMITATIONS =
             ),
         limitations =
             listOf(
-                AcceptedLimitation(LimitedAspect.PRICE, "the listing and the event pages print no figure; tickets are sold through outside shops")
+                AcceptedLimitation(LimitedAspect.PRICE, "the listing and the event pages print no figure; tickets are sold through outside shops"),
+                AcceptedLimitation(LimitedAspect.GENRE, "the listing and the event pages name no style, only tour prose")
             )
     )
 

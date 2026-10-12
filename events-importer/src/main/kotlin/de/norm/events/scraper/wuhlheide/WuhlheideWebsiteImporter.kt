@@ -51,5 +51,6 @@ class WuhlheideWebsiteImporter(
 val WUHLHEIDE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUHLHEIDE,
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the open-air pages name no style")
     )

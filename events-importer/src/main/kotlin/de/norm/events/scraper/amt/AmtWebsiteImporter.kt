@@ -46,5 +46,6 @@ val AMT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.START_TIME, "the month and event pages print a date but no clock time"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time"),
         AcceptedLimitation(LimitedAspect.PRICE, "the month pages leave the price cell out, and the event pages print no figure"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the event page carries icons and one picture shared by every night, no poster of its own")
+        AcceptedLimitation(LimitedAspect.IMAGE, "the event page carries icons and one picture shared by every night, no poster of its own"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style")
     )

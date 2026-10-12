@@ -1,10 +1,12 @@
 package de.norm.events.scraper.madameclaude
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.walkWpRestPages
@@ -84,5 +86,8 @@ class MadameClaudeWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val MADAME_CLAUDE_LIMITATIONS = VenueLimitations(EventSource.MADAME_CLAUDE)
+val MADAME_CLAUDE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MADAME_CLAUDE,
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue leaves its genre field empty on every event; style appears only in the description")
+    )
