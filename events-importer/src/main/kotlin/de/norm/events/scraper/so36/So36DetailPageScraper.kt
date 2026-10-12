@@ -297,6 +297,7 @@ private const val VENUE_NAME = "SO36"
  * `Qualitätspodcast`. A support line is never read this way, so `+ Festival Band` stays a concert.
  * A title that names a festival ([isFestivalTitle]) is one here already, so its roster is read (#2829).
  * A subtitle that bills one night of a run (`TAG 1 MIT …`, [dayLineup]) makes the night a festival too.
+ * A bingo night (`KIEZBINGO`, [BINGO_WORD]) is a hosted show, and its title is no act.
  */
 private fun refineBySubtitle(
     eventType: String,
@@ -309,7 +310,7 @@ private fun refineBySubtitle(
         isFestivalTitle(title) -> EventType.FESTIVAL.name
         isSupportLine(line) -> eventType
         FESTIVAL_WORD.containsMatchIn(line) || DAY_LINEUP.containsMatchIn(line) -> EventType.FESTIVAL.name
-        PODCAST_WORD.containsMatchIn(line) -> EventType.SHOW.name
+        PODCAST_WORD.containsMatchIn(line) || BINGO_WORD.containsMatchIn(title) -> EventType.SHOW.name
         CONVENTION_WORD.containsMatchIn(line) || PANEL_PREFIX.containsMatchIn(title) -> EventType.OTHER.name
         else -> eventType
     }
@@ -341,6 +342,9 @@ private val DAY_LINEUP = Regex("""^\s*(?:tag|day)\s*\d+\s+(?:mit|with)\s+""", Re
 
 /** A live podcast recording: `Qualitätspodcast mit Till Reiners und Moritz Neumeier`. */
 private val PODCAST_WORD = Regex("""podcast\b""", RegexOption.IGNORE_CASE)
+
+/** A bingo night, alone or as a compound's head: `KIEZBINGO`, `Bingo Night`. Not `Bingobongo`. */
+private val BINGO_WORD = Regex("""bingo\b""", RegexOption.IGNORE_CASE)
 
 /** A convention: `queere antifaschistische Tattoo Convention`. */
 private val CONVENTION_WORD = Regex("""\bconvention\b""", RegexOption.IGNORE_CASE)

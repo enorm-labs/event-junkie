@@ -84,6 +84,8 @@ class So36DetailPageScraperTest {
         typeAndActs("PANEL: ¡MASH-IT-UP! WE WERE ALWAYS THERE!", "BIPoC and FLINTA* Perspectives on 50 Years of Punk") shouldBe
             (EventType.OTHER.name to emptyList())
         typeAndActs("TALK OHNE GAST", "Qualitätspodcast mit Till Reiners und Moritz Neumeier") shouldBe (EventType.SHOW.name to emptyList())
+        typeAndActs("Bingo Night", "mit DJ Bingobongo") shouldBe (EventType.SHOW.name to emptyList())
+        typeAndActs("BINGOBONGO", "Live").first shouldBe EventType.CONCERT.name
         // A support line naming a festival band is still a concert.
         typeAndActs("POISON RUIN", "+ Festival Band").first shouldBe EventType.CONCERT.name
     }
@@ -298,6 +300,17 @@ class So36DetailPageScraperTest {
         // The venue cut `MIKE AND THE…` short, so that act is dropped.
         event.artists.map { it.name to it.role } shouldBe
             listOf("ULTIMO ASALTO", "VIOLENT TIMES", "TELEKOMA", "UNDERDOGZ", "GEWOHNHEITSTRINKER").map { it to "HEADLINER" }
+    }
+
+    @Test
+    fun `types a bingo night as a show and bills no act for it`() {
+        val url = "https://www.so36.com/produkte/100089-tickets-kiezbingo-so36-berlin-am-13-10-2026"
+        val event = scraper.scrape(fixture("so36-detail-bingo.html", url), url).shouldNotBeNull()
+
+        event.title shouldBe "KIEZBINGO"
+        event.subtitle shouldBe "Präsentiert von Inge Borg & Gisela Sommer"
+        event.eventType shouldBe EventType.SHOW.name
+        event.artists shouldBe emptyList()
     }
 
     @Test
