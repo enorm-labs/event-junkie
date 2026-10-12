@@ -91,6 +91,13 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `billsVarietyShow reads the show keywords and an ice show, not a bare show`() {
+        billsVarietyShow("Odeum Pro Wrestling Catche Diem 2026") shouldBe true
+        billsVarietyShow("Holiday on Ice") shouldBe true
+        billsVarietyShow("The Luxorium – Grand Varieté") shouldBe false
+    }
+
+    @Test
     fun `inferConcertVenueType detects an ice show`() {
         inferConcertVenueType("Holiday on Ice") shouldBe "SHOW"
         inferConcertVenueType("Disney On Ice präsentiert Mickys Magische Momente") shouldBe "SHOW"

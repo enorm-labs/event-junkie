@@ -44,6 +44,15 @@ class DelphiProgrammePageScraperTest {
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
+    private val variete: List<ScrapedEvent> by lazy {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/delphi/delphi-programm-variete.html")!!
+                .bufferedReader()
+                .readText()
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    }
+
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     @Test
@@ -108,10 +117,29 @@ class DelphiProgrammePageScraperTest {
     }
 
     @Test
-    fun `leaves an unlabelled row with no concert cue as OTHER`() {
-        val wrestling = credits.single { it.title == "Odeum Pro Wrestling Catche Diem 2026" }
-        wrestling.eventType shouldBe EventType.OTHER.name
+    fun `types an unlabelled wrestling night as a show and bills no act`() {
+        // The title has no dash, so no solo act is read off it (#3158).
+        val wrestling = credits.single { it.sourceId == "theater_im_delphi:546/2026-10-17-17:00" }
+        wrestling.eventType shouldBe EventType.SHOW.name
         wrestling.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types the Varieté and Performance labels as shows`() {
+        val luxorium = variete.filter { it.title == "The Luxorium – Grand Varieté" }
+        luxorium.map { it.sourceId } shouldBe
+            listOf(
+                "theater_im_delphi:553/2026-11-27-19:00",
+                "theater_im_delphi:553/2026-11-28-18:00",
+                "theater_im_delphi:553/2026-11-29-18:00"
+            )
+        luxorium.map { it.eventType }.distinct() shouldBe listOf(EventType.SHOW.name)
+        luxorium.first().genre.shouldBeNull()
+        // The troupe heads the title, as every variety house bills it (#315).
+        luxorium.first().artists.map { it.name } shouldBe listOf("The Luxorium")
+        val festival = variete.single { it.sourceId == "theater_im_delphi:551/2026-11-07-20:00" }
+        festival.eventType shouldBe EventType.SHOW.name
+        festival.artists.shouldBeEmpty()
     }
 
     @Test
