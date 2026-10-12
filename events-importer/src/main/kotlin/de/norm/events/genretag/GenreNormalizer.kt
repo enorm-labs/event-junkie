@@ -35,6 +35,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "deutschrock" to "Rock",
         "experimentalrock" to "Rock",
         "rawknroll" to "Rock",
+        // [lookupKey] strips the apostrophes, so "Rock´n´Roll", "Rock'n Roll" and "RocknRoll" share this key.
+        "rocknroll" to "Rock'n'Roll",
         "garagernr" to "Garage-Rock",
         "kraut" to "Krautrock",
         "krautrock" to "Krautrock",
@@ -58,9 +60,11 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "synthpop" to "Synthpop",
         "synthiepop" to "Synthpop",
         "synth" to "Synthpop",
+        "schlager" to "Schlager",
         // Punk
         "punk" to "Punk",
         "punkrock" to "Punk",
+        "ska" to "Ska",
         "emo" to "Emo",
         // Electropunk (folds the "Electropunk"/"Elektro-punk" spellings onto one tag)
         "electropunk" to "Electropunk",
@@ -82,6 +86,9 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "techno" to "Techno",
         "house" to "House",
         "ambient" to "Ambient",
+        // Collapsed from "Trip Hop" and "Digi Core" by [preNormalize], so the word-level match sees one word.
+        "triphop" to "Trip-Hop",
+        "digicore" to "Digicore",
         "newage" to "New Age",
         "afrohouse" to "House",
         "latinhouse" to "House",
@@ -111,6 +118,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "jazzfusion" to "Jazz",
         "latinjazz" to "Jazz",
         "blues" to "Blues",
+        "swing" to "Swing",
         // Folk
         "folk" to "Folk",
         "americana" to "Americana",
@@ -298,11 +306,17 @@ private val DRUM_AND_BASS_REGEX =
  */
 private val SINGER_SONGWRITER_REGEX = Regex("""\bsinger[\s/-]*songwriter(in)?\b""", RegexOption.IGNORE_CASE)
 
+/** Two-word genre names collapsed to one word, so "Instrumental Trip Hop" resolves word by word and "Digi Core" escapes the `core` veto. */
+private val TRIP_HOP_REGEX = Regex("""\btrip[\s-]+hop\b""", RegexOption.IGNORE_CASE)
+private val DIGICORE_REGEX = Regex("""\bdigi[\s-]+core\b""", RegexOption.IGNORE_CASE)
+
 /** Collapses delimiter-embedding genre names to a split-safe spelling before tokenization. */
 private fun preNormalize(rawGenre: String): String =
     rawGenre
         .replace(DRUM_AND_BASS_REGEX, "Drum'n'Bass")
         .replace(SINGER_SONGWRITER_REGEX, "Singer-Songwriter")
+        .replace(TRIP_HOP_REGEX, "Triphop")
+        .replace(DIGICORE_REGEX, "Digicore")
 
 /**
  * Suffixes appended to genre names in listings ("Hip Hop Floor", "Pop Disco Floor"), stripped
@@ -404,8 +418,15 @@ private fun resolveGenreOrNull(token: String): List<String>? {
     if (matched.isNotEmpty()) return matched
 
     // No synonym match: keep as a new genre only if it plausibly names one, so format labels never
-    // leak into genre_tag.
-    if (!looksLikeGenre(token)) return null
+    // leak into genre_tag. A dropped token still gives the genre a hyphen part names ("Jazz-Groove-Songs");
+    // a kept compound such as "Synth-Wave" is not split, or it would become Synthpop.
+    if (!looksLikeGenre(token)) {
+        return words
+            .flatMap { it.split('-') }
+            .mapNotNull { GENRE_SYNONYMS[lookupKey(it)] }
+            .distinct()
+            .ifEmpty { null }
+    }
     logger.info { "No synonym match for genre token '$token', using as-is" }
     val titleCased =
         token.split(" ").joinToString(" ") { word ->
