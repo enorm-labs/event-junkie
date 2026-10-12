@@ -28,7 +28,8 @@ val ABSTAND_LIMITATIONS =
             AcceptedLimitation(LimitedAspect.ARTISTS, "the bands are named only in free prose of no fixed shape"),
             AcceptedLimitation(LimitedAspect.IMAGE, "radar serves its poster files behind an anti-bot wall, which we do not pass"),
             AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets online"),
-            AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night")
+            AcceptedLimitation(LimitedAspect.DOORS_TIME, "radar gives one time per night"),
+            AcceptedLimitation(LimitedAspect.PRICE, "radar lists no price on most nights")
         ),
         houseGenre = "Punk"
     )
