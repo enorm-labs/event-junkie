@@ -215,13 +215,74 @@ class CassiopeiaDetailPageScraperTest {
     @ParameterizedTest
     @ValueSource(strings = ["presented by ATOK Berlin", "Präsentiert von: ATOK Berlin", "  presented   by ATOK Berlin "])
     fun `finds the promoter in a credit, in either language`(slot: String) {
-        presenterInGenreSlot(slot) shouldBe "ATOK Berlin"
+        presenterInCredit(slot) shouldBe "ATOK Berlin"
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["Noise", "Thrash Metal", "presented by", ""])
     fun `leaves a genre alone`(slot: String) {
-        presenterInGenreSlot(slot).shouldBeNull()
+        presenterInCredit(slot).shouldBeNull()
+    }
+
+    @Test
+    fun `reads a credit list in the description as the promoters`() {
+        // BSK, 2027: the last paragraph credits three presenters (#3166).
+        val url = "https://cassiopeia-berlin.de/event/bsk-111651972"
+        val event = scraper.scrape(Jsoup.parse(fixture("cassiopeia-detail-body-credit.html"), url), url).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf("Kidnap Music", "Audiolith Booking", "ROSA e.V.")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Präsentiert von Trinity Music | Trinity Music",
+            "präsentiert von Loft Concerts | Loft Concerts",
+            "präsentiert von: Kidnap Music, Audiolith | Kidnap Music;Audiolith",
+            "Presented by GreyZone Concerts & ATOK Berlin | GreyZone Concerts;ATOK Berlin"
+        ]
+    )
+    fun `reads a description paragraph the credit opens`(
+        credit: String,
+        expected: String
+    ) {
+        val html = buildDetailHtml("The Good The Bad And The Zugly", descriptionParagraphs = listOf("Punk aus Bern.", "Support: tba", credit))
+        val url = "https://cassiopeia-berlin.de/event/zugly-1"
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.promoters shouldContainExactly expected.split(";")
+        event.artists.map { it.name } shouldContainExactly listOf("The Good The Bad And The Zugly")
+    }
+
+    @Test
+    fun `reads no promoter from prose that mentions presenting`() {
+        val paragraphs =
+            listOf(
+                "Matze Rossi präsentiert sein neues Album live, presented by nobody but himself.",
+                "Die Band presents her new record — präsentiert von der eigenen Crew."
+            )
+        val html = buildDetailHtml("Matze Rossi Band", descriptionParagraphs = paragraphs)
+        val url = "https://cassiopeia-berlin.de/event/matze-rossi-band-1"
+
+        scraper
+            .scrape(Jsoup.parse(html, url), url)
+            .shouldNotBeNull()
+            .promoters
+            .shouldBeEmpty()
+    }
+
+    @Test
+    fun `lists a promoter credited in the genre slot and the description once`() {
+        val html =
+            buildDetailHtml("Thrash Talk", descriptionParagraphs = listOf("presented by ATOK Berlin"))
+                .replace(
+                    """<div class="subheading invert gap">Konzert</div>""",
+                    """<div class="subheading invert gap">Konzert</div><div>presented by ATOK Berlin</div>"""
+                )
+        val url = "https://cassiopeia-berlin.de/event/thrash-talk-1"
+
+        scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull().promoters shouldContainExactly listOf("ATOK Berlin")
     }
 
     @Test
