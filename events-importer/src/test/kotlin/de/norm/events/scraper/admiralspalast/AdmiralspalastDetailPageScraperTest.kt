@@ -11,6 +11,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -148,5 +151,85 @@ class AdmiralspalastDetailPageScraperTest {
     fun `returns nothing for a page without a schedule`() {
         val url = "https://www.admiralspalast.theater/veranstaltung/none.html"
         scraper.scrape(Jsoup.parse("<html><body></body></html>", url), url, null).shouldBeEmpty()
+    }
+
+    @ParameterizedTest(name = "{0} ({1})")
+    @MethodSource("billedTitles")
+    fun `bills the act a production title names, and none for a show title`(
+        title: String,
+        category: String,
+        expected: List<String>
+    ) {
+        billedNames(title, category) shouldBe expected
+    }
+
+    @Test
+    fun `bills a guest the title names after a support label as support`() {
+        val event = scrapeTitle("Chelsea Wolfe + Support: A.A. Williams - THE DARK World Tour", "Konzert")
+        event.artists.map { it.name to it.role } shouldBe listOf("Chelsea Wolfe" to "HEADLINER", "A.A. Williams" to "SUPPORT")
+    }
+
+    /** One performance row with [title] as its `<h2>`, in the markup the production page uses. */
+    private fun scrapeTitle(
+        title: String,
+        category: String
+    ): ScrapedEvent {
+        val url = "https://www.admiralspalast.theater/veranstaltung/fixture.html"
+        val html =
+            """
+            <div id="eventlist"><div class="item first even">
+            <div class="field date-time"><span class="value eventdate evDay">27</span>
+            <span class="value eventdate evMJ">Okt 2026</span><span class="value eventdate evWdT">Di, 20:00</span></div>
+            <div class="field city-venue"><span class="value eventname"><h2>$title</h2></span></div>
+            </div></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, url), url, category).single()
+    }
+
+    private fun billedNames(
+        title: String,
+        category: String
+    ): List<String> = scrapeTitle(title, category).artists.map { it.name }
+
+    private companion object {
+        /** Each production of #3150 as the venue titles it, and the acts it bills; the last rows must not change. */
+        @JvmStatic
+        fun billedTitles(): List<Arguments> =
+            listOf(
+                Arguments.of("Beyond the Horizon - The Sounds of Vangelis", "Konzert", emptyList<String>()),
+                Arguments.of("The Magic of Hans Zimmer – The Concert", "Konzert", emptyList<String>()),
+                Arguments.of("Let Me Entertain You - The Robbie Williams Show a night of greatest hits", "Konzert", emptyList<String>()),
+                Arguments.of("Game of Thrones & House of the Dragon - Das Konzert", "Konzert", emptyList<String>()),
+                Arguments.of(
+                    "Piano Man - A Tribute Concert to Billy Joel & St. Konrad Gospelchor Berlin",
+                    "Konzert",
+                    listOf("St. Konrad Gospelchor Berlin")
+                ),
+                Arguments.of("Soweto Gospel Choir - JOY! (Zulu: Injabulo)", "Konzert", listOf("Soweto Gospel Choir")),
+                Arguments.of("Maschine - Lieder mit klassischen Saiten & Streichquintett", "Konzert", listOf("Maschine")),
+                Arguments.of("Helmut Lotti goes Classic - 30th Anniversary Edition", "Konzert", listOf("Helmut Lotti")),
+                Arguments.of("Moka Efti Orchestra & Benno Fürmann - Der Vorhang fällt", "Konzert", listOf("Moka Efti Orchestra", "Benno Fürmann")),
+                Arguments.of("Karat 50+1", "Konzert", listOf("Karat")),
+                Arguments.of("Alexander Eder Unplugged - Die Akustik Tour Live mit Band", "Konzert", listOf("Alexander Eder")),
+                Arguments.of("Comedy Champions Slam - Kiezpoeten Berlin", "Comedy", emptyList<String>()),
+                // No structural cue; the class KDoc names both as the accepted cost.
+                Arguments.of("Kosmos & Orchester", "Konzert", listOf("Kosmos & Orchester")),
+                Arguments.of("Jahresausklang - Wo die Lerche singt", "Konzert", listOf("Jahresausklang")),
+                Arguments.of("Ólafur Arnalds - Falling Apart Together", "Konzert", listOf("Ólafur Arnalds")),
+                Arguments.of("Tom Gaebel & His Orchestra - A Swinging Christmas 2026", "Konzert", listOf("Tom Gaebel & His Orchestra")),
+                Arguments.of("Dirk Michaelis - Weihnachtstournee 2026", "Konzert", listOf("Dirk Michaelis")),
+                Arguments.of("Fischer-Z - 50th Anniversary Tour", "Konzert", listOf("Fischer-Z")),
+                // A bare `A Tribute to <X>` tail is the tribute act's own billing (#2882).
+                Arguments.of("THREE SIDES – A Tribute to Genesis", "Konzert", listOf("THREE SIDES")),
+                // The shared `Celebrating <X> –` frame bills the acts after the dash.
+                Arguments.of(
+                    "Celebrating Meat Loaf' - The Neverland Express with Andrew Polec",
+                    "Konzert",
+                    listOf("The Neverland Express with Andrew Polec")
+                ),
+                Arguments.of("Lacrimosa mit Orchester - Einzige und Exklusive Orchester-Show in Europa!", "Konzert", listOf("Lacrimosa")),
+                Arguments.of("Top Gun: Maverick – in Concert", "Konzert", emptyList<String>()),
+                Arguments.of("Bodo Wartke - Antigone", "Comedy", listOf("Bodo Wartke"))
+            )
     }
 }
