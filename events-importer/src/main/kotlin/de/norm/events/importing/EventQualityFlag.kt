@@ -7,8 +7,15 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.stereotype.Repository
 
-/** Why the sync gate kept a value out of an event. The names are the `event_quality_flag.kind` CHECK values (V100, V132). */
-enum class QualityFlagKind {
+/**
+ * Why an event carries an `event_quality_flag` row. The names are the `event_quality_flag.kind` CHECK values (V100, V132).
+ *
+ * Most kinds record a value the sync gate kept out of the event. A [forReview] kind records a cue for
+ * a person to read, and the event lost nothing, so the regression gate does not count it (#3148).
+ */
+enum class QualityFlagKind(
+    val forReview: Boolean = false
+) {
     /** An artist name with nothing a slug can keep, such as `-` (#1553). */
     SLUGLESS_ARTIST,
 
@@ -28,7 +35,12 @@ enum class QualityFlagKind {
      * A cue for a party feature that no clear phrase settles, such as a bare `FLINTA*` (#2631). The
      * value is the feature's slug, a colon and the cue in its words. Recorded by [EventFeatureSync].
      */
-    UNCERTAIN_PARTY_FEATURE
+    UNCERTAIN_PARTY_FEATURE(forReview = true);
+
+    companion object {
+        /** The [forReview] kinds as an SQL list, for a `NOT IN` in a constant query. A test holds it to the enum. */
+        const val REVIEW_KINDS_SQL = "'UNCERTAIN_PARTY_FEATURE'"
+    }
 }
 
 /** One value the sync gate kept out of [eventId], as the venue published it. */

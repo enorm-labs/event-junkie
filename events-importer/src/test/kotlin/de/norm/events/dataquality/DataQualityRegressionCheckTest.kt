@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.importing.QualityFlagKind
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -9,6 +10,8 @@ import java.time.LocalDate
 class DataQualityRegressionCheckTest {
     private val today = LocalDate.of(2026, 10, 9)
     private val genre = QualityIssue.MISSING_GENRE.key
+    private val flagged = QualityIssue.FLAGGED_AT_IMPORT.key
+    private val keptOut = DataQualityRegressionCheck.FLAGGED_AT_IMPORT_KEPT_OUT
 
     private fun row(
         daysAgo: Long,
@@ -132,9 +135,55 @@ class DataQualityRegressionCheckTest {
 
     @Test
     fun `every QualityIssue is checked`() {
-        val today = QualityIssue.entries.map { row(0, 50, metric = it.key) }
-        val history = QualityIssue.entries.flatMap { issue -> (1L..3L).map { row(it, 0, metric = issue.key) } }
+        val series = QualityIssue.KEYS - flagged + keptOut
+        val today = series.map { row(0, 50, metric = it) }
+        val history = series.flatMap { metric -> (1L..3L).map { row(it, 0, metric = metric) } }
 
-        DataQualityRegressionCheck.check(today, history).count { it.regressed } shouldBe QualityIssue.entries.size
+        DataQualityRegressionCheck
+            .check(today, history)
+            .filter { it.regressed }
+            .map { it.metric }
+            .toSet() shouldBe
+            QualityIssue.KEYS.toSet()
+    }
+
+    @Test
+    fun `new review flags alone are not a flaggedAtImport regression`() {
+        // SO36 on 2026-10-12: 10 % of its events newly flagged UNCERTAIN_PARTY_FEATURE, none kept out.
+        val today = listOf(row(0, 10, metric = flagged), row(0, 0, metric = keptOut))
+        val history = (1L..7L).flatMap { listOf(row(it, 0, metric = flagged), row(it, 0, metric = keptOut)) }
+
+        val verdict = DataQualityRegressionCheck.check(today, history).single()
+
+        verdict.metric shouldBe flagged
+        verdict.todayPct shouldBe 0.0
+        verdict.regressed shouldBe false
+    }
+
+    @Test
+    fun `new kept-out flags are still a flaggedAtImport regression`() {
+        val today = listOf(row(0, 12, metric = flagged), row(0, 12, metric = keptOut))
+        val history = (1L..7L).flatMap { listOf(row(it, 0, metric = flagged), row(it, 0, metric = keptOut)) }
+
+        val verdict = DataQualityRegressionCheck.check(today, history).single()
+
+        verdict.metric shouldBe flagged
+        verdict.todayPct shouldBe 12.0
+        verdict.regressed shouldBe true
+    }
+
+    @Test
+    fun `flaggedAtImport is not judged before its kept-out series has three days`() {
+        // The day the series starts, the history holds only the old flaggedAtImport rows.
+        val today = listOf(row(0, 50, metric = flagged), row(0, 50, metric = keptOut))
+        val history = (1L..7L).map { row(it, 0, metric = flagged) }
+
+        DataQualityRegressionCheck.check(today, history).single().baselinePct shouldBe null
+    }
+
+    @Test
+    fun `the review kinds in the snapshot query are the forReview kinds of the enum`() {
+        QualityFlagKind.REVIEW_KINDS_SQL shouldBe
+            QualityFlagKind.entries.filter { it.forReview }.joinToString(", ") { "'${it.name}'" }
     }
 }

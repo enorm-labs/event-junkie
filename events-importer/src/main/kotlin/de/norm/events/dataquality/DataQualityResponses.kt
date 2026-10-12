@@ -106,7 +106,14 @@ data class SourceQualityMetrics(
                 "The worklist entry names each value",
         example = "5"
     )
-    val flaggedAtImport: Long
+    val flaggedAtImport: Long,
+    @Schema(
+        description =
+            "The flaggedAtImport events that lost a value, without those flagged only for review " +
+                "(UNCERTAIN_PARTY_FEATURE). The regression alert judges this count (#3148)",
+        example = "4"
+    )
+    val flaggedAtImportKeptOut: Long
 )
 
 /** One event failing one metric, in the shape a steward needs to decide whether to open it. */

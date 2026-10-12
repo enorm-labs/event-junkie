@@ -23,6 +23,10 @@ import java.time.LocalDate
  * Every metric in [QualityIssue] counts something bad, so a rise is always the worse direction.
  * `totalEvents` and `suspectNonArtistTitles` are in the table too and are skipped: the first is the
  * denominator, and the second counts names rather than events.
+ *
+ * `flaggedAtImport` is judged on the [FLAGGED_AT_IMPORT_KEPT_OUT] series and reported under its own
+ * name (#3148). A review flag such as `UNCERTAIN_PARTY_FEATURE` fills a queue and costs the event
+ * nothing, so a new review kind must not read as a regression against a median from before it existed.
  */
 object DataQualityRegressionCheck {
     /** How far back the baseline reaches, today excluded. */
@@ -37,8 +41,15 @@ object DataQualityRegressionCheck {
     /** A rise of more than this many percentage points over the baseline is a regression. */
     const val MAX_WORSENING_POINTS = 10.0
 
+    /** The snapshot series of `flaggedAtImport` without the events flagged only for review. */
+    const val FLAGGED_AT_IMPORT_KEPT_OUT = "flaggedAtImportKeptOut"
+
     private const val PERCENT = 100.0
-    private val ISSUE_KEYS = QualityIssue.KEYS.toSet()
+
+    /** The metric each judged snapshot series is reported as. */
+    private val METRIC_OF_SERIES =
+        QualityIssue.KEYS.associateWith { it } - QualityIssue.FLAGGED_AT_IMPORT.key +
+            (FLAGGED_AT_IMPORT_KEPT_OUT to QualityIssue.FLAGGED_AT_IMPORT.key)
 
     /**
      * One judged source and metric.
@@ -61,7 +72,7 @@ object DataQualityRegressionCheck {
     fun baselineStart(today: LocalDate): LocalDate = today.minusDays(BASELINE_DAYS)
 
     /**
-     * One [Verdict] per [QualityIssue] row in [today], in the order of [today].
+     * One [Verdict] per judged [QualityIssue] row in [today], in the order of [today].
      *
      * [history] can hold any rows; only those of the [BASELINE_DAYS] days before the date of each
      * [today] row count. A row with zero events has no share and is ignored on both sides.
@@ -71,12 +82,9 @@ object DataQualityRegressionCheck {
         history: List<DataQualitySnapshotEntity>
     ): List<Verdict> {
         val shares =
-            history
-                .filter { it.metric in ISSUE_KEYS && it.totalEvents > 0 }
-                .groupBy { it.sourceSlug to it.metric }
+            judged(history).groupBy { it.sourceSlug to it.metric }
 
-        return today
-            .filter { it.metric in ISSUE_KEYS && it.totalEvents > 0 }
+        return judged(today)
             .map { row ->
                 val window = baselineStart(row.snapshotDate)..row.snapshotDate.minusDays(1)
                 val past =
@@ -94,6 +102,12 @@ object DataQualityRegressionCheck {
                 )
             }
     }
+
+    /** The rows of a judged series with a share, each renamed to the metric it is reported as. */
+    private fun judged(rows: List<DataQualitySnapshotEntity>): List<DataQualitySnapshotEntity> =
+        rows.mapNotNull { row ->
+            METRIC_OF_SERIES[row.metric]?.takeIf { row.totalEvents > 0 }?.let { row.copy(metric = it) }
+        }
 
     private fun share(row: DataQualitySnapshotEntity): Double = row.metricCount * PERCENT / row.totalEvents
 

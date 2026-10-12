@@ -155,6 +155,7 @@ class DataQualityReportLogger(
             QualityIssue.TITLE_DERIVED_SINGLETONS.key to source.titleDerivedSingletons,
             QualityIssue.TITLE_DERIVED_UNMATCHED.key to source.titleDerivedUnmatched,
             QualityIssue.FLAGGED_AT_IMPORT.key to source.flaggedAtImport,
+            DataQualityRegressionCheck.FLAGGED_AT_IMPORT_KEPT_OUT to source.flaggedAtImportKeptOut,
             SUSPECT_NON_ARTIST_TITLES to source.suspectNonArtistTitles
         )
 
