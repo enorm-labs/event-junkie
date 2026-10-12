@@ -336,7 +336,8 @@ run of failures. A 403 or 429 is bot protection or a rate limit refusing the cli
 line counts these refusals apart from the other skips. Any other 4xx or 5xx, and a DNS, TLS, connection or timeout
 fault, is a failure. Any URL that fails makes the venue fail.
 
-**A dead site is not a closed venue.** Three failures in a row log a `WARN` and put the venue on
+**A dead site is not a closed venue.** A first or second failure in a row logs an `INFO` line that names the venue.
+Three failures in a row log a `WARN` and put the venue on
 `GET /api/admin/venues/needs-review`. A `reviewed_at` later than `failing_since` takes it off the list. The pass writes
 neither `closed_on` nor `reviewed_at`: a person sets both. `POST /api/admin/venues/site-check` runs one pass now.
 

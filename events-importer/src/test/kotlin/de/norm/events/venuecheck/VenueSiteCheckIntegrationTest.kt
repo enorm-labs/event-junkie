@@ -93,15 +93,43 @@ class VenueSiteCheckIntegrationTest : BaseControllerTest() {
         }
 
     @Test
+    fun `a first failure logs one INFO line that names the venue, and an OK or skipped venue logs none`(): Unit =
+        runBlocking {
+            service().runOnce()
+
+            val line = appender.list.single { it.formattedMessage.startsWith("Venue site check: ") }
+            line.level shouldBe Level.INFO
+            line.formattedMessage shouldBe "Venue site check: dead-club failed (HTTP), 1 of 3 in a row"
+            line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf("url" to url("/dead"), "httpStatus" to 404)
+        }
+
+    @Test
+    fun `a failure without an HTTP status logs no httpStatus`(): Unit =
+        runBlocking {
+            insertVenue("gone-club", website = "http://127.0.0.1:1/")
+
+            service().runOnce()
+
+            val line = appender.list.single { it.formattedMessage.contains("gone-club") }
+            line.level shouldBe Level.INFO
+            line.formattedMessage shouldContain "1 of 3 in a row"
+            line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf("url" to "http://127.0.0.1:1/")
+        }
+
+    @Test
     fun `three failures in a row log a WARN and put the venue on the list the admin API returns`(): Unit =
         runBlocking {
             val service = service()
             repeat(2) { service.runOnce() }
             store.findNeedsReview(VenueSiteCheckService.REVIEW_THRESHOLD).shouldBeEmpty()
             appender.list.filter { it.level == Level.WARN }.shouldBeEmpty()
+            appender.list.filter { it.formattedMessage.contains("dead-club failed") }.map { it.formattedMessage } shouldBe
+                listOf("Venue site check: dead-club failed (HTTP), 1 of 3 in a row", "Venue site check: dead-club failed (HTTP), 2 of 3 in a row")
+            appender.list.clear()
 
             service.runOnce().shouldNotBeNull().needsReview shouldBe 1
 
+            appender.list.filter { it.formattedMessage.contains("dead-club") } shouldHaveSize 1
             val warn = appender.list.single { it.level == Level.WARN }
             warn.formattedMessage shouldContain "dead-club"
             warn.formattedMessage shouldContain "HTTP"

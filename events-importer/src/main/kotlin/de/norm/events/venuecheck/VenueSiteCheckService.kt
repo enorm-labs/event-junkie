@@ -83,11 +83,19 @@ class VenueSiteCheckService(
                     payload = mapOf(LogFields.URL to result.url, LogFields.HTTP_STATUS to result.httpStatus)
                 }
             }
-            if (result.outcome.isFailure && failures >= REVIEW_THRESHOLD) {
-                needsReview++
-                logger.at(Level.WARN) {
-                    message = "Venue site check: ${venue.slug} failed $failures times in a row (${result.outcome}), needs review"
-                    payload = listOfNotNull(LogFields.URL to result.url, result.httpStatus?.let { LogFields.HTTP_STATUS to it }).toMap()
+            if (result.outcome.isFailure) {
+                val failurePayload = listOfNotNull(LogFields.URL to result.url, result.httpStatus?.let { LogFields.HTTP_STATUS to it }).toMap()
+                if (failures >= REVIEW_THRESHOLD) {
+                    needsReview++
+                    logger.at(Level.WARN) {
+                        message = "Venue site check: ${venue.slug} failed $failures times in a row (${result.outcome}), needs review"
+                        payload = failurePayload
+                    }
+                } else {
+                    logger.at(Level.INFO) {
+                        message = "Venue site check: ${venue.slug} failed (${result.outcome}), $failures of $REVIEW_THRESHOLD in a row"
+                        payload = failurePayload
+                    }
                 }
             }
         }
