@@ -33,5 +33,6 @@ val A_TRANE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site sells one price online and holds reserved seats at that price"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "tickets sell in a shop inside the venue's own event card"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the sold-out line is printed on every night, booked out or not")
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the sold-out line is printed on every night, booked out or not"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the sidemen lines (`Feat:`, `WITH:`) bill no artists: double-barrelled names share their hyphens")
     )

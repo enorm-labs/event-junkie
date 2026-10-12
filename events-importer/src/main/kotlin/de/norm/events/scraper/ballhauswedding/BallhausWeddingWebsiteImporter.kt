@@ -16,7 +16,7 @@ import java.time.LocalDate
 
 /**
  * Website importer for Ballhaus Wedding: the `/veranstaltungen` programme, then the Wix Events page of each entry that
- * links one. About a third do; the others link a promoter's shop or nothing, and keep the programme's text.
+ * links one. About a third do; the others link a promoter's shop or nothing, and keep the programme's text and URL.
  *
  * It implements [EventImporter] directly because only some rows have a page of their own. The programme carries no
  * validators that cover the event pages, so every run reads it in full.
@@ -72,5 +72,6 @@ val BALLHAUS_WEDDING_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "only the entries with a Wix Events page have a poster; the programme has none"),
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the programme names a style"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one house rule, doors 45 minutes before a seated show, and no doors time per event"),
-        AcceptedLimitation(LimitedAspect.END_TIME, "only the Wix Events pages state an end")
+        AcceptedLimitation(LimitedAspect.END_TIME, "only the Wix Events pages state an end"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "an entry without a Wix Events page exists only on the programme page")
     )

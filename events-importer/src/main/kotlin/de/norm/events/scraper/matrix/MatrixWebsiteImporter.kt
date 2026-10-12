@@ -1,9 +1,11 @@
 package de.norm.events.scraper.matrix
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.LogContext
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Component
  * nights, at most one week ahead. A page that shows no date yields no night. A page that fails
  * costs that night only, and the run reports itself incomplete, so the stale cleanup keeps the
  * stored row.
+ *
+ * The only ticket link is the club's Eventbrite organiser page, so no night stores one.
  *
  * The importer reads no second language: the English pages' text matches the German closely
  * enough that the upsert stores none.
@@ -104,5 +108,9 @@ private class NightPage(
     val event: ScrapedEvent?
 )
 
-/** Nothing this source withholds needs declaring (#715). */
-val MATRIX_LIMITATIONS = VenueLimitations(EventSource.MATRIX)
+val MATRIX_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MATRIX,
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the only ticket link is the club's Eventbrite organiser page, never a per-night one"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the night states one `Einlass ab` time, which is taken as the start")
+    )

@@ -37,8 +37,8 @@ import java.time.Clock
  * stored last time. The CMS recycles entries, so two cards may link one page, which is read once.
  *
  * **Not published**: no doors time (one time per night, taken as the start), no presale price,
- * no genre, no lineup beyond the host in the title. The private karaoke boxes running all
- * evening appear nowhere — the listing is the main stage only.
+ * no genre, no lineup beyond the host, rarely a ticket link. The private karaoke boxes running
+ * all evening appear nowhere — the listing is the main stage only.
  *
  * @see MonsterRonsonsOverviewPageScraper for the listing parsing logic.
  * @see MonsterRonsonsDetailPageScraper for the night-page parsing logic.
@@ -110,5 +110,7 @@ val MONSTER_RONSONS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the price lives in prose and is often a time-banded tariff, which the model has no field for"),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the house's Karaoke"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door; a night rarely links a ticket shop"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the BOXHOPPING poster is a GIF whose black first frame is rejected as blank (#2669)"),
         houseGenre = "Karaoke"
     )
