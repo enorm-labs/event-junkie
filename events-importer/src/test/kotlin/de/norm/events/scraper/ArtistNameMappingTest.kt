@@ -655,15 +655,19 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Sesh Clara Cuve invites") shouldBe true
         isNonArtistEvent("Hosts Invite") shouldBe true
         headlinersFromTitle("Not Stereo Invites").shouldBeEmpty()
+        headlinersFromTitle("Tresor invites Surgeon").map { it.name } shouldBe listOf("Tresor invites Surgeon")
     }
 
     @Test
-    fun `isNonArtistEvent keeps a name with an act after invites`() {
+    fun `isNonArtistEvent keeps a name with an act after invites, and the title splits host from guest`() {
         isNonArtistEvent("Tony Hurdle Invites TC The 3RD") shouldBe false
         isNonArtistEvent("FLUXO INVITES EBONY") shouldBe false
         isNonArtistEvent("Invitees") shouldBe false
         isNonArtistEvent("Uninvited") shouldBe false
-        headlinersFromTitle("Tony Hurdle Invites TC The 3RD").map { it.name } shouldBe listOf("Tony Hurdle Invites TC The 3RD")
+        headlinersFromTitle("Tony Hurdle Invites TC The 3RD").map { it.name } shouldBe listOf("Tony Hurdle", "TC The 3RD")
+        headlinersFromTitle("Not Stereo Invites").shouldBeEmpty()
+        headlinersFromTitle("Tresor invites Surgeon").map { it.name } shouldBe listOf("Tresor invites Surgeon")
+        headlinersFromTitle("Invitees").map { it.name } shouldBe listOf("Invitees")
     }
 
     // --- splitSegmentOnConjunctions ---
@@ -2148,6 +2152,42 @@ class ArtistNameMappingTest {
 
     // #1761 — the bracket shapes staging stored on upcoming events, and the brackets that are the name.
     @Test
+    fun `stripArtistSuffix drops a number that tells same-named acts apart`() {
+        stripArtistSuffix("SiSi (2)") shouldBe "SiSi"
+        stripArtistSuffix("Emma (8)") shouldBe "Emma"
+        stripArtistSuffix("Jakob Seidensticker & Melina (3)") shouldBe "Jakob Seidensticker & Melina"
+        stripArtistSuffix("(3)") shouldBe "(3)"
+        stripArtistSuffix("Prince (1999)") shouldBe "Prince (1999)"
+        stripArtistSuffix("Blink-182") shouldBe "Blink-182"
+    }
+
+    @Test
+    fun `stripArtistSuffix drops an alias that the venue bills on its own`() {
+        stripArtistSuffix("CFL (AKA KRUMELUR)") shouldBe "CFL"
+        stripArtistSuffix("Inthelinbo (Aka Anaïs-Lin)") shouldBe "Inthelinbo"
+        stripArtistSuffix("Foo (a.k.a.Bar)") shouldBe "Foo"
+        stripArtistSuffix("Bar (Akasha)") shouldBe "Bar (Akasha)"
+        stripArtistSuffix("U.e. (Ulla)") shouldBe "U.e. (Ulla)"
+    }
+
+    @Test
+    fun `stripArtistSuffix drops a performance format, a backing band and a show title`() {
+        stripArtistSuffix("Nicole M Pikole (Drag)") shouldBe "Nicole M Pikole"
+        stripArtistSuffix("Creature (duo set)") shouldBe "Creature"
+        stripArtistSuffix("Dice Actors Live on Stage") shouldBe "Dice Actors"
+        stripArtistSuffix("Live on Stage") shouldBe "Live on Stage"
+        stripArtistSuffix("Guy Offenbach (& Original Karaoke Band)") shouldBe "Guy Offenbach"
+        stripArtistSuffix("Los Refrescos (Dandy Jack & Argenis Brito)") shouldBe "Los Refrescos (Dandy Jack & Argenis Brito)"
+        stripArtistSuffix("SHADEN (أنا إمرأة تعبانة) Show") shouldBe "SHADEN"
+        stripArtistSuffix("The Rocky Horror Show") shouldBe "The Rocky Horror Show"
+        stripArtistSuffix("TUTTI BOUNCE - 360 ° (Live) Show") shouldBe "TUTTI BOUNCE - 360 ° (Live) Show"
+        stripArtistSuffix("Potsa Lotsa XL - Pizza Lotsa") shouldBe "Potsa Lotsa XL"
+        stripArtistSuffix("BAD COMPANY LEGACY - Dave Colwell") shouldBe "BAD COMPANY LEGACY - Dave Colwell"
+        stripArtistSuffix("YOK - pocketpunk spielt FUCK 10 CHECK") shouldBe "YOK"
+        stripArtistSuffix("Das Kapital spielt Hanns Eisler") shouldBe "Das Kapital"
+    }
+
+    @Test
     fun `stripArtistSuffix drops an annotation bracket and keeps a bracket that is the name`() {
         stripArtistSuffix("Flow Rea (Est)") shouldBe "Flow Rea"
         stripArtistSuffix("goat (jp)") shouldBe "goat"
@@ -2161,7 +2201,6 @@ class ArtistNameMappingTest {
 
         stripArtistSuffix("Maynd (Chi)") shouldBe "Maynd (Chi)"
         stripArtistSuffix("Luca Saporito (Audiofly)") shouldBe "Luca Saporito (Audiofly)"
-        stripArtistSuffix("SiSi (2)") shouldBe "SiSi (2)"
         stripArtistSuffix("All(h)ours") shouldBe "All(h)ours"
         stripArtistSuffix("Go(ø)d Trip") shouldBe "Go(ø)d Trip"
         stripArtistSuffix("Kreisfrequenz ((ω))") shouldBe "Kreisfrequenz ((ω))"

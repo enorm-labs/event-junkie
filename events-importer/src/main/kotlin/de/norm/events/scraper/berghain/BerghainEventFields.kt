@@ -3,6 +3,7 @@ package de.norm.events.scraper.berghain
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.isNonArtistName
 
 /**
@@ -108,8 +109,14 @@ private const val KANTINE_MARKER = "Kantine"
 internal fun splitSlot(text: String): List<String> =
     text
         .split(SLOT_SEPARATOR)
-        .map { it.replace(SLOT_DESCRIPTION, "").trim() }
+        .map { it.replace(SLOT_DESCRIPTION, "").replace(SLOT_WORK, "").trim() }
         .filter { it.isNotBlank() && !isNonArtistName(it) }
+
+/**
+ * The work an act presents in its slot: `Robert Henke presents Dust`. The performer opens a Berghain slot, so the
+ * tail is the piece; a title elsewhere can open with a label instead, which is why this rule is the venue's.
+ */
+private val SLOT_WORK = Regex("""\s+(?:$PRESENTS_VERBS)\s+\S.*$""", RegexOption.IGNORE_CASE)
 
 /**
  * What Kantine writes after a name to describe the slot, not the act: `Booty Carrell DJ (Vinyl)

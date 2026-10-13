@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -287,5 +288,17 @@ class OhmOverviewPageScraperTest {
     fun `returns an empty list for a page without an event list`() {
         val document = Jsoup.parse("<html><body><section class='events'></section></body></html>", baseUrl)
         OhmOverviewPageScraper(captureClock).scrape(document, baseUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills each act a room heads in brackets on that room`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/ohm/ohm-overview.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("Rafush", "Vorraum (Harba &amp; Delta Division Live)")
+        val ouch = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Ouch x FemmeDecks" }
+        ouch.artists.takeLast(2) shouldBe listOf(ScrapedArtist("Harba", "LIVE", stage = "Vorraum"), ScrapedArtist("Delta Division", "LIVE", stage = "Vorraum"))
     }
 }

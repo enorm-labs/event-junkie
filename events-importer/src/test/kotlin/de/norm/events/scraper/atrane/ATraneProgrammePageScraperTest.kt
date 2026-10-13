@@ -262,4 +262,14 @@ class ATraneProgrammePageScraperTest {
         ruppnig.descriptionAlt.shouldBeNull()
         ruppnig.description.shouldNotBeNull() shouldContain "ENGLISH:"
     }
+
+    @Test
+    fun `drops the club's own name from a homecoming title`() {
+        val homecoming = fixture().replace("VIGNOLO-MUELLER", "JC DOOK BACK AT A-TRANE")
+        val night = ATraneProgrammePageScraper().scrape(Jsoup.parse(homecoming, sourceUrl)).single { it.eventDate == LocalDate.of(2026, 10, 13) }
+        night.artists
+            .first()
+            .name
+            .lowercase() shouldBe "jc dook"
+    }
 }

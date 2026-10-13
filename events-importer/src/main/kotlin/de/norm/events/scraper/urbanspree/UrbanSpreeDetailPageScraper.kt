@@ -91,7 +91,10 @@ class UrbanSpreeDetailPageScraper {
                 doorsAndStart != null -> doorsAndStart.second
                 else -> heroStart
             }
-        val titleArtists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
+        // `DJ JONAS POPPE (OUM SHATT)`: a DJ billed with the band he sings in, which is an affiliation, not his name.
+        val titleArtists =
+            buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
+                .map(::withoutDjAffiliation)
         // A club night filed under Concerts names no act in its title; its DJs are in the running order.
         val djSets = if (titleArtists.isEmpty()) urbanSpreeDjSets(description) else emptyList()
         // A co-branded night with no running order names its acts in one prose sentence (#2350).
@@ -203,3 +206,10 @@ class UrbanSpreeDetailPageScraper {
             DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH)
     }
 }
+
+/** The artist without the band a DJ is billed with. */
+private fun withoutDjAffiliation(artist: ScrapedArtist): ScrapedArtist =
+    DJ_AFFILIATION.matchEntire(artist.name)?.let { artist.copy(name = it.groupValues[1]) } ?: artist
+
+/** A DJ name with a trailing bracket: `DJ JONAS POPPE (OUM SHATT)`. */
+private val DJ_AFFILIATION = Regex("""^(dj\s+[^()]+?)\s*\([^()]+\)\s*$""", RegexOption.IGNORE_CASE)

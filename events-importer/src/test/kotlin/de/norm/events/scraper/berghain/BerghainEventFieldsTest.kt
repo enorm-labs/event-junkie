@@ -40,4 +40,11 @@ class BerghainEventFieldsTest {
         floorsToGenre(emptyList()).shouldBeNull()
         floorsToGenre(listOf("Halle")).shouldBeNull()
     }
+
+    @Test
+    fun `a slot keeps the act and drops the work it presents`() {
+        splitSlot("Robert Henke presents Dust") shouldBe listOf("Robert Henke")
+        splitSlot("Agata B2B Cunt Remember") shouldBe listOf("Agata", "Cunt Remember")
+        splitSlot("Blasha & Allatt") shouldBe listOf("Blasha & Allatt")
+    }
 }

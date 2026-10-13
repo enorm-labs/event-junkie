@@ -544,4 +544,14 @@ class GretchenOverviewPageScraperTest {
         events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
         warnings shouldHaveSize 1
     }
+
+    @Test
+    fun `splits the guests a credit after ft names`() {
+        html =
+            html.replace(
+                "Tulipa Ruiz  (ONErpm/BR) *live*",
+                "Àbáse  ft. special guests: Kacsó Hanga &amp; Otis Sandsjö (Analogue Foundation &amp; Oshu Records/HU/D ) *live*"
+            )
+        eventWithId("3492").artists.map { it.name } shouldContainExactly listOf("Àbáse", "Kacsó Hanga", "Otis Sandsjö")
+    }
 }

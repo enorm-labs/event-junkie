@@ -249,4 +249,15 @@ class UrbanSpreeDetailPageScraperTest {
         event.doorsTime.shouldBeNull()
         event.startTime shouldBe LocalTime.of(19, 0)
     }
+
+    @Test
+    fun `scrape drops the band a DJ is billed with`() {
+        val doc = fixture("urbanspree-detail-concert.html", concertUrl)
+        doc.allElements.forEach { e -> e.textNodes().forEach { t -> t.text(t.text().replace("TWIN NOIR + HINFORT", "NAARI + DJ JONAS POPPE (OUM SHATT)")) } }
+        scraper
+            .scrape(doc, concertUrl)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name } shouldContainExactly listOf("NAARI", "DJ JONAS POPPE")
+    }
 }

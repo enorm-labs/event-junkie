@@ -10,6 +10,7 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import de.norm.events.slug.SlugGenerator
@@ -120,6 +121,7 @@ class OhmOverviewPageScraper(
      * A line wholly in square
      * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
      * A set length in round brackets (`Pariah (4h set)`) comes off the act, or it mints a second one (#2439).
+     * A room heading its acts in brackets (`Vorraum (Harba & Delta Division Live)`) bills each act on that stage.
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
         var inTalk = false
@@ -132,7 +134,14 @@ class OhmOverviewPageScraper(
             }.filterNot { SET_NOTE.matches(it) }
             .map { it.replace(SET_LENGTH_NOTE, "").trim() }
             .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
-            .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "LIVE" else "DJ") }
+            .flatMap(::lineupEntries)
+    }
+
+    private fun lineupEntries(line: String): List<ScrapedArtist> {
+        val room = ROOM_GROUP.matchEntire(line) ?: return listOf(ScrapedArtist(line, if (LIVE_ANNOTATION.containsMatchIn(line)) "LIVE" else "DJ"))
+        val (stage, acts) = room.destructured
+        val role = if (LIVE_WORD.containsMatchIn(acts)) "LIVE" else "DJ"
+        return splitSegmentOnConjunctions(acts).map { ScrapedArtist(it.replace(LIVE_WORD, "").trim(), role, stage = stage) }
     }
 }
 
@@ -154,6 +163,12 @@ private val SECTION_HEADING = Regex("""\[\s*\d{1,2}[:.]\d{2}\s*]\s*$""")
 
 /** A heading whose part is spoken, not played: `Panel Talk [ 20:00 ]`. */
 private val TALK_HEADING = Regex("""\b(?:talk|panel|lecture|discussion|vortrag|gespräch|lesung)\b""", RegexOption.IGNORE_CASE)
+
+/** A room of the club in front of the acts it hosts: `Vorraum (Harba & Delta Division Live)`. */
+private val ROOM_GROUP = Regex("""^(Vorraum)\s*\((.+)\)\s*$""", RegexOption.IGNORE_CASE)
+
+/** A trailing `Live` on an act inside a [ROOM_GROUP]. */
+private val LIVE_WORD = Regex("""\s+live\s*$""", RegexOption.IGNORE_CASE)
 
 /** A bracket marking a live act: `(OPERA live)`, `(live)`. */
 private val LIVE_ANNOTATION = Regex("""\([^()]*\blive\b[^()]*\)""", RegexOption.IGNORE_CASE)

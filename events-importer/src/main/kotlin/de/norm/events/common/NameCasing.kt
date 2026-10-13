@@ -131,7 +131,9 @@ private val ACRONYMS: Set<String> =
         // (Berghain), `Joe BRT` (Club der Visionäre), `DJ TC` (Matrix).
         "UVB",
         "BRT",
-        "TC"
+        "TC",
+        // `Potsa Lotsa XL` (Maschinenhaus).
+        "XL"
     )
 
 /**

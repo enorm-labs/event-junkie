@@ -163,11 +163,12 @@ private val EXHIBITION_TITLE_KEYWORDS =
 
 /**
  * Title keywords marking a non-musical format with no more specific type ([EventType.OTHER]):
- * markets.
+ * markets, and a talk whose guest visits its host (`… - Robert Habeck zu Gast bei Maja Göpel`).
  */
 private val NON_CONCERT_TITLE_KEYWORDS =
     listOf(
-        "markt"
+        "markt",
+        "zu gast bei"
     )
 
 /**

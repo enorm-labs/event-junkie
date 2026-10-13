@@ -111,7 +111,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
     fun `splits co-billed and back-to-back slots but keeps parenthesised names whole`() {
         val discoSour = clubEvents.first { it.sourceId == "club_der_visionaere:41775" }
         // "// Yapacc & Pakkadej LIVE" → two live acts; the bracketed member list of
-        // "Los Refrescos (…)" is one act, and the "(3)" Resident Advisor disambiguator stays.
+        // "Los Refrescos (…)" is one act, and the "(3)" Resident Advisor disambiguator comes off.
         discoSour.artistNames() shouldContainExactly
             listOf(
                 "James Dean Brown",
@@ -123,7 +123,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
                 "himeee",
                 "Push EBP",
                 "Ponura",
-                "Dimitrios (3)"
+                "Dimitrios"
             )
 
         // "// XDB b2b Onirik" → two DJs; "// Ctrl+Opt & Gwenan" splits at the conjunction
