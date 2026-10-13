@@ -36,9 +36,10 @@ import java.time.MonthDay
  * 2. **The clock mixes 24-hour readings with a real meridiem, and glues `pm` onto both.**
  * "06:00pm" is 18:00 (the shop page agrees) and "2:00 p.m." is 14:00, whereas "16:00pm" and
  * "23:00pm" are already 24-hour. So the meridiem counts up to twelve and is ignored above it —
- * except where the stated end exposes it as decoration: "11:00pm – 17:00pm" is a daytime
- * event, because a start after its own end is not a night. An overnight run is written "until
- * late", never as a time, so the rule has no overnight case to get wrong.
+ * except where an end after noon exposes it as decoration: "11:00pm – 17:00pm" is a daytime
+ * event, because a start after its own end is not a night. An end up to noon is no such proof,
+ * so "11pm to 2am" stays overnight. Since October 2026 a bare hour carries the meridiem too:
+ * "from 7pm until late" (#3201).
  * 3. **The weekday label is unreliable** and not read: the venue writes "Thu. 05.08.2026" for
  * a Wednesday. A year-less date takes the nearest occurrence outright, not the nearest on the
  * stated weekday — [inferYearForWeekday] with no weekday.
@@ -167,9 +168,9 @@ class MaayaOverviewPageScraper(
     private fun MatchResult.digits(group: String): Int = checkNotNull(groups[group]).value.toInt()
 
     /**
-     * The start and, when stated after `to`/`–`/`until`, the end of the schedule line. The end is
-     * kept only when it follows the start on the same day; a start after its own end had a
-     * decorative meridiem (see the class KDoc) and is re-read without it.
+     * The start and, when stated after `to`/`–`/`until`, the end of the schedule line. A start after
+     * its own end had a decorative meridiem (see the class KDoc) and is re-read without it, unless
+     * that end is up to noon: then the run is overnight.
      */
     private fun parseTimes(schedule: String): Pair<LocalTime?, LocalTime?> {
         val start = TIME_PATTERN.find(schedule) ?: return null to null
@@ -177,7 +178,7 @@ class MaayaOverviewPageScraper(
         val startTime = clockTime(start)
         return when {
             end == null -> startTime to null
-            startTime <= end -> startTime to end
+            startTime <= end || end.hour <= NOON -> startTime to end
             else -> clockTime(start, meridiem = false) to end
         }
     }
@@ -196,7 +197,7 @@ class MaayaOverviewPageScraper(
                 suffix.startsWith('a', ignoreCase = true) && plain == NOON -> 0
                 else -> plain
             }
-        return LocalTime.of(resolved, minute.toInt())
+        return LocalTime.of(resolved, minute.ifEmpty { "0" }.toInt())
     }
 
     private companion object {
@@ -230,11 +231,15 @@ class MaayaOverviewPageScraper(
          */
         val DATE_PATTERN = Regex("""(?<day>\d{1,2})(?:/(?<lastDay>\d{1,2}))?\.(?<month>\d{1,2})(?:\.(?<year>\d{4}))?""")
 
-        /** One clock reading with its optional meridiem: `16:00pm`, `2:00 p.m.`, `14:00`. */
-        val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})\s*([ap]\.?m\.?)?""", RegexOption.IGNORE_CASE)
+        /**
+         * One clock reading with its optional meridiem: `16:00pm`, `2:00 p.m.`, `14:00`. A bare hour
+         * needs the meridiem, `7pm`, `11 pm` or `8 p.m.`, or "2 amazing nights" would read as 2 a.m.
+         */
+        val TIME_PATTERN =
+            Regex("""(?<!\d)(\d{1,2})(?=:\d{2}|\s*[ap]\.?m(?![a-z]))(?::(\d{2}))?\s*([ap]\.?m\.?)?""", RegexOption.IGNORE_CASE)
 
         /** What introduces the end of the range; `and from` introduces a second start and is not matched. */
-        val END_PATTERN = Regex("""(?:\bto\b|\buntil\b|[–-])\s*(\d{1,2}:\d{2}\s*(?:[ap]\.?m\.?)?)""", RegexOption.IGNORE_CASE)
+        val END_PATTERN = Regex("""(?:\bto\b|\buntil\b|[–-])\s*(\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?)""", RegexOption.IGNORE_CASE)
 
         const val NOON = 12
     }

@@ -11,6 +11,8 @@ import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -279,6 +281,90 @@ class MaayaOverviewPageScraperTest {
                     sourceUrl
                 )
             shouldThrow<IllegalStateException> { scraper.scrape(doc, sourceUrl) }
+        }
+    }
+
+    // October 2026: a bare hour with a meridiem beside the colon readings (#3201).
+    @Nested
+    inner class BareHourPage {
+        private val scraper = MaayaOverviewPageScraper(Clock.fixed(Instant.parse("2026-10-13T12:00:00Z"), ZoneOffset.UTC))
+
+        private val events: List<ScrapedEvent> by lazy {
+            val html =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-10.html")!!
+                    .bufferedReader()
+                    .readText()
+            scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+        }
+
+        private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
+
+        @Test
+        fun `reads a bare hour with a meridiem`() {
+            // "Fri. 16.10 from 7pm until late"
+            val festival = event("maaya:2026-10-16-maaya-meets-festival-of-lights")
+            festival.startTime shouldBe LocalTime.of(19, 0)
+            festival.endTime.shouldBeNull()
+            // "Sat. 17.10 from 8pm to 10pm"
+            val concert = event("maaya:2026-10-17-concert-caipirinha-society")
+            concert.startTime shouldBe LocalTime.of(20, 0)
+            concert.endTime shouldBe LocalTime.of(22, 0)
+            concert.endDate shouldBe LocalDate.of(2026, 10, 17)
+            // "Sat. 17.10 from 11pm until late"
+            event("maaya:2026-10-17-nairobi-night").startTime shouldBe LocalTime.of(23, 0)
+        }
+
+        @Test
+        fun `reads the colon readings on the same page as before`() {
+            // "Fri. 23.10 from 21:00 to 02:00" — overnight, so the end is on the next day.
+            val soul = event("maaya:2026-10-23-strictly-soul")
+            soul.startTime shouldBe LocalTime.of(21, 0)
+            soul.endTime shouldBe LocalTime.of(2, 0)
+            soul.endDate shouldBe LocalDate.of(2026, 10, 24)
+            // "Sat. 31.10 from 23:00pm until late"
+            event("maaya:2026-10-31-maaya-halloween").startTime shouldBe LocalTime.of(23, 0)
+        }
+
+        @Test
+        fun `every card survives the persistence boundary`() {
+            events shouldHaveSize 5
+            events.forEach { it.toEventEntity(venueId = 1L, venueSlug = "maaya", eventSourceId = 1L) }
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            delimiter = '|',
+            nullValues = ["-"],
+            value = [
+                "from 11 pm until late | 23:00 | -",
+                "from 8 p.m. to 11 p.m. | 20:00 | 23:00",
+                "from 23:00pm until late | 23:00 | -",
+                "from 21:00 to 02:00 | 21:00 | 02:00",
+                "from 11pm to 2am | 23:00 | 02:00",
+                "from 11:00pm – 17:00pm | 11:00 | 17:00",
+                "from 12pm to 5pm | 12:00 | 17:00",
+                "2 amazing nights from 9pm | 21:00 | -",
+                "from 7 until late | - | -"
+            ]
+        )
+        fun `reads the clock in every shape the venue writes`(
+            clock: String,
+            start: String?,
+            end: String?
+        ) {
+            val doc =
+                Jsoup.parse(
+                    """<section class="elementor-top-section"><section id="events">
+                    <section class="elementor-inner-section"><div class="elementor-column"><div class="elementor-widget-wrap">
+                    <div class="elementor-widget-heading"><h3 class="elementor-heading-title">SUPAFLY</h3></div>
+                    <div class="elementor-widget-text-editor"><p>Sat. 17.10 $clock</p></div>
+                    </div></div></section></section></section>""",
+                    sourceUrl
+                )
+            val night = scraper.scrape(doc, sourceUrl).single()
+            night.startTime shouldBe start?.let(LocalTime::parse)
+            night.endTime shouldBe end?.let(LocalTime::parse)
         }
     }
 }
