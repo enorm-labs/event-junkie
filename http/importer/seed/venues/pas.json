@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "PAS",
+        "address": "Kaiserin-Augusta-Allee 101",
+        "city": "Berlin",
+        "postalCode": "10553",
+        "district": "tiergarten",
+        "latitude": 52.524999,
+        "longitude": 13.319828,
+        "websiteUrl": "https://pas-berlin.org/",
+        "instagramUrl": "https://www.instagram.com/pas_berlin/",
+        "description": "Petersburg Art Space, an art space with an open bar on the Spree in Moabit, hosting concerts, performances, readings, film evenings and exhibitions beside an artist residency.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Petersburg Art Space, ein Kunstraum mit offener Bar an der Spree in Moabit, mit Konzerten, Performances, Lesungen, Filmabenden und Ausstellungen neben einem Residenzprogramm.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://pas-berlin.org/programme/",
+        "reviewedAt": "2026-10-13T18:00:00Z"
+    },
+    "sources": []
+}

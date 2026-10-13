@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "MUENZE",
+        "address": "Molkenmarkt 2",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.516129,
+        "longitude": 13.409077,
+        "websiteUrl": "https://muenze-club.de/",
+        "instagramUrl": "https://www.instagram.com/muenze_berlin/",
+        "description": "A techno club inside the Alte Münze cultural quarter on the Spree, hosting club nights by Berlin collectives such as HEISSS.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Techno-Club im Kulturquartier Alte Münze an der Spree, mit Clubnächten Berliner Kollektive wie HEISSS.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club"],
+        "programmeUrl": "https://ra.co/clubs/23260",
+        "reviewedAt": "2026-10-13T18:00:00Z"
+    },
+    "sources": []
+}
