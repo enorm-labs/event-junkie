@@ -210,7 +210,7 @@ internal class Bogen47ApiScraper(
                     soldOut = soldOut,
                     status = status,
                     artists = artistsFrom(title, eventType),
-                    promoters = listOfNotNull(acf.stringOrNull("event_organizer"))
+                    promoters = organizers(acf.stringOrNull("event_organizer"))
                 ),
             featuredMediaId = post.path("featured_media").asLong(0L).takeIf { it > 0 }
         )
@@ -320,3 +320,18 @@ private fun htmlToPlainText(raw: String): String {
 
 /** Three or more consecutive newlines, collapsed to one blank line. */
 private val BLANK_LINE_RUN = Regex("""\n{3,}""")
+
+/**
+ * The promoters one organiser field credits. The theme writes a list in one field (`Homebound Music, BANDU,
+ * Bedroomdisco and FluxFM`) or a co-hosted night as `Fitzroy x Baile Trama`; the venue's own name is dropped later,
+ * at the import.
+ */
+internal fun organizers(field: String?): List<String> =
+    field
+        .orEmpty()
+        .split(ORGANIZER_SEPARATOR)
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+
+/** A comma, a spaced `and` or a spaced `x` between two organisers. */
+private val ORGANIZER_SEPARATOR = Regex("""\s*,\s*|\s+(?:and|x)\s+""", RegexOption.IGNORE_CASE)

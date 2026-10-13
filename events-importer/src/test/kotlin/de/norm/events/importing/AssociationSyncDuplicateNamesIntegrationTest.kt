@@ -481,7 +481,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                     Triple("Kopf & Hörer", "DJ", "Floor"),
                     Triple("Dr. Sheppat", "DJ", "Floor"),
                     Triple("Evox", "DJ", "Floor"),
-                    Triple("Bluesky", "LIVE", null)
+                    Triple("Blue Sky", "LIVE", null)
                 )
             rows.map { it.billingOrder } shouldBe listOf(0, 1, 2, 3)
         }
@@ -510,7 +510,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                     Triple("Funk@delic", "DJ", null),
                     Triple("Jens Schwan", "LIVE", "Garten"),
                     Triple("Simon Berlin", "LIVE", "Garten"),
-                    Triple("Bluesky", "DJ", null)
+                    Triple("Blue Sky", "DJ", null)
                 )
             rows.map { it.billingOrder } shouldBe listOf(0, 1, 2, 3)
         }

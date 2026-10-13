@@ -88,7 +88,23 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Stylisations the de-shouter cannot tell from a shouted word (#2082). A colon is not a
         // rule of its own: `KOS:MO` and `RE:NI` would come out no better.
         "ccosmo" to "CCOSMO",
-        "formatb" to "Format:B"
+        "formatb" to "Format:B",
+        // One DJ billed with and without the prefix: the same club, or the same scene at two (/artist-cleanup).
+        "djbenwashington" to "Ben Washington",
+        "djbuttchin" to "Buttchin",
+        "djdannyd" to "Danny D",
+        "djsterni" to "Sterni",
+        "sterni" to "Sterni",
+        "djtroymytea" to "Troy Mytea",
+        "djallynx" to "Allynx",
+        "djeggsdelicious" to "Eggs Delicious",
+        "djlobotomy" to "Lobotomy",
+        // One act, spaced two ways by two venues.
+        "bluesky" to "Blue Sky",
+        "traumamia" to "Trauma Mia",
+        "limboboys" to "Limbo Boys",
+        "uppercuts" to "The Uppercuts",
+        "darktenor" to "The Dark Tenor"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */
