@@ -225,7 +225,11 @@ they are excluded rather than counted as unreviewed.
   than ten points worse logs a WARN and sets `data_quality_regression{source,metric}` to 1. The
   `ej-data-quality-regression` alert fires on it. For `flaggedAtImport`, the check counts only the flags that kept a
   value out of an event. A review flag such as `UNCERTAIN_PARTY_FEATURE` removes nothing, so the check ignores it. The
-  snapshot stores this count as `flaggedAtImportKeptOut` (#3148). The table is the baseline, so nobody maintains one. There is no CI
+  snapshot stores this count as `flaggedAtImportKeptOut` (#3148). The check skips a metric when the source declares its
+  field in `VenueLimitations` (#3195). `missingStartTime` maps to `START_TIME`, `missingGenre` to `GENRE`, `missingPromoter`
+  to `PROMOTERS`, `concertsWithoutArtist` to `ARTISTS` and `eventsTypedOther` to `EVENT_TYPE`. `missingPrice` maps to the
+  whole `PRICE` aspect only. A partial declaration also counts. The snapshot and the report keep these series, and the
+  check writes an INFO line instead of the WARN. The other metrics are always judged. The table is the baseline, so nobody maintains one. There is no CI
   gate on fixtures: the golden tests of each scraper already fail on changed output.
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff

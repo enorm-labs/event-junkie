@@ -557,7 +557,8 @@ rule(
     "that lost a field or a normalizer change is the usual cause. `flaggedAtImport` counts "
     "only the flags that kept a value out of an event (SLUGLESS_ARTIST, NON_ARTIST_NAME, "
     "HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE, NON_GENRE_TOKEN), not the review flag "
-    "UNCERTAIN_PARTY_FEATURE (#3148). The importer's WARN line "
+    "UNCERTAIN_PARTY_FEATURE (#3148). A metric whose field the source declares as an accepted "
+    "limitation (`VenueLimitations`) is not judged (#3195). The importer's WARN line "
     "`Data quality regressed` names the source, the metric and both numbers; "
     "`GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` lists the events.",
     "sum(max by (source, metric) (data_quality_regression) > bool 0)",

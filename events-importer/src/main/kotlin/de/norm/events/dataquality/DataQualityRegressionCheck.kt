@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.scraper.LimitedAspect
 import java.time.LocalDate
 
 /**
@@ -27,6 +28,10 @@ import java.time.LocalDate
  * `flaggedAtImport` is judged on the [FLAGGED_AT_IMPORT_KEPT_OUT] series and reported under its own
  * name (#3148). A review flag such as `UNCERTAIN_PARTY_FEATURE` fills a queue and costs the event
  * nothing, so a new review kind must not read as a regression against a median from before it existed.
+ *
+ * A series whose metric maps to an aspect the source declares in its `VenueLimitations` is measured
+ * but never [Verdict.regressed] (#3195). The source does not publish that field reliably, so its share
+ * has no baseline worth an alert. [ACCEPTED_ASPECT] holds the mapping.
  */
 object DataQualityRegressionCheck {
     /** How far back the baseline reaches, today excluded. */
@@ -46,6 +51,29 @@ object DataQualityRegressionCheck {
 
     private const val PERCENT = 100.0
 
+    /**
+     * The declared aspect that takes a metric out of the gate. Only the whole `PRICE` aspect counts:
+     * a source without a presale price can still lose its box-office price.
+     */
+    val ACCEPTED_ASPECT: Map<QualityIssue, LimitedAspect> =
+        mapOf(
+            QualityIssue.CONCERTS_WITHOUT_ARTIST to LimitedAspect.ARTISTS,
+            QualityIssue.EVENTS_TYPED_OTHER to LimitedAspect.EVENT_TYPE,
+            QualityIssue.MISSING_GENRE to LimitedAspect.GENRE,
+            QualityIssue.MISSING_PROMOTER to LimitedAspect.PROMOTERS,
+            QualityIssue.MISSING_PRICE to LimitedAspect.PRICE,
+            QualityIssue.MISSING_START_TIME to LimitedAspect.START_TIME
+        )
+
+    /** The metrics no declaration can excuse: each counts work of ours or a gate's verdict, not a field the venue publishes. */
+    val ALWAYS_JUDGED: Set<QualityIssue> =
+        setOf(
+            QualityIssue.UNREVIEWED_LICENCE,
+            QualityIssue.TITLE_DERIVED_SINGLETONS,
+            QualityIssue.TITLE_DERIVED_UNMATCHED,
+            QualityIssue.FLAGGED_AT_IMPORT
+        )
+
     /** The metric each judged snapshot series is reported as. */
     private val METRIC_OF_SERIES =
         QualityIssue.KEYS.associateWith { it } - QualityIssue.FLAGGED_AT_IMPORT.key +
@@ -55,17 +83,22 @@ object DataQualityRegressionCheck {
      * One judged source and metric.
      *
      * [baselinePct] is `null` when the source had too few days of history or too few events today to
-     * be judged; [regressed] is then false.
+     * be judged; [regressed] is then false. [limitationAccepted] is true when the source declares the
+     * metric's aspect; the share can then get [worse] without being [regressed].
      */
     data class Verdict(
         val source: String,
         val metric: String,
         val todayPct: Double,
         val baselinePct: Double?,
-        val totalEvents: Long
+        val totalEvents: Long,
+        val limitationAccepted: Boolean = false
     ) {
-        val regressed: Boolean
+        val worse: Boolean
             get() = baselinePct != null && todayPct - baselinePct > MAX_WORSENING_POINTS
+
+        val regressed: Boolean
+            get() = worse && !limitationAccepted
     }
 
     /** The first day of the baseline window for [today]. The last day is the day before [today]. */
@@ -76,10 +109,12 @@ object DataQualityRegressionCheck {
      *
      * [history] can hold any rows; only those of the [BASELINE_DAYS] days before the date of each
      * [today] row count. A row with zero events has no share and is ignored on both sides.
+     * [declaredAspects] maps a source slug to the aspects its `VenueLimitations` declare.
      */
     fun check(
         today: List<DataQualitySnapshotEntity>,
-        history: List<DataQualitySnapshotEntity>
+        history: List<DataQualitySnapshotEntity>,
+        declaredAspects: Map<String, Set<LimitedAspect>> = emptyMap()
     ): List<Verdict> {
         val shares =
             judged(history).groupBy { it.sourceSlug to it.metric }
@@ -98,7 +133,8 @@ object DataQualityRegressionCheck {
                     metric = row.metric,
                     todayPct = share(row),
                     baselinePct = if (judged) median(past) else null,
-                    totalEvents = row.totalEvents
+                    totalEvents = row.totalEvents,
+                    limitationAccepted = accepts(declaredAspects[row.sourceSlug].orEmpty(), row.metric)
                 )
             }
     }
@@ -108,6 +144,11 @@ object DataQualityRegressionCheck {
         rows.mapNotNull { row ->
             METRIC_OF_SERIES[row.metric]?.takeIf { row.totalEvents > 0 }?.let { row.copy(metric = it) }
         }
+
+    private fun accepts(
+        declared: Set<LimitedAspect>,
+        metric: String
+    ): Boolean = QualityIssue.byKey(metric)?.let(ACCEPTED_ASPECT::get)?.let { it in declared } == true
 
     private fun share(row: DataQualitySnapshotEntity): Double = row.metricCount * PERCENT / row.totalEvents
 
