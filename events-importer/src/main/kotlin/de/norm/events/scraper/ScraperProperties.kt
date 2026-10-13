@@ -17,6 +17,13 @@ import java.time.Duration
 data class ScraperProperties(
     /** Maximum time to wait for a server response before aborting the fetch. */
     val responseTimeout: Duration = Duration.ofSeconds(DEFAULT_RESPONSE_TIMEOUT_SECONDS),
+    /**
+     * Overrides [responseTimeout] for the hosts it names.
+     *
+     * Per host, because a global raise holds a `max-concurrency` slot longer at every hanging host. `radar.squat.net` gets 60 s:
+     * a cold group search can take over 30 s (see #2840).
+     */
+    val hostResponseTimeouts: Map<String, Duration> = emptyMap(),
     /** Politeness delay between consecutive detail page fetches to avoid overwhelming target servers. */
     val politeDelayMillis: Long = DEFAULT_POLITE_DELAY_MILLIS,
     /**
