@@ -164,6 +164,8 @@ class SchokoladenOverviewPageScraperTest {
                 listOf("Angela Aux")
             // The contracted presents verb and its colon frame the bill, not the promoter (#3213).
             artistsOf("M:Soundtrack prsts: Dark Selbo Release Show (Bln) + CHEEKY (US/Bln)") shouldContainExactly listOf("Dark Selbo", "CHEEKY")
+            // A cancelled act the venue brackets ahead of its note is the act, not a genre.
+            artistsOf("CANCELLED (Melanie Baker) - Kneipenabend ab 20:00") shouldContainExactly listOf("Melanie Baker")
         }
 
         @Test

@@ -252,4 +252,16 @@ class DerWeisseHaseOverviewPageScraperTest {
         events.single().sourceId shouldBe "der_weisse_hase:2026-10-03-klubnacht"
         warnings shouldHaveSize 1
     }
+
+    @Test
+    fun `splits a name glued to the number tag before it`() {
+        val glued =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/derweissehase/derweissehase-overview.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("Cat Vermillion<br>TechNovaBader", "Cat Vermillion<br>Emma (8)Youston")
+        val tuesdayRave = scraper.scrape(Jsoup.parse(glued, baseUrl), baseUrl).single { it.eventDate == LocalDate.of(2026, 8, 11) }
+        tuesdayRave.artists.map { it.name } shouldContainExactly listOf("Cat Vermillion", "Emma (8)", "Youston")
+    }
 }

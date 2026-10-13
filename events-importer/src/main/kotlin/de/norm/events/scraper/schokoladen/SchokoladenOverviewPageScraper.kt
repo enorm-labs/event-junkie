@@ -14,6 +14,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
+import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -138,6 +139,7 @@ class SchokoladenOverviewPageScraper {
     private fun parseGenre(title: String): String? =
         GENRE_PARENTHETICAL
             .findAll(title)
+            .filterNot { LEADING_BRACKETED_ACT.containsMatchIn(stripTitleStatusMarker(title)) }
             .flatMap { genresFromAnnotation(it.groupValues[1]) }
             .distinct()
             .joinToString(", ")
@@ -224,6 +226,7 @@ class SchokoladenOverviewPageScraper {
         subtitle: String?,
         eventType: String?
     ): List<ScrapedArtist> {
+        LEADING_BRACKETED_ACT.find(stripTitleStatusMarker(title))?.let { return buildArtistsForEventType(it.groupValues[1], subtitle, eventType) }
         val artistTitle =
             title
                 .replace(GENRE_PARENTHETICAL, " ")
@@ -259,6 +262,12 @@ class SchokoladenOverviewPageScraper {
 
         /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation and read for [parseGenre]. */
         private val GENRE_PARENTHETICAL = Regex("""\s*\(([^)]*)\)""")
+
+        /**
+         * An act the venue brackets ahead of the night's note, which is the act and not its genre:
+         * `CANCELLED (Melanie Baker) - Kneipenabend ab 20:00`.
+         */
+        private val LEADING_BRACKETED_ACT = Regex("""^\(([^()]+)\)\s*[-–—]\s+\S""")
 
         /** A bracketed venue note in a title — "[ausverkauft]", "[pre-sale sold out, 10 tix on the doors]". */
         private val TITLE_NOTE = Regex("""\s*\[([^\]]*)]""")

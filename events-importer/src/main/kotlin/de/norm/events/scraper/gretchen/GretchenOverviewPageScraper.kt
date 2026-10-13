@@ -28,6 +28,7 @@ import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitCrossBilled
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -268,6 +269,8 @@ class GretchenOverviewPageScraper {
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
                 .map(::cleanArtistName)
+                // A credit after `ft.` (`Àbáse ft. special guests: A & B`) is only exposed by the cut above.
+                .flatMap { if (CREDIT_PREFIX_PATTERN.containsMatchIn(it)) splitSupportActs(stripCreditPrefix(it)) else listOf(it) }
                 .flatMap(::splitCrossBilled)
                 .map(::stripArtistSuffix)
                 .filter { it.isNotBlank() && !isNonArtistName(it) && !isProseNote(it) }

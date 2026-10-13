@@ -152,8 +152,16 @@ class ATraneProgrammePageScraper {
 
     private fun deshout(name: String): String = name.trim().split(' ').joinToString(" ") { it.deshoutWord() }
 
-    /** The act without the album or programme title it names in quotes; an act that is only a quoted name loses the quotes. */
-    private fun actName(title: String): String = title.replace(WORK_TITLE, "").trim().ifEmpty { title.trim { it in QUOTES } }
+    /**
+     * The act without the album or programme title it names in quotes, or the club's own name a homecoming adds
+     * (`JC DOOK BACK AT A-TRANE`). An act that is only a quoted name loses the quotes.
+     */
+    private fun actName(title: String): String =
+        title
+            .replace(WORK_TITLE, "")
+            .replace(VENUE_TAIL, "")
+            .trim()
+            .ifEmpty { title.trim { it in QUOTES } }
 
     /** The wall-clock start of an unpadded `startDate`; the offset is ignored. */
     private fun parseStart(value: String?): LocalDateTime? =
@@ -180,6 +188,7 @@ class ATraneProgrammePageScraper {
         val WHITESPACE = Regex("""[\s\u00A0]+""")
         const val QUOTES = "«»\" "
         val WORK_TITLE = Regex("""\s*[«"][^»"]*[»"]\s*$""")
+        val VENUE_TAIL = Regex("""\s+(?:(?:back|live)\s+)?(?:at|im)\s+(?:the\s+)?a-?trane\s*$""", RegexOption.IGNORE_CASE)
         val START = Regex("""^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}""")
         val START_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("y-M-d'T'H:mm")
 

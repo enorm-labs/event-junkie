@@ -202,9 +202,11 @@ class DerWeisseHaseOverviewPageScraper {
 
         /**
          * Separators inside a roster line: comma and `+`. Deliberately **not** `&` — act names
-         * contain one ("Drauf & Dran DJ Team") — and not `/`, never used to separate two DJs.
+         * contain one ("Drauf & Dran DJ Team") — and not `/`, never used to separate two DJs. A
+         * number tag glued to the next name (`Emma (8)Youston`) also ends an act: the club's markup
+         * puts no space between two names there.
          */
-        private val LINEUP_SEPARATOR = Regex("""\s*[,+]\s*""")
+        private val LINEUP_SEPARATOR = Regex("""\s*[,+]\s*|(?<=\(\d{1,2}\))(?=\S)""")
 
         /**
          * An unbooked billing slot printed in place of a name: the residents ("Residents", "Resident

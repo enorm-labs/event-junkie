@@ -178,7 +178,7 @@ fun isEventSegmentLabel(name: String): Boolean {
  * check, and `The Specials` stays an act.
  *
  * A night that ends on `invites` or `invite` names its hosts, not an act (#3214): `Not Stereo
- * Invites`. The verb must end the name, so `Tony Hurdle Invites TC The 3RD` keeps its act.
+ * Invites`. The verb must end the name: a mid-name `invites` splits host and guest ([splitOnInvites]).
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
@@ -260,9 +260,11 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|(?<=\S)(?<!\bmore)(?<!\bmehr)\s+(?:(?:w/|with|feat\.?|[+&])\s*)?(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
-            """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
-            """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert""" +
-            """|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set)\)\s*$""" +
+            """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band|on\s+stage))?(?:\s*&\s*dj[\s-]?set)?""" +
+            """(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
+            """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|drag""" +
+            """|(?:duo|trio)[\s-]?set|konzert|concert|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show""" +
+            """|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set)\)\s*$""" +
             """|\s+(?:dj[\s-]?set|hybrid|(?:acoustic|akustik)[\s-]?set)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
@@ -271,6 +273,8 @@ private val ARTIST_SUFFIX_PATTERN =
             """|(?<=\S)(?<!\bmade)\s+in\s+berlin$""" +
             """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +
             """|\s+(?:mit|with)\s+(?:orchester|orchestra|band|ensemble|chor|choir|streichern?|strings)\s*$""" +
+            """|(?<=\S)\s*\((?!\s*live\s*\))[^()]+\)\s+show\s*$""" +
+            """|\s*\(\s*(?:&|und|and|mit|with)\s+[^()]*\b(?:band|friends|freunde|orchester|orchestra|ensemble)\)\s*$""" +
             """|^(?:nachholtermin|hochverlegung|verschoben|verlegt)\b\s*[-–—:]*\s*(?=\S)""" +
             """|\s+[-–—]\s+\S.*!\s*$""" +
             """|\s+[-–—]\s+(?:a\s+)?tribute\s+to\s+\S.*$""" +
@@ -390,6 +394,15 @@ private val SQUARE_TAG =
 private val AFFILIATION_TAG =
     Regex("""\s*\((?:$AFFILIATION_OPENER[^()]*|[^(),]+,[^()]*|[^()/]+/[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
 
+/** A trailing alias, which a venue that bills the alias too lists twice: `CFL (AKA KRUMELUR)`, `Foo (a.k.a. Bar)`. */
+private val ALIAS_TAG = Regex("""\s*\((?:aka|a\.k\.a\.?)(?:\s|(?<=\.))[^()]*\)\s*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * A Discogs or Resident Advisor number that tells same-named acts apart: `Emma (8)`, `SiSi (2)`. One page has no
+ * room for it, so same-named acts share a row. Four-digit years and a name that is only the bracket stay.
+ */
+private val NUMBER_DISAMBIGUATOR = Regex("""(?<=\S)\s*\(\d{1,2}\)\s*$""")
+
 /** The words that open an affiliation: `ex-`, `von`, `of`, `formerly`. */
 private const val AFFILIATION_OPENER = """(?:ex-|(?:ex|von|of|formerly)\s)"""
 
@@ -400,8 +413,8 @@ private val AFFILIATION_OPENER_INSIDE = Regex("""\s*\($AFFILIATION_OPENER[^()]*\
 private val UNCLOSED_TRAILING_BRACKET = Regex("""\s*\([^()]*$""")
 
 /**
- * Drops an [ORIGIN_TAG], a [SQUARE_TAG], an [AFFILIATION_TAG] or an [UNCLOSED_TRAILING_BRACKET] from the end of a
- * name, keeping the input when nothing else is left. Repeated, because one can hide the other
+ * Drops an [ORIGIN_TAG], a [SQUARE_TAG], an [AFFILIATION_TAG], an [ALIAS_TAG], a [NUMBER_DISAMBIGUATOR] or an
+ * [UNCLOSED_TRAILING_BRACKET] from the end of a name, keeping the input when nothing else is left. Repeated, because one can hide the other
  * (`Sylk (DE) (Malör Records, Surge)`).
  */
 private fun stripTrailingParenthetical(name: String): String {
@@ -412,6 +425,8 @@ private fun stripTrailingParenthetical(name: String): String {
                 .replace(ORIGIN_TAG, "")
                 .replace(SQUARE_TAG, "")
                 .replace(AFFILIATION_TAG, "")
+                .replace(ALIAS_TAG, "")
+                .replace(NUMBER_DISAMBIGUATOR, "")
                 .replace(UNCLOSED_TRAILING_BRACKET, "")
                 .trim()
         if (next == stripped || next.isBlank()) return@repeat
@@ -462,8 +477,20 @@ private fun stripWorkTitle(name: String): String {
     val tail = name.substring(boundary.range.last + 1).trim()
     // The lowercase fence guards the dash only: `DZ - DEATHRAY` is a name, `JON ROSE: HINTERLAND!` is not.
     val headIsAct = head.isNotBlank() && !PRESENTING_HEAD.containsMatchIn(head) && (dash == null || head.any { it.isLowerCase() })
-    return if (headIsAct && readsAsWorkTitle(tail)) head else name
+    return if (headIsAct && (readsAsWorkTitle(tail) || echoesHead(tail, head))) head else name
 }
+
+/** Whether [tail] repeats a word of four letters or more from [head]: `Potsa Lotsa XL - Pizza Lotsa` names its show. */
+private fun echoesHead(
+    tail: String,
+    head: String
+): Boolean {
+    val headWords = head.lowercase().split(WHITESPACE).toSet()
+    return tail.lowercase().split(WHITESPACE).any { it.length >= MIN_ECHO_LETTERS && it in headWords }
+}
+
+/** The shortest word [echoesHead] counts; a shorter one (`the`, `DJ`) repeats by chance. */
+private const val MIN_ECHO_LETTERS = 4
 
 private fun readsAsWorkTitle(tail: String): Boolean {
     val words = tail.split(WHITESPACE).filter { it.isNotBlank() }
@@ -484,10 +511,11 @@ private val PLACE_TAIL = Regex("""^(.*\S)\s+[-–—]\s+(?i:$COUNTRY_NAMES)$""")
 private fun stripPlaceTail(name: String): String = PLACE_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
 
 /**
- * `<act> plays <Name>`: the ensemble and the composer whose music it plays (#3211). Case-sensitive, and
- * a capital must follow, so a lowercase `plays` phrase inside a name stays.
+ * `<act> plays <Name>` or `spielt`: the ensemble and the music it plays (#3211). A lowercase descriptor after a
+ * dash goes with it (`YOK - pocketpunk spielt FUCK 10 CHECK`). Case-sensitive, and a capital must follow, so a
+ * lowercase `plays` phrase inside a name stays.
  */
-private val PLAYS_TAIL = Regex("""^(.*?\S)\s+plays\s+\p{Lu}.*$""")
+private val PLAYS_TAIL = Regex("""^(.*?\S)(?:\s+[-–—]\s+\p{Ll}[\p{L}-]*)?\s+(?:plays|spielt)\s+\p{Lu}.*$""")
 
 /** Drops a [PLAYS_TAIL]: `Lésions Graves Sextet plays Julius Eastman` → `Lésions Graves Sextet`. */
 private fun stripPlaysTail(name: String): String = PLAYS_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
@@ -1389,11 +1417,37 @@ fun splitHeadlinerTitle(
     val acts =
         cutAt(trimmed, hardCuts)
             .flatMap(::splitOnMeets)
+            .flatMap(::splitOnInvites)
             .flatMap { segment -> commaBillOf(segment, description) ?: splitSegmentOnConjunctions(segment) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
 
     return acts.ifEmpty { listOf(trimmed) }
+}
+
+/** A space-padded `invites` between a host act and its guest: `Tony Hurdle Invites TC The 3RD`. */
+private val INVITES_SEPARATOR = Regex("""\s+invites?\s+""", RegexOption.IGNORE_CASE)
+
+/**
+ * Splits [segment] at an [INVITES_SEPARATOR] outside brackets into host and guest. A one-word host is a venue or a
+ * series (`Tresor invites Surgeon`), as with [splitOnMeets], and a name that ends in `invites` has no guest: both
+ * stay whole.
+ */
+private fun splitOnInvites(segment: String): List<String> {
+    val cuts =
+        INVITES_SEPARATOR
+            .findAll(segment)
+            .filter { !isInsideBrackets(segment, it.range.first) }
+            .map { it.range }
+            .toList()
+    val sides = cutAt(segment, cuts).map { it.trim() }
+    val hostIsAct =
+        sides
+            .firstOrNull()
+            .orEmpty()
+            .split(WHITESPACE)
+            .size >= 2
+    return if (sides.size >= 2 && sides.none { it.isEmpty() } && hostIsAct) sides else listOf(segment)
 }
 
 /** A space-padded `meets` joining two co-billed acts: `Roots Daughters meets La Comadre Soundsystem` (#3159). */
