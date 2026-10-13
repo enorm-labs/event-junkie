@@ -91,11 +91,19 @@ def main() -> int:
         "unbilled-kept" in rows["Some Night"]["flags"], "an unbilled row with a profile link is flagged unbilled-kept"
     )
 
-    promoters = [artist(20, "Präsentiert von Tresor"), artist(21, "Tresor Records")]
+    promoters = [
+        artist(20, "Präsentiert von Tresor"),
+        artist(21, "Tresor Records", description="A label."),
+        artist(22, "Tresor Party"),
+    ]
     promoted = cleanup.review_rows(promoters, [event(12, "2026-10-14", [], [20])], venues, "promoters", TODAY)
     names = [r["name"] for r in promoted]
     check(names[0] == "Präsentiert von Tresor", "promoters are joined through promoterIds")
-    check("unbilled-kept" in promoted[1]["flags"], "an unbilled promoter is kept for review, since no sweep removes it")
+    check(
+        "unbilled-kept" in promoted[1]["flags"],
+        "an unbilled promoter with a description is kept, as its sweep keeps it",
+    )
+    check("Tresor Party" not in names, "an unbilled promoter the sweep deletes is left out")
 
     print(f"artist-cleanup: {checks} checks passed")
     return 0

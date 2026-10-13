@@ -429,4 +429,29 @@ class PromoterNormalizerTest {
             isNonPromoterName("www.dundj.berlin") shouldBe false
         }
     }
+
+    @Test
+    fun `folds the twins and company forms the cleanup found onto one promoter`() {
+        assertSoftly {
+            canonicalPromoterName("d2mberlin") shouldBe "d2m berlin"
+            canonicalPromoterName("d2m berlin") shouldBe "d2m berlin"
+            canonicalPromoterName("crunchtapes") shouldBe "Crunch Tapes"
+            canonicalPromoterName("Tingel Tangel") shouldBe "TingelTangel"
+            canonicalPromoterName("Concert Concept Veranstaltungs-GmbH Berlin") shouldBe "Concert Concept"
+            canonicalPromoterName("Concert Concept") shouldBe "Concert Concept"
+            canonicalPromoterName("Entertain the World – Etw Management") shouldBe "Entertain the World"
+        }
+    }
+
+    @Test
+    fun `refuses party names, a performer and a comedy night as promoters`() {
+        assertSoftly {
+            isNonPromoterName("Dirty Dancing Party") shouldBe true
+            isNonPromoterName("Fandom Night") shouldBe true
+            isNonPromoterName("Piano Man - Thomas Bötig") shouldBe true
+            isNonPromoterName("Adults Only Comedy by Anna Beros") shouldBe true
+            isNonPromoterName("Process Party - Effetto Notte") shouldBe true
+            isNonPromoterName("Simply Quiz") shouldBe false
+        }
+    }
 }

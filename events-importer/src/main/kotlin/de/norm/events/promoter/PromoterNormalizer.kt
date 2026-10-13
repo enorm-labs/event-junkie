@@ -217,7 +217,13 @@ private val NON_PROMOTER_NAMES: Set<String> =
         "thehilariousdeepamazingberlincomedy",
         "peteredelwwwstummfilmkonzertede",
         // Columbia Theater credits the magazine as the presenter; it is a media partner (#2653).
-        "metalde"
+        "metalde",
+        // Party and show names, a performer and a comedy night in the promoter slot (/artist-cleanup).
+        "dirtydancingparty",
+        "fandomnight",
+        "pianomanthomasbötig",
+        "adultsonlycomedybyannaberos",
+        "processpartyeffettonotte"
     )
 
 /**
@@ -350,5 +356,15 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Domain credits: SO36's presenter calls itself by its domain, Peter Edel's names the DJ duo's site.
         "berlinmusikerde" to "Berlinmusiker.de",
         "wwwdundjberlin" to "Dan & Jensai",
-        "dundjberlin" to "Dan & Jensai"
+        "dundjberlin" to "Dan & Jensai",
+        // Spacing twins /artist-cleanup found: each venue writes the name its own way.
+        "d2mberlin" to "d2m berlin",
+        "crunchtapes" to "Crunch Tapes",
+        "tingeltangel" to "TingelTangel",
+        // Tempodrom credits the company; its brand is the first two words.
+        "concertconceptveranstaltungsgmbhberlin" to "Concert Concept",
+        "concertconceptveranstaltungsberlin" to "Concert Concept",
+        // Cosmic Comedy credits the agency with its initials after a dash.
+        "entertaintheworldetw" to "Entertain the World",
+        "entertaintheworldetwmanagement" to "Entertain the World"
     )
