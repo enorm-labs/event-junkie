@@ -14,8 +14,16 @@
         "descriptionAlt": "Petersburg Art Space, ein Kunstraum mit offener Bar an der Spree in Moabit, mit Konzerten, Performances, Lesungen, Filmabenden und Ausstellungen neben einem Residenzprogramm.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar"],
-        "programmeUrl": "https://pas-berlin.org/programme/",
         "reviewedAt": "2026-10-13T18:00:00Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "PAS",
+            "url": "https://pas-berlin.org/wp-json/tribe/events/v1/events",
+            "sourceType": "PAS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

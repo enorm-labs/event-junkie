@@ -7385,7 +7385,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# PAS — not imported
+# PAS
 # ————————————————————————————————————————————————————————————
 
 ### --- Create PAS venue ---
@@ -7407,13 +7407,43 @@ Content-Type: application/json
     "descriptionAlt": "Petersburg Art Space, ein Kunstraum mit offener Bar an der Spree in Moabit, mit Konzerten, Performances, Lesungen, Filmabenden und Ausstellungen neben einem Residenzprogramm.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar"],
-    "programmeUrl": "https://pas-berlin.org/programme/",
     "reviewedAt": "2026-10-13T18:00:00Z"
 }
 
 > {%
+    client.global.set("venue_id_pas", response.body.id);
     client.test("PAS venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create PAS event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_pas}},
+    "name": "PAS",
+    "url": "https://pas-berlin.org/wp-json/tribe/events/v1/events",
+    "sourceType": "PAS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("PAS event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial PAS import ---
+POST {{importer-host}}/api/admin/event-sources/pas/import
+Accept: application/json
+
+> {%
+    client.test("PAS import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

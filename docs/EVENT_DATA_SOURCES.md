@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   127 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   128 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -123,6 +123,7 @@ schema change.
 | PANDA platforma                  | https://panda-platforma.berlin/veranstaltungen-in-berlin/                | Other        | TEC REST API; series type the night; credits, else title  |
 | Panke Culture                    | https://www.pankeculture.com/programme/                                  | Club         | WordPress/Divi; upcoming list only; no event pages        |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                                        | Open Air     | October CMS; ISO date in URL; seasonal, sold-out          |
+| PAS                              | https://pas-berlin.org/programme/                                        | Other        | TEC REST API; skips nights held elsewhere                 |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
 | Privatclub                       | https://privatclub-berlin.de/                                            | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |
@@ -168,7 +169,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-126 importer classes cover 127 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+127 importer classes cover 128 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -189,7 +190,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-48 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
+49 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -296,6 +297,7 @@ the upsert stores none.
 | PANDA platforma                  | Yes             | One field: Russian, `[EN]`, English                          | One field          | [captured page](../events-importer/src/test/resources/scraper/pandaplatforma/pandaplatforma-events.json)                           |
 | Panke Culture                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Parkbühne Wuhlheide              | No              | —                                                            | —                  |                                                                                                                                    |
+| PAS                              | Yes             | German About page, `/pas-de/`                                | Not on the listing | https://pas-berlin.org/pas-de/                                                                                                     |
 | Pfefferberg Haus 13              | No              | —                                                            | —                  |                                                                                                                                    |
 | Privatclub                       | Yes             | One field: `— english version —`                             | One field          | https://privatclub-berlin.de/                                                                                                      |
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |

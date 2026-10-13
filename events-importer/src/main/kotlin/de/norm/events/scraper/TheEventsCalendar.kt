@@ -20,6 +20,9 @@ private val tecMapper: JsonMapper = JsonMapper.builder().build()
 /** The plugin's local date-time format, in the venue's own timezone. */
 private val TEC_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
+/** The plugin's own blocks inside a block-editor description: schedule, price, venue, export links. */
+private const val TEC_TEMPLATE_BLOCKS = ".tribe-events-schedule, .tribe-block"
+
 /** The plugin's largest page, so a programme takes the fewest requests. */
 private const val TEC_PER_PAGE = 50
 
@@ -107,8 +110,19 @@ fun JsonNode.tecDateTime(field: String): LocalDateTime? =
 /** A text field with the HTML entities WordPress leaves in titles and taxonomy names decoded. */
 fun JsonNode.tecText(field: String): String? = stringOrNull(field)?.let(::decodeHtmlEntities)?.blankToNull()
 
-/** The `description` HTML as text. Parsed, not stripped, so an embedded `<script>` widget leaves no code behind. */
-fun JsonNode.tecDescription(): String? = stringOrNull("description")?.let { Jsoup.parseBodyFragment(it).body().text() }.blankToNull()
+/**
+ * The `description` HTML as text. Parsed, not stripped, so an embedded `<script>` widget leaves no code behind.
+ * The block editor's event template embeds the plugin's own date, price, venue and calendar-export blocks, which go.
+ */
+fun JsonNode.tecDescription(): String? =
+    stringOrNull("description")
+        ?.let { html ->
+            Jsoup
+                .parseBodyFragment(html)
+                .body()
+                .apply { select(TEC_TEMPLATE_BLOCKS).remove() }
+                .text()
+        }.blankToNull()
 
 /** The featured image's full-size URL. */
 fun JsonNode.tecImageUrl(): String? = path("image").stringOrNull("url")
