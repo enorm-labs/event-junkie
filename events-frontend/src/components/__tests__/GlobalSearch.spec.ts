@@ -110,6 +110,32 @@ describe('GlobalSearch', () => {
     )
   })
 
+  it('says a venue we do not import lists its programme elsewhere, not that it has no events', async () => {
+    getMock.mockResolvedValue({
+      ...results,
+      venues: {
+        items: [
+          {
+            slug: 'ysy',
+            name: 'YSY',
+            district: 'friedrichshain',
+            upcomingEventCount: 0,
+            imported: false,
+          },
+          { slug: 'berghain', name: 'Berghain', district: 'friedrichshain', upcomingEventCount: 0 },
+        ],
+        total: 2,
+      },
+    })
+    await mountAt()
+    await search('ysy')
+
+    const options = wrapper!.findAll('[role="option"]').map((option) => option.text())
+    expect(options[0]).toContain('Programme elsewhere')
+    expect(options[0]).not.toContain('No upcoming events')
+    expect(options[1]).toContain('No upcoming events')
+  })
+
   it('opens the detail page of the option picked', async () => {
     await mountAt()
     await search('berghain')

@@ -59,7 +59,10 @@ const groups = computed(() => {
       options: (r.venues?.items ?? []).map((venue) => ({
         value: localePath(`/venues/${venue.slug}`),
         label: venue.name ?? '',
-        meta: [districtLabel(venue.district), upcoming(venue.upcomingEventCount)]
+        meta: [
+          districtLabel(venue.district),
+          venue.imported === false ? t('venues.notImported') : upcoming(venue.upcomingEventCount),
+        ]
           .filter(Boolean)
           .join(' · '),
       })),

@@ -8,11 +8,5 @@
   "upcoming": "Upcoming",
   "seeAllUpcoming": "See all upcoming events",
   "thisWeek": "This week in Berlin",
-  "upcomingEmpty": "Nothing upcoming right now. Check back soon.",
-  "clubkultur": {
-    "name": "Tag der Clubkultur",
-    "dates": "3–11 October",
-    "body": "For nine days, around 80 Berlin clubs and collectives show what club culture is. Many of those nights are on our lists too.",
-    "link": "See the programme"
-  }
+  "upcomingEmpty": "Nothing upcoming right now. Check back soon."
 }
