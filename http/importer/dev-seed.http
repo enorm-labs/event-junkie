@@ -511,6 +511,39 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Alte Münze — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Alte Münze venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Alte Münze",
+    "address": "Molkenmarkt 2",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.516129,
+    "longitude": 13.409077,
+    "websiteUrl": "https://www.alte-muenze-berlin.de/",
+    "instagramUrl": "https://www.instagram.com/alte_muenze/",
+    "description": "A cultural quarter in Berlin's former state mint on the Spree, with exhibitions, concerts, festivals, opera days, fairs and an open-air cinema.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Kulturquartier in der ehemaligen Berliner Münzprägeanstalt an der Spree, mit Ausstellungen, Konzerten, Festivals, Operntagen, Messen und Open-Air-Kino.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"],
+    "programmeUrl": "https://www.alte-muenze-berlin.de/programm/",
+    "reviewedAt": "2026-10-13T18:00:00Z"
+}
+
+> {%
+    client.test("Alte Münze venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # AMT
 # ————————————————————————————————————————————————————————————
 
@@ -6728,6 +6761,39 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# MUENZE — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create MUENZE venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "MUENZE",
+    "address": "Molkenmarkt 2",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.516129,
+    "longitude": 13.409077,
+    "websiteUrl": "https://muenze-club.de/",
+    "instagramUrl": "https://www.instagram.com/muenze_berlin/",
+    "description": "A techno club inside the Alte Münze cultural quarter on the Spree, hosting club nights by Berlin collectives such as HEISSS.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Techno-Club im Kulturquartier Alte Münze an der Spree, mit Clubnächten Berliner Kollektive wie HEISSS.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://ra.co/clubs/23260",
+    "reviewedAt": "2026-10-13T18:00:00Z"
+}
+
+> {%
+    client.test("MUENZE venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Musikbrauerei — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -7319,6 +7385,39 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# PAS — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create PAS venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "PAS",
+    "address": "Kaiserin-Augusta-Allee 101",
+    "city": "Berlin",
+    "postalCode": "10553",
+    "district": "tiergarten",
+    "latitude": 52.524999,
+    "longitude": 13.319828,
+    "websiteUrl": "https://pas-berlin.org/",
+    "instagramUrl": "https://www.instagram.com/pas_berlin/",
+    "description": "Petersburg Art Space, an art space with an open bar on the Spree in Moabit, hosting concerts, performances, readings, film evenings and exhibitions beside an artist residency.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Petersburg Art Space, ein Kunstraum mit offener Bar an der Spree in Moabit, mit Konzerten, Performances, Lesungen, Filmabenden und Ausstellungen neben einem Residenzprogramm.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://pas-berlin.org/programme/",
+    "reviewedAt": "2026-10-13T18:00:00Z"
+}
+
+> {%
+    client.test("PAS venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Passionskirche — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -7505,6 +7604,39 @@ Content-Type: application/json
 
 > {%
     client.test("PKH Warehouse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Posh Teckel — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Posh Teckel venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Posh Teckel",
+    "address": "Pflügerstraße 4",
+    "city": "Berlin",
+    "postalCode": "12047",
+    "district": "neukoelln",
+    "latitude": 52.491105,
+    "longitude": 13.424787,
+    "websiteUrl": "https://www.poshteckel.de/",
+    "instagramUrl": "https://www.instagram.com/posh_teckel/",
+    "facebookUrl": "https://www.facebook.com/poshteckel/",
+    "description": "The world's only Manchester-themed dachshund pub: an indie bar in Neukölln since 2014, with DJ nights, live concerts, karaoke, music quizzes and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die weltweit einzige Manchester-Dackelkneipe: ein Indie-Pub im Reuterkiez seit 2014, mit DJ-Abenden, Konzerten, Karaoke, Musikquiz und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-13T18:00:00Z"
+}
+
+> {%
+    client.test("Posh Teckel venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}

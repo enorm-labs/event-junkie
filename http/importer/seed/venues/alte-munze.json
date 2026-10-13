@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Alte Münze",
+        "address": "Molkenmarkt 2",
+        "city": "Berlin",
+        "postalCode": "10179",
+        "district": "mitte",
+        "latitude": 52.516129,
+        "longitude": 13.409077,
+        "websiteUrl": "https://www.alte-muenze-berlin.de/",
+        "instagramUrl": "https://www.instagram.com/alte_muenze/",
+        "description": "A cultural quarter in Berlin's former state mint on the Spree, with exhibitions, concerts, festivals, opera days, fairs and an open-air cinema.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Kulturquartier in der ehemaligen Berliner Münzprägeanstalt an der Spree, mit Ausstellungen, Konzerten, Festivals, Operntagen, Messen und Open-Air-Kino.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"],
+        "programmeUrl": "https://www.alte-muenze-berlin.de/programm/",
+        "reviewedAt": "2026-10-13T18:00:00Z"
+    },
+    "sources": []
+}

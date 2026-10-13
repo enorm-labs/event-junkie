@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Posh Teckel",
+        "address": "Pflügerstraße 4",
+        "city": "Berlin",
+        "postalCode": "12047",
+        "district": "neukoelln",
+        "latitude": 52.491105,
+        "longitude": 13.424787,
+        "websiteUrl": "https://www.poshteckel.de/",
+        "instagramUrl": "https://www.instagram.com/posh_teckel/",
+        "facebookUrl": "https://www.facebook.com/poshteckel/",
+        "description": "The world's only Manchester-themed dachshund pub: an indie bar in Neukölln since 2014, with DJ nights, live concerts, karaoke, music quizzes and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die weltweit einzige Manchester-Dackelkneipe: ein Indie-Pub im Reuterkiez seit 2014, mit DJ-Abenden, Konzerten, Karaoke, Musikquiz und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-13T18:00:00Z"
+    },
+    "sources": []
+}
