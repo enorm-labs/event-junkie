@@ -1,5 +1,9 @@
 package de.norm.events.dataquality
 
+import de.norm.events.importing.EventSourceRepository
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.LogContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -27,6 +31,7 @@ class DataQualityReportLogger(
     private val service: DataQualityService,
     private val snapshots: DataQualitySnapshotRepository,
     private val metrics: DataQualityMetrics,
+    private val eventSources: EventSourceRepository,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -106,7 +111,7 @@ class DataQualityReportLogger(
      * Runs after the write and the summary line, so a failure here still leaves today's rows in the
      * table, and inside the same catch, so it cannot stop the scheduler either. One WARN per regressed source and metric:
      * the alert says that something regressed, and this line says which source, which metric and by
-     * how much.
+     * how much. A share that got worse on a declared limitation gets an INFO line and no alert (#3195).
      */
     private suspend fun checkForRegressions(
         today: LocalDate,
@@ -116,15 +121,32 @@ class DataQualityReportLogger(
             snapshots
                 .findBySnapshotDateBetween(DataQualityRegressionCheck.baselineStart(today), today.minusDays(1))
                 .toList()
-        val verdicts = DataQualityRegressionCheck.check(rows, history)
+        val verdicts = DataQualityRegressionCheck.check(rows, history, declaredAspectsBySlug())
         metrics.publishRegressions(verdicts)
-        verdicts.filter { it.regressed }.forEach { verdict ->
-            logger.at(Level.WARN) {
-                message =
-                    "Data quality regressed: ${verdict.metric} of ${verdict.source} is at ${pct(verdict.todayPct)}% " +
+        verdicts.filter { it.worse }.forEach { verdict ->
+            val numbers =
+                "${verdict.metric} of ${verdict.source} is at ${pct(verdict.todayPct)}% " +
                     "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% (${verdict.totalEvents} events)"
+            logger.at(if (verdict.regressed) Level.WARN else Level.INFO) {
+                message =
+                    if (verdict.regressed) {
+                        "Data quality regressed: $numbers"
+                    } else {
+                        "Data quality got worse on an accepted limitation, not a regression: $numbers"
+                    }
                 payload = mapOf(LogContext.SOURCE_SLUG to verdict.source)
             }
+        }
+    }
+
+    /** The aspects each source's `VenueLimitations` declare, keyed by slug, for the gate to skip (#3195). */
+    private suspend fun declaredAspectsBySlug(): Map<String, Set<LimitedAspect>> {
+        val sourcesByName = EventSource.entries.associateBy { it.name }
+        return eventSources.findAll().toList().associate { source ->
+            source.slug to
+                sourcesByName[source.sourceType]
+                    ?.let { type -> AcceptedLimitations.forSource(type).map { it.aspect }.toSet() }
+                    .orEmpty()
         }
     }
 

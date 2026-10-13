@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
+import de.norm.events.importing.EventSourceRepository
 import de.norm.events.scraper.LogContext
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
@@ -46,10 +47,13 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var registry: MeterRegistry
 
+    @Autowired
+    private lateinit var eventSources: EventSourceRepository
+
     private val today = LocalDate.of(2026, 8, 19)
     private val clock = Clock.fixed(Instant.parse("2026-08-19T03:00:00Z"), ZoneOffset.UTC)
 
-    private fun logger() = DataQualityReportLogger(service, snapshots, metrics, clock)
+    private fun logger() = DataQualityReportLogger(service, snapshots, metrics, eventSources, clock)
 
     private suspend fun seedOneImperfectEvent() {
         val venueId =
@@ -127,7 +131,7 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
         }
 
     @Test
-    fun `a share ten points over the week's median sets the regression gauge and logs a WARN`(): Unit =
+    fun `a share ten points over the week's median sets the regression gauge and logs a WARN, unless the source declares it`(): Unit =
         runBlocking {
             seedOneImperfectEvent()
             // Ten events: the least a source needs to be judged. None has a genre.
@@ -137,17 +141,20 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                         "SELECT e.venue_id, e.event_source_id, 'T' || n, 'alpha-t' || n, DATE '2026-09-01' + n, 'alpha-t' || n " +
                         "FROM events.event e, generate_series(2, 10) n WHERE e.slug = 'alpha-t'"
                 ).await()
-            // Three earlier days at 0 % without a genre: the least history that makes a baseline.
+            // Three earlier days at 0 % without a genre or a price: the least history that makes a baseline.
+            // CASSIOPEIA declares PRICE, so its price share is measured but never a regression (#3195).
             snapshots
                 .saveAll(
-                    (1L..3L).map {
-                        DataQualitySnapshotEntity(
-                            snapshotDate = today.minusDays(it),
-                            sourceSlug = "alpha",
-                            metric = QualityIssue.MISSING_GENRE.key,
-                            metricCount = 0,
-                            totalEvents = 10
-                        )
+                    listOf(QualityIssue.MISSING_GENRE, QualityIssue.MISSING_PRICE).flatMap { issue ->
+                        (1L..3L).map {
+                            DataQualitySnapshotEntity(
+                                snapshotDate = today.minusDays(it),
+                                sourceSlug = "alpha",
+                                metric = issue.key,
+                                metricCount = 0,
+                                totalEvents = 10
+                            )
+                        }
                     }
                 ).toList()
 
@@ -168,6 +175,7 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                     .gauge()!!
                     .value()
             regression(QualityIssue.MISSING_GENRE.key) shouldBe 1.0
+            regression(QualityIssue.MISSING_PRICE.key) shouldBe 0.0
             // No history for this one, so it is published as 0 rather than left absent.
             regression(QualityIssue.CONCERTS_WITHOUT_ARTIST.key) shouldBe 0.0
 
@@ -175,5 +183,8 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
             warning.formattedMessage shouldBe
                 "Data quality regressed: missingGenre of alpha is at 100.0% against a 7-day median of 0.0% (10 events)"
             warning.keyValuePairs.single { it.key == LogContext.SOURCE_SLUG }.value shouldBe "alpha"
+            appender.list.single { it.formattedMessage.contains("accepted limitation") }.formattedMessage shouldBe
+                "Data quality got worse on an accepted limitation, not a regression: " +
+                "missingPrice of alpha is at 100.0% against a 7-day median of 0.0% (10 events)"
         }
 }

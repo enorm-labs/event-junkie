@@ -1,6 +1,7 @@
 package de.norm.events.dataquality
 
 import de.norm.events.importing.QualityFlagKind
+import de.norm.events.scraper.LimitedAspect
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -179,6 +180,50 @@ class DataQualityRegressionCheckTest {
         val history = (1L..7L).map { row(it, 0, metric = flagged) }
 
         DataQualityRegressionCheck.check(today, history).single().baselinePct shouldBe null
+    }
+
+    @Test
+    fun `a jump on a metric the source declares as a limitation is not a regression`() {
+        // MS Hoppetosse on 2026-10-13: start times at 90 % against a median of 70 %, START_TIME declared.
+        val startTime = QualityIssue.MISSING_START_TIME.key
+        val today = listOf(row(0, 90, metric = startTime), row(0, 90, source = "beta", metric = startTime))
+        val history = (1L..7L).flatMap { listOf(row(it, 70, metric = startTime), row(it, 70, source = "beta", metric = startTime)) }
+
+        val verdicts = DataQualityRegressionCheck.check(today, history, mapOf("alpha" to setOf(LimitedAspect.START_TIME)))
+
+        verdicts.map { Triple(it.source, it.worse, it.regressed) } shouldBe
+            listOf(Triple("alpha", true, false), Triple("beta", true, true))
+        verdicts.first().limitationAccepted shouldBe true
+    }
+
+    @Test
+    fun `a declaration of another aspect does not skip the metric`() {
+        val declared = mapOf("alpha" to setOf(LimitedAspect.START_TIME, LimitedAspect.PRICE_PRESALE, LimitedAspect.PRICE_NOTE))
+
+        DataQualityRegressionCheck.check(listOf(row(0, 31)), week(20, 20, 20), declared).single().regressed shouldBe true
+        DataQualityRegressionCheck
+            .check(
+                listOf(row(0, 31, metric = QualityIssue.MISSING_PRICE.key)),
+                (1L..3L).map { row(it, 20, metric = QualityIssue.MISSING_PRICE.key) },
+                declared
+            ).single()
+            .regressed shouldBe true
+    }
+
+    @Test
+    fun `flaggedAtImport is judged whatever the source declares`() {
+        val today = listOf(row(0, 12, metric = flagged), row(0, 12, metric = keptOut))
+        val history = (1L..7L).flatMap { listOf(row(it, 0, metric = flagged), row(it, 0, metric = keptOut)) }
+
+        DataQualityRegressionCheck.check(today, history, mapOf("alpha" to LimitedAspect.entries.toSet())).single().regressed shouldBe true
+    }
+
+    @Test
+    fun `every QualityIssue is either mapped to a limited aspect or listed as always judged`() {
+        DataQualityRegressionCheck.ACCEPTED_ASPECT.keys
+            .intersect(DataQualityRegressionCheck.ALWAYS_JUDGED)
+            .shouldBeEmpty()
+        (DataQualityRegressionCheck.ACCEPTED_ASPECT.keys + DataQualityRegressionCheck.ALWAYS_JUDGED) shouldBe QualityIssue.entries.toSet()
     }
 
     @Test
