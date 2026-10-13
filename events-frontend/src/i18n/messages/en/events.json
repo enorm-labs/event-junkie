@@ -99,6 +99,7 @@
     "notFoundBody": "This one's gone, like last call. Plenty more nights out there.",
     "lineup": "Lineup",
     "runningOrder": "Running order",
+    "lineupShowAll": "Show all {count} artists",
     "lineupFrom": "Lineup and set times from",
     "detailsFrom": "Further details from",
     "listenOn": "Listen to {act} on {service}",

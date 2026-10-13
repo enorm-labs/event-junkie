@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -58,6 +58,27 @@ const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HE
 // Floors and set times where the venue published a running order (#2002); null for the rest.
 const floors = computed(() => runningOrder(lineup.value))
 
+// The lineup sits above the tickets and the venue, so a festival bill opens folded to keep them near.
+const LINEUP_FOLD_ABOVE = 10
+const LINEUP_FOLDED_SIZE = 8
+const lineupExpanded = ref(false)
+const lineupFolded = computed(
+  () => !lineupExpanded.value && lineup.value.length > LINEUP_FOLD_ABOVE,
+)
+const shownLineup = computed(() =>
+  lineupFolded.value ? lineup.value.slice(0, LINEUP_FOLDED_SIZE) : lineup.value,
+)
+/** The running order cut to the folded size across its floors, in the order they print. */
+const shownFloors = computed(() => {
+  if (!floors.value || !lineupFolded.value) return floors.value
+  let left = LINEUP_FOLDED_SIZE
+  return floors.value.flatMap((floor) => {
+    const sets = floor.sets.slice(0, left)
+    left -= sets.length
+    return sets.length ? [{ ...floor, sets }] : []
+  })
+})
+
 /** The host of the page the lineup came from when it is not the venue's, credited under it (ADR-036). */
 const lineupCredit = computed(() => {
   const url = event.value?.lineupSourceUrl
@@ -109,6 +130,7 @@ const isPast = computed(() => !!event.value && isPastEvent(event.value))
 const isRunning = computed(() => !!event.value && isRunningEvent(event.value))
 
 function load() {
+  lineupExpanded.value = false
   loadEvent()
   loadRelated()
 }
@@ -326,7 +348,94 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         {{ t('events.detail.descriptionElsewhere') }}
       </p>
 
-      <!-- What a visitor needs to decide comes before the lineup (#2963). -->
+      <section v-if="floors" class="space-y-3">
+        <SectionLabel>{{ t('events.detail.runningOrder') }}</SectionLabel>
+        <div v-for="floor in shownFloors" :key="floor.stage ?? ''" class="space-y-1">
+          <h3 v-if="floor.stage" class="pt-2 text-body font-medium text-muted-foreground">
+            {{ floor.stage }}
+          </h3>
+          <ul :class="CARD_LIST_CLASS">
+            <li
+              v-for="set in floor.sets"
+              :key="set.entry.artist?.slug ?? set.entry.artist?.name"
+              class="flex items-baseline gap-3 py-3"
+            >
+              <span class="w-28 shrink-0 text-meta text-muted-foreground tabular-nums">
+                {{ setTimeLabel(set) }}
+              </span>
+              <span class="min-w-0 flex-1 text-card-title font-medium">
+                <RouterLink
+                  v-if="set.entry.artist?.slug"
+                  :to="localePath(`/artists/${set.entry.artist.slug}`)"
+                  class="hover:text-primary"
+                >
+                  {{ set.entry.artist.name }}
+                </RouterLink>
+                <template v-else>{{ set.entry.artist?.name }}</template>
+                <ListenLinks :artist="set.entry.artist" />
+              </span>
+              <span
+                v-if="showRoles && set.entry.role"
+                class="shrink-0 text-meta text-muted-foreground"
+              >
+                {{ enumLabel('events.role', set.entry.role) }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section v-else-if="lineup.length" class="space-y-3">
+        <SectionLabel>{{ t('events.detail.lineup') }}</SectionLabel>
+        <ul :class="CARD_LIST_CLASS">
+          <li
+            v-for="entry in shownLineup"
+            :key="entry.artist?.slug ?? entry.artist?.name"
+            class="flex items-baseline justify-between gap-3 py-3"
+          >
+            <span :class="cn(lineupNameClass(entry.role), 'min-w-0 font-medium')">
+              <RouterLink
+                v-if="entry.artist?.slug"
+                :to="localePath(`/artists/${entry.artist.slug}`)"
+                class="hover:text-primary"
+              >
+                {{ entry.artist.name }}
+              </RouterLink>
+              <template v-else>{{ entry.artist?.name }}</template>
+              <ListenLinks :artist="entry.artist" />
+            </span>
+            <div class="flex shrink-0 items-center gap-2 text-meta text-muted-foreground">
+              <span v-if="entry.stage">{{ entry.stage }}</span>
+              <span v-if="entry.stage && showRoles && entry.role" aria-hidden="true">·</span>
+              <span v-if="showRoles && entry.role">
+                {{ enumLabel('events.role', entry.role) }}
+              </span>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <Button
+        v-if="lineupFolded"
+        data-testid="lineup-show-all"
+        type="button"
+        variant="outline"
+        @click="lineupExpanded = true"
+      >
+        {{ t('events.detail.lineupShowAll', { count: lineup.length }) }}
+      </Button>
+
+      <p v-if="lineupCredit" class="text-meta text-muted-foreground">
+        {{ t('events.detail.lineupFrom') }}
+        <a
+          class="underline underline-offset-2"
+          :href="lineupCredit.url"
+          rel="noopener"
+          target="_blank"
+          >{{ lineupCredit.host }}</a
+        >
+      </p>
+
       <section :class="cn('grid grid-cols-1 gap-6', factColumns)">
         <EventWhen :event="event" />
 
@@ -416,84 +525,6 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           }}</a>
         </Button>
       </EventShareActions>
-
-      <section v-if="floors" class="space-y-3">
-        <SectionLabel>{{ t('events.detail.runningOrder') }}</SectionLabel>
-        <div v-for="floor in floors" :key="floor.stage ?? ''" class="space-y-1">
-          <h3 v-if="floor.stage" class="pt-2 text-body font-medium text-muted-foreground">
-            {{ floor.stage }}
-          </h3>
-          <ul :class="CARD_LIST_CLASS">
-            <li
-              v-for="set in floor.sets"
-              :key="set.entry.artist?.slug ?? set.entry.artist?.name"
-              class="flex items-baseline gap-3 py-3"
-            >
-              <span class="w-28 shrink-0 text-meta text-muted-foreground tabular-nums">
-                {{ setTimeLabel(set) }}
-              </span>
-              <span class="min-w-0 flex-1 text-card-title font-medium">
-                <RouterLink
-                  v-if="set.entry.artist?.slug"
-                  :to="localePath(`/artists/${set.entry.artist.slug}`)"
-                  class="hover:text-primary"
-                >
-                  {{ set.entry.artist.name }}
-                </RouterLink>
-                <template v-else>{{ set.entry.artist?.name }}</template>
-                <ListenLinks :artist="set.entry.artist" />
-              </span>
-              <span
-                v-if="showRoles && set.entry.role"
-                class="shrink-0 text-meta text-muted-foreground"
-              >
-                {{ enumLabel('events.role', set.entry.role) }}
-              </span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section v-else-if="lineup.length" class="space-y-3">
-        <SectionLabel>{{ t('events.detail.lineup') }}</SectionLabel>
-        <ul :class="CARD_LIST_CLASS">
-          <li
-            v-for="entry in lineup"
-            :key="entry.artist?.slug ?? entry.artist?.name"
-            class="flex items-baseline justify-between gap-3 py-3"
-          >
-            <span :class="cn(lineupNameClass(entry.role), 'min-w-0 font-medium')">
-              <RouterLink
-                v-if="entry.artist?.slug"
-                :to="localePath(`/artists/${entry.artist.slug}`)"
-                class="hover:text-primary"
-              >
-                {{ entry.artist.name }}
-              </RouterLink>
-              <template v-else>{{ entry.artist?.name }}</template>
-              <ListenLinks :artist="entry.artist" />
-            </span>
-            <div class="flex shrink-0 items-center gap-2 text-meta text-muted-foreground">
-              <span v-if="entry.stage">{{ entry.stage }}</span>
-              <span v-if="entry.stage && showRoles && entry.role" aria-hidden="true">·</span>
-              <span v-if="showRoles && entry.role">
-                {{ enumLabel('events.role', entry.role) }}
-              </span>
-            </div>
-          </li>
-        </ul>
-      </section>
-
-      <p v-if="lineupCredit" class="text-meta text-muted-foreground">
-        {{ t('events.detail.lineupFrom') }}
-        <a
-          class="underline underline-offset-2"
-          :href="lineupCredit.url"
-          rel="noopener"
-          target="_blank"
-          >{{ lineupCredit.host }}</a
-        >
-      </p>
 
       <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
         {{ t('events.detail.detailsFrom') }}

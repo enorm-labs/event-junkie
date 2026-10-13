@@ -155,7 +155,7 @@ describe('EventDetailView', () => {
     expect(view.text()).not.toContain('Price not announced')
   })
 
-  it('orders poster, description, facts, then lineup', async () => {
+  it('orders poster, description, lineup, then facts', async () => {
     const view = await mountEvent({
       ...night,
       imageUrl: 'https://img.example/a.jpg',
@@ -163,10 +163,51 @@ describe('EventDetailView', () => {
     })
 
     const html = view.html()
-    const order = ['img.example', 'A long night of records.', 'Tickets', 'Mock Artist']
+    const order = ['img.example', 'A long night of records.', 'Mock Artist', 'Tickets']
     const positions = order.map((text) => html.indexOf(text))
     expect(positions.every((at) => at >= 0)).toBe(true)
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  it('folds a lineup over ten acts to the first eight until the visitor asks for all', async () => {
+    const lineup = Array.from({ length: 11 }, (_, index) => ({
+      artist: { name: `Act ${index + 1}` },
+      role: 'DJ' as const,
+    }))
+    const view = await mountEvent({ ...night, lineup })
+
+    expect(view.text()).toContain('Act 8')
+    expect(view.text()).not.toContain('Act 9')
+    await view.get('[data-testid="lineup-show-all"]').trigger('click')
+    expect(view.text()).toContain('Act 11')
+    expect(view.find('[data-testid="lineup-show-all"]').exists()).toBe(false)
+  })
+
+  it('folds a running order across its floors in print order', async () => {
+    const lineup = Array.from({ length: 11 }, (_, index) => ({
+      artist: { name: `Act ${index + 1}` },
+      role: 'DJ' as const,
+      stage: index < 6 ? 'Main' : 'Garden',
+      setStart: `2099-06-12T${String(12 + index).padStart(2, '0')}:00:00+02:00`,
+    }))
+    const view = await mountEvent({ ...night, lineup })
+
+    expect(view.text()).toContain('Garden')
+    expect(view.text()).toContain('Act 8')
+    expect(view.text()).not.toContain('Act 9')
+    await view.get('[data-testid="lineup-show-all"]').trigger('click')
+    expect(view.text()).toContain('Act 11')
+  })
+
+  it('shows a lineup of ten in full, with no toggle', async () => {
+    const lineup = Array.from({ length: 10 }, (_, index) => ({
+      artist: { name: `Act ${index + 1}` },
+      role: 'DJ' as const,
+    }))
+    const view = await mountEvent({ ...night, lineup })
+
+    expect(view.text()).toContain('Act 10')
+    expect(view.find('[data-testid="lineup-show-all"]').exists()).toBe(false)
   })
 
   it('credits each source that filled a field, linked by its host, and no source on a plain event (#2593)', async () => {
