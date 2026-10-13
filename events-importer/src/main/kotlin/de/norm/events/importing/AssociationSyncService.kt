@@ -86,7 +86,7 @@ class AssociationSyncService(
     ): AssociationOutcome {
         val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
         val (allBilled, heldBack) = billedArtists(events)
-        val unverified = heldBack.values.flatten().distinctBy { slugOf(it.name) }
+        val unverified = heldBack.values.flatten().distinctBy { artistSlugFor(it.name) }
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         val pins = AssociationPins(savedEvents, detailless)
         val pinsKept = keptPins(pins, allBilled, events)
@@ -142,7 +142,7 @@ class AssociationSyncService(
 
         val lineupEvents = open(PinnedField.LINEUP, withLineup)
         val (billed, heldBack) = billedArtists(lineupEvents.map { it.second })
-        val artistCache = resolveAllArtists(billed.values.flatten() + heldBack.values.flatten().distinctBy { slugOf(it.name) })
+        val artistCache = resolveAllArtists(billed.values.flatten() + heldBack.values.flatten().distinctBy { artistSlugFor(it.name) })
         val lineupFilled = lineupEvents.filter { (stored, _) -> billed[stored.sourceId].orEmpty().isNotEmpty() }.map { it.first }
         syncArtistAssociations(lineupFilled, billed, artistCache, emptySet())
 
@@ -185,7 +185,7 @@ class AssociationSyncService(
         val genres = pins.pinned(PinnedField.GENRES)
         return pins.countChanged(
             PinnedField.LINEUP,
-            desired = lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> slugOf(a.name) }.toSet() },
+            desired = lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> artistSlugFor(a.name) }.toSet() },
             stored =
                 storedSlugs(lineup, { eventArtistRepository.findByEventIdIn(it).toList() }, { it.eventId to it.artistId }) { ids ->
                     artistRepository.findAllById(ids).toList().associate { it.id to it.slug }
@@ -366,19 +366,19 @@ class AssociationSyncService(
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
                         .filterNot { refusal(it.name) != null || (it.titleDerived && festival) }
             }
-        val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::slugOf).toSet() }
+        val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::artistSlugFor).toSet() }
         val promoterNamed =
             stripped.flatMap { (sourceId, artists) ->
-                artists.filter { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) }
+                artists.filter { it.titleDerived && artistSlugFor(it.name) in promoterSlugsById.getValue(sourceId) }
             }
-        val verified = exactSlugs(promoterNamed.map { slugOf(it.name) }.toSet())
+        val verified = exactSlugs(promoterNamed.map { artistSlugFor(it.name) }.toSet())
         val heldBack =
             stripped
                 .mapValues { (sourceId, artists) ->
-                    artists.filter { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) && slugOf(it.name) !in verified }
+                    artists.filter { it.titleDerived && artistSlugFor(it.name) in promoterSlugsById.getValue(sourceId) && artistSlugFor(it.name) !in verified }
                 }.filterValues { it.isNotEmpty() }
         val billed = stripped.mapValues { (sourceId, artists) -> artists - heldBack[sourceId].orEmpty().toSet() }
-        heldBack.values.flatten().distinctBy { slugOf(it.name) }.forEach {
+        heldBack.values.flatten().distinctBy { artistSlugFor(it.name) }.forEach {
             logger.info { "Holding back '${it.name}': the event's promoter, and no MusicBrainz EXACT row vouches for it as an act" }
         }
         return unglueSeriesTails(billed) to heldBack
@@ -435,7 +435,7 @@ class AssociationSyncService(
 
     /** Glued name to the stored name of its head, for every head that is an `EXACT` row while the glued name is not. */
     private suspend fun verifiedHeads(headByName: Map<String, String>): Map<String, String> {
-        val slugsToRead = headByName.flatMap { (name, head) -> listOf(slugOf(name), slugOf(head)) }.toSet()
+        val slugsToRead = headByName.flatMap { (name, head) -> listOf(artistSlugFor(name), artistSlugFor(head)) }.toSet()
         val exactBySlug =
             artistRepository
                 .findBySlugIn(slugsToRead)
@@ -444,12 +444,10 @@ class AssociationSyncService(
                 .associateBy { it.slug }
         return headByName
             .mapNotNull { (name, head) ->
-                val headRow = exactBySlug[slugOf(head)]
-                if (headRow != null && exactBySlug[slugOf(name)] == null) name to headRow.name else null
+                val headRow = exactBySlug[artistSlugFor(head)]
+                if (headRow != null && exactBySlug[artistSlugFor(name)] == null) name to headRow.name else null
             }.toMap()
     }
-
-    private fun slugOf(name: String) = artistSlugFor(name)
 
     /**
      * A billed name that reaches a stored row whose name differs only by accents may be a different act, as `Göre`
