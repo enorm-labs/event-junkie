@@ -53,9 +53,9 @@ function stubPhone() {
   }))
 }
 
-async function mountWith(tonight: unknown[], locale: 'en' | 'de' = 'en') {
+async function mountWith(todays: unknown[], locale: 'en' | 'de' = 'en') {
   getMock.mockImplementation((path: string) =>
-    Promise.resolve(path === '/api/events/today' ? tonight : { content: [] }),
+    Promise.resolve(path === '/api/events/today' ? todays : { content: [] }),
   )
   const router = createRouter({
     history: createMemoryHistory(),
@@ -70,10 +70,10 @@ async function mountWith(tonight: unknown[], locale: 'en' | 'de' = 'en') {
 const surpriseButton = (view: VueWrapper) =>
   view.find<HTMLButtonElement>(`button[title*="${SMALL_ROOM_CAPACITY}"]`)
 
-const smallRoomTonight = () => [event('one', 120)]
+const smallRoomToday = () => [event('one', 120)]
 
 describe('HomeView "Surprise me" (#2722)', () => {
-  it('is hidden when no event tonight is in a small room', async () => {
+  it('is hidden when no event today is in a small room', async () => {
     const { view } = await mountWith([event('big', 1500), event('unknown', null)])
 
     expect(surpriseButton(view).exists()).toBe(false)
@@ -109,7 +109,7 @@ describe('HomeView "Surprise me" (#2722)', () => {
     i18n.global.locale.value = locale
     for (const phone of [false, true]) {
       if (phone) stubPhone()
-      const { view } = await mountWith(smallRoomTonight(), locale)
+      const { view } = await mountWith(smallRoomToday(), locale)
       const button = surpriseButton(view)
 
       expect(button.attributes('aria-label')).toBeUndefined()
@@ -122,7 +122,7 @@ describe('HomeView "Surprise me" (#2722)', () => {
 
   it('shows only the dice on a phone, with the label kept for screen readers', async () => {
     stubPhone()
-    const { view } = await mountWith(smallRoomTonight())
+    const { view } = await mountWith(smallRoomToday())
     const button = surpriseButton(view)
     const label = button.find('span')
 
@@ -132,7 +132,7 @@ describe('HomeView "Surprise me" (#2722)', () => {
   })
 
   it('keeps the small labelled button from sm up', async () => {
-    const { view } = await mountWith(smallRoomTonight())
+    const { view } = await mountWith(smallRoomToday())
     const button = surpriseButton(view)
 
     expect(button.classes()).toContain('h-7')

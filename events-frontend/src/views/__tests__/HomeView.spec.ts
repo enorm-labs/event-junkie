@@ -5,7 +5,7 @@ import { defineComponent, h, ref } from 'vue'
 import type { EventSummary } from '@/api/types'
 import { setI18nLocale } from '@/i18n'
 
-/** One upcoming event, so the Upcoming section renders its links; tonight stays empty. */
+/** One upcoming event, so the Upcoming section renders its links; Today stays empty. */
 function loaded(data: EventSummary[]) {
   return {
     data: ref(data),

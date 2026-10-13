@@ -56,7 +56,7 @@ test('a filtered link keeps the sheet closed and the date inputs off the page', 
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
   // The presets stay on the page, in one row.
-  const presets = ['On now', 'Tonight', 'This weekend', 'Next 7 days'].map((name) =>
+  const presets = ['On now', 'Today', 'This weekend', 'Next 7 days'].map((name) =>
     page.getByRole('button', { name, exact: true }),
   )
   const tops = await Promise.all(presets.map(async (p) => (await p.boundingBox())!.y))

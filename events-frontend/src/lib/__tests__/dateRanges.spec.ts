@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  activePresetKey,
-  DATE_PRESETS,
-  nextSevenDays,
-  thisWeekend,
-  tonight,
-} from '@/lib/dateRanges'
+import { activePresetKey, DATE_PRESETS, nextSevenDays, thisWeekend, today } from '@/lib/dateRanges'
 
 /** Freezes the clock at midday Berlin time on the given date, so the day never straddles. */
 function freezeOn(isoDate: string) {
@@ -19,9 +13,9 @@ describe('date range presets', () => {
     vi.useRealTimers()
   })
 
-  it('tonight is today alone', () => {
+  it('today is the current day alone', () => {
     freezeOn('2026-08-05') // Wednesday
-    expect(tonight()).toEqual({ from: '2026-08-05', to: '2026-08-05' })
+    expect(today()).toEqual({ from: '2026-08-05', to: '2026-08-05' })
   })
 
   it('next 7 days spans today plus six more', () => {
@@ -53,10 +47,10 @@ describe('date range presets', () => {
     expect(thisWeekend()).toEqual({ from: '2026-10-02', to: '2026-10-04' })
   })
 
-  it('presses Tonight alone on a Sunday, where it and This weekend are the same day', () => {
+  it('presses Today alone on a Sunday, where it and This weekend are the same day', () => {
     freezeOn('2026-08-09') // Sunday
-    expect(thisWeekend()).toEqual(tonight())
-    expect(activePresetKey(tonight())).toBe('dateRange.tonight')
+    expect(thisWeekend()).toEqual(today())
+    expect(activePresetKey(today())).toBe('dateRange.today')
   })
 
   it('reads a range as the preset it equals, and anything else as none', () => {

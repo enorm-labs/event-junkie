@@ -37,7 +37,7 @@ data class EventFilter(
     val runningCutoff: LocalTime? = null,
     /**
      * A day the event is on: started by it and not ended before it (ADR-029). Internal, set by the
-     * Tonight feed. Wins over [from] and [to].
+     * Today feed. Wins over [from] and [to].
      */
     val on: LocalDate? = null,
     /**
@@ -242,7 +242,7 @@ class EventSearchRepository(
     /**
      * Applies the date filter. With no range, every event that has not ended (ADR-029). An explicit
      * [EventFilter.from] means "starts on or after", which keeps a running event out of Upcoming
-     * (`from = tomorrow`) while Tonight carries it. [EventFilter.on] is the Tonight case, and
+     * (`from = tomorrow`) while Today carries it. [EventFilter.on] is the Today case, and
      * [EventFilter.over] the search page's past group. "Not over" carries the late-night grace (#299),
      * see [lateNightGrace].
      */

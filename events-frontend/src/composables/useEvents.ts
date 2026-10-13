@@ -68,11 +68,11 @@ export type EventFilterValues = Pick<
   | 'feature'
 >
 
-/** Today's events for the Home "Tonight" section. */
+/** Today's events for the Home "Today" section. */
 export function useTodayEvents() {
   return useAsync<EventSummary[]>(
     () => unwrap(api.GET('/api/events/today')),
-    'errors.subject.tonightsEvents',
+    'errors.subject.todaysEvents',
     () => '/api/events/today',
   )
 }

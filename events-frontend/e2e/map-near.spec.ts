@@ -111,8 +111,8 @@ test('on now keeps only what is running, and marks it', async ({ page }) => {
   await page.getByRole('button', { name: 'On now', exact: true }).click()
 
   await expect(page).toHaveURL(/now=1/)
-  // On now replaces the range, so the default Tonight no longer reads as pressed (#2605).
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute(
+  // On now replaces the range, so the default Today no longer reads as pressed (#2605).
+  await expect(page.getByRole('button', { name: 'Today', exact: true })).toHaveAttribute(
     'aria-pressed',
     'false',
   )
@@ -222,14 +222,14 @@ test('venues that share a door share one marker, which lists them and hands over
   await expect(marker).toBeFocused()
 })
 
-test('with no dates in the URL the map shows today, so Tonight reads as pressed', async ({
+test('with no dates in the URL the map shows today, so Today reads as pressed', async ({
   page,
 }) => {
   await mockBff(page)
   await page.goto('/en/map')
   await expect(page.getByText('3 events at 3 venues')).toBeVisible()
 
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'Today', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
@@ -238,7 +238,7 @@ test('with no dates in the URL the map shows today, so Tonight reads as pressed'
     'false',
   )
   // "On now" is a time, so it sits with the presets rather than with the location controls.
-  const times = page.locator('div', { has: page.getByRole('button', { name: 'Tonight' }) }).last()
+  const times = page.locator('div', { has: page.getByRole('button', { name: 'Today', exact: true }) }).last()
   await expect(times.getByRole('button', { name: 'On now', exact: true })).toBeVisible()
 })
 

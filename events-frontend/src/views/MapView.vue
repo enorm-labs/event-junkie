@@ -26,7 +26,7 @@ import { useLocation } from '@/composables/useLocation'
 import { beginContentLoad } from '@/composables/useViewLoaded'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
-import { tonight } from '@/lib/dateRanges'
+import { today } from '@/lib/dateRanges'
 import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
@@ -61,7 +61,7 @@ const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: stri
 
 /**
  * The URL's range, or today when it names none. Today is not written into the URL, so a shared
- * link without dates means "tonight" on the day it is opened. On now is today, whatever the range.
+ * link without dates means "today" on the day it is opened. On now is today, whatever the range.
  */
 const range = computed(() => {
   if (onNowOnly.value) return { from: todayIso(), to: todayIso() }
@@ -303,8 +303,8 @@ function distance(km: number): string {
 
 <template>
   <ListPage :subtitle="t('map.subtitle')" :title="t('map.title')">
-    <!-- With no dates in the URL the map shows today, so Tonight reads as pressed. -->
-    <EventFilterBar :default-range="tonight()" show-on-now />
+    <!-- With no dates in the URL the map shows today, so Today reads as pressed. -->
+    <EventFilterBar :default-range="today()" show-on-now />
 
     <section :aria-label="t('map.near.label')" class="space-y-3">
       <div class="flex flex-wrap items-center gap-2">

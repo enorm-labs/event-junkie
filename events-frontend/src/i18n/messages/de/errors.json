@@ -5,7 +5,7 @@
   "connection": "Beim Laden {subject} ist etwas schiefgegangen. Prüfe bitte deine Verbindung und lade neu.",
   "subject": {
     "generic": "dieser Inhalte",
-    "tonightsEvents": "der Events für heute Abend",
+    "todaysEvents": "der Events für heute",
     "upcomingEvents": "der kommenden Events",
     "events": "der Events",
     "venueEvents": "der Events in dieser Location",

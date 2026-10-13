@@ -105,7 +105,7 @@ it PG-13 and inclusive.
 
 Great places to let the voice show — **microcopy**:
 
-- Empty state: _"Nothing on tonight? In Berlin? Unlikely — try a wider date range."_
+- Empty state: _"Nothing on today? In Berlin? Unlikely — try a wider date range."_
 - End of list: _"That's the lot. Go touch some grass (or don't)."_
 - 404 / not found: _"This one's gone. Like last call — you snooze, you lose."_
 - Loading: _"Scoring the latest…"_
@@ -463,7 +463,7 @@ mark, and a rubber stamp that animates is a contradiction.
 
 ### 5.6 Page-level notes
 
-- **Home:** lead with _tonight / this week_ — the "next fix." Hero = wordmark + tagline (already the title).
+- **Home:** lead with _today / this week_ — the "next fix." Hero = wordmark + tagline (already the title).
 - **Events:** filter-forward (genre/type already exist); make "what's on this weekend" a one-tap default.
 - **Calendar:** the signature screen (ADR-011) — brand the "has events" day markers with the accent.
 - **Detail pages:** editorial layout; big image, lineup, venue — the place to reveal full-colour imagery.
@@ -804,7 +804,7 @@ kept because older sections still use it, not because it still exists.
   not. Files: [`branding/lockup-club-stamp.svg`](branding/lockup-club-stamp.svg) and its `-tagline` sibling. Component: `ClubStamp.vue`.
 - **EJ badge** — the logomark: the monogram in a square. Two constructions, split by size rather than taste — the **small badge** (drawn letters, no frame) for
   16–24 px, and the **stamp badge** (Rubik Distressed, framed, tilted) from 96 px. See §4b. Component: `EjBadge.vue`.
-- **Eyebrow label** — a small, mono, uppercase, letter-spaced heading in the muted text colour, used where a section title goes (e.g. "TONIGHT"). The
+- **Eyebrow label** — a small, mono, uppercase, letter-spaced heading in the muted text colour, used where a section title goes (e.g. "TODAY"). The
   editorial "listings" look. Component: `SectionLabel.vue`. Unrelated to the pulse mark despite the shared vocabulary, and deliberately untouched by the mark replacement.
 - **Favicon badge** — the app icon: the small badge as a **flat ink** square holding the EJ monogram — no gradient and no accent ground (decided 2026-08-23).
   File: `events-frontend/public/favicon.svg`. It needs **explicit fills** rather than the in-app knockout, or its letters take the colour of the tab strip

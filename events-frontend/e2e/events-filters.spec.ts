@@ -340,21 +340,21 @@ test('applies a date preset, marks it pressed, and clears it on a second click',
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
-  const tonight = page.getByRole('button', { name: 'Tonight' })
-  await tonight.click()
+  const todayPreset = page.getByRole('button', { name: 'Today', exact: true })
+  await todayPreset.click()
 
   // A preset is nothing but the two bounds, so it lands in the URL like any other filter.
   await expect(page).toHaveURL(new RegExp(`[?&]from=${today}\\b`))
   await expect(page).toHaveURL(new RegExp(`[?&]to=${today}\\b`))
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
-  await expect(tonight).toHaveAttribute('aria-pressed', 'true')
+  await expect(todayPreset).toHaveAttribute('aria-pressed', 'true')
   // The date inputs and the preset are two views of the same state.
   await expect(page.getByLabel('Earliest event date')).toHaveValue(today)
 
-  await tonight.click()
+  await todayPreset.click()
 
   await expect(page).not.toHaveURL(/[?&]from=/)
-  await expect(tonight).toHaveAttribute('aria-pressed', 'false')
+  await expect(todayPreset).toHaveAttribute('aria-pressed', 'false')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 })
 
@@ -368,12 +368,12 @@ test('each preset sends its own range and only one reads as pressed', async ({ p
     'aria-pressed',
     'true',
   )
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'Today', exact: true })).toHaveAttribute(
     'aria-pressed',
     'false',
   )
 
-  // "Next 7 days" spans a week, so its bounds differ — unlike Tonight's single day.
+  // "Next 7 days" spans a week, so its bounds differ — unlike Today's single day.
   const url = new URL(page.url())
   expect(url.searchParams.get('from')).not.toBe(url.searchParams.get('to'))
 })
@@ -529,7 +529,7 @@ test('the empty state offers a way out of the filters', async ({ page }) => {
   await page.goto('/events?q=nothing')
   await expect(page.getByText(/nothing matches/i)).toBeVisible()
 
-  await expect(page.getByRole('link', { name: /tonight/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'See what is on today' })).toBeVisible()
   await page.getByRole('button', { name: 'Clear all filters' }).click()
 
   await expect(page).toHaveURL(/\/events$/)

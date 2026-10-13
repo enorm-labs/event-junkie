@@ -2,7 +2,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
  * Home page feeds with a mocked BFF. Two independent feeds on mount:
- * Tonight   GET /api/events/today        (an EventSummary[] array)
+ * Today     GET /api/events/today        (an EventSummary[] array)
  * Upcoming  GET /api/events?from=&size=12 (an EventPage; the view reads .content)
  * Each has its own loading / error / empty / list state. The matchers do not overlap.
  */
@@ -46,11 +46,11 @@ test.beforeEach(async ({ page }) => {
 
 const eventHeading = (page: Page, name: string) => page.getByRole('heading', { level: 3, name })
 
-test('renders the tonight and upcoming feeds', async ({ page }) => {
+test('renders the today and upcoming feeds', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { level: 2, name: 'Tonight' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: 'Today', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: 'Upcoming' })).toBeVisible()
   // The count sits beside the heading, not in its name.
   await expect(page.getByText('1 event', { exact: true })).toBeVisible()
@@ -94,17 +94,17 @@ test('shows empty states when both feeds are empty', async ({ page }) => {
   await page.goto('/')
 
   // Empty-state copy is in the brand voice; assert on a stable substring so wording can flex.
-  await expect(page.getByText(/nothing on tonight/i)).toBeVisible()
+  await expect(page.getByText(/nothing on today/i)).toBeVisible()
   await expect(page.getByText(/nothing upcoming/i)).toBeVisible()
 })
 
 test('shows an error in one feed without affecting the other', async ({ page }) => {
-  // Tonight fails; Upcoming keeps the default (successful) mock.
+  // Today fails; Upcoming keeps the default (successful) mock.
   await page.route(todayFeed, (route) => json(route, { message: 'boom' }, 500))
 
   await page.goto('/')
 
-  await expect(page.getByText(/couldn't load tonight's events/i)).toBeVisible()
+  await expect(page.getByText(/couldn't load today's events/i)).toBeVisible()
   await expect(eventHeading(page, 'Upcoming One')).toBeVisible()
 })
 
@@ -155,7 +155,7 @@ test('long titles truncate inside the feed instead of widening the page', async 
   expect(box && viewport && box.x + box.width).toBeLessThanOrEqual(viewport!.width)
 })
 
-/** Tonight on a busy day: more events than the section's cap of six cards, or twelve rows (#2321). */
+/** Today on a busy day: more events than the section's cap of six cards, or twelve rows (#2321). */
 const busyNight = Array.from({ length: 15 }, (_, i) => ({
   slug: `night-${i + 1}`,
   title: `Night ${i + 1}`,
@@ -163,14 +163,14 @@ const busyNight = Array.from({ length: 15 }, (_, i) => ({
   startTime: '21:00',
 }))
 
-test('a busy Tonight shows six cards, and the button reveals the rest', async ({ page }) => {
+test('a busy Today shows six cards, and the button reveals the rest', async ({ page }) => {
   await page.route(todayFeed, (route) => json(route, busyNight))
   await page.goto('/')
 
   await expect(eventHeading(page, 'Night 6')).toBeVisible()
   await expect(eventHeading(page, 'Night 7')).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Show all 15 events tonight' }).click()
+  await page.getByRole('button', { name: 'Show all 15 events today' }).click()
 
   await expect(eventHeading(page, 'Night 15')).toBeVisible()
   await expect(page.getByRole('button', { name: /show all/i })).toHaveCount(0)
@@ -178,17 +178,17 @@ test('a busy Tonight shows six cards, and the button reveals the rest', async ({
   await expect(page.getByRole('link', { name: /Night 7\b/ })).toBeFocused()
 })
 
-test('the compact view caps Tonight at twelve rows', async ({ page }) => {
+test('the compact view caps Today at twelve rows', async ({ page }) => {
   await page.route(todayFeed, (route) => json(route, busyNight))
   await page.addInitScript(() => localStorage.setItem('view', 'compact'))
   await page.goto('/')
 
   await expect(page.getByRole('link', { name: /Night 12\b/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Night 13\b/ })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Show all 15 events tonight' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show all 15 events today' })).toBeVisible()
 })
 
-test('Tonight at the cap shows every event and no button', async ({ page }) => {
+test('Today at the cap shows every event and no button', async ({ page }) => {
   await page.route(todayFeed, (route) => json(route, busyNight.slice(0, 6)))
   await page.goto('/')
 
@@ -199,7 +199,7 @@ test('Tonight at the cap shows every event and no button', async ({ page }) => {
 test('the header stays on screen after scrolling down a long feed', async ({ page }) => {
   await page.route(todayFeed, (route) => json(route, busyNight))
   await page.goto('/')
-  await page.getByRole('button', { name: 'Show all 15 events tonight' }).click()
+  await page.getByRole('button', { name: 'Show all 15 events today' }).click()
   await eventHeading(page, 'Night 15').scrollIntoViewIfNeeded()
 
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)

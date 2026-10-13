@@ -77,7 +77,7 @@ class EventService(
         eventSearchRepository.firstFeatured(filter, Instant.now(clock))?.let { summariesFor(hydrateOrdered(listOf(it))).firstOrNull() }
 
     /**
-     * Tonight's events, everything on today including a weekender in its second night (ADR-029).
+     * Today's events, everything on today including a weekender in its second night (ADR-029).
      * Through the search repository so a night of 23:00 doors gets the same seeded tiebreak as the
      * list (#1380); a derived `OrderByStartTime` left tied rows in heap order.
      */

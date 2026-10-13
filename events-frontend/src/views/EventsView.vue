@@ -196,7 +196,7 @@ const mapLink = computed(() => ({
       <div class="flex flex-wrap gap-3">
         <ClearAllFilters empty-state />
         <Button as-child variant="outline">
-          <RouterLink :to="localePath('/')">{{ t('common.actions.browseTonight') }}</RouterLink>
+          <RouterLink :to="localePath('/')">{{ t('common.actions.browseToday') }}</RouterLink>
         </Button>
       </div>
     </div>
