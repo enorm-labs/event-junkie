@@ -223,7 +223,8 @@ they are excluded rather than counted as unreviewed.
   `DataQualityRegressionCheck` compares the share of each `QualityIssue` per source with its median over the seven
   days before, from `data_quality_snapshot`. The check needs at least ten events and three days of history. A share more
   than ten points worse logs a WARN and sets `data_quality_regression{source,metric}` to 1. The
-  `ej-data-quality-regression` alert fires on it. For `flaggedAtImport`, the check counts only the flags that kept a
+  `ej-data-quality-regression` alert fires on it. At start, the importer sets the gauge again from today's stored rows and
+  logs no WARN (#3223). Before the 03:00 snapshot, a restart leaves the gauge empty until 03:00. For `flaggedAtImport`, the check counts only the flags that kept a
   value out of an event. A review flag such as `UNCERTAIN_PARTY_FEATURE` removes nothing, so the check ignores it. The
   snapshot stores this count as `flaggedAtImportKeptOut` (#3148). The check skips a metric when the source declares its
   field in `VenueLimitations` (#3195). `missingStartTime` maps to `START_TIME`, `missingGenre` to `GENRE`, `missingPromoter`

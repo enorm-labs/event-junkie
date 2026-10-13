@@ -8,6 +8,9 @@ import de.norm.events.scraper.LogContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+import org.springframework.boot.ApplicationArguments
+import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -24,6 +27,10 @@ import java.time.LocalDate
  * `@ConditionalOnProperty` on `app.scheduling.enabled` follows `ScheduledImportService`, so the test
  * suite does not race a background write against its own assertions. The property also gates
  * [de.norm.events.SchedulingConfiguration], which is what stops the untagged `@Scheduled` beans (#949).
+ *
+ * At start it also republishes the regression gauge from today's stored rows (#3223). The gauge
+ * lives in the process, so without this a restart after 03:00 leaves the alert without data
+ * until the next night.
  */
 @Service
 @ConditionalOnProperty(name = ["app.scheduling.enabled"], havingValue = "true", matchIfMissing = true)
@@ -33,8 +40,40 @@ class DataQualityReportLogger(
     private val metrics: DataQualityMetrics,
     private val eventSources: EventSourceRepository,
     private val clock: Clock = Clock.systemUTC()
-) {
+) : ApplicationRunner {
     private val logger = KotlinLogging.logger {}
+
+    /** `runBlocking` is fine here: the runner executes on the main thread, not an event loop. */
+    override fun run(args: ApplicationArguments) {
+        runBlocking { publishStoredRegressions() }
+    }
+
+    /**
+     * Judges today's stored rows again and sets `data_quality_regression`, or does nothing when the
+     * 03:00 run has not written today's rows yet (#3223).
+     *
+     * Gauge only, no per-verdict lines: the 03:00 run logged those already, and a rollout must not
+     * repeat them. Failures are caught for the reason [snapshot] gives: a start must not fail on a
+     * measurement.
+     */
+    @Suppress("TooGenericExceptionCaught") // Intentional: measurement must not be able to fail the application
+    suspend fun publishStoredRegressions() {
+        try {
+            val today = LocalDate.now(clock)
+            val rows = snapshots.findBySnapshotDate(today).toList()
+            if (rows.isEmpty()) {
+                logger.info { "No data-quality snapshot for $today yet; the regression gauge waits for the nightly run" }
+                return
+            }
+            val verdicts = judge(today, rows)
+            logger.info {
+                "Republished the data-quality regression gauge from $today's snapshot: " +
+                    "${verdicts.size} series, ${verdicts.count { it.regressed }} regressed"
+            }
+        } catch (e: Exception) {
+            logger.warn(e) { "Could not republish the data-quality regression gauge at start; it stays empty until the nightly run" }
+        }
+    }
 
     /**
      * `cron` rather than `fixedDelay`, because a *daily* snapshot has to land on a day boundary
@@ -117,13 +156,7 @@ class DataQualityReportLogger(
         today: LocalDate,
         rows: List<DataQualitySnapshotEntity>
     ) {
-        val history =
-            snapshots
-                .findBySnapshotDateBetween(DataQualityRegressionCheck.baselineStart(today), today.minusDays(1))
-                .toList()
-        val verdicts = DataQualityRegressionCheck.check(rows, history, declaredAspectsBySlug())
-        metrics.publishRegressions(verdicts)
-        verdicts.filter { it.worse }.forEach { verdict ->
+        judge(today, rows).filter { it.worse }.forEach { verdict ->
             val numbers =
                 "${verdict.metric} of ${verdict.source} is at ${pct(verdict.todayPct)}% " +
                     "against a 7-day median of ${pct(verdict.baselinePct ?: 0.0)}% (${verdict.totalEvents} events)"
@@ -137,6 +170,20 @@ class DataQualityReportLogger(
                 payload = mapOf(LogContext.SOURCE_SLUG to verdict.source)
             }
         }
+    }
+
+    /** Judges [rows] against the week before [today], publishes the verdicts as the gauge, and returns them. */
+    private suspend fun judge(
+        today: LocalDate,
+        rows: List<DataQualitySnapshotEntity>
+    ): List<DataQualityRegressionCheck.Verdict> {
+        val history =
+            snapshots
+                .findBySnapshotDateBetween(DataQualityRegressionCheck.baselineStart(today), today.minusDays(1))
+                .toList()
+        val verdicts = DataQualityRegressionCheck.check(rows, history, declaredAspectsBySlug())
+        metrics.publishRegressions(verdicts)
+        return verdicts
     }
 
     /** The aspects each source's `VenueLimitations` declare, keyed by slug, for the gate to skip (#3195). */
