@@ -19,7 +19,9 @@ internal fun isModusComedySeries(title: String): Boolean = COMEDY_SERIES.contain
 
 /**
  * The comedians a `Modus Comedy` page bills: its description is the lineup, one name per line,
- * the host first behind a `Host :` label (`Host :Till Reiners<br>Rebecca Pap<br>…`).
+ * the host first behind a `Host :` label (`Host :Till Reiners<br>Rebecca Pap<br>…`). A blurb
+ * follows the names, so reading stops at the first prose line; a name inside the blurb
+ * ("präsentiert von Till Reiners") is never billed (#3217).
  */
 internal fun comedySeriesLineup(description: Element?): List<ScrapedArtist> =
     description
@@ -27,10 +29,23 @@ internal fun comedySeriesLineup(description: Element?): List<ScrapedArtist> =
         .orEmpty()
         .flatMap { it.textLines() }
         .map { it.replaceFirst(HOST_LABEL, "").trim() }
-        .filter { it.isNotEmpty() && !isNonArtistName(it) }
+        .filter { it.isNotEmpty() }
+        .takeWhile { !isProse(it) }
+        .filterNot { isNonArtistName(it) }
         .distinct()
         .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT") }
 
 private val COMEDY_SERIES = Regex("""^modus\s+comedy\b""", RegexOption.IGNORE_CASE)
+
+/** A sentence, a `label: text` line or more than five words: comedian names are one to four words. */
+private fun isProse(line: String): Boolean = line.last() in SENTENCE_END || LABEL_COLON.containsMatchIn(line) || line.split(WHITESPACE).size > MAX_NAME_WORDS
+
+private const val SENTENCE_END = ".!?"
+
+private const val MAX_NAME_WORDS = 5
+
+private val LABEL_COLON = Regex("""\w: """)
+
+private val WHITESPACE = Regex("""\s+""")
 
 private val HOST_LABEL = Regex("""^\s*host\s*:\s*""", RegexOption.IGNORE_CASE)

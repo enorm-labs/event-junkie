@@ -121,4 +121,17 @@ class ModusDetailPageScraperTest {
                 ScrapedArtist("Anna Bomhard", "SUPPORT")
             )
     }
+
+    @Test
+    fun `bills the comedy series' names and not the blurb that follows them`() {
+        val comedy = scrape("modus-comedy-blurb", "211026-ModusComedy")
+
+        comedy.artists shouldBe
+            listOf(
+                ScrapedArtist("Till Reiners", "HEADLINER"),
+                ScrapedArtist("Rebecca Pap", "SUPPORT"),
+                ScrapedArtist("Ludwig Benecke", "SUPPORT"),
+                ScrapedArtist("Anna Bomhard", "SUPPORT")
+            )
+    }
 }
