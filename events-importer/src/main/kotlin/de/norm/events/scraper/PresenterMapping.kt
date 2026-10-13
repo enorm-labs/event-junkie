@@ -9,8 +9,11 @@ package de.norm.events.scraper
  */
 const val PRESENTS_VERBS = """presents|pr(?:ä|ae)sentiert"""
 
-/** [PRESENTS_VERBS] plus the abbreviations `pres.` and `prs.`, for a credit or a frame that a colon or position already marks. */
-const val PRESENTS_WORDS = """$PRESENTS_VERBS|pres\.|prs\."""
+/** The contractions `prsts` and `prsnts` that Schokoladen writes (#3213); unambiguous only before a colon or in a credit. */
+const val PRESENTS_CONTRACTIONS = """prsn?ts"""
+
+/** [PRESENTS_VERBS] plus the abbreviations `pres.`, `prs.` and the [PRESENTS_CONTRACTIONS], for a credit or a frame that a colon or position already marks. */
+const val PRESENTS_WORDS = """$PRESENTS_VERBS|pres\.|prs\.|$PRESENTS_CONTRACTIONS"""
 
 /** The phrases that introduce a presenter, as a regex alternation: `präsentiert von`, `presented by`, `eine Veranstaltung von`. */
 const val PRESENTED_BY_WORDS = """pr(?:ä|ae)sentiert\s+von|presented\s+by|eine\s+veranstaltung\s+von"""

@@ -1641,14 +1641,19 @@ private val PRES_MARKER = Regex("""^(.+?)\s+pres[.:]\s+(.+)$""", RegexOption.IGN
 
 /**
  * `<promoter> presents: <bill>` / `<promoter> präsentiert: <bill>` — the spelled-out marker with
- * its colon, which the abbreviated [PRES_MARKER] never reads.
+ * its colon, which the abbreviated [PRES_MARKER] never reads. Schokoladen's `M:Soundtrack prsts:`
+ * contractions read the same way, and so does a night of at most three words between the verb and
+ * the colon, as in LARK's `Projektbau presents TOSKA: <acts>` (#3213).
  *
  * The colon is what makes the reading unambiguous where `pres.` is not: what follows it is the
  * night's bill, and what precedes it is who booked it. Gretchen and Morphine each carry a local
  * copy of this frame; this is the shared one, and the promoter half is not stored anywhere yet.
  */
 private val PRESENTS_FRAME =
-    Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+    Regex(
+        """^.{2,60}?\s+(?:$PRESENTS_VERBS|$PRESENTS_CONTRACTIONS)(?:\s+[^\s:,]+(?:\s+[^\s:,]+){0,2})?\s*:\s*(.+)$""",
+        RegexOption.IGNORE_CASE
+    )
 
 /**
  * The acts of a `<promoter> presents: <bill>` title, or `null` when the title carries no such

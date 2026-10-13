@@ -59,6 +59,24 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `a presents frame reads the prsts contraction and a night name before the colon`() {
+        // Schokoladen contracts the verb, LARK names the night between the verb and the colon (#3213).
+        // The Schokoladen title arrives without its origin annotations, which its scraper strips first.
+        headlinersFromTitle("M:Soundtrack prsts: Dark Selbo Release Show + CHEEKY").map { it.name } shouldContainExactly
+            listOf("Dark Selbo", "CHEEKY")
+        headlinersFromTitle("old & fast prsnts: Pisse").map { it.name } shouldContainExactly listOf("Pisse")
+        headlinersFromTitle("Projektbau presents TOSKA: dj poolboi, DJ Cinema Quartier Latin, Projektbau").map { it.name } shouldContainExactly
+            listOf("dj poolboi", "DJ Cinema Quartier Latin", "Projektbau")
+        headlinersFromTitle("Trinity presents: SKELER - Nightfall World Tour").map { it.name } shouldContainExactly listOf("SKELER")
+        // Without a colon the verb stays ambiguous: an act presenting its work, a band named for the word.
+        headlinersFromTitle("Robert Henke presents Dust").map { it.name } shouldContainExactly
+            listOf("Robert Henke presents Dust")
+        headlinersFromTitle("The Wedding Present").map { it.name } shouldContainExactly listOf("The Wedding Present")
+        // A night of more than three words is prose, not a name: the frame does not read it.
+        headlinersFromTitle("Projektbau presents a very long night out: dj poolboi").map { it.name } shouldNotContain "dj poolboi"
+    }
+
+    @Test
     fun `extractSupportFromSubtitle returns empty when no support line`() {
         extractSupportFromSubtitle("Tour 2026").shouldBeEmpty()
         extractSupportFromSubtitle(null).shouldBeEmpty()
