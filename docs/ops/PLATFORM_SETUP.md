@@ -1089,6 +1089,9 @@ Three things that are _not_ automatic:
 | **k3s**              | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | `node-pin-reminder.yml` opens an issue when `k3s_version` falls behind. Take it in place — [K3S_UPGRADE.md](K3S_UPGRADE.md) |
 | **Container images** | The applications' libraries come from their images, not the host's apt                          | Rebuild in CI, with Trivy scanning the result — §8 item 11                                                                  |
 
+**[CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md#rebooting-a-node) § Rebooting a node is the reboot procedure.** It gives the order of the nodes and the
+checks after each one.
+
 **A reboot does not update k3s.** It is installed at a pinned version and comes back on the same one. Only `k3s_version` moves it, and nothing else here can see a
 release. That is what the weekly reminder is for — see
 [ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md).
