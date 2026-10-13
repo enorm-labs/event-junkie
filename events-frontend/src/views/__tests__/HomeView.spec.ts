@@ -26,7 +26,6 @@ const stubs = {
   EventCard: { template: '<article />' },
   EventRow: { template: '<article />' },
   ClubStamp: { template: '<div />' },
-  ClubkulturNotice: { template: '<div />' },
 }
 
 let mounted: VueWrapper | undefined
