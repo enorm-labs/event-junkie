@@ -15,7 +15,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  * [ApiClient] hands it to `URI.create`: `…/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=13&limit=500`.
  * One request returns the whole programme. The API sends validators, but [ApiClient] makes no
  * conditional request, so every run is a [ImportResult.Success]. `robots.txt` asks for 20 s between
- * requests, which the throttle honours (#2171).
+ * requests, which the throttle honours (#2171). A cold search can take more than 30 s, so the host
+ * has a 60 s response timeout of its own (`app.scraper.host-response-timeouts`, #2840).
  *
  * A venue that reads a lineup overrides [lineup]. The default bills no one: radar titles name the
  * night ("Konzert", "Geburtstagsgeballer") far more often than an act.

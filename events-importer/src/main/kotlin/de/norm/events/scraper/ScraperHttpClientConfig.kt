@@ -3,9 +3,13 @@ package de.norm.events.scraper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
+import org.springframework.web.reactive.function.client.ClientRequest
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.netty.http.client.HttpClient
+import reactor.netty.http.client.HttpClientRequest
 import reactor.netty.resources.ConnectionProvider
+import java.time.Duration
 
 /** Bean name of the shared scraper [WebClient]; inject with `@Qualifier(SCRAPER_WEB_CLIENT)`. */
 const val SCRAPER_WEB_CLIENT = "scraperWebClient"
@@ -101,7 +105,7 @@ class ScraperHttpClientConfig {
             .filter(throttle)
             .build()
 
-    /** Pool, connector, timeout and `User-Agent` — everything both clients share. */
+    /** Pool, connector, timeouts and `User-Agent` — everything both clients share. */
     private fun baseClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
@@ -121,4 +125,31 @@ class ScraperHttpClientConfig {
                         .responseTimeout(scraperProperties.responseTimeout)
                 )
             ).defaultHeader("User-Agent", SCRAPER_USER_AGENT)
+            .filter(hostResponseTimeoutFilter(scraperProperties.hostResponseTimeouts))
+}
+
+/**
+ * Overrides the client's response timeout for a request to a host in [timeouts], through Reactor Netty's per-request setting.
+ * A host not in the map keeps the client's timeout.
+ */
+internal fun hostResponseTimeoutFilter(timeouts: Map<String, Duration>): ExchangeFilterFunction {
+    val byHost = timeouts.mapKeys { (host, _) -> host.lowercase() }
+    return ExchangeFilterFunction { request, next ->
+        val timeout =
+            request
+                .url()
+                .host
+                ?.lowercase()
+                ?.let(byHost::get)
+        if (timeout == null) {
+            next.exchange(request)
+        } else {
+            next.exchange(
+                ClientRequest
+                    .from(request)
+                    .httpRequest { it.getNativeRequest<HttpClientRequest>().responseTimeout(timeout) }
+                    .build()
+            )
+        }
+    }
 }
