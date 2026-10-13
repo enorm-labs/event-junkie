@@ -106,16 +106,20 @@ class OrangerieOverviewPageScraper {
     }
 
     /**
-     * The act after `w/` in `Naked Grapes w/ zodya`. A night without `w/` names its
-     * crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
+     * The acts after `w/` in `Naked Grapes w/ zodya`, one per comma (`Hang Jack w/ CRIES, Kallaloo, Vio PRG`). A night
+     * without `w/` names its crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
      */
     private fun artists(
         name: String,
         eventType: EventType
     ): List<ScrapedArtist> {
-        val act = name.substringAfter(WITH, "").trim().ifBlank { return emptyList() }
         val role = if (eventType == EventType.CONCERT) "HEADLINER" else "DJ"
-        return if (isNonArtistName(act)) emptyList() else listOf(ScrapedArtist(name = act, role = role))
+        return name
+            .substringAfter(WITH, "")
+            .split(',')
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = role) }
     }
 
     /** A bilingual tag holds a `lang="de"` and a `lang="en"` span, which `text()` would run together. */

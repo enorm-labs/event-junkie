@@ -72,6 +72,23 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills each act of a comma list after w-slash with the night's role`() {
+        val nights =
+            scrapeCards(
+                "ÍNTIMO w/ Nadia Wise, Sarah Ninon, Jelle from the Block" to "",
+                "Hang Jack w/ CRIES, Kallaloo, Vio PRG" to "",
+                "Parkside Sessions w/ Aruto, Os Camarões" to "",
+                "Sound Canteen w/ Bomchello b2b Terje, mnm," to ""
+            )
+
+        nights[0].artists shouldContainExactly
+            listOf("Nadia Wise", "Sarah Ninon", "Jelle from the Block").map { ScrapedArtist(name = it, role = "DJ") }
+        nights[1].artists shouldContainExactly listOf("CRIES", "Kallaloo", "Vio PRG").map { ScrapedArtist(name = it, role = "DJ") }
+        nights[2].artists shouldContainExactly listOf("Aruto", "Os Camarões").map { ScrapedArtist(name = it, role = "HEADLINER") }
+        nights[3].artists.flatMap { splitBackToBack(it) }.map { it.name } shouldContainExactly listOf("Bomchello", "Terje", "mnm")
+    }
+
+    @Test
     fun `names nobody for a crew or series night`() {
         events.first { it.title.startsWith("Gardens of Disco") }.artists.shouldBeEmpty()
         events.first { it.title.startsWith("Nice Tries") }.artists.shouldBeEmpty()
