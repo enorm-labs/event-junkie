@@ -85,17 +85,29 @@ private val MORE_TO_COME_PATTERN =
         RegexOption.IGNORE_CASE
     )
 
+/** A name wrapped whole in one pair of brackets: KitKatClub bills `Line up: (tba)` (#3202). */
+private val ENCLOSING_BRACKETS = Regex("""^\((.*)\)$|^\[(.*)]$""")
+
 /**
  * Whether [name] is a placeholder ([PLACEHOLDER_NAMES]) or a continuation
- * ([MORE_TO_COME_PATTERN]). Case-insensitive, dots ignored: "T.B.A." and "tba".
+ * ([MORE_TO_COME_PATTERN]). Case-insensitive, dots and one pair of enclosing brackets ignored:
+ * "T.B.A.", "(tba)" and "tba".
  */
 fun isPlaceholderName(name: String): Boolean {
-    val trimmed = name.trim().lowercase()
+    val trimmed = unwrapBrackets(name.trim()).lowercase()
     val dotFree = trimmed.replace(".", "")
     return dotFree in PLACEHOLDER_NAMES ||
         trimmed in PLACEHOLDER_NAMES ||
         MORE_TO_COME_PATTERN.containsMatchIn(trimmed)
 }
+
+private fun unwrapBrackets(name: String): String =
+    ENCLOSING_BRACKETS
+        .matchEntire(name)
+        ?.groupValues
+        ?.drop(1)
+        ?.firstOrNull { it.isNotEmpty() }
+        ?.trim() ?: name
 
 /**
  * A leading role label in front of the billed act, stripped off it ("Special Guest: FUCK" to
@@ -745,14 +757,25 @@ private val GUEST_SLOT_PATTERN =
 fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.trim().replace(WHITESPACE, " "))
 
 /**
+ * A `+` slot that adds a programme item to the night, not an act: Klunkerkranich bills `+ DJ
+ * Workshop (Workshop Sold Out)` and Kater `+ Darkroom` (#3202). The `+` must lead, so a `+` that
+ * joins two acts is untouched, and one word may stand before the item.
+ */
+private val PROGRAMME_ITEM_SLOT = Regex("""\+\s*(?:\p{L}+\s+)?(?:workshops?|darkroom)(?:\s*\(.*\))?""", RegexOption.IGNORE_CASE)
+
+/** Whether [name] is a slot that bills nobody: a [guest slot][isGuestSlotLabel] or a [PROGRAMME_ITEM_SLOT]. */
+private fun isUnbilledSlot(name: String): Boolean = isGuestSlotLabel(name) || PROGRAMME_ITEM_SLOT.matches(name.trim().replace(WHITESPACE, " "))
+
+/**
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare role label
  * ("Special Guest"), a segment ("Acid Aftershow"), an event ("Shred Fest"), a "DJ set" label, a
- * guest slot ("+ Guest"), a curated title ("The Revival Tour"), a head-count ("20 DJ's"), or a
- * name that slugs to nothing ("-"). The single predicate applied wherever names are resolved.
+ * guest slot ("+ Guest"), a programme item ("+ Darkroom"), a curated title ("The Revival Tour"), a
+ * head-count ("20 DJ's"), or a name that slugs to nothing ("-"). The single predicate applied
+ * wherever names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
-        isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
+        isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isUnbilledSlot(name) || isDenylistedNonArtist(name) ||
         isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name) || isNumberedVolume(name) ||
         isHeadCount(name)
 

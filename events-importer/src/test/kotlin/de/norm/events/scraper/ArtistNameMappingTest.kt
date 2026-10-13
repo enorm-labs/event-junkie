@@ -213,6 +213,23 @@ class ArtistNameMappingTest {
         isPlaceholderName("Moremore") shouldBe false
     }
 
+    @Test
+    fun `isPlaceholderName reads a placeholder inside one pair of enclosing brackets`() {
+        // KitKatClub bills its weekly Unity night as `Line up: (tba)` (#3202).
+        isPlaceholderName("(tba)") shouldBe true
+        isPlaceholderName("[TBA]") shouldBe true
+        isPlaceholderName("(t.b.a.)") shouldBe true
+        isNonArtistName("(tba)") shouldBe true
+    }
+
+    @Test
+    fun `isPlaceholderName keeps a bracketed name and a bracketed suffix`() {
+        isPlaceholderName("(Unauffinbar)") shouldBe false
+        isNonArtistName("(Unauffinbar)") shouldBe false
+        isNonArtistName("Name (Live)") shouldBe false
+        isNonArtistName("Name (tba)") shouldBe false
+    }
+
     // --- isNonArtistLabel ---
 
     @Test
@@ -527,6 +544,24 @@ class ArtistNameMappingTest {
         isDjSetFormatLabel("DJ Koze") shouldBe false
         isDjSetFormatLabel("DJ Set Sail") shouldBe false
         isNonArtistName("DJ Koze") shouldBe false
+    }
+
+    // --- programme item slot ---
+
+    @Test
+    fun `isNonArtistName drops a plus-led programme item`() {
+        // Klunkerkranich adds a workshop to its line-up, and Kater a darkroom (#3202, #1564).
+        isNonArtistName("+ DJ Workshop (Workshop Sold Out)") shouldBe true
+        isNonArtistName("+ Darkroom") shouldBe true
+        isNonArtistName("+Workshop") shouldBe true
+    }
+
+    @Test
+    fun `isNonArtistName keeps an act beside a programme item`() {
+        isNonArtistName("Laura Sí B2B Lea Chuga") shouldBe false
+        isNonArtistName("Darkroom Dubs") shouldBe false
+        isNonArtistName("Workshop") shouldBe false
+        isNonArtistName("DJ Koze + Darkroom Dubs") shouldBe false
     }
 
     // --- isGuestSlotLabel ---
