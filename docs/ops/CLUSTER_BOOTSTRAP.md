@@ -759,6 +759,57 @@ Four lines: `node_reboot_required_age_seconds`, `node_service_restart_pending_ag
 `node_patch_state_timestamp_seconds`. Then, from the
 repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-reboot-pending`, not `NO DATA`. `NO DATA` means the gateway is not reaching 9100. The place to look is the `node-patch-state` job in `up`.
 
+### Rebooting a node
+
+**Reboot a node when `ej-reboot-pending` or `ej-service-restart-pending` fires.** Nothing reboots a node automatically. [PLATFORM_SETUP.md](PLATFORM_SETUP.md)
+§8.2 says why. The alert's `node` label is the private address of the node.
+
+**Reboot in this order: the production database node, the production k3s node, then staging.** The applications then restart with the database already up.
+The production site is down for about 2 minutes. `10.10.0.1` is the WireGuard address on the production k3s node, so SSH to it times out while it reboots.
+
+**Before you reboot a cluster's nodes, check that no import runs on that cluster.** A reboot stops an import, and the source then shows
+`FAILED`. Open the forwards with `scripts/ej.sh up <env>`, then list the sources in `RUNNING` (`18081` for staging, `28081` for production):
+
+```bash
+for page in 0 1; do
+    curl -s "http://localhost:28081/api/admin/event-sources?size=100&page=$page" | jq -r '.content[] | select(.status == "RUNNING") | .slug'
+done
+```
+
+An empty result means you can reboot. When a slug shows, wait until its import ends, and then check again.
+
+**Wait for a new boot ID, not for any answer.** SSH can connect before the node goes down. A wait loop that accepts any answer then returns at once. The boot
+ID changes on every reboot, also when the kernel stays the same:
+
+```bash
+# Production database node, through the k3s node as a jump host
+old=$(ssh -J ops@10.10.0.1 ops@10.0.1.20 cat /proc/sys/kernel/random/boot_id)
+ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo systemctl reboot'
+until new=$(ssh -o ConnectTimeout=5 -J ops@10.10.0.1 ops@10.0.1.20 cat /proc/sys/kernel/random/boot_id) && [ "$new" != "$old" ]; do sleep 10; done
+
+# Production k3s node
+old=$(ssh ops@10.10.0.1 cat /proc/sys/kernel/random/boot_id)
+ssh ops@10.10.0.1 'sudo systemctl reboot'
+until new=$(ssh -o ConnectTimeout=5 ops@10.10.0.1 cat /proc/sys/kernel/random/boot_id) && [ "$new" != "$old" ]; do sleep 10; done
+
+# Staging
+old=$(ssh ops@10.10.1.1 cat /proc/sys/kernel/random/boot_id)
+ssh ops@10.10.1.1 'sudo systemctl reboot'
+until new=$(ssh -o ConnectTimeout=5 ops@10.10.1.1 cat /proc/sys/kernel/random/boot_id) && [ "$new" != "$old" ]; do sleep 10; done
+```
+
+**Check each node before you reboot the next one:**
+
+1. Every pod is `Running` and ready: `kubectl --context event-junkie-<env> get pods -A`.
+2. `/var/run/reboot-required` is gone: `ssh <node> 'ls /var/run/reboot-required'` reports no such file.
+3. The exporter reads 0 for `node_reboot_required_age_seconds` and `node_service_restart_pending_age_seconds`. Use the `curl` in
+   [The reboot-pending metric](#the-reboot-pending-metric-419) on that node. OpenObserve shows 0 one scrape later.
+4. On production, the site and `/api/events` answer 200.
+
+An import can still start between the check and the reboot. It then ends `FAILED` with "Import timed out (stuck in RUNNING for >30 minutes)". It
+recovers at its next scheduled run.
+Then check the Kubernetes events, as the next section says.
+
 ### After a reboot, check the Kubernetes events
 
 **A node reboot or a k3s restart can stop the Kubernetes events in OpenObserve.** The gateway collector can lose its `k8sobjects` watches while the API

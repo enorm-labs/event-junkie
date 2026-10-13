@@ -891,7 +891,8 @@ rule(
     "ej-reboot-pending",
     "A node has had `/var/run/reboot-required` set for more than three days. Its kernel or "
     "k3s update is installed but not running, and `apt` reports it as patched. Reboot it: "
-    "`docs/ops/PLATFORM_SETUP.md` §8b says how and what to check first. Which node: the "
+    "`docs/ops/CLUSTER_BOOTSTRAP.md` § Rebooting a node says how and what to check first. "
+    "Which node: the "
     "`node` label is its private address and node_exporter port.",
     "sum(max by (node) (node_reboot_required_age_seconds) > bool 3 * 86400)",
     ">",
@@ -912,7 +913,8 @@ rule(
     "A node has had a service waiting more than three days for a restart onto an updated "
     "library. needrestart does not restart k3s, systemd-networkd or PostgreSQL, so the old "
     "library stays loaded until a reboot. `sudo needrestart -b -r l` on that node lists them; "
-    "reboot it as `docs/ops/PLATFORM_SETUP.md` §8b says. Which node: the `node` label.",
+    "reboot it as `docs/ops/CLUSTER_BOOTSTRAP.md` § Rebooting a node says. Which node: the "
+    "`node` label.",
     "sum(max by (node) (node_service_restart_pending_age_seconds) > bool 3 * 86400)",
     ">",
     0,
