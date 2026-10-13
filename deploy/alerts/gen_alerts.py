@@ -549,8 +549,9 @@ rule(
 # The gauge holds its value until the next snapshot, so a regression fires once and
 # the 24h silence covers the rest of the day. `max by (source, metric)` collapses pod
 # generations; the `bool` keeps an all-zero day a 0 rather than an empty result
-# (trap 2). After a restart the series is absent until 03:00, and `--check` reports
-# NO DATA in that window.
+# (trap 2). At start the importer republishes the gauge from today's stored rows
+# (#3223). A restart before the day's 03:00 snapshot leaves no series until 03:00,
+# and `--check` reports NO DATA in that window.
 rule(
     "ej-data-quality-regression",
     "A source's data quality got worse overnight: one of its `QualityIssue` shares is more than "

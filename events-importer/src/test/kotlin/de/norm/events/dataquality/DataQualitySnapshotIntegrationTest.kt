@@ -8,6 +8,7 @@ import de.norm.events.importing.EventSourceRepository
 import de.norm.events.scraper.LogContext
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -53,7 +54,32 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     private val today = LocalDate.of(2026, 8, 19)
     private val clock = Clock.fixed(Instant.parse("2026-08-19T03:00:00Z"), ZoneOffset.UTC)
 
-    private fun logger() = DataQualityReportLogger(service, snapshots, metrics, eventSources, clock)
+    private fun logger(withMetrics: DataQualityMetrics = metrics) = DataQualityReportLogger(service, snapshots, withMetrics, eventSources, clock)
+
+    private fun captureLogs(block: suspend () -> Unit): List<ILoggingEvent> {
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        val logbackLogger = LoggerFactory.getLogger(DataQualityReportLogger::class.java) as Logger
+        logbackLogger.addAppender(appender)
+        try {
+            runBlocking { block() }
+        } finally {
+            logbackLogger.detachAppender(appender)
+            appender.stop()
+        }
+        return appender.list
+    }
+
+    private fun row(
+        daysAgo: Long,
+        issue: QualityIssue,
+        count: Long
+    ) = DataQualitySnapshotEntity(
+        snapshotDate = today.minusDays(daysAgo),
+        sourceSlug = "alpha",
+        metric = issue.key,
+        metricCount = count,
+        totalEvents = 10
+    )
 
     private suspend fun seedOneImperfectEvent() {
         val venueId =
@@ -186,5 +212,52 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
             appender.list.single { it.formattedMessage.contains("accepted limitation") }.formattedMessage shouldBe
                 "Data quality got worse on an accepted limitation, not a regression: " +
                 "missingPrice of alpha is at 100.0% against a 7-day median of 0.0% (10 events)"
+        }
+
+    @Test
+    fun `at start, today's stored rows set the regression gauge without logging a WARN`(): Unit =
+        runBlocking {
+            seedOneImperfectEvent()
+            // Three earlier days at 0 %, then today at 100 %: missingGenre regressed, and missingPrice
+            // got worse on a limitation CASSIOPEIA declares (#3195).
+            val issues = listOf(QualityIssue.MISSING_GENRE, QualityIssue.MISSING_PRICE)
+            snapshots
+                .saveAll(issues.flatMap { issue -> (1L..3L).map { row(it, issue, 0) } + row(0, issue, 10) })
+                .toList()
+            // A registry of its own, so a series left by another test cannot pass this one.
+            val registry = SimpleMeterRegistry()
+
+            val lines = captureLogs { logger(DataQualityMetrics(registry)).publishStoredRegressions() }
+
+            fun regression(metric: String) =
+                registry
+                    .find(DataQualityMetrics.REGRESSION_GAUGE)
+                    .tags(DataQualityMetrics.TAG_SOURCE, "alpha", DataQualityMetrics.TAG_METRIC, metric)
+                    .gauge()!!
+                    .value()
+            regression(QualityIssue.MISSING_GENRE.key) shouldBe 1.0
+            regression(QualityIssue.MISSING_PRICE.key) shouldBe 0.0
+            registry.find(DataQualityMetrics.REGRESSION_GAUGE).gauges().size shouldBe 2
+            // The 03:00 run logged the per-verdict lines already; a rollout must not repeat them.
+            lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
+            lines.map { it.formattedMessage } shouldBe
+                listOf("Republished the data-quality regression gauge from $today's snapshot: 2 series, 1 regressed")
+            // Republishing must not write: the stored rows are what it read.
+            snapshots.findBySnapshotDate(today).toList().size shouldBe issues.size
+        }
+
+    @Test
+    fun `at start, no rows for today publish no regression series`(): Unit =
+        runBlocking {
+            seedOneImperfectEvent()
+            snapshots.saveAll((1L..3L).map { row(it, QualityIssue.MISSING_GENRE, 0) }).toList()
+            val registry = SimpleMeterRegistry()
+
+            val lines = captureLogs { logger(DataQualityMetrics(registry)).publishStoredRegressions() }
+
+            registry.find(DataQualityMetrics.REGRESSION_GAUGE).gauges() shouldBe emptyList()
+            lines.none { it.level == ch.qos.logback.classic.Level.WARN } shouldBe true
+            lines.map { it.formattedMessage } shouldBe
+                listOf("No data-quality snapshot for $today yet; the regression gauge waits for the nightly run")
         }
 }
