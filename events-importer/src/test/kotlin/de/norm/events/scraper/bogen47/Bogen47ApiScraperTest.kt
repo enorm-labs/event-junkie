@@ -304,4 +304,13 @@ class Bogen47ApiScraperTest {
     private companion object {
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
+
+    @Test
+    fun `splits an organiser field into its promoters`() {
+        organizers("Homebound Music, BANDU, Bedroomdisco and FluxFM") shouldBe listOf("Homebound Music", "BANDU", "Bedroomdisco", "FluxFM")
+        organizers(" Rausgegangen, Bedroomdisco and FluxFM") shouldBe listOf("Rausgegangen", "Bedroomdisco", "FluxFM")
+        organizers("Fitzroy x LARK x Keep Hush Berlin x Ouch Berlin") shouldBe listOf("Fitzroy", "LARK", "Keep Hush Berlin", "Ouch Berlin")
+        organizers("Greyzone Concerts") shouldBe listOf("Greyzone Concerts")
+        organizers(null) shouldBe emptyList()
+    }
 }

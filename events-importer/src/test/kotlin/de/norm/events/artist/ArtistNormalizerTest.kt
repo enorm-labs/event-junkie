@@ -181,4 +181,21 @@ class ArtistNormalizerTest {
             canonicalArtistName("Paulk") shouldBe "Paulk"
         }
     }
+
+    @Test
+    fun `folds the duplicates the artist cleanup confirmed onto one spelling`() {
+        assertSoftly {
+            canonicalArtistName("DJ Buttchin") shouldBe "Buttchin"
+            canonicalArtistName("DJ BEN WASHINGTON") shouldBe "Ben Washington"
+            canonicalArtistName("sterni") shouldBe "Sterni"
+            canonicalArtistName("Bluesky") shouldBe "Blue Sky"
+            canonicalArtistName("TraumaMia") shouldBe "Trauma Mia"
+            canonicalArtistName("Uppercuts") shouldBe "The Uppercuts"
+            canonicalArtistName("The Uppercuts") shouldBe "The Uppercuts"
+            canonicalArtistName("Dark Tenor") shouldBe "The Dark Tenor"
+            // Different acts that share a key stay apart.
+            canonicalArtistName("DJ Gus") shouldBe "DJ Gus"
+            canonicalArtistName("K-Lone") shouldBe "K-Lone"
+        }
+    }
 }
