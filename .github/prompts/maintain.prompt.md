@@ -10,7 +10,8 @@ run. The steps are the existing commands; this command only joins them.
 ## Important
 
 - **Invoking this command is permission to run the steps marked _runs_ below**, each under its own prompt's rules and nothing more. `/daily-check` merges
-  the bot pull requests its Step 5 allows, `/afk` opens draft pull requests, `/post-release` runs the due steps it finds.
+  the bot pull requests its Step 6 allows and runs `/worklist` (which applies no fix), `/afk` opens draft pull requests, `/post-release` runs the due
+  steps it finds.
 - **Never, from here:** approve or merge a pull request, arm auto-merge, cut a release, dispatch `cut-release.yml`, add or remove `afk-ok`, file an issue
   the operator has not named, or write to a cluster outside `/post-release`. Each of these is a person's decision; this command prepares it and stops.
 - **One step per invocation.** Run it, then re-read the state and name the next. A question for the operator ends the turn.
@@ -30,7 +31,7 @@ run. The steps are the existing commands; this command only joins them.
 ```sh
 scripts/daily-check.sh --hours 24 > temp/maintain-state.json     # read-only; every key below comes from it
 scripts/ej.sh status                                             # tunnels and clusters
-ls -t temp/daily-check-*.md temp/afk-handover-*.md 2>/dev/null | head -4
+ls -t temp/daily-check-*.md temp/worklist-*.md temp/afk-handover-*.md 2>/dev/null | head -6
 gh issue list --label afk-ok --state open --json number,title,assignees --jq 'length'
 ```
 
@@ -44,7 +45,7 @@ The first row that holds decides. Each row names its evidence; report it with th
 | --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------ |
 | 1   | `release_main` is red, or `ej.sh status` shows a cluster or pod not Ready                | The blocker, with the failed step                 | reports      |
 | 2   | No `temp/daily-check-<today>.md`                                                         | `/daily-check`                                    | runs         |
-| 3   | Today's report has a draft heading ending `(unfiled)`                                    | "File which?", with each draft's `afk-ok` verdict | asks         |
+| 3   | Today's `daily-check` or `worklist` report has a draft heading ending `(unfiled)`        | "File which?", with each draft's `afk-ok` verdict | asks         |
 | 4   | The newest `temp/afk-handover-*.md` has a pull request in **Merge order** still open     | `/afk merge`                                      | runs         |
 | 5   | An open `afk-ok` issue no session holds, and no handover from today                      | `/afk`                                            | runs         |
 | 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                | The cut, as two commands for the operator         | proposes     |

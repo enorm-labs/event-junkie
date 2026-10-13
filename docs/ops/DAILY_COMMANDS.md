@@ -52,8 +52,10 @@ scripts/worklist.sh production --summary           # the data-quality worklist, 
 5. **Security.** Look at new code-scanning alerts, Dependabot alerts and Code Quality findings. `/security-report` gives the detail.
 6. **Bot pull requests.** Read each diff. Merge the green ones with `gh pr merge <n> --rebase`. A `claude[bot]` pull request needs your approval first.
 7. **Logs.** `/log-check` sorts both clusters' logs and alerts into noise, known, explained and new.
-8. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
-9. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
+8. **The data.** Read each flagged row of `new-artists.sh`. Then read the worklist summary, one row per issue and venue. `/worklist` gives each row a
+   verdict, writes issue drafts and proposes hand fixes. It changes nothing until you name the fixes to apply.
+9. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
+10. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
 
 ## Get in
 

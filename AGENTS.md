@@ -212,7 +212,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
 - `/commit-message` — a commit message from the staged changes
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
-- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs; merges the ready bot PRs, drafts the rest
+- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, the worklist; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms
@@ -242,6 +242,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/update-docs` — find documentation that stopped being true; correct, delete or leave it, with the proving check
 - `/verify` — the full pre-PR sequence; the prompt is the check list, and it runs every gate the diff touches
+- `/worklist [production|staging] [--issue <key>] [--source <slug>]` — the admin data-quality worklist, one verdict per issue and venue: issue drafts, numbered hand fixes, and a parser-fix draft when hand fixes recur; applies only the numbers the operator names
 - `/wrap-up` — before a session closes: what the conversation promised, what still runs, what git and GitHub hold; proposes, changes nothing
 - `/write-adr` — the record of a decision already made; claims the next ADR number by writing the file
   `scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree; it greps for the bullet shape above.

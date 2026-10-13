@@ -8,7 +8,7 @@
 #   scripts/worklist.sh production --summary             # one line per issue and source, the largest first
 #
 # The JSON is one object per issue, {"issue": …, "count": …, "entries": [ …WorklistEntryResponse… ]}. --summary prints
-# `issue<TAB>source<TAB>count<TAB>flag kinds` instead, which is what /daily-check reads first.
+# `issue<TAB>source<TAB>count<TAB>flag kinds` instead, which is what /worklist reads first.
 #
 # Needs the forward scripts/ej.sh up <environment> opens (importer on 18081 for staging, 28081 for production);
 # EJ_IMPORTER_URL overrides it. Reads only. The issue keys come from the endpoint's own refusal of an unknown key, so a
