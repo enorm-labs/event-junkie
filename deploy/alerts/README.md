@@ -134,6 +134,7 @@ loses its silence window and can fire again immediately.
 | `ej-certificate-expiry`        | the soonest certificate is inside 14 days                                                                                                          | certificate expiry |
 | `ej-ingest-shedding`           | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                                    | —                  |
 | `ej-ingest-queue-saturated`    | the collector's export queue is over 80% full                                                                                                      | —                  |
+| `ej-k8s-events-stalled`        | the collector accepted no Kubernetes event in an hour ([#3198](https://github.com/enorm-labs/event-junkie/issues/3198))                            | —                  |
 | `ej-dns-fanout`                | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                          | importer failing   |
 | `ej-musicbrainz-failing`       | more than a quarter of 24 hours' MusicBrainz lookups failed ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))                      | —                  |
 | `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))               | —                  |
