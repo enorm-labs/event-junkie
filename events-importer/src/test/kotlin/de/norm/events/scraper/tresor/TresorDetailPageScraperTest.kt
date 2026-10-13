@@ -62,16 +62,13 @@ class TresorDetailPageScraperTest {
     }
 
     @Test
-    fun `reads the act out of a room-and-format label and drops its quoted release`() {
-        // "Globus Listening Session: The Fear Ratio 'Slinky'": Globus is the room, Listening
-        // Session the format, Slinky the record (#1133).
+    fun `drops a listening session, which plays a record and bills no performer`() {
+        // "Globus Listening Session: The Fear Ratio 'Slinky'" opens the Globus floor.
         val night = scrape("tresor-detail-globus-session.html", "20260905-tresor-invites-o-v-r")
         night.shouldNotBeNull()
 
-        val globus = night.artists.filter { it.stage == "Globus" }.map { it.name }
-        globus.first() shouldBe "The Fear Ratio"
+        night.artists.filter { it.stage == "Globus" }.map { it.name } shouldBe listOf("Stella Zekri", "CRYME")
         night.artists.map { it.name } shouldContain "Samuel Kerridge"
-        night.artists.none { it.name.contains("Listening Session", ignoreCase = true) } shouldBe true
     }
 
     @Test

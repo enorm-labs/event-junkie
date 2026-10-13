@@ -134,23 +134,33 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
  * (`Ngly [LIVE]`, `The Ghost [All Night Long]`, `Shackleton Live` — stripped so the same DJ is
  * one artist across nights), or credit the collective curating the floor (`hosted by HARD WAX`),
  * a host rather than a performer and already visible in the floor label.
+ *
+ * A listening session plays a record and bills no performer, so its slot gives no act. The
+ * line names the label's catalogue number or a compilation as often as an artist
+ * (`Listening Session: Tresor.299 XOR Gate – Conic Sections`, `Tresor048X Infiniti Collection`).
  */
 internal fun splitActs(slot: String): List<String> =
-    slot
-        .split(B2B_SEPARATOR)
-        .map(::stripSetFormatNote)
-        // A format in *front* of the act ("Listening Session: Drexciya — Neptune's Lair") names the
-        // slot, not the performer.
-        .map(::stripFormatLabel)
-        .map(::stripReleaseTitle)
-        .filter { it.isNotBlank() && !isUnannouncedAct(it) && !HOST_CREDIT.containsMatchIn(it) }
+    if (LISTENING_SESSION.containsMatchIn(slot)) {
+        emptyList()
+    } else {
+        slot
+            .split(B2B_SEPARATOR)
+            .map(::stripSetFormatNote)
+            // A format in *front* of the act ("Live: Shackleton") names the slot, not the performer.
+            .map(::stripFormatLabel)
+            .map(::stripReleaseTitle)
+            .filter { it.isNotBlank() && !isUnannouncedAct(it) && !HOST_CREDIT.containsMatchIn(it) }
+    }
+
+/** A slot opening with `Listening Session`, after the room the `Globus …` programme line puts first. */
+private val LISTENING_SESSION = Regex("""^(?:(?:aurora\s+bar|tresor|globus)\s+)?listening\s+session\b""", RegexOption.IGNORE_CASE)
 
 /** Removes a trailing set-format note, unless it is all the slot says — then the name stands. */
 private fun stripSetFormatNote(act: String): String = act.replace(SET_FORMAT_NOTE, "").trim().ifBlank { act.trim() }
 
 /**
- * Strips a leading format label, with or without the room before it: the Globus programme line
- * reads `Globus Listening Session: The Fear Ratio 'Slinky'` (#1133). The room is dropped only
+ * Strips a leading format label such as `Record Release:`, with or without the room before it,
+ * as the Globus programme line writes it (#1133). The room is dropped only
  * when a label follows it, so an act whose name opens with a room's name stays whole.
  */
 private fun stripFormatLabel(act: String): String {

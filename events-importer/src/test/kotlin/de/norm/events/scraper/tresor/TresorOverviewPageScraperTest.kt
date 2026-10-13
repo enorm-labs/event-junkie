@@ -115,6 +115,22 @@ class TresorOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a listening session, whose line names a release and not a performer`() {
+        listOf(
+            "Listening Session: Tresor.299 XOR Gate – Conic Sections",
+            "Listening Session: Tresor048X Infiniti Collection ",
+            "Listening Session: Oscean Collection",
+            "Listening Session - Borderland (Tresor.262)",
+            "Globus Listening Session: The Fear Ratio 'Slinky'"
+        ).forEach { splitActs(it).shouldBeEmpty() }
+    }
+
+    @Test
+    fun `keeps an act whose name opens with a room's name`() {
+        splitActs("Tresor Listening Club") shouldBe listOf("Tresor Listening Club")
+    }
+
+    @Test
     fun `drops the host credit for the collective curating a floor`() {
         // "hosted by HARD WAX" is billed among the DJs but names the host, not a performer.
         events.flatMap { it.artists }.none { it.name.contains("hosted by", ignoreCase = true) } shouldBe true
