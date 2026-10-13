@@ -35,6 +35,7 @@ class AegWebsiteImportersTest {
 
     private val arenaUrl = "https://www.uber-arena.de/events/all"
     private val arenaDetailUrl = "https://www.uber-arena.de/events/detail/diljit-dosanjh/2026-08-21-2000"
+    private val superShowDetailUrl = "https://www.uber-arena.de/events/detail/90s-super-show-2027/2027-02-20-1700"
     private val musicHallUrl = "https://www.uber-eats-music-hall.de/events/all"
     private val musicHallDetailUrl = "https://www.uber-eats-music-hall.de/events/detail/jony/2026-09-15-1900"
 
@@ -65,6 +66,8 @@ class AegWebsiteImportersTest {
         coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("no fixture")
         coEvery { htmlFetcher.fetchDocument(arenaDetailUrl) } returns
             Jsoup.parse(readFixture("uberarena-detail-diljit-dosanjh.html"), arenaDetailUrl)
+        coEvery { htmlFetcher.fetchDocument(superShowDetailUrl) } returns
+            Jsoup.parse(readFixture("uberarena-detail-90s-super-show.html"), superShowDetailUrl)
         coEvery { htmlFetcher.fetchDocument(musicHallDetailUrl) } returns
             Jsoup.parse(readFixture("ubereatsmusichall-detail-jony.html"), musicHallDetailUrl)
     }
@@ -134,6 +137,19 @@ class AegWebsiteImportersTest {
             diljit.doorsTime shouldBe LocalTime.of(18, 30)
             diljit.description!!.isNotBlank() shouldBe true
             diljit.ticketUrl!! shouldStartWith "https://queue-de.axs.com/"
+        }
+
+    @Test
+    fun `bills a package show's Line Up list instead of the show's name`() =
+        runTest {
+            val result = arenaImporter.importEvents(arenaUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val show = result.events.first { it.sourceId == "uber_arena:90s-super-show-2027/2027-02-20-1700" }
+
+            show.title shouldBe "90s Super Show"
+            show.artists.map { it.name }.first() shouldBe "Eiffel 65"
+            show.artists shouldHaveSize 11
+            show.artists.none { it.titleDerived } shouldBe true
         }
 
     @Test

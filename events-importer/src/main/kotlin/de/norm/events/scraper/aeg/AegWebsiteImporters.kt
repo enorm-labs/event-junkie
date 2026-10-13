@@ -17,10 +17,10 @@ import org.springframework.stereotype.Component
  * shape: [EventSource.UBER_ARENA] and [EventSource.UBER_EATS_MUSIC_HALL]. Each reads its own
  * `/events/all` page — server-rendered, unpaginated — keeps everything not filed as sport, then
  * follows each row to its `/events/detail/<slug>/<YYYY-MM-DD-HHMM>` page for doors time,
- * description and ticket link.
+ * description, ticket link and a package show's `Line Up:` list.
  *
  * @see AegOverviewPageScraper for the listing (discovery, category, date, price).
- * @see AegDetailPageScraper for the detail pages (doors, description, ticket).
+ * @see AegDetailPageScraper for the detail pages (doors, description, ticket, line-up).
  */
 @Suppress("AbstractClassCanBeConcreteClass") // A base for the venue importers below it; an instance of it alone names no venue.
 abstract class AbstractAegVenueImporter(
@@ -38,8 +38,9 @@ abstract class AbstractAegVenueImporter(
      * Merges detail-page data ([primary]) with listing data ([fallback]). The **listing wins on
      * title, status, date, start time, category, price and thumbnail** — the detail page states
      * none cleanly: its heading appends "in der <venue>", and it renders neither a date nor a
-     * cancellation this parser reads. The detail page contributes only doors time, description and
-     * ticket link. The artist roster also comes from the listing, where the clean title lives.
+     * cancellation this parser reads. The detail page contributes doors time, description, ticket
+     * link and, when the description has a `Line Up:` list, the roster. Otherwise the roster comes
+     * from the listing, where the clean title lives.
      *
      * **The roster is re-derived here, and only here, when the description can add to it.** The two
      * halves the rule needs never meet before this point: the title and its acts are the listing's,
@@ -56,8 +57,8 @@ abstract class AbstractAegVenueImporter(
         )
 
     /**
-     * The merged roster: the listing's, unless it is a single act the detail page's description
-     * shows to be a whole bill (#1832).
+     * The merged roster: the detail page's `Line Up:` list when it has one (#3215). Otherwise the
+     * listing's, unless it is a single act the detail page's description shows to be a whole bill (#1832).
      *
      * `D-Block Europe, French Montana` is one artist row on the listing, because a single comma
      * decides nothing about a title; the description reads `D-Block Europe und French Montana …`
@@ -69,9 +70,10 @@ abstract class AbstractAegVenueImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): List<ScrapedArtist> {
+        val pageBilled = primary.artists.isNotEmpty()
         val roster = primary.artists.ifEmpty { fallback.artists }
         val description = primary.description
-        if (roster.size != 1 || description.isNullOrBlank()) return roster
+        if (pageBilled || roster.size != 1 || description.isNullOrBlank()) return roster
         val corroborated =
             buildArtistsForEventType(
                 fallback.title,

@@ -93,6 +93,70 @@ class AegDetailPageScraperTest {
     }
 
     @Test
+    fun `bills a Line Up list of one act per line, in page order`() {
+        val event =
+            scrape(
+                "uberarena-detail-90s-super-show.html",
+                "https://www.uber-arena.de/events/detail/90s-super-show-2027/2027-02-20-1700",
+                EventSource.UBER_ARENA
+            )
+        event.artists.map { it.name } shouldBe
+            listOf(
+                "Eiffel 65",
+                "Haddaway",
+                "Whigfield",
+                "East 17",
+                "Lou Bega",
+                "Oli P.",
+                "Masterboy & Beatrix Delgado",
+                "Fun Factory",
+                "Bellini",
+                "Charlie Lownoise",
+                "DJ Tomekk"
+            )
+        event.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+    }
+
+    @Test
+    fun `bills a Line Up list that shares one line, split on its commas`() {
+        val event =
+            scrape(
+                "uberarena-detail-beste-comedians.html",
+                "https://www.uber-arena.de/events/detail/beste-comedians-26/2026-12-01-2000",
+                EventSource.UBER_ARENA
+            )
+        event.artists.map { it.name } shouldBe
+            listOf("Markus Krebs", "Nico Stank", "Osana Yaran", "Cindy aus Marzahn", "Atze Schröder", "Kristina Bogansky", "Tahnee")
+    }
+
+    @Test
+    fun `bills nothing for a Line Up link without the label's colon`() {
+        // Die Schlagernacht des Jahres links its bill: "…finden Sie hier: <a>Line Up</a>".
+        val event =
+            scrape(
+                "uberarena-detail-schlagernacht.html",
+                "https://www.uber-arena.de/events/detail/schlagernacht-2026/2026-11-21-1800",
+                EventSource.UBER_ARENA
+            )
+        event.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads the Line Up list to the end of its paragraph only`() {
+        val html =
+            """
+            <h1 class="summary">Show in der Uber Arena</h1>
+            <div class="event_body">
+              <p>Intro.<br>Line-up: A, B<br>C &amp; D</p>
+              <p>Tickets gibt es ab sofort.</p>
+            </div>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, arenaUrl), arenaUrl, EventSource.UBER_ARENA)!!
+        // Two lines, so each is one act, the comma included.
+        event.artists.map { it.name } shouldBe listOf("A, B", "C & D")
+    }
+
+    @Test
     fun `states no price of its own`() {
         arenaEvent.pricePresale.shouldBeNull()
         arenaEvent.startTime.shouldBeNull()
