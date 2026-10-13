@@ -2,12 +2,15 @@ package de.norm.events.scraper.aeg
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.net.URI
@@ -16,8 +19,9 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for the AEG venues' event detail pages (`/events/detail/<slug>/<YYYY-MM-DD-HHMM>`).
  *
- * Adds the three things a listing row cannot carry: the `Einlass` doors time, the prose
- * description, and the external ticket-shop link.
+ * Adds what a listing row cannot carry: the `Einlass` doors time, the prose description, the
+ * external ticket-shop link, and a package show's bill from a `Line Up:` paragraph in the
+ * description (see [parseLineUp]).
  *
  * Deliberately supplies **no date and no usable title**: `h1.summary` appends the venue ("JONY
  * **live in der Uber Eats Music Hall**"), so the listing's cleaner act name is kept, and the
@@ -59,8 +63,40 @@ class AegDetailPageScraper {
             doorsTime = parseDoorsTime(document.textAt(".doors")),
             sourceUrl = sourceUrl,
             sourceId = "${eventSource.sourceIdPrefix}$slug",
-            ticketUrl = parseTicketUrl(document, sourceUrl)
+            ticketUrl = parseTicketUrl(document, sourceUrl),
+            artists = parseLineUp(document)
         )
+    }
+
+    /**
+     * The acts after a `Line Up:` label in `.event_body`, to the end of its paragraph, each a
+     * headliner in page order. Empty without the label.
+     *
+     * The 90s Super Show puts one act per `<br>` line; Die besten Comedians puts a comma list on the
+     * label's own line. One line is one act, so `Masterboy & Beatrix Delgado` stays whole. The colon
+     * is required: Die Schlagernacht des Jahres links its bill as `…finden Sie hier: <a>Line Up</a>`.
+     */
+    private fun parseLineUp(document: Document): List<ScrapedArtist> {
+        val lines =
+            document
+                .select(".event_body p")
+                .asSequence()
+                .map { it.textLines() }
+                .firstNotNullOfOrNull { lines ->
+                    val labelAt = lines.indexOfFirst { LINE_UP_LABEL.containsMatchIn(it) }
+                    if (labelAt < 0) {
+                        null
+                    } else {
+                        val rest = LINE_UP_LABEL.split(lines[labelAt], limit = 2).last()
+                        (listOf(rest) + lines.drop(labelAt + 1)).map(String::trim).filter(String::isNotEmpty)
+                    }
+                }.orEmpty()
+        val names = lines.singleOrNull()?.split(',') ?: lines
+        return names
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it) }
     }
 
     /**
@@ -87,4 +123,8 @@ class AegDetailPageScraper {
      * when the page states none.
      */
     private fun parseDoorsTime(text: String?): LocalTime? = labelledClock(text, DOORS_LABELS)
+
+    private companion object {
+        val LINE_UP_LABEL = Regex("""\bline[ -]?up\s*:""", RegexOption.IGNORE_CASE)
+    }
 }
