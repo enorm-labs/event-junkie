@@ -1894,6 +1894,41 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Bleech 9:3") shouldBe "Bleech 9:3"
     }
 
+    // #3211 — a quoted work, a `plays <composer>` tail and a `- <place>` tail are not part of the act.
+    @Test
+    fun `headlinersFromTitle drops a quoted work, a plays tail and a dashed place from an act`() {
+        headlinersFromTitle("Adam Goodwin: “Grumsin” + Kole Galbraith + Bile Bear + Forrest Gimp (DJ-Set)", splitOnSlash = false)
+            .map { it.name } shouldContainExactly listOf("Adam Goodwin", "Kole Galbraith", "Bile Bear", "Forrest Gimp")
+        headlinersFromTitle("Acephalic Headspace pres. ladr ache + Lésions Graves Sextet plays Julius Eastman").map { it.name } shouldContainExactly
+            listOf("ladr ache", "Lésions Graves Sextet")
+        headlinersFromTitle("Dead Phoenix - BERLIN").map { it.name } shouldContainExactly listOf("Dead Phoenix")
+    }
+
+    @Test
+    fun `stripArtistSuffix reads a quoted tail in any of the three quote styles as a work`() {
+        stripArtistSuffix("Nobel-Popel: \"Zebrastreifen\"") shouldBe "Nobel-Popel"
+        stripArtistSuffix("Die Band - „Hurra“") shouldBe "Die Band"
+        stripArtistSuffix("Die Band: “Hurra”") shouldBe "Die Band"
+        // Only a whole tail in quotes counts; a quoted word inside a longer tail is the two-word case #1585 keeps.
+        stripArtistSuffix("Die Band: “Hurra” Tour") shouldBe "Die Band: “Hurra” Tour"
+        // An all-caps head before a dash is still left alone.
+        stripArtistSuffix("DZ - \"DEATHRAY\"") shouldBe "DZ - \"DEATHRAY\""
+    }
+
+    @Test
+    fun `a place without a dash, and a plays with no capital after it, stay in the name`() {
+        stripArtistSuffix("Isolation Berlin") shouldBe "Isolation Berlin"
+        stripArtistSuffix("Dead Phoenix - Berlin Calling") shouldBe "Dead Phoenix - Berlin Calling"
+        stripArtistSuffix("Nobody plays alone") shouldBe "Nobody plays alone"
+        stripArtistSuffix("Kid Plays Ellington") shouldBe "Kid Plays Ellington"
+        stripArtistSuffix("Stereo Total - paris") shouldBe "Stereo Total"
+    }
+
+    @Test
+    fun `a Maschinenhaus show with a quoted work still bills no act`() {
+        buildArtistsForEventType("Nobel-Popel: \"Zebrastreifen\"", "Musiktheater für Kinder aus Berlin", "SHOW").shouldBeEmpty()
+    }
+
     // #1581 — `pres:` bills the act on whichever side is not the programme, and a series is not an act.
     @Test
     fun `headlinersFromTitle reads a pres marker by the shape of its right side`() {

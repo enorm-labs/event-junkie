@@ -300,7 +300,8 @@ fun stripArtistSuffix(name: String): String {
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
-    return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped))))))
+    val untailed = stripPlaysTail(stripWorkTitle(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
+    return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(untailed)))
 }
 
 /**
@@ -437,8 +438,9 @@ private val PRESENTING_HEAD = Regex("""\b(?:$PRESENTS_VERBS|pres)[.:]?$""", Rege
  * show — so the performer remains (#1585): `Transllusion - The Opening of the Cerebral Gate` →
  * `Transllusion`, `Jon Rose: Hinterland!` → `Jon Rose`.
  *
- * A tail counts as a work title when it ends in `!` or runs to [MIN_WORK_TITLE_WORDS] words in
- * title case (every word capitalised bar the [TITLE_CASE_SMALL_WORDS]). The head must be an act,
+ * A tail counts as a work title when it ends in `!`, is one [QUOTED_SPAN] (`Adam Goodwin: “Grumsin”`,
+ * #3211), or runs to [MIN_WORK_TITLE_WORDS] words in title case (every word capitalised bar the
+ * [TITLE_CASE_SMALL_WORDS]). The head must be an act,
  * not a label presenting one ([PRESENTING_HEAD]), and must carry a lowercase letter, so an all-caps
  * name a venue wrote with a dash (`DZ - DEATHRAY`) is left to [stripShoutedTourTail]'s fences. A
  * two-word tail (`BAD COMPANY LEGACY - Dave Colwell`, `Drone Art Show: Harry Potter`) is not
@@ -460,8 +462,26 @@ private fun readsAsWorkTitle(tail: String): Boolean {
         words.size >= MIN_WORK_TITLE_WORDS &&
             words.first().first().isUpperCase() &&
             words.all { word -> word.first().isUpperCase() || word.lowercase() in TITLE_CASE_SMALL_WORDS }
-    return words.isNotEmpty() && (tail.endsWith('!') || titleCased)
+    return words.isNotEmpty() && (tail.endsWith('!') || titleCased || QUOTED_SPAN.matches(tail))
 }
+
+/** A whole tail in one pair of straight, German or curly quotes: `"Zebrastreifen"`, `„Hurra“`, `“Grumsin”`. */
+private val QUOTED_SPAN = Regex("""["„“”][^"„“”]+["“”]""")
+
+/** A spaced dash before exactly one place from [COUNTRY_NAMES], in any case: `Dead Phoenix - BERLIN` (#3211). */
+private val PLACE_TAIL = Regex("""^(.*\S)\s+[-–—]\s+(?i:$COUNTRY_NAMES)$""")
+
+/** Drops a [PLACE_TAIL]. A place without the dash belongs to the name (`Isolation Berlin`). */
+private fun stripPlaceTail(name: String): String = PLACE_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
+
+/**
+ * `<act> plays <Name>`: the ensemble and the composer whose music it plays (#3211). Case-sensitive, and
+ * a capital must follow, so a lowercase `plays` phrase inside a name stays.
+ */
+private val PLAYS_TAIL = Regex("""^(.*?\S)\s+plays\s+\p{Lu}.*$""")
+
+/** Drops a [PLAYS_TAIL]: `Lésions Graves Sextet plays Julius Eastman` → `Lésions Graves Sextet`. */
+private fun stripPlaysTail(name: String): String = PLAYS_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
 
 /** Countries and cities a venue writes after an act in full, in the two languages the pages use. */
 internal const val COUNTRY_NAMES =
