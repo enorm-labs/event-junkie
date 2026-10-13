@@ -62,7 +62,8 @@ FLAGS = {
 }
 LONG_WORDS = 6
 LONG_CHARS = 45
-# What keeps an unbilled artist from the nightly OrphanArtistSweep (UnbilledArtistStore.deleteUnbilled).
+# What keeps an unbilled row from its nightly orphan sweep: UnbilledArtistStore and UncreditedPromoterStore.
+PROMOTER_PROFILE_FIELDS = ["description", "imageUrl"]
 PROFILE_FIELDS = [
     "description",
     "imageUrl",
@@ -133,8 +134,10 @@ def flags_of(name: str, venue_names: set, duplicates: dict) -> list:
 
 
 def swept(row: dict, kind: str) -> bool:
-    """Whether the nightly sweep deletes this row once no event bills it. Only artists have a sweep."""
-    return kind == "artists" and row.get("musicbrainzMatch") != "EXACT" and not any(row.get(f) for f in PROFILE_FIELDS)
+    """Whether the nightly sweep deletes this row once no event bills it."""
+    if kind == "promoters":
+        return not any(row.get(f) for f in PROMOTER_PROFILE_FIELDS)
+    return row.get("musicbrainzMatch") != "EXACT" and not any(row.get(f) for f in PROFILE_FIELDS)
 
 
 def review_rows(rows: list, events: list, venues: list, kind: str, today: datetime.date) -> list:

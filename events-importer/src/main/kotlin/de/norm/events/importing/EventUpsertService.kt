@@ -6,6 +6,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.PinnedField
 import de.norm.events.licence.SourceLicences
+import de.norm.events.promoter.canonicalPromoterName
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
@@ -74,7 +75,7 @@ class EventUpsertService(
         staleCleanup: StaleCleanup = StaleCleanup.WINDOWED
     ): UpsertOutcome {
         // Before the stale cleanup, or the stored run is not in this scrape and is deleted.
-        val foldedEvents = foldIntoStoredRuns(scrapedEvents, eventSourceId)
+        val foldedEvents = foldIntoStoredRuns(scrapedEvents, eventSourceId).map { it.withoutVenueAsPromoter(venueSlug) }
         val upcomingEvents = dropPastEvents(foldedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
@@ -640,3 +641,14 @@ enum class StaleCleanup {
     /** None: a page that holds events failed, so a missing event may still be listed (#1980). */
     SKIPPED
 }
+
+/**
+ * The event without a promoter credit that names its own venue: `Badehaus` crediting a Badehaus night says nothing the
+ * venue does not. The same name crediting a night at another venue is a promoter and stays.
+ */
+internal fun ScrapedEvent.withoutVenueAsPromoter(venueSlug: String): ScrapedEvent =
+    if (promoters.none { SlugGenerator.slugify(canonicalPromoterName(it)) == venueSlug }) {
+        this
+    } else {
+        copy(promoters = promoters.filterNot { SlugGenerator.slugify(canonicalPromoterName(it)) == venueSlug })
+    }
