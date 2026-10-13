@@ -2,6 +2,7 @@ package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.endOn
@@ -195,7 +196,8 @@ data class SilentGreenEventDetails(
      * Returns [event] with the fields the calendar row could not supply filled from this page. An
      * exhibition also takes the page's span: the calendar lists only the days inside the scraped
      * months. The days then fold in [collapseExhibitionRuns]; a festival's days keep their dates.
-     * A day's [dailyHours] apply only when neither time cell gives a start.
+     * A day's [dailyHours] apply only when neither time cell gives a start. A concert's blurb `Mit:`
+     * line replaces the title's acts.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart
@@ -208,9 +210,17 @@ data class SilentGreenEventDetails(
             endDate = if (run) runEnd else event.endDate ?: hours?.endDate(event.eventDate),
             endTime = event.endTime ?: hours?.end,
             description = event.description ?: description,
-            imageUrl = event.imageUrl ?: imageUrl
+            imageUrl = event.imageUrl ?: imageUrl,
+            artists = performersOr(event)
         )
     }
+
+    /** A concert's [silentGreenPerformers] from the blurb, or the acts the calendar row read off the title. */
+    private fun performersOr(event: ScrapedEvent): List<ScrapedArtist> =
+        silentGreenPerformers(event.description ?: description)
+            .takeIf { event.eventType == EventType.CONCERT.name }
+            .orEmpty()
+            .ifEmpty { event.artists }
 
     /**
      * Whether the row is free, or the blurb's "Eintritt frei" covers the whole event: not when the
