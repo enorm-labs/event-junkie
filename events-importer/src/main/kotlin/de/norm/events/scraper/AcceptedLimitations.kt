@@ -40,6 +40,7 @@ import de.norm.events.scraper.duncker.DUNCKER_LIMITATIONS
 import de.norm.events.scraper.erreichbar.ERREICHBAR_LIMITATIONS
 import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
 import de.norm.events.scraper.festsaal.FESTSAAL_LIMITATIONS
+import de.norm.events.scraper.frachtkante.FRACHTKANTE_LIMITATIONS
 import de.norm.events.scraper.frannz.FRANNZ_LIMITATIONS
 import de.norm.events.scraper.gaertenderwelt.GAERTEN_DER_WELT_LIMITATIONS
 import de.norm.events.scraper.gartn.GARTN_LIMITATIONS
@@ -170,6 +171,7 @@ object AcceptedLimitations {
             ESCHSCHLORAQUE_LIMITATIONS,
             FESTSAAL_LIMITATIONS,
             FITZROY_LIMITATIONS,
+            FRACHTKANTE_LIMITATIONS,
             FRANNZ_LIMITATIONS,
             GAERTEN_DER_WELT_LIMITATIONS,
             GARTN_LIMITATIONS,

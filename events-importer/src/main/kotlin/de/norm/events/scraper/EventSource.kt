@@ -112,6 +112,9 @@ enum class EventSource {
     /** Fitzroy Berlin – LARK's sister club, opened in 2018 in a former warehouse on the Spree next to it. */
     FITZROY,
 
+    /** Frachtkante Berlin – the khisdapaze collective's former freight canteen at Tegel airport, for open airs, club nights and markets by the runway. */
+    FRACHTKANTE,
+
     /** Frannz Club Berlin – a club and concert venue in the Kulturbrauerei, across pop, indie, hip-hop and electronic music. */
     FRANNZ,
 

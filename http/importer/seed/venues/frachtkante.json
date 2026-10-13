@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Frachtkante",
+        "address": "Flughafen Tegel",
+        "city": "Berlin",
+        "postalCode": "13405",
+        "district": "reinickendorf",
+        "latitude": 52.552639,
+        "longitude": 13.285,
+        "websiteUrl": "https://frachtkante.de/de/",
+        "instagramUrl": "https://www.instagram.com/frachtkante/",
+        "description": "The former freight canteen on the west side of Tegel airport, run by the khisdapaze collective with a view of the runway, with open airs, club nights, mini festivals, concerts, theatre, readings, flea markets and workshops.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die ehemalige Frachtkantine auf der Westseite des Flughafens Tegel, betrieben vom Kollektiv khisdapaze mit Blick auf die Start- und Landebahn, mit Open Airs, Clubnächten, Mini-Festivals, Konzerten, Theater, Lesungen, Flohmärkten und Workshops.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["open-air", "cultural-centre"],
+        "reviewedAt": "2026-10-13T18:34:21Z"
+    },
+    "sources": [
+        {
+            "name": "Frachtkante",
+            "url": "https://frachtkante.de/de/",
+            "sourceType": "FRACHTKANTE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
