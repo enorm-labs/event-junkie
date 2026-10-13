@@ -759,6 +759,26 @@ Four lines: `node_reboot_required_age_seconds`, `node_service_restart_pending_ag
 `node_patch_state_timestamp_seconds`. Then, from the
 repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-reboot-pending`, not `NO DATA`. `NO DATA` means the gateway is not reaching 9100. The place to look is the `node-patch-state` job in `up`.
 
+### After a reboot, check the Kubernetes events
+
+**A node reboot or a k3s restart can stop the Kubernetes events in OpenObserve.** The gateway collector can lose its `k8sobjects` watches while the API
+server restarts, and it does not retry. Production lost 20 hours of events this way ([#3198](https://github.com/enorm-labs/event-junkie/issues/3198)).
+Kubernetes keeps events for about an hour, so a gap stays a gap.
+
+When the node is back, check that `k8s_events` has a record newer than the reboot:
+
+```bash
+scripts/o2-query.sh <env> sql "SELECT max(_timestamp) FROM k8s_events" --hours 1
+```
+
+If it has no record, delete the gateway collector pod. The StatefulSet recreates it, and the new pod opens new watches:
+
+```bash
+kubectl --context event-junkie-<env> -n observability delete pod o2c-openobserve-collector-gateway-collector-0
+```
+
+`ej-k8s-events-stalled` fires after an hour without events. This check finds the stall before the alert does.
+
 ### Upgrading k3s is not a rebuild
 
 **A `k3s_version` bump does not need one.** k3s upgrades in place through the same installer the node

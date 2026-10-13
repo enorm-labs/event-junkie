@@ -50,7 +50,12 @@ kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still Clust
 kubectl -n kube-system get pods | grep svclb                       # must return nothing
 kubectl get pods -A                                                # everything back, none restarting
 flux get all -A                                                    # everything Ready
+scripts/o2-query.sh <env> sql "SELECT max(_timestamp) FROM k8s_events" --hours 1     # newer than the restart
 ```
+
+**The last line checks the Kubernetes events.** The API-server restart can stop the collector's `k8sobjects` watches. If no record is newer than the
+restart, delete the gateway collector pod. [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md#after-a-reboot-check-the-kubernetes-events) has the command
+([#3198](https://github.com/enorm-labs/event-junkie/issues/3198)).
 
 **The last check differs by environment, because staging has no public address.** Traefik binds the
 node's ports itself, so ask the node. **Send the Host header it routes on** — a bare `https://localhost/`

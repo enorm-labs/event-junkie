@@ -570,6 +570,36 @@
     ]
   },
   {
+    "name": "ej-k8s-events-stalled",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "otelcol_receiver_accepted_log_records",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The collector accepted no Kubernetes event in an hour, so `k8s_events` is empty and the events dashboard shows nothing. A healthy cluster never has a quiet hour: CoreDNS alone warns every few minutes. The usual cause is a `k8sobjects` watch that died at an API-server restart and did not retry (#3198). Delete the gateway collector pod; the StatefulSet recreates it. The events of the gap are lost.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(increase(otelcol_receiver_accepted_log_records{receiver=\"k8sobjects/events\"}[1h])) < bool 1",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 15,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-image-objects-missing",
     "org_id": "default",
     "stream_type": "metrics",

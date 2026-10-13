@@ -18,6 +18,7 @@ it produces an alert that never fires rather than an error.
     a source quiet for a month     -> ej-source-quiet             (#1498)
     a data-quality share regressed -> ej-data-quality-regression  (#2604)
     metrics being dropped          -> ej-ingest-shedding          (#625)
+    Kubernetes events not arriving -> ej-k8s-events-stalled       (#3198)
     translation failing open       -> ej-translations-failing      (#1301)
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
@@ -664,6 +665,28 @@ rule(
     period_minutes=15,
     frequency_minutes=5,
     silence_minutes=2 * 60,
+)
+
+# #3198: after an API-server restart, production's `k8sobjects` watches got
+# `forbidden`, closed, and never retried. `k8s_events` was empty for 20.5 hours.
+# Only the `events` receiver: pods, nodes and deployments can be quiet for an
+# hour on a healthy cluster. Staging's quietest hour held 58 records.
+# `< bool 1` inside `> 0`, per trap 2. The counter keeps its series while the
+# watch is dead, so a stall reads 0, not empty.
+rule(
+    "ej-k8s-events-stalled",
+    "The collector accepted no Kubernetes event in an hour, so `k8s_events` is empty and the "
+    "events dashboard shows nothing. A healthy cluster never has a quiet hour: CoreDNS alone "
+    "warns every few minutes. The usual cause is a `k8sobjects` watch that died at an "
+    "API-server restart and did not retry (#3198). Delete the gateway collector pod; the "
+    "StatefulSet recreates it. The events of the gap are lost.",
+    'sum(increase(otelcol_receiver_accepted_log_records{receiver="k8sobjects/events"}[1h])) < bool 1',
+    ">",
+    0,
+    stream_name="otelcol_receiver_accepted_log_records",
+    period_minutes=60,
+    frequency_minutes=15,
+    silence_minutes=6 * 60,
 )
 
 
