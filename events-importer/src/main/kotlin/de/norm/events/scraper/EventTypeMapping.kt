@@ -181,7 +181,18 @@ private val NON_CONCERT_TITLE_KEYWORDS =
  * ([isPresenterOwnEventTitle][de.norm.events.scraper.isPresenterOwnEventTitle]).
  */
 private val PARTY_TITLE_KEYWORDS =
-    listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "karaoke")
+    listOf(
+        "aftershow",
+        "afterparty",
+        "after-party",
+        "after party",
+        "party",
+        "club night",
+        "clubnight",
+        "karaoke",
+        "semesterauftakt",
+        "baile funk"
+    )
 
 /**
  * Whole-word party keyword too short for a substring test: `rave` is inside "GRAVE DIGGER" and
@@ -190,21 +201,36 @@ private val PARTY_TITLE_KEYWORDS =
 private val PARTY_TITLE_WORD_PATTERN = Regex("""\brave\b""", RegexOption.IGNORE_CASE)
 
 /**
+ * A masquerade night ([EventType.PARTY]), read in the title only: a subtitle names the act's
+ * show there ("MASQUERADE – LIVE 2027", Tempodrom).
+ */
+private val MASQUERADE_TITLE_PATTERN = Regex("""\bmasquerade\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * Whole-word stage-show cues ([EventType.SHOW]) for a venue that gives no category: a ballet or
+ * a drag pageant. Spandau Ballet is a band, so `Spandau Ballet` bills a concert (see #3210).
+ */
+private val SHOW_TITLE_WORD_PATTERN = Regex("""(?<!spandau\s)\bballett?\b|\bpageant\b""", RegexOption.IGNORE_CASE)
+
+/**
  * Classifies an event by unambiguous title keywords, or `null`: quiz to [QUIZ][EventType.QUIZ],
- * a stand-up or comedy-night phrase to [COMEDY][EventType.COMEDY], wrestling/burlesque/circus/ice show to
- * [SHOW][EventType.SHOW], football screening or cinema to
+ * a stand-up or comedy-night phrase to [COMEDY][EventType.COMEDY], wrestling/burlesque/circus/ice
+ * show/ballet/pageant to [SHOW][EventType.SHOW], football screening or cinema to
  * [SCREENING][EventType.SCREENING], reading/slam to [READING][EventType.READING],
  * exhibition/vernissage to [EXHIBITION][EventType.EXHIBITION], market to
  * [OTHER][EventType.OTHER], party/club-night keyword to [PARTY][EventType.PARTY].
  */
-private fun classifyByTitleKeyword(title: String): String? {
+private fun classifyByTitleKeyword(
+    title: String,
+    isSubtitle: Boolean = false
+): String? {
     val haystack = title.lowercase()
     return when {
         "quiz" in haystack -> EventType.QUIZ.name
 
         COMEDY_TITLE_PATTERN.containsMatchIn(title) -> EventType.COMEDY.name
 
-        billsVarietyShow(title) -> EventType.SHOW.name
+        billsVarietyShow(title) || SHOW_TITLE_WORD_PATTERN.containsMatchIn(title) -> EventType.SHOW.name
 
         isScreeningTitle(title) -> EventType.SCREENING.name
 
@@ -215,12 +241,20 @@ private fun classifyByTitleKeyword(title: String): String? {
 
         NON_CONCERT_TITLE_KEYWORDS.any { it in haystack } -> EventType.OTHER.name
 
-        PARTY_TITLE_KEYWORDS.any { it in haystack } ||
-            PARTY_TITLE_WORD_PATTERN.containsMatchIn(haystack) -> EventType.PARTY.name
+        billsPartyNight(title, isSubtitle) -> EventType.PARTY.name
 
         else -> null
     }
 }
+
+/** Whether [text] carries a party cue; a masquerade counts in a title only. */
+private fun billsPartyNight(
+    text: String,
+    isSubtitle: Boolean
+): Boolean =
+    PARTY_TITLE_KEYWORDS.any { it in text.lowercase() } ||
+        PARTY_TITLE_WORD_PATTERN.containsMatchIn(text) ||
+        (!isSubtitle && MASQUERADE_TITLE_PATTERN.containsMatchIn(text))
 
 /**
  * Title-based inference for a concert-leaning venue that left an event entirely unclassified
@@ -246,12 +280,16 @@ fun inferConcertVenueType(
     subtitle: String?,
     venueKeywords: Map<String, String> = emptyMap()
 ): String {
-    fun classify(text: String): String? =
-        classifyByTitleKeyword(text) ?: venueKeywords.entries.firstOrNull { (keyword, _) -> containsVenueKeyword(text, keyword) }?.value
-    return classify(title)
+    fun classify(
+        text: String,
+        isSubtitle: Boolean
+    ): String? =
+        classifyByTitleKeyword(text, isSubtitle)
+            ?: venueKeywords.entries.firstOrNull { (keyword, _) -> containsVenueKeyword(text, keyword) }?.value
+    return classify(title, isSubtitle = false)
         ?: subtitle
             ?.takeUnless { TOUR_NAME.containsMatchIn(it) }
-            ?.let { classify(it.substringBeforeMatch(AFTER_PARTY)) }
+            ?.let { classify(it.substringBeforeMatch(AFTER_PARTY), isSubtitle = true) }
             ?.takeIf { it in SUBTITLE_CUE_TYPES }
         ?: EventType.CONCERT.name
 }
