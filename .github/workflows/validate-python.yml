@@ -80,6 +80,9 @@ jobs:
       - name: musicbrainz-review keeps billed AMBIGUOUS artists and writes nothing but the MBID
         run: python3 scripts/test_musicbrainz_review.py
 
+      - name: artist-cleanup flags names that are not acts and skips what the orphan sweep deletes
+        run: python3 scripts/test_artist_cleanup.py
+
       # Gated on the two steps it explains.
       - name: Explain the fix
         if: failure() && (steps.check.outcome == 'failure' || steps.format.outcome == 'failure')
