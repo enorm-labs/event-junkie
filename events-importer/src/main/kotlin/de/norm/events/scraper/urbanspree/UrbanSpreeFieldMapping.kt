@@ -62,19 +62,19 @@ private val STATUS_PREFIX_PATTERN =
  */
 private const val PLACE_TOKEN = """(?:urban\s*spree|berlin(?:\s+show)?|raw[-\s]?gel(?:ä|ae)nde|\d{1,2}\.\d{1,2}\.\d{2,4})"""
 
-/** One or more [PLACE_TOKEN]s run together by spaces, commas, dashes, pipes or an `@` ("Berlin Show @ Urban Spree"). */
-private const val PLACE_RUN = """$PLACE_TOKEN(?:[\s,@|·-]+$PLACE_TOKEN)*"""
+/** One or more [PLACE_TOKEN]s run together by spaces, commas, dashes, pipes, bullets or an `@` ("Berlin Show @ Urban Spree"). */
+private const val PLACE_RUN = """$PLACE_TOKEN(?:[\s,@|·•-]+$PLACE_TOKEN)*"""
 
 /**
  * A trailing venue/city tail in the venue's two spellings: delimiter-introduced (`" - Urban Spree
- * - Berlin"`, `" | Urban Spree Berlin"`, `", BERLIN"`, `" @Urban Spree"`) and the prose `" live
- * at Urban Spree Berlin"`. The delimiter or `live at` is required, so "Isolation Berlin" is never
+ * - Berlin"`, `" | Urban Spree Berlin"`, `", BERLIN"`, `" @Urban Spree"`, `" • URBAN SPREE"`) and
+ * the prose `" live at Urban Spree Berlin"`. The delimiter or `live at` is required, so "Isolation Berlin" is never
  * truncated: only "Isolation Berlin - Urban Spree" loses its tail, and the band survives the
  * second pass because a bare space does not open one.
  */
 private val VENUE_TAIL_PATTERN =
     Regex(
-        """\s*[-–—|,@]+\s*(?:live\s+at\s+)?@?\s*$PLACE_RUN\s*[.,]?\s*$""" +
+        """\s*[-–—|,@•]+\s*(?:live\s+at\s+)?@?\s*$PLACE_RUN\s*[.,]?\s*$""" +
             """|\s+live\s+at\s+$PLACE_RUN\s*[.,]?\s*$""",
         RegexOption.IGNORE_CASE
     )

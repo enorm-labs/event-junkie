@@ -1,6 +1,8 @@
 package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
+import de.norm.events.event.EventType
+import de.norm.events.scraper.buildArtistsForEventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -63,6 +65,23 @@ class UrbanSpreeFieldMappingTest {
         cleanUrbanSpreeTitle("MAYFLOWER MADAME + BLKE - Berlin Show @Urban Spree") shouldBe "MAYFLOWER MADAME + BLKE"
         cleanUrbanSpreeTitle("New Candys (IT Fuzz Club) live at Urban Spree Berlin") shouldBe "New Candys (IT Fuzz Club)"
         cleanUrbanSpreeTitle("LES SHIRLEY - BERLIN, 15.09.2026") shouldBe "LES SHIRLEY"
+    }
+
+    // #3214 — a bullet opens the venue tail too, and the guest slot before it bills nobody.
+    @Test
+    fun `a bullet venue tail goes and its guest slot bills nobody`() {
+        val title = cleanUrbanSpreeTitle("UNS + GÄSTE BERLIN • URBAN SPREE")
+        title shouldBe "UNS + GÄSTE BERLIN"
+        buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name).map { it.name } shouldBe listOf("UNS")
+        cleanUrbanSpreeTitle("Coilguns • Berlin • Urban Spree") shouldBe "Coilguns"
+    }
+
+    @Test
+    fun `a bullet co-bill keeps both acts`() {
+        // A place must follow the bullet, so the co-bill of #1818 is no tail.
+        val title = cleanUrbanSpreeTitle("New Candys (IT, Fuzz Club) • BLKE (DE, Tonzonen)")
+        title shouldBe "New Candys (IT, Fuzz Club) • BLKE (DE, Tonzonen)"
+        buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name).map { it.name } shouldBe listOf("New Candys", "BLKE")
     }
 
     @Test
