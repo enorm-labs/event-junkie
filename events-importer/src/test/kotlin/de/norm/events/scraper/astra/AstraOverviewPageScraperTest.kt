@@ -134,11 +134,10 @@ class AstraOverviewPageScraperTest {
     }
 
     @Test
-    fun `puts a Live line-up between the title's act and the Support acts`() {
+    fun `bills no package title as an act when its Live line names the bill`() {
         event("Monsters Of Punk").artists.map { it.name to it.role } shouldContainExactly
             listOf(
-                "MONSTERS OF PUNK" to "HEADLINER",
-                "THE EXPLOITED" to "SUPPORT",
+                "THE EXPLOITED" to "HEADLINER",
                 "DISCHARGE" to "SUPPORT",
                 "CONFLICT" to "SUPPORT",
                 "VARUKERS" to "SUPPORT",
@@ -146,6 +145,25 @@ class AstraOverviewPageScraperTest {
                 "DEZERTER" to "SUPPORT",
                 "SHELL SHOCKED" to "SUPPORT",
                 "MANEGE FREI" to "SUPPORT"
+            )
+    }
+
+    @Test
+    fun `keeps the title's act as headliner over a one-act feat line`() {
+        artistsOf("FRANK TURNER", listOf("feat. Chuck Ragan", "+ Support: Tim Barry"), "CONCERT") shouldContainExactly
+            listOf(
+                ScrapedArtist("FRANK TURNER", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Chuck Ragan", "SUPPORT"),
+                ScrapedArtist("Tim Barry", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `keeps a co-billed title act the Live line names and drops the one it does not`() {
+        artistsOf("PUNK NIGHT + SLIME", listOf("Live: Slime, Rantanplan"), "CONCERT") shouldContainExactly
+            listOf(
+                ScrapedArtist("SLIME", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Rantanplan", "SUPPORT")
             )
     }
 
