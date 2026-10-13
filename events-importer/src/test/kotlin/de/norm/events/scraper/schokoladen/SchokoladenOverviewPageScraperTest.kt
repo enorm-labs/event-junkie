@@ -162,6 +162,8 @@ class SchokoladenOverviewPageScraperTest {
             // 9 December 2026: the act follows "Release Show von", and the quoted part after "w/" is the album (#2099).
             artistsOf("Berlin Release Show von Angela Aux w/ \"Das Nichts macht Kopien von sich selbst\" + TBA") shouldContainExactly
                 listOf("Angela Aux")
+            // The contracted presents verb and its colon frame the bill, not the promoter (#3213).
+            artistsOf("M:Soundtrack prsts: Dark Selbo Release Show (Bln) + CHEEKY (US/Bln)") shouldContainExactly listOf("Dark Selbo", "CHEEKY")
         }
 
         @Test

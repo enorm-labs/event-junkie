@@ -11,6 +11,8 @@ class PresenterMappingTest {
         promoterFromCredit("FKP Scorpio präsentiert:") shouldBe "FKP Scorpio"
         promoterFromCredit("Trinity Music pres.") shouldBe "Trinity Music"
         promoterFromCredit("little league shows present:") shouldBe "little league shows"
+        promoterFromCredit("M:Soundtrack prsts:") shouldBe "M:Soundtrack"
+        promoterFromCredit("old & fast prsnts") shouldBe "old & fast"
     }
 
     @Test
