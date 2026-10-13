@@ -1,7 +1,9 @@
 package de.norm.events.scraper.silentgreen
 
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -268,5 +270,34 @@ class SilentGreenDetailPageScraperTest {
         // The row's own blurb is the one read, and a free row stays free.
         free.applyTo(row.copy(description = "Tickets an der Abendkasse")).free shouldBe false
         SilentGreenEventDetails().applyTo(row.copy(free = true)).free shouldBe true
+    }
+
+    @Test
+    fun `applyTo bills a concert's Mit line in place of the title, and leaves every other row's acts`() {
+        val titleAct = listOf(ScrapedArtist("Kantine Musik", titleDerived = true))
+        val row =
+            ScrapedEvent(
+                title = "Kantine Musik",
+                eventType = "CONCERT",
+                eventDate = LocalDate.of(2026, 10, 18),
+                sourceUrl = "https://www.silent-green.net/programm/detail/kantine-musik-6",
+                sourceId = "silent_green:2026-10-18-kantine-musik-6",
+                artists = titleAct
+            )
+        // 18 October 2026, the blurb as stored.
+        val details =
+            SilentGreenEventDetails(
+                description =
+                    "Kantine Musik bringt Menschen zusammen, die im Mit- und Füreinander …\n" +
+                        "Mit: Simon Rose, Lukas Akintaya, Cassie Kinoshi, Eurico Mathias & Adam Pultz Melbye.\n" +
+                        "Sonntag, 18. Oktober 15 bis 19 Uhr Kuppelhalle Tickets: 10€ vor Ort"
+            )
+
+        details.applyTo(row).artists shouldContainExactly
+            listOf("Simon Rose", "Lukas Akintaya", "Cassie Kinoshi", "Eurico Mathias", "Adam Pultz Melbye").map { ScrapedArtist(it) }
+        // A reading's speakers are not a lineup, and a blurb without the line keeps the title's act.
+        details.applyTo(row.copy(eventType = "READING", artists = emptyList())).artists shouldBe emptyList()
+        SilentGreenEventDetails(description = "Ein Abend mit dem Deutschen Filmorchester Babelsberg.").applyTo(row).artists shouldBe titleAct
+        SilentGreenEventDetails().applyTo(row).artists shouldBe titleAct
     }
 }

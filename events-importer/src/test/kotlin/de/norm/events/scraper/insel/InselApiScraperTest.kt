@@ -209,6 +209,27 @@ class InselApiScraperTest {
     }
 
     @Test
+    fun `bills the ensemble of a WER line in place of the programme title`() {
+        val stimmen = events.single { it.title.startsWith("STIMMEN DER FREIHEIT") }
+        stimmen.artists shouldContainExactly listOf(ScrapedArtist("Lysistrata Chamber Collective", "HEADLINER"))
+    }
+
+    @Test
+    fun `splits the names of a WER line on semicolons and commas and drops the non-artists`() {
+        val json =
+            """
+            {"data":{"allDatoCmsEvent":{"edges":[{"node":{"name":"Liederabend","time":"2026-10-12T20:00:00+02:00",
+              "description":"<p>///WER: Interpreten: Anna Holm (Sopran); Ben Kurz, TBA.</p><p>Support: Cleo Marx</p>"}}]}}}
+            """.trimIndent()
+        scraper
+            .scrape(json, sourceUrl)
+            .shouldNotBeNull()
+            .single()
+            .artists shouldContainExactly
+            listOf(ScrapedArtist("Anna Holm", "HEADLINER"), ScrapedArtist("Ben Kurz", "HEADLINER"), ScrapedArtist("Cleo Marx", "SUPPORT"))
+    }
+
+    @Test
     fun `reads a support billing in both of the venue's colon spellings`() {
         val feePenafiel = events.single { it.title == "Fee Penafiel" }
         feePenafiel.subtitle shouldBe "+ support: Karwendel"

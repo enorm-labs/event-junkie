@@ -56,7 +56,8 @@ import java.time.format.DateTimeParseException
  * is why the date is only taken from `time`.
  *
  * The title is trusted as the act: a concert house whose titles are usually the artist's name,
- * so `CONCERT` by default and the title minted as headliner. Two frames are unpacked first: `…
+ * so `CONCERT` by default and the title minted as headliner. A programme concert names its players
+ * on a `///WER: Interpreten:` line instead, and that line wins over the title ([performers]). Two frames are unpacked first: `…
  * w/ <acts>` yields the acts after the marker, a `•`-separated title its first segment. A
  * trailing origin tag ("pinkpool (Bln)") is stripped from the act ([ORIGIN_TAG_PATTERN]) so it
  * resolves onto another venue's booking; the stored title keeps the venue's spelling. A closed
@@ -185,7 +186,7 @@ class InselApiScraper(
             free = lines.any(::hasFreeEntryPhrase),
             soldOut = SOLD_OUT_PREFIX.containsMatchIn(rawName) || lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
-            artists = buildArtists(styleCityTail?.first ?: title, supportNames, eventType)
+            artists = buildArtists(styleCityTail?.first ?: title, performers(lines), supportNames, eventType)
         )
     }
 
@@ -206,11 +207,12 @@ class InselApiScraper(
     }
 
     /**
-     * The lineup by resolved type: a concert's title is the act; a closed function or a poetry slam
-     * bills no performer this parser can trust.
+     * The lineup by resolved type: a concert's [performers] line, else its title, is the act; a
+     * closed function or a poetry slam bills no performer this parser can trust.
      */
     private fun buildArtists(
         title: String,
+        performerNames: List<String>,
         supportNames: List<String>,
         eventType: String
     ): List<ScrapedArtist> {
@@ -220,7 +222,12 @@ class InselApiScraper(
                 .map(::stripOriginTag)
                 .filterNot { isNonArtistName(it) }
                 .map { ScrapedArtist(name = it, role = "SUPPORT") }
-        return headliners(title) + supportActs
+        val performers =
+            performerNames
+                .filterNot { isNonArtistName(it) }
+                .distinctBy { it.lowercase() }
+                .map { ScrapedArtist(name = it, role = "HEADLINER") }
+        return performers.ifEmpty { headliners(title) } + supportActs
     }
 
     /**
@@ -315,6 +322,29 @@ private fun supportActs(lines: List<String>): List<String> =
         ?.let { SUPPORT_PATTERN.find(it)?.groupValues?.get(1) }
         ?.let { tail -> tail.split(SUPPORT_SEPARATOR).map { it.trim() }.filter { it.isNotBlank() } }
         .orEmpty()
+
+/**
+ * The players a programme concert names on its `///WER: Interpreten:` line, billed in place of the
+ * title, which names the programme. A bracket lists an ensemble's members and instruments, so it
+ * is dropped and the ensemble billed (#3216).
+ */
+private fun performers(lines: List<String>): List<String> =
+    lines
+        .firstNotNullOfOrNull { PERFORMER_LINE.find(it)?.groupValues?.get(1) }
+        ?.replace(BRACKETED, "")
+        ?.split(PERFORMER_SEPARATOR)
+        ?.map { it.trim().removeSuffix(".").trim() }
+        ?.filter { it.isNotBlank() }
+        .orEmpty()
+
+/** The venue's `///WER: Interpreten: …` data-sheet line, capturing the names after the label. */
+private val PERFORMER_LINE = Regex("""^/*\s*WER\s*:\s*Interpret\S*\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+/** A bracketed aside after a name, with the space before it. */
+private val BRACKETED = Regex("""\s*\([^)]*\)""")
+
+/** What separates the names on a [PERFORMER_LINE]. */
+private val PERFORMER_SEPARATOR = Regex("""[;,]""")
 
 /** The promoter behind an `ATOK prs.` / `… präsentiert:` credit, from the description's opening lines. */
 private fun promoter(lines: List<String>): String? =

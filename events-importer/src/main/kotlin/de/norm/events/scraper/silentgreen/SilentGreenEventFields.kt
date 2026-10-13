@@ -6,7 +6,9 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.splitSupportActs
 
 // Field mapping for silent green's vocabulary: category labels, the "… präsentiert" credit
 // line, and the host prefixes in front of a billed act.
@@ -89,12 +91,34 @@ internal fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { 
  * The billed acts as [ScrapedArtist] entries, via [buildArtistsForEventType], so only a `CONCERT`
  * turns its title into headliners; the title passes through [stripHostPrefix] first. An evening
  * runs in one hall, so the hall is the event's [room][de.norm.events.scraper.ScrapedEvent.room],
- * not a stage on each act.
+ * not a stage on each act. A blurb's `Mit:` line replaces these on the detail page ([silentGreenPerformers]).
  */
 internal fun silentGreenArtists(
     title: String,
     eventType: String
 ): List<ScrapedArtist> = buildArtistsForEventType(stripHostPrefix(title), subtitle = null, eventType = eventType)
+
+/**
+ * The players a house-series concert names on a blurb line that opens `Mit:` (`Mit: Simon Rose,
+ * Lukas Akintaya … & Adam Pultz Melbye.`), each a headliner; empty without one (#3216). Only a line
+ * that opens with the label counts, so `… mit dem Deutschen Filmorchester` in prose stays prose.
+ */
+internal fun silentGreenPerformers(blurb: String?): List<ScrapedArtist> =
+    blurb
+        ?.lineSequence()
+        ?.firstNotNullOfOrNull { PERFORMER_LINE.find(it.trim())?.groupValues?.get(1) }
+        ?.replace(BRACKETED, "")
+        ?.let(::splitSupportActs)
+        ?.filterNot { isNonArtistName(it) }
+        ?.distinctBy { it.lowercase() }
+        ?.map { ScrapedArtist(name = it) }
+        .orEmpty()
+
+/** A blurb line that opens `Mit:`, capturing the names without the closing full stop. */
+private val PERFORMER_LINE = Regex("""^Mit:\s*(.+?)\.?$""")
+
+/** A bracketed aside after a name, such as an instrument, with the space before it. */
+private val BRACKETED = Regex("""\s*\([^)]*\)""")
 
 /**
  * Strips the label or series hosting a night from the front of its title. A spelled-out
