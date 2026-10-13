@@ -138,8 +138,8 @@ class TempodromOverviewPageScraperTest {
         // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829), and
         // three are the Roncalli gala with an orchestra, a show (#2833). Holiday on Ice and
         // "Eiskönigin 1 & 2" are ice shows, which bill no act in the title. `Die Nacht der Musicals`
-        // is a gala named for its night (#3160).
-        events.count { it.artists.isNotEmpty() } shouldBe 132
+        // is a gala named for its night (#3160), and `Berlin Salsacongress 2026` a congress named for its year (#3212).
+        events.count { it.artists.isNotEmpty() } shouldBe 131
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 

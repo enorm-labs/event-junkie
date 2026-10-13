@@ -172,6 +172,10 @@ fun isEventSegmentLabel(name: String): Boolean {
  *
  * A gala named for its night is no act either (#3160): `Die Nacht der Musicals`, `Lange Nacht der
  * …` and `Die Schlagernacht des Jahres`. Both forms are anchored to the title start.
+ *
+ * So is a night that ends in a year, `Edition` or `Special`, or carries `Label Night` (#3212): `Autumn
+ * Bash 2026`, `Herbst Edition`, `Xmas Special`. A real act's tour or show year is stripped before this
+ * check, and `The Specials` stays an act.
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
@@ -181,7 +185,8 @@ private val NON_ARTIST_EVENT_PATTERN =
             """|\d+\.\s+\S.*|.*\bvol\.\s*(?:\d+|[ivx]+)\b.*|tribute[\s-]?(?:concert|konzert)\s*:.*""" +
             """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""" +
-            """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""",
+            """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""" +
+            """|\S.*\s(?:20\d{2}|edition|special)|.*\blabel\s+night\b.*""",
         RegexOption.IGNORE_CASE
     )
 
@@ -213,7 +218,7 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * Trailing suffixes that decorate a real act name, stripped by [stripArtistSuffix]; every case
  * is asserted in `ArtistNameMappingTest`.
  *
- * Hyphen tails: a tour name, "<n> Years/Jahre", "<n> Sets", an edition ending in a four-digit
+ * Hyphen tails: a tour name, "<n> Years/Jahre", "<n> Sets", "<n>th Anniversary …", an edition ending in a four-digit
  * year, "Releaseshow". Trailing tails: "Live" / "Live in <city>" / "in Berlin" (not "Made in Berlin") / "live <year>", a format annotation
  * parenthesized or a bare "DJ-Set", "Nachholtermin vom <date>" / "Hochverlegung", "singt
  * <repertoire>", "<Album/EP/…> Release" / "Release Party" / "Releaseshow", a record title spelled letter by
@@ -240,7 +245,7 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  */
 private val ARTIST_SUFFIX_PATTERN =
     Regex(
-        """\s+[-–—]\s+(?:\S.*tour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
+        """\s+[-–—]\s+(?:\S.*tour\b|\d+\s+(?:years?|jahre|sets?)\b|\d+(?:st|nd|rd|th)\s+anniversary\b).*$""" +
             """|(?<=\S)\s+\d+\s+(?:years\s+of|jahre\s+jubil(?:ä|ae)um)\b.*$""" +
             """|\s+[-–—]\s*zusatz(?:show|konzert|termin)\s*$""" +
             """|(?<=\S)\s+„[^„“]+“\s*$""" +
@@ -790,7 +795,7 @@ private fun isUnbilledSlot(name: String): Boolean = isGuestSlotLabel(name) || PR
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare role label
  * ("Special Guest"), a segment ("Acid Aftershow"), an event ("Shred Fest"), a "DJ set" label, a
  * guest slot ("+ Guest"), a programme item ("+ Darkroom"), a curated title ("The Revival Tour"), a
- * head-count ("20 DJ's"), or a name that slugs to nothing ("-"). The single predicate applied
+ * head-count ("20 DJ's"), a night name ("Autumn Bash 2026"), or a name that slugs to nothing ("-"). The single predicate applied
  * wherever names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =

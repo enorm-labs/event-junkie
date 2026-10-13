@@ -2021,6 +2021,39 @@ class ArtistNameMappingTest {
         listOf("Nachtblut", "Die Nacht", "Nacht", "Jazz Nacht Trio", "Nachtschatten des Jahres").forEach { isNonArtistEvent(it) shouldBe false }
     }
 
+    // #3212 — production titles: a night name ending in a year, Edition or Special, or carrying Label Night, is no act.
+    @Test
+    fun `headlinersFromTitle reads a night name with a year, edition, special or label night as no act`() {
+        listOf(
+            "Autumn Bash 2026",
+            "BERLIN BREAKOUT 2027",
+            "HANDS LABEL NIGHT BERLIN 2027",
+            "UNRELEASED BERLIN – XMAS SPECIAL",
+            "Unreleased Berlin – Xmas Special",
+            "TuneUp Session // Herbst Edition",
+            "OMLJF Special: Let’s Get Political!",
+            "NEW WAVES DAY CLUB EDITION",
+            "Berlin Salsacongress 2027",
+            "Hands Label Night"
+        ).forEach { title -> withClue(title) { headlinersFromTitle(title).shouldBeEmpty() } }
+    }
+
+    // #3212 — the suffix rules strip an act's tour or show year before the night rule runs.
+    @Test
+    fun `headlinersFromTitle keeps an act whose tour or show carries a year`() {
+        headlinersFromTitle("SIDOs Weihnachtsshow 2026").map { it.name } shouldBe listOf("SIDO")
+        headlinersFromTitle("Gregorian - The Magical Christmas Tour 2026").map { it.name } shouldBe listOf("Gregorian")
+        headlinersFromTitle("Kraftklub Live 2027").map { it.name } shouldBe listOf("Kraftklub")
+        headlinersFromTitle("The Specials").map { it.name } shouldBe listOf("The Specials")
+        stripArtistSuffix("Helmut Lotti goes Classic - 30th Anniversary Edition") shouldBe "Helmut Lotti goes Classic"
+    }
+
+    @Test
+    fun `isNonArtistName keeps a name that only contains a year, edition, special or night word`() {
+        listOf("The Specials", "Specials", "Special", "Edition", "Special Edition Band", "Front 242", "Blink-182", "Label", "Night Label Club")
+            .forEach { name -> withClue(name) { isNonArtistName(name) shouldBe false } }
+    }
+
     // #3160 — with the night's name dropped, the `ft.` guests are the whole bill.
     @Test
     fun `headlinersFromTitle bills the featured guests of a dropped night name as headliners`() {
