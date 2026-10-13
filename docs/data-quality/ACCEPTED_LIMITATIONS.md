@@ -369,6 +369,10 @@ says so.
 | `PANKE`                | `GENRE`            | the venue publishes no genre field; the style is only in the text                                                                                | —     |
 | `PANKE`                | `PRICE`            | most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose                       | —     |
 | `PANKE`                | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
+| `PAS`                  | `START_TIME`       | most concerts print the doors and `music a bit later`, no start                                                                                  | —     |
+| `PAS`                  | `PRICE`            | most events set no cost                                                                                                                          | —     |
+| `PAS`                  | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
+| `PAS`                  | `ARTISTS`          | a series night bills only its name, and its acts are in the prose                                                                                | —     |
 | `PETER_EDEL`           | `EVENT_TYPE`       | the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas                              | —     |
 | `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
