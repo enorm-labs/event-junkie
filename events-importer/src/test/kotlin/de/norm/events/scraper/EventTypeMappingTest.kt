@@ -91,6 +91,38 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `inferConcertVenueType types a ballet or a pageant as a show`() {
+        inferConcertVenueType("Ballet Of Lights") shouldBe "SHOW"
+        inferConcertVenueType("Schwanensee – Klassisches Ballett") shouldBe "SHOW"
+        inferConcertVenueType("MX. KOTTI PAGEANT") shouldBe "SHOW"
+    }
+
+    @Test
+    fun `inferConcertVenueType keeps Spandau Ballet and a word merely containing a cue a concert`() {
+        inferConcertVenueType("STEVE NORMAN (von Spandau Ballet) & The Sleevz") shouldBe "CONCERT"
+        inferConcertVenueType("Balletschule Kreuzberg") shouldBe "CONCERT"
+        inferConcertVenueType("Pageantry") shouldBe "CONCERT"
+    }
+
+    @Test
+    fun `inferConcertVenueType types a masquerade, a semester opener and a baile funk night as a party`() {
+        inferConcertVenueType("House of Horror #2 | Berlins Big Halloween Masquerade") shouldBe "PARTY"
+        inferConcertVenueType("Semesterauftakt") shouldBe "PARTY"
+        inferConcertVenueType("VRAUWEEN ཐི ₍^.ˬˬ.^₎ ཋྀ 2 CLUBS: QUEER BAILE FUNK") shouldBe "PARTY"
+    }
+
+    @Test
+    fun `inferConcertVenueType keeps masquerade inside a longer word a concert`() {
+        inferConcertVenueType("Masquerades of the Night") shouldBe "CONCERT"
+    }
+
+    @Test
+    fun `inferConcertVenueType reads masquerade in the title only, not as the act's show in the subtitle`() {
+        inferConcertVenueType("Louis Philippson", subtitle = "MASQUERADE – LIVE 2027") shouldBe "CONCERT"
+        inferConcertVenueType("GRAVE BR", subtitle = "Brazilian Baile Funk | Special Edition: Carioca Funk") shouldBe "PARTY"
+    }
+
+    @Test
     fun `billsVarietyShow reads the show keywords and an ice show, not a bare show`() {
         billsVarietyShow("Odeum Pro Wrestling Catche Diem 2026") shouldBe true
         billsVarietyShow("Holiday on Ice") shouldBe true

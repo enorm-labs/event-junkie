@@ -2,6 +2,8 @@ package de.norm.events.scraper.columbiatheater
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.inferConcertVenueType
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -137,5 +139,13 @@ class ColumbiaTheaterOverviewPageScraperTest {
     @Test
     fun `skips the venue's off-site campaign banner`() {
         events.map { it.sourceUrl }.none { it.contains("columbiahalle") } shouldBe true
+    }
+
+    @Test
+    fun `bills no act for a ballet with no billing row`() {
+        val title = "Ballet Of Lights"
+        val eventType = inferConcertVenueType(title)
+        eventType shouldBe "SHOW"
+        columbiaTheaterArtists(title, supportRows = emptyList(), eventType = eventType).shouldBeEmpty()
     }
 }
