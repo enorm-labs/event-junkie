@@ -165,6 +165,15 @@ says so.
 | `FITZROY`              | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |
 | `FITZROY`              | `EVENT_TYPE`       | the venue types every event Party, a live show included                                                                                          | —     |
 | `FITZROY`              | `PROMOTERS`        | the organiser field is empty on every event; a collective is named only in the title                                                             | —     |
+| `FRACHTKANTE`          | `PER_EVENT_PAGE`   | every event is a block on the homepage and takes its identity from its date plus its title                                                       | —     |
+| `FRACHTKANTE`          | `EVENT_TYPE`       | the site names no category, so a title without a format word is stored as other                                                                  | —     |
+| `FRACHTKANTE`          | `IMAGE`            | the programme shows no flyer                                                                                                                     | —     |
+| `FRACHTKANTE`          | `DOORS_TIME`       | the site prints one opening time per event                                                                                                       | —     |
+| `FRACHTKANTE`          | `GENRE`            | the programme names no style                                                                                                                     | —     |
+| `FRACHTKANTE`          | `PRICE`            | prices are only on the organiser's ticket shop                                                                                                   | —     |
+| `FRACHTKANTE`          | `ARTISTS`          | the programme lists no line-up                                                                                                                   | —     |
+| `FRACHTKANTE`          | `PROMOTERS`        | the organising collective is named only in the title                                                                                             | —     |
+| `FRACHTKANTE`          | `DESCRIPTION`      | an event carries at most a ticket line, no blurb                                                                                                 | —     |
 | `FRANNZ`               | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
 | `FRANNZ`               | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `FRANNZ`               | `GENRE`            | the venue tags each event only with a type (Konzert, Party, Lesung), never a genre                                                               | —     |

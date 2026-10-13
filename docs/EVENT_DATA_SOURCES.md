@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   128 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   129 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -75,6 +75,7 @@ schema change.
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                                           | Bar          | Drupal 7; front page = full nodes; RDFa datetimes         |
 | Festsaal Kreuzberg               | https://festsaal-kreuzberg.de/de                                         | Concert Hall | Nuxt/Wagtail SSR; `ld+json` empty; no prices              |
 | Fitzroy                          | https://fitzroy-berlin.de/events/                                        | Club         | Shares the LARK parser; every event typed `Party`         |
+| Frachtkante                      | https://frachtkante.de/de/                                               | Open Air     | ProcessWire one-pager; no event pages; typed by title     |
 | Frannz Club                      | https://frannz.eu/                                                       | Club         |                                                           |
 | gART.n                           | https://www.gartn.xyz/                                                   | Techno Club  | Carrd one-pager; year from weekday; no prices             |
 | Gärten der Welt                  | https://www.gaertenderwelt.de/events/veranstaltungen/                    | Open Air     | TYPO3 events2; paged; park activities excluded            |
@@ -169,7 +170,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-127 importer classes cover 128 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+128 importer classes cover 129 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -190,7 +191,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-49 sources have a second language, 75 have none, and 4 are unknown. Eight translate the event text on a second page.
+49 sources have a second language, 76 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -249,6 +250,7 @@ the upsert stores none.
 | Eschschloraque Rümschrümp        | No              | —                                                            | —                  |                                                                                                                                    |
 | Festsaal Kreuzberg               | Yes             | `/en` path                                                   | Not on the listing | https://festsaal-kreuzberg.de/en                                                                                                   |
 | Fitzroy                          | No              | —                                                            | —                  |                                                                                                                                    |
+| Frachtkante                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Frannz Club                      | No              | —                                                            | —                  |                                                                                                                                    |
 | gART.n                           | No              | —                                                            | —                  |                                                                                                                                    |
 | Gärten der Welt                  | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.gaertenderwelt.de/en/events/events/                                                                                    |
@@ -821,9 +823,9 @@ Where candidates come from, and what is deliberately left out:
   row here. It also opened the venues on the guide's techno district pages. That gave four Ready rows and eight Blocked
   rows. Valley and the Baergarten are part of Revier Südost, and Napoleon Komplex is the Komplex Berlin row. Two
   museums were left out, Dark Matter and Hamburger Bahnhof. So were two rental spaces, Freischwimmer and Villa K. So
-  were three event grounds: Teufelsberg, Malzfabrik and Frachtkante at Tegel airport. The guide's black-music page names
-  Auster Club, Cheshire Cat, St. Georg, Bohannon and Hangar 49. That page dates from January 2024, and no event in the
-  calendar names those places. They were not checked.
+  were two event grounds, Teufelsberg and Malzfabrik. The sweep also left out Frachtkante at Tegel airport, which now has
+  a row under Imported. The guide's black-music page names Auster Club, Cheshire Cat, St. Georg, Bohannon and
+  Hangar 49. That page dates from January 2024, and no event in the calendar names those places. They were not checked.
 - **The promoter websites** in `docs/promoters/REVIEWED.tsv`. On 2026-10-04, 132 rows had a website, and 127 distinct
   sites were fetched once each, plus one events page. Four rows have only an Instagram or Facebook page, and those
   were not opened. Most Berlin venues on these pages are already recorded. The sweep gave the eleven rows above. Many
