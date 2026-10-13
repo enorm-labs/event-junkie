@@ -139,20 +139,26 @@ class AstraOverviewPageScraper {
 /**
  * The acts of one overview article: the title's headliners, then a concert's [subtitleLineup], then the
  * `Support:` acts. Only the `Support:` lines feed [buildArtistsForEventType], so a note on another
- * `<br>` line, such as a cancellation, is not taken for an act.
+ * `<br>` line, such as a cancellation, is not taken for an act. A line-up of two or more acts is the
+ * whole bill, so a title act it does not name is a package name such as `MONSTERS OF PUNK` (#3194).
  */
 internal fun artistsOf(
     title: String,
     subtitleLines: List<String>,
     eventType: String?
 ): List<ScrapedArtist> {
-    val artists = buildArtistsForEventType(title, supportSubtitleLines(subtitleLines), eventType)
+    val named = if (eventType == EventType.CONCERT.name) subtitleLineup(subtitleLines) else emptyList()
+    val namedKeys = named.mapTo(mutableSetOf()) { it.lowercase() }
+    val artists =
+        buildArtistsForEventType(title, supportSubtitleLines(subtitleLines), eventType)
+            .filterNot { namedKeys.size >= MIN_WHOLE_BILL_LINEUP && it.isTitleHeadliner() && it.name.lowercase() !in namedKeys }
     val billed = artists.mapTo(mutableSetOf()) { it.name.lowercase() }
-    val lineup = if (eventType == EventType.CONCERT.name) subtitleLineup(subtitleLines).filter { billed.add(it.lowercase()) } else emptyList()
+    val lineup = named.filter { billed.add(it.lowercase()) }
     if (lineup.isEmpty()) return artists
     val (fromTitle, support) = artists.partition { it.titleDerived }
     // A tour or fest title bills no act, so the line-up's first act heads the bill (#3154).
-    val lineupArtists = lineup.mapIndexed { i, name -> ScrapedArtist(name = name, role = if (i == 0 && fromTitle.isEmpty()) "HEADLINER" else "SUPPORT") }
+    val leadsBill = fromTitle.none { it.role == "HEADLINER" }
+    val lineupArtists = lineup.mapIndexed { i, name -> ScrapedArtist(name = name, role = if (i == 0 && leadsBill) "HEADLINER" else "SUPPORT") }
     return fromTitle + lineupArtists + support
 }
 
@@ -166,6 +172,11 @@ internal fun subtitleLineup(subtitleLines: List<String>): List<String> =
         .mapNotNull { LINEUP_LINE.find(it.trim())?.groupValues?.get(1) }
         .flatMap(::splitSupportActs)
         .filterNot(::isNonArtistName)
+
+private fun ScrapedArtist.isTitleHeadliner(): Boolean = titleDerived && role == "HEADLINER"
+
+/** One `feat.` act is a guest of the title's act, not the bill. */
+private const val MIN_WHOLE_BILL_LINEUP = 2
 
 private val LINEUP_LINE = Regex("""^(?:featuring|feat\b\.?|live\s*:)\s*(.+)$""", RegexOption.IGNORE_CASE)
 
