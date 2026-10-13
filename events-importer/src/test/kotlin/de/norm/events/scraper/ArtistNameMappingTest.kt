@@ -629,6 +629,43 @@ class ArtistNameMappingTest {
         isNonArtistName("Guns N' Roses") shouldBe false
     }
 
+    // #3214 — Urban Spree bills `UNS + GÄSTE BERLIN`: a guest slot with a place after it.
+    @Test
+    fun `isGuestSlotLabel drops a guest slot with one place after it`() {
+        isGuestSlotLabel("GÄSTE BERLIN") shouldBe true
+        isGuestSlotLabel("+ Gäste Berlin") shouldBe true
+        isGuestSlotLabel("Guests London") shouldBe true
+        isNonArtistName("GÄSTE BERLIN") shouldBe true
+        headlinersFromTitle("UNS + GÄSTE BERLIN").map { it.name } shouldBe listOf("UNS")
+        // The place must stand alone after the guest word.
+        isGuestSlotLabel("Gäste Berlin Mitte") shouldBe false
+        isGuestSlotLabel("Guests Of Berlin") shouldBe false
+        isGuestSlotLabel("Berlin Gäste") shouldBe false
+    }
+
+    @Test
+    fun `a conjoined guest tail stays with its act`() {
+        headlinersFromTitle("Michael Mittermeier & Gäste").map { it.name } shouldBe listOf("Michael Mittermeier & Gäste")
+    }
+
+    // #3214 — a night named for its hosts, with no act after the verb.
+    @Test
+    fun `isNonArtistEvent drops a name that ends on invites`() {
+        isNonArtistEvent("Not Stereo Invites") shouldBe true
+        isNonArtistEvent("Sesh Clara Cuve invites") shouldBe true
+        isNonArtistEvent("Hosts Invite") shouldBe true
+        headlinersFromTitle("Not Stereo Invites").shouldBeEmpty()
+    }
+
+    @Test
+    fun `isNonArtistEvent keeps a name with an act after invites`() {
+        isNonArtistEvent("Tony Hurdle Invites TC The 3RD") shouldBe false
+        isNonArtistEvent("FLUXO INVITES EBONY") shouldBe false
+        isNonArtistEvent("Invitees") shouldBe false
+        isNonArtistEvent("Uninvited") shouldBe false
+        headlinersFromTitle("Tony Hurdle Invites TC The 3RD").map { it.name } shouldBe listOf("Tony Hurdle Invites TC The 3RD")
+    }
+
     // --- splitSegmentOnConjunctions ---
 
     @Test

@@ -176,6 +176,9 @@ fun isEventSegmentLabel(name: String): Boolean {
  * So is a night that ends in a year, `Edition` or `Special`, or carries `Label Night` (#3212): `Autumn
  * Bash 2026`, `Herbst Edition`, `Xmas Special`. A real act's tour or show year is stripped before this
  * check, and `The Specials` stays an act.
+ *
+ * A night that ends on `invites` or `invite` names its hosts, not an act (#3214): `Not Stereo
+ * Invites`. The verb must end the name, so `Tony Hurdle Invites TC The 3RD` keeps its act.
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
@@ -186,7 +189,8 @@ private val NON_ARTIST_EVENT_PATTERN =
             """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""" +
             """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""" +
-            """|\S.*\s(?:20\d{2}|edition|special)|.*\blabel\s+night\b.*""",
+            """|\S.*\s(?:20\d{2}|edition|special)|.*\blabel\s+night\b.*""" +
+            """|.*\binvites?""",
         RegexOption.IGNORE_CASE
     )
 
@@ -767,10 +771,11 @@ fun isDjSetFormatLabel(name: String): Boolean = DJ_SET_LABEL_PATTERN.matches(nam
  * "Friends"/"Band" is a plausible act name. OHM bills "+ Secret Lineup" and "+ Secret Guest tab",
  * its spelling of "tba" (#2439); a lineup slot needs the `secret` word, since "Line Up" alone is
  * [MORE_TO_COME_PATTERN]'s. One word may sit between: KitKatClub bills "Secret Music Line up" (#2901).
+ * One place from [COUNTRY_NAMES] may follow the guest word: Urban Spree bills "+ GÄSTE BERLIN" (#3214).
  */
 private val GUEST_SLOT_PATTERN =
     Regex(
-        """\+?\s*(?:(?:(?:secret|surprise|mystery)\s+)?(?:guests?|gäste|gaeste)(?:\s+djs?)?""" +
+        """\+?\s*(?:(?:(?:secret|surprise|mystery)\s+)?(?:guests?|gäste|gaeste)(?:\s+djs?)?(?:\s+(?:$COUNTRY_NAMES))?""" +
             """|(?:secret|surprise|mystery)\s+(?:\p{L}+\s+)?line[\s-]?up)(?:\s+(?:tba|tbc|tbd|tab)\.*)?""",
         RegexOption.IGNORE_CASE
     )
