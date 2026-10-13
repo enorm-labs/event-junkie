@@ -5,7 +5,7 @@
   "connection": "Couldn't load {subject}. Please check your connection and reload.",
   "subject": {
     "generic": "this content",
-    "tonightsEvents": "tonight's events",
+    "todaysEvents": "today's events",
     "upcomingEvents": "upcoming events",
     "events": "events",
     "venueEvents": "events at this venue",

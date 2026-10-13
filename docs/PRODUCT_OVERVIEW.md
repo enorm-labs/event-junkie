@@ -39,10 +39,10 @@ lists what that includes and what it excludes.
 
 **Find events**
 
-- See **Tonight** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
+- See **Today** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
 - Filter the events list, the calendar and the map with one filter bar. The filters are date range, time of night, event type,
   venue, venue type, district, genre, price range, free-only and exclude-sold-out.
-- Use the **Tonight**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
+- Use the **Today**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
 - Search from the header with `/` or Ctrl/Cmd+K. The search finds events, venues, artists and promoters as you type.
 - The full results page also lists past events, latest first, in a last group.
 - Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.
@@ -93,7 +93,7 @@ the first column. It fails in two cases:
 
 | Surface                            | What it is                                                                  |
 | ---------------------------------- | --------------------------------------------------------------------------- |
-| `/`                                | Home page: Tonight and Upcoming                                             |
+| `/`                                | Home page: Today and Upcoming                                               |
 | `/events`                          | The events list and its filter bar                                          |
 | `/events/:slug`                    | Event page: When block, line-up, set times, share, calendar, related events |
 | `/calendar`                        | Month calendar with the same filters                                        |
@@ -133,7 +133,7 @@ the first column. It fails in two cases:
 | `/api/sitemaps/{kind}.xml`         | The detail sitemaps                                                         |
 | `/api/images/{contentHash}/{file}` | Cached venue images                                                         |
 | `/api/meta`                        | Version and commit of the running backend, for the footer                   |
-| `home-feeds.spec.ts`               | e2e: Tonight and Upcoming                                                   |
+| `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                     |
 | `events-filters.spec.ts`           | e2e: the filter bar                                                         |
 | `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                      |
 | `calendar.spec.ts`                 | e2e: the calendar                                                           |

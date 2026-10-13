@@ -141,7 +141,7 @@ export function berlinTimeIso(): string {
 
 /**
  * Tomorrow in Berlin as `YYYY-MM-DD`. The Home "Upcoming" feed starts here; today's events are
- * the "Tonight" section.
+ * the "Today" section.
  */
 export function tomorrowIso(): string {
   return addDays(todayIso(), 1)

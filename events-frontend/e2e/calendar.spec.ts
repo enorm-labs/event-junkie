@@ -188,8 +188,8 @@ test('omits the date-range filter, whose job the visible window already does', a
   await expect(selectWithOption(page, 'All venues')).toBeVisible()
   await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
   await expect(page.getByLabel('Latest event date')).toHaveCount(0)
-  // The presets are shortcuts for that same range, so they go with it.
-  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveCount(0)
+  // The presets are shortcuts for that same range, so they go with it. Not Today: the calendar has its own.
+  await expect(page.getByRole('button', { name: 'This weekend' })).toHaveCount(0)
 })
 
 test('refetches the visible range with a filter from the shared filter bar', async ({ page }) => {

@@ -11,7 +11,7 @@ vi.mock('@/api/client', async (importOriginal) => ({
 
 const { default: EventFilterBar } = await import('@/components/EventFilterBar.vue')
 const { default: MultiSelectFilter } = await import('@/components/MultiSelectFilter.vue')
-const { tonight } = await import('@/lib/dateRanges')
+const { today } = await import('@/lib/dateRanges')
 const { i18n } = await import('@/i18n')
 
 const Page = defineComponent({ render: () => h('p') })
@@ -60,7 +60,7 @@ describe('EventFilterBar time options', () => {
     await mountAt('/events')
     const names = wrapper!.findAll('button').map((candidate) => candidate.text())
     expect(names.indexOf('On now')).toBeGreaterThanOrEqual(0)
-    expect(names.indexOf('On now')).toBeLessThan(names.indexOf('Tonight'))
+    expect(names.indexOf('On now')).toBeLessThan(names.indexOf('Today'))
   })
 
   it('offers On now only to a view that opts in', async () => {
@@ -83,11 +83,11 @@ describe('EventFilterBar time options', () => {
   it('removes On now when a preset is pressed', async () => {
     await mountAt('/events?now=1&venue=lido')
 
-    await click('Tonight')
+    await click('Today')
 
-    const { from, to } = tonight()
+    const { from, to } = today()
     expect(router.currentRoute.value.query).toEqual({ from, to, venue: 'lido' })
-    expect(pressed('Tonight')).toBe('true')
+    expect(pressed('Today')).toBe('true')
     expect(pressed('On now')).toBe('false')
   })
 
@@ -112,10 +112,10 @@ describe('EventFilterBar time options', () => {
   })
 
   it("does not show the view's default range as pressed while On now is", async () => {
-    await mountAt('/map?now=1', { showOnNow: true, defaultRange: tonight() })
+    await mountAt('/map?now=1', { showOnNow: true, defaultRange: today() })
 
     expect(pressed('On now')).toBe('true')
-    expect(pressed('Tonight')).toBe('false')
+    expect(pressed('Today')).toBe('false')
   })
 })
 

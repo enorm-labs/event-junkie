@@ -171,7 +171,7 @@ changes.
 
 ## The maps
 
-`/map` (tonight's events) and the venues page's map view share `components/VenueMap.vue`, which takes pins and knows nothing about events
+`/map` (today's events) and the venues page's map view share `components/VenueMap.vue`, which takes pins and knows nothing about events
 ([ADR-037](../docs/adr/ADR-037_SELF_HOSTED_MAP.md)).
 
 - **Every map request goes to this site.** Tiles, glyphs and sprites are served from `/map/`, copied into the image from `event-junkie-map-assets`.

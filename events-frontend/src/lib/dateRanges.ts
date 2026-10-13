@@ -1,5 +1,5 @@
 // Shortcut date ranges for the events filter bar — the questions people actually ask
-// ("what's on tonight?", "anything this weekend?") rather than two dates they have to pick.
+// ("what's on today?", "anything this weekend?") rather than two dates they have to pick.
 // All arithmetic is on the Berlin calendar date, matching the rest of the app.
 
 import { addDays, todayIso } from './format'
@@ -19,9 +19,9 @@ function isoWeekday(isoDate: string): number {
 }
 
 /** Today only. */
-export function tonight(): DateRange {
-  const today = todayIso()
-  return { from: today, to: today }
+export function today(): DateRange {
+  const date = todayIso()
+  return { from: date, to: date }
 }
 
 /**
@@ -45,19 +45,19 @@ export function nextSevenDays(): DateRange {
 
 /**
  * The presets the filter bar offers, in display order. Each range is computed on click rather
- * than up front, so a page left open overnight still resolves "tonight" against the current day.
+ * than up front, so a page left open overnight still resolves "today" against the current day.
  */
 // `key` rather than a literal label: these are rendered as buttons, so the text is UI chrome and
 // belongs in the message catalogue (`dateRange.*`). The key doubles as the list key.
 export const DATE_PRESETS: readonly { key: string; range: () => DateRange }[] = [
-  { key: 'dateRange.tonight', range: tonight },
+  { key: 'dateRange.today', range: today },
   { key: 'dateRange.thisWeekend', range: thisWeekend },
   { key: 'dateRange.next7Days', range: nextSevenDays },
 ]
 
 /**
  * The key of the preset a range reads as, or `undefined`. Two presets can resolve to the same
- * range — on a Sunday Tonight and This weekend are both today alone — so the first in display
+ * range — on a Sunday Today and This weekend are both today alone — so the first in display
  * order wins and at most one button is ever pressed (#2559).
  */
 export function activePresetKey(shown: DateRange): string | undefined {

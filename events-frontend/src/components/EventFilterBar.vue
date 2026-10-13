@@ -57,7 +57,7 @@ function toggleOnNow() {
 
 /**
  * True when the URL's range reads as this preset — it renders as the pressed button. With no
- * range in the URL, the view's own default stands in, so the map's "today" shows Tonight pressed.
+ * range in the URL, the view's own default stands in, so the map's default shows Today pressed.
  */
 function isPresetActive(key: string): boolean {
   if (onNow.value) return false
