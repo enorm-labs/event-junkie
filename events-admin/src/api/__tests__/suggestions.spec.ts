@@ -5,7 +5,7 @@ import {
   applySuggestion,
   cannotApply,
   fetchSuggestions,
-  lineupNames,
+  listItems,
   type Suggestion,
   suggestionsUrl,
 } from '../suggestions'
@@ -133,17 +133,23 @@ describe('suggestionsUrl', () => {
 })
 
 describe('cannotApply', () => {
-  it('names #3066 for features and accepts the fields the PUT takes', () => {
-    expect(cannotApply('features')).toContain('#3066')
+  it('accepts features and the fields the PUT takes, and nothing else', () => {
     expect(cannotApply('genre')).toContain('cannot apply')
-    for (const field of ['eventType', 'artists', 'startTime', 'pricePresale', 'priceBoxOffice']) {
+    for (const field of [
+      'features',
+      'eventType',
+      'artists',
+      'startTime',
+      'pricePresale',
+      'priceBoxOffice',
+    ]) {
       expect(cannotApply(field)).toBeNull()
     }
   })
 
-  it('reads an empty artists value as no act', () => {
-    expect(lineupNames('')).toEqual([])
-    expect(lineupNames('Ash Rivers; Nova Lane')).toEqual(['Ash Rivers', 'Nova Lane'])
+  it('reads an empty list value as none', () => {
+    expect(listItems('')).toEqual([])
+    expect(listItems('Ash Rivers; Nova Lane')).toEqual(['Ash Rivers', 'Nova Lane'])
   })
 })
 
@@ -155,7 +161,7 @@ describe('applySuggestion', () => {
 
     const { id: _id, slug: _slug, genreTags: _tags, pinnedFields: _pins, ...request } = stored
     expect(putBody(fetchFn)).toEqual({ ...request, startTime: '20:00' })
-    expect(saved.pinnedFields).toContain('startTime')
+    expect((saved as AdminEvent).pinnedFields).toContain('startTime')
     expect(calls(fetchFn).slice(-1)[0]).toBe('POST /api/admin/data-quality/suggestions/1/accept')
   })
 
@@ -198,19 +204,72 @@ describe('applySuggestion', () => {
     expect(calls(fetchFn).some((c) => c.endsWith('/accept'))).toBe(false)
   })
 
-  it('refuses a features suggestion before it reads anything', async () => {
-    const fetchFn = importer(() => [])
-    await expect(
-      applySuggestion(suggestion({ field: 'features', proposedValue: 'flinta-only' }), fetchFn),
-    ).rejects.toThrow('#3066')
-    expect(fetchFn).not.toHaveBeenCalled()
-  })
-
   it('refuses a malformed time without a PUT', async () => {
     const fetchFn = importer(() => ['startTime'])
     await expect(applySuggestion(suggestion({ proposedValue: '8 pm' }), fetchFn)).rejects.toThrow(
       'is no time',
     )
     expect(calls(fetchFn).some((c) => c.startsWith('PUT'))).toBe(false)
+  })
+})
+
+describe('applySuggestion for features', () => {
+  /** A fake importer whose event holds [stored] features. */
+  function featureImporter(stored: string[]) {
+    return vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+      if (url === '/api/admin/events/7/features') {
+        const slugs = method === 'PUT' ? JSON.parse(String(init?.body)).features : stored
+        const entries = slugs.map((feature: string) => ({ feature, phrase: '' }))
+        return json({ eventId: 7, features: entries, uncertain: [], pinned: method === 'PUT' })
+      }
+      if (method === 'POST' && url === '/api/admin/data-quality/suggestions/1/accept') {
+        return json(suggestion({ field: 'features', status: 'ACCEPTED' }))
+      }
+      return json({ detail: `unexpected ${method} ${url}` }, 404)
+    })
+  }
+
+  function features(overrides: Partial<Suggestion>) {
+    return suggestion({ field: 'features', storedValue: 'queer', ...overrides })
+  }
+
+  it('PUTs the proposed set, then accepts', async () => {
+    const fetchFn = featureImporter(['queer'])
+
+    await applySuggestion(features({ proposedValue: 'flinta-only; queer' }), fetchFn)
+
+    expect(calls(fetchFn)).toEqual([
+      'GET /api/admin/events/7/features',
+      'PUT /api/admin/events/7/features',
+      'POST /api/admin/data-quality/suggestions/1/accept',
+    ])
+    const put = fetchFn.mock.calls.find(([, init]) => init?.method === 'PUT')!
+    expect(JSON.parse(String(put[1]!.body))).toEqual({ features: ['flinta-only', 'queer'] })
+  })
+
+  it('reads a null stored value as no features', async () => {
+    const fetchFn = featureImporter([])
+    await applySuggestion(features({ storedValue: null, proposedValue: 'open-end' }), fetchFn)
+    expect(calls(fetchFn).slice(-1)[0]).toBe('POST /api/admin/data-quality/suggestions/1/accept')
+  })
+
+  it('leaves the suggestion open when the stored features changed', async () => {
+    const fetchFn = featureImporter(['queer', 'day-party'])
+
+    await expect(
+      applySuggestion(features({ proposedValue: 'flinta-only; queer' }), fetchFn),
+    ).rejects.toThrow('changed since the check ran')
+    expect(calls(fetchFn)).toEqual(['GET /api/admin/events/7/features'])
+  })
+
+  it('refuses an unknown slug before it writes', async () => {
+    const fetchFn = featureImporter(['queer'])
+
+    await expect(
+      applySuggestion(features({ proposedValue: 'queer; darkroom' }), fetchFn),
+    ).rejects.toThrow('"darkroom" is no party feature')
+    expect(calls(fetchFn).some((c) => !c.startsWith('GET'))).toBe(false)
   })
 })

@@ -2,18 +2,23 @@
  * The importer's suggestion store: the fixes a data-quality check proposes. Hand-written:
  * `EventSuggestionController.kt` and `EventClassificationCheck.kt` are the source of truth.
  *
- * A check only proposes (ADR-041). Accept applies the value with `PUT /api/admin/events/{id}`,
- * which pins the field (ADR-042), and then marks the suggestion accepted.
+ * A check only proposes (ADR-041). Accept applies the value with `PUT /api/admin/events/{id}`, or
+ * `PUT /api/admin/events/{id}/features` for features. Both pin the field (ADR-042). Then the suggestion
+ * is marked accepted.
  */
 import {
   type AdminEvent,
   type EventArtist,
   type EventRequest,
   EVENT_TYPES,
+  type EventFeatures,
   type EventType,
   failOnError,
   fetchEvent,
+  fetchEventFeatures,
+  PARTY_FEATURES,
   parsePrice,
+  setEventFeatures,
   toEventRequest,
   updateEvent,
 } from '@/api/events'
@@ -63,15 +68,13 @@ const PINS: Record<string, string> = {
 
 /** Why Accept is off for [field], or null when this app can apply it. */
 export function cannotApply(field: string): string | null {
-  if (field === 'features') {
-    return 'Features have no admin route yet. #3066 adds PUT /api/admin/events/{id}/features.'
-  }
+  if (field === 'features') return null
   if (!(field in PINS)) return `This app cannot apply a "${field}" suggestion.`
   return null
 }
 
-/** The `artists` value is the lineup joined by "; ". An empty value means no act. */
-export function lineupNames(value: string): string[] {
+/** The `artists` and `features` values are lists joined by "; ". An empty value means none. */
+export function listItems(value: string): string[] {
   return value
     .split(';')
     .map((name) => name.trim())
@@ -183,10 +186,42 @@ async function withProposal(
     case 'priceBoxOffice':
       return { ...request, priceBoxOffice: parsePrice(value) }
     case 'artists':
-      return { ...request, artists: await proposedLineup(event, lineupNames(value), fetchFn) }
+      return { ...request, artists: await proposedLineup(event, listItems(value), fetchFn) }
     default:
       throw new Error(cannotApply(suggestion.field) ?? `Cannot apply "${suggestion.field}".`)
   }
+}
+
+const FEATURE_SLUGS: readonly string[] = PARTY_FEATURES.map((feature) => feature.slug)
+
+function sameSet(a: string[], b: string[]) {
+  const left = new Set(a)
+  const right = new Set(b)
+  return left.size === right.size && [...left].every((item) => right.has(item))
+}
+
+/**
+ * Replaces the features of the event with the proposed set, which already holds the stored ones.
+ * A blind PUT would drop a feature added since the check ran, so a changed event is refused.
+ */
+async function applyFeatures(
+  suggestion: Suggestion,
+  fetchFn: typeof fetch,
+): Promise<EventFeatures> {
+  const proposed = listItems(suggestion.proposedValue)
+  const unknown = proposed.filter((slug) => !FEATURE_SLUGS.includes(slug))
+  if (unknown.length > 0) throw new Error(`"${unknown.join('", "')}" is no party feature.`)
+  const current = await fetchEventFeatures(suggestion.eventId, fetchFn)
+  const stored = current.features.map((entry) => entry.feature)
+  if (!sameSet(stored, listItems(suggestion.storedValue ?? ''))) {
+    throw new Error(
+      'The features of the event changed since the check ran. ' +
+        'The suggestion stays open: reject it, or edit the event.',
+    )
+  }
+  const saved = await setEventFeatures(suggestion.eventId, proposed, fetchFn)
+  await acceptSuggestion(suggestion.id, fetchFn)
+  return saved
 }
 
 /**
@@ -197,7 +232,8 @@ async function withProposal(
 export async function applySuggestion(
   suggestion: Suggestion,
   fetchFn: typeof fetch = fetch,
-): Promise<AdminEvent> {
+): Promise<AdminEvent | EventFeatures> {
+  if (suggestion.field === 'features') return applyFeatures(suggestion, fetchFn)
   const pin = PINS[suggestion.field]
   if (!pin) throw new Error(cannotApply(suggestion.field) ?? `Cannot apply "${suggestion.field}".`)
   const event = await fetchEvent(suggestion.eventId, fetchFn)
