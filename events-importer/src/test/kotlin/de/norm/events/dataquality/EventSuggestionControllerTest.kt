@@ -7,11 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
 
 /**
- * The suggestion store's HTTP contract (#474 part A).
+ * The suggestion store's HTTP contract (#474 part A, #346).
  *
- * No check writes suggestions yet, so each test inserts its rows with SQL, as a check will.
+ * Each test inserts its rows with SQL, as a check does.
  * The assertions that matter most: the filters narrow, a typo in `status` is a 400 rather than an
- * empty page, dismiss refuses an accepted suggestion, and nothing here changes the event.
+ * empty page, dismiss refuses an accepted suggestion and accept a dismissed one, and nothing here
+ * changes the event.
  */
 class EventSuggestionControllerTest : BaseControllerTest() {
     @Test
@@ -47,6 +48,14 @@ class EventSuggestionControllerTest : BaseControllerTest() {
                 .isEqualTo("claude-haiku-4-5")
                 .jsonPath("$.content[0].status")
                 .isEqualTo("OPEN")
+                .jsonPath("$.content[0].eventTitle")
+                .isEqualTo("first")
+                .jsonPath("$.content[0].eventSlug")
+                .isEqualTo("e-first")
+                .jsonPath("$.content[0].eventDate")
+                .isEqualTo("2026-10-24")
+                .jsonPath("$.content[0].venueName")
+                .isEqualTo("V first")
 
             webTestClient
                 .get()
@@ -74,6 +83,78 @@ class EventSuggestionControllerTest : BaseControllerTest() {
             expectIds("status=OPEN", count = 2)
             expectIds("eventId=$first&status=DISMISSED", count = 1, firstId = dismissed)
             expectIds("eventId=$second&status=DISMISSED", count = 0)
+        }
+
+    @Test
+    fun `checkName narrows the list to one check, alone and with the other filters`(): Unit =
+        runBlocking {
+            val event = insertEvent("first")
+            val classified = insertSuggestion(event, checkName = "event-classification")
+            insertSuggestion(event, checkName = "description-start-time")
+            insertSuggestion(event, checkName = "event-classification", status = "DISMISSED")
+
+            expectIds("checkName=event-classification", count = 2)
+            expectIds("checkName=event-classification&status=OPEN", count = 1, firstId = classified)
+            expectIds("checkName=no-such-check", count = 0)
+            expectIds("checkName=", count = 3)
+        }
+
+    @Test
+    fun `accept sets ACCEPTED, is repeatable, and leaves the event alone`(): Unit =
+        runBlocking {
+            val event = insertEvent("first")
+            val id = insertSuggestion(event)
+            val before = eventSnapshot(event)
+
+            repeat(2) {
+                webTestClient
+                    .post()
+                    .uri("/api/admin/data-quality/suggestions/$id/accept")
+                    .exchange()
+                    .expectStatus()
+                    .isOk
+                    .expectBody()
+                    .jsonPath("$.id")
+                    .isEqualTo(id)
+                    .jsonPath("$.status")
+                    .isEqualTo("ACCEPTED")
+                    .jsonPath("$.eventTitle")
+                    .isEqualTo("first")
+            }
+
+            check(eventSnapshot(event) == before) { "accepting a suggestion must not change the event" }
+            expectIds("status=ACCEPTED", count = 1, firstId = id)
+        }
+
+    @Test
+    fun `accepting an unknown suggestion is a 404 Problem Detail`() {
+        webTestClient
+            .post()
+            .uri("/api/admin/data-quality/suggestions/999999/accept")
+            .exchange()
+            .expectStatus()
+            .isNotFound
+            .expectBody()
+            .jsonPath("$.detail")
+            .isEqualTo("Suggestion with id 999999 not found")
+    }
+
+    @Test
+    fun `a dismissed suggestion cannot be accepted and stays dismissed`(): Unit =
+        runBlocking {
+            val id = insertSuggestion(insertEvent("first"), status = "DISMISSED")
+
+            webTestClient
+                .post()
+                .uri("/api/admin/data-quality/suggestions/$id/accept")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(409)
+                .expectBody()
+                .jsonPath("$.detail")
+                .isEqualTo("Suggestion with id $id is dismissed and cannot be accepted")
+
+            expectIds("status=DISMISSED", count = 1, firstId = id)
         }
 
     @Test
@@ -223,6 +304,7 @@ class EventSuggestionControllerTest : BaseControllerTest() {
         eventId: Long,
         field: String = "startTime",
         status: String = "OPEN",
+        checkName: String = "description-start-time",
         evidence: String = "Einlass 19 Uhr, Beginn 20 Uhr",
         createdAt: String = "2026-10-09T10:00:00Z"
     ): Long =
@@ -231,7 +313,7 @@ class EventSuggestionControllerTest : BaseControllerTest() {
                 """
                 INSERT INTO events.event_suggestion
                     (event_id, field, stored_value, proposed_value, evidence, confidence, check_name, model, status, created_at)
-                VALUES (:eventId, :field, NULL, '20:00', :evidence, 0.92, 'description-start-time', 'claude-haiku-4-5',
+                VALUES (:eventId, :field, NULL, '20:00', :evidence, 0.92, :checkName, 'claude-haiku-4-5',
                         :status, CAST(:createdAt AS timestamptz))
                 RETURNING id
                 """.trimIndent()
@@ -239,6 +321,7 @@ class EventSuggestionControllerTest : BaseControllerTest() {
             .bind("field", field)
             .bind("evidence", evidence)
             .bind("status", status)
+            .bind("checkName", checkName)
             .bind("createdAt", createdAt)
             .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .one()

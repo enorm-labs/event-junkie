@@ -168,8 +168,9 @@ The keystone. Everything else is judged against these numbers.
   artists. A last metric counts events whose source has no copyright position yet.
 - **Curation queue (API-first).** Promote the existing drop and degrade signals into an explicit, queryable **worklist
   endpoint** — `Dropping non-genre token`, artist-less events, detail-fetch fallbacks. That is the raw material for
-  growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. No bespoke frontend yet (see §7). A
-  steward acts on the worklist through the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files.
+  growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. A steward acts on the worklist in
+  `events-admin` ([ADR-045](adr/ADR-045_ADMIN_FRONTEND_IS_A_LOCAL_APP.md)). Its event editor saves through
+  `PUT /api/admin/events/{id}`.
 
 _Exit criterion:_ a per-source number for each headline metric, chartable in an external tool (§4). Pillars 3–4 are
 then judged by whether those numbers move.
@@ -249,7 +250,7 @@ normalizers**, handling only the long tail they cannot. That tail is title → a
 genre and missing-field enrichment, and bad-value correction for artist and promoter names.
 
 - Deterministic rules stay the fast, free, first pass. The model is the fallback, not the front door.
-- Human-in-the-loop. A steward confirms or corrects model output, through the API now and a frontend later (§7). A
+- Human-in-the-loop. A steward confirms or rejects model output on the _Suggested fixes_ page of `events-admin`. A
   confirmed correction that applies to a pattern goes into the curated vocabulary by pull request. A correction for
   one row is a hand edit that pins its field ([ADR-042](adr/ADR-042_CURATED_VOCABULARIES_STAY_IN_CODE.md)).
 - **[ADR-041](adr/ADR-041_AI_ASSISTED_DATA_QUALITY.md) decides the model.** Every step calls the hosted Claude model
@@ -276,16 +277,23 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     reads only upcoming events. [#2996](https://github.com/enorm-labs/event-junkie/issues/2996) adds the nightly run,
     and [#2997](https://github.com/enorm-labs/event-junkie/issues/2997) measures the false-positive rate per field.
 
+- **The review** ([#346](https://github.com/enorm-labs/event-junkie/issues/346)) is the _Suggested fixes_ page of
+  `events-admin`. It lists the open suggestions with the stored value, the proposed value and the evidence. Accept
+  writes the proposed value with `PUT /api/admin/events/{id}`, which pins the field. Then it calls
+  `POST /api/admin/data-quality/suggestions/{id}/accept`. That route sets the status to `ACCEPTED` and writes no event
+  field. Reject calls `POST /api/admin/data-quality/suggestions/{id}/dismiss`. An accepted `artists` value uses the
+  artist of each name, and creates the artist when none has that name. A `features` value has no admin route yet,
+  so its Accept is off until [#3066](https://github.com/enorm-labs/event-junkie/issues/3066).
+
 ## 6. Decisions
 
 The decisions that shape the pillars, and where each is recorded.
 
 - **Curated-vocabulary storage — decided: code.** The vocabularies stay in Kotlin, and a hand edit pins its field on
   that row ([ADR-042](adr/ADR-042_CURATED_VOCABULARIES_STAY_IN_CODE.md)).
-- **Fix / curation surface — API-only for now.** Ship the DQ report and worklist endpoints. A steward fixes through
-  the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files. A dedicated review frontend is deferred to
-  the backlogged _"Admin frontend to review, enrich & fix event data"_ item. The DQ work provides the _signal_, and
-  that frontend will provide the _fix surface_. Avoid building a second admin app.
+- **Fix / curation surface — `events-admin`.** The DQ work provides the _signal_: the report, the worklist and the
+  suggestions. `events-admin` is the _fix surface_ ([ADR-045](adr/ADR-045_ADMIN_FRONTEND_IS_A_LOCAL_APP.md)). It
+  writes through the admin API, so Swagger and the `.http` files still work. Do not build a second admin app.
 - **Dashboard — an existing tool, not a bespoke UI** (§4). The _Data quality_ tab of the OpenObserve dashboard
   charts the metrics. The `data_quality_snapshot` table keeps them for SQL.
 

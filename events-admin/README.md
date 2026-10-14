@@ -45,3 +45,10 @@ Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/
 in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.
 "Check now" starts one pass of the site check in the background.
+
+Suggested fixes (`src/views/SuggestionsView.vue`) lists the open rows of `GET /api/admin/data-quality/suggestions`, newest first, 20 per page. Each card shows
+the event, the field, the stored and the proposed value, the evidence, the confidence, the check and the model. Accept reads the event and PUTs it back with
+the proposed value in its field (`src/api/suggestions.ts`). The answer must list the field in `pinnedFields` (`lineup` for `artists`). Only then does Accept
+call `POST …/suggestions/{id}/accept`. Without the pin, the suggestion stays open and the card shows why. For `artists`, Accept keeps each act the event bills
+and looks up every other name. It creates an artist when no artist has that name. Reject calls `POST …/suggestions/{id}/dismiss`. A `features` suggestion has
+Accept off until #3066 adds its route.

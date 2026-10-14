@@ -172,7 +172,8 @@ function problemText(body: ProblemDetail): string | null {
   return `${detail ?? 'Validation failed'} (${fields.join('; ')})`
 }
 
-async function failOnError(response: Response, what: string): Promise<Response> {
+/** [response] when it is a success. Else an error naming [what], the status and the Problem Detail. */
+export async function failOnError(response: Response, what: string): Promise<Response> {
   if (response.ok) return response
   // The importer answers a refused request with an RFC 9457 Problem Detail.
   const detail = await response

@@ -4,6 +4,7 @@ import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.DuplicateArtistSlugException
 import de.norm.events.dataquality.EventClassificationDisabledException
 import de.norm.events.dataquality.EventSuggestionAlreadyAcceptedException
+import de.norm.events.dataquality.EventSuggestionAlreadyDismissedException
 import de.norm.events.dataquality.EventSuggestionNotFoundException
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.UnknownPinnedFieldException
@@ -60,7 +61,7 @@ class GlobalExceptionHandler {
      * a more descriptive error message than the generic DB constraint handler above,
      * identifying the entity type, conflicting slug, and the name that produced it.
      *
-     * A dismissal of an accepted suggestion is a 409 for the same reason, and shares the handler:
+     * A dismissal of an accepted suggestion, or the reverse, is a 409 for the same reason, and shares the handler:
      * the request conflicts with what is stored, and its message says what. So does a check route
      * called while its check is switched off.
      */
@@ -69,6 +70,7 @@ class GlobalExceptionHandler {
         DuplicateVenueSlugException::class,
         DuplicatePromoterSlugException::class,
         EventSuggestionAlreadyAcceptedException::class,
+        EventSuggestionAlreadyDismissedException::class,
         EventClassificationDisabledException::class
     )
     fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {

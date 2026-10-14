@@ -60,9 +60,38 @@
   },
   {
     "method": "PUT",
+    "path": "events/1555",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "pinnedFields": ["startTime", "pricePresale"]
+    }
+  },
+  {
+    "method": "PUT",
     "path": "events/{id}",
     "status": 200,
     "body": "$merge"
+  },
+  {
+    "method": "POST",
+    "path": "data-quality/suggestions/{id}/accept",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "id": "{id}",
+      "status": "ACCEPTED"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "data-quality/suggestions/{id}/dismiss",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "id": "{id}",
+      "status": "DISMISSED"
+    }
   },
   {
     "method": "DELETE",
