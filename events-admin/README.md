@@ -51,6 +51,11 @@ in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. 
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.
 "Check now" starts one pass of the site check in the background.
 
+Venues (`src/views/VenuesView.vue`) lists every venue by name, with a name filter in the browser. Closed venues (`closedOn` set) come last, greyed. Tags opens
+a venue's character tags (#2379) in the order of `VenueCharacterTag`, each with the source URL the importer stores (`src/components/VenueCharacterTags.vue`).
+Save PUTs `{ sourceUrl }` to `/api/admin/venues/{id}/character-tags/{tag}`, for a new tag and for a changed URL. The app takes only an `https://` URL and
+sends nothing for another. Clear asks for a confirmation, then DELETEs the tag. The page edits no other venue field.
+
 Artists to review (`src/views/ArtistsView.vue`) lists the artists whose MusicBrainz match is `AMBIGUOUS` and who play in the next 14 days, by name, 20 per
 page. Review opens a row: the events that bill the artist from today on, with the venue and the other acts (`GET /api/admin/events?artistId=`), and the
 MusicBrainz candidates the importer finds for the name. No candidate is chosen at first. Choose, then Confirm, PUTs the candidate's MBID to

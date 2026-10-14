@@ -41,6 +41,12 @@ const router = createRouter({
       meta: { title: 'Venues to review' },
     },
     {
+      path: '/venues',
+      name: 'venues',
+      component: () => import('@/views/VenuesView.vue'),
+      meta: { title: 'Venues' },
+    },
+    {
       path: '/events/new',
       name: 'new-event',
       component: () => import('@/views/NewEventView.vue'),

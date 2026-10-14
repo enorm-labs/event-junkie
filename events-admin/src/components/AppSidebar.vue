@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  Building2,
   CalendarPlus,
   CalendarSearch,
   Database,
@@ -31,12 +32,14 @@ const NAV = [
   { title: 'Suggested fixes', to: '/suggestions', icon: Sparkles },
   { title: 'Artists to review', to: '/artists', icon: MicVocal },
   { title: 'Venues to review', to: '/venues/review', icon: GlobeX },
+  { title: 'Venues', to: '/venues', icon: Building2 },
   { title: 'New event', to: '/events/new', icon: CalendarPlus },
 ]
 
 const route = useRoute()
 
-// The longest entry the path lies under, so /events/new marks "New event" and not "Events".
+// The longest entry the path lies under, so /events/new marks "New event" and /venues/review
+// "Venues to review".
 const active = computed(
   () =>
     NAV.map((item) => item.to)
