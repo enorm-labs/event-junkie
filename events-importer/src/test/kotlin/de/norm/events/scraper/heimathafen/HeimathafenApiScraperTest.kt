@@ -110,6 +110,29 @@ class HeimathafenApiScraperTest {
         events.single().artists.shouldBeEmpty()
     }
 
+    // The `tacheles` strand mixes talks with community meetings; only a talk tag makes a reading (#2992).
+    @Test
+    fun `types a talk in the tacheles strand as a reading by its tag`() {
+        fun typeOf(
+            title: String,
+            classes: String
+        ): String? =
+            scraper
+                .scrape(
+                    """
+                    [{"id":97,"link":"https://heimathafen-neukoelln.de/events/z/","title":{"rendered":"$title"},
+                      "excerpt":{"rendered":""},"content":{"rendered":""},"class_list":[$classes],
+                      "featured_images":{},"acf":{"event_performances":[{"performance_date_time":"11/03/2026 8:00 p.m."}]}}]
+                    """.trimIndent()
+                ).events
+                .single()
+                .eventType
+
+        typeOf("POLITIK MIT ANNE WILL", "\"events_cat-tacheles\",\"events_tag-live-podcast\"") shouldBe "READING"
+        typeOf("CAN DÜNDAR", "\"events_cat-tacheles\",\"events_tag-lesung\"") shouldBe "READING"
+        typeOf("NEUKÖLLNER KIEZVERSAMMLUNG", "\"events_cat-tacheles\",\"events_tag-kiezversammlung\"") shouldBe "OTHER"
+    }
+
     // A crowd sing-along whose first category is `musik`; the karaoke tag makes it a party, which bills no act (#2788).
     @Test
     fun `types a karaoke post as a party and bills no act whatever its category`() {

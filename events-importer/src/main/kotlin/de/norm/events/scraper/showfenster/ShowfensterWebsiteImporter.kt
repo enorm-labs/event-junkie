@@ -32,7 +32,7 @@ val SHOWFENSTER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives a start and an end time, no doors time"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "only a concert or comedy title names its act; a reading bills a duo by surnames, and shows and quizzes name none"
+            "only a concert or comedy title names its act; a reading bills a duo by surnames, and shows, quizzes and the open stage name none"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "only a concert's category names a style; comedy, readings and shows carry none"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")

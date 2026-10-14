@@ -20,6 +20,7 @@ import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
+import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.DESCRIPTION_CUES
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -76,8 +77,9 @@ import java.time.LocalTime
  * corrects that at the persistence boundary.
  *
  * Typing: [VENUE_FORMAT_KEYWORDS] for the formats the house names in its own words, then
- * [inferUnmarkedTitleType] over title and subtitle, else `OTHER` — never `CONCERT`, which would
- * also mint the event's name as a headliner. For the same reason [buildArtistList] takes an act
+ * [inferUnmarkedTitleType] over title and subtitle. A support billing then makes a concert, and
+ * last the blurb's own words decide ([DESCRIPTION_CUES], #2992). Else `OTHER` — never a default
+ * `CONCERT`, which would also mint the event's name as a headliner. For the same reason [buildArtistList] takes an act
  * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. Seating
  * badges ("Bestuhlt", "Freie Platzwahl") are dropped on purpose: seating is not part of the event model.
  *
@@ -211,6 +213,7 @@ class PeterEdelOverviewPageScraper {
         }
 
         val subtitle = subtitleOf(main)
+        val support = extractSupportFromSubtitle(subtitle)
         if (billsChildrensShow(title, subtitle)) {
             logger.info { "Skipping Peter Edel children's show '$title': out of scope" }
             return null
@@ -218,11 +221,12 @@ class PeterEdelOverviewPageScraper {
         val info = infoParagraph(main)?.text().orEmpty()
         val (doors, start) = parseTimes(info)
         val note = priceNote(ticketColumn)
+        val description = main.textAt(".text-block .text-container")
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = main.textAt(".text-block .text-container"),
-            eventType = inferVenueFormatType(title, subtitle, VENUE_FORMAT_KEYWORDS),
+            description = description,
+            eventType = typeOf(title, subtitle, hasSupport = support.isNotEmpty(), description = description),
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
@@ -248,7 +252,7 @@ class PeterEdelOverviewPageScraper {
                         ?.trim()
                         ?.takeIf { it.isNotBlank() }
                 ),
-            artists = buildArtistList(title, extractSupportFromSubtitle(subtitle))
+            artists = buildArtistList(title, support)
         )
     }
 
@@ -362,8 +366,10 @@ class PeterEdelOverviewPageScraper {
 
         /**
          * Formats this house names in its own words that the shared classifier misses: a talk show
-         * is a staged show, silent-film nights are screenings, tea dance and
-         * after-work night are parties. Checked before [inferUnmarkedTitleType], lowercase, first match wins.
+         * is a staged show, silent-film nights are screenings, tea dance and after-work night are
+         * parties. A talk (`Klubgespräch`) is a reading, and a sing-along (`Rudelsingen`) or a piano
+         * recital is a concert. New jokes (`Rohe neue Scherze`) are comedy. Checked before
+         * [inferUnmarkedTitleType], lowercase, first match wins.
          */
         private val VENUE_FORMAT_KEYWORDS: Map<String, String> =
             linkedMapOf(
@@ -371,7 +377,35 @@ class PeterEdelOverviewPageScraper {
                 "stummfilm" to EventType.SCREENING.name,
                 "tanztee" to EventType.PARTY.name,
                 "tanzcafé" to EventType.PARTY.name,
-                "after work" to EventType.PARTY.name
+                "after work" to EventType.PARTY.name,
+                "gespräch" to EventType.READING.name,
+                "singen" to EventType.CONCERT.name,
+                "klavier" to EventType.CONCERT.name,
+                "scherze" to EventType.COMEDY.name
             )
+
+        /**
+         * The blurb's words for a night the title leaves untyped, first match wins: jokes, then a
+         * book, then a dancefloor, then albums or a concert.
+         */
+        private val DESCRIPTION_CUES: Map<Regex, String> =
+            linkedMapOf(
+                Regex("""witze|comedy|kabarett|stand-?up""", RegexOption.IGNORE_CASE) to EventType.COMEDY.name,
+                Regex("""lesung|(?<!\p{L})buch(?:es|s)?(?!\p{L})""", RegexOption.IGNORE_CASE) to EventType.READING.name,
+                Regex("""party|dancefloor|tanzfläche""", RegexOption.IGNORE_CASE) to EventType.PARTY.name,
+                Regex("""album|alben|konzert""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
+            )
+
+        /** The type from the title and subtitle, else a support billing, else the blurb; `OTHER` without any. */
+        fun typeOf(
+            title: String,
+            subtitle: String?,
+            hasSupport: Boolean,
+            description: String?
+        ): String =
+            inferVenueFormatType(title, subtitle, VENUE_FORMAT_KEYWORDS).takeUnless { it == EventType.OTHER.name }
+                ?: EventType.CONCERT.name.takeIf { hasSupport }
+                ?: description?.let { text -> DESCRIPTION_CUES.entries.firstOrNull { (cue, _) -> cue.containsMatchIn(text) }?.value }
+                ?: EventType.OTHER.name
     }
 }

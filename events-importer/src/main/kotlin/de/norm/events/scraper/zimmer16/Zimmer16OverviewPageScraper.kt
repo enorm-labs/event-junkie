@@ -68,7 +68,7 @@ class Zimmer16OverviewPageScraper {
             sourceUrl = url,
             ticketUrl = url,
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
-            artists = if (TAGLINE.containsMatchIn(title)) emptyList() else artistsOf(title, subtitle, eventType)
+            artists = if (TAGLINE.containsMatchIn(title) || OPEN_STAGE in title.lowercase()) emptyList() else artistsOf(title, subtitle, eventType)
         )
     }
 
@@ -100,12 +100,15 @@ class Zimmer16OverviewPageScraper {
         val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
         val BACKGROUND_URL = Regex("""background-image:\s*url\('?([^')]+)'?\)""")
 
+        /** The open stage: live music with no billed act, so a concert that names nobody (#2992). */
+        const val OPEN_STAGE = "offene bühne"
+
         /** The house's own words for its formats beside concerts. */
         val HOUSE_FORMATS =
             linkedMapOf(
                 "lesebühne" to EventType.READING.name,
                 "revue" to EventType.SHOW.name,
-                "offene bühne" to EventType.OTHER.name
+                OPEN_STAGE to EventType.CONCERT.name
             )
     }
 }

@@ -84,6 +84,8 @@ class PandaPlatformaApiScraperTest {
     fun `falls back on the title for an event filed under no series`() {
         val reading = event("28-staged-reading")
 
+        // "“28”: staged reading" names its format in English.
+        reading.eventType shouldBe "READING"
         reading.typeIsFallback shouldBe true
         reading.ticketUrl shouldBe "https://www.eventbrite.com/e/28-staged-reading-tickets-2002750668161"
         reading.pricePresale.shouldBeNull()

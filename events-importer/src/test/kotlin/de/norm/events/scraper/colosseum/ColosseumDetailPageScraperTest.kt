@@ -1,5 +1,6 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.EventType
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -81,6 +82,16 @@ class ColosseumDetailPageScraperTest {
 
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    @Test
+    fun `types the night from the event's own text`() {
+        // Ali Siddiq's page calls him a storyteller of stand-up comedy.
+        scrape("colosseum-detail-siddiq.html").shouldNotBeNull().eventType shouldBe EventType.COMEDY.name
+        // Peter Sandberg is a composer and pianist.
+        scrape("colosseum-detail-sandberg.html").shouldNotBeNull().eventType shouldBe EventType.CONCERT.name
+        // A talk with a DJ names neither.
+        scrape("colosseum-detail-gysi.html").shouldNotBeNull().eventType.shouldBeNull()
     }
 
     @Test

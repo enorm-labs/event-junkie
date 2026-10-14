@@ -70,7 +70,8 @@ class GaertenDerWeltOverviewPageScraperTest {
     fun `infers a type from the title when the park files a row under no category`() {
         val gamesNight = scraper.scrape(fixture("gaertenderwelt-overview.html"), LISTING_URL).single()
 
-        gamesNight.eventType shouldBe EventType.OTHER.name
+        // "Spieleabend": a games night is a quiz.
+        gamesNight.eventType shouldBe EventType.QUIZ.name
         gamesNight.eventDate shouldBe LocalDate.of(2026, 8, 14)
         gamesNight.startTime shouldBe LocalTime.of(17, 30)
         // "17.30 – 21 Uhr": the stamp gives the start, the cell the end (#2970).

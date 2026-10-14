@@ -62,7 +62,7 @@ class Zimmer16ScrapersTest {
         billed["Soundtrack to Sunset, Landmusik"] shouldBe
             (EventType.CONCERT.name to listOf("Soundtrack to Sunset" to "HEADLINER", "Landmusik" to "HEADLINER"))
         billed["Frühling im Späti mit Jens Ohrenblicker"] shouldBe (EventType.CONCERT.name to listOf("Jens Ohrenblicker" to "HEADLINER"))
-        billed["Offene Bühne"] shouldBe (EventType.OTHER.name to emptyList())
+        billed["Offene Bühne"] shouldBe (EventType.CONCERT.name to emptyList())
         billed["Die offene Liederbühne – Singer-Songwriter-Forum"] shouldBe (EventType.CONCERT.name to emptyList())
         billed.getValue("Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht").second.shouldBeEmpty()
         billed.getValue("Lea Willms and MUD/O").second.map { it.first } shouldBe listOf("Lea Willms", "MUD/O")

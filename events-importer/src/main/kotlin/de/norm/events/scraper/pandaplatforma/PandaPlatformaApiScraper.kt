@@ -67,7 +67,7 @@ class PandaPlatformaApiScraper {
         return ScrapedEvent(
             title = title,
             description = event.tecDescription(),
-            eventType = eventType ?: inferUnmarkedTitleType(title),
+            eventType = eventType ?: titleType(title),
             typeIsFallback = eventType == null,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
@@ -97,6 +97,9 @@ class PandaPlatformaApiScraper {
             categories.any { it in MUSIC_CATEGORIES } -> EventType.CONCERT.name
             else -> null
         }
+
+    /** The type an uncategorised title names: a `staged reading` in English, else the shared title cues (#2992). */
+    private fun titleType(title: String): String = if (READING_TITLE.containsMatchIn(title)) EventType.READING.name else inferUnmarkedTitleType(title)
 
     /** The credited players, or the title's acts when no line credits one. */
     private fun concertActs(
@@ -159,6 +162,9 @@ class PandaPlatformaApiScraper {
         val PERSON_NAME_WORDS = 2..4
 
         val TEXT_CATEGORIES = setOf("pandatext", "pandapoetry")
+
+        /** The house titles in English as often as in German: `“28”: staged reading`. */
+        val READING_TITLE = Regex("""\breading\b""", RegexOption.IGNORE_CASE)
         val MUSIC_CATEGORIES = setOf("pandamusic", "pandajazz", "pandaexperimental", "pandaglobal")
         val STYLE_BY_CATEGORY = mapOf("pandajazz" to "Jazz", "pandaexperimental" to "Experimental", "pandaglobal" to "World")
     }

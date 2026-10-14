@@ -11,6 +11,8 @@ import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -119,8 +121,8 @@ class PeterEdelOverviewPageScraperTest {
         polica.free shouldBe false
         polica.promoters shouldContainExactly listOf("Loft Concerts")
         polica.description!! shouldContain "die beste Band aller Zeiten"
-        // The venue states no category and its programme is mixed, so nothing types this as a concert.
-        polica.eventType shouldBe "OTHER"
+        // The venue states no category, but a support billing makes the night a concert.
+        polica.eventType shouldBe "CONCERT"
         polica.artists shouldContainExactly
             listOf(
                 ScrapedArtist("Poliça", "HEADLINER", titleDerived = true),
@@ -320,6 +322,34 @@ class PeterEdelOverviewPageScraperTest {
         parsed[0].promoters.shouldBeEmpty()
         parsed[0].artists.shouldBeEmpty()
         parsed[0].eventType shouldBe "OTHER"
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        quoteCharacter = '"',
+        value = [
+            "FIL'S TESTSHOWS | Rohe neue Scherze und unfertige Songs | probiert Fil neue Witze und Lieder aus. | COMEDY",
+            "DEFA-Filmküche - Klubgespräch im PETER EDEL | Paul Werner Wagner im Gespräch mit Knut Elstermann | Der Moderator. | READING",
+            "Rudelsingen - Das Original aus Münster | | Wir singen gemeinsam die größten Hits. | CONCERT",
+            "Klavierfest Berlin-Weißensee 2027 - Liederabend | Zwischen Wort und Klang | Lieder nach einem Buch. | CONCERT",
+            "Miriam Davoudvandi | Das können wir uns nicht leisten - Tour 2026 | Mit ihrem Buch bringt sie ihre Geschichte auf die Bühne. | READING",
+            "VAMPIRES BALL | Nina Queers Halloween | Aus ihrer legendären Halloween-Party wird ein Ball. | PARTY",
+            "Sip & Smash X Sublime | | Das PETER EDEL wird zum sportlichsten Dancefloor der Stadt. | PARTY",
+            "Veljanov - Shanderilan Tour | | Mit seinen drei Studioalben zeigt der Frontmann seine Stimme. | CONCERT",
+            "Neu-Zeit: Dr. Neu trifft Michael Müller | Berlin hat gewählt - wohin geht die Stadt? | Leider abgesagt. | OTHER"
+        ]
+    )
+    fun `types a night from the house's own words in the title, the subtitle or the blurb`(
+        title: String,
+        subtitle: String?,
+        blurb: String,
+        type: String
+    ) {
+        val main =
+            "<h3>$title</h3>${subtitle?.let { "<p>$it</p>" }.orEmpty()}" +
+                "<div class=\"text-block\"><div class=\"text-container\"><p>$blurb</p></div></div>"
+        scraper.scrape(grid("OKTOBER 2026", "FR | 16.10.", main), baseUrl).single().eventType shouldBe type
     }
 
     @Test

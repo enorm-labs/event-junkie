@@ -282,7 +282,9 @@ class HeimathafenApiScraper(
      * Maps the venue's `events_cat-*` taxonomy slug — inlined on every post by `class_list`, so no
      * second request — onto an [EventType], falling back to the title without a category. A
      * [party tag][PARTY_TAGS] wins over the category: the first category of a karaoke night is
-     * `musik`, which would make it a concert billing its own title (#2788).
+     * `musik`, which would make it a concert billing its own title (#2788). A [talk tag][TALK_TAGS]
+     * makes a reading of a night the category leaves `OTHER`: a live podcast, a debate or a
+     * `Live-Erzählung` in the `tacheles` strand (#2992).
      */
     private fun resolveEventType(
         classes: List<String>,
@@ -290,7 +292,9 @@ class HeimathafenApiScraper(
     ): String {
         if (PARTY_TAGS.any { "$TAG_CLASS_PREFIX$it" in classes }) return EventType.PARTY.name
         val category = classes.firstOrNull { it.startsWith(CATEGORY_CLASS_PREFIX) }?.removePrefix(CATEGORY_CLASS_PREFIX)
-        return mapEventType(category, CATEGORY_TYPES) ?: mapEventType(title) ?: EventType.OTHER.name
+        val type = mapEventType(category, CATEGORY_TYPES) ?: mapEventType(title) ?: EventType.OTHER.name
+        val talk = TALK_TAGS.any { "$TAG_CLASS_PREFIX$it" in classes }
+        return if (type == EventType.OTHER.name && talk) EventType.READING.name else type
     }
 
     /** Flattens an HTML fragment to plain text, or `null` when it holds none. */
@@ -338,6 +342,9 @@ class HeimathafenApiScraper(
         /** Tag slugs that make a post a party whatever its category: a sing-along has no act to bill. */
         val PARTY_TAGS = setOf("karaoke")
 
+        /** Tags that name a talk, which EVENT_SCOPE.md §2 files as a reading. */
+        val TALK_TAGS = setOf("lesung", "live-podcast", "gespraech", "debatte", "podiumsdiskussion")
+
         /** `class_list` prefix carrying the venue's own category slug (`events_cat-musik`). */
         const val CATEGORY_CLASS_PREFIX = "events_cat-"
 
@@ -345,7 +352,7 @@ class HeimathafenApiScraper(
          * The venue's category vocabulary. `musik` is its concert programme; `theater`, `amusemang`
          * (its comedy/variety strand) and the three production labels are staged shows; `literatur` is
          * readings. `tacheles` (talks and panels), `jugendclub` and `kiezklub` (community formats) have
-         * no closer type than `OTHER`.
+         * no closer type than `OTHER`, unless a [talk tag][TALK_TAGS] names a reading.
          */
         val CATEGORY_TYPES: Map<String, String> =
             mapOf(

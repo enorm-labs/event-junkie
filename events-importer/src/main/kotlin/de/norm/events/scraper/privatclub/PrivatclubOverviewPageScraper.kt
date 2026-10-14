@@ -1,5 +1,6 @@
 package de.norm.events.scraper.privatclub
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
@@ -130,7 +131,7 @@ class PrivatclubOverviewPageScraper(
 
         // The dedicated row, not the desktop genre line
         val eventTypeText = header.textAt(".event_typ")
-        val eventType = mapEventType(eventTypeText)
+        val eventType = mapEventType(eventTypeText, VENUE_EVENT_TYPES)
 
         // Desktop "typ" div shows the genre; mobile shows the type
         val genre = header.textAt(".typ.typdesktop")
@@ -153,7 +154,7 @@ class PrivatclubOverviewPageScraper(
 
         // Concerts: title is the headliner, support from the subtitle's "Support: <name>";
         // parties and festivals extract none. See buildArtistsForEventType.
-        val artists = buildArtistsForEventType(title, subtitle, eventType)
+        val artists = if (eventTypeText.equals(SONG_SLAM, ignoreCase = true)) emptyList() else buildArtistsForEventType(title, subtitle, eventType)
 
         return ScrapedEvent(
             title = title,
@@ -389,6 +390,11 @@ class PrivatclubOverviewPageScraper(
     )
 
     companion object {
+        /** The song slam, a singer-songwriter contest: a concert whose title names no act (#2992). */
+        private const val SONG_SLAM = "Songslam"
+
+        private val VENUE_EVENT_TYPES = mapOf(SONG_SLAM.lowercase() to EventType.CONCERT.name)
+
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
 

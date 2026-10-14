@@ -128,6 +128,31 @@ class PrivatclubOverviewPageScraperTest {
     }
 
     @Nested
+    inner class SongSlamParsing {
+        /** The card as the venue publishes it, trimmed to the fields the scraper reads. */
+        private val songSlamHtml =
+            """
+            <div class="event_wrapper skewed">
+                <a href="https://privatclub-berlin.de/event/songslam-kreuzberg-2/" class="event_header">
+                    <div class="typ typdesktop">Singer-Songwriter</div>
+                    <span class="datum_part1">Fr. 6.</span> <span class="datum_part2">November</span>
+                    <div class="zeile_typ"><div class="event_typ">Songslam</div></div>
+                    <span class="titel">Songslam Kreuzberg</span>
+                    <span class="untertitel">Der Singer-/ Songwriter*innen-Wettstreit zwischen Schlesi und Görli</span>
+                </a>
+            </div>
+            """.trimIndent()
+
+        @Test
+        fun `types the song slam as a concert that names no act`() {
+            val event = scraper.scrape(Jsoup.parse(songSlamHtml, baseUrl), baseUrl).single()
+
+            event.eventType shouldBe "CONCERT"
+            event.artists.shouldBeEmpty()
+        }
+    }
+
+    @Nested
     inner class StatusHandling {
         @Test
         fun `detects sold out status`() {

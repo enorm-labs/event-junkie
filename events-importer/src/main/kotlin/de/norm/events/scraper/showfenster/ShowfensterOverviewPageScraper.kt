@@ -137,6 +137,7 @@ private fun titleType(title: String): EventType =
     when {
         QUIZ_WORD.containsMatchIn(title) -> EventType.QUIZ
         SHOW_WORD.containsMatchIn(title) -> EventType.SHOW
+        OPEN_STAGE.containsMatchIn(title) -> EventType.CONCERT
         else -> EventType.OTHER
     }
 
@@ -151,7 +152,10 @@ private val CONCERT_GENRES = mapOf("jazz-blues" to "Jazz, Blues", "pop-rock" to 
 
 private val PERFORMER_LED = setOf(EventType.CONCERT, EventType.COMEDY)
 
-private val HOUSE_FORMAT = Regex("""show|quiz|theater""", RegexOption.IGNORE_CASE)
+private val HOUSE_FORMAT = Regex("""show|quiz|theater|offene\s+bühne""", RegexOption.IGNORE_CASE)
+
+/** The open stage: live music with no billed act, so a concert that names nobody (#2992). */
+private val OPEN_STAGE = Regex("""offene\s+bühne""", RegexOption.IGNORE_CASE)
 
 private val QUIZ_WORD = Regex("""quiz""", RegexOption.IGNORE_CASE)
 

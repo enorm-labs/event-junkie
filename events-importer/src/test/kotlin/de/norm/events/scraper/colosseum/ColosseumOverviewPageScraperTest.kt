@@ -165,9 +165,20 @@ class ColosseumOverviewPageScraperTest {
     }
 
     @Test
-    fun `leaves a talk as OTHER rather than defaulting to concert`() {
+    fun `types a talk as a reading rather than defaulting to concert`() {
         // This is a talks-and-readings house, so a category-less event is not assumed to be a gig.
-        event("colosseum:gysis-begegnungen-mit-philipp-hochmair").eventType shouldBe EventType.OTHER.name
+        event("colosseum:gysis-begegnungen-mit-philipp-hochmair").eventType shouldBe EventType.READING.name
+        typeOf("themondaytalks", "") shouldBe EventType.READING.name
+    }
+
+    @Test
+    fun `types a sing-along from its title, not from the strapline the house clones`() {
+        event("colosseum:das-betreute-singen-september").eventType shouldBe EventType.CONCERT.name
+        // The live 2026-10-14 listing gives the Reimanns' talk show the sing-along's strapline.
+        typeOf(
+            "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY",
+            "Ihr wünscht euch eure Lieblingshits, wir spielen sie auf Zuruf - und singen sie gemeinsam"
+        ) shouldBe EventType.OTHER.name
     }
 
     @Test

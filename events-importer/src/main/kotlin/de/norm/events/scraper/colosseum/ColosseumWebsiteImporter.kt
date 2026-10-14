@@ -1,5 +1,6 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -51,14 +52,15 @@ class ColosseumWebsiteImporter(
      * Keeps the listing's record whole and takes the two times from the event's own page.
      *
      * The listing is the richer source — prices, the sold-out flag, the poster, the ticket shop and
-     * the type are all read from it — and the detail page is fetched for nothing else. A page that
-     * states no clock leaves the listing's time where it was.
+     * the type are all read from it. A page that states no clock leaves the listing's time where it
+     * was. The page's own text types only a night the listing left `OTHER` (#2992).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
         fallback.withGapsFrom(primary).copy(
+            eventType = primary.eventType?.takeIf { fallback.eventType == EventType.OTHER.name } ?: fallback.eventType,
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
             startTime = primary.startTime ?: fallback.startTime,
             // The ticket's own price wins over the listing's checkout total; the note follows it.
@@ -70,7 +72,10 @@ class ColosseumWebsiteImporter(
 val COLOSSEUM_LIMITATIONS =
     VenueLimitations(
         EventSource.COLOSSEUM,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "`categories` is empty on every event, so the type is inferred from the title and subtitle"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "`categories` is empty on every event, so the type is inferred from the title, the subtitle and the event's own text"
+        ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
             "an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors"

@@ -102,12 +102,12 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
-        fun `types the venue's format nights as other, not concert`() {
+        fun `types the venue's format nights as concerts with no act`() {
             val events = scraper.scrape(programme(), baseUrl)
 
             // Monday open stage, Tuesday jam, Wednesday freie Bühne session.
             listOf(LocalDate.of(2026, 8, 3), LocalDate.of(2026, 8, 4), LocalDate.of(2026, 8, 5)).forEach { date ->
-                events.single { it.eventDate == date }.eventType shouldBe EventType.OTHER.name
+                events.single { it.eventDate == date }.eventType shouldBe EventType.CONCERT.name
             }
         }
 
@@ -232,7 +232,7 @@ class ArcanoaOverviewPageScraperTest {
                 event.startTime shouldBe LocalTime.of(19, 0)
                 event.endDate shouldBe event.eventDate
                 event.endTime shouldBe LocalTime.of(21, 0)
-                event.eventType shouldBe EventType.OTHER.name
+                event.eventType shouldBe EventType.CONCERT.name
                 event.artists.shouldHaveSize(0)
             }
             events.first().sourceId shouldBe "arcanoa:2026-10-06-songwriting-workshop-mit-dave-benjoya"
@@ -296,22 +296,22 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
-        fun `types the Monday open stage as other and mints no artist`() {
+        fun `types the Monday open stage as a concert and mints no artist`() {
             val events =
                 scraper.scrape(fragment("Mo 05.10.Live: ARCANOA- Open Stage - SingerSongwriter/Poets mit Moderation"), baseUrl)
 
             val event = events.single()
             event.title shouldBe "ARCANOA - Open Stage"
-            event.eventType shouldBe EventType.OTHER.name
+            event.eventType shouldBe EventType.CONCERT.name
             event.artists.shouldHaveSize(0)
         }
 
         @Test
-        fun `types a jam session as other`() {
+        fun `types a jam session as a concert with no act`() {
             val events = scraper.scrape(fragment("Di 06.10.Live: JamSession - offen für alle"), baseUrl)
 
             val event = events.single()
-            event.eventType shouldBe EventType.OTHER.name
+            event.eventType shouldBe EventType.CONCERT.name
             event.artists.shouldHaveSize(0)
         }
 

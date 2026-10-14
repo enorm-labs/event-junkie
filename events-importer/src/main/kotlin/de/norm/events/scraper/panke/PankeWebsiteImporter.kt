@@ -35,7 +35,7 @@ val PANKE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue expands each event's full text inline and publishes no page per event"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "no category is published and titles name a series; a format word or live show in the title, or a Resident Advisor lineup, types an event"
+            "no category is published and titles name a series; a format word in the title or the body, or a Resident Advisor lineup, types an event"
         ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,

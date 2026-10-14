@@ -47,7 +47,7 @@ val MAAYA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER"
+            "the programme carries a name, a date and a time and no category; the type comes from a title keyword or a late start, else OTHER"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every music night takes the house's Afrobeats, Latin"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),

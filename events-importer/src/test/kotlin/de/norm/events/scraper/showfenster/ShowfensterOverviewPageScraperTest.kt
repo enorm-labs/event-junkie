@@ -109,7 +109,8 @@ class ShowfensterOverviewPageScraperTest {
         assertSoftly {
             openStage.free shouldBe true
             openStage.ticketUrl shouldBe null
-            openStage.eventType shouldBe "OTHER"
+            openStage.eventType shouldBe "CONCERT"
+            openStage.artists.shouldBeEmpty()
             // "Frei nach dem Märchen …"
             on("2026-11-04", "Puppentheater Don Oswaldo").free shouldBe false
         }
