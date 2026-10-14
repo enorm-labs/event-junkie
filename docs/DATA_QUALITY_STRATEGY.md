@@ -255,6 +255,26 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
 - **[ADR-041](adr/ADR-041_AI_ASSISTED_DATA_QUALITY.md) decides the model.** Every step calls the hosted Claude model
   through Spring AI, Haiku by default. The model only suggests. An item cap per run and a monthly workspace limit
   bound the cost.
+- **The event-classification check** (`EventClassificationCheck`, [#3241](https://github.com/enorm-labs/event-junkie/issues/3241))
+  is the first check that writes suggestions. An event is a candidate when one of these is true:
+    - Its type is `OTHER`.
+    - It has a title-derived artist that `titleDerivedUnmatched` or `titleDerivedSingletons` lists.
+    - It has a description, and no start time or no price.
+    - It has an `UNCERTAIN_PARTY_FEATURE` flag.
+
+    MusicBrainz goes first (ADR-031). A part of a longer title that names an `EXACT` artist outside the lineup becomes
+    a suggestion with no model. A title of one part goes to the model, because "ELVIS" matches and is a production.
+    Then one model call per event returns the type, the acts in the title and a verdict on each uncertain cue. It also
+    returns a start time and prices from the text. Each answer quotes its evidence. The check drops an answer whose
+    quote is not in the event's text, whose value is outside the vocabulary or whose confidence is below 0.7. Each
+    field that differs from the stored value becomes one `event_suggestion` row with `check_name = event-classification`.
+    The fields are `eventType`, `artists`, `features`, `startTime`, `pricePresale` and `priceBoxOffice`. The check
+    never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
+    check skips an event whose text did not change since its last answer. `app.data-quality.classification.enabled`
+    switches it on. It is off by default. An operator starts it with `POST /api/admin/data-quality/check/event/{id}` or
+    `POST /api/admin/data-quality/check/source/{slug}`. `max-per-run` limits the model calls of one run. A source run
+    reads only upcoming events. [#2996](https://github.com/enorm-labs/event-junkie/issues/2996) adds the nightly run,
+    and [#2997](https://github.com/enorm-labs/event-junkie/issues/2997) measures the false-positive rate per field.
 
 ## 6. Decisions
 

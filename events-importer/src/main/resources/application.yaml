@@ -83,6 +83,16 @@ app:
     max-retries: 2
     # A source that grants translation and publishes 300 events spreads over several runs.
     max-per-run: 50
+  data-quality:
+    classification:
+      # The event-classification check (#3241, ADR-041): one model call per candidate event. It
+      # proposes fixes as `event_suggestion` rows and never writes an event. Off until an operator
+      # sets it: it sends titles and descriptions to Anthropic, billed per token.
+      enabled: ${APP_DATA_QUALITY_CLASSIFICATION_ENABLED:false}
+      # The translation key, so one Secret serves both callers of the one integration.
+      api-key: ${APP_TRANSLATION_API_KEY:}
+      model: ${APP_DATA_QUALITY_CLASSIFICATION_MODEL:claude-haiku-4-5}
+      max-per-run: ${APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN:50}
   musicbrainz:
     # On the artist lookup tick, every artist an import billed is looked up in MusicBrainz and the
     # verdict stored (ADR-031). Only the stage name is sent.

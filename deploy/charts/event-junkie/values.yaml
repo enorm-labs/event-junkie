@@ -167,6 +167,14 @@ importer:
     model: "claude-haiku-4-5"
     # Descriptions one source translates per pass. One that gains more in a night never catches up.
     maxPerRun: 50
+  # importer.eventClassification proposes fixes for unsure events with one model call each (#3241,
+  # ADR-041). Off by default: it sends titles and descriptions to Anthropic. The key is the
+  # translation Secret's, so `importer.translation.existingSecret` must exist when this is on.
+  eventClassification:
+    enabled: false
+    model: "claude-haiku-4-5"
+    # Model calls one admin-triggered run makes. The rest wait for the next run.
+    maxPerRun: 50
   # importer.discogs asks Discogs about every artist MusicBrainz marks NONE, and stores its id and an
   # empty link (#2026, ADR-035). Off by default: it sends a stage name to a third party.
   discogs:

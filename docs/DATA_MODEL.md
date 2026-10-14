@@ -571,6 +571,21 @@ as `UNCERTAIN_PARTY_FEATURE`, which the data-quality worklist lists. `flinta-onl
 FLINTA*", "Einlass nur für FLINTA*". The public API filters by
 `feature=` (every given feature must hold) and returns the slugs on the event detail.
 
+### event_classification_check (Side Table)
+
+The text of an event when the event-classification check last read it (#3241). One row per checked event.
+
+| Field          | Type          | Nullable | Description                                                             | Example            |
+| -------------- | ------------- | -------- | ----------------------------------------------------------------------- | ------------------ |
+| `event_id`     | `BIGINT` PK   | No       | References `event.id`. Deleting the event deletes the row               | `101`              |
+| `content_hash` | `TEXT`        | No       | Hex SHA-256 of the title, subtitle and description, joined by `chr(31)` | `9f86d0…`          |
+| `model`        | `TEXT`        | No       | The model that answered                                                 | `claude-haiku-4-5` |
+| `checked_at`   | `TIMESTAMPTZ` | No       | When the model answered                                                 |                    |
+
+The check sends an event to the model only when the hash differs from this row, so a dismissed suggestion stays
+dismissed. A failed call writes no row, and the event stays a candidate. The check writes its proposals to
+`event_suggestion` and never writes to `event` (ADR-041).
+
 ## Design Decisions
 
 ### Idempotent Imports via `source_id`

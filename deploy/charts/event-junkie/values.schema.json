@@ -234,6 +234,32 @@
           },
           "additionalProperties": false
         },
+        "eventClassification": {
+          "type": "object",
+          "description": "The event-classification data-quality check (#3241, ADR-041). Off by default. Reads the key from importer.translation.existingSecret.",
+          "required": [
+            "enabled",
+            "model",
+            "maxPerRun"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "false creates no check and sends nothing to Anthropic. The admin check routes then answer 409."
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxPerRun": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Model calls one run makes. It bounds the bill of one admin request."
+            }
+          },
+          "additionalProperties": false
+        },
         "discogs": {
           "type": "object",
           "description": "The Discogs lookup for artists MusicBrainz does not know (#2026, ADR-035). Off by default.",
