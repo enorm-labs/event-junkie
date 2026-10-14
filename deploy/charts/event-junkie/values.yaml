@@ -532,7 +532,7 @@ tests:
     # `digest:` key is invisible to that manager, so the bump would move the tag alone and the pod would
     # run the old image while this file said otherwise. The digest is the manifest LIST's, not one
     # architecture's. `values.schema.json` refuses a tag without a digest.
-    tag: "8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"
+    tag: "8.23.0@sha256:a134550be58ab783810e613ae96fd253c38f7bdd16d9bf9be350700c7a29ac06"
   # The second hook (#1697): `perf/smoke.js` from a k6 pod, every public endpoint once, through
   # the Ingress. Off by default and switched on per cluster, because the default `verifyTls` fails
   # against staging's Let's Encrypt staging certificate before staging's own values can say
