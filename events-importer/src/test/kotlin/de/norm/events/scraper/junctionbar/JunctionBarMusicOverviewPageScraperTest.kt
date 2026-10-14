@@ -146,4 +146,22 @@ class JunctionBarMusicOverviewPageScraperTest {
         friday.artists shouldContainExactly
             listOf(ScrapedArtist(name = "Yellow Snow", role = "HEADLINER"), ScrapedArtist(name = "sunflowerstarfish", role = "HEADLINER"))
     }
+
+    @Test
+    fun `keeps the heading when the photo alt has no colon and the bio does not spell the photo name`() {
+        val novemberUrl = "https://www.junction-bar.de/program/11_2026/11_26.html"
+        val november =
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-11_2026.html")!!
+                    .bufferedReader()
+                    .readText(),
+                novemberUrl
+            )
+        val night = scraper.scrape(november, novemberUrl).single { it.eventDate == LocalDate.of(2026, 11, 19) }
+
+        // The alt reads "Bandfoto Ray's Al-Aassad", a line break, then the poster description; the bio spells the heading (#3279).
+        night.title shouldBe "Ra'as ul-Assad"
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Ra'as ul-Assad", role = "HEADLINER"))
+    }
 }
