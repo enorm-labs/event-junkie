@@ -128,11 +128,12 @@ class FrannzOverviewPageScraper(
 
         val (pricePresale, priceBoxOffice) = parsePrices(article)
         val lines = descriptionLines(article)
+        val texts = lines.map { it.text }
 
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = parseDescription(lines),
+            description = parseDescription(texts),
             eventType = eventType,
             eventDate = eventDate,
             doorsTime = doorsTime,
@@ -218,30 +219,45 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * The ticket link: the venue's own shop first. A show sold through Eventim has no such anchor
-     * and names the seller in its "Tickets im VVK gibt es bei …" line (#1496) — the event's own
-     * Eventim page when the CMS linked it, else the seller's front page when the line only spells
-     * the host. Less than a per-event link, but the venue's own pointer rather than nothing.
+     * The ticket link. First the first `http(s)` anchor in a seller line, whatever the seller:
+     * Eventim, Greyzone, Loft, dice.fm, the Schöne Party's own shop and more (#3281). Then the
+     * venue's own shop, then an Eventim anchor anywhere in the body, which also catches a seller
+     * written on the line after the promo line. Last, a line that only spells `eventim.de` points
+     * to Eventim's front page (#1496). Another bare host stays `null`: its front page is not the
+     * event's page.
      */
     private fun parseTicketUrl(
         article: Element,
-        lines: List<String>
-    ): String? =
-        article.hrefAt(".entry-content-wrap a[href*=\"shop.copilot.events\"]")
+        lines: List<DescriptionLine>
+    ): String? {
+        val promoLines = lines.filter { TICKET_PROMO_LINE.containsMatchIn(it.text) }
+        return lines
+            .filter { TICKET_PROMO_LINE.containsMatchIn(it.text) || TICKET_LABEL_LINE.containsMatchIn(it.text) }
+            .firstNotNullOfOrNull { line -> line.hrefs.firstOrNull { HTTP_URL.containsMatchIn(it) } }
+            ?: article.hrefAt(".entry-content-wrap a[href*=\"shop.copilot.events\"]")
             ?: article.hrefAt(".entry-content-wrap a[href*=\"eventim\"]")
-            ?: lines.firstOrNull { TICKET_PROMO_LINE.containsMatchIn(it) && it.contains(EVENTIM_HOST, ignoreCase = true) }?.let { EVENTIM_URL }
+            ?: promoLines.firstOrNull { it.text.contains(EVENTIM_HOST, ignoreCase = true) }?.let { EVENTIM_URL }
+    }
+
+    /** One `<br>`-delimited body line: its cleaned text and the raw `href`s of its anchors. */
+    private data class DescriptionLine(
+        val text: String,
+        val hrefs: List<String>
+    )
 
     /**
      * The cleaned `<br>`-delimited lines of the hidden `.entry-content` body. The element mixes the
      * `.sidebar` (image + info/price facts) with the blurb as `<br>`-separated sibling text nodes;
      * the sidebar subtree is skipped, each line [cleaned][cleanDescriptionLine], blank or
-     * bullet-only residue dropped.
+     * bullet-only residue dropped. A line keeps its anchors, so [parseTicketUrl] reads the seller
+     * link of a seller line and of no other line.
      */
-    private fun descriptionLines(article: Element): List<String> {
+    private fun descriptionLines(article: Element): List<DescriptionLine> {
         val content = article.selectFirst(".entry-content-wrap > .content") ?: return emptyList()
 
-        val lines = mutableListOf<String>()
+        val lines = mutableListOf<DescriptionLine>()
         val current = StringBuilder()
+        val hrefs = mutableListOf<String>()
         for (node in content.childNodes()) {
             when {
                 // facts live in the sidebar, not the blurb
@@ -250,12 +266,14 @@ class FrannzOverviewPageScraper(
                 }
 
                 node is Element && node.tagName().equals("br", ignoreCase = true) -> {
-                    lines.add(current.toString())
+                    lines.add(DescriptionLine(current.toString(), hrefs.toList()))
                     current.clear()
+                    hrefs.clear()
                 }
 
                 node is Element -> {
                     current.append(node.text())
+                    node.select("a[href]").mapTo(hrefs) { it.attr("href").trim() }
                 }
 
                 node is TextNode -> {
@@ -263,11 +281,11 @@ class FrannzOverviewPageScraper(
                 }
             }
         }
-        lines.add(current.toString())
+        lines.add(DescriptionLine(current.toString(), hrefs.toList()))
 
         return lines
-            .map { cleanDescriptionLine(it) }
-            .filter { it.isNotBlank() && !BULLET_ONLY.matches(it) }
+            .map { it.copy(text = cleanDescriptionLine(it.text)) }
+            .filter { it.text.isNotBlank() && !BULLET_ONLY.matches(it.text) }
     }
 
     /**
@@ -352,11 +370,21 @@ class FrannzOverviewPageScraper(
         private val TICKET_PROMO_LINE =
             Regex("""^Tickets\s+(?:im\s+VVK|gibt\s+es)\b""", RegexOption.IGNORE_CASE)
 
+        /**
+         * A labelled seller line, `Tickets: <shop>` or `Tickets online: <shop>`, read for its anchor.
+         * It stays in the description: it often carries more, such as `(presale Starts on 15.04.)`.
+         * `Tickets vor Ort: Abendkasse 16 €` has another label and is not one.
+         */
+        private val TICKET_LABEL_LINE = Regex("""^Tickets(?:\s+online)?\s*:""", RegexOption.IGNORE_CASE)
+
         /** The seller a promo line names when the venue does not sell the show itself. */
         private const val EVENTIM_HOST = "eventim.de"
 
         /** Where a promo line that only spells [EVENTIM_HOST] points: the seller's front page. */
         private const val EVENTIM_URL = "https://www.eventim.de/"
+
+        /** An absolute web link. A bare `www.…` `href` would resolve against frannz.eu, so it does not count. */
+        private val HTTP_URL = Regex("""^https?://""", RegexOption.IGNORE_CASE)
 
         /** A leading Markdown heading marker. Without the space it is text: `#1 on the iTunes …`. */
         private val LEADING_HEADING = Regex("""^\s*#{1,6}\s+""")
