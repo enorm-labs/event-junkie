@@ -238,6 +238,15 @@ const { t } = useI18n()
         Veranstaltungsseite als solche gekennzeichnet, und der Originaltext bleibt maßgeblich.
       </p>
       <p>
+        <strong>Prüfung der Veranstaltungsdaten:</strong> Titel, Untertitel und Beschreibung einer
+        Veranstaltung werden maschinell geprüft, um Fehler beim Import zu finden. Ein Beispiel ist
+        eine falsche Veranstaltungsart oder ein Titel, der als Künstler*in gespeichert wurde. Das
+        Ergebnis ist nur ein Vorschlag. Ob er übernommen wird, entscheide ich. Dafür werden diese
+        Texte an denselben Dienstleister übermittelt wie für die Übersetzung (Abschnitt 5).
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse sind richtige
+        Angaben zu den Veranstaltungen.
+      </p>
+      <p>
         <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine
         Beschreibung, die dich nennt, entfernt oder korrigiert wird, schreib an
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a
@@ -258,12 +267,13 @@ const { t } = useI18n()
           stehen in Deutschland; eine Übermittlung außerhalb der EU findet dabei nicht statt.
         </li>
         <li>
-          <strong>Maschinelle Übersetzung:</strong> Anthropic PBC, San Francisco, USA. Dorthin wird
-          der Beschreibungstext einer Veranstaltung übermittelt, damit er übersetzt werden kann.
-          Nennt eine Beschreibung Künstler*innen, werden diese Namen mit übermittelt; die Namen des
-          Line-ups und der Location werden zusätzlich ausdrücklich mitgesendet, damit die
-          Übersetzung sie unverändert lässt. Andere Daten erreichen diesen Dienst nicht: weder
-          Logdaten noch irgendetwas über dich.
+          <strong>Maschinelle Übersetzung und Prüfung der Veranstaltungsdaten:</strong> Anthropic
+          PBC, San Francisco, USA. Dorthin wird der Beschreibungstext einer Veranstaltung
+          übermittelt, damit er übersetzt werden kann. Für die Prüfung (Abschnitt 4) gehen
+          zusätzlich Titel und Untertitel mit. Nennen diese Texte Künstler*innen, werden diese Namen
+          mit übermittelt; die Namen des Line-ups und der Location werden zusätzlich ausdrücklich
+          mitgesendet, damit die Übersetzung sie unverändert lässt. Andere Daten erreichen diesen
+          Dienst nicht: weder Logdaten noch irgendetwas über dich.
         </li>
       </ul>
       <p>
@@ -276,9 +286,9 @@ const { t } = useI18n()
       <p>
         Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
         Deine Anfrage erreicht die Server von Event Junkie in Deutschland direkt. An der
-        Auslieferung dieser Seite ist damit kein Drittland beteiligt. Die Übersetzung oben ist der
-        einzige Weg, auf dem Daten die EU verlassen, und sie betrifft Veranstaltungstexte, nicht
-        deinen Besuch.
+        Auslieferung dieser Seite ist damit kein Drittland beteiligt. Übersetzung und Prüfung oben
+        sind der einzige Weg, auf dem Daten die EU verlassen, und sie betreffen Veranstaltungstexte,
+        nicht deinen Besuch.
       </p>
       <p>
         <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von den Servern von Event Junkie,
