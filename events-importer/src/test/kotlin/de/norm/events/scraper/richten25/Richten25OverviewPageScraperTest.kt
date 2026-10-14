@@ -13,18 +13,19 @@ class Richten25OverviewPageScraperTest {
 
     @Test
     fun `reads the upcoming nights from the embed in the island props and skips the past ones`() {
-        events.size shouldBe 9
-        events.first().eventDate shouldBe LocalDate.of(2026, 10, 8)
-        events.last().eventDate shouldBe LocalDate.of(2026, 10, 23)
-        events.first().sourceId shouldBe "richten25:2026-10-08"
+        events.size shouldBe 8
+        events.first().eventDate shouldBe LocalDate.of(2026, 10, 15)
+        events.last().eventDate shouldBe LocalDate.of(2026, 10, 31)
+        events.first().sourceId shouldBe "richten25:2026-10-15"
         events.forEach { it.eventType shouldBe EventType.CONCERT.name }
-        events.first().title shouldBe "Mia Zabelka, Edith Steyer & Łukasz Marciniak // Zone Null & Réka Csiszér"
+        events.first().title shouldBe "EKO: Daniel Erdmann, Kalle Kalima & Mia Ohlmeier"
     }
 
     @Test
     fun `bills each musician of a set, and a band for a prefixed set`() {
-        events.first().artists.map { it.name } shouldBe listOf("Mia Zabelka", "Edith Steyer", "Łukasz Marciniak", "Zone Null", "Réka Csiszér")
-        events.first { it.eventDate == LocalDate.of(2026, 10, 12) }.artists.map { it.name } shouldBe listOf("Schrödinger or Boom Boom God", "SLAP")
+        events.first { it.eventDate == LocalDate.of(2026, 10, 20) }.artists.map { it.name } shouldBe
+            listOf("Chino Shuichi", "Asger Thomsen", "Devin Gray", "Mia Dyberg", "Rieko Okuda")
+        events.first().artists.map { it.name } shouldBe listOf("EKO")
         events.first { it.eventDate == LocalDate.of(2026, 10, 23) }.artists.map { it.name } shouldBe listOf("Jon Elbaz Sextet")
     }
 
@@ -38,6 +39,25 @@ class Richten25OverviewPageScraperTest {
         val night = Richten25OverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
         night.artists.map { it.name } shouldBe listOf("Otis Mensah", "Nour Sokhon", "Jumoke Adeyanju")
+    }
+
+    @Test
+    fun `bills the members of a night named before its colon, without its more-to-come tail`() {
+        val night = events.first { it.eventDate == LocalDate.of(2026, 10, 21) }
+
+        night.artists.map { it.name } shouldBe
+            listOf(
+                "Laura.aLL",
+                "Carla Boregas",
+                "Giuliana Corsi",
+                "Marina Cyrino",
+                "Stephanie Fernandes",
+                "Matthias Koole",
+                "Manuel Pessôa de Lima",
+                "Kaloan Meenochite",
+                "Sofia Salvo",
+                "M.Takara"
+            )
     }
 
     @Test

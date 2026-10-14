@@ -22,8 +22,10 @@ import java.util.Locale
  * `section.event-list` with an "Upcoming Events" heading and one `li` per night.
  *
  * Each night is `<strong>October 8, 2026: </strong>` and a lineup, its sets parted by `//`. A set reads either
- * `Name, Name & Name`, which bills each musician, or `Band: members`, which bills the band. A `… Series:` prefix names
- * the curated series, not an act, so its members are billed. A second embed lists past nights and is not read.
+ * `Name, Name & Name`, which bills each musician, or `Band: members`, which bills the band. A prefix with a word such as
+ * `Series`, `Evening` or `Benefit` names the night, not an act, so its members are billed: `Solidarity Evening in Support
+ * of …: Laura.aLL, Carla Boregas, … and more..` (#3280). The `and more..` tail announces nobody and is cut before the
+ * split, because a bare `more..` would read as the band More. A second embed lists past nights and is not read.
  * The page names no time, price or image.
  */
 class Richten25OverviewPageScraper {
@@ -94,8 +96,8 @@ class Richten25OverviewPageScraper {
             .flatMap { set ->
                 val prefixed = PREFIX.find(set)
                 when {
-                    prefixed == null -> set.split(MEMBER_SEPARATOR)
-                    SERIES.containsMatchIn(prefixed.groupValues[1]) -> prefixed.groupValues[2].split(MEMBER_SEPARATOR)
+                    prefixed == null -> set.replace(MORE_TAIL, "").split(MEMBER_SEPARATOR)
+                    NIGHT_NAME.containsMatchIn(prefixed.groupValues[1]) -> prefixed.groupValues[2].replace(MORE_TAIL, "").split(MEMBER_SEPARATOR)
                     else -> listOf(prefixed.groupValues[1])
                 }
             }.map { it.trim() }
@@ -110,7 +112,8 @@ class Richten25OverviewPageScraper {
         val NIGHT = Regex("""^([A-Z][a-z]+ \d{1,2}, \d{4}):\s*(.+)$""")
         val SET_SEPARATOR = Regex("""\s*//\s*""")
         val PREFIX = Regex("""^\s*([^:,&]+?):\s*(.+)$""")
-        val SERIES = Regex("""\bseries\b""", RegexOption.IGNORE_CASE)
+        val NIGHT_NAME = Regex("""\b(?:series|evening|night|benefit|solidarity|festival)\b""", RegexOption.IGNORE_CASE)
+        val MORE_TAIL = Regex("""\s+(?:and|&)\s+more\.*\s*$""", RegexOption.IGNORE_CASE)
         val MEMBER_SEPARATOR = Regex(""",\s*|\s+&\s+|\s+and\s+""")
     }
 }
