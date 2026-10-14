@@ -136,12 +136,14 @@ fun isScreeningTitle(title: String): Boolean {
 
 /**
  * Title keywords marking a reading ([EventType.READING]); `lesedüne` is a recurring Berlin
- * series. The shorter `slam` marker is [READING_TITLE_WORD_PATTERN].
+ * series. A talk whose guest visits its host reads too (`… - Robert Habeck zu Gast bei Maja Göpel`).
+ * The shorter `slam` marker is [READING_TITLE_WORD_PATTERN].
  */
 private val READING_TITLE_KEYWORDS =
     listOf(
         "lesung",
-        "lesedüne"
+        "lesedüne",
+        "zu gast bei"
     )
 
 /**
@@ -161,14 +163,10 @@ private val EXHIBITION_TITLE_KEYWORDS =
         "vernissage"
     )
 
-/**
- * Title keywords marking a non-musical format with no more specific type ([EventType.OTHER]):
- * markets, and a talk whose guest visits its host (`… - Robert Habeck zu Gast bei Maja Göpel`).
- */
+/** Title keywords marking a non-musical format with no more specific type ([EventType.OTHER]): markets. */
 private val NON_CONCERT_TITLE_KEYWORDS =
     listOf(
-        "markt",
-        "zu gast bei"
+        "markt"
     )
 
 /**

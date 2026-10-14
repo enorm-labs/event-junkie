@@ -1262,9 +1262,10 @@ class ArtistNameMappingTest {
     }
 
     @Test
-    fun `stripArtistSuffix strips a singt tribute framing and a release promo tag`() {
+    fun `stripArtistSuffix strips a singt or sings tribute framing and a release promo tag`() {
         stripArtistSuffix("Tex singt Leoanard Cohen") shouldBe "Tex"
         stripArtistSuffix("Max Raabe singt Weihnachtslieder") shouldBe "Max Raabe"
+        stripArtistSuffix("Thomas Anders sings MODERN TALKING") shouldBe "Thomas Anders"
         stripArtistSuffix("Hawt Coco Album Release") shouldBe "Hawt Coco"
         stripArtistSuffix("Some Band EP Release Show") shouldBe "Some Band"
         stripArtistSuffix("Some Band Release Party") shouldBe "Some Band"
