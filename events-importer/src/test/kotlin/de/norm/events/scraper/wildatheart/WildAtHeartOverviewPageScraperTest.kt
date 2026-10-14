@@ -86,6 +86,29 @@ class WildAtHeartOverviewPageScraperTest {
     }
 
     @Test
+    fun `lifts a Tickets unter link out of the banner, with or without a colon`() {
+        // The 14 October 2026 programme: Holy Mother says "Tickets unter: <url>", The Spitfires "Tickets unter <url>" (#3283).
+        val octoberClock = Clock.fixed(Instant.parse("2026-10-14T10:00:00Z"), ZoneOffset.UTC)
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/wildatheart/wildatheart-concerts-october.html")!!
+                .bufferedReader()
+                .readText()
+        val events = WildAtHeartOverviewPageScraper(octoberClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        val holyMother = events.first { it.title == "Holy Mother" }
+        holyMother.eventDate shouldBe LocalDate.of(2026, 11, 14)
+        holyMother.ticketUrl shouldBe "https://www.eventim.de/eventseries/holy-mother-the-holy-storm-tour-2026-4050037/"
+        // The banner was only the link, so nothing is left for a subtitle.
+        holyMother.subtitle.shouldBeNull()
+
+        val spitfires = events.first { it.title == "The Spitfires" }
+        spitfires.eventDate shouldBe LocalDate.of(2026, 12, 4)
+        spitfires.ticketUrl shouldBe "https://www.reservix.de/p/reservix/event/2571402"
+        spitfires.subtitle shouldBe "Rudeboys Production presents"
+    }
+
+    @Test
     fun `flags a Wild Wednesday free-entry night and starts it from the banner time`() {
         val event = scraper.scrape(programme(), baseUrl).first { it.title == "La Retraite de la Peur" }
 
