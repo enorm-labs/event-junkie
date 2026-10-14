@@ -6,8 +6,9 @@
 // Usage: node scripts/admin-fixture-server.mjs <dist dir> <fixtures dir> <port>
 //
 // GET  /api/admin/<path>   <fixtures>/<path>.json. Else the item of <fixtures>/<parent>.json's `content` whose slug or
-//                          id is the last segment. A list is filtered by `name` (part of it, any case) and paged by
-//                          `page` and `size`, at most 100, as the importer does. Other query parameters are ignored.
+//                          id is the last segment. A list is filtered by `name` (part of it, any case), `musicbrainzMatch`
+//                          and `artistId`, and paged by `page` and `size`, at most 100, as the importer does. Other query
+//                          parameters are ignored.
 // Other methods            the first rule in <fixtures>/writes.json whose method and path match, and whose `when`
 //                          fields equal the request body's. `{name}` in a rule's path matches one segment.
 //
@@ -124,6 +125,17 @@ async function api(req, res, url) {
       const name = url.searchParams.get('name')?.trim().toLowerCase()
       if (name) {
         const content = found.content.filter((item) => String(item.name ?? '').toLowerCase().includes(name))
+        found = { ...found, content, totalElements: content.length }
+      }
+      // The Artists page lists one MusicBrainz verdict and reads the events that bill one artist.
+      const verdict = url.searchParams.get('musicbrainzMatch')
+      const artistId = url.searchParams.get('artistId')
+      if (verdict || artistId) {
+        const content = found.content.filter(
+          (item) =>
+            (!verdict || item.musicbrainzMatch === verdict) &&
+            (!artistId || (item.artists ?? []).some((a) => String(a.artistId) === artistId)),
+        )
         found = { ...found, content, totalElements: content.length }
       }
       // The importer caps a page at 100, whatever `size` asks for.

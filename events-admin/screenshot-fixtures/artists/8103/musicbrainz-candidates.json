@@ -1,0 +1,26 @@
+[
+  {
+    "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000004",
+    "name": "Mira",
+    "nameMatch": "NAME",
+    "type": "Person",
+    "disambiguation": "Berlin techno DJ",
+    "country": "DE",
+    "area": "Berlin",
+    "founded": null,
+    "dissolved": null,
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000004"
+  },
+  {
+    "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000005",
+    "name": "Mira",
+    "nameMatch": "NAME",
+    "type": "Group",
+    "disambiguation": "Russian dream pop band",
+    "country": "RU",
+    "area": "Moscow",
+    "founded": "2003",
+    "dissolved": null,
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000005"
+  }
+]

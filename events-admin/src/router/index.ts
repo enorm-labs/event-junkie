@@ -23,6 +23,12 @@ const router = createRouter({
       meta: { title: 'Suggested fixes' },
     },
     {
+      path: '/artists',
+      name: 'artists',
+      component: () => import('@/views/ArtistsView.vue'),
+      meta: { title: 'Artists to review' },
+    },
+    {
       path: '/venues/review',
       name: 'venue-review',
       component: () => import('@/views/VenueReviewView.vue'),

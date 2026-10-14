@@ -2,7 +2,8 @@
 
 Take the AMBIGUOUS MusicBrainz matches of the artists who play in the next two weeks. Judge each one from its billing, and give the operator a file
 of proposals to check. **It writes nothing to a cluster on its own.** `scripts/musicbrainz-review.py collect` reads, the judging is yours, and
-`apply --apply` runs only when the operator says so.
+`apply --apply` runs only when the operator says so. The by-hand route for the same queue is the Artists to review page in `events-admin`
+(`/artists`): the same billing and candidates, one artist at a time, through the same `PUT`.
 
 ## Important
 
@@ -68,6 +69,8 @@ Write the decisions into the TSV. Then sort it: `PROPOSE` first, by confidence.
 Next: read the PROPOSE rows, delete the ones you doubt, then
 python3 scripts/musicbrainz-review.py apply <env> temp/musicbrainz-review-<env>-<date>.tsv          # dry run
 python3 scripts/musicbrainz-review.py apply <env> temp/musicbrainz-review-<env>-<date>.tsv --apply  # writes
+
+A KEEP row, or a PROPOSE you doubt, can be settled by hand on events-admin's Artists to review page.
 ```
 
 When the operator asks you to apply, run the dry run first and show it. Then run `--apply`. Both read each artist's match first and print

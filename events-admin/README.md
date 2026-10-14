@@ -46,6 +46,12 @@ in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. 
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.
 "Check now" starts one pass of the site check in the background.
 
+Artists to review (`src/views/ArtistsView.vue`) lists the artists whose MusicBrainz match is `AMBIGUOUS` and who play in the next 14 days, by name, 20 per
+page. Review opens a row: the events that bill the artist from today on, with the venue and the other acts (`GET /api/admin/events?artistId=`), and the
+MusicBrainz candidates the importer finds for the name. No candidate is chosen at first. Choose, then Confirm, PUTs the candidate's MBID to
+`/api/admin/artists/{id}/musicbrainz-id`, and the row leaves the list. When no candidate fits, leave the row: it stays `AMBIGUOUS`. A 503 shows the
+importer's message, because MusicBrainz did not answer.
+
 Suggested fixes (`src/views/SuggestionsView.vue`) lists the open rows of `GET /api/admin/data-quality/suggestions`, newest first, 20 per page. Each card shows
 the event, the field, the stored and the proposed value, the evidence, the confidence, the check and the model. Accept reads the event and PUTs it back with
 the proposed value in its field (`src/api/suggestions.ts`). The answer must list the field in `pinnedFields` (`lineup` for `artists`). Only then does Accept
