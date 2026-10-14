@@ -183,6 +183,7 @@
         "image",
         "service",
         "resources",
+        "anthropic",
         "translation"
       ],
       "properties": {
@@ -198,12 +199,26 @@
           "minimum": 25,
           "maximum": 90
         },
+        "anthropic": {
+          "type": "object",
+          "description": "The one Claude API key, shared by translation and eventClassification.",
+          "required": [
+            "existingSecret"
+          ],
+          "properties": {
+            "existingSecret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Hand-made Secret holding APP_ANTHROPIC_API_KEY. Read only when translation.engine is anthropic or eventClassification.enabled is true."
+            }
+          },
+          "additionalProperties": false
+        },
         "translation": {
           "type": "object",
           "description": "Machine translation of event descriptions, for a source whose licence grants it (ADR-026).",
           "required": [
             "engine",
-            "existingSecret",
             "model",
             "maxPerRun"
           ],
@@ -215,11 +230,6 @@
                 "anthropic"
               ],
               "description": "none translates nothing and calls nobody. anthropic still needs a per-source PERMITTED grant."
-            },
-            "existingSecret": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Hand-made Secret holding APP_TRANSLATION_API_KEY. Read only when engine is anthropic."
             },
             "model": {
               "type": "string",
@@ -236,7 +246,7 @@
         },
         "eventClassification": {
           "type": "object",
-          "description": "The event-classification data-quality check (#3241, ADR-041). Off by default. Reads the key from importer.translation.existingSecret.",
+          "description": "The event-classification data-quality check (#3241, ADR-041). Off by default. Reads the key from importer.anthropic.existingSecret.",
           "required": [
             "enabled",
             "model",

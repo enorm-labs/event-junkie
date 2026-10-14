@@ -71,13 +71,16 @@ app:
     robots-cache-ttl: 24h
     # A host's Crawl-delay spaces our requests to it. Above this, the host reads as a complete disallow.
     max-crawl-delay: 300s
+  anthropic:
+    # The one Claude API key, read by translation and by the event-classification check (#3247).
+    api-key: ${APP_ANTHROPIC_API_KEY:}
   translation:
     # `none` or `anthropic`. Off until an operator chooses both an engine and a key: translating
     # sends a venue's text to a third party and is billed per character (ADR-026). A source also
     # needs `translation_licence` PERMITTED, which since ADR-027 follows the display rule; the #808
     # mail turns silence into a real grant.
     engine: none
-    api-key: ${APP_TRANSLATION_API_KEY:}
+    api-key: ${app.anthropic.api-key:}
     model: claude-haiku-4-5
     timeout: 60s
     max-retries: 2
@@ -89,8 +92,7 @@ app:
       # proposes fixes as `event_suggestion` rows and never writes an event. Off until an operator
       # sets it: it sends titles and descriptions to Anthropic, billed per token.
       enabled: ${APP_DATA_QUALITY_CLASSIFICATION_ENABLED:false}
-      # The translation key, so one Secret serves both callers of the one integration.
-      api-key: ${APP_TRANSLATION_API_KEY:}
+      api-key: ${app.anthropic.api-key:}
       model: ${APP_DATA_QUALITY_CLASSIFICATION_MODEL:claude-haiku-4-5}
       max-per-run: ${APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN:50}
   musicbrainz:

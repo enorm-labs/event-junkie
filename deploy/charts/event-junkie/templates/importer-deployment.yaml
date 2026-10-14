@@ -172,13 +172,6 @@ spec:
               value: {{ .Values.importer.translation.model | quote }}
             - name: APP_TRANSLATION_MAX_PER_RUN
               value: {{ .Values.importer.translation.maxPerRun | quote }}
-            {{- /* Hand-made, never SOPS: the ciphertext in a public repository is permanent, and this key is usable
-               by anyone who holds it (docs/ops/SECRETS.md). Regenerating it is a Console click. */}}
-            - name: APP_TRANSLATION_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.importer.translation.existingSecret | quote }}
-                  key: APP_TRANSLATION_API_KEY
             {{- end }}
             {{- if .Values.importer.eventClassification.enabled }}
             - name: APP_DATA_QUALITY_CLASSIFICATION_ENABLED
@@ -187,20 +180,20 @@ spec:
               value: {{ .Values.importer.eventClassification.model | quote }}
             - name: APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN
               value: {{ .Values.importer.eventClassification.maxPerRun | quote }}
-            {{- /* The translation key, one Secret for the one integration (ADR-041). Named here only when the
-               translation block above did not name it already: a variable listed twice is a warning at apply. */}}
-            {{- if ne .Values.importer.translation.engine "anthropic" }}
-            - name: APP_TRANSLATION_API_KEY
+            {{- end }}
+            {{- if or (eq .Values.importer.translation.engine "anthropic") .Values.importer.eventClassification.enabled }}
+            {{- /* One key for both Anthropic callers, so it is named once. Hand-made, never SOPS: the ciphertext in a
+               public repository is permanent, and anyone who holds the key can spend it (docs/ops/SECRETS.md). */}}
+            - name: APP_ANTHROPIC_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.importer.translation.existingSecret | quote }}
-                  key: APP_TRANSLATION_API_KEY
-            {{- end }}
+                  name: {{ .Values.importer.anthropic.existingSecret | quote }}
+                  key: APP_ANTHROPIC_API_KEY
             {{- end }}
             {{- if .Values.importer.discogs.enabled }}
             - name: APP_DISCOGS_MAX_PER_RUN
               value: {{ .Values.importer.discogs.maxPerRun | quote }}
-            {{- /* Hand-made, never SOPS, for the reason the translation key gives. Without both the lookup stays off. */}}
+            {{- /* Hand-made, never SOPS, for the reason the Anthropic key gives. Without both the lookup stays off. */}}
             - name: APP_DISCOGS_CONSUMER_KEY
               valueFrom:
                 secretKeyRef:

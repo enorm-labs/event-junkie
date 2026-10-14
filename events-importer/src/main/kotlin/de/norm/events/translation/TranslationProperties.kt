@@ -17,8 +17,8 @@ data class TranslationProperties(
     /**
      * The API key, from the environment. Empty means the engine declines every request.
      *
-     * Never written to a log or to a row. It reaches the process as `APP_TRANSLATION_API_KEY`, from
-     * a Kubernetes Secret.
+     * Never written to a log or to a row. `application.yaml` fills it from `app.anthropic.api-key`, the
+     * key the classification check shares, which reaches the process as `APP_ANTHROPIC_API_KEY`.
      */
     val apiKey: String = "",
     /**

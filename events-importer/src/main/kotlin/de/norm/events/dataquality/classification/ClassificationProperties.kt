@@ -14,8 +14,8 @@ data class ClassificationProperties(
     /** Creates the check, the model client and the admin routes' backing bean. Nothing else switches it. */
     val enabled: Boolean = false,
     /**
-     * The Anthropic key. `application.yaml` reads the translation key's variable, so one Secret
-     * serves both. Empty means the check sends nothing.
+     * The Anthropic key. `application.yaml` fills it from `app.anthropic.api-key`, which translation
+     * reads too. Empty means the check sends nothing.
      */
     val apiKey: String = "",
     /** Haiku by default. A move to Sonnet needs a measured false-positive rate first (ADR-041 rule 2, #2997). */
