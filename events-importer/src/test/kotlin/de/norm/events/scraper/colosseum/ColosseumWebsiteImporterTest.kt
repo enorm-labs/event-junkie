@@ -1,5 +1,6 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -75,6 +76,20 @@ class ColosseumWebsiteImporterTest {
             gysi.startTime shouldBe LocalTime.of(11, 30)
             // The page sells no ticket itself, so the listing's price and link stand.
             gysi.ticketUrl shouldBe eventPage("gysis-begegnungen-mit-felix-jaehn")
+        }
+
+    @Test
+    fun `types a night the listing left OTHER from its own page, and keeps a typed one`() =
+        runTest {
+            // A synthetic pairing: the cue-less listing row gets a comedian's page.
+            coEvery { htmlFetcher.fetchDocument(eventPage("babywho-connect")) } returns detailPage("colosseum-detail-siddiq.html")
+            coEvery { htmlFetcher.fetchDocument(eventPage("cornelia-funke")) } returns detailPage("colosseum-detail-sandberg.html")
+
+            val events = (importer.importEvents(sourceUrl) as ImportResult.Success).events.associateBy { it.sourceId }
+
+            events.getValue("colosseum:babywho-connect").eventType shouldBe EventType.COMEDY.name
+            // The listing's Buchpremiere cue wins over a page that names a concert.
+            events.getValue("colosseum:cornelia-funke").eventType shouldBe EventType.READING.name
         }
 
     @Test

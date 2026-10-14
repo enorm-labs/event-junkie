@@ -33,7 +33,8 @@ val ART_STALKER_LIMITATIONS =
         EventSource.ART_STALKER,
         AcceptedLimitation(LimitedAspect.PAGINATION, "robots.txt disallows the shop's paged listing, so only the first 25 events are read"),
         AcceptedLimitation(LimitedAspect.GENRE, "the style is only a free-text tagline after the act's name, so only the genre words in it become the genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the weekly open session is a concert that bills no act")
     )
 
 private val OVERVIEW_SCRAPER = ArtStalkerOverviewPageScraper()

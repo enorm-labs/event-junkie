@@ -3,6 +3,7 @@ package de.norm.events.scraper.eschschloraque
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -197,8 +198,42 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
-    fun `types every other event OTHER because the venue publishes no categories`() {
-        events.filterNot { it.title.contains(" presents ") }.map { it.eventType }.toSet() shouldBe setOf(EventType.OTHER.name)
+    fun `types a night from its billing and its prose, the venue publishing no categories`() {
+        val types = events.associate { it.title to it.eventType }
+        assertSoftly {
+            // An "on the couch:" line bills the DJ seat of the venue's "Partyreihe".
+            types["Hot Tunes for Cool Cats"] shouldBe EventType.PARTY.name
+            // A `Live:` line bills a live act.
+            types["20 Jahre MissVergnügen!"] shouldBe EventType.CONCERT.name
+            // An unlabelled billing line is no cue, and nor is a bingo night's prose.
+            types["BadassBassBombardement"] shouldBe EventType.OTHER.name
+            types["BULETTEN BINGO – OPENAIR EDITION"] shouldBe EventType.OTHER.name
+        }
+    }
+
+    @Test
+    fun `types a night whose prose names its dancefloor as a club night`() {
+        val node =
+            """
+            <div class="node-veranstaltung" about="/electric-baile-17102026">
+              <h2 class="veranstaltung-title">Electric Baile</h2>
+              <span class="date-display-single" content="2026-10-17T21:00:00+02:00">Samstag, 17. Oktober 2026 ab 21Uhr</span>
+              <div class="field-type-text-with-summary"><p>Another night charged with Electro Synth Disco sounds, made for dancing from beginning to end.</p></div>
+            </div>
+            <div class="node-veranstaltung" about="/bande-a-part-27102026">
+              <h2 class="veranstaltung-title">Bande á Part</h2>
+              <span class="date-display-single" content="2026-10-27T20:00:00+02:00">Dienstag, 27. Oktober 2026 ab 20Uhr</span>
+              <div class="field-type-text-with-summary">
+                <p><span class="redsubtitle">MASTICAR EL REZO Poetic Forensics of Hate</span></p>
+                <p>by Boneless Light (Dance and Performance Collective)</p>
+              </div>
+            </div>
+            """.trimIndent()
+        val nights = EschschloraqueOverviewPageScraper().scrape(Jsoup.parse(node, baseUrl), baseUrl).associate { it.title to it.eventType }
+
+        nights["Electric Baile"] shouldBe EventType.PARTY.name
+        // A performance billed on an unlabelled line, with no club-night word in its prose.
+        nights["Bande á Part"] shouldBe EventType.OTHER.name
     }
 
     @Test

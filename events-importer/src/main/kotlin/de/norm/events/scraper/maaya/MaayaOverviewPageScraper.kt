@@ -48,11 +48,11 @@ import java.time.MonthDay
  * stated, mistakes included: both halves of a two-part night can share a shop page.
  *
  * **Artists are minted only for a concert.** Titles are series and party names ("SUPAFLY",
- * "RIPPLES W/ AMINE K"), not acts, so a derived headliner would file party names as artists. For
- * the same reason the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than
- * `PARTY`: a multi-format house — gallery, garden, pool and market — so a cue-less title is
- * genuinely unknown, not presumed a club night the way Crack Bellmer's is. The exception is the
- * venue's own concert prefix, "CONCERT JIZZLE": the night is a `CONCERT` and the rest of the
+ * "RIPPLES W/ AMINE K"), not acts, so a derived headliner would file party names as artists.
+ * MAAYA is a multi-format house — gallery, garden, pool and market — so a cue-less title is not
+ * presumed a club night the way Crack Bellmer's is. The schedule decides instead: a night that starts at
+ * 21:00 or later and runs past midnight is a `PARTY`, and an earlier one stays `OTHER`. The
+ * venue's own concert prefix, "CONCERT JIZZLE", makes the night a `CONCERT`, and the rest of the
  * title is the act (#2315).
  *
  * @see MAAYA_LIMITATIONS for what the venue does not publish.
@@ -124,7 +124,7 @@ class MaayaOverviewPageScraper(
         val concertAct = CONCERT_PREFIX.find(title)?.groupValues?.get(1)
         return ScrapedEvent(
             title = title,
-            eventType = if (concertAct != null) EventType.CONCERT.name else inferUnmarkedTitleType(title),
+            eventType = if (concertAct != null) EventType.CONCERT.name else typeOf(title, eventDate, startTime, endDate),
             eventDate = eventDate,
             endDate = endDate,
             startTime = startTime,
@@ -140,6 +140,22 @@ class MaayaOverviewPageScraper(
             free = detectFree(priceNote = entryNote, title = title),
             artists = concertAct?.let { buildArtistsForEventType(it, subtitle = null, eventType = EventType.CONCERT.name) }.orEmpty()
         )
+    }
+
+    /**
+     * The type of a night without the concert prefix: a title cue first, else a late night is a
+     * club night. A night that starts at 21:00 or later and runs past midnight, or "until late",
+     * is one (#2992); an afternoon or early-evening card stays `OTHER`.
+     */
+    private fun typeOf(
+        title: String,
+        eventDate: LocalDate,
+        startTime: LocalTime?,
+        endDate: LocalDate?
+    ): String {
+        val fromTitle = inferUnmarkedTitleType(title)
+        val lateNight = startTime != null && startTime >= LATE_NIGHT_START && (endDate == null || endDate.isAfter(eventDate))
+        return if (fromTitle == EventType.OTHER.name && lateNight) EventType.PARTY.name else fromTitle
     }
 
     /**
@@ -218,6 +234,9 @@ class MaayaOverviewPageScraper(
 
         /** The venue's concert billing, "CONCERT JIZZLE" or "Konzert: Agnes Nunes"; the group is the act. */
         val CONCERT_PREFIX = Regex("""^(?:concert|konzert)\s*:?\s+(\S.*)$""", RegexOption.IGNORE_CASE)
+
+        /** The earliest start of a club night; the venue's concerts and garden events start before it. */
+        val LATE_NIGHT_START: LocalTime = LocalTime.of(21, 0)
 
         /** Button labels that name the link rather than the entry terms, so carry no pricing information. */
         val CALL_TO_ACTION_LABELS = setOf("TICKETS", "RESERVATIONS")

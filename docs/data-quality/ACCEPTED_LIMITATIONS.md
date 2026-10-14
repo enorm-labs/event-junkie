@@ -49,6 +49,7 @@ says so.
 | `ART_STALKER`          | `PAGINATION`       | robots.txt disallows the shop's paged listing, so only the first 25 events are read                                                              | —     |
 | `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name, so only the genre words in it become the genre                                       | —     |
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `ART_STALKER`          | `ARTISTS`          | the weekly open session is a concert that bills no act                                                                                           | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `ASTRA`                | `PRICE`            | some nights print no figure and only link the promoter's outside ticket shop                                                                     | —     |
 | `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
@@ -89,7 +90,7 @@ says so.
 | `CLUB_OST`             | `ARTISTS`          | the listing carries no lineup, though the CMS holds an empty div where one would go                                                              | —     |
 | `CLUB_OST`             | `DOORS_TIME`       | the listing carries one time per night and no doors time                                                                                         | —     |
 | `CLUB_OST`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
-| `COLOSSEUM`            | `EVENT_TYPE`       | `categories` is empty on every event, so the type is inferred from the title and subtitle                                                        | —     |
+| `COLOSSEUM`            | `EVENT_TYPE`       | `categories` is empty on every event, so the type is inferred from the title, the subtitle and the event's own text                              | —     |
 | `COLOSSEUM`            | `DOORS_TIME`       | an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors                                   | —     |
 | `COLOSSEUM`            | `GENRE`            | the house names no musical style anywhere                                                                                                        | —     |
 | `COLOSSEUM`            | `ARTISTS`          | no support-act convention exists in the subtitles, and a title is as often an event name as a performer's                                        | —     |
@@ -277,7 +278,7 @@ says so.
 | `MAAYA`                | `PRICE`            | the venue publishes an entry note in words and no numeric price                                                                                  | —     |
 | `MAAYA`                | `ARTISTS`          | there is no lineup field, and the titles are series and party names rather than acts                                                             | —     |
 | `MAAYA`                | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
-| `MAAYA`                | `EVENT_TYPE`       | the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER                                 | —     |
+| `MAAYA`                | `EVENT_TYPE`       | the programme carries a name, a date and a time and no category; the type comes from a title keyword or a late start, else OTHER                 | —     |
 | `MAAYA`                | `GENRE`            | the venue publishes no genre; every music night takes the house's Afrobeats, Latin                                                               | —     |
 | `MAAYA`                | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `MADAME_CLAUDE`        | `GENRE`            | the venue leaves its genre field empty on every event; style appears only in the description                                                     | —     |
@@ -373,7 +374,7 @@ says so.
 | `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |
 | `PANKE`                | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
-| `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word or live show in the title, or a Resident Advisor lineup, types an event         | —     |
+| `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word in the title or the body, or a Resident Advisor lineup, types an event          | —     |
 | `PANKE`                | `DOORS_TIME`       | only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start      | —     |
 | `PANKE`                | `GENRE`            | the venue publishes no genre field; the style is only in the text                                                                                | —     |
 | `PANKE`                | `PRICE`            | most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose                       | —     |
@@ -390,6 +391,7 @@ says so.
 | `PFEFFERBERG_HAUS_13`  | `GENRE`            | no event names a style                                                                                                                           | —     |
 | `PFEFFERBERG_HAUS_13`  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `PRIVATCLUB`           | `PRICE`            | about half the nights print a genre line and a start time but no price                                                                           | —     |
+| `PRIVATCLUB`           | `ARTISTS`          | the song slam is a concert that names none of its contestants                                                                                    | —     |
 | `PUNCHLINE`            | `IMAGE`            | the date list carries no image                                                                                                                   | —     |
 | `PUNCHLINE`            | `TICKET_URL`       | the date list links no ticket shop; tickets sell on Ticketmaster                                                                                 | —     |
 | `PUNCHLINE`            | `PRICE`            | the club publishes no price; Ticketmaster states it                                                                                              | —     |
@@ -441,7 +443,7 @@ says so.
 | `SHOWFENSTER`          | `SUBTITLE`         | the calendar gives each event a title and one short text                                                                                         | —     |
 | `SHOWFENSTER`          | `PRICE`            | prices are on the Eventfrog ticket shop, not on the venue's site                                                                                 | —     |
 | `SHOWFENSTER`          | `DOORS_TIME`       | the calendar gives a start and an end time, no doors time                                                                                        | —     |
-| `SHOWFENSTER`          | `ARTISTS`          | only a concert or comedy title names its act; a reading bills a duo by surnames, and shows and quizzes name none                                 | —     |
+| `SHOWFENSTER`          | `ARTISTS`          | only a concert or comedy title names its act; a reading bills a duo by surnames, and shows, quizzes and the open stage name none                 | —     |
 | `SHOWFENSTER`          | `GENRE`            | only a concert's category names a style; comedy, readings and shows carry none                                                                   | —     |
 | `SHOWFENSTER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SILENT_GREEN`         | `PRICE`            | the venue names no event price — a ticket shop link, an "Eintritt frei" in the blurb, or nothing                                                 | —     |

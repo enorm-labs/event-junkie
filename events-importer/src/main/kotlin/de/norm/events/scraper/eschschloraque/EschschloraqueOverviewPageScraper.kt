@@ -38,9 +38,12 @@ import java.time.format.DateTimeParseException
  * one `span.date-display-single`; the attribute has a four-digit year and needs no German month
  * table, so it is the only date source and an event without it is skipped.
  *
- * Typing goes through [inferUnmarkedTitleType], so an event is `OTHER` unless its *title* names
- * an unambiguous format. A `<host> presents <act> - live!` title is one: it bills a live act, so
- * the night is a `CONCERT`. Deliberately **not**
+ * Typing goes through [inferUnmarkedTitleType] first, so a *title* that names an unambiguous
+ * format decides. A `<host> presents <act> - live!` title is one: it bills a live act, so the night
+ * is a `CONCERT`. Then the billing and the prose decide (#2992): a `Live:` line makes a concert, and
+ * a `Dj:` or "on the couch:" line, or prose that names a party or a dancefloor, makes a club night.
+ * "on the couch" is a DJ seat, and the venue calls those nights a "Partyreihe". Else `OTHER`.
+ * Deliberately **not**
  * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]: defaulting a bar's DJ
  * nights to `CONCERT` would also mint each event name ("Hot Tunes for Cool Cats") as a
  * headliner. Free entry stated in prose is flagged via [hasFreeEntryPhrase]; every other night
@@ -102,6 +105,7 @@ class EschschloraqueOverviewPageScraper {
         val description = parseDescription(node, billingParagraphs)
         val (doorsTime, startTime) = resolveTimes(startDateTime.second, node.select(PROSE_PARAGRAPHS).text())
         val presentedActs = presentedLiveActs(title)
+        val lineup = (presentedActs + parseLineup(billingParagraphs)).distinctBy { it.name.lowercase() }
 
         return ScrapedEvent(
             title = title,
@@ -113,7 +117,12 @@ class EschschloraqueOverviewPageScraper {
                     ?.trim()
                     ?.takeIf { it.isNotBlank() },
             description = description,
-            eventType = if (presentedActs.isEmpty()) inferUnmarkedTitleType(title) else EventType.CONCERT.name,
+            eventType =
+                if (presentedActs.isEmpty()) {
+                    typeOf(title, lineup, billsDjs = billingParagraphs.any { DJ_BILLING.containsMatchIn(it.text()) }, description = description)
+                } else {
+                    EventType.CONCERT.name
+                },
             eventDate = startDateTime.first,
             doorsTime = doorsTime,
             startTime = startTime,
@@ -123,7 +132,7 @@ class EschschloraqueOverviewPageScraper {
             // "eschschloraque:20-jahre-missvergnügen-12082026" rather than "…missvergn%C3%BCgen…".
             sourceId = "${EventSource.ESCHSCHLORAQUE.sourceIdPrefix}${extractSlug(path)}",
             free = hasFreeEntryPhrase(description),
-            artists = (presentedActs + parseLineup(billingParagraphs)).distinctBy { it.name.lowercase() }
+            artists = lineup
         )
     }
 
@@ -230,7 +239,7 @@ class EschschloraqueOverviewPageScraper {
             .flatMap { line ->
                 val text = line.text().trim()
                 val label = billingLabel(line)
-                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) "LIVE" else "DJ"
+                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) LIVE_ROLE else "DJ"
                 val names = if (label != null) text.removePrefix(label).trim() else text.replaceFirst(BILLING_LABEL, "")
                 splitActs(names).map { ScrapedArtist(name = it, role = role) }
             }.distinctBy { it.name.lowercase() }
@@ -297,6 +306,15 @@ class EschschloraqueOverviewPageScraper {
         /** The start as the prose labels it; `Showtime` is the venue's word for a show's start after the DJs. */
         val START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
 
+        /** The role a `Live:` billing line gives its acts. */
+        const val LIVE_ROLE = "LIVE"
+
+        /** A labelled DJ billing line: `Dj:`, `Djs:`, `on the couch:`, `auf der Couch:`. */
+        val DJ_BILLING = Regex("""\bdjs?\s*:|couch\s*:""", RegexOption.IGNORE_CASE)
+
+        /** Prose that names a club night: a party, dancing, a dancefloor, or a resident DJ's set. */
+        val CLUB_NIGHT_PROSE = Regex("""party|dancing|dancefloor|tanzfläche|resident\s+dj|\bdjing\b""", RegexOption.IGNORE_CASE)
+
         /** The `Live:` label, which bills the line's acts as headliners rather than DJs. */
         val LIVE_LABEL = Regex("""^live\s*:""", RegexOption.IGNORE_CASE)
 
@@ -310,6 +328,25 @@ class EschschloraqueOverviewPageScraper {
          * with those letters ("Akatombo") is not torn in half.
          */
         val ALIAS_SEPARATOR = Regex("""\s+a\.k\.a\.?\s*|\s+aka\s+""", RegexOption.IGNORE_CASE)
+
+        /**
+         * The type from the title, else from the billing, else from the prose; `OTHER` without any. An
+         * unlabelled billing line is no DJ cue: a performance collective is billed that way too.
+         */
+        fun typeOf(
+            title: String,
+            lineup: List<ScrapedArtist>,
+            billsDjs: Boolean,
+            description: String?
+        ): String {
+            val fromTitle = inferUnmarkedTitleType(title)
+            return when {
+                fromTitle != EventType.OTHER.name -> fromTitle
+                lineup.any { it.role == LIVE_ROLE } -> EventType.CONCERT.name
+                billsDjs || CLUB_NIGHT_PROSE.containsMatchIn(description.orEmpty()) -> EventType.PARTY.name
+                else -> fromTitle
+            }
+        }
     }
 }
 

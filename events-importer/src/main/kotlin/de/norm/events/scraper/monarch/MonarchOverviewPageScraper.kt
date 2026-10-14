@@ -1,5 +1,6 @@
 package de.norm.events.scraper.monarch
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -11,6 +12,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
+import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -87,12 +89,15 @@ class MonarchOverviewPageScraper {
             return null
         }
 
-        // "(KONZERT)" is the venue's authoritative concert marker. Everything else (DJ nights,
-        // parties, other formats) is classified by keyword — a party/quiz/show/… cue types it,
-        // otherwise OTHER. Unmarked events deliberately do not default to CONCERT (see
-        // [inferUnmarkedTitleType]).
+        val startTime = parseStartTime(dateText)
+        // "(KONZERT)" is the venue's authoritative concert marker. An unmarked event never defaults to
+        // CONCERT, so its name is not minted as a headliner ([inferUnmarkedTitleType]).
         val eventType =
-            if (KONZERT_PATTERN.containsMatchIn(rawTitle)) mapEventType("konzert") else inferUnmarkedTitleType(rawTitle)
+            if (KONZERT_PATTERN.containsMatchIn(rawTitle)) {
+                mapEventType("konzert")
+            } else {
+                unmarkedType(rawTitle, startTime, block.textAt("td.tom").orEmpty())
+            }
         // "ABGESAGT" in the raw title flags a cancellation.
         val status = parseEventStatus(rawTitle)
 
@@ -104,7 +109,7 @@ class MonarchOverviewPageScraper {
             title = title,
             eventType = eventType,
             eventDate = eventDate,
-            startTime = parseStartTime(dateText),
+            startTime = startTime,
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.MONARCH.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
@@ -113,6 +118,21 @@ class MonarchOverviewPageScraper {
             // Only a concert's title names the headliner; parties/club nights extract none.
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
+    }
+
+    /**
+     * The type of an event without the concert marker: a title cue first. Else the venue's club
+     * nights give themselves away (#2992): they start at 21:00 or later, while its concerts start
+     * earlier, or the blurb calls the night a party or names its dancefloor. Otherwise `OTHER`.
+     */
+    private fun unmarkedType(
+        rawTitle: String,
+        startTime: LocalTime?,
+        blurb: String
+    ): String {
+        val fromTitle = inferUnmarkedTitleType(rawTitle)
+        val clubNight = (startTime != null && startTime >= CLUB_NIGHT_START) || CLUB_NIGHT_BLURB.containsMatchIn(blurb)
+        return if (fromTitle == EventType.OTHER.name && clubNight) EventType.PARTY.name else fromTitle
     }
 
     /** The bold line in the title table's second row, or empty when the table has none. */
@@ -167,6 +187,12 @@ class MonarchOverviewPageScraper {
         private val LEADING_WEEKDAY = Regex("""^\p{L}+""")
         private const val HOUR_GROUP = 4
         private const val MINUTE_GROUP = 5
+
+        /** The earliest start of a club night; every concert on the programme starts before it. */
+        private val CLUB_NIGHT_START: LocalTime = LocalTime.of(21, 0)
+
+        /** A blurb that calls the night a party ("Pop-Party") or names its dancefloor. */
+        private val CLUB_NIGHT_BLURB = Regex("""party|dance\s?floor""", RegexOption.IGNORE_CASE)
 
         /** The "(KONZERT)" concert marker suffix, case-insensitive. */
         private val KONZERT_PATTERN = Regex("""\(\s*konzert\s*\)""", RegexOption.IGNORE_CASE)

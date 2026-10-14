@@ -36,18 +36,18 @@ Ten values on [`EventType`](../events-core/src/main/kotlin/de/norm/events/event/
 and this is not an aspirational list. The shares come from the 4,889 upcoming events on production in October 2026.
 They show the _mix_, not the coverage:
 
-| Type         | Share | What it covers                                                   | Where it comes from                             |
-| ------------ | ----: | ---------------------------------------------------------------- | ----------------------------------------------- |
-| `CONCERT`    |  ~50% | Live music with a billed lineup, from back rooms to arenas       | `konzert` / `concert`, and most venues' default |
-| `COMEDY`     |  ~23% | Stand-up, Kabarett, comedy shows and comedy theatre              | `comedy` / `stand-up` / `kabarett`, a comedian  |
-| `PARTY`      |  ~14% | Club nights and parties, one-off or recurring                    | `party`                                         |
-| `SHOW`       |   ~7% | Staged performance — burlesque, musicals, variety                | `show`                                          |
-| `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`  | fallback                                        |
-| `READING`    |   ~1% | Literary readings, spoken word, poetry slams                     | `lesung` / `reading`                            |
-| `FESTIVAL`   |   <1% | Multi-day or multi-stage events                                  | `festival`                                      |
-| `QUIZ`       |   <1% | Pub quizzes and game nights                                      | `quiz`                                          |
-| `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"      | `screening`, `public viewing`                   |
-| `EXHIBITION` |   <1% | A run, opening day to closing day; the vernissage is its evening | `ausstellung` / `exhibition` / `vernissage`     |
+| Type         | Share | What it covers                                                       | Where it comes from                             |
+| ------------ | ----: | -------------------------------------------------------------------- | ----------------------------------------------- |
+| `CONCERT`    |  ~50% | Live music, from back rooms to arenas, open stages and jams included | `konzert` / `concert`, and most venues' default |
+| `COMEDY`     |  ~23% | Stand-up, Kabarett, comedy shows and comedy theatre                  | `comedy` / `stand-up` / `kabarett`, a comedian  |
+| `PARTY`      |  ~14% | Club nights and parties, one-off or recurring                        | `party`                                         |
+| `SHOW`       |   ~7% | Staged performance — burlesque, musicals, variety                    | `show`                                          |
+| `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`      | fallback                                        |
+| `READING`    |   ~1% | Literary readings, spoken word, poetry slams, talks and panels       | `lesung` / `reading`                            |
+| `FESTIVAL`   |   <1% | Multi-day or multi-stage events                                      | `festival`                                      |
+| `QUIZ`       |   <1% | Pub quizzes and game nights                                          | `quiz`                                          |
+| `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"          | `screening`, `public viewing`                   |
+| `EXHIBITION` |   <1% | A run, opening day to closing day; the vernissage is its evening     | `ausstellung` / `exhibition` / `vernissage`     |
 
 **`OTHER` is a fallback, not a bin.** `parseOrDefault` logs a warning whenever it resolves to `OTHER`. An
 unrecognised label is therefore a signal to extend the mapping, not something that silently accumulates. The 3% share
@@ -60,11 +60,14 @@ One path discards artists for `PARTY`: `buildArtistsForEventType`, which reads a
 publishes no lineup. A party title names the night, not an act. The same applies to `FESTIVAL`.
 
 **No new type for dance, theatre or talks.** Dance and theatre stay `SHOW`: Delphi, Admiralspalast and Kesselhaus map
-`tanz` and `theater` to `SHOW`. Talks and panels stay `READING` (Urania) or `OTHER`. On 2026-10-09, `OTHER` held 158
-of the 5,278 upcoming events on production (3.0%). Of the 86 `OTHER` events from 2026-10-09 to 2026-11-09, only 9 talks
-and 2 dance or theatre events fit no existing type. A type for 11 events in a month buys no useful filter. The other
-75 are mapping gaps into existing types. Among them are 24 club nights, 15 open stages and jams, 14 concerts and 5
-comedians. Issue #2992 fixes these mapping gaps (#332).
+`tanz` and `theater` to `SHOW`. A talk, a panel, a debate or a live podcast is a `READING`. On 2026-10-09, `OTHER` held
+158 of the 5,278 upcoming events on production (3.0%). Of the 86 `OTHER` events from 2026-10-09 to 2026-11-09, 9 were
+talks and 2 were dance or theatre. A type for 11 events in a month buys no useful filter (#332).
+
+**An open stage, a jam session or a song slam is a `CONCERT` with no act.** Its venue declares the `ARTISTS`
+limitation, so the `concertsWithoutArtist` check does not count the night as a defect. A club night that has no
+category gets `PARTY` from the signal on its venue's own page. That signal is a late start, a `Dj:` line or a dancefloor
+in the text. A night with no such signal stays `OTHER` (#2992).
 
 **`EXHIBITION` is a _run_.** An event carries an optional end since ADR-029, and an exhibition uses it. It is one row
 from opening day to closing day, with `end_date` set and `end_time` empty. The vernissage time is its `start_time`

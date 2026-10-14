@@ -30,6 +30,14 @@ class GaertenDerWeltFieldMappingTest {
     }
 
     @Test
+    fun `types the park's games night as a quiz and leaves any other title to the shared cues`() {
+        gamesNightOrTitleType("Spieletreff") shouldBe EventType.QUIZ.name
+        gamesNightOrTitleType("Spieleabend") shouldBe EventType.QUIZ.name
+        gamesNightOrTitleType("Quiz Night Show") shouldBe EventType.QUIZ.name
+        gamesNightOrTitleType("Herbstmarkt") shouldBe EventType.OTHER.name
+    }
+
+    @Test
     fun `keeps the park's staged programme in scope`() {
         isProgrammeCategory("Konzerte") shouldBe true
         isProgrammeCategory("Open-Air Kino") shouldBe true

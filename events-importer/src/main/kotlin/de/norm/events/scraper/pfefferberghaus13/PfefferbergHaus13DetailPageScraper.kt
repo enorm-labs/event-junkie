@@ -116,15 +116,10 @@ class PfefferbergHaus13DetailPageScraper {
 }
 
 /**
- * The type from the title: a premiere or a reading is a [EventType.READING], a debate or a talk is [EventType.OTHER],
- * and anything else goes to the concert-venue default, which the house's book and politics nights would otherwise join.
+ * The type from the title: a premiere, a reading, a debate or a talk is a [EventType.READING] (EVENT_SCOPE.md §2,
+ * #2992), and anything else goes to the concert-venue default, which the house's book and politics nights would otherwise join.
  */
-internal fun eventTypeOf(title: String): String =
-    when {
-        READING.containsMatchIn(title) -> EventType.READING.name
-        TALK.containsMatchIn(title) -> EventType.OTHER.name
-        else -> inferConcertVenueType(title)
-    }
+internal fun eventTypeOf(title: String): String = if (READING.containsMatchIn(title)) EventType.READING.name else inferConcertVenueType(title)
 
 internal fun isFreeEntry(text: String?): Boolean = text != null && FREE.containsMatchIn(text)
 
@@ -142,8 +137,7 @@ internal fun actsOf(
         else -> emptyList()
     }
 
-private val READING = Regex("""premiere|lesung""", RegexOption.IGNORE_CASE)
-private val TALK = Regex("""kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
+private val READING = Regex("""premiere|lesung|kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
 private val ACT_FRAME = Regex("""\s(?:mit|feat\.?|ft\.|w/)\s""", RegexOption.IGNORE_CASE)
 private val FREE = Regex("""freier eintritt|eintritt frei""", RegexOption.IGNORE_CASE)
 private val THUMBNAIL_SUFFIX = Regex("""-\d+x\d+(?=\.\w+$)""")

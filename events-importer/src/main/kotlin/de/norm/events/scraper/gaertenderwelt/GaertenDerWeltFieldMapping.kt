@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.collapseExhibitionRuns
+import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
@@ -35,6 +36,13 @@ internal val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
         "ausstellungen" to EventType.EXHIBITION.name,
         "parkfeste" to EventType.FESTIVAL.name
     )
+
+/** The park's games night, `Spieleabend` or `Spieletreff`: a [EventType.QUIZ] (EVENT_SCOPE.md §2, #2992). */
+private val GAMES_NIGHT_PATTERN = Regex("""spiele(?:abend|treff|nacht)""", RegexOption.IGNORE_CASE)
+
+/** The type an uncategorised row's [title] names: a games night, else the shared title cues. */
+internal fun gamesNightOrTitleType(title: String): String =
+    if (GAMES_NIGHT_PATTERN.containsMatchIn(title)) EventType.QUIZ.name else inferUnmarkedTitleType(title)
 
 /**
  * The park-activity formats this importer leaves out, matched as substrings of the raw category

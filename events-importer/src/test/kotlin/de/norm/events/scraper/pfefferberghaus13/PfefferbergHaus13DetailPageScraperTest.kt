@@ -50,10 +50,10 @@ class PfefferbergHaus13DetailPageScraperTest {
     }
 
     @Test
-    fun `reads a free debate as other`() {
+    fun `reads a free debate as a reading`() {
         val event = page("europa-kontrovers", "europa-kontrovers-frieden-sichern-was-zivile-resilienz-in-berlin-und-europa-leisten-kann")
 
-        event.eventType shouldBe EventType.OTHER.name
+        event.eventType shouldBe EventType.READING.name
         event.free shouldBe true
         event.doorsTime shouldBe LocalTime.of(17, 30)
         event.startTime shouldBe LocalTime.of(18, 0)

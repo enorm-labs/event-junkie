@@ -74,7 +74,7 @@ class ArtStalkerOverviewPageScraperTest {
     @Test
     fun `types the house formats and bills no act for them`() {
         val session = bySourceId("2560217")
-        session.eventType shouldBe EventType.OTHER.name
+        session.eventType shouldBe EventType.CONCERT.name
         session.artists.shouldBeEmpty()
         bySourceId("2556952").eventType shouldBe EventType.OTHER.name
         bySourceId("2559666").eventType shouldBe EventType.QUIZ.name

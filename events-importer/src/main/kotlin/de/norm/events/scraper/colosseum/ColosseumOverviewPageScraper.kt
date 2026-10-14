@@ -45,10 +45,11 @@ import java.math.BigDecimal
  * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
  * a performer's, so minting it as a headliner would create artists that are not people.
  *
- * Typing: [VENUE_FORMATS] first, then [inferUnmarkedTitleType] over title and subtitle with
- * [CINEMA_AS_PLACE] removed, else `OTHER` — the house publishes no category (`categories` is
- * empty on every event), and `CONCERT` would be wrong for a talks-and-readings room. A talk lands
- * on `OTHER` too: the model has no `TALK` type.
+ * Typing: [VENUE_FORMATS] first, then a sing-along named in the title ([SING_ALONG_TITLE]), then
+ * [inferUnmarkedTitleType] over title and subtitle with [CINEMA_AS_PLACE] removed, else `OTHER` —
+ * the house publishes no category (`categories` is empty on every event), and `CONCERT` would be
+ * wrong for a talks-and-readings room. A talk is a `READING` (EVENT_SCOPE.md §2). The event's own
+ * page can still type an `OTHER` night ([ColosseumDetailPageScraper]).
  *
  * @see COLOSSEUM_LIMITATIONS for what the house does not publish.
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
@@ -132,6 +133,7 @@ class ColosseumOverviewPageScraper {
     ): String {
         val text = listOfNotNull(title, subtitle).joinToString(" ")
         return VENUE_FORMATS.entries.firstOrNull { (cue, _) -> cue.containsMatchIn(text) }?.value
+            ?: EventType.CONCERT.name.takeIf { SING_ALONG_TITLE.containsMatchIn(title) }
             ?: inferUnmarkedTitleType(CINEMA_AS_PLACE.replace(text, ""))
     }
 
@@ -150,14 +152,22 @@ class ColosseumOverviewPageScraper {
          * decides the type, not who hosts it. The book cues come before the shared cues, which would
          * read the building's "Kino" first (#2562). `roman` and `buch` match as whole words, so
          * "Romantik" and "Tagebuch" stay untyped; `buchpremiere` and `lesung` match inside a compound
-         * ("Kinderbuchpremiere").
+         * ("Kinderbuchpremiere"). A talk is a reading: `themondaytalks`, `Gysis Begegnungen`.
          */
         private val VENUE_FORMATS: Map<Regex, String> =
             linkedMapOf(
                 Regex("""film:|kinoevent""", RegexOption.IGNORE_CASE) to EventType.SCREENING.name,
                 Regex("""buchpremiere|lesung|(?<!\p{L})(?:roman|buch)(?!\p{L})""", RegexOption.IGNORE_CASE) to EventType.READING.name,
-                Regex("""podcast""", RegexOption.IGNORE_CASE) to EventType.SHOW.name
+                Regex("""podcast""", RegexOption.IGNORE_CASE) to EventType.SHOW.name,
+                Regex("""talks?(?!\p{L})|begegnungen""", RegexOption.IGNORE_CASE) to EventType.READING.name
             )
+
+        /**
+         * A sing-along in the title, "Das Betreute Singen Oktober": the house band plays and the room
+         * sings. Title only, because the house clones the strapline "… und singen sie gemeinsam" onto
+         * other nights.
+         */
+        private val SING_ALONG_TITLE = Regex("""(?<!\p{L})singen(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /**
          * The house itself, named as a place: "im historischen Berliner Kino". Every event here is in a

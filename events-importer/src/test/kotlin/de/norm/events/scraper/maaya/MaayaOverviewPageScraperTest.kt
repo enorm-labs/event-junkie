@@ -2,6 +2,7 @@ package de.norm.events.scraper.maaya
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -324,6 +325,18 @@ class MaayaOverviewPageScraperTest {
             soul.endDate shouldBe LocalDate.of(2026, 10, 24)
             // "Sat. 31.10 from 23:00pm until late"
             event("maaya:2026-10-31-maaya-halloween").startTime shouldBe LocalTime.of(23, 0)
+        }
+
+        @Test
+        fun `types a night that starts late and runs past midnight as a club night`() {
+            assertSoftly {
+                event("maaya:2026-10-17-nairobi-night").eventType shouldBe EventType.PARTY.name
+                event("maaya:2026-10-23-strictly-soul").eventType shouldBe EventType.PARTY.name
+                event("maaya:2026-10-31-maaya-halloween").eventType shouldBe EventType.PARTY.name
+                // "from 7pm until late" starts too early to be presumed a club night.
+                event("maaya:2026-10-16-maaya-meets-festival-of-lights").eventType shouldBe EventType.OTHER.name
+                events.filter { it.eventType == EventType.PARTY.name }.forEach { it.artists.shouldBeEmpty() }
+            }
         }
 
         @Test

@@ -47,6 +47,7 @@ class ArtStalkerOverviewPageScraper {
         }
         val (title, subtitle) = splitTagline(rawTitle)
         val eventType = inferConcertVenueType(title, subtitle, VENUE_FORMATS)
+        val openStage = OPEN_STAGE.containsMatchIn(title)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -59,21 +60,19 @@ class ArtStalkerOverviewPageScraper {
             sourceId = "${EventSource.ART_STALKER.sourceIdPrefix}$id",
             ticketUrl = url,
             pricePresale = parsePriceValue(card.textAt(".c-list-item-event__event-min-price")),
-            artists = buildArtistsForEventType(billedActs(title), subtitle, eventType)
+            artists = if (openStage) emptyList() else buildArtistsForEventType(billedActs(title), subtitle, eventType)
         )
     }
 
     private companion object {
+        /** The music school's student showcase, a house format that is no concert of a billed act. */
+        val VENUE_FORMATS = mapOf("musikschule" to EventType.OTHER.name)
+
         /**
-         * The house's own formats, which bill no act in the title: the weekly open session and the
-         * music school's student showcase.
+         * The weekly open session and an open mic: live music with no billed act, so a concert
+         * whose title names nobody (#2992).
          */
-        val VENUE_FORMATS =
-            mapOf(
-                "session" to EventType.OTHER.name,
-                "musikschule" to EventType.OTHER.name,
-                "open mic" to EventType.OTHER.name
-            )
+        val OPEN_STAGE = Regex("""\bsession\b|\bopen\s+mic\b""", RegexOption.IGNORE_CASE)
     }
 }
 

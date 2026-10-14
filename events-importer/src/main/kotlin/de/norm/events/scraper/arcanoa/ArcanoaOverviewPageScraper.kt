@@ -1,10 +1,8 @@
 package de.norm.events.scraper.arcanoa
 
-import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.arcanoa.ArcanoaOverviewPageScraper.Companion.RECURRING_FORMAT_PATTERN
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferConcertVenueType
@@ -146,15 +144,9 @@ class ArcanoaOverviewPageScraper(
 
         val subtitle = rawSubtitle?.let { normalizeDashSpacing(it.trimStart('+', '-', ' ')) }?.takeIf { it.isNotBlank() }
         val start = entry.start ?: startTime
-        val keywordType = inferConcertVenueType(title)
-        val artists = parseArtists(title, subtitle, keywordType)
-        // An unmarked night defaults to CONCERT. A standing format whose title names no act is not a concert.
-        val eventType =
-            if (keywordType == EventType.CONCERT.name && artists.isEmpty() && RECURRING_FORMAT_PATTERN.containsMatchIn(title)) {
-                EventType.OTHER.name
-            } else {
-                keywordType
-            }
+        // An open stage, a jam or a SpielleuteSession is live music with no billed act, so it stays a concert (#2992).
+        val eventType = inferConcertVenueType(title)
+        val artists = parseArtists(title, subtitle, eventType)
 
         return ScrapedEvent(
             title = title,
@@ -329,8 +321,7 @@ class ArcanoaOverviewPageScraper(
          * festival, the songwriting workshop, and the venue's own name leading its house nights.
          * Venue-local rather than in the shared `ArtistNameMapping` denylist — every entry is specific
          * to this programme. Matched as a
-         * substring on an already-split act name, so a co-billed real act survives; a title that
-         * matches and leaves no act is typed OTHER, not CONCERT. `jam session`
+         * substring on an already-split act name, so a co-billed real act survives. `jam session`
          * beside `\bjam\b` is not redundant: the venue also writes "JamSession" run-together, where
          * the trailing boundary `\bjam\b` needs is absent — and a bare `\bjam` prefix would swallow
          * "Jamiroquai".

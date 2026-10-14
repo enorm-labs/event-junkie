@@ -32,10 +32,10 @@ class PfefferbergHaus13OverviewPageScraperTest {
     }
 
     @Test
-    fun `types a premiere as a reading and a debate as other, and reads free entry`() {
+    fun `types a premiere and a debate as readings, and reads free entry`() {
         titled("Premiere mit Buchpreisträgerin").eventType shouldBe EventType.READING.name
         val debate = titled("Europa kontrovers")
-        debate.eventType shouldBe EventType.OTHER.name
+        debate.eventType shouldBe EventType.READING.name
         debate.free shouldBe true
         titled("FIREWORK!").ticketUrl shouldBe "https://www.eventbrite.de/e/firework-berlin-annabell-whitney-tickets-1981851019750?aff=oddtdtcreator"
     }

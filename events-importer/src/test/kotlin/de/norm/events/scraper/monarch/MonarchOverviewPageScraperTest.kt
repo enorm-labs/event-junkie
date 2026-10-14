@@ -103,15 +103,17 @@ class MonarchOverviewPageScraperTest {
     }
 
     @Test
-    fun `treats a non-concert club night with no keyword cue as OTHER with no artists`() {
-        val offBeat =
-            scraper
-                .scrape(programme(), baseUrl)
-                .single { it.title == "OFF BEAT: SUMMER SESSIONS" }
+    fun `types an unmarked night that starts at nine or later as a club night with no artists`() {
+        val events = scraper.scrape(programme(), baseUrl)
+        val offBeat = events.single { it.title == "OFF BEAT: SUMMER SESSIONS" }
 
-        // No "(KONZERT)" marker and no party/quiz/… keyword in the title → OTHER
-        // (never CONCERT, so the event name is not minted as a headliner).
-        offBeat.eventType shouldBe "OTHER"
+        // No "(KONZERT)" marker and no keyword in the title, but a 23:00 start: a club night,
+        // never a CONCERT, so the event name is not minted as a headliner.
+        offBeat.eventType shouldBe "PARTY"
+        events.filter { it.title == "INDIE GROUND" }.map { it.eventType }.toSet() shouldBe setOf("PARTY")
+        events.single { it.title == "CHEERS QUEERS – CSD EDITION" }.eventType shouldBe "PARTY"
+        // An unmarked 19:00 night gives no club-night signal.
+        events.single { it.title == "DAS LUNSENTRIO" }.eventType shouldBe "OTHER"
         offBeat.startTime shouldBe LocalTime.of(23, 0)
         offBeat.ticketUrl shouldBe "https://ra.co/events/2475168"
         // A party/DJ-night title is not an artist.
@@ -163,6 +165,20 @@ class MonarchOverviewPageScraperTest {
         event.startTime.shouldBeNull()
         event.sourceId shouldBe "monarch:2026-10-24-cheers-queers"
         event.ticketUrl shouldBe "https://hausofus.ditix.shop/event/66p0v12m0t41xn3m"
+    }
+
+    @Test
+    fun `types a night with no time as a club night when its blurb calls it a party`() {
+        val html =
+            organiserBlock("Samstag 24/10/2026-", "CHEERS QUEERS").outerHtml().replace(
+                "</table>",
+                "</table><table><tr><td id='tom' class='tom'>Deine queere Pop-Party geht in die fünfte Runde. " +
+                    "Are you ready for Drag, Drinks &amp; Dancefloor?</td></tr></table>"
+            )
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.eventType shouldBe "PARTY"
+        event.artists shouldHaveSize 0
     }
 
     @Test

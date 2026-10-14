@@ -100,11 +100,12 @@ class PankeProgrammePageScraper {
         val lineup = withTimetable(residentAdvisorLineup(article), article, eventDate)
         val times = parseTimes(article)
         val price = parsePankePrice(article.select("$BODY_COLUMN p").flatMap { it.textLines() })
+        val description = descriptionOf(article)
 
         return ScrapedEvent(
             title = title,
-            description = descriptionOf(article),
-            eventType = eventTypeOf(title, lineup),
+            description = description,
+            eventType = eventTypeOf(title, lineup, description),
             eventDate = eventDate,
             doorsTime = times.doors,
             startTime = times.start,
@@ -124,19 +125,23 @@ class PankeProgrammePageScraper {
      * keyword wins first — a market is not a club night, a rave is. Where the title says nothing,
      * **an event that bills DJs on Resident Advisor is a club night**: the venue links a profile
      * only for the acts on its floor, a far better signal than the name, a series title rather
-     * than a format. Last, a title that names a live show (`… MIT LIVE BANDS`, `… Tour`, `… Live at
-     * Panke`) is a concert (#2398). An event with none of the three stays `OTHER` rather than being
-     * guessed.
+     * than a format. Then a live show is a concert: a title that names one (`… MIT LIVE BANDS`,
+     * `… Tour`, `… Live at Panke`, #2398) or a body that bills `live bands`. Last, a `Disko` or
+     * `Fiesta` title, or a body that names a dancefloor, is a club night (#2992). An event with none
+     * of these, or a market, stays `OTHER` rather than being guessed.
      */
     private fun eventTypeOf(
         title: String,
-        lineup: List<ScrapedArtist>
+        lineup: List<ScrapedArtist>,
+        description: String?
     ): String {
         val fromTitle = inferUnmarkedTitleType(title)
+        val body = description.orEmpty()
         return when {
-            fromTitle != EventType.OTHER.name -> fromTitle
+            fromTitle != EventType.OTHER.name || MARKET_TITLE.containsMatchIn(title) -> fromTitle
             lineup.isNotEmpty() -> EventType.PARTY.name
-            LIVE_SHOW_TITLE.containsMatchIn(title) -> EventType.CONCERT.name
+            LIVE_SHOW_TITLE.containsMatchIn(title) || LIVE_BANDS.containsMatchIn(body) -> EventType.CONCERT.name
+            PARTY_TITLE.containsMatchIn(title) || CLUB_NIGHT_BODY.containsMatchIn(body) -> EventType.PARTY.name
             else -> fromTitle
         }
     }
@@ -301,6 +306,18 @@ private const val MINUTE_GROUP = 2
 
 /** A title word that names a live show rather than a series: `live`, `tour`. */
 private val LIVE_SHOW_TITLE = Regex("""\b(?:live|tour)\b""", RegexOption.IGNORE_CASE)
+
+/** The Sunday market, whatever its body says: a market is no club night. */
+private val MARKET_TITLE = Regex("""markt|market""", RegexOption.IGNORE_CASE)
+
+/** A disco or a fiesta in the title, the venue's own words for a dance night. */
+private val PARTY_TITLE = Regex("""\b(?:disko|disco|fiesta)\b""", RegexOption.IGNORE_CASE)
+
+/** The body bills live bands, as the FLIGHTMODE series does. */
+private val LIVE_BANDS = Regex("""\blive\s+bands?\b""", RegexOption.IGNORE_CASE)
+
+/** The body names a dancefloor or a night-long set: a club night. A bare DJ is none, since an open mic has one too. */
+private val CLUB_NIGHT_BODY = Regex("""\bdance\s?floor\b|\ball\s+night\s+long\b""", RegexOption.IGNORE_CASE)
 
 /**
  * The body's precise pair, "🕐 Doors 19:00 · Concert 21:00". Both labels are required and at most
