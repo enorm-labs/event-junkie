@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { EllipsisVertical, LoaderCircle } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
+import { checkSource } from '@/api/dataQuality'
 import {
   type EventSource,
   fetchSource,
@@ -41,6 +43,26 @@ const error = ref<string | null>(null)
 let timer: ReturnType<typeof setTimeout> | undefined
 let unmounted = false
 const editing = ref(false)
+
+/** The AI check runs in the background and is not polled: the importer log carries its result. */
+const confirmingCheck = ref(false)
+const checking = ref(false)
+const checkStarted = ref(false)
+
+async function runCheck() {
+  confirmingCheck.value = false
+  checking.value = true
+  checkStarted.value = false
+  error.value = null
+  try {
+    await checkSource(props.source.slug)
+    checkStarted.value = true
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    checking.value = false
+  }
+}
 
 /** The PATCH answers the source as stored, so the row shows it without another read. */
 function saved(source: EventSource) {
@@ -153,6 +175,18 @@ onBeforeUnmount(() => {
               Reset to IDLE and clear the error. The scheduler imports it on its next tick.
             </span>
           </DropdownMenuItem>
+          <!-- The check reads the stored events and changes no import, so a running import does not block it. -->
+          <DropdownMenuItem
+            :aria-label="`Check ${source.name} with AI`"
+            :disabled="checking"
+            class="flex-col items-start gap-0"
+            @select="confirmingCheck = true"
+          >
+            Check with AI
+            <span class="text-xs text-muted-foreground">
+              Propose fixes for the upcoming events the nightly check would pick.
+            </span>
+          </DropdownMenuItem>
           <!-- Edit stays open while the row polls: the form changes no import. -->
           <DropdownMenuItem :aria-label="`Edit ${source.name}`" @select="editing = true">
             Edit
@@ -175,6 +209,27 @@ onBeforeUnmount(() => {
       role="status"
     >
       Still running after 10 minutes. Reload the page later.
+    </p>
+    <div
+      v-if="confirmingCheck"
+      :aria-label="`Confirm the check of ${source.name}`"
+      class="flex max-w-48 flex-col gap-1 text-xs whitespace-normal"
+      role="group"
+    >
+      <p>One model call per event, counted against the month’s token budget. Start?</p>
+      <div class="flex gap-1">
+        <Button size="xs" @click="runCheck">Check</Button>
+        <Button size="xs" variant="outline" @click="confirmingCheck = false">Cancel</Button>
+      </div>
+    </div>
+    <p
+      v-if="checkStarted"
+      class="max-w-48 text-xs whitespace-normal text-muted-foreground"
+      role="status"
+    >
+      The check started. Its suggestions appear on
+      <RouterLink class="underline underline-offset-4" to="/suggestions">Suggested fixes</RouterLink
+      >.
     </p>
     <p v-if="error" class="max-w-48 text-xs whitespace-normal text-destructive" role="alert">
       {{ error }}

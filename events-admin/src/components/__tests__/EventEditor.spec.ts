@@ -1,6 +1,7 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { checkEvent, ClassificationRun } from '@/api/dataQuality'
 import type {
   AdminEvent,
   EventFeatures,
@@ -59,6 +60,13 @@ vi.mock('@/api/events', async (original) => ({
   ...api,
 }))
 
+const quality = vi.hoisted(() => ({ checkEvent: vi.fn<typeof checkEvent>() }))
+
+vi.mock('@/api/dataQuality', async (original) => ({
+  ...(await original<typeof import('@/api/dataQuality')>()),
+  ...quality,
+}))
+
 const known: Record<'artists' | 'promoters', NamedRow[]> = {
   artists: [
     { id: 3, name: 'Die Nerven', slug: 'die-nerven' },
@@ -91,7 +99,11 @@ async function mountEditor(event: AdminEvent = stored, features: EventFeatures =
   })
   api.fetchEvent.mockResolvedValue(event)
   api.fetchEventFeatures.mockResolvedValue(features)
-  const wrapper = mount(EventEditor, { props: { eventId: 418 }, attachTo: document.body })
+  const wrapper = mount(EventEditor, {
+    props: { eventId: 418 },
+    attachTo: document.body,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  })
   await flushPromises()
   return wrapper
 }
@@ -402,6 +414,89 @@ describe('EventEditor', () => {
       await submit()
       expect(api.updateEvent).toHaveBeenCalledOnce()
       expect(api.setEventFeatures).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Check with AI', () => {
+    const run = (overrides: Partial<ClassificationRun>): ClassificationRun => ({
+      candidates: 1,
+      checked: 0,
+      unchanged: 0,
+      failed: 0,
+      overCap: 0,
+      overBudget: 0,
+      suggested: {},
+      ...overrides,
+    })
+
+    const buttonNamed = (label: string) =>
+      [...body().querySelectorAll<HTMLButtonElement>('button')].find(
+        (b) => b.textContent?.trim() === label,
+      )
+
+    async function check(answer: ClassificationRun | Error) {
+      if (answer instanceof Error) quality.checkEvent.mockRejectedValue(answer)
+      else quality.checkEvent.mockResolvedValue(answer)
+      const wrapper = await mountEditor()
+      buttonNamed('Check with AI')!.click()
+      await flushPromises()
+      expect(quality.checkEvent).not.toHaveBeenCalled()
+      expect(body().querySelector('[data-testid="check-confirm"]')?.textContent).toContain(
+        'token budget',
+      )
+      buttonNamed('Check')!.click()
+      await flushPromises()
+      return wrapper
+    }
+
+    const outcome = () => body().querySelector('[data-testid="check-outcome"]')?.textContent
+
+    it.each([
+      [
+        'checked, with suggestions',
+        run({ checked: 1, suggested: { startTime: 1, eventType: 1 } }),
+        'Checked. New suggestions for: startTime, eventType.',
+      ],
+      ['checked, without', run({ checked: 1 }), 'Checked. No field differs from the stored value.'],
+      ['unchanged', run({ unchanged: 1 }), 'Skipped: the title, subtitle and description'],
+      ['failed', run({ failed: 1 }), 'The model gave no answer.'],
+      ['overBudget', run({ overBudget: 1 }), 'Not sent: the month’s token budget is spent.'],
+    ])('confirms, checks the event without force and reports %s', async (_, answer, text) => {
+      const wrapper = await check(answer)
+
+      expect(quality.checkEvent).toHaveBeenCalledExactlyOnceWith(418)
+      expect(outcome()).toContain(text)
+      expect(wrapper.getComponent(RouterLinkStub).props('to')).toBe('/suggestions')
+      expect(api.updateEvent).not.toHaveBeenCalled()
+    })
+
+    it('Cancel calls nothing', async () => {
+      await mountEditor()
+      buttonNamed('Check with AI')!.click()
+      await flushPromises()
+      buttonNamed('Cancel')!.click()
+      await flushPromises()
+
+      expect(quality.checkEvent).not.toHaveBeenCalled()
+      expect(body().querySelector('[data-testid="check-confirm"]')).toBeNull()
+      expect(outcome()).toBeUndefined()
+    })
+
+    it('shows the message of a 409', async () => {
+      const message =
+        'POST /api/admin/data-quality/check/event/418: HTTP 409: The event-classification check is off'
+      await check(new Error(message))
+
+      expect(body().querySelector('[role="alert"]')?.textContent).toBe(message)
+      expect(outcome()).toBeUndefined()
+    })
+
+    it('closes the editor from the Suggested fixes link', async () => {
+      const wrapper = await check(run({ checked: 1 }))
+
+      await wrapper.getComponent(RouterLinkStub).trigger('click')
+
+      expect(wrapper.emitted('close')).toHaveLength(1)
     })
   })
 })
