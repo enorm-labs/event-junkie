@@ -15,8 +15,10 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSubtitleNotice
 import de.norm.events.scraper.supportSubtitleLines
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -186,7 +188,8 @@ internal fun parseLidoEventBlock(
         doorsTime = doorsTime,
         startTime = startTime,
         eventType = refineConcertVenueType(mapEventType(root.textAt(".event-ticket__type__label")), title),
-        subtitle = root.textAt(".event-ticket__content__subtitle"),
+        // The status label already says sold out, postponed or relocated, so the banner below the subtitle is dropped.
+        subtitle = splitSubtitleNotice(root.selectFirst(".event-ticket__content__subtitle")?.textLines(keepBlankLines = true).orEmpty()).first,
         soldOut = statusText.contains("ausverkauft") || statusText.contains("sold out"),
         status = parseEventStatus(statusText),
         promoters = parseLidoPresenters(root),

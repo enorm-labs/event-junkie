@@ -3,6 +3,7 @@ package de.norm.events.scraper.astra
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.splitSubtitleNotice
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -189,5 +190,19 @@ class AstraOverviewPageScraperTest {
         val chapo = event("Chapo")
         chapo.soldOut shouldBe true
         chapo.status shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `takes a subtitle made only of a sold-out banner as the description`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/astra/astra-overview-notice-only-subtitle.html")!!
+                .bufferedReader()
+                .readText()
+        val lilPeep = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        lilPeep.subtitle shouldBe null
+        lilPeep.description shouldBe "DIE SHOW IST RESTLOS AUSVERKAUFT UND ES WIRD KEINE TICKETS AN DER ABENDKASSE GEBEN!"
+        lilPeep.soldOut shouldBe true
     }
 }
