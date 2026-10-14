@@ -298,8 +298,9 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
   writes the proposed value with `PUT /api/admin/events/{id}`, which pins the field. Then it calls
   `POST /api/admin/data-quality/suggestions/{id}/accept`. That route sets the status to `ACCEPTED` and writes no event
   field. Reject calls `POST /api/admin/data-quality/suggestions/{id}/dismiss`. An accepted `artists` value uses the
-  artist of each name, and creates the artist when none has that name. A `features` value has no admin route yet,
-  so its Accept is off until [#3066](https://github.com/enorm-labs/event-junkie/issues/3066).
+  artist of each name, and creates the artist when none has that name. An accepted `features` value goes to
+  `PUT /api/admin/events/{id}/features` as the full set. Accept refuses it when the stored features changed since
+  the check ran.
 
 ## 6. Decisions
 

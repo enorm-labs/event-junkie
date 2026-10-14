@@ -50,5 +50,6 @@ Suggested fixes (`src/views/SuggestionsView.vue`) lists the open rows of `GET /a
 the event, the field, the stored and the proposed value, the evidence, the confidence, the check and the model. Accept reads the event and PUTs it back with
 the proposed value in its field (`src/api/suggestions.ts`). The answer must list the field in `pinnedFields` (`lineup` for `artists`). Only then does Accept
 call `POST …/suggestions/{id}/accept`. Without the pin, the suggestion stays open and the card shows why. For `artists`, Accept keeps each act the event bills
-and looks up every other name. It creates an artist when no artist has that name. Reject calls `POST …/suggestions/{id}/dismiss`. A `features` suggestion has
-Accept off until #3066 adds its route.
+and looks up every other name. It creates an artist when no artist has that name. Reject calls `POST …/suggestions/{id}/dismiss`. A `features` suggestion goes
+through `PUT /api/admin/events/{id}/features` with the full proposed set. Accept refuses a slug the app does not know, and leaves the suggestion open when
+the event's features changed since the check ran.

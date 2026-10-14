@@ -232,14 +232,12 @@ describe('SuggestionsView', () => {
     expect(cards[0]!.text()).toContain('Nova Lane')
   })
 
-  it('turns Accept off for a features suggestion and names #3066', async () => {
+  it('turns Accept on for a features suggestion', async () => {
     listed = [suggestion({ field: 'features', proposedValue: 'flinta-only' })]
     const wrapper = await mountView()
 
     const accept = button(wrapper, 'Accept features for Ash Rivers')
-    expect(accept.attributes('disabled')).toBeDefined()
-    const note = wrapper.find(`#${accept.attributes('aria-describedby')}`)
-    expect(note.text()).toContain('#3066')
-    expect(button(wrapper, 'Reject features for Ash Rivers').attributes('disabled')).toBeUndefined()
+    expect(accept.attributes('disabled')).toBeUndefined()
+    expect(accept.attributes('aria-describedby')).toBeUndefined()
   })
 })
