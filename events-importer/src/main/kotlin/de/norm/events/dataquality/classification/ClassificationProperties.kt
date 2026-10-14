@@ -31,8 +31,23 @@ data class ClassificationProperties(
      * Input plus output tokens the check may use in one calendar month (UTC). At the limit every run
      * stops before its next model call. The Anthropic workspace limit of ADR-041 stays the backstop.
      */
-    val monthlyTokenBudget: Long = DEFAULT_MONTHLY_TOKEN_BUDGET
+    val monthlyTokenBudget: Long = DEFAULT_MONTHLY_TOKEN_BUDGET,
+    val minConfidence: MinConfidence = MinConfidence()
 ) {
+    /**
+     * The confidence an answer needs, per field, to become a suggestion. Below it the answer is a guess,
+     * and a guess is the busywork #474 warns about. #2997 measured the floors (ADR-041).
+     */
+    data class MinConfidence(
+        /** At 0.85, 10 of 11 type suggestions in #2997's sample were right. At 0.7, 16 of 34 were. */
+        val eventType: Double = HIGH_FLOOR,
+        val artists: Double = HIGH_FLOOR,
+        val features: Double = DEFAULT_FLOOR,
+        val startTime: Double = DEFAULT_FLOOR,
+        /** The floor of `pricePresale` and `priceBoxOffice`. */
+        val prices: Double = DEFAULT_FLOOR
+    )
+
     companion object {
         /** 04:00 UTC: after the 03:00 snapshot that sets the regression gauge and the sweeps up to 03:45. */
         const val DEFAULT_CRON = "0 0 4 * * *"
@@ -43,5 +58,8 @@ data class ClassificationProperties(
 
         /** Fifty calls a night for a month at about 2,000 tokens each. */
         private const val DEFAULT_MONTHLY_TOKEN_BUDGET = 3_000_000L
+
+        private const val DEFAULT_FLOOR = 0.7
+        private const val HIGH_FLOOR = 0.85
     }
 }

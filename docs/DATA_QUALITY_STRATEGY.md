@@ -267,7 +267,10 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     a suggestion with no model. A title of one part goes to the model, because "ELVIS" matches and is a production.
     Then one model call per event returns the type, the acts in the title and a verdict on each uncertain cue. It also
     returns a start time and prices from the text. Each answer quotes its evidence. The check drops an answer whose
-    quote is not in the event's text, whose value is outside the vocabulary or whose confidence is below 0.7. Each
+    quote is not in the event's text, or whose value is outside the vocabulary. It also drops an answer whose
+    confidence is below the floor of its field. The floor is 0.85 for the type and the acts, and 0.7 for the other
+    fields ([#2997](https://github.com/enorm-labs/event-junkie/issues/2997)). It drops an act when the next
+    word of the title is capitalised and is not a tour suffix. It removes a title-derived artist only on evidence beyond the title. Each
     field that differs from the stored value becomes one `event_suggestion` row with `check_name = event-classification`.
     The fields are `eventType`, `artists`, `features`, `startTime`, `pricePresale` and `priceBoxOffice`. The check
     never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the

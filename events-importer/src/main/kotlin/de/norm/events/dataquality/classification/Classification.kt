@@ -119,15 +119,14 @@ object ClassificationValidator {
         return answer
     }
 
-    /** An act must be words of the title. A name the model made up or took from the description is refused. */
+    /** An act must be a whole name in the title. A name the model made up or took from the description is refused. */
     private fun titleActs(
         node: JsonNode,
         title: String
     ): List<String>? {
         if (!node.isArray) return null
         val names = node.toList().map { it.asString("").trim() }
-        val normalisedTitle = normalise(title)
-        return names.takeIf { all -> all.all { it.isNotEmpty() && normalise(it) in normalisedTitle } }
+        return names.takeIf { all -> all.all { it.isNotEmpty() && TitleActNames.isWholeName(it, title) } }
     }
 
     private fun verdicts(
@@ -215,4 +214,40 @@ object ClassificationValidator {
             .replace(WHITESPACE, " ")
             .trim()
             .lowercase(Locale.ROOT)
+}
+
+/** Whether a proposed act is a whole name in the title, and not cut short: "Katja" from "Katja Berlin Tour 2026" (#2997). */
+internal object TitleActNames {
+    private const val NO_WORD_BEFORE = "(?<![\\p{L}\\p{N}])"
+    private const val NO_WORD_AFTER = "(?![\\p{L}\\p{N}])"
+
+    /** Capitalised words that may follow a complete name: a tour or edition suffix, or a word that joins two acts. */
+    private val NAME_SUFFIXES = setOf("tour", "tournee", "live", "edition", "feat", "featuring", "und", "and", "mit", "with", "vs")
+
+    fun isWholeName(
+        act: String,
+        title: String
+    ): Boolean {
+        val normalisedAct = ClassificationValidator.normalise(act)
+        val wholeWords = Regex("$NO_WORD_BEFORE${Regex.escape(normalisedAct)}$NO_WORD_AFTER")
+        return wholeWords.containsMatchIn(ClassificationValidator.normalise(title)) && !cutShort(act, title)
+    }
+
+    /**
+     * Every occurrence of [act] goes on with a capitalised word that is no suffix, so the name continues.
+     * An all-caps title shows no case, so nothing counts as cut there.
+     */
+    private fun cutShort(
+        act: String,
+        title: String
+    ): Boolean {
+        // Only the act ignores case, so the next word still has to start with a capital.
+        val continued = Regex("$NO_WORD_BEFORE(?iu:${Regex.escape(act)})$NO_WORD_AFTER(?:\\s+(\\p{Lu}\\p{Ll}[\\p{L}'-]*))?")
+        val occurrences = continued.findAll(title).toList()
+        return occurrences.isNotEmpty() &&
+            occurrences.all { match ->
+                val next = match.groups[1]?.value
+                next != null && next.lowercase(Locale.ROOT) !in NAME_SUFFIXES
+            }
+    }
 }

@@ -184,7 +184,7 @@ class EventClassificationCheck(
         if (result != ClassifierResult.Failed) tally.monthTokens = ledger.record(result.usage)
         when (result) {
             is ClassifierResult.Answered -> {
-                suggestions += Proposals(target, lineup, musicBrainzActs, features, result.answer, classifier.model).all()
+                suggestions += Proposals(target, lineup, musicBrainzActs, features, result.answer).all()
                 repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_ANSWERED)
             }
@@ -222,35 +222,44 @@ class EventClassificationCheck(
         return segments.mapNotNull { exact[it.lowercase()] }.filter { it.lowercase() !in billed }.distinct()
     }
 
-    /** The proposals of one model answer, one per field that differs from the stored value. */
-    private class Proposals(
+    /** The proposals of one model answer, one per field that differs from the stored value and clears that field's floor. */
+    private inner class Proposals(
         private val target: ClassificationTarget,
         private val lineup: List<LineupEntry>,
         private val musicBrainzActs: List<String>,
         private val features: List<String>,
-        private val answer: ClassificationAnswer,
-        private val model: String
+        private val answer: ClassificationAnswer
     ) {
+        private val model = classifier.model
+        private val floor = properties.minConfidence
+
         fun all(): List<NewSuggestion> = listOfNotNull(eventType(), artists(), features(), startTime(), pricePresale(), priceBoxOffice())
 
         private fun eventType() =
-            answer.eventType?.confident()?.takeIf { it.value.name != target.eventType }?.let {
+            answer.eventType?.confident(floor.eventType)?.takeIf { it.value.name != target.eventType }?.let {
                 NewSuggestion(target.id, FIELD_EVENT_TYPE, target.eventType, it.value.name, it.evidence, it.confidence, model)
             }
 
-        /** Adds the acts the title names, and drops a title-derived artist the model does not call an act. */
+        /**
+         * Adds the acts the title names, and drops a title-derived artist the model does not call an act.
+         * A drop needs evidence beyond the title: "PLOT HOUSE" quoted back from the title "PLOT HOUSE"
+         * does not show that it names a production and not a band (#2997).
+         */
         private fun artists(): NewSuggestion? {
-            val acts = answer.titleActs?.confident() ?: return null
+            val acts = answer.titleActs?.confident(floor.artists) ?: return null
             val current = lineup.map { it.name } + musicBrainzActs
             val named = acts.value.map { it.lowercase() }.toSet()
-            val kept = lineup.filter { !it.titleDerived || it.name.lowercase() in named }.map { it.name } + musicBrainzActs
+            val (kept, removed) = lineup.partition { !it.titleDerived || it.name.lowercase() in named }
             val added = acts.value.filter { act -> current.none { it.equals(act, ignoreCase = true) } }
-            val proposed = (kept + added).distinctBy { it.lowercase() }
-            return if (proposed == current) null else artistsSuggestion(target, lineup, proposed, acts.evidence, acts.confidence, model)
+            val proposed = (kept.map { it.name } + musicBrainzActs + added).distinctBy { it.lowercase() }
+            val unbacked = removed.isNotEmpty() && quotesOnlyTheTitle(acts.evidence)
+            return if (proposed == current || unbacked) null else artistsSuggestion(target, lineup, proposed, acts.evidence, acts.confidence, model)
         }
 
+        private fun quotesOnlyTheTitle(evidence: String) = ClassificationValidator.normalise(evidence) in ClassificationValidator.normalise(target.title)
+
         private fun features(): NewSuggestion? {
-            val confirmed = answer.features.filter { it.confirmed && it.confidence >= MIN_CONFIDENCE }
+            val confirmed = answer.features.filter { it.confirmed && it.confidence >= floor.features }
             val proposed = (features + confirmed.map { it.feature.slug }).toSortedSet()
             if (proposed == features.toSortedSet()) return null
             return NewSuggestion(
@@ -265,7 +274,7 @@ class EventClassificationCheck(
         }
 
         private fun startTime() =
-            answer.startTime?.confident()?.let { found ->
+            answer.startTime?.confident(floor.startTime)?.let { found ->
                 val proposed = found.value.format(TIME_FORMAT)
                 val stored = target.startTime?.format(TIME_FORMAT)
                 if (proposed == stored) null else NewSuggestion(target.id, FIELD_START_TIME, stored, proposed, found.evidence, found.confidence, model)
@@ -279,13 +288,13 @@ class EventClassificationCheck(
             field: String,
             finding: Finding<BigDecimal>?,
             stored: BigDecimal?
-        ) = finding?.confident()?.let { found ->
+        ) = finding?.confident(floor.prices)?.let { found ->
             val proposed = found.value.toPlainString()
             val storedText = stored?.setScale(2, RoundingMode.HALF_UP)?.toPlainString()
             if (proposed == storedText) null else NewSuggestion(target.id, field, storedText, proposed, found.evidence, found.confidence, model)
         }
 
-        private fun <T> Finding<T>.confident(): Finding<T>? = takeIf { it.confidence >= MIN_CONFIDENCE }
+        private fun <T> Finding<T>.confident(min: Double): Finding<T>? = takeIf { it.confidence >= min }
     }
 
     companion object {
@@ -311,9 +320,6 @@ class EventClassificationCheck(
         private const val OUTCOME_REJECTED = "rejected"
         private const val OUTCOME_FAILED = "failed"
         private const val OUTCOME_UNCHANGED = "unchanged"
-
-        /** Below this the answer is a guess, and a guess is the busywork #474 warns about. #2997 measures it. */
-        const val MIN_CONFIDENCE = 0.7
 
         /** An `EXACT` artist as a part of a longer title: strong, and still a proposal. */
         private const val MUSICBRAINZ_CONFIDENCE = 0.9

@@ -84,3 +84,25 @@ for this workload.
 - [ADR-026](ADR-026_MULTILINGUAL_EVENT_TEXT.md), the translation engine
 - `docs/DATA_QUALITY_STRATEGY.md` §5, Pillar 4
 - `docs/LEGAL.md` §7.3a, the processor entry
+
+## Follow-up: measured false-positive rate, 2026-10-14
+
+The operator labelled 58 suggestions of the `event-classification` check from one staging run. The run read five sources with a cap of 20 calls each.
+[#2997](https://github.com/enorm-labs/event-junkie/issues/2997) holds the sample and each label.
+
+| Field            | Right, confidence 0.7 or more | Right, confidence 0.85 or more | Decision                                  |
+| ---------------- | ----------------------------: | -----------------------------: | ----------------------------------------- |
+| `eventType`      |                16 of 34 (47%) |                 10 of 11 (91%) | Keep, with a floor of 0.85                |
+| `artists`        |                14 of 21 (67%) |                 12 of 16 (75%) | Tune, with a floor of 0.85                |
+| `startTime`      |                        2 of 2 |                         2 of 2 | Keep at 0.7. The sample is small          |
+| `pricePresale`   |                        1 of 1 |                         1 of 1 | Keep at 0.7. The sample is small          |
+| `priceBoxOffice` |                             — |                              — | Keep at 0.7. The sample has no suggestion |
+| `features`       |                             — |                              — | Keep at 0.7. The sample has no suggestion |
+
+Each field has its own floor in `app.data-quality.classification.min-confidence`. The tuning for `artists` has two parts:
+
+- The prompt states the type rules of `docs/EVENT_SCOPE.md` §2. It also asks for each name complete, as the title writes it.
+- The check refuses a name when the next word of the title is capitalised and is not a tour suffix. It also refuses to remove a title-derived artist when
+  the evidence is only the title.
+
+A new sample measures the tuned prompt before the floors change again.

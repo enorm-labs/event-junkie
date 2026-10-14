@@ -115,6 +115,47 @@ class EventClassificationCheckTest : BaseControllerTest() {
         }
 
     @Test
+    fun `each field has its own floor, so a 0_8 type or act writes nothing and a 0_8 start time does`(): Unit =
+        runBlocking {
+            val event = insertEvent("Blond", description = "Beginn 21 Uhr.", startTime = null)
+            server.enqueue(
+                answer(
+                    "eventType" to finding("COMEDY", "Blond", confidence = 0.8),
+                    "titleActs" to finding(listOf("Blond"), "Blond", confidence = 0.8),
+                    "startTime" to finding("21:00", "Beginn 21 Uhr", confidence = 0.8)
+                )
+            )
+
+            check().checkEvent(event)
+
+            suggestions(event).map { it.field to it.proposed } shouldContainExactly listOf("startTime" to "21:00")
+        }
+
+    @Test
+    fun `a floor is configurable per field`(): Unit =
+        runBlocking {
+            val event = insertEvent("Blond", type = "OTHER")
+            server.enqueue(answer("eventType" to finding("CONCERT", "Blond", confidence = 0.8)))
+
+            check(minConfidence = ClassificationProperties.MinConfidence(eventType = 0.75)).checkEvent(event)
+
+            suggestions(event).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "CONCERT")
+        }
+
+    @Test
+    fun `dropping a title-derived act on the title alone writes nothing, since the title may name a band`(): Unit =
+        runBlocking {
+            val artist = insertArtist("Plot House", "NONE")
+            val event = insertEvent("PLOT HOUSE", description = "Indie-Rock aus Berlin.")
+            linkArtist(event, artist, titleDerived = true)
+            server.enqueue(answer("titleActs" to finding(emptyList<String>(), "PLOT HOUSE", confidence = 0.9)))
+
+            check().checkEvent(event)
+
+            suggestions(event).shouldBeEmpty()
+        }
+
+    @Test
     fun `a title act MusicBrainz matches EXACT is proposed with no model, and the model does not repeat it`(): Unit =
         runBlocking {
             insertArtist("Kraftklub", "EXACT")
@@ -388,7 +429,8 @@ class EventClassificationCheckTest : BaseControllerTest() {
         maxPerRun: Int = 50,
         repository: EventClassificationRepository = EventClassificationRepository(template),
         budget: Long = 3_000_000,
-        meters: SimpleMeterRegistry = registry
+        meters: SimpleMeterRegistry = registry,
+        minConfidence: ClassificationProperties.MinConfidence = ClassificationProperties.MinConfidence()
     ): EventClassificationCheck {
         val properties =
             ClassificationProperties(
@@ -397,7 +439,8 @@ class EventClassificationCheckTest : BaseControllerTest() {
                 maxPerRun = maxPerRun,
                 maxRetries = 0,
                 timeout = Duration.ofSeconds(10),
-                monthlyTokenBudget = budget
+                monthlyTokenBudget = budget,
+                minConfidence = minConfidence
             )
         val classifier = AnthropicEventClassifier(properties, meters, Dispatchers.IO, server.url("/").toString().trimEnd('/'))
         val ledger = ClassificationTokenLedger(template, properties, meters)
