@@ -14,6 +14,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -56,6 +57,43 @@ class KesselhausCalendarScraperTest {
         event.pricePresale.shouldNotBeNull()
         event.imageUrl.shouldNotBeNull() shouldStartWith "https://firebasestorage.googleapis.com/"
         event.artists.map { it.name } shouldBe listOf("17 Hippies")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "KESSELHAUS    | Young The Giant     | 35.20 |",
+            "MASCHINENHAUS | Sylvan              | 33    | 38",
+            "MASCHINENHAUS | Die Improvisionäre  |       | 18",
+            "MASCHINENHAUS | SPH Music Masters   | 15    |",
+            "KESSELHAUS    | Oathbreaker         | 39.90 |",
+            "KESSELHAUS    | Ivo der Bandit      | 36.99 |",
+            "KESSELHAUS    | Unter meinem Bett   | 26    |",
+            "KESSELHAUS    | Keimzeit            | 35    | 45",
+            "MASCHINENHAUS | PARATAXE Symposium  |       | 5",
+            "KESSELHAUS    | 17 Hippies          | 35    |"
+        ]
+    )
+    fun `reads a ticket's price from its label when the amount is empty`(
+        room: KesselhausRoom,
+        title: String,
+        presale: BigDecimal?,
+        boxOffice: BigDecimal?
+    ) {
+        val event = KesselhausCalendarScraper(room, clock).scrape(calendar, url).first { it.title.startsWith(title) }
+
+        event.pricePresale shouldBe presale
+        event.priceBoxOffice shouldBe boxOffice
+    }
+
+    @Test
+    fun `reads no price from a label that names a new date`() {
+        val tickets = """[{"alt":"Verlegt auf 17.8.2027","type":"/categories//pos//subs//ticket"}]"""
+        val event = scrapeOne(title = "Manolito Simonet y su Trabuco", subtitle = "", tickets = tickets)
+
+        event.pricePresale.shouldBeNull()
+        event.priceBoxOffice.shouldBeNull()
     }
 
     @Test
@@ -207,16 +245,19 @@ class KesselhausCalendarScraperTest {
     /** One concert card on a calendar page of its own, with the transfer state the CMS writes, `&`-escaped as `&a;`. */
     private fun scrapeOne(
         title: String,
-        subtitle: String
+        subtitle: String,
+        tickets: String = "[]"
     ) = kesselhaus
-        .scrape(Jsoup.parse(calendarPage(title, subtitle), url), url)
+        .scrape(Jsoup.parse(calendarPage(title, subtitle, tickets), url), url)
         .single()
 
     private fun calendarPage(
         title: String,
-        subtitle: String
+        subtitle: String,
+        tickets: String
     ): String {
-        val base = """{"venue":"/venues//kesselhaus","start":"2027-01-09T19:00:00.000Z","topics":["/categories//event-topics//subs//concerts"]}"""
+        val base =
+            """{"venue":"/venues//kesselhaus","start":"2027-01-09T19:00:00.000Z","topics":["/categories//event-topics//subs//concerts"],"tickets":$tickets}"""
         val text = """{"title":"$title","subtitle":"$subtitle"}"""
         val state = """{"store.x.doc:/events//e1/meta:base/1":$base,"store.x.doc:/events//e1/meta:de/1":$text}"""
         val escaped = state.replace("&", "&a;").replace("\"", "&q;")

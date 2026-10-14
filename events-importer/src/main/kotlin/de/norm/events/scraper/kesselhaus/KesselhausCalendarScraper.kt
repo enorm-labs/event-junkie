@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.LabelledPrices
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -14,6 +15,7 @@ import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.splitSupportActs
@@ -26,6 +28,7 @@ import org.jsoup.nodes.Element
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -134,8 +137,8 @@ class KesselhausCalendarScraper(
             sourceUrl = "${baseUrl.substringBefore("/calendar")}/calendar/$id",
             sourceId = "${room.eventSource.sourceIdPrefix}$id",
             ticketUrl = tickets.firstNotNullOfOrNull { ticket -> ticket.stringOrNull("url")?.takeIf { it.startsWith("http") } },
-            pricePresale = tickets.price(PRESALE),
-            priceBoxOffice = tickets.price(BOX_OFFICE),
+            pricePresale = TicketPrices.presale(tickets),
+            priceBoxOffice = TicketPrices.boxOffice(tickets),
             genre =
                 topics
                     .mapNotNull { GENRE_TOPICS[it] }
@@ -193,9 +196,6 @@ class KesselhausCalendarScraper(
             .trim()
             .ifBlank { null }
 
-    private fun List<JsonNode>.price(type: String) =
-        firstOrNull { it.stringOrNull("type")?.endsWith("//$type") == true }?.stringOrNull("A")?.let { parsePriceValue("$it €") }
-
     private fun statusOf(notes: Set<String>): String =
         when {
             CANCELLED in notes -> EventStatus.CANCELLED.name
@@ -211,6 +211,37 @@ class KesselhausCalendarScraper(
         }
 
     private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)
+
+    /**
+     * The calendar's prices. Each ticket entry has an amount `A` and a label `alt`, and the label is read when the amount is
+     * empty (#3284). A labelled `alt` gives the price of its own kind, so `AK: 18 Euro | erm. 16 Euro` gives none for a
+     * presale entry. An unlabelled one, `35,20 Euro inkl. Gebühren`, is the entry's own price. The presale entry's `AK:`
+     * label is the box-office price when no box-office entry names one.
+     */
+    private object TicketPrices {
+        fun presale(tickets: List<JsonNode>): BigDecimal? = tickets.price(PRESALE)
+
+        fun boxOffice(tickets: List<JsonNode>): BigDecimal? = tickets.price(BOX_OFFICE) ?: tickets.ticket(PRESALE)?.altPrices()?.boxOffice
+
+        private fun List<JsonNode>.ticket(type: String) = firstOrNull { it.stringOrNull("type")?.endsWith("//$type") == true }
+
+        private fun List<JsonNode>.price(type: String): BigDecimal? =
+            ticket(type)?.let { ticket -> ticket.stringOrNull("A")?.let { parsePriceValue("$it €") } ?: ticket.altPrice(type) }
+
+        private fun JsonNode.altPrice(type: String): BigDecimal? {
+            val labelled = altPrices() ?: return null
+            return when {
+                labelled.presale == null && labelled.boxOffice == null -> parsePriceValue(altText())
+                type == BOX_OFFICE -> labelled.boxOffice
+                else -> labelled.presale
+            }
+        }
+
+        private fun JsonNode.altPrices(): LabelledPrices? = altText()?.let(::parseLabelledPrices)
+
+        /** The `alt` label with a bare amount read as euros: `VVK: 39,90 inkl. Gebühren`. */
+        private fun JsonNode.altText(): String? = stringOrNull("alt")?.replace(BARE_AMOUNT, "$1 €")
+    }
 
     /**
      * Angular's serialised transfer state, `&q;`-escaped JSON keyed by the store's document paths
@@ -267,6 +298,9 @@ class KesselhausCalendarScraper(
         private val MARKUP_TAG = Regex("""</?(?:h[1-6]|p|span|strong|em|b|i|u|div)(?:\s[^>]*)?>""", RegexOption.IGNORE_CASE)
         private val BOLD = Regex("""\*\*""")
         private val HEADING = Regex("""^#{1,6}\s+""")
+
+        /** An amount with cents in a ticket label that no currency follows; a whole number may be a date or a time. */
+        private val BARE_AMOUNT = Regex("""(?<![\d.,])(\d+,\d{2})(?![\d.,]|\s*(?:€|eur))""", RegexOption.IGNORE_CASE)
 
         private val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
         private val SUBTITLE_BILL = Regex("""^mit\s+(.+)""", RegexOption.IGNORE_CASE)
