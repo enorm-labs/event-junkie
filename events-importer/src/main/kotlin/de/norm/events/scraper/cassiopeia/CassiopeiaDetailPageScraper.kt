@@ -159,17 +159,20 @@ class CassiopeiaDetailPageScraper {
     }
 
     /**
-     * The promoters a description paragraph credits: `Präsentiert von Trinity Music`, or a list such
-     * as `präsentiert von: Kidnap Music, Audiolith Booking & ROSA e.V.` (#3166). Only a paragraph the
-     * credit opens counts, because a mid-sentence "presents" is usually the act presenting its record.
+     * The promoters a description line credits: `Präsentiert von Trinity Music`, `Veranstalter:
+     * Landstreicher Konzerte`, or a list such as `präsentiert von: Kidnap Music, Audiolith Booking &
+     * ROSA e.V.` (#3166). Only a line the credit opens counts, because a mid-sentence "presents" is
+     * usually the act presenting its record. A block keeps its line breaks, since the credit often
+     * follows a blank line inside the last block (#3286). The venue's own name is not a promoter.
      */
     private fun parseBodyPresenters(content: Element): List<String> =
         content
             .select(".paragraph-wrapper .paragraph.events")
-            .mapNotNull { presenterInCredit(it.text()) }
+            .flatMap { it.wholeText().lines() }
+            .mapNotNull { line -> presenterInCredit(line) ?: ORGANISER_CREDIT.find(line)?.groupValues?.get(1) }
             .flatMap { it.split(CO_PRESENTER_SEPARATOR) }
             .map { it.trim() }
-            .filter { it.isNotBlank() }
+            .filter { it.isNotBlank() && !VENUE_NAME.matches(it) }
 
     /**
      * The ticket URL, by reliability: an `a.faq-link-wrapper` containing "Tickets", the Webflow
@@ -260,6 +263,12 @@ class CassiopeiaDetailPageScraper {
 
         /** What a credit list joins its promoters with: `Kidnap Music, Audiolith Booking & ROSA e.V.`. */
         private val CO_PRESENTER_SEPARATOR = Regex("""\s*[,&]\s*""")
+
+        /** The organiser label Cassiopeia writes before a credit, `Veranstalter: Trinity Music`; the colon is required. */
+        private val ORGANISER_CREDIT = Regex("""^\s*Veranstalter\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** The venue's own name in a credit list, `Veranstalter: cassiopeia & King Kong Kicks`. */
+        private val VENUE_NAME = Regex("""cassiopeia(?:\s+berlin)?""", RegexOption.IGNORE_CASE)
 
         /** The paragraph that opens a festival's act list: `Line-up:`, `Lineup`, `LINE UP:`. */
         private val LINEUP_LABEL = Regex("""line[- ]?up:?""", RegexOption.IGNORE_CASE)
