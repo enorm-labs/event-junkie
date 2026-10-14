@@ -3,6 +3,8 @@
  * `GET /api/admin/promoters?name=` match any part of the name, ignoring case (#2988).
  */
 
+import { failOnError } from '@/api/events'
+
 /** An artist or a promoter as a picker shows it. */
 export interface NamedRow {
   id: number
@@ -60,4 +62,31 @@ export async function fetchNames(
     unique.map((id) => getJson<NamedRow>(`/api/admin/${kind}/${id}`, fetchFn).catch(() => null)),
   )
   return new Map(unique.map((id, i) => [id, rows[i] ?? null]))
+}
+
+/**
+ * The artist named exactly [name], ignoring case, or null. The search matches any part of the name,
+ * so it reads a page of 100 and keeps the exact match.
+ */
+export async function findArtistByName(
+  name: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<NamedRow | null> {
+  const wanted = name.trim()
+  const query = new URLSearchParams({ name: wanted, size: '100', sort: 'name' })
+  const page = await getJson<Page<NamedRow>>(`/api/admin/artists?${query}`, fetchFn)
+  const found = page.content.find((row) => row.name.toLowerCase() === wanted.toLowerCase())
+  return found ? { id: found.id, name: found.name, slug: found.slug } : null
+}
+
+/** Creates an artist with [name] and nothing else. The importer answers 409 when its slug is taken. */
+export async function createArtist(name: string, fetchFn: typeof fetch = fetch): Promise<NamedRow> {
+  const response = await fetchFn('/api/admin/artists', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim() }),
+  })
+  await failOnError(response, 'POST /api/admin/artists')
+  const { id, name: stored, slug } = (await response.json()) as NamedRow
+  return { id, name: stored, slug }
 }

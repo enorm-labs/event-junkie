@@ -135,7 +135,8 @@ Accept: application/json
 ###
 ### A check proposes a fix with its evidence; a person decides. Nothing here
 ### writes to an event: apply a fix with events.http's
-### `PUT /api/admin/events/{id}`, which pins the field.
+### `PUT /api/admin/events/{id}`, which pins the field, then accept it below.
+### events-admin's Suggested fixes page does both (#346).
 ### ============================================================
 
 ### Open suggestions, newest first
@@ -153,6 +154,16 @@ Accept: application/json
 
 ### The suggestions for one event
 GET {{importer-host}}/api/admin/data-quality/suggestions?eventId=1
+Accept: application/json
+
+### The open suggestions of one check
+GET {{importer-host}}/api/admin/data-quality/suggestions?status=OPEN&checkName=event-classification
+Accept: application/json
+
+### Accept one — run the list above first, and PUT the event with the value
+### before this: accepting writes no event field. A second acceptance is a
+### no-op; a dismissed suggestion answers 409, an unknown id 404.
+POST {{importer-host}}/api/admin/data-quality/suggestions/{{suggestionId}}/accept
 Accept: application/json
 
 ### Dismiss one — run the list above first. A second dismissal is a no-op;
