@@ -167,4 +167,18 @@ Apply only the numbers the operator names, one at a time, on the environment's i
     curl -sf -X PUT -H 'Content-Type: application/json' --data @temp/artist-<id>-put.json localhost:$PORT/api/admin/artists/<id> | jq '{id, name, slug}'
     ```
 
-6. **Record each fix** under **Applied** in the report: its number, `applied`, and the pinned fields the PUT answered. A skipped fix gets its reason.
+    **Then pin the line-up of every upcoming event that bills the artist, or the next import undoes the rename.** The rename changes the slug, and the
+    import finds an artist by the slug of the scraped name (`artistSlugFor`). It creates the old name again and bills it in place of the renamed one.
+    `namePinned` guards only the MusicBrainz enrichment. No endpoint pins a field by itself, and a PUT pins the line-up only when it changes. So PUT each
+    event twice: once with `billingOrder` moved, once as stored. The line-up ends unchanged and pinned.
+
+    ```sh
+    curl -sf "localhost:$PORT/api/admin/events?artistId=<artist-id>&size=100" \
+      | jq -r --arg today "$(TZ=Europe/Berlin date +%F)" '.content[] | select(.eventDate >= $today and (.pinnedFields | index("lineup") | not)) | .id'
+    # for each id: PUT the item-2 projection with .artists[0].billingOrder += 1, then PUT it unchanged; the second answer must list "lineup"
+    ```
+
+    An importer older than the `artistId` filter ignores it and returns every event, so check that `totalElements` is small before pinning anything.
+
+6. **Record each fix** under **Applied** in the report: its number, `applied`, the pinned fields the PUT answered, and for a rename the events whose
+   line-up it pinned. A skipped fix gets its reason.
