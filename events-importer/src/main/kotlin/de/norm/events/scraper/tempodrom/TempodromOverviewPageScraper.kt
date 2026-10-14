@@ -10,6 +10,7 @@ import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isIceShow
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.schemaDate
@@ -18,6 +19,7 @@ import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.schemaSoldOut
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.schemaTime
+import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -93,7 +95,8 @@ class TempodromOverviewPageScraper {
                 .asString(null)
                 ?.let(::decodeHtmlEntities)
                 ?.takeIf { it.isNotBlank() }
-        val eventType = tempodromEventType(title, subtitle)
+        val production = tempodromProduction(title, subtitle)
+        val eventType = production?.eventType?.name ?: tempodromEventType(title, subtitle)
         val offers = event.path("offers")
         val (presale, priceNote) = parsePrices(offers)
 
@@ -103,8 +106,8 @@ class TempodromOverviewPageScraper {
             // Edition"), not a blurb — it belongs in the subtitle.
             subtitle = subtitle,
             eventType = eventType,
-            // CONCERT is only ever the default here: no cue typed the night (ADR-039).
-            typeIsFallback = eventType == EventType.CONCERT.name,
+            // CONCERT is the default unless a production cue typed it (ADR-039).
+            typeIsFallback = production == null && eventType == EventType.CONCERT.name,
             eventDate = eventDate,
             // `doorTime` is a full timestamp of its own; only its clock part is wanted.
             doorsTime = event.schemaTime("doorTime"),
@@ -120,7 +123,7 @@ class TempodromOverviewPageScraper {
             priceNote = priceNote,
             soldOut = event.schemaSoldOut(),
             status = event.schemaStatus(),
-            artists = tempodromArtists(title, subtitle, eventType)
+            artists = production?.artists ?: tempodromArtists(title, subtitle, eventType)
         )
     }
 
@@ -174,8 +177,8 @@ class TempodromOverviewPageScraper {
 /**
  * [EventType.COMEDY] when the venue's format line says "comedy" as a word, [EventType.SHOW] when
  * it bills an ice show ("Musik-Show auf Eis"), else the shared concert-hall rule on the title.
- * No other cue is read from the subtitle: the line is also a tour name, and "Die beste Wolfgang
- * Petry Party" is a tribute show, not a party.
+ * Beyond the production cues of [tempodromProduction], no other cue is read from the subtitle: the
+ * line is also a tour name, and "Die beste Wolfgang Petry Party" is a tribute show, not a party.
  */
 internal fun tempodromEventType(
     title: String,
@@ -187,21 +190,114 @@ internal fun tempodromEventType(
         else -> inferConcertVenueType(title)
     }
 
+/** A night billed by a production's name, so its title is no act: its type, and the acts its format line names (#3162). */
+internal data class TempodromProduction(
+    val eventType: EventType,
+    val artists: List<ScrapedArtist> = emptyList()
+)
+
+/**
+ * The production [title] and [subtitle] bill, or `null` for an act's night. A film-music night is a
+ * concert; a musical, a film with live orchestra, a gala or a tribute concert is a show. The
+ * orchestra a film names after `mit dem` plays it, so it is billed.
+ */
+internal fun tempodromProduction(
+    title: String,
+    subtitle: String?
+): TempodromProduction? =
+    when {
+        listOfNotNull(title, subtitle).any { FILM_MUSIC.containsMatchIn(it) } -> TempodromProduction(EventType.CONCERT)
+
+        subtitle != null && PRODUCTION_FORMAT.containsMatchIn(subtitle) -> TempodromProduction(EventType.SHOW, filmOrchestra(subtitle))
+
+        // Loriot died in 2011: a night under his name stages his sketches, and the cast is not billed.
+        LORIOT.matches(title) -> TempodromProduction(EventType.SHOW)
+
+        // A dance congress is days of workshops and parties, not a concert: "Berlin Salsacongress 2027".
+        DANCE_CONGRESS.containsMatchIn(title) -> TempodromProduction(EventType.OTHER)
+
+        else -> null
+    }
+
+/** The orchestra after `mit dem`, in the nominative: "mit dem Deutschen Filmorchester Babelsberg". */
+private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
+    FILM_ORCHESTRA
+        .find(subtitle)
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+        ?.takeUnless { BACKING.matches(it) }
+        ?.replace(DATIVE_ADJECTIVE, "$1es")
+        ?.let { listOf(ScrapedArtist(it, "HEADLINER")) }
+        .orEmpty()
+
 /**
  * The title is the act at Tempodrom, comedy included: "Oliver Polak" / "COMEDY - Clubtour 2026".
  * A comedy night is billed like a concert without the format line, which names no support act.
  * The shared comedy rule wants "<Performer> – <Show>" in the title, and Tempodrom never writes it.
+ * A format line that opens with `mit` names the acts instead of the title.
  */
 private fun tempodromArtists(
     title: String,
     subtitle: String?,
     eventType: String
 ): List<ScrapedArtist> =
-    if (eventType == EventType.COMEDY.name) {
-        buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name)
-    } else {
-        buildArtistsForEventType(title, subtitle, eventType)
-    }
+    subtitle?.let(::castFromFormatLine)?.takeIf { it.isNotEmpty() }
+        ?: if (eventType == EventType.COMEDY.name) {
+            buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name)
+        } else {
+            buildArtistsForEventType(title, subtitle, eventType)
+        }
+
+/**
+ * The acts a `mit <names>` format line bills, without a trailing `uvm.`: "mit Marc-Uwe Kling, Sarah
+ * Bosetti uvm.". A backing band or orchestra is no act.
+ */
+private fun castFromFormatLine(subtitle: String): List<ScrapedArtist> =
+    CAST_LINE
+        .matchEntire(subtitle.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.replace(AND_MORE, "")
+        ?.let(::splitSupportActs)
+        ?.filterNot { isNonArtistName(it) || BACKING.matches(it) }
+        ?.map { ScrapedArtist(it, "HEADLINER") }
+        .orEmpty()
 
 /** "comedy" as a word in Tempodrom's format line: "Comedy Perle", "MUSIK-COMEDY-STAND-UP-SHOW". */
 private val COMEDY_FORMAT = Regex("""\bcomedy\b""", RegexOption.IGNORE_CASE)
+
+/** A film-music night, in the title or the format line: "Die Nacht der Filmmusik". */
+private val FILM_MUSIC = Regex("""\bfilmmusik\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * A production's format line: "Das Musical", "Die Originalproduktion …", "Der Originalfilm …", "… Musicalgala …",
+ * "Das Tribute-Konzert …". A bare "Musical" also bills a real act's tour ("A VERY SPECIAL MUSICAL CHRISTMAS TOUR"), so
+ * the noun needs its article. "in Concert" is no cue: it also stands beside a real act.
+ */
+private val PRODUCTION_FORMAT =
+    Regex(
+        """\b(?:das|ein|the)\s+musical\b|\bmusicalgala\b|\boriginal(?:produktion|film)\b|\btribute[\s-]?konzert\b""",
+        RegexOption.IGNORE_CASE
+    )
+
+/** The orchestra a film night names: "mit dem Deutschen Filmorchester Babelsberg". */
+private val FILM_ORCHESTRA = Regex("""\bmit\s+dem\s+(\p{Lu}[^,|]*?(?i:orchester|orchestra)[^,|]*)""")
+
+/** An adjective in the dative after `dem`, made nominative for a neuter orchestra: "Deutschen" → "Deutsches". */
+private val DATIVE_ADJECTIVE = Regex("""\b(\p{Lu}\p{Ll}+)en\b(?=.*(?i:orchester))""")
+
+/** Loriot's name as the whole title. */
+private val LORIOT = Regex("""loriot""", RegexOption.IGNORE_CASE)
+
+/** A dance congress, its dance compounded onto the word: "Salsacongress", "Tangokongress". */
+private val DANCE_CONGRESS = Regex("""\b\p{L}+(?:congress|kongress)\b""", RegexOption.IGNORE_CASE)
+
+/** A format line that bills its cast after a lowercase `mit`: "mit Marc-Uwe Kling, Sarah Bosetti uvm.". */
+private val CAST_LINE = Regex("""mit\s+(\p{Lu}.*)""")
+
+/** A trailing "and many more": `uvm.`, `u.v.m.`, `und viele mehr`. */
+private val AND_MORE = Regex("""\s*(?:\bu\.?\s?v\.?\s?m\.?|\bund\s+viele\s+mehr)\s*$""", RegexOption.IGNORE_CASE)
+
+/** A backing band or orchestra, which a cast line may name beside the acts. */
+private val BACKING = Regex("""(?:live-?)?(?:band|orchester|orchestra|ensemble|chor|choir)""", RegexOption.IGNORE_CASE)

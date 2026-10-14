@@ -139,7 +139,8 @@ class TempodromOverviewPageScraperTest {
         // three are the Roncalli gala with an orchestra, a show (#2833). Holiday on Ice and
         // "Eiskönigin 1 & 2" are ice shows, which bill no act in the title. `Die Nacht der Musicals`
         // is a gala named for its night (#3160), and `Berlin Salsacongress 2026` a congress named for its year (#3212).
-        events.count { it.artists.isNotEmpty() } shouldBe 131
+        // Six productions bill no act from the title (#3162).
+        events.count { it.artists.isNotEmpty() } shouldBe 125
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 
@@ -167,6 +168,89 @@ class TempodromOverviewPageScraperTest {
         eiskoenigin.eventType shouldBe "SHOW"
         eiskoenigin.typeIsFallback shouldBe false
         eiskoenigin.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a production SHOW and bills no act from its title`() {
+        // ELVIS / "Das Musical", "Die Originalproduktion …", "… Musicalgala …", "Das Tribute-Konzert …" (#3162).
+        listOf(
+            "elvis_2027-04-04_19",
+            "das_phantom_der_oper_2027-01-21_20",
+            "die_nacht_der_musicals_2027-03-17_20",
+            "pop_divas-der_soundtrack_deines_lebens_2027-03-18_19",
+            "drei_haselnuesse_fuer_aschenbroedel_2026-12-08_19"
+        ).forEach { id ->
+            val production = event(id)
+            production.eventType shouldBe "SHOW"
+            production.typeIsFallback shouldBe false
+            production.artists.shouldBeEmpty()
+        }
+    }
+
+    @Test
+    fun `keeps an act whose tour line calls the music a musical`() {
+        val klaws = event("alexander_klaws_2026-11-25_19")
+        klaws.subtitle shouldBe "A VERY SPECIAL MUSICAL CHRISTMAS TOUR 2026"
+        klaws.eventType shouldBe "CONCERT"
+        klaws.artists.map { it.name } shouldContainExactly listOf("ALEXANDER KLAWS")
+    }
+
+    @Test
+    fun `types a film-music night CONCERT and bills no act`() {
+        val klassikRadio = event("klassik_radio_2026-11-08_19")
+        klassikRadio.subtitle shouldBe "Live in Concert - Die Nacht der Filmmusik"
+        klassikRadio.eventType shouldBe "CONCERT"
+        klassikRadio.typeIsFallback shouldBe false
+        klassikRadio.artists.shouldBeEmpty()
+
+        val filmNight = scrapeOne("Die Nacht der Filmmusik 2027", "Live")
+        filmNight.eventType shouldBe "CONCERT"
+        filmNight.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the orchestra an original film names and no act from the title`() {
+        val film = scrapeOne("Drei Haselnüsse für Aschenbrödel", "Der Originalfilm mit dem Deutschen Filmorchester Babelsberg")
+
+        film.eventType shouldBe "SHOW"
+        film.artists shouldContainExactly listOf(ScrapedArtist("Deutsches Filmorchester Babelsberg", "HEADLINER"))
+    }
+
+    @Test
+    fun `types the Loriot programme SHOW and bills no act`() {
+        val loriot = event("loriot_2027-02-14_14")
+        loriot.eventType shouldBe "SHOW"
+        loriot.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a dance congress OTHER and bills no act`() {
+        event("berlin_salsacongress_2026_2026-08-27_2026-08-30_00").eventType shouldBe "OTHER"
+
+        val congress = scrapeOne("Berlin Salsacongress 2027", "Jungle Reloaded Edition")
+        congress.eventType shouldBe "OTHER"
+        congress.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a guest-and-host talk READING and bills no act`() {
+        val talk = scrapeOne("MISSVERSTEHEN SIE MICH RICHTIG - Robert Habeck zu Gast bei Maja Göpel", "Der Realist mit Restzweifel")
+
+        talk.eventType shouldBe "READING"
+        talk.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the cast a mit line names instead of the title`() {
+        val finale = scrapeOne("Das große Fun Facts Jahresfinale", "mit Marc-Uwe Kling, Sarah Bosetti uvm.")
+
+        finale.artists.map { it.name } shouldContainExactly listOf("Marc-Uwe Kling", "Sarah Bosetti")
+    }
+
+    @Test
+    fun `bills the act in front of sings and of a bracketed show`() {
+        event("thomas_anders_sings_modern_talking_2027-05-16_20").artists.map { it.name } shouldContainExactly listOf("Thomas Anders")
+        scrapeOne("SHADEN (أنا إمرأة تعبانة) Show", "// Berlin | Kleine Arena").artists.map { it.name } shouldContainExactly listOf("SHADEN")
     }
 
     @Test
@@ -230,6 +314,20 @@ class TempodromOverviewPageScraperTest {
             """.trimIndent()
 
         scraper.scrape(Jsoup.parse(html, baseUrl)).map { it.title } shouldContainExactly listOf("Masters of Rock")
+    }
+
+    private fun scrapeOne(
+        name: String,
+        description: String
+    ): ScrapedEvent {
+        val html =
+            """
+            <html><body><script type="application/ld+json">[
+              {"@type": "Event", "name": "$name", "description": "$description",
+               "startDate": "2027-04-04T19:00:00+02:00", "url": "https://www.tempodrom.de/event/x_2027-04-04_19/"}
+            ]</script></body></html>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, baseUrl)).single()
     }
 
     @Test

@@ -64,7 +64,7 @@ class EventTypeMappingTest {
         inferConcertVenueType("Stand-Up Night mit Freunden") shouldBe "COMEDY"
         inferConcertVenueType("KAMISI - Die 80er Jahre Comedy Show") shouldBe "COMEDY"
         inferConcertVenueType("English Comedy Night") shouldBe "COMEDY"
-        inferConcertVenueType("MISSVERSTEHEN SIE MICH RICHTIG - Robert Habeck zu Gast bei Maja Göpel") shouldBe "OTHER"
+        inferConcertVenueType("MISSVERSTEHEN SIE MICH RICHTIG - Robert Habeck zu Gast bei Maja Göpel") shouldBe "READING"
         inferConcertVenueType("The Divine Comedy") shouldBe "CONCERT"
         inferConcertVenueType("Stand Up - Tribute Night") shouldBe "CONCERT"
     }
