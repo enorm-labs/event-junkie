@@ -495,6 +495,100 @@ class FrannzOverviewPageScraperTest {
 
             event.ticketUrl.shouldBeNull()
         }
+
+        // Captured from frannz.eu on 2026-10-14: The Delines, sold through Greyzone, with no
+        // copilot or Eventim anchor anywhere in the article (#3281).
+        @Test
+        fun `reads any seller's anchor from the promo line, not only Eventim`() {
+            val fixture =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/frannz/frannz-greyzone-promo-line.html")!!
+                    .bufferedReader()
+                    .readText()
+
+            val event = scraper.scrape(Jsoup.parse(fixture, baseUrl), baseUrl).single()
+
+            event.title shouldBe "THE DELINES"
+            event.ticketUrl shouldBe "https://www.greyzone-tickets.de/produkte/1240"
+            event.description!! shouldNotContain "Tickets im VVK"
+        }
+
+        @Test
+        fun `leaves the link empty when the line only spells a host other than Eventim`() {
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(article("-Tickets im VVK gibt es bei [www.greyzone-tickets.de](www.greyzone-tickets.de) -"), baseUrl),
+                        baseUrl
+                    ).single()
+
+            event.ticketUrl.shouldBeNull()
+        }
+
+        // A bare `www.…` href resolves against frannz.eu, a page on the venue's own site.
+        @Test
+        fun `ignores a promo-line anchor without a scheme`() {
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(article("""Tickets im VVK gibt es bei <a href="www.deinetickets.de">www.deinetickets.de</a>"""), baseUrl),
+                        baseUrl
+                    ).single()
+
+            event.ticketUrl.shouldBeNull()
+        }
+
+        // Captured from frannz.eu on 2026-10-14: a Schöne Party night that labels its own shop.
+        @Test
+        fun `reads the seller's anchor from a Tickets online line and keeps the line`() {
+            val fixture =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/frannz/frannz-tickets-online-line.html")!!
+                    .bufferedReader()
+                    .readText()
+
+            val event = scraper.scrape(Jsoup.parse(fixture, baseUrl), baseUrl).single()
+
+            event.title shouldBe "Die Schöne Party"
+            event.ticketUrl shouldBe "https://tickets.schoeneparty.de/20261031/"
+            event.description!! shouldContain "Tickets online: tickets.schoeneparty.de"
+            event.description shouldContain "Tickets vor Ort: Abendkasse 16 €"
+        }
+
+        @Test
+        fun `reads the seller's anchor from a Tickets line and keeps the presale date`() {
+            val event = scrape().first { it.title == "WIDOWSPEAK" }
+
+            event.ticketUrl shouldBe "https://www.greyzone-tickets.de/produkte/1278"
+            event.description!! shouldContain "Tickets: www.greyzone-tickets.de (presale Starts on 15.04.)"
+        }
+
+        @Test
+        fun `reads no anchor from a Tickets line with another label`() {
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(article("""Tickets vor Ort: <a href="https://example.com/abendkasse">Abendkasse</a>"""), baseUrl),
+                        baseUrl
+                    ).single()
+
+            event.ticketUrl.shouldBeNull()
+        }
+
+        @Test
+        fun `reads no anchor from a line other than the promo line`() {
+            val html =
+                article("Tickets im VVK gibt es in Kürze").replace(
+                    "Die große neue Hoffnung des britischen Indie.",
+                    """Mehr auf <a href="https://limegarden.band/">limegarden.band</a>"""
+                )
+
+            scraper
+                .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+                .single()
+                .ticketUrl
+                .shouldBeNull()
+        }
     }
 
     @Nested
