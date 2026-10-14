@@ -23,6 +23,8 @@ class EventFeatureFilterTest : BaseControllerTest() {
             event(venueId, "queer-only", today.plusDays(1), "queer")
             event(venueId, "flinta-day-party", today.plusDays(2), "flinta-only", "day-party")
             event(venueId, "techno-night", today.plusDays(3))
+            // An open mic at a comedy night carries the feature without being a party (#3254).
+            event(venueId, "comedy-open-mic", today.plusDays(4), "open-stage", eventType = "COMEDY")
             // The venue says it is queer; its nights say nothing, so none of them is a queer night by that.
             databaseClient
                 .sql("INSERT INTO events.venue_character_tag (venue_id, tag, source_url) VALUES (:id, 'queer', 'https://club.example/about')")
@@ -39,6 +41,9 @@ class EventFeatureFilterTest : BaseControllerTest() {
             "feature=queer&feature=queer" to listOf("queer-open-end", "queer-only"),
             "feature=queer&feature=day-party" to emptyList(),
             "feature=no-such-feature" to emptyList(),
+            "feature=open-stage" to listOf("comedy-open-mic"),
+            "eventType=COMEDY&feature=open-stage" to listOf("comedy-open-mic"),
+            "eventType=PARTY&feature=open-stage" to emptyList(),
             "eventType=PARTY" to listOf("queer-open-end", "queer-only", "flinta-day-party", "techno-night")
         ).forEach { (query, slugs) ->
             webTestClient
@@ -108,9 +113,10 @@ class EventFeatureFilterTest : BaseControllerTest() {
         venueId: Long,
         slug: String,
         date: LocalDate,
-        vararg features: String
+        vararg features: String,
+        eventType: String = "PARTY"
     ) {
-        val id = insertEvent(venueId, slug, slug, date, eventType = "PARTY")
+        val id = insertEvent(venueId, slug, slug, date, eventType = eventType)
         features.forEach { feature ->
             databaseClient
                 .sql("INSERT INTO events.event_feature (event_id, feature, matched_phrase) VALUES (:id, :feature, :phrase)")

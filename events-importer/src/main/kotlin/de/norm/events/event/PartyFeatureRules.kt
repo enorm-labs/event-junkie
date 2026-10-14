@@ -194,6 +194,22 @@ object PartyFeatureRules {
                         "$B(?:sonntag|samstag|sunday|saturday)s?\\s+(?:ab|from)\\s+(?:1[0-6]|[6-9])(?:[:.]00)?\\s*(?:uhr|h|am|pm)?$E"
                     ),
                 negations = listOf("$B(?:kein(?:e[mnrs]?)?|ohne|no|without)\\s+(?:daylight|tageslicht)$E")
+            ),
+            Rule(
+                PartyFeature.OPEN_STAGE,
+                clear =
+                    listOf(
+                        "${B}open[\\s-]?(?:stage|mic|deck|jam)s?$E",
+                        "${B}offene[nmr]?\\s+(?:bühne|buehne|jam)$E",
+                        "${B}jam[\\s-]?sessions?$E"
+                    ),
+                // A bare "jam" is mostly a name: Pearl Jam, JAM FM, slow jams, a DJ called JAM.
+                cues = listOf("${B}improv(?:isation)?[\\s-]+jams?$E", "${B}jam[\\s-]?(?:nights?|abend)$E", "${B}open[\\s-]?floor$E"),
+                negations =
+                    listOf(
+                        "${B}karaoke[\\s-]+open[\\s-]?(?:stage|mic)s?$E",
+                        "$B(?:open[\\s-]?(?:stage|mic)|jam[\\s-]?session)s?[\\s-]*workshops?$E"
+                    )
             )
         )
 

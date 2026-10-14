@@ -562,7 +562,7 @@ What kind of night an event is, as its own text states it (#2631). One row per p
 | `matched_phrase` | `TEXT`      | No       | The words of the event's text that set the feature, on one line | `FLINTA* only` |
 
 The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `queer`, `sex-positive`, `dress-code`,
-`fetish-dress-code`, `no-photo-policy`, `open-end` and `day-party`. Where `venue_character_tag` has the same fact, the
+`fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party` and `open-stage`. Where `venue_character_tag` has the same fact, the
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
 `PartyFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
 English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
