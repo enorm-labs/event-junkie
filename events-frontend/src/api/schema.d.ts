@@ -1506,7 +1506,7 @@ export interface components {
             /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
             enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];
             /**
-             * @description What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, fetish-dress-code, no-photo-policy, open-end, day-party. Set only where the event's own title or description states it; the venue's character tags never fill it.
+             * @description What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, fetish-dress-code, no-photo-policy, open-end, day-party, open-stage. Set only where the event's own title or description states it; the venue's character tags never fill it.
              * @example [
              *       "open-end",
              *       "queer"

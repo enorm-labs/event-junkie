@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -64,7 +65,7 @@ class PartyFeatureRulesTest {
     fun `FLINTA tied to who plays or takes part is a cue, not flinta-only`(text: String) {
         val detection = PartyFeatureRules.detect(text)
 
-        detection.features.shouldBeEmpty()
+        detection.features.map { it.feature } shouldNotContain PartyFeature.FLINTA_ONLY
         detection.uncertain.map { it.feature } shouldContainExactly listOf(PartyFeature.FLINTA_ONLY)
     }
 
@@ -78,14 +79,14 @@ class PartyFeatureRulesTest {
                     "We kindly ask that you respect the space behind the decks as exclusively for FLINTA*. Free entry."
             )
 
-        detection.features.shouldBeEmpty()
+        detection.features.map { it.feature } shouldContainExactly listOf(PartyFeature.OPEN_STAGE)
         detection.uncertain.single().phrase shouldContain "behind the decks as exclusively for FLINTA*"
     }
 
     @Test
     fun `a door restriction next to the decks stays flinta-only`() {
         PartyFeatureRules.detect("FLINTA* only party with open decks").features.map { it.feature } shouldContainExactly
-            listOf(PartyFeature.FLINTA_ONLY)
+            listOf(PartyFeature.FLINTA_ONLY, PartyFeature.OPEN_STAGE)
     }
 
     @Test
@@ -141,6 +142,12 @@ class PartyFeatureRulesTest {
         uncertain.phrase shouldContain phrase
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("jamNames")
+    fun `a bare jam is a name, not an open-stage cue`(text: String) {
+        PartyFeatureRules.detect(text).uncertain.shouldBeEmpty()
+    }
+
     @Test
     fun `no text detects nothing`() {
         PartyFeatureRules.detect(null, " ").features.shouldBeEmpty()
@@ -184,7 +191,22 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.OPEN_END, "Ab 23 Uhr bis Ende offen", "Ende offen"),
                 Arguments.of(PartyFeature.OPEN_END, "From 23:00 till open end", "open end"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Die Tagesparty im Garten", "Tagesparty"),
-                Arguments.of(PartyFeature.DAY_PARTY, "Sunday Day Party on the terrace", "Day Party")
+                Arguments.of(PartyFeature.DAY_PARTY, "Sunday Day Party on the terrace", "Day Party"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Open Stage Varieté präsentiert von Stefan Linne", "Open Stage"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "ARCANOA - Open Stage", "Open Stage"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "JamSession", "JamSession"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Grünes Licht (Open Mic Show)", "Open Mic"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Comedy, Pizza and Shots – OPEN-MIC THURSDAY", "OPEN-MIC"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "THE ZIG ZAG JAZZED UP JAM SESSION", "JAM SESSION"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "OPEN DECKS & TISCHTENNIS", "OPEN DECKS"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Offene Bühne", "Offene Bühne"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Jeden Dienstag: offene Jam für alle", "offene Jam"),
+                Arguments.of(
+                    PartyFeature.OPEN_STAGE,
+                    "The CCB Improv Jam is an open stage for improvisers looking to practice",
+                    "open stage"
+                ),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Berlin’s finest live hip-hop jam session. Open Stage, Open Mic.", "Open Stage")
             )
 
         @JvmStatic
@@ -195,6 +217,17 @@ class PartyFeatureRulesTest {
                 "Ein Auflegeworkshop nur für FLINTA*",
                 "The decks are exclusively for FLINTA* tonight",
                 "No cis men behind the DJ booth"
+            )
+
+        @JvmStatic
+        fun jamNames(): List<String> =
+            listOf(
+                "Doppelkonzert: Glam Jam + Mission BlueZ",
+                "Modern Jam",
+                "MOCKY - LA meets BERLIN JAM with MEGIAPA",
+                "Produced by Brendan O’Brien (Pearl Jam, Soundgarden), on air at JAM FM",
+                "Expect chill house and sultry slow jams",
+                "Mambo: DJ JAM, Bachata: DJ Reza"
             )
 
         @JvmStatic
@@ -214,6 +247,8 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.OPEN_END, "Join us for 48 hours of techno", "48 hours of techno"),
                 Arguments.of(PartyFeature.OPEN_END, "We dance till dawn", "till dawn"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Tanzen im Tageslicht auf der Terrasse", "Tageslicht"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "The CCB Improv Jam", "Improv Jam"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Jam Night im Keller", "Jam Night"),
                 Arguments.of(
                     PartyFeature.NO_PHOTO_POLICY,
                     "Ihr benutzt bitte keine Handys oder ähnliche Hilfsmittel, sonst macht das Quiz keinen Spaß.",
@@ -240,7 +275,17 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.OPEN_END, "Ein Gespräch mit offenem Ende"),
                 Arguments.of(PartyFeature.OPEN_END, "An open-ended discussion about club culture"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Wir feiern unsere Geburtstagsparty"),
-                Arguments.of(PartyFeature.DAY_PARTY, "A birthday party with a holiday party afterwards")
+                Arguments.of(PartyFeature.DAY_PARTY, "A birthday party with a holiday party afterwards"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Song Slam: acht Songwriter*innen, ein Sieg"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Karaoke Night mit DJ Hasi"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Schülervorspiel der Musikschule Fanny Hensel"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Songwriting workshop mit Dave Benjoya | anschließend Karaoke open stage"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Jam-Session-Workshop für Bläser*innen"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "JAMES BLAKE | „Trying Times Tour“ + Support: MONICA MARTIN"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Declan Forde Trio | Plays Ahmad Jamal"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Doppelkonzert: Glam Jam + Mission BlueZ"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Produced by Brendan O’Brien (Pearl Jam, Soundgarden), on air at JAM FM"),
+                Arguments.of(PartyFeature.OPEN_STAGE, "Expect chill house and sultry slow jams")
             )
     }
 }

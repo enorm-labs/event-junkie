@@ -10,6 +10,7 @@ export const PARTY_FEATURES: readonly string[] = [
   'no-photo-policy',
   'open-end',
   'day-party',
+  'open-stage',
 ]
 
 /** The BFF orders features by slug; this puts them in display order, an unknown slug last. */

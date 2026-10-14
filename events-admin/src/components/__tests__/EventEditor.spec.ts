@@ -10,6 +10,7 @@ import type {
   unpinField,
   updateEvent,
 } from '@/api/events'
+import { PARTY_FEATURES } from '@/api/events'
 import type { fetchNames, NamedRow, searchByName } from '@/api/names'
 import EventEditor from '@/components/EventEditor.vue'
 
@@ -340,7 +341,9 @@ describe('EventEditor', () => {
     it('ticks the stored features and shows an uncertain cue next to its feature', async () => {
       await mountEditor(stored, party)
 
-      expect(body().querySelectorAll('[data-testid="feature-row"]')).toHaveLength(8)
+      expect(body().querySelectorAll('[data-testid="feature-row"]')).toHaveLength(
+        PARTY_FEATURES.length,
+      )
       expect(checkbox('queer').checked).toBe(true)
       expect(checkbox('flinta-only').checked).toBe(false)
       const cue = body().querySelector('[data-testid="feature-cue"]')!

@@ -36,7 +36,13 @@ enum class PartyFeature(
     OPEN_END("open-end"),
 
     /** The night calls itself a day party or day rave. A daytime start alone is #2720's time-of-day filter. */
-    DAY_PARTY("day-party");
+    DAY_PARTY("day-party"),
+
+    /**
+     * Anyone may get up and play: an open stage, open mic, open decks or jam session, whatever the event type.
+     * A slam with a signed-up line-up, karaoke, a school's showcase and a workshop are not this.
+     */
+    OPEN_STAGE("open-stage");
 
     companion object {
         /** The feature whose [slug] matches, or `null` for a slug the vocabulary does not know. */
