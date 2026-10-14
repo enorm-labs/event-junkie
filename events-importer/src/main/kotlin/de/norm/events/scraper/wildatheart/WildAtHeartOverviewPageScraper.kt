@@ -30,8 +30,9 @@ import java.time.MonthDay
  * `topics.htm` nav frame. Every event is a `<tr>` with a leading `.datum` cell (`Weekday DD.MM.`,
  * **no year**), a `.band` headliner and any number of `.supportband` acts (each tagged with a
  * `.stil-country` `(Genre - Country)` label), an optional `.dj`, a flyer under `/uploads/img/…`,
- * and an optional `.headlines` banner that may embed a `Tickets:<url>` presale link, a `Beginn
- * HH:MM` start time, or an `Eintritt frei` note. No per-event URLs — one page.
+ * and an optional `.headlines` banner that may embed a presale link (`Tickets:<url>` or `Tickets
+ * unter <url>`), a `Beginn HH:MM` start time, or an `Eintritt frei` note. No per-event URLs — one
+ * page.
  *
  * A row without a banner time stores the house doors instead of nothing: `info.htm` states
  * "Geöffnet ist für Konzerte und Events von 20 Uhr bis Open End", and the one per-event time
@@ -189,7 +190,7 @@ class WildAtHeartOverviewPageScraper(
     /** Strips the decorative surrounding double-quotes and whitespace a band/support name is wrapped in. */
     private fun stripQuotes(text: String): String = text.trim().trim('"').trim()
 
-    /** Cleans a `.headlines` banner for use as a subtitle — drops any embedded `Tickets:<url>` link. */
+    /** Cleans a `.headlines` banner for use as a subtitle — drops any embedded presale link. */
     private fun cleanBanner(headline: String?): String? = headline?.replace(TICKETS_PATTERN, "")?.trim()?.takeIf { it.isNotBlank() }
 
     companion object {
@@ -199,8 +200,8 @@ class WildAtHeartOverviewPageScraper(
         /** A `.datum` cell "Weekday DD.MM.", capturing the German weekday abbreviation, day and month. */
         private val DATUM_PATTERN = Regex("""(Mo|Di|Mi|Do|Fr|Sa|So)\s*(\d{1,2})\.(\d{1,2})\.""", RegexOption.IGNORE_CASE)
 
-        /** A `Tickets:<url>` presale link embedded in a `.headlines` banner. */
-        private val TICKETS_PATTERN = Regex("""Tickets:\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
+        /** A presale link in a `.headlines` banner: `Tickets:<url>`, `Tickets unter <url>` or `Tickets unter: <url>` (#3283). */
+        private val TICKETS_PATTERN = Regex("""Tickets(?:\s+unter)?:?\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
 
         /** An "ab HH Uhr" / "ab HH:MM Uhr" start time in a `.headlines` banner. */
         private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)
