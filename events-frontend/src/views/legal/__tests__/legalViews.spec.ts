@@ -101,6 +101,12 @@ const PRIVACY_ELEMENTS: Element[] = [
   // is what #1233 found.
   { what: 'recipients', en: /Hetzner/, de: /Hetzner/ },
   { what: 'the translation processor', en: /Anthropic/, de: /Anthropic/ },
+  // The same processor's second purpose since #3241; the notice names it, its fields and its basis (#3242).
+  {
+    what: 'the data-quality check sent to the translation processor',
+    en: /Checking event data:.*title, subtitle and description/s,
+    de: /Prüfung der Veranstaltungsdaten:.*Titel, Untertitel und Beschreibung/s,
+  },
   // The transfer basis, since the second processor is in a third country (Art. 13 (1) (f)).
   {
     what: 'the transfer mechanism for the third country',

@@ -220,6 +220,14 @@ const { t } = useI18n()
         stays authoritative.
       </p>
       <p>
+        <strong>Checking event data:</strong> an event's title, subtitle and description are checked
+        by machine, to find errors made during the import. An example is a wrong type of event, or a
+        title stored as a performing artist. The result is only a suggestion, and I decide whether
+        it is applied. The texts are sent to the same service provider as for translation (section
+        5). The legal basis is Art. 6 (1) (f) GDPR. The legitimate interest is correct information
+        about the events.
+      </p>
+      <p>
         <strong>If you are an artist</strong> and would like your name, or a description that names
         you, removed or corrected, write to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
@@ -240,11 +248,12 @@ const { t } = useI18n()
           in Germany; no transfer outside the EU is involved.
         </li>
         <li>
-          <strong>Machine translation:</strong> Anthropic PBC, San Francisco, USA. An event's
-          description is sent there so that it can be translated. Where a description names
-          performing artists, those names go with it, and the names of the line-up and the venue are
-          sent explicitly as well, so that the translation leaves them unchanged. Nothing else
-          reaches this service: no log data, and nothing about you.
+          <strong>Machine translation and checking event data:</strong> Anthropic PBC, San
+          Francisco, USA. An event's description is sent there so that it can be translated. For the
+          check (section 4), its title and subtitle go as well. Where these texts name performing
+          artists, those names go with them, and the names of the line-up and the venue are sent
+          explicitly as well, so that the translation leaves them unchanged. Nothing else reaches
+          this service: no log data, and nothing about you.
         </li>
       </ul>
       <p>
@@ -257,8 +266,9 @@ const { t } = useI18n()
       <p>
         There is no content delivery network, no edge provider and no traffic proxy in front of the
         site. Your request reaches Event Junkie's servers in Germany directly, so no third country
-        is involved in delivering this site to you. The translation above is the only path on which
-        data leaves the EU, and it carries event texts rather than anything about your visit.
+        is involved in delivering this site to you. Translation and checking above are the only path
+        on which data leaves the EU, and they carry event texts rather than anything about your
+        visit.
       </p>
       <p>
         <strong>That holds for images as well.</strong> They come from Event Junkie's servers,
