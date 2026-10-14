@@ -513,6 +513,7 @@ says so.
 | `THE_WALL`             | `PRICE`            | most shows are pay-what-you-want, and a fixed price appears only in the prose                                                                    | —     |
 | `THE_WALL`             | `TICKET_URL`       | reservations run through the club's own Spotagig pages, which the event page is                                                                  | —     |
 | `THE_WALL`             | `ARTISTS`          | the showcases name no comedians, and a headliner appears only in the title                                                                       | —     |
+| `THE_WALL`             | `PROMOTERS`        | the club produces most shows itself, and only a guest producer is named apart from it                                                            | —     |
 | `THE_WALL`             | `GENRE`            | the club names no genre                                                                                                                          | —     |
 | `TIFFANY_CLUB`         | `EVENT_TYPE`       | the site names no category; the type is read from the title and defaults to a party                                                              | —     |
 | `TIFFANY_CLUB`         | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
