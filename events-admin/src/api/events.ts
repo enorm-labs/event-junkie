@@ -216,6 +216,61 @@ export async function unpinField(
   await failOnError(response, `DELETE ${path}`)
 }
 
+/** `PartyFeature` in the importer, in its order, with the label the editor shows. */
+export const PARTY_FEATURES = [
+  { slug: 'flinta-only', label: 'FLINTA* only' },
+  { slug: 'queer', label: 'Queer' },
+  { slug: 'sex-positive', label: 'Sex-positive' },
+  { slug: 'dress-code', label: 'Dress code' },
+  { slug: 'fetish-dress-code', label: 'Fetish dress code' },
+  { slug: 'no-photo-policy', label: 'No photos' },
+  { slug: 'open-end', label: 'Open end' },
+  { slug: 'day-party', label: 'Day party' },
+] as const
+
+/** A feature slug and the words of the event's text behind it. */
+export interface EventFeatureEntry {
+  feature: string
+  phrase: string
+}
+
+/** `EventFeaturesResponse`: the features, the uncertain cues the worklist lists, and the pin. */
+export interface EventFeatures {
+  eventId: number
+  features: EventFeatureEntry[]
+  uncertain: EventFeatureEntry[]
+  pinned: boolean
+}
+
+export async function fetchEventFeatures(
+  id: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<EventFeatures> {
+  const path = `/api/admin/events/${id}/features`
+  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
+  await failOnError(response, `GET ${path}`)
+  return (await response.json()) as EventFeatures
+}
+
+/**
+ * Replaces the features of event [id] with [features], the full list. The importer pins
+ * `features`, so the next import keeps them, and clears the event's uncertain cues (#3066).
+ */
+export async function setEventFeatures(
+  id: number,
+  features: string[],
+  fetchFn: typeof fetch = fetch,
+): Promise<EventFeatures> {
+  const path = `/api/admin/events/${id}/features`
+  const response = await fetchFn(path, {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ features }),
+  })
+  await failOnError(response, `PUT ${path}`)
+  return (await response.json()) as EventFeatures
+}
+
 /**
  * Latin letters that NFD cannot split into a base letter and a mark. The same table as
  * `SlugGenerator.kt`, so a title slugs here as it does in the importer.

@@ -92,6 +92,19 @@ class EventQualityFlagRepository(
             .awaitFirstOrNull()
     }
 
+    /** Deletes the flags of [kind] on [eventId], and returns how many there were. */
+    suspend fun deleteKind(
+        eventId: Long,
+        kind: QualityFlagKind
+    ): Long =
+        template.databaseClient
+            .sql("DELETE FROM $EVENTS_SCHEMA.event_quality_flag WHERE event_id = :id AND kind = :kind")
+            .bind("id", eventId)
+            .bind("kind", kind.name)
+            .fetch()
+            .rowsUpdated()
+            .awaitFirstOrNull() ?: 0
+
     /** The flags of [eventIds], in key order. */
     suspend fun findByEventIds(eventIds: Collection<Long>): List<EventQualityFlag> =
         if (eventIds.isEmpty()) {

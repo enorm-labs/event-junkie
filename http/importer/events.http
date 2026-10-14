@@ -162,6 +162,21 @@ Content-Type: application/json
 ### Once the pin is gone, the next import that reads the page writes the source's value.
 DELETE {{importer-host}}/api/admin/events/{{event_id}}/pins/title
 
+### Party features of an event, with the uncertain cues and the pin (#3066)
+GET {{importer-host}}/api/admin/events/{{event_id}}/features
+Accept: application/json
+
+### Set the party features of an event by hand
+### The full list: a feature left out is removed, and [] clears them all. The PUT pins `features`,
+### so the importer keeps them, and deletes the event's UNCERTAIN_PARTY_FEATURE flags.
+### DELETE .../pins/features hands them back to the keyword rules at the next import.
+PUT {{importer-host}}/api/admin/events/{{event_id}}/features
+Content-Type: application/json
+
+{
+    "features": ["queer", "open-end"]
+}
+
 ### Delete event
 DELETE {{importer-host}}/api/admin/events/{{event_id}}
 

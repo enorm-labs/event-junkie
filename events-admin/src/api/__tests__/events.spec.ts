@@ -4,10 +4,13 @@ import {
   type AdminEvent,
   createEvent,
   emptyNewEventForm,
+  type EventFeatures,
+  fetchEventFeatures,
   fetchEventsOn,
   manualSourceId,
   type NewEventForm,
   parsePrice,
+  setEventFeatures,
   slugify,
   toCreateRequest,
   toEventRequest,
@@ -200,6 +203,44 @@ describe('unpinField', () => {
     )
 
     await expect(unpinField(418, 'x', fetchFn)).rejects.toThrow("Unknown pinned field 'x'")
+  })
+})
+
+describe('setEventFeatures', () => {
+  it('PUTs the full list of slugs to the features of the event', async () => {
+    const saved: EventFeatures = {
+      eventId: 418,
+      features: [{ feature: 'queer', phrase: 'Queer party' }],
+      uncertain: [],
+      pinned: true,
+    }
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(saved)))
+
+    await expect(setEventFeatures(418, ['queer'], fetchFn)).resolves.toEqual(saved)
+
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(url).toBe('/api/admin/events/418/features')
+    expect(init?.method).toBe('PUT')
+    expect(JSON.parse(String(init?.body))).toEqual({ features: ['queer'] })
+  })
+
+  it('names the valid slugs an unknown one is refused with', async () => {
+    const detail = "Unknown party feature 'darkroom'. Valid: flinta-only, queer"
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify({ detail }), { status: 400 }),
+    )
+
+    await expect(setEventFeatures(418, ['darkroom'], fetchFn)).rejects.toThrow(detail)
+  })
+})
+
+describe('fetchEventFeatures', () => {
+  it('GETs the features of the event', async () => {
+    const stored: EventFeatures = { eventId: 418, features: [], uncertain: [], pinned: false }
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(stored)))
+
+    await expect(fetchEventFeatures(418, fetchFn)).resolves.toEqual(stored)
+    expect(fetchFn.mock.calls[0]![0]).toBe('/api/admin/events/418/features')
   })
 })
 

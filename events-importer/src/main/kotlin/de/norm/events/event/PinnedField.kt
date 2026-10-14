@@ -38,7 +38,10 @@ enum class PinnedField(
     PROMOTERS("promoters"),
 
     /** The `event_genre_tag` rows, which an edit of [GENRE] rewrites. */
-    GENRES("genres");
+    GENRES("genres"),
+
+    /** The `event_feature` rows, which `PUT /api/admin/events/{id}/features` sets (#3066). */
+    FEATURES("features");
 
     /** Whether this field is a column of `event`, rather than a join table. */
     val isColumn: Boolean get() = valueOf != null

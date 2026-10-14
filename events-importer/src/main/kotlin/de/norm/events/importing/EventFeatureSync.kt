@@ -3,6 +3,7 @@ package de.norm.events.importing
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.event.EventEntity
 import de.norm.events.event.PartyFeatureRules
+import de.norm.events.event.PinnedField
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -78,6 +79,9 @@ class EventFeatureRepository(
  * It reads the entity as saved, so a pinned title or description (ADR-042) is the text it reads, and
  * a description the licence withholds was never stored. Runs after [AssociationSyncService], whose
  * [EventQualityFlagRepository.replaceFor] has cleared the events' flags for this import.
+ *
+ * An event that pins [PinnedField.FEATURES] keeps the features set by hand ([EventFeatureService]),
+ * and gets no uncertain cue back: the operator has decided.
  */
 @Service
 class EventFeatureSync(
@@ -87,20 +91,22 @@ class EventFeatureSync(
     private val logger = KotlinLogging.logger {}
 
     suspend fun sync(savedEvents: List<EventEntity>) {
+        val (pinned, open) = savedEvents.partition { PinnedField.FEATURES.key in it.pinnedFields }
         val rows = mutableListOf<EventFeatureRow>()
         val flags = mutableListOf<EventQualityFlag>()
-        savedEvents.forEach { event ->
+        open.forEach { event ->
             val id = event.id ?: return@forEach
             val detection = PartyFeatureRules.detect(event.title, event.subtitle, event.description)
             detection.features.mapTo(rows) { EventFeatureRow(id, it.feature.slug, it.phrase) }
             detection.uncertain.mapTo(flags) { EventQualityFlag(id, QualityFlagKind.UNCERTAIN_PARTY_FEATURE, "${it.feature.slug}: ${it.phrase}") }
         }
-        featureRepository.replaceFor(savedEvents.mapNotNull { it.id }, rows)
+        featureRepository.replaceFor(open.mapNotNull { it.id }, rows)
         qualityFlagRepository.add(flags)
-        if (rows.isNotEmpty() || flags.isNotEmpty()) {
+        if (rows.isNotEmpty() || flags.isNotEmpty() || pinned.isNotEmpty()) {
             logger.info {
                 "Set ${rows.size} party feature(s) ${rows.groupingBy { it.feature }.eachCount()}; " +
-                    "flagged ${flags.size} uncertain cue(s) for the data-quality worklist"
+                    "flagged ${flags.size} uncertain cue(s) for the data-quality worklist; " +
+                    "kept the pinned features of ${pinned.size} event(s)"
             }
         }
     }

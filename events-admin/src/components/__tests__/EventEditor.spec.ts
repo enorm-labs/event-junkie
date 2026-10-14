@@ -1,7 +1,15 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { AdminEvent, fetchEvent, unpinField, updateEvent } from '@/api/events'
+import type {
+  AdminEvent,
+  EventFeatures,
+  fetchEvent,
+  fetchEventFeatures,
+  setEventFeatures,
+  unpinField,
+  updateEvent,
+} from '@/api/events'
 import type { fetchNames, NamedRow, searchByName } from '@/api/names'
 import EventEditor from '@/components/EventEditor.vue'
 
@@ -39,7 +47,11 @@ const api = vi.hoisted(() => ({
   fetchEvent: vi.fn<typeof fetchEvent>(),
   updateEvent: vi.fn<typeof updateEvent>(),
   unpinField: vi.fn<typeof unpinField>(),
+  fetchEventFeatures: vi.fn<typeof fetchEventFeatures>(),
+  setEventFeatures: vi.fn<typeof setEventFeatures>(),
 }))
+
+const noFeatures: EventFeatures = { eventId: 418, features: [], uncertain: [], pinned: false }
 
 vi.mock('@/api/events', async (original) => ({
   ...(await original<typeof import('@/api/events')>()),
@@ -67,7 +79,7 @@ vi.mock('@/api/names', async (original) => ({
   ...names,
 }))
 
-async function mountEditor(event: AdminEvent = stored) {
+async function mountEditor(event: AdminEvent = stored, features: EventFeatures = noFeatures) {
   names.fetchNames.mockImplementation(
     async (kind, ids) =>
       new Map(ids.map((id) => [id, known[kind].find((row) => row.id === id) ?? null])),
@@ -77,6 +89,7 @@ async function mountEditor(event: AdminEvent = stored) {
     return { rows, total: rows.length }
   })
   api.fetchEvent.mockResolvedValue(event)
+  api.fetchEventFeatures.mockResolvedValue(features)
   const wrapper = mount(EventEditor, { props: { eventId: 418 }, attachTo: document.body })
   await flushPromises()
   return wrapper
@@ -304,6 +317,88 @@ describe('EventEditor', () => {
       await search('add-promoter', 'Bellmer')
 
       expect(body().textContent).toContain('No promoters match “Bellmer”.')
+    })
+  })
+  describe('kind of night', () => {
+    const party: EventFeatures = {
+      eventId: 418,
+      features: [{ feature: 'queer', phrase: 'Queer party' }],
+      uncertain: [{ feature: 'flinta-only', phrase: '…A night with FLINTA* DJs.' }],
+      pinned: false,
+    }
+
+    function checkbox(slug: string) {
+      return body().querySelector<HTMLInputElement>(`input#edit-feature-${slug}`)!
+    }
+
+    /** Clicks the box of [slug], then lets the model update before the next click reads it. */
+    async function toggle(slug: string) {
+      checkbox(slug).click()
+      await flushPromises()
+    }
+
+    it('ticks the stored features and shows an uncertain cue next to its feature', async () => {
+      await mountEditor(stored, party)
+
+      expect(body().querySelectorAll('[data-testid="feature-row"]')).toHaveLength(8)
+      expect(checkbox('queer').checked).toBe(true)
+      expect(checkbox('flinta-only').checked).toBe(false)
+      const cue = body().querySelector('[data-testid="feature-cue"]')!
+      expect(cue.closest('[data-testid="feature-row"]')!.textContent).toContain('FLINTA* only')
+      expect(cue.textContent).toContain('…A night with FLINTA* DJs.')
+    })
+
+    it('saves a changed set through the features route, before the event', async () => {
+      api.setEventFeatures.mockResolvedValue({
+        ...party,
+        features: [{ feature: 'flinta-only', phrase: 'set by hand' }],
+        uncertain: [],
+        pinned: true,
+      })
+      api.updateEvent.mockResolvedValue({ ...stored, pinnedFields: ['title', 'features'] })
+      await mountEditor(stored, party)
+
+      await toggle('open-end')
+      await toggle('flinta-only')
+      await toggle('queer')
+      await submit()
+
+      expect(api.setEventFeatures).toHaveBeenCalledExactlyOnceWith(418, ['flinta-only', 'open-end'])
+      expect(api.setEventFeatures.mock.invocationCallOrder[0]).toBeLessThan(
+        api.updateEvent.mock.invocationCallOrder[0]!,
+      )
+      expect(body().querySelector('[data-testid="feature-cue"]')).toBeNull()
+      expect(body().querySelector('button[aria-label="Unpin features"]')).not.toBeNull()
+    })
+
+    it('does not call the features route when the set is unchanged', async () => {
+      api.updateEvent.mockResolvedValue(stored)
+      await mountEditor(stored, party)
+
+      // Off and on again: the same set.
+      await toggle('queer')
+      await toggle('queer')
+      await submit()
+
+      expect(api.updateEvent).toHaveBeenCalledOnce()
+      expect(api.setEventFeatures).not.toHaveBeenCalled()
+    })
+
+    it('keeps the editor usable when the features cannot be read', async () => {
+      api.updateEvent.mockResolvedValue(stored)
+      names.fetchNames.mockResolvedValue(new Map())
+      api.fetchEvent.mockResolvedValue(stored)
+      api.fetchEventFeatures.mockRejectedValue(
+        new Error('GET /api/admin/events/418/features: HTTP 404'),
+      )
+      mount(EventEditor, { props: { eventId: 418 }, attachTo: document.body })
+      await flushPromises()
+
+      expect(body().textContent).toContain('HTTP 404')
+      expect(body().querySelectorAll('[data-testid="feature-row"]')).toHaveLength(0)
+      await submit()
+      expect(api.updateEvent).toHaveBeenCalledOnce()
+      expect(api.setEventFeatures).not.toHaveBeenCalled()
     })
   })
 })

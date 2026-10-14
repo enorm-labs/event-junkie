@@ -1,0 +1,16 @@
+{
+  "eventId": 2864,
+  "features": [
+    {
+      "feature": "queer",
+      "phrase": "Queeres Bingo"
+    }
+  ],
+  "uncertain": [
+    {
+      "feature": "flinta-only",
+      "phrase": "…von Inge Borg & Gisela Sommer, mit FLINTA* am Mikro"
+    }
+  ],
+  "pinned": false
+}

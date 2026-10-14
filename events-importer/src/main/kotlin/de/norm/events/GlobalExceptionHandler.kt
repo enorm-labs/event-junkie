@@ -11,6 +11,7 @@ import de.norm.events.genretag.GenreTagNotFoundException
 import de.norm.events.importing.EventSourceNotFoundException
 import de.norm.events.importing.InvalidSourceTypeException
 import de.norm.events.importing.ReservedSlugException
+import de.norm.events.importing.UnknownPartyFeatureException
 import de.norm.events.promoter.DuplicatePromoterSlugException
 import de.norm.events.promoter.PromoterNotFoundException
 import de.norm.events.venue.DuplicateVenueSlugException
@@ -128,9 +129,10 @@ class GlobalExceptionHandler {
 
     /**
      * Handles a name the client sent that no known value has: a `sourceType` that is no
-     * [de.norm.events.scraper.EventSource] constant, or a pin that is no [de.norm.events.event.PinnedField].
+     * [de.norm.events.scraper.EventSource] constant, a pin that is no [de.norm.events.event.PinnedField],
+     * or a feature that is no [de.norm.events.event.PartyFeature].
      */
-    @ExceptionHandler(InvalidSourceTypeException::class, UnknownPinnedFieldException::class)
+    @ExceptionHandler(InvalidSourceTypeException::class, UnknownPinnedFieldException::class, UnknownPartyFeatureException::class)
     fun handleUnknownName(ex: RuntimeException): ProblemDetail {
         logger.debug { "Unknown name: ${ex.message}" }
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Unknown name")

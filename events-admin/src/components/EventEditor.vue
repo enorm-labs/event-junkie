@@ -5,9 +5,13 @@ import {
   type AdminEvent,
   ARTIST_ROLES,
   type EventArtist,
+  type EventFeatures,
   EVENT_TYPES,
   type EventType,
   fetchEvent,
+  fetchEventFeatures,
+  PARTY_FEATURES,
+  setEventFeatures,
   toEventRequest,
   unpinField,
   updateEvent,
@@ -37,6 +41,11 @@ const subtitle = ref('')
 const description = ref('')
 const lineup = ref<EventArtist[]>([])
 const promoterIds = ref<number[]>([])
+/** The features as the importer answered them, and the slugs the checkboxes hold. */
+const storedFeatures = ref<EventFeatures | null>(null)
+const features = ref<string[]>([])
+/** A failed features read leaves the rest of the editor usable. */
+const featuresError = ref<string | null>(null)
 /** Names by id, per kind. The event answer carries ids only. */
 const names = ref<Record<NameKind, Map<number, NamedRow | null>>>({
   artists: new Map(),
@@ -47,6 +56,35 @@ const busy = ref(false)
 const error = ref<string | null>(null)
 
 const lineupIds = computed(() => lineup.value.map((artist) => artist.artistId))
+
+const featuresChanged = computed(() => {
+  const stored = storedFeatures.value?.features.map((entry) => entry.feature) ?? []
+  return (
+    storedFeatures.value !== null &&
+    (stored.length !== features.value.length ||
+      stored.some((slug) => !features.value.includes(slug)))
+  )
+})
+
+function cuesOf(slug: string): string[] {
+  return (storedFeatures.value?.uncertain ?? [])
+    .filter((cue) => cue.feature === slug)
+    .map((cue) => cue.phrase)
+}
+
+function showFeatures(loaded: EventFeatures) {
+  storedFeatures.value = loaded
+  features.value = loaded.features.map((entry) => entry.feature)
+}
+
+async function loadFeatures(id: number) {
+  featuresError.value = null
+  try {
+    showFeatures(await fetchEventFeatures(id))
+  } catch (e) {
+    featuresError.value = e instanceof Error ? e.message : String(e)
+  }
+}
 
 function show(loaded: AdminEvent) {
   event.value = loaded
@@ -115,10 +153,12 @@ watch(
   () => props.eventId,
   async (id) => {
     event.value = null
+    storedFeatures.value = null
     error.value = null
     if (id === null) return
     loading.value = true
     try {
+      void loadFeatures(id)
       show(await fetchEvent(id))
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
@@ -133,6 +173,12 @@ function save() {
   const current = event.value
   if (!current) return
   return run(async () => {
+    // Before the event PUT, so the pin on `features` is in the answer the editor shows.
+    if (featuresChanged.value) {
+      const order = PARTY_FEATURES.map((feature) => feature.slug as string)
+      const slugs = [...features.value].sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      showFeatures(await setEventFeatures(current.id, slugs))
+    }
     const saved = await updateEvent(
       current.id,
       toEventRequest(current, {
@@ -156,6 +202,7 @@ function unpin(field: string) {
     await unpinField(current.id, field)
     // The DELETE answers 204, so the pins are read back rather than guessed.
     show(await fetchEvent(current.id))
+    if (field === 'features') await loadFeatures(current.id)
   })
 }
 </script>
@@ -221,6 +268,48 @@ function unpin(field: string) {
               Tags now: {{ event.genreTags.length ? event.genreTags.join(', ') : 'none' }}
             </span>
           </label>
+
+          <fieldset class="flex flex-col gap-2" aria-describedby="features-hint">
+            <legend class="mb-2 text-sm font-medium">Kind of night</legend>
+            <p v-if="featuresError" class="text-sm text-destructive" role="alert">
+              {{ featuresError }}
+            </p>
+            <ul v-else-if="storedFeatures" class="flex flex-col gap-1.5">
+              <li
+                v-for="feature in PARTY_FEATURES"
+                :key="feature.slug"
+                class="flex flex-col gap-0.5"
+                data-testid="feature-row"
+              >
+                <label
+                  :for="`edit-feature-${feature.slug}`"
+                  class="flex items-center gap-2 text-sm"
+                >
+                  <input
+                    :id="`edit-feature-${feature.slug}`"
+                    v-model="features"
+                    :value="feature.slug"
+                    class="size-4"
+                    name="features"
+                    type="checkbox"
+                  />
+                  {{ feature.label }}
+                </label>
+                <span
+                  v-for="cue in cuesOf(feature.slug)"
+                  :key="cue"
+                  class="pl-6 text-xs text-muted-foreground"
+                  data-testid="feature-cue"
+                >
+                  Unsure: “{{ cue }}”
+                </span>
+              </li>
+            </ul>
+            <span id="features-hint" class="text-xs text-muted-foreground">
+              Saving a changed set pins <code>features</code>, so the importer keeps it, and clears
+              the uncertain cues.
+            </span>
+          </fieldset>
 
           <section class="flex flex-col gap-2" aria-labelledby="lineup-heading">
             <h3 id="lineup-heading" class="text-sm font-medium">Lineup</h3>
