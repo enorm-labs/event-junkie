@@ -53,7 +53,7 @@ private fun JsonNode.jsonLdNodes(): List<JsonNode> =
  * Whether one of the node's `@type` values is `Event` or a schema.org subtype of it
  * (`MusicEvent`, `TheaterEvent`, `Festival`). A prefixed type (`schema:Event`, a full URL) counts.
  */
-fun JsonNode.isSchemaEvent(): Boolean {
+private fun JsonNode.isSchemaEvent(): Boolean {
     val type = path("@type")
     val names = (if (type.isArray) type.toList() else listOf(type)).map { it.asString("") }
     return names
