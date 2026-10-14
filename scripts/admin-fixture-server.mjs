@@ -6,9 +6,9 @@
 // Usage: node scripts/admin-fixture-server.mjs <dist dir> <fixtures dir> <port>
 //
 // GET  /api/admin/<path>   <fixtures>/<path>.json. Else the item of <fixtures>/<parent>.json's `content` whose slug or
-//                          id is the last segment. A list is filtered by `name` (part of it, any case), `musicbrainzMatch`
-//                          and `artistId`, and paged by `page` and `size`, at most 100, as the importer does. Other query
-//                          parameters are ignored.
+//                          id is the last segment. A list is filtered by `name` and `q` (part of the name or title, any
+//                          case), `musicbrainzMatch`, `artistId`, `venueId` and `from` (the first `eventDate`), and paged by
+//                          `page` and `size`, at most 100, as the importer does. Other query parameters are ignored.
 // Other methods            the first rule in <fixtures>/writes.json whose method and path match, and whose `when`
 //                          fields equal the request body's. `{name}` in a rule's path matches one segment.
 //
@@ -138,10 +138,26 @@ async function api(req, res, url) {
         )
         found = { ...found, content, totalElements: content.length }
       }
+      // The Events page searches a part of the title at one venue from one date on, by date and start time.
+      const title = url.searchParams.get('q')?.trim().toLowerCase()
+      const venueId = url.searchParams.get('venueId')
+      const from = url.searchParams.get('from')
+      if (title || venueId || from) {
+        const content = found.content
+          .filter(
+            (item) =>
+              (!title || String(item.title ?? '').toLowerCase().includes(title)) &&
+              (!venueId || String(item.venueId) === venueId) &&
+              (!from || item.eventDate >= from),
+          )
+          .sort((a, b) => a.eventDate.localeCompare(b.eventDate) || String(a.startTime ?? '~').localeCompare(String(b.startTime ?? '~')))
+        found = { ...found, content, totalElements: content.length, totalPages: undefined }
+      }
       // The importer caps a page at 100, whatever `size` asks for.
       const size = Math.min(Number(url.searchParams.get('size') ?? 20), 100)
       const page = Number(url.searchParams.get('page') ?? 0)
-      return send(res, 200, { ...found, content: found.content.slice(page * size, (page + 1) * size), size, number: page })
+      const totalPages = found.totalPages ?? Math.ceil(found.totalElements / size)
+      return send(res, 200, { ...found, content: found.content.slice(page * size, (page + 1) * size), size, number: page, totalPages })
     }
     return send(res, 200, found)
   }

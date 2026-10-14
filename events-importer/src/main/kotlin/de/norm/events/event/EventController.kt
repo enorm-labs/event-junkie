@@ -37,12 +37,14 @@ class EventController(
     private val eventPinService: EventPinService
 ) {
     /**
-     * Lists events with pagination, optionally narrowed to a venue, a date and an artist (#347, #3005). Returns a [List] instead of a `Flow` because
+     * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title and a first date
+     * (#347, #3005, #3269). Returns a [List] instead of a `Flow` because
      * batch loading artist/promoter/genre tag associations requires all events in memory
      * to avoid N+1 queries (4 queries per page regardless of event count).
      */
     @GetMapping
-    @Operation(summary = "List events with pagination; `venueId`, `date` and `artistId` narrow the list, alone or together")
+    @Suppress("LongParameterList") // One request parameter per filter, each documented in the OpenAPI listing.
+    @Operation(summary = "List events with pagination; `venueId`, `date`, `artistId`, `q` and `from` narrow the list, alone or together")
     suspend fun findAll(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable,
@@ -65,8 +67,22 @@ class EventController(
                     "Omit it to list every event.",
             example = "7"
         )
-        @RequestParam(required = false) artistId: Long?
-    ): PageResponse<EventResponse> = eventService.findAll(pageable, venueId, date, artistId)
+        @RequestParam(required = false) artistId: Long?,
+        @Parameter(
+            description =
+                "A part of the title, in any case. `%` and `_` match only themselves. Blank or omitted lists every title.",
+            example = "open stage"
+        )
+        @RequestParam(required = false) q: String?,
+        @Parameter(
+            description =
+                "ISO date (`yyyy-MM-dd`): only events whose `eventDate` is on or after it. An event over midnight counts on the date " +
+                    "it starts on. Omit it to list past events too.",
+            example = "2026-10-14"
+        )
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate?
+    ): PageResponse<EventResponse> = eventService.findAll(pageable, EventListFilter(venueId, date, artistId, q, from))
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

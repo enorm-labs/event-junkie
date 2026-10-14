@@ -437,3 +437,51 @@ export async function fetchEventsOn(
   await failOnError(response, 'GET /api/admin/events')
   return ((await response.json()) as { content: AdminEvent[] }).content
 }
+
+/** The Events page shows 20 events a page. */
+export const SEARCH_PAGE_SIZE = 20
+
+/** What the Events page searches for. A blank title, a null venue or a null `from` does not narrow. */
+export interface EventSearch {
+  title: string
+  venueId: number | null
+  /** The first `eventDate` (`yyyy-MM-dd`) to list, or null for past events too. */
+  from: string | null
+  page: number
+}
+
+export interface EventSearchPage {
+  content: AdminEvent[]
+  totalElements: number
+  totalPages: number
+}
+
+/**
+ * The `GET /api/admin/events` URL for [search], sorted by date, then start time: oldest first from
+ * `from`, newest first when past events are shown, so the first page is never weeks old.
+ */
+export function eventSearchUrl(search: EventSearch): string {
+  const params = new URLSearchParams()
+  const title = search.title.trim()
+  if (title) params.set('q', title)
+  if (search.venueId !== null) params.set('venueId', String(search.venueId))
+  if (search.from) params.set('from', search.from)
+  params.set('page', String(search.page))
+  params.set('size', String(SEARCH_PAGE_SIZE))
+  const direction = search.from ? 'asc' : 'desc'
+  params.append('sort', `eventDate,${direction}`)
+  params.append('sort', `startTime,${direction}`)
+  return `/api/admin/events?${params}`
+}
+
+/** One page of the events [search] finds. */
+export async function searchEvents(
+  search: EventSearch,
+  fetchFn: typeof fetch = fetch,
+): Promise<EventSearchPage> {
+  const response = await fetchFn(eventSearchUrl(search), {
+    headers: { Accept: 'application/json' },
+  })
+  await failOnError(response, 'GET /api/admin/events')
+  return (await response.json()) as EventSearchPage
+}

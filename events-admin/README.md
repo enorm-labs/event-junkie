@@ -41,6 +41,11 @@ row unmounts.
 Edit, in the same row menu, opens a form for `enabled`, the import interval and max retries (`src/components/SourceEditForm.vue`). It PATCHes only the changed
 fields, and the row shows the source the importer answers. A new source still needs an `EventSource` value in code, so `http/importer/dev-seed.http` creates it.
 
+Events (`src/views/EventsView.vue`) finds any event, to open it in the event editor (`src/components/EventEditor.vue`), as the worklist does. It searches
+`GET /api/admin/events` with a part of the title (`q`, any case), a venue (`venueId`) and, while "Show past events" is off, `from` = today in Berlin. Enter or
+Search sends the title; a venue or the switch searches at once. The list shows 20 events per page, by date and then start time: oldest first, or newest first while past events are shown. A save in the editor replaces
+the row with the saved event. The query string holds the search, so a reload keeps it.
+
 Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
 in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.

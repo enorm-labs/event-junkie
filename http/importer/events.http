@@ -66,6 +66,24 @@ Accept: application/json
     });
 %}
 
+### Find events by a part of the title, from a date on — the Events page of events-admin (#3269)
+# `q` matches the title in any case; `%` and `_` match only themselves. `from` drops events whose eventDate is earlier.
+# Both combine with `venueId`, `date` and `artistId`.
+GET {{importer-host}}/api/admin/events?q=open%20stage&from=2026-06-01&sort=eventDate,asc&sort=startTime,asc
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("every event matches the title and the date", function () {
+        response.body.content.forEach(function (event) {
+            client.assert(event.title.toLowerCase().indexOf("open stage") >= 0, "Unexpected title " + event.title);
+            client.assert(event.eventDate >= "2026-06-01", "Unexpected date " + event.eventDate);
+        });
+    });
+%}
+
 ### List events with a date that is not ISO — 400 Problem Detail
 GET {{importer-host}}/api/admin/events?date=12.06.2026
 Accept: application/json
