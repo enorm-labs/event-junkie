@@ -116,6 +116,10 @@ spec:
       # reads. `translation_licence` stays PERMITTED.
       translation:
         engine: none
+      # On here first: #2997 measures its false-positive rate before production runs it.
+      eventClassification:
+        enabled: true
+        maxPerRun: 20
       discogs:
         enabled: true
       resources:
