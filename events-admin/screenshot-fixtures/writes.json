@@ -143,6 +143,20 @@
   },
   {
     "method": "PUT",
+    "path": "venues/{id}/character-tags/{tag}",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "tag": "{tag}"
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "venues/{id}/character-tags/{tag}",
+    "status": 204
+  },
+  {
+    "method": "PUT",
     "path": "artists/{id}/musicbrainz-id",
     "status": 200,
     "body": "$merge",

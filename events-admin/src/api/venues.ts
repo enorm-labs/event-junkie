@@ -195,3 +195,87 @@ export async function reviewVenue(
   await ensureOk(response, `PUT ${path}`)
   return (await response.json()) as VenueDetail
 }
+
+/**
+ * `VenueCharacterTag.kt` in the importer, in the enum's order, which is the display order (#2379).
+ * The labels are the public site's English ones (`venueCharacter.json`).
+ */
+export const VENUE_CHARACTER_TAGS = [
+  { slug: 'queer', label: 'Queer' },
+  { slug: 'sex-positive', label: 'Sex-positive' },
+  { slug: 'diy-collective', label: 'DIY / collective' },
+  { slug: 'awareness-team', label: 'Awareness team' },
+  { slug: 'safer-space-policy', label: 'Safer-space policy' },
+  { slug: 'quiet-room', label: 'Quiet room' },
+  { slug: 'all-gender-toilets', label: 'All-gender toilets' },
+  { slug: 'free-water', label: 'Free water at the bar' },
+  { slug: 'smoke-free', label: 'Smoke-free' },
+  { slug: 'dress-code', label: 'Dress code' },
+  { slug: 'fetish-dress-code', label: 'Fetish dress code' },
+  { slug: 'no-photo-policy', label: 'No-photo policy' },
+  { slug: 'cash-only', label: 'Cash only' },
+  { slug: 'wheelchair-accessible', label: 'Wheelchair accessible' },
+] as const
+
+/** `VenueCharacterTagResponse`: a tag and the venue's own page that states it. */
+export interface CharacterTag {
+  tag: string
+  sourceUrl: string
+}
+
+/**
+ * Whether [value] can be a tag's source URL here: `https://` and no whitespace. The importer also
+ * takes `http://`; this app asks for the stricter form.
+ */
+export function isHttpsUrl(value: string): boolean {
+  if (!/^https:\/\/\S+$/.test(value) || value.length > 2048) return false
+  try {
+    return new URL(value).hostname !== ''
+  } catch {
+    return false
+  }
+}
+
+const tagsPath = (venueId: number) => `${VENUES}/${venueId}/character-tags`
+
+export async function fetchCharacterTags(
+  venueId: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<CharacterTag[]> {
+  const path = tagsPath(venueId)
+  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
+  await ensureOk(response, `GET ${path}`)
+  return (await response.json()) as CharacterTag[]
+}
+
+/** Sets [tag] on the venue, or replaces its source URL. Refuses a URL `isHttpsUrl` refuses. */
+export async function setCharacterTag(
+  venueId: number,
+  tag: string,
+  sourceUrl: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<CharacterTag> {
+  if (!isHttpsUrl(sourceUrl)) throw new Error(`Not an https:// URL: ${sourceUrl}`)
+  const path = `${tagsPath(venueId)}/${encodeURIComponent(tag)}`
+  const response = await fetchFn(path, {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceUrl }),
+  })
+  await ensureOk(response, `PUT ${path}`)
+  return (await response.json()) as CharacterTag
+}
+
+/** Removes [tag] from the venue. The importer answers `204`. */
+export async function clearCharacterTag(
+  venueId: number,
+  tag: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<void> {
+  const path = `${tagsPath(venueId)}/${encodeURIComponent(tag)}`
+  const response = await fetchFn(path, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json' },
+  })
+  await ensureOk(response, `DELETE ${path}`)
+}

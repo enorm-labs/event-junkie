@@ -1,6 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { fetchAllVenues, fetchNeedsReview, reviewVenue, runSiteCheck } from '../venues'
+import {
+  clearCharacterTag,
+  fetchAllVenues,
+  fetchCharacterTags,
+  fetchNeedsReview,
+  isHttpsUrl,
+  reviewVenue,
+  runSiteCheck,
+  setCharacterTag,
+  VENUE_CHARACTER_TAGS,
+} from '../venues'
 
 function venue(n: number) {
   return {
@@ -117,5 +127,102 @@ describe('reviewVenue', () => {
       'GET /api/admin/venues/7: HTTP 404',
     )
     expect(fetchFn).toHaveBeenCalledOnce()
+  })
+})
+
+describe('VENUE_CHARACTER_TAGS', () => {
+  it('holds the 14 slugs of VenueCharacterTag.kt in the enum order', () => {
+    expect(VENUE_CHARACTER_TAGS.map((t) => t.slug)).toEqual([
+      'queer',
+      'sex-positive',
+      'diy-collective',
+      'awareness-team',
+      'safer-space-policy',
+      'quiet-room',
+      'all-gender-toilets',
+      'free-water',
+      'smoke-free',
+      'dress-code',
+      'fetish-dress-code',
+      'no-photo-policy',
+      'cash-only',
+      'wheelchair-accessible',
+    ])
+  })
+})
+
+describe('isHttpsUrl', () => {
+  it.each(['https://so36.com/about', 'https://www.example.org/a?b=c#d'])('takes %s', (url) => {
+    expect(isHttpsUrl(url)).toBe(true)
+  })
+
+  it.each([
+    '',
+    'http://so36.com/about',
+    'so36.com',
+    'https://',
+    'https://so 36.com',
+    'ftp://x.org',
+  ])('refuses %j', (url) => {
+    expect(isHttpsUrl(url)).toBe(false)
+  })
+})
+
+describe('character tags', () => {
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+  it('reads the tags of one venue', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json([{ tag: 'queer', sourceUrl: 'https://so36.com/about' }]),
+    )
+
+    const tags = await fetchCharacterTags(7, fetchFn)
+
+    expect(tags).toEqual([{ tag: 'queer', sourceUrl: 'https://so36.com/about' }])
+    expect(String(fetchFn.mock.calls[0]?.[0])).toBe('/api/admin/venues/7/character-tags')
+  })
+
+  it('PUTs the source URL of one tag', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async (_input, init) =>
+      json({ tag: 'quiet-room', ...JSON.parse(String(init?.body)) }),
+    )
+
+    const saved = await setCharacterTag(7, 'quiet-room', 'https://so36.com/awareness', fetchFn)
+
+    expect(saved).toEqual({ tag: 'quiet-room', sourceUrl: 'https://so36.com/awareness' })
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(url).toBe('/api/admin/venues/7/character-tags/quiet-room')
+    expect(init?.method).toBe('PUT')
+    expect(JSON.parse(String(init?.body))).toEqual({ sourceUrl: 'https://so36.com/awareness' })
+  })
+
+  it('sends nothing for a URL that is not https://', async () => {
+    const fetchFn = vi.fn<typeof fetch>()
+
+    await expect(setCharacterTag(7, 'queer', 'http://so36.com/', fetchFn)).rejects.toThrow(
+      'Not an https:// URL',
+    )
+    expect(fetchFn).not.toHaveBeenCalled()
+  })
+
+  it('DELETEs one tag and accepts the 204', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => new Response(null, { status: 204 }))
+
+    await clearCharacterTag(7, 'queer', fetchFn)
+
+    const [url, init] = fetchFn.mock.calls[0]!
+    expect(url).toBe('/api/admin/venues/7/character-tags/queer')
+    expect(init?.method).toBe('DELETE')
+  })
+
+  it('reports the importer refusing a tag', async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () =>
+      json({ detail: "Unknown character tag 'nope'" }, 400),
+    )
+
+    await expect(setCharacterTag(7, 'nope', 'https://x.org/', fetchFn)).rejects.toThrow(
+      "PUT /api/admin/venues/7/character-tags/nope: HTTP 400: Unknown character tag 'nope'",
+    )
   })
 })
