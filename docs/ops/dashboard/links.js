@@ -1068,6 +1068,10 @@ window.EJ_LINKS = {
         {
           "command": "scripts/worklist.sh production --summary",
           "note": "the data-quality worklist, one line per issue and venue"
+        },
+        {
+          "command": "curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&size=100' | jq '.totalElements'",
+          "note": "open suggested fixes"
         }
       ]
     },
