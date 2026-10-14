@@ -383,7 +383,8 @@ Core entity representing a single music event at a venue on a specific date.
 | `updated_at`           | `TIMESTAMPTZ`   | No       | Last modification timestamp                                         |                                                            |
 
 **A hand edit pins the fields that it changes (ADR-042).** `PUT /api/admin/events/{id}` adds each changed field to
-`pinned_fields`, by its name in the request. `lineup`, `promoters` and `genres` pin the join tables. The importer keeps a
+`pinned_fields`, by its name in the request. `lineup`, `promoters` and `genres` pin the join tables.
+`PUT /api/admin/events/{id}/features` sets the party features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
 the end. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
 the source's value.
@@ -565,7 +566,9 @@ The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `quee
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
 `PartyFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
 English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
-sets nothing. A cue the rules cannot settle sets no feature. Examples are a bare `FLINTA*` and a FLINTA* phrase
+sets nothing. `PUT /api/admin/events/{id}/features` sets the rows by hand and pins `features` (ADR-042). The import
+then keeps the rows and adds no cue. A feature that no text set has the phrase `set by hand`. The PUT also deletes the
+`UNCERTAIN_PARTY_FEATURE` flags of the event. A cue the rules cannot settle sets no feature. Examples are a bare `FLINTA*` and a FLINTA* phrase
 about who plays ("open decks for FLINTA*", "Auflegen für FLINTA*"). Such a cue goes to `event_quality_flag`
 as `UNCERTAIN_PARTY_FEATURE`, which the data-quality worklist lists. `flinta-only` is a door rule: "FLINTA* only", "nur für
 FLINTA*", "Einlass nur für FLINTA*". The public API filters by
