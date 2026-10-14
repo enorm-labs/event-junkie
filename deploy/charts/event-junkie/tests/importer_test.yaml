@@ -378,7 +378,7 @@ tests:
   # --- Translation: two switches, and the chart owns only the first ---------------------------
   # A missing Secret must not be a broken cluster: with the engine off the deployment names no Secret
   # at all (ADR-026).
-  - it: names no translation secret while the engine is off
+  - it: switches no translation on while the engine is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -395,13 +395,14 @@ tests:
             name: APP_TRANSLATION_ENGINE
           any: true
 
-  - it: reads the key from the hand-made secret once the engine is anthropic
+  - it: reads the Anthropic key once the engine is anthropic and classification is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       importer.translation.engine: "anthropic"
       importer.translation.maxPerRun: 50
+      importer.eventClassification.enabled: false
     documentSelector:
       path: kind
       value: Deployment
@@ -414,11 +415,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: APP_TRANSLATION_API_KEY
+            name: APP_ANTHROPIC_API_KEY
             valueFrom:
               secretKeyRef:
-                name: event-junkie-translation
-                key: APP_TRANSLATION_API_KEY
+                name: event-junkie-anthropic
+                key: APP_ANTHROPIC_API_KEY
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -442,8 +443,8 @@ tests:
             name: APP_TRANSLATION_MAX_PER_RUN
             value: "250"
 
-  # --- Event classification: off by default, and it shares the translation key (#3241) ----------
-  - it: switches no classification on and names no key while it is off
+  # --- Event classification: off by default, and it shares the Anthropic key (#3241, #3247) -----
+  - it: switches no classification on and names no key while both callers are off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -462,10 +463,10 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: APP_TRANSLATION_API_KEY
+            name: APP_ANTHROPIC_API_KEY
           any: true
 
-  - it: reads the translation key once classification is on and translation is off
+  - it: reads the Anthropic key once classification is on and translation is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -490,19 +491,20 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: APP_TRANSLATION_API_KEY
+            name: APP_ANTHROPIC_API_KEY
             valueFrom:
               secretKeyRef:
-                name: event-junkie-translation
-                key: APP_TRANSLATION_API_KEY
+                name: event-junkie-anthropic
+                key: APP_ANTHROPIC_API_KEY
 
-  - it: names the key once when classification and translation are both on
+  - it: names the key once, from the configured secret, when both callers are on
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       importer.translation.engine: "anthropic"
       importer.eventClassification.enabled: true
+      importer.anthropic.existingSecret: "claude-key"
     documentSelector:
       path: kind
       value: Deployment
@@ -510,11 +512,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: APP_TRANSLATION_API_KEY
+            name: APP_ANTHROPIC_API_KEY
             valueFrom:
               secretKeyRef:
-                name: event-junkie-translation
-                key: APP_TRANSLATION_API_KEY
+                name: claude-key
+                key: APP_ANTHROPIC_API_KEY
           count: 1
 
   # --- Discogs: off by default, and off means no Secret named (#2026) ---------------------------

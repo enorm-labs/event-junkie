@@ -155,21 +155,22 @@ importer:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  # importer.anthropic holds the one Claude API key that translation and eventClassification share.
+  anthropic:
+    # Read when translation.engine is `anthropic` or eventClassification is enabled, else by nothing. The
+    # Secret is hand-made, never encrypted into this public repository (docs/ops/SECRETS.md).
+    existingSecret: "event-junkie-anthropic"
   # importer.translation fills in the missing language for a source whose licence grants it (ADR-026,
   # #470). **The engine is not the switch that spends money** — a source also needs
   # `translation_licence = PERMITTED`, which follows the display rule (ADR-027).
   translation:
     # `none` or `anthropic`.
     engine: "none"
-    # Read only when engine is `anthropic`. The Secret is hand-made, never encrypted into this public
-    # repository (docs/ops/SECRETS.md); with engine `none` nothing reads it.
-    existingSecret: "event-junkie-translation"
     model: "claude-haiku-4-5"
     # Descriptions one source translates per pass. One that gains more in a night never catches up.
     maxPerRun: 50
   # importer.eventClassification proposes fixes for unsure events with one model call each (#3241,
-  # ADR-041). Off by default: it sends titles and descriptions to Anthropic. The key is the
-  # translation Secret's, so `importer.translation.existingSecret` must exist when this is on.
+  # ADR-041). Off by default: it sends titles and descriptions to Anthropic.
   eventClassification:
     enabled: false
     model: "claude-haiku-4-5"

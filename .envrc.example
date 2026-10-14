@@ -16,7 +16,7 @@
 # Nothing secret belongs in this file. The values come out of the macOS Keychain, so the copy you
 # actually use stays safe to read over your shoulder and harmless in a screen share. Store it once:
 #
-#   security add-generic-password -a "$USER" -s event-junkie-translation-api-key -w
+#   security add-generic-password -a "$USER" -s event-junkie-anthropic-api-key -w
 #
 # `-w` with no value prompts for it, so the secret never reaches your shell history.
 #
@@ -24,10 +24,10 @@
 
 keychain() { security find-generic-password -a "$USER" -s "$1" -w 2>/dev/null || true; }
 
-# The Claude API key the importer translates with (ADR-026). Its own key in its own Console
-# workspace, so it carries a spend limit of its own and can be revoked without touching anything
-# else. See docs/CREDENTIALS.md #26.
-export APP_TRANSLATION_API_KEY="$(keychain event-junkie-translation-api-key)"
+# The Claude API key the importer translates (ADR-026) and classifies events (ADR-041) with. Its own
+# key in its own Console workspace, so it carries a spend limit of its own and can be revoked without
+# touching anything else. See docs/CREDENTIALS.md #26.
+export APP_ANTHROPIC_API_KEY="$(keychain event-junkie-anthropic-api-key)"
 
 # **`none` is the default and the right value for ordinary work.** The key alone costs nothing.
 # Setting this to `anthropic` is what starts spending, and even then only for an event source whose
@@ -36,6 +36,6 @@ export APP_TRANSLATION_ENGINE=none
 
 # An empty key produces a warning on the first translation rather than at startup, which is a long
 # way from the cause. Say so now instead.
-if [ -z "$APP_TRANSLATION_API_KEY" ]; then
-    echo "envrc: APP_TRANSLATION_API_KEY is empty — is it in the Keychain under the name above?" >&2
+if [ -z "$APP_ANTHROPIC_API_KEY" ]; then
+    echo "envrc: APP_ANTHROPIC_API_KEY is empty — is it in the Keychain under the name above?" >&2
 fi
