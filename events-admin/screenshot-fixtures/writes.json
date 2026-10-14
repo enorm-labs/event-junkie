@@ -149,5 +149,31 @@
     "merge": {
       "musicbrainzMatch": "EXACT"
     }
+  },
+  {
+    "method": "POST",
+    "path": "data-quality/check/event/{id}",
+    "status": 200,
+    "body": {
+      "candidates": 1,
+      "checked": 1,
+      "unchanged": 0,
+      "failed": 0,
+      "overCap": 0,
+      "overBudget": 0,
+      "suggested": {
+        "startTime": 1,
+        "eventType": 1
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "data-quality/check/source/{slug}",
+    "status": 202,
+    "body": {
+      "message": "Event classification started for source '{slug}'",
+      "sourceSlug": "{slug}"
+    }
   }
 ]

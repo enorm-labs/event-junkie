@@ -59,3 +59,10 @@ call `POST …/suggestions/{id}/accept`. Without the pin, the suggestion stays o
 and looks up every other name. It creates an artist when no artist has that name. Reject calls `POST …/suggestions/{id}/dismiss`. A `features` suggestion goes
 through `PUT /api/admin/events/{id}/features` with the full proposed set. Accept refuses a slug the app does not know, and leaves the suggestion open when
 the event's features changed since the check ran.
+
+Check with AI runs the event-classification check by hand (#3241), so a fix does not wait for the nightly run. In the event editor
+(`src/components/EventEditor.vue`) it asks for a confirmation, because it costs one model call against the month's token budget. Then it calls
+`POST /api/admin/data-quality/check/event/{id}` without `force` and shows what the run did: checked, skipped because the text did not change, no answer from
+the model or over the budget. In a source's row menu (`src/components/SourceActions.vue`) it confirms and calls `POST …/check/source/{slug}`. That run goes in
+the background, so the row says only that it started. New suggestions appear on Suggested fixes. A 409 shows the importer's message: the check is off, as on
+staging, or a run is going.

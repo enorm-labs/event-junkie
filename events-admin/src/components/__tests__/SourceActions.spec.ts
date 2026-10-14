@@ -1,4 +1,4 @@
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventSource } from '@/api/eventSources'
@@ -89,7 +89,11 @@ async function click(wrapper: ReturnType<typeof mount>, label: string) {
 }
 
 const mountActions = (props: { source: EventSource }) =>
-  mount(SourceActions, { props, attachTo: document.body })
+  mount(SourceActions, {
+    props,
+    attachTo: document.body,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  })
 
 /** Runs the next poll and lets its read settle. */
 async function tick() {
@@ -298,5 +302,72 @@ describe('SourceActions', () => {
     )
     answer(json({}, 202))
     wrapper.unmount()
+  })
+
+  describe('Check with AI', () => {
+    const CHECK = 'POST /api/admin/data-quality/check/source/lido'
+
+    async function chooseCheck(wrapper: ReturnType<typeof mount>) {
+      await openMenu(wrapper)
+      document.body
+        .querySelector<HTMLElement>('[role="menuitem"][aria-label="Check Lido with AI"]')!
+        .click()
+      await flushPromises()
+    }
+
+    const confirmButton = (wrapper: ReturnType<typeof mount>, label: string) =>
+      wrapper
+        .get('[role="group"]')
+        .findAll('button')
+        .find((b) => b.text() === label)!
+
+    it('asks first, then posts the check and says it started, without reading the source', async () => {
+      const fetchFn = stubFetch(
+        () => json({ message: "Event classification started for source 'lido'" }, 202),
+        [{}],
+      )
+      const wrapper = mountActions({ source: source() })
+
+      await chooseCheck(wrapper)
+      expect(fetchFn).not.toHaveBeenCalled()
+      expect(wrapper.get('[role="group"]').text()).toContain('token budget')
+
+      await confirmButton(wrapper, 'Check').trigger('click')
+      await flushPromises()
+
+      expect(calls(fetchFn)).toEqual([CHECK])
+      expect(wrapper.find('[role="group"]').exists()).toBe(false)
+      expect(wrapper.get('[role="status"]').text()).toContain('The check started')
+      expect(wrapper.getComponent(RouterLinkStub).props('to')).toBe('/suggestions')
+      expect(wrapper.emitted('updated')).toBeUndefined()
+      await tick()
+      expect(fetchFn).toHaveBeenCalledOnce()
+    })
+
+    it('Cancel posts nothing', async () => {
+      const fetchFn = stubFetch(() => json({}, 202), [{}])
+      const wrapper = mountActions({ source: source() })
+
+      await chooseCheck(wrapper)
+      await confirmButton(wrapper, 'Cancel').trigger('click')
+      await flushPromises()
+
+      expect(fetchFn).not.toHaveBeenCalled()
+      expect(wrapper.find('[role="group"]').exists()).toBe(false)
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
+    })
+
+    it('shows the message of a 409', async () => {
+      const detail = 'An event-classification run is going. Start another one when it has finished'
+      stubFetch(() => json({ status: 409, detail }, 409), [{}])
+      const wrapper = mountActions({ source: source() })
+
+      await chooseCheck(wrapper)
+      await confirmButton(wrapper, 'Check').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.get('[role="alert"]').text()).toBe(`${CHECK}: HTTP 409: ${detail}`)
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
+    })
   })
 })
