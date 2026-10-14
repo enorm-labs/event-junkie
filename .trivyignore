@@ -1,7 +1,8 @@
 # Vulnerabilities waived for the container image scan in .github/workflows/release.yml.
 #
-# **Empty is the goal.** It went back to empty on 2026-08-17 (#492), on 2026-09-05 (#770) and on
-# 2026-09-15 (#1273), each time by fixing the image rather than by amending the waiver.
+# **Empty is the goal.** It went back to empty on 2026-08-17 (#492), on 2026-09-05 (#770), on
+# 2026-09-15 (#1273) and on 2026-10-14 (#2972, #3071), each time by fixing the image rather than by
+# amending the waiver.
 #
 # The gate blocks a release on CRITICAL and HIGH findings **that have a fix available**; unfixed ones
 # are already excluded by `--ignore-unfixed` and do not belong here. So an entry in this file means
@@ -42,30 +43,14 @@
 # ---------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------
 #
-# 2026-09-15 — back to empty for the third time. The CVE-2026-84445 waiver (grpc-go in the imgproxy
-# sidecar, added 2026-09-10, #1273) named its own deletion condition — "revisit sooner if imgproxy
-# ships v4.0.15" — and that condition held five weeks before the calendar date it also carried.
-# v4.0.15 ships grpc v1.83.2, the fixed version, so the entry went away with a digest bump rather
-# than a re-dating. The waiver was written to expire and it expired; that is the outcome this file
-# wants, and the reason every entry above is required to say what would end it.
-
-# 2026-10-09 — CVE-2026-78667 (net/http, a crafted Range header), CVE-2026-97031 (crypto/tls,
-# repeated ECH outer extensions) and CVE-2026-78669 (HTTP/2, excessive SETTINGS frames, also in
-# golang.org/x/net v0.59.0), all denial of service, in the Go 1.27.1 standard library compiled into
-# the imgproxy sidecar (ghcr.io/imgproxy/imgproxy, pinned by digest in the chart). Fixed in Go
-# 1.26.9 and 1.27.2 (x/net 0.60.0), and no imgproxy build carries the fix: the pin is v4.0.17, the
-# newest release (2026-09-30), and `latest` (sha256:c0d8c00b, scanned 2026-10-11) links the same.
+# 2026-10-14 — back to empty for the fourth time. The three Go standard-library waivers
+# (CVE-2026-78667, CVE-2026-78669 and CVE-2026-97031 in the imgproxy sidecar, added 2026-10-09,
+# #2972, #3071) named their own deletion condition — "sooner if imgproxy ships a release built with
+# Go 1.27.2 or later" — and it held three weeks before the calendar date they also carried. v4.0.18
+# builds on Go 1.27.2 with x/net 0.61.0 and scans clean, so the entries went away with a digest bump
+# rather than a re-dating. Written to expire, and they expired; that is the outcome this file wants,
+# and the reason every entry above is required to say what would end it.
 #
-# Not reachable from outside: the sidecar answers on loopback inside the importer pod (ADR-020),
-# so only the importer can send it a Range header or an HTTP/2 frame. It terminates no TLS; it is a
-# TLS client only to the origins `IMGPROXY_ALLOWED_SOURCES` lists.
-#
-# **Revisit on 2026-11-06, or sooner if imgproxy ships a release built with Go 1.27.2 or later.**
-# Releases came every two weeks in September (v4.0.15 to v4.0.17). Take the digest and delete all
-# three lines then. See #2972, #3071.
-#
-# The second imgproxy episode, after #1273 (a different dependency). A third is the signal the note
-# above describes: the question becomes how imgproxy is built, not whether one finding is reachable.
-CVE-2026-78667
-CVE-2026-78669
-CVE-2026-97031
+# #1273 was the same story on a different imgproxy dependency, which makes two imgproxy episodes. A
+# third is the signal the note above describes: the question becomes how imgproxy is built, not
+# whether one finding is reachable.
