@@ -237,6 +237,59 @@ class CassiopeiaDetailPageScraperTest {
     @CsvSource(
         delimiter = '|',
         value = [
+            // Cold Years: the credit follows a blank line inside the last block (#3286).
+            "cassiopeia-detail-credit-after-break.html | cold-years-111676616 | Trinity Music",
+            "cassiopeia-detail-veranstalter.html | blacktoothed-111656473 | Trinity Music",
+            "cassiopeia-detail-veranstalter-after-break.html | pako-peng-111665131 | Landstreicher Konzerte",
+            // Indie Club Berlin: "Veranstalter: cassiopeia & King Kong Kicks" credits the venue itself too.
+            "cassiopeia-detail-veranstalter-with-venue.html | indie-club-berlin-111647971 | King Kong Kicks"
+        ]
+    )
+    fun `reads a credit that opens a line of a description block`(
+        fixtureName: String,
+        slug: String,
+        expected: String
+    ) {
+        val url = "https://cassiopeia-berlin.de/event/$slug"
+        val event = scraper.scrape(Jsoup.parse(fixture(fixtureName), url), url).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf(expected)
+    }
+
+    @Test
+    fun `reads no promoter from a credit word inside a line, or a Veranstalter without a colon`() {
+        val paragraphs =
+            listOf(
+                "Ein Abend voller Lieder.\n\nDie Band wird präsentiert von ihrer eigenen Crew.",
+                "Veranstalter Trinity Music fragt nach Gästelisten.\nUnser Veranstalter: das Kollektiv selbst? Nein."
+            )
+        val html = buildDetailHtml("Matze Rossi Band", descriptionParagraphs = paragraphs)
+        val url = "https://cassiopeia-berlin.de/event/matze-rossi-band-2"
+
+        scraper
+            .scrape(Jsoup.parse(html, url), url)
+            .shouldNotBeNull()
+            .promoters
+            .shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a credit after a line break and drops the venue from the list`() {
+        val html =
+            buildDetailHtml(
+                "Indie Club Berlin",
+                category = "Party",
+                descriptionParagraphs = listOf("Floor 1: Indie<br>Mindestalter: 18\n\nVeranstalter: Cassiopeia Berlin, King Kong Kicks")
+            )
+        val url = "https://cassiopeia-berlin.de/event/indie-club-berlin-1"
+
+        scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull().promoters shouldContainExactly listOf("King Kong Kicks")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
             "Präsentiert von Trinity Music | Trinity Music",
             "präsentiert von Loft Concerts | Loft Concerts",
             "präsentiert von: Kidnap Music, Audiolith | Kidnap Music;Audiolith",
