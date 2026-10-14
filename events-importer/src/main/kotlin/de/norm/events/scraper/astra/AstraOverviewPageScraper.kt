@@ -17,6 +17,7 @@ import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSubtitleNotice
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.supportSubtitleLines
 import de.norm.events.scraper.textAt
@@ -234,22 +235,3 @@ internal fun parseAstraEventBlock(
         status = parseEventStatus(statusText)
     )
 }
-
-/**
- * Separates the subtitle proper from the notice the venue appends below it.
- *
- * `.event__subtitle` is the tour name and a `+ Support:` line, then after a blank `<br><br>` a
- * shouted banner — `VERLEGT INS LIDO. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!`,
- * `MATINEE SHOW!`. Joined as one text the banner ran into the subtitle and the support act read
- * as "Gym Tonic Verlegt Ins Lido" (#1138). A line is a notice when it follows a blank line
- * **and** is shouted; a festival's lower-case lineup after the same blank stays subtitle.
- * Returns subtitle and notice, each `null` when empty.
- */
-internal fun splitSubtitleNotice(lines: List<String>): Pair<String?, String?> {
-    val firstBlank = lines.indexOfFirst { it.isBlank() }.takeIf { it >= 0 } ?: lines.size
-    val (notice, subtitle) = lines.filter { it.isNotBlank() }.partition { line -> lines.indexOf(line) > firstBlank && line.isShouted() }
-    return subtitle.joinToString(" ").ifBlank { null } to notice.joinToString(" ").ifBlank { null }
-}
-
-/** True for a capitals-only line — the venue's style for a notice, never a tour name or act. */
-private fun String.isShouted(): Boolean = any { it.isLetter() } && none { it.isLowerCase() }

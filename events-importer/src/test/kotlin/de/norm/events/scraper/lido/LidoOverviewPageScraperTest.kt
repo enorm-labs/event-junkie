@@ -190,4 +190,27 @@ class LidoOverviewPageScraperTest {
 
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 1
     }
+
+    @Test
+    fun `stores the subtitle without the sold-out banner below it`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/lido/lido-overview-sold-out-notice.html")!!
+                .bufferedReader()
+                .readText()
+        val kayla = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        kayla.subtitle shouldBe "„Sad Girl Summer TOUR 2026\" + Support: DANI LIA"
+        kayla.soldOut shouldBe true
+        kayla.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("KAYLA SHYX", "HEADLINER", titleDerived = true),
+                ScrapedArtist("DANI LIA", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `drops a cancellation banner from the subtitle`() {
+        event("Together Pangea").subtitle shouldBe "+ Support: JEFF CLARKE"
+    }
 }
