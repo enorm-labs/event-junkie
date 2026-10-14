@@ -11,6 +11,12 @@ const router = createRouter({
       meta: { title: 'Event sources' },
     },
     {
+      path: '/events',
+      name: 'events',
+      component: () => import('@/views/EventsView.vue'),
+      meta: { title: 'Events' },
+    },
+    {
       path: '/worklist',
       name: 'worklist',
       component: () => import('@/views/WorklistView.vue'),

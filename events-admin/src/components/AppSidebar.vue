@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   CalendarPlus,
+  CalendarSearch,
   Database,
   GlobeX,
   ListChecks,
@@ -8,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from '@lucide/vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import {
@@ -24,6 +26,7 @@ import {
 // One entry per admin page. The pages #342, #343, #345 and #347 add go here.
 const NAV = [
   { title: 'Sources', to: '/sources', icon: Database },
+  { title: 'Events', to: '/events', icon: CalendarSearch },
   { title: 'Worklist', to: '/worklist', icon: ListChecks },
   { title: 'Suggested fixes', to: '/suggestions', icon: Sparkles },
   { title: 'Artists to review', to: '/artists', icon: MicVocal },
@@ -32,6 +35,14 @@ const NAV = [
 ]
 
 const route = useRoute()
+
+// The longest entry the path lies under, so /events/new marks "New event" and not "Events".
+const active = computed(
+  () =>
+    NAV.map((item) => item.to)
+      .filter((to) => route.path === to || route.path.startsWith(`${to}/`))
+      .sort((a, b) => b.length - a.length)[0],
+)
 </script>
 
 <template>
@@ -53,11 +64,7 @@ const route = useRoute()
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem v-for="item in NAV" :key="item.to">
-              <SidebarMenuButton
-                as-child
-                :is-active="route.path.startsWith(item.to)"
-                :tooltip="item.title"
-              >
+              <SidebarMenuButton as-child :is-active="item.to === active" :tooltip="item.title">
                 <RouterLink :to="item.to">
                   <component :is="item.icon" />
                   <span>{{ item.title }}</span>

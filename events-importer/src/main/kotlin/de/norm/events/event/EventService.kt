@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.common.PageResponse
+import de.norm.events.common.containsIgnoringCase
 import de.norm.events.common.pageMatching
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
@@ -46,19 +47,16 @@ class EventService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Lists events with their associations, paged and sorted by [pageable]. [venueId], [date] and
-     * [artistId] narrow the list; null means no filter, and an unknown venue or artist is an empty
-     * page. Batch loading: the page of events first, then artists, promoters and genre tags in three
+     * Lists events with their associations, paged and sorted by [pageable] and narrowed by
+     * [filter]. Batch loading: the page of events first, then artists, promoters and genre tags in three
      * more queries, four per page regardless of size.
      */
     @Transactional(readOnly = true)
     suspend fun findAll(
         pageable: Pageable,
-        venueId: Long? = null,
-        date: LocalDate? = null,
-        artistId: Long? = null
+        filter: EventListFilter = EventListFilter()
     ): PageResponse<EventResponse> {
-        val (entities, total) = pageOf(pageable, venueId, date, artistId)
+        val (entities, total) = pageOf(pageable, filter)
         if (entities.isEmpty()) return PageResponse.of(emptyList(), pageable, total)
 
         val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
@@ -95,17 +93,17 @@ class EventService(
     /** One page of the events [findAll] narrows to, and the count of all of them. */
     private suspend fun pageOf(
         pageable: Pageable,
-        venueId: Long?,
-        date: LocalDate?,
-        artistId: Long?
+        filter: EventListFilter
     ): Pair<List<EventEntity>, Long> {
         // The ids rather than a subquery, because the criteria API has none; one act bills a few hundred events at most.
-        val billedIds = artistId?.let { id -> eventArtistRepository.findByArtistId(id).toList().map { it.eventId } }
+        val billedIds = filter.artistId?.let { id -> eventArtistRepository.findByArtistId(id).toList().map { it.eventId } }
         val narrowedBy =
             listOfNotNull(
-                venueId?.let { Criteria.where("venueId").`is`(it) },
-                date?.let { Criteria.where("eventDate").`is`(it) },
-                billedIds?.let { Criteria.where("id").`in`(it) }
+                filter.venueId?.let { Criteria.where("venueId").`is`(it) },
+                filter.date?.let { Criteria.where("eventDate").`is`(it) },
+                billedIds?.let { Criteria.where("id").`in`(it) },
+                filter.title?.takeIf { it.isNotBlank() }?.let { containsIgnoringCase("title", it.trim()) },
+                filter.from?.let { Criteria.where("eventDate").greaterThanOrEquals(it) }
             ).reduceOrNull(Criteria::and)
         return when {
             billedIds?.isEmpty() == true -> emptyList<EventEntity>() to 0L
@@ -465,6 +463,21 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
         featuredUntil = featuredUntil?.orElse(null)
     )
 }
+
+/**
+ * The filters of [EventService.findAll], combined with AND. A null one, or a blank [title], does
+ * not narrow the list; an unknown venue or artist gives an empty page.
+ *
+ * @property title a part of the title, in any case.
+ * @property from the first `eventDate`: an event over midnight counts on the day it starts.
+ */
+data class EventListFilter(
+    val venueId: Long? = null,
+    val date: LocalDate? = null,
+    val artistId: Long? = null,
+    val title: String? = null,
+    val from: LocalDate? = null
+)
 
 /** The id of a genre tag read back from the database, which is never null once it is persisted. */
 private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

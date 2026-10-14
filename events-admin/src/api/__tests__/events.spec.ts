@@ -5,11 +5,13 @@ import {
   createEvent,
   emptyNewEventForm,
   type EventFeatures,
+  eventSearchUrl,
   fetchEventFeatures,
   fetchEventsOn,
   manualSourceId,
   type NewEventForm,
   parsePrice,
+  searchEvents,
   setEventFeatures,
   slugify,
   toCreateRequest,
@@ -449,5 +451,52 @@ describe('fetchEventsOn', () => {
     await expect(fetchEventsOn(7, '12.09.2026', fetchFn)).rejects.toThrow(
       "GET /api/admin/events: HTTP 400 — Invalid value '12.09.2026'",
     )
+  })
+})
+
+describe('eventSearchUrl', () => {
+  function params(url: string) {
+    const parsed = new URL(url, 'http://admin.test')
+    expect(parsed.pathname).toBe('/api/admin/events')
+    return [...parsed.searchParams]
+  }
+
+  it('sends only the page and the newest-first sort when nothing narrows', () => {
+    expect(params(eventSearchUrl({ title: '  ', venueId: null, from: null, page: 0 }))).toEqual([
+      ['page', '0'],
+      ['size', '20'],
+      ['sort', 'eventDate,desc'],
+      ['sort', 'startTime,desc'],
+    ])
+  })
+
+  it('sends the trimmed title, the venue and the first date, with % and _ as typed', () => {
+    const url = eventSearchUrl({ title: ' 100%_Jam ', venueId: 7, from: '2026-10-14', page: 3 })
+
+    expect(params(url)).toEqual([
+      ['q', '100%_Jam'],
+      ['venueId', '7'],
+      ['from', '2026-10-14'],
+      ['page', '3'],
+      ['size', '20'],
+      ['sort', 'eventDate,asc'],
+      ['sort', 'startTime,asc'],
+    ])
+    expect(url).toContain('q=100%25_Jam')
+  })
+})
+
+describe('searchEvents', () => {
+  it('returns the page and names the request in an error', async () => {
+    const page = { content: [adminEvent()], totalElements: 1, totalPages: 1 }
+    const ok = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(page)))
+    expect(await searchEvents({ title: 'Nerven', venueId: null, from: null, page: 0 }, ok)).toEqual(
+      page,
+    )
+
+    const failed = vi.fn<typeof fetch>(async () => new Response('{}', { status: 502 }))
+    await expect(
+      searchEvents({ title: '', venueId: null, from: null, page: 0 }, failed),
+    ).rejects.toThrow('GET /api/admin/events: HTTP 502')
   })
 })
