@@ -9,6 +9,7 @@ import de.norm.events.importing.EventSourceRepository
 import de.norm.events.importing.QualityFlagKind
 import de.norm.events.scraper.LogContext
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.withContext
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -20,14 +21,18 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.coroutines.cancellation.CancellationException
 
-/** What one run of [EventClassificationCheck] did. [suggested] counts the rows it wrote, per field. */
+/**
+ * What one run of [EventClassificationCheck] did. [suggested] counts the rows it wrote, per field.
+ * [overBudget] counts the events left unsent because the month's tokens reached the budget.
+ */
 data class ClassificationRunResult(
     val candidates: Int,
     val checked: Int,
     val unchanged: Int,
     val failed: Int,
     val overCap: Int,
-    val suggested: Map<String, Int>
+    val suggested: Map<String, Int>,
+    val overBudget: Int = 0
 )
 
 /**
@@ -39,7 +44,7 @@ data class ClassificationRunResult(
  */
 @Service
 @ConditionalOnProperty(name = ["app.data-quality.classification.enabled"], havingValue = "true")
-@Suppress("LongParameterList") // The check reads four tables through their owners' repositories and writes one meter.
+@Suppress("LongParameterList") // The check reads four tables through their owners' repositories, writes one meter and counts tokens.
 class EventClassificationCheck(
     private val repository: EventClassificationRepository,
     private val classifier: AnthropicEventClassifier,
@@ -47,7 +52,8 @@ class EventClassificationCheck(
     private val featureRepository: EventFeatureRepository,
     private val flagRepository: EventQualityFlagRepository,
     private val properties: ClassificationProperties,
-    private val meterRegistry: MeterRegistry
+    private val meterRegistry: MeterRegistry,
+    private val ledger: ClassificationTokenLedger
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -57,33 +63,62 @@ class EventClassificationCheck(
         force: Boolean = false
     ): ClassificationRunResult {
         repository.findTarget(eventId) ?: throw EventNotFoundException(eventId)
-        return run("event $eventId", listOf(eventId), force)
+        return run("event $eventId", listOf(eventId), force, properties.maxPerRun, sourceSlug = null)
     }
 
-    /** Checks the upcoming candidates of one source, soonest first, up to `max-per-run` model calls. */
+    /**
+     * Checks the upcoming candidates of one source, soonest first, up to [maxCalls] model calls.
+     * The nightly pass passes what is left of its own cap.
+     */
     suspend fun checkSource(
         slug: String,
-        force: Boolean = false
+        force: Boolean = false,
+        maxCalls: Int = properties.maxPerRun
     ): ClassificationRunResult {
         sourceRepository.findBySlug(slug) ?: throw EventSourceNotFoundException(slug)
-        return run("source '$slug'", repository.findSourceCandidateIds(slug), force)
+        return run("source '$slug'", repository.findSourceCandidateIds(slug), force, maxCalls, sourceSlug = slug)
     }
 
     private suspend fun run(
         scope: String,
         eventIds: List<Long>,
-        force: Boolean
+        force: Boolean,
+        maxCalls: Int,
+        sourceSlug: String?
     ): ClassificationRunResult {
-        logger.info { "Event classification of $scope started: ${eventIds.size} candidate(s), at most ${properties.maxPerRun} model call(s)" }
-        val tally = Tally()
+        val tally = Tally(maxCalls, ledger.monthTotal())
+        val sourcePayload = sourceSlug?.let { mapOf(LogContext.SOURCE_SLUG to it) }
+        logger.at(Level.INFO) {
+            message =
+                "Event classification of $scope started: ${eventIds.size} candidate(s), at most $maxCalls model call(s), " +
+                "${tally.monthTokens} of ${ledger.budget} tokens used this month"
+            payload = sourcePayload
+        }
         runCatching { eventIds.forEach { step(it, force, tally) } }
             .onFailure { e ->
-                if (e !is CancellationException) logger.error(e) { "Event classification of $scope failed after ${tally.calls} model call(s)" }
+                if (e !is CancellationException) {
+                    logger.at(Level.ERROR) {
+                        message = "Event classification of $scope failed after ${tally.calls} model call(s)"
+                        cause = e
+                        payload = sourcePayload
+                    }
+                }
             }.getOrThrow()
-        val result = ClassificationRunResult(eventIds.size, tally.calls, tally.unchanged, tally.failed, tally.overCap, tally.suggested.toSortedMap())
-        logger.info {
-            "Event classification of $scope finished: ${result.checked} checked, ${result.unchanged} unchanged, ${result.failed} failed, " +
-                "${result.overCap} over the cap; suggested ${result.suggested}"
+        val result =
+            ClassificationRunResult(
+                eventIds.size,
+                tally.calls,
+                tally.unchanged,
+                tally.failed,
+                tally.overCap,
+                tally.suggested.toSortedMap(),
+                tally.overBudget
+            )
+        logger.at(Level.INFO) {
+            message =
+                "Event classification of $scope finished: ${result.checked} checked, ${result.unchanged} unchanged, ${result.failed} failed, " +
+                "${result.overCap} over the cap, ${result.overBudget} over the token budget; suggested ${result.suggested}"
+            payload = sourcePayload
         }
         return result
     }
@@ -93,24 +128,36 @@ class EventClassificationCheck(
         force: Boolean,
         tally: Tally
     ) {
-        if (tally.calls >= properties.maxPerRun) {
+        if (tally.calls >= tally.maxCalls) {
             tally.overCap++
             return
         }
         val target = repository.findTarget(eventId) ?: return
-        if (!force && target.checkedHash == target.contentHash) {
-            tally.unchanged++
-            outcome(OUTCOME_UNCHANGED)
-        } else {
-            classify(target, tally)
+        when {
+            !force && target.checkedHash == target.contentHash -> {
+                tally.unchanged++
+                outcome(OUTCOME_UNCHANGED)
+            }
+
+            tally.monthTokens >= ledger.budget -> {
+                tally.overBudget++
+            }
+
+            else -> {
+                classify(target, tally)
+            }
         }
     }
 
-    private class Tally {
+    private class Tally(
+        val maxCalls: Int,
+        var monthTokens: Long
+    ) {
         var calls = 0
         var unchanged = 0
         var failed = 0
         var overCap = 0
+        var overBudget = 0
         val suggested = mutableMapOf<String, Int>()
     }
 
@@ -133,14 +180,16 @@ class EventClassificationCheck(
 
         val input = ClassificationInput(target.title, target.subtitle, target.description, cues)
         tally.calls++
-        when (val result = withContext(LogContext.forEvent(target.id)) { classifier.classify(input) }) {
+        val result = withContext(LogContext.forEvent(target.id)) { classifier.classify(input) }
+        if (result != ClassifierResult.Failed) tally.monthTokens = ledger.record(result.usage)
+        when (result) {
             is ClassifierResult.Answered -> {
                 suggestions += Proposals(target, lineup, musicBrainzActs, features, result.answer, classifier.model).all()
                 repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_ANSWERED)
             }
 
-            ClassifierResult.Rejected -> {
+            is ClassifierResult.Rejected -> {
                 repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_REJECTED)
             }

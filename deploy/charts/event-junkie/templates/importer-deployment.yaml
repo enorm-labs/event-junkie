@@ -180,6 +180,10 @@ spec:
               value: {{ .Values.importer.eventClassification.model | quote }}
             - name: APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN
               value: {{ .Values.importer.eventClassification.maxPerRun | quote }}
+            - name: APP_DATA_QUALITY_CLASSIFICATION_CRON
+              value: {{ .Values.importer.eventClassification.cron | quote }}
+            - name: APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET
+              value: {{ .Values.importer.eventClassification.monthlyTokenBudget | int64 | quote }}
             {{- end }}
             {{- if or (eq .Values.importer.translation.engine "anthropic") .Values.importer.eventClassification.enabled }}
             {{- /* One key for both Anthropic callers, so it is named once. Hand-made, never SOPS: the ciphertext in a

@@ -402,6 +402,22 @@ CREATE TABLE events.event_classification_check (
 );
 
 --
+-- Name: event_classification_usage; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_classification_usage (
+    month_start date NOT NULL,
+    input_tokens bigint DEFAULT 0 NOT NULL,
+    output_tokens bigint DEFAULT 0 NOT NULL,
+    calls integer DEFAULT 0 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_classification_usage_calls_check CHECK ((calls >= 0)),
+    CONSTRAINT event_classification_usage_input_tokens_check CHECK ((input_tokens >= 0)),
+    CONSTRAINT event_classification_usage_month_start_check CHECK ((EXTRACT(day FROM month_start) = (1)::numeric)),
+    CONSTRAINT event_classification_usage_output_tokens_check CHECK ((output_tokens >= 0))
+);
+
+--
 -- Name: event_enrichment; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -846,6 +862,13 @@ ALTER TABLE ONLY events.event_change
 
 ALTER TABLE ONLY events.event_classification_check
     ADD CONSTRAINT event_classification_check_pkey PRIMARY KEY (event_id);
+
+--
+-- Name: event_classification_usage event_classification_usage_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_classification_usage
+    ADD CONSTRAINT event_classification_usage_pkey PRIMARY KEY (month_start);
 
 --
 -- Name: event_enrichment event_enrichment_pkey; Type: CONSTRAINT; Schema: events; Owner: -

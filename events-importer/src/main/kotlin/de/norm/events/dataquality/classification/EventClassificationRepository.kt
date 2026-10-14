@@ -73,6 +73,22 @@ class EventClassificationRepository(
             .asFlow()
             .toList()
 
+    /** The number of upcoming candidates of every source that has one, by slug. */
+    suspend fun countSourceCandidates(): Map<String, Long> =
+        template.databaseClient
+            .sql(
+                """
+                SELECT s.slug, count(*) AS candidates FROM $EVENTS_SCHEMA.event e
+                JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
+                WHERE e.event_date >= CURRENT_DATE AND ($CANDIDATE_PREDICATE)
+                GROUP BY s.slug
+                """.trimIndent()
+            ).map { row, _ -> row.string("slug") to row.long("candidates") }
+            .all()
+            .asFlow()
+            .toList()
+            .toMap()
+
     suspend fun findTarget(eventId: Long): ClassificationTarget? =
         template.databaseClient
             .sql(

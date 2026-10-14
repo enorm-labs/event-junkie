@@ -72,6 +72,9 @@ class DataQualityMetrics(
         }
     }
 
+    /** The sources with at least one series of `data_quality_regression` at 1. The nightly classification pass takes them first. */
+    fun regressedSources(): Set<String> = regressions.filterValues { it.get() > 0 }.keys.mapTo(sortedSetOf()) { it.first }
+
     companion object {
         /**
          * `data_quality{source="badehaus",metric="concertsWithoutArtist"}`.

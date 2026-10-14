@@ -450,6 +450,7 @@ tests:
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       importer.translation.engine: "none"
+      # Forced: cluster-assertions.sh runs this suite against each cluster's values, and a cluster may turn it on.
       importer.eventClassification.enabled: false
     documentSelector:
       path: kind
@@ -459,6 +460,11 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: APP_DATA_QUALITY_CLASSIFICATION_ENABLED
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DATA_QUALITY_CLASSIFICATION_CRON
           any: true
       - notContains:
           path: spec.template.spec.containers[0].env
@@ -474,6 +480,8 @@ tests:
       importer.translation.engine: "none"
       importer.eventClassification.enabled: true
       importer.eventClassification.maxPerRun: 20
+      importer.eventClassification.cron: "0 30 4 * * *"
+      importer.eventClassification.monthlyTokenBudget: 5000000
     documentSelector:
       path: kind
       value: Deployment
@@ -488,6 +496,17 @@ tests:
           content:
             name: APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN
             value: "20"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DATA_QUALITY_CLASSIFICATION_CRON
+            value: "0 30 4 * * *"
+      # A large number reaches the template as a float; without int64 it renders "5e+06", which Spring cannot bind.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET
+            value: "5000000"
       - contains:
           path: spec.template.spec.containers[0].env
           content:

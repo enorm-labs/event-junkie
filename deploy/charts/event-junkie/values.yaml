@@ -174,8 +174,12 @@ importer:
   eventClassification:
     enabled: false
     model: "claude-haiku-4-5"
-    # Model calls one admin-triggered run makes. The rest wait for the next run.
+    # Model calls one run makes. The nightly pass shares one cap across all its sources.
     maxPerRun: 50
+    # The nightly pass, Spring's six fields in UTC. After the 03:00 snapshot that sets the regression gauge.
+    cron: "0 0 4 * * *"
+    # Input plus output tokens per calendar month. At the limit every run stops before its next call.
+    monthlyTokenBudget: 3000000
   # importer.discogs asks Discogs about every artist MusicBrainz marks NONE, and stores its id and an
   # empty link (#2026, ADR-035). Off by default: it sends a stage name to a third party.
   discogs:

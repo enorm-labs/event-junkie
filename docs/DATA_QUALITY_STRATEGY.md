@@ -272,10 +272,23 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     The fields are `eventType`, `artists`, `features`, `startTime`, `pricePresale` and `priceBoxOffice`. The check
     never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
     check skips an event whose text did not change since its last answer. `app.data-quality.classification.enabled`
-    switches it on. It is off by default. An operator starts it with `POST /api/admin/data-quality/check/event/{id}` or
-    `POST /api/admin/data-quality/check/source/{slug}`. `max-per-run` limits the model calls of one run. A source run
-    reads only upcoming events. [#2996](https://github.com/enorm-labs/event-junkie/issues/2996) adds the nightly run,
-    and [#2997](https://github.com/enorm-labs/event-junkie/issues/2997) measures the false-positive rate per field.
+    switches it on. It is off by default.
+
+    A nightly pass runs the check at 04:00 UTC, after the 03:00 snapshot
+    ([#2996](https://github.com/enorm-labs/event-junkie/issues/2996)). The pass takes the sources with a
+    `data_quality_regression` first. Then it takes the sources with the most candidates. In each source it reads only
+    upcoming events, soonest first. `app.scheduling.enabled=false` stops the pass, as it stops every scheduled job.
+    An operator can also start the check by hand. `POST /api/admin/data-quality/check/event/{id}` checks one event and
+    answers with the result. `POST /api/admin/data-quality/check/source/{slug}` starts a run in the background and
+    answers `202`. Both kinds of run share one runner, so a second start answers `409` while a run is going. The
+    importer log has the start, the result per source and a failure of each run.
+
+    Two limits stop the spending. `max-per-run` caps the model calls of one run, and of the whole nightly pass.
+    `monthly-token-budget` caps the input and output tokens of one calendar month in UTC. `event_classification_usage`
+    keeps that count, so a restart does not reset it. At the budget, every run stops before its next model call. The
+    Anthropic workspace limit of ADR-041 stays the backstop. The _Data quality_ tab of the dashboard charts the
+    suggestions per field and the tokens of the month.
+    [#2997](https://github.com/enorm-labs/event-junkie/issues/2997) measures the false-positive rate per field.
 
 - **The review** ([#346](https://github.com/enorm-labs/event-junkie/issues/346)) is the _Suggested fixes_ page of
   `events-admin`. It lists the open suggestions with the stored value, the proposed value and the evidence. Accept

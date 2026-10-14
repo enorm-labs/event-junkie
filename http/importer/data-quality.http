@@ -175,9 +175,11 @@ Accept: application/json
 ### Event classification — the first check that writes suggestions, issue #3241
 ###
 ### MusicBrainz first, then one model call per event. Off unless
-### app.data-quality.classification.enabled is true: then both routes answer 409.
+### app.data-quality.classification.enabled is true; while off, both routes answer 409.
 ### An event whose title, subtitle and description did not change since its
 ### last check is skipped; `force=true` sends it again. Each model call is billed.
+### A nightly pass runs the same check (#2996); the source route starts a run in
+### the background, and answers 409 while that pass or another run is going.
 ### ============================================================
 
 ### Classify one event
@@ -190,17 +192,17 @@ Accept: application/json
     });
 %}
 
-### Classify the upcoming candidates of one source, up to max-per-run model calls
+### Start a background run over the upcoming candidates of one source; the importer log carries the result
 POST {{importer-host}}/api/admin/data-quality/check/source/badehaus
 Accept: application/json
 
 > {%
-    client.test("200, or 409 while the check is off", function () {
-        client.assert(response.status === 200 || response.status === 409, "Expected 200 or 409 but got " + response.status);
+    client.test("202, or 409 while the check is off or a run is going", function () {
+        client.assert(response.status === 202 || response.status === 409, "Expected 202 or 409 but got " + response.status);
     });
-    if (response.status === 200) {
-        client.test("reports what it checked", function () {
-            client.assert(typeof response.body.checked === "number", "No checked count: " + JSON.stringify(response.body));
+    if (response.status === 202) {
+        client.test("names the source", function () {
+            client.assert(response.body.sourceSlug === "badehaus", "No source slug: " + JSON.stringify(response.body));
         });
     }
 %}

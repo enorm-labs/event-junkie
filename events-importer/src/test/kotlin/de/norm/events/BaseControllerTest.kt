@@ -80,12 +80,13 @@ abstract class BaseControllerTest {
         runBlocking {
             databaseClient
                 .sql(
-                    // cached_image has no foreign key to any of the others, so CASCADE does not
-                    // reach it and it has to be named. A table missing from this list leaks rows
-                    // between tests, which shows up as a neighbouring test failing.
+                    // cached_image and event_classification_usage have no foreign key to any of the others, so
+                    // CASCADE does not reach them and they have to be named. A table missing from this list leaks
+                    // rows between tests, which shows up as a neighbouring test failing.
                     "TRUNCATE TABLE events.data_quality_snapshot, events.event_source, events.event_genre_tag, " +
                         "events.event_promoter, events.event_artist, events.event, events.genre_tag, events.promoter, " +
-                        "events.artist, events.venue, events.cached_image_variant, events.cached_image CASCADE"
+                        "events.artist, events.venue, events.cached_image_variant, events.cached_image, " +
+                        "events.event_classification_usage CASCADE"
                 ).await()
         }
 }

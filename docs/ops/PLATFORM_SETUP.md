@@ -830,6 +830,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `data_quality_regression{source=…,metric=…}`     | Gauge                                 | 1/0 — a share over ten points above its 7-day median, unless declared (#2604)      |
 | `importer.data_quality.suggestions{check,field}` | Counter                               | Suggestion rows a check wrote, per field — event-classification's six (#3241)      |
 | `importer.data_quality.classifications{outcome}` | Counter                               | answered / rejected / failed / unchanged — events the classification check read    |
+| `importer.data_quality.classification.tokens`    | Gauge                                 | Tokens the classification check used this UTC month, against its budget (#2996)    |
 | `images.urls{state}`                             | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
 | `images.derivatives.backlog`                     | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
 | `images.fetch{outcome}`                          | Counter                               | fetched / unchanged / failed                                                       |
