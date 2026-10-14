@@ -10,24 +10,52 @@ import org.springframework.ai.anthropic.AnthropicChatModel
 import org.springframework.ai.anthropic.AnthropicChatOptions
 import org.springframework.ai.chat.messages.SystemMessage
 import org.springframework.ai.chat.messages.UserMessage
+import org.springframework.ai.chat.metadata.ChatResponseMetadata
+import org.springframework.ai.chat.metadata.Usage
+import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
 
-/** What one classification call produced. */
+/** The tokens one model call was billed for, as the response reports them. */
+data class TokenUsage(
+    val input: Long,
+    val output: Long
+) {
+    val total: Long get() = input + output
+
+    companion object {
+        val NONE = TokenUsage(0, 0)
+    }
+}
+
+/** What one classification call produced, and the tokens it cost. */
 sealed interface ClassifierResult {
+    val usage: TokenUsage
+
     data class Answered(
-        val answer: ClassificationAnswer
+        val answer: ClassificationAnswer,
+        override val usage: TokenUsage
     ) : ClassifierResult
 
     /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer. */
-    data object Rejected : ClassifierResult
+    data class Rejected(
+        override val usage: TokenUsage
+    ) : ClassifierResult
 
     /** No answer came back: the call failed, or there is no key. The event stays a candidate. */
-    data object Failed : ClassifierResult
+    data object Failed : ClassifierResult {
+        override val usage: TokenUsage = TokenUsage.NONE
+    }
 }
+
+/** The model's text, or null for a refusal or an empty answer, and the tokens of the call. */
+private data class ModelReply(
+    val text: String?,
+    val usage: TokenUsage
+)
 
 /**
  * Asks Claude, through Spring AI, what one event is: its type, the acts in its title, the uncertain
@@ -79,8 +107,9 @@ class AnthropicEventClassifier(
     suspend fun classify(input: ClassificationInput): ClassifierResult {
         if (properties.apiKey.isEmpty()) return ClassifierResult.Failed
         return runCatching { call(input) }.fold(
-            onSuccess = { text ->
-                text?.let { ClassificationValidator.parse(it, input) }?.let { ClassifierResult.Answered(it) } ?: ClassifierResult.Rejected
+            onSuccess = { reply ->
+                reply.text?.let { ClassificationValidator.parse(it, input) }?.let { ClassifierResult.Answered(it, reply.usage) }
+                    ?: ClassifierResult.Rejected(reply.usage)
             },
             onFailure = { error ->
                 logger.warn(error) { "The classification call failed" }
@@ -90,24 +119,34 @@ class AnthropicEventClassifier(
     }
 
     /** On an IO thread, because Spring AI's `call` blocks and this runs on a Netty event loop (ADR-001). */
-    private suspend fun call(input: ClassificationInput): String? =
+    private suspend fun call(input: ClassificationInput): ModelReply =
         withContext(ioDispatcher) {
             val response = chatModel.call(Prompt(listOf(SystemMessage(SYSTEM_PROMPT), UserMessage(userMessage(input))), chatOptions))
+            val usage = usageOf(response)
             if (response.result
                     ?.metadata
                     ?.finishReason
                     .equals(REFUSAL, ignoreCase = true)
             ) {
                 logger.warn { "The model declined to classify an event" }
-                null
+                ModelReply(null, usage)
             } else {
-                response.result
-                    ?.output
-                    ?.text
-                    ?.trim()
-                    ?.takeIf { it.isNotEmpty() }
+                val text =
+                    response.result
+                        ?.output
+                        ?.text
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                ModelReply(text, usage)
             }
         }
+
+    /** The same numbers `gen_ai.client.token.usage` counts, which translation's calls share and a restart clears. */
+    private fun usageOf(response: ChatResponse): TokenUsage {
+        val metadata: ChatResponseMetadata? = response.metadata
+        val usage: Usage? = metadata?.usage
+        return TokenUsage(usage?.promptTokens?.toLong() ?: 0, usage?.completionTokens?.toLong() ?: 0)
+    }
 
     /** The event as a JSON document, so no venue text can pose as part of the instructions. */
     private fun userMessage(input: ClassificationInput): String =

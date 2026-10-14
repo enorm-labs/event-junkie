@@ -250,12 +250,14 @@
           "required": [
             "enabled",
             "model",
-            "maxPerRun"
+            "maxPerRun",
+            "cron",
+            "monthlyTokenBudget"
           ],
           "properties": {
             "enabled": {
               "type": "boolean",
-              "description": "false creates no check and sends nothing to Anthropic. The admin check routes then answer 409."
+              "description": "false creates no check, no nightly pass and sends nothing to Anthropic. The admin check routes then answer 409."
             },
             "model": {
               "type": "string",
@@ -265,7 +267,17 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 1000,
-              "description": "Model calls one run makes. It bounds the bill of one admin request."
+              "description": "Model calls one run makes. The nightly pass shares one cap across all its sources."
+            },
+            "cron": {
+              "type": "string",
+              "pattern": "^\\S+( \\S+){5}$",
+              "description": "When the nightly pass runs: Spring's six-field cron, in UTC."
+            },
+            "monthlyTokenBudget": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Input plus output tokens the check may use per calendar month (UTC). At the limit every run stops before its next model call. The Anthropic workspace limit stays the backstop (ADR-041)."
             }
           },
           "additionalProperties": false

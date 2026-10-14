@@ -656,6 +656,40 @@ dq_panels += [
     )
     for n, (key, title, meaning) in enumerate(DQ_BARS)
 ]
+# The event-classification check (#3241) and its nightly pass (#2996). Both series are empty while the check is off.
+DQ_CHECK_Y = 26 + 14 * ((len(DQ_BARS) + 1) // 2)
+dq_panels += [
+    panel(
+        "p_dq_suggestions",
+        "Suggestions the classification check wrote, per hour by field",
+        "The nightly pass runs at 04:00 UTC, so a working night is one spike. Flagged sources go first, then the most "
+        "candidates. A night without a spike is a pass that did not run, a spent budget, or nothing new to read: the "
+        "importer log says which. `GET /api/admin/data-quality/suggestions?status=OPEN` lists the rows. "
+        "Empty while `app.data-quality.classification.enabled` is false.",
+        "line",
+        "sum by (field) (rate(importer_data_quality_suggestions_total[1h])) * 3600",
+        x=0,
+        y=DQ_CHECK_Y,
+        w=96,
+        h=14,
+        decimals=0,
+    ),
+    panel(
+        "p_dq_classification_tokens",
+        "Classification tokens used this month",
+        "Input plus output tokens of the classification check in the current UTC month, from "
+        "`event_classification_usage`. At `app.data-quality.classification.monthly-token-budget` every run stops "
+        "before its next model call; the Anthropic workspace limit (ADR-041) is the backstop. The line falls to zero "
+        "at the first run of a month.",
+        "line",
+        "max(importer_data_quality_classification_tokens)",
+        x=96,
+        y=DQ_CHECK_Y,
+        w=96,
+        h=14,
+        decimals=0,
+    ),
+]
 
 dashboard = {
     "version": 8,

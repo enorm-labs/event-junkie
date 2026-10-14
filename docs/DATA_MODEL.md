@@ -589,6 +589,23 @@ The check sends an event to the model only when the hash differs from this row, 
 dismissed. A failed call writes no row, and the event stays a candidate. The check writes its proposals to
 `event_suggestion` and never writes to `event` (ADR-041).
 
+### event_classification_usage (Side Table)
+
+The tokens the event-classification check used, per calendar month in UTC (#2996). One row per month.
+
+| Field           | Type          | Nullable | Description                                                     | Example      |
+| --------------- | ------------- | -------- | --------------------------------------------------------------- | ------------ |
+| `month_start`   | `DATE` PK     | No       | The first day of the month. A check rejects any other day       | `2026-10-01` |
+| `input_tokens`  | `BIGINT`      | No       | Input tokens of every model call in the month                   | `412000`     |
+| `output_tokens` | `BIGINT`      | No       | Output tokens of every model call in the month                  | `61000`      |
+| `calls`         | `INTEGER`     | No       | Model calls that came back with an answer, a rejection included | `230`        |
+| `updated_at`    | `TIMESTAMPTZ` | No       | When the last call was added                                    |              |
+
+The check adds each call to the row of its month. A run stops before its next model call when `input_tokens +
+output_tokens` reaches `app.data-quality.classification.monthly-token-budget`. The count is in a table because Spring
+AI's token meter starts at zero after a restart, and translation adds to the same meter. A failed call has no token
+count and adds nothing.
+
 ## Design Decisions
 
 ### Idempotent Imports via `source_id`

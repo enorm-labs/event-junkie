@@ -296,11 +296,16 @@ class EventClassificationCheckTest : BaseControllerTest() {
 
             server.requestCount shouldBe 1
             suggestions(candidate) shouldHaveSize 1
-            lines.filter { it.level == Level.INFO }.map { it.formattedMessage } shouldContainExactly
+            val info = lines.filter { it.level == Level.INFO }
+            info.map { it.formattedMessage } shouldContainExactly
                 listOf(
-                    "Event classification of source '$SOURCE' started: 1 candidate(s), at most 50 model call(s)",
-                    "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 over the cap; suggested {eventType=1}"
+                    "Event classification of source '$SOURCE' started: 1 candidate(s), at most 50 model call(s), 0 of 3000000 tokens used this month",
+                    "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 over the cap, " +
+                        "0 over the token budget; suggested {eventType=1}"
                 )
+            withClue("each line names the source as a field, so the log can be filtered by it") {
+                info.forEach { line -> line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf("sourceSlug" to SOURCE) }
+            }
         }
 
     @Test
@@ -324,6 +329,54 @@ class EventClassificationCheckTest : BaseControllerTest() {
         }
 
     @Test
+    fun `the monthly token budget stops a run before its next call, and a new process reads the month's count back`(): Unit =
+        runBlocking {
+            val events = (1..3).map { insertEvent("Unbekannt $it", type = "OTHER") }
+            repeat(3) { server.enqueue(answer("eventType" to finding("PARTY", "Unbekannt", confidence = 0.4))) }
+
+            val result = check(budget = 60).checkSource(SOURCE)
+
+            withClue("each response bills 10 + 20 tokens, so the second call reaches 60") { server.requestCount shouldBe 2 }
+            result.checked shouldBe 2
+            result.overBudget shouldBe 1
+            usage() shouldBe Triple(20L, 40L, 2)
+            registry.find("importer.data_quality.classification.tokens").gauge()?.value() shouldBe 60.0
+
+            val restarted = SimpleMeterRegistry()
+            val again = check(budget = 60, meters = restarted).checkEvent(events.last())
+
+            server.requestCount shouldBe 2
+            again.overBudget shouldBe 1
+            withClue("the gauge of a new process starts from the stored month") {
+                restarted.find("importer.data_quality.classification.tokens").gauge()?.value() shouldBe 60.0
+            }
+        }
+
+    @Test
+    fun `an unchanged event costs nothing, so it is still read once the budget is spent`(): Unit =
+        runBlocking {
+            val event = insertEvent("Unbekannt", type = "OTHER")
+            server.enqueue(answer("eventType" to finding("PARTY", "Unbekannt", confidence = 0.4)))
+            check(budget = 30).checkEvent(event)
+
+            val result = check(budget = 30).checkEvent(event)
+
+            server.requestCount shouldBe 1
+            result shouldBe ClassificationRunResult(1, 0, 1, 0, 0, emptyMap(), overBudget = 0)
+        }
+
+    @Test
+    fun `the candidates are counted per source, upcoming ones only`(): Unit =
+        runBlocking {
+            insertEvent("Blond", description = "Die Band Blond.")
+            insertEvent("Unbekannt", type = "OTHER")
+            insertEvent("Lesung", type = "OTHER")
+            insertEvent("Vergangen", type = "OTHER", daysAhead = -3)
+
+            EventClassificationRepository(template).countSourceCandidates() shouldBe mapOf(SOURCE to 2L)
+        }
+
+    @Test
     fun `an unknown event or source is a not-found`(): Unit =
         runBlocking {
             shouldThrow<EventNotFoundException> { check().checkEvent(999_999) }
@@ -333,12 +386,22 @@ class EventClassificationCheckTest : BaseControllerTest() {
 
     private fun check(
         maxPerRun: Int = 50,
-        repository: EventClassificationRepository = EventClassificationRepository(template)
+        repository: EventClassificationRepository = EventClassificationRepository(template),
+        budget: Long = 3_000_000,
+        meters: SimpleMeterRegistry = registry
     ): EventClassificationCheck {
         val properties =
-            ClassificationProperties(enabled = true, apiKey = "test-key", maxPerRun = maxPerRun, maxRetries = 0, timeout = Duration.ofSeconds(10))
-        val classifier = AnthropicEventClassifier(properties, registry, Dispatchers.IO, server.url("/").toString().trimEnd('/'))
-        return EventClassificationCheck(repository, classifier, sourceRepository, featureRepository, flagRepository, properties, registry)
+            ClassificationProperties(
+                enabled = true,
+                apiKey = "test-key",
+                maxPerRun = maxPerRun,
+                maxRetries = 0,
+                timeout = Duration.ofSeconds(10),
+                monthlyTokenBudget = budget
+            )
+        val classifier = AnthropicEventClassifier(properties, meters, Dispatchers.IO, server.url("/").toString().trimEnd('/'))
+        val ledger = ClassificationTokenLedger(template, properties, meters)
+        return EventClassificationCheck(repository, classifier, sourceRepository, featureRepository, flagRepository, properties, meters, ledger)
     }
 
     private data class Row(
@@ -364,6 +427,21 @@ class EventClassificationCheckTest : BaseControllerTest() {
                 )
             }.flow()
             .toList()
+
+    /** This month's input tokens, output tokens and calls. */
+    private suspend fun usage(): Triple<Long, Long, Int> =
+        databaseClient
+            .sql(
+                "SELECT input_tokens, output_tokens, calls FROM events.event_classification_usage " +
+                    "WHERE month_start = date_trunc('month', now() AT TIME ZONE 'UTC')::date"
+            ).map { row, _ ->
+                Triple(
+                    row.get("input_tokens", Number::class.java)!!.toLong(),
+                    row.get("output_tokens", Number::class.java)!!.toLong(),
+                    row.get("calls", Number::class.java)!!.toInt()
+                )
+            }.one()
+            .awaitSingle()
 
     private suspend fun eventsSnapshot(): List<String> =
         databaseClient

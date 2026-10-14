@@ -8,6 +8,7 @@ import de.norm.events.dataquality.classification.AnthropicResponses.messageRespo
 import de.norm.events.dataquality.classification.AnthropicResponses.textResponse
 import de.norm.events.event.EventType
 import de.norm.events.event.PartyFeature
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -43,10 +44,9 @@ class AnthropicEventClassifierTest {
 
             val result = classifier().classify(INPUT)
 
-            result
-                .shouldBeInstanceOf<ClassifierResult.Answered>()
-                .answer.eventType
-                ?.value shouldBe EventType.READING
+            val answered = result.shouldBeInstanceOf<ClassifierResult.Answered>()
+            answered.answer.eventType?.value shouldBe EventType.READING
+            withClue("the tokens come from the response's usage block") { answered.usage shouldBe TokenUsage(input = 10, output = 20) }
             val recorded = server.takeRequest()
             recorded.headers["x-api-key"] shouldBe "test-key"
             val body = recorded.body?.utf8().orEmpty()
@@ -62,7 +62,7 @@ class AnthropicEventClassifierTest {
         runTest {
             server.enqueue(textResponse("I think this is a reading."))
 
-            classifier().classify(INPUT) shouldBe ClassifierResult.Rejected
+            classifier().classify(INPUT) shouldBe ClassifierResult.Rejected(TokenUsage(input = 10, output = 20))
         }
 
     @Test
@@ -70,7 +70,7 @@ class AnthropicEventClassifierTest {
         runTest {
             server.enqueue(messageResponse(""""type":"text","text":""""", "refusal"))
 
-            classifier().classify(INPUT) shouldBe ClassifierResult.Rejected
+            classifier().classify(INPUT) shouldBe ClassifierResult.Rejected(TokenUsage(input = 10, output = 20))
         }
 
     @Test

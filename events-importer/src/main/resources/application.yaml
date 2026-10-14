@@ -94,7 +94,12 @@ app:
       enabled: ${APP_DATA_QUALITY_CLASSIFICATION_ENABLED:false}
       api-key: ${app.anthropic.api-key:}
       model: ${APP_DATA_QUALITY_CLASSIFICATION_MODEL:claude-haiku-4-5}
+      # Model calls of one run. The nightly pass shares one cap across all its sources.
       max-per-run: ${APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN:50}
+      # The nightly pass, in UTC: after the 03:00 snapshot sets the regression gauge it reads first.
+      cron: ${APP_DATA_QUALITY_CLASSIFICATION_CRON:0 0 4 * * *}
+      # Input plus output tokens per calendar month (UTC). At the limit every run stops before its next call.
+      monthly-token-budget: ${APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET:3000000}
   musicbrainz:
     # On the artist lookup tick, every artist an import billed is looked up in MusicBrainz and the
     # verdict stored (ADR-031). Only the stage name is sent.

@@ -11,7 +11,7 @@ import java.time.Duration
  */
 @ConfigurationProperties(prefix = "app.data-quality.classification")
 data class ClassificationProperties(
-    /** Creates the check, the model client and the admin routes' backing bean. Nothing else switches it. */
+    /** Creates the check, the model client, the nightly pass and the admin routes' backing beans. Nothing else switches it. */
     val enabled: Boolean = false,
     /**
      * The Anthropic key. `application.yaml` fills it from `app.anthropic.api-key`, which translation
@@ -20,15 +20,28 @@ data class ClassificationProperties(
     val apiKey: String = "",
     /** Haiku by default. A move to Sonnet needs a measured false-positive rate first (ADR-041 rule 2, #2997). */
     val model: String = "claude-haiku-4-5",
-    /** The most model calls one run makes. An event over the cap stays a candidate for the next run. */
+    /** The most model calls one run makes, a whole nightly pass included. An event over the cap stays a candidate. */
     val maxPerRun: Int = DEFAULT_MAX_PER_RUN,
     val timeout: Duration = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS),
     /** Zero in tests, so a deliberate error response does not back off. */
-    val maxRetries: Int = DEFAULT_MAX_RETRIES
+    val maxRetries: Int = DEFAULT_MAX_RETRIES,
+    /** When [ClassificationRunner] starts the nightly pass. Spring's six fields, in UTC. */
+    val cron: String = DEFAULT_CRON,
+    /**
+     * Input plus output tokens the check may use in one calendar month (UTC). At the limit every run
+     * stops before its next model call. The Anthropic workspace limit of ADR-041 stays the backstop.
+     */
+    val monthlyTokenBudget: Long = DEFAULT_MONTHLY_TOKEN_BUDGET
 ) {
-    private companion object {
-        const val DEFAULT_MAX_PER_RUN = 50
-        const val DEFAULT_TIMEOUT_SECONDS = 60L
-        const val DEFAULT_MAX_RETRIES = 2
+    companion object {
+        /** 04:00 UTC: after the 03:00 snapshot that sets the regression gauge and the sweeps up to 03:45. */
+        const val DEFAULT_CRON = "0 0 4 * * *"
+
+        private const val DEFAULT_MAX_PER_RUN = 50
+        private const val DEFAULT_TIMEOUT_SECONDS = 60L
+        private const val DEFAULT_MAX_RETRIES = 2
+
+        /** Fifty calls a night for a month at about 2,000 tokens each. */
+        private const val DEFAULT_MONTHLY_TOKEN_BUDGET = 3_000_000L
     }
 }

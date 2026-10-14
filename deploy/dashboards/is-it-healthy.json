@@ -1572,6 +1572,92 @@
             "h": 14,
             "i": 32
           }
+        },
+        {
+          "id": "p_dq_suggestions",
+          "type": "line",
+          "title": "Suggestions the classification check wrote, per hour by field",
+          "description": "The nightly pass runs at 04:00 UTC, so a working night is one spike. Flagged sources go first, then the most candidates. A night without a spike is a pass that did not run, a spent budget, or nothing new to read: the importer log says which. `GET /api/admin/data-quality/suggestions?status=OPEN` lists the rows. Empty while `app.data-quality.classification.enabled` is false.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (field) (rate(importer_data_quality_suggestions_total[1h])) * 3600",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 82,
+            "w": 96,
+            "h": 14,
+            "i": 33
+          }
+        },
+        {
+          "id": "p_dq_classification_tokens",
+          "type": "line",
+          "title": "Classification tokens used this month",
+          "description": "Input plus output tokens of the classification check in the current UTC month, from `event_classification_usage`. At `app.data-quality.classification.monthly-token-budget` every run stops before its next model call; the Anthropic workspace limit (ADR-041) is the backstop. The line falls to zero at the first run of a month.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(importer_data_quality_classification_tokens)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 82,
+            "w": 96,
+            "h": 14,
+            "i": 34
+          }
         }
       ]
     }
