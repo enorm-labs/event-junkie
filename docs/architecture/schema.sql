@@ -391,6 +391,17 @@ ALTER TABLE events.event_change ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 );
 
 --
+-- Name: event_classification_check; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_classification_check (
+    event_id bigint NOT NULL,
+    content_hash text NOT NULL,
+    model text NOT NULL,
+    checked_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: event_enrichment; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -828,6 +839,13 @@ ALTER TABLE ONLY events.event_artist
 
 ALTER TABLE ONLY events.event_change
     ADD CONSTRAINT event_change_pkey PRIMARY KEY (id);
+
+--
+-- Name: event_classification_check event_classification_check_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_classification_check
+    ADD CONSTRAINT event_classification_check_pkey PRIMARY KEY (event_id);
 
 --
 -- Name: event_enrichment event_enrichment_pkey; Type: CONSTRAINT; Schema: events; Owner: -
@@ -1269,6 +1287,13 @@ ALTER TABLE ONLY events.event_artist
 
 ALTER TABLE ONLY events.event_change
     ADD CONSTRAINT event_change_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event_classification_check event_classification_check_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_classification_check
+    ADD CONSTRAINT event_classification_check_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_enrichment event_enrichment_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

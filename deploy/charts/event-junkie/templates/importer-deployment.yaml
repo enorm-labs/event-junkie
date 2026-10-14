@@ -180,6 +180,23 @@ spec:
                   name: {{ .Values.importer.translation.existingSecret | quote }}
                   key: APP_TRANSLATION_API_KEY
             {{- end }}
+            {{- if .Values.importer.eventClassification.enabled }}
+            - name: APP_DATA_QUALITY_CLASSIFICATION_ENABLED
+              value: "true"
+            - name: APP_DATA_QUALITY_CLASSIFICATION_MODEL
+              value: {{ .Values.importer.eventClassification.model | quote }}
+            - name: APP_DATA_QUALITY_CLASSIFICATION_MAX_PER_RUN
+              value: {{ .Values.importer.eventClassification.maxPerRun | quote }}
+            {{- /* The translation key, one Secret for the one integration (ADR-041). Named here only when the
+               translation block above did not name it already: a variable listed twice is a warning at apply. */}}
+            {{- if ne .Values.importer.translation.engine "anthropic" }}
+            - name: APP_TRANSLATION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.importer.translation.existingSecret | quote }}
+                  key: APP_TRANSLATION_API_KEY
+            {{- end }}
+            {{- end }}
             {{- if .Values.importer.discogs.enabled }}
             - name: APP_DISCOGS_MAX_PER_RUN
               value: {{ .Values.importer.discogs.maxPerRun | quote }}

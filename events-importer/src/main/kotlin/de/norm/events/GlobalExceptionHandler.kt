@@ -2,6 +2,7 @@ package de.norm.events
 
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.DuplicateArtistSlugException
+import de.norm.events.dataquality.EventClassificationDisabledException
 import de.norm.events.dataquality.EventSuggestionAlreadyAcceptedException
 import de.norm.events.dataquality.EventSuggestionNotFoundException
 import de.norm.events.event.EventNotFoundException
@@ -60,13 +61,15 @@ class GlobalExceptionHandler {
      * identifying the entity type, conflicting slug, and the name that produced it.
      *
      * A dismissal of an accepted suggestion is a 409 for the same reason, and shares the handler:
-     * the request conflicts with what is stored, and its message says what.
+     * the request conflicts with what is stored, and its message says what. So does a check route
+     * called while its check is switched off.
      */
     @ExceptionHandler(
         DuplicateArtistSlugException::class,
         DuplicateVenueSlugException::class,
         DuplicatePromoterSlugException::class,
-        EventSuggestionAlreadyAcceptedException::class
+        EventSuggestionAlreadyAcceptedException::class,
+        EventClassificationDisabledException::class
     )
     fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {
         logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }

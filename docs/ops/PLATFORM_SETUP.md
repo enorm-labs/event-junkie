@@ -808,44 +808,46 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 
 **The ones that had to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive. These tell you it is _working_:
 
-| Metric                                         | Type                                  | Why                                                                                |
-| ---------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------- |
-| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                 |
-| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
-| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
-| `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date / slug_conflict — **what a run threw away**     |
-| `importer.enrichment.events`                   | Counter, tagged `source`, `outcome`   | matched / unmatched / ambiguous — an enrichment source's events (ADR-043)          |
-| `importer.enrichment.fields_filled`            | Counter, tagged `source`              | Empty fields an enrichment source filled on the venue's own events                 |
-| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
-| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; also tagged `known_blocked` (#2201)                      |
-| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
-| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
-| `importer.sources.failed{reason}`              | Gauge                                 | Sources currently FAILED, per reason, read from the row — one venue's DNS or ours  |
-| `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)       |
-| `importer.source.days_since_future_event`      | Gauge, tagged `source`, `known_quiet` | How long a source has held no future event; a floor, with the known venues marked  |
-| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor       |
-| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                        |
-| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end       |
-| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising          |
-| `data_quality_regression{source=…,metric=…}`   | Gauge                                 | 1/0 — a share over ten points above its 7-day median, unless declared (#2604)      |
-| `images.urls{state}`                           | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
-| `images.derivatives.backlog`                   | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
-| `images.fetch{outcome}`                        | Counter                               | fetched / unchanged / failed                                                       |
-| `images.derivatives{outcome}`                  | Counter                               | written / refused, counted in files rather than images                             |
-| `importer.musicbrainz.lookups{state}`          | Counter                               | exact / ambiguous / none / error — the ADR-031 shares, and the rows given up on    |
-| `importer.musicbrainz.unchecked`               | Gauge                                 | Artist rows still owed a verdict. Drains after the columns land; then a flat zero  |
-| `importer.musicbrainz.enriched{field}`         | Counter                               | Fields filled from an `EXACT` entity: website … description; `error`, read failed  |
-| `importer.musicbrainz.image_refused{reason}`   | Counter                               | A Commons picture not stored: licence / author / source / mime / size              |
-| `importer.wikipedia.refused{reason}`           | Counter                               | An ensemble's Wikipedia lead not stored: birth-data / short / no-article           |
-| `importer.musicbrainz.unenriched`              | Gauge                                 | `EXACT` rows still owed their entity read. Drains 100 per tick; then a flat zero   |
-| `importer.discogs.lookups{state}`              | Counter                               | exact / ambiguous / none / inactive / error — MusicBrainz `NONE` rows only         |
-| `importer.discogs.unchecked`                   | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                |
-| `importer.artists.lookup_tick.last_success`    | Gauge                                 | Epoch seconds of the last finished lookup tick; 0 while off                        |
-| `importer.venues.site_check.last_success`      | Gauge                                 | Epoch seconds of the last finished site check; seeded at start from the table      |
-| `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
-| `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
-| `bff.images.served{outcome}`                   | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |
-| `bff.images.cache.weight`                      | Gauge                                 | Bytes the serving cache holds. `cache_size` beside it counts entries               |
+| Metric                                           | Type                                  | Why                                                                                |
+| ------------------------------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------- |
+| `importer.run.duration`                          | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                 |
+| `importer.run.outcome`                           | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
+| `importer.events.written`                        | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
+| `importer.events.dropped`                        | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date / slug_conflict — **what a run threw away**     |
+| `importer.enrichment.events`                     | Counter, tagged `source`, `outcome`   | matched / unmatched / ambiguous — an enrichment source's events (ADR-043)          |
+| `importer.enrichment.fields_filled`              | Counter, tagged `source`              | Empty fields an enrichment source filled on the venue's own events                 |
+| `importer.scrape.failures`                       | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
+| `importer.source.last_success`                   | Gauge, tagged `source`                | Age of the last good run; also tagged `known_blocked` (#2201)                      |
+| `importer.source.has_succeeded`                  | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
+| `importer.source.running`                        | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
+| `importer.sources.failed{reason}`                | Gauge                                 | Sources currently FAILED, per reason, read from the row — one venue's DNS or ours  |
+| `importer.source.events_future{source}`          | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)       |
+| `importer.source.days_since_future_event`        | Gauge, tagged `source`, `known_quiet` | How long a source has held no future event; a floor, with the known venues marked  |
+| `importer.source.field_coverage{source,field}`   | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor       |
+| `bff.events.served`                              | Counter, tagged endpoint              | Is anyone actually using it                                                        |
+| `db.events{horizon="all"\|"future"}`             | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end       |
+| `data_quality{source=…,metric=…}`                | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising          |
+| `data_quality_regression{source=…,metric=…}`     | Gauge                                 | 1/0 — a share over ten points above its 7-day median, unless declared (#2604)      |
+| `importer.data_quality.suggestions{check,field}` | Counter                               | Suggestion rows a check wrote, per field — event-classification's six (#3241)      |
+| `importer.data_quality.classifications{outcome}` | Counter                               | answered / rejected / failed / unchanged — events the classification check read    |
+| `images.urls{state}`                             | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
+| `images.derivatives.backlog`                     | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
+| `images.fetch{outcome}`                          | Counter                               | fetched / unchanged / failed                                                       |
+| `images.derivatives{outcome}`                    | Counter                               | written / refused, counted in files rather than images                             |
+| `importer.musicbrainz.lookups{state}`            | Counter                               | exact / ambiguous / none / error — the ADR-031 shares, and the rows given up on    |
+| `importer.musicbrainz.unchecked`                 | Gauge                                 | Artist rows still owed a verdict. Drains after the columns land; then a flat zero  |
+| `importer.musicbrainz.enriched{field}`           | Counter                               | Fields filled from an `EXACT` entity: website … description; `error`, read failed  |
+| `importer.musicbrainz.image_refused{reason}`     | Counter                               | A Commons picture not stored: licence / author / source / mime / size              |
+| `importer.wikipedia.refused{reason}`             | Counter                               | An ensemble's Wikipedia lead not stored: birth-data / short / no-article           |
+| `importer.musicbrainz.unenriched`                | Gauge                                 | `EXACT` rows still owed their entity read. Drains 100 per tick; then a flat zero   |
+| `importer.discogs.lookups{state}`                | Counter                               | exact / ambiguous / none / inactive / error — MusicBrainz `NONE` rows only         |
+| `importer.discogs.unchecked`                     | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                |
+| `importer.artists.lookup_tick.last_success`      | Gauge                                 | Epoch seconds of the last finished lookup tick; 0 while off                        |
+| `importer.venues.site_check.last_success`        | Gauge                                 | Epoch seconds of the last finished site check; seeded at start from the table      |
+| `images.sweep.candidates{kind}`                  | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
+| `images.sweep.deleted{kind}`                     | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
+| `bff.images.served{outcome}`                     | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |
+| `bff.images.cache.weight`                        | Gauge                                 | Bytes the serving cache holds. `cache_size` beside it counts entries               |
 
 **Nine things to know before writing a rule against these:**
 
