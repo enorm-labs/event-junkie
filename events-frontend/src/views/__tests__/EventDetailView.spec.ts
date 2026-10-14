@@ -236,6 +236,33 @@ describe('EventDetailView', () => {
     expect(section.text()).toContain("As the event's own text states it.")
   })
 
+  it('shows the type and the genre tags under the date and venue line', async () => {
+    const view = await mountEvent({
+      ...night,
+      eventType: 'CONCERT',
+      genreTags: ['Soul', 'Afrobeats'],
+    })
+
+    const taxonomy = view.find('[data-testid="event-taxonomy"]')
+    expect(taxonomy.text().replace(/\s+/g, ' ')).toBe('Concert · Soul · Afrobeats')
+    expect(taxonomy.element.previousElementSibling?.textContent).toContain('2099')
+  })
+
+  it('shows the type alone when the event has no genre tags, in German', async () => {
+    const view = await mountEvent({ ...night, eventType: 'PARTY', genreTags: [] }, 'de')
+
+    expect(view.find('[data-testid="event-taxonomy"]').text()).toBe('Party')
+  })
+
+  it('shows the genre tags alone for an OTHER event, and no line when there is nothing', async () => {
+    const tags = await mountEvent({ ...night, eventType: 'OTHER', genreTags: ['Jazz'] })
+    expect(tags.find('[data-testid="event-taxonomy"]').text()).toBe('Jazz')
+    tags.unmount()
+
+    const bare = await mountEvent({ ...night, eventType: 'OTHER' })
+    expect(bare.find('[data-testid="event-taxonomy"]').exists()).toBe(false)
+  })
+
   it('shows no feature section for a night that states none', async () => {
     const view = await mountEvent({ ...night, features: [] })
 

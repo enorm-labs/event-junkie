@@ -148,6 +148,7 @@ const {
   formatRunState,
   formatWeekday,
   formatPartyFeature,
+  formatEventType,
 } = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
@@ -162,6 +163,16 @@ const features = computed(() =>
     to: { path: localePath('/events'), query: { feature: slug } },
   })),
 )
+// What kind of event and which sound, the card's taxonomy without the language, which has its own
+// fact block here. OTHER says nothing, as on the card.
+const taxonomyItems = computed<MetaItem[]>(() => {
+  const e = event.value
+  if (!e) return []
+  const type = e.eventType && e.eventType !== 'OTHER' ? formatEventType(e.eventType) : null
+  return [type, ...(e.genreTags ?? [])]
+    .filter((text): text is string => !!text)
+    .map((text) => ({ text }))
+})
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
 
@@ -272,7 +283,15 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       <header class="mb-5 space-y-3">
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
-        <EventMetaLine :items="metaItems" />
+        <!-- Two lines of one block, when and where then what kind: closer than the header's stride. -->
+        <div class="space-y-1">
+          <EventMetaLine :items="metaItems" />
+          <EventMetaLine
+            v-if="taxonomyItems.length"
+            :items="taxonomyItems"
+            data-testid="event-taxonomy"
+          />
+        </div>
         <!--
           A past event is where a search engine sends people; saying only that it is over left the
           venue's own site as the nearest onward link (#1268), so the sentence carries one that stays
