@@ -1,0 +1,38 @@
+[
+  {
+    "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000001",
+    "name": "Glasshouse",
+    "nameMatch": "NAME",
+    "type": "Group",
+    "disambiguation": "UK indie rock band",
+    "country": "GB",
+    "area": "London",
+    "founded": "2009",
+    "dissolved": null,
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000001"
+  },
+  {
+    "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000002",
+    "name": "Glasshouse",
+    "nameMatch": "NAME",
+    "type": "Group",
+    "disambiguation": "US post-rock band",
+    "country": "US",
+    "area": "Chicago",
+    "founded": "1998",
+    "dissolved": "2004",
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000002"
+  },
+  {
+    "musicbrainzId": "0f3b6c1e-0000-4000-8000-000000000003",
+    "name": "Glass House",
+    "nameMatch": "OTHER_NAME",
+    "type": null,
+    "disambiguation": null,
+    "country": null,
+    "area": null,
+    "founded": null,
+    "dissolved": null,
+    "url": "https://musicbrainz.org/artist/0f3b6c1e-0000-4000-8000-000000000003"
+  }
+]

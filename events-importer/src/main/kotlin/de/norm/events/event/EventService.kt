@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.common.PageResponse
+import de.norm.events.common.pageMatching
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
@@ -16,6 +17,8 @@ import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -37,42 +40,25 @@ class EventService(
     private val promoterRepository: PromoterRepository,
     private val eventPinService: EventPinService,
     private val contentStamp: EventContentStamp,
-    private val changeLog: EventChangeLog
+    private val changeLog: EventChangeLog,
+    private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Lists events with their associations, paged and sorted by [pageable]. [venueId] and [date]
-     * narrow the list; null means no filter, and an unknown venue is an empty page. Batch loading: the page
-     * of events first, then artists, promoters and genre tags in three more queries, four per page
-     * regardless of size.
+     * Lists events with their associations, paged and sorted by [pageable]. [venueId], [date] and
+     * [artistId] narrow the list; null means no filter, and an unknown venue or artist is an empty
+     * page. Batch loading: the page of events first, then artists, promoters and genre tags in three
+     * more queries, four per page regardless of size.
      */
     @Transactional(readOnly = true)
     suspend fun findAll(
         pageable: Pageable,
         venueId: Long? = null,
-        date: LocalDate? = null
+        date: LocalDate? = null,
+        artistId: Long? = null
     ): PageResponse<EventResponse> {
-        val (rows, total) =
-            when {
-                venueId != null && date != null -> {
-                    eventRepository.findAllByVenueIdAndEventDate(venueId, date, pageable) to
-                        eventRepository.countByVenueIdAndEventDate(venueId, date)
-                }
-
-                venueId != null -> {
-                    eventRepository.findAllByVenueId(venueId, pageable) to eventRepository.countByVenueId(venueId)
-                }
-
-                date != null -> {
-                    eventRepository.findAllByEventDate(date, pageable) to eventRepository.countByEventDate(date)
-                }
-
-                else -> {
-                    eventRepository.findAllBy(pageable) to eventRepository.count()
-                }
-            }
-        val entities = rows.toList()
+        val (entities, total) = pageOf(pageable, venueId, date, artistId)
         if (entities.isEmpty()) return PageResponse.of(emptyList(), pageable, total)
 
         val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
@@ -104,6 +90,28 @@ class EventService(
                 toResponse(entity, artists, promoters, genreTags)
             }
         return PageResponse.of(content, pageable, total)
+    }
+
+    /** One page of the events [findAll] narrows to, and the count of all of them. */
+    private suspend fun pageOf(
+        pageable: Pageable,
+        venueId: Long?,
+        date: LocalDate?,
+        artistId: Long?
+    ): Pair<List<EventEntity>, Long> {
+        // The ids rather than a subquery, because the criteria API has none; one act bills a few hundred events at most.
+        val billedIds = artistId?.let { id -> eventArtistRepository.findByArtistId(id).toList().map { it.eventId } }
+        val narrowedBy =
+            listOfNotNull(
+                venueId?.let { Criteria.where("venueId").`is`(it) },
+                date?.let { Criteria.where("eventDate").`is`(it) },
+                billedIds?.let { Criteria.where("id").`in`(it) }
+            ).reduceOrNull(Criteria::and)
+        return when {
+            billedIds?.isEmpty() == true -> emptyList<EventEntity>() to 0L
+            narrowedBy != null -> template.pageMatching(EventEntity::class.java, narrowedBy, pageable)
+            else -> eventRepository.findAllBy(pageable).toList() to eventRepository.count()
+        }
     }
 
     /**

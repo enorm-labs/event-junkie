@@ -156,36 +156,6 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     fun findAllBy(pageable: Pageable): Flow<EventEntity>
 
     /**
-     * The admin listing narrowed to one venue, one date, or both (#347): the New event form asks
-     * which events a venue already holds on the date it is about to save. Derived, with a count of
-     * the same filter for the page total (ADR-002). An event over midnight matches its `event_date`.
-     */
-    fun findAllByVenueId(
-        venueId: Long,
-        pageable: Pageable
-    ): Flow<EventEntity>
-
-    fun findAllByEventDate(
-        eventDate: LocalDate,
-        pageable: Pageable
-    ): Flow<EventEntity>
-
-    fun findAllByVenueIdAndEventDate(
-        venueId: Long,
-        eventDate: LocalDate,
-        pageable: Pageable
-    ): Flow<EventEntity>
-
-    suspend fun countByVenueId(venueId: Long): Long
-
-    suspend fun countByEventDate(eventDate: LocalDate): Long
-
-    suspend fun countByVenueIdAndEventDate(
-        venueId: Long,
-        eventDate: LocalDate
-    ): Long
-
-    /**
      * Finds events imported by a specific event source whose date falls within a given range.
      *
      * Used to detect stale events that were previously imported but are no longer listed
@@ -246,6 +216,9 @@ data class SourceFutureEventsRow(
  */
 interface EventArtistRepository : CoroutineCrudRepository<EventArtistEntity, Long> {
     fun findByEventId(eventId: Long): Flow<EventArtistEntity>
+
+    /** The events that bill [artistId], for the admin listing's `artistId` filter. */
+    fun findByArtistId(artistId: Long): Flow<EventArtistEntity>
 
     /** Batch-fetches artist associations for multiple events to avoid N+1 queries. */
     fun findByEventIdIn(eventIds: Collection<Long>): Flow<EventArtistEntity>

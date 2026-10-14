@@ -49,6 +49,23 @@ Accept: application/json
     });
 %}
 
+### List the events that bill one artist — the Artists page of events-admin (#3005)
+# `artistId` combines with `venueId` and `date`. An unknown artist is an empty page, not a 404.
+GET {{importer-host}}/api/admin/events?artistId={{artist_id}}&sort=eventDate,desc
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("every event bills the artist", function () {
+        response.body.content.forEach(function (event) {
+            var billed = event.artists.some(function (a) { return String(a.artistId) === String(client.global.get("artist_id")); });
+            client.assert(billed, "Event " + event.id + " does not bill the artist");
+        });
+    });
+%}
+
 ### List events with a date that is not ISO — 400 Problem Detail
 GET {{importer-host}}/api/admin/events?date=12.06.2026
 Accept: application/json

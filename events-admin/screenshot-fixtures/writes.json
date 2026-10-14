@@ -64,7 +64,10 @@
     "status": 200,
     "body": "$merge",
     "merge": {
-      "pinnedFields": ["startTime", "pricePresale"]
+      "pinnedFields": [
+        "startTime",
+        "pricePresale"
+      ]
     }
   },
   {
@@ -137,5 +140,14 @@
     "path": "venues/{id}",
     "status": 200,
     "body": "$merge"
+  },
+  {
+    "method": "PUT",
+    "path": "artists/{id}/musicbrainz-id",
+    "status": 200,
+    "body": "$merge",
+    "merge": {
+      "musicbrainzMatch": "EXACT"
+    }
   }
 ]

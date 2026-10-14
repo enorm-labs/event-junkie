@@ -37,12 +37,12 @@ class EventController(
     private val eventPinService: EventPinService
 ) {
     /**
-     * Lists events with pagination, optionally narrowed to a venue and a date (#347). Returns a [List] instead of a `Flow` because
+     * Lists events with pagination, optionally narrowed to a venue, a date and an artist (#347, #3005). Returns a [List] instead of a `Flow` because
      * batch loading artist/promoter/genre tag associations requires all events in memory
      * to avoid N+1 queries (4 queries per page regardless of event count).
      */
     @GetMapping
-    @Operation(summary = "List events with pagination; `venueId` and `date` narrow the list to one venue, one date, or both")
+    @Operation(summary = "List events with pagination; `venueId`, `date` and `artistId` narrow the list, alone or together")
     suspend fun findAll(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable,
@@ -58,8 +58,15 @@ class EventController(
             example = "2026-10-10"
         )
         @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
-    ): PageResponse<EventResponse> = eventService.findAll(pageable, venueId, date)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?,
+        @Parameter(
+            description =
+                "Database ID of an artist: only the events that bill it. An unknown ID gives an empty page, not a 404. " +
+                    "Omit it to list every event.",
+            example = "7"
+        )
+        @RequestParam(required = false) artistId: Long?
+    ): PageResponse<EventResponse> = eventService.findAll(pageable, venueId, date, artistId)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

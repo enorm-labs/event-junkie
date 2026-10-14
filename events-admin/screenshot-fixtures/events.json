@@ -57,9 +57,171 @@
       "artists": [],
       "promoterIds": [],
       "pinnedFields": []
+    },
+    {
+      "id": 9201,
+      "venueId": 43,
+      "title": "Glasshouse – Late Show",
+      "subtitle": null,
+      "description": null,
+      "eventType": "CONCERT",
+      "status": "SCHEDULED",
+      "slug": "2026-10-16-lido-glasshouse",
+      "eventDate": "2026-10-16",
+      "doorsTime": null,
+      "startTime": "23:00:00",
+      "imageUrl": null,
+      "sourceUrl": null,
+      "sourceId": "fixture:2026-10-16-lido-glasshouse",
+      "ticketUrl": null,
+      "facebookEventUrl": null,
+      "genre": null,
+      "genreTags": [],
+      "pricePresale": null,
+      "priceBoxOffice": null,
+      "priceCurrency": "EUR",
+      "priceNote": null,
+      "soldOut": false,
+      "free": false,
+      "artists": [
+        {
+          "artistId": 8101,
+          "role": "HEADLINER",
+          "billingOrder": 0,
+          "stage": null
+        },
+        {
+          "artistId": 2761,
+          "role": "SUPPORT",
+          "billingOrder": 1,
+          "stage": null
+        }
+      ],
+      "promoterIds": [],
+      "pinnedFields": []
+    },
+    {
+      "id": 9202,
+      "venueId": 70,
+      "title": "Night of Glass",
+      "subtitle": null,
+      "description": null,
+      "eventType": "CONCERT",
+      "status": "SCHEDULED",
+      "slug": "2026-10-22-so36-night-of-glass",
+      "eventDate": "2026-10-22",
+      "doorsTime": null,
+      "startTime": "20:00:00",
+      "imageUrl": null,
+      "sourceUrl": null,
+      "sourceId": "fixture:2026-10-22-so36-night-of-glass",
+      "ticketUrl": null,
+      "facebookEventUrl": null,
+      "genre": null,
+      "genreTags": [],
+      "pricePresale": null,
+      "priceBoxOffice": null,
+      "priceCurrency": "EUR",
+      "priceNote": null,
+      "soldOut": false,
+      "free": false,
+      "artists": [
+        {
+          "artistId": 1869,
+          "role": "HEADLINER",
+          "billingOrder": 0,
+          "stage": null
+        },
+        {
+          "artistId": 8101,
+          "role": "SUPPORT",
+          "billingOrder": 1,
+          "stage": null
+        },
+        {
+          "artistId": 7538,
+          "role": "SUPPORT",
+          "billingOrder": 2,
+          "stage": null
+        }
+      ],
+      "promoterIds": [],
+      "pinnedFields": []
+    },
+    {
+      "id": 9203,
+      "venueId": 162,
+      "title": "Brass after Dark",
+      "subtitle": null,
+      "description": null,
+      "eventType": "CONCERT",
+      "status": "SCHEDULED",
+      "slug": "2026-10-19-kesselhaus-brass-after-dark",
+      "eventDate": "2026-10-19",
+      "doorsTime": null,
+      "startTime": "19:30:00",
+      "imageUrl": null,
+      "sourceUrl": null,
+      "sourceId": "fixture:2026-10-19-kesselhaus-brass-after-dark",
+      "ticketUrl": null,
+      "facebookEventUrl": null,
+      "genre": null,
+      "genreTags": [],
+      "pricePresale": null,
+      "priceBoxOffice": null,
+      "priceCurrency": "EUR",
+      "priceNote": null,
+      "soldOut": false,
+      "free": false,
+      "artists": [
+        {
+          "artistId": 8102,
+          "role": "HEADLINER",
+          "billingOrder": 0,
+          "stage": null
+        }
+      ],
+      "promoterIds": [],
+      "pinnedFields": []
+    },
+    {
+      "id": 9204,
+      "venueId": 17,
+      "title": "Mira",
+      "subtitle": null,
+      "description": null,
+      "eventType": "CONCERT",
+      "status": "SCHEDULED",
+      "slug": "2026-10-24-columbia-theater-mira",
+      "eventDate": "2026-10-24",
+      "doorsTime": null,
+      "startTime": "21:00:00",
+      "imageUrl": null,
+      "sourceUrl": null,
+      "sourceId": "fixture:2026-10-24-columbia-theater-mira",
+      "ticketUrl": null,
+      "facebookEventUrl": null,
+      "genre": null,
+      "genreTags": [],
+      "pricePresale": null,
+      "priceBoxOffice": null,
+      "priceCurrency": "EUR",
+      "priceNote": null,
+      "soldOut": false,
+      "free": false,
+      "artists": [
+        {
+          "artistId": 8103,
+          "role": "HEADLINER",
+          "billingOrder": 0,
+          "stage": null
+        }
+      ],
+      "promoterIds": [],
+      "pinnedFields": []
     }
   ],
-  "totalElements": 2,
+  "totalElements": 6,
   "totalPages": 1,
   "size": 100,
   "number": 0

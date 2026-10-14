@@ -54,10 +54,28 @@
       "id": 2761,
       "name": "Youngblood Brass Band",
       "slug": "youngblood-brass-band"
+    },
+    {
+      "id": 8101,
+      "name": "Glasshouse",
+      "slug": "glasshouse",
+      "musicbrainzMatch": "AMBIGUOUS"
+    },
+    {
+      "id": 8102,
+      "name": "The Extraordinarily Long-Named Late-Night Brass and String Collective of Neukölln",
+      "slug": "the-extraordinarily-long-named-late-night-brass-and-string-collective-of-neukolln",
+      "musicbrainzMatch": "AMBIGUOUS"
+    },
+    {
+      "id": 8103,
+      "name": "Mira",
+      "slug": "mira",
+      "musicbrainzMatch": "AMBIGUOUS"
     }
   ],
   "page": 0,
   "size": 20,
-  "totalElements": 11,
+  "totalElements": 14,
   "totalPages": 1
 }

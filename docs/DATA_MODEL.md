@@ -424,6 +424,8 @@ The next read then writes MusicBrainz's letter case on an `EXACT` row.
 `GET /api/admin/artists/{id}/musicbrainz-candidates` returns what the MusicBrainz search finds for the name.
 The importer sends that request, on the same queue as the sweep.
 `PUT /api/admin/artists/{id}/musicbrainz-id` stores the chosen MBID as `EXACT` and changes no other field.
+The _Artists to review_ page of `events-admin` uses these three endpoints.
+It also shows the events that bill the artist (`GET /api/admin/events?artistId=`).
 
 ### Promoter
 
