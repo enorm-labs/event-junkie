@@ -149,10 +149,11 @@ class JunctionBarMusicOverviewPageScraper {
 
     /**
      * The acts to bill. A heading can name the night rather than the band (`Tag der Gelben Einheit`,
-     * whose band, Yellow Snow, only the bio and the photo name). Every band photo's `alt` opens
-     * `Bandfoto <name>:`, so a heading that names no photographed band is billed as the one
-     * photographed band no heading names, in the bio's spelling (#2267). Anything less clear-cut
-     * keeps the headings.
+     * whose band, Yellow Snow, only the bio and the photo name). A band photo's `alt` opens
+     * `Bandfoto <name>`, ended by a `:` or a line break, so a heading that names no photographed
+     * band is billed as the one photographed band no heading names, in the bio's spelling (#2267).
+     * The bio is the proof: a photo name it does not contain keeps the heading (#3279), and so
+     * does anything less clear-cut.
      */
     private fun photographedBands(
         bands: List<String>,
@@ -164,14 +165,16 @@ class JunctionBarMusicOverviewPageScraper {
                     .attr("alt")
                     .removePrefix("Bandfoto ")
                     .substringBefore(':')
+                    .lineSequence()
+                    .first()
                     .trim()
             }
         val unpictured = bands.filter { band -> pictured.none { it.equals(band, ignoreCase = true) } }
         val unnamed = pictured.filter { photo -> bands.none { it.equals(photo, ignoreCase = true) } }
         if (unpictured.size != 1 || unnamed.size != 1) return bands
         val bio = content.select("p.text").text()
-        val name = Regex(Regex.escape(unnamed.single()), RegexOption.IGNORE_CASE).find(bio)?.value ?: unnamed.single()
-        return bands.map { if (it == unpictured.single()) name else it }
+        val name = Regex(Regex.escape(unnamed.single()), RegexOption.IGNORE_CASE).find(bio)?.value
+        return bands.map { if (it == unpictured.single() && name != null) name else it }
     }
 
     /** The band bios (`p.text`), joined into one description. */
