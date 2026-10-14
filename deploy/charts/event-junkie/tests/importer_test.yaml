@@ -449,6 +449,7 @@ tests:
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       importer.translation.engine: "none"
+      importer.eventClassification.enabled: false
     documentSelector:
       path: kind
       value: Deployment
