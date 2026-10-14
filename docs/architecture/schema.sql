@@ -261,6 +261,16 @@ ALTER TABLE events.artist ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: artist_slug_alias; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.artist_slug_alias (
+    slug text NOT NULL,
+    artist_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: cached_image; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -787,6 +797,13 @@ ALTER TABLE ONLY events.artist
     ADD CONSTRAINT artist_pkey PRIMARY KEY (id);
 
 --
+-- Name: artist_slug_alias artist_slug_alias_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.artist_slug_alias
+    ADD CONSTRAINT artist_slug_alias_pkey PRIMARY KEY (slug);
+
+--
 -- Name: artist artist_slug_key; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1062,6 +1079,12 @@ CREATE INDEX artist_musicbrainz_unenriched_idx ON events.artist USING btree (id)
 CREATE INDEX idx_artist_name_search_trgm ON events.artist USING gin (replace(name_search, ' '::text, ''::text) events.gin_trgm_ops);
 
 --
+-- Name: idx_artist_slug_alias_artist_id; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_artist_slug_alias_artist_id ON events.artist_slug_alias USING btree (artist_id);
+
+--
 -- Name: idx_cached_image_content_hash; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1282,6 +1305,13 @@ CREATE TRIGGER trg_promoter_updated_at BEFORE UPDATE ON events.promoter FOR EACH
 --
 
 CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW EXECUTE FUNCTION events.set_updated_at();
+
+--
+-- Name: artist_slug_alias artist_slug_alias_artist_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.artist_slug_alias
+    ADD CONSTRAINT artist_slug_alias_artist_id_fkey FOREIGN KEY (artist_id) REFERENCES events.artist(id) ON DELETE CASCADE;
 
 --
 -- Name: cached_image_variant cached_image_variant_cached_image_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

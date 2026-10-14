@@ -2,6 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.artist.ArtistSlugAliasStore
 import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.artist.artistSlugFor
 import de.norm.events.artist.canonicalArtistName
@@ -64,7 +65,8 @@ class AssociationSyncService(
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
     private val genreTagRepository: GenreTagRepository,
-    private val qualityFlagRepository: EventQualityFlagRepository
+    private val qualityFlagRepository: EventQualityFlagRepository,
+    private val artistSlugAliasStore: ArtistSlugAliasStore
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -185,7 +187,7 @@ class AssociationSyncService(
         val genres = pins.pinned(PinnedField.GENRES)
         return pins.countChanged(
             PinnedField.LINEUP,
-            desired = lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> artistSlugFor(a.name) }.toSet() },
+            desired = renamedArtistSlugs(lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> artistSlugFor(a.name) }.toSet() }),
             stored =
                 storedSlugs(lineup, { eventArtistRepository.findByEventIdIn(it).toList() }, { it.eventId to it.artistId }) { ids ->
                     artistRepository.findAllById(ids).toList().associate { it.id to it.slug }
@@ -309,6 +311,7 @@ class AssociationSyncService(
                 .toMutableMap()
 
         warnAboutAccentOnlyMatches(scrapedArtists, artistCache)
+        artistCache.putAll(artistsByFormerSlug(allArtistSlugs - artistCache.keys))
 
         // Auto-create only the artists not in the database, with the display name canonicalized first so
         // an act is not frozen SHOUTING by whichever venue imported it first.
@@ -317,6 +320,26 @@ class AssociationSyncService(
             .forEach { resolveOrCreateArtist(canonicalArtistName(it.name), artistCache) }
 
         return artistCache
+    }
+
+    /**
+     * The renamed artists among [slugs], by the former slug the scraped name still takes (#3289). A
+     * rename in the admin API changes the slug. Without this the import would create the old name again.
+     */
+    private suspend fun artistsByFormerSlug(slugs: Set<String>): Map<String, ArtistEntity> {
+        val idsBySlug = artistSlugAliasStore.artistIdsBySlug(slugs)
+        if (idsBySlug.isEmpty()) return emptyMap()
+        val byId = artistRepository.findAllById(idsBySlug.values.toSet()).toList().associateBy { it.id }
+        return idsBySlug
+            .mapNotNull { (slug, id) -> byId[id]?.let { slug to it } }
+            .toMap()
+            .onEach { (slug, artist) -> logger.debug { "Billed slug '$slug' resolved to renamed artist '${artist.name}' (${artist.slug})" } }
+    }
+
+    /** Each set of [slugsBySourceId] with a renamed artist's former slug replaced by its current one. */
+    private suspend fun renamedArtistSlugs(slugsBySourceId: Map<String, Set<String>>): Map<String, Set<String>> {
+        val renamed = artistsByFormerSlug(slugsBySourceId.values.flatten().toSet()).mapValues { it.value.slug }
+        return if (renamed.isEmpty()) slugsBySourceId else slugsBySourceId.mapValues { (_, slugs) -> slugs.mapTo(mutableSetOf()) { renamed[it] ?: it } }
     }
 
     /**

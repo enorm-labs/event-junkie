@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -21,6 +22,7 @@ import java.time.ZoneId
 class ArtistService(
     private val artistRepository: ArtistRepository,
     private val upcomingArtistStore: UpcomingArtistStore,
+    private val slugAliasStore: ArtistSlugAliasStore,
     private val template: R2dbcEntityTemplate
 ) {
     private val logger = KotlinLogging.logger {}
@@ -119,10 +121,12 @@ class ArtistService(
 
     /**
      * Replaces all mutable fields of an existing artist. A changed name is pinned, so the MusicBrainz
-     * enrichment keeps it (ADR-042).
+     * enrichment keeps it (ADR-042). A changed slug keeps the old one as an alias, through which the
+     * import still finds this artist under its old name (#3289); a rename back to an alias takes it back.
      *
      * @throws ArtistNotFoundException if no artist with the given [id] exists.
      */
+    @Transactional
     suspend fun update(
         id: Long,
         request: ArtistRequest
@@ -135,7 +139,7 @@ class ArtistService(
         // Only check for conflicts if the slug actually changed — renaming to the same
         // effective slug (e.g. fixing capitalization) should not trigger a false positive.
         if (slug != existing.slug) {
-            ensureSlugAvailable(request.name, slug)
+            ensureSlugAvailable(request.name, slug, renamedId = id)
         }
 
         val pinsName = request.name != existing.name
@@ -173,8 +177,19 @@ class ArtistService(
             )
         val saved = artistRepository.save(updated)
         logger.info { "Updated artist '${saved.name}' (id=${saved.id})" }
+        if (slug != existing.slug) keepOldSlug(id, existing.slug, slug)
         if (pinsName) logger.info { "Pinned the name of artist $id: the MusicBrainz enrichment keeps it" }
         return ArtistResponse.fromDomain(storeHandSetMusicBrainzId(saved, request.musicbrainzId).toDomain())
+    }
+
+    /** Records [oldSlug] as an alias of artist [id], and drops [newSlug] from its aliases when the rename takes it back. */
+    private suspend fun keepOldSlug(
+        id: Long,
+        oldSlug: String,
+        newSlug: String
+    ) {
+        if (slugAliasStore.remove(newSlug, id)) logger.info { "Artist $id took its former slug '$newSlug' back" }
+        if (slugAliasStore.add(oldSlug, id)) logger.info { "Kept the former slug '$oldSlug' of artist $id as an alias: the import resolves it to $newSlug" }
     }
 
     /**
@@ -235,16 +250,23 @@ class ArtistService(
     }
 
     /**
-     * Checks whether the given [slug] is already taken by another artist and throws
-     * [DuplicateArtistSlugException] if so. This provides a clear, domain-specific error
-     * message to the API consumer instead of relying on the DB's generic constraint violation.
+     * Checks whether the given [slug] is already taken by another artist, or is the former slug of
+     * one, and throws [DuplicateArtistSlugException] if so: the import resolves an alias to its
+     * artist, so a second artist under it would never be billed (#3289). A former slug of
+     * [renamedId] itself is free to take back. The pre-check gives a clear message instead of the
+     * DB's generic constraint violation.
      */
     private suspend fun ensureSlugAvailable(
         name: String,
-        slug: String
+        slug: String,
+        renamedId: Long? = null
     ) {
         if (artistRepository.findBySlug(slug) != null) {
             throw DuplicateArtistSlugException(name, slug)
+        }
+        val aliasOf = slugAliasStore.artistIdOf(slug)
+        if (aliasOf != null && aliasOf != renamedId) {
+            throw DuplicateArtistSlugException(name, slug, formerSlugOf = aliasOf)
         }
     }
 

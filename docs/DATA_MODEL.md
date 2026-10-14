@@ -420,6 +420,13 @@ The MusicBrainz enrichment then keeps the name and logs the spelling that it did
 `DELETE /api/admin/artists/{id}/pins/name` removes the pin and queues the row for the enrichment again.
 The next read then writes MusicBrainz's letter case on an `EXACT` row.
 
+**A rename keeps the old slug (#3289).** A changed name changes the slug, and the import finds an artist by the slug of the scraped name.
+So `PUT /api/admin/artists/{id}` writes the old slug to `artist_slug_alias`, and the import looks a slug up there when no `artist` row has it.
+The next import of an event that bills the old name then bills the renamed artist, and creates no new row.
+A rename back to a former slug removes that alias.
+The admin API refuses a new artist or a rename whose slug is the alias of another artist, with a 409.
+Deleting the artist deletes its aliases.
+
 **A person decides an `AMBIGUOUS` name (#2946).** `GET /api/admin/artists?musicbrainzMatch=AMBIGUOUS&upcomingWithinDays=14` lists the rows to review.
 `GET /api/admin/artists/{id}/musicbrainz-candidates` returns what the MusicBrainz search finds for the name.
 The importer sends that request, on the same queue as the sweep.
