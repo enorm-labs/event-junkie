@@ -100,6 +100,13 @@ app:
       cron: ${APP_DATA_QUALITY_CLASSIFICATION_CRON:0 0 4 * * *}
       # Input plus output tokens per calendar month (UTC). At the limit every run stops before its next call.
       monthly-token-budget: ${APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET:3000000}
+      # The confidence an answer needs per field to become a suggestion, measured in #2997 (ADR-041).
+      min-confidence:
+        event-type: 0.85
+        artists: 0.85
+        features: 0.7
+        start-time: 0.7
+        prices: 0.7
   musicbrainz:
     # On the artist lookup tick, every artist an import billed is looked up in MusicBrainz and the
     # verdict stored (ADR-031). Only the stage name is sent.

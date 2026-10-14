@@ -178,8 +178,19 @@ class AnthropicEventClassifier(
             Each answer has "evidence": a passage copied word for word from the title, subtitle or description. Do not translate or shorten it.
             Each answer has "confidence": a number from 0 to 1. Use a low number when the text leaves room for doubt.
             Keys:
-            - "eventType": {"value", "evidence", "confidence"}. value is one of ${EventType.entries.joinToString()}.
-            - "titleActs": {"value", "evidence", "confidence"}. value lists the words of the title that name a performing artist, band or DJ, exactly as the title writes them. A production, a show, a tour name, a party series, a radio station or a musical is not an act. An empty list means the title names no act.
+            - "eventType": {"value", "evidence", "confidence"}. value is one of ${EventType.entries.joinToString()}. Type rules:
+              - An open stage, open mic, jam session or song slam is CONCERT. A sing-along such as Rudelsingen or Betreutes Singen is CONCERT.
+              - A DJ set, a club night or a set by a DJ is PARTY.
+              - A listening session or an album playback is OTHER.
+              - A talk, a panel, a talk show, a live podcast or a live narration (Live-Erzählung) is READING.
+              - A children's show, a musical or a stage production is SHOW.
+              - FESTIVAL is only for an event over several days or stages, never for one night of a series.
+            - "titleActs": {"value", "evidence", "confidence"}. value lists the performing artists, bands and DJs the title names. Act rules:
+              - Write each name complete, exactly as the title writes it. Never cut a name to a first name or a part of it. Leave out only a trailing tour or edition suffix, such as "Tour 2026" or "Live 2026".
+              - When the title holds only a part of a name, leave out titleActs.
+              - A title that is only a name is an act, also when a subtitle gives a genre. A production, a show, a tour name, a party series, a radio station or a musical is not an act.
+              - An open stage, a jam session, a sing-along, a listening session or an album playback has no act. The artist of a record that is played is not an act.
+              - An empty list says the title names no act. Give it only when the subtitle or description shows that the title names a production, a series, a format or a brand, and quote that passage. A missing description is no evidence.
             - "features": a list of {"feature", "confirmed", "evidence", "confidence"}, one for each entry of uncertainCues only. confirmed is true only when the text states the feature for the whole night. Features: ${PartyFeature.entries.joinToString {
                 it.slug
             }}.

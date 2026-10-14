@@ -129,6 +129,26 @@ class ClassificationValidatorTest {
     }
 
     @Test
+    fun `an act cut short of the name in the title is refused, and a dropped tour suffix is not a cut`() {
+        val tour = input.copy(title = "Katja Berlin Tour 2026")
+
+        acts("Katja", tour).shouldBeNull()
+        acts("Katja Berlin", tour) shouldBe listOf("Katja Berlin")
+        acts("Figarino", input.copy(title = "Figarinos Fahrradladen - Figarino Live 2026 / 2027")) shouldBe listOf("Figarino")
+        acts("N-Type", input.copy(title = "Bassism 5.0 feat. N-Type & Slowie")) shouldBe listOf("N-Type")
+    }
+
+    @Test
+    fun `an act that is only part of a word of the title is refused`() {
+        acts("Kraft", input).shouldBeNull()
+    }
+
+    @Test
+    fun `an all-caps title shows no case, so its acts are not judged cut`() {
+        acts("PLOT", input.copy(title = "PLOT HOUSE")) shouldBe listOf("PLOT")
+    }
+
+    @Test
     fun `a verdict on a feature nobody asked about is refused`() {
         ClassificationValidator
             .parse("""{"features": [{"feature": "queer", "confirmed": true, "evidence": "Beginn 20 Uhr", "confidence": 0.9}]}""", input)
@@ -144,4 +164,13 @@ class ClassificationValidatorTest {
             ?.titleActs
             ?.value shouldBe listOf("Kraftklub")
     }
+
+    private fun acts(
+        act: String,
+        on: ClassificationInput
+    ): List<String>? =
+        ClassificationValidator
+            .parse("""{"titleActs": {"value": ["$act"], "evidence": "${on.title}", "confidence": 0.9}}""", on)
+            ?.titleActs
+            ?.value
 }
