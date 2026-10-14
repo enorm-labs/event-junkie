@@ -28,13 +28,13 @@
 #
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
 # still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
-# `libexpat >= 2.8.5-r0` (#1802), `libuuid >= 2.42.3-r1` (#1117) and `pcre2 >= 10.49-r0` (#2298),
-# checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2"'`
+# `libexpat >= 2.8.5-r0` (#1802), `libuuid >= 2.42.3-r1` (#1117), `pcre2 >= 10.49-r0` (#2298) and
+# `tiff >= 4.7.2-r0` (#2883), checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
 # verified clean and changed nothing.
-FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:884e0b7f42f303641b0f4e78755aea647521dca0b89ca3be7992ad78b5c07434
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
@@ -45,21 +45,6 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="BUSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-
-# A base-image CVE fix that has not arrived upstream (#2883): CVE-2026-4775, a signed-integer
-# overflow in libtiff that allows arbitrary code execution or denial of service, is fixed in Alpine
-# 3.24's `tiff 4.7.2-r0`, but the base still ships 4.7.1-r0. A digest bump was not available —
-# `1.31-alpine` already resolves to the digest pinned above. Not reachable either: `tiff` arrives
-# through `libgd`, which the base's `nginx-module-image-filter` pulls in, and `docker/nginx.conf`
-# loads no module and names no `image_filter` directive. But a fixable finding is fixed rather than
-# waived, which is what keeps `.trivyignore` empty.
-#
-# Delete this once the base ships 4.7.2-r0 or later: an upgrade kept past its purpose hides that the
-# base has caught up and becomes the thing choosing the version. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^tiff"'` on the pinned
-# digest. `USER 0` (root) because apk needs write access; the final `USER` below is unaffected.
-USER 0
-RUN apk upgrade --no-cache tiff
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
