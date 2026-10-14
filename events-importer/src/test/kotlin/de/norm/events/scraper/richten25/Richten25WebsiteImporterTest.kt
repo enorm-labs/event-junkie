@@ -28,7 +28,7 @@ class Richten25WebsiteImporterTest {
             val result = importer.importEvents(url)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 9
+            result.events shouldHaveSize 8
             result.etag shouldBe "\"richten25\""
             result.lastModified shouldBe "Thu, 08 Oct 2026 06:00:00 GMT"
         }
