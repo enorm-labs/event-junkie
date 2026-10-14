@@ -58,7 +58,7 @@ suspend fun <T : Any> HtmlFetcher.readSecondLanguagePage(
  * has a description, the alternate differs from it, and the scraper set no second language itself.
  * The upsert stores it only where the two read as German and English.
  */
-fun <K> List<ScrapedEvent>.withDescriptionAlts(
+private fun <K> List<ScrapedEvent>.withDescriptionAlts(
     alternates: Map<K, String?>,
     key: (ScrapedEvent) -> K
 ): List<ScrapedEvent> = map { it.withDescriptionAlt(alternates[key(it)]) }

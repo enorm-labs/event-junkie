@@ -79,7 +79,7 @@ data class EventChange(
  * change: a value that disappears is a scrape that missed it, and one that appears was not published
  * before. Neither is a move a visitor has to know about.
  */
-fun changesBetween(
+private fun changesBetween(
     stored: EventEntity,
     written: EventEntity
 ): List<EventChange> {
