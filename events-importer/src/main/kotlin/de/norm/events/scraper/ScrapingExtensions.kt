@@ -8,8 +8,6 @@ import java.net.URI
  * Extracts trimmed text content from the first child element matching [cssQuery].
  *
  * Returns `null` if no element matches or the text is blank.
- * This is the most common extraction pattern in scrapers — wraps the
- * verbose `selectFirst(...)?.text()?.trim()?.takeIf { ... }` chain.
  */
 fun Element.textAt(cssQuery: String): String? =
     selectFirst(cssQuery)
@@ -94,10 +92,6 @@ fun Element.absoluteLinksAt(
  * that don't meet a CMS condition. This is commonly used for status flags
  * (e.g. "Sold-Out", "Cancelled") that are always present in the DOM but
  * conditionally shown based on a CMS toggle field.
- *
- * A flag is considered "visible" if it does **not** have the
- * `w-condition-invisible` class and its text content contains [text]
- * (case-insensitive).
  */
 fun Element.hasVisibleWebflowFlag(
     cssQuery: String,
@@ -154,12 +148,6 @@ fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
 
 /**
  * Resolves a potentially relative [href] against the [baseUrl].
- *
- * If the href is already absolute (starts with "http"), it is returned as-is.
- * Otherwise, it is resolved against the base URL using [URI.resolve].
- *
- * This is a common operation when scraping venue pages that use relative
- * links for event detail pages.
  */
 fun resolveUrl(
     baseUrl: String,
