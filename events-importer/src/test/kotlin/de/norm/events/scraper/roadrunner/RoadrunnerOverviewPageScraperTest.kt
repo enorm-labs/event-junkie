@@ -1,5 +1,6 @@
 package de.norm.events.scraper.roadrunner
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
@@ -271,6 +272,26 @@ class RoadrunnerOverviewPageScraperTest {
         events[1].title shouldBe "BLUES EXPLOSION"
         events[1].eventDate shouldBe LocalDate.of(2026, 8, 14) // Friday
         events[1].description shouldBe null
+    }
+
+    @Test
+    fun `reads a title styled on its strong, not the Eintritt frei line below it`() {
+        val html =
+            """
+            <html><body>
+              <p class="Stil62"><strong>Freitag 6. November: </strong></p>
+              <p class="Stil62"><strong class="Stil11">SCIENCE SLAM</strong><br></p>
+              <p class="Stil62"><strong>Einlass: 19:00 Uhr </strong></p>
+              <p class="Stil11"><strong>Eintritt Frei</strong></p>
+              <p>Im Rahmen der Berlin Science Week nimmt Science of Intelligence am Science Slam teil.</p>
+            </body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        event.title shouldBe "SCIENCE SLAM"
+        event.eventType shouldBe EventType.READING.name
+        event.priceNote shouldBe "Eintritt Frei"
+        event.description shouldBe "Im Rahmen der Berlin Science Week nimmt Science of Intelligence am Science Slam teil."
     }
 
     @Test
