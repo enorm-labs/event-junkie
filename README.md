@@ -64,6 +64,7 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 - **An RSS feed** at `/feed.xml`, which takes every filter, so a filtered feed is a saved search without an account.
 - **A calendar subscription** at `/calendar.ics`, with the same filters: the next 90 days in any calendar app.
 - **A page per week** at `/week/2026-41`, day by day, to share or bookmark.
+- **Installable as an app** from the footer, with its own icon and window, and no prompt that asks you to.
 - **German and English**, with no tracking and no third-party requests.
 - **Always a link back** to the venue's own page for tickets and the final word.
 
