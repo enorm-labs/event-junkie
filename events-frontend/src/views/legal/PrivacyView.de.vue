@@ -200,6 +200,16 @@ const { t } = useI18n()
         erlaubt. Der Importer ruft nur die Seite ab; Daten über dich werden dabei nicht übermittelt.
       </p>
       <p>
+        Bei einigen Locations ohne eigene Website stammen die Veranstaltungen aus den öffentlichen
+        Beiträgen ihres Instagram-Geschäftskontos. Der Importer liest sie über die offizielle
+        Schnittstelle von Meta (Meta Platforms Ireland Ltd.) mit dem Konto von Event Junkie. Er
+        liest nur den Text, den Link und das Datum eines Beitrags, keine Bilder. Ein Sprachmodell
+        entwirft daraus Datum, Titel und Line-up (Abschnitt 5), und ich prüfe jeden Entwurf, bevor
+        eine Veranstaltung erscheint. Der Text des Beitrags wird nur bis zu dieser Prüfung
+        gespeichert, höchstens 14 Tage, und nie auf dieser Seite gezeigt. Die Veranstaltung verlinkt
+        den Beitrag. Daten über dich werden dabei nicht übermittelt.
+      </p>
+      <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
         kulturelle Veranstaltungen.
       </p>
@@ -272,8 +282,10 @@ const { t } = useI18n()
           übermittelt, damit er übersetzt werden kann. Für die Prüfung (Abschnitt 4) gehen
           zusätzlich Titel und Untertitel mit. Nennen diese Texte Künstler*innen, werden diese Namen
           mit übermittelt; die Namen des Line-ups und der Location werden zusätzlich ausdrücklich
-          mitgesendet, damit die Übersetzung sie unverändert lässt. Andere Daten erreichen diesen
-          Dienst nicht: weder Logdaten noch irgendetwas über dich.
+          mitgesendet, damit die Übersetzung sie unverändert lässt. Für Veranstaltungen aus
+          Instagram-Beiträgen (Abschnitt 4) geht der Text des Beitrags dorthin, mit dem Namen der
+          Location und dem Datum des Beitrags. Nennt ein Beitrag Personen, gehen ihre Namen mit.
+          Andere Daten erreichen diesen Dienst nicht: weder Logdaten noch irgendetwas über dich.
         </li>
       </ul>
       <p>
@@ -286,9 +298,9 @@ const { t } = useI18n()
       <p>
         Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
         Deine Anfrage erreicht die Server von Event Junkie in Deutschland direkt. An der
-        Auslieferung dieser Seite ist damit kein Drittland beteiligt. Übersetzung und Prüfung oben
-        sind der einzige Weg, auf dem Daten die EU verlassen, und sie betreffen Veranstaltungstexte,
-        nicht deinen Besuch.
+        Auslieferung dieser Seite ist damit kein Drittland beteiligt. Übersetzung, Prüfung und
+        Entwürfe oben sind der einzige Weg, auf dem Daten die EU verlassen, und sie betreffen
+        Veranstaltungstexte, nicht deinen Besuch.
       </p>
       <p>
         <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von den Servern von Event Junkie,

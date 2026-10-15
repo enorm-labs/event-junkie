@@ -1,0 +1,27 @@
+### ============================================================
+### Admin: Instagram drafts — ADR-048, issue #3366
+###
+### Reads the posts of venues switched on in `instagram_venue` through
+### Business Discovery and drafts their events. Writes drafts, never an
+### event. Both routes answer 409 while app.instagram.enabled is false.
+### ============================================================
+
+### Start a background read of one venue; the importer log carries the result
+POST {{importer-host}}/api/admin/instagram/venues/rso-berlin/read
+Accept: application/json
+
+> {%
+    client.test("202, or 404 for a venue not switched on, or 409 while off or a run is going", function () {
+        client.assert([202, 404, 409].includes(response.status), "Expected 202, 404 or 409 but got " + response.status);
+    });
+%}
+
+### Start the daily pass now, over every venue switched on
+POST {{importer-host}}/api/admin/instagram/run
+Accept: application/json
+
+> {%
+    client.test("202, or 409 while off or a run is going", function () {
+        client.assert(response.status === 202 || response.status === 409, "Expected 202 or 409 but got " + response.status);
+    });
+%}

@@ -240,6 +240,36 @@
     ]
   },
   {
+    "name": "ej-instagram-access-refused",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "instagram_graph_errors_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The Instagram pass was refused access in the last 24 hours: an expired or revoked token (Graph error 190), or a permission the Meta app lost (10, 200). No venue's posts are read until a person fixes the token or the app. The importer log names the error.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(increase(instagram_graph_errors_total{kind=\"refused\"}[24h]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-musicbrainz-failing",
     "org_id": "default",
     "stream_type": "metrics",

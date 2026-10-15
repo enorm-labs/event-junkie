@@ -180,6 +180,18 @@ importer:
     cron: "0 0 4 * * *"
     # Input plus output tokens per calendar month. At the limit every run stops before its next call.
     monthlyTokenBudget: 3000000
+  # importer.instagram drafts events from the Instagram posts of venues with no website (ADR-048,
+  # #3366). Off by default: it reads Meta's Graph API and sends captions to Anthropic. The Anthropic key
+  # comes from importer.anthropic.existingSecret, the Meta token from existingSecret below.
+  instagram:
+    enabled: false
+    # Read only when enabled. Hand-made, never encrypted into this public repository (docs/ops/SECRETS.md).
+    existingSecret: "event-junkie-instagram"
+    model: "claude-haiku-4-5"
+    # Model calls one daily pass makes over every venue.
+    maxPerRun: 50
+    # The daily pass, Spring's six fields in UTC. After the 04:00 classification pass.
+    cron: "0 30 4 * * *"
   # importer.discogs asks Discogs about every artist MusicBrainz marks NONE, and stores its id and an
   # empty link (#2026, ADR-035). Off by default: it sends a stage name to a third party.
   discogs:
