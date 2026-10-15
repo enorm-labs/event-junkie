@@ -1511,6 +1511,39 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Brauhaus Neulich — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Brauhaus Neulich venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Brauhaus Neulich",
+    "address": "Selchower Straße 20",
+    "city": "Berlin",
+    "postalCode": "12049",
+    "district": "neukoelln",
+    "latitude": 52.478437,
+    "longitude": 13.419898,
+    "websiteUrl": "https://neulich.de/",
+    "instagramUrl": "https://www.instagram.com/neulich.bier",
+    "description": "A Schillerkiez brewery that has brewed its own beer on site since 2017, with live music and small shows in its back room.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Brauerei im Schillerkiez, die seit 2017 vor Ort braut, mit Livemusik und kleinen Shows im Hinterzimmer.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://rausgegangen.de/en/locations/brauhaus-neulich/",
+    "reviewedAt": "2026-10-15T12:00:00Z"
+}
+
+> {%
+    client.test("Brauhaus Neulich venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Bredouille — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -1602,6 +1635,39 @@ Content-Type: application/json
 
 > {%
     client.test("C115 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Café Cralle — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Café Cralle venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Café Cralle",
+    "address": "Hochstädter Straße 10a",
+    "city": "Berlin",
+    "postalCode": "13347",
+    "district": "wedding",
+    "latitude": 52.550607,
+    "longitude": 13.363522,
+    "websiteUrl": "https://cafecralle.wordpress.com/",
+    "instagramUrl": "https://www.instagram.com/cafecrallekollektiv",
+    "description": "A queer-feminist pub collective in Wedding with solidarity prices, open every evening, hosting readings, quiz and bingo nights, film nights and fiestas.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Queerfeministisches Kneipenkollektiv im Wedding mit solidarischen Preisen, jeden Abend geöffnet, mit Lesungen, Quiz- und Bingo-Abenden, Filmabenden und Fiestas.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://cafecralle.wordpress.com/",
+    "reviewedAt": "2026-10-15T12:00:00Z"
+}
+
+> {%
+    client.test("Café Cralle venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -6515,6 +6581,40 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Mokka Mitte Bar — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Mokka Mitte Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mokka Mitte Bar",
+    "address": "Stadtbahnbogen 159",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.522238,
+    "longitude": 13.398307,
+    "websiteUrl": "https://www.mokkamitte.de/",
+    "instagramUrl": "https://www.instagram.com/mokkamittebar/",
+    "facebookUrl": "https://www.facebook.com/mokkamitte",
+    "description": "A bar in the S-Bahn arches of James-Simon-Park, with a Spree-side lawn facing the Berliner Dom, a 1920s-style club room with a club sound system, and DJ day parties.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar in den S-Bahn-Bögen am James-Simon-Park mit Rasen an der Spree und Blick auf den Dom, Club im Stil der 20er-Jahre mit Club-Soundanlage und DJ-Daypartys.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "open-air"],
+    "capacity": 400,
+    "reviewedAt": "2026-10-15T12:00:00Z"
+}
+
+> {%
+    client.test("Mokka Mitte Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Mokum — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -9524,6 +9624,37 @@ Content-Type: application/json
 
 > {%
     client.test("Spindler & Klatt venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Splitter Bar — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Splitter Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Splitter Bar",
+    "address": "Pasteurstraße 44",
+    "city": "Berlin",
+    "postalCode": "10407",
+    "district": "prenzlauer-berg",
+    "latitude": 52.531531,
+    "longitude": 13.437518,
+    "instagramUrl": "https://www.instagram.com/splitterbarberlin/",
+    "description": "A small Prenzlauer Berg music bar with Monday jam sessions, live jazz sets and vinyl nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kleine Musikbar in Prenzlauer Berg mit Jam-Session am Montag, Live-Jazz und Vinyl-Abenden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-15T12:00:00Z"
+}
+
+> {%
+    client.test("Splitter Bar venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}

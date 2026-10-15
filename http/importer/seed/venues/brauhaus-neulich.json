@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Brauhaus Neulich",
+        "address": "Selchower Straße 20",
+        "city": "Berlin",
+        "postalCode": "12049",
+        "district": "neukoelln",
+        "latitude": 52.478437,
+        "longitude": 13.419898,
+        "websiteUrl": "https://neulich.de/",
+        "instagramUrl": "https://www.instagram.com/neulich.bier",
+        "description": "A Schillerkiez brewery that has brewed its own beer on site since 2017, with live music and small shows in its back room.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Brauerei im Schillerkiez, die seit 2017 vor Ort braut, mit Livemusik und kleinen Shows im Hinterzimmer.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://rausgegangen.de/en/locations/brauhaus-neulich/",
+        "reviewedAt": "2026-10-15T12:00:00Z"
+    },
+    "sources": []
+}

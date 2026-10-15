@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Splitter Bar",
+        "address": "Pasteurstraße 44",
+        "city": "Berlin",
+        "postalCode": "10407",
+        "district": "prenzlauer-berg",
+        "latitude": 52.531531,
+        "longitude": 13.437518,
+        "instagramUrl": "https://www.instagram.com/splitterbarberlin/",
+        "description": "A small Prenzlauer Berg music bar with Monday jam sessions, live jazz sets and vinyl nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kleine Musikbar in Prenzlauer Berg mit Jam-Session am Montag, Live-Jazz und Vinyl-Abenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-15T12:00:00Z"
+    },
+    "sources": []
+}
