@@ -183,7 +183,9 @@ class AnthropicEventClassifier(
               - A DJ set, a club night or a set by a DJ is PARTY.
               - A listening session or an album playback is OTHER.
               - A talk, a panel, a talk show, a live podcast or a live narration (Live-Erzählung) is READING.
-              - A children's show, a musical or a stage production is SHOW.
+              - Kabarett, Musikkabarett, satire, stand-up and comedy theatre are COMEDY, also when an ensemble stages them as a production.
+              - A children's show, a musical, a dance piece or a play is SHOW.
+              - When the text names neither the kind of stage show nor its genre, leave out eventType.
               - FESTIVAL is only for an event over several days or stages, never for one night of a series.
             - "titleActs": {"value", "evidence", "confidence"}. value lists the performing artists, bands and DJs the title names. Act rules:
               - Write each name complete, exactly as the title writes it. Never cut a name to a first name or a part of it. Leave out only a trailing tour or edition suffix, such as "Tour 2026" or "Live 2026".
