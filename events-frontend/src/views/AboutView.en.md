@@ -84,6 +84,22 @@ I say so because it is the interesting part. A real project, with real users and
 
 </section>
 
+<!-- The footer's "Install as app" link lands here where the browser offers no install dialog
+     of its own (#2727). The id is the same in both languages. -->
+<section id="install" class="scroll-mt-8">
+
+## Install as app
+
+Event Junkie also runs as an app: its own icon on your home screen, its own window, no browser bar around it. It is the same website, so there is nothing to download from a store and nothing to update.
+
+**iPhone and iPad:** open the site in Safari, tap Share, then _Add to Home Screen_.
+
+**Android:** open the browser menu (⋮), then _Install app_ or _Add to Home screen_.
+
+**Computer:** in Chrome or Edge, click the install icon at the right end of the address bar. Firefox and Safari on a computer cannot install a site as an app.
+
+</section>
+
 <!-- The header's beta badge links here. `scroll-mt` keeps the heading clear of the
      sticky-ish header when the anchor is followed. -->
 <section id="beta" class="scroll-mt-8">

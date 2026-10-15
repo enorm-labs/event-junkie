@@ -80,6 +80,7 @@ lists what that includes and what it excludes.
 - Every filter lives in the URL, so a filtered view is a link you can share.
 - Subscribe to the **RSS feed** of new events. A filtered feed URL is a saved search with no account.
 - Subscribe a calendar app to the **next 90 days** of events, filtered the same way. New and cancelled events reach the calendar by themselves.
+- **Install the site as an app** from the footer, with its own icon and window. The site never asks by itself.
 - The site loads nothing from a third party and does not track you. The map tiles are self-hosted.
 - A venue can opt out on the _For venues_ page.
 
@@ -114,6 +115,7 @@ the first column. It fails in two cases:
 | `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter            |
 | `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter   |
 | `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers             |
+| `/manifest.webmanifest`            | Makes the site installable as an app; no service worker, nothing stored     |
 | `/api/events`                      | Event search with the full filter set, paged and sorted                     |
 | `/api/events/{slug}`               | One event                                                                   |
 | `/api/events/{slug}/related`       | Upcoming events like this one                                               |

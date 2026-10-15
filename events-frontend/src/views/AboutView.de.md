@@ -84,6 +84,22 @@ Ich erzähle das, weil genau das der spannende Teil ist. Erst an einem echten Pr
 
 </section>
 
+<!-- Der Link „Als App installieren“ im Footer führt hierher, wenn der Browser keinen eigenen
+     Installationsdialog anbietet (#2727). Die id ist in beiden Sprachfassungen dieselbe. -->
+<section id="install" class="scroll-mt-8">
+
+## Als App installieren
+
+Event Junkie läuft auch als App: mit eigenem Icon auf dem Homescreen, im eigenen Fenster, ohne Browserleiste drumherum. Es ist dieselbe Website, du lädst also nichts aus einem Store und musst nichts aktualisieren.
+
+**iPhone und iPad:** Öffne die Seite in Safari, tippe auf Teilen und dann auf _Zum Home-Bildschirm_.
+
+**Android:** Öffne das Browsermenü (⋮) und tippe auf _App installieren_ oder _Zum Startbildschirm hinzufügen_.
+
+**Computer:** Klick in Chrome oder Edge auf das Installationssymbol rechts in der Adressleiste. Firefox und Safari können eine Website am Computer nicht als App installieren.
+
+</section>
+
 <!-- Das Beta-Abzeichen im Header verlinkt hierher. `scroll-mt` hält die Überschrift frei vom
      Header, wenn der Anker angesprungen wird. Die id muss `beta` bleiben: sie ist in beiden
      Sprachfassungen dasselbe Ziel. -->

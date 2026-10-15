@@ -4,14 +4,15 @@
  * (docs/LEGAL.md §2). The disclaimer sits here rather than only on a legal page because it is the
  * single most useful sentence for a user of an aggregator, and nobody clicks through (§7.6).
  */
-import { CalendarRange, Rss } from '@lucide/vue'
+import { CalendarRange, Download, Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { useAppMeta } from '@/composables/useAppMeta'
 import { feedbackMailto } from '@/lib/feedback'
+import { canPromptInstall, isInstalledApp, promptInstall } from '@/lib/installPrompt'
 import { FEED_TYPE, feedPath } from '@/lib/seo'
 import type { Locale } from '@/i18n/locales'
 import {
@@ -48,6 +49,27 @@ const localePath = useLocalePath()
 
 /** Every new event, unfiltered; the filter bar links the filtered feed (#368). */
 const feedHref = computed(() => feedPath(locale.value as Locale))
+
+// Undefined in component tests, which mount without a router; the link then navigates as a plain anchor.
+const router = useRouter() as ReturnType<typeof useRouter> | undefined
+
+const installedApp = isInstalledApp()
+const installHref = computed(() => `${localePath('/about')}#install`)
+
+/**
+ * Opens the browser's install dialog where it offered one, else the About steps (#2727).
+ * A modified click keeps the browser's own handling, such as a new tab.
+ */
+function onInstallClick(event: MouseEvent) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  if (canPromptInstall()) {
+    event.preventDefault()
+    void promptInstall()
+  } else if (router) {
+    event.preventDefault()
+    void router.push(installHref.value)
+  }
+}
 </script>
 
 <template>
@@ -78,6 +100,16 @@ const feedHref = computed(() => feedPath(locale.value as Locale))
               <CalendarRange aria-hidden="true" class="size-4" />
               {{ t('footer.thisWeek') }}
             </RouterLink>
+            <a
+              v-if="!installedApp"
+              :class="[linkClass, 'inline-flex items-center gap-1.5 text-body']"
+              :href="installHref"
+              data-testid="install-app"
+              @click="onInstallClick"
+            >
+              <Download aria-hidden="true" class="size-4" />
+              {{ t('footer.installApp') }}
+            </a>
           </div>
         </div>
 

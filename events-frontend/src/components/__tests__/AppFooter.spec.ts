@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { enableAutoUnmount, mount, type VueWrapper } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { setI18nLocale } from '@/i18n'
 import AppFooter from '@/components/AppFooter.vue'
+import { holdInstallPrompt } from '@/lib/installPrompt'
 import { CONTROLLER } from '@/lib/legal'
 import { REPOSITORY_URL } from '@/lib/links'
 
@@ -126,5 +127,60 @@ describe('AppFooter week link', () => {
     expect(week.get('svg').attributes('aria-hidden')).toBe('true')
     // Same row as the feed link, so the two read as the visitor-facing pair.
     expect(week.element.parentElement?.querySelector('a[type]')).not.toBeNull()
+  })
+})
+
+describe('AppFooter install link', () => {
+  async function mountAt(locale: 'en' | 'de') {
+    const Page = defineComponent({ render: () => h('p') })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:locale(en|de)/:rest(.*)*', component: Page }],
+    })
+    await router.push(`/${locale}`)
+    setI18nLocale(locale)
+    return { router, wrapper: mount(AppFooter, { global: { plugins: [router] } }) }
+  }
+
+  afterEach(() => {
+    setI18nLocale('en')
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    ['en', 'Install as app'],
+    ['de', 'Als App installieren'],
+  ] as const)('points at the About steps in %s', async (locale, label) => {
+    const { wrapper } = await mountAt(locale)
+    const link = wrapper.get('[data-testid="install-app"]')
+    expect(link.text()).toBe(label)
+    expect(link.attributes('href')).toBe(`/${locale}/about#install`)
+  })
+
+  it('navigates to the steps where the browser offers no install dialog', async () => {
+    const { router, wrapper } = await mountAt('en')
+    await wrapper.get('[data-testid="install-app"]').trigger('click', { button: 0 })
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/en/about#install')
+  })
+
+  it("opens the browser's own dialog where it offered one, and stays on the page", async () => {
+    holdInstallPrompt(window)
+    const offer = new Event('beforeinstallprompt', { cancelable: true }) as Event & {
+      prompt: () => Promise<void>
+    }
+    offer.prompt = vi.fn<() => Promise<void>>(() => Promise.resolve())
+    window.dispatchEvent(offer)
+    const { router, wrapper } = await mountAt('en')
+    await wrapper.get('[data-testid="install-app"]').trigger('click', { button: 0 })
+    await flushPromises()
+    expect(offer.prompt).toHaveBeenCalledOnce()
+    expect(router.currentRoute.value.fullPath).toBe('/en')
+  })
+
+  it('is absent inside the installed app', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }))
+    const { wrapper } = await mountAt('en')
+    expect(wrapper.find('[data-testid="install-app"]').exists()).toBe(false)
   })
 })

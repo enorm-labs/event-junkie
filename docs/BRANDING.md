@@ -635,6 +635,9 @@ conflict, a model sides with the vibe.
   old mark survived in three places at once.
 - **Favicon / app icons** → `events-frontend/public/favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `og-image.png`. The favicon differs from its source in
   one way only: its letters get an opaque ground, because a knockout's letters would take the colour of the browser tab strip.
+- **Installed-app icons** → `icon-192.png`, `icon-512.png` and `icon-maskable-512.png` beside them, named by `manifest.webmanifest` (#2727). Each is the stamp
+  badge in white on the `#0b0b0c` ground of `apple-touch-icon.png`, square and full-bleed, rendered with `rsvg-convert`. The badge fills 78 % of the two plain
+  icons, as on the touch icon, and 54 % of the maskable one, which keeps the tilted frame inside the circle Android masks with.
 - **Logo in the app** → `src/components/EjBadge.vue` (icon and chrome), `ClubStamp.ts` + `ClubStamp.{en,de}.vue` (the lockup, lazy-loaded per locale) and
   `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
