@@ -37,7 +37,7 @@ const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
  * the product token and the URL** if it ever changes — and keep the token in step with
  * [RobotsRulesCache.ROBOT_NAMES], which is what matches a `robots.txt` group.
  */
-internal const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
+private const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
 
 /** The size of Reactor Netty's global pool, so moving off it changes eviction and nothing else. */
 private const val SCRAPER_POOL_MAX_CONNECTIONS = 500
@@ -132,7 +132,7 @@ class ScraperHttpClientConfig {
  * Overrides the client's response timeout for a request to a host in [timeouts], through Reactor Netty's per-request setting.
  * A host not in the map keeps the client's timeout.
  */
-internal fun hostResponseTimeoutFilter(timeouts: Map<String, Duration>): ExchangeFilterFunction {
+private fun hostResponseTimeoutFilter(timeouts: Map<String, Duration>): ExchangeFilterFunction {
     val byHost = timeouts.mapKeys { (host, _) -> host.lowercase() }
     return ExchangeFilterFunction { request, next ->
         val timeout =

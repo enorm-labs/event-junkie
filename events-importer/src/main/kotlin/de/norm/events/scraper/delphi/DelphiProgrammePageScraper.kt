@@ -247,7 +247,7 @@ private val CONCERT_CUES = listOf("konzert", "songwriter", "folk")
  * Whether [teaser] credits [name] as an author of the work, not a performer: `mit Musik von
  * Johannes Brahms`, `(1922, F.W. Murnau)`.
  */
-internal fun isCreditedAuthor(
+private fun isCreditedAuthor(
     name: String,
     teaser: String?
 ): Boolean =

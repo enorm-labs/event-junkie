@@ -844,13 +844,13 @@ fun isNonArtistName(name: String): Boolean =
 private val HEAD_COUNT = Regex("""\d+\s*(?:dj'?s?|djanes?|acts?|bands?|artists?|künstler(?:innen)?|musiker(?:innen)?)""", RegexOption.IGNORE_CASE)
 
 /** Whether [name] is only a [HEAD_COUNT]. */
-fun isHeadCount(name: String): Boolean = HEAD_COUNT.matches(name.trim())
+private fun isHeadCount(name: String): Boolean = HEAD_COUNT.matches(name.trim())
 
 /** A `Vol 5` / `Vol. 12` / `Volume 3` ending: a series edition, never a performer (#1952). */
 private val NUMBERED_VOLUME = Regex("""\bvol(?:\.|ume)?\s*\d+$""", RegexOption.IGNORE_CASE)
 
 /** Whether [name] ends in a [NUMBERED_VOLUME], so it names an edition of a series. */
-fun isNumberedVolume(name: String): Boolean = NUMBERED_VOLUME.containsMatchIn(name.trim())
+private fun isNumberedVolume(name: String): Boolean = NUMBERED_VOLUME.containsMatchIn(name.trim())
 
 /**
  * A name with nothing a slug can keep is a separator the split left behind (#1553).
@@ -868,13 +868,13 @@ private val BARE_NUMBER = Regex("""\d+""")
 private val KNOWN_NUMERIC_ACTS: Set<String> = setOf("234", "255")
 
 /** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556), unless it is a [KNOWN_NUMERIC_ACTS] name. */
-fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim()) && name.trim() !in KNOWN_NUMERIC_ACTS
+private fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim()) && name.trim() !in KNOWN_NUMERIC_ACTS
 
 /** A clock range that a title can be cut down to: Arcanoa's `19-21Uhr` (#1841). */
 private val TIME_RANGE = Regex("""\d{1,2}(?:[:.]\d{2})?\s*[-–]\s*\d{1,2}(?:[:.]\d{2})?\s*uhr""", RegexOption.IGNORE_CASE)
 
 /** Whether [name] is only a [TIME_RANGE]. */
-fun isTimeRange(name: String): Boolean = TIME_RANGE.matches(name.trim())
+private fun isTimeRange(name: String): Boolean = TIME_RANGE.matches(name.trim())
 
 /**
  * A candidate still carrying a title's `|` separator ("SKETCHY SESSIONS | jazz") is a slice of
