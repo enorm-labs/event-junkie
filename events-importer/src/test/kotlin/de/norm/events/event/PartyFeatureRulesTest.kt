@@ -13,7 +13,7 @@ import kotlin.test.Test
 
 class PartyFeatureRulesTest {
     @ParameterizedTest(name = "{0}: {1}")
-    @MethodSource("positives")
+    @MethodSource("crowdAndDressPositives", "policyAndTimePositives")
     fun `a clear phrase sets the feature and keeps the phrase`(
         feature: PartyFeature,
         text: String,
@@ -164,7 +164,7 @@ class PartyFeatureRulesTest {
 
     companion object {
         @JvmStatic
-        fun positives(): List<Arguments> =
+        fun crowdAndDressPositives(): List<Arguments> =
             listOf(
                 Arguments.of(PartyFeature.FLINTA_ONLY, "Diese Party ist nur für FLINTA*.", "nur für FLINTA*"),
                 Arguments.of(PartyFeature.FLINTA_ONLY, "Doors 23:00. FLINTA* only!", "FLINTA* only"),
@@ -174,12 +174,25 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.QUEER, "Die queere Party im Wedding", "queere Party"),
                 Arguments.of(PartyFeature.QUEER, "A queer rave for everyone", "queer rave"),
                 Arguments.of(PartyFeature.QUEER, "Clubnacht für die queere Community", "Clubnacht für die queere Community"),
+                Arguments.of(PartyFeature.QUEER, "GAYHANE - QueerOriental Dancefloor", "QueerOriental Dancefloor"),
+                Arguments.of(PartyFeature.QUEER, "Eine queere Tanzfläche im Keller", "queere Tanzfläche"),
+                Arguments.of(
+                    PartyFeature.QUEER,
+                    "Queer & Friends Party #5: 3 Dancefloors für Queers, Friends und alle, die mitfeiern wollen",
+                    "Dancefloors für Queers"
+                ),
+                Arguments.of(PartyFeature.QUEER, "Two dancefloors for queer folks and allies", "dancefloors for queer folks"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Eine sexpositive Nacht mit Darkroom", "sexpositive"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "A sex-positive party with a play area", "sex-positive"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Dresscode: ganz in Weiß", "Dresscode"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Strict dress code: all black", "dress code"),
                 Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Fetisch-Dresscode an der Tür", "Fetisch-Dresscode"),
-                Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Dress code: rubber, leather or latex", "Dress code: rubber"),
+                Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Dress code: rubber, leather or latex", "Dress code: rubber")
+            )
+
+        @JvmStatic
+        fun policyAndTimePositives(): List<Arguments> =
+            listOf(
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Fotografieren ist streng verboten.", "Fotografieren ist streng verboten"),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "We put stickers on your phone cameras at the door.", "stickers on your phone"),
                 Arguments.of(
@@ -188,10 +201,22 @@ class PartyFeatureRulesTest {
                     "No Phones Policy"
                 ),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Strictly NO phones in the club allowed.", "Strictly NO phones"),
+                Arguments.of(
+                    PartyFeature.NO_PHOTO_POLICY,
+                    "Wie immer setzen wir auf ein geheimes Lineup und verbotene Handykameras.",
+                    "verbotene Handykameras"
+                ),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Auf dem Floor gilt: keine Handy-Kameras.", "keine Handy-Kameras"),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Kameras sind verboten.", "Kameras sind verboten"),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Handykameras untersagt", "Handykameras untersagt"),
                 Arguments.of(PartyFeature.OPEN_END, "Ab 23 Uhr bis Ende offen", "Ende offen"),
                 Arguments.of(PartyFeature.OPEN_END, "From 23:00 till open end", "open end"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Die Tagesparty im Garten", "Tagesparty"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Sunday Day Party on the terrace", "Day Party"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Let's Swing - Tanztee", "Tanztee"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Kommt ins Ballhaus zu unserem Sonntags-Tanztee", "Tanztee"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Tanztee im PETER EDEL", "Tanztee"),
+                Arguments.of(PartyFeature.DAY_PARTY, "A queer tea dance on Sunday afternoon", "tea dance"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "Open Stage Varieté präsentiert von Stefan Linne", "Open Stage"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "ARCANOA - Open Stage", "Open Stage"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "JamSession", "JamSession"),
@@ -263,19 +288,28 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.FLINTA_ONLY, "An all-FLINTA* lineup, everyone welcome"),
                 Arguments.of(PartyFeature.QUEER, "Eine Lesung über queere Geschichte"),
                 Arguments.of(PartyFeature.QUEER, "Queer artists from Berlin present new work"),
+                Arguments.of(PartyFeature.QUEER, "Ein Gespräch zu queeren Aspekten der Clubkultur"),
+                Arguments.of(PartyFeature.QUEER, "FLINTA* LOVE AUF DER TANZFLÄCHE"),
+                Arguments.of(PartyFeature.QUEER, "Zwei Dancefloors für alle"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Ein Abend über Sexualität und Positivität"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Sex Pistols tribute night"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Kein Dresscode, komm wie du bist"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Dress code: none."),
                 Arguments.of(PartyFeature.DRESS_CODE, "DRESSCODE? Be yourself. We care about authenticity."),
+                Arguments.of(PartyFeature.DRESS_CODE, "Kostüme erwünscht"),
                 Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Ein Film über Fetisch und Mode"),
                 Arguments.of(PartyFeature.FETISH_DRESS_CODE, "Her fetish for analogue synths"),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Fotos: Jane Doe"),
                 Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Photos of the last edition are online"),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Ihr benutzt bitte keine Handys"),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Kamera: Jane Doe, Schnitt: John Doe"),
+                Arguments.of(PartyFeature.NO_PHOTO_POLICY, "Ein Film über verbotene Liebe, gedreht mit drei Kameras"),
                 Arguments.of(PartyFeature.OPEN_END, "Ein Gespräch mit offenem Ende"),
                 Arguments.of(PartyFeature.OPEN_END, "An open-ended discussion about club culture"),
                 Arguments.of(PartyFeature.DAY_PARTY, "Wir feiern unsere Geburtstagsparty"),
                 Arguments.of(PartyFeature.DAY_PARTY, "A birthday party with a holiday party afterwards"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Tea Party mit Kuchen und Lesung"),
+                Arguments.of(PartyFeature.DAY_PARTY, "Tanzteekessel"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "Song Slam: acht Songwriter*innen, ein Sieg"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "Karaoke Night mit DJ Hasi"),
                 Arguments.of(PartyFeature.OPEN_STAGE, "Schülervorspiel der Musikschule Fanny Hensel"),

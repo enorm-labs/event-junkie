@@ -116,7 +116,10 @@ object PartyFeatureRules {
                     listOf(
                         "${B}queer(?:e|en|er|es)?[\\s-]+$NIGHT$E",
                         "$B(?:gay|lesbian|lesbische?n?|schwule?n?|lgbt[qia+*]*)[\\s-]+$NIGHT$E",
-                        "$B$NIGHT\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E"
+                        "$B$NIGHT\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E",
+                        // Not a NIGHT word: NIGHT also feeds DOOR_CLAUSE and the open-end duration cue.
+                        "${B}queer\\p{L}*[\\s-]+(?:dancefloors?|tanzfläche)$E",
+                        "$B(?:dancefloors?|tanzflächen?)\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?))$E"
                     ),
                 cues = listOf("${B}queer", "${B}lgbt")
             ),
@@ -162,7 +165,9 @@ object PartyFeatureRules {
                         "$B(?:stickers?|aufkleber)\\s+(?:on|over|auf|über)\\s+(?:your\\s+|eure\\s+|deine\\s+|die\\s+|the\\s+)?" +
                             "(?:phones?|handys?|cameras?|kameras?)",
                         "$B(?:kameras?|cameras?|handy[\\s-]?kameras?|phone\\s+cameras?)\\s+(?:werden\\s+|will\\s+be\\s+|get\\s+|are\\s+)?" +
-                            "(?:abgeklebt|taped|covered|stickered)$E"
+                            "(?:abgeklebt|taped|covered|stickered)$E",
+                        "$B(?:verbotene[n]?|keine)\\s+(?:handy[\\s-]?)?kameras?$E",
+                        "$B(?:handy[\\s-]?)?kameras?\\s+(?:sind\\s+)?(?:verboten|untersagt)$E"
                     ),
                 cues = listOf("$B(?:no|keine?)\\s+(?:phones?|handys?|cameras?|kameras?)$E", "$B(?:phone|handy)[\\s-]?(?:free|frei)$E")
             ),
@@ -185,7 +190,9 @@ object PartyFeatureRules {
                     listOf(
                         "${B}day(?:time)?[\\s-]?(?:party|parties|rave|raves|dance)$E",
                         "${B}tag(?:es)?[\\s-]?(?:party|rave|tanz)$E",
-                        "$B(?:party|rave|tanzen|dancing)\\s+(?:am|bei|by|in)\\s+(?:the\\s+)?(?:tag|tage|day|daylight|daytime|tageslicht)$E"
+                        "$B(?:party|rave|tanzen|dancing)\\s+(?:am|bei|by|in)\\s+(?:the\\s+)?(?:tag|tage|day|daylight|daytime|tageslicht)$E",
+                        "${B}tanztee$E",
+                        "${B}tea[\\s-]?dances?$E"
                     ),
                 cues =
                     listOf(
