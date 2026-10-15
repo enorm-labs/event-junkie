@@ -76,6 +76,16 @@ class InstagramDraftRunnerTest {
         }
 
     @Test
+    fun `the refused-access series exists at zero before any pass`() {
+        InstagramMetrics(registry)
+        registry
+            .find("instagram.graph.errors")
+            .tag("kind", "refused")
+            .counter()!!
+            .count() shouldBe 0.0
+    }
+
+    @Test
     fun `a refused access stops the pass with an error line, and an unreadable account does not`() =
         runTest {
             val log = LoggerFactory.getLogger(InstagramDraftRunner::class.java) as Logger

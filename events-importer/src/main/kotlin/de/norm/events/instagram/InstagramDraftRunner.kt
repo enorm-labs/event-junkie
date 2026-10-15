@@ -179,7 +179,7 @@ class InstagramDraftRunner(
             }
 
             is DiscoveryResult.AccessRefused -> {
-                metrics.graphError("refused")
+                metrics.graphError(InstagramMetrics.KIND_REFUSED)
                 logger.error {
                     "Instagram access refused at venue '${venue.slug}' (Graph error ${result.code}: ${result.message}). " +
                         "No venue can be read until the token or the app's permission is fixed"
