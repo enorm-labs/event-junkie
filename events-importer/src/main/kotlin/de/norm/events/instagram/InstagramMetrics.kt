@@ -11,6 +11,11 @@ import org.springframework.stereotype.Component
 class InstagramMetrics(
     private val registry: MeterRegistry
 ) {
+    // The alert's stream exists only once the series has been exported, and OpenObserve refuses an alert on a missing one.
+    init {
+        registry.counter(GRAPH_ERRORS, TAG_KIND, KIND_REFUSED)
+    }
+
     /** Posts Business Discovery returned. */
     fun postsRead(count: Int) = registry.counter(POSTS_READ).increment(count.toDouble())
 
@@ -33,5 +38,6 @@ class InstagramMetrics(
         const val GRAPH_ERRORS = "instagram.graph.errors"
         const val TAG_OUTCOME = "outcome"
         const val TAG_KIND = "kind"
+        const val KIND_REFUSED = "refused"
     }
 }
