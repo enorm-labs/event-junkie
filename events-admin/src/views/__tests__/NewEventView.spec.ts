@@ -1,13 +1,17 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 
 import type { AdminEvent, createEvent } from '@/api/events'
+import type { approveDraft, fetchDraft, InstagramDraft } from '@/api/instagramDrafts'
 import type { fetchAllVenues } from '@/api/venues'
 import NewEventView from '@/views/NewEventView.vue'
 
 const api = vi.hoisted(() => ({
   createEvent: vi.fn<typeof createEvent>(),
   fetchAllVenues: vi.fn<typeof fetchAllVenues>(),
+  fetchDraft: vi.fn<typeof fetchDraft>(),
+  approveDraft: vi.fn<typeof approveDraft>(),
 }))
 
 vi.mock('@/api/events', async (original) => ({
@@ -15,6 +19,25 @@ vi.mock('@/api/events', async (original) => ({
   createEvent: api.createEvent,
 }))
 vi.mock('@/api/venues', () => ({ fetchAllVenues: api.fetchAllVenues }))
+vi.mock('@/api/instagramDrafts', async (original) => ({
+  ...(await original<typeof import('@/api/instagramDrafts')>()),
+  fetchDraft: api.fetchDraft,
+  approveDraft: api.approveDraft,
+}))
+
+/** The view reads `?draft=` and goes to the drafts after approving, so every mount has a router. */
+async function routerAt(path: string): Promise<Router> {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/events/new', name: 'new-event', component: NewEventView },
+      { path: '/drafts', name: 'drafts', component: { template: '<p>drafts</p>' } },
+    ],
+  })
+  await router.push(path)
+  await router.isReady()
+  return router
+}
 
 const body = () => document.body
 
@@ -38,7 +61,8 @@ async function submitWith(button: 'save' | 'saveAndAddAnother') {
 }
 
 async function mountView() {
-  const wrapper = mount(NewEventView, { attachTo: document.body })
+  const router = await routerAt('/events/new')
+  const wrapper = mount(NewEventView, { attachTo: document.body, global: { plugins: [router] } })
   await flushPromises()
   await fill({
     venueId: '7',
@@ -312,5 +336,41 @@ describe('NewEventView', () => {
 
       expect(api.createEvent).toHaveBeenCalledOnce()
     })
+  })
+
+  it('fills the form from an Instagram draft, links the post, and approves the night after the save', async () => {
+    const draft = {
+      id: 12,
+      venueId: 7,
+      venueName: 'Kulturhaus X',
+      permalink: 'https://www.instagram.com/p/DeTbTdosF6F/',
+      caption: 'Open Decks on Saturday from 21:00',
+      eventDate: '2026-11-14',
+      startTime: '21:00:00',
+      title: 'Open Decks',
+      acts: ['DJ Kodah'],
+      pricePresale: null,
+      priceBoxOffice: null,
+    } as unknown as InstagramDraft
+    api.fetchDraft.mockResolvedValue(draft)
+    api.approveDraft.mockResolvedValue()
+    api.createEvent.mockResolvedValue(saved())
+    const router = await routerAt('/events/new?draft=12')
+    mount(NewEventView, { attachTo: document.body, global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(field('title').value).toBe('Open Decks')
+    expect(field('sourceUrl').value).toBe('https://www.instagram.com/p/DeTbTdosF6F/')
+    expect(body().querySelector('[data-testid="draft"]')!.textContent).toContain('DJ Kodah')
+
+    await submitWith('save')
+
+    expect(api.createEvent.mock.calls[0]![0]).toMatchObject({
+      venueId: 7,
+      eventDate: '2026-11-14',
+      startTime: '21:00',
+    })
+    expect(api.approveDraft).toHaveBeenCalledWith(12, 9001)
+    expect(router.currentRoute.value.name).toBe('drafts')
   })
 })

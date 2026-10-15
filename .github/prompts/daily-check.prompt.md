@@ -95,9 +95,9 @@ Unless `--no-logs`, or the tunnel is down: run [`/log-check`](log-check.prompt.m
 report is its own file. Carry its verdict lines and its NEW items into this report, and link the file. It reads the same `alert_history` against the logs:
 where its alert rows give a cause Step 3 did not, its answer replaces Step 3's line.
 
-## Step 5 — The data: new artists, the worklist and the suggestions
+## Step 5 — The data: new artists, the worklist, the suggestions and the Instagram drafts
 
-Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all three, even with `--no-logs`.
+Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all four, even with `--no-logs`.
 
 **New artists.**
 
@@ -147,6 +147,30 @@ seven days, ACT: "review N suggestions", with the oldest `createdAt`.
 
 Apply nothing. The operator accepts or dismisses on the admin app's "Suggested fixes" page, where each suggestion's evidence sits beside it.
 
+**The Instagram drafts** (ADR-048). The daily pass (04:30 UTC) drafts events from venue posts. Skip this part while `importer.instagram.enabled` is off on
+production, and say so under Not checked. Read the pending drafts:
+
+```sh
+curl -s 'http://localhost:28081/api/admin/instagram-drafts?status=PENDING&size=100' > temp/instagram-drafts-$(date +%F).json
+```
+
+- **Count** the pending drafts and the nights they form: one night is one `venueName` and `eventDate`. Count how many have a `createdAt` inside the last
+  `$HOURS`.
+- **The pass.** Confirm it ran. A `refused`, a `failed`, or no line at all is ACT, with the line. A refused access is a token to renew
+  (`scripts/instagram-page-token.sh`, `docs/ops/SECRETS.md`):
+
+    ```sh
+    scripts/o2-query.sh production sql "SELECT _timestamp, body FROM default WHERE str_match(body, 'Instagram') ORDER BY _timestamp DESC LIMIT 20" --hours "$HOURS"
+    ```
+
+- **Age.** The pass deletes a draft nobody judged in 14 days, caption included. A pending draft with a `createdAt` older than 10 days is ACT: "review N
+  Instagram drafts before they expire", with the oldest night.
+- **A verdict for each new night**, numbered, with the `id` of its first draft: **CREATE** when the evidence holds and the night is not already an event
+  at the venue, **REJECT** when it is a recap, a duplicate of a stored event or a wrong date, **UNSURE** with what would settle it. Open the `permalink`
+  and the venue's events on the public site before you recommend.
+
+Apply nothing. The operator creates or rejects on the admin app's "Instagram drafts" page.
+
 ## Step 6 — The bot pull requests
 
 For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]` (`app/…` in the JSON), in that order:
@@ -168,7 +192,8 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, and the alerts that fired, one line per rule and cluster.
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists with their verdicts, the `/worklist` line: its draft and proposal counts, and the link to its report, and the
-   suggestions: the open and new counts by check and field, the night's run result, any pattern drafted, and the numbered verdicts.
+   suggestions: the open and new counts by check and field, the night's run result, any pattern drafted, and the numbered verdicts. The Instagram
+   drafts: the pending and new counts, the pass result, and the numbered verdicts.
 5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
    one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.

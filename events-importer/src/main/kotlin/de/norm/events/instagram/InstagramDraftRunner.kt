@@ -39,9 +39,11 @@ data class InstagramPassResult(
  */
 @Component
 @ConditionalOnProperty(name = ["app.instagram.enabled"], havingValue = "true")
+@Suppress("LongParameterList") // Two stores, the service, metrics and limits, plus the dispatcher and a clock for the test.
 class InstagramDraftRunner(
     private val service: InstagramDraftService,
     private val repository: InstagramDraftRepository,
+    private val venues: InstagramVenueRepository,
     private val metrics: InstagramMetrics,
     private val properties: InstagramProperties,
     @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher,
@@ -55,7 +57,7 @@ class InstagramDraftRunner(
 
     /** Starts a read of one venue in the background. An unknown or switched-off venue and a running pass fail here. */
     suspend fun startVenue(slug: String): Job {
-        val venue = repository.findVenues().firstOrNull { it.slug == slug } ?: throw InstagramVenueNotFoundException(slug)
+        val venue = venues.findVenues().firstOrNull { it.slug == slug } ?: throw InstagramVenueNotFoundException(slug)
         return launchLocked("Instagram read of venue '$slug'") { read(venue, properties.maxPerRun) }
     }
 
@@ -107,16 +109,16 @@ class InstagramDraftRunner(
 
     private suspend fun pass(): InstagramPassResult {
         val removed = repository.deletePendingCreatedBefore(OffsetDateTime.now(clock).minusDays(properties.pendingDays))
-        val venues = repository.findVenues()
+        val switchedOn = venues.findVenues()
         logger.info {
-            "The Instagram pass started: ${venues.size} venue(s), at most ${properties.maxPerRun} model call(s), " +
+            "The Instagram pass started: ${switchedOn.size} venue(s), at most ${properties.maxPerRun} model call(s), " +
                 "$removed unjudged draft(s) older than ${properties.pendingDays} days deleted"
         }
         var drafts = 0
         var calls = 0
         var read = 0
         var stop: InstagramPassStop? = null
-        val pending = ArrayDeque(venues)
+        val pending = ArrayDeque(switchedOn)
         while (stop == null && pending.isNotEmpty()) {
             val left = properties.maxPerRun - calls
             if (left <= 0) {
@@ -131,7 +133,7 @@ class InstagramDraftRunner(
                 if (result is VenueDraftResult.NotRead && result.result is DiscoveryResult.AccessRefused) stop = InstagramPassStop.ACCESS_REFUSED
             }
         }
-        return InstagramPassResult(read, drafts, calls, removed, stop).also { report(it, venues.size) }
+        return InstagramPassResult(read, drafts, calls, removed, stop).also { report(it, switchedOn.size) }
     }
 
     private suspend fun read(
@@ -209,10 +211,10 @@ class InstagramDraftRunner(
     override fun destroy() = scope.cancel()
 }
 
-/** Thrown when a read is asked for a venue that is not switched on. Rendered as a 404. */
+/** Thrown for a venue that does not exist, or that a read needs switched on and is not. Rendered as a 404. */
 class InstagramVenueNotFoundException(
     slug: String
-) : RuntimeException("No venue '$slug' is switched on for Instagram drafts")
+) : RuntimeException("No venue '$slug' to read for Instagram drafts")
 
 /** Thrown when an Instagram run is asked for while one is going. Rendered as a 409. */
 class InstagramRunInProgressException : RuntimeException("An Instagram run is going. Start another one when it has finished")

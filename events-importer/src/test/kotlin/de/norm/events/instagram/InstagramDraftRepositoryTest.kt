@@ -17,6 +17,9 @@ class InstagramDraftRepositoryTest : BaseControllerTest() {
     @Autowired
     private lateinit var repository: InstagramDraftRepository
 
+    @Autowired
+    private lateinit var venues: InstagramVenueRepository
+
     private suspend fun venue(
         slug: String,
         instagramUrl: String?
@@ -43,7 +46,7 @@ class InstagramDraftRepositoryTest : BaseControllerTest() {
             venue("prisma", "https://www.instagram.com/prisma.berlin/")
             databaseClient.sql("INSERT INTO events.instagram_venue (venue_id) VALUES ($rso)").await()
 
-            repository.findVenues() shouldBe listOf(InstagramVenue(rso, "rso-berlin", "RSO-BERLIN", "https://www.instagram.com/rso.berlin/"))
+            venues.findVenues() shouldBe listOf(InstagramVenue(rso, "rso-berlin", "RSO-BERLIN", "https://www.instagram.com/rso.berlin/"))
         }
 
     @Test

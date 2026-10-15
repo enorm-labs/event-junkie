@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import {
   type AdminEvent,
@@ -10,6 +11,7 @@ import {
   type NewEventForm,
   toCreateRequest,
 } from '@/api/events'
+import { approveDraft, fetchDraft, formFromDraft, type InstagramDraft } from '@/api/instagramDrafts'
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +28,11 @@ const error = ref<string | null>(null)
 const created = ref<{ id: number; title: string; eventDate: string; sourceId: string } | null>(null)
 
 const venue = computed(() => venues.value.find((v) => v.id === form.venueId) ?? null)
+
+const route = useRoute()
+const router = useRouter()
+/** The Instagram draft the form was opened from (ADR-048). Saving approves its night. */
+const draft = shallowRef<InstagramDraft | null>(null)
 
 /**
  * The events the venue already holds on the date (#347). The sourceId only refuses an exact
@@ -71,12 +78,33 @@ function startTime(event: AdminEvent): string {
 }
 
 onMounted(async () => {
+  const draftId = Number(route.query.draft)
+  if (draftId > 0) {
+    try {
+      draft.value = await fetchDraft(draftId)
+      Object.assign(form, formFromDraft(draft.value, emptyNewEventForm()))
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
+    }
+  }
   try {
     venues.value = await fetchAllVenues()
   } catch (e) {
     venuesError.value = e instanceof Error ? e.message : String(e)
   }
 })
+
+/** Approves the draft's night with [eventId] and goes back to the drafts. The event stays saved either way. */
+async function approve(eventId: number) {
+  const from = draft.value
+  if (!from) return
+  try {
+    await approveDraft(from.id, eventId)
+    await router.push({ name: 'drafts' })
+  } catch (e) {
+    error.value = `The event is saved, but approving the draft failed. ${e instanceof Error ? e.message : String(e)}`
+  }
+}
 
 /**
  * Enter submits with the first button, "Save and add another". The check runs again first; when
@@ -119,6 +147,10 @@ async function save(addAnother: boolean) {
       eventDate: saved.eventDate,
       sourceId: saved.sourceId,
     }
+    if (draft.value) {
+      await approve(saved.id)
+      return
+    }
     if (addAnother) {
       const { venueId, eventDate } = form
       Object.assign(form, emptyNewEventForm(), { venueId, eventDate })
@@ -142,6 +174,34 @@ async function save(addAnother: boolean) {
   </p>
 
   <p v-if="venuesError" class="text-destructive" role="alert">{{ venuesError }}</p>
+
+  <section
+    v-if="draft"
+    aria-labelledby="new-event-draft"
+    class="flex max-w-2xl flex-col gap-1.5 rounded-lg border p-3 text-sm"
+    data-testid="draft"
+  >
+    <h2 id="new-event-draft" class="font-medium">
+      From an Instagram draft of {{ draft.venueName }}.
+      <a
+        :href="draft.permalink"
+        class="underline-offset-4 hover:underline"
+        rel="noopener noreferrer"
+        target="_blank"
+        >Open the post</a
+      >
+    </h2>
+    <p>
+      Acts the post names:
+      <template v-if="draft.acts.length">{{ draft.acts.join(', ') }}</template>
+      <span v-else class="text-muted-foreground italic">none</span>. Add them in the event editor
+      after saving. Saving approves this night.
+    </p>
+    <details v-if="draft.caption">
+      <summary class="cursor-pointer text-muted-foreground">Caption</summary>
+      <p class="mt-1 break-words whitespace-pre-line">{{ draft.caption }}</p>
+    </details>
+  </section>
 
   <form class="grid max-w-2xl gap-4 sm:grid-cols-2" @submit.prevent="onSubmit">
     <label class="flex flex-col gap-1.5 sm:col-span-2" for="new-event-venue">
