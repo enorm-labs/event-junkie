@@ -96,7 +96,7 @@ class HuxleysOverviewPageScraper {
     }
 }
 
-/** Path prefix of an event permalink, stripped to obtain the `YYYY-MM-DD-<slug>` identity. */
+/** Path prefix of an event permalink, stripped to obtain the `YYYY-MM-DD-<slug>` (or bare post id) identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"
 
 /** The CSS class on a sold-out card's `li` (and its badge text). */

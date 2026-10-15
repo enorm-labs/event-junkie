@@ -1,6 +1,7 @@
 package de.norm.events.scraper.huxleys
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -136,6 +137,54 @@ class HuxleysDetailPageScraperTest {
         val currentJoys = scrape("huxleys-detail-relocated.html", "2026-08-18-current-joys")
         currentJoys.shouldNotBeNull()
         currentJoys.promoters shouldContainExactly listOf("Puschen")
+    }
+
+    @Test
+    fun `reads the date from the Datum line when the permalink is a bare post id`() {
+        val palace = scrape("huxleys-detail-id-only.html", "9740")
+        palace.shouldNotBeNull()
+        palace.title shouldBe "PALACE"
+        palace.eventDate shouldBe LocalDate.of(2027, 3, 10)
+        palace.startTime shouldBe LocalTime.of(20, 0)
+        palace.doorsTime shouldBe LocalTime.of(19, 0)
+        palace.sourceId shouldBe "huxleys:9740"
+    }
+
+    @Test
+    fun `prefers the slug's date over the Datum line`() {
+        val event = scrapeInline(slug = "2026-09-05-some-act", dateLine = "Do. 01.10.2026")
+        event.shouldNotBeNull()
+        event.eventDate shouldBe LocalDate.of(2026, 9, 5)
+    }
+
+    @Test
+    fun `reads a Datum line without a weekday`() {
+        scrapeInline(slug = "9741", dateLine = "10.03.2027").shouldNotBeNull().eventDate shouldBe LocalDate.of(2027, 3, 10)
+    }
+
+    @Test
+    fun `keeps the printed date when the Datum line's weekday disagrees and no neighbouring month fits`() {
+        // 10.03.2027 is a Wednesday; neither February nor April 10th is a Monday.
+        scrapeInline(slug = "9742", dateLine = "Mo. 10.03.2027").shouldNotBeNull().eventDate shouldBe LocalDate.of(2027, 3, 10)
+    }
+
+    @Test
+    fun `leaves the date unresolved for a bare post id without a Datum line`() {
+        scrapeInline(slug = "9743", dateLine = null).shouldNotBeNull().eventDate shouldBe UNRESOLVED_EVENT_DATE
+    }
+
+    private fun scrapeInline(
+        slug: String,
+        dateLine: String?
+    ): ScrapedEvent? {
+        val url = "https://huxleysneuewelt.de/event/$slug"
+        val datum = dateLine?.let { "<b>Datum:</b> $it<br>" }.orEmpty()
+        val html =
+            """
+            <html><head><meta property="og:title" content="Some Act - Huxleys Neue Welt"></head>
+            <body><article class="event"><div class="event-info"><p>$datum<b>Beginn:</b> 20:00</p></div></article></body></html>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, url), url)
     }
 
     @Test

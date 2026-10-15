@@ -177,6 +177,30 @@ class HuxleysWebsiteImporterTest {
         }
 
     @Test
+    fun `keeps a card whose permalink is a bare post id, dated from its detail page`() =
+        runTest {
+            // The live card as the listing prints it: a year-less `.date` cell and no ISO prefix in the link.
+            val listing =
+                """
+                <html><body><ul><li class="event-item">
+                <a href="https://huxleysneuewelt.de/event/9740">
+                <div class="date">10<span>März</span></div>
+                <div class="details"><div class="time">Beginn: 20:00 | Einlass: 19:00</div><span class="eventname">PALACE</span></div>
+                </a></li></ul></body></html>
+                """.trimIndent()
+            val palaceUrl = "https://huxleysneuewelt.de/event/9740"
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(Jsoup.parse(listing, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(palaceUrl) } returns Jsoup.parse(fixture("huxleys-detail-id-only.html"), palaceUrl)
+
+            val palace = event(importer.importEvents(overviewUrl), "9740")
+            palace.title shouldBe "PALACE"
+            palace.eventDate shouldBe LocalDate.of(2027, 3, 10)
+            palace.startTime shouldBe LocalTime.of(20, 0)
+            palace.promoters shouldContainExactly listOf("Trinity Music")
+        }
+
+    @Test
     fun `degrades to listing data when a detail page is unavailable`() =
         runTest {
             val other = event(importer.importEvents(overviewUrl), "2026-08-07-electric-bassboy")
