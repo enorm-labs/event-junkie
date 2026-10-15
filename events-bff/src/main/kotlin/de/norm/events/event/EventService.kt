@@ -213,7 +213,7 @@ class EventService(
 
     /**
      * Up to [RELATED_LIMIT] upcoming events like the one at [slug]: of the same kind, with the same
-     * artists, venue or genre tags, best match first (#359). Through [summariesFor], so the licence gate and the image
+     * artists, promoters, venue, genre tags or a similar title, best match first (#359). Through [summariesFor], so the licence gate and the image
      * rewrite apply as on every list.
      *
      * @throws EventNotFoundException if no event with the given slug exists.
@@ -222,7 +222,7 @@ class EventService(
     suspend fun related(slug: String): List<EventSummaryResponse> {
         val event = eventRepository.findBySlug(slug) ?: throw EventNotFoundException(slug)
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
-        return summariesFor(hydrateOrdered(eventSearchRepository.related(eventId, event.venueId, event.eventType, RELATED_LIMIT)))
+        return summariesFor(hydrateOrdered(eventSearchRepository.related(eventId, event.venueId, event.eventType, event.eventDate, RELATED_LIMIT)))
     }
 
     /**
