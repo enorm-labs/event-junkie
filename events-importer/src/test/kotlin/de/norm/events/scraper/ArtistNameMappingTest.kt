@@ -1385,6 +1385,19 @@ class ArtistNameMappingTest {
         headlinersFromTitle("THE REVIVAL TOUR", unpackWithFrame = true) shouldBe emptyList()
     }
 
+    // #3326 — production titles: a production or series whose cast is only in the page text.
+    @Test
+    fun `buildArtistsForEventType bills no production or series name as the act`() {
+        listOf("Pater Brown", "Die Weihnachtsengel", "Generation XY", "Unter meinem Bett", "NightWash", "Nightwash", "Smash Comedy Deluxe")
+            .forEach { withClue(it) { isNonArtistName(it) shouldBe true } }
+        buildArtistsForEventType("Unter meinem Bett", null, "CONCERT").shouldBeEmpty()
+        buildArtistsForEventType("NightWash – Das Sing Ding", null, "CONCERT").shouldBeEmpty()
+        buildArtistsForEventType("Smash Comedy Deluxe: Chaya Time!", null, "COMEDY").shouldBeEmpty()
+        listOf("Generation XY", "Pater Brown", "Die Weihnachtsengel").forEach { withClue(it) { headlinersFromTitle(it).shouldBeEmpty() } }
+        // An exact match only: an act whose name merely contains the brand is kept.
+        listOf("NightWash Allstars", "Nightwasher", "Mr. Nightwash").forEach { withClue(it) { isNonArtistName(it) shouldBe false } }
+    }
+
     @Test
     fun `buildArtistsForEventType reads a numeric support act from the Huxleys merged subtitle`() {
         // The detail page's tour name and the listing's support line, joined by " | " (#2207).

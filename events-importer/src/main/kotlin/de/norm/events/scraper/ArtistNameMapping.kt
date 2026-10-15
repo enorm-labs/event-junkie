@@ -638,7 +638,15 @@ private val NON_ARTIST_NAMES: Set<String> =
         // `Jam` of Badehaus's `Uats Live + Jam` and Mikropol's numbered `Im Kreise der Familia 3`.
         "jazz night",
         "jam",
-        "im kreise der familia"
+        "im kreise der familia",
+        // Productions and series billed as the act; only the page text names the cast (#3326):
+        // three Wühlmäuse shows, a Kesselhaus sampler concert and comedy brand, a Downstairs show.
+        "pater brown",
+        "die weihnachtsengel",
+        "generation xy",
+        "unter meinem bett",
+        "nightwash",
+        "smash comedy deluxe"
     ) + BILLED_SERIES_NAMES
 
 /**
