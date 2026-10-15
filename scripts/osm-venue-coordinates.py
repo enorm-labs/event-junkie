@@ -24,7 +24,8 @@ User-Agent naming the caller. Both are enforced here. Responses cache in
 `temp/osm-geocode-cache.json`, so a re-run asks again only for what changed.
 
 Only the venue files with an empty `sources` list are read (`http/importer/seed/venues/`, #2824).
-`--apply` rewrites the two numbers in each file and then regenerates `dev-seed.http`.
+`--apply` writes the two numbers into each file, adding them to a file that has none, and then
+regenerates `dev-seed.http`.
 """
 
 import argparse
@@ -161,10 +162,20 @@ def apply_point(text, body_start, body_end, lat, lon):
     """Rewrite the latitude and longitude inside one body, leaving every other byte as it was.
 
     The venue comes first in its file and a source carries no coordinates, so a whole file is one body.
+    A body without coordinates gets both keys after `district`, or after `postalCode` when it has none.
     """
     body = text[body_start:body_end]
-    body = re.sub(r'"latitude": -?[\d.]+', f'"latitude": {lat:.6f}', body, count=1)
-    body = re.sub(r'"longitude": -?[\d.]+', f'"longitude": {lon:.6f}', body, count=1)
+    if '"latitude"' in body:
+        body = re.sub(r'"latitude": -?[\d.]+', f'"latitude": {lat:.6f}', body, count=1)
+        body = re.sub(r'"longitude": -?[\d.]+', f'"longitude": {lon:.6f}', body, count=1)
+    else:
+        anchor = re.search(r'^( *)"district": .*$', body, re.M) or re.search(r'^( *)"postalCode": .*$', body, re.M)
+        if anchor:
+            line, pad = anchor.group(0), anchor.group(1)
+            # The anchor may be the last key, without a comma; the inserted pair then ends the object.
+            last = not line.endswith(",")
+            points = f'{pad}"latitude": {lat:.6f},\n{pad}"longitude": {lon:.6f}' + ("" if last else ",")
+            body = body[: anchor.start()] + line + ("," if last else "") + "\n" + points + body[anchor.end() :]
     return text[:body_start] + body + text[body_end:]
 
 
@@ -214,11 +225,15 @@ def main():
     finally:
         save_cache(cache)
 
+    written = 0
     if args.apply:
         for path, (lat, lon) in edits:
             text = path.read_text(encoding="utf-8")
-            path.write_text(apply_point(text, 0, len(text), lat, lon), encoding="utf-8")
-        if edits:
+            edited = apply_point(text, 0, len(text), lat, lon)
+            if edited != text:
+                path.write_text(edited, encoding="utf-8")
+                written += 1
+        if written:
             seed_venues.parity(check=False)
 
     lines = ["| Venue | Address | Verdict | OSM point | Distance to stored | Note |", "|---|---|---|---|---|---|"]
@@ -231,7 +246,7 @@ def main():
     print(table)
     counts = {k: sum(1 for r in rows if r[2] == k) for k in order}
     print(" · ".join(f"{k} {v}" for k, v in counts.items() if v))
-    print(f"{'Wrote' if args.apply else 'Would write'} {len(edits)} OSM points.")
+    print(f"Wrote {written} OSM points." if args.apply else f"Would write {len(edits)} OSM points.")
     if args.report:
         pathlib.Path(args.report).write_text(table, encoding="utf-8")
     sys.exit(0)
