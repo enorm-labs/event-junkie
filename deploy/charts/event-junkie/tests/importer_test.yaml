@@ -452,6 +452,8 @@ tests:
       importer.translation.engine: "none"
       # Forced: cluster-assertions.sh runs this suite against each cluster's values, and a cluster may turn it on.
       importer.eventClassification.enabled: false
+      # Forced: a cluster turns the drafts on, and this case asserts the default.
+      importer.instagram.enabled: false
     documentSelector:
       path: kind
       value: Deployment
@@ -566,6 +568,8 @@ tests:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
+      # Forced: a cluster turns the drafts on, and this case asserts the default.
+      importer.instagram.enabled: false
     documentSelector:
       path: kind
       value: Deployment
