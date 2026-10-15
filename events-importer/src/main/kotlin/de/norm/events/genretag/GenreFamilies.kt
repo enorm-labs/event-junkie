@@ -161,6 +161,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         // Post-Punk & Wave
         "post-punk" to WAVE,
         "new-wave" to WAVE,
+        "wave" to WAVE,
         "darkwave" to WAVE,
         "ebm" to WAVE,
         "industrial" to WAVE,

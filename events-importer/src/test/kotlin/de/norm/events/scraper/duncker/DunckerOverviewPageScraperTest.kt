@@ -84,7 +84,7 @@ class DunckerOverviewPageScraperTest {
                 ScrapedArtist(name = "Neue K", role = "DJ"),
                 ScrapedArtist(name = "Lichene", role = "DJ")
             )
-        event.genre shouldBe "EBM, Post-Punk"
+        event.genre shouldBe "Wave, EBM, Post-Punk"
     }
 
     @Test
