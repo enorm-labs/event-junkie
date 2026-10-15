@@ -2,6 +2,7 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FREE_ENTRY_PHRASE
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -177,6 +178,7 @@ class RoadrunnerOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ROADRUNNER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(keyLine)}",
             ticketUrl = ticketUrl,
+            priceNote = parseFreeEntryLine(block),
             artists = billing(title, description, billedActs),
             promoters = listOfNotNull(credit?.let { promoterFromCredit(it.text()) })
         )
@@ -318,6 +320,12 @@ class RoadrunnerOverviewPageScraper(
         val acts: List<ScrapedArtist>
     )
 
+    /**
+     * A paragraph that says only "Eintritt frei". It carries the `Stil11` title styling, so the
+     * description drops it, and the price note keeps the free entry.
+     */
+    private fun parseFreeEntryLine(block: List<Element>): String? = block.map { it.text().trim() }.firstOrNull { FREE_ENTRY_PHRASE.matches(it) }
+
     /** Doors time from the "Einlass: HH:mm Uhr" paragraph. */
     private fun parseDoorsTime(block: List<Element>): LocalTime? = block.firstNotNullOfOrNull { labelledClock(it.text(), DOORS_LABELS) }
 
@@ -367,10 +375,10 @@ class RoadrunnerOverviewPageScraper(
     // -- Line classification ----------------------------------------------
 
     /**
-     * The `Stil11` title styling, on a `<span>` inside the paragraph on some blocks and on the
-     * `<p>` itself on others (autumn 2026: "BLUT & EISEN 30 JAHRE").
+     * The `Stil11` title styling: on the `<p>` itself ("BLUT & EISEN 30 JAHRE"), or on a `<span>`
+     * or `<strong>` inside it ("SCIENCE SLAM", November 2026).
      */
-    private fun titleElement(p: Element): Element? = if (p.hasClass(TITLE_CLASS)) p else p.selectFirst("span.$TITLE_CLASS")
+    private fun titleElement(p: Element): Element? = p.selectFirst(".$TITLE_CLASS")
 
     private fun isDateLine(p: Element): Boolean = DATE_PATTERN.containsMatchIn(p.text())
 
