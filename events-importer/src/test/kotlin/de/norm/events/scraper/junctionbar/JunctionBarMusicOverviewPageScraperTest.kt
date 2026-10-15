@@ -148,6 +148,42 @@ class JunctionBarMusicOverviewPageScraperTest {
     }
 
     @Test
+    fun `leaves the headings of a translation in another script out of the title`() {
+        val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
+        val october =
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
+                    .bufferedReader()
+                    .readText(),
+                octoberUrl
+            )
+        val night = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 16) }
+
+        // The night repeats its billing in Chinese, with headings of its own: `（叫我克里斯）携格律之习`, `驻场助演` (#3301).
+        night.title shouldBe "Call me Chris + Groovy Habit"
+        night.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "Call me Chris", role = "HEADLINER"), ScrapedArtist(name = "Groovy Habit", role = "HEADLINER"))
+    }
+
+    @Test
+    fun `keeps every heading of a night billed only in another script`() {
+        val url = "https://www.junction-bar.de/program/10_2026/10_26.html"
+        val page =
+            Jsoup.parse(
+                """
+                <div class="gridContainer">
+                  <div><table><tr><td><strong class="datum">Fr 16.10.</strong></td></tr></table></div>
+                  <div><p class="Stil1222">格律之习</p><p class="text">开场由格律之习担当。</p></div>
+                </div>
+                """.trimIndent(),
+                url
+            )
+
+        scraper.scrape(page, url).single().title shouldBe "格律之习"
+    }
+
+    @Test
     fun `keeps the heading when the photo alt has no colon and the bio does not spell the photo name`() {
         val novemberUrl = "https://www.junction-bar.de/program/11_2026/11_26.html"
         val november =
