@@ -10,7 +10,6 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltWebsiteImporter.Companion.MAX_PAGES
 import de.norm.events.scraper.scrapeListingPages
@@ -103,7 +102,7 @@ class GaertenDerWeltWebsiteImporter(
             endDate = row.endDate,
             endTime = row.endTime,
             eventType = row.eventType,
-            artists = buildArtistsForEventType(detail.title, subtitle = subtitle, eventType = row.eventType)
+            artists = gaertenDerWeltArtists(detail.title, subtitle = subtitle, eventType = row.eventType)
         )
     }
 
@@ -123,5 +122,9 @@ val GAERTEN_DER_WELT_LIMITATIONS =
             LimitedAspect.GENRE,
             "the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through an outside ticket shop prints no figure on its page")
+        AcceptedLimitation(LimitedAspect.PRICE, "an event sold through an outside ticket shop prints no figure on its page"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all"
+        )
     )
