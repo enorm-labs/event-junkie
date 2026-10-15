@@ -118,6 +118,9 @@ spec:
         engine: none
       discogs:
         enabled: true
+      # Drafts events from venue posts (ADR-048); the token is the hand-made Secret event-junkie-instagram.
+      instagram:
+        enabled: true
       resources:
         requests:
           cpu: "50m"
