@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.artist.ArtistSummaryResponse
 import de.norm.events.common.AssumedStartTime
 import de.norm.events.common.PageResponse
+import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
@@ -278,6 +279,13 @@ data class EventDetailResponse(
     val genreTags: List<String>,
     @Schema(
         description =
+            "The tags of genreTags the source did not publish, by name, with where each comes from (ADR-047): ARTIST from the " +
+                "billed acts' other events, DESCRIPTION from the event's description. A tag missing here is the source's own.",
+        example = "{\"Punk\": \"ARTIST\"}"
+    )
+    val derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap(),
+    @Schema(
+        description =
             "The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page " +
                 "must link each one (ADR-036). Empty for almost every event."
     )
@@ -313,7 +321,8 @@ data class EventDetailResponse(
             descriptionWithheld: Boolean,
             enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
             changes: List<EventChangeResponse> = emptyList(),
-            postponedTo: PostponedToResponse? = null
+            postponedTo: PostponedToResponse? = null,
+            derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap()
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -358,6 +367,7 @@ data class EventDetailResponse(
                 lineup = lineup,
                 promoters = promoters,
                 genreTags = genreTags,
+                derivedGenreTags = derivedGenreTags,
                 enrichmentSources = enrichmentSources,
                 features = features,
                 changes = changes,

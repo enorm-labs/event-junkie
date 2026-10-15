@@ -169,10 +169,18 @@ const taxonomyItems = computed<MetaItem[]>(() => {
   const e = event.value
   if (!e) return []
   const type = e.eventType && e.eventType !== 'OTHER' ? formatEventType(e.eventType) : null
-  return [type, ...(e.genreTags ?? [])]
-    .filter((text): text is string => !!text)
-    .map((text) => ({ text }))
+  const genres = (e.genreTags ?? []).map((text) => ({
+    text,
+    note: derivedGenreNote(e.derivedGenreTags?.[text]),
+  }))
+  return [...(type ? [{ text: type }] : []), ...genres]
 })
+// A genre the source did not publish says where it comes from (ADR-047).
+function derivedGenreNote(origin: string | undefined): string | undefined {
+  if (origin === 'ARTIST') return t('events.detail.genreFromArtist')
+  if (origin === 'DESCRIPTION') return t('events.detail.genreFromDescription')
+  return undefined
+}
 // A venue without a coordinate gets no route (#2767).
 const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
 

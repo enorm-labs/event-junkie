@@ -457,7 +457,9 @@ CREATE TABLE events.event_feature (
 CREATE TABLE events.event_genre_tag (
     id bigint NOT NULL,
     event_id bigint NOT NULL,
-    genre_tag_id bigint NOT NULL
+    genre_tag_id bigint NOT NULL,
+    origin text DEFAULT 'SOURCE'::text NOT NULL,
+    CONSTRAINT event_genre_tag_origin_check CHECK ((origin = ANY (ARRAY['SOURCE'::text, 'ARTIST'::text, 'DESCRIPTION'::text])))
 );
 
 --

@@ -27,5 +27,7 @@ data class GenreTagEntity(
 data class EventGenreTagEntity(
     @Id val id: Long? = null,
     val eventId: Long,
-    val genreTagId: Long
+    val genreTagId: Long,
+    /** A `GenreTagOrigin` name. */
+    val origin: String = "SOURCE"
 )

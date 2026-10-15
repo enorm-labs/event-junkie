@@ -146,6 +146,8 @@
     "reportWrong": "Something wrong with this event? Report it by email:",
     "related": "More like this",
     "relatedAtVenue": "Also at {venue}",
+    "genreFromArtist": "Genre from the acts' other events",
+    "genreFromDescription": "Genre from the event description",
     "share": {
       "share": "Share",
       "nativeShare": "Share via…",

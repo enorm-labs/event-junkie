@@ -1503,6 +1503,15 @@ export interface components {
              *     ]
              */
             genreTags?: string[];
+            /**
+             * @description The tags of genreTags the source did not publish, by name, with where each comes from (ADR-047): ARTIST from the billed acts' other events, DESCRIPTION from the event's description. A tag missing here is the source's own.
+             * @example {
+             *       "Punk": "ARTIST"
+             *     }
+             */
+            derivedGenreTags?: {
+                [key: string]: "SOURCE" | "ARTIST" | "DESCRIPTION";
+            };
             /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
             enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];
             /**
