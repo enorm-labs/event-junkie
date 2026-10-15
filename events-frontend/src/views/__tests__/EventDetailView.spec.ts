@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
-import type { EventDetail } from '@/api/types'
+import type { EventDetail, EventSummary } from '@/api/types'
 import { i18n } from '@/i18n'
 
 const { getMock } = vi.hoisted(() => ({ getMock: vi.fn<(path: string) => Promise<unknown>>() }))
@@ -47,9 +47,15 @@ afterEach(() => {
   getMock.mockReset()
 })
 
-async function mountEvent(event: EventDetail, locale: 'en' | 'de' = 'en') {
+async function mountEvent(
+  event: EventDetail,
+  locale: 'en' | 'de' = 'en',
+  related: EventSummary[] = [],
+) {
   getMock.mockImplementation((path: string) =>
-    Promise.resolve(path === '/api/events/{slug}' ? event : []),
+    Promise.resolve(
+      path === '/api/events/{slug}' ? event : path.endsWith('/related') ? related : [],
+    ),
   )
   const router = createRouter({
     history: createMemoryHistory(),
@@ -325,6 +331,46 @@ describe('EventDetailView', () => {
         expect(block(view, venue)).toContain(`Festsaal Kreuzberg${line}`)
         expect(block(view, when)).not.toContain('Lido')
         expect(block(view, when)).toContain('22:00')
+      })
+    }
+  })
+
+  describe('related events heading (#3337)', () => {
+    const festsaal = { slug: 'festsaal-kreuzberg', name: 'Festsaal Kreuzberg' }
+    const show: EventDetail = { ...night, venue: festsaal, genreTags: ['Indie'] }
+    const sameVenue: EventSummary = { slug: 'next-show', title: 'Next Show', venue: festsaal }
+
+    function heading(view: VueWrapper): string {
+      return view.find('[data-testid="related-events"] h2').text()
+    }
+
+    for (const [locale, text] of [
+      ['en', 'Also at Festsaal Kreuzberg'],
+      ['de', 'Weitere Events bei Festsaal Kreuzberg'],
+    ] as const) {
+      it(`names the venue when it is the only match (${locale})`, async () => {
+        const view = await mountEvent(show, locale, [
+          sameVenue,
+          { ...sameVenue, slug: 'other-show', genreTags: ['Techno'], artistNames: ['Someone'] },
+        ])
+
+        expect(heading(view)).toBe(text)
+      })
+    }
+
+    const mixed: [string, EventSummary][] = [
+      ['shares a genre tag', { ...sameVenue, slug: 'indie-night', genreTags: ['Indie'] }],
+      ['shares an act', { ...sameVenue, slug: 'mock-night', artistNames: ['Mock Artist'] }],
+      [
+        'is at another venue',
+        { ...sameVenue, slug: 'elsewhere', venue: { slug: 'lido', name: 'Lido' } },
+      ],
+    ]
+    for (const [match, other] of mixed) {
+      it(`says "More like this" when one suggestion ${match}`, async () => {
+        const view = await mountEvent(show, 'en', [sameVenue, other])
+
+        expect(heading(view)).toBe('More like this')
       })
     }
   })

@@ -193,32 +193,42 @@ class EventSearchRepository(
         }
 
     /**
-     * Up to [limit] events that are not over and share something with the event [eventId] at
-     * [venueId], best match first (#359). An event scores [ARTIST_WEIGHT] per shared artist,
-     * [VENUE_WEIGHT] for the same venue and [GENRE_WEIGHT] per shared genre tag. Each branch of the
-     * union starts from an index on its join column, so no branch reads the whole table. Ties fall
-     * to the earliest date, then to the list's own order.
+     * Up to [limit] events that are not over, of the same family as [eventType], and sharing an
+     * artist, the venue [venueId] or a genre tag with the event [eventId], best match first (#359, #3337).
+     * Each branch of the union starts from an index on its join column. Ties fall to the earliest
+     * date, then to the list's own order.
      */
     suspend fun related(
         eventId: Long,
         venueId: Long,
+        eventType: String,
         limit: Int
     ): List<Long> {
-        val params = mutableMapOf<String, Any>("eventId" to eventId, "venueId" to venueId)
-        val where = buildWhereClause(EventFilter(), params, bySimilarity = false)
+        val params = mutableMapOf<String, Any>("eventId" to eventId, "venueId" to venueId, "eventType" to eventType)
+        val liveWhere = buildWhereClause(EventFilter(), params, bySimilarity = false)
+        val where = buildWhereClause(EventFilter(eventTypes = typeFamily(eventType)), params, bySimilarity = false)
+        // A tag's weight is its IDF over the events that are not over, so a rare tag outweighs a common one.
+        val tagWeights =
+            "WITH live AS (SELECT e.id FROM $EVENTS_SCHEMA.event e $liveWhere), " +
+                "tag_weight AS (SELECT g.genre_tag_id, 1 + ln((SELECT count(DISTINCT t.event_id) FROM $EVENTS_SCHEMA.event_genre_tag t " +
+                "WHERE t.event_id IN (SELECT id FROM live))::float8 / count(*)) AS weight FROM $EVENTS_SCHEMA.event_genre_tag g " +
+                "WHERE g.event_id IN (SELECT id FROM live) AND g.genre_tag_id IN " +
+                "(SELECT genre_tag_id FROM $EVENTS_SCHEMA.event_genre_tag WHERE event_id = :eventId) GROUP BY g.genre_tag_id)"
         val matches =
             listOf(
-                "SELECT other.event_id AS id, $ARTIST_WEIGHT AS weight FROM $EVENTS_SCHEMA.event_artist own " +
+                "SELECT other.event_id AS id, CAST($ARTIST_WEIGHT AS float8) AS weight FROM $EVENTS_SCHEMA.event_artist own " +
                     "JOIN $EVENTS_SCHEMA.event_artist other ON other.artist_id = own.artist_id WHERE own.event_id = :eventId",
                 "SELECT x.id, $VENUE_WEIGHT FROM $EVENTS_SCHEMA.event x WHERE x.venue_id = :venueId",
-                "SELECT other.event_id, $GENRE_WEIGHT FROM $EVENTS_SCHEMA.event_genre_tag own " +
-                    "JOIN $EVENTS_SCHEMA.event_genre_tag other ON other.genre_tag_id = own.genre_tag_id WHERE own.event_id = :eventId"
+                "SELECT other.event_id, tw.weight FROM tag_weight tw " +
+                    "JOIN $EVENTS_SCHEMA.event_genre_tag other ON other.genre_tag_id = tw.genre_tag_id"
             ).joinToString(" UNION ALL ")
+        // The same type is a bonus on a match, not a match. Rounded, because float sums in another order differ in the last bit.
+        val score = "round((SUM(m.weight) + CASE WHEN e.event_type = :eventType THEN $SAME_TYPE_WEIGHT ELSE 0 END)::numeric, 6)"
         // Grouped by the primary key, so the ORDER BY may read the row's other columns.
         return databaseClient
             .sql(
-                "SELECT e.id FROM ($matches) m JOIN $EVENTS_SCHEMA.event e ON e.id = m.id $where AND e.id <> :eventId " +
-                    "GROUP BY e.id ORDER BY SUM(m.weight) DESC, e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK LIMIT :limit"
+                "$tagWeights SELECT e.id FROM ($matches) m JOIN $EVENTS_SCHEMA.event e ON e.id = m.id $where AND e.id <> :eventId " +
+                    "GROUP BY e.id ORDER BY $score DESC, e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK LIMIT :limit"
             ).bindAll(params)
             .bind("seed", tiebreakSeed())
             .bind("limit", limit)
@@ -488,10 +498,23 @@ class EventSearchRepository(
         /** The day an event is over after: its stated end, else its date (ADR-029). */
         private const val EFFECTIVE_END = "COALESCE(e.end_date, e.event_date)"
 
-        /** What one shared artist, the shared venue and one shared genre tag add to a related event's score. */
-        private const val ARTIST_WEIGHT = 3
-        private const val VENUE_WEIGHT = 2
-        private const val GENRE_WEIGHT = 1
+        /** What one shared artist, the shared venue and the exact same type add to a related event's score. */
+        private const val ARTIST_WEIGHT = 6
+        private const val VENUE_WEIGHT = 1
+        private const val SAME_TYPE_WEIGHT = 0.5
+
+        /** The kinds of event that suggest each other on an event page (#3337). A type in none is its own family. */
+        private val TYPE_FAMILIES: List<Set<EventType>> =
+            listOf(
+                setOf(EventType.CONCERT, EventType.FESTIVAL, EventType.PARTY),
+                setOf(EventType.SHOW, EventType.COMEDY, EventType.READING, EventType.QUIZ),
+                setOf(EventType.SCREENING, EventType.EXHIBITION),
+                setOf(EventType.OTHER)
+            )
+
+        /** The type names of [eventType]'s family, [eventType] included. */
+        private fun typeFamily(eventType: String): List<String> =
+            TYPE_FAMILIES.firstOrNull { family -> family.any { it.name == eventType } }?.map { it.name } ?: listOf(eventType)
 
         /** An event starting at or after this is a night, and gets the grace (#299). */
         private const val LATE_START = "22:00"

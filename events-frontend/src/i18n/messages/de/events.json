@@ -145,6 +145,7 @@
     "browseUpcoming": "Schau, was gerade läuft.",
     "reportWrong": "Stimmt bei diesem Event etwas nicht? Melde es per E-Mail:",
     "related": "Ähnliche Events",
+    "relatedAtVenue": "Weitere Events bei {venue}",
     "share": {
       "share": "Teilen",
       "nativeShare": "Teilen über…",

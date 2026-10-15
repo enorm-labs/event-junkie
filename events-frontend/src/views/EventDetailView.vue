@@ -197,6 +197,25 @@ const factColumns = computed(() => {
 
 const { t, te, locale } = useI18n()
 
+/** Whether every suggestion is at this venue and shares no tag and no act with this event (#3337). */
+const relatedByVenueOnly = computed(() => {
+  const venue = event.value?.venue?.slug
+  if (!venue) return false
+  const tags = new Set(event.value?.genreTags ?? [])
+  const acts = new Set(lineup.value.map((entry) => entry.artist?.name))
+  return related.value.every(
+    (other) =>
+      other.venue?.slug === venue &&
+      !(other.genreTags ?? []).some((tag) => tags.has(tag)) &&
+      !(other.artistNames ?? []).some((name) => acts.has(name)),
+  )
+})
+const relatedHeading = computed(() =>
+  relatedByVenueOnly.value
+    ? t('events.detail.relatedAtVenue', { venue: event.value?.venue?.name ?? '' })
+    : t('events.detail.related'),
+)
+
 const metaItems = computed<MetaItem[]>(() => {
   const e = event.value
   if (!e) return []
@@ -589,7 +608,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
 
     <!-- Outside the article: these are other events, not facts about this one. -->
     <section v-if="event && related.length" class="space-y-4" data-testid="related-events">
-      <SectionLabel>{{ t('events.detail.related') }}</SectionLabel>
+      <SectionLabel>{{ relatedHeading }}</SectionLabel>
       <div v-if="compact" :class="CARD_LIST_CLASS">
         <EventRow v-for="other in related" :key="other.slug" :event="other" />
       </div>
