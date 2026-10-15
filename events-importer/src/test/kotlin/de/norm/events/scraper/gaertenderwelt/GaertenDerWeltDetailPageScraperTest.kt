@@ -15,7 +15,8 @@ import java.time.LocalTime
 
 /**
  * Unit tests for [GaertenDerWeltDetailPageScraper], parsing saved snapshots of the park's
- * `events2` single view (captured 6 August 2026).
+ * `events2` single view (captured 6 August 2026; the EPIC SYMPHONY, Mega 90er and Stereoact pages
+ * on 15 October 2026).
  *
  * The concert snapshot is the one that exercises every labelled prose paragraph the park writes —
  * doors, both prices, promoter and support billing — and that the description keeps none of them.
@@ -148,6 +149,51 @@ class GaertenDerWeltDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a promoter line that follows the price on the Tickets paragraph`() {
+        val event = scraper.scrape(fixture("gaertenderwelt-detail-epic-symphony.html", EPIC_URL), EPIC_URL).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf("Ovation Events GmbH")
+        event.pricePresale shouldBe BigDecimal("42.00")
+        event.priceBoxOffice.shouldBeNull()
+        // The promoter and its Kontakt line no longer ride along in the pricing note.
+        event.priceNote shouldBe "ab 42,00 € (Hinweis: Gültig nur ab offiziellem Einlass, kein Tagesticket für die Gärten der Welt)"
+        event.doorsTime shouldBe LocalTime.of(18, 0)
+    }
+
+    @Test
+    fun `reads a promoter line that follows the doors time on the Einlass paragraph`() {
+        val event = scraper.scrape(fixture("gaertenderwelt-detail-stereoact.html", STEREOACT_URL), STEREOACT_URL).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf("Semmel Concerts Entertainment GmbH")
+        event.doorsTime shouldBe LocalTime.of(18, 0)
+        event.pricePresale shouldBe BigDecimal("39.90")
+        event.description.shouldNotBeNull() shouldNotContain "Semmel"
+    }
+
+    @Test
+    fun `reads a promoter line below two Einlass lines and keeps the first of them`() {
+        val event = scraper.scrape(fixture("gaertenderwelt-detail-mega-90er.html", MEGA_90ER_URL), MEGA_90ER_URL).shouldNotBeNull()
+
+        // "HB Music, Hendrik Büring": the part after the comma is the contact, as on the Loft Concert line.
+        event.promoters shouldContainExactly listOf("HB Music")
+        event.pricePresale shouldBe BigDecimal("29.95")
+        // "Einlass Gärten der Welt: 16.30 Uhr" opens the paragraph and wins over the later
+        // "Einlass Veranstaltungsbereich: 17 Uhr"; its dotted time reads as no time, as before.
+        event.doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `starts no field inside an unlabelled prose paragraph`() {
+        val html =
+            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+                .outerHtml()
+                .replace("Die Berliner Kultband KARAT", "Einleitung<br>Veranstalter: kein Name<br>Die Berliner Kultband KARAT")
+        val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf("MB-Konzerte GmbH")
+    }
+
+    @Test
     fun `returns null for a page with no single-view block`() {
         val notFound = Jsoup.parse("<html><body><h1>404</h1></body></html>", CONCERT_URL)
 
@@ -168,5 +214,11 @@ class GaertenDerWeltDetailPageScraperTest {
         private const val EXHIBITION_URL =
             "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-09-01_0900/zwischen-himmel-und-erde-ausstellung/"
         private const val KOSTEN_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-09-12_1900/karat-live-in-berlin/"
+        private const val EPIC_URL =
+            "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2027-06-11_1930/epic-symphony-live-orchestra-choir-dj/"
+        private const val MEGA_90ER_URL =
+            "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2027-07-09_1700/das-mega-90er-live-open-air-27/"
+        private const val STEREOACT_URL =
+            "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2027-05-05_1930/stereoact-ich-liebe-das-leben-party-2027-feat-lena-marie-engel/"
     }
 }

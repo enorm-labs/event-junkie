@@ -91,20 +91,37 @@ class GaertenDerWeltDetailPageScraper {
     }
 
     /**
-     * Indexes the bold-labelled prose paragraphs by lowercased label, keeping each paragraph's
-     * `<br>`-separated lines with the label stripped off the first. The lines matter: one `Tickets:`
-     * paragraph carries the presale price on its first line and `Abendkasse: …` on its second. A
-     * label appearing twice keeps its first paragraph.
+     * Indexes the bold-labelled prose fields by lowercased label, each with its `<br>`-separated
+     * lines and the label stripped off the first. A label opening any line of a labelled paragraph
+     * starts a new field, so `Tickets: … <br>Veranstalter*in: …` yields both. A label appearing
+     * twice keeps its first field.
      */
     private fun Element.labelledParagraphs(): Map<String, List<String>> =
         select(PROSE_SELECTOR)
-            .mapNotNull { paragraph ->
-                val lines = paragraph.textLines()
-                val head = lines.firstOrNull() ?: return@mapNotNull null
-                val label = FIELD_LABELS.keys.firstOrNull { head.startsWith(it, ignoreCase = true) } ?: return@mapNotNull null
-                FIELD_LABELS.getValue(label) to (listOf(head.drop(label.length).stripLabelTail()) + lines.drop(1)).filter { it.isNotBlank() }
-            }.reversed()
+            .flatMap { it.labelledFields() }
+            .reversed()
             .toMap()
+
+    /**
+     * Splits one paragraph into its labelled fields, or none when its first line carries no label:
+     * a description paragraph stays prose whatever its later lines start with. An `Abendkasse:` line
+     * stays with the line above, so the `Tickets:` field keeps its box-office price.
+     */
+    private fun Element.labelledFields(): List<Pair<String, List<String>>> {
+        val fields = mutableListOf<Pair<String, MutableList<String>>>()
+        for (line in textLines()) {
+            val label =
+                FIELD_LABELS.keys
+                    .firstOrNull { line.startsWith(it, ignoreCase = true) }
+                    ?.takeUnless { it == BOX_OFFICE_LABEL && fields.isNotEmpty() }
+            when {
+                label != null -> fields += FIELD_LABELS.getValue(label) to mutableListOf(line.drop(label.length).stripLabelTail())
+                fields.isEmpty() -> return emptyList()
+                else -> fields.last().second += line
+            }
+        }
+        return fields.map { (field, lines) -> field to lines.filter { it.isNotBlank() } }
+    }
 
     /**
      * Strips what follows a matched label: the gender-inclusive ending on `Veranstalter*in:` (also
