@@ -2,10 +2,14 @@ package de.norm.events.scraper.distel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.classifyByGenreKeyword
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -24,6 +28,10 @@ import java.time.format.DateTimeFormatter
  *
  * A touring date names its town and hall in the subtitle (`Aurich・Stadthalle Aurich`) on the show
  * pages; the calendar lists the home stage only, and a row with that marker is skipped.
+ *
+ * Ensemble Kabarett and guest nights share the calendar. A guest night names its act before a colon
+ * (`Wenzel: Lieder & Texte`) or as the guest and host of a talk series; [distelEventType] and
+ * [distelActs] read both.
  */
 class DistelCalendarPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -61,13 +69,14 @@ class DistelCalendarPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            eventType = EventType.COMEDY.name,
+            eventType = distelEventType(title, subtitle),
             eventDate = eventDate,
             startTime = startTime,
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.DISTEL.sourceIdPrefix}$slug-$eventDate-${startTime?.format(HHMM).orEmpty()}",
             ticketUrl = item.selectFirst(".ce_button a[href*=event=]")?.absUrl("href")?.takeUnless { it.endsWith("event=") },
-            soldOut = item.selectFirst(".available.sold_out") != null
+            soldOut = item.selectFirst(".available.sold_out") != null,
+            artists = distelActs(title)
         )
     }
 
@@ -111,3 +120,58 @@ class DistelCalendarPageScraper {
             ).mapIndexed { index, name -> name to Month.of(index + 1) }.toMap()
     }
 }
+
+/**
+ * The format of a calendar row: a talk or a reading the title names, then a concert the subtitle
+ * names, then a `<name> liest:` reading. Anything else is the house's Kabarett.
+ */
+internal fun distelEventType(
+    title: String,
+    subtitle: String?
+): String =
+    classifyByGenreKeyword(title)
+        ?: when {
+            subtitle?.contains("konzert", ignoreCase = true) == true -> EventType.CONCERT.name
+            READS.containsMatchIn(title.substringBefore(": ")) -> EventType.READING.name
+            else -> EventType.COMEDY.name
+        }
+
+/**
+ * The acts a calendar title bills: the guest and the host of a `<series> – <A> zu Gast bei <B>`
+ * talk, else the names before the first colon. A performance marker before the colon
+ * (`PREMIERE: Gut im Abgang`) bills nobody, and nor does a title with no colon: the ensemble's shows.
+ */
+@Suppress("ReturnCount") // Guard clauses for the talk frame and the colon are clearer than nesting
+internal fun distelActs(title: String): List<ScrapedArtist> {
+    GUEST_AT_HOST.find(title)?.let { match ->
+        return match.groupValues
+            .drop(1)
+            .map(::stripAcademicTitle)
+            .filter { it.isNotBlank() }
+            .map(::titleAct)
+    }
+    val names = title.substringBefore(": ", "").trim()
+    if (names.isEmpty() || PERFORMANCE_MARKER.matches(names)) return emptyList()
+    return names
+        .split(',')
+        .flatMap { splitSegmentOnConjunctions(it.trim()) }
+        .map { stripAcademicTitle(it.replace(READS, "")) }
+        .filterNot(::isNonArtistName)
+        .map(::titleAct)
+}
+
+private fun titleAct(name: String) = ScrapedArtist(name = name, role = "HEADLINER", titleDerived = true)
+
+private fun stripAcademicTitle(name: String): String = name.trim().replace(ACADEMIC_TITLE, "").trim()
+
+/** `MISSVERSTEHEN SIE MICH RICHTIG – Prof. Carlo Masala zu Gast bei Ulrike Herrmann`; the series ends at a colon or a dash. */
+private val GUEST_AT_HOST = Regex("""^[^:–]+?(?::|\s+[–-])\s+(.+?)\s+zu Gast bei\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/** A prefix that marks one performance of an ensemble show, not an act. */
+private val PERFORMANCE_MARKER =
+    Regex("""premiere|voraufführung|generalprobe|dernière|derniere|matinee|bunter weihnachtsteller""", RegexOption.IGNORE_CASE)
+
+private val ACADEMIC_TITLE = Regex("""^(?:(?:prof|dr)\.\s*)+""", RegexOption.IGNORE_CASE)
+
+/** `Max Goldt liest: Aber?` is a reading by Max Goldt. */
+private val READS = Regex("""\s+liest$""", RegexOption.IGNORE_CASE)

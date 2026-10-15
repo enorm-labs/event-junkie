@@ -125,7 +125,7 @@ says so.
 | `DISTEL`               | `DOORS_TIME`       | the calendar states one time per performance                                                                                                     | —     |
 | `DISTEL`               | `PRICE`            | prices appear only inside the ticket shop, which robots.txt closes                                                                               | —     |
 | `DISTEL`               | `ARTISTS`          | the ensemble's shows name a cast only in prose                                                                                                   | —     |
-| `DISTEL`               | `EVENT_TYPE`       | the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list                                                    | —     |
+| `DISTEL`               | `EVENT_TYPE`       | the calendar names no format for the ensemble's shows                                                                                            | —     |
 | `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `DISTEL`               | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
