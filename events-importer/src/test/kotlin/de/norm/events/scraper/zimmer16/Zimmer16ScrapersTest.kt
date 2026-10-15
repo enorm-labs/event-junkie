@@ -97,11 +97,25 @@ class Zimmer16ScrapersTest {
     fun `stores a free night at 0 euros but not a pay-what-you-want one`() {
         val lesebuehne = events.first { it.title.startsWith("So noch nie") }
 
-        eventPage.enrich(lesebuehne, Jsoup.parse(zeroPricePage("Eintritt frei"), baseUrl)).shouldNotBeNull().free shouldBe true
-        val payWhatYouWant = eventPage.enrich(lesebuehne, Jsoup.parse(zeroPricePage("Eintritt frei, but pay what you want"), baseUrl)).shouldNotBeNull()
+        val free = eventPage.enrich(lesebuehne, Jsoup.parse(yesticketPage("<p>Eintritt frei</p>"), baseUrl)).shouldNotBeNull()
+        free.free shouldBe true
+        free.priceNote.shouldBeNull()
+        val payWhatYouWant = eventPage.enrich(lesebuehne, Jsoup.parse(yesticketPage("<p>Eintritt frei, but pay what you want</p>"), baseUrl)).shouldNotBeNull()
         payWhatYouWant.free shouldBe false
         payWhatYouWant.priceBoxOffice shouldBe lesebuehne.priceBoxOffice
+        payWhatYouWant.priceNote shouldBe "Eintritt frei, but pay what you want"
         payWhatYouWant.description shouldBe "Eintritt frei, but pay what you want"
+    }
+
+    @Test
+    fun `notes only the pay-what-you-want sentence, and only on a 0 euro night`() {
+        val lesebuehne = events.first { it.title.startsWith("So noch nie") }
+        val text = "<p>Für Künstler ab 19:00 Uhr geöffnet. Eintritt frei, pay what you want. Bringt Texte mit!</p><p>Moderation: Lothar</p>"
+
+        eventPage.enrich(lesebuehne, Jsoup.parse(yesticketPage(text), baseUrl)).shouldNotBeNull().priceNote shouldBe "Eintritt frei, pay what you want."
+        val priced = eventPage.enrich(lesebuehne, Jsoup.parse(yesticketPage(text, price = "8.00"), baseUrl)).shouldNotBeNull()
+        priced.priceBoxOffice shouldBe BigDecimal("8.00")
+        priced.priceNote.shouldBeNull()
     }
 
     @Test
@@ -110,13 +124,16 @@ class Zimmer16ScrapersTest {
         Zimmer16OverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
 
-    private fun zeroPricePage(text: String): String =
+    private fun yesticketPage(
+        paragraphs: String,
+        price: String = "0.00"
+    ): String =
         """
         <script type="application/ld+json">
         {"@context": "https://schema.org", "@type": "Event", "startDate": "2026-10-26T19:30:00",
-         "offers": {"@type": "Offer", "price": "0.00", "priceCurrency": "EUR"}}
+         "offers": {"@type": "Offer", "price": "$price", "priceCurrency": "EUR"}}
         </script>
-        <div class="spacer--C"><p>$text</p></div>
+        <div class="spacer--C">$paragraphs</div>
         """.trimIndent()
 
     private fun cards(titles: List<String>): String =
