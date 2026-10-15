@@ -73,10 +73,10 @@
     "closeSheet": "Close filters",
     "showResults": "Show events",
     "showResultsCount": "Show {count} event | Show {count} events",
-    "allFeatures": "Any party",
+    "allFeatures": "Any feature",
     "featuresSelected": "{n} features",
     "clearFeatures": "Clear features",
-    "byFeature": "Filter by party features",
+    "byFeature": "Filter by features",
     "featureHint": "As the event's own text states it. An event needs every feature chosen; what the venue says about itself does not count."
   },
   "card": {
