@@ -1,0 +1,206 @@
+[
+    {
+        "id": 7604,
+        "date": "2026-12-19T19:00:00",
+        "date_gmt": "2026-10-13T15:24:37",
+        "guid": {
+            "rendered": "https://larkberlin.com/?post_type=event&#038;p=7604"
+        },
+        "modified": "2026-10-13T17:33:26",
+        "modified_gmt": "2026-10-13T15:33:26",
+        "slug": "kulturschocktherapie",
+        "status": "publish",
+        "type": "event",
+        "link": "https://larkberlin.com/event/kulturschocktherapie/",
+        "title": {
+            "rendered": "KULTURSCHOCKTHERAPIE"
+        },
+        "content": {
+            "rendered": "",
+            "protected": false
+        },
+        "excerpt": {
+            "rendered": "",
+            "protected": false
+        },
+        "featured_media": 7605,
+        "template": "",
+        "meta": {
+            "_acf_changed": false,
+            "footnotes": ""
+        },
+        "categories": [
+            9
+        ],
+        "tags": [],
+        "event-category": [],
+        "class_list": [
+            "post-7604",
+            "event",
+            "type-event",
+            "status-publish",
+            "has-post-thumbnail",
+            "hentry",
+            "category-events-archive"
+        ],
+        "blocksy_meta": "",
+        "acf": {
+            "event_date": "2026-12-19 19:00:00",
+            "event_doors_time": "20:00:00",
+            "event_status": "Scheduled",
+            "event_highlight": false,
+            "event_type": "Concert",
+            "event_day_name": "Experimontag",
+            "event_entrance_fee": "Has Entrance Fee",
+            "event_price": 18.63,
+            "event_organizer": "",
+            "event_primary_participant": "",
+            "event_secondary_participant": "",
+            "event_tickets_url": "https://eventfrog.de/de/p/konzerte/indie-alternative/kulturschocktherapie-berlin-7505012663295944860.html?fbclid=PAZnRzaAUvpJlleHRuA2FlbQIxMQBwZG9mAmZkaWQWUPpB75WTT51JqmaR-aJ0y-lD_mHpIHNydGMGYXBwX2lkDzEyNDAyNDU3NDI4NzQxNAABpzsqFFG635dkGDg5g6n5cSp6IXdT-vTbbJxRTNTELfV0e8ZPYGaEG1eemq4z_aem_n5kr7L-07geA6txufPOY_Q",
+            "event_facebook_link": "",
+            "event_card_title": "KULTURSCHOCKTHERAPIE",
+            "event_card_subtitle": "",
+            "event_music_genre": "",
+            "event_artist_link": "",
+            "event_artist_buy_link": "",
+            "event_description": "⚡️WILLKOMMEN IN DER KULTURSCHOCKTHERAPIE⚡️\r\n\r\nWir bieten dem Underground eine Bühne!\r\n\r\nEin Abend - 6 einzigartige Acts aus der alternativen Szene:\r\n\r\n- Sin Davis\r\n\r\n- Deadboyboo\r\n\r\n- Eaven X Oceans11\r\n\r\n- HATE/LOVE\r\n\r\n- Lilyth\r\n\r\n- t1m",
+            "event_poster": "",
+            "_thumbnail_id": 7605,
+            "event_video_embed": "",
+            "event_soundcloud_embed": "",
+            "event_image_01": "",
+            "event_image_02": "",
+            "event_image_03": "",
+            "event_image_04": "",
+            "name_act_01": "",
+            "country_act_01": "",
+            "genre_act_01": "",
+            "type_act_01": "Live",
+            "link_01_act_01": "",
+            "link_02_act_01": "",
+            "description_act_01": "",
+            "video_act_01": "",
+            "image_01_act_01": "",
+            "image_02_act_01": "",
+            "name_act_02": "",
+            "country_act_02": "",
+            "genre_act_02": "",
+            "type_act_02": "Live",
+            "link_01_act_02": "",
+            "link_02_act_02": "",
+            "description_act_02": "",
+            "video_act_02": "",
+            "image_01_act_02": "",
+            "image_02_act_02": "",
+            "name_act_03": "",
+            "country_act_03": "",
+            "genre_act_03": "",
+            "type_act_03": "Live",
+            "link_01_act_03": "",
+            "link_02_act_03": "",
+            "description_act_03": "",
+            "video_act_03": "",
+            "image_01_act_03": "",
+            "image_02_act_03": "",
+            "name_act_04": "",
+            "country_act_04": "",
+            "genre_act_04": "",
+            "type_act_04": "Live",
+            "link_01_act_04": "",
+            "link_02_act_04": "",
+            "description_act_04": "",
+            "video_act_04": "",
+            "image_01_act_04": "",
+            "image_02_act_04": "",
+            "name_act_05": "",
+            "country_act_05": "",
+            "genre_act_05": "",
+            "type_act_05": "Live",
+            "link_01_act_05": "",
+            "link_02_act_05": "",
+            "description_act_05": "",
+            "video_act_05": "",
+            "image_01_act_05": "",
+            "image_02_act_05": "",
+            "name_act_06": "",
+            "country_act_06": "",
+            "genre_act_06": "",
+            "type_act_06": "Live",
+            "link_01_act_06": "",
+            "link_02_act_06": "",
+            "description_act_06": "",
+            "video_act_06": "",
+            "image_01_act_06": "",
+            "image_02_act_06": ""
+        },
+        "_links": {
+            "self": [
+                {
+                    "href": "https://larkberlin.com/wp-json/wp/v2/event/7604",
+                    "targetHints": {
+                        "allow": [
+                            "GET"
+                        ]
+                    }
+                }
+            ],
+            "collection": [
+                {
+                    "href": "https://larkberlin.com/wp-json/wp/v2/event"
+                }
+            ],
+            "about": [
+                {
+                    "href": "https://larkberlin.com/wp-json/wp/v2/types/event"
+                }
+            ],
+            "version-history": [
+                {
+                    "count": 4,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/event/7604/revisions"
+                }
+            ],
+            "predecessor-version": [
+                {
+                    "id": 7609,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/event/7604/revisions/7609"
+                }
+            ],
+            "wp:featuredmedia": [
+                {
+                    "embeddable": true,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/media/7605"
+                }
+            ],
+            "wp:attachment": [
+                {
+                    "href": "https://larkberlin.com/wp-json/wp/v2/media?parent=7604"
+                }
+            ],
+            "wp:term": [
+                {
+                    "taxonomy": "category",
+                    "embeddable": true,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/categories?post=7604"
+                },
+                {
+                    "taxonomy": "post_tag",
+                    "embeddable": true,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/tags?post=7604"
+                },
+                {
+                    "taxonomy": "event_category",
+                    "embeddable": true,
+                    "href": "https://larkberlin.com/wp-json/wp/v2/event-category?post=7604"
+                }
+            ],
+            "curies": [
+                {
+                    "name": "wp",
+                    "href": "https://api.w.org/{rel}",
+                    "templated": true
+                }
+            ]
+        }
+    }
+]

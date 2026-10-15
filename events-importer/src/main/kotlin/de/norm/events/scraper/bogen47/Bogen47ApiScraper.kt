@@ -76,6 +76,10 @@ internal data class Bogen47Page(
  * event is classified**, because it otherwise decides the type: a bare `club` in the keyword
  * classifier turned `LEILA – 20 SOMETHING CLUB TOUR` into a `PARTY` that lost its headliner.
  *
+ * **A showcase night bills its line-up in the description** (`KULTURSCHOCKTHERAPIE`, #3293):
+ * three or more bullet lines (`- Sin Davis`), with only blank or punctuation lines between them,
+ * are the concert's headliners in listed order, and the title, the night's name, bills no act.
+ *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
  * description of just `TBA` is dropped.
@@ -84,7 +88,7 @@ internal data class Bogen47Page(
  * @param eventTypes the venue's `acf.event_type` vocabulary beyond the shared synonyms.
  * @see AbstractBogen47WebsiteImporter for the HTTP fetch orchestrator.
  */
-@Suppress("LongComment") // 26 lines: the theme writes the date, the status and the billing all into fields meant for something else.
+@Suppress("LongComment") // 29 lines: the theme writes the date, the status and the billing all into fields meant for something else.
 internal class Bogen47ApiScraper(
     private val eventSource: EventSource,
     private val eventsUrl: String,
@@ -181,6 +185,11 @@ internal class Bogen47ApiScraper(
         val title = cleanEventTitle(stripStatusMarkers(rawTitle))
 
         val acf = post.path("acf")
+        val description =
+            acf
+                .stringOrNull("event_description")
+                ?.let(::htmlToPlainText)
+                ?.takeIf { it.isNotBlank() && !it.equals(PLACEHOLDER_DESCRIPTION, ignoreCase = true) }
         // Classify the act, not the tour: "LEILA – 20 SOMETHING CLUB TOUR" is a gig, but the shared
         // keyword classifier sees the "club" in its tour name and calls it a party.
         val actTitle = stripArtistSuffix(title)
@@ -190,11 +199,7 @@ internal class Bogen47ApiScraper(
             event =
                 ScrapedEvent(
                     title = title,
-                    description =
-                        acf
-                            .stringOrNull("event_description")
-                            ?.let(::htmlToPlainText)
-                            ?.takeIf { it.isNotBlank() && !it.equals(PLACEHOLDER_DESCRIPTION, ignoreCase = true) },
+                    description = description,
                     eventType = eventType,
                     eventDate = startedAt.toLocalDate(),
                     // The site renders this time as "Doors"; it publishes no separate start time.
@@ -209,7 +214,7 @@ internal class Bogen47ApiScraper(
                     ticketUrl = acf.stringOrNull("event_tickets_url")?.takeIf { it.startsWith("http") },
                     soldOut = soldOut,
                     status = status,
-                    artists = artistsFrom(title, eventType),
+                    artists = artistsFrom(title, description, eventType),
                     promoters = organizers(acf.stringOrNull("event_organizer"))
                 ),
             featuredMediaId = post.path("featured_media").asLong(0L).takeIf { it > 0 }
@@ -224,9 +229,12 @@ internal class Bogen47ApiScraper(
      * (`Mamalia’The first lady of modern funk’`) is dropped, and `b2b` and `ft.` split a name,
      * because LARK writes `ft.` without a space. A party or other non-concert format names an event,
      * not a performer, so it yields none (mirroring `buildArtistsForEventType`).
+     *
+     * A [bulletedLineup] in the description replaces the title's headliners; its support acts stay.
      */
     private fun artistsFrom(
         title: String,
+        description: String?,
         eventType: String
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name) return emptyList()
@@ -242,8 +250,9 @@ internal class Bogen47ApiScraper(
                 .replace(QUOTED_EPITHET, " ")
                 .replace(WHITESPACE, " ")
                 .trim()
+        val lineup = bulletedLineup(description)
         val headliners =
-            headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
+            lineup?.map { ScrapedArtist(name = it, role = "HEADLINER") } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
                 act.name
                     .split(NAME_JOINER)
                     .map { it.trim() }
@@ -317,6 +326,39 @@ private fun htmlToPlainText(raw: String): String {
         .replace(BLANK_LINE_RUN, "\n\n")
         .trim()
 }
+
+/**
+ * The acts a description lists as bullets, or null when it lists fewer than [MIN_LINEUP_BULLETS].
+ * A run of bullets may hold blank lines, as LARK's editor puts one between each, and lines of only
+ * punctuation (`--`), but any other line ends it. A trailing parenthesis is a note
+ * (`GUILE (TSOL, X-Kalay)`), and `X` inside a name (`Eaven X Oceans11`) is one act.
+ */
+private fun bulletedLineup(description: String?): List<String>? {
+    val runs = mutableListOf(mutableListOf<String>())
+    description
+        .orEmpty()
+        .lines()
+        .filter { it.contains(LETTER_OR_DIGIT) }
+        .forEach { line ->
+            val name = BULLET_LINE.matchEntire(line.trim())?.groupValues?.get(1)
+            if (name == null) runs += mutableListOf<String>() else runs.last() += name
+        }
+    return runs
+        .firstOrNull { it.size >= MIN_LINEUP_BULLETS }
+        ?.map { it.replace(TRAILING_PARENTHESIS, "").trim() }
+        ?.filterNot { it.isBlank() || isNonArtistName(it) }
+}
+
+/** Fewer bullets than this are a list of something else, so the title keeps the billing. */
+private const val MIN_LINEUP_BULLETS = 3
+
+private val LETTER_OR_DIGIT = Regex("""[\p{L}\p{N}]""")
+
+/** A hyphen, en dash or bullet sign, then the name. */
+private val BULLET_LINE = Regex("""[-–•]\s*(.+)""")
+
+/** A parenthesised note closing a bullet's name. */
+private val TRAILING_PARENTHESIS = Regex("""\s*\([^)]*\)$""")
 
 /** Three or more consecutive newlines, collapsed to one blank line. */
 private val BLANK_LINE_RUN = Regex("""\n{3,}""")

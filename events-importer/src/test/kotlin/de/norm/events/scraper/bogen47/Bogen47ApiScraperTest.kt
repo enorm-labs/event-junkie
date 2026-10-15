@@ -142,6 +142,85 @@ class Bogen47ApiScraperTest {
             listOf("Greg Mendez" to ArtistRole.HEADLINER.name, "Lily Seabird" to ArtistRole.SUPPORT.name)
     }
 
+    /** One post typed [eventType] with [title] and a description of [descriptionHtml], a JSON string body. */
+    private fun eventDescribed(
+        title: String,
+        descriptionHtml: String,
+        eventType: String = "Concert"
+    ): ScrapedEvent =
+        scraper
+            .scrapePage(
+                """
+                [{"id":10,"link":"https://larkberlin.com/event/d/","date":"2026-09-28T19:00:00",
+                  "title":{"rendered":"$title"},
+                  "acf":{"event_type":"$eventType","event_description":"$descriptionHtml"},"featured_media":0}]
+                """.trimIndent()
+            ).entries
+            .single()
+            .event
+
+    @Test
+    fun `scrapePage bills a showcase night's bulleted line-up, not its name`() {
+        // Post 7604 as the API served it on 2026-10-15: the bullets come with a blank line between each.
+        val event =
+            scraper
+                .scrapePage(fixture("lark-event-kulturschocktherapie.json"))
+                .entries
+                .single()
+                .event
+
+        event.title shouldBe "KULTURSCHOCKTHERAPIE"
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { it.name } shouldContainExactly listOf("Sin Davis", "Deadboyboo", "Eaven X Oceans11", "HATE/LOVE", "Lilyth", "t1m")
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER.name)
+    }
+
+    @Test
+    fun `scrapePage keeps the title's act when the description holds only two bullets`() {
+        val event = eventDescribed("Ben Morgan", """Mit dabei:\r\n- Tickets 20 €\r\n- Einlass 19 Uhr""")
+
+        event.artists.map { it.name } shouldContainExactly listOf("Ben Morgan")
+    }
+
+    @Test
+    fun `scrapePage reads bullets with en dashes, bullet signs and trailing notes, and skips a dash-only line`() {
+        val event =
+            eventDescribed(
+                "Punk Night",
+                """<p>– GUILE (TSOL, X-Kalay)</p><p>--</p><p>• Sin Davis</p><p>-Lilyth</p><p>- t1m</p>"""
+            )
+
+        event.artists.map { it.name } shouldContainExactly listOf("GUILE", "Sin Davis", "Lilyth", "t1m")
+    }
+
+    @Test
+    fun `scrapePage ends a bullet run at a line of prose`() {
+        val event = eventDescribed("Ben Morgan", """- Sin Davis\n- Lilyth\nund viele mehr\n- t1m""")
+
+        event.artists.map { it.name } shouldContainExactly listOf("Ben Morgan")
+    }
+
+    @Test
+    fun `scrapePage bills no act for a party whose description lists bullets`() {
+        val event = eventDescribed("UNORDNUNGSAMT", """- Sin Davis\n- Lilyth\n- t1m""", eventType = "Club")
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists shouldHaveSize 0
+    }
+
+    @Test
+    fun `scrapePage keeps a title's support act beside a bulleted line-up`() {
+        val event = eventDescribed("Showcase + Lily Seabird (support)", """- Sin Davis\n\n- Lilyth\n\n- t1m""")
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf(
+                "Sin Davis" to ArtistRole.HEADLINER.name,
+                "Lilyth" to ArtistRole.HEADLINER.name,
+                "t1m" to ArtistRole.HEADLINER.name,
+                "Lily Seabird" to ArtistRole.SUPPORT.name
+            )
+    }
+
     @Test
     fun `scrapePage strips an en-dash tour tail from the derived act`() {
         // The venue writes tour tails with an en dash, which the shared ASCII-hyphen stripper misses.
