@@ -386,14 +386,17 @@ class PeterEdelOverviewPageScraper {
 
         /**
          * The blurb's words for a night the title leaves untyped, first match wins: jokes, then a
-         * book, then a dancefloor, then albums or a concert.
+         * book or a podcast on stage, then a dancefloor, then a Varieté or musical revue, then albums,
+         * concerts or an orchestra. The revue goes before the concert because its blurb may name a
+         * concert too. `show` is no cue: comedians and singers alike play "live shows" (#3324).
          */
         private val DESCRIPTION_CUES: Map<Regex, String> =
             linkedMapOf(
                 Regex("""witze|comedy|kabarett|stand-?up""", RegexOption.IGNORE_CASE) to EventType.COMEDY.name,
-                Regex("""lesung|(?<!\p{L})buch(?:es|s)?(?!\p{L})""", RegexOption.IGNORE_CASE) to EventType.READING.name,
+                Regex("""lesung|(?<!\p{L})buch(?:es|s)?(?!\p{L})|podcast""", RegexOption.IGNORE_CASE) to EventType.READING.name,
                 Regex("""party|dancefloor|tanzfläche""", RegexOption.IGNORE_CASE) to EventType.PARTY.name,
-                Regex("""album|alben|konzert""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
+                Regex("""varieté|variete|musical""", RegexOption.IGNORE_CASE) to EventType.SHOW.name,
+                Regex("""album|alben|konzert|concerts?|orchest(?:er|ra)|duett(?:e|s)?""", RegexOption.IGNORE_CASE) to EventType.CONCERT.name
             )
 
         /** The type from the title and subtitle, else a support billing, else the blurb; `OTHER` without any. */
