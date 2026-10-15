@@ -352,6 +352,61 @@ class PeterEdelOverviewPageScraperTest {
         scraper.scrape(grid("OKTOBER 2026", "FR | 16.10.", main), baseUrl).single().eventType shouldBe type
     }
 
+    /**
+     * Seven boxes cut from the live page of 2026-10-15 (#3324), headings kept: four blurbs that name
+     * a podcast, a Varieté show, concerts or an orchestra's duets, and three that name none.
+     */
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "2027-10-12 | Schwarze Akte | READING",
+            "2026-11-14 | Frack & Spitzenhöschen | SHOW",
+            "2027-03-08 | ERIKA VIKMAN | CONCERT",
+            "2027-04-03 | Sinatra & The Swingin' Ladies | CONCERT",
+            "2026-12-12 | FIL | OTHER",
+            "2027-05-22 | MAMA LEISA | OTHER",
+            "2026-11-01 | Tanztee im PETER EDEL | PARTY"
+        ]
+    )
+    fun `types a night from the podcast, revue and concert words in its blurb`(
+        date: LocalDate,
+        title: String,
+        type: String
+    ) {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/peteredel/peteredel-blurbs-2026-10.html")!!
+                .bufferedReader()
+                .readText()
+        val parsed = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        parsed.single { it.eventDate == date && it.title == title }.eventType shouldBe type
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            // A revue blurb that names a concert is still a show: the revue cue comes first.
+            "Ein Abend aus Varieté und Konzert. | SHOW",
+            "Das Musical mit Live-Orchester. | SHOW",
+            // An orchestra, in German or English, plays a concert.
+            "Das Landesjugendorchester spielt. | CONCERT",
+            "Die schönsten Duette der Filmgeschichte. | CONCERT",
+            // "show" alone decides nothing: comedians and singers both play live shows.
+            "Seine neue Show, live erlebbar. | OTHER",
+            // A podcast taped live is a reading, as #2992 decided.
+            "Der Podcast kommt auf die Bühne. | READING"
+        ]
+    )
+    fun `orders the blurb cues so a revue wins over a concert and show alone is no cue`(
+        blurb: String,
+        type: String
+    ) {
+        val main = "<h3>Something</h3><div class=\"text-block\"><div class=\"text-container\"><p>$blurb</p></div></div>"
+        scraper.scrape(grid("OKTOBER 2026", "FR | 16.10.", main), baseUrl).single().eventType shouldBe type
+    }
+
     @Test
     fun `returns no events for a page without a programme grid`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
