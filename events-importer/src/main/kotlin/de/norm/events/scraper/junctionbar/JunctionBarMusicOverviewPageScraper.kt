@@ -89,7 +89,7 @@ class JunctionBarMusicOverviewPageScraper {
         val bands = parseBands(night.content)
         if (bands.isEmpty()) return null // "PRIVAT PARTY" or an empty night — nothing to import.
 
-        val title = bands.joinToString(TITLE_SEPARATOR)
+        val title = titleHeadings(bands).joinToString(TITLE_SEPARATOR)
         val ticketUrl =
             night.content
                 .select("a[href*=junction-bar-shop.de]")
@@ -146,6 +146,13 @@ class JunctionBarMusicOverviewPageScraper {
                     .trim()
             }.filter { it.isNotBlank() && !it.equals(PRIVAT_PARTY, ignoreCase = true) }
             .distinct()
+
+    /**
+     * The headings that make the title. A night can repeat its billing in another script, with headings of its own
+     * (`（叫我克里斯）携格律之习`, `驻场助演`), so a heading with no Latin letter is left out (#3301). A night billed
+     * only in another script keeps every heading, so it still has a title.
+     */
+    private fun titleHeadings(bands: List<String>): List<String> = bands.filter { LATIN_LETTER.containsMatchIn(it) }.ifEmpty { bands }
 
     /**
      * The acts to bill. A heading can name the night rather than the band (`Tag der Gelben Einheit`,
@@ -266,6 +273,9 @@ class JunctionBarMusicOverviewPageScraper {
         /** Filename fragments identifying non-content images (logo, decorative bars, ticket button, scroll arrow). */
         private val DECORATIVE_IMAGE_MARKERS =
             listOf("tickets-button", "balken_lang", "scrollup", "junction-bar-logo")
+
+        /** Any letter of the Latin script, accented ones included. */
+        private val LATIN_LETTER = Regex("""\p{IsLatin}""")
 
         private const val PRIVAT_PARTY = "PRIVAT PARTY"
         private const val TITLE_SEPARATOR = " + "
