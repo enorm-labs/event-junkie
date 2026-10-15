@@ -111,7 +111,7 @@ val DISTEL_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar states one time per performance"),
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only inside the ticket shop, which robots.txt closes"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the ensemble's shows name a cast only in prose"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the calendar names no format for the ensemble's shows"),
         AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances"),
