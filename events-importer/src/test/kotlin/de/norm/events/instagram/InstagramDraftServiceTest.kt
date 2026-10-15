@@ -1,0 +1,93 @@
+package de.norm.events.instagram
+
+import io.kotest.matchers.shouldBe
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+
+class InstagramDraftServiceTest {
+    private val client = mockk<BusinessDiscoveryClient>()
+    private val extractor = mockk<AnthropicPostExtractor> { every { model } returns "claude-haiku-4-5" }
+    private val repository = mockk<InstagramDraftRepository>(relaxed = true)
+    private val clock = Clock.fixed(Instant.parse("2026-10-15T08:00:00Z"), ZoneOffset.UTC)
+    private val service = InstagramDraftService(client, extractor, repository, InstagramProperties(enabled = true), clock)
+
+    private fun post(
+        id: String,
+        caption: String? = "caption $id",
+        postedAt: String = "2026-10-13T16:00:00Z"
+    ) = InstagramPost(id, caption, "https://www.instagram.com/p/$id/", OffsetDateTime.parse(postedAt), "IMAGE")
+
+    private fun event(date: String) = DraftedEvent(date = LocalDate.parse(date), title = "XTRUDE", evidence = "on Saturday", confidence = 0.9)
+
+    @Test
+    fun `a new post with events becomes pending drafts, a known one is not sent again`() =
+        runTest {
+            coEvery { client.recentPosts("rso.berlin") } returns DiscoveryResult.Posts(listOf(post("1"), post("2")))
+            coEvery { repository.knownMediaIds(listOf("1", "2")) } returns setOf("2")
+            coEvery { extractor.extract(any()) } returns ExtractionResult.Events(listOf(event("2026-10-17")), tokens = 40)
+            val stored = slot<List<NewDraft>>()
+            coEvery { repository.insert(capture(stored)) } returns 1
+
+            val result = service.draftFrom(RSO, maxCalls = 10)
+
+            result shouldBe VenueDraftResult.Read(posts = 2, newPosts = 1, drafts = 1, notEvents = 0, rejected = 0, failed = 0, calls = 1, tokens = 40)
+            stored.captured.single().status shouldBe DraftStatus.PENDING
+            stored.captured
+                .single()
+                .post.mediaId shouldBe "1"
+        }
+
+    @Test
+    fun `a post with no caption, a past event and a refused answer are stored as no event`() =
+        runTest {
+            coEvery { client.recentPosts(any()) } returns DiscoveryResult.Posts(listOf(post("a", caption = null), post("b"), post("c")))
+            coEvery { repository.knownMediaIds(any()) } returns emptySet()
+            coEvery { extractor.extract(match { it.caption == "caption b" }) } returns ExtractionResult.Events(listOf(event("2026-10-14")), 40)
+            coEvery { extractor.extract(match { it.caption == "caption c" }) } returns ExtractionResult.Rejected(30)
+
+            val result = service.draftFrom(RSO, maxCalls = 10) as VenueDraftResult.Read
+
+            result.notEvents shouldBe 2
+            result.rejected shouldBe 1
+            result.calls shouldBe 2
+            coVerify(exactly = 3) { repository.insert(match { it.single().status == DraftStatus.NOT_AN_EVENT }) }
+        }
+
+    @Test
+    fun `a failed call stores nothing, the cap stops the calls, and old posts are not read`() =
+        runTest {
+            val old = post("old", postedAt = "2026-08-01T10:00:00Z")
+            coEvery { client.recentPosts(any()) } returns DiscoveryResult.Posts(listOf(post("1"), post("2"), old))
+            coEvery { repository.knownMediaIds(listOf("1", "2")) } returns emptySet()
+            coEvery { extractor.extract(any()) } returns ExtractionResult.Failed
+
+            val result = service.draftFrom(RSO, maxCalls = 1) as VenueDraftResult.Read
+
+            result.calls shouldBe 1
+            result.failed shouldBe 1
+            coVerify(exactly = 0) { repository.insert(any()) }
+        }
+
+    @Test
+    fun `no handle and an unreadable account read nothing`() =
+        runTest {
+            service.draftFrom(RSO.copy(instagramUrl = "https://example.com"), maxCalls = 10) shouldBe VenueDraftResult.NoHandle
+
+            coEvery { client.recentPosts(any()) } returns DiscoveryResult.AccountUnreadable(110)
+            service.draftFrom(RSO, maxCalls = 10) shouldBe VenueDraftResult.NotRead(DiscoveryResult.AccountUnreadable(110))
+        }
+
+    private companion object {
+        val RSO = InstagramVenue(id = 7, slug = "rso-berlin", name = "RSO", instagramUrl = "https://www.instagram.com/rso.berlin/")
+    }
+}

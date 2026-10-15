@@ -17,6 +17,7 @@ flowchart TD
     genretag["genretag"]
     image["image"]
     importing["importing"]
+    instagram["instagram"]
     licence["licence"]
     musicbrainz["musicbrainz"]
     promoter["promoter"]
@@ -60,6 +61,7 @@ flowchart TD
     importing --> translation
     importing --> venue
     importing --> wikimedia
+    instagram --> common
     musicbrainz --> artist
     musicbrainz --> common
     promoter --> common
