@@ -748,6 +748,15 @@
       "closedOn": null
     },
     {
+      "id": 215,
+      "name": "Prisma",
+      "slug": "prisma",
+      "city": "Berlin",
+      "address": "Hauptstraße 1",
+      "district": "schoeneberg",
+      "closedOn": null
+    },
+    {
       "id": 62,
       "name": "Privatclub",
       "slug": "privatclub",
@@ -826,6 +835,15 @@
       "city": "Berlin",
       "address": "Storkower Str. 121",
       "district": "prenzlauer-berg",
+      "closedOn": null
+    },
+    {
+      "id": 214,
+      "name": "RSO.Berlin",
+      "slug": "rso-berlin",
+      "city": "Berlin",
+      "address": "Schnellerstraße 1-5",
+      "district": "treptow-koepenick",
       "closedOn": null
     },
     {
@@ -973,7 +991,7 @@
       "closedOn": null
     }
   ],
-  "totalElements": 108,
+  "totalElements": 110,
   "totalPages": 2,
   "size": 100,
   "number": 0

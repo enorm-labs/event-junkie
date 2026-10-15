@@ -6,8 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -20,8 +23,40 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin/instagram")
 @Tag(name = "Admin: Instagram", description = "Event drafts from the Instagram posts of venues with no website (ADR-048)")
 class InstagramController(
-    private val runner: ObjectProvider<InstagramDraftRunner>
+    private val runner: ObjectProvider<InstagramDraftRunner>,
+    private val venues: InstagramVenueRepository
 ) {
+    @Operation(summary = "The venues whose Instagram account the pass reads", description = "Works with the drafts switched off.")
+    @GetMapping("/venues")
+    suspend fun venues(): List<InstagramVenueResponse> = venues.findVenues().map(InstagramVenueResponse::from)
+
+    @Operation(
+        summary = "Switch a venue on",
+        description = "The pass reads its account from the next run. The handle comes from the venue's instagramUrl. 404 for an unknown venue."
+    )
+    @PutMapping("/venues/{slug}")
+    suspend fun switchOn(
+        @Parameter(description = "The venue slug", example = "rso-berlin")
+        @PathVariable slug: String
+    ): InstagramVenueResponse {
+        val venue = venues.findVenueBySlug(slug) ?: throw InstagramVenueNotFoundException(slug)
+        venues.switchOn(venue.id)
+        return InstagramVenueResponse.from(venue)
+    }
+
+    @Operation(
+        summary = "Switch a venue off, and delete its drafts",
+        description = "For a venue that objects (ADR-048 rule 8). Events already created from its drafts stay. 404 for an unknown venue."
+    )
+    @DeleteMapping("/venues/{slug}")
+    suspend fun switchOff(
+        @Parameter(description = "The venue slug", example = "rso-berlin")
+        @PathVariable slug: String
+    ): SwitchedOffResponse {
+        val venue = venues.findVenueBySlug(slug) ?: throw InstagramVenueNotFoundException(slug)
+        return SwitchedOffResponse(slug, venues.switchOff(venue.id))
+    }
+
     @Operation(
         summary = "Start a background read of one venue's Instagram posts",
         description =
@@ -57,4 +92,26 @@ class InstagramController(
 data class InstagramRunStartedResponse(
     @Schema(description = "Human-readable acknowledgement", example = "Instagram read started for venue 'rso-berlin'")
     val message: String
+)
+
+@Schema(description = "A venue whose Instagram account the pass reads")
+data class InstagramVenueResponse(
+    @Schema(example = "rso-berlin")
+    val slug: String,
+    @Schema(example = "RSO.Berlin")
+    val name: String,
+    @Schema(description = "The handle the pass reads, or null when instagramUrl names no profile", example = "rso.berlin")
+    val handle: String?
+) {
+    companion object {
+        fun from(venue: InstagramVenue) = InstagramVenueResponse(venue.slug, venue.name, InstagramHandle.of(venue.instagramUrl))
+    }
+}
+
+@Schema(description = "A venue switched off")
+data class SwitchedOffResponse(
+    @Schema(example = "rso-berlin")
+    val slug: String,
+    @Schema(description = "Its drafts deleted", example = "3")
+    val draftsDeleted: Long
 )

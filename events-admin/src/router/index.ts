@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { title: 'Suggested fixes' },
     },
     {
+      path: '/drafts',
+      name: 'drafts',
+      component: () => import('@/views/DraftsView.vue'),
+      meta: { title: 'Instagram drafts' },
+    },
+    {
       path: '/artists',
       name: 'artists',
       component: () => import('@/views/ArtistsView.vue'),

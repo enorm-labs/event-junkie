@@ -25,3 +25,34 @@ Accept: application/json
         client.assert(response.status === 202 || response.status === 409, "Expected 202 or 409 but got " + response.status);
     });
 %}
+
+### The pending drafts, the soonest night first
+GET {{importer-host}}/api/admin/instagram-drafts?status=PENDING&size=50
+Accept: application/json
+
+> {%
+    client.test("200 with a page", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(typeof response.body.totalElements === "number", "No totalElements: " + JSON.stringify(response.body));
+    });
+%}
+
+### Reject the night of a draft: every pending draft of its venue and date
+POST {{importer-host}}/api/admin/instagram-drafts/1/reject
+Accept: application/json
+
+> {%
+    client.test("200, or 404 for an unknown draft, or 409 for one judged already", function () {
+        client.assert([200, 404, 409].includes(response.status), "Expected 200, 404 or 409 but got " + response.status);
+    });
+%}
+
+### The venues whose account the pass reads
+GET {{importer-host}}/api/admin/instagram/venues
+Accept: application/json
+
+> {%
+    client.test("200 with a list", function () {
+        client.assert(response.status === 200 && Array.isArray(response.body), "Expected a list but got " + response.status);
+    });
+%}

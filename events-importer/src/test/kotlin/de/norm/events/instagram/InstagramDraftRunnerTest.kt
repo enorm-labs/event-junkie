@@ -22,6 +22,7 @@ import java.time.ZoneOffset
 class InstagramDraftRunnerTest {
     private val service = mockk<InstagramDraftService>()
     private val repository = mockk<InstagramDraftRepository>()
+    private val venues = mockk<InstagramVenueRepository>()
     private val registry = SimpleMeterRegistry()
     private val clock = Clock.fixed(Instant.parse("2026-10-15T04:30:00Z"), ZoneOffset.UTC)
 
@@ -29,6 +30,7 @@ class InstagramDraftRunnerTest {
         InstagramDraftRunner(
             service = service,
             repository = repository,
+            venues = venues,
             metrics = InstagramMetrics(registry),
             properties = InstagramProperties(enabled = true, maxPerRun = maxPerRun),
             ioDispatcher = Dispatchers.IO,
@@ -49,7 +51,7 @@ class InstagramDraftRunnerTest {
     @Test
     fun `a pass deletes stale drafts, reads every venue with what is left of the cap, and counts`() =
         runTest {
-            coEvery { repository.findVenues() } returns listOf(venue("prisma"), venue("rso.berlin"))
+            coEvery { venues.findVenues() } returns listOf(venue("prisma"), venue("rso.berlin"))
             coEvery { service.draftFrom(venue("prisma"), 50) } returns read(drafts = 2, calls = 30)
             coEvery { service.draftFrom(venue("rso.berlin"), 20) } returns read(drafts = 1, calls = 5)
 
@@ -65,7 +67,7 @@ class InstagramDraftRunnerTest {
     @Test
     fun `the cap stops the pass before the next venue`() =
         runTest {
-            coEvery { repository.findVenues() } returns listOf(venue("prisma"), venue("rso.berlin"))
+            coEvery { venues.findVenues() } returns listOf(venue("prisma"), venue("rso.berlin"))
             coEvery { service.draftFrom(venue("prisma"), 10) } returns read(drafts = 4, calls = 10)
 
             runner(maxPerRun = 10).runDaily()?.stoppedBy shouldBe InstagramPassStop.CALL_CAP
@@ -80,7 +82,7 @@ class InstagramDraftRunnerTest {
             val appender = ListAppender<ILoggingEvent>().apply { start() }
             log.addAppender(appender)
             try {
-                coEvery { repository.findVenues() } returns listOf(venue("gone"), venue("prisma"), venue("rso.berlin"))
+                coEvery { venues.findVenues() } returns listOf(venue("gone"), venue("prisma"), venue("rso.berlin"))
                 coEvery { service.draftFrom(venue("gone"), any()) } returns VenueDraftResult.NotRead(DiscoveryResult.AccountUnreadable(110))
                 coEvery { service.draftFrom(venue("prisma"), any()) } returns
                     VenueDraftResult.NotRead(DiscoveryResult.AccessRefused(190, "Session has expired"))
