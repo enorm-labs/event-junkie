@@ -25,11 +25,10 @@ name: Merge Gate
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-09-14 — `pull_request_target` is insecure when it checks out or executes pull-request code;
   # this reads `pull_request.user` from the payload and exits. `synchronize`, because a required check
   # reports on every head.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [ opened, reopened, synchronize ]
   # A review is the event that can turn a red gate green, so the check runs again on each one, on the
   # same head.

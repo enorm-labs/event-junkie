@@ -15,11 +15,10 @@ name: Publish failure issue
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-09-05 — `workflow_run` carries the default branch's secrets, and the danger is checking out
   # the triggering run's head. No checkout here: `github-script` reads the run and its artifact through
   # the API and writes an issue. Re-check before adding any step.
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [ 'Release' ]
     types: [ completed ]
   # Replays a completed run. The only way to produce the first issue (the button exists once the file

@@ -32,13 +32,12 @@ name: Label Pull Requests
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-08-12 — `pull_request_target` is insecure when it checks out or executes pull-request code;
   # this workflow does neither, and the absence of a checkout is the property to re-check before adding
   # any step. `synchronize` because the importer label follows the files; `labeled` and `unlabeled`
   # because a managed label set by hand (`gh pr create --label importer`, #1546) is this workflow's to
   # correct. Its own label calls fire the same events and find nothing to change.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [ opened, edited, reopened, synchronize, labeled, unlabeled ]
 
 permissions:

@@ -23,13 +23,12 @@ name: Fix notices on bot PRs
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-09-04 — `workflow_run` is usually insecure, and **this job does check out the head**, so the
   # containment is explicit: forks cannot reach it (`head_repository.full_name == github.repository`);
   # only two bot branch prefixes reach it; the credential does not exist while untrusted code runs;
   # one file is staged by name; the token carries `contents: write` alone. Re-check all five before
   # adding a step.
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [ 'Validate Notices' ]
     types: [ completed ]
 

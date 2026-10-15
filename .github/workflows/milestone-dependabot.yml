@@ -16,10 +16,9 @@ name: Milestone bot PRs
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-08-25 — safe only while this file has no checkout, the property to re-check before adding any
   # step. Required, too: a `pull_request` run raised by Dependabot gets a read-only token.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [ opened, reopened ]
 
   # Sweeps open bot pull requests that have none. The button exists once this file is on the default branch.
