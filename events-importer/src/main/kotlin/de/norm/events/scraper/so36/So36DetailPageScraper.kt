@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.ROLE_LABEL_PREFIX
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
@@ -21,6 +22,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaStatus
@@ -42,7 +44,8 @@ import java.util.Locale
  * - description (`.product_description`), poster image (`og:image`)
  * - ticket price (`[itemprop=price]` content) and the external ticket-shop link
  * - free admission (the ticket tab's `Eintritt frei / Admission free!` notice)
- * - promoter (the `Anbieter/Veranstalter` field, `.product_merchant`)
+ * - promoter (the `Anbieter/Veranstalter` field, `.product_merchant`; on a night it credits to SO36,
+ *   the credit on the page itself, see [houseNightCredits])
  *
  * Only two fields come from the schema.org `Event` JSON-LD block, having no reliable HTML
  * rendering: the ISO `startDate` (four-digit, time-zoned) and the `eventStatus` (scheduled /
@@ -73,7 +76,11 @@ class So36DetailPageScraper {
             return null
         }
 
-        val subtitle = document.textAt("small.subtitle")
+        val merchant = document.textAt(".product_merchant b")
+        val houseNight = merchant == null || merchant.equals(VENUE_NAME, ignoreCase = true)
+        val shownSubtitle = document.textAt("small.subtitle")
+        val subtitleCredit = shownSubtitle?.takeIf { houseNight }?.let(::subtitleCredit)
+        val subtitle = shownSubtitle.takeIf { subtitleCredit == null }
         val eventType =
             refineBySubtitle(refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title), title, subtitle)
         val jsonLd = document.jsonLdEvents().firstOrNull()
@@ -111,7 +118,12 @@ class So36DetailPageScraper {
                 } else {
                     parseArtists(document, title, subtitle, eventType)
                 },
-            promoters = listOfNotNull(document.parsePromoter())
+            promoters =
+                if (houseNight) {
+                    subtitleCredit?.let(::listOf) ?: houseNightCredits(document.descriptionLines())
+                } else {
+                    listOf(merchant)
+                }
         )
     }
 
@@ -280,16 +292,64 @@ private fun Document.isFreeAdmission(): Boolean =
     select(".tabs .panel-body .alert")
         .any { hasFreeEntryPhrase(it.text()) }
 
+/** The `Anbieter/Veranstalter` name on the house's own nights, and on nights the shop files under the venue. */
+private const val VENUE_NAME = "SO36"
+
 /**
- * The `Anbieter/Veranstalter` name. The house's own nights credit `SO36`, the venue itself, so
- * that credit is dropped.
+ * The promoter a credit subtitle names (`Präsentiert von Subculture Fight Stories`), read on a night
+ * filed under the venue. The subtitle is then a credit, not a subtitle, and is not stored.
  */
-private fun Document.parsePromoter(): String? =
-    textAt(".product_merchant b")
+private fun subtitleCredit(subtitle: String): String? =
+    promoterFromCredit(subtitle.takeIf { SUBTITLE_CREDIT.containsMatchIn(it) })
         ?.takeUnless { it.equals(VENUE_NAME, ignoreCase = true) }
 
-/** The promoter credit on the house's own nights. */
-private const val VENUE_NAME = "SO36"
+/** A subtitle that opens with a [PRESENTED_BY_WORDS] intro. */
+private val SUBTITLE_CREDIT = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * The lines of the description block, a leading `<div>` included: CODEFENDANTS opens with
+ * `<div>Destiny Tourbooking presents</div>` above its paragraphs.
+ */
+private fun Document.descriptionLines(): List<String> =
+    select(".product_description > p, .product_description > div")
+        .flatMap { htmlParagraphText(it.html())?.lines().orEmpty() }
+
+/**
+ * The promoters a night filed under the venue credits in its description (#3319): the first line
+ * when it is a credit (`Destiny Tourbooking presents`, `Subculture Fight Stories präsentieren:`), else
+ * a `Presented by …` line, else a `Tourveranstalter: …` line. The venue itself is dropped.
+ *
+ * A German `präsentiert von …` line in the body lists media partners (`präsentiert von OX, VISIONS,
+ * DIFFUS & livegigs.de`) and is not read, nor is `Präsentatoren:`, which names sponsors. A credit
+ * naming more than [MAX_CREDITED_PARTIES] is a sponsor roll (`SO36, CORETEX, IRIEDAILY, … präsentieren`).
+ */
+private fun houseNightCredits(lines: List<String>): List<String> {
+    val credit =
+        lines.firstOrNull()?.let { PRESENTS_LINE.find(it) }
+            ?: lines.firstNotNullOfOrNull { PRESENTED_BY_LINE.find(it) }
+            ?: lines.firstNotNullOfOrNull { TOUR_PROMOTER_LINE.find(it) }
+    val names =
+        credit
+            ?.groupValues
+            ?.get(1)
+            ?.split(',', '&')
+            ?.map { it.trim().trimEnd('.').trim() }
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+    return if (names.size > MAX_CREDITED_PARTIES) emptyList() else names.filterNot { it.equals(VENUE_NAME, ignoreCase = true) }
+}
+
+/** The most parties a promoter credit names; a longer list is a sponsor roll. */
+private const val MAX_CREDITED_PARTIES = 3
+
+/** A whole line that credits its presenters: `<names> presents`, `<names> präsentiert:`, `<names> präsentieren:`. */
+private val PRESENTS_LINE = Regex("""^(.+?)\s+(?:presents\s*:?|pr(?:ä|ae)sentier(?:t|en)\s*:)\s*$""", RegexOption.IGNORE_CASE)
+
+/** An English credit line: `Presented by Sonido Muchacho, Entre Trópicos & SO36.` */
+private val PRESENTED_BY_LINE = Regex("""^presented\s+by\s*:?\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/** The tour promoter's labelled line: `Tourveranstalter: Headline Concerts`. */
+private val TOUR_PROMOTER_LINE = Regex("""^tourveranstalter\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
 
 /**
  * The venue files every ticketed night under `Konzert`, and the subtitle or a title prefix names
