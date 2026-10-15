@@ -77,7 +77,7 @@
     "featuresSelected": "{n} features",
     "clearFeatures": "Clear features",
     "byFeature": "Filter by party features",
-    "featureHint": "As the event's own text states it. A party needs every feature chosen; what the venue says about itself does not count."
+    "featureHint": "As the event's own text states it. An event needs every feature chosen; what the venue says about itself does not count."
   },
   "card": {
     "ourPick": "Our pick",
