@@ -14,6 +14,9 @@ import de.norm.events.importing.EventSourceNotFoundException
 import de.norm.events.importing.InvalidSourceTypeException
 import de.norm.events.importing.ReservedSlugException
 import de.norm.events.importing.UnknownPartyFeatureException
+import de.norm.events.instagram.InstagramDraftsDisabledException
+import de.norm.events.instagram.InstagramRunInProgressException
+import de.norm.events.instagram.InstagramVenueNotFoundException
 import de.norm.events.promoter.DuplicatePromoterSlugException
 import de.norm.events.promoter.PromoterNotFoundException
 import de.norm.events.venue.DuplicateVenueSlugException
@@ -44,7 +47,8 @@ class GlobalExceptionHandler {
         EventNotFoundException::class,
         EventSourceNotFoundException::class,
         GenreTagNotFoundException::class,
-        EventSuggestionNotFoundException::class
+        EventSuggestionNotFoundException::class,
+        InstagramVenueNotFoundException::class
     )
     fun handleNotFound(ex: RuntimeException): ProblemDetail {
         logger.debug { "Entity not found: ${ex.message}" }
@@ -74,7 +78,9 @@ class GlobalExceptionHandler {
         EventSuggestionAlreadyAcceptedException::class,
         EventSuggestionAlreadyDismissedException::class,
         EventClassificationDisabledException::class,
-        ClassificationRunInProgressException::class
+        ClassificationRunInProgressException::class,
+        InstagramDraftsDisabledException::class,
+        InstagramRunInProgressException::class
     )
     fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {
         logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }

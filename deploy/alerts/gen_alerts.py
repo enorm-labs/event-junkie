@@ -20,6 +20,7 @@ it produces an alert that never fires rather than an error.
     metrics being dropped          -> ej-ingest-shedding          (#625)
     Kubernetes events not arriving -> ej-k8s-events-stalled       (#3198)
     translation failing open       -> ej-translations-failing      (#1301)
+    Instagram access refused       -> ej-instagram-access-refused   (#3366)
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
     artist lookup tick stopped     -> ej-artist-lookup-tick-stale (#2059)
@@ -404,6 +405,27 @@ rule(
     period_minutes=15,
     frequency_minutes=30,
     silence_minutes=12 * 60,
+    failure_only=True,
+)
+
+# The Instagram pass stops at the first refused access, because a missing
+# permission or an expired token fails every venue alike (ADR-048). Nothing else
+# shows it: the drafts simply stop arriving. One refusal is enough, so a count.
+# NO DATA is the healthy state, as for the translation rule: the series is absent
+# until the first refusal, and absent on a cluster where the drafts are off.
+rule(
+    "ej-instagram-access-refused",
+    "The Instagram pass was refused access in the last 24 hours: an expired or revoked "
+    "token (Graph error 190), or a permission the Meta app lost (10, 200). No venue's "
+    "posts are read until a person fixes the token or the app. The importer log names "
+    "the error.",
+    'sum(increase(instagram_graph_errors_total{kind="refused"}[24h]))',
+    ">",
+    0,
+    stream_name="instagram_graph_errors_total",
+    period_minutes=15,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
     failure_only=True,
 )
 

@@ -116,6 +116,8 @@ app:
     api-key: ${app.anthropic.api-key:}
     model: ${APP_INSTAGRAM_MODEL:claude-haiku-4-5}
     max-per-run: ${APP_INSTAGRAM_MAX_PER_RUN:50}
+    # The daily pass, in UTC: after the 04:00 classification pass.
+    cron: ${APP_INSTAGRAM_CRON:0 30 4 * * *}
   musicbrainz:
     # On the artist lookup tick, every artist an import billed is looked up in MusicBrainz and the
     # verdict stored (ADR-031). Only the stage name is sent.

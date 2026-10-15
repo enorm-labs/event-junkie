@@ -282,6 +282,44 @@
           },
           "additionalProperties": false
         },
+        "instagram": {
+          "type": "object",
+          "description": "Event drafts from the Instagram posts of venues with no website (#3366, ADR-048). Off by default. Reads the Anthropic key from importer.anthropic.existingSecret.",
+          "required": [
+            "enabled",
+            "existingSecret",
+            "model",
+            "maxPerRun",
+            "cron"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "false creates no pass, reads no account and sends nothing to Anthropic. The admin Instagram routes then answer 409."
+            },
+            "existingSecret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A hand-made Secret with the key APP_INSTAGRAM_ACCESS_TOKEN: the Page token that scripts/instagram-page-token.sh makes. Meta's data access for it expires after 90 days."
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxPerRun": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Model calls one daily pass makes over every venue."
+            },
+            "cron": {
+              "type": "string",
+              "pattern": "^\\S+( \\S+){5}$",
+              "description": "When the daily pass runs: Spring's six-field cron, in UTC."
+            }
+          },
+          "additionalProperties": false
+        },
         "discogs": {
           "type": "object",
           "description": "The Discogs lookup for artists MusicBrainz does not know (#2026, ADR-035). Off by default.",

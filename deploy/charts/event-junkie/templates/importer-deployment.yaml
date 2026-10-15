@@ -185,8 +185,24 @@ spec:
             - name: APP_DATA_QUALITY_CLASSIFICATION_MONTHLY_TOKEN_BUDGET
               value: {{ .Values.importer.eventClassification.monthlyTokenBudget | int64 | quote }}
             {{- end }}
-            {{- if or (eq .Values.importer.translation.engine "anthropic") .Values.importer.eventClassification.enabled }}
-            {{- /* One key for both Anthropic callers, so it is named once. Hand-made, never SOPS: the ciphertext in a
+            {{- if .Values.importer.instagram.enabled }}
+            - name: APP_INSTAGRAM_ENABLED
+              value: "true"
+            - name: APP_INSTAGRAM_MODEL
+              value: {{ .Values.importer.instagram.model | quote }}
+            - name: APP_INSTAGRAM_MAX_PER_RUN
+              value: {{ .Values.importer.instagram.maxPerRun | quote }}
+            - name: APP_INSTAGRAM_CRON
+              value: {{ .Values.importer.instagram.cron | quote }}
+            {{- /* Hand-made, never SOPS, for the reason the Anthropic key gives. */}}
+            - name: APP_INSTAGRAM_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.importer.instagram.existingSecret | quote }}
+                  key: APP_INSTAGRAM_ACCESS_TOKEN
+            {{- end }}
+            {{- if or (eq .Values.importer.translation.engine "anthropic") .Values.importer.eventClassification.enabled .Values.importer.instagram.enabled }}
+            {{- /* One key for every Anthropic caller, so it is named once. Hand-made, never SOPS: the ciphertext in a
                public repository is permanent, and anyone who holds the key can spend it (docs/ops/SECRETS.md). */}}
             - name: APP_ANTHROPIC_API_KEY
               valueFrom:

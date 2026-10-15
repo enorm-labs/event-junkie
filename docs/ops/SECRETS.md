@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Eleven objects.** One, `events-db`, is encrypted into git and restored by Flux. The other ten are typed by a human and exist nowhere else.
+- **Twelve objects.** One, `events-db`, is encrypted into git and restored by Flux. The other eleven are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,26 +18,27 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The eleven objects, and where each comes from
+## The twelve objects, and where each comes from
 
-| Secret                    | Namespace                                         | Holds                                                  | Created at                                                     |
-| ------------------------- | ------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------- |
-| `events-db`               | `event-junkie`                                    | the `events` role's password                           | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
-| `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only     | §8                                                             |
-| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                 | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
-| `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo  | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
-| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                               | §postgres-exporter, below                                      |
-| `event-junkie-anthropic`  | `event-junkie`                                    | the Claude API key for translation and the event check | §event-junkie-anthropic, below                                 |
-| `event-junkie-discogs`    | `event-junkie`                                    | the Discogs application's consumer key and secret      | §event-junkie-discogs, below                                   |
-| `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`          | §3, below                                                      |
-| `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**     | §event-junkie-images, below                                    |
-| `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs               | §event-junkie-imgproxy, below                                  |
-| `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail     | §openobserve-smtp, below                                       |
+| Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
+| ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `events-db`               | `event-junkie`                                    | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
+| `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
+| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
+| `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
+| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
+| `event-junkie-anthropic`  | `event-junkie`                                    | the Claude API key for every Anthropic caller         | §event-junkie-anthropic, below                                 |
+| `event-junkie-discogs`    | `event-junkie`                                    | the Discogs application's consumer key and secret     | §event-junkie-discogs, below                                   |
+| `event-junkie-instagram`  | `event-junkie`                                    | the Meta Page token for the Instagram drafts          | §event-junkie-instagram, below                                 |
+| `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
+| `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
+| `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
+| `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 
-**All eleven belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All twelve belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists eleven objects, not eleven values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists twelve objects, not twelve values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -98,7 +99,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the eleven on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the twelve on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -136,6 +137,7 @@ secret.
 | `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
 | `event-junkie-anthropic`  | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                   |
 | `event-junkie-discogs`    | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key        |
+| `event-junkie-instagram`  | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key        |
 | `openobserve-smtp`        | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
@@ -145,8 +147,8 @@ same argument that kept the Hetzner token hand-made, applied to a different asse
 **On `event-junkie-anthropic`.** The exposure cost is the lowest in the table — a spend cap bounds it and revoking takes one click. It is hand-made anyway, for
 two other reasons. Anyone who holds it can use it, from anywhere, with **no network precondition**. That is the property that makes `events-db` safe to encrypt
 and this key not. Regenerating it is also a Console click, so the rebuild-survival benefit that justifies encrypting anything is nil. A cluster that
-never creates it is healthy. `importer.translation.engine` defaults to `none` and `importer.eventClassification.enabled` to `false`, and with both
-off the deployment names no Secret at all.
+never creates it is healthy. `importer.translation.engine` defaults to `none`, and `importer.eventClassification.enabled` and
+`importer.instagram.enabled` to `false`. With all three off the deployment names no Secret at all.
 
 **Hand-made, like `hetzner`, not encrypted like `events-db`.** The rebuild-survival benefit is small, because recreating a PAT is a two-minute job, and the
 exposure cost is the highest of the three. So the count is **one of three**: `events-db` encrypted, `hetzner` and `github-dispatch` hand-made,
@@ -243,10 +245,11 @@ running server nobody can log into. Once it exists, helm-controller picks it up 
 
 ### `event-junkie-anthropic` — the one that is not needed for a healthy cluster
 
-The Claude API key for the two callers of Anthropic in the importer: translation (ADR-026) and the event-classification check (ADR-041). The Secret holds
-one key, `APP_ANTHROPIC_API_KEY`. The chart value `importer.anthropic.existingSecret` names it. **Create it only when one of the two callers is about to
-go on.** The deployment names the Secret only when `importer.translation.engine` is `anthropic` or `importer.eventClassification.enabled` is `true`. With
-both off, the importer runs without it, and a missing one is not a failure to diagnose. With one on and the Secret missing, the pod does not start.
+The Claude API key for the three callers of Anthropic in the importer: translation (ADR-026), the event-classification check (ADR-041) and the Instagram
+drafts (ADR-048). The Secret holds one key, `APP_ANTHROPIC_API_KEY`. The chart value `importer.anthropic.existingSecret` names it. **Create it only when
+one of the callers is about to go on.** The deployment names the Secret only when `importer.translation.engine` is `anthropic`, or
+`importer.eventClassification.enabled` or `importer.instagram.enabled` is `true`. With all three off, the importer runs without it, and a missing one is
+not a failure to diagnose. With one on and the Secret missing, the pod does not start.
 
 ```sh
 kubectl --context event-junkie-staging -n event-junkie create secret generic event-junkie-anthropic \
@@ -255,7 +258,7 @@ kubectl --context event-junkie-production -n event-junkie create secret generic 
   --from-literal=APP_ANTHROPIC_API_KEY="$(security find-generic-password -a "$USER" -s event-junkie-anthropic-api-key -w)"
 ```
 
-One key serves both clusters and both callers, from the `event-junkie` workspace in the Anthropic Console. The workspace carries the spend cap, so a second
+One key serves both clusters and every caller, from the `event-junkie` workspace in the Anthropic Console. The workspace carries the spend cap, so a second
 key would split the budget without splitting the risk. Rotating is `kubectl delete secret` and this command again, followed by a restart of the importer.
 
 **Production sets `engine: anthropic` and translates. Staging sets `none` since 2026-09-09.** Both ran the engine until then, which billed the same 84 sources
@@ -277,6 +280,31 @@ kubectl --context event-junkie-staging -n event-junkie create secret generic eve
 The same command against `event-junkie-production`. One application serves both clusters. The rate limit counts per source address, so each cluster has its
 own 60 requests a minute. Create the Secret before a cluster sets `importer.discogs.enabled: true`. Otherwise the importer pod does not start. Rotating is a new
 secret in the Discogs developer settings, then `kubectl delete secret`, this command again, and a restart of the importer.
+
+### `event-junkie-instagram` — needed only while the Instagram drafts are on
+
+The token the importer reads Business Discovery with (ADR-048). The Secret holds one key, `APP_INSTAGRAM_ACCESS_TOKEN`. The chart value
+`importer.instagram.existingSecret` names it. `importer.instagram.enabled` defaults to `false`, so the deployment names no Secret, and the importer reads no
+account. With the drafts on and the Secret missing, the pod does not start.
+
+The token is a **Page token** of the Page "Event Junkie", for the app "Event Junkie Importer". `scripts/instagram-page-token.sh` makes it from a
+short-lived user token of the app's admin and the app secret, and stores it in the keychain item `instagram-token`. The token has no expiry date, but
+**Meta's data access for it expires 90 days after the admin last authorised the app**. `credential-expiry-reminder.yml` opens an issue 30 days before.
+**A Facebook password change or the loss of admin rights on the Page ends it too.** Run the script again in each case. Leave `business_management` out
+of the user token: the pass needs only the four permissions above.
+
+A system user token is not an option without App Review. Business Discovery refuses it with error 10 under Standard Access, in Live mode too
+(2026-10-15). A Graph API Explorer token expires within hours, and a long-lived user token after 60 days. The system user `importer` stays in the
+business portfolio for the day App Review grants Advanced Access.
+
+```sh
+kubectl --context event-junkie-staging -n event-junkie create secret generic event-junkie-instagram \
+  --from-literal=APP_INSTAGRAM_ACCESS_TOKEN="$(security find-generic-password -s instagram-token -w)"
+```
+
+The same command against `event-junkie-production`. One token serves both clusters, and Meta's rate limit counts per app, so the two passes share about
+200 calls an hour. Rotating is `scripts/instagram-page-token.sh`, then `kubectl delete secret`, this command again, and a restart of the importer. An
+expired or revoked token fires `ej-instagram-access-refused`.
 
 ### `postgres-exporter` — a monitoring role, not the application's
 

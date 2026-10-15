@@ -516,6 +516,71 @@ tests:
                 name: event-junkie-anthropic
                 key: APP_ANTHROPIC_API_KEY
 
+  - it: passes the Instagram settings and both keys once the drafts are on
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      importer.translation.engine: "none"
+      importer.eventClassification.enabled: false
+      importer.instagram.enabled: true
+      importer.instagram.maxPerRun: 30
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_MAX_PER_RUN
+            value: "30"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_CRON
+            value: "0 30 4 * * *"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-instagram
+                key: APP_INSTAGRAM_ACCESS_TOKEN
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-anthropic
+                key: APP_ANTHROPIC_API_KEY
+
+  - it: sets no Instagram variable while the drafts are off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_ENABLED
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_ACCESS_TOKEN
+          any: true
+
   - it: names the key once, from the configured secret, when both callers are on
     set:
       database.host: "10.0.1.2"

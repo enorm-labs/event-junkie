@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.OffsetDateTime
 
 /** Where a draft stands. Only a person moves it out of [PENDING] (ADR-048 rule 5). */
 enum class DraftStatus { PENDING, APPROVED, REJECTED, NOT_AN_EVENT }
@@ -103,6 +104,15 @@ class InstagramDraftRepository(
                 .rowsUpdated()
                 .awaitSingle()
         }
+
+    /** Deletes the drafts nobody judged before [before], caption included (ADR-048 rule 6). */
+    suspend fun deletePendingCreatedBefore(before: OffsetDateTime): Long =
+        template.databaseClient
+            .sql("DELETE FROM $EVENTS_SCHEMA.instagram_draft WHERE status = 'PENDING' AND created_at < :before")
+            .bind("before", before)
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
 
     private fun <T : Any> DatabaseClient.GenericExecuteSpec.bindOrNull(
         name: String,

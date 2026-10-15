@@ -204,10 +204,11 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
   provision, and §5 of the notice names it.
 - **The same contract rules out training on the transmitted text.** The Commercial Terms state it as _"Anthropic may
   not train models on Customer Content from Services"_.
-- **Two purposes, one processor.** Translation sends the description and the protected names. The data-quality check
+- **Three purposes, one processor.** Translation sends the description and the protected names. The data-quality check
   (#3241, ADR-041) sends the title, the subtitle and the description, and gets back suggestions that a person applies.
-  The legal basis of the check is Art. 6 (1) (f): correct event information. The categories in the table below do not
-  change.
+  The Instagram drafts (ADR-048, #3366) send the caption of a venue's post, the venue's name and the post's date. They
+  get back drafted events that a person approves. The legal basis of the check and of the drafts is Art. 6 (1) (f): correct
+  and complete event information. The categories in the table below do not change.
 - **Nothing else goes.** No log data, and nothing about a visitor. §4 and §5 of the notice say that too, because a
   reader cannot check it.
 
@@ -260,6 +261,18 @@ times of each Sisyphos weekend. Nothing leaves the stack but the page request, a
 So it is not processing on our behalf, there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The
 developer of the site allows the use on two conditions: a credit beside the line-up, and few requests. The notice names
 the source in a paragraph of its own, after the MusicBrainz paragraph.
+
+**Meta's Business Discovery is a source of the same kind** (ADR-048, [#3366](https://github.com/enorm-labs/event-junkie/issues/3366)).
+For a venue with no website of its own, the importer reads the recent posts of the venue's Instagram business account.
+It reads them through the Graph API as our own business account, `eventjunkie.berlin`. It reads the text, the link and
+the date of a post, and never an image. The request carries the venue's public handle and our token, and no personal
+data. Meta Platforms Ireland Ltd. decides nothing for us and holds nothing of ours, so this is not processing on our
+behalf. There is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. A caption can name people who are
+not artists: a host, a designer, a caterer. Those names are public credits in a venue's promotional text, the same kind
+of text as an event's `description`. **The caption is stored only until a person approves or rejects the draft, and
+at most 14 days.** A CHECK constraint keeps it on unjudged drafts only. No caption and no image reaches the site. The
+event links the post. The notice names the source in a paragraph of its own, after the sisy.fan paragraph, and names
+the captions under Anthropic in §5.
 
 **The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
 on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
@@ -707,24 +720,24 @@ editing a `.vue` file loads.
 
 Settled questions, so they are not re-litigated. The reasoning is in the section named.
 
-| #   | Question               | Decision                                                                                                                                | Where                |
-| --- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                                                     | §8.3                 |
-| 2   | Legal-page language    | English and German, German authoritative                                                                                                | §6.1                 |
-| 3   | Version scheme         | Computed from the release tags and commits, and no file carries it. Only a released `X.Y.Z` links                                       | §4.7                 |
-| 4   | `package.json` version | A `0.0.0` placeholder. The site reads `GET /meta`                                                                                       | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                               | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                       | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                  | §8.4                 |
-| 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                               | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                      | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                 | §9.1                 |
-| 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                                                   | §4.1                 |
-| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                       | `ops/EMAIL.md`       |
-| 13  | Art. 28 contracts      | Two: Hetzner's AVV and Anthropic's DPA. Anthropic, for translation and the data check, is the one third-country transfer — #1233, #3242 | §7.3a                |
-| 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                | §7.3a                |
-| 15  | Terms of Use           | None. No accounts and no contract with the visitor, so the §7.6 disclaimer is the whole answer — #478                                   | §7.6                 |
-| 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                            | `legal-review/`      |
+| #   | Question               | Decision                                                                                                                                                             | Where                |
+| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                                                                                  | §8.3                 |
+| 2   | Legal-page language    | English and German, German authoritative                                                                                                                             | §6.1                 |
+| 3   | Version scheme         | Computed from the release tags and commits, and no file carries it. Only a released `X.Y.Z` links                                                                    | §4.7                 |
+| 4   | `package.json` version | A `0.0.0` placeholder. The site reads `GET /meta`                                                                                                                    | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                                            | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                                    | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                               | §8.4                 |
+| 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                                            | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                                                   | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                              | §9.1                 |
+| 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                                                                                | §4.1                 |
+| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                    | `ops/EMAIL.md`       |
+| 13  | Art. 28 contracts      | Two: Hetzner's AVV and Anthropic's DPA. Anthropic, for translation, the data check and the Instagram drafts, is the one third-country transfer — #1233, #3242, #3366 | §7.3a                |
+| 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                                             | §7.3a                |
+| 15  | Terms of Use           | None. No accounts and no contract with the visitor, so the §7.6 disclaimer is the whole answer — #478                                                                | §7.6                 |
+| 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                                                         | `legal-review/`      |
 
 ## 14. Open items
 

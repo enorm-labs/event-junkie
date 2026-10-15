@@ -12,7 +12,7 @@ import java.time.Duration
 @ConfigurationProperties(prefix = "app.instagram")
 data class InstagramProperties(
     val enabled: Boolean = false,
-    /** A system user token of the business portfolio. A Graph Explorer token expires within hours. */
+    /** The Page token `scripts/instagram-page-token.sh` makes. Meta's data access for it lasts 90 days; the script renews it. */
     val accessToken: String = "",
     /** The Instagram business account the calls are made as: `eventjunkie.berlin`. */
     val igUserId: String = "17841471622815307",
@@ -34,15 +34,23 @@ data class InstagramProperties(
     /** Model calls of one pass over every venue. A post over the cap waits for the next pass. */
     val maxPerRun: Int = DEFAULT_MAX_PER_RUN,
     /** An event the model is less sure of is not drafted. */
-    val minConfidence: Double = DEFAULT_MIN_CONFIDENCE
+    val minConfidence: Double = DEFAULT_MIN_CONFIDENCE,
+    /** When the daily pass runs. Spring's six fields, in UTC. */
+    val cron: String = DEFAULT_CRON,
+    /** A draft nobody judged in this many days is deleted with its caption (ADR-048 rule 6). */
+    val pendingDays: Long = DEFAULT_PENDING_DAYS
 ) {
-    private companion object {
-        const val DEFAULT_MEDIA_LIMIT = 25
-        const val DEFAULT_LOOKBACK_DAYS = 30L
-        const val DEFAULT_TIMEOUT_SECONDS = 30L
-        const val DEFAULT_MODEL_TIMEOUT_SECONDS = 60L
-        const val DEFAULT_MAX_RETRIES = 2
-        const val DEFAULT_MAX_PER_RUN = 50
-        const val DEFAULT_MIN_CONFIDENCE = 0.7
+    companion object {
+        /** 04:30 UTC: after the 04:00 classification pass, so the two do not share the model's rate limit. */
+        const val DEFAULT_CRON = "0 30 4 * * *"
+
+        private const val DEFAULT_PENDING_DAYS = 14L
+        private const val DEFAULT_MEDIA_LIMIT = 25
+        private const val DEFAULT_LOOKBACK_DAYS = 30L
+        private const val DEFAULT_TIMEOUT_SECONDS = 30L
+        private const val DEFAULT_MODEL_TIMEOUT_SECONDS = 60L
+        private const val DEFAULT_MAX_RETRIES = 2
+        private const val DEFAULT_MAX_PER_RUN = 50
+        private const val DEFAULT_MIN_CONFIDENCE = 0.7
     }
 }
