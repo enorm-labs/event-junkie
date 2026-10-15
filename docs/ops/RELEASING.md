@@ -95,6 +95,9 @@ cosign verify ghcr.io/enorm-labs/charts/event-junkie:<version> \
 The signature is separate from the provenance attestation (#443), which `gh attestation verify` reads and Flux cannot. Flux verifies cosign
 signatures and nothing else, so the signature is the half a cluster can enforce through `spec.verify` on its OCIRepository.
 
+[`scripts/cosign-sign.sh`](../../scripts/cosign-sign.sh) signs each artifact and then runs `cosign verify` against that same identity. It tries each
+step up to three times, because Rekor can refuse an upload once and accept the next (#3331).
+
 One more package in GHCR has no signature. `publish-map-assets.yml` publishes the map data by hand ([ADR-037](../adr/ADR-037_SELF_HOSTED_MAP.md)).
 No cluster pulls it. The frontend Dockerfile copies it by digest, so the signature on the frontend image covers the map files.
 
@@ -241,6 +244,9 @@ The levers, in order:
 2. **Upgrade the package in our layer.** Name the package, and write the deletion condition in the comment. #964 is the shape. #1033 is its removal.
 3. **A dated waiver in `.trivyignore`**, only when the fix cannot be taken. The gate scans the **amd64** image, and Alpine builds each architecture
    separately. So verify on `--platform linux/amd64`. #1118 was verified on arm64 and changed nothing in CI. #1119 is the waiver that followed.
+
+A run can also fail at _Sign the published images_. The images are then pushed and clean, but not signed, and a cluster refuses them. When three
+attempts in a row fail, the cause is Sigstore and not the change. Re-run the failed job with `gh run rerun <run id> --failed`.
 
 A red publish on `main` does two things by itself (#1122). `publish-failure-issue.yml` opens one blocker issue with the Trivy tables, updates it on
 each further red run, and closes it on the first green one. `agent-security.yml` runs on the same trigger. It walks this list with the commands in

@@ -402,6 +402,7 @@ jobs:
       # identity, `https://github.com/enorm-labs/event-junkie/.github/workflows/release.yml@<ref>`, which is
       # what each cluster's OCIRepository `spec.verify` matches. **The attestation says where an image came
       # from; this is what Flux can check** (#1425). Signed by digest, credential from the docker login above.
+      # `scripts/cosign-sign.sh` retries a transient Rekor failure and verifies each signature (#3331).
       - name: Install cosign
         if: steps.version.outputs.publish == 'true'
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
@@ -416,13 +417,15 @@ jobs:
           FRONTEND_DIGEST: ${{ steps.push-frontend.outputs.digest }}
           INJECTOR_DIGEST: ${{ steps.push-injector.outputs.digest }}
         run: |
+          refs=()
           for component in bff importer frontend injector; do
             var="$(echo "$component" | tr '[:lower:]' '[:upper:]')_DIGEST"
             digest="${!var}"
             # A missing digest would sign nothing and pass — the failure #1087 exists to refuse.
             [[ "$digest" == sha256:* ]] || { echo "::error::no digest for ${component}"; exit 1; }
-            cosign sign --yes "${IMAGE_PREFIX}/${component}@${digest}"
+            refs+=("${IMAGE_PREFIX}/${component}@${digest}")
           done
+          scripts/cosign-sign.sh "${refs[@]}"
 
       # --- Publish the chart ----------------------------------------------------------------------
 
@@ -504,7 +507,7 @@ jobs:
         if: steps.version.outputs.publish == 'true'
         env:
           DIGEST: ${{ steps.push-chart.outputs.digest }}
-        run: cosign sign --yes "${CHART_REPO#oci://}/event-junkie@${DIGEST}"
+        run: scripts/cosign-sign.sh "${CHART_REPO#oci://}/event-junkie@${DIGEST}"
 
       - name: Summarise
         if: success() || failure()

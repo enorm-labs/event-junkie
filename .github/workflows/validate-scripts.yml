@@ -102,6 +102,10 @@ jobs:
       - name: Assert what migration-collisions.sh rules
         run: scripts/migration-collisions-test.sh
 
+      # A retry that passes everything would publish an unsigned image the clusters refuse (#3331).
+      - name: Assert what cosign-sign.sh retries and refuses
+        run: scripts/cosign-sign-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'
