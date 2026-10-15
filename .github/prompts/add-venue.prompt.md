@@ -68,7 +68,8 @@ A borderline case is a question for the operator, not a call to make.
 
 7. **Write the confirmed venues**, each as its own file `http/importer/seed/venues/<venue-slug>.json` (#2824). The file name is the slug
    `SlugGenerator` makes from the name (`Café Köpenick` → `cafe-kopenick.json`); `SeedVenueFilesTest` fails on a wrong one, and
-   `scripts/dev-seed-parity.sh` says which name it wants.
+   `scripts/dev-seed-parity.sh` says which name it wants. Leave out `latitude` and `longitude`: the `--apply` run in step 3 adds them after
+   `district`.
 
     ```json
     {
@@ -78,8 +79,6 @@ A borderline case is a question for the operator, not a call to make.
             "city": "Berlin",
             "postalCode": "<postal code>",
             "district": "<district slug>",
-            "latitude": <lat>,
-            "longitude": <lon>,
             "websiteUrl": "<homepage>",
             "instagramUrl": "<Instagram profile, or leave the line out>",
             "facebookUrl": "<Facebook page, or leave the line out>",

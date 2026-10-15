@@ -8,6 +8,7 @@ No network: every Nominatim answer here is written out by hand.
 
 import argparse
 import importlib.util
+import json
 import pathlib
 import sys
 
@@ -73,8 +74,33 @@ def main():
 
     check("every other line is untouched", others(edited), others(FILE))
     check("the other fields stay", '"websiteUrl": "https://www.example-club.de/"' in edited, True)
+    check("a second run changes nothing", osm.apply_point(edited, 0, len(edited), 52.5055, 13.3388), edited)
 
-    total = 16
+    bare = {
+        "name": "Not Imported",
+        "address": "Budapester Straße 38-40",
+        "postalCode": "10787",
+        "district": "tiergarten",
+        "websiteUrl": "https://www.example-club.de/",
+    }
+    bare_file = osm.seed_venues.venue_file_text(bare, [])
+    inserted = osm.apply_point(bare_file, 0, len(bare_file), 52.5055, 13.3388)
+    keys = list(json.loads(inserted)["venue"])
+    check("a file without a point gets one", json.loads(inserted)["venue"]["latitude"], 52.5055)
+    check("the point follows district", keys[keys.index("district") :][:3], ["district", "latitude", "longitude"])
+    check("every other line is kept on insert", others(inserted), others(bare_file))
+
+    no_district = {k: v for k, v in bare.items() if k != "district"}
+    no_district_file = osm.seed_venues.venue_file_text(no_district, [])
+    keys = list(json.loads(osm.apply_point(no_district_file, 0, len(no_district_file), 52.5055, 13.3388))["venue"])
+    check("without district the point follows postalCode", keys[keys.index("postalCode") + 1], "latitude")
+
+    district_last = {"name": "Last", "address": "Revaler Str. 99", "district": "friedrichshain"}
+    last_file = osm.seed_venues.venue_file_text(district_last, [])
+    last_venue = json.loads(osm.apply_point(last_file, 0, len(last_file), 52.5055, 13.3388))["venue"]
+    check("district as the last key still loads", list(last_venue)[-2:], ["latitude", "longitude"])
+
+    total = 22
     for f in failures:
         print(f"FAIL {f}")
     print(f"{total - len(failures)} of {total} checks passed")
