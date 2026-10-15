@@ -52,7 +52,7 @@ env:
   # installs it. It was 3.x until #1006 on a lapsed premise, and Helm 4's `--strict` rejects an unknown
   # `Chart.yaml` key that 3's let through: **the gate must not be weaker than the hook in front of
   # it.** Every copy of this pin moves together.
-  HELM_VERSION: 4.3.0
+  HELM_VERSION: 4.3.1
   # `flux schema validate` replaced kubeconform (#414). Strings in YAML, invisible to Dependabot, so
   # Renovate's `customManagers` watch them (ADR-024).
   FLUX_VERSION: 2.9.6
