@@ -65,7 +65,7 @@ env:
   CHART_REPO: oci://ghcr.io/enorm-labs/charts
   # Pinned to the Helm SDK helm-controller embeds, as validate-chart.yml is, so the client that packages
   # the chart is the one that installs it.
-  HELM_VERSION: 4.3.0
+  HELM_VERSION: 4.3.1
   TRIVY_VERSION: 0.76.0
 
 jobs:

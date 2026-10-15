@@ -50,7 +50,7 @@ env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
   # Matched to the SDK helm-controller embeds: `deployed-versions.sh` borrows Helm's solver to reproduce
   # helm-controller's selection, and a Helm 3 client answers a slightly different question.
-  HELM_VERSION: 4.3.0
+  HELM_VERSION: 4.3.1
   # **Must match release.yml's**, so a finding here the publish gate did not raise means the advisory is
   # new, not the scanner. Renovate groups both copies into one pull request (ADR-024).
   TRIVY_VERSION: 0.76.0
