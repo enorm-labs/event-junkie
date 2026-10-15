@@ -28,7 +28,7 @@ permissions:
 
 env:
   # Pinned and visible; invisible to Dependabot, so Renovate's `customManagers` watch them (ADR-024).
-  ZIZMOR_VERSION: 1.30.1
+  ZIZMOR_VERSION: 1.31.0
   ACTIONLINT_VERSION: 1.7.12
 
 jobs:
