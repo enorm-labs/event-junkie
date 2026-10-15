@@ -19,12 +19,11 @@ on:
   schedule:
     - cron: '23 4 * * *'
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
-# zizmor: ignore[dangerous-triggers]
   # 2026-09-05 — `workflow_run` runs with the default branch's secrets, and the danger is checking out
   # the triggering run's head. Nothing from that run is checked out: the checkout below is `main`, and
   # the only thing taken from the event is the run's URL. The job-level `if:` narrows it to a red
   # publish on `main` or a red release.
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [ 'Release' ]
     types: [ completed ]
   workflow_dispatch:
