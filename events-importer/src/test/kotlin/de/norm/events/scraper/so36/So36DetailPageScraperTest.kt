@@ -308,7 +308,9 @@ class So36DetailPageScraperTest {
         val event = scraper.scrape(fixture("so36-detail-bingo.html", url), url).shouldNotBeNull()
 
         event.title shouldBe "KIEZBINGO"
-        event.subtitle shouldBe "Präsentiert von Inge Borg & Gisela Sommer"
+        // The subtitle `Präsentiert von Inge Borg & Gisela Sommer` is the night's credit, not a subtitle (#3319).
+        event.subtitle shouldBe null
+        event.promoters shouldBe listOf("Inge Borg & Gisela Sommer")
         event.eventType shouldBe EventType.SHOW.name
         event.artists shouldBe emptyList()
     }
@@ -346,6 +348,107 @@ class So36DetailPageScraperTest {
 
         event.title shouldBe "SUPERSTARS DER DEMOKRATIE"
         event.promoters shouldBe listOf("Die PARTEI")
+    }
+
+    @Test
+    fun `reads a credit subtitle as the promoter of a night filed under the venue`() {
+        val url = "https://www.so36.com/produkte/94296-tickets-fliehende-stuerme-der-fluch-totenwald-elektrokohle-so36-berlin-am-23-01-2027"
+        val event = scraper.scrape(fixture("so36-detail-credit-subtitle.html", url), url).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("Subculture Fight Stories")
+        event.subtitle shouldBe null
+    }
+
+    @Test
+    fun `reads the promoter from a description that opens with a presents credit`() {
+        val festival = "https://www.so36.com/produkte/91592-tickets-grossstadtwahnsinn-2026-festivalticket-so36-berlin-am-06-11-2026"
+        val codefendants = "https://www.so36.com/produkte/95203-tickets-codefendants-so36-berlin-am-28-10-2026"
+        val dayTwo = "https://www.so36.com/produkte/102037-tickets-grossstadtwahnsinn-2026-tag-2-so36-berlin-am-07-11-2026"
+        val poebel = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
+
+        scraper.scrape(fixture("so36-detail-credit-presents.html", festival), festival).shouldNotBeNull().promoters shouldBe
+            listOf("Subculture Fight Stories")
+        scraper.scrape(fixture("so36-detail-credit-tourbooking.html", codefendants), codefendants).shouldNotBeNull().promoters shouldBe
+            listOf("Destiny Tourbooking")
+        scraper.scrape(fixture("so36-detail-festival-day-lineup.html", dayTwo), dayTwo).shouldNotBeNull().promoters shouldBe
+            listOf("Subculture Fight Stories")
+        // `Subculture Fight Stories presents:`, with a colon.
+        scraper.scrape(fixture("so36-detail-support-label.html", poebel), poebel).shouldNotBeNull().promoters shouldBe
+            listOf("Subculture Fight Stories")
+    }
+
+    @Test
+    fun `reads a Tourveranstalter line and not the Praesentatoren line above it`() {
+        // `Präsentatoren: Headline Concerts und Lonsdale` names a clothing sponsor too.
+        val url = "https://www.so36.com/produkte/96974-tickets-the-busters-so36-berlin-am-04-03-2027"
+        val event = scraper.scrape(fixture("so36-detail-credit-tourveranstalter.html", url), url).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("Headline Concerts")
+    }
+
+    @Test
+    fun `splits a Presented by line into its promoters and drops the venue`() {
+        // `Presented by Sonido Muchacho, Entre Trópicos & SO36.`
+        val url = "https://www.so36.com/produkte/101164-tickets-depresion-sonora-so36-berlin-am-31-01-2027"
+        val event = scraper.scrape(fixture("so36-detail-credit-presented-by.html", url), url).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("Sonido Muchacho", "Entre Trópicos")
+        event.subtitle shouldBe "Vacaciones por Europa"
+    }
+
+    @Test
+    fun `reads no promoter from a sponsor roll, a media list or a credit to the venue alone`() {
+        val day1 = "https://www.so36.com/produkte/93090-tickets-female-fronted-is-not-a-genre-5-so36-berlin-am-22-10-2026"
+        // `SO36, CORETEX, IRIEDAILY, TRUE REBEL, DIFFUS, OX-Fanzine, faemm & KROD Records präsentieren`
+        scraper.scrape(fixture("so36-detail-festival-day1.html", day1), day1).shouldNotBeNull().promoters shouldHaveSize 0
+
+        fun houseNight(
+            subtitle: String,
+            description: String
+        ) = scraper
+            .scrape(
+                Jsoup.parse(
+                    """
+                    <html><body>
+                      <small class="supertitle">Konzert</small>
+                      <h1><span itemprop="name">HEADLINER</span><small class="subtitle">$subtitle</small></h1>
+                      <div class="product_description">$description</div>
+                      <div class="product_merchant"><b><a href="/veranstalter/so36">SO36</a></b></div>
+                    </body></html>
+                    """.trimIndent(),
+                    concertUrl
+                ),
+                concertUrl
+            ).shouldNotBeNull()
+
+        houseNight("Tour 2027", "<p>Text.</p><p>präsentiert von OX, VISIONS, DIFFUS &amp; livegigs.de</p>").promoters shouldHaveSize 0
+        houseNight("Tour 2027", "<p>SO36 presents</p>").promoters shouldHaveSize 0
+        houseNight("Präsentiert von SO36", "<p>Text.</p>").let {
+            it.promoters shouldHaveSize 0
+            it.subtitle shouldBe "Präsentiert von SO36"
+        }
+        // A sentence that only contains the verb is no credit.
+        houseNight("Tour 2027", "<p>Die Lesedüne ist Berlins größte Lesebühne. Immer am zweiten Montag präsentieren sie Humor.</p>")
+            .promoters shouldHaveSize 0
+    }
+
+    @Test
+    fun `keeps a promoter merchant over a credit on the page`() {
+        val page =
+            Jsoup.parse(
+                """
+                <html><body>
+                  <h1><span itemprop="name">HEADLINER</span><small class="subtitle">Präsentiert von Someone Else</small></h1>
+                  <div class="product_description"><p>Other Booking presents</p></div>
+                  <div class="product_merchant"><b>Trinity Music</b></div>
+                </body></html>
+                """.trimIndent(),
+                concertUrl
+            )
+        val event = scraper.scrape(page, concertUrl).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("Trinity Music")
+        event.subtitle shouldBe "Präsentiert von Someone Else"
     }
 
     @Test
