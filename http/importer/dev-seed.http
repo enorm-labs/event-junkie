@@ -11062,7 +11062,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# YAAM — not imported
+# YAAM
 # ————————————————————————————————————————————————————————————
 
 ### --- Create YAAM venue ---
@@ -11083,13 +11083,43 @@ Content-Type: application/json
     "descriptionAlt": "Seit 1994 gibt es das vom gemeinnützigen KULT e.V. getragene YAAM, seit 2014 auf einem 8000 m² großen Gelände an der Spree, mit Strand, Reggae- und Hip-Hop-DJs, Open-Air-Events und Abendprogramm im Vereinsheim Cool Runnings.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["open-air", "cultural-centre", "bar"],
-    "programmeUrl": "https://yaam.de/programm/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_yaam", response.body.id);
     client.test("YAAM venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create YAAM event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_yaam}},
+    "name": "YAAM",
+    "url": "https://yaam.de/wp-json/tribe/events/v1/events",
+    "sourceType": "YAAM",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("YAAM event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial YAAM import ---
+POST {{importer-host}}/api/admin/event-sources/yaam/import
+Accept: application/json
+
+> {%
+    client.test("YAAM import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

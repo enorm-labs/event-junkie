@@ -566,6 +566,12 @@ says so.
 | `WUHLHEIDE`            | `CANCELLATION`     | the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag                                                             | —     |
 | `WUHLHEIDE`            | `GENRE`            | the open-air pages name no style                                                                                                                 | —     |
 | `WUHLHEIDE`            | `PRICE`            | a show its promoter sells, or a sold-out one, has no `Preis` row                                                                                 | —     |
+| `YAAM`                 | `DOORS_TIME`       | an event carries one start time only                                                                                                             | —     |
+| `YAAM`                 | `GENRE`            | no event sets a category; the style is only in the prose                                                                                         | —     |
+| `YAAM`                 | `PRICE`            | `cost` is empty on every event                                                                                                                   | —     |
+| `YAAM`                 | `TICKET_URL`       | `website` is empty on every event                                                                                                                | —     |
+| `YAAM`                 | `ARTISTS`          | a jam session names only its host series, and no act                                                                                             | —     |
+| `YAAM`                 | `PROMOTERS`        | every event names the venue itself as organizer                                                                                                  | —     |
 | `ZENNER`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `ZENNER`               | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
 | `ZENNER`               | `SOLD_OUT`         | the venue publishes no sold-out state                                                                                                            | —     |

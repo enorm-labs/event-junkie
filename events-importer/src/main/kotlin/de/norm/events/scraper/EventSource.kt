@@ -384,6 +384,9 @@ enum class EventSource {
     /** Parkbühne Wuhlheide Berlin – a large open-air amphitheatre in the Wuhlheide park, running a seasonal summer concert programme. */
     WUHLHEIDE,
 
+    /** YAAM – the Young African Art Market, a non-profit socio-cultural centre and beach on the Spree at Schillingbrücke. */
+    YAAM,
+
     /** Zenner Berlin – a riverside venue in Treptower Park with a historic Saal, a club, a beer garden and a wine garden. */
     ZENNER,
 
