@@ -278,7 +278,7 @@ private val WHITESPACE_RUN = Regex("""\s+""")
  * Normalizes a raw token to a [GENRE_SYNONYMS] key: lowercased, everything but `a-z`, `0-9` and
  * `&` stripped ("Hip Hop", "hip-hop", "HIPHOP" to "hiphop"). `&` stays so "R&B"/"rnb" differ.
  */
-private fun lookupKey(raw: String): String = raw.lowercase().replace(Regex("[^a-z0-9&]"), "")
+internal fun lookupKey(raw: String): String = raw.lowercase().replace(Regex("[^a-z0-9&]"), "")
 
 /**
  * Delimiters splitting a raw genre string: `, ` ("Pop, Rock, Indie"); `/`, spaced or not
@@ -312,7 +312,7 @@ private val TRIP_HOP_REGEX = Regex("""\btrip[\s-]+hop\b""", RegexOption.IGNORE_C
 private val DIGICORE_REGEX = Regex("""\bdigi[\s-]+core\b""", RegexOption.IGNORE_CASE)
 
 /** Collapses delimiter-embedding genre names to a split-safe spelling before tokenization. */
-private fun preNormalize(rawGenre: String): String =
+internal fun preNormalize(rawGenre: String): String =
     rawGenre
         .replace(DRUM_AND_BASS_REGEX, "Drum'n'Bass")
         .replace(SINGER_SONGWRITER_REGEX, "Singer-Songwriter")

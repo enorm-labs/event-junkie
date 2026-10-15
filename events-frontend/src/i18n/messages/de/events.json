@@ -146,6 +146,8 @@
     "reportWrong": "Stimmt bei diesem Event etwas nicht? Melde es per E-Mail:",
     "related": "Ähnliche Events",
     "relatedAtVenue": "Weitere Events bei {venue}",
+    "genreFromArtist": "Genre aus anderen Events der Acts",
+    "genreFromDescription": "Genre aus der Eventbeschreibung",
     "share": {
       "share": "Teilen",
       "nativeShare": "Teilen über…",

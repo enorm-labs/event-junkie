@@ -305,12 +305,14 @@ abstract class BaseControllerTest {
 
     protected suspend fun linkGenre(
         eventId: Long,
-        genreTagId: Long
+        genreTagId: Long,
+        origin: String = "SOURCE"
     ) {
         databaseClient
-            .sql("INSERT INTO events.event_genre_tag (event_id, genre_tag_id) VALUES (:eventId, :genreTagId)")
+            .sql("INSERT INTO events.event_genre_tag (event_id, genre_tag_id, origin) VALUES (:eventId, :genreTagId, :origin)")
             .bind("eventId", eventId)
             .bind("genreTagId", genreTagId)
+            .bind("origin", origin)
             .await()
     }
 

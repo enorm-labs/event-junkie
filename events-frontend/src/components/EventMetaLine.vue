@@ -12,6 +12,8 @@ export interface MetaItem {
   badge?: boolean
   /** A date the show does not happen on: postponed or cancelled (#3093). */
   struck?: boolean
+  /** Where a value comes from when the source did not state it, such as a derived genre (ADR-047). */
+  note?: string
 }
 
 defineProps<{ items: MetaItem[] }>()
@@ -23,6 +25,14 @@ defineProps<{ items: MetaItem[] }>()
       <span v-if="index > 0" aria-hidden="true" data-meta-separator>&nbsp;· </span>
       <BaseBadge v-if="item.badge" variant="destructive">{{ item.text }}</BaseBadge>
       <del v-else-if="item.struck" :class="item.class">{{ item.text }}</del>
+      <span
+        v-else-if="item.note"
+        :class="item.class"
+        class="underline decoration-dotted underline-offset-4"
+        :title="item.note"
+        data-meta-derived
+        >{{ item.text }}<span class="sr-only"> ({{ item.note }})</span></span
+      >
       <span v-else :class="item.class">{{ item.text }}</span>
     </template>
   </p>

@@ -16,6 +16,7 @@ import de.norm.events.event.PinnedField
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
+import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.genreFamily
 import de.norm.events.genretag.nonGenreTokens
@@ -66,7 +67,8 @@ class AssociationSyncService(
     private val promoterRepository: PromoterRepository,
     private val genreTagRepository: GenreTagRepository,
     private val qualityFlagRepository: EventQualityFlagRepository,
-    private val artistSlugAliasStore: ArtistSlugAliasStore
+    private val artistSlugAliasStore: ArtistSlugAliasStore,
+    private val genreDerivation: GenreDerivationService
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -110,6 +112,7 @@ class AssociationSyncService(
         val genreEvents = events.map { if (it.sourceId in genresPinned) it.copy(genre = null) else it }
         val genreTagCache = resolveAllGenreTags(genreEvents)
         syncGenreTagAssociations(synced(PinnedField.GENRES), genreEvents, genreTagCache)
+        genreDerivation.derive(synced(PinnedField.GENRES))
 
         // A pinned field ignores the source, so nothing the source published there is flagged.
         val flagEvents = genreEvents.map { if (it.sourceId in lineupPinned) it.copy(artists = emptyList()) else it }
@@ -137,7 +140,12 @@ class AssociationSyncService(
         if (ids.isEmpty()) return AssociationFill(emptyMap(), emptySet())
         val withLineup = eventArtistRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
         val withPromoters = eventPromoterRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
-        val withGenres = eventGenreTagRepository.findByEventIdIn(ids).toList().mapTo(mutableSetOf()) { it.eventId }
+        val withGenres =
+            eventGenreTagRepository
+                .findByEventIdIn(ids)
+                .toList()
+                .filter { it.origin == GenreTagOrigin.SOURCE.name }
+                .mapTo(mutableSetOf()) { it.eventId }
         val open = { field: PinnedField, filled: Set<Long> ->
             events.filter { (stored, _) -> stored.id !in filled && field.key !in stored.pinnedFields }
         }
@@ -782,7 +790,8 @@ class AssociationSyncService(
     // -- Genre tag association syncing --
 
     /**
-     * Synchronizes genre tag associations by diff: simple links, insert and delete only.
+     * Synchronizes the source's genre tags by diff. A derived tag (ADR-047) stays while the source names none, for
+     * [GenreDerivationService] to replace. Once the source names a genre, a derived row of that tag becomes a source row and the rest go.
      */
     private suspend fun syncGenreTagAssociations(
         savedEvents: List<EventEntity>,
@@ -798,6 +807,7 @@ class AssociationSyncService(
 
         val genresBySourceId = scrapedEvents.associate { it.sourceId to normalizeGenre(it.storedGenre()) }
         val toInsert = mutableListOf<EventGenreTagEntity>()
+        val toPromote = mutableListOf<EventGenreTagEntity>()
         val toDeleteIds = mutableListOf<Long>()
 
         for (saved in savedEvents) {
@@ -815,19 +825,25 @@ class AssociationSyncService(
                     }
                 desiredGenreTagIds.add(genreTagId)
 
-                if (existingByGenreTagId[genreTagId] == null) {
-                    toInsert.add(EventGenreTagEntity(eventId = eventId, genreTagId = genreTagId))
+                val current = existingByGenreTagId[genreTagId]
+                when {
+                    current == null -> toInsert.add(EventGenreTagEntity(eventId = eventId, genreTagId = genreTagId))
+                    current.origin != GenreTagOrigin.SOURCE.name -> toPromote.add(current.copy(origin = GenreTagOrigin.SOURCE.name))
                 }
             }
 
             existing
                 .filter { it.genreTagId !in desiredGenreTagIds }
+                .filter { desiredGenreTagIds.isNotEmpty() || it.origin == GenreTagOrigin.SOURCE.name }
                 .mapNotNull { it.id }
                 .let { toDeleteIds.addAll(it) }
         }
 
         if (toDeleteIds.isNotEmpty()) {
             eventGenreTagRepository.deleteAllById(toDeleteIds)
+        }
+        if (toPromote.isNotEmpty()) {
+            eventGenreTagRepository.saveAll(toPromote).toList()
         }
         if (toInsert.isNotEmpty()) {
             eventGenreTagRepository.saveAll(toInsert).toList()

@@ -269,6 +269,23 @@ describe('EventDetailView', () => {
     expect(bare.find('[data-testid="event-taxonomy"]').exists()).toBe(false)
   })
 
+  it('marks a derived genre with where it comes from, and leaves a source genre plain', async () => {
+    const view = await mountEvent({
+      ...night,
+      eventType: 'OTHER',
+      genreTags: ['Jazz', 'Punk', 'Ska'],
+      derivedGenreTags: { Punk: 'ARTIST', Ska: 'DESCRIPTION' },
+    })
+
+    const derived = view.findAll('[data-meta-derived]')
+    expect(derived.map((d) => d.attributes('title'))).toEqual([
+      "Genre from the acts' other events",
+      'Genre from the event description',
+    ])
+    expect(derived[0]?.find('.sr-only').text()).toBe("(Genre from the acts' other events)")
+    expect(view.find('[data-testid="event-taxonomy"]').text()).toContain('Jazz')
+  })
+
   it('shows no feature section for a night that states none', async () => {
     const view = await mountEvent({ ...night, features: [] })
 

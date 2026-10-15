@@ -7,6 +7,7 @@ import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
+import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.image.CachedImageGate
 import de.norm.events.licence.SourceLicences
@@ -169,9 +170,15 @@ class EventService(
         val promoterEntities =
             if (promoterIds.isEmpty()) emptyList() else promoterRepository.findByIdIn(promoterIds).toList()
 
-        val genreTagIds = eventGenreTagRepository.findByEventId(eventId).toList().map { it.genreTagId }
-        val genreTags =
-            if (genreTagIds.isEmpty()) emptyList() else genreTagRepository.findAllById(genreTagIds).toList().map { it.name }
+        val genreLinks = eventGenreTagRepository.findByEventId(eventId).toList()
+        val genreTagsById =
+            if (genreLinks.isEmpty()) emptyMap() else genreTagRepository.findAllById(genreLinks.map { it.genreTagId }).toList().associateBy { it.requiredId() }
+        val genreTags = genreTagsById.values.map { it.name }
+        val derivedGenreTags =
+            genreLinks
+                .filter { it.origin != GenreTagOrigin.SOURCE.name }
+                .mapNotNull { link -> genreTagsById[link.genreTagId]?.let { it.name to GenreTagOrigin.valueOf(link.origin) } }
+                .toMap()
 
         // One lookup for every image this response carries: an embedded venue or artist summary holds
         // an `imageUrl` too, and leaving those unrewritten hands out a venue's own URL (#833).
@@ -207,7 +214,8 @@ class EventService(
             imageWithheld = licensed.imageWithheld,
             enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
             changes = eventChangeRepository.recent(eventId),
-            postponedTo = postponementRepository.newDate(event)
+            postponedTo = postponementRepository.newDate(event),
+            derivedGenreTags = derivedGenreTags
         )
     }
 

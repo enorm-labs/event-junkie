@@ -196,7 +196,8 @@ class EventImportServiceTest {
                 promoterRepository = promoterRepository,
                 genreTagRepository = genreTagRepository,
                 qualityFlagRepository = mockk(relaxed = true),
-                artistSlugAliasStore = mockk { coEvery { artistIdsBySlug(any()) } returns emptyMap() }
+                artistSlugAliasStore = mockk { coEvery { artistIdsBySlug(any()) } returns emptyMap() },
+                genreDerivation = mockk(relaxed = true)
             )
 
         eventUpsertService =
