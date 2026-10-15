@@ -135,11 +135,25 @@ class DelphiProgrammePageScraperTest {
             )
         luxorium.map { it.eventType }.distinct() shouldBe listOf(EventType.SHOW.name)
         luxorium.first().genre.shouldBeNull()
-        // The troupe heads the title, as every variety house bills it (#315).
-        luxorium.first().artists.map { it.name } shouldBe listOf("The Luxorium")
         val festival = variete.single { it.sourceId == "theater_im_delphi:551/2026-11-07-20:00" }
         festival.eventType shouldBe EventType.SHOW.name
         festival.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills no act on a staged row, whose title names the production`() {
+        // `<Name> – <Show>` reads as a performer's bill elsewhere (#315); at a theatre it is a production (#3327).
+        val luxorium = variete.filter { it.title == "The Luxorium – Grand Varieté" }
+        luxorium shouldHaveSize 3
+        luxorium.forEach { it.artists.shouldBeEmpty() }
+        val jubilee = variete.single { it.title == "Happy Jubilee – Eine Tanzrevue zum Jubiläum" }
+        jubilee.sourceId shouldBe "theater_im_delphi:534/2026-12-13-18:00"
+        jubilee.eventType shouldBe EventType.SHOW.name
+        // The credit line names the company, not an act (#2899).
+        jubilee.artists.shouldBeEmpty()
+        val drag = events.filter { it.title == "König Theater – Drag King Theater Show" }
+        drag shouldHaveSize 2
+        drag.forEach { it.artists.shouldBeEmpty() }
     }
 
     @Test

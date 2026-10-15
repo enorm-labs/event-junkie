@@ -45,9 +45,10 @@ import java.time.LocalDateTime
  * — so they drive the event type. Only the two naming a genre ([MUSIC_GENRE_LABELS]) are also
  * stored as one. A row without a label is typed from its title and teaser ([CONCERT_CUES]).
  *
- * A concert's line-up comes from its `p.stabText` credit line, where the row has one: the title
- * there is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899). On a
- * staged row the same line credits the company, so it is not read.
+ * Only a concert bills acts. Its line-up comes from its `p.stabText` credit line, where the row has
+ * one: the title there is often the programme (`Kunstlieder aus Lateinamerika`), not the act (#2899).
+ * Any other row bills nothing. Its title names a production (`Happy Jubilee – Eine Tanzrevue`), not
+ * a performer, and its credit line names the company (#3327).
  *
  * @see DelphiProductionPageScraper for the per-production page (full description, bigger poster).
  * @see DelphiWebsiteImporter for the HTTP fetch orchestrator.
@@ -149,8 +150,12 @@ class DelphiProgrammePageScraper {
             priceNote = record?.priceNote,
             free = record?.free == true,
             artists =
-                creditedActs(row, teaser).takeIf { eventType == EventType.CONCERT.name }.orEmpty().ifEmpty {
-                    buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                if (eventType == EventType.CONCERT.name) {
+                    creditedActs(row, teaser).ifEmpty {
+                        buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
+                    }
+                } else {
+                    emptyList()
                 }
         )
     }
