@@ -194,41 +194,28 @@ class EventSearchRepository(
 
     /**
      * Up to [limit] events that are not over, of the same family as [eventType], and sharing an
-     * artist, the venue [venueId] or a genre tag with the event [eventId], best match first (#359, #3337).
-     * Each branch of the union starts from an index on its join column. Ties fall to the earliest
-     * date, then to the list's own order.
+     * artist, a promoter, the venue [venueId], a genre tag or a similar title with the event [eventId],
+     * best match first (#359, #3337, #3338). Each branch of the union starts from an index. A date near
+     * [eventDate] and the same type raise a match, and never make one. Ties fall to the earliest date,
+     * then to the list's own order.
      */
     suspend fun related(
         eventId: Long,
         venueId: Long,
         eventType: String,
+        eventDate: LocalDate,
         limit: Int
     ): List<Long> {
-        val params = mutableMapOf<String, Any>("eventId" to eventId, "venueId" to venueId, "eventType" to eventType)
+        val params =
+            mutableMapOf<String, Any>("eventId" to eventId, "venueId" to venueId, "eventType" to eventType, "eventDate" to eventDate)
         val liveWhere = buildWhereClause(EventFilter(), params, bySimilarity = false)
         val where = buildWhereClause(EventFilter(eventTypes = typeFamily(eventType)), params, bySimilarity = false)
-        // A tag's weight is its IDF over the events that are not over, so a rare tag outweighs a common one.
-        val tagWeights =
-            "WITH live AS (SELECT e.id FROM $EVENTS_SCHEMA.event e $liveWhere), " +
-                "tag_weight AS (SELECT g.genre_tag_id, 1 + ln((SELECT count(DISTINCT t.event_id) FROM $EVENTS_SCHEMA.event_genre_tag t " +
-                "WHERE t.event_id IN (SELECT id FROM live))::float8 / count(*)) AS weight FROM $EVENTS_SCHEMA.event_genre_tag g " +
-                "WHERE g.event_id IN (SELECT id FROM live) AND g.genre_tag_id IN " +
-                "(SELECT genre_tag_id FROM $EVENTS_SCHEMA.event_genre_tag WHERE event_id = :eventId) GROUP BY g.genre_tag_id)"
-        val matches =
-            listOf(
-                "SELECT other.event_id AS id, CAST($ARTIST_WEIGHT AS float8) AS weight FROM $EVENTS_SCHEMA.event_artist own " +
-                    "JOIN $EVENTS_SCHEMA.event_artist other ON other.artist_id = own.artist_id WHERE own.event_id = :eventId",
-                "SELECT x.id, $VENUE_WEIGHT FROM $EVENTS_SCHEMA.event x WHERE x.venue_id = :venueId",
-                "SELECT other.event_id, tw.weight FROM tag_weight tw " +
-                    "JOIN $EVENTS_SCHEMA.event_genre_tag other ON other.genre_tag_id = tw.genre_tag_id"
-            ).joinToString(" UNION ALL ")
-        // The same type is a bonus on a match, not a match. Rounded, because float sums in another order differ in the last bit.
-        val score = "round((SUM(m.weight) + CASE WHEN e.event_type = :eventType THEN $SAME_TYPE_WEIGHT ELSE 0 END)::numeric, 6)"
         // Grouped by the primary key, so the ORDER BY may read the row's other columns.
         return databaseClient
             .sql(
-                "$tagWeights SELECT e.id FROM ($matches) m JOIN $EVENTS_SCHEMA.event e ON e.id = m.id $where AND e.id <> :eventId " +
-                    "GROUP BY e.id ORDER BY $score DESC, e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK LIMIT :limit"
+                "${relatedTagWeights(liveWhere)} SELECT e.id FROM ($RELATED_MATCHES) m JOIN $EVENTS_SCHEMA.event e ON e.id = m.id " +
+                    "$where AND e.id <> :eventId GROUP BY e.id ORDER BY $RELATED_SCORE DESC, e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK " +
+                    "LIMIT :limit"
             ).bindAll(params)
             .bind("seed", tiebreakSeed())
             .bind("limit", limit)
@@ -498,10 +485,65 @@ class EventSearchRepository(
         /** The day an event is over after: its stated end, else its date (ADR-029). */
         private const val EFFECTIVE_END = "COALESCE(e.end_date, e.event_date)"
 
-        /** What one shared artist, the shared venue and the exact same type add to a related event's score. */
+        /** What one shared artist, one shared promoter, a similar title, the shared venue and the exact same type add to a related event's score. */
         private const val ARTIST_WEIGHT = 6
+        private const val PROMOTER_WEIGHT = 4
+        private const val TITLE_WEIGHT = 3
         private const val VENUE_WEIGHT = 1
         private const val SAME_TYPE_WEIGHT = 0.5
+
+        /** A title is a series match at this trigram similarity, the threshold `TextSearch` uses too. */
+        private const val TITLE_SIMILARITY = 0.5
+
+        /** The bonus a match gets for a date this many days from the seed's, or fewer. */
+        private const val NEAR_DAYS = 7
+        private const val NEAR_WEIGHT = 1
+        private const val SOON_DAYS = 21
+        private const val SOON_WEIGHT = 0.5
+
+        /** The folded title as `idx_event_title_search_trgm` indexes it, so the `%` operator reaches the index. */
+        private fun titleKey(alias: String) = "replace($alias.title_search, ' ', '')"
+
+        /**
+         * One row per signal a candidate shares with the seed, with its weight. `%` takes the
+         * `pg_trgm` default of 0.3 to reach the index, and the similarity test then holds it to [TITLE_SIMILARITY].
+         */
+        private val RELATED_MATCHES =
+            listOf(
+                "SELECT other.event_id AS id, CAST($ARTIST_WEIGHT AS float8) AS weight FROM $EVENTS_SCHEMA.event_artist own " +
+                    "JOIN $EVENTS_SCHEMA.event_artist other ON other.artist_id = own.artist_id WHERE own.event_id = :eventId",
+                "SELECT other.event_id, $PROMOTER_WEIGHT FROM $EVENTS_SCHEMA.event_promoter own " +
+                    "JOIN $EVENTS_SCHEMA.event_promoter other ON other.promoter_id = own.promoter_id WHERE own.event_id = :eventId",
+                "SELECT x.id, $VENUE_WEIGHT FROM $EVENTS_SCHEMA.event x WHERE x.venue_id = :venueId",
+                "SELECT other.event_id, tw.weight FROM tag_weight tw " +
+                    "JOIN $EVENTS_SCHEMA.event_genre_tag other ON other.genre_tag_id = tw.genre_tag_id",
+                "SELECT x.id, $TITLE_WEIGHT FROM $EVENTS_SCHEMA.event own JOIN $EVENTS_SCHEMA.event x " +
+                    "ON ${titleKey("x")} OPERATOR($EVENTS_SCHEMA.%) ${titleKey("own")} WHERE own.id = :eventId " +
+                    "AND $EVENTS_SCHEMA.similarity(${titleKey("x")}, ${titleKey("own")}) >= $TITLE_SIMILARITY"
+            ).joinToString(" UNION ALL ")
+
+        /** The bonus for a date near the seed's; the date difference is in days. */
+        private const val DATE_BONUS =
+            "CASE WHEN abs(e.event_date - :eventDate) <= $NEAR_DAYS THEN $NEAR_WEIGHT " +
+                "WHEN abs(e.event_date - :eventDate) <= $SOON_DAYS THEN $SOON_WEIGHT ELSE 0 END"
+
+        /**
+         * The sum of the matches, plus the bonuses, which only raise a match. Rounded, because float
+         * sums in another order differ in the last bit.
+         */
+        private const val RELATED_SCORE =
+            "round((SUM(m.weight) + CASE WHEN e.event_type = :eventType THEN $SAME_TYPE_WEIGHT ELSE 0 END + $DATE_BONUS)::numeric, 6)"
+
+        /**
+         * A shared tag's weight: its IDF over the events that are not over, as [liveWhere] selects
+         * them, so a rare tag outweighs a common one.
+         */
+        private fun relatedTagWeights(liveWhere: String) =
+            "WITH live AS (SELECT e.id FROM $EVENTS_SCHEMA.event e $liveWhere), " +
+                "tag_weight AS (SELECT g.genre_tag_id, 1 + ln((SELECT count(DISTINCT t.event_id) FROM $EVENTS_SCHEMA.event_genre_tag t " +
+                "WHERE t.event_id IN (SELECT id FROM live))::float8 / count(*)) AS weight FROM $EVENTS_SCHEMA.event_genre_tag g " +
+                "WHERE g.event_id IN (SELECT id FROM live) AND g.genre_tag_id IN " +
+                "(SELECT genre_tag_id FROM $EVENTS_SCHEMA.event_genre_tag WHERE event_id = :eventId) GROUP BY g.genre_tag_id)"
 
         /** The kinds of event that suggest each other on an event page (#3337). A type in none is its own family. */
         private val TYPE_FAMILIES: List<Set<EventType>> =

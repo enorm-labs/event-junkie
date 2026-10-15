@@ -6,7 +6,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-/** `GET /events/{slug}/related`: upcoming events of the same kind sharing artists, the venue or genre tags (#359, #3337). */
+/**
+ * `GET /events/{slug}/related`: upcoming events of the same kind sharing artists, promoters, the venue, genre tags
+ * or a similar title, a near date first (#359, #3337, #3338).
+ */
 class EventRelatedTest : BaseControllerTest() {
     /** The BFF's day, not the runner's: they differ between midnight in Berlin and midnight UTC. */
     private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
@@ -78,6 +81,74 @@ class EventRelatedTest : BaseControllerTest() {
             linkGenre(insertEvent(lido, "Venue And Genre", "venue-and-genre", today.plusDays(9)), drone)
 
             relatedSlugs().isEqualTo(listOf("both-genres", "venue-and-genre", "drone-elsewhere", "same-venue"))
+        }
+
+    @Test
+    fun `ranks a shared promoter at another venue above the venue alone`(): Unit =
+        runBlocking {
+            val lido = insertVenue("Lido", "lido")
+            val sameHeaven = insertVenue("SameHeaven", "sameheaven")
+            val promoter = insertPromoter("Puschen", "puschen")
+            linkPromoter(insertEvent(lido, "Source", "source", today.plusDays(1)), promoter)
+
+            insertEvent(lido, "Same Venue", "same-venue", today.plusDays(2))
+            linkPromoter(insertEvent(sameHeaven, "Same Promoter", "same-promoter", today.plusDays(3)), promoter)
+
+            relatedSlugs().isEqualTo(listOf("same-promoter", "same-venue"))
+        }
+
+    @Test
+    fun `finds a series by its title at another venue`(): Unit =
+        runBlocking {
+            val lido = insertVenue("Lido", "lido")
+            val sameHeaven = insertVenue("SameHeaven", "sameheaven")
+            insertEvent(lido, "Kantine Deluxe Vol. 12", "source", today.plusDays(1), eventType = "PARTY")
+
+            insertEvent(lido, "Same Venue", "same-venue", today.plusDays(2), eventType = "PARTY")
+            insertEvent(sameHeaven, "Kantine Deluxe Vol. 13", "next-in-series", today.plusDays(3), eventType = "PARTY")
+            insertEvent(sameHeaven, "Kantinenfest", "unlike-title", today.plusDays(2), eventType = "PARTY")
+
+            relatedSlugs().isEqualTo(listOf("next-in-series", "same-venue"))
+        }
+
+    @Test
+    fun `ranks two otherwise equal matches by how near their date is`(): Unit =
+        runBlocking {
+            val lido = insertVenue("Lido", "lido")
+            insertEvent(lido, "Source", "source", today.plusDays(30))
+
+            // Inserted earliest first, so the date bonus and not the date tie-break decides.
+            insertEvent(lido, "Weeks Before", "weeks-before", today.plusDays(2))
+            insertEvent(lido, "Fortnight Before", "fortnight-before", today.plusDays(14))
+            insertEvent(lido, "Days After", "days-after", today.plusDays(33))
+
+            relatedSlugs().isEqualTo(listOf("days-after", "fortnight-before", "weeks-before"))
+        }
+
+    @Test
+    fun `never suggests an event for its date alone`(): Unit =
+        runBlocking {
+            val lido = insertVenue("Lido", "lido")
+            insertEvent(lido, "Source", "source", today.plusDays(1))
+
+            insertEvent(insertVenue("SameHeaven", "sameheaven"), "Same Night", "same-night", today.plusDays(1))
+            insertEvent(lido, "Next Month", "next-month", today.plusDays(40))
+
+            relatedSlugs().isEqualTo(listOf("next-month"))
+        }
+
+    @Test
+    fun `keeps a shared promoter out when the event is of another kind`(): Unit =
+        runBlocking {
+            val lido = insertVenue("Lido", "lido")
+            val sameHeaven = insertVenue("SameHeaven", "sameheaven")
+            val promoter = insertPromoter("Puschen", "puschen")
+            linkPromoter(insertEvent(lido, "Source", "source", today.plusDays(1)), promoter)
+
+            linkPromoter(insertEvent(sameHeaven, "Reading", "reading", today.plusDays(2), eventType = "READING"), promoter)
+            linkPromoter(insertEvent(sameHeaven, "Party", "party", today.plusDays(3), eventType = "PARTY"), promoter)
+
+            relatedSlugs().isEqualTo(listOf("party"))
         }
 
     @Test
