@@ -243,7 +243,9 @@ test.describe('a past event', () => {
     await expect(page.getByText('DJ', { exact: true })).toHaveCount(2)
   })
 
-  test('a live act on a DJ night is labelled Live and printed at the DJs\' size', async ({ page }) => {
+  test("a live act on a DJ night is labelled Live and printed at the DJs' size", async ({
+    page,
+  }) => {
     // Berghain's `Live` marker says the act plays live, not that it tops the bill (#2925).
     const liveSet = {
       ...eventBody,
@@ -616,6 +618,8 @@ test.describe('related events', () => {
       startTime: '23:00',
       venue: { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' },
       genreTags: ['Techno'],
+      // Shares the act, so the heading is "More like this" and not "Also at Mock Venue" (#3337).
+      artistNames: ['Mock Artist'],
     },
   ]
 
