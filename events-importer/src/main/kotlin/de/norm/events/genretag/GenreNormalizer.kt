@@ -99,6 +99,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "postpunk" to "Post-Punk",
         "newwave" to "New Wave",
         "darkwave" to "Darkwave",
+        // The bare word is the broad family ("dream-pop/wave"), not New Wave.
+        "wave" to "Wave",
         "ebm" to "EBM",
         "industrial" to "Industrial",
         "gothicrock" to "Gothic Rock",
@@ -215,7 +217,6 @@ private val NON_GENRE_TOKENS: Set<String> =
         "releaseparty",
         // Freeform fragments observed leaking as standalone tags
         "beyond",
-        "wave",
         "retro",
         "nontango",
         // Descriptors a venue lists alongside real genres ("Funk, Soul, Groove"; "Dub, Grime, Bass,

@@ -1,6 +1,7 @@
 package de.norm.events.genretag
 
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -292,8 +293,28 @@ class GenreNormalizerTest {
     }
 
     @Test
-    fun `standalone freeform fragments are dropped`() {
-        normalizeGenre("Beyond, Wave, Retro").shouldBeEmpty()
+    fun `standalone freeform fragments are dropped, and wave is kept as a genre`() {
+        normalizeGenre("Beyond, Retro").shouldBeEmpty()
+        normalizeGenre("Beyond, Retro, Wave").shouldContainExactly("Wave")
+        nonGenreTokens("Beyond, Retro, Wave").shouldContainExactly("Beyond", "Retro")
+    }
+
+    @Test
+    fun `the bare word wave is the Wave tag in the family of the same name`() {
+        normalizeGenre("wave").shouldContainExactly("Wave")
+        normalizeGenre("new wave/postpunk, wave").shouldContainExactly("New Wave", "Post-Punk", "Wave")
+        normalizeGenre("nndw/post-punk/wave").shouldContain("Wave")
+        normalizeGenre("dream-pop/wave").shouldContain("Wave")
+        genreFamily("wave") shouldBe GenreFamily.WAVE
+    }
+
+    @Test
+    fun `the compound wave genres keep their own tags`() {
+        normalizeGenre("Synth-Wave").shouldContainExactly("Synth-Wave")
+        normalizeGenre("Hardwave").shouldContainExactly("Hardwave")
+        normalizeGenre("New Wave").shouldContainExactly("New Wave")
+        normalizeGenre("Darkwave").shouldContainExactly("Darkwave")
+        normalizeGenre("Dark Wave").shouldContainExactly("Darkwave")
     }
 
     @Test
