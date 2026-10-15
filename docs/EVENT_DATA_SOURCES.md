@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   129 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   130 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
@@ -163,6 +163,7 @@ schema change.
 | Velodrom                         | https://www.velomax.de/events                                            | Arena        | Shares the VELOMAX listing; Microdata details             |
 | VOID Club                        | https://www.void-club.de/                                                | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms          |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
+| YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
 | Zenner                           | https://zenner.berlin/programm                                           | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive          |
 | Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
 | Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu                           | Club         | Squarespace list + event pages; Hall items dropped        |
@@ -170,7 +171,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-128 importer classes cover 129 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+129 importer classes cover 130 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -191,7 +192,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-49 sources have a second language, 76 have none, and 4 are unknown. Eight translate the event text on a second page.
+49 sources have a second language, 77 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -338,6 +339,7 @@ the upsert stores none.
 | Velodrom                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | VOID Club                        | Yes             | One field, in the club text only                             | Not on the listing | https://www.void-club.de/                                                                                                          |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
+| YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
 | Zenner                           | Yes             | Script switch, no URL                                        | Unknown            | https://zenner.berlin/programm                                                                                                     |
 | Zig Zag Hall                     | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-hall-detail.html)                                      |
 | Zig Zag Jazz Club                | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-detail.html)                                           |
@@ -532,9 +534,9 @@ each is cheap to recognise before spending time on a candidate:
   Atemporal, Prisma, Mena Berlin, Phantom Bar, Containerhafen, Rosie's Bar, Süss war gestern and RAW-Gelände. ROSA was
   the tenth and now has its own site.
 - **A second RA sweep on 2026-09-13 found the same shapes again.** The eight-week window held 1123 events at
-  234 venues. Every venue with two or more events and no row here was opened, seventeen in all, and not one is
-  importable. Seven have no site of their own: 90mil, West Germany, Torte Bar, Ipse, Lauschangriff, Studiodb and PKH
-  Warehouse. YAAM runs EventON and reports no upcoming events. Musikbrauerei is the only one with dated HTML, a
+  234 venues. Every venue with two or more events and no row here was opened, seventeen in all, and not one was
+  importable then. Seven have no site of their own: 90mil, West Germany, Torte Bar, Ipse, Lauschangriff, Studiodb and PKH
+  Warehouse. YAAM ran EventON with no upcoming events. It now runs The Events Calendar and is imported. Musikbrauerei is the only one with dated HTML, a
   hand-edited page that keeps its 2025 entries and holds two upcoming concerts. RA's `Void Hall` is VOID Club, already
   imported.
   Searching for an own domain is still worth it everywhere else. It turned up twelve venue sites this document did not
@@ -657,7 +659,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | 90mil                             | —                                                   | Open Air     | Farewell festival in May 2026; site demolished            | Not importable (closed)    |
 | Taborkirche                       | https://www.taborkirche.de                          | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change                |
 | West Germany                      | —                                                   | Club         | No own site; RA only                                      | Site change / manual entry |
-| YAAM                              | https://yaam.de/programm/                           | Club         | WordPress + EventON; calendar says no upcoming events     | Site change / re-check     |
 | Torte Bar                         | —                                                   | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
 | Ipse                              | —                                                   | Open Air     | Back as IPSE.UFER; no own site, RA only                   | Site change / manual entry |
 | Musikbrauerei                     | https://musikbrauerei.com/events/                   | Concert Hall | Hand-edited Kadence page; 2025 entries kept, 2 upcoming   | More events / re-check     |

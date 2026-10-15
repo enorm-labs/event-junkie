@@ -120,6 +120,7 @@ import de.norm.events.scraper.voidclub.VOID_CLUB_LIMITATIONS
 import de.norm.events.scraper.wildatheart.WILD_AT_HEART_LIMITATIONS
 import de.norm.events.scraper.wuehlmaeuse.WUEHLMAEUSE_LIMITATIONS
 import de.norm.events.scraper.wuhlheide.WUHLHEIDE_LIMITATIONS
+import de.norm.events.scraper.yaam.YAAM_LIMITATIONS
 import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
 import de.norm.events.scraper.zigzag.ZIG_ZAG_LIMITATIONS
 import de.norm.events.scraper.zimmer16.ZIMMER_16_LIMITATIONS
@@ -253,6 +254,7 @@ object AcceptedLimitations {
             WILD_AT_HEART_LIMITATIONS,
             WUEHLMAEUSE_LIMITATIONS,
             WUHLHEIDE_LIMITATIONS,
+            YAAM_LIMITATIONS,
             ZENNER_LIMITATIONS,
             ZIG_ZAG_LIMITATIONS,
             ZIMMER_16_LIMITATIONS,
