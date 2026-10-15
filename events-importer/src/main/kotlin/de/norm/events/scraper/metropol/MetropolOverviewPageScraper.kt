@@ -161,7 +161,7 @@ internal fun buildMetropolArtists(
  * two, inventing an 18:00 start. No Metropol show begins at midnight; the latest listed start
  * is 20:30.
  */
-internal fun parseMetropolTime(text: String?): LocalTime? =
+private fun parseMetropolTime(text: String?): LocalTime? =
     TIME_PATTERN.find(text.orEmpty())?.let { match ->
         val hour = match.groupValues[1].toInt()
         val minute = match.groupValues[2].toInt()

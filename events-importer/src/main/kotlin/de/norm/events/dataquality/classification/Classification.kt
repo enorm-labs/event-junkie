@@ -217,7 +217,7 @@ object ClassificationValidator {
 }
 
 /** Whether a proposed act is a whole name in the title, and not cut short: "Katja" from "Katja Berlin Tour 2026" (#2997). */
-internal object TitleActNames {
+private object TitleActNames {
     private const val NO_WORD_BEFORE = "(?<![\\p{L}\\p{N}])"
     private const val NO_WORD_AFTER = "(?![\\p{L}\\p{N}])"
 

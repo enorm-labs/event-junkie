@@ -180,7 +180,7 @@ class TempodromOverviewPageScraper {
  * Beyond the production cues of [tempodromProduction], no other cue is read from the subtitle: the
  * line is also a tour name, and "Die beste Wolfgang Petry Party" is a tribute show, not a party.
  */
-internal fun tempodromEventType(
+private fun tempodromEventType(
     title: String,
     subtitle: String?
 ): String =
@@ -191,7 +191,7 @@ internal fun tempodromEventType(
     }
 
 /** A night billed by a production's name, so its title is no act: its type, and the acts its format line names (#3162). */
-internal data class TempodromProduction(
+private data class TempodromProduction(
     val eventType: EventType,
     val artists: List<ScrapedArtist> = emptyList()
 )
@@ -201,7 +201,7 @@ internal data class TempodromProduction(
  * concert; a musical, a film with live orchestra, a gala or a tribute concert is a show. The
  * orchestra a film names after `mit dem` plays it, so it is billed.
  */
-internal fun tempodromProduction(
+private fun tempodromProduction(
     title: String,
     subtitle: String?
 ): TempodromProduction? =

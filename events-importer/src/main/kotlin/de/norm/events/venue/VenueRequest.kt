@@ -142,7 +142,7 @@ data class VenueRequest(
 ) : AttributableImage
 
 /** `https://instagram.com/…` or `https://www.instagram.com/…`, with a path. */
-internal const val INSTAGRAM_URL = "https://(www\\.)?instagram\\.com/.+"
+private const val INSTAGRAM_URL = "https://(www\\.)?instagram\\.com/.+"
 
 /** `https://facebook.com/…`, or a subdomain of it such as `www.` or `m.`, with a path. */
-internal const val FACEBOOK_URL = "https://([a-z0-9-]+\\.)?facebook\\.com/.+"
+private const val FACEBOOK_URL = "https://([a-z0-9-]+\\.)?facebook\\.com/.+"

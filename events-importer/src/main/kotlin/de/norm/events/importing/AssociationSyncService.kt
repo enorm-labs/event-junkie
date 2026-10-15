@@ -989,7 +989,7 @@ data class AssociationFill(
 )
 
 /** Whether [a] and [b] are the same letters in any case once accents are removed, and differ with them kept. */
-internal fun differsOnlyByAccents(
+private fun differsOnlyByAccents(
     a: String,
     b: String
 ): Boolean = !a.equals(b, ignoreCase = true) && stripAccents(a).equals(stripAccents(b), ignoreCase = true)

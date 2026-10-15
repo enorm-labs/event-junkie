@@ -433,7 +433,7 @@ private data class ZennerTextSpan(
  * is `klubShowProgramm`, distinct from `klubShowLocation` / `klubShowMieten`, which govern other
  * page sections. Every flag defaults to `true` ([ZennerApiScraper.parseVisibility]).
  */
-internal data class ZennerPlaceVisibility(
+private data class ZennerPlaceVisibility(
     val saalShow: Boolean = true,
     val klubShowProgramm: Boolean = true,
     val biergartenShow: Boolean = true,

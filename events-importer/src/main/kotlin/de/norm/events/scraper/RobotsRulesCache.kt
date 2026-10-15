@@ -216,7 +216,7 @@ class RobotsRulesCache(
 }
 
 /** One host's parsed rules, and when they were read. */
-internal data class CachedRules(
+private data class CachedRules(
     val rules: SimpleRobotRules,
     val robotsTxtUrl: String?,
     val fetchedAt: Instant,

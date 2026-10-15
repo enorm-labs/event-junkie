@@ -18,7 +18,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /** Base URL for Bi Nuu's PocketBase file store; event `image.url` values are stored relative to it. */
-internal const val BINUU_IMAGE_BASE_URL = "https://pb.binuu.de/api/files/"
+private const val BINUU_IMAGE_BASE_URL = "https://pb.binuu.de/api/files/"
 
 /**
  * Extracts the SvelteKit SSR payload embedded in Bi Nuu pages: every page inlines its route
