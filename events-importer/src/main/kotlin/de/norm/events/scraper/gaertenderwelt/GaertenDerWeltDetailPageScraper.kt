@@ -204,7 +204,8 @@ class GaertenDerWeltDetailPageScraper {
          * The paragraph labels the park writes, mapped onto fields. One field arrives under several
          * labels: `Tickets:` where its own box office sells, `Kosten:` where an external promoter does.
          * `veranstalter` is a prefix of both `Veranstalter:` and `Veranstalter*in:`; `abendkasse` is
-         * listed for the pages that give it a paragraph.
+         * listed for the pages that give it a paragraph. The prefix match also takes `Einlassort:` and
+         * `Einlassbestimmungen` as a doors field; harmless while no such line comes before the real `Einlass:` line.
          */
         private val FIELD_LABELS =
             mapOf(
@@ -222,8 +223,11 @@ class GaertenDerWeltDetailPageScraper {
          */
         private val EXCLUDED_LABELS = FIELD_LABELS.keys + "kontakt"
 
-        /** A clock time inside the `Einlass:` prose, with the minutes the park often leaves off ("18 Uhr"). */
-        private val DOORS_TIME_PATTERN = Regex("""(\d{1,2})(?::(\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
+        /**
+         * A clock time inside the `Einlass:` prose, with the minutes after a colon or a dot ("17:30 Uhr", "16.30 Uhr") or
+         * left off ("18 Uhr"). It never starts inside a number, so "16.30 Uhr" is never read as 30 o'clock (#3353).
+         */
+        private val DOORS_TIME_PATTERN = Regex("""(?<!\d)(\d{1,2})(?:[:.](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
         /** A ticket line for a free event that prices only the park entry on top. */
         private val PARK_ENTRY_ONLY = Regex("""kostenfrei.*zzgl\.?\s*Parkeintritt""", RegexOption.IGNORE_CASE)

@@ -10,6 +10,8 @@ import io.kotest.matchers.string.shouldNotContain
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalTime
 
@@ -119,6 +121,29 @@ class GaertenDerWeltDetailPageScraperTest {
         event.doorsTime shouldBe LocalTime.of(18, 0)
     }
 
+    @ParameterizedTest(name = "{0} gives {1}")
+    @CsvSource(
+        "16.30 Uhr, 16:30",
+        "16:30 Uhr, 16:30",
+        "ab 17:30 Uhr, 17:30",
+        "18 Uhr, 18:00",
+        "'16.30, Haupteingang', ",
+        "'ab 09.07.2027', ",
+        nullValues = [""]
+    )
+    fun `reads the doors time after a colon or a dot, and never from inside a number`(
+        einlass: String,
+        doors: String?
+    ) {
+        val html =
+            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+                .outerHtml()
+                .replace("<strong>Einlass: </strong>18 Uhr", "<strong>Einlass: </strong>$einlass")
+        val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
+
+        event.doorsTime shouldBe doors?.let(LocalTime::parse)
+    }
+
     @Test
     fun `takes the doors time rather than the start time when the page lists both on one line`() {
         val event = scraper.scrape(fixture("gaertenderwelt-detail-quiz.html", QUIZ_URL), QUIZ_URL).shouldNotBeNull()
@@ -178,8 +203,8 @@ class GaertenDerWeltDetailPageScraperTest {
         event.promoters shouldContainExactly listOf("HB Music")
         event.pricePresale shouldBe BigDecimal("29.95")
         // "Einlass Gärten der Welt: 16.30 Uhr" opens the paragraph and wins over the later
-        // "Einlass Veranstaltungsbereich: 17 Uhr"; its dotted time reads as no time, as before.
-        event.doorsTime.shouldBeNull()
+        // "Einlass Veranstaltungsbereich: 17 Uhr"; the dot between hours and minutes is read (#3353).
+        event.doorsTime shouldBe LocalTime.of(16, 30)
     }
 
     @Test
