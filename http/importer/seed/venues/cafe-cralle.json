@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Café Cralle",
+        "address": "Hochstädter Straße 10a",
+        "city": "Berlin",
+        "postalCode": "13347",
+        "district": "wedding",
+        "latitude": 52.550607,
+        "longitude": 13.363522,
+        "websiteUrl": "https://cafecralle.wordpress.com/",
+        "instagramUrl": "https://www.instagram.com/cafecrallekollektiv",
+        "description": "A queer-feminist pub collective in Wedding with solidarity prices, open every evening, hosting readings, quiz and bingo nights, film nights and fiestas.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Queerfeministisches Kneipenkollektiv im Wedding mit solidarischen Preisen, jeden Abend geöffnet, mit Lesungen, Quiz- und Bingo-Abenden, Filmabenden und Fiestas.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "programmeUrl": "https://cafecralle.wordpress.com/",
+        "reviewedAt": "2026-10-15T12:00:00Z"
+    },
+    "sources": []
+}

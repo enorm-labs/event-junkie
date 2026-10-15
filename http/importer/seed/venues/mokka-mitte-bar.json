@@ -1,0 +1,22 @@
+{
+    "venue": {
+        "name": "Mokka Mitte Bar",
+        "address": "Stadtbahnbogen 159",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.522238,
+        "longitude": 13.398307,
+        "websiteUrl": "https://www.mokkamitte.de/",
+        "instagramUrl": "https://www.instagram.com/mokkamittebar/",
+        "facebookUrl": "https://www.facebook.com/mokkamitte",
+        "description": "A bar in the S-Bahn arches of James-Simon-Park, with a Spree-side lawn facing the Berliner Dom, a 1920s-style club room with a club sound system, and DJ day parties.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar in den S-Bahn-Bögen am James-Simon-Park mit Rasen an der Spree und Blick auf den Dom, Club im Stil der 20er-Jahre mit Club-Soundanlage und DJ-Daypartys.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "open-air"],
+        "capacity": 400,
+        "reviewedAt": "2026-10-15T12:00:00Z"
+    },
+    "sources": []
+}
