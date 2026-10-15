@@ -666,6 +666,59 @@ ALTER TABLE events.import_run_field_stats ALTER COLUMN id ADD GENERATED ALWAYS A
 );
 
 --
+-- Name: instagram_draft; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.instagram_draft (
+    id bigint NOT NULL,
+    venue_id bigint NOT NULL,
+    media_id text NOT NULL,
+    permalink text NOT NULL,
+    posted_at timestamp with time zone NOT NULL,
+    caption text,
+    event_date date,
+    start_time time without time zone,
+    title text,
+    acts text[] DEFAULT '{}'::text[] NOT NULL,
+    price_presale numeric(10,2),
+    price_box_office numeric(10,2),
+    evidence text,
+    confidence double precision,
+    model text,
+    status text NOT NULL,
+    event_id bigint,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    reviewed_at timestamp with time zone,
+    CONSTRAINT instagram_draft_caption_only_pending CHECK (((caption IS NULL) OR (status = 'PENDING'::text))),
+    CONSTRAINT instagram_draft_confidence_check CHECK (((confidence >= (0)::double precision) AND (confidence <= (1)::double precision))),
+    CONSTRAINT instagram_draft_event_has_date CHECK (((status = 'NOT_AN_EVENT'::text) OR ((event_date IS NOT NULL) AND (title IS NOT NULL)))),
+    CONSTRAINT instagram_draft_permalink_check CHECK ((permalink ~ '^https://www\.instagram\.com/'::text)),
+    CONSTRAINT instagram_draft_status_check CHECK ((status = ANY (ARRAY['PENDING'::text, 'APPROVED'::text, 'REJECTED'::text, 'NOT_AN_EVENT'::text])))
+);
+
+--
+-- Name: instagram_draft_id_seq; Type: SEQUENCE; Schema: events; Owner: -
+--
+
+ALTER TABLE events.instagram_draft ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME events.instagram_draft_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: instagram_venue; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.instagram_venue (
+    venue_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: promoter; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1009,6 +1062,27 @@ ALTER TABLE ONLY events.import_run_field_stats
     ADD CONSTRAINT import_run_field_stats_run_id_field_key UNIQUE (run_id, field);
 
 --
+-- Name: instagram_draft instagram_draft_one_per_post_and_date; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_draft
+    ADD CONSTRAINT instagram_draft_one_per_post_and_date UNIQUE NULLS NOT DISTINCT (media_id, event_date);
+
+--
+-- Name: instagram_draft instagram_draft_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_draft
+    ADD CONSTRAINT instagram_draft_pkey PRIMARY KEY (id);
+
+--
+-- Name: instagram_venue instagram_venue_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_venue
+    ADD CONSTRAINT instagram_venue_pkey PRIMARY KEY (venue_id);
+
+--
 -- Name: promoter promoter_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1223,6 +1297,12 @@ CREATE INDEX idx_genre_tag_family ON events.genre_tag USING btree (family);
 --
 
 CREATE INDEX idx_import_run_field_stats_baseline ON events.import_run_field_stats USING btree (source_id, field, observed_at DESC);
+
+--
+-- Name: idx_instagram_draft_venue_date; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_instagram_draft_venue_date ON events.instagram_draft USING btree (venue_id, event_date, status);
 
 --
 -- Name: idx_promoter_name_search_trgm; Type: INDEX; Schema: events; Owner: -
@@ -1440,6 +1520,27 @@ ALTER TABLE ONLY events.event
 
 ALTER TABLE ONLY events.import_run_field_stats
     ADD CONSTRAINT import_run_field_stats_source_id_fkey FOREIGN KEY (source_id) REFERENCES events.event_source(id) ON DELETE CASCADE;
+
+--
+-- Name: instagram_draft instagram_draft_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_draft
+    ADD CONSTRAINT instagram_draft_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE SET NULL;
+
+--
+-- Name: instagram_draft instagram_draft_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_draft
+    ADD CONSTRAINT instagram_draft_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;
+
+--
+-- Name: instagram_venue instagram_venue_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.instagram_venue
+    ADD CONSTRAINT instagram_venue_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;
 
 --
 -- Name: venue_character_tag venue_character_tag_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

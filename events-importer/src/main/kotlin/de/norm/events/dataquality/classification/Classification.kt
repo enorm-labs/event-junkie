@@ -1,5 +1,6 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.common.QuotedText
 import de.norm.events.event.EventType
 import de.norm.events.event.PartyFeature
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -8,7 +9,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.Normalizer
 import java.time.LocalTime
 import java.util.Locale
 
@@ -75,11 +75,6 @@ object ClassificationValidator {
 
     private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
     private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
-    private val COMBINING_MARKS = Regex("\\p{Mn}+")
-    private val APOSTROPHES = Regex("[‘’‛ʼ´`]")
-    private val QUOTES = Regex("[“”„‟«»]")
-    private val DASHES = Regex("[‐-―]")
-    private val WHITESPACE = Regex("\\s+")
 
     /** The validated answer, or null when the text is no JSON object at all. */
     fun parse(
@@ -203,17 +198,7 @@ object ClassificationValidator {
             evidence.length in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH &&
             normalise(evidence) in source
 
-    /** Case, accents, quote and dash shapes, and line breaks: what a faithful quote can still change. */
-    fun normalise(text: String): String =
-        Normalizer
-            .normalize(text, Normalizer.Form.NFKD)
-            .replace(COMBINING_MARKS, "")
-            .replace(APOSTROPHES, "'")
-            .replace(QUOTES, "\"")
-            .replace(DASHES, "-")
-            .replace(WHITESPACE, " ")
-            .trim()
-            .lowercase(Locale.ROOT)
+    fun normalise(text: String): String = QuotedText.normalise(text)
 }
 
 /** Whether a proposed act is a whole name in the title, and not cut short: "Katja" from "Katja Berlin Tour 2026" (#2997). */
