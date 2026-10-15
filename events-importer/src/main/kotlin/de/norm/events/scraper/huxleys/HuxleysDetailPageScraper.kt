@@ -9,10 +9,13 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
@@ -22,9 +25,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
+import java.time.LocalDate
 
 /**
- * Pure HTML parser for Huxleys Neue Welt event detail pages (`/event/YYYY-MM-DD-<slug>`).
+ * Pure HTML parser for Huxleys Neue Welt event detail pages (`/event/YYYY-MM-DD-<slug>`, or a bare
+ * post id such as `/event/9740`).
  *
  * One `article.event`: a `.tourtitel` tour name, an optional `.canceledsoldout` badge, an
  * `.event-info` box (poster, a labelled `Datum` / `Beginn` / `Einlass` block, the Eventim link)
@@ -78,7 +83,7 @@ class HuxleysDetailPageScraper {
             subtitle = subtitle,
             description = article.textAt(".event-content"),
             eventType = eventType,
-            eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: parseLabelledDate(details) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = labelledClock(details, DOORS_LABELS),
             startTime = labelledClock(details, START_LABELS),
             // The linked file is the full-size poster; the nested <img> is a scaled-down variant.
@@ -95,6 +100,17 @@ class HuxleysDetailPageScraper {
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(document, article)
         )
+    }
+
+    /**
+     * The `Datum: Mi. 10.03.2027` line, checked against its weekday. Read only when the permalink is a
+     * bare post id (`/event/9740`, #3313): the overview's `.date` cell has no year, so this line is
+     * then the only date. A dated slug's ISO prefix always wins.
+     */
+    private fun parseLabelledDate(details: String): LocalDate? {
+        val match = DATE_LINE.find(details) ?: return null
+        val (weekday, date) = match.destructured
+        return parseGermanDate(date)?.let { dateCheckedAgainstWeekday(it, parseGermanWeekdayAbbreviation(weekday), match.value) }
     }
 
     /**
@@ -176,6 +192,9 @@ class HuxleysDetailPageScraper {
 
         /** The sold-out badge text. */
         const val SOLD_OUT_TEXT = "ausverkauft"
+
+        /** The labelled date line, its weekday abbreviation optional: `Datum: Mi. 10.03.2027`. */
+        val DATE_LINE = Regex("""Datum:\s*(?:(\p{L}{2})\.?\s+)?(\d{1,2}\.\d{1,2}\.\d{4})""", RegexOption.IGNORE_CASE)
 
         /** A booking-fee qualifier, which makes the raw line worth keeping as a note. */
         val FEE_NOTE = Regex("""zzgl|geb(?:ü|ue)hr""", RegexOption.IGNORE_CASE)
