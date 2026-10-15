@@ -77,7 +77,7 @@
     "featuresSelected": "{n} Merkmale",
     "clearFeatures": "Merkmale zurücksetzen",
     "byFeature": "Nach Party-Merkmalen filtern",
-    "featureHint": "So, wie es im Text des Events steht. Eine Party braucht jedes gewählte Merkmal; was die Location über sich sagt, zählt nicht."
+    "featureHint": "So, wie es im Text des Events steht. Ein Event braucht jedes gewählte Merkmal; was die Location über sich sagt, zählt nicht."
   },
   "card": {
     "ourPick": "Unser Tipp",
