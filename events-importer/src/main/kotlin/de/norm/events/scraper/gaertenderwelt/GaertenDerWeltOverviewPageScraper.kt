@@ -6,7 +6,6 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
-import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -99,7 +98,7 @@ class GaertenDerWeltOverviewPageScraper {
         }
 
         val title = cleanGaertenDerWeltTitle(rawTitle)
-        val eventType = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS) ?: gamesNightOrTitleType(title)
+        val eventType = gaertenDerWeltEventType(category, title)
         val run = parseDateRange(row.textAt(".date"))?.takeIf { eventType == EventType.EXHIBITION.name }
         // A run's `.time` is the daily opening hours, not when the run ends.
         val endTime = if (run == null) parseEndClock(row.textAt(".time")) else null

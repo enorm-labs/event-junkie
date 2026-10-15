@@ -3,9 +3,11 @@ package de.norm.events.scraper.gaertenderwelt
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.classifyByGenreKeyword
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
@@ -39,6 +41,20 @@ internal val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
 
 /** The park's games night, `Spieleabend` or `Spieletreff`: a [EventType.QUIZ] (EVENT_SCOPE.md §2, #2992). */
 private val GAMES_NIGHT_PATTERN = Regex("""spiele(?:abend|treff|nacht)""", RegexOption.IGNORE_CASE)
+
+/**
+ * A row's event type: its [category] label, else the cues in its [title]. The park files readings
+ * under "Bühne/Theater" too, so a reading, screening or exhibition cue in the title beats [EventType.SHOW].
+ */
+internal fun gaertenDerWeltEventType(
+    category: String?,
+    title: String
+): String =
+    when (val mapped = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS)) {
+        null -> gamesNightOrTitleType(title)
+        EventType.SHOW.name -> classifyByGenreKeyword(title) ?: mapped
+        else -> mapped
+    }
 
 /** The type an uncategorised row's [title] names: a games night, else the shared title cues. */
 internal fun gamesNightOrTitleType(title: String): String =

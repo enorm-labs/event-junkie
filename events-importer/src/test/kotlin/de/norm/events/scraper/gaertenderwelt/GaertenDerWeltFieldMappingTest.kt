@@ -38,6 +38,14 @@ class GaertenDerWeltFieldMappingTest {
     }
 
     @Test
+    fun `types a reading the park files under Bühne-Theater by its title`() {
+        gaertenDerWeltEventType("Bühne/Theater", "Lesung Katja Oskamp") shouldBe EventType.READING.name
+        gaertenDerWeltEventType("Bühne/Theater", "Märchenhafte Abendvorstellung") shouldBe EventType.SHOW.name
+        gaertenDerWeltEventType("Konzerte", "Lesung mit Musik") shouldBe EventType.CONCERT.name
+        gaertenDerWeltEventType(null, "Spieleabend") shouldBe EventType.QUIZ.name
+    }
+
+    @Test
     fun `keeps the park's staged programme in scope`() {
         isProgrammeCategory("Konzerte") shouldBe true
         isProgrammeCategory("Open-Air Kino") shouldBe true
