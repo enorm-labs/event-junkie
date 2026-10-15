@@ -180,6 +180,7 @@ says so.
 | `FRANNZ`               | `GENRE`            | the venue tags each event only with a type (Konzert, Party, Lesung), never a genre                                                               | —     |
 | `GAERTEN_DER_WELT`     | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GAERTEN_DER_WELT`     | `PRICE`            | an event sold through an outside ticket shop prints no figure on its page                                                                        | —     |
+| `GAERTEN_DER_WELT`     | `ARTISTS`          | the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all                           | —     |
 | `GARTN`                | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `GARTN`                | `GENRE`            | the venue publishes no genre; every night takes the club's Techno default                                                                        | —     |
 | `GARTN`                | `IMAGE`            | the venue publishes no per-event image                                                                                                           | —     |

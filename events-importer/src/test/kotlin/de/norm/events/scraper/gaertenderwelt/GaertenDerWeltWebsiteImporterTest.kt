@@ -134,6 +134,42 @@ class GaertenDerWeltWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents bills a concert's teaser line-up and no act for a drone show`() =
+        runTest {
+            fun concertPage(
+                title: String,
+                teaser: String
+            ): Document {
+                val page = fixture("gaertenderwelt-detail-concert.html", CONCERT_URL)
+                page.selectFirst(".tx-events2-single h1")!!.text(title)
+                page.selectFirst(".tx-events2-single p.lead")!!.text(teaser)
+                page.select(".tx-events2-single p.textNormal").filter { it.text().startsWith("Support") }.forEach { it.remove() }
+                return page
+            }
+            coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns
+                concertPage(
+                    "Das Mega 90er Live Open Air",
+                    "5x Berlin, 5x ausverkauft! 🔥 Das MEGA 90er LIVE Open Air ist zurück – mit Haddaway, Loona, East 17 & Mütze Katze. Jetzt Tickets sichern!"
+                )
+            val lineup = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+
+            lineup.events
+                .single { it.sourceUrl == CONCERT_URL }
+                .artists
+                .map { it.name to it.role } shouldBe
+                listOf("Haddaway", "Loona", "East 17", "Mütze Katze").map { it to "HEADLINER" }
+
+            coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns
+                concertPage(
+                    "Drone Art Show: Harry Potter",
+                    "Erlebe klassische Musik und Drohnenshow unter Kerzenlicht – ein magischer Abend voller Klang, Licht und moderner Technik."
+                )
+            val drone = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+
+            drone.events.single { it.sourceUrl == CONCERT_URL }.artists shouldHaveSize 0
+        }
+
+    @Test
     fun `importEvents mints no artist for a non-concert event`() =
         runTest {
             val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
