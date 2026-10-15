@@ -231,7 +231,7 @@ they are excluded rather than counted as unreviewed.
   field in `VenueLimitations` (#3195). `missingStartTime` maps to `START_TIME`, `missingGenre` to `GENRE`, `missingPromoter`
   to `PROMOTERS`, `concertsWithoutArtist` to `ARTISTS` and `eventsTypedOther` to `EVENT_TYPE`. `missingPrice` maps to the
   whole `PRICE` aspect only. A partial declaration also counts. The snapshot and the report keep these series, and the
-  check writes an INFO line instead of the WARN. The other metrics are always judged. The table is the baseline, so nobody maintains one. There is no CI
+  check writes an INFO line instead of the WARN. The check never judges `titleDerivedSingletons` and `titleDerivedUnmatched`, because each is a queue for `/musicbrainz-review` and not a defect count (#3314). The snapshot and the worklist keep both. The other metrics are always judged. The table is the baseline, so nobody maintains one. There is no CI
   gate on fixtures: the golden tests of each scraper already fail on changed output.
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff

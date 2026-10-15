@@ -23,7 +23,8 @@ import java.time.LocalDate
  *
  * Every metric in [QualityIssue] counts something bad, so a rise is always the worse direction.
  * `totalEvents` and `suspectNonArtistTitles` are in the table too and are skipped: the first is the
- * denominator, and the second counts names rather than events.
+ * denominator, and the second counts names rather than events. The [NOT_JUDGED] review queues are
+ * skipped as well.
  *
  * `flaggedAtImport` is judged on the [FLAGGED_AT_IMPORT_KEPT_OUT] series and reported under its own
  * name (#3148). A review flag such as `UNCERTAIN_PARTY_FEATURE` fills a queue and costs the event
@@ -69,14 +70,22 @@ object DataQualityRegressionCheck {
     val ALWAYS_JUDGED: Set<QualityIssue> =
         setOf(
             QualityIssue.UNREVIEWED_LICENCE,
-            QualityIssue.TITLE_DERIVED_SINGLETONS,
-            QualityIssue.TITLE_DERIVED_UNMATCHED,
             QualityIssue.FLAGGED_AT_IMPORT
+        )
+
+    /**
+     * The review queues the gate never judges (#3314). A new act MusicBrainz does not know is a name
+     * to read in `/musicbrainz-review`, not a defect, and three of them move a small venue past the threshold.
+     */
+    val NOT_JUDGED: Set<QualityIssue> =
+        setOf(
+            QualityIssue.TITLE_DERIVED_SINGLETONS,
+            QualityIssue.TITLE_DERIVED_UNMATCHED
         )
 
     /** The metric each judged snapshot series is reported as. */
     private val METRIC_OF_SERIES =
-        QualityIssue.KEYS.associateWith { it } - QualityIssue.FLAGGED_AT_IMPORT.key +
+        QualityIssue.KEYS.associateWith { it } - NOT_JUDGED.map { it.key }.toSet() - QualityIssue.FLAGGED_AT_IMPORT.key +
             (FLAGGED_AT_IMPORT_KEPT_OUT to QualityIssue.FLAGGED_AT_IMPORT.key)
 
     /**

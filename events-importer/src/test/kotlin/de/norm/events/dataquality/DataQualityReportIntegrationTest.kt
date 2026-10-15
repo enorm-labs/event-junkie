@@ -167,6 +167,7 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
     @Test
     fun `the title-derived queue lists the four known shapes and neither control`(): Unit =
         runBlocking {
+            // The regression gate skips both queues; the worklist still lists them (#3314).
             val singletons = service.worklist(QualityIssue.TITLE_DERIVED_SINGLETONS, source = null, limit = 50, offset = 0)
             singletons.entries.map { it.slug }.toSet() shouldBe setOf("gamma-night-0", "gamma-night-1", "gamma-night-2", "gamma-night-3")
 

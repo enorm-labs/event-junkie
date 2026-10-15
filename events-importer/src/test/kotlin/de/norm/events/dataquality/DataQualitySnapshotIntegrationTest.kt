@@ -113,7 +113,9 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
             rows.map { it.sourceSlug }.toSet() shouldBe setOf("alpha")
             // totalEvents + every QualityIssue metric + flaggedAtImportKeptOut + suspectNonArtistTitles.
             rows.size shouldBe QualityIssue.entries.size + 3
+            // The regression gate skips the two review queues, and the snapshot still counts them (#3314).
             rows.single { it.metric == "titleDerivedSingletons" }.metricCount shouldBe 0L
+            rows.single { it.metric == "titleDerivedUnmatched" }.metricCount shouldBe 0L
             rows.single { it.metric == "totalEvents" }.metricCount shouldBe 1L
             rows.single { it.metric == "concertsWithoutArtist" }.metricCount shouldBe 1L
             // The seeded source has no licence_reviewed_at, which is the state every source is in
