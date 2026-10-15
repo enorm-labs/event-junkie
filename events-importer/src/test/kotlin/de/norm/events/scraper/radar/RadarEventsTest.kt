@@ -45,6 +45,14 @@ class RadarEventsTest {
     }
 
     @Test
+    fun `files an open-decks night radar calls a concert as a party`() {
+        val drugstore = parseRadarEvents(fixture("drugstore"), "Drugstore").events
+        // Node 598025 is filed under music/concert and party, and its body reads "Open Breakbeat Decks".
+        drugstore.single { it.nodeId == 598025L }.eventType shouldBe "PARTY"
+        drugstore.single { it.title == "Hardcore for Solidarity" }.eventType shouldBe "CONCERT"
+    }
+
+    @Test
     fun `reads no end where radar repeats the start as the end`() {
         koepi.events
             .single { it.nodeId == 577799L }

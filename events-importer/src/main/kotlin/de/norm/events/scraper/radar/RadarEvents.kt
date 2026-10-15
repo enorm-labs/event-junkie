@@ -23,6 +23,9 @@ private val logger = KotlinLogging.logger {}
 /** The categories that make a row programme: the rest is bars, food, film, meetings and protest. */
 private val PROGRAMME_CATEGORIES = setOf("music/concert", "party")
 
+/** An open-decks night ("Open Breakbeat Decks"), which radar can file under concert: a DJ party, not a band. */
+private val OPEN_DECKS = Regex("""\b(?:open|offene)[\s-]+(?:\p{L}+\s+)?decks?\b""", RegexOption.IGNORE_CASE)
+
 private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
 
 /** One programme row of a radar group, in the venue's local time. */
@@ -40,8 +43,14 @@ data class RadarEvent(
     val price: String?,
     val categories: List<String>
 ) {
-    /** `PARTY` for a row radar files as a party only, `CONCERT` wherever it names a concert. */
-    val eventType: String get() = if ("music/concert" in categories) EventType.CONCERT.name else EventType.PARTY.name
+    /** `CONCERT` where radar names a concert, but `PARTY` for a party-only row or an open-decks night. */
+    val eventType: String
+        get() =
+            if ("music/concert" in categories && !OPEN_DECKS.containsMatchIn("$title ${description.orEmpty()}")) {
+                EventType.CONCERT.name
+            } else {
+                EventType.PARTY.name
+            }
 }
 
 /** The rows of one response, and the `count` radar reports, which exceeds the rows when a page is cut short. */
