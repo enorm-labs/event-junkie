@@ -135,7 +135,7 @@ class DataQualityRegressionCheckTest {
     }
 
     @Test
-    fun `every QualityIssue is checked`() {
+    fun `every QualityIssue but the review queues is checked`() {
         val series = QualityIssue.KEYS - flagged + keptOut
         val today = series.map { row(0, 50, metric = it) }
         val history = series.flatMap { metric -> (1L..3L).map { row(it, 0, metric = metric) } }
@@ -145,7 +145,17 @@ class DataQualityRegressionCheckTest {
             .filter { it.regressed }
             .map { it.metric }
             .toSet() shouldBe
-            QualityIssue.KEYS.toSet()
+            QualityIssue.KEYS.toSet() - DataQualityRegressionCheck.NOT_JUDGED.map { it.key }.toSet()
+    }
+
+    @Test
+    fun `new acts MusicBrainz does not know at a small venue are not a regression`() {
+        // PANDA platforma on 2026-10-14: three unknown acts of 21 events, against seven days at none.
+        val issues = DataQualityRegressionCheck.NOT_JUDGED.map { it.key }
+        val today = issues.map { row(0, count = 3, total = 21, metric = it) }
+        val history = issues.flatMap { metric -> (1L..7L).map { row(it, count = 0, total = 21, metric = metric) } }
+
+        DataQualityRegressionCheck.check(today, history).shouldBeEmpty()
     }
 
     @Test
@@ -219,11 +229,16 @@ class DataQualityRegressionCheckTest {
     }
 
     @Test
-    fun `every QualityIssue is either mapped to a limited aspect or listed as always judged`() {
-        DataQualityRegressionCheck.ACCEPTED_ASPECT.keys
-            .intersect(DataQualityRegressionCheck.ALWAYS_JUDGED)
-            .shouldBeEmpty()
-        (DataQualityRegressionCheck.ACCEPTED_ASPECT.keys + DataQualityRegressionCheck.ALWAYS_JUDGED) shouldBe QualityIssue.entries.toSet()
+    fun `every QualityIssue is mapped to a limited aspect, always judged or never judged, and only one of them`() {
+        val groups =
+            listOf(
+                DataQualityRegressionCheck.ACCEPTED_ASPECT.keys,
+                DataQualityRegressionCheck.ALWAYS_JUDGED,
+                DataQualityRegressionCheck.NOT_JUDGED
+            )
+
+        groups.sumOf { it.size } shouldBe QualityIssue.entries.size
+        groups.flatten().toSet() shouldBe QualityIssue.entries.toSet()
     }
 
     @Test
