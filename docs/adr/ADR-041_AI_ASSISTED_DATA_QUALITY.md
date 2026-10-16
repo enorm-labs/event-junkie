@@ -48,7 +48,8 @@ platform it would serve.
 The rules:
 
 1. **One integration.** Every AI step uses Spring AI with the Anthropic model module, configured inside its own conditional bean, as translation does. No
-   step adds a second client or a second vendor.
+   step adds a second client or a second vendor. [ADR-050](ADR-050_ONE_SHARED_ANTHROPIC_CLIENT.md) amends this rule: each step has its own bean over the
+   shared `ai` client.
 2. **Haiku by default, Sonnet per check.** Each check has its own model property. A check moves to Sonnet only when its false-positive rate on Haiku is
    too high. The measurement goes into the issue of that check.
 3. **Suggest only.** A check produces a finding with its evidence. It never writes to an event, an artist or a vocabulary. A person applies the fix, through

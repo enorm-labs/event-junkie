@@ -8,6 +8,7 @@ The application modules and the dependencies between them, as Spring Modulith re
 
 ```mermaid
 flowchart TD
+    ai["ai"]
     artist["artist"]
     common["common «open»"]
     dataquality["dataquality"]
@@ -30,6 +31,7 @@ flowchart TD
 
     artist --> common
     artist --> slug
+    dataquality --> ai
     dataquality --> common
     dataquality --> event
     dataquality --> importing
@@ -61,6 +63,7 @@ flowchart TD
     importing --> translation
     importing --> venue
     importing --> wikimedia
+    instagram --> ai
     instagram --> common
     musicbrainz --> artist
     musicbrainz --> common
@@ -71,6 +74,7 @@ flowchart TD
     scraper --> genretag
     scraper --> licence
     scraper --> slug
+    translation --> ai
     translation --> event
     venue --> common
     venue --> slug

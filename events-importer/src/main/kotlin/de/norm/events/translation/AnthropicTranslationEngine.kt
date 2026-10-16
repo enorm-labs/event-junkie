@@ -1,14 +1,10 @@
 package de.norm.events.translation
 
+import de.norm.events.ai.AnthropicClient
+import de.norm.events.ai.AnthropicSettings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
-import org.springframework.ai.anthropic.AnthropicChatModel
-import org.springframework.ai.anthropic.AnthropicChatOptions
-import org.springframework.ai.chat.messages.SystemMessage
-import org.springframework.ai.chat.messages.UserMessage
-import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -24,8 +20,7 @@ import java.util.Locale
  * cost at this corpus size is a rounding error either way.
  *
  * **Spring AI rather than the HTTP API**, so this project has one model integration rather than one
- * per feature. #473 owns that choice for every AI-assisted step, and translation was its first
- * caller.
+ * per feature. The shared [AnthropicClient] holds it (ADR-041 rule 1, ADR-050).
  *
  * **The output is checked before it is accepted.** The input is someone else's promotional copy, so
  * it is untrusted, and what comes back would be published as that venue's meaning. [isPlausible]
@@ -38,33 +33,19 @@ class AnthropicTranslationEngine(
     /** The importer's own registry, so token use and latency land beside every other meter (ADR-015). */
     meterRegistry: MeterRegistry,
     /** The shared IO dispatcher bean, as `HtmlFetcher` takes it. */
-    @Qualifier("ioDispatcher") private val ioDispatcher: CoroutineDispatcher,
+    @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher,
     /** Overridden only by the test, which points it at a local server. */
-    baseUrl: String = DEFAULT_BASE_URL
+    baseUrl: String = AnthropicClient.DEFAULT_BASE_URL
 ) : TranslationEngine {
     private val logger = KotlinLogging.logger {}
 
-    private val chatOptions =
-        AnthropicChatOptions
-            .builder()
-            .baseUrl(baseUrl)
-            .apiKey(properties.apiKey)
-            .timeout(properties.timeout)
-            .maxRetries(properties.maxRetries)
-            .model(properties.model)
-            .maxTokens(MAX_TOKENS)
-            // Deterministic, because two runs over one description should not differ. A translation
-            // is regenerated whenever the venue rewrites its text, and a drifting one would read as
-            // a change the venue did not make.
-            .temperature(0.0)
-            .build()
-
-    private val chatModel =
-        AnthropicChatModel
-            .builder()
-            .options(chatOptions)
-            .meterRegistry(meterRegistry)
-            .build()
+    private val client =
+        AnthropicClient(
+            AnthropicSettings(properties.apiKey, properties.model, properties.timeout, properties.maxRetries, MAX_TOKENS),
+            meterRegistry,
+            ioDispatcher,
+            baseUrl
+        )
 
     override val id = "anthropic:${properties.model}"
 
@@ -93,36 +74,11 @@ class AnthropicTranslationEngine(
         )
     }
 
-    /**
-     * Calls the model on an IO thread.
-     *
-     * Spring AI's `call` is blocking, and this runs inside the importer's coroutines on a Netty
-     * event loop (ADR-001). Without the switch, one translation would stall every other source's
-     * HTTP work for the length of the call.
-     */
-    private suspend fun call(request: TranslationRequest): String? =
-        withContext(ioDispatcher) {
-            val prompt =
-                Prompt(
-                    listOf(SystemMessage(systemPrompt(request)), UserMessage(request.text)),
-                    chatOptions
-                )
-            val response = chatModel.call(prompt)
-            // A safety classifier declines with a finish reason rather than an error, so reading the
-            // text without checking would hand back an empty translation as though it were real.
-            val finishReason = response.result?.metadata?.finishReason
-            if (finishReason.equals(REFUSAL, ignoreCase = true)) {
-                logger.warn { "The model declined to translate a description" }
-                null
-            } else {
-                response
-                    .result
-                    ?.output
-                    ?.text
-                    ?.trim()
-                    ?.takeIf { it.isNotEmpty() }
-            }
-        }
+    private suspend fun call(request: TranslationRequest): String? {
+        val reply = client.call(systemPrompt(request), request.text)
+        if (reply.refused) logger.warn { "The model declined to translate a description" }
+        return reply.text
+    }
 
     /**
      * The rule the model is held to, and the reason this is an LLM rather than a glossary.
@@ -182,13 +138,8 @@ class AnthropicTranslationEngine(
     }
 
     private companion object {
-        const val DEFAULT_BASE_URL = "https://api.anthropic.com"
-
         /** Generous for a description: the longest in the corpus is 16,763 characters. */
         const val MAX_TOKENS = 8192
-
-        /** What Anthropic reports when a safety classifier declines the request. */
-        const val REFUSAL = "refusal"
 
         /** German runs longer than English, and a summary runs far shorter than either. */
         const val MIN_LENGTH_RATIO = 0.5

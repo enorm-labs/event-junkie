@@ -1,15 +1,10 @@
 package de.norm.events.instagram
 
+import de.norm.events.ai.AnthropicClient
+import de.norm.events.ai.AnthropicSettings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
-import org.springframework.ai.anthropic.AnthropicChatModel
-import org.springframework.ai.anthropic.AnthropicChatOptions
-import org.springframework.ai.chat.messages.SystemMessage
-import org.springframework.ai.chat.messages.UserMessage
-import org.springframework.ai.chat.model.ChatResponse
-import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.content.Media
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -22,7 +17,7 @@ import java.util.Locale
 /**
  * Asks Claude, through Spring AI, which events one Instagram post announces (ADR-048 rule 4).
  *
- * The same integration as `AnthropicEventClassifier` (ADR-041 rule 1). The caption goes in as a JSON
+ * The shared [AnthropicClient] (ADR-041 rule 1, ADR-050). The caption goes in as a JSON
  * document, the post's images beside it (ADR-049), and the system prompt calls both data, because a
  * venue wrote them. [PostExtractionValidator] checks every answer against the caption and the text
  * the model read off the images.
@@ -32,30 +27,19 @@ import java.util.Locale
 class AnthropicPostExtractor(
     private val properties: InstagramProperties,
     meterRegistry: MeterRegistry,
-    @Qualifier("ioDispatcher") private val ioDispatcher: CoroutineDispatcher,
+    @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher,
     /** Overridden only by the test, which points it at a local server. */
-    baseUrl: String = DEFAULT_BASE_URL
+    baseUrl: String = AnthropicClient.DEFAULT_BASE_URL
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private val chatOptions =
-        AnthropicChatOptions
-            .builder()
-            .baseUrl(baseUrl)
-            .apiKey(properties.apiKey)
-            .timeout(properties.modelTimeout)
-            .maxRetries(properties.maxRetries)
-            .model(properties.model)
-            .maxTokens(MAX_TOKENS)
-            .temperature(0.0)
-            .build()
-
-    private val chatModel =
-        AnthropicChatModel
-            .builder()
-            .options(chatOptions)
-            .meterRegistry(meterRegistry)
-            .build()
+    private val client =
+        AnthropicClient(
+            AnthropicSettings(properties.apiKey, properties.model, properties.modelTimeout, properties.maxRetries, MAX_TOKENS),
+            meterRegistry,
+            ioDispatcher,
+            baseUrl
+        )
 
     val model: String = properties.model
 
@@ -81,33 +65,12 @@ class AnthropicPostExtractor(
         )
     }
 
-    /** On an IO thread, because Spring AI's `call` blocks and this runs on a Netty event loop (ADR-001). */
-    private suspend fun call(input: PostInput): Pair<String?, Long> =
-        withContext(ioDispatcher) {
-            val user =
-                UserMessage
-                    .builder()
-                    .text(userMessage(input))
-                    .media(input.images.map { Media(it.mediaType, ByteArrayResource(it.bytes)) })
-                    .build()
-            val response = chatModel.call(Prompt(listOf(SystemMessage(SYSTEM_PROMPT), user), chatOptions))
-            val tokens = tokensOf(response)
-            val result = response.result
-            if (result?.metadata?.finishReason.equals(REFUSAL, ignoreCase = true)) {
-                logger.warn { "The model declined to read a caption" }
-                null to tokens
-            } else {
-                result
-                    ?.output
-                    ?.text
-                    ?.trim()
-                    ?.takeIf { it.isNotEmpty() } to tokens
-            }
-        }
-
-    private fun tokensOf(response: ChatResponse): Long =
-        response.metadata.usage
-            .let { it.promptTokens.toLong() + it.completionTokens.toLong() }
+    private suspend fun call(input: PostInput): Pair<String?, Long> {
+        val media = input.images.map { Media(it.mediaType, ByteArrayResource(it.bytes)) }
+        val reply = client.call(SYSTEM_PROMPT, userMessage(input), media)
+        if (reply.refused) logger.warn { "The model declined to read a caption" }
+        return reply.text to reply.promptTokens + reply.completionTokens
+    }
 
     /** The post as a JSON document, so no caption can pose as part of the instructions. */
     private fun userMessage(input: PostInput): String =
@@ -122,9 +85,7 @@ class AnthropicPostExtractor(
         )
 
     private companion object {
-        const val DEFAULT_BASE_URL = "https://api.anthropic.com"
         const val MAX_TOKENS = 4096
-        const val REFUSAL = "refusal"
 
         /** Instagram caps a caption at 2,200 characters. */
         const val MAX_CAPTION_CHARS = 2200

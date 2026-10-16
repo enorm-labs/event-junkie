@@ -18,7 +18,8 @@ import org.springframework.modulith.ApplicationModule
  * It also holds Pillar 4's suggestion store (`event_suggestion`, #474). A suggestion is a proposal
  * with its evidence, and writing one still writes no event: a person applies it through
  * `PUT /api/admin/events/{id}` (ADR-041 rule 3). `common` supplies the paged envelope. The first
- * check that writes suggestions is `classification.EventClassificationCheck` (#3241).
+ * check that writes suggestions is `classification.EventClassificationCheck` (#3241). It asks the
+ * model through the `ai` module's client (ADR-050).
  */
-@ApplicationModule(allowedDependencies = ["event", "importing", "scraper", "common"])
+@ApplicationModule(allowedDependencies = ["event", "importing", "scraper", "common", "ai"])
 class DataQualityModule
