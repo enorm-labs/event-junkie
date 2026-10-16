@@ -553,31 +553,31 @@
         },
         {
           "name": "org.jetbrains.kotlin:kotlin-reflect",
-          "version": "2.4.10",
+          "version": "2.4.21",
           "url": "https://kotlinlang.org/",
           "ecosystem": "backend"
         },
         {
           "name": "org.jetbrains.kotlin:kotlin-stdlib",
-          "version": "2.4.10",
+          "version": "2.4.21",
           "url": "https://kotlinlang.org/",
           "ecosystem": "backend"
         },
         {
           "name": "org.jetbrains.kotlin:kotlin-stdlib-common",
-          "version": "2.4.10",
+          "version": "2.4.21",
           "url": "https://kotlinlang.org/",
           "ecosystem": "backend"
         },
         {
           "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
-          "version": "2.4.10",
+          "version": "2.4.21",
           "url": "https://kotlinlang.org/",
           "ecosystem": "backend"
         },
         {
           "name": "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
-          "version": "2.4.10",
+          "version": "2.4.21",
           "url": "https://kotlinlang.org/",
           "ecosystem": "backend"
         },
