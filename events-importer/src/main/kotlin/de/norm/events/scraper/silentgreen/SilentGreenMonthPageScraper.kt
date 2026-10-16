@@ -124,7 +124,7 @@ class SilentGreenMonthPageScraper {
             ticketUrl = row.hrefAt(".eventList-event-ticket a"),
             soldOut = rawTitle.contains(SOLD_OUT_MARKER, ignoreCase = true),
             status = parseEventStatus(rawTitle),
-            artists = silentGreenArtists(title, eventType),
+            artists = silentGreenArtists(title, eventType, subLine),
             promoters = silentGreenPresenters(subLine)
         )
     }

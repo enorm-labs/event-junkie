@@ -2,6 +2,7 @@ package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -181,9 +182,9 @@ class SilentGreenMonthPageScraperTest {
         val series = september.first { it.title.startsWith("15 YEARS zweikommasieben") }
         series.artists.map { it.name } shouldContainExactly listOf("Anna Homler", "Steven Warwick", "zweikommasieben DJs")
 
-        // A colon with a single name after it is a title, not a series and its act — so it stays whole.
-        val single = august.first { it.title == "The I in the Mirror: Reflection" }
-        single.artists.map { it.name } shouldContainExactly listOf("The I in the Mirror: Reflection")
+        // A colon with a single name after it is a programme title, not a series and its act, and the row bills
+        // nobody else, so it bills nobody (#3415).
+        august.first { it.title == "The I in the Mirror: Reflection" }.artists.shouldBeEmpty()
     }
 
     @Test

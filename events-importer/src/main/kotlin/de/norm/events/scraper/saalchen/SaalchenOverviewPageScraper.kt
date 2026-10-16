@@ -130,7 +130,7 @@ class SaalchenOverviewPageScraper {
             // wording is kept whenever it names one.
             priceNote = entrance,
             artists =
-                (buildArtistsForEventType(title, subtitle = null, eventType = eventType) + parseLineupSentence(row))
+                (buildArtistsForEventType(saalchenActs(title), subtitle = null, eventType = eventType) + parseLineupSentence(row))
                     .distinctBy { it.name.lowercase() }
         )
     }
@@ -236,6 +236,15 @@ class SaalchenOverviewPageScraper {
             .map { Jsoup.parse(it).body() }
     }
 }
+
+/**
+ * The title without a numbered programme after a dash: `"Stegreif Orchester – freeEroica #1"` bills
+ * the orchestra, not `freeEroica #1` fused to it (#3415).
+ */
+internal fun saalchenActs(title: String): String = title.replace(NUMBERED_WORK_TAIL, "").trim().ifBlank { title }
+
+/** A spaced dash, then a work and its `#<n>` instalment, at the end of a title. */
+private val NUMBERED_WORK_TAIL = Regex("""\s+[–—-]\s+[^–—]+?\s*#\s*\d+\s*$""")
 
 /** A notice line naming the ticket shop: `Tickets` alone, or `Tickets: <link>`. */
 private fun String.isTicketLine(): Boolean = equals(TICKETS_LABEL, ignoreCase = true) || startsWith("$TICKETS_LABEL:", ignoreCase = true)

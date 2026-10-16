@@ -271,6 +271,16 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `cuts the show after two acts before splitting them`() {
+        // Stored as `Polak - Friendly Fire` until V167 (#3415).
+        event("beisenherz_und_polak-friendly_fire_2026-09-13_19").artists.map { it.name } shouldContainExactly
+            listOf("Beisenherz", "Polak")
+        events.first { it.title == "Elena Uhlig & Fritz Karl" }.artists.map { it.name } shouldContainExactly
+            listOf("Elena Uhlig", "Fritz Karl")
+        tempodromActs("Clemens Brock - Der Vadda") shouldBe "Clemens Brock - Der Vadda"
+    }
+
+    @Test
     fun `keeps a decoded ampersand act whole instead of splitting it into two headliners`() {
         // Decoding exposes the `&` to the co-bill splitter; this choir is one act, not two.
         val scala = events.first { it.title == "Scala & Kolacny Brothers" }

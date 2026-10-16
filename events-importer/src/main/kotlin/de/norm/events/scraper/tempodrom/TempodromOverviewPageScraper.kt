@@ -250,19 +250,29 @@ private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
  * The title is the act at Tempodrom, comedy included: "Oliver Polak" / "COMEDY - Clubtour 2026".
  * A comedy night is billed like a concert without the format line, which names no support act.
  * The shared comedy rule wants "<Performer> – <Show>" in the title, and Tempodrom never writes it.
- * A format line that opens with `mit` names the acts instead of the title.
+ * A format line that opens with `mit` names the acts instead of the title. Two acts joined by `&`
+ * lose the show after the last ` - ` first, or the second act keeps it: `"Beisenherz & Polak - Friendly
+ * Fire"` billed `Polak - Friendly Fire` (#3415).
  */
 private fun tempodromArtists(
     title: String,
     subtitle: String?,
     eventType: String
-): List<ScrapedArtist> =
-    subtitle?.let(::castFromFormatLine)?.takeIf { it.isNotEmpty() }
+): List<ScrapedArtist> {
+    val acts = tempodromActs(title)
+    return subtitle?.let(::castFromFormatLine)?.takeIf { it.isNotEmpty() }
         ?: if (eventType == EventType.COMEDY.name) {
-            buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name)
+            buildArtistsForEventType(acts, subtitle = null, eventType = EventType.CONCERT.name)
         } else {
-            buildArtistsForEventType(title, subtitle, eventType)
+            buildArtistsForEventType(acts, subtitle, eventType)
         }
+}
+
+/** [title] without the ` - <show>` after a pair of acts joined by `&`; any other title unchanged. */
+internal fun tempodromActs(title: String): String = ACTS_THEN_SHOW.matchEntire(title.trim())?.groupValues?.get(1) ?: title
+
+/** Acts joined by a spaced `&`, then the last spaced hyphen and the show after it. */
+private val ACTS_THEN_SHOW = Regex("""(.+?\s&\s.+)\s+-\s+[^-]+""")
 
 /**
  * The acts a `mit <names>` format line bills, without a trailing `uvm.`: "mit Marc-Uwe Kling, Sarah
