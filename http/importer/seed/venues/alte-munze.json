@@ -14,8 +14,16 @@
         "descriptionAlt": "Ein Kulturquartier in der ehemaligen Berliner Münzprägeanstalt an der Spree, mit Ausstellungen, Konzerten, Festivals, Operntagen, Messen und Open-Air-Kino.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["cultural-centre"],
-        "programmeUrl": "https://www.alte-muenze-berlin.de/programm/",
         "reviewedAt": "2026-10-13T18:00:00Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Alte Münze",
+            "url": "https://www.alte-muenze-berlin.de/wp-json/tribe/events/v1/events",
+            "sourceType": "ALTE_MUENZE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

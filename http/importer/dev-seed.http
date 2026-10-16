@@ -541,7 +541,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Alte Münze — not imported
+# Alte Münze
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Alte Münze venue ---
@@ -563,13 +563,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein Kulturquartier in der ehemaligen Berliner Münzprägeanstalt an der Spree, mit Ausstellungen, Konzerten, Festivals, Operntagen, Messen und Open-Air-Kino.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["cultural-centre"],
-    "programmeUrl": "https://www.alte-muenze-berlin.de/programm/",
     "reviewedAt": "2026-10-13T18:00:00Z"
 }
 
 > {%
+    client.global.set("venue_id_alte_munze", response.body.id);
     client.test("Alte Münze venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Alte Münze event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_alte_munze}},
+    "name": "Alte Münze",
+    "url": "https://www.alte-muenze-berlin.de/wp-json/tribe/events/v1/events",
+    "sourceType": "ALTE_MUENZE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Alte Münze event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Alte Münze import ---
+POST {{importer-host}}/api/admin/event-sources/alte-munze/import
+Accept: application/json
+
+> {%
+    client.test("Alte Münze import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

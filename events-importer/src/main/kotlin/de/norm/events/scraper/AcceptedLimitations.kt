@@ -10,6 +10,7 @@ import de.norm.events.scraper.admiralspalast.ADMIRALSPALAST_LIMITATIONS
 import de.norm.events.scraper.aeden.AEDEN_LIMITATIONS
 import de.norm.events.scraper.aeg.AEG_LIMITATIONS
 import de.norm.events.scraper.altekantine.ALTE_KANTINE_LIMITATIONS
+import de.norm.events.scraper.altemuenze.ALTE_MUENZE_LIMITATIONS
 import de.norm.events.scraper.amt.AMT_LIMITATIONS
 import de.norm.events.scraper.arcanoa.ARCANOA_LIMITATIONS
 import de.norm.events.scraper.artstalker.ART_STALKER_LIMITATIONS
@@ -170,6 +171,7 @@ object AcceptedLimitations {
             AEDEN_LIMITATIONS,
             AEG_LIMITATIONS,
             ALTE_KANTINE_LIMITATIONS,
+            ALTE_MUENZE_LIMITATIONS,
             AMT_LIMITATIONS,
             ARCANOA_LIMITATIONS,
             ART_STALKER_LIMITATIONS,
