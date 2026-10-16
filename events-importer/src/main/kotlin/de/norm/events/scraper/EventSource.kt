@@ -130,6 +130,9 @@ enum class EventSource {
     /** Gärten der Welt Berlin – the Marzahn landscape park of international themed gardens, whose Arena stages open-air concerts and park festivals. */
     GAERTEN_DER_WELT,
 
+    /** Galiläakirche Berlin – a 1910 brick Gothic Revival church on Rigaer Straße, no longer holding services, now a stage for concerts, film and theatre. */
+    GALILAEAKIRCHE,
+
     /** gART.n Berlin – an open-air garden club on the Rummelsburger Bucht, running daytime techno and house parties at the weekend. */
     GARTN,
 

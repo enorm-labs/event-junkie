@@ -13,8 +13,16 @@
         "descriptionAlt": "Die backsteingotische Kirche von 1910 in der Rigaer Straße hält keine Gottesdienste mehr und ist heute ein unabhängiger Ort für Konzerte, Film, Theater und Lesungen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue", "cultural-centre"],
-        "programmeUrl": "https://galilaea-kirche.de/programm/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Galiläakirche",
+            "url": "https://galilaea-kirche.de/programm/",
+            "sourceType": "GALILAEAKIRCHE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
