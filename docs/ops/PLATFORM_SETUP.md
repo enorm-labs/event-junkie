@@ -274,7 +274,7 @@ reached 99 on two cores ([#271](https://github.com/enorm-labs/event-junkie/issue
 
 **The upgrade path is a single step:** `CX43` (8 vCPU / 16 GB) if OpenObserve outgrows ADR-015's footprint test, or if Grafana joins it. Nothing else in the
 design changes. `cx43` is supported in `eu-central` but frequently out of stock. `infra/check-capacity.sh --probe` is the only way to find out, because
-Hetzner's `datacenters` endpoint both advertises types it will not sell and omits types it will (§10).
+Hetzner's `datacenters` endpoint both advertises types it will not sell and omits types it will (§11).
 
 **Keep the two production nodes in one _location_.** Every query crosses that link and inter-location latency lands on every request. The network _zone_ is a
 different thing: Hetzner charges nothing for traffic within `eu-central`, so the buckets pin the servers nowhere.
@@ -419,7 +419,7 @@ Five decisions in it are worth not re-deriving:
 - **The Trivy gate blocks on CRITICAL and HIGH _that have a fix_.** `--ignore-unfixed` is load-bearing. A base-image CVE with no upstream fix would otherwise
   block every release until someone deleted the gate, which is how gates die. Waivers go in `.trivyignore` with a reason and a date.
 
-**Images are multi-arch**: same chart, same tags, digests per platform. That is what keeps the door open to ARM whenever it becomes buyable again (§10).
+**Images are multi-arch**: same chart, same tags, digests per platform. That is what keeps the door open to ARM whenever it becomes buyable again (§11).
 
 The versioning scheme is in [DEVELOPMENT.md](../DEVELOPMENT.md#versions-and-cutting-a-release). One number is read from the release tags and the commits
 (ADR-032). Snapshots are prereleases _of the coming release_, and `latest` is published but never consumed.
@@ -1182,20 +1182,7 @@ Everything below the cloud layer can be exercised without spending money — `/k
 
 ---
 
-## 10. What is left
-
-Every decision in this document is made. What remains is work, tracked in the
-[`v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones):
-
-|                                                                                                     |                                                                             |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **Monitoring and alerting** — [#271](https://github.com/enorm-labs/event-junkie/issues/271)         | The zero-events alert is a **go-live blocker**, not a nice-to-have          |
-| **Rate limiting and abuse control** — [#268](https://github.com/enorm-labs/event-junkie/issues/268) | §8 item 9's other half                                                      |
-| **Deploy to production** — [#285](https://github.com/enorm-labs/event-junkie/issues/285)            | The application is installed; go-live is flipping `publish_dns`             |
-| **Legal sign-off** — [LEGAL.md](../LEGAL.md) §14                                                    | Clearing `INFRASTRUCTURE_IS_PROPOSED` only after the notice matches reality |
-| **SEO** — `sitemap.xml` and the ADR-014 sidecar                                                     | Neither is built                                                            |
-
-### Three things nobody needs, and why
+## 10. Three things nobody needs, and why
 
 **OpenSearch — no, and probably never.** PostgreSQL full-text search is genuinely enough here. `tsvector` plus a GIN index handles tens of thousands of events with
 room to spare. `pg_trgm` covers fuzzy venue and artist matching, and `unaccent` handles the German. Against that, OpenSearch is a second JVM wanting 2 GB

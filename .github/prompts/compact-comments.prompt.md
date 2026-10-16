@@ -89,8 +89,8 @@ compressing a paragraph that should have been deleted.
 
 - **DELETE** — the boilerplate #393 removed and copying a scraper puts back: `@param document the parsed Jsoup document`, "performs no I/O", the
   fixture-and-mock setup.
-- **RELOCATE, and check first** — a fenced `Example:` block in KDoc is usually a second copy of an assertion that exists. Grep its strings against the test
-  tree; if the tests hold them, the block goes.
+- **RELOCATE, and check first** — a fenced `Example:` block in KDoc is usually a second copy of an assertion that exists. Grep its strings against the Kotlin
+  test sources (`src/test/**/*.kt`), not the fixtures: a fixture can hold a string no assertion checks (#998). If an assertion holds them, the block goes.
 - **KEEP, and compress** — the trade-off, the outside constraint, the failure the shape avoids. The `asd-ste100` skill does the rewrite: ≤20-word sentences,
   active, present, one word per concept, ≤3 sentences.
 
