@@ -1,9 +1,9 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ class SplitBadehausMeetsArtistMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("142").migrate()
+        flyway(postgres, "142").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -33,7 +33,7 @@ class SplitBadehausMeetsArtistMigrationTest {
             )
             plantEvent(statement, NIGHT, FUSED, "gomez")
         }
-        flyway("145").migrate()
+        flyway(postgres, "145").migrate()
     }
 
     @AfterAll
@@ -60,14 +60,6 @@ class SplitBadehausMeetsArtistMigrationTest {
         artistSlugFor("Roots Daughters") shouldBe "roots-daughters"
         artistSlugFor("La Comadre Soundsystem") shouldBe "la-comadre-soundsystem"
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     /** One night billing the artists of [slugs], in billing order. */
     private fun plantEvent(

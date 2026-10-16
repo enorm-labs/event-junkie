@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -20,14 +20,14 @@ class DropUnsureMarkMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("56").migrate()
+        flyway(postgres, "56").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO artist (name, slug) VALUES ('Octave?', 'octave')")
             // Same shape, another slug: the migration names one row only.
             statement.execute("INSERT INTO artist (name, slug) VALUES ('Therapy?', 'therapy')")
         }
-        flyway("57").migrate()
+        flyway(postgres, "57").migrate()
     }
 
     @AfterAll
@@ -41,14 +41,6 @@ class DropUnsureMarkMigrationTest {
         names()["octave"] shouldBe "Octave"
         names()["therapy"] shouldBe "Therapy?"
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun names(): Map<String, String> =
         connection.createStatement().use { statement ->

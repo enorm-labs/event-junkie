@@ -1,11 +1,11 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ class SplitOhmB2bArtistsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("86").migrate()
+        flyway(postgres, "86").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -59,7 +59,7 @@ class SplitOhmB2bArtistsMigrationTest {
             )
             plantEvent(statement, "ohm:2026-10-31-garage-girls", "amaliah-b2b-niks" to "DJ", "dj-northern" to "DJ")
         }
-        flyway("88").migrate()
+        flyway(postgres, "88").migrate()
     }
 
     @AfterAll
@@ -112,14 +112,6 @@ class SplitOhmB2bArtistsMigrationTest {
             .map { (slug, name) -> "'$slug' is named '$name'" }
             .shouldBeEmpty()
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun plantArtist(
         statement: Statement,

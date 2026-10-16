@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +22,7 @@ class DropRenatePerformancesByArtistMigrationTest {
     fun migrateToBefore() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("90").migrate()
+        flyway(postgres, "90").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -43,7 +43,7 @@ class DropRenatePerformancesByArtistMigrationTest {
 
     @Test
     fun `removes the label row billed only by Renate and keeps the event`() {
-        flyway("91").migrate()
+        flyway(postgres, "91").migrate()
 
         slugs("artist") shouldContainExactlyInAnyOrder listOf("tallest-woman-alive")
         slugs("event") shouldContainExactlyInAnyOrder listOf("renate-2026-10-03-renate-klubnacht")
@@ -55,7 +55,7 @@ class DropRenatePerformancesByArtistMigrationTest {
             statement.execute("SET search_path TO events")
             plantEvent(statement, "so36:1", "performances-by")
         }
-        flyway("91").migrate()
+        flyway(postgres, "91").migrate()
 
         slugs("artist") shouldContainExactlyInAnyOrder listOf("performances-by", "tallest-woman-alive")
     }
@@ -75,14 +75,6 @@ class DropRenatePerformancesByArtistMigrationTest {
                 "SELECT e.id, a.id FROM event e, artist a WHERE e.source_id = '$sourceId' AND a.slug = '$artistSlug'"
         )
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun slugs(table: String): List<String> =
         connection.createStatement().use { statement ->

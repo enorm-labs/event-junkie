@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.sql.Connection
@@ -64,17 +64,6 @@ class BackfillArtistSlugAliasMigrationTest {
     ) {
         statement.execute("INSERT INTO artist (name, slug) VALUES ('$slug', '$slug')")
     }
-
-    private fun flyway(
-        postgres: PostgreSQLContainer,
-        target: String
-    ): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun aliases(connection: Connection): Map<String, String> =
         connection.createStatement().use { statement ->

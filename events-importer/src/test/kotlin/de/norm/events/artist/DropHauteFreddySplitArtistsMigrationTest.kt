@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ class DropHauteFreddySplitArtistsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("63").migrate()
+        flyway(postgres, "63").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -32,7 +32,7 @@ class DropHauteFreddySplitArtistsMigrationTest {
             // A `Freddy` billed on another night is a different act, so the row stays.
             plantEvent(statement, "other-night", "Freddy Live", "freddy")
         }
-        flyway("64").migrate()
+        flyway(postgres, "64").migrate()
     }
 
     @AfterAll
@@ -63,14 +63,6 @@ class DropHauteFreddySplitArtistsMigrationTest {
             )
         }
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun slugs(): List<String> =
         connection.createStatement().use { statement ->

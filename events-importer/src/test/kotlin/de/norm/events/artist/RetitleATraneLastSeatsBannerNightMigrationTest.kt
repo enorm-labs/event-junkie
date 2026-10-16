@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.sql.Connection
@@ -80,17 +80,6 @@ class RetitleATraneLastSeatsBannerNightMigrationTest {
                 "SELECT e.id, a.id, 'HEADLINER', 0, true FROM event e, artist a WHERE e.source_id = '$sourceId' AND a.slug = '$artistSlug'"
         )
     }
-
-    private fun flyway(
-        postgres: PostgreSQLContainer,
-        target: String
-    ): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun billing(connection: Connection): Set<List<String>> =
         rows(

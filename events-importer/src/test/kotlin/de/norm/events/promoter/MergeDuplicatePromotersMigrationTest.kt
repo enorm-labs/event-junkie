@@ -1,9 +1,9 @@
 package de.norm.events.promoter
 
+import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ class MergeDuplicatePromotersMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("22").migrate()
+        flyway(postgres, "22").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -51,7 +51,7 @@ class MergeDuplicatePromotersMigrationTest {
             plantPromoter(statement, "Listen", "listen")
             plantEvent(statement, "e6", "listen")
         }
-        flyway("23").migrate()
+        flyway(postgres, "23").migrate()
         connection.createStatement().use { statement ->
             // V025: the row V023 misnamed, and the one the next import minted beside it.
             plantPromoter(statement, "Greyzone Concerts", "greyzone")
@@ -66,7 +66,7 @@ class MergeDuplicatePromotersMigrationTest {
             plantPromoter(statement, "Jb Freie", "jb-freie")
             plantEvent(statement, "h1", "jb-freie")
         }
-        flyway("27").migrate()
+        flyway(postgres, "27").migrate()
         connection.createStatement().use { statement ->
             // V029: a survivor whose first-listed loser is absent and whose second exists, which V023
             // renamed nothing for; and a row minted before the de-shout.
@@ -90,7 +90,7 @@ class MergeDuplicatePromotersMigrationTest {
             plantEvent(statement, "m1", "mfp")
             statement.execute("UPDATE promoter SET website_url = 'http://www.MFPConcerts.com' WHERE slug = 'mfp'")
         }
-        flyway("64").migrate()
+        flyway(postgres, "64").migrate()
         plantThenMigrate("65", ::plantTradingNames)
         plantThenMigrate("66", ::plantSchokoladenSpans)
         plantThenMigrate("78", ::plantCtmSpellings)
@@ -104,7 +104,7 @@ class MergeDuplicatePromotersMigrationTest {
         plant: () -> Unit
     ) {
         plant()
-        flyway(target).migrate()
+        flyway(postgres, target).migrate()
     }
 
     @AfterAll
@@ -414,14 +414,6 @@ class MergeDuplicatePromotersMigrationTest {
             plantEvent(statement, "c3", "ctm", "ctm-festival")
         }
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun plantPromoter(
         statement: java.sql.Statement,

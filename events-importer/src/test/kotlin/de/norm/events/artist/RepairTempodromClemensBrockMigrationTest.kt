@@ -1,8 +1,8 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.sql.Connection
@@ -76,17 +76,6 @@ class RepairTempodromClemensBrockMigrationTest {
             )
         }
     }
-
-    private fun flyway(
-        postgres: PostgreSQLContainer,
-        target: String
-    ): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun billing(
         connection: Connection,

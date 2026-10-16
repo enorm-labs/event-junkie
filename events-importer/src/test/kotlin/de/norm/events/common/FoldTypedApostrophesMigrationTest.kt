@@ -1,7 +1,7 @@
 package de.norm.events.common
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class FoldTypedApostrophesMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("71").migrate()
+        flyway(postgres, "71").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute(
@@ -40,7 +40,7 @@ class FoldTypedApostrophesMigrationTest {
                     "SELECT v.id, s.id, 's:1', 'PANSY´S HALLOWEEN', 'pansy-s-halloween', CURRENT_DATE FROM venue v, event_source s"
             )
         }
-        flyway("72").migrate()
+        flyway(postgres, "72").migrate()
     }
 
     @AfterAll
@@ -66,14 +66,6 @@ class FoldTypedApostrophesMigrationTest {
         column("promoter", "name") shouldBe mapOf("luv-n-musiq" to "Luv'n Musiq")
         column("event", "title") shouldBe mapOf("pansy-s-halloween" to "PANSY'S HALLOWEEN")
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun column(
         table: String,
