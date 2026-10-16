@@ -23,7 +23,8 @@ import java.time.LocalDate
  * `Beginn:` and `Preis:` rows beside the ticket link or a `Freier Eintritt` line. The text follows the list.
  *
  * A price beside a ticket link is the presale, and one beside `Abendkasse` the box office; `ab 17€` and `7-10€` keep
- * the printed text as the note. A concert that lists its bands under a `… mit:` line bills that list. Without one, only a
+ * the printed text as the note. A concert or a festival bills the bands listed under a `… mit:` line, or the
+ * `Name – blurb` / `Name: blurb` items listed under any other line ending in `:` (see [blurbedAct]). Without a list, only a
  * title that frames its acts (`Soul Night mit Montigo Rim & Hiddit`) bills them: the house titles a night by its series
  * (`Resonanzen – internationale Klänge: Rock den Berg`) or its show (`FIREWORK! – Annabell Whitney`) as often.
  */
@@ -98,16 +99,32 @@ class PfefferbergHaus13DetailPageScraper {
             .joinToString("\n")
             .ifBlank { null }
 
-    /** The bands under a paragraph ending in `mit:`, as Punk Rocktopus lists them. */
-    private fun lineupOf(text: Element): List<String> =
-        text
-            .select("p")
-            .firstOrNull { it.text().trimEnd().endsWith("mit:") }
-            ?.nextElementSibling()
-            ?.takeIf { it.tagName() == "ul" }
-            ?.select("li")
-            ?.map { it.text().trim() }
-            .orEmpty()
+    /**
+     * The bands under a paragraph ending in `mit:`, as Punk Rocktopus lists them, or else the blurbed acts under the other
+     * paragraphs ending in `:`. The Halloween page lists its bands in German and again in English, so each name counts once.
+     */
+    private fun lineupOf(text: Element): List<String> {
+        val intros = text.children().filter { it.tagName() == "p" && it.text().trimEnd().endsWith(":") }
+        val plain =
+            intros
+                .firstOrNull { it.text().trimEnd().endsWith("mit:") }
+                ?.nextElementSibling()
+                ?.takeIf { it.tagName() == "ul" }
+                ?.select("li")
+                ?.map { it.text().trim() }
+        return plain ?: intros.flatMap(::blurbedActsAfter).distinctBy { it.lowercase() }
+    }
+
+    /** The acts in the lists after [intro], up to the first item that is not one; blank paragraphs between the lists are spacers. */
+    private fun blurbedActsAfter(intro: Element): List<String> =
+        generateSequence(intro.nextElementSibling()) { it.nextElementSibling() }
+            .takeWhile { it.tagName() == "ul" || (it.tagName() == "p" && it.text().replace('\u00A0', ' ').isBlank()) }
+            .filter { it.tagName() == "ul" }
+            .flatMap { it.children() }
+            .map(::blurbedAct)
+            .takeWhile { it != null }
+            .filterNotNull()
+            .toList()
 
     private companion object {
         val RANGE_OR_FROM = Regex("""^ab\s|\d\s*[-–]\s*\d""", RegexOption.IGNORE_CASE)
@@ -132,11 +149,39 @@ internal fun actsOf(
     lineup: List<String>
 ): List<ScrapedArtist> =
     when {
-        type == EventType.CONCERT.name && lineup.isNotEmpty() -> lineup.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = "HEADLINER") }
+        type in LISTED_LINEUP_TYPES && lineup.isNotEmpty() -> lineup.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = "HEADLINER") }
         ACT_FRAME.containsMatchIn(title) -> buildArtistsForEventType(title, subtitle = null, eventType = type, unpackWithFrame = true)
         else -> emptyList()
     }
 
+/**
+ * The act an item such as `<strong>Amptray</strong> – eine Band, die …` or `WR51: Schon fünf Jahre …` names, or null for
+ * any other item. A short name and a blurb of words keep `Einlass: 19:00` and `Regulär 10€` out.
+ */
+internal fun blurbedAct(item: Element): String? {
+    val text = item.text().replace('\u00A0', ' ').trim()
+    val lead =
+        item
+            .selectFirst("strong")
+            ?.text()
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() && text.startsWith(it) && LEADING_SEPARATOR.containsMatchIn(text.removePrefix(it)) }
+    val (name, blurb) =
+        if (lead != null) {
+            lead to text.removePrefix(lead).replaceFirst(LEADING_SEPARATOR, "")
+        } else {
+            BLURBED_ITEM.matchEntire(text)?.destructured?.let { (name, blurb) -> name to blurb } ?: return null
+        }
+    val isAct = name.split(WHITESPACE).size <= MAX_NAME_WORDS && blurb.firstOrNull()?.isLetter() == true && blurb.split(WHITESPACE).size >= MIN_BLURB_WORDS
+    return name.takeIf { isAct }
+}
+
+private val LISTED_LINEUP_TYPES = setOf(EventType.CONCERT.name, EventType.FESTIVAL.name)
+private val LEADING_SEPARATOR = Regex("""^\s*(?:[–-]|:)\s+""")
+private val BLURBED_ITEM = Regex("""(\S.*?)(?:\s+[–-]|:)\s+(.+)""")
+private val WHITESPACE = Regex("""\s+""")
+private const val MAX_NAME_WORDS = 5
+private const val MIN_BLURB_WORDS = 4
 private val READING = Regex("""premiere|lesung|kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
 private val ACT_FRAME = Regex("""\s(?:mit|feat\.?|ft\.|w/)\s""", RegexOption.IGNORE_CASE)
 private val FREE = Regex("""freier eintritt|eintritt frei""", RegexOption.IGNORE_CASE)
