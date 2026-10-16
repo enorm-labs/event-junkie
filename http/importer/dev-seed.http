@@ -7573,7 +7573,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Paloma — not imported
+# Paloma
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Paloma venue ---
@@ -7594,13 +7594,43 @@ Content-Type: application/json
     "descriptionAlt": "Die Clubbar am Kottbusser Tor hat eine Bar und eine Tanzfläche und wird von Donnerstag bis Sonntag mit DJs bespielt.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "club"],
-    "programmeUrl": "https://www.palomabar.de/programm.php",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("venue_id_paloma", response.body.id);
     client.test("Paloma venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Paloma event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_paloma}},
+    "name": "Paloma",
+    "url": "https://www.palomabar.de/programm.php",
+    "sourceType": "PALOMA",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Paloma event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Paloma import ---
+POST {{importer-host}}/api/admin/event-sources/paloma/import
+Accept: application/json
+
+> {%
+    client.test("Paloma import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

@@ -13,8 +13,16 @@
         "descriptionAlt": "Die Clubbar am Kottbusser Tor hat eine Bar und eine Tanzfläche und wird von Donnerstag bis Sonntag mit DJs bespielt.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "club"],
-        "programmeUrl": "https://www.palomabar.de/programm.php",
         "reviewedAt": "2026-10-07T12:38:29Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Paloma",
+            "url": "https://www.palomabar.de/programm.php",
+            "sourceType": "PALOMA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
