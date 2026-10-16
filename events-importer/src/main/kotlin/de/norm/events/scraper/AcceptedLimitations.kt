@@ -16,6 +16,7 @@ import de.norm.events.scraper.astra.ASTRA_LIMITATIONS
 import de.norm.events.scraper.atrane.A_TRANE_LIMITATIONS
 import de.norm.events.scraper.ausland.AUSLAND_LIMITATIONS
 import de.norm.events.scraper.badehaus.BADEHAUS_LIMITATIONS
+import de.norm.events.scraper.baiz.BAIZ_LIMITATIONS
 import de.norm.events.scraper.ballhauswedding.BALLHAUS_WEDDING_LIMITATIONS
 import de.norm.events.scraper.barjedervernunft.BAR_JEDER_VERNUNFT_LIMITATIONS
 import de.norm.events.scraper.berghain.BERGHAIN_LIMITATIONS
@@ -158,6 +159,7 @@ object AcceptedLimitations {
             ASTRA_LIMITATIONS,
             AUSLAND_LIMITATIONS,
             BADEHAUS_LIMITATIONS,
+            BAIZ_LIMITATIONS,
             BALLHAUS_WEDDING_LIMITATIONS,
             BAR_JEDER_VERNUNFT_LIMITATIONS,
             BERGHAIN_LIMITATIONS,

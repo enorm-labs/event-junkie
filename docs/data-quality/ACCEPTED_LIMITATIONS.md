@@ -61,6 +61,13 @@ says so.
 | `AUSLAND`              | `TICKET_URL`       | most nights sell only at the door; a ticket shop is linked only from a phrase in the text                                                        | —     |
 | `AUSLAND`              | `PROMOTERS`        | the site credits partners only as logos                                                                                                          | —     |
 | `AUSLAND`              | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `BAIZ`                 | `ARTISTS`          | the acts and readers are named only in free prose of no fixed shape                                                                              | —     |
+| `BAIZ`                 | `GENRE`            | radar files the nights under concert or no category, and the style is in prose                                                                   | —     |
+| `BAIZ`                 | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
+| `BAIZ`                 | `TICKET_URL`       | the pub sells no tickets                                                                                                                         | —     |
+| `BAIZ`                 | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
+| `BAIZ`                 | `PRICE`            | radar lists no price for the pub's nights                                                                                                        | —     |
+| `BAIZ`                 | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
 | `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
 | `BALLHAUS_WEDDING`     | `ARTISTS`          | the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act                                                           | —     |
 | `BALLHAUS_WEDDING`     | `IMAGE`            | only the entries with a Wix Events page have a poster; the programme has none                                                                    | —     |

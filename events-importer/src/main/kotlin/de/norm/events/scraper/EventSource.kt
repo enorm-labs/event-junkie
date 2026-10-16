@@ -37,6 +37,9 @@ enum class EventSource {
     /** ausland – a basement venue in the former Lychi 60 squat in Prenzlauer Berg, for improvised and experimental music, film and performance. */
     AUSLAND,
 
+    /** Baiz – a smokers' pub on Schönhauser Allee whose name stands for Berlin Informationszentrum, with readings, talks and concerts on its small stage. */
+    BAIZ,
+
     /** Ballhaus Wedding Berlin – an 1899 back-courtyard ballroom with concerts, dance socials, slams, improv and variety evenings. */
     BALLHAUS_WEDDING,
 

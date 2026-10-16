@@ -34,6 +34,9 @@ abstract class RadarGroupImporter(
     /** The acts and the genre a row bills. */
     protected open fun lineup(event: RadarEvent): Lineup = Lineup()
 
+    /** Whether a row is programme; a venue that files talks or theatre under other categories overrides it. */
+    protected open fun isProgramme(event: RadarEvent): Boolean = isRadarProgramme(event)
+
     /** The row's event type; a venue whose radar category misnames its nights overrides it. */
     protected open fun eventType(event: RadarEvent): String? = event.eventType
 
@@ -42,7 +45,7 @@ abstract class RadarGroupImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val listing = parseRadarEvents(apiClient.fetchJson(url), venueName)
+        val listing = parseRadarEvents(apiClient.fetchJson(url), venueName, ::isProgramme)
         // A `count` above the rows read means the `limit` cut the programme short: the stale cleanup
         // would then delete real events past the last row.
         val complete = listing.count <= listing.rowsRead
