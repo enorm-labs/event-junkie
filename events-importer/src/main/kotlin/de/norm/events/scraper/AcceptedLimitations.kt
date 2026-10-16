@@ -87,6 +87,7 @@ import de.norm.events.scraper.neuezukunft.NEUE_ZUKUNFT_LIMITATIONS
 import de.norm.events.scraper.ohm.OHM_LIMITATIONS
 import de.norm.events.scraper.orangerie.ORANGERIE_LIMITATIONS
 import de.norm.events.scraper.orania.ORANIA_LIMITATIONS
+import de.norm.events.scraper.orwohaus.ORWOHAUS_LIMITATIONS
 import de.norm.events.scraper.pandaplatforma.PANDA_PLATFORMA_LIMITATIONS
 import de.norm.events.scraper.panke.PANKE_LIMITATIONS
 import de.norm.events.scraper.pas.PAS_LIMITATIONS
@@ -230,6 +231,7 @@ object AcceptedLimitations {
             OHM_LIMITATIONS,
             ORANGERIE_LIMITATIONS,
             ORANIA_LIMITATIONS,
+            ORWOHAUS_LIMITATIONS,
             PANDA_PLATFORMA_LIMITATIONS,
             PANKE_LIMITATIONS,
             PAS_LIMITATIONS,

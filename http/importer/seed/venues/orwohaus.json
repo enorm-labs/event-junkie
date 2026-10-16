@@ -13,8 +13,16 @@
         "descriptionAlt": "Siebenstöckiges einstiges Produktionsgebäude des Filmherstellers ORWO in Marzahn, das der Musikerverein ORWOhaus e.V. 2005 kaufte – heute Proberaumkomplex mit Jamsessions, Bandabenden im Showroom 104 und Workshops.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue", "cultural-centre"],
-        "programmeUrl": "https://www.orwohaus.de/veranstaltungen/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "ORWOhaus",
+            "url": "https://www.orwohaus.de/veranstaltungen/",
+            "sourceType": "ORWOHAUS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

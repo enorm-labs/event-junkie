@@ -7479,7 +7479,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# ORWOhaus — not imported
+# ORWOhaus
 # ————————————————————————————————————————————————————————————
 
 ### --- Create ORWOhaus venue ---
@@ -7500,13 +7500,43 @@ Content-Type: application/json
     "descriptionAlt": "Siebenstöckiges einstiges Produktionsgebäude des Filmherstellers ORWO in Marzahn, das der Musikerverein ORWOhaus e.V. 2005 kaufte – heute Proberaumkomplex mit Jamsessions, Bandabenden im Showroom 104 und Workshops.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "cultural-centre"],
-    "programmeUrl": "https://www.orwohaus.de/veranstaltungen/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_orwohaus", response.body.id);
     client.test("ORWOhaus venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ORWOhaus event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_orwohaus}},
+    "name": "ORWOhaus",
+    "url": "https://www.orwohaus.de/veranstaltungen/",
+    "sourceType": "ORWOHAUS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ORWOhaus event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ORWOhaus import ---
+POST {{importer-host}}/api/admin/event-sources/orwohaus/import
+Accept: application/json
+
+> {%
+    client.test("ORWOhaus import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
