@@ -62,6 +62,7 @@ import de.norm.events.scraper.kesselhaus.KESSELHAUS_LIMITATIONS
 import de.norm.events.scraper.kitkatclub.KITKATCLUB_LIMITATIONS
 import de.norm.events.scraper.klunkerkranich.KLUNKERKRANICH_LIMITATIONS
 import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
+import de.norm.events.scraper.kuehlspot.KUEHLSPOT_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
@@ -197,6 +198,7 @@ object AcceptedLimitations {
             KITKATCLUB_LIMITATIONS,
             KLUNKERKRANICH_LIMITATIONS,
             KOEPI_LIMITATIONS,
+            KUEHLSPOT_LIMITATIONS,
             LARK_LIMITATIONS,
             LIDO_LIMITATIONS,
             LOGE_LIMITATIONS,

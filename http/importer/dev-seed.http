@@ -5144,7 +5144,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Kühlspot Social Club — not imported
+# Kühlspot Social Club
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Kühlspot Social Club venue ---
@@ -5165,13 +5165,43 @@ Content-Type: application/json
     "descriptionAlt": "Ehrenamtlich getragener Verein in einem denkmalgeschützten Gewerbehof in Weißensee, der Free Jazz, improvisierte und zeitgenössische Musik, Performance und Tanz zeigt.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "cultural-centre"],
-    "programmeUrl": "https://kuehlspot.com/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_kuhlspot_social_club", response.body.id);
     client.test("Kühlspot Social Club venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Kühlspot Social Club event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_kuhlspot_social_club}},
+    "name": "Kühlspot Social Club",
+    "url": "https://kuehlspot.com/",
+    "sourceType": "KUEHLSPOT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Kühlspot Social Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Kühlspot Social Club import ---
+POST {{importer-host}}/api/admin/event-sources/kuhlspot-social-club/import
+Accept: application/json
+
+> {%
+    client.test("Kühlspot Social Club import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

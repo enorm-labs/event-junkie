@@ -183,6 +183,9 @@ enum class EventSource {
     /** KØPI Berlin – the squatted house project at Köpenicker Straße 137, running punk, hardcore and metal concerts. */
     KOEPI,
 
+    /** Kühlspot Social Club – a volunteer-run club in a listed Weißensee courtyard for improvised and experimental music and free jazz. */
+    KUEHLSPOT,
+
     /** LARK Berlin – a live-music club in the railway arches on Holzmarktstraße, programming indie, folk, pop and singer-songwriter shows. */
     LARK,
 

@@ -276,6 +276,16 @@ says so.
 | `KOEPI`                | `PRICE`            | radar carries no price for its concerts                                                                                                          | —     |
 | `KOEPI`                | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `KOEPI`                | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
+| `KUEHLSPOT`            | `SUBTITLE`         | each night has a date line, a title and a line-up, no second title line                                                                          | —     |
+| `KUEHLSPOT`            | `END_TIME`         | the site states a curfew for musicians, not an end per night                                                                                     | —     |
+| `KUEHLSPOT`            | `IMAGE`            | the events section carries no pictures                                                                                                           | —     |
+| `KUEHLSPOT`            | `TICKET_URL`       | admission is a donation at the door and nothing is sold online                                                                                   | —     |
+| `KUEHLSPOT`            | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `KUEHLSPOT`            | `PRICE_PRESALE`    | admission is a donation at the door and nothing is sold in advance                                                                               | —     |
+| `KUEHLSPOT`            | `PRICE_BOX_OFFICE` | admission is a sliding-scale donation, kept as a price note                                                                                      | —     |
+| `KUEHLSPOT`            | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `KUEHLSPOT`            | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `KUEHLSPOT`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `LARK`                 | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `LARK`                 | `PRICE`            | the venue prints no figure; tickets link to hum-berlin.com                                                                                       | —     |
 | `LARK`                 | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |
