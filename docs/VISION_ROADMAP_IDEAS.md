@@ -75,7 +75,7 @@ The core product exists end-to-end:
 
 - **Backend** — Kotlin + Spring Boot on a reactive stack (WebFlux, R2DBC, Flyway), split into a Spring-Modulith **importer** and a public **BFF** (see
   the [ADRs](adr/)).
-- **Importers** — six Berlin venues live: Cassiopeia, Privatclub, Madame Claude, Astra, Lido, SO36, with a `/scaffold-importer` skill for adding more.
+- **Importers** — the Berlin sources in [EVENT_DATA_SOURCES.md § Imported](EVENT_DATA_SOURCES.md#-imported), with a `/scaffold-importer` skill for adding more.
 - **Frontend** — Vue 3 app with a calendar view, event/artist/venue/promoter detail pages, and district / free / sold-out filters plus genre tags.
 
 ### Phase 1 — MVP / Go-live 🔴 _(in progress)_
