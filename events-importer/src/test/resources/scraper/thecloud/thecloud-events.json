@@ -1,0 +1,4357 @@
+{
+  "events": [
+    {
+      "id": 25881,
+      "global_id": "thecloud.berlin?id=25881",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25881"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-29 23:32:35",
+      "date_utc": "2026-09-29 22:32:35",
+      "modified": "2026-09-29 23:32:35",
+      "modified_utc": "2026-09-29 22:32:35",
+      "url": "https://thecloud.berlin/event/live-on-stage-%d0%b2%d1%83%d0%b8%d0%bd%d0%b4%d0%bb%d0%b8%d1%8f/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25881",
+      "title": "LIVE ON STAGE: ВУИНДЛИЯ",
+      "description": "<p>🔥 16.10.2026 — BERLIN, WIR DREHEN DURCH! 🔥</p>\n<p>Die Nacht wird laut. Die Beats werden hart. 🖤🔥<br />\nLIVE ON STAGE: ВУИНДЛИЯ – dazu eine explosive Mischung aus ШАДЭ • MONEY • ЕЩЕ ХУЖЕ • WANNA FLY.</p>\n<p>🎧 DJ A-TON<br />\n🎧 DJ SLAV<br />\n🎧 DJ ALEX CHEF</p>\n<p>📍 THE CLOUD<br />\nAlexanderstraße 7, 10178 Berlin<br />\nEingang: Otto-Braun-Straße<br />\n🕚 START: 23:00 UHR<br />\n🔞 18+</p>\n<p>💥 KLUBNIKA PARTY 💥<br />\nEin Abend. Eine Bühne. Keine halben Sachen.</p>\n<p>📲 HOTLINE: 0155 63 96 66 57</p>\n<p>Markiert eure Crew und macht euch bereit.<br />\nBerlin — wir sehen uns am 16.10.! 🥂🔥</p>\n<p>#KlubnikaParty #BerlinNightlife #BerlinParty #russian #BerlinEvents</p>",
+      "excerpt": "",
+      "slug": "live-on-stage-%d0%b2%d1%83%d0%b8%d0%bd%d0%b4%d0%bb%d0%b8%d1%8f",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-scaled.jpeg",
+        "id": 25882,
+        "extension": "jpeg",
+        "width": 1821,
+        "height": 2560,
+        "filesize": 533203,
+        "sizes": {
+          "medium": {
+            "width": 213,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 13057,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-213x300.jpeg"
+          },
+          "large": {
+            "width": 728,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 89421,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-728x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 5277,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 1080,
+            "mime-type": "image/jpeg",
+            "filesize": 98104,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-768x1080.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 142,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 6939,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-142x200.jpeg"
+          },
+          "1536x1536": {
+            "width": 1093,
+            "height": 1536,
+            "mime-type": "image/jpeg",
+            "filesize": 184711,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-1093x1536.jpeg"
+          },
+          "2048x2048": {
+            "width": 1457,
+            "height": 2048,
+            "mime-type": "image/jpeg",
+            "filesize": 331224,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-1457x2048.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 520,
+            "mime-type": "image/jpeg",
+            "filesize": 30951,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-370x520.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1290,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 99668,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-1290x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 41515,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 12427,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 3721,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1181,
+            "mime-type": "image/jpeg",
+            "filesize": 114350,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-840x1181.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 576,
+            "mime-type": "image/jpeg",
+            "filesize": 36343,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-410x576.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 51746,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 40052,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 60905,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 44966,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 843,
+            "mime-type": "image/jpeg",
+            "filesize": 65855,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-600x843.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 5277,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 6837,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 30745,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 19874,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/02c29915-0215-40cf-ace6-9aa05bc34abf-370x370.jpeg"
+          }
+        },
+        "original_image": "02c29915-0215-40cf-ace6-9aa05bc34abf.jpeg"
+      },
+      "all_day": false,
+      "start_date": "2026-10-16 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "16",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-17 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-16 21:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "16",
+        "hour": "21",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-17 03:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "03",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25834,
+      "global_id": "thecloud.berlin?id=25834",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25834"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-06 09:26:07",
+      "date_utc": "2026-09-06 08:26:07",
+      "modified": "2026-09-06 09:26:07",
+      "modified_utc": "2026-09-06 08:26:07",
+      "url": "https://thecloud.berlin/event/le-shuuk-exklusiv-und-erstmalig-in-berlin/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25834",
+      "title": "LE SHUUK &#8211; EXKLUSIV und ERSTMALIG in Berlin",
+      "description": "<p>🔥 BERLIN, SEID IHR BEREIT FÜR DAS KLASSENTREFFEN DES JAHRES? 🔥</p>\n<p>Die WORLD CLUB DOME Klassentreffen Tour 2026 kommt nach Berlin – und das mit einem ganz besonderen Highlight! 🚀</p>\n<p>🎧 LE SHUUK legt EXKLUSIV und ERSTMALIG in Berlin auf!<br />\nFreut euch auf fette Beats, unvergessliche Vibes und eine Nacht voller Klassentreffen-Feeling! ⚡️🟡</p>\n<p>📍 THE CLOUD<br />\nAlexanderstraße 7, 10178 Berlin<br />\n➡️ Eingang: Otto-Braun-Straße</p>\n<p>📅 17.10.2026<br />\n🕕 Einlass: ab 18:00 Uhr<br />\n🎶 Event: 19:00–22:00 Uhr</p>\n<p>🎟️ JETZT TICKETS SICHERN:<br />\n⁠https://leshuuk.ticket.io/w00DPSSW/?fbclid=PAdGRleAUJ81NwZG9mAmZkaWQWUN4bo2yvpdhAR7OmEmT-2-gkUMpPg2V4dG4DYWVtAjExAHNydGMGYXBwX2lkDzEyNDAyNDU3NDI4NzQxNAABp728r61GH5xMCfK4gwZYuPJWPULyA-BpROCc6ssVv_xdAR6jFTtCfPtRJkQF_aem_8weIodOUzFdxJPUHmpfDTg</p>\n<p>Berlin – das wird laut. Das wird wild. Das wird KLASSENTREFFEN! 🖤💛</p>\n<p>Seid dabei, wenn LE SHUUK zum ersten Mal exklusiv die Hauptstadt zum Beben bringt! 🔥</p>\n<p style=\"padding-left: 40px;\">#WorldClubDome #KlassentreffenTour2026 #LeShuuk #Berlin #TheCloud #BerlinNightlife #BerlinEvents #ElectronicMusic #EDM #Rave #Clubnight #Klassentreffen #LeShuukBerlin #TicketsNow</p>",
+      "excerpt": "",
+      "slug": "le-shuuk-exklusiv-und-erstmalig-in-berlin",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618.png",
+        "id": 25835,
+        "extension": "png",
+        "width": 1254,
+        "height": 1254,
+        "filesize": 1914753,
+        "sizes": {
+          "medium": {
+            "width": 300,
+            "height": 300,
+            "mime-type": "image/png",
+            "filesize": 131198,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-300x300.png"
+          },
+          "large": {
+            "width": 1024,
+            "height": 1024,
+            "mime-type": "image/png",
+            "filesize": 1108884,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-1024x1024.png"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 39932,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-150x150.png"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 768,
+            "mime-type": "image/png",
+            "filesize": 664091,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-768x768.png"
+          },
+          "etfrtb_logo": {
+            "width": 200,
+            "height": 200,
+            "mime-type": "image/png",
+            "filesize": 65660,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-200x200.png"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 188720,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-370x370.png"
+          },
+          "thegig-thumb-huge": {
+            "width": 1254,
+            "height": 725,
+            "mime-type": "image/png",
+            "filesize": 1114324,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-1254x725.png"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/png",
+            "filesize": 460406,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-840x473.png"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/png",
+            "filesize": 127745,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-410x230.png"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/png",
+            "filesize": 27114,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-120x120.png"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 840,
+            "mime-type": "image/png",
+            "filesize": 776772,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-840x840.png"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 410,
+            "mime-type": "image/png",
+            "filesize": 225368,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-410x410.png"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/png",
+            "filesize": 438489,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-570x696.png"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/png",
+            "filesize": 448760,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-650x572.png"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/png",
+            "filesize": 659141,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-890x664.png"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/png",
+            "filesize": 471932,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-630x630.png"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 600,
+            "mime-type": "image/png",
+            "filesize": 434102,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-600x600.png"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 39932,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-150x150.png"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/png",
+            "filesize": 61018,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-270x152.png"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/png",
+            "filesize": 224522,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-370x493.png"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 188720,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/29771352-0C8A-45AF-B9F7-E6F56198F618-370x370.png"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-17 18:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "18",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-17 22:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-17 16:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "16",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-17 20:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "20",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://leshuuk.ticket.io/w00DPSSW/?fbclid=PAdGRleAUJ81NwZG9mAmZkaWQWUN4bo2yvpdhAR7OmEmT-2-gkUMpPg2V4dG4DYWVtAjExAHNydGMGYXBwX2lkDzEyNDAyNDU3NDI4NzQxNAABp728r61GH5xMCfK4gwZYuPJWPULyA-BpROCc6ssVv_xdAR6jFTtCfPtRJkQF_aem_8weIodOUzFdxJPUHmpfDTg",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [
+        {
+          "id": 25836,
+          "author": "1",
+          "status": "publish",
+          "date": "2026-09-06 09:26:07",
+          "date_utc": "2026-09-06 08:26:07",
+          "modified": "2026-09-06 09:26:07",
+          "modified_utc": "2026-09-06 08:26:07",
+          "url": "https://thecloud.berlin/veranstalter/worldclubdome/",
+          "organizer": "WorldClubDome",
+          "slug": "worldclubdome",
+          "global_id": "thecloud.berlin?id=25836",
+          "global_id_lineage": [
+            "thecloud.berlin?id=25836"
+          ]
+        }
+      ],
+      "custom_fields": []
+    },
+    {
+      "id": 25911,
+      "global_id": "thecloud.berlin?id=25911",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25911"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-10-12 11:53:47",
+      "date_utc": "2026-10-12 10:53:47",
+      "modified": "2026-10-12 11:53:47",
+      "modified_utc": "2026-10-12 10:53:47",
+      "url": "https://thecloud.berlin/event/afrovibes-is-back-in-berlin/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25911",
+      "title": "AFROVIBES IS BACK IN BERLIN!",
+      "description": "<p>AFROVIBES IS BACK IN BERLIN!</p>\n<p>DIE GRÖSSTE AFRO DANCE COMMUNITY DER WELT KOMMT<br />\nENDLICH ZURÜCK NACH BERLIN!</p>\n<p>Berlin, seid ihr bereit? Am Samstag, den 17. Oktober 2026, bringt AFROVIBES die pulsierende Energie Clubkultur zurück in die Hauptstadt!</p>\n<p>Erlebt eine unvergessliche Nacht voller heißer Rhythmen, mitreißender Beats und einzigartiger Vibes. Wenn AFROBEATS, AMAPIANO &amp; LATIN SOUNDS aufeinandertreffen, gibt es nur eine Mission: DANCE ALL NIGHT LONG!</p>\n<p>LIVE ON THE DECKS: BEROX &amp; MOTIS</p>",
+      "excerpt": "",
+      "slug": "afrovibes-is-back-in-berlin",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534.jpeg",
+        "id": 25912,
+        "extension": "jpeg",
+        "width": 1290,
+        "height": 1591,
+        "filesize": 692503,
+        "sizes": {
+          "medium": {
+            "width": 243,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 22932,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-243x300.jpeg"
+          },
+          "large": {
+            "width": 830,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 170405,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-830x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 8605,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 947,
+            "mime-type": "image/jpeg",
+            "filesize": 151858,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-768x947.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 162,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 11599,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-162x200.jpeg"
+          },
+          "1536x1536": {
+            "width": 1245,
+            "height": 1536,
+            "mime-type": "image/jpeg",
+            "filesize": 313002,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-1245x1536.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 456,
+            "mime-type": "image/jpeg",
+            "filesize": 46533,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-370x456.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1290,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 152918,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-1290x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 75861,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 23979,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 6055,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1036,
+            "mime-type": "image/jpeg",
+            "filesize": 174243,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-840x1036.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 506,
+            "mime-type": "image/jpeg",
+            "filesize": 55152,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-410x506.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 93770,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 83303,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 111472,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 90865,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 740,
+            "mime-type": "image/jpeg",
+            "filesize": 102867,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-600x740.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 8605,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 12133,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 49205,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 38408,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6534-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-17 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-18 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "18",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-17 21:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "17",
+        "hour": "21",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-18 03:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "18",
+        "hour": "03",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25848,
+      "global_id": "thecloud.berlin?id=25848",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25848"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-08 07:09:36",
+      "date_utc": "2026-09-08 06:09:36",
+      "modified": "2026-09-08 07:09:36",
+      "modified_utc": "2026-09-08 06:09:36",
+      "url": "https://thecloud.berlin/event/russian-glamour-festival-4/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25848",
+      "title": "RUSSIAN GLAMOUR FESTIVAL",
+      "description": "<p>24.10.26 ★ RUSSIAN GLAMOUR FESTIVAL ★ CLUB THE CLOUD BERLIN ★ XTIN ★ LEOMEE ★ DIMON</p>\n<p>DAS RUSSIAN GLAMOUR FESTIVAL kommt wieder nach BERLIN😍Nach unserer Sommerpause sind wir wieder da❤️</p>\n<p>DAS GRÖSSTE RUSSIAN INDOOR EVENT IN NORDDEUTSCHLAND kommt wieder zu euch in die Hauptstadt🫶</p>\n<p>❗️EIN unverwechselbares TEAM • bringt euch die beste russische MUSIK❗️</p>\n<p>Wir feiern im Herzen von Berlin😍</p>\n<p>Lasst uns gemeinsam THE CLOUD zum ESKALIEREN bringen🍾</p>\n<p>🛑FACTS🛑</p>\n<p>🗓️24.Oktober 2026<br />\n⏰Ab 23 Uhr<br />\n🪩CLUB THE CLOUD<br />\n⏩️ Alerxanderstr. 7, 10178 Berlin<br />\n▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀<br />\n✅TICKETS ONLINE bei Eventbrite.de</p>\n<p>=&gt; https://www.eventbrite.de/e/241026-russian-glamour-festival-club-the-cloud-berlin-xtin-leome-tickets-1999933711568?aff=oddtdtcreator</p>\n<p>Early Bird Tickets (streng limitiert): 16,00 Euro</p>\n<p>Online Vorverkaufsticket: 19,00 Euro</p>\n<p>Fast Lane Ticket: 21,00 Euro<br />\n(Kein Warten an der Schlange, gesonderter Einlass)</p>\n<p>❗️ABENDKASSE wird vorhanden sein🍾<br />\n▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀<br />\n🔞 EINLASS AB 18 Jahre</p>",
+      "excerpt": "",
+      "slug": "russian-glamour-festival-4",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995.png",
+        "id": 25849,
+        "extension": "png",
+        "width": 1920,
+        "height": 1006,
+        "filesize": 2539907,
+        "sizes": {
+          "medium": {
+            "width": 300,
+            "height": 157,
+            "mime-type": "image/png",
+            "filesize": 92317,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-300x157.png"
+          },
+          "large": {
+            "width": 1024,
+            "height": 537,
+            "mime-type": "image/png",
+            "filesize": 773708,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-1024x537.png"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 43407,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-150x150.png"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 402,
+            "mime-type": "image/png",
+            "filesize": 467645,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-768x402.png"
+          },
+          "etfrtb_logo": {
+            "width": 200,
+            "height": 105,
+            "mime-type": "image/png",
+            "filesize": 45733,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-200x105.png"
+          },
+          "1536x1536": {
+            "width": 1536,
+            "height": 805,
+            "mime-type": "image/png",
+            "filesize": 1552236,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-1536x805.png"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 194,
+            "mime-type": "image/png",
+            "filesize": 132669,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-370x194.png"
+          },
+          "thegig-thumb-huge": {
+            "width": 1290,
+            "height": 725,
+            "mime-type": "image/png",
+            "filesize": 1201320,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-1290x725.png"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/png",
+            "filesize": 573537,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-840x473.png"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/png",
+            "filesize": 164911,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-410x230.png"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/png",
+            "filesize": 29288,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-120x120.png"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 440,
+            "mime-type": "image/png",
+            "filesize": 548302,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-840x440.png"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 215,
+            "mime-type": "image/png",
+            "filesize": 158382,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-410x215.png"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/png",
+            "filesize": 514798,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-570x696.png"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/png",
+            "filesize": 523484,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-650x572.png"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/png",
+            "filesize": 787761,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-890x664.png"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/png",
+            "filesize": 533518,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-630x630.png"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 314,
+            "mime-type": "image/png",
+            "filesize": 304552,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-600x314.png"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 43407,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-150x150.png"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/png",
+            "filesize": 80576,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-270x152.png"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/png",
+            "filesize": 258694,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-370x493.png"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 208860,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5995-370x370.png"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-24 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "24",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-25 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "25",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-24 21:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "24",
+        "hour": "21",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-25 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "25",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25903,
+      "global_id": "thecloud.berlin?id=25903",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25903"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-10-12 11:20:44",
+      "date_utc": "2026-10-12 10:20:44",
+      "modified": "2026-10-12 11:34:17",
+      "modified_utc": "2026-10-12 10:34:17",
+      "url": "https://thecloud.berlin/event/%f0%9f%8e%83-die-groesste-halloween-party-der-stadt-%f0%9f%8e%83/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25903",
+      "title": "🎃 DIE GRÖSSTE HALLOWEEN-PARTY DER STADT! 🎃",
+      "description": "<p>&nbsp;</p>\n<p>🎃 DIE GRÖSSTE HALLOWEEN-PARTY DER STADT! 🎃</p>\n<p>Die Nacht wird düster, die Party wird wild! 🩸 Schnapp dir deine Freunde und feiert mit uns die schaurigste Nacht des Jahres! 😈🔥</p>\n<p>👉 DICH ERWARTET 👇<br />\n💀 HORROR-SPECIALS<br />\n🧟 SCHAURIGE DEKO<br />\n🏰 XXL HALLOWEEN-STAGE<br />\n🍭 GRATIS SÜSSES &amp; SAURES<br />\n🩸 BLUTIGE WELCOME-SHOTS<br />\n🧛🏼 ERSCHRECKEND GUTE DJs &amp; ANIMATION<br />\n🏆 WAHL DES BESTEN HALLOWEEN-KOSTÜMS</p>\n<p>🕷 DRESSCODE: Ob gruselig, blutig oder ausgefallen – wir freuen uns auf dein Halloween-Outfit! Verkleidung ist gerne gesehen, aber keine Pflicht. 👻</p>\n<p>🎟 JETZT TICKETS SICHERN – DIE NACHFRAGE IST HOCH! 🔥</p>\n<p>https://horrorweenparty.de/halloween/berlin/berlin2910</p>\n<p>Lasst uns gemeinsam Gas geben und das Ding richtig voll machen! 🚀🎃<br />\nDanke euch für den Support! 🫶🏼</p>\n<p>Gib mir bescheid sobald es auf eurer Webseite ist, damit ich es nochmal gegen prüfen kann</p>",
+      "excerpt": "",
+      "slug": "%f0%9f%8e%83-die-groesste-halloween-party-der-stadt-%f0%9f%8e%83",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a.png",
+        "id": 25904,
+        "extension": "png",
+        "width": 1122,
+        "height": 1402,
+        "filesize": 2523853,
+        "sizes": {
+          "medium": {
+            "width": 240,
+            "height": 300,
+            "mime-type": "image/png",
+            "filesize": 131617,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-240x300.png"
+          },
+          "large": {
+            "width": 819,
+            "height": 1024,
+            "mime-type": "image/png",
+            "filesize": 1236733,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-819x1024.png"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 44993,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-150x150.png"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 960,
+            "mime-type": "image/png",
+            "filesize": 1100347,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-768x960.png"
+          },
+          "etfrtb_logo": {
+            "width": 160,
+            "height": 200,
+            "mime-type": "image/png",
+            "filesize": 62334,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-160x200.png"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 462,
+            "mime-type": "image/png",
+            "filesize": 291171,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-370x462.png"
+          },
+          "thegig-thumb-huge": {
+            "width": 1122,
+            "height": 725,
+            "mime-type": "image/png",
+            "filesize": 1331472,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-1122x725.png"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/png",
+            "filesize": 629431,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-840x473.png"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/png",
+            "filesize": 167461,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-410x230.png"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/png",
+            "filesize": 29697,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-120x120.png"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1050,
+            "mime-type": "image/png",
+            "filesize": 1294721,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-840x1050.png"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 512,
+            "mime-type": "image/png",
+            "filesize": 351351,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-410x512.png"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/png",
+            "filesize": 628135,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-570x696.png"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/png",
+            "filesize": 586417,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-650x572.png"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/png",
+            "filesize": 893003,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-890x664.png"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/png",
+            "filesize": 623920,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-630x630.png"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 750,
+            "mime-type": "image/png",
+            "filesize": 704565,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-600x750.png"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 44993,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-150x150.png"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/png",
+            "filesize": 77980,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-270x152.png"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/png",
+            "filesize": 307703,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-370x493.png"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 236245,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/3ef34f6f-f805-440d-a830-785c9472f12a-370x370.png"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-29 20:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "29",
+        "hour": "20",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-30 02:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "30",
+        "hour": "02",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-29 19:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "29",
+        "hour": "19",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-30 01:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "30",
+        "hour": "01",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://horrorweenparty.de/halloween/berlin/berlin2910",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25907,
+      "global_id": "thecloud.berlin?id=25907",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25907"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-10-12 11:31:10",
+      "date_utc": "2026-10-12 10:31:10",
+      "modified": "2026-10-12 11:31:10",
+      "modified_utc": "2026-10-12 10:31:10",
+      "url": "https://thecloud.berlin/event/%f0%9f%8e%83-halloween-2026-the-cloud-club-%f0%9f%91%bb/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25907",
+      "title": "🎃 HALLOWEEN 2026 @ The Cloud Club 👻",
+      "description": "<p>🎃 <strong>HALLOWEEN 2026 @ The Cloud Club</strong> 👻</p>\n<p>Am <strong>30. Oktober</strong> findet im <strong>THE CLOUD</strong> Berlins angesagteste Halloween Party statt. Euch erwarten unzählige bekannte Gesichter aus TV, Radio, Social Media! Pack dein bestes Halloween-Outfit aus und feier mit uns durch die Nacht! 🕷️🖤</p>\n<p>🔥 <strong>HIP-HOP FLOOR</strong><br />\nHip-Hop • Rap • R’n’B</p>\n<p>🏊‍♂️<strong>Terasse</strong><br />\natemberaubende Aussicht direkt am Fernsehturm. 👻🩸</p>\n<p>🩸 <strong>SPECIALS</strong><br />\n🎃 Halloween-Deko<br />\n👻 Grusel-Poolarea<br />\n📸 Halloween-Fotospots<br />\n🍹 Halloween Special Drinks<br />\n🧪 Bloody Shots &amp; spooky Cocktails<br />\n🎁 Überraschungs-Giveaways<br />\n💀 Special Halloween Effects<br />\n🕸️ Halloween Visuals &amp; Dekoration<br />\n🧛‍♀️ Verkleidung ausdrücklich erwünscht!</p>\n<p>&nbsp;</p>\n<p>📅 <strong>DATUM:</strong> 30.10.<br />\n📍 <strong>LOCATION:</strong> The CLoud</p>\n<p>👻 <strong>SEE YOU IN THE DARK.</strong></p>",
+      "excerpt": "",
+      "slug": "%f0%9f%8e%83-halloween-2026-the-cloud-club-%f0%9f%91%bb",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded.jpeg",
+        "id": 25908,
+        "extension": "jpeg",
+        "width": 1080,
+        "height": 1350,
+        "filesize": 310384,
+        "sizes": {
+          "medium": {
+            "width": 240,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 15596,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-240x300.jpeg"
+          },
+          "large": {
+            "width": 819,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 122618,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-819x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 6180,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 960,
+            "mime-type": "image/jpeg",
+            "filesize": 110371,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-768x960.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 160,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 8135,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-160x200.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 463,
+            "mime-type": "image/jpeg",
+            "filesize": 33160,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-370x463.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1080,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 120692,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-1080x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 65054,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 19555,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 4359,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1050,
+            "mime-type": "image/jpeg",
+            "filesize": 127740,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-840x1050.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 513,
+            "mime-type": "image/jpeg",
+            "filesize": 39355,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-410x513.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 67195,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 65670,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 92035,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 67980,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 750,
+            "mime-type": "image/jpeg",
+            "filesize": 74187,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-600x750.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 6180,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 9667,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 35720,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 27905,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/64ef7a92-8789-4378-afbe-a002206d6ded-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-30 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "30",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-10-31 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "31",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-30 22:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "30",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-10-31 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "31",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://www.eventim-light.com/de/a/617fcc080395395ac1542abe/e/6ab1a78774f021402111a3c2?lang=de",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25877,
+      "global_id": "thecloud.berlin?id=25877",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25877"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-28 08:32:17",
+      "date_utc": "2026-09-28 07:32:17",
+      "modified": "2026-09-28 08:32:17",
+      "modified_utc": "2026-09-28 07:32:17",
+      "url": "https://thecloud.berlin/event/les-biens-halloween-flinta-only/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25877",
+      "title": "Les Biens Halloween *Flinta only*",
+      "description": "<p><span class=\"qw_extension_icon-qw-resize\"> My </span>Serving looks &amp; spooky vibes</p>\n<p>On October 31st, Les Biens goes dark.</p>\n<p>We&#8217;re opening the doors for a magical Halloween night &#8211; FLINTA only*</p>\n<p>No basic outfits allowed &#8211; bring your scariest, most dramatic Halloween look and show us what you&#8217;ve got! e</p>\n<p>The Cloud | Oct 31 | 23:00</p>\n<p>#halloween #flinta #lesbiensevents #lesbiens #berlin</p>",
+      "excerpt": "",
+      "slug": "les-biens-halloween-flinta-only",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268.jpeg",
+        "id": 25878,
+        "extension": "jpeg",
+        "width": 1080,
+        "height": 1920,
+        "filesize": 1413126,
+        "sizes": {
+          "medium": {
+            "width": 169,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 24125,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-169x300.jpeg"
+          },
+          "large": {
+            "width": 576,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 101063,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-576x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 18504,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 1365,
+            "mime-type": "image/jpeg",
+            "filesize": 155448,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-768x1365.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 113,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 18413,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-113x200.jpeg"
+          },
+          "1536x1536": {
+            "width": 864,
+            "height": 1536,
+            "mime-type": "image/jpeg",
+            "filesize": 183775,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-864x1536.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 658,
+            "mime-type": "image/jpeg",
+            "filesize": 55758,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-370x658.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1080,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 127817,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-1080x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 74665,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 30867,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 16600,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1493,
+            "mime-type": "image/jpeg",
+            "filesize": 177526,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-840x1493.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 729,
+            "mime-type": "image/jpeg",
+            "filesize": 62900,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-410x729.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 76915,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 69470,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 96520,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 75818,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 1067,
+            "mime-type": "image/jpeg",
+            "filesize": 106285,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-600x1067.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 18504,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 21700,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 47333,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 39162,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6268-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-10-31 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "31",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-11-01 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "01",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-10-31 22:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "10",
+        "day": "31",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-11-01 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "01",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25899,
+      "global_id": "thecloud.berlin?id=25899",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25899"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-10-11 08:46:34",
+      "date_utc": "2026-10-11 07:46:34",
+      "modified": "2026-10-11 08:46:34",
+      "modified_utc": "2026-10-11 07:46:34",
+      "url": "https://thecloud.berlin/event/officialkevents-berlin-kpop-khiphop-night-in-november-%f0%9f%8e%83halloween-edition%f0%9f%8e%83/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25899",
+      "title": "OfficialKEvents | BERLIN: KPOP &#038; KHIPHOP Night in November &#8211; 🎃HALLOWEEN EDITION🎃",
+      "description": "<p>OfficialKEvents ist der größte Veranstalter von K-Pop- und K-Hip-hop-Clubbing-Events weltweit. Unsere Clubnächte in London, Paris und vielen anderen Städten ziehen monatlich über 2000 Teilnehmer an und finden in über 25 Ländern statt. Wir sind zurück und bringen euch eine weitere unvergessliche Nacht im <b>THE CLOUD</b> in <b>BERLIN!</b></p>\n<p><em>OfficialKEvents — Making Events Everlasting!</em></p>\n<p>__________________________________________</p>\n<p><b>📅 Veranstaltungsdetails</b></p>\n<p>📅 Freitag, 6. November 2026<br />\n🕐 23:00 &#8211; 05:00 (letzter Einlass 02:00)<br />\n📍 The Cloud, Alexanderstraße 7, 10178 Berlin, Germany</p>\n<p>🔞 18+ Veranstaltung — Gäste MÜSSEN einen Ausweis mitbringen (keine Kopien)</p>\n<p>__________________________________________</p>\n<p>🎃<b>HALLOWEEN EDITION</b>🎃<br />\n<b>Dresscode:</b> <b>Halloween Costumes • Cosplay • K-Pop Halloween Looks</b><br />\n*Empfohlen, aber keine Pflicht. Kleiden Sie sich so, wie Sie sich am wohlsten fühlen – solange Ihr Outfit anderen Gästen keinen Schaden zufügt oder Unbehagen __________________________________________</p>\n<p>&nbsp;</p>\n<p><b>TICKETS KAUFEN</b>: <b> </b><b><a href=\"https://bit.ly/4wQPspH\" rel=\"nofollow\">bit.ly/4wQPspH</a></b></p>\n<p>__________________________________________<br />\n<b>🎧 DJs 🎧</b><br />\nDJ Sani [KOR/GER] [@sani.kevents]</p>\n<p><b>🎵 Musik </b><br />\nKPop &amp; KHiphop</p>\n<p>__________________________________________<br />\n<b>📸 Fotograf 📸</b><br />\nEin Fotograf wird die Nacht begleiten!<br />\nBitte posiert nur für ein Foto, wenn es für euch in Ordnung ist, dass es auf einer unserer Social-Media-Plattformen oder unserer Website geteilt wird.</p>",
+      "excerpt": "",
+      "slug": "officialkevents-berlin-kpop-khiphop-night-in-november-%f0%9f%8e%83halloween-edition%f0%9f%8e%83",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519.png",
+        "id": 25900,
+        "extension": "png",
+        "width": 1080,
+        "height": 1080,
+        "filesize": 3504434,
+        "sizes": {
+          "medium": {
+            "width": 300,
+            "height": 300,
+            "mime-type": "image/png",
+            "filesize": 137396,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-300x300.png"
+          },
+          "large": {
+            "width": 1024,
+            "height": 1024,
+            "mime-type": "image/png",
+            "filesize": 1314433,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-1024x1024.png"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 39499,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-150x150.png"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 768,
+            "mime-type": "image/png",
+            "filesize": 772467,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-768x768.png"
+          },
+          "etfrtb_logo": {
+            "width": 200,
+            "height": 200,
+            "mime-type": "image/png",
+            "filesize": 66166,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-200x200.png"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 199089,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-370x370.png"
+          },
+          "thegig-thumb-huge": {
+            "width": 1080,
+            "height": 725,
+            "mime-type": "image/png",
+            "filesize": 943679,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-1080x725.png"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/png",
+            "filesize": 461376,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-840x473.png"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/png",
+            "filesize": 125537,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-410x230.png"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/png",
+            "filesize": 25960,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-120x120.png"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 840,
+            "mime-type": "image/png",
+            "filesize": 914131,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-840x840.png"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 410,
+            "mime-type": "image/png",
+            "filesize": 239598,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-410x410.png"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/png",
+            "filesize": 542947,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-570x696.png"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/png",
+            "filesize": 484693,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-650x572.png"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/png",
+            "filesize": 706627,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-890x664.png"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/png",
+            "filesize": 531139,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-630x630.png"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 600,
+            "mime-type": "image/png",
+            "filesize": 485453,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-600x600.png"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/png",
+            "filesize": 39499,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-150x150.png"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/png",
+            "filesize": 61969,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-270x152.png"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/png",
+            "filesize": 261270,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-370x493.png"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/png",
+            "filesize": 199089,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6519-370x370.png"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-11-06 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "06",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-11-07 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "07",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-11-06 22:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "06",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-11-07 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "07",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://www.tickettailor.com/events/wanentertainmentsltd/2332901?fbclid=IwdGRleAU4HeZleHRuA2FlbQIxMQBwZG9mAWZkaWQWUQE7Al7IEQtpWltbUhSVHayf2ERoTXNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR5X3O5noDXJC9GlZ8S2KTeUEJMNzs3yhLrLcl7Jj6CT0LChmOYgHNJ_KqIGhQ_aem_Tt4-zHFgct_Z6fVNY__NkA",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25841,
+      "global_id": "thecloud.berlin?id=25841",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25841"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-07 08:01:37",
+      "date_utc": "2026-09-07 07:01:37",
+      "modified": "2026-09-07 08:01:37",
+      "modified_utc": "2026-09-07 07:01:37",
+      "url": "https://thecloud.berlin/event/nairobi-nights-praesentiert-rayvanny-live-in-berlin/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25841",
+      "title": "NAIROBI NIGHTS PRÄSENTIERT RAYVANNY — LIVE IN BERLIN",
+      "description": "<p>ES IST OFFIZIELL. 🇩🇪🔥</p>\n<p>NAIROBI NIGHTS PRÄSENTIERT<br />\nRAYVANNY — LIVE IN BERLIN</p>\n<p>Am 14. NOVEMBER 2026 kommt einer der größten Stars Ostafrikas für eine exklusive Live-Show ins THE CLOUD BERLIN.</p>\n<p>Das ist nicht einfach nur irgendeine Partynacht.<br />\nDas ist RAYVANNY. LIVE. IN BERLIN.</p>\n<p>📍 THE CLOUD<br />\nAlexanderstraße 7, 10178 Berlin</p>\n<p>🎟️ EARLY BIRD TICKETS — 25 € INKL. GEBÜHREN<br />\nNur begrenzt verfügbar.</p>\n<p>DIE TICKETS SIND JETZT LIVE — LINK IN BIO.</p>\n<p>Berlin, sagt euren Freunden Bescheid.<br />\nDas wird etwas Besonderes.</p>",
+      "excerpt": "",
+      "slug": "nairobi-nights-praesentiert-rayvanny-live-in-berlin",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970.jpeg",
+        "id": 25842,
+        "extension": "jpeg",
+        "width": 1280,
+        "height": 1600,
+        "filesize": 540224,
+        "sizes": {
+          "medium": {
+            "width": 240,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 33382,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-240x300.jpeg"
+          },
+          "large": {
+            "width": 819,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 137152,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-819x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 23937,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 960,
+            "mime-type": "image/jpeg",
+            "filesize": 124694,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-768x960.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 160,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 25465,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-160x200.jpeg"
+          },
+          "1536x1536": {
+            "width": 1229,
+            "height": 1536,
+            "mime-type": "image/jpeg",
+            "filesize": 247183,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-1229x1536.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 463,
+            "mime-type": "image/jpeg",
+            "filesize": 50651,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-370x463.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1280,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 170941,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-1280x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 89728,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 39805,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 21704,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1050,
+            "mime-type": "image/jpeg",
+            "filesize": 141738,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-840x1050.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 513,
+            "mime-type": "image/jpeg",
+            "filesize": 56574,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-410x513.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 83896,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 82726,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 114216,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 86234,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 750,
+            "mime-type": "image/jpeg",
+            "filesize": 89637,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-600x750.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 23937,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 28505,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 52593,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 47058,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_5970-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-11-14 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "14",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-11-15 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "15",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-11-14 22:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "14",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-11-15 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "15",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://www.eventbrite.de/e/rayvanny-live-in-berlin-nairobi-nights-tickets-1999928276311?aff=oddtdtcreator",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25918,
+      "global_id": "thecloud.berlin?id=25918",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25918"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-10-15 08:10:37",
+      "date_utc": "2026-10-15 07:10:37",
+      "modified": "2026-10-15 08:10:37",
+      "modified_utc": "2026-10-15 07:10:37",
+      "url": "https://thecloud.berlin/event/enca-live-on-stage-%e2%98%85-club-the-cloud-berlin/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25918",
+      "title": "ENCA LIVE ON STAGE ★ CLUB THE CLOUD BERLIN",
+      "description": "<div class=\"StructuredModuleRenderer-module-scss-module__Qv95HW__structuredContent StructuredModuleRenderer-module-scss-module__Qv95HW__text\" data-testid=\"text-content\">\n<div>\n<p>21.11.26 ★ ENCA LIVE ON STAGE ★ CLUB THE CLOUD BERLIN ★ DJ BOUANA ★ DJ J-CUT ★ AVNI TUPANSHOW ★</p>\n</div>\n</div>\n<div class=\"StructuredModuleRenderer-module-scss-module__Qv95HW__structuredContent StructuredModuleRenderer-module-scss-module__Qv95HW__text\" data-testid=\"text-content\">\n<div>\n<p>21.11.26 ★ ENCA LIVE ON STAGE ★ CLUB THE CLOUD BERLIN ★ DJ BOUANA ★ DJ J-CUT ★ AVNI TUPANSHOW ★</p>\n<p>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</p>\n<p>BERLIN, das größte albanische Event in Norddeutschland kommt zum ersten Mal, zu euch in die Hauptstadt❤️</p>\n<p>IHR WOLLTET ES, ihr kriegts🇦🇱</p>\n<p>Zum GRAND OPENING bringen wir euch die Schönheit der albanischen Musikszene mit:</p>\n<p>💎ENCA💥</p>\n<p>mit ihrem AKTUELLEN HIT, das VIRAL durch die Decke gegangen ist &#8211; VASHA🔥</p>\n<p>ES WIRD EINE UNVERGESSLICHE NACHT😍</p>\n<p>🛑FACTS🛑</p>\n<p>🗓️21.NOVEMBER 2026</p>\n<p>⏰Ab 23 Uhr</p>\n<p>🪩CLUB THE CLOUD BERLIN</p>\n<p>⏩️ Alerxanderstr. 7, 10178 Berlin</p>\n<p>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</p>\n<p>🎫TICKETS ONLINE UNTER:</p>\n<p>🛑VORVERKAUF🛑</p>\n<p>🎫 Early Bird Tickets (streng limitert):</p>\n<p>➡️22,00 Euro</p>\n<p>🎫FAST LANE TICKET: 28,00 Euro</p>\n<p>(kein Anstellen an der Schlange, seperater Eingang!)</p>\n<p>🎫 Vorverkaufs Tickets: 25,00 Euro</p>\n<p>🛑ABENDKASSE WIRD VORHANDEN SEIN❗️</p>\n<p>💎VIP LOUNGES könnt ihr direkt beim Club THE CLOUD buchen🫶 • per DM</p>\n<p>▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀</p>\n<p>🔞 EINLASS AB 18 Jahre<br />\nℹ️ Einlass nur mit gültigem Ausweisdokument und unter Beachtung der Clubregeln!</p>\n</div>\n</div>",
+      "excerpt": "",
+      "slug": "enca-live-on-stage-%e2%98%85-club-the-cloud-berlin",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565.jpeg",
+        "id": 25919,
+        "extension": "jpeg",
+        "width": 1290,
+        "height": 631,
+        "filesize": 160897,
+        "sizes": {
+          "medium": {
+            "width": 300,
+            "height": 147,
+            "mime-type": "image/jpeg",
+            "filesize": 8582,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-300x147.jpeg"
+          },
+          "large": {
+            "width": 1024,
+            "height": 501,
+            "mime-type": "image/jpeg",
+            "filesize": 51844,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-1024x501.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 4995,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 376,
+            "mime-type": "image/jpeg",
+            "filesize": 33426,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-768x376.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 200,
+            "height": 98,
+            "mime-type": "image/jpeg",
+            "filesize": 5164,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-200x98.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 181,
+            "mime-type": "image/jpeg",
+            "filesize": 11743,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-370x181.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 44072,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 15223,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 3841,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 411,
+            "mime-type": "image/jpeg",
+            "filesize": 37939,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-840x411.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 201,
+            "mime-type": "image/jpeg",
+            "filesize": 13556,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-410x201.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 631,
+            "mime-type": "image/jpeg",
+            "filesize": 33646,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-570x631.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 37459,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 631,
+            "mime-type": "image/jpeg",
+            "filesize": 60491,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-890x631.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 35600,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 293,
+            "mime-type": "image/jpeg",
+            "filesize": 23459,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-600x293.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 4995,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 8577,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 17808,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 16474,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/10/IMG_6565-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-11-21 23:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "21",
+        "hour": "23",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-11-22 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "22",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-11-21 22:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "21",
+        "hour": "22",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-11-22 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "11",
+        "day": "22",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://www.eventbrite.de/e/211126-enca-live-on-stage-club-the-cloud-berlin-dj-bouana-dj-j-c-tickets-2003359066898?aff=oddtdtcreator&amp;utm_source=ig&amp;utm_medium=social&amp;utm_content=link_in_bio&amp;fbclid=PAdGRleAU8A5dleHRuA2FlbQIxMQBwZG9mAmZkaWQWUQQpKBvZO_NatKEvJLan8lmSLZt-YnNydGMGYXBwX2lkDzEyNDAyNDU3NDI4NzQxNAABp0JxgznqJl5E4z_RCPZ565AqwVwoehXcnd63T1iytJ5kgzQU4trPfnjK2hwf_aem_xrLeKZGipwxniHmVA-EmUg",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    },
+    {
+      "id": 25884,
+      "global_id": "thecloud.berlin?id=25884",
+      "global_id_lineage": [
+        "thecloud.berlin?id=25884"
+      ],
+      "author": "1",
+      "status": "publish",
+      "date": "2026-09-29 23:38:20",
+      "date_utc": "2026-09-29 22:38:20",
+      "modified": "2026-09-29 23:38:20",
+      "modified_utc": "2026-09-29 22:38:20",
+      "url": "https://thecloud.berlin/event/12-12-26-ran-d-berlin/",
+      "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/25884",
+      "title": "12.12.26 | RAN-D | BERLIN",
+      "description": "<p>* 12.12.26 | RAN-D | BERLIN *</p>\n<p>After more than 3 years, it&#8217;s finally time to bring the one and only RAN-D back to the capital!</p>\n<p>With legendary tracks like &#8222;Zombie&#8220;, &#8222;Hurricane&#8220; and &#8222;Living for the Moment&#8220;, he has become an undeniable part of the hardstyle scene and in December he&#8217;s coming back to Berlin to make the capital go wild again</p>\n<p>We can&#8217;t wait to have him back and share this night with you. This one is going to be special.</p>\n<p>Tickets: https://wanted-berlin.com/</p>\n<p>Keep an eye on our socials and don&#8217;t miss the drop!</p>\n<p>GO HARD OR DIE</p>",
+      "excerpt": "",
+      "slug": "12-12-26-ran-d-berlin",
+      "image": {
+        "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297.jpeg",
+        "id": 25885,
+        "extension": "jpeg",
+        "width": 1290,
+        "height": 1645,
+        "filesize": 497221,
+        "sizes": {
+          "medium": {
+            "width": 235,
+            "height": 300,
+            "mime-type": "image/jpeg",
+            "filesize": 18407,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-235x300.jpeg"
+          },
+          "large": {
+            "width": 803,
+            "height": 1024,
+            "mime-type": "image/jpeg",
+            "filesize": 123969,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-803x1024.jpeg"
+          },
+          "thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 7234,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-150x150.jpeg"
+          },
+          "medium_large": {
+            "width": 768,
+            "height": 979,
+            "mime-type": "image/jpeg",
+            "filesize": 116496,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-768x979.jpeg"
+          },
+          "etfrtb_logo": {
+            "width": 157,
+            "height": 200,
+            "mime-type": "image/jpeg",
+            "filesize": 9416,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-157x200.jpeg"
+          },
+          "1536x1536": {
+            "width": 1205,
+            "height": 1536,
+            "mime-type": "image/jpeg",
+            "filesize": 218946,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-1205x1536.jpeg"
+          },
+          "post-thumbnail": {
+            "width": 370,
+            "height": 472,
+            "mime-type": "image/jpeg",
+            "filesize": 37754,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-370x472.jpeg"
+          },
+          "thegig-thumb-huge": {
+            "width": 1290,
+            "height": 725,
+            "mime-type": "image/jpeg",
+            "filesize": 99688,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-1290x725.jpeg"
+          },
+          "thegig-thumb-big": {
+            "width": 840,
+            "height": 473,
+            "mime-type": "image/jpeg",
+            "filesize": 52021,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-840x473.jpeg"
+          },
+          "thegig-thumb-med": {
+            "width": 410,
+            "height": 230,
+            "mime-type": "image/jpeg",
+            "filesize": 17583,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-410x230.jpeg"
+          },
+          "thegig-thumb-tiny": {
+            "width": 120,
+            "height": 120,
+            "mime-type": "image/jpeg",
+            "filesize": 5133,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-120x120.jpeg"
+          },
+          "thegig-thumb-masonry-big": {
+            "width": 840,
+            "height": 1071,
+            "mime-type": "image/jpeg",
+            "filesize": 132410,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-840x1071.jpeg"
+          },
+          "thegig-thumb-masonry": {
+            "width": 410,
+            "height": 523,
+            "mime-type": "image/jpeg",
+            "filesize": 44403,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-410x523.jpeg"
+          },
+          "thegig-thumb-rectangle": {
+            "width": 570,
+            "height": 696,
+            "mime-type": "image/jpeg",
+            "filesize": 70997,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-570x696.jpeg"
+          },
+          "thegig-thumb-medium-square": {
+            "width": 650,
+            "height": 572,
+            "mime-type": "image/jpeg",
+            "filesize": 61289,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-650x572.jpeg"
+          },
+          "thegig-thumb-square": {
+            "width": 890,
+            "height": 664,
+            "mime-type": "image/jpeg",
+            "filesize": 81044,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-890x664.jpeg"
+          },
+          "woocommerce_thumbnail": {
+            "width": 630,
+            "height": 630,
+            "mime-type": "image/jpeg",
+            "filesize": 67582,
+            "uncropped": false,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-630x630.jpeg"
+          },
+          "woocommerce_single": {
+            "width": 600,
+            "height": 765,
+            "mime-type": "image/jpeg",
+            "filesize": 80080,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-600x765.jpeg"
+          },
+          "woocommerce_gallery_thumbnail": {
+            "width": 150,
+            "height": 150,
+            "mime-type": "image/jpeg",
+            "filesize": 7234,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-150x150.jpeg"
+          },
+          "trx_addons-thumb-small": {
+            "width": 270,
+            "height": 152,
+            "mime-type": "image/jpeg",
+            "filesize": 9149,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-270x152.jpeg"
+          },
+          "trx_addons-thumb-portrait": {
+            "width": 370,
+            "height": 493,
+            "mime-type": "image/jpeg",
+            "filesize": 38588,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-370x493.jpeg"
+          },
+          "trx_addons-thumb-avatar": {
+            "width": 370,
+            "height": 370,
+            "mime-type": "image/jpeg",
+            "filesize": 29673,
+            "url": "https://thecloud.berlin/wp-content/uploads/2026/09/IMG_6297-370x370.jpeg"
+          }
+        }
+      },
+      "all_day": false,
+      "start_date": "2026-12-12 21:00:00",
+      "start_date_details": {
+        "year": "2026",
+        "month": "12",
+        "day": "12",
+        "hour": "21",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "end_date": "2026-12-13 05:00:00",
+      "end_date_details": {
+        "year": "2026",
+        "month": "12",
+        "day": "13",
+        "hour": "05",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_start_date": "2026-12-12 20:00:00",
+      "utc_start_date_details": {
+        "year": "2026",
+        "month": "12",
+        "day": "12",
+        "hour": "20",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "utc_end_date": "2026-12-13 04:00:00",
+      "utc_end_date_details": {
+        "year": "2026",
+        "month": "12",
+        "day": "13",
+        "hour": "04",
+        "minutes": "00",
+        "seconds": "00"
+      },
+      "timezone": "UTC+1",
+      "timezone_abbr": "UTC+1",
+      "cost": "",
+      "cost_details": {
+        "currency_symbol": "$",
+        "currency_code": "USD",
+        "currency_position": "prefix",
+        "values": []
+      },
+      "website": "https://wanted-berlin.com/",
+      "show_map": true,
+      "show_map_link": true,
+      "hide_from_listings": false,
+      "sticky": false,
+      "featured": false,
+      "categories": [
+        {
+          "name": "Night Club",
+          "slug": "night-club",
+          "term_group": 0,
+          "term_taxonomy_id": 204,
+          "taxonomy": "tribe_events_cat",
+          "description": "",
+          "parent": 0,
+          "count": 138,
+          "filter": "raw",
+          "id": 204,
+          "urls": {
+            "self": "https://thecloud.berlin/wp-json/tribe/events/v1/categories/204",
+            "collection": "https://thecloud.berlin/wp-json/tribe/events/v1/categories"
+          }
+        }
+      ],
+      "tags": [],
+      "venue": {
+        "id": 1192,
+        "author": "1",
+        "status": "publish",
+        "date": "2020-04-28 12:37:44",
+        "date_utc": "2020-04-28 12:37:44",
+        "modified": "2025-01-14 13:51:58",
+        "modified_utc": "2025-01-14 12:51:58",
+        "url": "https://thecloud.berlin/veranstaltungsort/manhattan-club/",
+        "venue": "THE Cloud",
+        "slug": "manhattan-club",
+        "image": {
+          "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px.png",
+          "id": 25037,
+          "extension": "png",
+          "width": 512,
+          "height": 512,
+          "filesize": 55155,
+          "sizes": {
+            "medium": {
+              "width": 300,
+              "height": 300,
+              "mime-type": "image/png",
+              "filesize": 30130,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-300x300.png"
+            },
+            "thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "post-thumbnail": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "thegig-thumb-big": {
+              "width": 512,
+              "height": 473,
+              "mime-type": "image/png",
+              "filesize": 58155,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-512x473.png"
+            },
+            "thegig-thumb-med": {
+              "width": 410,
+              "height": 230,
+              "mime-type": "image/png",
+              "filesize": 37052,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x230.png"
+            },
+            "thegig-thumb-tiny": {
+              "width": 120,
+              "height": 120,
+              "mime-type": "image/png",
+              "filesize": 8923,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-120x120.png"
+            },
+            "thegig-thumb-masonry": {
+              "width": 410,
+              "height": 410,
+              "mime-type": "image/png",
+              "filesize": 45793,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-410x410.png"
+            },
+            "woocommerce_gallery_thumbnail": {
+              "width": 150,
+              "height": 150,
+              "mime-type": "image/png",
+              "filesize": 12188,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-150x150.png"
+            },
+            "trx_addons-thumb-small": {
+              "width": 270,
+              "height": 152,
+              "mime-type": "image/png",
+              "filesize": 22138,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x152.png"
+            },
+            "trx_addons-thumb-portrait": {
+              "width": 370,
+              "height": 493,
+              "mime-type": "image/png",
+              "filesize": 56369,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x493.png"
+            },
+            "trx_addons-thumb-avatar": {
+              "width": 370,
+              "height": 370,
+              "mime-type": "image/png",
+              "filesize": 39782,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-370x370.png"
+            },
+            "site_icon-270": {
+              "width": 270,
+              "height": 270,
+              "mime-type": "image/png",
+              "filesize": 26940,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-270x270.png"
+            },
+            "site_icon-192": {
+              "width": 192,
+              "height": 192,
+              "mime-type": "image/png",
+              "filesize": 17027,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-192x192.png"
+            },
+            "site_icon-180": {
+              "width": 180,
+              "height": 180,
+              "mime-type": "image/png",
+              "filesize": 15597,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-180x180.png"
+            },
+            "site_icon-32": {
+              "width": 32,
+              "height": 32,
+              "mime-type": "image/png",
+              "filesize": 1489,
+              "url": "https://thecloud.berlin/wp-content/uploads/2025/01/cropped-the-cloud-logo-300px-32x32.png"
+            }
+          }
+        },
+        "address": "Alexanderstraße 7",
+        "city": "Berlin",
+        "country": "Germany",
+        "province": "Berlin",
+        "state": "NY",
+        "zip": "10178",
+        "stateprovince": "Berlin",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "thecloud.berlin?id=1192",
+        "global_id_lineage": [
+          "thecloud.berlin?id=1192"
+        ]
+      },
+      "organizer": [],
+      "custom_fields": []
+    }
+  ],
+  "rest_url": "https://thecloud.berlin/wp-json/tribe/events/v1/events/?page=1&per_page=50&start_date=2026-10-16 00:00:00&end_date=2028-10-16 23:59:59&status=publish",
+  "total": 11,
+  "total_pages": 1
+}

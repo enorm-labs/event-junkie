@@ -588,6 +588,9 @@ says so.
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
 | `THEATER_IM_DELPHI`    | `GENRE`            | the labels are formats; only Kammermusik and Elektronische Musik name a style                                                                    | —     |
 | `THEATER_IM_DELPHI`    | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `THE_CLOUD`            | `GENRE`            | every event is filed under one `Night Club` category; the style is only in the prose                                                             | —     |
+| `THE_CLOUD`            | `PRICE`            | `cost` is empty on every event; ticket tiers appear only in the promoters' prose                                                                 | —     |
+| `THE_CLOUD`            | `ARTISTS`          | a club night names its DJs only in free prose; only a live show bills its act in the title                                                       | —     |
 | `THE_WALL`             | `DOORS_TIME`       | each producer states one time per show, doors for some and the start for others                                                                  | —     |
 | `THE_WALL`             | `PRICE`            | most shows are pay-what-you-want, and a fixed price appears only in the prose                                                                    | —     |
 | `THE_WALL`             | `TICKET_URL`       | reservations run through the club's own Spotagig pages, which the event page is                                                                  | —     |
