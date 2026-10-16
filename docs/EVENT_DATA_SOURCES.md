@@ -659,7 +659,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | 90mil                             | —                                                   | Open Air     | Farewell festival in May 2026; site demolished            | Not importable (closed)    |
 | Taborkirche                       | https://www.taborkirche.de                          | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change                |
 | West Germany                      | —                                                   | Club         | No own site; RA only                                      | Site change / manual entry |
-| Torte Bar                         | —                                                   | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
+| Torte Bar                         | https://www.torte-bar.de/                           | Bar          | One-page Wix site, no programme; Instagram and RA only    | Site change / manual entry |
 | Ipse                              | —                                                   | Open Air     | Back as IPSE.UFER; no own site, RA only                   | Site change / manual entry |
 | Musikbrauerei                     | https://musikbrauerei.com/events/                   | Concert Hall | Hand-edited Kadence page; 2025 entries kept, 2 upcoming   | More events / re-check     |
 | P61 Gallery                       | https://www.p61gallery.com/programm                 | Other        | Digital-art museum; programme is exhibitions              | Scope decision             |
