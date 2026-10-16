@@ -114,7 +114,7 @@ jobs:
       # can authenticate before a run that publishes.
       - name: Mint an App installation token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           # `client-id` takes the numeric App id; `app-id` warns on every run.
           client-id: ${{ vars.RELEASE_APP_ID }}
@@ -168,7 +168,7 @@ jobs:
         id: claude
         continue-on-error: true
         timeout-minutes: 5
-        uses: anthropics/claude-code-action@58985842b834ed26087302ba27d07bc24ca8697a # v1
+        uses: anthropics/claude-code-action@1d6de8cb0c237e7c15e9e1bdf973826ebae490cc # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           display_report: true

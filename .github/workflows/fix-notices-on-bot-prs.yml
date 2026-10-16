@@ -76,7 +76,7 @@ jobs:
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24' # should match the version specified in .nvmrc
           cache: 'npm'
@@ -107,7 +107,7 @@ jobs:
       - name: Mint an App installation token
         id: app-token
         if: steps.changed.outputs.result == 'changed'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           # The numeric App id, which `client-id` accepts.
           client-id: ${{ vars.RELEASE_APP_ID }}
