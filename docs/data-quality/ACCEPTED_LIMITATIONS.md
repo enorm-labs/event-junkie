@@ -309,6 +309,13 @@ says so.
 | `MADAME_CLAUDE`        | `GENRE`            | the venue leaves its genre field empty on every event; style appears only in the description                                                     | —     |
 | `MADAME_CLAUDE`        | `PRICE`            | entry is mostly by donation, kept as the note with no figure                                                                                     | —     |
 | `MADAME_CLAUDE`        | `PROMOTERS`        | a presenter is named only on a rare night                                                                                                        | —     |
+| `MAD_MONKEY_ROOM`      | `DESCRIPTION`      | the shop list carries no text; each date's shop page repeats its series' text                                                                    | —     |
+| `MAD_MONKEY_ROOM`      | `DOORS_TIME`       | the shop list prints only the start; doors appear only in each date's page text                                                                  | —     |
+| `MAD_MONKEY_ROOM`      | `END_TIME`         | the shop list prints only the start                                                                                                              | —     |
+| `MAD_MONKEY_ROOM`      | `ARTISTS`          | the club names a night's comedians only on social media, shortly before                                                                          | —     |
+| `MAD_MONKEY_ROOM`      | `SOLD_OUT`         | the shop list marks no date as sold out                                                                                                          | —     |
+| `MAD_MONKEY_ROOM`      | `GENRE`            | the shop names no genre                                                                                                                          | —     |
+| `MAD_MONKEY_ROOM`      | `PROMOTERS`        | every show is the club's own                                                                                                                     | —     |
 | `MASCHINENHAUS`        | `DOORS_TIME`       | the calendar states one time per event; only a few event texts add an Einlass time                                                               | —     |
 | `MASCHINENHAUS`        | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
 | `MASCHINENHAUS`        | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |
