@@ -5136,7 +5136,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# KAOS Berlin — not imported
+# KAOS Berlin
 # ————————————————————————————————————————————————————————————
 
 ### --- Create KAOS Berlin venue ---
@@ -5157,13 +5157,43 @@ Content-Type: application/json
     "descriptionAlt": "Die Kreative Arbeitsgemeinschaft Oberschöneweide sitzt seit 2013 in einer Lagerhalle an der Spree; rund 100 Mitglieder teilen sich Coworking und Studios, abends gibt es Live-Konzerte, Impro-Comedy und einen queeren Treff.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["cultural-centre", "live-venue"],
-    "programmeUrl": "https://kaosberlin.de/veranstaltungen/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_kaos_berlin", response.body.id);
     client.test("KAOS Berlin venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create KAOS Berlin event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_kaos_berlin}},
+    "name": "KAOS Berlin",
+    "url": "https://kaosberlin.de/wp-json/tribe/events/v1/events",
+    "sourceType": "KAOS_BERLIN",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("KAOS Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial KAOS Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/kaos-berlin/import
+Accept: application/json
+
+> {%
+    client.test("KAOS Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
