@@ -686,6 +686,17 @@ says so.
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `SUPAMOLLY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `SURPRISE`             | `SUBTITLE`         | each night has one title line                                                                                                                    | —     |
+| `SURPRISE`             | `EVENT_TYPE`       | the site names no category; every night is a party                                                                                               | —     |
+| `SURPRISE`             | `DOORS_TIME`       | the events page prints no time                                                                                                                   | —     |
+| `SURPRISE`             | `START_TIME`       | the events page prints no time                                                                                                                   | —     |
+| `SURPRISE`             | `END_TIME`         | the site prints no end of a night                                                                                                                | —     |
+| `SURPRISE`             | `TICKET_URL`       | the club sells entry at the door and links no ticket shop                                                                                        | —     |
+| `SURPRISE`             | `PRICE_PRESALE`    | the club sells entry at the door only                                                                                                            | —     |
+| `SURPRISE`             | `PROMOTERS`        | the site credits no promoter                                                                                                                     | —     |
+| `SURPRISE`             | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `SURPRISE`             | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `SURPRISE`             | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the events page                                                                   | —     |
 | `TAUSEND`              | `PER_EVENT_PAGE`   | every night points at its anchor on the lineup page                                                                                              | —     |
 | `TAUSEND`              | `PRICE`            | the lineup prints no admission                                                                                                                   | —     |
 | `TAUSEND`              | `GENRE`            | each night names its styles only in its prose                                                                                                    | —     |
