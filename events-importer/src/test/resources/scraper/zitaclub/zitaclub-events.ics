@@ -1,0 +1,148 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//wp-events-plugin.com//7.4.7//EN
+TZID:Europe/Berlin
+X-WR-TIMEZONE:Europe/Berlin
+BEGIN:VEVENT
+UID:375@zita-club.de
+DTSTART;TZID=Europe/Berlin:20261017T210000
+DTEND;TZID=Europe/Berlin:20261018T040000
+DTSTAMP:20261005T100355Z
+URL:https://zita-club.de/events/rock-at-zita-16/
+SUMMARY:Rock at Zita
+DESCRIPTION:Der Zita Club verwandelt sich wieder in das Herz einer mitreiß
+ enden Rock-Nacht. Ob du headbangen\, tanzen oder einfach eine gute Zeit mi
+ t Freunden haben willst – hier bist du genau richtig.\n\n21–22 Uhr: Cl
+ assic Rock Stunde + Happy Hour an der Bar (2-für-1)\n\n🎸DJ Eric Jr.\n\
+ n🔉 Line-up\, das knallt: Songs von Led Zeppelin\, Black Sabbath\, Guns 
+ N’ Roses\, Iron Maiden\, Disturbed und vielen mehr.\n\n📍 Zita Club &a
+ mp\; Bar\, Am Juliusturm 64\, 13599 Berlin\n\nSchnapp dir deine Crew und f
+ eier mit uns die Rückkehr der Rock-Nacht! 🤘
+ATTACH;FMTTYPE=image/jpeg:https://zita-club.de/wp-content/uploads/2026/10/
+ Rock-at-Zita-Instagram-Post-45-594-x-840-mm-2-scaled.png
+END:VEVENT
+BEGIN:VEVENT
+UID:378@zita-club.de
+DTSTART;TZID=Europe/Berlin:20261030T180000
+DTEND;TZID=Europe/Berlin:20261031T060000
+DTSTAMP:20261005T182121Z
+URL:https://zita-club.de/events/geschlossene-veranstaltung-2/
+SUMMARY:Geschlossene Veranstaltung
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:376@zita-club.de
+DTSTART;TZID=Europe/Berlin:20261106T210000
+DTEND;TZID=Europe/Berlin:20261107T060000
+DTSTAMP:20261005T184737Z
+URL:https://zita-club.de/events/danse-macabre-a-tribute-to-bruno-kramm/
+SUMMARY:Danse Macabre - a Tribute to Bruno Kramm
+DESCRIPTION:Am Freitag\, 25.09. verstarb unerwartet unser lieber Freund\, K
+ ollege und Weggefährte Bruno Kramm. An diesem Abend wollen wir ihm gedenk
+ en und – mit Sicherheit ganz in seinem Sinne – ein Event für Euch erm
+ öglichen um gemeinsam Abschied zu nehmen\, jedoch auch die Musik von DAS 
+ ICH und vielen anderen zu zelebrieren:\n\nDANSE MACABRE – A TRIBUTE TO B
+ RUNO KRAMM mit\n\n- DJ Sven Hegewald (Das Ich)\n- DJ Jolly (Danse Macabre 
+ Night)\n- DJ Sven Friedrich (Solar Fake\, Zeraphine)\n- DJ Oswald Henke (G
+ oethes Erben\, Erblast u.a.)\n- DJane Sara Noxx\n- DJ Axel K. (Silke Bisch
+ off)\n\nOrt: ZiTa Club &amp\; Bar in der Zitadelle Spandau\, Berlin\nBegin
+ n: 21:00 Uhr\n\n„Das Ich“ Sänger Stefan Ackermann wird je nach Befind
+ en ggf. spontan dem Abend beiwohnen.\n\nAlle teilnehmenden Künster und DJ
+ ’s verzichten auf Gagen und tragen ihre Unkosten selbst. Es wird am Eing
+ ang eine Box in Funktion eines Fonds zum Spenden zur Deckung der Kosten vo
+ n Anfahrt und Hotels geben. Der Erlös des Eintritts kommt somit vollumfä
+ nglich den Kindern und Familie von Bruno Kramm zugute.\n\nAlle\, die ein T
+ icket im VVK erwerben nehmen an einer großen Verlosung teil. Bisher sind 
+ im Lostopf:\n\n+++ 2 Tickets für das Mera Luna Festival 2027 inkl. Campin
+ g (7. &amp\; 8. August)\n+++ 2 Tickets für das „Out of Line“ Festival
+  2027 in Berlin (6.-8.Mai)\n+++ 2 Tickets für das „Berlin Dark Nights
+ “ Festival (29. &amp\; 30. Januar 2027)\n+++ 2 Tickets für das Konzert 
+ von „Anne Clark“ in Berlin (19. Januar 2027)\n+++ 2 Tickets für das K
+ onzert von „Extrabreit“ in Berlin (29.12.)\n+++ 2 Tickets für das Kon
+ zert von „Bragolin“ in Berlin (19.11.)\n+++ 1 Booking für DJ Jolly f
+ ür Deine ganz private Party\n+++ 3x2 Tickets für die Party „Friday I
+ ’m in Love“ im Frannz Club (13.11.)\n+++ 2 x 2 Tickets für die Linien
+ treu Revival Party im Silverwings Club (14.11.) + 2 Getränebons pro Perso
+ n !\n+++ 2 x 2 Tickets für die LINIENTREU Revival Party im Silverwings Cl
+ ub (12.12.) + 2 Getränkebons pro Person !\n+++ 2x2 Tickets für die „Da
+ nce Dance Revolution: November 2026 - Jolly &amp\; Rebel L“ im Privatclu
+ b (20.11.)\n\nDazu kommt noch haufenweise signiertes Merch u.a. von Leathe
+ r Strip\, Dorsetshire\, The Second Sight usw. Außerdem könnt ihr Goodies
+  vom Darkstore Shop in Berlin erwerben !\n\nDie Liste der DJ’s\, Gewinne
+  und Specials wird noch erweitert ! Alle Updates und Infos hier im Event o
+ der – noch schneller- in der Facebook Gruppe zur DANSE MACABRE NIGHT\, h
+ ier:\nhttps://www.facebook.com/groups/3435855253219953
+ATTACH;FMTTYPE=image/jpeg:https://zita-club.de/wp-content/uploads/2026/10/
+ Flyer_final.jpeg
+END:VEVENT
+BEGIN:VEVENT
+UID:377@zita-club.de
+DTSTART;TZID=Europe/Berlin:20261107T210000
+DTEND;TZID=Europe/Berlin:20261108T060000
+DTSTAMP:20261005T184812Z
+URL:https://zita-club.de/events/danse-macabre-a-tribute-to-bruno-kramm-2/
+SUMMARY:Danse Macabre - a Tribute to Bruno Kramm
+DESCRIPTION:Am Freitag\, 25.09. verstarb unerwartet unser lieber Freund\, K
+ ollege und Weggefährte Bruno Kramm. An diesem Abend wollen wir ihm gedenk
+ en und – mit Sicherheit ganz in seinem Sinne – ein Event für Euch erm
+ öglichen um gemeinsam Abschied zu nehmen\, jedoch auch zur Musik von DAS 
+ ICH und vielen anderen zu zelebrieren:\n\nDANSE MACABRE – A TRIBUTE TO B
+ RUNO KRAMM mit\n\n- DJ Sven Hegewald (Das Ich)\n- DJ Jolly (Danse Macabre 
+ Night)\n- DJ Oswald Henke (Goethes Erben\, Erblast u.a.)\n- DJ Axel K. (Si
+ lke Bischoff)\n- DJ La Olaf Bonita (Darkstore Berlin)\n\nOrt: ZiTa Club &a
+ mp\; Bar in der Zitadelle Spandau\, Berlin\nBeginn: 21:00 Uhr\n\n„Das Ic
+ h“ Sänger Stefan Ackermann wird je nach Befinden ggf. spontan dem Abend
+  beiwohnen.\n\nAlle teilnehmenden Künster und DJ’s verzichten auf Gagen
+  und tragen ihre Unkosten selbst. Es wird am Eingang eine Box in Funktion 
+ eines Fonds zum Spenden zur Deckung der Kosten von Anfahrt und Hotels gebe
+ n. Der Erlös des Eintritts kommt somit vollumfänglich den Kindern und Fa
+ milie von Bruno Kramm zugute.\nAlle\, die ein Ticket im VVK erwerben nehme
+ n an einer großen Verlosung teil. Bisher sind im Lostopf:\n\n+++ 2 Ticket
+ s für das Mera Luna Festival 2027 inkl. Camping (7. &amp\; 8. August)\n++
+ + 2 Tickets für das „Out of Line“ Festival 2027 in Berlin (6.-8.Mai)\
+ n+++ 2 Tickets für das „Berlin Dark Nights“ Festival (29. &amp\; 30. 
+ Januar 2027)\n+++ 2 Tickets für das Konzert von „Anne Clark“ in Berli
+ n (19. Januar 2027)\n+++ 2 Tickets für das Konzert von „Extrabreit“ i
+ n Berlin (29.12.)\n+++ 2 Tickets für das Konzert von „Bragolin“ in Be
+ rlin (19.11.)\n+++ 1 Booking für DJ Jolly für Deine ganz private Party\n
+ +++ 3x2 Tickets für die Party „Friday I’m in Love“ im Frannz Club (
+ 13.11.)\n+++ 2 x 2 Tickets für die Linientreu Revival Party im Silverwing
+ s Club (14.11.) + 2 Getränebons pro Person !\n+++ 2 x 2 Tickets für die 
+ LINIENTREU Revival Party im Silverwings Club (12.12.) + 2 Getränkebons pr
+ o Person !\n+++ 2x2 Tickets für die „Dance Dance Revolution: November 2
+ 026 - Jolly &amp\; Rebel L“ im Privatclub (20.11.)\n\nDazu kommt noch ha
+ ufenweise signiertes Merch u.a. von Leather Strip\, Dorsetshire\, The Seco
+ nd Sight usw. Außerdem könnt ihr Goodies vom Darkstore Shop in Berlin er
+ werben !\n\nDie Liste der DJ’s\, Gewinne und Specials wird noch erweiter
+ t ! Alle Updates und Infos hier im Event oder – noch schneller- in der F
+ acebook Gruppe zur DANSE MACABRE NIGHT\, hier:\nhttps://www.facebook.com/g
+ roups/3435855253219953
+ATTACH;FMTTYPE=image/jpeg:https://zita-club.de/wp-content/uploads/2026/10/
+ Flyer_final.jpeg
+END:VEVENT
+BEGIN:VEVENT
+UID:379@zita-club.de
+DTSTART;TZID=Europe/Berlin:20261121T200000
+DTEND;TZID=Europe/Berlin:20261122T060000
+DTSTAMP:20261005T182156Z
+URL:https://zita-club.de/events/geschlossene-veranstaltung-3/
+SUMMARY:Geschlossene Veranstaltung
+DESCRIPTION:
+END:VEVENT
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+X-LIC-LOCATION:Europe/Berlin
+BEGIN:DAYLIGHT
+DTSTART:20260329T030000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:20261025T020000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+END:STANDARD
+END:VTIMEZONE
+END:VCALENDAR

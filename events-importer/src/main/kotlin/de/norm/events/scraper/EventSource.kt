@@ -474,6 +474,9 @@ enum class EventSource {
     /** Zitadelle Spandau – the Renaissance fortress whose courtyard hosts the Citadel Music Festival, an open-air concert series each summer. */
     ZITADELLE,
 
+    /** Zita Club & Bar – a nightclub and cocktail bar under the stone vaults of the Zitadelle Spandau, with DJ nights from current hits to classic rock. */
+    ZITA_CLUB,
+
     /** Zur Klappe Berlin – a one-room club in a former public toilet at Yorckstraße and Mehringdamm in Kreuzberg. */
     ZUR_KLAPPE;
 

@@ -22,11 +22,11 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   154 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   155 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    25 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     9 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     8 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -192,10 +192,11 @@ schema change.
 | Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
 | Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu                           | Club         | Squarespace list + event pages; Hall items dropped        |
 | ZIMMER 16                        | https://zimmer16.com/                                                    | Other        | YesTicket cards + event pages; next 20 only               |
+| Zita Club & Bar                  | https://zita-club.de/                                                    | Club         | Events-Manager iCal + event pages for tags, price         |
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-153 importer classes cover 154 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+154 importer classes cover 155 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -217,7 +218,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-56 sources have a second language, 94 have none, and 4 are unknown. Twelve translate the event text on a second page.
+56 sources have a second language, 95 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -395,6 +396,7 @@ the upsert stores none.
 | Zig Zag Hall                     | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-hall-detail.html)                                      |
 | Zig Zag Jazz Club                | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-detail.html)                                           |
 | ZIMMER 16                        | No              | —                                                            | —                  |                                                                                                                                    |
+| Zita Club & Bar                  | No              | TranslatePress `/en/` path, event text untranslated          | —                  |                                                                                                                                    |
 | Zitadelle                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://citadel-music-festival.de/en/events/                                                                                       |
 | Zur Klappe                       | No              | —                                                            | —                  |                                                                                                                                    |
 
@@ -787,7 +789,6 @@ no site of the venue's own.
 | Paradox Music Hall    | —                                     | Club         | Diffus, Landstreicher Konzerte |
 | Trixxter              | —                                     | Bar          | Metal Hammer                   |
 | Wowsville             | —                                     | Bar          | Crunch Tapes                   |
-| Zita Club & Bar       | https://zita-club.de/                 | Club         | Channel Music                  |
 
 Check these points when a row is opened:
 
@@ -797,8 +798,8 @@ Check these points when a row is opened:
 - **Paradox Music Hall** is at Ganghoferstraße 10 in Neukölln (berlin.de). Diffus lists yola there on 2026-10-16,
   moved up from the Prachtwerk. Landstreicher Konzerte has a venue page for it. The search found no site of its own.
 - **Ernst-Reuter-Saal** has one New Berlin Konzerte show. The page does not give the district.
-- **Zita Café & Weingarten** (<https://zita-cafe.de/>) has the same address as Zita Club & Bar. Channel Music lists
-  both. Only the club has a row.
+- **Zita Café & Weingarten** (<https://zita-cafe.de/>) has the same address as Zita Club & Bar, which is imported.
+  Channel Music lists both. The café has no row.
 
 Three venues the sweep found are deliberately left out. **Narva Lounge** is the lounge room of Matrix Club Berlin, and the
 Matrix importer covers it. **arkaoda** closed (see above). Crunch Tapes still lists shows there, but the listing is

@@ -756,6 +756,14 @@ says so.
 | `ZIMMER_16`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ZITADELLE`            | `GENRE`            | the open-air pages name no style                                                                                                                 | —     |
 | `ZITADELLE`            | `PRICE`            | the festival pages print no figure; tickets sell through Eventim                                                                                 | —     |
+| `ZITA_CLUB`            | `ARTISTS`          | the DJs appear only in the prose, and a house night names none                                                                                   | —     |
+| `ZITA_CLUB`            | `DOORS_TIME`       | the site publishes one time per night                                                                                                            | —     |
+| `ZITA_CLUB`            | `EVENT_TYPE`       | the site names no category, so every night is a party unless its title says otherwise                                                            | —     |
+| `ZITA_CLUB`            | `GENRE`            | a night whose page carries no tags names no style                                                                                                | —     |
+| `ZITA_CLUB`            | `PRICE`            | the price field is left empty on some nights                                                                                                     | —     |
+| `ZITA_CLUB`            | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
+| `ZITA_CLUB`            | `SOLD_OUT`         | the site marks no night sold out                                                                                                                 | —     |
+| `ZITA_CLUB`            | `CANCELLATION`     | the site marks no night cancelled or moved                                                                                                       | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
 | `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |
