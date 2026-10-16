@@ -21,6 +21,11 @@ person** (#877). It needs `ZO_SMTP_*` in the HelmRelease and the `openobserve-sm
 Secret; without them OpenObserve refuses the destination with `SMTPUnavailable`
 and this script stops there, before any rule is touched.
 
+**A rule that already matches `alerts.json` is not sent** (#3445). OpenObserve treats a
+PUT as a new rule state and restarts its silence window, so a PUT of an unchanged rule
+can mail a firing again inside the silence it was in. The comparison is the one
+`diff_alerts.py` makes for `--diff`, imported rather than copied.
+
 **The recipient has to be a member of the org**, or the destination is refused with
 `UserNotPermitted`. It is created once as a service account, which has no password.
 The API token OpenObserve returns is never printed or stored. An existing member is
@@ -43,8 +48,11 @@ from alert_objects import (
     recipient_payload,
     template_payload,
 )
+from diff_alerts import differences
 
-auth, svc, org, path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+# Tolerant of being imported with no arguments, like `diff_alerts.py`, so
+# `test_apply_alerts.py` can stub `call()` and run the rule loop without a cluster.
+auth, svc, org, path = (sys.argv + ["", "", "", ""])[1:5]
 # The cluster this is being applied to, for the template's `environment` field (#928).
 # `apply.sh` derives it from `EJ_NODE`; the default keeps a hand-run against staging working.
 environment = sys.argv[5] if len(sys.argv) > 5 else "staging"
@@ -106,8 +114,8 @@ def existing_alerts():
     }
 
 
-def stored_stream(alert_id):
-    """The (stream_type, stream_name) an existing alert is bound to, or None if it cannot be read."""
+def stored_alert(alert_id):
+    """An existing alert as the server holds it, or None if it cannot be read."""
     code, body = call("GET", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, alert_id))
     if code != 200:
         return None
@@ -115,23 +123,16 @@ def stored_stream(alert_id):
         stored = json.loads(body)
     except ValueError:
         return None
-    return stored.get("stream_type"), stored.get("stream_name")
+    return stored if isinstance(stored, dict) else None
 
 
-def main():
-    ensure_recipient()
-    ensure("templates", TEMPLATE_NAME, template_payload(environment))
-    ensure("templates", EMAIL_TEMPLATE_NAME, email_template_payload(environment))
-    ensure("destinations", DESTINATION_NAME, destination_payload(org, auth))
-    ensure("destinations", EMAIL_DESTINATION_NAME, email_destination_payload())
-
+def apply_rules(alerts):
+    """Create, update or recreate each rule. A rule that already matches gets no call."""
     known = existing_alerts()
-    with open(path) as f:
-        alerts = json.load(f)
-
     for alert in alerts:
         name = alert["name"]
         if name in known and known[name]:
+            stored = stored_alert(known[name])
             # **A PUT cannot move an alert to a different stream, and says 200 anyway.**
             # Measured with `ej-site-down` (#702): rewriting its query from `up` to
             # `kube_deployment_status_replicas_available` reported success, the query
@@ -145,10 +146,16 @@ def main():
             # window, so a condition that is true right now can fire again immediately.
             # The alternative is a rule whose published identity disagrees with its
             # query, permanently, with no way to correct it short of the UI.
-            if stored_stream(known[name]) not in (None, (alert.get("stream_type"), alert.get("stream_name"))):
+            if stored is not None and (stored.get("stream_type"), stored.get("stream_name")) != (
+                alert.get("stream_type"),
+                alert.get("stream_name"),
+            ):
                 call("DELETE", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]))
                 code, body = call("POST", "http://%s:5080/api/v2/%s/alerts" % (svc, org), alert)
                 verb = "recreated"
+            elif stored is not None and not differences(alert, stored):
+                print("%-30s unchanged" % name)
+                continue
             else:
                 code, body = call("PUT", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]), alert)
                 verb = "updated"
@@ -161,4 +168,16 @@ def main():
             sys.exit(1)
 
 
-main()
+def main():
+    ensure_recipient()
+    ensure("templates", TEMPLATE_NAME, template_payload(environment))
+    ensure("templates", EMAIL_TEMPLATE_NAME, email_template_payload(environment))
+    ensure("destinations", DESTINATION_NAME, destination_payload(org, auth))
+    ensure("destinations", EMAIL_DESTINATION_NAME, email_destination_payload())
+
+    with open(path) as f:
+        apply_rules(json.load(f))
+
+
+if __name__ == "__main__":
+    main()

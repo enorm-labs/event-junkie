@@ -62,6 +62,9 @@ jobs:
       - name: No credential appears in an alert diff
         run: python3 deploy/alerts/test_diff_alerts.py
 
+      - name: An alert apply sends only the rules that changed
+        run: python3 deploy/alerts/test_apply_alerts.py
+
       - name: The dashboard linter rejects what it claims to
         run: python3 deploy/dashboards/test_lint_dashboard.py
 

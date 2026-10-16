@@ -11,7 +11,7 @@
 # It reaches the cluster over the WireGuard tunnel via the node, like the rest of
 # docs/ops/CLUSTER_ACCESS.md. There is no ingress route to OpenObserve.
 #
-#   ./apply.sh                # create or update every rule in alerts.json, on staging
+#   ./apply.sh                # create or update each rule in alerts.json that differs, on staging
 #   ./apply.sh --check        # evaluate each rule's query, change nothing
 #   ./apply.sh --diff         # compare the cluster's rules to alerts.json, change nothing
 #   EJ_NODE=ops@10.10.0.1 ./apply.sh   # any of the three, against production
@@ -104,7 +104,10 @@ if $check_only; then
     exit $?
 fi
 
+# `diff_alerts.py` goes too, under its importable name: the apply reuses its comparison to skip
+# a rule that already matches, because a PUT restarts the rule's silence window (#3445).
 ssh_node 'cat > /tmp/alert_objects.py' <alert_objects.py
+ssh_node 'cat > /tmp/diff_alerts.py' <diff_alerts.py
 ssh_node 'cat > /tmp/ej-apply-alerts.py' <apply_alerts.py
 ssh_node "
     AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
