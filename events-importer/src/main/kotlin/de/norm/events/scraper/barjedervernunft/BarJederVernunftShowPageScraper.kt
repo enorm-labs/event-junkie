@@ -128,10 +128,10 @@ data class BarJederVernunftShow(
 /**
  * Maps a `Genre` label to an [EventType] name.
  *
- * Everything here is an evening in the Spiegelzelt, so the genre separates three cases: a
+ * Everything here is an evening in the Spiegelzelt or the TIPI tent, so the genre separates the cases: a
  * **music style** ([MUSIC_GENRES]) is a concert whose billed name is the performer, a **comedy
  * format** ([COMEDY_GENRES]) a comedy night, a **staged format** ([STAGE_FORMAT_GENRES]) a show
- * whose billed name is the production. Unrecognized or
+ * whose billed name is the production, a **spoken format** ([SPOKEN_GENRES]) a reading. Unrecognized or
  * missing defaults to [EventType.SHOW] — the safe side, minting no artist. The lists are
  * curated from the venue's programme; add a new music style when one appears, otherwise a
  * genuine concert is filed as a show and its performer is lost.
@@ -145,10 +145,14 @@ private val MUSIC_GENRES = listOf("chanson", "a cappella", "swing", "singer/song
 private val STAGE_FORMAT_GENRES = listOf("musik-show", "musical", "show")
 
 /** Comedy formats, Kabarett among them (#2314). */
-private val COMEDY_GENRES = listOf("musik-comedy", "musik-kabarett", "kabarett")
+private val COMEDY_GENRES = listOf("musik-comedy", "musik-kabarett", "kabarett", "kabarett-theater", "puppen-comedy", "satire")
+
+/** Spoken formats: a reading, or a talk on stage, as Peter Edel files its `Klubgespräch`. */
+private val SPOKEN_GENRES = listOf("lesung & gespräch", "talk")
 
 /** Venue-specific genre synonyms handed to [mapEventType]; see [resolveEventType]. */
 private val BAR_JEDER_VERNUNFT_GENRES: Map<String, String> =
     MUSIC_GENRES.associateWith { EventType.CONCERT.name } +
         STAGE_FORMAT_GENRES.associateWith { EventType.SHOW.name } +
-        COMEDY_GENRES.associateWith { EventType.COMEDY.name }
+        COMEDY_GENRES.associateWith { EventType.COMEDY.name } +
+        SPOKEN_GENRES.associateWith { EventType.READING.name }

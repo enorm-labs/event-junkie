@@ -177,6 +177,16 @@ class BarJederVernunftShowPageScraperTest {
         resolveEventType("Musik-Show") shouldBe "SHOW"
     }
 
+    @Test
+    fun `TIPI's satire and puppet formats are comedy, its readings and talks are readings`() {
+        resolveEventType("Satire") shouldBe "COMEDY"
+        resolveEventType("Puppen-Comedy") shouldBe "COMEDY"
+        resolveEventType("Kabarett-Theater") shouldBe "COMEDY"
+        resolveEventType("Lesung") shouldBe "READING"
+        resolveEventType("Lesung & Gespräch") shouldBe "READING"
+        resolveEventType("Talk") shouldBe "READING"
+    }
+
     private companion object {
         const val SHOW_URL = "https://www.bar-jeder-vernunft.de/de/programm/programmuebersicht/a-show.html"
     }

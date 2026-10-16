@@ -360,6 +360,9 @@ enum class EventSource {
     /** Tiffany Club – a club on Rosmarinstraße in Mitte, behind Unter den Linden, with student, Latin and K-pop nights, stand-up comedy and concerts. */
     TIFFANY_CLUB,
 
+    /** TIPI am Kanzleramt – a permanent tent theatre in the Tiergarten, sister stage of Bar jeder Vernunft, with cabaret, chanson, musicals and music shows. */
+    TIPI_AM_KANZLERAMT,
+
     /** Tresor Berlin – the techno institution in a disused power plant on Köpenicker Straße, with the Tresor vault, the Globus floor and the Aurora Bar. */
     TRESOR,
 

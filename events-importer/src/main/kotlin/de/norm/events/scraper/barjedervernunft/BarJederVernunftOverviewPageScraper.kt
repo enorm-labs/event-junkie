@@ -22,6 +22,7 @@ import java.net.URI
 
 /**
  * Pure HTML parser for Bar jeder Vernunft's Neos-CMS calendar page (`/de/programm/kalender.html`).
+ * Its sister stage TIPI am Kanzleramt runs the same site build, so [eventSource] names the venue.
  *
  * One `.card-type-calendar` per **performance date**, so a residency appears once per night —
  * no range to expand. Each card is immediately followed by its own
@@ -39,7 +40,9 @@ import java.net.URI
  * @see BarJederVernunftWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.bar-jeder-vernunft.de/de/programm/kalender.html">Bar jeder Vernunft calendar</a>
  */
-class BarJederVernunftOverviewPageScraper {
+class BarJederVernunftOverviewPageScraper(
+    private val eventSource: EventSource = EventSource.BAR_JEDER_VERNUNFT
+) {
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -53,7 +56,7 @@ class BarJederVernunftOverviewPageScraper {
         val cards = document.select(CARD_SELECTOR)
         logger.info { "Found ${cards.size} calendar card(s) on page" }
 
-        return cards.mapSkippingFailures(logger, "Bar jeder Vernunft calendar card") { card ->
+        return cards.mapSkippingFailures(logger, "$eventSource calendar card") { card ->
             parseCard(card)
         }
     }
@@ -97,7 +100,11 @@ class BarJederVernunftOverviewPageScraper {
      * ("`<performer> - <sub-line>`"), so the two are kept apart rather than re-split.
      */
     private fun parseCard(card: Element): ScrapedEvent? {
-        val eventNode = parseJsonLd(card) ?: return null
+        val eventNode = parseJsonLd(card)
+        if (eventNode == null) {
+            logger.warn { "Calendar card '${card.textAt(".event-artist")}' has no JSON-LD block, skipping" }
+            return null
+        }
 
         val title = eventNode.stringOrNull("performer") ?: card.textAt(".event-artist")
         if (title.isNullOrBlank()) {
@@ -128,7 +135,7 @@ class BarJederVernunftOverviewPageScraper {
             startTime = eventNode.schemaTime("startDate"),
             imageUrl = eventNode.schemaImageUrl(),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.BAR_JEDER_VERNUNFT.sourceIdPrefix}$eventDate-${showSlug(sourceUrl)}",
+            sourceId = "${eventSource.sourceIdPrefix}$eventDate-${showSlug(sourceUrl)}",
             ticketUrl = card.hrefAt("a[data-ticketing]"),
             soldOut = eventNode.schemaSoldOut()
         )
@@ -136,12 +143,13 @@ class BarJederVernunftOverviewPageScraper {
 
     /**
      * The schema.org `Event` node from the JSON-LD block following [card], or `null` without such
-     * a sibling or when unparseable. Only the **immediate** next sibling: scanning further would
-     * let a card missing its block silently adopt the next card's date and title.
+     * a sibling or when unparseable. Only the next sibling: scanning further would let a card
+     * missing its block silently adopt the next card's date and title. A phone-booking `.modal`
+     * between the two belongs to the card and is stepped over (TIPI's Silvestergala).
      */
     private fun parseJsonLd(card: Element): JsonNode? =
-        card
-            .nextElementSibling()
+        generateSequence(card.nextElementSibling()) { it.nextElementSibling() }
+            .firstOrNull { !it.hasClass("modal") }
             ?.takeIf { it.tagName() == "script" && it.attr("type") == "application/ld+json" }
             ?.let { jsonLdEvents(it.data()).firstOrNull() }
 

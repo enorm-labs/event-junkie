@@ -558,6 +558,8 @@ says so.
 | `TIFFANY_CLUB`         | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
 | `TIFFANY_CLUB`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `TIFFANY_CLUB`         | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
+| `TIPI_AM_KANZLERAMT`   | `DOORS_TIME`       | the calendar and the show pages state one start time and never an Einlass                                                                        | —     |
+| `TIPI_AM_KANZLERAMT`   | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `TRESOR`               | `DOORS_TIME`       | the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start                     | —     |
 | `TRESOR`               | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
 | `TRESOR`               | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |

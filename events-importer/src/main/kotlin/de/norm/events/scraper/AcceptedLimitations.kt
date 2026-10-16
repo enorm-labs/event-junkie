@@ -115,6 +115,7 @@ import de.norm.events.scraper.tausend.TAUSEND_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
 import de.norm.events.scraper.thewall.THE_WALL_LIMITATIONS
 import de.norm.events.scraper.tiffanyclub.TIFFANY_CLUB_LIMITATIONS
+import de.norm.events.scraper.tipiamkanzleramt.TIPI_AM_KANZLERAMT_LIMITATIONS
 import de.norm.events.scraper.tresor.TRESOR_LIMITATIONS
 import de.norm.events.scraper.ufafabrik.UFA_FABRIK_LIMITATIONS
 import de.norm.events.scraper.urania.URANIA_LIMITATIONS
@@ -254,6 +255,7 @@ object AcceptedLimitations {
             THEATER_IM_DELPHI_LIMITATIONS,
             THE_WALL_LIMITATIONS,
             TIFFANY_CLUB_LIMITATIONS,
+            TIPI_AM_KANZLERAMT_LIMITATIONS,
             TRESOR_LIMITATIONS,
             UFA_FABRIK_LIMITATIONS,
             URANIA_LIMITATIONS,
