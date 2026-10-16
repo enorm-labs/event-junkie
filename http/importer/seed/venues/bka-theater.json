@@ -13,8 +13,16 @@
         "descriptionAlt": "Seit 1988 spielt die Berliner Kabarett Anstalt im fünften Stock eines Geschäftshauses von 1913 am Mehringdamm, mit queerem und politischem Programm aus Kabarett, Comedy, Drag, Impro, Musicals und Konzerten.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["theatre", "live-venue"],
-        "programmeUrl": "https://www.bka-theater.de/spielplan/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "BKA Theater",
+            "url": "https://www.bka-theater.de/spielplan/",
+            "sourceType": "BKA_THEATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

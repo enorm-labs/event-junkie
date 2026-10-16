@@ -58,6 +58,9 @@ enum class EventSource {
     /** Bi Nuu Berlin – a live-music club under the U-Bahn viaduct at Schlesisches Tor. */
     BINUU,
 
+    /** BKA Theater – the Berliner Kabarett Anstalt, on a fifth floor at Mehringdamm since 1988: queer and political cabaret, drag, improv and concerts. */
+    BKA_THEATER,
+
     /** Cassiopeia Berlin – a multi-room club and cultural venue on the RAW-Gelände, from reggae and drum & bass to indie and electronic nights. */
     CASSIOPEIA,
 
