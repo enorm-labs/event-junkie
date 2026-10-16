@@ -22,11 +22,11 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   150 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   153 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    25 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    10 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -88,6 +88,9 @@ schema change.
 | Giri                             | https://giri.berlin/programme/                                           | Bar          | WordPress month pages; date from the calendar             |
 | Golden Gate                      | https://goldengate-berlin.de/                                            | Techno Club  | Elementor; current Thu–Sat block only; door-only          |
 | Gretchen                         | https://www.gretchen-club.de/                                            | Club         |                                                           |
+| HAU1 Hebbel am Ufer              | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/             | Theater      | TYPO3 month pages; one page per production                |
+| HAU2 Hebbel am Ufer              | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/             | Theater      | HAU1 parser; stage filter, WAU as a room                  |
+| HAU3 Hebbel am Ufer              | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/             | Theater      | HAU1 parser; stage filter, Houseclub as a room            |
 | Havanna                          | https://www.havanna-berlin.de/                                           | Club         | Undated weekly nights; occurrences derived                |
 | Heideglühen                      | https://heidegluehen.berlin/monatsvorschau/                              | Techno Club  | One month at a time; DJ lineup on /aktuell/               |
 | Heimathafen Neukölln             | https://heimathafen-neukoelln.de/                                        | Concert Hall | WP REST + ACF; one post, many dated performances          |
@@ -191,10 +194,11 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-149 importer classes cover 150 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Six other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
+152 importer classes cover 153 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
+The last group is the three HAU Hebbel am Ufer houses.
 
 ## 🌐 Second language
 
@@ -212,7 +216,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-53 sources have a second language, 93 have none, and 4 are unknown. Nine translate the event text on a second page.
+56 sources have a second language, 93 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -220,7 +224,7 @@ it stores the row, and only when the scraper gave no second language. The second
 language. Each half must read as German or English, so a Russian half stays in the whole text. The SO36 and Zig Zag
 scrapers cut their own text first. Their cut reads line breaks or a pointer line that the stored text does not keep.
 
-Eight importers also read the page in the other language. They store its event text as the publisher's second language:
+Eleven importers also read the page in the other language. They store its event text as the publisher's second language:
 
 - Bar Tausend and Columbiahalle read the English listing. This adds one request to each run.
 - Bar jeder Vernunft, TIPI am Kanzleramt and Theater im Delphi read the English page of each production. This adds one request for each
@@ -228,6 +232,7 @@ Eight importers also read the page in the other language. They store its event t
 - silent green reads the English page of each programme entry. This adds one request for each entry.
 - Orania.Berlin reads the German page of each concert. This adds one request for each concert.
 - ausland reads the German page of each event. This adds one request for each event.
+- HAU1, HAU2 and HAU3 read the German page of each production. This adds one request for each production.
 
 The importer finds the other page through the `hreflang` link of the page that it reads. When that page does not load,
 the run keeps the first language and stores no second language. The upsert stores a second text only when the two
@@ -285,6 +290,9 @@ the upsert stores none.
 | Giri                             | Yes             | `?lang=de` on the link                                       | Not on the listing | https://giri.berlin/programme/?lang=de                                                                                             |
 | Golden Gate                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Gretchen                         | Yes             | `/en/` path                                                  | Not on the listing | https://www.gretchen-club.de/en/                                                                                                   |
+| HAU1 Hebbel am Ufer              | Yes             | `hreflang`, German page at `/programm/`                      | Translated         | https://www.hebbel-am-ufer.de/programm/spielplan-tickets/                                                                          |
+| HAU2 Hebbel am Ufer              | Yes             | `hreflang`, German page at `/programm/`                      | Translated         | https://www.hebbel-am-ufer.de/programm/spielplan-tickets/                                                                          |
+| HAU3 Hebbel am Ufer              | Yes             | `hreflang`, German page at `/programm/`                      | Translated         | https://www.hebbel-am-ufer.de/programm/spielplan-tickets/                                                                          |
 | Havanna                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Heideglühen                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Heimathafen Neukölln             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -767,19 +775,18 @@ All rows come from the promoter sweep of 2026-10-04 (see the list below). **Foun
 showed a show there. A URL comes from a web search. Nobody opened it yet. A dash means that the search found
 no site of the venue's own.
 
-| Name                  | URL                                                          | Type         | Found via                      |
-| --------------------- | ------------------------------------------------------------ | ------------ | ------------------------------ |
-| Baketown              | https://baketown.berlin/                                     | Other        | ZART Agency                    |
-| Ernst-Reuter-Saal     | —                                                            | Concert Hall | New Berlin Konzerte            |
-| Friedrichstadt-Palast | https://www.palast.berlin/gastspiele/                        | Theater      | Antenne Brandenburg            |
-| Haus der Statistik    | https://hausderstatistik.org/programm/                       | Other        | Crunch Tapes                   |
-| HAU Hebbel am Ufer    | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/ | Theater      | Powerline Agency, Musikexpress |
-| K19                   | —                                                            | Club         | Patchanka Booking              |
-| Kiezkapelle           | https://www.kiezkapelle.de/programm/                         | Other        | Puschen                        |
-| Paradox Music Hall    | —                                                            | Club         | Diffus, Landstreicher Konzerte |
-| Trixxter              | —                                                            | Bar          | Metal Hammer                   |
-| Wowsville             | —                                                            | Bar          | Crunch Tapes                   |
-| Zita Club & Bar       | https://zita-club.de/                                        | Club         | Channel Music                  |
+| Name                  | URL                                    | Type         | Found via                      |
+| --------------------- | -------------------------------------- | ------------ | ------------------------------ |
+| Baketown              | https://baketown.berlin/               | Other        | ZART Agency                    |
+| Ernst-Reuter-Saal     | —                                      | Concert Hall | New Berlin Konzerte            |
+| Friedrichstadt-Palast | https://www.palast.berlin/gastspiele/  | Theater      | Antenne Brandenburg            |
+| Haus der Statistik    | https://hausderstatistik.org/programm/ | Other        | Crunch Tapes                   |
+| K19                   | —                                      | Club         | Patchanka Booking              |
+| Kiezkapelle           | https://www.kiezkapelle.de/programm/   | Other        | Puschen                        |
+| Paradox Music Hall    | —                                      | Club         | Diffus, Landstreicher Konzerte |
+| Trixxter              | —                                      | Bar          | Metal Hammer                   |
+| Wowsville             | —                                      | Bar          | Crunch Tapes                   |
+| Zita Club & Bar       | https://zita-club.de/                  | Club         | Channel Music                  |
 
 Check these points when a row is opened:
 

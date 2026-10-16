@@ -131,6 +131,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | silent green        | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`          |
 | Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`        | The Eventfrog category `kurse-seminare`: the swing course              |
 | Baiz                | `BaizWebsiteImporter.isProgramme`                    | An uncategorised radar row that names `Schach`, `Beratung` or `Messer` |
+| HAU1, HAU2, HAU3    | `HauScheduleScraper.isOutOfScope`                    | The `Workshop` category, and an `Online` piece (§5)                    |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.

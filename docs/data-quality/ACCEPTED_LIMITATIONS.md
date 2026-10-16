@@ -248,6 +248,24 @@ says so.
 | `GOLDEN_GATE`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `GRETCHEN`             | `DESCRIPTION`      | the text is only on each night's detail page; the import reads the homepage and the ticket popups, not those pages                               | —     |
 | `GRETCHEN`             | `PRICE`            | club nights print no price, and a cancelled show loses its line; presale concerts list theirs                                                    | —     |
+| `HAU1`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
+| `HAU1`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
+| `HAU1`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU1`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
+| `HAU1`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
+| `HAU1`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
+| `HAU2`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
+| `HAU2`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
+| `HAU2`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU2`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
+| `HAU2`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
+| `HAU2`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
+| `HAU3`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
+| `HAU3`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
+| `HAU3`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU3`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
+| `HAU3`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
+| `HAU3`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
 | `HAVANNA`              | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HAVANNA`              | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `HEIDEGLUEHEN`         | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |
