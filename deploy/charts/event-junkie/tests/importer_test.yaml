@@ -563,6 +563,23 @@ tests:
                 name: event-junkie-anthropic
                 key: APP_ANTHROPIC_API_KEY
 
+  - it: passes a cron of "-" through, which runs no daily Instagram pass
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      importer.instagram.enabled: true
+      importer.instagram.cron: "-"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_INSTAGRAM_CRON
+            value: "-"
+
   - it: sets no Instagram variable while the drafts are off
     set:
       database.host: "10.0.1.2"
