@@ -9,6 +9,9 @@ caption reaches the public site.**
 Decided in [#2592](https://github.com/enorm-labs/event-junkie/issues/2592), option 1. **Not implemented yet.** The Meta app exists, and a test call on
 2026-10-15 read the posts of eight venue accounts.
 
+**Rule 3 is superseded by [ADR-049](ADR-049_INSTAGRAM_DRAFTS_READ_THE_POST_IMAGES.md) (2026-10-16).** The model now reads the images of a post as well as
+its caption. No image is stored or shown.
+
 **Does not supersede anything.** [ADR-043](ADR-043_ONE_MAIN_SOURCE_PER_VENUE_AND_ENRICHMENT_SOURCES.md) rule 2 allows an official account as a main
 source through an official API. This ADR names that API. [ADR-041](ADR-041_AI_ASSISTED_DATA_QUALITY.md) applies as written: one integration, Haiku by
 default, suggest only, two spending limits.

@@ -21,6 +21,8 @@ data class InstagramProperties(
     val graphVersion: String = "v26.0",
     /** Posts read per venue and pass. 25 is one page of Business Discovery's media edge. */
     val mediaLimit: Int = DEFAULT_MEDIA_LIMIT,
+    /** Images of one post sent to the model: a carousel's first slides. Each costs about 1,600 input tokens (ADR-049). */
+    val maxImagesPerPost: Int = DEFAULT_MAX_IMAGES_PER_POST,
     /** Older posts never go to the model. Their events are past, and a first read would spend the cap on them. */
     val lookbackDays: Long = DEFAULT_LOOKBACK_DAYS,
     val timeout: Duration = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS),
@@ -46,6 +48,7 @@ data class InstagramProperties(
 
         private const val DEFAULT_PENDING_DAYS = 14L
         private const val DEFAULT_MEDIA_LIMIT = 25
+        private const val DEFAULT_MAX_IMAGES_PER_POST = 4
         private const val DEFAULT_LOOKBACK_DAYS = 30L
         private const val DEFAULT_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_MODEL_TIMEOUT_SECONDS = 60L

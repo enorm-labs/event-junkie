@@ -62,7 +62,7 @@ class InstagramDraftController(
     @Operation(
         summary = "Approve the night of a draft, with the event created for it",
         description =
-            "Every pending draft of the venue and date becomes APPROVED, points at the event and loses its caption. " +
+            "Every pending draft of the venue and date becomes APPROVED, points at the event and loses its caption and flyer text. " +
                 "404 for an unknown draft, 409 for one already judged or an event that does not exist."
     )
     @PostMapping("/{id}/approve")
@@ -74,7 +74,7 @@ class InstagramDraftController(
 
     @Operation(
         summary = "Reject the night of a draft",
-        description = "Every pending draft of the venue and date becomes REJECTED and loses its caption. No event is written."
+        description = "Every pending draft of the venue and date becomes REJECTED and loses its caption and flyer text. No event is written."
     )
     @PostMapping("/{id}/reject")
     suspend fun reject(
@@ -107,15 +107,19 @@ data class InstagramDraftResponse(
     val postedAt: OffsetDateTime,
     @Schema(description = "The post's text. Null once the draft is judged (ADR-048 rule 6)")
     val caption: String?,
+    @Schema(description = "The text the model read off the post's images (ADR-049). Null when no image was read, and once the draft is judged")
+    val flyerText: String?,
     @Schema(description = "Null only for NOT_AN_EVENT")
     val eventDate: LocalDate?,
     val startTime: LocalTime?,
+    @Schema(description = "When the doors open, only when the caption or the flyer text names the hour")
+    val doorsTime: LocalTime?,
     val title: String?,
-    @Schema(description = "Each act exactly as the caption writes it")
+    @Schema(description = "Each act as the caption or the flyer text writes it")
     val acts: List<String>,
     val pricePresale: BigDecimal?,
     val priceBoxOffice: BigDecimal?,
-    @Schema(description = "The passage of the caption that gives the day")
+    @Schema(description = "The passage of the caption or the flyer text that gives the day")
     val evidence: String?,
     val confidence: Double?,
     val status: String,
@@ -134,8 +138,10 @@ data class InstagramDraftResponse(
                 permalink = row.permalink,
                 postedAt = row.postedAt,
                 caption = row.caption,
+                flyerText = row.flyerText,
                 eventDate = row.eventDate,
                 startTime = row.startTime,
+                doorsTime = row.doorsTime,
                 title = row.title,
                 acts = row.acts,
                 pricePresale = row.pricePresale,

@@ -153,7 +153,8 @@ class InstagramDraftRunner(
                 metrics.extraction("rejected", result.rejected)
                 logger.info {
                     "Instagram venue '${venue.slug}': ${result.posts} post(s), ${result.newPosts} new, ${result.drafts} draft(s), " +
-                        "${result.notEvents} without an event, ${result.rejected} answer(s) refused, ${result.failed} call(s) failed, " +
+                        "${result.ofRejectedNights} of a rejected night, ${result.notEvents} without an event, " +
+                        "${result.rejected} answer(s) refused, ${result.failed} call(s) failed, " +
                         "${result.calls} model call(s), ${result.tokens} token(s)"
                 }
             }

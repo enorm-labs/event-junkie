@@ -203,11 +203,12 @@ const { t } = useI18n()
         Bei einigen Locations ohne eigene Website stammen die Veranstaltungen aus den öffentlichen
         Beiträgen ihres Instagram-Geschäftskontos. Der Importer liest sie über die offizielle
         Schnittstelle von Meta (Meta Platforms Ireland Ltd.) mit dem Konto von Event Junkie. Er
-        liest nur den Text, den Link und das Datum eines Beitrags, keine Bilder. Ein Sprachmodell
-        entwirft daraus Datum, Titel und Line-up (Abschnitt 5), und ich prüfe jeden Entwurf, bevor
-        eine Veranstaltung erscheint. Der Text des Beitrags wird nur bis zu dieser Prüfung
-        gespeichert, höchstens 14 Tage, und nie auf dieser Seite gezeigt. Die Veranstaltung verlinkt
-        den Beitrag. Daten über dich werden dabei nicht übermittelt.
+        liest den Text, den Link, das Datum und die Bilder eines Beitrags. Ein Sprachmodell entwirft
+        daraus Datum, Titel und Line-up (Abschnitt 5), und ich prüfe jeden Entwurf, bevor eine
+        Veranstaltung erscheint. Der Text des Beitrags und der Text, der aus seinen Bildern gelesen
+        wird, werden nur bis zu dieser Prüfung gespeichert, höchstens 14 Tage, und nie auf dieser
+        Seite gezeigt. Die Bilder werden nicht gespeichert. Die Veranstaltung verlinkt den Beitrag.
+        Daten über dich werden dabei nicht übermittelt.
       </p>
       <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
@@ -283,24 +284,25 @@ const { t } = useI18n()
           zusätzlich Titel und Untertitel mit. Nennen diese Texte Künstler*innen, werden diese Namen
           mit übermittelt; die Namen des Line-ups und der Location werden zusätzlich ausdrücklich
           mitgesendet, damit die Übersetzung sie unverändert lässt. Für Veranstaltungen aus
-          Instagram-Beiträgen (Abschnitt 4) geht der Text des Beitrags dorthin, mit dem Namen der
-          Location und dem Datum des Beitrags. Nennt ein Beitrag Personen, gehen ihre Namen mit.
-          Andere Daten erreichen diesen Dienst nicht: weder Logdaten noch irgendetwas über dich.
+          Instagram-Beiträgen (Abschnitt 4) gehen Text und Bilder des Beitrags dorthin, mit dem
+          Namen der Location und dem Datum des Beitrags. Nennt ein Beitrag Personen, gehen ihre
+          Namen mit, und ein Bild kann eine Person zeigen. Andere Daten erreichen diesen Dienst
+          nicht: weder Logdaten noch irgendetwas über dich.
         </li>
       </ul>
       <p>
-        <strong>Übermittlung in die USA.</strong> Anthropic verarbeitet diese Texte ausschließlich
-        nach meiner Weisung. Grundlage ist das Data Processing Addendum, das über die Commercial
-        Terms of Service Bestandteil des Vertrags ist und die Standardvertragsklauseln der
-        EU-Kommission einschließt (Art. 46 Abs. 2 lit. c DSGVO). Derselbe Vertrag schließt aus, dass
-        die übermittelten Texte zum Training von Modellen verwendet werden.
+        <strong>Übermittlung in die USA.</strong> Anthropic verarbeitet diese Texte und Bilder
+        ausschließlich nach meiner Weisung. Grundlage ist das Data Processing Addendum, das über die
+        Commercial Terms of Service Bestandteil des Vertrags ist und die Standardvertragsklauseln
+        der EU-Kommission einschließt (Art. 46 Abs. 2 lit. c DSGVO). Derselbe Vertrag schließt aus,
+        dass die übermittelten Texte und Bilder zum Training von Modellen verwendet werden.
       </p>
       <p>
         Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
         Deine Anfrage erreicht die Server von Event Junkie in Deutschland direkt. An der
         Auslieferung dieser Seite ist damit kein Drittland beteiligt. Übersetzung, Prüfung und
         Entwürfe oben sind der einzige Weg, auf dem Daten die EU verlassen, und sie betreffen
-        Veranstaltungstexte, nicht deinen Besuch.
+        Veranstaltungstexte und Flyer, nicht deinen Besuch.
       </p>
       <p>
         <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von den Servern von Event Junkie,

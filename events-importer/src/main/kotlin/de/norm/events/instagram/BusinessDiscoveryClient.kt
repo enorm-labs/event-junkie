@@ -15,13 +15,14 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-/** One post as Business Discovery returns it. The image is never read (ADR-048 rule 3). */
+/** One post as Business Discovery returns it. [imageUrls] are signed CDN links that expire, so they are read in the same pass (ADR-049). */
 data class InstagramPost(
     val mediaId: String,
     val caption: String?,
     val permalink: String,
     val postedAt: OffsetDateTime,
-    val mediaType: String?
+    val mediaType: String?,
+    val imageUrls: List<String> = emptyList()
 )
 
 /** What one Business Discovery call gave. */
@@ -50,9 +51,10 @@ sealed interface DiscoveryResult {
 /**
  * The Graph API's Business Discovery, read as our own business account (ADR-048 rule 1).
  *
- * `GET {ig-user-id}?fields=business_discovery.username(<handle>){media.limit(n){…}}`. The fields are
- * `id`, `caption`, `permalink`, `timestamp` and `media_type`, never `media_url` (rule 3). The handle
- * goes into the field expression, so only Instagram's own handle characters pass.
+ * `GET {ig-user-id}?fields=business_discovery.username(<handle>){media.limit(n){…}}`. Besides the
+ * caption it asks for the images (ADR-049): `media_url` of a photo and of each carousel slide, and
+ * `thumbnail_url`, the cover frame, of a video. The handle goes into the field expression, so only
+ * Instagram's own handle characters pass.
  */
 @Component
 class BusinessDiscoveryClient(
@@ -63,7 +65,7 @@ class BusinessDiscoveryClient(
 
     suspend fun recentPosts(handle: String): DiscoveryResult {
         require(HANDLE.matches(handle)) { "Not an Instagram handle: '$handle'" }
-        val fields = "business_discovery.username($handle){media.limit(${properties.mediaLimit}){id,caption,permalink,timestamp,media_type}}"
+        val fields = "business_discovery.username($handle){media.limit(${properties.mediaLimit}){$MEDIA_FIELDS}}"
         return try {
             val (status, body) =
                 webClient
@@ -138,10 +140,28 @@ class BusinessDiscoveryClient(
                 caption = node.get("caption")?.asString()?.takeIf { it.isNotBlank() },
                 permalink = permalink,
                 postedAt = postedAt,
-                mediaType = node.get("media_type")?.asString()
+                mediaType = node.get("media_type")?.asString(),
+                imageUrls = imageUrls(node).take(properties.maxImagesPerPost)
             )
         }
     }
+
+    /** A carousel's slides in order, else the post's own image. A video gives its cover frame. */
+    private fun imageUrls(node: JsonNode): List<String> {
+        val slides =
+            node
+                .path("children")
+                .path("data")
+                .toList()
+                .mapNotNull(::imageUrl)
+        return slides.ifEmpty { listOfNotNull(imageUrl(node)) }
+    }
+
+    private fun imageUrl(node: JsonNode): String? =
+        node
+            .path(if (node.path("media_type").asString("") == VIDEO) "thumbnail_url" else "media_url")
+            .asString("")
+            .takeIf { it.startsWith("https://") }
 
     private fun timestamp(value: String): OffsetDateTime? =
         try {
@@ -155,6 +175,9 @@ class BusinessDiscoveryClient(
         val HANDLE = Regex("^[A-Za-z0-9._]{1,30}$")
 
         private const val HTTP_ERROR = 400
+        private const val VIDEO = "VIDEO"
+        private const val SLIDE_FIELDS = "media_type,media_url,thumbnail_url"
+        private const val MEDIA_FIELDS = "id,caption,permalink,timestamp,$SLIDE_FIELDS,children{$SLIDE_FIELDS}"
         private const val ACCOUNT_NOT_FOUND = 110
         private const val PERMALINK_PREFIX = "https://www.instagram.com/"
 

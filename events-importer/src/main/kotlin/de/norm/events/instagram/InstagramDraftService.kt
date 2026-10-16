@@ -18,7 +18,9 @@ sealed interface VenueDraftResult {
         val rejected: Int,
         val failed: Int,
         val calls: Int,
-        val tokens: Long
+        val tokens: Long,
+        /** Drafts of a night a person rejected before, stored as rejected. */
+        val ofRejectedNights: Int = 0
     ) : VenueDraftResult
 
     /** The venue's `instagram_url` names no profile. */
@@ -33,16 +35,18 @@ sealed interface VenueDraftResult {
 /**
  * Reads one venue's recent posts and stores a draft for each event the model finds (ADR-048).
  *
- * A post goes to the model once: a post that announces nothing, or whose answer was refused, is
- * stored as `NOT_AN_EVENT`. A failed call stores nothing, so the next pass asks again. Only posts of
- * the last [InstagramProperties.lookbackDays] go to the model, and only events from today on are
- * drafted.
+ * A post goes to the model once, with its caption and its images (ADR-049): a post that announces
+ * nothing, or whose answer was refused, is stored as `NOT_AN_EVENT`. A failed call stores nothing, so
+ * the next pass asks again, and so does a post with no caption whose images did not download. Only
+ * posts of the last [InstagramProperties.lookbackDays] go to the model, and only events from today
+ * on are drafted.
  */
 @Service
 @ConditionalOnProperty(name = ["app.instagram.enabled"], havingValue = "true")
 class InstagramDraftService(
     private val client: BusinessDiscoveryClient,
     private val extractor: AnthropicPostExtractor,
+    private val images: InstagramImageFetcher,
     private val repository: InstagramDraftRepository,
     private val properties: InstagramProperties,
     private val clock: Clock = Clock.systemUTC()
@@ -71,15 +75,19 @@ class InstagramDraftService(
         val recent = posts.filter { !it.postedAt.toLocalDate().isBefore(today.minusDays(properties.lookbackDays)) }
         val known = repository.knownMediaIds(recent.map { it.mediaId })
         val fresh = recent.filter { it.mediaId !in known }
-        var tally = VenueDraftResult.Read(posts.size, fresh.size, 0, 0, 0, 0, 0, 0)
+        var tally = VenueDraftResult.Read(posts.size, fresh.size, 0, 0, 0, 0, 0, 0, 0)
         for (post in fresh) {
-            val caption = post.caption
-            if (caption == null) {
+            if (post.caption == null && post.imageUrls.isEmpty()) {
                 repository.insert(listOf(NewDraft(venue.id, post, DraftStatus.NOT_AN_EVENT)))
                 tally = tally.copy(notEvents = tally.notEvents + 1)
             } else if (tally.calls < maxCalls) {
                 // A post over the cap stays unread, so the next pass sends it.
-                val result = extractor.extract(PostInput(venue.name, caption, post.postedAt))
+                val fetched = images.fetch(post.imageUrls)
+                if (post.caption == null && fetched.isEmpty()) {
+                    tally = tally.copy(failed = tally.failed + 1)
+                    continue
+                }
+                val result = extractor.extract(PostInput(venue.name, post.caption.orEmpty(), post.postedAt, fetched))
                 tally = store(venue, post, result, today, tally.copy(calls = tally.calls + 1, tokens = tally.tokens + result.tokens))
             }
         }
@@ -109,11 +117,25 @@ class InstagramDraftService(
                     repository.insert(listOf(NewDraft(venue.id, post, DraftStatus.NOT_AN_EVENT, model = extractor.model)))
                     tally.copy(notEvents = tally.notEvents + 1)
                 } else {
-                    val stored = repository.insert(upcoming.map { NewDraft(venue.id, post, DraftStatus.PENDING, it, extractor.model) })
-                    logger.debug { "Drafted $stored event(s) from ${post.permalink}" }
-                    tally.copy(drafts = tally.drafts + stored.toInt())
+                    val (ofRejected, pending) = upcoming.map { draft(venue, post, it) }.partition { it.status == DraftStatus.REJECTED }
+                    val stored = repository.insert(pending)
+                    val rejected = if (ofRejected.isEmpty()) 0L else repository.insert(ofRejected)
+                    logger.debug { "Drafted $stored event(s) from ${post.permalink}, $rejected of a rejected night" }
+                    tally.copy(drafts = tally.drafts + stored.toInt(), ofRejectedNights = tally.ofRejectedNights + rejected.toInt())
                 }
             }
+        }
+
+    /** A night judged before is not asked again: a rejected one stays rejected, an approved one gets an update proposal. */
+    private suspend fun draft(
+        venue: InstagramVenue,
+        post: InstagramPost,
+        event: DraftedEvent
+    ): NewDraft =
+        when (val earlier = repository.earlierJudgement(venue.id, event.date)) {
+            is EarlierJudgement.Approved -> NewDraft(venue.id, post, DraftStatus.PENDING, event, extractor.model, eventId = earlier.eventId)
+            EarlierJudgement.Rejected -> NewDraft(venue.id, post, DraftStatus.REJECTED, event, extractor.model)
+            null -> NewDraft(venue.id, post, DraftStatus.PENDING, event, extractor.model)
         }
 
     private companion object {

@@ -4,6 +4,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -14,8 +15,9 @@ class PostExtractionValidatorTest {
     private fun parse(
         answer: String,
         caption: String = RSO_WEEK,
-        postedAt: String = "2026-10-13T16:00:12Z"
-    ) = PostExtractionValidator.parse(answer, PostInput("RSO", caption, OffsetDateTime.parse(postedAt)), minConfidence = 0.7)
+        postedAt: String = "2026-10-13T16:00:12Z",
+        images: List<PostImage> = emptyList()
+    ) = PostExtractionValidator.parse(answer, PostInput("RSO", caption, OffsetDateTime.parse(postedAt), images), minConfidence = 0.7)
 
     @Test
     fun `weekdays counted from the post become two events`() {
@@ -95,6 +97,59 @@ class PostExtractionValidatorTest {
     }
 
     @Test
+    fun `with an image, the day, the time and the acts may come from the text read off it`() {
+        val answer =
+            """
+            {"isEvent": true, "flyerText": "SELF.CONTROL.\nFR 16 Oct\n23:00 – 08:00\nCosmo Vitelli\nCYRK live\nModerna",
+             "events": [{"date": "2026-10-16", "title": "Self. Control.", "startTime": "23:00",
+              "acts": ["Cosmo Vitelli", "CYRK", "Moderna", "Ben Klock"], "evidence": "FR 16 Oct", "confidence": 0.9}]}
+            """.trimIndent()
+
+        val event = parse(answer, caption = FLYER_CAPTION, images = listOf(FLYER))?.single()
+
+        event?.acts shouldBe listOf("Cosmo Vitelli", "CYRK", "Moderna")
+        event?.startTime shouldBe LocalTime.of(23, 0)
+        event?.flyerText shouldBe "SELF.CONTROL.\nFR 16 Oct\n23:00 – 08:00\nCosmo Vitelli\nCYRK live\nModerna"
+    }
+
+    @Test
+    fun `a doors time stays apart from the start, and only when the post names its hour`() {
+        val event =
+            parse(
+                """
+                {"isEvent": true, "flyerText": "SELF.CONTROL.\nFR 16 Oct\nDoors 23:00",
+                 "events": [{"date": "2026-10-16", "title": "Self. Control.", "doorsTime": "23:00", "startTime": "22:00",
+                  "evidence": "FR 16 Oct", "confidence": 0.9}]}
+                """.trimIndent(),
+                caption = FLYER_CAPTION,
+                images = listOf(FLYER)
+            )?.single()
+
+        event?.doorsTime shouldBe LocalTime.of(23, 0)
+        event?.startTime.shouldBeNull()
+    }
+
+    @Test
+    fun `without an image, text the answer claims to have read off one counts for nothing`() {
+        parse(
+            """{"isEvent": true, "flyerText": "FR 16 Oct", "events": [{"date": "2026-10-16", "title": "x", "evidence": "FR 16 Oct", "confidence": 0.9}]}""",
+            caption = FLYER_CAPTION
+        )?.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a post with no caption is drafted from its image alone`() {
+        parse(
+            """
+            {"isEvent": true, "flyerText": "XTRUDE SAT 17 OCT",
+             "events": [{"date": "2026-10-17", "title": "XTRUDE", "evidence": "SAT 17 OCT", "confidence": 0.9}]}
+            """.trimIndent(),
+            caption = "",
+            images = listOf(FLYER)
+        )?.map { it.title } shouldBe listOf("XTRUDE")
+    }
+
+    @Test
     fun `a price the caption names survives`() {
         val event =
             parse(
@@ -126,6 +181,10 @@ class PostExtractionValidatorTest {
     }
 
     private companion object {
+        val FLYER = PostImage(byteArrayOf(1), MediaType.IMAGE_JPEG)
+
+        const val FLYER_CAPTION = "selfcontrolbln returns to the SUMME floor✖️ / Artwork by dominikkeller_of"
+
         const val RSO_WEEK =
             "Coming up this week — We host selfcontrolbln on the SUMME floor on Friday and then on Saturday we team up with " +
                 "elli.acula’s Euphoria Sessions as we round out the weekend with XTRUDE✖️"

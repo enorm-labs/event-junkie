@@ -689,9 +689,12 @@ CREATE TABLE events.instagram_draft (
     event_id bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     reviewed_at timestamp with time zone,
+    flyer_text text,
+    doors_time time without time zone,
     CONSTRAINT instagram_draft_caption_only_pending CHECK (((caption IS NULL) OR (status = 'PENDING'::text))),
     CONSTRAINT instagram_draft_confidence_check CHECK (((confidence >= (0)::double precision) AND (confidence <= (1)::double precision))),
     CONSTRAINT instagram_draft_event_has_date CHECK (((status = 'NOT_AN_EVENT'::text) OR ((event_date IS NOT NULL) AND (title IS NOT NULL)))),
+    CONSTRAINT instagram_draft_flyer_text_only_pending CHECK (((flyer_text IS NULL) OR (status = 'PENDING'::text))),
     CONSTRAINT instagram_draft_permalink_check CHECK ((permalink ~ '^https://www\.instagram\.com/'::text)),
     CONSTRAINT instagram_draft_status_check CHECK ((status = ANY (ARRAY['PENDING'::text, 'APPROVED'::text, 'REJECTED'::text, 'NOT_AN_EVENT'::text])))
 );

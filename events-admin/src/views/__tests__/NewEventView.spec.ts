@@ -345,6 +345,7 @@ describe('NewEventView', () => {
       venueName: 'Kulturhaus X',
       permalink: 'https://www.instagram.com/p/DeTbTdosF6F/',
       caption: 'Open Decks on Saturday from 21:00',
+      flyerText: null,
       eventDate: '2026-11-14',
       startTime: '21:00:00',
       title: 'Open Decks',

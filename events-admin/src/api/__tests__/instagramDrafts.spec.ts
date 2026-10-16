@@ -1,13 +1,48 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { emptyNewEventForm } from '@/api/events'
+import { type AdminEvent, emptyNewEventForm } from '@/api/events'
 import {
+  applyChanges,
   approveDraft,
+  draftChanges,
   formFromDraft,
   groupByNight,
   type InstagramDraft,
   switchVenueOff,
 } from '@/api/instagramDrafts'
+
+function adminEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
+  return {
+    id: 8426,
+    venueId: 7,
+    title: 'Self. Control.',
+    subtitle: null,
+    description: null,
+    eventType: 'PARTY',
+    status: 'SCHEDULED',
+    slug: '2026-10-17-rso-self-control',
+    eventDate: '2026-10-17',
+    doorsTime: null,
+    startTime: '23:00:00',
+    imageUrl: null,
+    sourceUrl: 'https://www.instagram.com/p/a/',
+    sourceId: 'manual:rso-berlin:2026-10-17-self-control',
+    ticketUrl: null,
+    facebookEventUrl: null,
+    genre: 'Techno',
+    genreTags: [],
+    pricePresale: null,
+    priceBoxOffice: 15,
+    priceCurrency: 'EUR',
+    priceNote: null,
+    soldOut: false,
+    free: false,
+    artists: [{ artistId: 3, role: 'DJ', billingOrder: 0, stage: null }],
+    promoterIds: [],
+    pinnedFields: [],
+    ...overrides,
+  }
+}
 
 function draft(overrides: Partial<InstagramDraft> = {}): InstagramDraft {
   return {
@@ -19,8 +54,10 @@ function draft(overrides: Partial<InstagramDraft> = {}): InstagramDraft {
     permalink: 'https://www.instagram.com/p/DecMBi9gqGk/',
     postedAt: '2026-10-13T16:00:12Z',
     caption: 'We team up with space.trax for XTRUDE next Saturday, October 17th',
+    flyerText: null,
     eventDate: '2026-10-17',
     startTime: '23:00:00',
+    doorsTime: '22:00:00',
     title: 'XTRUDE',
     acts: ['space.trax'],
     pricePresale: 15,
@@ -64,11 +101,55 @@ describe('formFromDraft', () => {
       title: 'XTRUDE',
       eventDate: '2026-10-17',
       startTime: '23:00',
+      doorsTime: '22:00',
       pricePresale: '15.00',
       priceBoxOffice: '',
       sourceUrl: 'https://www.instagram.com/p/DecMBi9gqGk/',
       eventType: 'CONCERT',
     })
+  })
+})
+
+describe('draftChanges and applyChanges', () => {
+  it('lists each field a later post names with another value, the newest post first', () => {
+    const drafts = [
+      draft({
+        id: 2,
+        startTime: null,
+        doorsTime: '23:00:00',
+        pricePresale: null,
+        priceBoxOffice: 15,
+      }),
+      draft({
+        id: 1,
+        startTime: '22:00:00',
+        doorsTime: '22:00:00',
+        pricePresale: 12,
+        priceBoxOffice: null,
+      }),
+    ]
+
+    const changes = draftChanges(adminEvent(), drafts)
+
+    expect(changes).toEqual([
+      { field: 'doorsTime', label: 'Doors', from: null, to: '23:00' },
+      { field: 'startTime', label: 'Start', from: '23:00', to: '22:00' },
+      { field: 'pricePresale', label: 'Presale', from: null, to: '12.00' },
+    ])
+  })
+
+  it('writes only the changed fields and sends everything else back as read', () => {
+    const event = adminEvent()
+    const request = applyChanges(event, [
+      { field: 'doorsTime', label: 'Doors', from: null, to: '23:00' },
+      { field: 'pricePresale', label: 'Presale', from: null, to: '12.00' },
+    ])
+
+    expect(request.doorsTime).toBe('23:00')
+    expect(request.pricePresale).toBe(12)
+    expect(request.startTime).toBe('23:00:00')
+    expect(request.genre).toBe('Techno')
+    expect(request.artists).toEqual(event.artists)
   })
 })
 

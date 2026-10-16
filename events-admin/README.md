@@ -73,8 +73,10 @@ the event's features changed since the check ran.
 Instagram drafts (`src/views/DraftsView.vue`) lists the pending rows of `GET /api/admin/instagram-drafts`, the soonest night first (ADR-048). A card is one
 night: one venue and date, with each post that announces it, its acts, its evidence, its confidence and a link to the post. Create event opens the New event
 form with `?draft=<id>`. The form fills the venue, the title, the date, the start, the prices and the post as the source URL (`src/api/instagramDrafts.ts`),
-and shows the acts and the caption beside it. Saving creates the event and then calls `POST …/instagram-drafts/{id}/approve` with its id, which approves
-every draft of that night. Reject calls `POST …/instagram-drafts/{id}/reject` for the night. Venues read lists the venues the pass reads. Switch off, pressed
+and shows the acts, the caption and the text read off the images beside it. Saving creates the event and then calls `POST …/instagram-drafts/{id}/approve` with its id, which approves
+every draft of that night. A later post of a night approved before shows as "Update to event #N": the card lists the doors, start and prices that differ
+from the event. Apply to event writes them with `PUT /api/admin/events/{id}` and approves the night against that event. Edit event opens the event editor
+for the acts. Reject calls `POST …/instagram-drafts/{id}/reject` for the night. Venues read lists the venues the pass reads. Switch off, pressed
 twice, calls `DELETE /api/admin/instagram/venues/{slug}`, which also deletes that venue's drafts.
 
 Check with AI runs the event-classification check by hand (#3241), so a fix does not wait for the nightly run. In the event editor

@@ -107,6 +107,11 @@ class InstagramDraftControllerTest : BaseControllerTest() {
             b?.eventId shouldBe created.id
             b?.caption shouldBe null
             repository.findById(draftId("c"))?.status shouldBe DraftStatus.PENDING
+
+            repository.earlierJudgement(venue.id, LocalDate.of(2026, 10, 17)) shouldBe EarlierJudgement.Approved(created.id)
+            repository.earlierJudgement(venue.id, LocalDate.of(2026, 10, 24)) shouldBe null
+            repository.judgeNight(draftId("c"), DraftStatus.REJECTED, null)
+            repository.earlierJudgement(venue.id, LocalDate.of(2026, 10, 24)) shouldBe EarlierJudgement.Rejected
         }
 
     @Test

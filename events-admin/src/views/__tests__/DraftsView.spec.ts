@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
+import type { AdminEvent } from '@/api/events'
 import type { InstagramDraft } from '@/api/instagramDrafts'
 import DraftsView from '@/views/DraftsView.vue'
 
@@ -15,8 +16,10 @@ function draft(overrides: Partial<InstagramDraft>): InstagramDraft {
     permalink: 'https://www.instagram.com/p/a/',
     postedAt: '2026-10-13T16:00:12Z',
     caption: 'We team up with space.trax for XTRUDE next Saturday, October 17th',
+    flyerText: null,
     eventDate: '2026-10-17',
     startTime: null,
+    doorsTime: null,
     title: 'XTRUDE',
     acts: ['space.trax'],
     pricePresale: null,
@@ -31,6 +34,36 @@ function draft(overrides: Partial<InstagramDraft>): InstagramDraft {
 }
 
 let listed: InstagramDraft[] = []
+
+const approvedEvent = {
+  id: 8426,
+  venueId: 7,
+  title: 'XTRUDE',
+  subtitle: null,
+  description: null,
+  eventType: 'PARTY',
+  status: 'SCHEDULED',
+  slug: '2026-10-17-rso-xtrude',
+  eventDate: '2026-10-17',
+  doorsTime: null,
+  startTime: '23:00:00',
+  imageUrl: null,
+  sourceUrl: null,
+  sourceId: 'manual:rso-berlin:2026-10-17-xtrude',
+  ticketUrl: null,
+  facebookEventUrl: null,
+  genre: null,
+  genreTags: [],
+  pricePresale: null,
+  priceBoxOffice: null,
+  priceCurrency: 'EUR',
+  priceNote: null,
+  soldOut: false,
+  free: false,
+  artists: [],
+  promoterIds: [],
+  pinnedFields: [],
+} satisfies AdminEvent
 const fetchMock = vi.fn<typeof fetch>()
 
 function json(body: unknown, status = 200) {
@@ -62,6 +95,10 @@ beforeEach(() => {
     if (method === 'GET' && url === '/api/admin/instagram/venues') {
       return json([{ slug: 'rso-berlin', name: 'RSO.Berlin', handle: 'rso.berlin' }])
     }
+    if (method === 'GET' && url === '/api/admin/events/8426') return json(approvedEvent)
+    if (method === 'PUT' && url === '/api/admin/events/8426') return json(approvedEvent)
+    if (method === 'POST' && url === '/api/admin/instagram-drafts/5/approve')
+      return json({ status: 'APPROVED', drafts: 1 })
     if (method === 'POST' && url === '/api/admin/instagram-drafts/3/reject')
       return json({ status: 'REJECTED', drafts: 1 })
     if (method === 'DELETE' && url === '/api/admin/instagram/venues/rso-berlin') {
@@ -109,6 +146,42 @@ describe('DraftsView', () => {
     expect(nights[0]!.text()).toContain('next Saturday, October 17th')
     expect(nights[1]!.text()).toContain('none named')
     expect(wrapper.find('[data-testid="pending-count"]').text()).toBe('3 pending')
+    expect(wrapper.find('[data-testid="flyer-text"]').exists()).toBe(false)
+  })
+
+  it('shows the text read off the image beside the caption', async () => {
+    listed = [
+      draft({
+        caption: null,
+        flyerText: 'XTRUDE\nSAT 17 OCT\nChris Liebing',
+        doorsTime: '23:00:00',
+      }),
+    ]
+
+    const { wrapper } = await mountView()
+
+    expect(wrapper.find('[data-testid="flyer-text"]').text()).toContain('Chris Liebing')
+    expect(wrapper.find('[data-testid="night"]').text()).toContain('doors 23:00')
+  })
+
+  it('shows a later post of an approved night as an update, and applies it to the event', async () => {
+    listed = [draft({ id: 5, eventId: 8426, doorsTime: '22:00:00', startTime: '23:00:00' })]
+
+    const { wrapper } = await mountView()
+
+    expect(wrapper.find('[data-testid="update-badge"]').text()).toContain('8426')
+    expect(wrapper.find('[data-testid="update"]').text()).toContain('Doors: none → 22:00')
+    expect(wrapper.find('[data-testid="update"]').text()).not.toContain('Start')
+    await wrapper
+      .find('button[aria-label="Apply the update to RSO.Berlin on 2026-10-17"]')
+      .trigger('click')
+    await flushPromises()
+
+    const put = fetchMock.mock.calls.find(([, init]) => init?.method === 'PUT')
+    expect(JSON.parse(String(put?.[1]?.body)).doorsTime).toBe('22:00')
+    expect(methods()).toContain('POST /api/admin/instagram-drafts/5/approve')
+    expect(wrapper.find('[role="status"]').text()).toContain('Updated XTRUDE: Doors 22:00')
+    expect(wrapper.findAll('[data-testid="night"]')).toHaveLength(0)
   })
 
   it('opens the New event form with the first draft of the night', async () => {

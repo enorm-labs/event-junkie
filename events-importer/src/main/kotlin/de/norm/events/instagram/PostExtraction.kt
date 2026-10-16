@@ -14,11 +14,12 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
 
-/** What the model reads for one post. Nothing else about the venue or the post leaves the platform. */
+/** What the model reads for one post. Nothing else about the venue or the post leaves the platform. [caption] is empty for a post without one. */
 data class PostInput(
     val venueName: String,
     val caption: String,
-    val postedAt: OffsetDateTime
+    val postedAt: OffsetDateTime,
+    val images: List<PostImage> = emptyList()
 ) {
     /** The post's day in Berlin, which a caption's "Friday" and "next Saturday" count from. */
     val postedOn: LocalDate get() = postedAt.atZoneSameInstant(BERLIN).toLocalDate()
@@ -33,12 +34,15 @@ data class DraftedEvent(
     val date: LocalDate,
     val title: String,
     val startTime: LocalTime? = null,
+    val doorsTime: LocalTime? = null,
     val acts: List<String> = emptyList(),
     val pricePresale: BigDecimal? = null,
     val priceBoxOffice: BigDecimal? = null,
-    /** The passage of the caption the date rests on. */
+    /** The passage of the caption or the image text the date rests on. */
     val evidence: String,
-    val confidence: Double
+    val confidence: Double,
+    /** The text the model read off the post's images, word for word. Null when no image was sent. */
+    val flyerText: String? = null
 )
 
 /** What one extraction call gave, and the tokens it cost. */
@@ -67,8 +71,12 @@ sealed interface ExtractionResult {
  *
  * A caption is a venue's promotional text, so the answer is untrusted. The date must quote the
  * caption, fall on the weekday the quote names, and lie between the post's day and [HORIZON_DAYS]
- * after it. A start time and a price must each appear in the caption. An act must appear in it too,
+ * after it. A start time, a doors time and a price must each appear in the caption. An act must appear in it too,
  * or spell a handle in it.
+ *
+ * When images were sent, the model also copies the text it reads on them into `flyerText`, and every
+ * check accepts that text beside the caption (ADR-049). Nothing here can prove the image says it: the
+ * person who approves the draft compares the flyer text with the post.
  */
 object PostExtractionValidator {
     private val logger = KotlinLogging.logger {}
@@ -78,6 +86,9 @@ object PostExtractionValidator {
     private const val MIN_EVIDENCE_LENGTH = 3
     private const val MAX_EVIDENCE_LENGTH = 500
     private const val MAX_TITLE_LENGTH = 200
+
+    /** A flyer with a long lineup is a few hundred characters. More is not a copy of a flyer. */
+    private const val MAX_FLYER_TEXT_LENGTH = 3000
     private const val HALF_DAY = 12
 
     /** A post announces a night months ahead at most. A date further out is a wrong year. */
@@ -115,18 +126,33 @@ object PostExtractionValidator {
                 .takeIf { it.isArray && root.path("isEvent").asBoolean(false) }
                 ?.toList()
                 .orEmpty()
-        val kept = events.mapNotNull { event(it, input, minConfidence) }
+        val flyerText = flyerText(root, input)
+        val kept = events.mapNotNull { event(it, input, flyerText, minConfidence) }
         if (kept.size < events.size) logger.warn { "Dropped ${events.size - kept.size} of ${events.size} drafted event(s) that failed a check" }
         // A post that names one night twice ("Friday … October 16th") gives one draft.
         return kept.groupBy { it.date }.map { (_, same) -> same.maxBy { it.confidence } }
     }
 
+    /** Read only when images were sent, so a caption-only answer cannot widen its own checks. */
+    private fun flyerText(
+        root: JsonNode,
+        input: PostInput
+    ): String? =
+        root
+            .path("flyerText")
+            .asString("")
+            .trim()
+            .takeIf { input.images.isNotEmpty() && it.isNotEmpty() }
+            ?.take(MAX_FLYER_TEXT_LENGTH)
+
     private fun event(
         node: JsonNode,
         input: PostInput,
+        flyerText: String?,
         minConfidence: Double
     ): DraftedEvent? {
-        val caption = input.caption
+        // Everything the model read: a fact must be quoted from one of the two.
+        val caption = listOfNotNull(input.caption.takeIf { it.isNotBlank() }, flyerText).joinToString("\n")
         val evidence = node.path("evidence").asString("").trim()
         val confidence = node.path("confidence").asDouble(-1.0)
         val date = date(node.path("date").asString(""))
@@ -144,6 +170,7 @@ object PostExtractionValidator {
             date = checkNotNull(date),
             title = title,
             startTime = time(node.path("startTime").asString(""))?.takeIf { namesHour(it, caption) },
+            doorsTime = time(node.path("doorsTime").asString(""))?.takeIf { namesHour(it, caption) },
             acts =
                 node
                     .path("acts")
@@ -154,7 +181,8 @@ object PostExtractionValidator {
             pricePresale = price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
             priceBoxOffice = price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
             evidence = evidence,
-            confidence = confidence
+            confidence = confidence,
+            flyerText = flyerText
         )
     }
 

@@ -187,11 +187,12 @@ const { t } = useI18n()
       <p>
         For some venues with no website of their own, the events come from the public posts of their
         Instagram business account. The importer reads them through Meta's official interface (Meta
-        Platforms Ireland Ltd.) as Event Junkie's own account. It reads only the text, the link and
-        the date of a post, never an image. A language model drafts the date, the title and the
-        line-up from it (section 5), and I check every draft before an event appears. The post's
-        text is stored only until that check, for 14 days at most, and is never shown on this site.
-        The event links the post. Nothing about you is sent.
+        Platforms Ireland Ltd.) as Event Junkie's own account. It reads the text, the link, the date
+        and the images of a post. A language model drafts the date, the title and the line-up from
+        them (section 5), and I check every draft before an event appears. The post's text, and the
+        text read off its images, are stored only until that check, for 14 days at most, and are
+        never shown on this site. The images are not stored. The event links the post. Nothing about
+        you is sent.
       </p>
       <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
@@ -262,24 +263,24 @@ const { t } = useI18n()
           check (section 4), its title and subtitle go as well. Where these texts name performing
           artists, those names go with them, and the names of the line-up and the venue are sent
           explicitly as well, so that the translation leaves them unchanged. For events from
-          Instagram posts (section 4), the post's text goes there, with the venue's name and the
-          post's date. Where a post names people, their names go with it. Nothing else reaches this
-          service: no log data, and nothing about you.
+          Instagram posts (section 4), the post's text and images go there, with the venue's name
+          and the post's date. Where a post names people, their names go with it, and an image can
+          show a person. Nothing else reaches this service: no log data, and nothing about you.
         </li>
       </ul>
       <p>
-        <strong>Transfer to the USA.</strong> Anthropic processes these texts on my instruction
-        only. The basis is the Data Processing Addendum, which is part of the contract through the
-        Commercial Terms of Service and includes the European Commission's standard contractual
-        clauses (Art. 46 (2) (c) GDPR). The same contract rules out using the transmitted texts to
-        train models.
+        <strong>Transfer to the USA.</strong> Anthropic processes these texts and images on my
+        instruction only. The basis is the Data Processing Addendum, which is part of the contract
+        through the Commercial Terms of Service and includes the European Commission's standard
+        contractual clauses (Art. 46 (2) (c) GDPR). The same contract rules out using the
+        transmitted texts and images to train models.
       </p>
       <p>
         There is no content delivery network, no edge provider and no traffic proxy in front of the
         site. Your request reaches Event Junkie's servers in Germany directly, so no third country
         is involved in delivering this site to you. Translation, checking and drafting above are the
-        only path on which data leaves the EU, and they carry event texts rather than anything about
-        your visit.
+        only path on which data leaves the EU, and they carry event texts and flyers rather than
+        anything about your visit.
       </p>
       <p>
         <strong>That holds for images as well.</strong> They come from Event Junkie's servers,
