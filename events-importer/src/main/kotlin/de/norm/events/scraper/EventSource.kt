@@ -372,6 +372,9 @@ enum class EventSource {
     /** Theater im Delphi Berlin – a 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre and talks. */
     THEATER_IM_DELPHI,
 
+    /** The Cloud – a rentable event space at Alexanderplatz that hosts galas and private parties as well as weekend club nights and live shows. */
+    THE_CLOUD,
+
     /** The Wall Comedy Club – a Friedrichshain stand-up club named for the fall of the Berlin Wall, with English-language shows most nights. */
     THE_WALL,
 

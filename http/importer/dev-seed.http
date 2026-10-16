@@ -10246,7 +10246,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# The Cloud — not imported
+# The Cloud
 # ————————————————————————————————————————————————————————————
 
 ### --- Create The Cloud venue ---
@@ -10268,13 +10268,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "live-venue"],
     "capacity": 1000,
-    "programmeUrl": "https://thecloud.berlin/events/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_the_cloud", response.body.id);
     client.test("The Cloud venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create The Cloud event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_the_cloud}},
+    "name": "The Cloud",
+    "url": "https://thecloud.berlin/wp-json/tribe/events/v1/events",
+    "sourceType": "THE_CLOUD",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("The Cloud event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial The Cloud import ---
+POST {{importer-host}}/api/admin/event-sources/the-cloud/import
+Accept: application/json
+
+> {%
+    client.test("The Cloud import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

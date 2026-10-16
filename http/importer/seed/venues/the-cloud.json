@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["club", "live-venue"],
         "capacity": 1000,
-        "programmeUrl": "https://thecloud.berlin/events/",
         "reviewedAt": "2026-10-07T14:21:58Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "The Cloud",
+            "url": "https://thecloud.berlin/wp-json/tribe/events/v1/events",
+            "sourceType": "THE_CLOUD",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
