@@ -68,7 +68,7 @@ class UrbanSpreeDetailPageScraperTest {
 
         event.title shouldBe "Human Tree x Urban Spree Klubnacht"
         event.sourceId shouldBe "urban_spree:concerts/human-tree-x-urban-spree-klubnacht"
-        event.eventType shouldBe EventType.CONCERT.name
+        event.eventType shouldBe EventType.PARTY.name
         event.promoters shouldContainExactly listOf("Human Tree", "Urban Spree")
         event.artists.map { it.name to it.role } shouldContainExactly
             listOf("Bam Bam’s Boogie" to "HEADLINER", "Delta Division" to "HEADLINER", "N Ska" to "HEADLINER")
@@ -84,6 +84,40 @@ class UrbanSpreeDetailPageScraperTest {
             .shouldNotBeNull()
             .artists
             .shouldBeEmpty()
+    }
+
+    private val bracketUrl = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-(kim,-kyra).html"
+
+    @Test
+    fun `scrape types a Klubnacht as a party and bills the DJs in its title's bracket`() {
+        val event = scraper.scrape(fixture("urbanspree-detail-klubnacht-bracket.html", bracketUrl), bracketUrl).shouldNotBeNull()
+
+        event.title shouldBe "Urban Spree KLUBNACHT (Kim, Kyra)"
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Kim" to "DJ", "Kyra" to "DJ")
+    }
+
+    @Test
+    fun `scrape prefers a Klubnacht's running order to its title's bracket`() {
+        val document = fixture("urbanspree-detail-klubnacht.html", klubnachtUrl)
+        document.selectFirst("#pseudo-card h1.title")!!.text("Urban Spree KLUBNACHT (Kim & Kyra)")
+
+        scraper
+            .scrape(document, klubnachtUrl)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name } shouldContainExactly
+            listOf("Albert Kraft", "Key Clef", "Daraio")
+    }
+
+    @Test
+    fun `scrape keeps a concert's type and title acts when its title ends in a bracket`() {
+        val document = fixture("urbanspree-detail-concert.html", concertUrl)
+        document.selectFirst("#pseudo-card h1.title")!!.text("Coilguns (CH)")
+
+        val event = scraper.scrape(document, concertUrl).shouldNotBeNull()
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Coilguns" to "HEADLINER")
     }
 
     private fun scrapeConcert() = scraper.scrape(fixture("urbanspree-detail-concert.html", concertUrl), concertUrl)

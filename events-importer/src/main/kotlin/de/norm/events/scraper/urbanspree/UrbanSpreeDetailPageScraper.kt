@@ -35,13 +35,10 @@ import java.util.Locale
  * the hero clock, the hero is the doors time ([urbanSpreeDoorsAndStart], #2787).
  *
  * A late club night is the exception on both counts (#1904). Its hero says 23:59
- * ([URBAN_SPREE_LATE_PLACEHOLDER]), the description opens with the real start stamped with the
- * night's own date, and the DJs appear only there, as `<name> — DJ set`. Such a night is typed
- * `PARTY`, although the venue files it under Concerts. A night co-branded with a partner
- * (`Human Tree x Urban Spree Klubnacht`) may have no running order at all and name its acts in
- * one `Featuring A, B and C` sentence instead (#2350); that sentence is read only when neither the
- * title nor a running order bills anyone. Only that wording is read, because the venue's other
- * uses of `featuring` are prose about a band, not a line-up.
+ * ([URBAN_SPREE_LATE_PLACEHOLDER]), and the description opens with the real start stamped with
+ * the night's own date. A title with `Klubnacht` is typed `PARTY`, although the venue files it
+ * under Concerts (#3382). Its title names the night, so its line-up comes from the page
+ * ([urbanSpreeClubNightLineUp]).
  *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
@@ -76,7 +73,9 @@ class UrbanSpreeDetailPageScraper {
         // artists.
         val (headline, supportNote) = splitUrbanSpreeBilling(rawTitle)
         val title = cleanUrbanSpreeTitle(headline)
-        val eventType = mapEventType(hero.textAt(".parent-name"), URBAN_SPREE_CATEGORY_SYNONYMS)
+        // A Klubnacht's title names the night, so typing it first also keeps its name from being billed (#3382).
+        val eventType =
+            if (isUrbanSpreeKlubnacht(title)) EventType.PARTY.name else mapEventType(hero.textAt(".parent-name"), URBAN_SPREE_CATEGORY_SYNONYMS)
         val priceText = hero.textAt(".ct-dates li.price")
         val price = parsePriceValue(priceText)
         // The blurb opens with the night's own billing — one act per line under `Live:`, each with
@@ -95,15 +94,14 @@ class UrbanSpreeDetailPageScraper {
         val titleArtists =
             buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
                 .map(::withoutDjAffiliation)
-        // A club night filed under Concerts names no act in its title; its DJs are in the running order.
-        val djSets = if (titleArtists.isEmpty()) urbanSpreeDjSets(description) else emptyList()
-        // A co-branded night with no running order names its acts in one prose sentence (#2350).
-        val featured = if (titleArtists.isEmpty() && djSets.isEmpty()) urbanSpreeFeaturedActs(description) else emptyList()
+        val artists = titleArtists.ifEmpty { urbanSpreeClubNightLineUp(title, description) }
+        // A Concerts night whose running order bills DJ sets is a club night.
+        val billsDjSets = titleArtists.isEmpty() && artists.any { it.role == DJ_ROLE }
         return ScrapedEvent(
             title = title,
             subtitle = supportNote,
             description = description,
-            eventType = if (djSets.isNotEmpty() && eventType == EventType.CONCERT.name) EventType.PARTY.name else eventType,
+            eventType = if (billsDjSets && eventType == EventType.CONCERT.name) EventType.PARTY.name else eventType,
             // The overview card's data-dateStart wins during the merge; this is the standalone value.
             eventDate = eventDate,
             startTime = startTime,
@@ -117,10 +115,7 @@ class UrbanSpreeDetailPageScraper {
             free = detectFree(pricePresale = price, priceNote = priceText),
             status = urbanSpreeStatus(rawTitle),
             soldOut = urbanSpreeSoldOut(rawTitle),
-            artists =
-                titleArtists
-                    .ifEmpty { djSets.map { ScrapedArtist(name = it, role = "DJ") } }
-                    .ifEmpty { featured.map { ScrapedArtist(name = it, role = "HEADLINER") } },
+            artists = artists,
             promoters = infoValue(document, PROMOTER_LABEL)?.let(::splitPromoters).orEmpty()
         )
     }
