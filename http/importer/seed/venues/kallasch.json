@@ -13,8 +13,16 @@
         "descriptionAlt": "Die Moabiter Programmkneipe entstand 2014 als Barprojekt aus dem Festival Musique Maudite, hält Getränke günstig und die meisten Abende kostenlos und bietet samstags Konzerte, eine Jazzreihe zweimal im Monat und einen monatlichen Poetry Slam.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "live-venue"],
-        "programmeUrl": "https://kallasch.berlin/programm/",
         "reviewedAt": "2026-10-07T09:58:32Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Kallasch&",
+            "url": "https://kallasch.berlin/programm/",
+            "sourceType": "KALLASCH",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

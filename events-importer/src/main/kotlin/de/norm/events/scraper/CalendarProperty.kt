@@ -1,4 +1,4 @@
-package de.norm.events.scraper.orwohaus
+package de.norm.events.scraper
 
 /** One content line of an iCalendar component: the raw [value] and its parameters, upper-cased by name. */
 internal data class CalendarProperty(
