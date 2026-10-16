@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.hasFreeEntryPhrase
@@ -57,7 +58,7 @@ class ShowfensterOverviewPageScraper {
         val ticketUrl = ticketUrlOf(node)
         val category = eventfrogCategory(ticketUrl)
         val cancellation = CANCELLATION_NOTE.find(rawTitle)
-        val title = stripSoldOutMarker(rawTitle.removeRange(cancellation?.range ?: IntRange.EMPTY)).replace(WHITESPACE_RUN, " ")
+        val title = stripSoldOutMarker(rawTitle.removeRange(cancellation?.range ?: IntRange.EMPTY)).replace(WHITESPACE, " ")
         val eventType = eventTypeOf(category, title)
         val description = node.stringOrNull("description")
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
@@ -163,5 +164,3 @@ private val SHOW_WORD = Regex("""\bshow\b""", RegexOption.IGNORE_CASE)
 
 /** `(fällt aus, nächster Termin am 23.10.)`, `- (fällt leider aus)`, `- fällt leider aus wegen …`, always at the end. */
 private val CANCELLATION_NOTE = Regex("""\s*[-–]?\s*\(?\s*f(?:ä|ae)llt\s+(?:leider\s+)?aus\b[^()]*\)?\s*$""", RegexOption.IGNORE_CASE)
-
-private val WHITESPACE_RUN = Regex("""\s+""")

@@ -2,6 +2,7 @@ package de.norm.events.scraper.arcanoa
 
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -269,21 +270,7 @@ class ArcanoaOverviewPageScraper(
         private fun normalizeDashSpacing(text: String): String = text.replace(UNEVEN_DASH, " - ").trim()
 
         /** German month names, as rendered in the `font.gesperrt` block headings. */
-        private val GERMAN_MONTHS: Set<String> =
-            setOf(
-                "Januar",
-                "Februar",
-                "März",
-                "April",
-                "Mai",
-                "Juni",
-                "Juli",
-                "August",
-                "September",
-                "Oktober",
-                "November",
-                "Dezember"
-            )
+        private val GERMAN_MONTHS: Set<String> = GERMAN_MONTH_NAMES.toSet()
 
         /** The caption identifying a month block's programme paragraph ("Live Musik:"). */
         private val PROGRAMME_HEADING_PATTERN = Regex("""Live\s*Musik""", RegexOption.IGNORE_CASE)

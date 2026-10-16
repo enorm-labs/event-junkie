@@ -3,6 +3,7 @@ package de.norm.events.scraper.supamolly
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -231,7 +232,7 @@ class SupamollyOverviewPageScraper {
          */
         private val PROGRAMME_POSTER_TITLE =
             Regex(
-                """^(?:januar|februar|m(?:ä|ae)rz|april|mai|juni|juli|august|september|oktober|november|dezember)\b""",
+                """^(?:${GERMAN_MONTH_NAMES.joinToString("|") { it.replace("ä", "(?:ä|ae)") }})\b""",
                 RegexOption.IGNORE_CASE
             )
 

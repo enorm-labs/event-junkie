@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
@@ -354,7 +355,7 @@ class PrivatclubOverviewPageScraper(
         // "Örtlicher Veranstalter: <link>" in the content section
         val veranstalterLink = detail.selectFirst(".veranstaltertext a")
         if (veranstalterLink != null) {
-            return veranstalterLink.text().trim().takeIf { it.isNotBlank() }
+            return veranstalterLink.text().blankToNull()
         }
 
         // Plain text after "Örtlicher Veranstalter:"

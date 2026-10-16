@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
@@ -114,7 +115,7 @@ class GoldenGateOverviewPageScraper {
         lineupHeading: Element?,
         baseUrl: String
     ): ScrapedEvent? {
-        val title = nonDateHeading(titleHeading)?.text()?.trim()?.takeIf { it.isNotBlank() }
+        val title = nonDateHeading(titleHeading)?.text().blankToNull()
         if (title == null) {
             logger.warn { "No title heading after Golden Gate date line '${line.text}', skipping night" }
             return null

@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
@@ -212,7 +213,7 @@ internal fun parseAstraEventBlock(
     baseUrl: String
 ): AstraEventBlock? {
     val titleLink = root.selectFirst(".event__title .event__title-link") ?: return null
-    val title = titleLink.text().trim().takeIf { it.isNotBlank() } ?: return null
+    val title = titleLink.text().blankToNull() ?: return null
     val href = titleLink.attr("href").takeIf { it.isNotBlank() } ?: return null
     val sourceUrl = resolveUrl(baseUrl, href)
 

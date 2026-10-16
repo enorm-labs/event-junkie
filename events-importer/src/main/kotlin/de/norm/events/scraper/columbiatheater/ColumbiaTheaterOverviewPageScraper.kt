@@ -15,6 +15,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -24,9 +25,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for Columbia Theater Berlin's homepage, which **is** the programme listing.
@@ -36,7 +34,9 @@ import java.time.format.DateTimeParseException
  * tour name, one `.item-support-row` per billing line, `.item-date-day`/`.item-date-month`, and
  * the venue's `data-c` / `data-m` / `data-p` status flags. The date block has a German month
  * abbreviation and usually no year, so the date is read from the `YYYYMMDD` permalink prefix
- * instead — canonical and unambiguous (see [parseColumbiaTheaterSlugDate]).
+ * instead — canonical and unambiguous (see [parseBasicIsoDatePrefix]).
+ * A slug without one leaves the date unresolved, and the importer drops the event rather than
+ * guess a year.
  *
  * The overview carries every field except times, description, ticket URL and presenters, which
  * only the detail page has. [ColumbiaTheaterWebsiteImporter] falls back to this data when a detail
@@ -89,7 +89,7 @@ class ColumbiaTheaterOverviewPageScraper {
             subtitle = columbiaTheaterSubtitle(card.textAt(".item-tour-text"), supportRows),
             eventType = eventType,
             // The permalink's YYYYMMDD prefix is the only year-bearing date on the card.
-            eventDate = parseColumbiaTheaterSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = parseBasicIsoDatePrefix(slug) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = card.imgSrcAt(".item-image-wrapper img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
@@ -143,28 +143,6 @@ internal fun parseColumbiaTheaterStatus(
         root.attr(POSTPONED_FLAG) == FLAG_SET -> EventStatus.POSTPONED.name
         else -> parseEventStatus(statusText.orEmpty())
     }
-
-/** The `YYYYMMDD` date the venue prefixes to every event permalink slug. */
-private val SLUG_DATE_PATTERN = Regex("""^(\d{8})-""")
-
-/**
- * The event date from the `YYYYMMDD` permalink prefix
- * (`20260816-nathan-evans-the-saint-phnx-band` → `2026-08-16`), or `null` without one.
- *
- * The only unambiguous date the site publishes: the overview card (`03` / `Aug`) and the detail
- * header (`So. 16.08. um 20:00`) both omit the year unless the event is more than a season away.
- * Callers substitute [UNRESOLVED_EVENT_DATE][de.norm.events.scraper.UNRESOLVED_EVENT_DATE] on
- * `null` so [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter]
- * drops the event rather than guessing a year.
- */
-internal fun parseColumbiaTheaterSlugDate(slug: String): LocalDate? {
-    val digits = SLUG_DATE_PATTERN.find(slug)?.groupValues?.get(1) ?: return null
-    return try {
-        LocalDate.parse(digits, DateTimeFormatter.BASIC_ISO_DATE)
-    } catch (_: DateTimeParseException) {
-        null
-    }
-}
 
 /** The `.item-support-row` billing lines under [root], in listing order. */
 internal fun supportRowTexts(root: Element): List<String> =

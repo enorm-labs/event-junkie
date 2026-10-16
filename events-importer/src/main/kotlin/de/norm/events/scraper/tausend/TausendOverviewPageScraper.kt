@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -94,7 +95,7 @@ class TausendOverviewPageScraper {
     /** `House Queens · Tausend Electronica` is the act, then the series; a series named twice has no act. */
     private fun splitName(name: String): Pair<String, String?> {
         val act = name.substringBefore(NAME_SEPARATOR).trim()
-        val series = name.substringAfter(NAME_SEPARATOR, "").trim().takeIf { it.isNotBlank() }
+        val series = name.substringAfter(NAME_SEPARATOR, "").blankToNull()
         return act to series
     }
 

@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
@@ -134,9 +135,9 @@ class TempodromOverviewPageScraper {
      * is `Germany Tour` in `Kleine Arena`. A description that is only the room has no format line.
      */
     private fun splitRoom(description: String?): Pair<String?, String?> {
-        val text = description?.trim()?.takeIf { it.isNotBlank() }
+        val text = description.blankToNull()
         val room = text?.let(ROOM_SUFFIX::find) ?: return text to null
-        return text.substring(0, room.range.first).trim().takeIf { it.isNotBlank() } to room.groupValues[1]
+        return text.substring(0, room.range.first).blankToNull() to room.groupValues[1]
     }
 
     /**
@@ -158,7 +159,7 @@ class TempodromOverviewPageScraper {
      * [parsePriceValue][de.norm.events.scraper.parsePriceValue]: that reads a *rendered* price and
      * requires the `€` sign this machine-readable field does not carry.
      */
-    private fun parseDecimal(value: String?): BigDecimal? = value?.trim()?.takeIf { it.isNotBlank() }?.let { runCatching { BigDecimal(it) }.getOrNull() }
+    private fun parseDecimal(value: String?): BigDecimal? = value.blankToNull()?.let { runCatching { BigDecimal(it) }.getOrNull() }
 
     /**
      * Whether the title or the format line names a sport: "Snooker" / "German Masters 2027". Whole

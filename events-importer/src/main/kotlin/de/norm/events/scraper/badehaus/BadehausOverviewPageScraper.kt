@@ -7,6 +7,7 @@ import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.inferConcertVenueType
@@ -71,7 +72,7 @@ class BadehausOverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent? {
         val titleLink = card.selectFirst(".nomargin h2 a") ?: return null
-        val title = titleLink.text().trim().takeIf { it.isNotBlank() } ?: return null
+        val title = titleLink.text().blankToNull() ?: return null
 
         val href = titleLink.attr("href").takeIf { it.isNotBlank() } ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)

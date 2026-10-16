@@ -10,6 +10,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -71,7 +72,7 @@ class ColumbiaTheaterDetailPageScraper {
             subtitle = columbiaTheaterSubtitle(content.textAt(".header-tour-text"), supportRows),
             description = content.textAt("div.event-text"),
             eventType = eventType,
-            eventDate = parseColumbiaTheaterSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = parseBasicIsoDatePrefix(slug) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = labelledClock(dateLine, DOORS_LABELS),
             startTime = labelledClock(dateLine, START_LABEL),
             imageUrl = content.imgSrcAt("img.event-image-img"),

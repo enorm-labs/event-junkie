@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -67,7 +68,7 @@ class TresorDetailPageScraper {
         // Every event page repeats the whole programme in its footer as `article.event-item` blocks —
         // the listing's markup — so parsing must stay inside this event's own section.
         val content = document.selectFirst(MAIN_CONTENT) ?: document
-        val eventDate = parseSlugDate(slug)
+        val eventDate = parseBasicIsoDatePrefix(slug)
 
         return ScrapedEvent(
             title = title,

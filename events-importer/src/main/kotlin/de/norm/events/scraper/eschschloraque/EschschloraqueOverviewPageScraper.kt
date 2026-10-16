@@ -149,9 +149,9 @@ class EschschloraqueOverviewPageScraper {
         structured: LocalTime,
         prose: String
     ): Pair<LocalTime?, LocalTime?> {
-        val proseStart = proseTime(prose, START_LABELS)
+        val proseStart = proseTime(prose, ESCHSCHLORAQUE_START_LABELS)
         // A bare `ab 21uhr` beside a labelled show start is the doors; alone it is the one time the venue announces.
-        val proseDoors = proseTime(prose, DOORS_LABELS) ?: proseStart?.let { proseTime(prose, BARE_AB) }
+        val proseDoors = proseTime(prose, ESCHSCHLORAQUE_DOORS_LABELS) ?: proseStart?.let { proseTime(prose, BARE_AB) }
         return when {
             proseDoors == null && proseStart == null -> null to structured
             proseDoors == structured -> structured to (proseStart ?: structured)
@@ -298,13 +298,13 @@ class EschschloraqueOverviewPageScraper {
         private const val CLOCK = """\s*:?\s*(?:ab\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(?:uhr)?\b"""
 
         /** The doors as the prose labels them, in both of the venue's languages. */
-        val DOORS_LABELS = Regex("""\b(?:einlass|doors?|djs)$CLOCK""", RegexOption.IGNORE_CASE)
+        val ESCHSCHLORAQUE_DOORS_LABELS = Regex("""\b(?:einlass|doors?|djs)$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The unlabelled `ab HH Uhr` the venue writes before a `SHOWTIME`; read only beside a labelled start. */
         val BARE_AB = Regex("""\bab$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The start as the prose labels it; `Showtime` is the venue's word for a show's start after the DJs. */
-        val START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
+        val ESCHSCHLORAQUE_START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The role a `Live:` billing line gives its acts. */
         const val LIVE_ROLE = "LIVE"

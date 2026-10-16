@@ -87,38 +87,22 @@ class DateParsingExtensionsTest {
         parseIsoTime("2026-05-16Tinvalid").shouldBeNull()
     }
 
-    // --- parseShortDate ---
+    // --- parseBasicIsoDatePrefix ---
 
     @Test
-    fun `parseShortDate parses DD-MM-YY format`() {
-        parseShortDate("21/09/26") shouldBe LocalDate.of(2026, 9, 21)
+    fun `parseBasicIsoDatePrefix reads the YYYYMMDD permalink prefix`() {
+        parseBasicIsoDatePrefix("20260816-nathan-evans") shouldBe LocalDate.of(2026, 8, 16)
     }
 
     @Test
-    fun `parseShortDate parses single-digit day and month`() {
-        parseShortDate("1/9/26") shouldBe LocalDate.of(2026, 9, 1)
+    fun `parseBasicIsoDatePrefix returns null without a prefix`() {
+        parseBasicIsoDatePrefix("nathan-evans").shouldBeNull()
+        parseBasicIsoDatePrefix("2026-08-16-nathan-evans").shouldBeNull()
     }
 
     @Test
-    fun `parseShortDate trims whitespace`() {
-        parseShortDate("  21/09/26  ") shouldBe LocalDate.of(2026, 9, 21)
-    }
-
-    @Test
-    fun `parseShortDate returns null for null input`() {
-        parseShortDate(null).shouldBeNull()
-    }
-
-    @Test
-    fun `parseShortDate returns null for blank input`() {
-        parseShortDate("").shouldBeNull()
-        parseShortDate("   ").shouldBeNull()
-    }
-
-    @Test
-    fun `parseShortDate returns null for invalid format`() {
-        parseShortDate("invalid").shouldBeNull()
-        parseShortDate("2026-09-21").shouldBeNull()
+    fun `parseBasicIsoDatePrefix returns null for an impossible date`() {
+        parseBasicIsoDatePrefix("20261332-nathan-evans").shouldBeNull()
     }
 
     // --- parseGermanDate ---

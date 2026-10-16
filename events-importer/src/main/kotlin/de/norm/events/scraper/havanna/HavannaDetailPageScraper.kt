@@ -1,5 +1,6 @@
 package de.norm.events.scraper.havanna
 
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
@@ -70,7 +71,7 @@ class HavannaDetailPageScraper {
                 return null
             }
         val title =
-            children[titleIndex].text().trim().takeIf { it.isNotBlank() } ?: run {
+            children[titleIndex].text().blankToNull() ?: run {
                 logger.warn { "Havanna page $url has a blank night title, skipping" }
                 return null
             }

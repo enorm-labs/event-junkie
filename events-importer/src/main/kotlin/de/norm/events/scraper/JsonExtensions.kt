@@ -11,4 +11,4 @@ import tools.jackson.databind.JsonNode
  * expected — `image` arrives as an `ImageObject` on some venues. A missing value is not worth
  * an exception, so every shape that is not a scalar reads as absent.
  */
-fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").trim().takeIf { it.isNotBlank() }
+fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").blankToNull()

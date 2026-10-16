@@ -10,9 +10,9 @@ import java.time.format.DateTimeParseException
 
 // Shared date parsing for venue scrapers; the clock readers are in TimeParsingExtensions, and the
 // dates a printed weekday decides are in WeekdayDateExtensions. Berlin
-// venue websites write a date three ways: ISO 8601 in schema.org JSON-LD ([parseIsoDate]),
-// `DD/MM/YY` on some WordPress sites ([parseShortDate]), and German dotted `DD.MM.YYYY` /
-// `DD.MM.YY` ([parseGermanDate], [parseGermanShortDate]). Every function returns null for
+// venue websites write a date as ISO 8601 in schema.org JSON-LD ([parseIsoDate]), as German
+// dotted `DD.MM.YYYY` / `DD.MM.YY` ([parseGermanDate], [parseGermanShortDate]), or as a
+// `YYYYMMDD` permalink prefix ([parseBasicIsoDatePrefix]). Every function returns null for
 // unparseable input rather than throwing.
 
 /**
@@ -27,9 +27,6 @@ val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
  * the venue's local time, and to give a [Clock] the zone whose "today" decides a year-less date.
  */
 val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-
-/** European short date format (d/M/yy); 2-digit year resolves to 2000–2099. */
-private val SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yy")
 
 /** German dotted date format with a four-digit year (d.M.yyyy); accepts single- and double-digit day/month. */
 private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yyyy")
@@ -64,17 +61,19 @@ fun parseRealDate(attr: String?): LocalDate? {
 }
 
 /**
- * Parses a European short date `DD/MM/YY`; two-digit years resolve to 2000–2099, single-digit
- * day/month accepted. Used by some WordPress-based venue sites (Madame Claude).
+ * The date of a `YYYYMMDD-` permalink prefix (`20260816-nathan-evans` → `2026-08-16`), or `null`
+ * without one. Shared by Tresor and Columbia Theater.
  */
-fun parseShortDate(text: String?): LocalDate? {
-    if (text.isNullOrBlank()) return null
+fun parseBasicIsoDatePrefix(slug: String): LocalDate? {
+    val digits = BASIC_ISO_DATE_PREFIX.find(slug)?.groupValues?.get(1) ?: return null
     return try {
-        LocalDate.parse(text.trim(), SHORT_DATE_FORMATTER)
+        LocalDate.parse(digits, DateTimeFormatter.BASIC_ISO_DATE)
     } catch (_: DateTimeParseException) {
         null
     }
 }
+
+private val BASIC_ISO_DATE_PREFIX = Regex("""^(\d{8})-""")
 
 /**
  * Parses a German dotted date with a four-digit year (`DD.MM.YYYY`), the most common rendering on
@@ -155,6 +154,13 @@ private val ENGLISH_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
         "sat" to DayOfWeek.SATURDAY,
         "sun" to DayOfWeek.SUNDAY
     )
+
+/**
+ * The twelve German month names in calendar order, `Januar` at index 0. A venue builds the form
+ * it matches against (a set, a map, a regex alternation) from this list.
+ */
+val GERMAN_MONTH_NAMES: List<String> =
+    listOf("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember")
 
 private val GERMAN_MONTH_ABBREVIATIONS: Map<String, Month> =
     mapOf(

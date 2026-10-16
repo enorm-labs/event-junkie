@@ -5,6 +5,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
@@ -74,7 +75,7 @@ class SodaOverviewPageScraper(
     ): ScrapedEvent? {
         val link = snippet.selectFirst("h4.title a") ?: return null
         val href = link.attr("href").takeIf { it.isNotBlank() } ?: return null
-        val title = link.text().trim().takeIf { it.isNotBlank() } ?: return null
+        val title = link.text().blankToNull() ?: return null
         val eventDate = parseCalendarDate(snippet) ?: return null
 
         val sourceUrl = resolveUrl(baseUrl, href)

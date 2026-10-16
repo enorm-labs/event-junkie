@@ -1,6 +1,7 @@
 package de.norm.events.scraper.so36
 
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.splitSupportActs
 import org.jsoup.nodes.Document
@@ -119,7 +120,6 @@ private fun Element.isBold(): Boolean = tagName() in BOLD_TAGS || (tagName() == 
 
 private const val MIN_ROSTER = 2
 private const val NBSP = Typography.nbsp
-private val WHITESPACE = Regex("""\s+""")
 private val BOLD_TAGS = setOf("strong", "b")
 private val BOLD_STYLE = Regex("""font-weight:\s*(?:bold|[6-9]00)""", RegexOption.IGNORE_CASE)
 

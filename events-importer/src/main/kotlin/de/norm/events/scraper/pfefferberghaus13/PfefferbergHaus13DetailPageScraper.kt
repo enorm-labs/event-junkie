@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
@@ -179,7 +180,6 @@ internal fun blurbedAct(item: Element): String? {
 private val LISTED_LINEUP_TYPES = setOf(EventType.CONCERT.name, EventType.FESTIVAL.name)
 private val LEADING_SEPARATOR = Regex("""^\s*(?:[–-]|:)\s+""")
 private val BLURBED_ITEM = Regex("""(\S.*?)(?:\s+[–-]|:)\s+(.+)""")
-private val WHITESPACE = Regex("""\s+""")
 private const val MAX_NAME_WORDS = 5
 private const val MIN_BLURB_WORDS = 4
 private val READING = Regex("""premiere|lesung|kontrovers|diskussion|podium|vortrag|gespräch""", RegexOption.IGNORE_CASE)
