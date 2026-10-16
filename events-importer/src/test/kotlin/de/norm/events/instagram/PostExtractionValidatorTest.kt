@@ -135,6 +135,19 @@ class PostExtractionValidatorTest {
     }
 
     @Test
+    fun `a quote that joins the line with the date to the line with the time is kept`() {
+        // Café Cralle's answer on staging: the two lines are the caption's, the two between them are left out.
+        val answer =
+            """{"isEvent": true, "events": [{"date": "2026-10-31", "title": "Día de Muertos", "startTime": "19:00",
+              "evidence": "SÁBADO, 31.10.2026\n🕖 A PARTIR DE LAS 19 H", "confidence": 0.95}]}"""
+
+        val event = parse(answer, caption = CRALLE, postedAt = "2026-10-04T19:28:41Z")?.single()
+
+        event?.date shouldBe LocalDate.of(2026, 10, 31)
+        event?.startTime shouldBe LocalTime.of(19, 0)
+    }
+
+    @Test
     fun `with an image, the day, the time and the acts may come from the text read off it`() {
         val answer =
             """
@@ -220,6 +233,9 @@ class PostExtractionValidatorTest {
 
     private companion object {
         val FLYER = PostImage(byteArrayOf(1), MediaType.IMAGE_JPEG)
+
+        const val CRALLE =
+            "🌼💀 DÍA DE MUERTOS 💀🌼\n\n📅 SÁBADO, 31.10.2026\n📍 CAFÉ CRALLE\nHochstädter Str. 10A, 13347 Berlín\n🕖 A PARTIR DE LAS 19 H"
 
         const val FLYER_CAPTION = "selfcontrolbln returns to the SUMME floor✖️ / Artwork by dominikkeller_of"
 

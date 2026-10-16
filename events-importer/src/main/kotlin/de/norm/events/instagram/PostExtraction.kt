@@ -213,7 +213,7 @@ object PostExtractionValidator {
 
             evidence.length !in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH -> DraftCheck.EVIDENCE_LENGTH
 
-            !QuotedText.occursIn(evidence, read) -> DraftCheck.EVIDENCE_NOT_QUOTED
+            !QuotedText.eachLineOccursIn(evidence, read) -> DraftCheck.EVIDENCE_NOT_QUOTED
 
             date !in input.postedOn..input.postedOn.plusDays(HORIZON_DAYS) -> DraftCheck.HORIZON
 

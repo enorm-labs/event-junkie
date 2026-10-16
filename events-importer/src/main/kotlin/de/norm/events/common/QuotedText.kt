@@ -31,4 +31,13 @@ object QuotedText {
         quote: String,
         text: String
     ): Boolean = normalise(quote) in normalise(text)
+
+    /**
+     * Each line of [quote] occurs in [text], though not next to each other. A model joins the line with
+     * the date to the line with the time and leaves out the lines between them.
+     */
+    fun eachLineOccursIn(
+        quote: String,
+        text: String
+    ): Boolean = quote.lines().filter { it.isNotBlank() }.let { lines -> lines.isNotEmpty() && lines.all { occursIn(it, text) } }
 }
