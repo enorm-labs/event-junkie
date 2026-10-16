@@ -51,7 +51,7 @@ class TempodromOverviewPageScraperTest {
     @Test
     fun `types a night whose format line says comedy as COMEDY and keeps the performer`() {
         val polak = event("oliver_polak_2026-11-28_20")
-        polak.subtitle shouldBe "COMEDY - Clubtour 2026 | Kleine Arena"
+        polak.subtitle shouldBe "COMEDY - Clubtour 2026"
         polak.eventType shouldBe "COMEDY"
         polak.artists.map { it.name } shouldContainExactly listOf("Oliver Polak")
 
@@ -328,6 +328,36 @@ class TempodromOverviewPageScraperTest {
             ]</script></body></html>
             """.trimIndent()
         return scraper.scrape(Jsoup.parse(html, baseUrl)).single()
+    }
+
+    @Test
+    fun `moves the room the description ends in from the subtitle to the room`() {
+        val polak = event("oliver_polak_2026-11-28_20")
+        polak.room shouldBe "Kleine Arena"
+
+        val azeem = scrapeOne("Azeem Banatwalla", "Germany Tour | Kleine Arena")
+        azeem.subtitle shouldBe "Germany Tour"
+        azeem.room shouldBe "Kleine Arena"
+
+        scrapeOne("Abdullah Sbeih", "Proposal | Stand-Up Comedy Show | Kleine Arena").subtitle shouldBe "Proposal | Stand-Up Comedy Show"
+        scrapeOne("Big Act", "World Tour | Große Arena").room shouldBe "Große Arena"
+    }
+
+    @Test
+    fun `stores a description that is only the room as the room and no subtitle`() {
+        val robby = scrapeOne("Robby Hoffman", "Kleine Arena")
+
+        robby.subtitle.shouldBeNull()
+        robby.room shouldBe "Kleine Arena"
+    }
+
+    @Test
+    fun `keeps a description without a room whole and leaves the room empty`() {
+        val event = scrapeOne("Some Act", "Tour 2026 | Ersatztermin vom 07.05.2026")
+
+        event.subtitle shouldBe "Tour 2026 | Ersatztermin vom 07.05.2026"
+        event.room.shouldBeNull()
+        scrapeOne("Arena Rock", "Arena Tour").room.shouldBeNull()
     }
 
     @Test

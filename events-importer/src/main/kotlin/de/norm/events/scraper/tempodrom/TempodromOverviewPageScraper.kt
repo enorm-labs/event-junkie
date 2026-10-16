@@ -36,8 +36,8 @@ import java.math.BigDecimal
  *
  * Two fields are not taken at face value. `performer.name` is always a copy of the event `name`,
  * not an act, so it is ignored and artists derive from the title as for any concert hall. And
- * `location.name` is always "Tempodrom Berlin", so the Große / Kleine Arena split — nowhere in
- * the listing — is not represented.
+ * `location.name` is always "Tempodrom Berlin". The room is the last part of `description`
+ * instead ("Germany Tour | Kleine Arena"), so it moves from the subtitle to `room` ([splitRoom], #3380).
  *
  * Tempodrom publishes no category, and about a third of its programme is comedy or Kabarett. The
  * `description` line names the format when the venue bills it as comedy ("COMEDY - Clubtour 2026",
@@ -89,12 +89,13 @@ class TempodromOverviewPageScraper {
         val endDate = event.schemaDate("endDate")?.takeIf { it > eventDate || event.schemaTime("endDate") != null }
 
         val url = event.path("url").asString("").trim()
-        val subtitle =
-            event
-                .path("description")
-                .asString(null)
-                ?.let(::decodeHtmlEntities)
-                ?.takeIf { it.isNotBlank() }
+        val (subtitle, room) =
+            splitRoom(
+                event
+                    .path("description")
+                    .asString(null)
+                    ?.let(::decodeHtmlEntities)
+            )
         val production = tempodromProduction(title, subtitle)
         val eventType = production?.eventType?.name ?: tempodromEventType(title, subtitle)
         val offers = event.path("offers")
@@ -105,6 +106,7 @@ class TempodromOverviewPageScraper {
             // The venue's `description` is the tour or edition name ("The Ca$ino Tour", "Jungle Vibes
             // Edition"), not a blurb — it belongs in the subtitle.
             subtitle = subtitle,
+            room = room,
             eventType = eventType,
             // CONCERT is the default unless a production cue typed it (ADR-039).
             typeIsFallback = production == null && eventType == EventType.CONCERT.name,
@@ -125,6 +127,16 @@ class TempodromOverviewPageScraper {
             status = event.schemaStatus(),
             artists = production?.artists ?: tempodromArtists(title, subtitle, eventType)
         )
+    }
+
+    /**
+     * The format line and the room the venue's `description` ends in: "Germany Tour | Kleine Arena"
+     * is `Germany Tour` in `Kleine Arena`. A description that is only the room has no format line.
+     */
+    private fun splitRoom(description: String?): Pair<String?, String?> {
+        val text = description?.trim()?.takeIf { it.isNotBlank() }
+        val room = text?.let(ROOM_SUFFIX::find) ?: return text to null
+        return text.substring(0, room.range.first).trim().takeIf { it.isNotBlank() } to room.groupValues[1]
     }
 
     /**
@@ -158,6 +170,9 @@ class TempodromOverviewPageScraper {
     private companion object {
         /** Path prefix of a Tempodrom event permalink, stripped to obtain the slug identity. */
         const val EVENT_PATH_PREFIX = "/event/"
+
+        /** One of the two rooms, as the whole description or after its last `|`: "… | Kleine Arena". */
+        val ROOM_SUFFIX = Regex("""(?:^|\s*\|\s*)((?:Große|Grosse|Kleine)\s+Arena)\s*$""", RegexOption.IGNORE_CASE)
 
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"

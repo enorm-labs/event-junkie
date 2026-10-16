@@ -16,12 +16,13 @@ import org.springframework.stereotype.Component
  * `/programm-und-tickets/` embeds the whole programme as schema.org `Event` JSON-LD, so an
  * HTML fetch whose *payload* is structured data, parsed by [TempodromOverviewPageScraper]. The
  * JSON-LD names no organizer, and every event page credits one under "Veranstalter", so each
- * event's page is read for its promoter ([TempodromDetailPageScraper], #2711). That costs one GET
+ * event's page is read for its promoter ([TempodromDetailPageScraper], #2711), and for the comedy a
+ * fallback night's blurb names (#3380). That costs one GET
  * per event and stops the listing's `Last-Modified` 304 skipping a run: a promoter can change on a
  * page while the listing stays the same. A failed page flags the row, and the upsert keeps the stored promoter.
  *
  * @see TempodromOverviewPageScraper for the JSON-LD parsing logic.
- * @see TempodromDetailPageScraper for the promoter credit.
+ * @see TempodromDetailPageScraper for the promoter credit and the comedy cue.
  * @see <a href="https://www.tempodrom.de/programm-und-tickets/">Tempodrom programme</a>
  */
 @Component
@@ -31,7 +32,7 @@ class TempodromWebsiteImporter(
     override val eventSource: EventSource = EventSource.TEMPODROM
     override val listsWholeProgramme: Boolean = true
 
-    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = TempodromDetailPageScraper()::addPromoter
+    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = TempodromDetailPageScraper()::enrich
 }
 
 val TEMPODROM_LIMITATIONS =

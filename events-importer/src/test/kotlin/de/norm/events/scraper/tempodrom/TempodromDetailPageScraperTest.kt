@@ -19,6 +19,14 @@ class TempodromDetailPageScraperTest {
             sourceId = "tempodrom:jill_scott_2026-10-06_20"
         )
 
+    private fun fallbackRow(
+        title: String,
+        subtitle: String?
+    ) = listingRow.copy(title = title, subtitle = subtitle, eventType = "CONCERT", typeIsFallback = true)
+
+    private fun descriptionPage(blurb: String) =
+        Jsoup.parse("""<button class="acc-button btn" aria-controls="event-txt-1">Beschreibung <span></span></button><div id="event-txt-1"><p>$blurb</div>""")
+
     private fun page(name: String) =
         Jsoup.parse(
             javaClass.classLoader
@@ -76,6 +84,69 @@ class TempodromDetailPageScraperTest {
         val document = Jsoup.parse("<div class=copy>Veranstalter <a>Concertbüro Zahlmann GmbH</a></div>", listingRow.sourceUrl)
 
         scraper.addPromoter(listingRow, document).promoters shouldBe listOf("Concertbüro Zahlmann GmbH")
+    }
+
+    @Test
+    fun `types a fallback night COMEDY when the Beschreibung names a comedian`() {
+        // "The iconic standup comedian Shaden premieres her … brand new special" (#3380).
+        val event = scraper.enrich(fallbackRow("SHADEN (أنا إمرأة تعبانة) Show", "// Berlin"), page("tempodrom-detail-shaden-comedy.html"))
+
+        event.eventType shouldBe "COMEDY"
+        event.typeIsFallback shouldBe false
+        event.promoters shouldBe listOf("Levanto Entertainment")
+    }
+
+    @Test
+    fun `keeps a fallback CONCERT whose only comedy is the promoter's name`() {
+        // Abishek Kumar's page credits "The Comedy Cornershop" and its blurb names no comedy.
+        val row = fallbackRow("Abishek Kumar", "Abishek wants to Enjoy Life! - Europe/UK tour 2026")
+
+        val event = scraper.enrich(row, page("tempodrom-detail-comedy-promoter-no-cue.html"))
+
+        event.eventType shouldBe "CONCERT"
+        event.typeIsFallback shouldBe true
+        event.promoters shouldBe listOf("The Comedy Cornershop")
+    }
+
+    @Test
+    fun `reads stand-up, comedians and Kabarett as comedy cues`() {
+        listOf(
+            "one of India's most critically acclaimed stand-up comedians",
+            "Ein Abend voller Comedy",
+            "die Kabarettistin aus Leipzig",
+            "Politisches Kabarett"
+        ).forEach { blurb ->
+            scraper.addComedyType(fallbackRow("Act", null), descriptionPage(blurb)).eventType shouldBe "COMEDY"
+        }
+    }
+
+    @Test
+    fun `reads a comedy cue in the title or the format line when the page has no Beschreibung`() {
+        val event = scraper.addComedyType(fallbackRow("Act", "Kabarett 2027"), Jsoup.parse("<div class=copy>Event teilen</div>"))
+
+        event.eventType shouldBe "COMEDY"
+    }
+
+    @Test
+    fun `reads no cue from the house rules or from a word that only contains one`() {
+        val page =
+            Jsoup.parse(
+                """
+                <button class="acc-button" aria-controls="event-txt-1">Beschreibung</button>
+                <div id="event-txt-1">Die Band spielt ihre Hits. Comedyfans und Standuptische gibt es nicht.</div>
+                <button class="acc-button" aria-controls="event-txt-2">Hinweis zur Einlasskontrolle</button>
+                <div id="event-txt-2">Kein Einlass mit Comedy-Requisiten.</div>
+                """.trimIndent()
+            )
+
+        scraper.addComedyType(fallbackRow("Band", null), page).eventType shouldBe "CONCERT"
+    }
+
+    @Test
+    fun `never retypes a night the listing typed from a cue`() {
+        val show = fallbackRow("Ice Show", null).copy(eventType = "SHOW", typeIsFallback = false)
+
+        scraper.addComedyType(show, descriptionPage("A comedy on ice")) shouldBeSameInstanceAs show
     }
 
     @Test
