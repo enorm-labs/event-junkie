@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventSummary, VenueSummary } from '@/api/types'
-import { groupByVenue, nearby, overlapGroups, radiusFromQuery, venuePin } from '@/lib/mapPins'
+import {
+  groupByVenue,
+  nearby,
+  overlapGroups,
+  radiusFromQuery,
+  radiusQuery,
+  venuePin,
+} from '@/lib/mapPins'
 
 const ASTRA: VenueSummary = {
   slug: 'astra',
@@ -88,6 +95,14 @@ describe('radiusFromQuery', () => {
     expect(radiusFromQuery('5')).toBe(5)
     expect(radiusFromQuery('3')).toBe(2)
     expect(radiusFromQuery('')).toBe(2)
+  })
+})
+
+describe('radiusQuery', () => {
+  it('leaves the default radius out of the URL and writes any other', () => {
+    expect(radiusQuery(2)).toBeUndefined()
+    expect(radiusQuery(5)).toBe('5')
+    expect(radiusFromQuery(radiusQuery(1) ?? '')).toBe(1)
   })
 })
 

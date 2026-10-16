@@ -19,6 +19,7 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
+import NearOriginControls from '@/components/NearOriginControls.vue'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -31,13 +32,12 @@ import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
 import {
-  DEFAULT_RADIUS,
   groupByVenue,
   MAP_KEYS,
   type MapPin,
   nearby,
-  RADII,
   radiusFromQuery,
+  radiusQuery,
   venuePin,
   venuePosition,
 } from '@/lib/mapPins'
@@ -281,6 +281,10 @@ function clearNear() {
   clearOrigin()
 }
 
+function selectRadius(radius: number) {
+  applyFilters({ radius: radiusQuery(radius) })
+}
+
 const originLabel = computed(() => describeOrigin(origin.value, t))
 const coarse = computed(() => coarseAccuracy(origin.value, radiusKm.value, locale.value))
 
@@ -364,26 +368,12 @@ function distance(km: number): string {
       </p>
 
       <div v-if="origin" class="flex flex-wrap items-center gap-2 text-body">
-        <span>{{ t('map.near.from', { origin: originLabel }) }}</span>
-        <div :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
-          <Button
-            v-for="radius in RADII"
-            :key="radius"
-            :aria-pressed="radius === radiusKm"
-            :variant="radius === radiusKm ? 'default' : 'outline'"
-            size="sm"
-            type="button"
-            @click="
-              applyFilters({ radius: radius === DEFAULT_RADIUS ? undefined : String(radius) })
-            "
-          >
-            {{ distance(radius) }}
-          </Button>
-        </div>
-        <Button size="sm" type="button" variant="ghost" @click="clearNear">
-          <X aria-hidden="true" />
-          {{ t('map.near.clear') }}
-        </Button>
+        <NearOriginControls
+          :origin="origin"
+          :radius-km="radiusKm"
+          @clear="clearNear"
+          @select="selectRadius"
+        />
       </div>
       <p v-if="coarse" class="text-body text-muted-foreground">
         {{ t('map.near.coarse', { accuracy: coarse }) }}
