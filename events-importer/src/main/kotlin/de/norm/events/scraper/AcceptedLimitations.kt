@@ -71,6 +71,7 @@ import de.norm.events.scraper.mehringhof.MEHRINGHOF_LIMITATIONS
 import de.norm.events.scraper.metropol.METROPOL_LIMITATIONS
 import de.norm.events.scraper.migas.MIGAS_LIMITATIONS
 import de.norm.events.scraper.mikropol.MIKROPOL_LIMITATIONS
+import de.norm.events.scraper.minimalbar.MINIMAL_BAR_LIMITATIONS
 import de.norm.events.scraper.modus.MODUS_LIMITATIONS
 import de.norm.events.scraper.monarch.MONARCH_LIMITATIONS
 import de.norm.events.scraper.monsterronsons.MONSTER_RONSONS_LIMITATIONS
@@ -204,6 +205,7 @@ object AcceptedLimitations {
             METROPOL_LIMITATIONS,
             MIGAS_LIMITATIONS,
             MIKROPOL_LIMITATIONS,
+            MINIMAL_BAR_LIMITATIONS,
             MODUS_LIMITATIONS,
             MONARCH_LIMITATIONS,
             MONSTER_RONSONS_LIMITATIONS,

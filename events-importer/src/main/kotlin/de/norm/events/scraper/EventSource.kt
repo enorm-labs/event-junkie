@@ -219,6 +219,9 @@ enum class EventSource {
     /** Mikropol Berlin – a small underground club in Schöneberg spanning rock, metal, electronic and alternative styles. */
     MIKROPOL,
 
+    /** Minimal Bar – a five-room bar on Rigaer Straße in Friedrichshain with a DJ every night, free entrance and table tennis in the back room. */
+    MINIMAL_BAR,
+
     /** Modus Berlin – a club and concert room on the Ritter Butzke grounds in Kreuzberg, programming touring acts and spoken-word nights. */
     MODUS,
 
