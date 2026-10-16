@@ -78,7 +78,35 @@ data class ArtistRequest(
         example = "06e3bce0-c612-4a5f-b095-9ffed1e4a656"
     )
     val musicbrainzId: String? = null
-) : AttributableImage
+) : AttributableImage {
+    /**
+     * Copies every field of this request onto [base] under [slug]: the one mapping `create` and `update` share (#3409).
+     * [musicbrainzId] is not among them, because the service stores it as a separate write.
+     */
+    fun applyTo(
+        base: Artist,
+        slug: String
+    ): Artist =
+        base.copy(
+            name = name,
+            slug = slug,
+            description = description,
+            imageUrl = imageUrl,
+            imageAttribution = imageAttribution,
+            imageLicenceId = imageLicenceId,
+            imageSourceUrl = imageSourceUrl,
+            websiteUrl = websiteUrl,
+            facebookUrl = facebookUrl,
+            instagramUrl = instagramUrl,
+            youtubeUrl = youtubeUrl,
+            bandcampUrl = bandcampUrl,
+            soundcloudUrl = soundcloudUrl,
+            discogsUrl = discogsUrl,
+            wikidataUrl = wikidataUrl,
+            residentAdvisorUrl = residentAdvisorUrl,
+            spotifyUrl = spotifyUrl
+        )
+}
 
 /** A MusicBrainz id as the API writes it: a lowercase UUID. */
 internal const val MBID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"

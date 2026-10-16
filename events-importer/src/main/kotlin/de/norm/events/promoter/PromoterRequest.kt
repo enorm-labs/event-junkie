@@ -66,4 +66,24 @@ data class PromoterRequest(
         example = "2026-09-11T18:00:00Z"
     )
     val reviewedAt: Instant? = null
-) : AttributableImage
+) : AttributableImage {
+    /** Copies every field of this request onto [base] under [slug]: the one mapping `create` and `update` share (#3409). */
+    fun applyTo(
+        base: Promoter,
+        slug: String
+    ): Promoter =
+        base.copy(
+            name = name,
+            slug = slug,
+            websiteUrl = websiteUrl,
+            imageUrl = imageUrl,
+            imageAttribution = imageAttribution,
+            imageLicenceId = imageLicenceId,
+            imageSourceUrl = imageSourceUrl,
+            description = description,
+            descriptionLanguage = descriptionLanguage,
+            descriptionAlt = descriptionAlt,
+            descriptionAltLanguage = descriptionAltLanguage,
+            reviewedAt = reviewedAt
+        )
+}

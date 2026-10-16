@@ -54,35 +54,7 @@ class VenueService(
         // relying on the DB constraint, which would produce a generic 409 response.
         ensureSlugAvailable(request.name, slug)
 
-        // Route through the domain model to ensure any future business rules
-        // (e.g. validation, normalization) are consistently applied (see ADR-003).
-        val venue =
-            Venue(
-                name = request.name,
-                slug = slug,
-                address = request.address,
-                city = request.city,
-                postalCode = request.postalCode,
-                district = request.district?.value,
-                latitude = request.latitude,
-                longitude = request.longitude,
-                websiteUrl = request.websiteUrl,
-                instagramUrl = request.instagramUrl,
-                facebookUrl = request.facebookUrl,
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                description = request.description,
-                descriptionLanguage = request.descriptionLanguage,
-                descriptionAlt = request.descriptionAlt,
-                descriptionAltLanguage = request.descriptionAltLanguage,
-                venueTypes = request.venueTypes.distinct().map { it.slug },
-                capacity = request.capacity,
-                programmeUrl = request.programmeUrl,
-                reviewedAt = request.reviewedAt,
-                closedOn = request.closedOn
-            )
+        val venue = request.applyTo(Venue(name = request.name, slug = slug), slug)
         val entity = VenueEntity.fromDomain(venue)
         val saved = venueRepository.save(entity)
         logger.info { "Created venue '${saved.name}' with id ${saved.id}" }
@@ -109,33 +81,7 @@ class VenueService(
             ensureSlugAvailable(request.name, slug)
         }
 
-        val updated =
-            existing.copy(
-                name = request.name,
-                slug = slug,
-                address = request.address,
-                city = request.city,
-                postalCode = request.postalCode,
-                district = request.district?.value,
-                latitude = request.latitude,
-                longitude = request.longitude,
-                websiteUrl = request.websiteUrl,
-                instagramUrl = request.instagramUrl,
-                facebookUrl = request.facebookUrl,
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                description = request.description,
-                descriptionLanguage = request.descriptionLanguage,
-                descriptionAlt = request.descriptionAlt,
-                descriptionAltLanguage = request.descriptionAltLanguage,
-                venueTypes = request.venueTypes.distinct().map { it.slug },
-                capacity = request.capacity,
-                programmeUrl = request.programmeUrl,
-                reviewedAt = request.reviewedAt,
-                closedOn = request.closedOn
-            )
+        val updated = VenueEntity.fromDomain(request.applyTo(existing.toDomain(), slug))
         val saved = venueRepository.save(updated)
         logger.info { "Updated venue '${saved.name}' (id=${saved.id})" }
         return VenueResponse.fromDomain(saved.toDomain())

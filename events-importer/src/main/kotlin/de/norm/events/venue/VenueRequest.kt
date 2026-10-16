@@ -139,7 +139,43 @@ data class VenueRequest(
         example = "2026-10-31"
     )
     val closedOn: LocalDate? = null
-) : AttributableImage
+) : AttributableImage {
+    /**
+     * Copies every field of this request onto [base] under [slug]. The one mapping `create` and `update` share,
+     * so a field added here reaches both (#3409); what [base] carries beyond the request, such as the derived
+     * programme, stays as it is.
+     */
+    fun applyTo(
+        base: Venue,
+        slug: String
+    ): Venue =
+        base.copy(
+            name = name,
+            slug = slug,
+            address = address,
+            city = city,
+            postalCode = postalCode,
+            district = district?.value,
+            latitude = latitude,
+            longitude = longitude,
+            websiteUrl = websiteUrl,
+            instagramUrl = instagramUrl,
+            facebookUrl = facebookUrl,
+            imageUrl = imageUrl,
+            imageAttribution = imageAttribution,
+            imageLicenceId = imageLicenceId,
+            imageSourceUrl = imageSourceUrl,
+            description = description,
+            descriptionLanguage = descriptionLanguage,
+            descriptionAlt = descriptionAlt,
+            descriptionAltLanguage = descriptionAltLanguage,
+            venueTypes = venueTypes.distinct().map { it.slug },
+            capacity = capacity,
+            programmeUrl = programmeUrl,
+            reviewedAt = reviewedAt,
+            closedOn = closedOn
+        )
+}
 
 /** `https://instagram.com/…` or `https://www.instagram.com/…`, with a path. */
 private const val INSTAGRAM_URL = "https://(www\\.)?instagram\\.com/.+"

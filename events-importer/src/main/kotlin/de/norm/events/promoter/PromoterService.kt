@@ -75,23 +75,7 @@ class PromoterService(
         // relying on the DB constraint, which would produce a generic 409 response.
         ensureSlugAvailable(request.name, slug)
 
-        // Route through the domain model to ensure any future business rules
-        // (e.g. validation, normalization) are consistently applied (see ADR-003).
-        val promoter =
-            Promoter(
-                name = request.name,
-                slug = slug,
-                websiteUrl = request.websiteUrl,
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                description = request.description,
-                descriptionLanguage = request.descriptionLanguage,
-                descriptionAlt = request.descriptionAlt,
-                descriptionAltLanguage = request.descriptionAltLanguage,
-                reviewedAt = request.reviewedAt
-            )
+        val promoter = request.applyTo(Promoter(name = request.name, slug = slug), slug)
         val entity = PromoterEntity.fromDomain(promoter)
         val saved = promoterRepository.save(entity)
         logger.info { "Created promoter '${saved.name}' with id ${saved.id}" }
@@ -118,21 +102,7 @@ class PromoterService(
             ensureSlugAvailable(request.name, slug)
         }
 
-        val updated =
-            existing.copy(
-                name = request.name,
-                slug = slug,
-                websiteUrl = request.websiteUrl,
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                description = request.description,
-                descriptionLanguage = request.descriptionLanguage,
-                descriptionAlt = request.descriptionAlt,
-                descriptionAltLanguage = request.descriptionAltLanguage,
-                reviewedAt = request.reviewedAt
-            )
+        val updated = PromoterEntity.fromDomain(request.applyTo(existing.toDomain(), slug))
         val saved = promoterRepository.save(updated)
         logger.info { "Updated promoter '${saved.name}' (id=${saved.id})" }
         return PromoterResponse.fromDomain(saved.toDomain())
