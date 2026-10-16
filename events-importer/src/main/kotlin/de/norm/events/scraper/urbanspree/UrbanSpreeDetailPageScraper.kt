@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.mapEventType
@@ -156,8 +157,7 @@ class UrbanSpreeDetailPageScraper {
         select(".ct-dates li.infos")
             .getOrNull(index)
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
 
     /**
      * The value of the `.ct-info` pair whose label is [label] ("Promoter"), or `null`.

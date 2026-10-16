@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -180,8 +181,7 @@ class SupamollyOverviewPageScraper {
             row
                 .selectFirst(".flyer_small_frame img")
                 ?.attr("src")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() } ?: return null
+                ?.blankToNull() ?: return null
         return runCatching { resolveUrl(baseUrl, src).replace(FLYER_THUMBNAIL_SEGMENT, "/flyer/") }.getOrNull()
     }
 

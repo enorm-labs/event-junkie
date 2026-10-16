@@ -359,8 +359,7 @@ class PrivatclubOverviewPageScraper(
         if (veranstalterText != null) {
             return veranstalterText
                 .removePrefix("Örtlicher Veranstalter:")
-                .trim()
-                .takeIf { it.isNotBlank() }
+                .blankToNull()
         }
 
         // "präsentiert von" in the header
@@ -368,8 +367,7 @@ class PrivatclubOverviewPageScraper(
         if (presentedBy != null) {
             return presentedBy
                 .removePrefix("präsentiert von")
-                .trim()
-                .takeIf { it.isNotBlank() }
+                .blankToNull()
         }
 
         return null

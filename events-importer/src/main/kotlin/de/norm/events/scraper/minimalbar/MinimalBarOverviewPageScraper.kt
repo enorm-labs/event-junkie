@@ -8,6 +8,7 @@ import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonArrayAt
@@ -114,7 +115,7 @@ class MinimalBarOverviewPageScraper {
     private fun genres(node: JsonNode): String? =
         node
             .path("genres")
-            .mapNotNull { it.asString("").trim().ifBlank { null } }
+            .mapNotNull { it.asString("").blankToNull() }
             .joinToString(", ")
             .ifEmpty { null }
 

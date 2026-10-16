@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
@@ -184,8 +185,7 @@ class SaalchenOverviewPageScraper {
         (bodyLines(row).ifEmpty { noticeLines(row) })
             .filterNot { it.substringBefore(':', "").trim().lowercase() in NOTICE_LABELS || it.isTicketLine() }
             .joinToString("\n\n")
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
 
     /**
      * The rendered `.body-content` split into lines, as [noticeLines] splits the escaped copy. The

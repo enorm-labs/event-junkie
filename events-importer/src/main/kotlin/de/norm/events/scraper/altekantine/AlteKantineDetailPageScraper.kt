@@ -4,6 +4,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.imgSrcAt
@@ -152,8 +153,7 @@ private fun titleFrom(
         ?: document
             .title()
             .replace(SITE_TITLE_SUFFIX, "")
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
 
 /**
  * The value of the `ul.list-style-6` row whose `<label>` matches [label] (ignoring trailing
@@ -175,8 +175,7 @@ private fun detailField(
                 ?.trim()
                 .equals(label, ignoreCase = true)
         }?.ownText()
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /**
  * The blurb paragraphs from `.line-height-28` joined, minus the `p.p1` line that echoes the
@@ -188,5 +187,4 @@ private fun parseDescription(content: Element): String? =
         ?.select("p")
         ?.filterNot { it.hasClass("p1") }
         ?.joinToString("\n\n") { it.text().trim() }
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()

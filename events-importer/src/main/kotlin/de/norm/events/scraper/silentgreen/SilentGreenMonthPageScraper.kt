@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapSkippingFailures
@@ -106,8 +107,7 @@ class SilentGreenMonthPageScraper {
             row
                 .textAt("$TITLE_SELECTOR p")
                 ?.replace(NON_BREAKING_SPACE, ' ')
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
+                ?.blankToNull()
 
         return ScrapedEvent(
             title = title,

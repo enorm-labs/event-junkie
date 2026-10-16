@@ -1,6 +1,7 @@
 package de.norm.events.scraper.koepi
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.radar.RadarGroupImporter.Lineup
 
@@ -26,8 +27,7 @@ internal fun parseKoepiBill(description: String?): Lineup {
             artists += ScrapedArtist(name = quoted, role = if (artists.none { it.role == "HEADLINER" }) "HEADLINER" else "SUPPORT")
             bracket
                 .substringBefore(',')
-                .trim()
-                .takeIf { it.isNotBlank() }
+                .blankToNull()
                 ?.let { genres += it }
         }
     }

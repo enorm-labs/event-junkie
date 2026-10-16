@@ -7,6 +7,7 @@ import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.parseBasicIsoDatePrefix
@@ -137,8 +138,7 @@ class TresorDetailPageScraper {
     private fun parseTitle(document: Document): String? =
         (document.selectFirst("meta[property=og:title]")?.attr("content") ?: document.title())
             .substringBefore(SITE_TITLE_SEPARATOR)
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
             ?.let(::cleanEventTitle)
 
     /**

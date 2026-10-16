@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -99,8 +100,7 @@ class VoidClubOverviewPageScraper(
                 notes
                     .firstOrNull()
                     ?.text()
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() },
+                    ?.blankToNull(),
             // A techno club stating no category; `.void-event-genre` names the music, `.void-event-venue`
             // the room(s) — neither a kind of event.
             eventType = EventType.PARTY.name,

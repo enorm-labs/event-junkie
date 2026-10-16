@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -80,8 +81,7 @@ class MetropolOverviewPageScraper {
             row
                 .selectFirst("h2.artist")
                 ?.ownText()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() } ?: return null
+                ?.blankToNull() ?: return null
         val title = cleanEventTitle(stripRelocationPrefix(rawTitle))
         val support = row.textAt("h2.artist small.support")
         val eventType = mapEventType(row.textAt("ul.event-categories"))

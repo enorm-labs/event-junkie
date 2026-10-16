@@ -2,6 +2,7 @@ package de.norm.events.scraper.so36
 
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.splitSupportActs
 import org.jsoup.nodes.Document
@@ -110,7 +111,7 @@ private fun originTaggedName(element: Element): String? {
             ?.trimStart()
             ?.startsWith("(") == true
     return when {
-        originInside != null -> text.substring(0, originInside.range.first).trim().ifBlank { null }
+        originInside != null -> text.substring(0, originInside.range.first).blankToNull()
         originAfter && text.isNotBlank() -> text
         else -> null
     }

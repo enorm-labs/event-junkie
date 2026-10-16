@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapSkippingFailures
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -60,8 +61,7 @@ class MehringhofProgrammPageScraper {
             cells[1]
                 .text()
                 .replace(WHITESPACE, " ")
-                .trim()
-                .takeIf { it.isNotEmpty() } ?: return null
+                .blankToNull() ?: return null
         val ticketUrl = cells[1].selectFirst("a[href*=/produkte/]")?.absUrl("href")
         val product = ticketUrl?.let { PRODUCT.find(it) }
         val dayMonth = DAY_MONTH.find(cells[0].text())

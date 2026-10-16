@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
@@ -207,8 +208,7 @@ class MorphineDetailPageScraper {
         overlay
             .select("div.block.paragraph")
             .joinToString(PARAGRAPH_SEPARATOR) { block -> block.select("p").joinToString("\n") { it.textLines().joinToString("\n") } }
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
 
     /**
      * The presale price from the PayPal form's hidden inputs, or `null` without a form. Guarded on

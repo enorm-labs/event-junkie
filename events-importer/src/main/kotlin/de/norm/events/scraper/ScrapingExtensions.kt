@@ -12,8 +12,7 @@ import java.net.URI
 fun Element.textAt(cssQuery: String): String? =
     selectFirst(cssQuery)
         ?.text()
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /**
  * Extracts an attribute value from the first child element matching [cssQuery].
@@ -64,8 +63,7 @@ fun Element.detailTableCell(label: String): String? =
         ?.select("td")
         ?.getOrNull(1)
         ?.text()
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /**
  * Resolves the `href` of every element matching [cssQuery] against [baseUrl], dropping

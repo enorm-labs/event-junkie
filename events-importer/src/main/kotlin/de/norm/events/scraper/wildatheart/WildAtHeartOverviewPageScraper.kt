@@ -171,8 +171,7 @@ class WildAtHeartOverviewPageScraper(
             .substringBefore(" - ")
             .trim()
             .trim('-')
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
     }
 
     /**

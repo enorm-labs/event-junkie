@@ -233,8 +233,7 @@ private fun parseLidoPresenters(root: Element): List<String> {
         presenter
             .selectFirst("a")
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() } ?: promoterFromCredit(presenter.text())
+            ?.blankToNull() ?: promoterFromCredit(presenter.text())
     return listOfNotNull(name)
 }
 

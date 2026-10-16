@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.billsChildrensShow
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.parseGermanDate
@@ -132,7 +133,7 @@ class WuehlmaeuseApiScraper {
         val prices = product.path("prices")
         return WuehlmaeuseTicket(
             act = actLine.replace(CANCELLED_TAIL, "").trim(),
-            programme = programme?.replace(CANCELLED_TAIL, "")?.trim()?.takeIf { it.isNotEmpty() },
+            programme = programme?.replace(CANCELLED_TAIL, "").blankToNull(),
             date = date,
             start = start,
             doors = lines.firstNotNullOfOrNull { DOORS.find(it) }?.let { parseTime(it.groupValues[1]) },

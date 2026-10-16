@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -80,8 +81,7 @@ class AdmiralspalastDetailPageScraper {
                 document
                     .textAt(PROMOTER)
                     ?.replaceFirst(PROMOTER_LABEL, "")
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() }
+                    ?.blankToNull()
             )
 
         return rows.mapSkippingFailures(logger, "an Admiralspalast performance on $sourceUrl") { row ->

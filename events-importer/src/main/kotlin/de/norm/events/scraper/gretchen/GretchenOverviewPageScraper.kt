@@ -131,8 +131,7 @@ class GretchenOverviewPageScraper {
                 gig
                     .selectFirst(".title")
                     ?.ownText()
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() },
+                    ?.blankToNull(),
             pricePresale = pricePresale,
             priceBoxOffice = priceBoxOffice,
             priceNote = priceNote,
@@ -196,8 +195,7 @@ class GretchenOverviewPageScraper {
             gig
                 .selectFirst("span.img img")
                 ?.attr("src")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() } ?: return null
+                ?.blankToNull() ?: return null
         return runCatching { resolveUrl(baseUrl, src.replace(" ", "%20")) }.getOrNull()
     }
 

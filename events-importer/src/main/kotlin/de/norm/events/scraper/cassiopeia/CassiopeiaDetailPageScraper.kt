@@ -7,6 +7,7 @@ import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
@@ -141,8 +142,7 @@ class CassiopeiaDetailPageScraper {
         return categoryEl
             .nextElementSibling()
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
     }
 
     /**
@@ -285,8 +285,7 @@ class CassiopeiaDetailPageScraper {
 internal fun presenterInCredit(text: String?): String? =
     text
         ?.let { PRESENTER_CREDIT.find(it)?.groupValues?.get(1) }
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /**
  * The genre a slot holds as written, or `null` when it holds a promoter credit or nothing
