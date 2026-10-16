@@ -13,8 +13,16 @@
         "descriptionAlt": "Ein unabhängiger Raum an der Hermannstraße zwischen Club und Bar, der Musik, Essen und Nachbarschaft verbindet, mit DJ-Abenden meist gegen Spende, Jazzkonzerten mit Abendessen und Listening Sessions unter der Woche.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "club"],
-        "programmeUrl": "https://giri.berlin/programme/",
         "reviewedAt": "2026-10-07T09:58:32Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Giri",
+            "url": "https://giri.berlin/programme/",
+            "sourceType": "GIRI",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

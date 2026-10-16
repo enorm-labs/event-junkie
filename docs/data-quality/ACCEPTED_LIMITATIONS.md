@@ -216,6 +216,14 @@ says so.
 | `GARTN`                | `DOORS_TIME`       | the venue states one time per night and no separate doors time                                                                                   | —     |
 | `GARTN`                | `EVENT_TYPE`       | the venue states no category; every night here is a DJ party                                                                                     | —     |
 | `GARTN`                | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `GIRI`                 | `SUBTITLE`         | the line under the title is a list of styles, stored as the genre                                                                                | —     |
+| `GIRI`                 | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `GIRI`                 | `END_TIME`         | nights run open-ended, printed as `From 18:00-end`                                                                                               | —     |
+| `GIRI`                 | `PRICE`            | entry is by donation, and a suggested figure appears only in some descriptions                                                                   | —     |
+| `GIRI`                 | `PROMOTERS`        | a collaborating crew appears only in the title, as `GIRI x CURRENTS`                                                                             | —     |
+| `GIRI`                 | `SOLD_OUT`         | entry is by RSVP and donation, with no ticket status                                                                                             | —     |
+| `GIRI`                 | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `GIRI`                 | `PER_EVENT_PAGE`   | the event links answer 404, so every night points at the month's list view                                                                       | —     |
 | `GOLDEN_GATE`          | `EVENT_TYPE`       | the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred                                | —     |
 | `GOLDEN_GATE`          | `PER_EVENT_PAGE`   | there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source                    | —     |
 | `GOLDEN_GATE`          | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |

@@ -3653,7 +3653,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Giri — not imported
+# Giri
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Giri venue ---
@@ -3674,13 +3674,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein unabhängiger Raum an der Hermannstraße zwischen Club und Bar, der Musik, Essen und Nachbarschaft verbindet, mit DJ-Abenden meist gegen Spende, Jazzkonzerten mit Abendessen und Listening Sessions unter der Woche.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "club"],
-    "programmeUrl": "https://giri.berlin/programme/",
     "reviewedAt": "2026-10-07T09:58:32Z"
 }
 
 > {%
+    client.global.set("venue_id_giri", response.body.id);
     client.test("Giri venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Giri event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_giri}},
+    "name": "Giri",
+    "url": "https://giri.berlin/programme/",
+    "sourceType": "GIRI",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Giri event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Giri import ---
+POST {{importer-host}}/api/admin/event-sources/giri/import
+Accept: application/json
+
+> {%
+    client.test("Giri import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
