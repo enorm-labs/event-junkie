@@ -4,6 +4,7 @@ import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.NameListOrder
 import de.norm.events.common.NextThirtyDays
 import de.norm.events.common.TextSearch
+import de.norm.events.common.bindAll
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
@@ -98,9 +99,6 @@ class PromoterSearchRepository(
         term: String?,
         bySimilarity: Boolean
     ): DatabaseClient.GenericExecuteSpec = if (term == null) this else bindAll(TextSearch.params(term, bySimilarity))
-
-    private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
-        params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     companion object {
         private const val UPCOMING_COUNT =

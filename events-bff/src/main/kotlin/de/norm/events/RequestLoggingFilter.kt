@@ -48,7 +48,7 @@ class RequestLoggingFilter(
             .doFinally {
                 // The request still gets its id and its trip through the chain; only the line is withheld, so
                 // timing and context behaviour stay identical for every request.
-                if (!isActuatorRequest(request.path.value())) {
+                if (!isActuatorPath(request.path.value(), actuatorBasePath)) {
                     val durationMs = (System.nanoTime() - startNanos) / 1_000_000
                     val rawQuery = request.uri.rawQuery
                     val query = if (rawQuery == null) "" else "?$rawQuery"
@@ -67,14 +67,5 @@ class RequestLoggingFilter(
                     }
                 }
             }.contextWrite { it.put(REQUEST_ID, request.id) }
-    }
-
-    /**
-     * Matches the base path and everything under it, not `/actuatorial`, which a prefix comparison
-     * would silently unlog.
-     */
-    private fun isActuatorRequest(path: String): Boolean {
-        val base = actuatorBasePath.removeSuffix("/")
-        return path == base || path.startsWith("$base/")
     }
 }
