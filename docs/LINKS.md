@@ -95,12 +95,12 @@ ADR-012, as amended on 2026-08-10, leaves exactly one processor. Everything belo
 > staging would lock production out for a week.
 
 Both domains were registered at **INWX on 2026-08-10** and delegate to `hydrogen`/`oxygen`/`helium.ns.hetzner.com`.
-That closed [#259](https://github.com/enorm-labs/event-junkie/issues/259), so the nameserver flip
-(PLATFORM_SETUP §10 Phase B step 9) is done.
+That closed [#259](https://github.com/enorm-labs/event-junkie/issues/259), so the nameserver flip is done.
 
-**DNSSEC is not**, and it has no issue of its own. PLATFORM_SETUP §10 step 9 calls it _"a separate, later step —
-#259"_, and #259 is the registration issue and is closed. A DS record at INWX that does not match Hetzner's key makes
-the domain _unresolvable_ rather than merely wrong. That is why it is a deliberate sitting rather than a follow-on.
+**DNSSEC is not**, see [#3423](https://github.com/enorm-labs/event-junkie/issues/3423).
+[`infra/bootstrap/outputs.tf`](../infra/bootstrap/outputs.tf) calls it _"a separate, later sitting"_. A DS
+record at INWX that does not match Hetzner's key makes the domain _unresolvable_ rather than merely wrong. That is why
+it is a deliberate sitting rather than a follow-on.
 
 Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are **live since 2026-08-21**, on Hetzner
 Webhosting S, and proven in both directions. Mail arrives, and replies authenticate `spf=pass` / `dkim=pass` /
