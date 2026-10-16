@@ -123,7 +123,8 @@ class DistelCalendarPageScraper {
 
 /**
  * The format of a calendar row: a talk or a reading the title names, then a concert the subtitle
- * names, then a `<name> liest:` reading. Anything else is the house's Kabarett.
+ * names, then a reading or a talk the subtitle names, then a `<name> liest:` reading. Anything
+ * else is the house's Kabarett.
  */
 internal fun distelEventType(
     title: String,
@@ -132,6 +133,7 @@ internal fun distelEventType(
     classifyByGenreKeyword(title)
         ?: when {
             subtitle?.contains("konzert", ignoreCase = true) == true -> EventType.CONCERT.name
+            subtitle?.let(SUBTITLE_READING::containsMatchIn) == true -> EventType.READING.name
             READS.containsMatchIn(title.substringBefore(": ")) -> EventType.READING.name
             else -> EventType.COMEDY.name
         }
@@ -172,6 +174,9 @@ private val PERFORMANCE_MARKER =
     Regex("""premiere|voraufführung|generalprobe|dernière|derniere|matinee|bunter weihnachtsteller""", RegexOption.IGNORE_CASE)
 
 private val ACADEMIC_TITLE = Regex("""^(?:(?:prof|dr)\.\s*)+""", RegexOption.IGNORE_CASE)
+
+/** `Der BILD-Kolumnist liest seine besten Texte`, `Ein Gespräch über den Osten`; `Lesereise` names a tour, not a format. */
+private val SUBTITLE_READING = Regex("""\bliest\b|lesung|gespräch""", RegexOption.IGNORE_CASE)
 
 /** `Max Goldt liest: Aber?` is a reading by Max Goldt. */
 private val READS = Regex("""\s+liest$""", RegexOption.IGNORE_CASE)
