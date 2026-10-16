@@ -11,10 +11,13 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSupportActs
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -46,15 +49,14 @@ import java.time.LocalTime
  * later. [parseTimes] reads the pair where it exists and falls back to the prose line, which is
  * the only clock the other events publish.
  *
- * **The lineup is read only from Resident Advisor links.** The bodies are free prose with no
- * convention — one event lists DJs one per paragraph under a `LINE UP:` heading, the next packs
- * them into a sentence beside a timetable — so the only unambiguous artist marker is an anchor
- * to an `ra.co/dj/…` profile. An event without one stores no artists rather than a guess.
+ * **The lineup is read from Resident Advisor links, else from a `feat.` title.** The bodies are free
+ * prose with no convention, so an `ra.co/dj/…` anchor is the one unambiguous marker in a body. A night
+ * that links none bills its title's `feat.` acts ([featuredActs]); one with neither stores no artists.
  *
  * Those links also type the event: no category is published, and titles are series names
  * rather than formats, so a billed DJ lineup is the best evidence of a club night. See [eventTypeOf].
  *
- * The price is a body line that opens with its own label, in no fixed form; see [parsePankePrice].
+ * The price and the ticket link each sit in a labelled body line; see [parsePankePrice] and [pankeTicketUrl].
  *
  * @see PankeWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -97,15 +99,18 @@ class PankeProgrammePageScraper {
             logger.warn { "Panke article '$postId' has no title, skipping" }
             return null
         }
-        val lineup = withTimetable(residentAdvisorLineup(article), article, eventDate)
+        val residentAdvisor = residentAdvisorLineup(article)
+        val lineup = withTimetable(residentAdvisor.ifEmpty { featuredActs(title) }, article, eventDate)
         val times = parseTimes(article)
-        val price = parsePankePrice(article.select("$BODY_COLUMN p").flatMap { it.textLines() })
+        val paragraphs = article.select("$BODY_COLUMN p")
+        val price = parsePankePrice(paragraphs.flatMap { it.textLines() })
         val description = descriptionOf(article)
 
         return ScrapedEvent(
             title = title,
             description = description,
-            eventType = eventTypeOf(title, lineup, description),
+            // Only a linked lineup types the night: a `feat.` title bills a concert's guests as well as a DJ's.
+            eventType = eventTypeOf(title, residentAdvisor, description),
             eventDate = eventDate,
             doorsTime = times.doors,
             startTime = times.start,
@@ -114,6 +119,7 @@ class PankeProgrammePageScraper {
             priceBoxOffice = price.boxOffice,
             priceNote = price.note,
             sourceUrl = sourceUrl,
+            ticketUrl = pankeTicketUrl(paragraphs),
             // No per-event page, so the WordPress post id is the identity.
             sourceId = "${EventSource.PANKE.sourceIdPrefix}$postId",
             artists = lineup
@@ -217,6 +223,44 @@ class PankeProgrammePageScraper {
         val minute = match.groupValues[MINUTE_GROUP].ifEmpty { "00" }
         return parseTime("$hour:$minute")
     }
+}
+
+/**
+ * The acts a title names after `feat.` or `ft.`, in title order; none without that frame. The
+ * night's name before it is a series, never an act.
+ */
+internal fun featuredActs(title: String): List<ScrapedArtist> {
+    val frame = FEATURED_FRAME.find(title) ?: return emptyList()
+    return splitSupportActs(title.substring(frame.range.last + 1))
+        .map { stripArtistSuffix(it) }
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = HEADLINER_ROLE, titleDerived = true) }
+}
+
+/**
+ * The link of the first body paragraph that opens with a tickets label: `Tickets: <a>`,
+ * `TICKETS: <a>`, `Tickets on RA: <a>` or `Tickets <a>`. Any seller's link counts. A label
+ * paragraph with no web link, such as FUKSTEP's `Tickets on RA (Limited capacity!)`, is skipped,
+ * and so is a paragraph where prose stands between the label and the link.
+ */
+internal fun pankeTicketUrl(paragraphs: List<Element>): String? =
+    paragraphs.firstNotNullOfOrNull { paragraph ->
+        paragraph.selectFirst("a[href]")?.let { anchor ->
+            anchor.absUrl("href").takeIf { it.startsWith("http") && TICKETS_LEAD.matches(textBefore(anchor, paragraph)) }
+        }
+    }
+
+/** The [paragraph]'s text before its [anchor]: all of it when the link shows no text. */
+private fun textBefore(
+    anchor: Element,
+    paragraph: Element
+): String {
+    val text = paragraph.text()
+    return anchor
+        .text()
+        .takeIf { it.isNotBlank() }
+        ?.let { text.substringBefore(it) }
+        ?.trim() ?: text
 }
 
 /** An event's two clocks, either of which the source may leave unstated. */
@@ -368,6 +412,15 @@ private val RESIDENT_ADVISOR_PROFILE = Regex("""^https?://(?:www\.)?ra\.co/(?:dj
 
 /** The URL inside a CSS `url(…)` value, with or without quotes. */
 private val BACKGROUND_URL_PATTERN = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
+
+/** The `feat.` / `ft.` marker that ends a night's name and starts its acts. */
+private val FEATURED_FRAME = Regex("""\s(?:feat\.?|ft\.)\s+""", RegexOption.IGNORE_CASE)
+
+/** All of a paragraph's text before its link: the tickets label, optionally `on RA`, optionally a colon. */
+private val TICKETS_LEAD = Regex("""tickets?(?:\s+on\s+ra)?\s*:?""", RegexOption.IGNORE_CASE)
+
+/** An act the title names: the night is billed for them. */
+private const val HEADLINER_ROLE = "HEADLINER"
 
 /** Every act the venue links on Resident Advisor is billed there as a DJ. */
 private const val DJ_ROLE = "DJ"
