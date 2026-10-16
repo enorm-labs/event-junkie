@@ -266,6 +266,14 @@ says so.
 | `HAU3`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
 | `HAU3`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
 | `HAU3`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
+| `HAUS_DER_STATISTIK`   | `SUBTITLE`         | each row has a title and a teaser, no second title line                                                                                          | —     |
+| `HAUS_DER_STATISTIK`   | `TICKET_URL`       | the event pages link no ticket shop                                                                                                              | —     |
+| `HAUS_DER_STATISTIK`   | `GENRE`            | the site tags a format such as Musik, never a style                                                                                              | —     |
+| `HAUS_DER_STATISTIK`   | `PRICE_PRESALE`    | the site prints one free-text price line, read as the note                                                                                       | —     |
+| `HAUS_DER_STATISTIK`   | `PRICE_BOX_OFFICE` | the site prints one free-text price line, read as the note                                                                                       | —     |
+| `HAUS_DER_STATISTIK`   | `PROMOTERS`        | the organiser line often names a private person with an e-mail address                                                                           | —     |
+| `HAUS_DER_STATISTIK`   | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `HAUS_DER_STATISTIK`   | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
 | `HAVANNA`              | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HAVANNA`              | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `HEIDEGLUEHEN`         | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |

@@ -160,6 +160,9 @@ enum class EventSource {
     /** HAU3 – HAU Hebbel am Ufer's smallest house, up three flights at Tempelhofer Ufer, with the Houseclub for young people: performance and theatre games. */
     HAU3,
 
+    /** Haus der Statistik – the former GDR statistics office at Alexanderplatz, now a model quarter with concerts and talks in its OTTO pavilion. */
+    HAUS_DER_STATISTIK,
+
     /** Havanna Berlin – a multi-floor Latin dance club in Schöneberg running the same resident nights every week, with lessons before the party. */
     HAVANNA,
 

@@ -5,7 +5,7 @@ import org.jsoup.nodes.Document
 
 /**
  * Base class for a venue whose entry page holds no events, only a link per month at
- * [monthLinkSelector]: fetch the entry page, read every linked month with [scrape], keep the others
+ * [monthLinkSelector] ([monthPageUrls]): fetch the entry page, read every linked month with [scrape], keep the others
  * when one fails. The entry page changes only when a month is added, so it is fetched
  * unconditionally; its validators would mask an edit inside a month. A venue whose rows link a
  * page of their own sets [enrichFromEventPage].
@@ -30,12 +30,18 @@ abstract class AbstractMonthPagesWebsiteImporter(
     /** Whether [event] links a page of its own rather than the month page it was listed on. */
     protected open fun hasEventPage(event: ScrapedEvent): Boolean = true
 
+    /** The month pages [entry] names; a venue whose months are form values rather than links builds them here. */
+    protected open fun monthPageUrls(
+        entry: Document,
+        url: String
+    ): List<String> = entry.absoluteLinksAt(monthLinkSelector, url)
+
     final override suspend fun importEvents(
         url: String,
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val monthUrls = htmlFetcher.fetchDocument(url).absoluteLinksAt(monthLinkSelector, url)
+        val monthUrls = monthPageUrls(htmlFetcher.fetchDocument(url), url)
         logger.info { "Found ${monthUrls.size} month page(s) linked from $venueName entry $url" }
 
         val months =

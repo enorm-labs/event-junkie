@@ -4207,6 +4207,69 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Haus der Statistik
+# ————————————————————————————————————————————————————————————
+
+### --- Create Haus der Statistik venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Haus der Statistik",
+    "address": "Otto-Braun-Straße 72",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.523544,
+    "longitude": 13.419311,
+    "websiteUrl": "https://hausderstatistik.org/",
+    "instagramUrl": "https://www.instagram.com/hausderstatistik/",
+    "facebookUrl": "https://www.facebook.com/hausderstatistik/",
+    "description": "The former GDR statistics office at Alexanderplatz, saved from demolition by an art action and now a cooperative model quarter whose OTTO pavilion hosts concerts and talks.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die frühere Zentralverwaltung für Statistik der DDR am Alexanderplatz, durch eine Kunstaktion vor dem Abriss bewahrt, ist heute ein gemeinwohlorientiertes Modellquartier mit Konzerten und Vorträgen im Pavillon OTTO.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"]
+}
+
+> {%
+    client.global.set("venue_id_haus_der_statistik", response.body.id);
+    client.test("Haus der Statistik venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Haus der Statistik event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_haus_der_statistik}},
+    "name": "Haus der Statistik",
+    "url": "https://hausderstatistik.org/programm/",
+    "sourceType": "HAUS_DER_STATISTIK",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Haus der Statistik event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Haus der Statistik import ---
+POST {{importer-host}}/api/admin/event-sources/haus-der-statistik/import
+Accept: application/json
+
+> {%
+    client.test("Haus der Statistik import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Haus der Visionäre — not imported
 # ————————————————————————————————————————————————————————————
 
