@@ -43,6 +43,13 @@ class PankeProgrammePageScraperPricesTest {
         rage.pricePresale shouldBe BigDecimal("18")
         rage.priceBoxOffice shouldBe BigDecimal("23")
         rage.priceNote!!.startsWith("Admission is free for transgender women.") shouldBe true
+        // `Tickets <link>`, no colon: the link, and no price from its digits.
+        rage.ticketUrl shouldBe "https://ra.co/events/2525373"
+    }
+
+    @Test
+    fun `a tickets line with a figure and no link stores no ticket link`() {
+        event("panke:17471").ticketUrl.shouldBeNull()
     }
 
     @Test

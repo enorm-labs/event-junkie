@@ -32,6 +32,10 @@ class PankeWebsiteImporter(
 val PANKE_LIMITATIONS =
     VenueLimitations(
         EventSource.PANKE,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "acts named only in free prose are not read; a Resident Advisor profile link or a `feat.` title bills them"
+        ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue expands each event's full text inline and publishes no page per event"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
