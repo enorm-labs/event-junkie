@@ -1333,19 +1333,19 @@
         },
         {
           "name": "@full-ui/headless-calendar",
-          "version": "7.1.1",
+          "version": "7.1.2",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/core",
-          "version": "7.1.1",
+          "version": "7.1.2",
           "url": "https://github.com/fullcalendar/fullcalendar",
           "ecosystem": "frontend"
         },
         {
           "name": "@fullcalendar/vue3",
-          "version": "7.1.1",
+          "version": "7.1.2",
           "url": "https://github.com/fullcalendar/fullcalendar-vue",
           "ecosystem": "frontend"
         },
@@ -1975,7 +1975,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.52.0",
+          "version": "1.56.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
@@ -1987,7 +1987,7 @@
         },
         {
           "name": "@maplibre/geojson-vt",
-          "version": "6.1.1",
+          "version": "6.1.2",
           "url": "https://github.com/maplibre/geojson-vt",
           "ecosystem": "frontend"
         },
@@ -2125,7 +2125,7 @@
         },
         {
           "name": "maplibre-gl",
-          "version": "6.12.0",
+          "version": "6.14.0",
           "url": "https://github.com/maplibre/maplibre-gl-js",
           "ecosystem": "frontend"
         },
