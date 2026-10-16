@@ -1,6 +1,7 @@
 package de.norm.events.instagram
 
 import de.norm.events.common.ApiUserAgent
+import de.norm.events.common.ApiWebClient
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
@@ -27,12 +28,10 @@ class InstagramHttpClientConfig {
         properties: InstagramProperties,
         buildProperties: ObjectProvider<BuildProperties>
     ): WebClient =
-        webClientBuilder
+        ApiWebClient
+            .builder(webClientBuilder, properties.timeout, buildProperties)
             .baseUrl("${properties.graphBaseUrl.trimEnd('/')}/${properties.graphVersion}/")
-            .clientConnector(ReactorClientHttpConnector(HttpClient.create().compress(true).responseTimeout(properties.timeout)))
-            .defaultHeader("User-Agent", ApiUserAgent.of(buildProperties.ifAvailable?.version))
             .defaultHeader("Authorization", "Bearer ${properties.accessToken}")
-            .defaultHeader("Accept", "application/json")
             .build()
 
     /**
