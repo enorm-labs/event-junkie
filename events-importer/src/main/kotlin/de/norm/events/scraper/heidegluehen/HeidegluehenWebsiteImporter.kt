@@ -3,12 +3,13 @@ package de.norm.events.scraper.heidegluehen
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.importEntryPage
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -49,21 +50,10 @@ class HeidegluehenWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = monthPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} party date(s) from the Heideglühen month page" }
-
-                ImportResult.Success(
-                    events = applyLineup(events, url),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
+        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
+            val events = monthPageScraper.scrape(document, url)
+            logger.info { "Scraped ${events.size} party date(s) from the Heideglühen month page" }
+            ListingPages(applyLineup(events, url), complete = true)
         }
 
     /**

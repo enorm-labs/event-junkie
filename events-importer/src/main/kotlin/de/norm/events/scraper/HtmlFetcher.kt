@@ -234,6 +234,33 @@ sealed interface FetchResult {
 }
 
 /**
+ * Fetches the entry page [url] conditionally and imports it: a 304 is [ImportResult.NotModified],
+ * a page is what [read] makes of it, stored with the response's validators.
+ */
+suspend fun HtmlFetcher.importEntryPage(
+    url: String,
+    etag: String?,
+    lastModified: String?,
+    cookies: Map<String, String> = emptyMap(),
+    read: suspend (Document) -> ListingPages
+): ImportResult =
+    when (val fetchResult = fetch(url, etag, lastModified, cookies)) {
+        is FetchResult.NotModified -> {
+            ImportResult.NotModified
+        }
+
+        is FetchResult.Success -> {
+            val listing = read(fetchResult.document)
+            ImportResult.Success(
+                events = listing.events,
+                etag = fetchResult.etag,
+                lastModified = fetchResult.lastModified,
+                complete = listing.complete
+            )
+        }
+    }
+
+/**
  * Thrown when an HTTP fetch returns 4xx/5xx; recorded as a failure on the source by
  * `EventImportService.importFromSource`.
  */

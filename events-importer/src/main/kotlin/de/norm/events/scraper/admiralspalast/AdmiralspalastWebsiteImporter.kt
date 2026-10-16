@@ -3,11 +3,12 @@ package de.norm.events.scraper.admiralspalast
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.importEntryPage
 import de.norm.events.scraper.readEach
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -51,28 +52,15 @@ class AdmiralspalastWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val productionUrls = listingPageScraper.scrapeProductionUrls(fetchResult.document, url)
-                val genres = resolveGenres(fetchResult.document, url)
-                val productions =
-                    readEach(productionUrls, { "Failed to load the Admiralspalast production page $it, skipping" }) { productionUrl ->
-                        detailPageScraper.scrape(htmlFetcher.fetchDocument(productionUrl), productionUrl, genres[productionUrl])
-                    }
-                val events = productions.items
-                logger.info { "Scraped ${events.size} performance(s) from ${productionUrls.size} Admiralspalast production(s)" }
-
-                ImportResult.Success(
-                    events = events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = productions.complete
-                )
-            }
+        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
+            val productionUrls = listingPageScraper.scrapeProductionUrls(document, url)
+            val genres = resolveGenres(document, url)
+            val productions =
+                readEach(productionUrls, { "Failed to load the Admiralspalast production page $it, skipping" }) { productionUrl ->
+                    detailPageScraper.scrape(htmlFetcher.fetchDocument(productionUrl), productionUrl, genres[productionUrl])
+                }
+            logger.info { "Scraped ${productions.items.size} performance(s) from ${productionUrls.size} Admiralspalast production(s)" }
+            ListingPages(productions.items, productions.complete)
         }
 
     /**
