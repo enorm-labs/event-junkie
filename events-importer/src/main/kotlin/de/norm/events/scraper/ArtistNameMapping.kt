@@ -941,7 +941,10 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "pauken & planeten",
         "maël & jonas",
         "mael & jonas",
-        "nie & nimmer"
+        "nie & nimmer",
+        // Bands whose name is a comma list, which [commaListActs] would cut into three (#3419).
+        "kitty, daisy & lewis",
+        "frost, pisse & elend"
     )
 
 /**
@@ -1059,7 +1062,8 @@ private fun maskBracketed(line: String): String {
 
 /**
  * Splits a title segment into acts at a ` x ` join ([splitCrossBilled]) and then at its
- * conjunctions, per boundary, so a real co-bill still splits beside a band-name tail: a comma anywhere suppresses splitting ("Earth, Wind & Fire"),
+ * conjunctions, per boundary, so a real co-bill still splits beside a band-name tail: a one-comma list `A, B & C` is three acts
+ * ([commaListActs]), and any other comma keeps the segment whole,
  * and a boundary whose right-hand side opens with a [tail marker][CONJUNCTION_TAIL_MARKERS]
  * stays joined, so `CARL CARLTON & MELANIE WIEGMANN AND THE GREAT BAND` cuts only at the `&`.
  * Never on `/` or `+`, so a venue can pre-split its co-bills and hand each segment here;
@@ -1101,13 +1105,36 @@ fun splitCrossBilled(segment: String): List<String> {
     return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
 }
 
-@Suppress("ReturnCount") // Guard clauses for the comma and no-cut cases are clearer than nesting
+@Suppress("ReturnCount") // Guard clauses for the prose and comma cases are clearer than nesting
 private fun splitOnConjunctionsOnly(segment: String): List<String> {
     if (isKnownSingleAct(segment)) return listOf(segment)
-    if (segment.contains(',')) return listOf(segment)
     // `Einzige und Exklusive Orchester-Show in Europa!` is billing prose, not two acts (#1580).
     if (PROSE_END.containsMatchIn(segment)) return listOf(segment)
+    if (segment.contains(',')) {
+        val oneCommaList = if (topLevelCommas(segment).size == 1) commaListActs(segment) else null
+        return oneCommaList ?: listOf(segment)
+    }
+    return cutAtConjunctions(segment)
+}
 
+/**
+ * The acts of a comma list whose last part holds a conjunction, `A, B & C`, or `null` when [line] is not one (#3419).
+ * Each part is cut at its conjunctions by the per-boundary rules, so `A, B & The Cs` cuts at the comma only.
+ * A [KNOWN_SINGLE_ACTS] entry such as `Kitty, Daisy & Lewis` stays whole.
+ */
+@Suppress("ReturnCount") // Guard clauses for the known act and the no-list case are clearer than nesting
+fun commaListActs(line: String): List<String>? {
+    if (isKnownSingleAct(line)) return listOf(line)
+    val commas = topLevelCommas(line)
+    val parts = cutAt(line, commas.map { it..it }).map { it.trim() }.filter { it.isNotEmpty() }
+    val last = parts.lastOrNull() ?: return null
+    val endsInConjunction = CONJUNCTION_SEPARATOR.findAll(last).any { !isInsideBrackets(last, it.range.first) }
+    if (commas.isEmpty() || !endsInConjunction) return null
+    return parts.flatMap { if (isKnownSingleAct(it)) listOf(it) else cutAtConjunctions(it) }.map { it.trim() }
+}
+
+/** [segment] cut at each conjunction outside brackets whose right-hand side is no tail marker and no bare number. */
+private fun cutAtConjunctions(segment: String): List<String> {
     val cuts =
         CONJUNCTION_SEPARATOR
             .findAll(segment)
@@ -1143,10 +1170,10 @@ private fun isInsideBrackets(
 }
 
 /**
- * Two commas make a list; one does not (#1789). `Hey, Nothing`, `Kitty, Daisy & Lewis`,
- * `Wracaj, bociemno` and `Yes, I’m Very Tired Now` are all real acts with one comma, and
- * `D-Block Europe, French Montana` is a bill with one, so a single comma decides nothing. No act
- * in the corpus carries two.
+ * Two commas make a list; one does not (#1789). `Hey, Nothing`, `Wracaj, bociemno` and
+ * `Yes, I’m Very Tired Now` are all real acts with one comma, and `D-Block Europe, French Montana`
+ * is a bill with one, so a single comma decides nothing. A conjunction after it does: see
+ * [commaListActs]. No act in the corpus carries two.
  */
 private const val MIN_COMMAS_FOR_A_LIST = 2
 
@@ -1519,7 +1546,21 @@ private fun commaBillOf(
             .flatMap { splitSegmentOnConjunctions(it) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
-    return corroboratedActs(trimmed, candidates, description)
+    return corroboratedActs(trimmed, candidates, description) ?: listOf(trimmed).takeIf { readsAsOneName(trimmed, candidates, description) }
+}
+
+/**
+ * Whether [description] reads the one-comma [title] as one name, which keeps it whole ahead of [commaListActs]: the blurb
+ * states the whole title, or joins two of its acts with the title's own conjunction (`Ghosts & Errors`).
+ */
+private fun readsAsOneName(
+    title: String,
+    candidates: List<String>,
+    description: String
+): Boolean {
+    val descriptionPhrase = phraseForm(description)
+    val titlePhrase = phraseForm(title)
+    return descriptionPhrase.contains(titlePhrase) || conjoinedAlike(titlePhrase, descriptionPhrase, candidates)
 }
 
 /**

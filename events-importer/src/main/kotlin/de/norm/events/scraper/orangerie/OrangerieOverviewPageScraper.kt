@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.commaListActs
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -106,17 +107,17 @@ class OrangerieOverviewPageScraper {
     }
 
     /**
-     * The acts after `w/` in `Naked Grapes w/ zodya`, one per comma (`Hang Jack w/ CRIES, Kallaloo, Vio PRG`). A night
-     * without `w/` names its crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
+     * The acts after `w/` in `Naked Grapes w/ zodya`, one per comma (`Hang Jack w/ CRIES, Kallaloo, Vio PRG`), and a list's
+     * last two split at their conjunction ([commaListActs]). A lone `juan and only` keeps its `and`. A night without `w/`
+     * names its crew or its series (`Gardens of Disco by Duma, The Collective`, `Nice Tries & Friends Vol. 6`), so nobody.
      */
     private fun artists(
         name: String,
         eventType: EventType
     ): List<ScrapedArtist> {
         val role = if (eventType == EventType.CONCERT) "HEADLINER" else "DJ"
-        return name
-            .substringAfter(WITH, "")
-            .split(',')
+        val acts = name.substringAfter(WITH, "")
+        return (commaListActs(acts) ?: acts.split(','))
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = role) }
