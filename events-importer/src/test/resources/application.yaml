@@ -46,6 +46,13 @@ spring:
   r2dbc:
     properties:
       schema: events
+    # Repeated because this file shadows the main one. `ConnectionResetTest` asserts the two agree.
+    pool:
+      initial-size: 5
+      max-size: 12
+      validation-query: SELECT 1
+      validation-depth: remote
+      acquire-retry: 12
 
 # Mirrors the main application.yaml's exposure list, and has to (#415).
 #
