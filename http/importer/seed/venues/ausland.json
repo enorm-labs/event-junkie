@@ -13,8 +13,16 @@
         "descriptionAlt": "Unabhängiger Ort im Keller des einstigen besetzten Hauses Lychi 60, seit 2002 Adresse für improvisierte und experimentelle Musik, Film und Performance, mit mindestens 50 Prozent FLINTA auf und hinter der Bühne.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue", "cultural-centre"],
-        "programmeUrl": "https://ausland.berlin/program/all",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "ausland",
+            "url": "https://ausland.berlin/program/all",
+            "sourceType": "AUSLAND",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
