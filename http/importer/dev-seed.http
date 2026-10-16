@@ -4024,6 +4024,189 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# HAU1 Hebbel am Ufer
+# ————————————————————————————————————————————————————————————
+
+### --- Create HAU1 Hebbel am Ufer venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "HAU1 Hebbel am Ufer",
+    "address": "Stresemannstr. 29",
+    "city": "Berlin",
+    "postalCode": "10963",
+    "district": "kreuzberg",
+    "latitude": 52.49996,
+    "longitude": 13.38716,
+    "websiteUrl": "https://www.hebbel-am-ufer.de/",
+    "description": "The main house of HAU Hebbel am Ufer, the Hebbel-Theater on Stresemannstraße, a production house for international theatre, dance and performance that also stages concerts and talks.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Haupthaus des HAU Hebbel am Ufer, das Hebbel-Theater an der Stresemannstraße, ein Produktionshaus für internationales Theater, Tanz und Performance, das auch Konzerte und Gespräche zeigt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"]
+}
+
+> {%
+    client.global.set("venue_id_hau1_hebbel_am_ufer", response.body.id);
+    client.test("HAU1 Hebbel am Ufer venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create HAU1 Hebbel am Ufer event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_hau1_hebbel_am_ufer}},
+    "name": "HAU1 Hebbel am Ufer",
+    "url": "https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/",
+    "sourceType": "HAU1",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("HAU1 Hebbel am Ufer event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial HAU1 Hebbel am Ufer import ---
+POST {{importer-host}}/api/admin/event-sources/hau1-hebbel-am-ufer/import
+Accept: application/json
+
+> {%
+    client.test("HAU1 Hebbel am Ufer import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# HAU2 Hebbel am Ufer
+# ————————————————————————————————————————————————————————————
+
+### --- Create HAU2 Hebbel am Ufer venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "HAU2 Hebbel am Ufer",
+    "address": "Hallesches Ufer 34",
+    "city": "Berlin",
+    "postalCode": "10963",
+    "district": "kreuzberg",
+    "latitude": 52.49911,
+    "longitude": 13.38599,
+    "websiteUrl": "https://www.hebbel-am-ufer.de/",
+    "description": "HAU Hebbel am Ufer's house on Hallesches Ufer, with the WAU bar at street level: dance, performance and theatre on stage, listening sessions and DJ sets in the WAU.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Haus des HAU Hebbel am Ufer am Halleschen Ufer, mit der WAU-Bar im Erdgeschoss: Tanz, Performance und Theater auf der Bühne, Listening Sessions und DJ-Sets im WAU.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"]
+}
+
+> {%
+    client.global.set("venue_id_hau2_hebbel_am_ufer", response.body.id);
+    client.test("HAU2 Hebbel am Ufer venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create HAU2 Hebbel am Ufer event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_hau2_hebbel_am_ufer}},
+    "name": "HAU2 Hebbel am Ufer",
+    "url": "https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/",
+    "sourceType": "HAU2",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("HAU2 Hebbel am Ufer event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial HAU2 Hebbel am Ufer import ---
+POST {{importer-host}}/api/admin/event-sources/hau2-hebbel-am-ufer/import
+Accept: application/json
+
+> {%
+    client.test("HAU2 Hebbel am Ufer import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# HAU3 Hebbel am Ufer
+# ————————————————————————————————————————————————————————————
+
+### --- Create HAU3 Hebbel am Ufer venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "HAU3 Hebbel am Ufer",
+    "address": "Tempelhofer Ufer 10",
+    "city": "Berlin",
+    "postalCode": "10963",
+    "district": "kreuzberg",
+    "latitude": 52.49734,
+    "longitude": 13.38569,
+    "websiteUrl": "https://www.hebbel-am-ufer.de/",
+    "description": "HAU Hebbel am Ufer's smallest house, on the third floor at Tempelhofer Ufer, home of the Houseclub for young people: performance, theatre and game pieces.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das kleinste Haus des HAU Hebbel am Ufer, im dritten Stock am Tempelhofer Ufer und Sitz des Houseclubs für junge Leute: Performance, Theater und Game-Stücke.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"]
+}
+
+> {%
+    client.global.set("venue_id_hau3_hebbel_am_ufer", response.body.id);
+    client.test("HAU3 Hebbel am Ufer venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create HAU3 Hebbel am Ufer event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_hau3_hebbel_am_ufer}},
+    "name": "HAU3 Hebbel am Ufer",
+    "url": "https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/",
+    "sourceType": "HAU3",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("HAU3 Hebbel am Ufer event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial HAU3 Hebbel am Ufer import ---
+POST {{importer-host}}/api/admin/event-sources/hau3-hebbel-am-ufer/import
+Accept: application/json
+
+> {%
+    client.test("HAU3 Hebbel am Ufer import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Haus der Visionäre — not imported
 # ————————————————————————————————————————————————————————————
 

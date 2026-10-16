@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "HAU2 Hebbel am Ufer",
+        "address": "Hallesches Ufer 34",
+        "city": "Berlin",
+        "postalCode": "10963",
+        "district": "kreuzberg",
+        "latitude": 52.49911,
+        "longitude": 13.38599,
+        "websiteUrl": "https://www.hebbel-am-ufer.de/",
+        "description": "HAU Hebbel am Ufer's house on Hallesches Ufer, with the WAU bar at street level: dance, performance and theatre on stage, listening sessions and DJ sets in the WAU.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Haus des HAU Hebbel am Ufer am Halleschen Ufer, mit der WAU-Bar im Erdgeschoss: Tanz, Performance und Theater auf der Bühne, Listening Sessions und DJ-Sets im WAU.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "HAU2 Hebbel am Ufer",
+            "url": "https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/",
+            "sourceType": "HAU2",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

@@ -151,6 +151,15 @@ enum class EventSource {
     /** Gretchen Berlin – a club in the vaulted former stables of a 19th-century Kreuzberg barracks, known for bass-driven electronic nights. */
     GRETCHEN,
 
+    /** HAU1 – the main house of HAU Hebbel am Ufer, the Hebbel-Theater on Stresemannstraße, for international theatre, dance, performance and concerts. */
+    HAU1,
+
+    /** HAU2 – HAU Hebbel am Ufer's house on Hallesches Ufer, with the WAU bar: dance, performance and theatre, plus concerts and DJ sets at the WAU. */
+    HAU2,
+
+    /** HAU3 – HAU Hebbel am Ufer's smallest house, up three flights at Tempelhofer Ufer, with the Houseclub for young people: performance and theatre games. */
+    HAU3,
+
     /** Havanna Berlin – a multi-floor Latin dance club in Schöneberg running the same resident nights every week, with lessons before the party. */
     HAVANNA,
 
