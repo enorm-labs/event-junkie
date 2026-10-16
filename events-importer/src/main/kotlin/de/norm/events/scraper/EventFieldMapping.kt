@@ -233,7 +233,7 @@ private val WHITESPACE_RUN = Regex("""[\s\u00A0\u202F]+""")
 private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
 
 /**
- * A free-entry phrase unambiguous enough for any text field: "Eintritt frei", "Eintritt: Frei",
+ * A free-entry phrase unambiguous enough for any text field: "Eintritt frei", "Eintritt: Frei", "Eintritt ist frei",
  * "freier Eintritt", "bei freiem Eintritt", "kostenloser Eintritt", "Kostenfreie Tickets", "free
  * entry", "free admission", "Admission free", "no entrance fee". Multi-word, so it cannot collide with a band or
  * festival name or with a bare "kostenfrei (zzgl. Parkeintritt)", and whole-word, so "Eintritt
@@ -243,7 +243,7 @@ private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
 val FREE_ENTRY_PHRASE =
     Regex(
         listOf(
-            """eintritt\s*:?\s*frei""",
+            """eintritt\s*(?::|\s+ist)?\s*frei""",
             """freie[mnr]?\s+eintritt""",
             """kostenlose[mnr]?\s+eintritt""",
             """kostenfreie[mnr]?\s+(?:eintritt|tickets?|karten)""",

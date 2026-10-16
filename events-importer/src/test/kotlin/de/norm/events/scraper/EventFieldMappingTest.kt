@@ -105,6 +105,7 @@ class EventFieldMappingTest {
         listOf(
             "Eintritt frei!",
             "Eintritt: Frei",
+            "Eintritt ist frei!",
             "Freier Eintritt für Alle",
             "bei freiem Eintritt",
             "kostenloser Eintritt",

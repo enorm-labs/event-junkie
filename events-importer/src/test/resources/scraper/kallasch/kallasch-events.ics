@@ -1,0 +1,200 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+METHOD:PUBLISH
+CALSCALE:GREGORIAN
+PRODID:-//WordPress - MECv7.37.0//EN
+X-ORIGINAL-URL:https://kallasch.berlin/
+X-WR-CALNAME:Kallasch&amp;
+X-WR-CALDESC:Programmkneipe in Berlin Moabit
+X-WR-TIMEZONE:Europe/Berlin
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+X-LIC-LOCATION:Europe/Berlin
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:20260329T030000
+RRULE:FREQ=YEARLY;BYMONTH=03;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:20261025T020000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=4SU
+END:STANDARD
+END:VTIMEZONE
+REFRESH-INTERVAL;VALUE=DURATION:PT1H
+X-PUBLISHED-TTL:PT1H
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-d96409bf894217686ba124d7356686c9@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261105T200000
+DTEND;TZID=Europe/Berlin:20261105T220000
+DTSTAMP:20241012T231826Z
+RRULE:FREQ=MONTHLY;WKST=MO;BYDAY=1TH
+EXDATE:20250501T180000Z,20260101T190000Z
+CREATED:20241012
+LAST-MODIFIED:20260303
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:QUIZ // Musikquiz Moabit
+DESCRIPTION:Es geht los um 20.00 | Eintritt ist frei! \nGruppengröße: max 5 Personen \nIhr ratet in Teams Bingos (Interpret und Song) und Bongos (Thema, welches die Songs der Runde verbindet) sowie Spezialrunden.\nDas Gewinnerteam richtet immer das nächste Quiz aus.\nNeben Ruhm und Ehre gibt es wie immer auch trinkbare Preise!\nJede Richtige Antwort bringt euch einen Schnaps ein!\nDas Gewinnerteam wird nicht nur auf dem Quizpokal verewigt, sondern erhält noch eine Flasche selbstgemachten Kallasch&amp;-Hausrezept-Mexi oben drauf!\nAnmeldung direkt vor Ort bei den Hosts. Früh kommen empfiehlt sich (ca 18.30). \n
+URL:https://kallasch.berlin/programm/quiz-musikquiz-moabit/
+CATEGORIES:QUIZ
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/jpeg:https://kallasch.berlin/wp-content/uploads/2024/10/Kallasch_MusikquizMoabit.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-b1a59b315fc9a3002ce38bbe070ec3f5@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261113T193000
+DTEND;TZID=Europe/Berlin:20261113T220000
+DTSTAMP:20241012T232247Z
+RRULE:FREQ=MONTHLY;WKST=MO;BYDAY=2FR
+EXDATE:20260710T173000Z
+CREATED:20241012
+LAST-MODIFIED:20260701
+PRIORITY:5
+SEQUENCE:3
+TRANSP:OPAQUE
+SUMMARY:POETRY SLAM // Eagel Slam 1000
+DESCRIPTION:Ausgerichtet von den Kiezpoeten aus Berlin (kiezpoeten.com)! \n\nTickets für 8€ gibt es ausschließlich an der Abendkasse. \nDie Türen öffnen sich um Punkt 18:45 Uhr. Start ist um 19:30 Uhr.\nBegrenzte Platzzahl und schnell ausverkauft. Bitte seid pünktlich!\nJeden 2. Freitag im Monat.\n
+URL:https://kallasch.berlin/programm/slam-eagel-slam-1000/
+CATEGORIES:POETRY SLAM
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/jpeg:https://kallasch.berlin/wp-content/uploads/2024/10/Kallasch_EagleSlam1000.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-ccb0989662211f61edae2e26d58ea92f@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261029T200000
+DTEND;TZID=Europe/Berlin:20261029T220000
+DTSTAMP:20241114T173439Z
+RRULE:FREQ=MONTHLY;WKST=MO;BYDAY=-1TH
+EXDATE:20241226T190000Z,20251225T190000Z,20260625T180000Z,20260730T180000Z,20260827T180000Z
+CREATED:20241114
+LAST-MODIFIED:20260903
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:OPEN MIC // Freiraum&amp;
+DESCRIPTION:Jeden letzten Donnerstag im Monat!\n\nWillkommen sind alle Beiträge von Wort bis Musik und darüber hinaus. Jeder spielt 2 Lieder oder bekommt maximal 10 Minuten of fame!\nAnmeldung an booking@kallasch.berlin\nWir haben etwa 8 Slots zu vergeben. Die Reihenfolge wird vor Beginn gelost.\nPS: Es geht pünktlich um 20.00 los, damit wir bis 22 Uhr möglichst viele Beiträge unterkriegen…\n
+URL:https://kallasch.berlin/programm/open-mic-freiraum-532/
+CATEGORIES:OPEN MIC
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/png:https://kallasch.berlin/wp-content/uploads/2025/03/Kallasch_KonzertKontrabass.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-4ae67a7dd7e491f8fb6f9ea0cf25dfdb@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261031T203000
+DTEND;TZID=Europe/Berlin:20261031T220000
+DTSTAMP:20260923T171206Z
+CREATED:20260923
+LAST-MODIFIED:20261007
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:KONZERT // Frankie &amp; Yamirah
+DESCRIPTION:Frankie  &amp; Yamirah \nBerlin-based singer and songwriter Frankie Balou has been making music since her teens, releasing her first record with Frankfurt label 3p and reaching the German charts. Rooted in Soul and deep Blues, her warm, distinctive voice moves between unreleased original songs and a selection of her favorite covers.\nShe is joined by Berlin-based guitarist Yamirah Gercke, a Berklee College of Music graduate whose atmospheric playing blends Jazz, Soul and psychedelic sounds.\nThe two first met by chance one summer day, when Yamirah was playing her floating guitar on the street below Frankie’s window. That spontaneous encounter grew into a musical connection, bringing their two distinct musical backgrounds together.\nExpect an intimate and powerful night full of groove, emotion and, above all, Soul.\nhttps://www.instagram.com/frankie_balou_official/?hl=en\nhttps://www.instagram.com/yamirahguitar/?hl=en\nEINTRITT FREI || DIE MONEYBOX GEHT RUM\nBezahlvorschlag: Das Doppelte eures Getränks\n \n
+URL:https://kallasch.berlin/programm/konzert-11-884-335-104-264-632-432-775/
+CATEGORIES:KONZERT
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/png:https://kallasch.berlin/wp-content/uploads/2026/09/Red-Bold-Modern-Music-Concert-Event-Poster-4.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-443dec3062d0286986e21dc0631734c9@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261024T203000
+DTEND;TZID=Europe/Berlin:20261024T220000
+DTSTAMP:20260923T170817Z
+CREATED:20260923
+LAST-MODIFIED:20260923
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:KONZERT // Mo Klé
+DESCRIPTION:Mo Klé ist das musikalische Pseudonym des Schweizer Songwriters René Grünenfelder. Mit einem verflixt guten Gespür für schöne Songs und seinem unprätentiös virtuosen Gitarrenspiel bringt Mo Klé eine Intensität und Präsenz auf die Bühne, die unseren wirren Zeiten völlig angemessen sind. Er präsentiert sein neues Album „Three Chords and a Shaking Hand“.\n \nEINTRITT FREI || DIE MONEYBOX GEHT RUM\nBezahlvorschlag: Das Doppelte eures Getränks\n\n
+URL:https://kallasch.berlin/programm/konzert-11-884-335-104-264-632-636-864-495/
+CATEGORIES:KONZERT
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/jpeg:https://kallasch.berlin/wp-content/uploads/2026/09/mokle.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-13111c20aee51aeb480ecbd988cd8cc9@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261018T203000
+DURATION:PT1H30M
+DTSTAMP:20260923T165010Z
+RDATE;TZID=Europe/Berlin:20261004T203000,20261018T203000,20261101T203000,20261115T203000,20261206T083000,20261220T083000
+CREATED:20260923
+LAST-MODIFIED:20260928
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:KONZERT // Live Jazz @ Kallasch&amp;
+DESCRIPTION:\nJames Crutchfield Trio\nAm 4.10.2026 beginnt eine neue Jazz Konzertreihe im Kallasch in Moabit. Jeden 1. und 3.\nSonntag im Monat, stellt der Gitarrist James Crutchfield mit seinem Trio einen Musiker der\nBerliner Jazzszene vor . Die Musik wird von traditionellen Jazz Standards bis komplett frei\nImprovisierter Musik reichen.\n\nDiesen Sonntag der 4.10 wird der hervorragende Alt Saxophonist Henrik Walsdorff vorgestellt.\nSchon lange eine prägende Stimme der Berliner als auch Deutschen Jazz Szene in Besetzungen\nvon und mit Rudi Mahall, Aki Takaese, Oli Steidle uvm…\nHenrik Walsdorff Sax\nJames Crutchfield Gitarre\nCookie Stephenson Bass\nShinichi Nakajima Drums\n\nEINTRITT FREI || DIE MONEYBOX GEHT RUM\nBezahlvorschlag: Das Doppelte eures Getränks\n \n
+URL:https://kallasch.berlin/programm/konzert-boviy-741-933-676-556-576-877-740-497-264-747-641-164-382-375-805-593-252-480/
+CATEGORIES:KONZERT
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/png:https://kallasch.berlin/wp-content/uploads/2026/09/Bildschirmfoto-2026-09-23-um-16.51.22.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-b5c01503041b70d41d80e3dbe31bbd8c@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261022T200000
+DTEND;TZID=Europe/Berlin:20261022T220000
+DTSTAMP:20260923T163725Z
+CREATED:20260923
+LAST-MODIFIED:20260923
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:QUIZ // S.O.S. Pubquiz für die zivile Seenotrettung
+DESCRIPTION:Ratespaß und dabei etwas gutes tun hört sich für euch super an? Kommt zum Pub Quiz für die zivile Seenotrettung. Die Teilnahme ist auf Spendenbasis und Eure Spenden gehen zu 100% an SOS Humanity. SOS Humanity ist eine gemeinnützige Nichtregierungsorganisation und rettet mit ihrem Schiff, der Humanity 1, Geflüchtete im zentralen Mittelmeer vor dem Ertrinken.Die Quizfragen haben keinen Zusammenhang mit dem Thema Seenotrettung. Es wird einen spannenden Mix aus Allgemeinwissen, Fangfragen und Musikraten geben. \nWir freuen uns auf euch!\n
+URL:https://kallasch.berlin/programm/quiz-s-o-s-pubquiz-fuer-die-zivile-seenotrettung-6-356-636-640-124-274-875-972/
+CATEGORIES:QUIZ
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/png:https://kallasch.berlin/wp-content/uploads/2025/02/Bildschirmfoto-2025-02-06-um-15.37.44.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-1368ba1ab6ed38bb1f26f36673739d54@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261029T190000
+DTEND;TZID=Europe/Berlin:20261029T200000
+DTSTAMP:20260921T185540Z
+CREATED:20260921
+LAST-MODIFIED:20260921
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:KONZERT // Jazzfest 2026
+DESCRIPTION:Rossano Snel – Keyboard\nEvgeniy Abin – Tenorsaxofon, Bassklarinette\nhttps://www.berlinerfestspiele.de/bfs-de/jazzfest-berlin\nEINTRITT FREI ||\n \n
+URL:https://kallasch.berlin/programm/konzert-11-884-478/
+CATEGORIES:KONZERT
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/png:https://kallasch.berlin/wp-content/uploads/2025/09/Bildschirmfoto-2025-09-24-um-16.14.54.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-4aecfbe5d21e3f7912bf8eb29124423a@kallasch.berlin
+DTSTART;TZID=Europe/Berlin:20261017T203000
+DTEND;TZID=Europe/Berlin:20261017T220000
+DTSTAMP:20260921T184729Z
+CREATED:20260921
+LAST-MODIFIED:20260921
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:KONZERT // Leah Marlene
+DESCRIPTION:\nLeah Marlene hat die Gabe Menschen in ihren Bann zu ziehen. Den Kern ihrer Musik bildet eindringliches Storytelling, melodische Vielfalt und emotionale Ehrlichkeit. Sie verbindet die Intimität des Folk mit der Dynamik von Rock und Pop und schafft so Songs, die sowohl zeitlos, als auch erfrischend neu sind. Geboren in Ontario und aufgewachsen in Illinois in einer Familie aus MusikerInnen, war Leah immer inmitten der Musik, bevor sie mit ihrem dritten Platz in der 20. Staffel von American Idol nationale Aufmerksamkeit erlangte. Heute lebt sie in Nashville, tourt ausgiebig durch Nordamerika, stand mit Künstlern wie Jade Bird, Peach Pit und Margo Price auf der Bühne und wurde unter die Top 50 Finalisten des Tiny Desk Contest von NPR gewählt. Live ist Leah Marlene magnetisch und nahbar zugleich. Sie schafft einen positiven Vibe, der sich im Konzertsaal beinahe greifen lässt.\n\n\nEINTRITT FREI || DIE MONEYBOX GEHT RUM\nBezahlvorschlag: Das Doppelte eures Getränks\n
+URL:https://kallasch.berlin/programm/konzert-boviy-741-933-676-556-576-877-740-497-264-747-641-164-382-375-805-671-632/
+CATEGORIES:KONZERT
+LOCATION:Kallasch&amp; // Unionstr. 2, 10551
+ATTACH;FMTTYPE=image/jpeg:https://kallasch.berlin/wp-content/uploads/2026/09/Leah-Marlene-3_Shot-by-Shea-Grehan-2024-scaled.jpg
+END:VEVENT
+END:VCALENDAR

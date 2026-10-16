@@ -265,6 +265,14 @@ says so.
 | `JUNCTION_BAR`         | `PRICE`            | the DJ programme page prints no figure, and a DJ night has no shop page; a live night carries one                                                | —     |
 | `JUNCTION_BAR`         | `IMAGE`            | the DJ programme page carries no picture per night; a live night carries one                                                                     | —     |
 | `JUNCTION_BAR`         | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `KALLASCH`             | `GENRE`            | the feed files a night by format only, never by style                                                                                            | —     |
+| `KALLASCH`             | `PRICE`            | most nights are free, and a price appears only in the prose                                                                                      | —     |
+| `KALLASCH`             | `DOORS_TIME`       | the feed carries one time per night                                                                                                              | —     |
+| `KALLASCH`             | `TICKET_URL`       | the feed links no ticket shop                                                                                                                    | —     |
+| `KALLASCH`             | `ARTISTS`          | a series names only itself, and its guests appear only in the prose                                                                              | —     |
+| `KALLASCH`             | `PROMOTERS`        | the bar programmes its own nights and names no promoter                                                                                          | —     |
+| `KALLASCH`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
+| `KALLASCH`             | `CANCELLATION`     | a cancelled date leaves the feed instead of being marked                                                                                         | —     |
 | `KATER`                | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
