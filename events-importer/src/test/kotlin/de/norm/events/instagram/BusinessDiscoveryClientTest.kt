@@ -32,13 +32,14 @@ class BusinessDiscoveryClientTest {
         server.close()
     }
 
-    private fun client(): BusinessDiscoveryClient {
+    private fun client(maxImagesPerPost: Int = 4): BusinessDiscoveryClient {
         val properties =
             InstagramProperties(
                 accessToken = "secret-token",
                 igUserId = "1784",
                 graphBaseUrl = server.url("/").toString(),
-                graphVersion = "v26.0"
+                graphVersion = "v26.0",
+                maxImagesPerPost = maxImagesPerPost
             )
         val webClient =
             InstagramHttpClientConfig().instagramWebClient(
@@ -60,7 +61,7 @@ class BusinessDiscoveryClientTest {
         .build()
 
     @Test
-    fun `reads the posts with the token in a header and without media_url`() =
+    fun `reads the posts with the token in a header`() =
         runTest {
             server.enqueue(
                 answer(
@@ -94,9 +95,48 @@ class BusinessDiscoveryClientTest {
             val request = server.takeRequest()
             request.headers["Authorization"] shouldBe "Bearer secret-token"
             val target = URLDecoder.decode(request.target, Charsets.UTF_8)
-            target shouldContain "/v26.0/1784?fields=business_discovery.username(rso.berlin){media.limit(25){id,caption,permalink,timestamp,media_type}}"
-            target shouldNotContain "media_url"
+            target shouldContain
+                "/v26.0/1784?fields=business_discovery.username(rso.berlin){media.limit(25)" +
+                "{id,caption,permalink,timestamp,media_type,media_url,thumbnail_url,children{media_type,media_url,thumbnail_url}}}"
             target shouldNotContain "secret-token"
+        }
+
+    @Test
+    fun `a photo gives its image, a carousel its slides up to the cap, and a reel its cover frame`() =
+        runTest {
+            server.enqueue(
+                answer(
+                    200,
+                    """
+                    {"business_discovery": {"media": {"data": [
+                      {"id": "1", "media_type": "IMAGE", "media_url": "https://scontent.cdninstagram.com/1.jpg",
+                       "permalink": "https://www.instagram.com/p/1/", "timestamp": "2026-10-13T16:00:12+0000"},
+                      {"id": "2", "media_type": "CAROUSEL_ALBUM", "media_url": "https://scontent.cdninstagram.com/2a.jpg",
+                       "permalink": "https://www.instagram.com/p/2/", "timestamp": "2026-10-13T16:00:12+0000",
+                       "children": {"data": [
+                         {"media_type": "IMAGE", "media_url": "https://scontent.cdninstagram.com/2a.jpg"},
+                         {"media_type": "VIDEO", "media_url": "https://scontent.cdninstagram.com/2b.mp4",
+                          "thumbnail_url": "https://scontent.cdninstagram.com/2b.jpg"},
+                         {"media_type": "IMAGE", "media_url": "https://scontent.cdninstagram.com/2c.jpg"}
+                       ]}},
+                      {"id": "3", "media_type": "VIDEO", "media_url": "https://scontent.cdninstagram.com/3.mp4",
+                       "thumbnail_url": "https://scontent.cdninstagram.com/3.jpg",
+                       "permalink": "https://www.instagram.com/reel/3/", "timestamp": "2026-10-13T16:00:12+0000"},
+                      {"id": "4", "media_type": "VIDEO", "permalink": "https://www.instagram.com/reel/4/", "timestamp": "2026-10-13T16:00:12+0000"}
+                    ]}}}
+                    """.trimIndent()
+                )
+            )
+
+            val posts = client(maxImagesPerPost = 2).recentPosts("rso.berlin").shouldBeInstanceOf<DiscoveryResult.Posts>().posts
+
+            posts.map { it.imageUrls } shouldBe
+                listOf(
+                    listOf("https://scontent.cdninstagram.com/1.jpg"),
+                    listOf("https://scontent.cdninstagram.com/2a.jpg", "https://scontent.cdninstagram.com/2b.jpg"),
+                    listOf("https://scontent.cdninstagram.com/3.jpg"),
+                    emptyList()
+                )
         }
 
     @Test

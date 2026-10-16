@@ -201,6 +201,10 @@ async function save(addAnother: boolean) {
       <summary class="cursor-pointer text-muted-foreground">Caption</summary>
       <p class="mt-1 break-words whitespace-pre-line">{{ draft.caption }}</p>
     </details>
+    <details v-if="draft.flyerText">
+      <summary class="cursor-pointer text-muted-foreground">Read from the image</summary>
+      <p class="mt-1 break-words whitespace-pre-line">{{ draft.flyerText }}</p>
+    </details>
   </section>
 
   <form class="grid max-w-2xl gap-4 sm:grid-cols-2" @submit.prevent="onSubmit">

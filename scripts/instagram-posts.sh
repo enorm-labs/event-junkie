@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# instagram-posts.sh — read the recent posts of a venue's Instagram business account, as the importer reads them (ADR-048).
+# instagram-posts.sh — read the recent posts of a venue's Instagram business account, as the importer reads them (ADR-048, ADR-049).
 #
 # Usage:
 #   scripts/instagram-posts.sh <handle> [--limit N]   # one line per post: date, type, permalink, caption
 #   scripts/instagram-posts.sh <handle> --json        # Business Discovery's answer, unchanged
 #
 # Calls Meta's Graph API Business Discovery as our account eventjunkie.berlin, with the fields the
-# importer reads and never `media_url`. The token comes from INSTAGRAM_ACCESS_TOKEN, else from the
+# importer reads. The image links are signed and expire within days. The token comes from INSTAGRAM_ACCESS_TOKEN, else from the
 # macOS keychain item `instagram-token`. It goes to curl on stdin, so it never shows in `ps`, and it
 # is never printed. INSTAGRAM_IG_USER_ID and INSTAGRAM_GRAPH_VERSION override the defaults.
 #
@@ -63,7 +63,7 @@ fi
 
 ig_user_id="${INSTAGRAM_IG_USER_ID:-17841471622815307}"
 version="${INSTAGRAM_GRAPH_VERSION:-v26.0}"
-fields="business_discovery.username(${handle}){username,name,media_count,media.limit(${limit}){id,caption,permalink,timestamp,media_type}}"
+fields="business_discovery.username(${handle}){username,name,media_count,media.limit(${limit}){id,caption,permalink,timestamp,media_type,media_url,thumbnail_url,children{media_type,media_url,thumbnail_url}}}"
 
 response="$(printf 'header = "Authorization: Bearer %s"\n' "$token" |
     curl -sS -K - -G "https://graph.facebook.com/${version}/${ig_user_id}" --data-urlencode "fields=${fields}")"

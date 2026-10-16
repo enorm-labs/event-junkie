@@ -27,8 +27,10 @@ data class DraftRow(
     val permalink: String,
     val postedAt: OffsetDateTime,
     val caption: String?,
+    val flyerText: String?,
     val eventDate: LocalDate?,
     val startTime: LocalTime?,
+    val doorsTime: LocalTime?,
     val title: String?,
     val acts: List<String>,
     val pricePresale: BigDecimal?,
@@ -40,14 +42,29 @@ data class DraftRow(
     val createdAt: OffsetDateTime
 )
 
-/** One row to insert into `instagram_draft`. A [DraftStatus.NOT_AN_EVENT] row carries no event and no caption. */
+/**
+ * One row to insert into `instagram_draft`. Only a [DraftStatus.PENDING] row keeps the caption. A
+ * pending row with an [eventId] proposes an update to that event: its night was approved before.
+ */
 data class NewDraft(
     val venueId: Long,
     val post: InstagramPost,
     val status: DraftStatus,
     val event: DraftedEvent? = null,
-    val model: String? = null
+    val model: String? = null,
+    val eventId: Long? = null
 )
+
+/** How a venue's night was judged before a new post named it again. */
+sealed interface EarlierJudgement {
+    /** Approved, and its event still exists: a new draft proposes an update to it. */
+    data class Approved(
+        val eventId: Long
+    ) : EarlierJudgement
+
+    /** Rejected and never approved: a new post of it is stored as rejected too. */
+    data object Rejected : EarlierJudgement
+}
 
 /** The `instagram_draft` table, in hand-written SQL like `EventSuggestionRepository`: a draft row joins `venue`. */
 @Repository
@@ -66,6 +83,24 @@ class InstagramDraftRepository(
             .toSet()
     }
 
+    /** The judgement of [venueId]'s night on [date], or null when no draft of it was judged. An approval wins over a rejection. */
+    suspend fun earlierJudgement(
+        venueId: Long,
+        date: LocalDate
+    ): EarlierJudgement? =
+        template.databaseClient
+            .sql(
+                "SELECT status, event_id FROM $EVENTS_SCHEMA.instagram_draft " +
+                    "WHERE venue_id = :venueId AND event_date = :date AND status IN ('APPROVED', 'REJECTED') " +
+                    "AND NOT (status = 'APPROVED' AND event_id IS NULL) " +
+                    "ORDER BY status = 'APPROVED' DESC, reviewed_at DESC NULLS LAST LIMIT 1"
+            ).bind("venueId", venueId)
+            .bind("date", date)
+            .map { row, _ ->
+                row.get("event_id", Number::class.java)?.let { EarlierJudgement.Approved(it.toLong()) } ?: EarlierJudgement.Rejected
+            }.one()
+            .awaitSingleOrNull()
+
     /** Inserts the rows of one post. A second insert of the same post and date changes nothing. */
     suspend fun insert(drafts: List<NewDraft>): Long =
         drafts.sumOf { draft ->
@@ -73,10 +108,10 @@ class InstagramDraftRepository(
                 .sql(
                     """
                     INSERT INTO $EVENTS_SCHEMA.instagram_draft
-                        (venue_id, media_id, permalink, posted_at, caption, event_date, start_time, title, acts,
-                         price_presale, price_box_office, evidence, confidence, model, status)
-                    VALUES (:venueId, :mediaId, :permalink, :postedAt, :caption, :eventDate, :startTime, :title, :acts,
-                            :pricePresale, :priceBoxOffice, :evidence, :confidence, :model, :status)
+                        (venue_id, media_id, permalink, posted_at, caption, flyer_text, event_date, start_time, doors_time, title, acts,
+                         price_presale, price_box_office, evidence, confidence, model, status, event_id)
+                    VALUES (:venueId, :mediaId, :permalink, :postedAt, :caption, :flyerText, :eventDate, :startTime, :doorsTime, :title, :acts,
+                            :pricePresale, :priceBoxOffice, :evidence, :confidence, :model, :status, :eventId)
                     ON CONFLICT ON CONSTRAINT instagram_draft_one_per_post_and_date DO NOTHING
                     """.trimIndent()
                 ).bind("venueId", draft.venueId)
@@ -84,8 +119,10 @@ class InstagramDraftRepository(
                 .bind("permalink", draft.post.permalink)
                 .bind("postedAt", draft.post.postedAt)
                 .bindOrNull("caption", draft.post.caption.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
+                .bindOrNull("flyerText", draft.event?.flyerText.takeIf { draft.status == DraftStatus.PENDING }, String::class.java)
                 .bindOrNull("eventDate", draft.event?.date, LocalDate::class.java)
                 .bindOrNull("startTime", draft.event?.startTime, LocalTime::class.java)
+                .bindOrNull("doorsTime", draft.event?.doorsTime, LocalTime::class.java)
                 .bindOrNull("title", draft.event?.title, String::class.java)
                 .bind(
                     "acts",
@@ -99,6 +136,7 @@ class InstagramDraftRepository(
                 .bindOrNull("confidence", draft.event?.confidence, Double::class.javaObjectType)
                 .bindOrNull("model", draft.model, String::class.java)
                 .bind("status", draft.status.name)
+                .bindOrNull("eventId", draft.eventId, Long::class.javaObjectType)
                 .fetch()
                 .rowsUpdated()
                 .awaitSingle()
@@ -142,7 +180,7 @@ class InstagramDraftRepository(
 
     /**
      * Judges the night of draft [id]: every pending draft of its venue and date takes [status] and
-     * [eventId], and loses its caption (ADR-048 rule 6). Returns how many rows changed, 0 when the
+     * [eventId], and loses its caption and its flyer text (ADR-048 rule 6). Returns how many rows changed, 0 when the
      * draft was judged already.
      */
     suspend fun judgeNight(
@@ -152,7 +190,7 @@ class InstagramDraftRepository(
     ): Long =
         template.databaseClient
             .sql(
-                "UPDATE $EVENTS_SCHEMA.instagram_draft d SET status = :status, event_id = :eventId, caption = NULL, reviewed_at = now() " +
+                "UPDATE $EVENTS_SCHEMA.instagram_draft d SET status = :status, event_id = :eventId, caption = NULL, flyer_text = NULL, reviewed_at = now() " +
                     "FROM $EVENTS_SCHEMA.instagram_draft t WHERE t.id = :id AND t.status = 'PENDING' " +
                     "AND d.venue_id = t.venue_id AND d.event_date = t.event_date AND d.status = 'PENDING'"
             ).bind("status", status.name)
@@ -187,8 +225,10 @@ class InstagramDraftRepository(
             permalink = required("permalink", String::class.java),
             postedAt = required("posted_at", OffsetDateTime::class.java),
             caption = get("caption", String::class.java),
+            flyerText = get("flyer_text", String::class.java),
             eventDate = get("event_date", LocalDate::class.java),
             startTime = get("start_time", LocalTime::class.java),
+            doorsTime = get("doors_time", LocalTime::class.java),
             title = get("title", String::class.java),
             acts = get("acts", Array<String>::class.java)?.toList().orEmpty(),
             pricePresale = get("price_presale", BigDecimal::class.java),
@@ -207,8 +247,8 @@ class InstagramDraftRepository(
 
     private companion object {
         const val COLUMNS =
-            "d.id, d.venue_id, v.slug AS venue_slug, v.name AS venue_name, d.media_id, d.permalink, d.posted_at, d.caption, " +
-                "d.event_date, d.start_time, d.title, d.acts, d.price_presale, d.price_box_office, d.evidence, d.confidence, " +
+            "d.id, d.venue_id, v.slug AS venue_slug, v.name AS venue_name, d.media_id, d.permalink, d.posted_at, d.caption, d.flyer_text, " +
+                "d.event_date, d.start_time, d.doors_time, d.title, d.acts, d.price_presale, d.price_box_office, d.evidence, d.confidence, " +
                 "d.status, d.event_id, d.created_at"
         const val FROM = "$EVENTS_SCHEMA.instagram_draft d JOIN $EVENTS_SCHEMA.venue v ON v.id = d.venue_id"
     }

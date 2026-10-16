@@ -631,32 +631,38 @@ deleting it stops the reading. The handle comes from `venue.instagram_url`.
 
 ### instagram_draft (Side Table)
 
-An event that the model drafted from an Instagram caption, until a person approves or rejects it (ADR-048). One row
+An event that the model drafted from an Instagram post, until a person approves or rejects it (ADR-048, ADR-049). One row
 per post and event date. A post that announces no event has one row with status `NOT_AN_EVENT` and no date, so the
 model reads each post once.
 
-| Field                               | Type            | Nullable | Description                                                       | Example                                    |
-| ----------------------------------- | --------------- | -------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| `id`                                | `BIGINT` PK     | No       | Generated                                                         | `1`                                        |
-| `venue_id`                          | `BIGINT`        | No       | References `venue.id`. Deleting the venue deletes the row         | `42`                                       |
-| `media_id`                          | `TEXT`          | No       | Instagram's id of the post                                        | `18356757751169892`                        |
-| `permalink`                         | `TEXT`          | No       | The post's page. Must start with `https://www.instagram.com/`     | `https://www.instagram.com/p/DecMBi9gqGk/` |
-| `posted_at`                         | `TIMESTAMPTZ`   | No       | When the venue posted it                                          |                                            |
-| `caption`                           | `TEXT`          | Yes      | The post's text, only while the status is `PENDING`               |                                            |
-| `event_date`                        | `DATE`          | Yes      | The drafted day. Null only for `NOT_AN_EVENT`                     | `2026-10-16`                               |
-| `start_time`                        | `TIME`          | Yes      | Only when the caption names the hour                              | `23:00`                                    |
-| `title`                             | `TEXT`          | Yes      | The party series, show or act. Null only for `NOT_AN_EVENT`       | `XTRUDE`                                   |
-| `acts`                              | `TEXT[]`        | No       | Each act exactly as the caption writes it                         | `{space.trax}`                             |
-| `price_presale`, `price_box_office` | `NUMERIC(10,2)` | Yes      | Only when the caption names the amount                            | `12.00`                                    |
-| `evidence`                          | `TEXT`          | Yes      | The passage of the caption that gives the day                     | `next Saturday, October 17th`              |
-| `confidence`                        | `DOUBLE`        | Yes      | The model's confidence, from 0 to 1                               | `0.9`                                      |
-| `model`                             | `TEXT`          | Yes      | The model that answered                                           | `claude-haiku-4-5`                         |
-| `status`                            | `TEXT`          | No       | `PENDING`, `APPROVED`, `REJECTED` or `NOT_AN_EVENT`               | `PENDING`                                  |
-| `event_id`                          | `BIGINT`        | Yes      | The event an approval created. Deleting the event sets it to null |                                            |
-| `created_at`, `reviewed_at`         | `TIMESTAMPTZ`   | No, Yes  | When the draft was stored, and when a person judged it            |                                            |
+| Field                               | Type            | Nullable | Description                                                     | Example                                    |
+| ----------------------------------- | --------------- | -------- | --------------------------------------------------------------- | ------------------------------------------ |
+| `id`                                | `BIGINT` PK     | No       | Generated                                                       | `1`                                        |
+| `venue_id`                          | `BIGINT`        | No       | References `venue.id`. Deleting the venue deletes the row       | `42`                                       |
+| `media_id`                          | `TEXT`          | No       | Instagram's id of the post                                      | `18356757751169892`                        |
+| `permalink`                         | `TEXT`          | No       | The post's page. Must start with `https://www.instagram.com/`   | `https://www.instagram.com/p/DecMBi9gqGk/` |
+| `posted_at`                         | `TIMESTAMPTZ`   | No       | When the venue posted it                                        |                                            |
+| `caption`                           | `TEXT`          | Yes      | The post's text, only while the status is `PENDING`             |                                            |
+| `flyer_text`                        | `TEXT`          | Yes      | The text the model read off the images, only while `PENDING`    | `XTRUDE / SAT 17 OCT`                      |
+| `event_date`                        | `DATE`          | Yes      | The drafted day. Null only for `NOT_AN_EVENT`                   | `2026-10-16`                               |
+| `start_time`                        | `TIME`          | Yes      | Only when the caption or the flyer text names the hour          | `23:00`                                    |
+| `doors_time`                        | `TIME`          | Yes      | Only when the caption or the flyer text names the doors hour    | `23:00`                                    |
+| `title`                             | `TEXT`          | Yes      | The party series, show or act. Null only for `NOT_AN_EVENT`     | `XTRUDE`                                   |
+| `acts`                              | `TEXT[]`        | No       | Each act as the caption or the flyer text writes it             | `{space.trax}`                             |
+| `price_presale`, `price_box_office` | `NUMERIC(10,2)` | Yes      | Only when the caption or the flyer text names the amount        | `12.00`                                    |
+| `evidence`                          | `TEXT`          | Yes      | The passage of the caption or the flyer text that gives the day | `next Saturday, October 17th`              |
+| `confidence`                        | `DOUBLE`        | Yes      | The model's confidence, from 0 to 1                             | `0.9`                                      |
+| `model`                             | `TEXT`          | Yes      | The model that answered                                         | `claude-haiku-4-5`                         |
+| `status`                            | `TEXT`          | No       | `PENDING`, `APPROVED`, `REJECTED` or `NOT_AN_EVENT`             | `PENDING`                                  |
+| `event_id`                          | `BIGINT`        | Yes      | The approved event. On a `PENDING` row, the event it updates    |                                            |
+| `created_at`, `reviewed_at`         | `TIMESTAMPTZ`   | No, Yes  | When the draft was stored, and when a person judged it          |                                            |
 
-Two CHECK constraints hold ADR-048's rules in the database. A caption exists only on a `PENDING` row. An event row
+Three CHECK constraints hold ADR-048's rules in the database. A caption and a flyer text exist only on a `PENDING` row. An event row
 has a date and a title. `UNIQUE NULLS NOT DISTINCT (media_id, event_date)` makes a second read of a post a no-op.
+
+A new post can name a night that a person judged before. If that night was approved and its event exists, the new row is `PENDING` with the event's
+`event_id`. It proposes an update to that event. If that night was only rejected, the new row is stored as `REJECTED` and nobody reviews it again.
+Deleting the event sets `event_id` to null, and the next post of that night is a new draft again.
 
 ## Design Decisions
 

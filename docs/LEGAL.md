@@ -206,8 +206,9 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
   not train models on Customer Content from Services"_.
 - **Three purposes, one processor.** Translation sends the description and the protected names. The data-quality check
   (#3241, ADR-041) sends the title, the subtitle and the description, and gets back suggestions that a person applies.
-  The Instagram drafts (ADR-048, #3366) send the caption of a venue's post, the venue's name and the post's date. They
-  get back drafted events that a person approves. The legal basis of the check and of the drafts is Art. 6 (1) (f): correct
+  The Instagram drafts (ADR-048, ADR-049) send the caption and the images of a venue's post, the venue's name and the
+  post's date. They get back drafted events that a person approves. A flyer can show a photograph of an identifiable
+  person. Anthropic receives it under the same DPA as the caption, and it is not stored on either side of the call. The legal basis of the check and of the drafts is Art. 6 (1) (f): correct
   and complete event information. The categories in the table below do not change.
 - **Nothing else goes.** No log data, and nothing about a visitor. §4 and §5 of the notice say that too, because a
   reader cannot check it.
@@ -264,13 +265,15 @@ the source in a paragraph of its own, after the MusicBrainz paragraph.
 
 **Meta's Business Discovery is a source of the same kind** (ADR-048, [#3366](https://github.com/enorm-labs/event-junkie/issues/3366)).
 For a venue with no website of its own, the importer reads the recent posts of the venue's Instagram business account.
-It reads them through the Graph API as our own business account, `eventjunkie.berlin`. It reads the text, the link and
-the date of a post, and never an image. The request carries the venue's public handle and our token, and no personal
+It reads them through the Graph API as our own business account, `eventjunkie.berlin`. It reads the text, the link,
+the date and the images of a post (ADR-049). The request carries the venue's public handle and our token, and no personal
 data. Meta Platforms Ireland Ltd. decides nothing for us and holds nothing of ours, so this is not processing on our
 behalf. There is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. A caption can name people who are
 not artists: a host, a designer, a caterer. Those names are public credits in a venue's promotional text, the same kind
-of text as an event's `description`. **The caption is stored only until a person approves or rejects the draft, and
-at most 14 days.** A CHECK constraint keeps it on unjudged drafts only. No caption and no image reaches the site. The
+of text as an event's `description`. **The caption and the text the model reads off the images stay only until a person
+judges the draft, and 14 days at most.** CHECK constraints keep both on unjudged drafts only.
+The importer holds an image in memory for one model call and then drops it. No image is stored, so the Image files row
+below does not change. No caption and no image reaches the site. The
 event links the post. The notice names the source in a paragraph of its own, after the sisy.fan paragraph, and names
 the captions under Anthropic in §5.
 

@@ -12,6 +12,9 @@ import reactor.netty.http.client.HttpClient
 /** Bean name of the Graph API [WebClient]; inject with `@Qualifier(INSTAGRAM_WEB_CLIENT)`. */
 const val INSTAGRAM_WEB_CLIENT = "instagramWebClient"
 
+/** Bean name of the image [WebClient]; inject with `@Qualifier(INSTAGRAM_IMAGE_WEB_CLIENT)`. */
+const val INSTAGRAM_IMAGE_WEB_CLIENT = "instagramImageWebClient"
+
 /**
  * The [WebClient] every Graph API request goes through. Its own client, not the scraper's: an API
  * with its own terms gets no `robots.txt` check, and the token travels in a header, never in a URL.
@@ -30,5 +33,21 @@ class InstagramHttpClientConfig {
             .defaultHeader("User-Agent", ApiUserAgent.of(buildProperties.ifAvailable?.version))
             .defaultHeader("Authorization", "Bearer ${properties.accessToken}")
             .defaultHeader("Accept", "application/json")
+            .build()
+
+    /**
+     * The [WebClient] that downloads a post's images from Meta's CDN (ADR-049). It carries no token: the
+     * signed URL is the permission. It follows no redirect, so [InstagramImageFetcher]'s host check holds.
+     */
+    @Bean(INSTAGRAM_IMAGE_WEB_CLIENT)
+    fun instagramImageWebClient(
+        webClientBuilder: WebClient.Builder,
+        properties: InstagramProperties,
+        buildProperties: ObjectProvider<BuildProperties>
+    ): WebClient =
+        webClientBuilder
+            .clientConnector(ReactorClientHttpConnector(HttpClient.create().followRedirect(false).responseTimeout(properties.timeout)))
+            .codecs { it.defaultCodecs().maxInMemorySize(InstagramImageFetcher.MAX_BYTES) }
+            .defaultHeader("User-Agent", ApiUserAgent.of(buildProperties.ifAvailable?.version))
             .build()
 }

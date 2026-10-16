@@ -1,18 +1,33 @@
 <script setup lang="ts">
-import { CalendarPlus, ChevronLeft, ChevronRight, ExternalLink, X } from '@lucide/vue'
+import {
+  CalendarPlus,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Pencil,
+  X,
+} from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { type AdminEvent, fetchEvent, updateEvent } from '@/api/events'
 import {
+  applyChanges,
+  approveDraft,
+  type DraftChange,
+  draftChanges,
   type DraftNight,
   type DraftPage,
   fetchDrafts,
   fetchInstagramVenues,
   groupByNight,
+  type InstagramDraft,
   type InstagramVenue,
   rejectDraft,
   switchVenueOff,
 } from '@/api/instagramDrafts'
+import EventEditor from '@/components/EventEditor.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -30,6 +45,11 @@ const notice = ref<string | null>(null)
 
 const venues = shallowRef<InstagramVenue[]>([])
 const venuesError = ref<string | null>(null)
+/** The approved event of each night a later post updates, or the error that kept it from loading. */
+const targets = ref<Record<string, AdminEvent | string>>({})
+/** The event open in the editor, to add the acts of an update. */
+const editing = ref<number | null>(null)
+
 /** The venue whose "Switch off" was pressed once. The second press deletes its drafts. */
 const confirmingOff = ref<string | null>(null)
 
@@ -40,12 +60,68 @@ async function load() {
   try {
     result.value = await fetchDrafts(page.value)
     nights.value = groupByNight(result.value.content)
+    void loadTargets()
   } catch (e) {
     result.value = null
     nights.value = []
     error.value = e instanceof Error ? e.message : String(e)
   } finally {
     loading.value = false
+  }
+}
+
+/** Reads the approved event of every update night on the page. */
+async function loadTargets() {
+  targets.value = {}
+  await Promise.all(
+    nights.value.map(async (night) => {
+      const eventId = night.drafts[0]!.eventId
+      if (eventId == null) return
+      try {
+        targets.value[night.key] = await fetchEvent(eventId)
+      } catch (e) {
+        targets.value[night.key] = e instanceof Error ? e.message : String(e)
+      }
+    }),
+  )
+}
+
+function target(night: DraftNight): AdminEvent | null {
+  const event = targets.value[night.key]
+  return typeof event === 'object' ? event : null
+}
+
+function changes(night: DraftNight): DraftChange[] {
+  const event = target(night)
+  return event ? draftChanges(event, night.drafts) : []
+}
+
+/** Writes the night's changes to its event, then approves the night against it. */
+async function applyUpdate(night: DraftNight) {
+  const event = target(night)
+  if (!event) return
+  busy.value = night.key
+  notice.value = null
+  delete failures.value[night.key]
+  const changed = changes(night)
+  try {
+    if (changed.length) await updateEvent(event.id, applyChanges(event, changed))
+    await approveDraft(night.drafts[0]!.id, event.id)
+  } catch (e) {
+    failures.value[night.key] = e instanceof Error ? e.message : String(e)
+    return
+  } finally {
+    busy.value = null
+  }
+  nights.value = nights.value.filter((n) => n.key !== night.key)
+  notice.value = changed.length
+    ? `Updated ${event.title}: ${changed.map((c) => `${c.label} ${c.to}`).join(', ')}.`
+    : `Approved ${event.title}: nothing new.`
+}
+
+function onEdited(saved: AdminEvent) {
+  for (const night of nights.value) {
+    if (night.drafts[0]!.eventId === saved.id) targets.value[night.key] = saved
   }
 }
 
@@ -109,8 +185,12 @@ function percent(confidence: number | null) {
   return confidence == null ? '–' : `${Math.round(confidence * 100)} %`
 }
 
-function time(value: string | null) {
-  return value?.slice(0, 5) ?? 'no start time'
+function time(draft: InstagramDraft) {
+  const start = draft.startTime?.slice(0, 5)
+  const doors = draft.doorsTime?.slice(0, 5)
+  if (start && doors) return `doors ${doors}, start ${start}`
+  if (doors) return `doors ${doors}`
+  return start ?? 'no start time'
 }
 </script>
 
@@ -118,8 +198,9 @@ function time(value: string | null) {
   <div class="flex flex-wrap items-center gap-2">
     <p class="max-w-prose text-sm text-muted-foreground">
       Events the model drafted from Instagram posts, the soonest night first. Create event opens the
-      New event form filled from the draft; saving it approves the night. Reject drops it. Nothing
-      appears on the site until you save an event.
+      New event form filled from the draft; saving it approves the night. A later post of an
+      approved night proposes an update to its event instead. Reject drops it. Nothing appears on
+      the site until you save an event.
     </p>
     <div class="ml-auto flex items-center gap-2">
       <p class="text-sm text-muted-foreground tabular-nums" data-testid="pending-count">
@@ -169,12 +250,34 @@ function time(value: string | null) {
           <h2 class="text-base font-medium">{{ night.drafts[0]!.title }}</h2>
           <p class="text-sm text-muted-foreground">
             <span class="tabular-nums">{{ night.eventDate }}</span> · {{ night.venueName }} ·
-            <span class="tabular-nums">{{ time(night.drafts[0]!.startTime) }}</span>
+            <span class="tabular-nums">{{ time(night.drafts[0]!) }}</span>
           </p>
         </div>
+        <Badge v-if="night.drafts[0]!.eventId != null" data-testid="update-badge" variant="outline">
+          Update to event #{{ night.drafts[0]!.eventId }}
+        </Badge>
         <Badge v-if="night.drafts.length > 1" variant="secondary">
           {{ night.drafts.length }} posts
         </Badge>
+      </div>
+
+      <div
+        v-if="night.drafts[0]!.eventId != null"
+        class="flex flex-col gap-1 rounded-md bg-muted p-3 text-sm"
+        data-testid="update"
+      >
+        <p class="font-medium">A later post of a night you approved.</p>
+        <p v-if="typeof targets[night.key] === 'string'" class="text-destructive" role="alert">
+          {{ targets[night.key] }}
+        </p>
+        <p v-else-if="!target(night)" class="text-muted-foreground">Loading the event…</p>
+        <ul v-else-if="changes(night).length" class="flex flex-col gap-0.5">
+          <li v-for="change in changes(night)" :key="change.field" class="tabular-nums">
+            {{ change.label }}: {{ change.from ?? 'none' }} → {{ change.to }}
+          </li>
+        </ul>
+        <p v-else class="text-muted-foreground">Doors, start and prices match the event.</p>
+        <p class="text-muted-foreground">Compare the acts with the lineup in the event editor.</p>
       </div>
 
       <div v-for="draft in night.drafts" :key="draft.id" class="flex flex-col gap-2 border-t pt-2">
@@ -207,13 +310,39 @@ function time(value: string | null) {
           <summary class="cursor-pointer text-muted-foreground">Caption</summary>
           <p class="mt-1 break-words whitespace-pre-line">{{ draft.caption }}</p>
         </details>
+        <details v-if="draft.flyerText" class="text-sm" data-testid="flyer-text">
+          <summary class="cursor-pointer text-muted-foreground">Read from the image</summary>
+          <p class="mt-1 break-words whitespace-pre-line">{{ draft.flyerText }}</p>
+        </details>
       </div>
 
       <p v-if="failures[night.key]" class="text-sm text-destructive" role="alert">
         {{ failures[night.key] }}
       </p>
       <div class="flex flex-wrap gap-2">
+        <template v-if="night.drafts[0]!.eventId != null">
+          <Button
+            :aria-label="`Apply the update to ${night.venueName} on ${night.eventDate}`"
+            :disabled="busy !== null || !target(night)"
+            size="sm"
+            @click="applyUpdate(night)"
+          >
+            <Check aria-hidden="true" />
+            {{ changes(night).length ? 'Apply to event' : 'Approve, nothing new' }}
+          </Button>
+          <Button
+            :aria-label="`Edit the event of ${night.venueName} on ${night.eventDate}`"
+            :disabled="busy !== null"
+            size="sm"
+            variant="outline"
+            @click="editing = night.drafts[0]!.eventId"
+          >
+            <Pencil aria-hidden="true" />
+            Edit event
+          </Button>
+        </template>
         <Button
+          v-else
           :aria-label="`Create the event for ${night.venueName} on ${night.eventDate}`"
           :disabled="busy !== null"
           size="sm"
@@ -235,6 +364,8 @@ function time(value: string | null) {
       </div>
     </li>
   </ul>
+
+  <EventEditor :event-id="editing" @close="editing = null" @saved="onEdited" />
 
   <section aria-labelledby="drafts-venues" class="flex flex-col gap-2">
     <h2 id="drafts-venues" class="text-base font-medium">Venues read</h2>

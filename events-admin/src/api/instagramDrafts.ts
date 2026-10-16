@@ -4,9 +4,16 @@
  *
  * The model only drafts. A person creates the event through the New event form, then approves the
  * draft with the new event's id. Approve and reject judge the whole night: every pending draft of the
- * venue and date.
+ * venue and date. A pending draft that already carries an `eventId` is a later post of a night
+ * approved before: it proposes an update to that event.
  */
-import { failOnError, type NewEventForm } from '@/api/events'
+import {
+  type AdminEvent,
+  type EventRequest,
+  failOnError,
+  type NewEventForm,
+  toEventRequest,
+} from '@/api/events'
 
 export type DraftStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_AN_EVENT'
 
@@ -20,9 +27,13 @@ export interface InstagramDraft {
   postedAt: string
   /** Null once the draft is judged. */
   caption: string | null
+  /** The text the model read off the post's images. Null when no image was read, and once judged. */
+  flyerText: string | null
   eventDate: string | null
   /** `HH:mm:ss`, or null when the caption names no start. */
   startTime: string | null
+  /** `HH:mm:ss`, or null when the post names no doors time. */
+  doorsTime: string | null
   title: string | null
   acts: string[]
   pricePresale: number | null
@@ -124,6 +135,53 @@ export async function switchVenueOff(slug: string, fetchFn: typeof fetch = fetch
   return ((await response.json()) as { draftsDeleted: number }).draftsDeleted
 }
 
+/** The event fields a later post can fill or correct. The lineup is edited in the event editor. */
+const UPDATABLE = {
+  doorsTime: 'Doors',
+  startTime: 'Start',
+  pricePresale: 'Presale',
+  priceBoxOffice: 'Box office',
+} as const
+
+export type UpdatableField = keyof typeof UPDATABLE
+
+export interface DraftChange {
+  field: UpdatableField
+  label: string
+  /** The event's value as shown, or null when it has none. */
+  from: string | null
+  to: string
+}
+
+function shown(field: UpdatableField, value: string | number | null): string | null {
+  if (value == null) return null
+  return typeof value === 'number' ? value.toFixed(2) : value.slice(0, 5)
+}
+
+/**
+ * What the drafts of a night approved before would change on [event]: each field a draft names
+ * with another value. The newest post that names a field wins, as the drafts arrive newest first.
+ */
+export function draftChanges(event: AdminEvent, drafts: readonly InstagramDraft[]): DraftChange[] {
+  return (Object.keys(UPDATABLE) as UpdatableField[]).flatMap((field) => {
+    const named = drafts.map((d) => shown(field, d[field])).find((v) => v != null)
+    const current = shown(field, event[field])
+    return named == null || named === current
+      ? []
+      : [{ field, label: UPDATABLE[field], from: current, to: named }]
+  })
+}
+
+/** The PUT body for [event] with [changes] applied. Every other field goes back as it was read. */
+export function applyChanges(event: AdminEvent, changes: readonly DraftChange[]): EventRequest {
+  const request = toEventRequest(event, { eventType: event.eventType, genre: event.genre ?? '' })
+  for (const { field, to } of changes) {
+    if (field === 'pricePresale' || field === 'priceBoxOffice') request[field] = Number(to)
+    else request[field] = to
+  }
+  return request
+}
+
 /** The drafts of a page, grouped by venue and date in the order the importer sent them. */
 export function groupByNight(drafts: readonly InstagramDraft[]): DraftNight[] {
   const nights = new Map<string, DraftNight>()
@@ -151,6 +209,7 @@ export function formFromDraft(draft: InstagramDraft, empty: NewEventForm): NewEv
     title: draft.title ?? '',
     eventDate: draft.eventDate ?? '',
     startTime: draft.startTime?.slice(0, 5) ?? '',
+    doorsTime: draft.doorsTime?.slice(0, 5) ?? '',
     pricePresale: price(draft.pricePresale),
     priceBoxOffice: price(draft.priceBoxOffice),
     sourceUrl: draft.permalink,

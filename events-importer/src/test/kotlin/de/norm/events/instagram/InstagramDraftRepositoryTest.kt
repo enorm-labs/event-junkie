@@ -83,14 +83,21 @@ class InstagramDraftRepositoryTest : BaseControllerTest() {
         }
 
     @Test
-    fun `the database refuses a caption on a judged draft and a draft without a date`() =
+    fun `the database refuses a caption or flyer text on a judged draft and a draft without a date`() =
         runTest {
             val rso = venue("rso-berlin", null)
-            repository.insert(listOf(NewDraft(rso, post, DraftStatus.PENDING, event("2026-10-17"))))
+            repository.insert(listOf(NewDraft(rso, post, DraftStatus.PENDING, event("2026-10-17").copy(flyerText = "SAT 17 OCT"))))
 
             shouldThrow<DataIntegrityViolationException> {
                 databaseClient.sql("UPDATE events.instagram_draft SET status = 'APPROVED'").await()
             }
+            shouldThrow<DataIntegrityViolationException> {
+                databaseClient.sql("UPDATE events.instagram_draft SET status = 'APPROVED', caption = NULL").await()
+            }
+            val judged = repository.findPage(DraftStatus.PENDING, 10, 0).single()
+            judged.flyerText shouldBe "SAT 17 OCT"
+            repository.judgeNight(judged.id, DraftStatus.REJECTED, null) shouldBe 1
+            repository.findById(judged.id)?.flyerText shouldBe null
             shouldThrow<DataIntegrityViolationException> {
                 databaseClient
                     .sql(
