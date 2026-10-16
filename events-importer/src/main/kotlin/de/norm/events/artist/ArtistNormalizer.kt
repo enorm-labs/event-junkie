@@ -99,6 +99,7 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "djallynx" to "Allynx",
         "djeggsdelicious" to "Eggs Delicious",
         "djlobotomy" to "Lobotomy",
+        "djdonrogall" to "Don Rogall",
         // One act, spaced two ways by two venues.
         "bluesky" to "Blue Sky",
         "traumamia" to "Trauma Mia",

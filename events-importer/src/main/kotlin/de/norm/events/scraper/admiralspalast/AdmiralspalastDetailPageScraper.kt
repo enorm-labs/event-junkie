@@ -254,13 +254,13 @@ class AdmiralspalastDetailPageScraper {
 
         /**
          * A tribute or score production: `The Sounds of Vangelis`, `The Magic of Hans Zimmer`, `A Tribute
-         * Concert to Billy Joel`, `The Robbie Williams Show`, or a `- Das Konzert` tail. A bare `A Tribute to
+         * Concert to Billy Joel`, `The Robbie Williams Show`, or a `- Das Konzert` / `- Ein Konzert` tail. A bare `A Tribute to
          * <X>` tail stays an act's, as in the shared suffix list: `THREE SIDES – A Tribute to Genesis`.
          */
         val TRIBUTE_FRAME =
             Regex(
                 """\bthe\s+(?:sounds?|music|magic)\s+of\b|\btribute\s+(?:concert|show)\b|\bthe\s+(?:\S+\s+){1,3}?show\b""" +
-                    """|\s[-–—]\s+(?:the|das)\s+(?:concert|konzert)\s*$""",
+                    """|\s[-–—]\s+(?:the|das|ein)\s+(?:concert|konzert)\s*$""",
                 RegexOption.IGNORE_CASE
             )
 

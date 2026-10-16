@@ -36,8 +36,9 @@ import java.time.MonthDay
  * date, no `eventname`) and are skipped.
  *
  * The time cell ("22h-04h") is the night's opening hours, not doors: start and end, the end on
- * the next day. A single DJ may carry a set name after a colon ("DJ Hanzel: Efetto Notte"); two
- * DJs are joined with `&`, never a colon, so the colon tail is cut as the set name.
+ * the next day. A single DJ may carry a set name after a colon ("DJ Hanzel: Efetto Notte") or in
+ * brackets ("DJ Hanzel (Efetto Notte)"); two DJs are joined with `&`, never a colon, so the colon
+ * tail and the bracket are cut as the set name.
  *
  * Every night is a DJ dance party, so all events are [EventType.PARTY]. Dates render as German
  * `DD.MM.` with **no year**, but the row carries a German two-letter weekday (Mo–So); the year
@@ -200,17 +201,24 @@ class DunckerOverviewPageScraper(
     /**
      * Resident DJ(s) for the night, role [DJ][ScrapedArtist]. Names appear as the text of a link
      * (a profile, or inside the Facebook-event link) or as a trailing text node, always prefixed
-     * with "DJ"/"Djs". The label and a set-name tail ("DJ Hanzel: Efetto Notte") are stripped,
-     * and multi-DJ lines ("Djs Neue K & Lichene") split.
+     * with "DJ"/"Djs". The label and a set-name tail ("DJ Hanzel: Efetto Notte", "DJ Hanzel (Efetto
+     * Notte)") are stripped, and multi-DJ lines split: "Djs Neue K & Lichene", and "DJ Smoboda & DJ
+     * Gomez", whose second label comes off too.
      */
     private fun parseDjs(cell: Element): List<ScrapedArtist> {
         val candidates = cell.select("a").map { it.text() } + cell.textNodes().map { it.text() }
         return candidates
             .map { it.trim() }
             .mapNotNull { DJ_PATTERN.find(it)?.groupValues?.get(1) }
-            .map { it.substringBefore(SET_NAME_SEPARATOR).trim() }
+            .map { it.substringBefore(SET_NAME_SEPARATOR).replace(SET_NAME_BRACKET, "").trim() }
             .flatMap { splitSupportActs(it) }
-            .filterNot { isNonArtistName(it) }
+            .map {
+                DJ_PATTERN
+                    .find(it)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.trim() ?: it
+            }.filterNot { isNonArtistName(it) }
             .distinct()
             .map { ScrapedArtist(name = it, role = "DJ") }
     }
@@ -238,6 +246,9 @@ class DunckerOverviewPageScraper(
 
         /** Separates a DJ's name from the set name that may follow it. */
         private const val SET_NAME_SEPARATOR = ":"
+
+        /** A set name in a trailing bracket after a space; a bracket inside a styled name (`ALL(H)OURS`) has none. */
+        private val SET_NAME_BRACKET = Regex("""\s+\([^()]*\p{L}[^()]*\)\s*$""")
 
         /** A "DJ"/"Djs" label followed by the act name(s), captured to end of line. */
         private val DJ_PATTERN = Regex("""^djs?\b\.?\s+(.+)$""", RegexOption.IGNORE_CASE)

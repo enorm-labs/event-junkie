@@ -186,6 +186,7 @@ class ArtistNormalizerTest {
     fun `folds the duplicates the artist cleanup confirmed onto one spelling`() {
         assertSoftly {
             canonicalArtistName("DJ Buttchin") shouldBe "Buttchin"
+            canonicalArtistName("DJ Don Rogall") shouldBe "Don Rogall"
             canonicalArtistName("DJ BEN WASHINGTON") shouldBe "Ben Washington"
             canonicalArtistName("sterni") shouldBe "Sterni"
             canonicalArtistName("Bluesky") shouldBe "Blue Sky"

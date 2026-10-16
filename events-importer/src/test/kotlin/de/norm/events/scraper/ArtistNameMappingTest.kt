@@ -129,6 +129,16 @@ class ArtistNameMappingTest {
             listOf("Earth Tongue", "Scott Hepple & The Sun Band")
     }
 
+    @Test
+    fun `splitSupportActs bills a mid-name featured guest as an act of its own`() {
+        splitSupportActs("Bad Sound System feat. Fermin Muguruza") shouldContainExactly listOf("Bad Sound System", "Fermin Muguruza")
+        splitSupportActs("Bîdar featuring Fem Jam Collective, Aska") shouldContainExactly listOf("Bîdar", "Fem Jam Collective", "Aska")
+        splitSupportActs("Featurecast") shouldContainExactly listOf("Featurecast")
+        splitSupportActs("Little Feat & Friends") shouldContainExactly listOf("Little Feat & Friends")
+        // A guest in a bracket is splitBracketedGuest's, which splits it once.
+        splitSupportActs("Dosenstolz (feat. Tancred)") shouldContainExactly listOf("Dosenstolz (feat. Tancred)")
+    }
+
     // --- supportSubtitleLines ---
 
     @Test
@@ -2211,6 +2221,10 @@ class ArtistNameMappingTest {
         stripArtistSuffix("DJ Hell (Vinyl Set)") shouldBe "DJ Hell"
         stripArtistSuffix("Sonny Smiles (Album Set)") shouldBe "Sonny Smiles"
         stripArtistSuffix("Aexhy & Sonny Smiles (album-set)") shouldBe "Aexhy & Sonny Smiles"
+        stripArtistSuffix("Ethereal Logic (all night long)") shouldBe "Ethereal Logic"
+        stripArtistSuffix("Ethereal Logic (Open to Close)") shouldBe "Ethereal Logic"
+        stripArtistSuffix("Maria Wildeis TC80 Live (2h)") shouldBe "Maria Wildeis TC80 Live (2h)"
+        stripArtistSuffix("Night Tempo") shouldBe "Night Tempo"
         stripArtistSuffix("Sean Steinfeger (OHSHITF*CKYES") shouldBe "Sean Steinfeger"
 
         stripArtistSuffix("Maynd (Chi)") shouldBe "Maynd (Chi)"

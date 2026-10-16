@@ -109,8 +109,19 @@ class MatrixNightPageScraperTest {
     }
 
     @Test
+    fun `reads a spelled-out or dotted DJ label as DJ`() {
+        for (entry in listOf("D.J. R2V", "Deejay R2V")) {
+            scraper
+                .scrape(withLineUp(entry), nightUrl("social"))
+                .shouldNotBeNull()
+                .artists
+                .map { it.name } shouldContainExactly listOf("DJ R2V")
+        }
+    }
+
+    @Test
     fun `keeps a long name whole`() {
-        val name = "DJ Supercalifragilistic Expialidocious Featuring The Very Long Residency Name"
+        val name = "DJ Supercalifragilistic Expialidocious Of The Very Long Residency Name"
         val document = withLineUp(name)
 
         scraper

@@ -231,7 +231,7 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * Orchester`), which the conjunction split keeps attached, and a dash tail ending in `!`, which
  * is billing prose. A `: <night> 2027` tail is the year-ended tour rule again with a colon
  * (#305), and a `— more TBA` or bare `tba` tail is a placeholder glued to the act (#1564, #1843). A show
- * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761), and so is `(Album Set)` (#2960).
+ * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761), and so are `(Album Set)` (#2960) and `(all night long)`.
  *
  * From #1841: a compound tour word after a dash (`Die Abschiedstour`), an anniversary without a
  * dash when it reads `<n> Years Of …` or `<n> Jahre Jubiläum` (`Mutabor 35 Jahre Jubiläum`), and
@@ -264,7 +264,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|drag""" +
             """|(?:duo|trio)[\s-]?set|konzert|concert|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show""" +
-            """|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set)\)\s*$""" +
+            """|(?:all\s+)?vinyl(?:\s+(?:set|only))?|album[\s-]?set|all\s+night\s+long|open\s+to\s+close)\)\s*$""" +
             """|\s+(?:dj[\s-]?set|hybrid|(?:acoustic|akustik)[\s-]?set)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+(?:singt|sings)\s+\S.*$""" +
@@ -1357,6 +1357,10 @@ private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
  * per boundary via [splitSegmentOnConjunctions], so `Scott Hepple & The Sun Band` is one act and
  * `High On Fire & Gnome` two.
  *
+ * A mid-name `feat.` / `featuring` / `ft.` bills a guest, as [FEATURED_GUEST_MARKER] reads it in a
+ * title: `Bad Sound System feat. Fermin Muguruza` is two acts. `feat` needs its full stop here, so
+ * `Little Feat & Friends` stays whole, and a marker inside a bracket is [splitBracketedGuest]'s.
+ *
  * Each act loses a leading [ARTIST_LABEL_PREFIX]: a venue that prints its support line as
  * `Support: THE BAXBYS` bills the band, and thirteen Metropol rows were stored under the label
  * (#1678). The colon is what makes that safe — the band `Support Lesbiens` keeps its name.
@@ -1365,9 +1369,21 @@ private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
 fun splitSupportActs(text: String): List<String> =
     text
         .split(SUPPORT_HARD_SEPARATOR)
+        .flatMap { splitOnFeaturedGuest(it) }
         .flatMap { splitSegmentOnConjunctions(it) }
         .map { stripArtistPrefix(it.trim()) }
         .filter { it.isNotBlank() }
+
+/** A lineup segment cut at each [LINEUP_FEATURED_GUEST] outside a bracket; the segment alone when there is none. */
+private fun splitOnFeaturedGuest(segment: String): List<String> {
+    val marker = LINEUP_FEATURED_GUEST.find(segment) ?: return listOf(segment)
+    val head = segment.substring(0, marker.range.first)
+    val insideBracket = head.count { it == '(' } != head.count { it == ')' }
+    return if (insideBracket) listOf(segment) else listOf(head) + splitOnFeaturedGuest(segment.substring(marker.range.last + 1))
+}
+
+/** [FEATURED_GUEST_MARKER] with the full stop `feat.` needs in a lineup segment. */
+private val LINEUP_FEATURED_GUEST = Regex("""\s+(?:feat\.|featuring|ft\.)\s+""", RegexOption.IGNORE_CASE)
 
 /**
  * Splits a headliner title into co-billed acts (`TOTAL CHAOS + RUMKICKS + THE DOLLHEADS`,

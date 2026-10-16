@@ -125,7 +125,7 @@ class MatrixNightPageScraper {
      * The line-up, every entry as `DJ`, duplicates collapsed. An entry reads `DJ JC b2b DJ GUS` or
      * `DJ TC (Blactro)`: the trailing parenthesis is the resident's crew or radio show, which the old
      * site set apart in `<small>`. It is dropped so `DJ TC` stays one artist across both sites. Then
-     * `b2b`, `&` and commas split the entry into acts, and a leading `Deejay` reads as `DJ`.
+     * `b2b`, `&` and commas split the entry into acts, and a leading `Deejay` or `D.J.` reads as `DJ`.
      */
     private fun parseLineup(document: Document): List<ScrapedArtist> =
         document
@@ -158,7 +158,7 @@ class MatrixNightPageScraper {
         /** A parenthesis at the end of a line-up entry, `DJ R2V (KISS FM)`. */
         val TRAILING_AFFILIATION = Regex("""\s*\([^()]*\)\s*$""")
 
-        /** The spelled-out `Deejay` in front of a DJ's name. */
-        val DEEJAY_PREFIX = Regex("""^deejay\s+""", RegexOption.IGNORE_CASE)
+        /** The spelled-out `Deejay`, or `D.J.`, in front of a DJ's name. */
+        val DEEJAY_PREFIX = Regex("""^(?:deejay\s+|d\.\s?j\.\s*)""", RegexOption.IGNORE_CASE)
     }
 }

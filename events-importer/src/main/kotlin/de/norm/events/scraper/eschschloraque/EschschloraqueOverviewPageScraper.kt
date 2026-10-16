@@ -105,7 +105,7 @@ class EschschloraqueOverviewPageScraper {
         val description = parseDescription(node, billingParagraphs)
         val (doorsTime, startTime) = resolveTimes(startDateTime.second, node.select(PROSE_PARAGRAPHS).text())
         val presentedActs = presentedLiveActs(title)
-        val lineup = (presentedActs + parseLineup(billingParagraphs)).distinctBy { it.name.lowercase() }
+        val lineup = (presentedActs + parseLineup(billingParagraphs).filterNot { repeatsNightName(it.name, title) }).distinctBy { it.name.lowercase() }
 
         return ScrapedEvent(
             title = title,
@@ -368,3 +368,19 @@ private fun presentedLiveActs(title: String): List<ScrapedArtist> {
  * presented series name is never billed.
  */
 private val PRESENTED_LIVE_ACT = Regex("""^.+?\s+(?:$PRESENTS_VERBS)\s+(.+?)\s*[-–—]\s*live!*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * Whether a billing line is the night's own name with a tail: `Methods Of Dance - 2 Act` on the
+ * night titled `Methods of Dance II`. The title loses a trailing number first. A line that is the
+ * title alone stays, because a night can be named after its one DJ.
+ */
+private fun repeatsNightName(
+    name: String,
+    title: String
+): Boolean {
+    val nightName = title.replace(TRAILING_EDITION_NUMBER, "").trim()
+    return nightName.isNotEmpty() && Regex("""${Regex.escape(nightName)}\s*[-–—:]\s*\S.*""", RegexOption.IGNORE_CASE).matches(name.trim())
+}
+
+/** A night's edition number at the end of its title: `II`, `3`, `#4`. */
+private val TRAILING_EDITION_NUMBER = Regex("""\s+#?(?:[IVX]+|\d+)$""")
