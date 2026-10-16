@@ -1564,14 +1564,15 @@ val SUPPORT_ROLE_PREFIX = Regex("""^(?:$SUPPORT_LABELS)\s*:""", RegexOption.IGNO
  * A leading role or event-format label in front of the billed act (`Support:`, `Opener:`,
  * `Record Release:`, `Listening Session:`, `Live:`), which must not become part of the name
  * (Admiralspalast stored `Support: A.A. Williams`, Loge `Record Release: Pair`, Tresor
- * `Listening Session: Drexciya - Neptune's Lair`). The colon is required, unlike
- * [ROLE_LABEL_PREFIX]: against an arbitrary title, `Support Lesbiens` and `Session Victim`
- * would be maimed.
+ * `Listening Session: Drexciya - Neptune's Lair`, Neue Zukunft `Im Anschlusz: Constant Disappointment`).
+ * The colon is required, unlike [ROLE_LABEL_PREFIX]: against an arbitrary title, `Support Lesbiens` and
+ * `Session Victim` would be maimed.
  */
 private val ARTIST_LABEL_PREFIX =
     Regex(
         """^(?:$SUPPORT_LABELS""" +
-            """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show|live)\s*:\s*""",
+            """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show|live""" +
+            """|im\s+anschlus[sz])\s*:\s*""",
         RegexOption.IGNORE_CASE
     )
 

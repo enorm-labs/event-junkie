@@ -1,5 +1,6 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -57,12 +58,13 @@ class MetropolDetailPageScraper {
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
         val timeLine = document.textAt(".event-details .time")
+        val description = document.textAt(".event-text")
 
         return ScrapedEvent(
             title = cleanEventTitle(stripRelocationPrefix(rawTitle)),
             subtitle = document.textAt(".event-info p.tour"),
-            description = document.textAt(".event-text"),
-            eventType = mapEventType(document.textAt(".event-details ul.event-categories")),
+            description = description,
+            eventType = metropolEventType(document.textAt(".event-details ul.event-categories"), description),
             // The slug's ISO prefix is the canonical date; the sentinel lets the overview's rendered
             // German date backstop it via fillGapsFromOverview.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
@@ -77,6 +79,15 @@ class MetropolDetailPageScraper {
             promoters = listOfNotNull(parsePromoter(document))
         )
     }
+
+    /**
+     * The category's type, unless the text calls the night a party format: PARTY101 is filed under
+     * `Konzert`, and its blurb says `Throwback-Party` and `Partyformat` (#3415). A party mints no act.
+     */
+    private fun metropolEventType(
+        category: String?,
+        description: String?
+    ): String? = if (description != null && PARTY_FORMAT.containsMatchIn(description)) EventType.PARTY.name else mapEventType(category)
 
     /**
      * The status from the `.alert-red` badge (`Achtung: Abgesagt!`) and the title's
@@ -111,4 +122,9 @@ class MetropolDetailPageScraper {
             document.attrAt(".event-image a.thumbnail img[data-src]", "data-src")
                 ?: document.attrAt(".event-image noscript img", "src")
         )?.takeIf { it.startsWith("http") }
+
+    private companion object {
+        /** The words a blurb uses for a party night billed under another category. */
+        val PARTY_FORMAT = Regex("""(?<!\p{L})(?:partyformat|throwback-party)""", RegexOption.IGNORE_CASE)
+    }
 }

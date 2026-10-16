@@ -92,11 +92,39 @@ internal fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { 
  * turns its title into headliners; the title passes through [stripHostPrefix] first. An evening
  * runs in one hall, so the hall is the event's [room][de.norm.events.scraper.ScrapedEvent.room],
  * not a stage on each act. A blurb's `Mit:` line replaces these on the detail page ([silentGreenPerformers]).
+ *
+ * A `"<lead>: <one name>"` title that is left whole bills the lead only when the row's sub-line
+ * names it too, and nobody otherwise: `"The I in the Mirror: Reflection"` is a programme, and nothing
+ * in the title tells it from `"<act>: <work>"` (#3415).
  */
 internal fun silentGreenArtists(
     title: String,
-    eventType: String
-): List<ScrapedArtist> = buildArtistsForEventType(stripHostPrefix(title), subtitle = null, eventType = eventType)
+    eventType: String,
+    subLine: String? = null
+): List<ScrapedArtist> {
+    val acts = stripHostPrefix(title)
+    val lead =
+        COLON_LEAD
+            .find(acts)
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
+    val billed =
+        when {
+            lead == null -> acts
+            namesAgain(silentGreenSubtitle(subLine), lead) -> lead
+            else -> return emptyList()
+        }
+    return buildArtistsForEventType(billed, subtitle = null, eventType = eventType)
+}
+
+/** Whether [text] contains [name] as a whole name, ignoring case. */
+private fun namesAgain(
+    text: String?,
+    name: String
+): Boolean =
+    text != null &&
+        Regex("""(?<![\p{L}\d])${Regex.escape(name)}(?![\p{L}\d])""", RegexOption.IGNORE_CASE).containsMatchIn(text)
 
 /**
  * The players a house-series concert names on a blurb line that opens `Mit:` (`Mit: Simon Rose,
@@ -127,7 +155,7 @@ private val BRACKETED = Regex("""\s*\([^)]*\)""")
  * `headlinersFromTitle`, which reads the right side: `"hub pres. Doorman + Franco Franco"` is a
  * host and its programme, `"Burnt Friedman pres. Secret Rhythms"` an act and its project (#1581).
  * A bare `"<series>: <acts>"` colon is far weaker (`"The I in the Mirror: Reflection"` is a
- * title), so it is stripped only when the remainder still bills more than one act (`"Psychic
+ * title, see [silentGreenArtists]), so it is stripped only when the remainder still bills more than one act (`"Psychic
  * Liberation Night: Niloofar Asghary + Júlia Koffler"`, `"15 YEARS zweikommasieben: Anna Homler
  * + Steven Warwick + zweikommasieben DJs"`). An en dash sets a series off the same way (`"HALF LIGHT – Abul
  * Mogard, Marja de Sanctis, …"`), and a series the house names at the end is in [HOUSE_SERIES] (#2072). Only the derived
@@ -207,6 +235,9 @@ private val SERIES_PREFIX = Regex("""^[^:+,–—]{2,60}(?::|\s[–—])\s+""")
  * Klunkerkranich's duo names are, because nothing in the title tells a series from an act (#2072).
  */
 private val HOUSE_SERIES = Regex("""\s*[–—]\s*sonic\s+morgue\s*$""", RegexOption.IGNORE_CASE)
+
+/** A `"<lead>: "` that [stripHostPrefix] left in place, capturing the lead. */
+private val COLON_LEAD = Regex("""^([^:+,–—]{2,60}):\s+\S""")
 
 /** What separates co-billed acts here: a space-padded `+`, or a comma in a list after a series. */
 private val CO_BILL_SEPARATOR = Regex("""\s\+\s|,\s""")

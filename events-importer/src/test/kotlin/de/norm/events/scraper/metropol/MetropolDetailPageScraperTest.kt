@@ -72,6 +72,13 @@ class MetropolDetailPageScraperTest {
     }
 
     @Test
+    fun `types a night the blurb calls a party format PARTY, whatever its category`() {
+        // Filed under `Konzert`, and stored as the act `PARTY101` until V167 (#3415).
+        scrape("party101", "2026-09-11-party101").eventType shouldBe EventType.PARTY.name
+        scrape("shadow-of-intent", "2026-10-08-shadow-of-intent").eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `drops an unset start time the venue renders as midnight`() {
         val event = scrape("shadow-of-intent", "2026-10-08-shadow-of-intent")
         event.doorsTime shouldBe LocalTime.of(18, 0)

@@ -3,6 +3,7 @@ package de.norm.events.scraper.saalchen
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
@@ -46,6 +47,15 @@ class SaalchenOverviewPageScraperTest {
         events.any { it.title == "Jimmy Sax" } shouldBe true
         events.none { it.title.contains("FLOHMARKT") } shouldBe true
         events.none { it.title.contains("BREAKFAST") } shouldBe true
+    }
+
+    @Test
+    fun `bills the act without the numbered work after the dash`() {
+        // Stored as `Stegreif Orchester – freeEroica #1` and `#2` until V167 (#3415).
+        event("saalchen:stegreif-orchester-freeeroica-1").artists.map { it.name } shouldContainExactly listOf("Stegreif Orchester")
+        event("saalchen:stegreif-orchester-freeeroica-2").artists.map { it.name } shouldContainExactly listOf("Stegreif Orchester")
+        saalchenActs("Jimmy Sax") shouldBe "Jimmy Sax"
+        saalchenActs("frytz - TOUR 2026") shouldBe "frytz - TOUR 2026"
     }
 
     @Test

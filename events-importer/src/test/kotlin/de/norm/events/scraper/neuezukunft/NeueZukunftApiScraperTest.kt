@@ -2,6 +2,7 @@ package de.norm.events.scraper.neuezukunft
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.headlinersFromTitle
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -128,6 +129,17 @@ class NeueZukunftApiScraperTest {
                 ScrapedArtist("TVOD", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Twiggy", "HEADLINER", titleDerived = true)
             )
+    }
+
+    @Test
+    fun `drops the Im Anschluss label in front of the act that plays after`() {
+        // The stored title; it billed `Im Anschlusz: Constant Disappointment` until V167 (#3415).
+        headlinersFromTitle("Im Anschlusz: Constant Disappointment + Dosenstolz (feat. Tancred) + Mangel").map { it.name } shouldContainExactly
+            listOf("Constant Disappointment", "Dosenstolz (feat. Tancred)", "Mangel")
+        headlinersFromTitle("Im Anschluss: Constant Disappointment").map { it.name } shouldContainExactly
+            listOf("Constant Disappointment")
+        // Without its colon the phrase is left alone.
+        headlinersFromTitle("Anschluss").map { it.name } shouldContainExactly listOf("Anschluss")
     }
 
     @Test

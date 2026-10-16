@@ -122,6 +122,17 @@ class MetropolWebsiteImporterTest {
         }
 
     @Test
+    fun `bills no act on a night the detail page calls a party format`() =
+        runTest {
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            // The listing files it under `Konzert`, and `PARTY101` was stored as an act until V167 (#3415).
+            val party = result.events.first { it.sourceId == "metropol:2026-09-11-party101" }
+            party.eventType shouldBe "PARTY"
+            party.artists shouldBe emptyList()
+        }
+
+    @Test
     fun `falls back to listing data when a detail page cannot be fetched`() =
         runTest {
             val result = importer.importEvents(sourceUrl)
