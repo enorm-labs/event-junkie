@@ -202,6 +202,12 @@ says so.
 | `GAERTEN_DER_WELT`     | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GAERTEN_DER_WELT`     | `PRICE`            | an event sold through an outside ticket shop prints no figure on its page                                                                        | —     |
 | `GAERTEN_DER_WELT`     | `ARTISTS`          | the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all                           | —     |
+| `GALILAEAKIRCHE`       | `SUBTITLE`         | the programme has a title per event and no second title line                                                                                     | —     |
+| `GALILAEAKIRCHE`       | `GENRE`            | the site files events only as concert, reading, film, theatre or other, and names no musical style                                               | —     |
+| `GALILAEAKIRCHE`       | `END_TIME`         | the site states a start and a doors time, not an end                                                                                             | —     |
+| `GALILAEAKIRCHE`       | `ARTISTS`          | the band fields hold prose or a video, so the act comes from the title                                                                           | —     |
+| `GALILAEAKIRCHE`       | `PROMOTERS`        | the site names an organiser only in the event text                                                                                               | —     |
+| `GALILAEAKIRCHE`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `GARTN`                | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `GARTN`                | `GENRE`            | the venue publishes no genre; every night takes the club's Techno default                                                                        | —     |
 | `GARTN`                | `IMAGE`            | the venue publishes no per-event image                                                                                                           | —     |
