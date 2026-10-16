@@ -153,13 +153,13 @@ class SupamollyOverviewPageScraper {
     /**
      * The billed act names as artist entries, in billing order. Each is stripped of a leading
      * co-bill conjunction (`"& Support"` → `"Support"`, so the shared [isNonArtistName] recognises
-     * the bare role label) and a trailing tour/live/format tail ([stripArtistSuffix]), then dropped
+     * the bare role label), a founding tagline ([FOUNDING_TAGLINE]) and a trailing tour/live/format tail ([stripArtistSuffix]), then dropped
      * if not a performer ([isNonArtistName]) or a programme note ([isProgrammeNote]). First survivor
      * is headliner, the rest support.
      */
     private fun buildArtists(actNames: List<String>): List<ScrapedArtist> =
         actNames
-            .map { stripArtistSuffix(stripArtistPrefix(it.replaceFirst(LEADING_CONJUNCTION, ""))) }
+            .map { stripArtistSuffix(stripArtistPrefix(it.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, ""))) }
             .filter { it.isNotBlank() && !isNonArtistName(it) && !isProgrammeNote(it) }
             .distinct()
             .mapIndexed { index, name ->
@@ -237,6 +237,9 @@ class SupamollyOverviewPageScraper {
 
         /** The `HHMM` tail of every poster row's stamp; no real event has started at 23:59. */
         private const val POSTER_STAMP_TIME = "2359"
+
+        /** A band's founding tagline after its name: `Skarface est.1991 La France` bills Skarface. */
+        private val FOUNDING_TAGLINE = Regex("""\s+est\.?\s*(?:19|20)\d{2}\b.*$""", RegexOption.IGNORE_CASE)
 
         /** A leading `&` / `+` co-bill conjunction on an act name ("& Support" → "Support"). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")

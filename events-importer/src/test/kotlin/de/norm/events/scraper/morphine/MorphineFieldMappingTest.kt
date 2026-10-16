@@ -40,6 +40,9 @@ class MorphineFieldMappingTest {
         titleBilling("PICI - Clémence Manachère & Polina Pohozha - Live Recording") shouldBe "PICI"
         titleBilling("Tony Buck & Flo Stoffner - Live Recording") shouldBe "Tony Buck & Flo Stoffner"
         titleBilling("Alister Spence – Within Without") shouldBe "Alister Spence – Within Without"
+        titleBilling("Evelyn Plaschg - Alphabet Live") shouldBe "Evelyn Plaschg"
+        titleBilling("Felix-Florian Tödtloff Live") shouldBe "Felix-Florian Tödtloff"
+        titleBilling("Olive") shouldBe "Olive"
     }
 
     @Test

@@ -237,6 +237,31 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a billing line that repeats the night's name with a tail`() {
+        val node =
+            """
+            <div class="node-veranstaltung" about="/methods-dance-ii-18092026">
+              <h2 class="veranstaltung-title">Methods of Dance II</h2>
+              <span class="date-display-single" content="2026-09-18T21:00:00+02:00">Freitag, 18. September 2026 ab 21Uhr</span>
+              <div class="field-type-text-with-summary">
+                <p><span class="redsubtitle">Methods Of Dance - 2 Act</span></p>
+                <p><span class="redsubtitle"><span>Dj:</span> M.O.E.</span></p>
+              </div>
+            </div>
+            <div class="node-veranstaltung" about="/krawallwitz-19092026">
+              <h2 class="veranstaltung-title">Krawallwitz</h2>
+              <span class="date-display-single" content="2026-09-19T21:00:00+02:00">Samstag, 19. September 2026 ab 21Uhr</span>
+              <div class="field-type-text-with-summary"><p><span class="redsubtitle">Krawallwitz</span></p></div>
+            </div>
+            """.trimIndent()
+        val lineups = EschschloraqueOverviewPageScraper().scrape(Jsoup.parse(node, baseUrl), baseUrl).associate { it.title to it.artists.map { a -> a.name } }
+
+        lineups["Methods of Dance II"] shouldBe listOf("M.O.E.")
+        // A night named after its one DJ keeps the DJ.
+        lineups["Krawallwitz"] shouldBe listOf("Krawallwitz")
+    }
+
+    @Test
     fun `joins the venue's bilingual prose and excludes photo credits`() {
         val bingo = events.first { it.title.startsWith("BULETTEN BINGO") }
         val description = bingo.description!!

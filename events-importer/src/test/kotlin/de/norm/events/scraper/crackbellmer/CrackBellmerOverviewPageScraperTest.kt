@@ -154,6 +154,23 @@ class CrackBellmerOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a withheld lineup however the venue spells it`() {
+        lineupOfStayToxic("Spntaneous :)").shouldBeEmpty()
+        lineupOfStayToxic("Spontaneous").shouldBeEmpty()
+        lineupOfStayToxic("Smuda, cupidstunt") shouldContainExactly listOf("Smuda", "cupidstunt")
+    }
+
+    /** The 29 August night with its withheld `Secret Line-Up` replaced by [lineup]. */
+    private fun lineupOfStayToxic(lineup: String): List<String> {
+        val html = fixture().replace("fs-list-field=\"lineup\">Secret Line-Up<", "fs-list-field=\"lineup\">$lineup<")
+        return CrackBellmerOverviewPageScraper(beforeProgramme)
+            .scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+            .on(LocalDate.of(2026, 8, 29), "STAY TOXIC")
+            .artists
+            .map { it.name }
+    }
+
+    @Test
     fun `returns no events for a page without a programme`() {
         val document = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
         CrackBellmerOverviewPageScraper(captureDate).scrape(document, sourceUrl).shouldBeEmpty()

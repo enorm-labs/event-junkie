@@ -200,6 +200,7 @@ class AdmiralspalastDetailPageScraperTest {
                 Arguments.of("The Magic of Hans Zimmer – The Concert", "Konzert", emptyList<String>()),
                 Arguments.of("Let Me Entertain You - The Robbie Williams Show a night of greatest hits", "Konzert", emptyList<String>()),
                 Arguments.of("Game of Thrones & House of the Dragon - Das Konzert", "Konzert", emptyList<String>()),
+                Arguments.of("Vier Pianisten - Ein Konzert", "Konzert", emptyList<String>()),
                 Arguments.of(
                     "Piano Man - A Tribute Concert to Billy Joel & St. Konrad Gospelchor Berlin",
                     "Konzert",

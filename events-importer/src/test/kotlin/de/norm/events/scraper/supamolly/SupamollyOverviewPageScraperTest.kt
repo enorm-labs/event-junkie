@@ -103,7 +103,8 @@ class SupamollyOverviewPageScraperTest {
             val event = eventWithStamp("202609032100")
 
             event.title shouldBe "Skarface est.1991 La France"
-            event.artists shouldContainExactly listOf(ScrapedArtist("Skarface est.1991 La France", "HEADLINER"))
+            // The founding tagline is not part of the band's name.
+            event.artists shouldContainExactly listOf(ScrapedArtist("Skarface", "HEADLINER"))
         }
 
         @Test

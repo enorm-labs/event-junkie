@@ -127,6 +127,28 @@ class DunckerOverviewPageScraperTest {
     }
 
     @Test
+    fun `cuts a bracketed set name and the second DJ label of a two-DJ line`() {
+        // The live page's 16.11. and 07.11. rows: the DJs only, without their set name or a second `DJ`.
+        artistsOf("DJ Hanzel (Efetto Notte)") shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = "DJ"))
+        artistsOf("DJ Smoboda & DJ Gomez") shouldContainExactly
+            listOf(ScrapedArtist(name = "Smoboda", role = "DJ"), ScrapedArtist(name = "Gomez", role = "DJ"))
+        // A bracket inside a styled name is no set name.
+        artistsOf("DJ ALL(H)OURS") shouldContainExactly listOf(ScrapedArtist(name = "ALL(H)OURS", role = "DJ"))
+    }
+
+    private fun artistsOf(djLine: String): List<ScrapedArtist> {
+        val row =
+            """
+            <table class="bodytable"><tr class="tablereihe">
+              <td class="tableweekday">Mo</td><td class="tabledate">16.11.</td>
+              <td class="tableevent"><span class="eventname">Dark Mønday</span><br>darkwave<br>$djLine</td>
+              <td class="tabletime">21h-04h</td>
+            </tr></table>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(row, baseUrl), baseUrl).single().artists
+    }
+
+    @Test
     fun `returns no events for a page without the programme table`() {
         val emptyDoc = Jsoup.parse("<html><body><p>Baustelle</p></body></html>", baseUrl)
         scraper.scrape(emptyDoc, baseUrl).shouldBeEmpty()
