@@ -89,6 +89,14 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits the last two acts of a comma list at their conjunction`() {
+        val nights = scrapeCards("ÍNTIMO w/ Sarah Ninon, The Brahma & Jelle from the Block" to "")
+
+        nights.single().artists shouldContainExactly
+            listOf("Sarah Ninon", "The Brahma", "Jelle from the Block").map { ScrapedArtist(name = it, role = "DJ") }
+    }
+
+    @Test
     fun `names nobody for a crew or series night`() {
         events.first { it.title.startsWith("Gardens of Disco") }.artists.shouldBeEmpty()
         events.first { it.title.startsWith("Nice Tries") }.artists.shouldBeEmpty()

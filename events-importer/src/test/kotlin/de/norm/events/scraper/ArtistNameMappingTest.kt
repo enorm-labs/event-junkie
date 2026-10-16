@@ -977,7 +977,6 @@ class ArtistNameMappingTest {
     fun `headlinersFromTitle changes nothing without a description`() {
         headlinersFromTitle("D-Block Europe, French Montana").map { it.name } shouldBe
             listOf("D-Block Europe, French Montana")
-        headlinersFromTitle("Myki, Darlene & Nini").map { it.name } shouldBe listOf("Myki, Darlene & Nini")
     }
 
     @Test
@@ -1592,10 +1591,38 @@ class ArtistNameMappingTest {
     }
 
     @Test
-    fun `splitHeadlinerTitle keeps a one-comma name whole, whichever it turns out to be`() {
-        // Four real acts, each with exactly one comma. Nothing in the string says they are not bills.
-        splitHeadlinerTitle("Hey, Nothing") shouldContainExactly listOf("Hey, Nothing")
+    fun `splitHeadlinerTitle splits a one-comma list that ends in a conjunction into its acts`() {
+        // The three stored list rows of #3419.
+        splitHeadlinerTitle("Sarah Ninon, The Brahma & Jelle from the Block") shouldContainExactly
+            listOf("Sarah Ninon", "The Brahma", "Jelle from the Block")
+        splitHeadlinerTitle("Emil, Jorin Hagen & Jhnwndt") shouldContainExactly listOf("Emil", "Jorin Hagen", "Jhnwndt")
+        splitHeadlinerTitle("Müge, Ecrin Hazer & Sianza") shouldContainExactly listOf("Müge", "Ecrin Hazer", "Sianza")
+        headlinersFromTitle("Myki, Darlene & Nini").map { it.name } shouldBe listOf("Myki", "Darlene", "Nini")
+    }
+
+    @Test
+    fun `splitHeadlinerTitle keeps a band named as a comma list, and a tail marker after the conjunction`() {
         splitHeadlinerTitle("Kitty, Daisy & Lewis") shouldContainExactly listOf("Kitty, Daisy & Lewis")
+        splitHeadlinerTitle("Frost, Pisse & Elend") shouldContainExactly listOf("Frost, Pisse & Elend")
+        splitHeadlinerTitle("Earth, Wind & Fire") shouldContainExactly listOf("Earth, Wind & Fire")
+        splitHeadlinerTitle("Ana, Nick Cave & The Bad Seeds") shouldContainExactly listOf("Ana", "Nick Cave & The Bad Seeds")
+        // No comma, no list: `A & B` keeps the per-boundary rules.
+        splitHeadlinerTitle("High On Fire & Gnome") shouldContainExactly listOf("High On Fire", "Gnome")
+        splitHeadlinerTitle("Stella & The Longos") shouldContainExactly listOf("Stella & The Longos")
+    }
+
+    @Test
+    fun `commaListActs reads only a comma list that ends in a conjunction`() {
+        commaListActs("Sarah Ninon, The Brahma & Jelle from the Block") shouldBe listOf("Sarah Ninon", "The Brahma", "Jelle from the Block")
+        commaListActs("Kitty, Daisy & Lewis") shouldBe listOf("Kitty, Daisy & Lewis")
+        commaListActs("CRIES, Kallaloo, Vio PRG") shouldBe null
+        commaListActs("juan and only") shouldBe null
+    }
+
+    @Test
+    fun `splitHeadlinerTitle keeps a one-comma name whole, whichever it turns out to be`() {
+        // Real acts, each with exactly one comma and no conjunction. Nothing in the string says they are not bills.
+        splitHeadlinerTitle("Hey, Nothing") shouldContainExactly listOf("Hey, Nothing")
         splitHeadlinerTitle("Wracaj, bociemno") shouldContainExactly listOf("Wracaj, bociemno")
         splitHeadlinerTitle("Yes, I\u2019m Very Tired Now") shouldContainExactly listOf("Yes, I\u2019m Very Tired Now")
         // And one that is a bill, kept whole for the same reason. The comma rule does not guess.
@@ -1679,7 +1706,7 @@ class ArtistNameMappingTest {
         splitHeadlinerTitle("James and the Cold Gun") shouldContainExactly listOf("James and the Cold Gun")
         // A bare "and" inside a single word must not be split (space-padding).
         splitHeadlinerTitle("Portland") shouldContainExactly listOf("Portland")
-        // Comma signals a member-list band name.
+        // A member-list band name is a known act.
         splitHeadlinerTitle("Earth, Wind & Fire") shouldContainExactly listOf("Earth, Wind & Fire")
         // "& Friends" / "& Guests" / "& Band" collective tail names an unnamed cast, not a second act.
         splitHeadlinerTitle("Taylor & Friends") shouldContainExactly listOf("Taylor & Friends")
