@@ -610,6 +610,10 @@ says so.
 | `YAAM`                 | `TICKET_URL`       | `website` is empty on every event                                                                                                                | —     |
 | `YAAM`                 | `ARTISTS`          | a jam session names only its host series, and no act                                                                                             | —     |
 | `YAAM`                 | `PROMOTERS`        | every event names the venue itself as organizer                                                                                                  | —     |
+| `ZEBRANO_THEATER`      | `DOORS_TIME`       | the programme prints one time per evening                                                                                                        | —     |
+| `ZEBRANO_THEATER`      | `PRICE_PRESALE`    | the house sells one price, by e-mail reservation or through its ticket shop                                                                      | —     |
+| `ZEBRANO_THEATER`      | `GENRE`            | the programme names a category per evening, not a musical style                                                                                  | —     |
+| `ZEBRANO_THEATER`      | `PROMOTERS`        | the house presents every evening itself                                                                                                          | —     |
 | `ZENNER`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `ZENNER`               | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
 | `ZENNER`               | `SOLD_OUT`         | the venue publishes no sold-out state                                                                                                            | —     |

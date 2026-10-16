@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   136 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    39 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   137 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    38 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -170,6 +170,7 @@ schema change.
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
+| Zebrano-Theater                  | https://www.zebrano-theater.de/programm.html                             | Theater      | Hand-written month tables + event pages                   |
 | Zenner                           | https://zenner.berlin/programm                                           | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive          |
 | Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
 | Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu                           | Club         | Squarespace list + event pages; Hall items dropped        |
@@ -177,7 +178,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-135 importer classes cover 136 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+136 importer classes cover 137 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
@@ -198,7 +199,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 81 have none, and 4 are unknown. Nine translate the event text on a second page.
+51 sources have a second language, 82 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -353,6 +354,7 @@ the upsert stores none.
 | WABE                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
 | YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
+| Zebrano-Theater                  | No              | —                                                            | —                  |                                                                                                                                    |
 | Zenner                           | Yes             | Script switch, no URL                                        | Unknown            | https://zenner.berlin/programm                                                                                                     |
 | Zig Zag Hall                     | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-hall-detail.html)                                      |
 | Zig Zag Jazz Club                | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-detail.html)                                           |
@@ -388,7 +390,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend               |
 | Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint      |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices       |
-| Zebrano Theater          | https://www.zebrano-theater.de/programm.html              | Theater      | Medium   | Month table; time, price, genre; year from the heading      |
 | Mad Monkey Room          | https://t.rausgegangen.de/tickets/shop/mad-monkey-2       | Comedy Club  | Medium   | rausgegangen ticket shop; ~470 dated shows with prices      |
 | Baiz                     | https://radar.squat.net/en/node/1609                      | Bar          | Medium   | radar group API, 66 upcoming; talks and quizzes too         |
 | Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops    |

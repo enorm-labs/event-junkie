@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["theatre"],
         "capacity": 65,
-        "programmeUrl": "https://www.zebrano-theater.de/programm.html",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Zebrano-Theater",
+            "url": "https://www.zebrano-theater.de/programm.html",
+            "sourceType": "ZEBRANO_THEATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

@@ -27,6 +27,9 @@ abstract class AbstractSinglePageWebsiteImporter(
      */
     protected open val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?)? = null
 
+    /** Whether [event] links a page of its own rather than the listing; [enrichFromEventPage] reads only those. */
+    protected open fun hasEventPage(event: ScrapedEvent): Boolean = true
+
     /** The fields a good run takes from the event page over the listing's, see [withEventPageOrFlagged]. */
     protected open val eventPageOwns: Set<ScrapedField> = emptySet()
 
@@ -97,7 +100,9 @@ abstract class AbstractSinglePageWebsiteImporter(
 
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val enrich = enrichFromEventPage ?: return events
-        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event, eventPageOwns) { document -> enrich(event, document) } }
+        return events.map { event ->
+            if (hasEventPage(event)) htmlFetcher.withEventPageOrFlagged(event, eventPageOwns) { document -> enrich(event, document) } else event
+        }
     }
 }
 
