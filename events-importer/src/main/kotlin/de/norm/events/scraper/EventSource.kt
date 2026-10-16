@@ -243,6 +243,9 @@ enum class EventSource {
     /** Loge Berlin – an intimate, collectively run bar and events space in Friedrichshain. */
     LOGE,
 
+    /** L.U.X – a small Kreuzberg dance bar on Schlesische Straße, without live music, whose DJs mostly play vinyl. */
+    LUX,
+
     /** MAAYA Berlin – an Afro-diasporic cultural venue on the RAW-Gelände built around a heated open-air pool, with a gallery, garden and market. */
     MAAYA,
 

@@ -407,6 +407,16 @@ says so.
 | `LOGE`                 | `EVENT_TYPE`       | the venue has no category field; a live-music venue, so an unmarked title defaults to a concert                                                  | —     |
 | `LOGE`                 | `ARTISTS`          | a title without a + separator can be a band or an event name, so no act is derived from one                                                      | —     |
 | `LOGE`                 | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `LUX`                  | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
+| `LUX`                  | `DOORS_TIME`       | the site prints one time per night, marked as doors only on some nights                                                                          | —     |
+| `LUX`                  | `END_TIME`         | the site prints no end time beyond an open-ended late                                                                                            | —     |
+| `LUX`                  | `TICKET_URL`       | the bar sells no tickets and links no ticket shop                                                                                                | —     |
+| `LUX`                  | `GENRE`            | the site names no style beyond a free-text tagline                                                                                               | —     |
+| `LUX`                  | `PRICE_PRESALE`    | entry is free or a donation, and there is no presale                                                                                             | —     |
+| `LUX`                  | `PROMOTERS`        | the site credits no promoter apart from free text                                                                                                | —     |
+| `LUX`                  | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `LUX`                  | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `LUX`                  | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `MAAYA`                | `PER_EVENT_PAGE`   | the programme is one hand-built section of the WordPress home page                                                                               | —     |
 | `MAAYA`                | `DESCRIPTION`      | the programme is one hand-built section of the home page and carries no detail text                                                              | —     |
 | `MAAYA`                | `PRICE`            | the venue publishes an entry note in words and no numeric price                                                                                  | —     |
