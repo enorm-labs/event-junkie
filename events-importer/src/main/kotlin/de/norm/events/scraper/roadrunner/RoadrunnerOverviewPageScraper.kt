@@ -4,6 +4,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -133,7 +134,7 @@ class RoadrunnerOverviewPageScraper(
     ): ScrapedEvent? {
         val dateLine = block.firstOrNull { isDateLine(it) } ?: return null
         val eventDate =
-            parseGermanDate(dateLine.text()) ?: run {
+            parseRoadrunnerDate(dateLine.text()) ?: run {
                 logger.warn { "Could not parse date from '${dateLine.text()}', skipping block" }
                 return null
             }
@@ -360,7 +361,7 @@ class RoadrunnerOverviewPageScraper(
      * Parses a German date line like "Freitag, 29. Mai:" into a [LocalDate]: day and month from
      * the text, year [inferred][inferYear] from the weekday. `null` when day/month cannot be parsed.
      */
-    private fun parseGermanDate(text: String): LocalDate? {
+    private fun parseRoadrunnerDate(text: String): LocalDate? {
         val match = DATE_PATTERN.find(text) ?: return null
         val (weekdayName, day, month) = match.destructured
         val weekday = parseGermanWeekday(weekdayName)
@@ -405,7 +406,7 @@ class RoadrunnerOverviewPageScraper(
         private val DATE_PATTERN =
             Regex(
                 """(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag),?\s*(\d{1,2})\.?\s*""" +
-                    """(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)""",
+                    """(${GERMAN_MONTH_NAMES.joinToString("|")})""",
                 RegexOption.IGNORE_CASE
             )
 

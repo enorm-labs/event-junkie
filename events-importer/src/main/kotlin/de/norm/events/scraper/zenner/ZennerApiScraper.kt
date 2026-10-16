@@ -313,7 +313,7 @@ private val SERIES_FRAME_PATTERN =
  * Strips a leading [SERIES_FRAME_PATTERN], or returns null when nothing is left (a bare "180
  * MINUTES" edition). A title with no frame ("Yeule", "KALI MALONE (Live)") is unchanged.
  */
-private fun stripSeriesFrame(title: String): String? = title.replaceFirst(SERIES_FRAME_PATTERN, "").trim().takeIf { it.isNotBlank() }
+private fun stripSeriesFrame(title: String): String? = title.replaceFirst(SERIES_FRAME_PATTERN, "").blankToNull()
 
 /**
  * Zenner's recurring concert series whose name is sometimes the whole title: "180 MINUTES"

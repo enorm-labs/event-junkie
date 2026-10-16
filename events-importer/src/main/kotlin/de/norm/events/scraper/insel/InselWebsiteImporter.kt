@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.gatsbyPageDataUrl
 import de.norm.events.scraper.gatsbyStaticQueryUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -84,7 +85,7 @@ class InselWebsiteImporter(
             jsonMapper
                 .readTree(json)
                 .path(GATSBY_STATIC_QUERY_HASHES)
-                .mapNotNull { node -> node.asString().trim().takeIf { it.isNotBlank() } }
+                .mapNotNull { node -> node.asString().blankToNull() }
         } catch (e: Exception) {
             logger.warn(e) { "Failed to parse Insel page-data for its static-query hashes" }
             emptyList()

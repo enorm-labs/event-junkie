@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
@@ -67,7 +68,7 @@ class Hole44OverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
 
         // The anchor text is the headliner; a nested `.event-support` span holds the support line.
-        val title = link.ownText().trim().takeIf { it.isNotBlank() } ?: return null
+        val title = link.ownText().blankToNull() ?: return null
         val support = item.textAt(".event-support")
 
         val eventType = inferConcertVenueType(title)

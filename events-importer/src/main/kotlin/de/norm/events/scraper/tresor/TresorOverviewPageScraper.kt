@@ -12,15 +12,13 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseBasicIsoDatePrefix
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Pure HTML parser for Tresor's `/club/events/` listing.
@@ -84,7 +82,7 @@ class TresorOverviewPageScraper {
             eventType = EventType.PARTY.name,
             // The site names no style, but all three rooms programme techno, so the venue is the default (as Berghain's floors are).
             // The card prints "Sa 01.08" with no year; the permalink states it.
-            eventDate = parseSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = parseBasicIsoDatePrefix(slug) ?: UNRESOLVED_EVENT_DATE,
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             // `Tresor New Faces hosted by <DJ>` with no line-up bills its host; `hosted by Tresor` is the house itself.
@@ -95,22 +93,6 @@ class TresorOverviewPageScraper {
 
 /** Path prefix of an event permalink, stripped to obtain the `YYYYMMDD-<slug>` identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"
-
-/** The `YYYYMMDD` date the venue prefixes to every event permalink. */
-private val SLUG_DATE_PATTERN = Regex("""^(\d{8})-""")
-
-/**
- * The event date from the `YYYYMMDD` permalink prefix, or `null` without one — the card shows
- * only a weekday and `DD.MM`.
- */
-internal fun parseSlugDate(slug: String): LocalDate? {
-    val digits = SLUG_DATE_PATTERN.find(slug)?.groupValues?.get(1) ?: return null
-    return try {
-        LocalDate.parse(digits, DateTimeFormatter.BASIC_ISO_DATE)
-    } catch (_: DateTimeParseException) {
-        null
-    }
-}
 
 /**
  * The DJs grouped by floor. Both pages mark the lineup up the same way — a floor block naming

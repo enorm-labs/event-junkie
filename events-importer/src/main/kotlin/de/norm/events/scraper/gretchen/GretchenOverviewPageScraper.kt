@@ -9,6 +9,7 @@ import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
@@ -230,7 +231,7 @@ class GretchenOverviewPageScraper {
                 ?: return Triple(null, null, null)
 
         val prices = parseLabelledPrices(priceText)
-        val priceNote = priceText.trim('*', ' ').trim().takeIf { it.isNotBlank() }
+        val priceNote = priceText.trim('*', ' ').blankToNull()
         return Triple(prices.presale, prices.boxOffice, priceNote)
     }
 

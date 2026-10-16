@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.WpRestPage
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
@@ -273,7 +274,7 @@ internal class Bogen47ApiScraper(
 
     /** Parses WordPress's `yyyy-MM-dd'T'HH:mm:ss` local post date, null instead of throwing. */
     private fun parseDateTime(raw: String): LocalDateTime? {
-        val cleaned = raw.trim().takeIf { it.isNotBlank() } ?: return null
+        val cleaned = raw.blankToNull() ?: return null
         return try {
             LocalDateTime.parse(cleaned)
         } catch (_: DateTimeParseException) {

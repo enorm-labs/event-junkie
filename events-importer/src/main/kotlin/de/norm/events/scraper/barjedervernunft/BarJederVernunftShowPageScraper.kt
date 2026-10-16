@@ -2,6 +2,7 @@ package de.norm.events.scraper.barjedervernunft
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
@@ -33,7 +34,7 @@ class BarJederVernunftShowPageScraper {
      * page served with a 200).
      */
     fun scrape(document: Document): BarJederVernunftShow? {
-        val genre = overviewValue(document, "Genre")?.text()?.trim()?.takeIf { it.isNotBlank() }
+        val genre = overviewValue(document, "Genre")?.text().blankToNull()
         // The Preise block stacks regular / reduced / special-performance prices as <br>-separated
         // lines in one <p>; only the first is the regular admission range.
         val priceLine = overviewValue(document, "Preise")?.textLinesAt("p")?.firstOrNull()

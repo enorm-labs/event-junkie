@@ -117,7 +117,7 @@ class ClashOverviewPageScraper {
             eventType = eventType,
             eventDate = eventDate,
             doorsTime = labelledClock(panel.text, DOORS_LABELS),
-            startTime = labelledClock(panel.text, START_LABELS) ?: parseTime(item.textAt(".meta .time")),
+            startTime = labelledClock(panel.text, START_LABELS) ?: parseClashTime(item.textAt(".meta .time")),
             imageUrl = imageUrl,
             // No per-event pages — deep-link to the expanded event on the homepage listing.
             sourceUrl = resolveUrl(baseUrl, "#$slug"),
@@ -214,7 +214,7 @@ class ClashOverviewPageScraper {
      * ("0:00"), which the strict `HH:mm` parser rejects, so the `H:mm`/`HH:mm` value is extracted
      * by regex and built directly.
      */
-    private fun parseTime(text: String?): LocalTime? {
+    private fun parseClashTime(text: String?): LocalTime? {
         val match = text?.let { TIME_PATTERN.find(it) } ?: return null
         return try {
             LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].toInt())

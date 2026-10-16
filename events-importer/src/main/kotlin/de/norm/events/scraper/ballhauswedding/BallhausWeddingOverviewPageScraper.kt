@@ -3,7 +3,9 @@ package de.norm.events.scraper.ballhauswedding
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.resolveUrl
@@ -245,10 +247,10 @@ private fun clean(text: String): String =
     text
         .replace('\u00A0', ' ')
         .replace("\u200B", "")
-        .replace(SPACES, " ")
+        .replace(WHITESPACE, " ")
         .trim()
 
-private val MONTHS = setOf("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember")
+private val MONTHS = GERMAN_MONTH_NAMES.toSet()
 private val WEEKDAYS =
     mapOf(
         "Mo" to DayOfWeek.MONDAY,
@@ -260,7 +262,6 @@ private val WEEKDAYS =
         "So" to DayOfWeek.SUNDAY
     )
 private val YEAR_HEADING = Regex("""20\d\d""")
-private val SPACES = Regex("""\s+""")
 
 /** `Do 1.10. 19:30 Uhr <title>`, `Di, 6.10. 20 Uhr`, `So 27.6. 13 - 16 Uhr`, `Di 15.12. 19:30 <title>`. */
 private val DATE_LINE =

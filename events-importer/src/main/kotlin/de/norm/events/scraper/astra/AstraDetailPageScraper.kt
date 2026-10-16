@@ -3,6 +3,7 @@ package de.norm.events.scraper.astra
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.parsePresaleAndBoxOfficePrices
@@ -88,7 +89,7 @@ class AstraDetailPageScraper {
         content
             .select(".promoters__link")
             .mapNotNull { link ->
-                val name = link.text().trim().takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                val name = link.text().blankToNull() ?: return@mapNotNull null
                 val url = link.absUrl("href").takeIf { it.startsWith("http") } ?: return@mapNotNull null
                 name to url
             }.toMap()

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
@@ -174,7 +175,7 @@ internal fun parseLidoEventBlock(
     baseUrl: String
 ): LidoEventBlock? {
     val titleLink = root.selectFirst(".event-ticket__content__title a") ?: return null
-    val title = titleLink.text().trim().takeIf { it.isNotBlank() } ?: return null
+    val title = titleLink.text().blankToNull() ?: return null
     val href = titleLink.attr("href").takeIf { it.isNotBlank() } ?: return null
     val sourceUrl = resolveUrl(baseUrl, href)
 
@@ -243,7 +244,7 @@ private fun parseLidoPresenterWebsites(root: Element): Map<String, String> =
     root
         .select(".event-ticket__meta__presenter a")
         .mapNotNull { link ->
-            val name = link.text().trim().takeIf { it.isNotBlank() }
+            val name = link.text().blankToNull()
             val url = link.absUrl("href").takeIf { it.startsWith("http") }
             if (name != null && url != null) name to url else null
         }.toMap()

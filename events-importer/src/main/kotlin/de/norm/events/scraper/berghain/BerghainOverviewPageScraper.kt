@@ -7,6 +7,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
@@ -139,7 +140,7 @@ class BerghainOverviewPageScraper(
         var currentStage: String? = null
         for (element in block.select("h3, h4")) {
             if (element.tagName() == "h3") {
-                currentStage = element.text().trim().takeIf { it.isNotBlank() }
+                currentStage = element.text().blankToNull()
             } else {
                 lineup += parseFloorLineup(element, role, currentStage)
             }

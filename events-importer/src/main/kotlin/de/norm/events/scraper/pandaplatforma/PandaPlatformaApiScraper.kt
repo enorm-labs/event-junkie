@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
@@ -154,7 +155,6 @@ class PandaPlatformaApiScraper {
 
         val LINE_BREAK = Regex("""<br\s*/?>|</p>|</div>|</li>|\n""")
         val TAG = Regex("""<[^>]+>""")
-        val WHITESPACE = Regex("""\s+""")
 
         /** Longer than any credit line seen; a longer one is prose that happens to hold a colon. */
         const val MAX_CREDIT_LINE = 120

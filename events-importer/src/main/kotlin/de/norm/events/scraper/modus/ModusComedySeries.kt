@@ -2,6 +2,7 @@ package de.norm.events.scraper.modus
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.textLines
@@ -45,7 +46,5 @@ private const val SENTENCE_END = ".!?"
 private const val MAX_NAME_WORDS = 5
 
 private val LABEL_COLON = Regex("""\w: """)
-
-private val WHITESPACE = Regex("""\s+""")
 
 private val HOST_LABEL = Regex("""^\s*host\s*:\s*""", RegexOption.IGNORE_CASE)

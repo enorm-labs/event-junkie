@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
@@ -82,7 +83,7 @@ class AlteKantineOverviewPageScraper(
         // `data-pid`.
         val postId = extractPostId(sourceUrl) ?: item.attr("data-pid").takeIf { it.isNotBlank() } ?: return null
 
-        val title = link.text().trim().takeIf { it.isNotBlank() } ?: return null
+        val title = link.text().blankToNull() ?: return null
         val subtitle = item.textAt(".pt-cv-ctf-veranstaltungsbeschreibung p")
         // No kind label on the overview, so classify from the title (mixed party/quiz venue → OTHER default).
         val eventType = alteKantineEventType(was = null, title = title)

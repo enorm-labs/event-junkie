@@ -8,6 +8,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -131,7 +132,7 @@ class DunckerOverviewPageScraper(
     private fun parseTitle(cell: Element): String? {
         val nameEl = cell.selectFirst("span.eventname") ?: return null
         val cleaned = nameEl.clone().also { it.select("a").remove() }
-        return cleaned.text().trim().takeIf { it.isNotBlank() }
+        return cleaned.text().blankToNull()
     }
 
     /**

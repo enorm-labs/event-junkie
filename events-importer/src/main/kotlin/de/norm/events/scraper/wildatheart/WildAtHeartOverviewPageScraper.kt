@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
@@ -192,7 +193,7 @@ class WildAtHeartOverviewPageScraper(
     private fun stripQuotes(text: String): String = text.trim().trim('"').trim()
 
     /** Cleans a `.headlines` banner for use as a subtitle — drops any embedded presale link. */
-    private fun cleanBanner(headline: String?): String? = headline?.replace(TICKETS_PATTERN, "")?.trim()?.takeIf { it.isNotBlank() }
+    private fun cleanBanner(headline: String?): String? = headline?.replace(TICKETS_PATTERN, "").blankToNull()
 
     companion object {
         /** The doors the venue's `info.htm` states for concerts and events: "von 20 Uhr bis Open End". */

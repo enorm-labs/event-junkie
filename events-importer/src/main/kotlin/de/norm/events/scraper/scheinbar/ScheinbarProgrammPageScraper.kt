@@ -2,6 +2,7 @@ package de.norm.events.scraper.scheinbar
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.headlinersFromTitle
@@ -87,7 +88,6 @@ class ScheinbarProgrammPageScraper {
     private companion object {
         const val PRESENTED_BY = "präsentiert von"
         val AMOUNT = Regex("""\d+,\d{2}""")
-        val GERMAN_MONTHS =
-            listOf("januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember")
+        val GERMAN_MONTHS = GERMAN_MONTH_NAMES.map { it.lowercase() }
     }
 }

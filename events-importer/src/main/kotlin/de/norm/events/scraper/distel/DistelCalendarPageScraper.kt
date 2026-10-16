@@ -2,6 +2,7 @@ package de.norm.events.scraper.distel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.classifyByGenreKeyword
@@ -104,20 +105,7 @@ class DistelCalendarPageScraper {
         val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         val GERMAN_MONTHS: Map<String, Month> =
-            listOf(
-                "januar",
-                "februar",
-                "märz",
-                "april",
-                "mai",
-                "juni",
-                "juli",
-                "august",
-                "september",
-                "oktober",
-                "november",
-                "dezember"
-            ).mapIndexed { index, name -> name to Month.of(index + 1) }.toMap()
+            GERMAN_MONTH_NAMES.mapIndexed { index, name -> name.lowercase() to Month.of(index + 1) }.toMap()
     }
 }
 

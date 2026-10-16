@@ -1,5 +1,6 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -57,7 +58,7 @@ class AdmiralspalastListingPageScraper {
             .select("a[href*=$GENRE_PATH_PREFIX]")
             .mapNotNull { link ->
                 val href = link.attr("href").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                val label = link.text().trim().takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                val label = link.text().blankToNull() ?: return@mapNotNull null
                 resolveUrl(baseUrl, href).substringBefore('#') to label
             }.toMap()
 
