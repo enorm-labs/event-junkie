@@ -467,7 +467,7 @@
       }
     },
     "trigger_condition": {
-      "period": 60,
+      "period": 5,
       "frequency": 60,
       "frequency_type": "minutes",
       "operator": ">=",
