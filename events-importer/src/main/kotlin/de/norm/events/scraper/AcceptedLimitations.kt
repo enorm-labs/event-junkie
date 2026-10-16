@@ -48,6 +48,7 @@ import de.norm.events.scraper.frannz.FRANNZ_LIMITATIONS
 import de.norm.events.scraper.gaertenderwelt.GAERTEN_DER_WELT_LIMITATIONS
 import de.norm.events.scraper.galilaeakirche.GALILAEAKIRCHE_LIMITATIONS
 import de.norm.events.scraper.gartn.GARTN_LIMITATIONS
+import de.norm.events.scraper.giri.GIRI_LIMITATIONS
 import de.norm.events.scraper.goldengate.GOLDEN_GATE_LIMITATIONS
 import de.norm.events.scraper.gretchen.GRETCHEN_LIMITATIONS
 import de.norm.events.scraper.havanna.HAVANNA_LIMITATIONS
@@ -196,6 +197,7 @@ object AcceptedLimitations {
             GAERTEN_DER_WELT_LIMITATIONS,
             GALILAEAKIRCHE_LIMITATIONS,
             GARTN_LIMITATIONS,
+            GIRI_LIMITATIONS,
             GOLDEN_GATE_LIMITATIONS,
             GRETCHEN_LIMITATIONS,
             HAVANNA_LIMITATIONS,

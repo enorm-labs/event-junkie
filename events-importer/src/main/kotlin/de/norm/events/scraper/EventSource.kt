@@ -136,6 +136,9 @@ enum class EventSource {
     /** gART.n Berlin – an open-air garden club on the Rummelsburger Bucht, running daytime techno and house parties at the weekend. */
     GARTN,
 
+    /** Giri – an independent room on Hermannstraße between club and bar, with donation-entry DJ nights, live electronic showcases and jazz dinners. */
+    GIRI,
+
     /** Golden Gate Berlin – a small techno club in the S-Bahn arches at Jannowitzbrücke, open Thursday to Saturday with door-only entry. */
     GOLDEN_GATE,
 
