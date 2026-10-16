@@ -156,7 +156,7 @@ Every check below is read-only. **Nothing in this file writes to a cluster.** A 
 **Check:** `scripts/ej.sh status` says `does not answer (restarting)`. A release or a merge just rolled the pods.
 
 **Fix:** Wait about 30 seconds. `ej.sh` probes each `kubectl` forward every 10 seconds and starts a new one when the probe fails. While no pod is Ready, it
-tries again after 5 seconds, then less often, up to once a minute. If it stays down, read `build/ej/<env>-<name>.log` and the pod's state.
+tries again after 5 seconds, then less often, up to once a minute. If it stays down, read `.git/ej/<env>-<name>.log` in the main checkout and the pod's state.
 
 **Why:** A `kubectl` forward attaches to one pod, even through `svc/`. When a rollout replaces that pod, the old process forwards nothing (#2976).
 

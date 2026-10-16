@@ -14,6 +14,9 @@ Background: [Claude Code: run parallel sessions with worktrees](https://code.cla
 **Not isolated:** the local runtime. Postgres (host port `56298`), the importer (`8081`), the BFF (`8080`) and the frontend (`5173`) are fixed, shared,
 single-tenant resources.
 
+**Shared:** the port-forwards of `scripts/ej.sh`. It records them under `ej/` in the shared `.git` directory. `up` in a worktree uses the forwards that
+another checkout started. `down` in any checkout stops them.
+
 So the rule is: **edit in parallel, run the stack one worktree at a time.**
 
 ## 1. Create a worktree
