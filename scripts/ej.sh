@@ -27,7 +27,8 @@
 # The tunnel state is read from what wg-quick writes (`/var/run/wireguard/<env>.name` on macOS, the
 # interface on Linux), not from a ping; the ping is the handshake check after `up`, because an
 # interface appears whether or not UDP/51820 is open and a missing handshake is the only symptom.
-# Everything started is recorded under build/ej/ (gitignored); `down` kills only pids it wrote.
+# Everything started is recorded under ej/ in the git common dir, which every worktree shares, so `up`
+# in one finds what another started and `down` in any stops it (#3411). `down` kills only pids it wrote.
 # Each kubectl forward runs under a watchdog that starts a new one when a rollout replaces the pod
 # (#2976); `status` counts the restarts.
 # `up`, `status` and `versions` also write docs/ops/dashboard/status.js for the local operations page
@@ -43,7 +44,16 @@ case "${1:-}" in
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STATE_DIR="$REPO_ROOT/build/ej"
+if GIT_COMMON="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+    STATE_DIR="$GIT_COMMON/ej"
+else
+    STATE_DIR="$REPO_ROOT/build/ej"
+fi
+# Before #3411 each worktree kept its own build/ej; a watchdog started then is still found there.
+LEGACY_STATE_DIRS=()
+while IFS= read -r line; do
+    case "$line" in "worktree "*) LEGACY_STATE_DIRS+=("${line#worktree }/build/ej") ;; esac
+done < <(git -C "$REPO_ROOT" worktree list --porcelain 2>/dev/null || true)
 STATUS_JS="$REPO_ROOT/docs/ops/dashboard/status.js"
 WG_DIR="${EJ_WG_DIR:-$HOME/.wireguard}"
 RELEASES="https://github.com/enorm-labs/event-junkie/releases/tag"
@@ -168,16 +178,31 @@ hosts_check() {
 
 # --- forwards -----------------------------------------------------------------------------------
 
-pidfile() { echo "$STATE_DIR/$1-$2.pid"; }
-logfile() { echo "$STATE_DIR/$1-$2.log"; }
+# live_state_dirs <env> <name> → every state dir whose pid file names a live process
+live_state_dirs() {
+    local d pid
+    for d in "$STATE_DIR" ${LEGACY_STATE_DIRS[@]+"${LEGACY_STATE_DIRS[@]}"}; do
+        [ -f "$d/$1-$2.pid" ] || continue
+        pid="$(cat "$d/$1-$2.pid")"
+        kill -0 "$pid" 2>/dev/null && echo "$d"
+    done
+    return 0
+}
+
+state_dir() {
+    local d
+    d="$(live_state_dirs "$1" "$2" | head -1)"
+    echo "${d:-$STATE_DIR}"
+}
+
+pidfile() { echo "$(state_dir "$1" "$2")/$1-$2.pid"; }
+logfile() { echo "$(state_dir "$1" "$2")/$1-$2.log"; }
 
 forward_pid() {
-    local f
-    f="$(pidfile "$1" "$2")"
-    [ -f "$f" ] || return 1
-    local pid
-    pid="$(cat "$f")"
-    kill -0 "$pid" 2>/dev/null && echo "$pid"
+    local d
+    d="$(live_state_dirs "$1" "$2" | head -1)"
+    [ -n "$d" ] || return 1
+    cat "$d/$1-$2.pid"
 }
 
 port_answers() { curl -s -o /dev/null --max-time 2 "http://localhost:$1/" 2>/dev/null; }
@@ -239,6 +264,12 @@ forward_supervise() {
             backoff=5
             while snooze 10 && kill -0 "$child" 2>/dev/null && forward_answers "$name" "$port"; do :; done
         fi
+        # kubectl exits on `bind: address already in use`, and the port answers through whoever holds
+        # it. A restart fails the same way, about once a second (#3411).
+        if ! kill -0 "$child" 2>/dev/null && forward_answers "$name" "$port"; then
+            echo "stopping: $port is served by another process, $(date -u +%FT%TZ)" >>"$log"
+            exit 0
+        fi
         echo "restarting: $port did not answer, $(date -u +%FT%TZ)" >>"$log"
         kill "$child" 2>/dev/null || true
         wait "$child" 2>/dev/null || true
@@ -291,12 +322,15 @@ forward_start() {
 }
 
 forward_stop() {
-    local env="$1" name="$2" pid port ns listener
-    if pid="$(forward_pid "$env" "$name")"; then
+    local env="$1" name="$2" pid port ns listener d
+    while IFS= read -r d; do
+        pid="$(cat "$d/$env-$name.pid")"
         kill "$pid" 2>/dev/null || true
         echo "forward $env/$name: stopped (pid $pid)"
-    fi
-    rm -f "$(pidfile "$env" "$name")"
+    done < <(live_state_dirs "$env" "$name")
+    for d in "$STATE_DIR" ${LEGACY_STATE_DIRS[@]+"${LEGACY_STATE_DIRS[@]}"}; do
+        rm -f "$d/$env-$name.pid"
+    done
     read -r port ns _ <<<"$(forward_spec "$env" "$name")"
     [ "$ns" = ssh ] && return 0
     # The loop's trap stops its kubectl. One that outlived a `kill -9` of the loop still holds the
