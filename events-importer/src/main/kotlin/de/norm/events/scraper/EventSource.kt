@@ -228,6 +228,9 @@ enum class EventSource {
     /** KREUZWERK – a club near Moritzplatz built around queer and FLINTA* voices, with techno, house and queer party series and a no-photo floor. */
     KREUZWERK,
 
+    /** Konrad Tönz – a Kreuzberg smokers' bar since 1996 where DJs play 1950s to 1970s records, with a Sunday jazz night. */
+    KONRAD_TOENZ,
+
     /** Kühlspot Social Club – a volunteer-run club in a listed Weißensee courtyard for improvised and experimental music and free jazz. */
     KUEHLSPOT,
 

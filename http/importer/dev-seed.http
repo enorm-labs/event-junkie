@@ -5582,7 +5582,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Konrad Tönz Bar — not imported
+# Konrad Tönz Bar
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Konrad Tönz Bar venue ---
@@ -5603,13 +5603,43 @@ Content-Type: application/json
     "descriptionAlt": "Raucherbar in der Falckensteinstraße, seit Dezember 1996 geöffnet und nach dem Aktenzeichen-XY-Moderator Konrad Toenz benannt: DJs legen Platten der 50er bis 70er auf tragbaren Mono-Plattenspielern auf, sonntags gibt es Jazz.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar"],
-    "programmeUrl": "http://www.konradtoenzbar.de/#events",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_konrad_tonz_bar", response.body.id);
     client.test("Konrad Tönz Bar venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Konrad Tönz Bar event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_konrad_tonz_bar}},
+    "name": "Konrad Tönz Bar",
+    "url": "http://www.konradtoenzbar.de/",
+    "sourceType": "KONRAD_TOENZ",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Konrad Tönz Bar event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Konrad Tönz Bar import ---
+POST {{importer-host}}/api/admin/event-sources/konrad-tonz-bar/import
+Accept: application/json
+
+> {%
+    client.test("Konrad Tönz Bar import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
