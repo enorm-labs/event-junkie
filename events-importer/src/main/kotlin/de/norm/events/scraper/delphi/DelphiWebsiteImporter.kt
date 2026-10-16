@@ -1,17 +1,14 @@
 package de.norm.events.scraper.delphi
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.SecondLanguagePage
+import de.norm.events.scraper.SharedPages
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.enrichFromSharedPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -25,7 +22,7 @@ import org.springframework.stereotype.Component
  * 3. Each **distinct** `?prod=<id>` page once, applying its full blurb and photo to every date
  * of that production ([DelphiProduction.applyTo]).
  *
- * Step 3 is why this class implements [EventImporter] directly, as at Bar jeder Vernunft. The
+ * Step 3 is why this class sets [sharedPages] rather than an event-page hook, as at Bar jeder Vernunft. The
  * house programmes runs, not one-off nights: at the time of writing 24 performance rows resolve
  * to 15 production pages, one ballet alone owning 8. Per-event fetching would re-request the
  * same page eight times, which the per-host politeness throttle would rightly serialise into a
@@ -44,45 +41,20 @@ import org.springframework.stereotype.Component
  */
 @Component
 class DelphiWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Theater im Delphi", DelphiProgrammePageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.THEATER_IM_DELPHI
     override val listsWholeProgramme: Boolean = true
-    override val fetchesBeyondEntryPage: Boolean = true
 
-    private val programmePageScraper = DelphiProgrammePageScraper()
     private val productionPageScraper = DelphiProductionPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = programmePageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} performance date(s) from Theater im Delphi" }
-
-                ImportResult.Success(
-                    events =
-                        htmlFetcher.enrichFromSharedPages(
-                            events,
-                            productionPageScraper::scrape,
-                            DelphiProduction::applyTo,
-                            pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION),
-                            secondLanguage = SecondLanguagePage("en") { productionPageScraper.scrape(it)?.description }
-                        ),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
+    override val sharedPages: SharedPages<DelphiProduction> =
+        SharedPages(
+            productionPageScraper::scrape,
+            DelphiProduction::applyTo,
+            pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION),
+            secondLanguage = SecondLanguagePage("en") { productionPageScraper.scrape(it)?.description }
+        )
 }
 
 val THEATER_IM_DELPHI_LIMITATIONS =

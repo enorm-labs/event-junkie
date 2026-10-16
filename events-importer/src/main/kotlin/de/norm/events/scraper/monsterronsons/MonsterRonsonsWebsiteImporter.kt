@@ -1,18 +1,15 @@
 package de.norm.events.scraper.monsterronsons
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.BERLIN
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.SharedPages
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.nextPageUrl
-import de.norm.events.scraper.scrapeListingPages
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -29,7 +26,7 @@ import java.time.Clock
  * 3. Each night's `/posts/<slug>` page once, applying prose, door price and ticket link
  * ([MonsterRonsonsNightDetail.applyTo]).
  *
- * Implements [EventImporter] directly rather than
+ * Reads the night pages as [sharedPages] rather than through
  * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] because the night page enriches the
  * card instead of superseding it: the base class treats the detail page as primary and merges
  * the overview into its gaps, the wrong way round here — the card is the only place the date is
@@ -47,53 +44,22 @@ import java.time.Clock
  */
 @Component
 class MonsterRonsonsWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher,
+    htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's year inference and past-event cutoff; override in tests. */
     clock: Clock = Clock.system(BERLIN)
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Monster Ronson's", MonsterRonsonsOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.MONSTER_RONSONS
-    override val fetchesBeyondEntryPage: Boolean = true
+    override val maxListingPages: Int = MAX_PAGES
 
-    private val overviewPageScraper = MonsterRonsonsOverviewPageScraper(clock)
     private val detailPageScraper = MonsterRonsonsDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
+    override val sharedPages: SharedPages<MonsterRonsonsNightDetail> =
+        SharedPages({ detailPageScraper.scrape(it, it.location()) }, MonsterRonsonsNightDetail::applyTo)
 
-            is FetchResult.Success -> {
-                val listing =
-                    htmlFetcher.scrapeListingPages(
-                        eventSource,
-                        fetchResult.document,
-                        url,
-                        MAX_PAGES,
-                        { document, _ -> document.nextPageUrl(NEXT_PAGE_SELECTOR) },
-                        overviewPageScraper::scrape
-                    )
-                logger.info { "Scraped ${listing.events.size} karaoke night(s) from Monster Ronson's listing" }
-
-                ImportResult.Success(
-                    events =
-                        htmlFetcher.enrichFromSharedPages(
-                            listing.events,
-                            { detailPageScraper.scrape(it, it.location()) },
-                            MonsterRonsonsNightDetail::applyTo
-                        ),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = listing.complete
-                )
-            }
-        }
+    override fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? = document.nextPageUrl(NEXT_PAGE_SELECTOR)
 
     private companion object {
         /** A runaway guard on the page walk; the listing runs to four pages. */

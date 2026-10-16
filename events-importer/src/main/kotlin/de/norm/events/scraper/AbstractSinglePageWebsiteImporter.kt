@@ -7,7 +7,8 @@ import org.jsoup.nodes.Document
  * Base class for a venue whose whole programme is one listing: fetch it conditionally, parse it
  * with [scrape], return the events with the page's validators. The one-page counterpart of
  * [AbstractTwoPageWebsiteImporter]. A listing paged by a next link sets [maxListingPages] and
- * [nextListingPage]; a venue that needs any other fetch implements [EventImporter] directly.
+ * [nextListingPage]; rows that share one page per production set [sharedPages]. A venue that
+ * needs any other fetch implements [EventImporter] directly.
  *
  * [venueName] is how the log line names the source, kept as each venue wrote it.
  */
@@ -38,6 +39,12 @@ abstract class AbstractSinglePageWebsiteImporter(
      */
     protected open val secondLanguage: SecondLanguageListing? = null
 
+    /**
+     * The page that several rows share, as one production's performances do, read once per page and
+     * applied to each row. Null for a venue whose rows have no shared page.
+     */
+    protected open val sharedPages: SharedPages<*>? = null
+
     /** A runaway guard on [nextListingPage]; 1 reads the entry page alone. */
     protected open val maxListingPages: Int = 1
 
@@ -48,7 +55,8 @@ abstract class AbstractSinglePageWebsiteImporter(
     ): String? = null
 
     /** A run that reads event pages or later listing pages cannot be skipped on the entry page's validators. */
-    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null || maxListingPages > 1 || secondLanguage != null
+    override val fetchesBeyondEntryPage: Boolean
+        get() = enrichFromEventPage != null || sharedPages != null || maxListingPages > 1 || secondLanguage != null
 
     final override suspend fun importEvents(
         url: String,
@@ -67,7 +75,7 @@ abstract class AbstractSinglePageWebsiteImporter(
                 val events =
                     secondLanguage?.let { htmlFetcher.withSecondLanguageListing(listing.events, fetchResult.document, it) } ?: listing.events
                 ImportResult.Success(
-                    events = withEventPages(events),
+                    events = withSharedPages(withEventPages(events)),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete
@@ -85,8 +93,26 @@ abstract class AbstractSinglePageWebsiteImporter(
             ListingPages(scrape(document, url), complete = true)
         }
 
+    private suspend fun withSharedPages(events: List<ScrapedEvent>): List<ScrapedEvent> = sharedPages?.applyTo(htmlFetcher, events) ?: events
+
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val enrich = enrichFromEventPage ?: return events
         return events.map { event -> htmlFetcher.withEventPageOrFlagged(event, eventPageOwns) { document -> enrich(event, document) } }
     }
+}
+
+/**
+ * The [enrichFromSharedPages] arguments of an [AbstractSinglePageWebsiteImporter]: [parse] reads one
+ * shared page, [apply] writes it into each row that links it, [pageOwns] and [secondLanguage] as there.
+ */
+class SharedPages<T : Any>(
+    private val parse: (Document) -> T?,
+    private val apply: (T, ScrapedEvent) -> ScrapedEvent,
+    private val pageOwns: Set<ScrapedField> = emptySet(),
+    private val secondLanguage: SecondLanguagePage? = null
+) {
+    internal suspend fun applyTo(
+        htmlFetcher: HtmlFetcher,
+        events: List<ScrapedEvent>
+    ): List<ScrapedEvent> = htmlFetcher.enrichFromSharedPages(events, parse, apply, pageOwns, secondLanguage = secondLanguage)
 }
