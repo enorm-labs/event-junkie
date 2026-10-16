@@ -4,6 +4,7 @@ import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.NameListOrder
 import de.norm.events.common.NextThirtyDays
 import de.norm.events.common.TextSearch
+import de.norm.events.common.bindAll
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
@@ -196,9 +197,6 @@ class VenueSearchRepository(
 
         return VenueListPage(rows, total)
     }
-
-    private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
-        params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     companion object {
         /** A venue is imported while an `event_source` row points at it; there is no column for it (#2766). */

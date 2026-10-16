@@ -39,7 +39,7 @@ class CacheControlFilter(
         chain: WebFilterChain
     ): Mono<Void> {
         val request = exchange.request
-        if (request.method != HttpMethod.GET || isActuatorRequest(request.path.value())) return chain.filter(exchange)
+        if (request.method != HttpMethod.GET || isActuatorPath(request.path.value(), actuatorBasePath)) return chain.filter(exchange)
 
         val response = exchange.response
         response.beforeCommit {
@@ -54,12 +54,6 @@ class CacheControlFilter(
             Mono.empty()
         }
         return chain.filter(exchange)
-    }
-
-    /** Matches the base path and everything under it, never a route that merely starts the same. */
-    private fun isActuatorRequest(path: String): Boolean {
-        val base = actuatorBasePath.removeSuffix("/")
-        return path == base || path.startsWith("$base/")
     }
 
     private companion object {

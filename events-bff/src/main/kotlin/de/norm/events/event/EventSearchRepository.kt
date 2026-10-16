@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.AssumedStartTime
 import de.norm.events.common.TextSearch
+import de.norm.events.common.bindAll
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
@@ -423,9 +424,6 @@ class EventSearchRepository(
             params += TextSearch.params(term, bySimilarity)
         }
     }
-
-    private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
-        params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     /**
      * Builds a safe `ORDER BY` by whitelisting sort properties to known columns. Falls back to
