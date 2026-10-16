@@ -118,6 +118,11 @@ was `alert_history` rows carrying the old stream — which is worse than an erro
 longer installed, and one did. `apply_alerts.py` now detects a changed stream and recreates the alert; the cost, stated because it is real, is that the rule
 loses its silence window and can fire again immediately.
 
+**A PUT re-arms a rule inside its silence window too, and `apply.sh` PUTs every rule, changed or not.** So every apply has the recreate's cost: a rule
+whose condition is true when it runs can fire again at its next evaluation. The apply recorded on
+[#3341](https://github.com/enorm-labs/event-junkie/pull/3341#issuecomment-6195084616) at 14:56 UTC on 2026-10-15 re-fired `ej-data-quality-regression` on both
+clusters inside the silence its 04:00 firing had started. Apply after the condition has cleared, or expect the mail again.
+
 ## The rules
 
 | Rule                           | Fires when                                                                                                                                         | #271 item          |
