@@ -8,10 +8,10 @@ import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.wixParagraphs
+import de.norm.events.scraper.wixTicketPriceRange
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
-import tools.jackson.databind.JsonNode
-import java.math.BigDecimal
 import java.time.LocalTime
 
 /**
@@ -58,7 +58,7 @@ class ColosseumDetailPageScraper {
         val event = state?.let { WixEventsWarmupData.eventOf(it, EventSource.COLOSSEUM) } ?: return null
         val prices = state.path("tickets").mapNotNull { parseWixTicketPrice(it.path("price")) }
         val schedule = parseWixSchedule(event.path("scheduling").path("config"))
-        val text = paragraphs(event.path("longDescription"))
+        val text = wixParagraphs(event.path("longDescription"))
         val lines = timeLines(text)
         val start = lines[BEGINN] ?: schedule.startTime
         // An Einlass equal to the start is the listing's own time read back, not a door time.
@@ -73,17 +73,10 @@ class ColosseumDetailPageScraper {
             doorsTime = doors,
             startTime = start,
             pricePresale = prices.minOrNull(),
-            priceNote = priceRange(prices),
+            priceNote = wixTicketPriceRange(prices),
             sourceUrl = url,
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}${event.stringOrNull("slug").orEmpty()}"
         )
-    }
-
-    /** `€15.00 – €30.00` when the tiers differ, in the listing note's format; null for one price or none. */
-    private fun priceRange(prices: List<BigDecimal>): String? {
-        val low = prices.minOrNull() ?: return null
-        val high = prices.max()
-        return if (low.compareTo(high) == 0) null else "€${low.setScale(2)} – €${high.setScale(2)}"
     }
 
     /**
@@ -115,28 +108,7 @@ class ColosseumDetailPageScraper {
         }
     }
 
-    /**
-     * The rich content's paragraphs, each as one string.
-     *
-     * **A line is read per paragraph, not per text node.** Wix splits a styled line into one node
-     * per run, so a bold label and its clock are siblings — `Einlass:` then ` 19:00 Uhr` — and six
-     * of the eighteen events kept the listing's time because neither half matched on its own.
-     */
-    private fun paragraphs(node: JsonNode): List<String> =
-        buildList {
-            if (node.stringOrNull("type") == PARAGRAPH) add(joinedText(node))
-            node.path("nodes").forEach { child -> addAll(paragraphs(child)) }
-        }
-
-    /** Every `textData.text` below [node], joined in document order. */
-    private fun joinedText(node: JsonNode): String =
-        buildString {
-            node.path("textData").stringOrNull("text")?.let { append(it) }
-            node.path("nodes").forEach { child -> append(joinedText(child)) }
-        }
-
     private companion object {
-        const val PARAGRAPH = "PARAGRAPH"
         const val EINLASS = "einlass"
         const val BEGINN = "beginn"
 

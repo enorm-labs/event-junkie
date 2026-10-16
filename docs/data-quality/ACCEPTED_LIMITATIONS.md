@@ -341,6 +341,12 @@ says so.
 | `MAD_MONKEY_ROOM`      | `SOLD_OUT`         | the shop list marks no date as sold out                                                                                                          | —     |
 | `MAD_MONKEY_ROOM`      | `GENRE`            | the shop names no genre                                                                                                                          | —     |
 | `MAD_MONKEY_ROOM`      | `PROMOTERS`        | every show is the club's own                                                                                                                     | —     |
+| `MARMORBAR`            | `EVENT_TYPE`       | the bar publishes no categories; a night without a title cue is a DJ night                                                                       | —     |
+| `MARMORBAR`            | `ARTISTS`          | each night is billed by its name or its collective, and the DJs appear only in free prose                                                        | —     |
+| `MARMORBAR`            | `GENRE`            | the bar names no musical style except in free prose                                                                                              | —     |
+| `MARMORBAR`            | `PROMOTERS`        | the collective that hosts a night is named only in its title or its prose                                                                        | —     |
+| `MARMORBAR`            | `DOORS_TIME`       | the calendar gives a start and an end time, no doors time                                                                                        | —     |
+| `MARMORBAR`            | `SUBTITLE`         | the calendar gives each event a title and one text                                                                                               | —     |
 | `MASCHINENHAUS`        | `DOORS_TIME`       | the calendar states one time per event; only a few event texts add an Einlass time                                                               | —     |
 | `MASCHINENHAUS`        | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
 | `MASCHINENHAUS`        | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |

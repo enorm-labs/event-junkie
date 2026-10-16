@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   145 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    30 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   146 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    29 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -112,6 +112,7 @@ schema change.
 | MAAYA                            | https://maaya.de/                                                        | Club         | Elementor home page; year-less dates; `pm` half real      |
 | Madame Claude                    | https://madameclaude.de/                                                 | Bar          | WordPress `event` REST API (ACF)                          |
 | Mad Monkey Room                  | https://t.rausgegangen.de/tickets/shop/mad-monkey-2                      | Comedy Club  | rausgegangen shop list; start and price, no text          |
+| Marmorbar                        | https://www.marmorbar.com/en/event-list                                  | Bar          | Wix warmup JSON; fee-free price from event page           |
 | Maschinenhaus                    | https://www.kesselhaus.net/de/calendar                                   | Concert Hall | Shares the Kesselhaus calendar; room filter               |
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                                            | Club         | Next.js; one page per night format; next date only        |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                                            | Arena        | Shared VELOMAX listing; no sport imported                 |
@@ -186,7 +187,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-144 importer classes cover 145 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+145 importer classes cover 146 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Six other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -207,7 +208,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 90 have none, and 4 are unknown. Nine translate the event text on a second page.
+52 sources have a second language, 90 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -304,6 +305,7 @@ the upsert stores none.
 | MAAYA                            | Unknown         | The page sent a bot challenge (403)                          | —                  |                                                                                                                                    |
 | Madame Claude                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Mad Monkey Room                  | No              | —                                                            | —                  |                                                                                                                                    |
+| Marmorbar                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.marmorbar.com/en/event-list                                                                                            |
 | Maschinenhaus                    | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
 | Matrix Club Berlin               | Yes             | `/en/` path, language buttons                                | Translated         | https://www.matrix-berlin.de/en/night/social                                                                                       |
 | Max-Schmeling-Halle              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
@@ -421,7 +423,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Passionskirche           | https://www.halle-luja.berlin/kommende-events             | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"              |
 | M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links          |
 | Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only             |
-| Marmorbar                | https://www.marmorbar.com/en/event-list                   | Bar          | Medium   | Wix Events warmup JSON; prices include fees                 |
 | Giri                     | https://giri.berlin/programme/                            | Bar          | Medium   | WordPress; /programme/?month=; robots bars its JSON         |
 | ACUD MACHT NEU           | https://acudmachtneu.de/programm/                         | Club         | Medium   | WordPress; /programm/YYYY/M/ pages; time on detail          |
 | Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year              |
