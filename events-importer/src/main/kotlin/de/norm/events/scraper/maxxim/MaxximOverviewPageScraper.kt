@@ -50,7 +50,6 @@ class MaxximOverviewPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required slug, title and date are clearer than nesting
     private fun parseEvent(
         node: JsonNode,
         baseUrl: String

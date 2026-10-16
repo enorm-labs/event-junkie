@@ -38,7 +38,6 @@ class ImageDerivativeService(
      * Nothing here fails an image outright. A width imgproxy refuses simply produces no row, and the
      * next pass asks again — which is what makes an interrupted run cost a retry rather than a gap.
      */
-    @Suppress("ReturnCount")
     suspend fun generateBatch(): DerivativeOutcome {
         if (!properties.enabled || !storage.isEnabled()) return DerivativeOutcome()
 
@@ -54,7 +53,6 @@ class ImageDerivativeService(
     }
 
     // Guard clauses: an image with no hash or no id is not an error, it is simply not ready.
-    @Suppress("ReturnCount")
     private suspend fun generateFor(image: CachedImageEntity): DerivativeOutcome {
         val hash = image.contentHash ?: return DerivativeOutcome()
         val imageId = image.id ?: return DerivativeOutcome()
@@ -107,7 +105,6 @@ class ImageDerivativeService(
      * Null when JPEG is not configured, imgproxy refuses it, or the bytes do not decode: each of
      * those keeps the image.
      */
-    @Suppress("ReturnCount") // One guard clause per reason to keep the image.
     private suspend fun probe(hash: String): Probe? {
         if (JPEG !in properties.formats) return null
         val width = properties.widths.minOrNull() ?: return null

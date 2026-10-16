@@ -67,7 +67,6 @@ class MonarchOverviewPageScraper {
     }
 
     /** Parses one event block (anchored on its `td#td1` title cell) into a [ScrapedEvent]. */
-    @Suppress("ReturnCount") // Guard clauses for the required block/date/title are clearer than nesting
     private fun parseEvent(
         titleCell: Element,
         baseUrl: String
@@ -155,7 +154,6 @@ class MonarchOverviewPageScraper {
     }
 
     /** The start time from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
-    @Suppress("ReturnCount") // Early exits for no match and no time are clearer than nested lets
     private fun parseStartTime(dateText: String): LocalTime? {
         val match = DATE_TIME_PATTERN.find(dateText) ?: return null
         val hour = match.groupValues[HOUR_GROUP].toIntOrNull() ?: return null

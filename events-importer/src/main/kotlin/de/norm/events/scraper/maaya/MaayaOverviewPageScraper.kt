@@ -107,7 +107,6 @@ class MaayaOverviewPageScraper(
      * dateless card is the standing opening hours, not a malformed event, so dropped quietly — a
      * warning per import for the two permanent ones would be noise.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String

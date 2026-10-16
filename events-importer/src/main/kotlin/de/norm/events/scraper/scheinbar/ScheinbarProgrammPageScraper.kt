@@ -47,7 +47,6 @@ class ScheinbarProgrammPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun parseItem(
         item: Element,
         month: Pair<Month, Int>

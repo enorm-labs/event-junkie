@@ -58,7 +58,6 @@ class QuasimodoOverviewPageScraper {
     }
 
     /** Parses one listing `<li>` into a [ScrapedEvent], or `null` without a title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String

@@ -83,7 +83,6 @@ class CrackBellmerOverviewPageScraper(
     }
 
     /** Parses one `.event-item` into a [ScrapedEvent], or `null` when unusable or not an event. */
-    @Suppress("ReturnCount") // Guard clauses for the required link/title/date and the closed-day marker are clearer than nesting
     private fun parseItem(
         item: Element,
         sourceUrl: String

@@ -186,7 +186,6 @@ class PeterEdelOverviewPageScraper {
         }
 
     /** Parses one event box, or `null` when it has no title, no usable date, or no month heading above it. */
-    @Suppress("ReturnCount") // Guard clauses for the required columns / title / date are clearer than nesting
     private fun parseBox(
         box: Element,
         year: Int?,
@@ -260,7 +259,6 @@ class PeterEdelOverviewPageScraper {
      * The date from the box's own `DO | 20.08.` line plus the [year] of the heading above it;
      * `null` when either part is missing or day/month is not a real date.
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing year / unparseable line are clearer than nesting
     private fun parseEventDate(
         dateColumn: Element,
         year: Int?

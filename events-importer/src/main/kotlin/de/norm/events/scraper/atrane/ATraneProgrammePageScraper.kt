@@ -53,7 +53,6 @@ class ATraneProgrammePageScraper {
             }.distinctBy { it.sourceId }
     }
 
-    @Suppress("ReturnCount") // One guard clause per kind of card that is not a concert here
     private fun parseCard(card: Element): ScrapedEvent? {
         val event = card.jsonLdEvents().firstOrNull() ?: error("No JSON-LD block found")
         val url = event.stringOrNull("url") ?: error("No event URL found")

@@ -54,7 +54,6 @@ class CassiopeiaDetailPageScraper {
      * source.
      * @return the parsed event, or `null` on an unexpected page structure.
      */
-    @Suppress("ReturnCount") // Guard clauses for missing container and missing title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

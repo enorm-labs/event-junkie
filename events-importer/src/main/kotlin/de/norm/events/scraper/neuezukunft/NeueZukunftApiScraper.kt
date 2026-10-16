@@ -85,7 +85,6 @@ class NeueZukunftApiScraper(
         return parsed
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required id, title, and date are clearer than nesting.
     private fun parseEvent(node: ElfsightEventNode): List<ScrapedEvent> {
         val id = node.id.blankToNull()
         if (id == null) {

@@ -99,7 +99,6 @@ class ImageFetcher(
      * Applies the size, type and pixel limits. One guard clause per limit, over the return-count
      * rule, so each refusal reason stays legible to the operator who reads it.
      */
-    @Suppress("ReturnCount")
     private suspend fun describe(
         bytes: ByteArray,
         etag: String?,

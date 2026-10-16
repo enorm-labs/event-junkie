@@ -36,7 +36,6 @@ open class ImageUrlValidator {
      * that reads top to bottom is one a reviewer can check; the nested form hides which condition
      * admitted a URL.
      */
-    @Suppress("ReturnCount")
     open fun reject(url: String): String? {
         val uri =
             try {

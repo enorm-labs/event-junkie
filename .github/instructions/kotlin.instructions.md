@@ -31,6 +31,8 @@ How code here is written, and where its versions and thresholds live. Comments h
 - **detekt: `settings.gradle.kts` is the only place a version is written.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion`
   (`./gradlew :detekt-rules:detektToolVersion`), so a custom rule cannot be built against a different API than it is loaded with. The 2.0 pre-release line is
   tracked deliberately because it supports current Kotlin. Overrides in root `detekt.yml` (`MaxLineLength: 160`; `.editorconfig` agrees).
+    - **`ReturnCount` is `max: 4` with `excludeGuardClauses: true`** (#3404): a parser returns null for each field the source withholds, and guard clauses
+      read better than nesting. A function past that limit carries `@Suppress("ReturnCount")` with its reason; one does.
     - **`detekt`, `detektMain` and `detektTest` run different rules, and CI runs all three** (#407). `UnsafeCallOnNullableType`, `UseOrEmpty`,
       `UnusedPrivateProperty`, `LongParameterList` need resolved types, so `detekt` alone silently _skips_ them.
     - **Four rules are tuned for test sources in `detekt.yml`, each with its reason there** — a fixture builder's parameter list is the record it builds,

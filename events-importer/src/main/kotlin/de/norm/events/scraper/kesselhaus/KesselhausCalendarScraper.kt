@@ -105,7 +105,6 @@ class KesselhausCalendarScraper(
         )
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the room filter and the required fields are clearer than nesting.
     private fun parseCard(
         card: Element,
         state: TransferState,

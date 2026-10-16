@@ -49,7 +49,6 @@ class TiffanyClubOverviewPageScraper(
         }
     }
 
-    @Suppress("ReturnCount") // One guard clause per thing an item can withhold reads better than nesting
     private fun parseItem(
         item: Element,
         sourceUrl: String

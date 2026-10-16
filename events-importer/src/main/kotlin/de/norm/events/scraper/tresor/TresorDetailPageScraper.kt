@@ -48,7 +48,6 @@ class TresorDetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl], its date and [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // Guard clauses for a non-event page and a missing title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

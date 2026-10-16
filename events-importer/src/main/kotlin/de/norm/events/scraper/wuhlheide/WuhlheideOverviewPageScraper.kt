@@ -55,7 +55,6 @@ class WuhlheideOverviewPageScraper {
     }
 
     /** Parses one `.show` block into a [ScrapedEvent], or `null` without a link or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseShow(
         show: Element,
         baseUrl: String

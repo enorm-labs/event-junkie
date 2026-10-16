@@ -61,7 +61,6 @@ class InselWebsiteImporter(
      * Walks the page's static-query candidates and returns the events from the first artefact that
      * is the programme query, or an empty list.
      */
-    @Suppress("ReturnCount") // The early exits for "no candidates" and "found it" are clearer than nesting.
     private suspend fun fetchEvents(url: String): List<ScrapedEvent> {
         val hashes = staticQueryHashes(apiClient.fetchJson(gatsbyPageDataUrl(url)))
         if (hashes.isEmpty()) {

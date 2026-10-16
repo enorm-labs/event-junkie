@@ -69,7 +69,6 @@ class HeidegluehenMonthPageScraper {
      * paragraphs, the month's "Unter anderem mit" name-drop and the footer notes all fail that
      * test, which keeps them out of the programme.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required date and title are clearer than nesting
     private fun parseParagraph(
         paragraph: Element,
         sourceUrl: String,

@@ -60,7 +60,6 @@ class SchokoladenOverviewPageScraper {
     /**
      * Parses one `div.event` into a [ScrapedEvent], or `null` when title, date or fragment id is missing.
      */
-    @Suppress("ReturnCount") // Null-safe early exits for each required field are clearer than nested let-chains
     private fun parseEvent(
         block: Element,
         baseUrl: String

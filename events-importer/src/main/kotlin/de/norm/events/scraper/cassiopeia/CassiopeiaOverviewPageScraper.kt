@@ -156,7 +156,6 @@ class CassiopeiaOverviewPageScraper(
      * The date from `.event-date-wrapper`, whose `h2.event-date` children and a hidden "faker" read
      * as `"14 . 05 . Mai 2026"`; the numeric parts are extracted by regex, skipping the month name.
      */
-    @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseEventDate(item: Element): LocalDate? {
         val wrapperText = item.selectFirst(".event-date-wrapper")?.text() ?: return null
         val numericParts = NUMERIC_PATTERN.findAll(wrapperText).map { it.value }.toList()

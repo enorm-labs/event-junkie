@@ -37,7 +37,6 @@ class HavannaDetailPageScraper {
      * @return the parsed night, or `null` when the URL names no weekday or the page has no
      * programme block.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required weekday/programme block are clearer than nesting.
     fun scrape(
         document: Document,
         url: String

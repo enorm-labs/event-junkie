@@ -42,7 +42,6 @@ class Zimmer16OverviewPageScraper {
         return cards.mapSkippingFailures(logger, "ZIMMER 16 card") { parseCard(it, baseUrl) }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title, link and date are clearer than nesting.
     private fun parseCard(
         card: Element,
         baseUrl: String

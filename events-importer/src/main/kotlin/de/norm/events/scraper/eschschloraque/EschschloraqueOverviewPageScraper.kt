@@ -74,7 +74,6 @@ class EschschloraqueOverviewPageScraper {
     }
 
     /** Parses one `.node-veranstaltung` into a [ScrapedEvent], or `null` without title, path or date. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/path/date are clearer than nesting
     private fun parseNode(
         node: Element,
         baseUrl: String

@@ -45,7 +45,6 @@ class BinuuOverviewPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required id and title are clearer than nesting
     private fun parseEvent(
         node: JsonNode,
         baseUrl: String

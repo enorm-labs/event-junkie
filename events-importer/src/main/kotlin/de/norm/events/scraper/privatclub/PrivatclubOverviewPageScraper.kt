@@ -85,7 +85,7 @@ class PrivatclubOverviewPageScraper(
      * URL, ticket URL), HTML as fallback and for title, subtitle, genre, description, prices,
      * status, promoter, artists.
      */
-    @Suppress("CyclomaticComplexity", "CyclomaticComplexMethod", "ReturnCount", "LongMethod") // Cohesive single-event parsing with many optional fields
+    @Suppress("CyclomaticComplexity", "CyclomaticComplexMethod", "LongMethod") // Cohesive single-event parsing with many optional fields
     private fun parseEventWrapper(
         wrapper: Element,
         baseUrl: String
@@ -192,7 +192,6 @@ class PrivatclubOverviewPageScraper(
      * the ticket URL comes from `offers[].url` rather than a substring search that could hit
      * the event's own top-level `url`. Null when no block is found or it does not parse.
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing and unparseable JSON-LD block are clearer than nesting.
     private fun parseJsonLd(wrapper: Element): JsonLdData? {
         val jsonLdScript =
             wrapper
@@ -232,7 +231,6 @@ class PrivatclubOverviewPageScraper(
      * regex, month by [GERMAN_DATE_FORMATTER], year = current or next depending on
      * whether the date has passed. Only used without JSON-LD.
      */
-    @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseDateFromHtml(header: Element): LocalDate? {
         val datumPart1 = header.textAt(".datum_part1") ?: return null // e.g. "Sa. 16."
         val datumPart2 = header.textAt(".datum_part2") ?: return null // e.g. "Mai"
@@ -327,7 +325,6 @@ class PrivatclubOverviewPageScraper(
      * Description: every `<p>` in `.content` except the `genre` paragraph, the promoter
      * section and status/ticketing notices.
      */
-    @Suppress("ReturnCount") // Guard clauses for null detail/content are clearer than nesting
     private fun parseDescription(detail: Element?): String? {
         if (detail == null) return null
         val content = detail.selectFirst(".zeile.content") ?: return null
@@ -348,7 +345,6 @@ class PrivatclubOverviewPageScraper(
     /**
      * Promoter: a link inside `.veranstaltertext`, or plain text after "präsentiert von" in the header.
      */
-    @Suppress("ReturnCount") // Multiple fallback strategies with early returns are clearer than nested conditionals
     private fun parsePromoterName(detail: Element?): String? {
         if (detail == null) return null
 

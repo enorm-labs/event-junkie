@@ -68,7 +68,6 @@ class MigasOverviewPageScraper {
                 .getOrNull()
         }
 
-    @Suppress("ReturnCount") // Guard clauses for the three required fields read better than nesting.
     private fun parseEvent(
         item: Element,
         document: Document

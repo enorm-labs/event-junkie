@@ -78,7 +78,6 @@ class MonsterRonsonsOverviewPageScraper(
     /**
      * Parses one `.grid-item` card into a [ScrapedEvent], or null for a closure notice or no usable date.
      */
-    @Suppress("ReturnCount") // Early exits for a closure card and an unparseable date are clearer than nested lets
     private fun parseCard(
         card: Element,
         sourceUrl: String
@@ -130,7 +129,6 @@ class MonsterRonsonsOverviewPageScraper(
     }
 
     /** Parses the card's `6 Aug` / `16 Aug` text into a [MonthDay]. */
-    @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than a let-chain
     private fun parseMonthDay(text: String?): MonthDay? {
         val match = DAY_MONTH_PATTERN.find(text?.trim().orEmpty()) ?: return null
         val day = match.groupValues[1].toIntOrNull() ?: return null

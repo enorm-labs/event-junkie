@@ -100,7 +100,6 @@ class InselApiScraper(
      * with nothing upcoming; `null` when it is a different static query, so the caller tries the
      * next candidate.
      */
-    @Suppress("ReturnCount") // Guard clauses for the unparseable body and the wrong artefact are clearer than nesting.
     fun scrape(
         json: String,
         sourceUrl: String
@@ -123,10 +122,7 @@ class InselApiScraper(
      * sibling query publishes the same collection projected to a bare date and category, so the
      * array is accepted only once its first node carries a `name`.
      */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-        "ReturnCount" // Guard clauses for the unparseable body and the wrong artefact are clearer than nesting.
-    )
+    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun eventNodes(json: String): JsonNode? {
         val root =
             try {
@@ -140,7 +136,6 @@ class InselApiScraper(
         return edges.takeIf { it.isEmpty || it.first().path("node").has("name") }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title and date are clearer than nesting.
     private fun parseEvent(
         node: InselEventNode,
         sourceUrl: String

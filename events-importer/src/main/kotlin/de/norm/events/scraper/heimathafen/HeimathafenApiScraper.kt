@@ -100,7 +100,6 @@ class HeimathafenApiScraper(
         }
 
     /** Expands one event post into one [ScrapedEvent] per **upcoming** performance. */
-    @Suppress("ReturnCount") // Guard clauses for the required id / title are clearer than nesting
     private fun parsePost(
         post: JsonNode,
         today: LocalDate
@@ -217,7 +216,6 @@ class HeimathafenApiScraper(
      * the note whenever it carries more than that single general price, so no concession tier is
      * silently lost.
      */
-    @Suppress("ReturnCount") // Guard clauses for the absent / empty price repeater are clearer than nesting
     private fun parsePrices(prices: JsonNode): Triple<BigDecimal?, BigDecimal?, String?> {
         if (!prices.isArray || prices.isEmpty) return Triple(null, null, null)
         val entries =

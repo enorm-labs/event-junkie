@@ -75,7 +75,6 @@ class SaalchenOverviewPageScraper {
     }
 
     /** Parses one `.views-row` into a [ScrapedEvent], or `null` without link, title or date. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title/date are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String

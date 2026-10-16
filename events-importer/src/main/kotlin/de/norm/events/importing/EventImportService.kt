@@ -180,7 +180,7 @@ class EventImportService(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught", "ReturnCount") // Intentional: record any failure; multiple early returns for error paths
+    @Suppress("TooGenericExceptionCaught") // Intentional: record any failure; multiple early returns for error paths
     private suspend fun runImportPipeline(
         source: EventSourceEntity,
         force: Boolean

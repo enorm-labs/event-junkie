@@ -117,7 +117,6 @@ class ArcanoaOverviewPageScraper(
     }
 
     /** Maps one programme entry onto a [ScrapedEvent], or `null` without an importable event. */
-    @Suppress("ReturnCount") // Guard clauses for the unparseable/private-function cases are clearer than nesting
     private fun parseEntry(
         entry: ProgrammeEntry,
         startTime: LocalTime?,

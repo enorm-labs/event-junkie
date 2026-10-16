@@ -68,7 +68,6 @@ class SisyphosCalendarScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title and opening are clearer than nesting
     private fun parseEntry(node: JsonNode): ScrapedEvent? {
         val rawTitle = node.stringOrNull("title")
         if (rawTitle == null) {

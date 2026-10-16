@@ -46,7 +46,6 @@ class TheWallEventsPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val title = event.schemaName()?.let(::cleanEventTitle) ?: return null
         val eventDate = event.schemaDate("startDate") ?: return null

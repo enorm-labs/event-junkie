@@ -99,7 +99,6 @@ class AdmiralspalastDetailPageScraper {
      * a concert) and pushed format labels into the genre-tag vocabulary. The category is already
      * the event *type*; the house publishes no genre, so none is stored.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required title and date are clearer than nesting
     private fun parsePerformance(
         row: Element,
         sourceUrl: String,
@@ -158,7 +157,6 @@ class AdmiralspalastDetailPageScraper {
      * or score frame bills none but an ensemble named after it. These rules stay here and out of
      * the shared lists, which other venues read (#3150).
      */
-    @Suppress("ReturnCount") // One guard per title shape reads better than a nested when
     private fun billedActs(
         title: String,
         eventType: String

@@ -65,7 +65,6 @@ class So36DetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // Guard clause for the required title is clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

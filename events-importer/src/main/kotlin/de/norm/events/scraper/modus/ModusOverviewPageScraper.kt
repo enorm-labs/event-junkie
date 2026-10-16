@@ -53,7 +53,6 @@ class ModusOverviewPageScraper {
     }
 
     /** Parses one `.event-item` tile into a [ScrapedEvent], or `null` without a link or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseTile(
         tile: Element,
         baseUrl: String

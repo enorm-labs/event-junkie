@@ -65,7 +65,6 @@ class SilentGreenMonthPageScraper {
      * The raw title is read twice: [parseEventStatus] and the sold-out check need the annotations
      * (`"… – ausverkauft"`), [cleanEventTitle] removes them from what is stored.
      */
-    @Suppress("ReturnCount") // Guard clauses per missing required field are clearer than nesting
     private fun parseRow(
         row: Element,
         month: YearMonth,

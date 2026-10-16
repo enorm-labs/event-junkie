@@ -76,7 +76,6 @@ class ZennerApiScraper(
      * @return upcoming [ScrapedEvent]s in rooms the venue publishes; empty if the payload is absent,
      * unparseable or has no nodes.
      */
-    @Suppress("ReturnCount") // Guard clauses for the unparseable body and missing node array are clearer than nesting.
     fun scrape(
         json: String,
         sourceUrl: String
@@ -103,10 +102,7 @@ class ZennerApiScraper(
     }
 
     /** Parses the response body and returns its `result.data` object, or null when unparseable or absent. */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-        "ReturnCount" // Guard clauses for the unparseable body and missing data block are clearer than nesting.
-    )
+    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseData(json: String): JsonNode? {
         val root =
             try {
@@ -137,7 +133,6 @@ class ZennerApiScraper(
         return jsonMapper.treeToValue(node, ZennerPlaceVisibility::class.java)
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required id, title, date, and place visibility are clearer than nesting.
     private fun parseEvent(
         node: ZennerEventNode,
         sourceUrl: String,
@@ -354,7 +349,6 @@ private val SET_LENGTH_NOTE_PATTERN =
  * "NICE ONE"). Guests split on the shared separators, notes and suffixes stripped, non-artists
  * dropped.
  */
-@Suppress("ReturnCount") // Guard clauses for the missing frame and its empty tail are clearer than nesting.
 private fun djsFromWithFrame(title: String): List<ScrapedArtist> {
     val match = WITH_FRAME_PATTERN.find(title) ?: return emptyList()
     val billed = title.substring(match.range.last + 1).replace(SET_LENGTH_NOTE_PATTERN, "").trim()

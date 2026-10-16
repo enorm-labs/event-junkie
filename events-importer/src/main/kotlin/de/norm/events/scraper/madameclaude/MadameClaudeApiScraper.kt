@@ -89,10 +89,7 @@ class MadameClaudeApiScraper {
     }
 
     /** The response body as a JSON array, or null if unparseable or not an array. */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-        "ReturnCount" // Guard clauses for the unparseable body and non-array root are clearer than nesting.
-    )
+    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseRoot(json: String): JsonNode? {
         val root =
             try {
@@ -108,7 +105,6 @@ class MadameClaudeApiScraper {
         return root
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required slug, title, and date are clearer than nesting.
     private fun parseEvent(node: MadameClaudeEventNode): ScrapedEvent? {
         val acf = node.acf
 

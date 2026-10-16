@@ -96,7 +96,6 @@ class BarJederVernunftOverviewPageScraper {
      * act or show, `.event-title` its sub-line — exactly how the JSON-LD `name` is assembled
      * ("`<performer> - <sub-line>`"), so the two are kept apart rather than re-split.
      */
-    @Suppress("ReturnCount") // Guard clauses per missing required field are clearer than nesting
     private fun parseCard(card: Element): ScrapedEvent? {
         val eventNode = parseJsonLd(card) ?: return null
 

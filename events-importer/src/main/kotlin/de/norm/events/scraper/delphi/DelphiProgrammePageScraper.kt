@@ -95,7 +95,6 @@ class DelphiProgrammePageScraper {
     /**
      * Parses one performance row into a [ScrapedEvent], or `null` without a production or title.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required link/title/day are clearer than nesting
     private fun parseRow(
         row: Element,
         month: LocalDate,

@@ -74,7 +74,6 @@ class KaterOverviewPageScraper(
     }
 
     /** Parses one `article.event` into a [ScrapedEvent], or `null` without id, title or date. */
-    @Suppress("ReturnCount") // Guard clauses for the required id / title / date are clearer than nesting
     private fun parseArticle(
         article: Element,
         baseUrl: String

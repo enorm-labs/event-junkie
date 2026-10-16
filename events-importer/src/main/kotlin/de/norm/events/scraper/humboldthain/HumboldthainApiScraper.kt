@@ -86,7 +86,6 @@ class HumboldthainApiScraper(
     }
 
     /** Validates one calendar entry and expands it into one [ScrapedEvent] per occurrence date. */
-    @Suppress("ReturnCount") // Guard clauses for the required id, title, and date are clearer than nesting.
     private fun parseEvent(node: ElfsightEventNode): List<ScrapedEvent> {
         val id = node.id.blankToNull()
         if (id == null) {

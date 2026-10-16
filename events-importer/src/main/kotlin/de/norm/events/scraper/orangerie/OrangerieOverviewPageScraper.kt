@@ -58,7 +58,6 @@ class OrangerieOverviewPageScraper {
             null
         }
 
-    @Suppress("ReturnCount") // Guard clauses for the required name and date are clearer than nesting.
     private fun parseNight(
         node: JsonNode,
         cards: Map<String?, Element>,

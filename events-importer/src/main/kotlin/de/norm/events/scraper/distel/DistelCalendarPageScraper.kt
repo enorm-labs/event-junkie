@@ -54,7 +54,6 @@ class DistelCalendarPageScraper {
     /** True when the month lists no performance, which ends the walk. */
     fun isEmptyMonth(document: Document): Boolean = document.select("div.event.event_list").isEmpty()
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun parseItem(
         item: Element,
         heading: Pair<Month, Int>
@@ -131,7 +130,6 @@ internal fun distelEventType(
  * talk, else the names before the first colon. A performance marker before the colon
  * (`PREMIERE: Gut im Abgang`) bills nobody, and nor does a title with no colon: the ensemble's shows.
  */
-@Suppress("ReturnCount") // Guard clauses for the talk frame and the colon are clearer than nesting
 internal fun distelActs(title: String): List<ScrapedArtist> {
     GUEST_AT_HOST.find(title)?.let { match ->
         return match.groupValues

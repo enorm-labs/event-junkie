@@ -73,7 +73,6 @@ private fun endOfStringLiteral(
  *
  * Quotes and escapes are tracked so a `[` inside a string value cannot end the array early.
  */
-@Suppress("ReturnCount") // Guard clauses for the absent key and the unclosed array are clearer than nesting
 fun jsonArrayAt(
     payload: String,
     key: String

@@ -62,7 +62,6 @@ class TausendOverviewPageScraper {
                 sourceId(start.date, name) to text.ifBlank { null }
             }.toMap()
 
-    @Suppress("ReturnCount") // Guard clauses for the required name and date are clearer than nesting.
     private fun parseNight(
         node: JsonNode,
         texts: Map<String, String?>,

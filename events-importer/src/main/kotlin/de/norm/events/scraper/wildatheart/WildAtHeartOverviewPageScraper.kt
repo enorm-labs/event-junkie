@@ -73,7 +73,6 @@ class WildAtHeartOverviewPageScraper(
     }
 
     /** Parses one event `<tr>` row into a [ScrapedEvent]. */
-    @Suppress("ReturnCount") // Guard clauses for the required date/title are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String
@@ -151,7 +150,6 @@ class WildAtHeartOverviewPageScraper(
      * `DD.MM.` from the text, year [inferred][inferYearForWeekday] from the weekday. `null`
      * without a parseable date.
      */
-    @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseDatum(text: String?): LocalDate? {
         if (text == null) return null
         val match = DATUM_PATTERN.find(text) ?: return null

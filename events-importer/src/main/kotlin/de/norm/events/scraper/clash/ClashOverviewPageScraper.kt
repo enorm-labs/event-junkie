@@ -74,7 +74,6 @@ class ClashOverviewPageScraper {
     /**
      * Parses one `.item` block into a [ScrapedEvent], or `null` when title or date is missing/unparseable.
      */
-    @Suppress("ReturnCount") // Null-safe early exits for the required title/date fields are clearer than nesting
     private fun parseItem(
         item: Element,
         baseUrl: String

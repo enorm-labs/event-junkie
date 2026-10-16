@@ -40,7 +40,6 @@ class OraniaOverviewPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for each required field are clearer than nesting
     private fun parseItem(item: Element): ScrapedEvent? {
         val link = item.selectFirst("h2 a[href]")
         val title = link?.text()?.trim()

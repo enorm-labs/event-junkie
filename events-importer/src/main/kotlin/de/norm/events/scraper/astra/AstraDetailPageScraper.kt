@@ -37,7 +37,6 @@ class AstraDetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // Guard clauses for missing container and title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

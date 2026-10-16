@@ -105,7 +105,6 @@ class ClubDerVisionaereProgrammePageScraper(
         return ClubDerVisionaereRoom.entries.firstOrNull { title.hasClass(it.titleClass) }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title/date/id are clearer than nesting.
     private fun parseBlock(
         block: Element,
         eventDate: LocalDate?,
@@ -163,7 +162,6 @@ class ClubDerVisionaereProgrammePageScraper(
      * The block's German `Wd. D.M.` date cell, year from the weekday. `null` for an empty cell
      * (the shared-date case) or an unparseable one.
      */
-    @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(block: Element): LocalDate? {
         val dateText = block.textAt(DATE_SELECTOR) ?: return null
         val match = DATE_PATTERN.find(dateText) ?: return null

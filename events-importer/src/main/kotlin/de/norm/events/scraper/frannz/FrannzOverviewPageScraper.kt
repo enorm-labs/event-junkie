@@ -91,7 +91,6 @@ class FrannzOverviewPageScraper(
      * Parses one `<article class="events">` into a [ScrapedEvent], or `null` when title or a
      * parseable date cannot be resolved, so malformed articles never reach persistence.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date/id fields are clearer than nesting
     private fun parseArticle(
         article: Element,
         baseUrl: String
@@ -160,7 +159,6 @@ class FrannzOverviewPageScraper(
      * occurrence from today whose weekday matches `.event-dayname` (#1988). Without a weekday, or
      * when none matches, it is the next occurrence.
      */
-    @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains
     private fun parseEventDate(article: Element): LocalDate? {
         val day = article.textAt(".event-day") ?: return null
         val month = article.textAt(".event-month") ?: return null

@@ -80,7 +80,6 @@ class TempodromOverviewPageScraper {
     }
 
     /** Maps one schema.org `Event` onto a [ScrapedEvent], or `null` without a name or date. */
-    @Suppress("ReturnCount") // Guard clauses for the required name/date are clearer than nesting
     private fun parseEvent(event: JsonNode): ScrapedEvent? {
         val title = event.schemaName()?.let(::cleanEventTitle) ?: return null
         val eventDate = event.schemaDate("startDate") ?: return null

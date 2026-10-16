@@ -78,7 +78,6 @@ class DunckerOverviewPageScraper(
     }
 
     /** Parses one programme row (its event cell plus sibling date/weekday/time cells) into a [ScrapedEvent]. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting.
     private fun parseRow(
         cell: Element,
         baseUrl: String
@@ -163,7 +162,6 @@ class DunckerOverviewPageScraper(
      * The row's German `DD.MM.` date, year from the two-letter weekday cell (Mo–So) via
      * [inferYearForWeekday]. `null` when unparseable.
      */
-    @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(row: Element): LocalDate? {
         val dateText = row.textAt("td.tabledate") ?: return null
         val match = DATE_PATTERN.find(dateText) ?: return null

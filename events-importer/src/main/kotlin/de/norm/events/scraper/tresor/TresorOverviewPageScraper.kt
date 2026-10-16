@@ -66,7 +66,6 @@ class TresorOverviewPageScraper {
     }
 
     /** Parses one `article.event-item`, or `null` without a permalink or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseItem(
         item: Element,
         baseUrl: String

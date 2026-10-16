@@ -57,7 +57,6 @@ class Hole44OverviewPageScraper {
     }
 
     /** Parses one `li.event-item` into a [ScrapedEvent], or `null` without a title link. */
-    @Suppress("ReturnCount") // Guard clauses for the required link/href/title are clearer than nesting
     private fun parseItem(
         item: Element,
         baseUrl: String

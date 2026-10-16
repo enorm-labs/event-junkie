@@ -62,7 +62,6 @@ class ClubOstOverviewPageScraper {
      * the HTML5 adoption-agency algorithm splits the outer anchor into siblings, and every selector
      * matches from the `.event-item` container rather than that anchor.
      */
-    @Suppress("ReturnCount") // Guard clauses per missing required field read better than a nested let-chain
     private fun parseCard(
         card: Element,
         sourceUrl: String

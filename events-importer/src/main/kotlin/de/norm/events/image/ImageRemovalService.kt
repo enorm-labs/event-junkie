@@ -82,7 +82,6 @@ class ImageRemovalService(
      *   [ImageSweepProperties.enabled] describes.
      * @return how many objects went, or would have gone.
      */
-    @Suppress("ReturnCount")
     private suspend fun discard(
         image: CachedImageEntity,
         delete: Boolean

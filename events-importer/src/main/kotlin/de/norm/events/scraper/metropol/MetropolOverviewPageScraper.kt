@@ -66,7 +66,6 @@ class MetropolOverviewPageScraper {
     }
 
     /** Parses one `li.event` row into a [ScrapedEvent], or `null` without a link or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String

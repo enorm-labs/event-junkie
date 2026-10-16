@@ -49,10 +49,7 @@ internal object BinuuSvelteKitPayload {
      * for a detail page).
      * @param openBracket the bracket opening its value (`'['` / `'{'`), disambiguating the marker.
      */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed/absent payload must degrade to null, never abort the import
-        "ReturnCount" // Guard clauses for the missing script and unparseable payload are clearer than nesting
-    )
+    @Suppress("TooGenericExceptionCaught") // A malformed/absent payload must degrade to null, never abort the import
     fun dataNode(
         document: Document,
         key: String,
@@ -74,7 +71,6 @@ internal object BinuuSvelteKitPayload {
     }
 
     /** Extracts the balanced `{…}` object that opens immediately before [marker]. */
-    @Suppress("ReturnCount") // Sequential null-guards for each extraction step are clearer than nesting
     private fun extractObjectLiteral(
         script: String,
         marker: Regex

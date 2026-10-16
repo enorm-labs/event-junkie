@@ -50,7 +50,6 @@ class SpeakeazyOverviewPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // One guard clause per thing an article can withhold reads better than nesting
     private fun parseArticle(
         article: Element,
         sourceUrl: String

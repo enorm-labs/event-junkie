@@ -85,7 +85,6 @@ class DerWeisseHaseOverviewPageScraper {
     }
 
     /** Parses one `.event50` block into a [ScrapedEvent], or `null` without a title or usable date. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseBlock(
         block: Element,
         baseUrl: String
