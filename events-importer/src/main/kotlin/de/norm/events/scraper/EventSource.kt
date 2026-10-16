@@ -28,6 +28,9 @@ enum class EventSource {
     /** Alte Kantine Berlin – a club and concert space in the Kulturbrauerei, mixing live gigs, club nights and themed parties. */
     ALTE_KANTINE,
 
+    /** Alte Münze – a cultural quarter in Berlin's former state mint on the Spree, with exhibitions, festivals, performances and opera days. */
+    ALTE_MUENZE,
+
     /** Arcanoa Berlin – a tiny Kreuzberg bar running since 1988: independent live acts at the weekend, open stages and jam sessions midweek. */
     ARCANOA,
 

@@ -45,6 +45,10 @@ says so.
 | `ALTE_KANTINE`         | `PRICE`            | some nights leave the Eintritt field empty ("Eintritt: €"), so no figure is published                                                            | —     |
 | `ALTE_KANTINE`         | `GENRE`            | each post's labels name kind, price, date, time and DJ, never a style                                                                            | —     |
 | `ALTE_KANTINE`         | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `ALTE_MUENZE`          | `PRICE`            | most events set no cost                                                                                                                          | —     |
+| `ALTE_MUENZE`          | `TICKET_URL`       | the event link is often an artist's site or a social profile, not a shop                                                                         | —     |
+| `ALTE_MUENZE`          | `ARTISTS`          | the calendar bills no lineup; the acts are in the prose                                                                                          | —     |
+| `ALTE_MUENZE`          | `GENRE`            | the tags mix styles with formats and topics                                                                                                      | —     |
 | `ARCANOA`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `ARCANOA`              | `PRICE`            | a night is one line — a date, the act and a genre string — and the page prints no figure anywhere                                                | —     |
 | `ARCANOA`              | `TICKET_URL`       | entry is paid at the door, and the page's only links point at partner sites                                                                      | —     |
