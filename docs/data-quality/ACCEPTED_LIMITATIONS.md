@@ -666,6 +666,14 @@ says so.
 | `VOID_CLUB`            | `IMAGE`            | event cards carry no image; the hero slider shows other events than the listed nights                                                            | —     |
 | `VOID_CLUB`            | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
 | `WABE`                 | `DOORS_TIME`       | the site prints one time per night, the start                                                                                                    | —     |
+| `WEEKEND`              | `SUBTITLE`         | the listing prints a title and a blurb, no second title line                                                                                     | —     |
+| `WEEKEND`              | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
+| `WEEKEND`              | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
+| `WEEKEND`              | `GENRE`            | the listing names no style field, only the blurb describes one                                                                                   | —     |
+| `WEEKEND`              | `PRICE`            | the prices are only in the embedded ticket shop                                                                                                  | —     |
+| `WEEKEND`              | `PROMOTERS`        | the guest crew is named only in the title, as `WKND X <crew>`                                                                                    | —     |
+| `WEEKEND`              | `SOLD_OUT`         | the listing states no ticket status                                                                                                              | —     |
+| `WEEKEND`              | `CANCELLATION`     | the listing has no status field, so a cancelled night can only disappear                                                                         | —     |
 | `WILD_AT_HEART`        | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `WILD_AT_HEART`        | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |

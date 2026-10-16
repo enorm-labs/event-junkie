@@ -426,6 +426,9 @@ enum class EventSource {
     /** WABE – Pankow's octagonal 1986 hall for jazz, pop, song and theatre, playing in Schönfließer Straße 7 while it is renovated. */
     WABE,
 
+    /** Weekend – a club on the 15th floor of the former Haus des Reisens at Alexanderplatz, with a rooftop facing the TV tower. */
+    WEEKEND,
+
     /** Wild at Heart Berlin – a rock'n'roll bar and live club near Schlesisches Tor: rockabilly, punk, garage and surf. */
     WILD_AT_HEART,
 

@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   148 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    27 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   149 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    26 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -179,6 +179,7 @@ schema change.
 | Velodrom                         | https://www.velomax.de/events                                            | Arena        | Shares the VELOMAX listing; Microdata details             |
 | VOID Club                        | https://www.void-club.de/                                                | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms          |
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
+| Weekend                          | https://www.weekendclub.berlin/upcoming                                  | Club         | Squarespace list; Xceed tickets; DJs from blurb           |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
 | Zebrano-Theater                  | https://www.zebrano-theater.de/programm.html                             | Theater      | Hand-written month tables + event pages                   |
@@ -189,7 +190,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-147 importer classes cover 148 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+148 importer classes cover 149 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Six other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -210,7 +211,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-53 sources have a second language, 91 have none, and 4 are unknown. Nine translate the event text on a second page.
+53 sources have a second language, 92 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -374,6 +375,7 @@ the upsert stores none.
 | Velodrom                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | VOID Club                        | Yes             | One field, in the club text only                             | Not on the listing | https://www.void-club.de/                                                                                                          |
 | WABE                             | No              | —                                                            | —                  |                                                                                                                                    |
+| Weekend                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
 | YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
 | Zebrano-Theater                  | No              | —                                                            | —                  |                                                                                                                                    |
@@ -428,7 +430,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links          |
 | Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only             |
 | Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year              |
-| Weekend                  | https://www.weekendclub.berlin/upcoming                   | Club         | Medium   | Squarespace /upcoming HTML; robots bars JSON                |
 | Beate Uwe                | https://beate-uwe.de/                                     | Club         | Medium   | WordPress/Elementor; homepage list; RA links                |
 | Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks            |
 
