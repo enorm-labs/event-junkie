@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ class DropModusComedySeriesArtistMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("84").migrate()
+        flyway(postgres, "84").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -30,7 +30,7 @@ class DropModusComedySeriesArtistMigrationTest {
             plantEvent(statement, "modus:281026-ModusComedy", "modus-comedy")
             plantEvent(statement, "modus:011026-MiaMorgan", "mia-morgan")
         }
-        flyway("85").migrate()
+        flyway(postgres, "85").migrate()
     }
 
     @AfterAll
@@ -50,7 +50,7 @@ class DropModusComedySeriesArtistMigrationTest {
         PostgreSQLContainer("postgres:18.3-alpine").use { other ->
             other.start()
             DriverManager.getConnection(other.jdbcUrl, other.username, other.password).use { conn ->
-                flyway("84", other).migrate()
+                flyway(other, "84").migrate()
                 conn.createStatement().use { statement ->
                     statement.execute("SET search_path TO events")
                     statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -58,7 +58,7 @@ class DropModusComedySeriesArtistMigrationTest {
                     plantEvent(statement, "modus:211026-ModusComedy", "modus-comedy")
                     plantEvent(statement, "so36:1", "modus-comedy")
                 }
-                flyway("85", other).migrate()
+                flyway(other, "85").migrate()
                 slugs("artist", conn) shouldContainExactlyInAnyOrder listOf("modus-comedy")
             }
         }
@@ -80,17 +80,6 @@ class DropModusComedySeriesArtistMigrationTest {
             )
         }
     }
-
-    private fun flyway(
-        target: String,
-        container: PostgreSQLContainer = postgres
-    ): Flyway =
-        Flyway
-            .configure()
-            .dataSource(container.jdbcUrl, container.username, container.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun slugs(
         table: String,

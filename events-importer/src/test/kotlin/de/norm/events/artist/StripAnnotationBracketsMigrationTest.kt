@@ -1,10 +1,10 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -28,7 +28,7 @@ class StripAnnotationBracketsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("44").migrate()
+        flyway(postgres, "44").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -53,7 +53,7 @@ class StripAnnotationBracketsMigrationTest {
             plantArtist(statement, "Fracture (Uk)", "fracture-uk")
             plantArtist(statement, "Plain", "plain")
         }
-        flyway("45").migrate()
+        flyway(postgres, "45").migrate()
     }
 
     @AfterAll
@@ -101,14 +101,6 @@ class StripAnnotationBracketsMigrationTest {
             .toList()
             .shouldBeEmpty()
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun plantArtist(
         statement: Statement,

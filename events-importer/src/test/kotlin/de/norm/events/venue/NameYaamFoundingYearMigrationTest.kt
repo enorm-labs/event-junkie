@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -22,7 +22,7 @@ class NameYaamFoundingYearMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("161").migrate()
+        flyway(postgres, "161").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute(
@@ -31,7 +31,7 @@ class NameYaamFoundingYearMigrationTest {
                     "('Other', 'other', '$OLD', 'en', NULL, NULL)"
             )
         }
-        flyway("162").migrate()
+        flyway(postgres, "162").migrate()
     }
 
     @AfterAll
@@ -68,14 +68,6 @@ class NameYaamFoundingYearMigrationTest {
             connection.autoCommit = true
         }
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun strings(query: String): List<String> =
         connection.createStatement().use { statement ->

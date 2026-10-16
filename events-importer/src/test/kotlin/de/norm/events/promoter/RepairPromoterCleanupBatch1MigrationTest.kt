@@ -1,9 +1,9 @@
 package de.norm.events.promoter
 
+import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.nio.file.Files
@@ -64,17 +64,6 @@ class RepairPromoterCleanupBatch1MigrationTest {
             )
         }
     }
-
-    private fun flyway(
-        postgres: PostgreSQLContainer,
-        target: String
-    ): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun credits(
         connection: Connection,

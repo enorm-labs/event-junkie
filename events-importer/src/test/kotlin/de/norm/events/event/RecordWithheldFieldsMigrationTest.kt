@@ -1,7 +1,7 @@
 package de.norm.events.event
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class RecordWithheldFieldsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("68").migrate()
+        flyway(postgres, "68").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute(
@@ -39,7 +39,7 @@ class RecordWithheldFieldsMigrationTest {
                     "('prohibited', 'p:1', 'a'), ('text-only', 't:1', 'b'), ('unclear', 'u:1', 'c'), (NULL, 'm:1', 'd')) AS e(src, key, slug)"
             )
         }
-        flyway("69").migrate()
+        flyway(postgres, "69").migrate()
     }
 
     @AfterAll
@@ -58,14 +58,6 @@ class RecordWithheldFieldsMigrationTest {
                 "d" to (false to false)
             )
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun flags(): Map<String, Pair<Boolean, Boolean>> =
         connection.createStatement().use { statement ->

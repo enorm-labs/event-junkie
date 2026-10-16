@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -7,7 +8,6 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -32,7 +32,7 @@ class MergeSplitSo36AmpersandBandsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("86").migrate()
+        flyway(postgres, "86").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -60,7 +60,7 @@ class MergeSplitSo36AmpersandBandsMigrationTest {
             plantEvent(statement, "elsewhere-kai", "kai" to "DJ")
             plantEvent(statement, "so36-booze", "booze" to "HEADLINER", "glory" to "HEADLINER", "doc-rotten" to "SUPPORT")
         }
-        flyway("89").migrate()
+        flyway(postgres, "89").migrate()
     }
 
     @AfterAll
@@ -116,14 +116,6 @@ class MergeSplitSo36AmpersandBandsMigrationTest {
             .map { (slug, name) -> "'$slug' is named '$name'" }
             .shouldBeEmpty()
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun plantArtist(
         statement: Statement,

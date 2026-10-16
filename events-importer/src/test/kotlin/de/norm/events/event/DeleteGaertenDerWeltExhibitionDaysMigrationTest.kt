@@ -1,8 +1,8 @@
 package de.norm.events.event
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -22,7 +22,7 @@ class DeleteGaertenDerWeltExhibitionDaysMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("101").migrate()
+        flyway(postgres, "101").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -45,7 +45,7 @@ class DeleteGaertenDerWeltExhibitionDaysMigrationTest {
             plantEvent(statement, "gaerten_der_welt:2026-10-05_1000/eine-andere-ausstellung", "2026-10-05", "EXHIBITION")
             plantEvent(statement, "silent_green:2026-10-04_0900/zwischen-himmel-und-erde-ausstellung", "2026-10-06", "EXHIBITION")
         }
-        flyway("102").migrate()
+        flyway(postgres, "102").migrate()
     }
 
     @AfterAll
@@ -83,14 +83,6 @@ class DeleteGaertenDerWeltExhibitionDaysMigrationTest {
                 "SELECT id, 'Fixture event', '$slug', DATE '$date', '$sourceId', '$type' FROM venue WHERE slug = 'fixture'"
         )
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun strings(query: String): List<String> =
         connection.createStatement().use { statement ->

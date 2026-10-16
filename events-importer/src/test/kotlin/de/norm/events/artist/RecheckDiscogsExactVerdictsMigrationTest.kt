@@ -1,7 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ class RecheckDiscogsExactVerdictsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("62").migrate()
+        flyway(postgres, "62").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute(
@@ -33,7 +33,7 @@ class RecheckDiscogsExactVerdictsMigrationTest {
                 """.trimIndent()
             )
         }
-        flyway("63").migrate()
+        flyway(postgres, "63").migrate()
     }
 
     @AfterAll
@@ -64,14 +64,6 @@ class RecheckDiscogsExactVerdictsMigrationTest {
         val discogsUrl: String?,
         val checked: Boolean
     )
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun row(slug: String): Row =
         connection.prepareStatement("SELECT discogs_match, discogs_id, discogs_url, discogs_checked_at FROM events.artist WHERE slug = ?").use { statement ->

@@ -1,10 +1,10 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ class SplitBulletBillMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("52").migrate()
+        flyway(postgres, "52").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -41,7 +41,7 @@ class SplitBulletBillMigrationTest {
             plantEvent(statement, "fused", "new-candys-it-fuzz-club-blke-de-tonzonen")
             plantEvent(statement, "other", "mayflower-madame", "blke")
         }
-        flyway("53").migrate()
+        flyway(postgres, "53").migrate()
     }
 
     @AfterAll
@@ -86,14 +86,6 @@ class SplitBulletBillMigrationTest {
             .toList()
             .shouldBeEmpty()
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     private fun plantArtist(
         statement: Statement,

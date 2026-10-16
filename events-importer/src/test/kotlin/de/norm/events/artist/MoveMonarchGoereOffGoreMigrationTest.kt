@@ -1,8 +1,8 @@
 package de.norm.events.artist
 
+import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -25,7 +25,7 @@ class MoveMonarchGoereOffGoreMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("125").migrate()
+        flyway(postgres, "125").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -34,7 +34,7 @@ class MoveMonarchGoereOffGoreMigrationTest {
             plantEvent(statement, "monarch:2026-10-09-gore", "gore")
             plantEvent(statement, "ufo:2026-10-13-i-prevail", "i-prevail", "gore")
         }
-        flyway("127").migrate()
+        flyway(postgres, "127").migrate()
     }
 
     @AfterAll
@@ -65,14 +65,6 @@ class MoveMonarchGoereOffGoreMigrationTest {
         artistSlugFor("GÖRE") shouldBe "goere"
         artistSlugFor("Gore") shouldBe "gore"
     }
-
-    private fun flyway(target: String): Flyway =
-        Flyway
-            .configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .schemas("events")
-            .target(target)
-            .load()
 
     /** One night billing the artists of [slugs], in billing order. */
     private fun plantEvent(
