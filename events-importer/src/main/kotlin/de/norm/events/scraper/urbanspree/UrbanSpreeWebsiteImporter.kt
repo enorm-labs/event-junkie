@@ -2,6 +2,7 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
@@ -45,7 +46,7 @@ import java.time.LocalDate
 class UrbanSpreeWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the "has this page reached the past?" pagination cutoff. Defaults to the system clock; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 

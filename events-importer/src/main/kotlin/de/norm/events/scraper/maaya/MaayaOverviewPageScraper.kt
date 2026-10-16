@@ -1,6 +1,7 @@
 package de.norm.events.scraper.maaya
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -61,7 +62,7 @@ import java.time.MonthDay
 @Suppress("LongComment") // 30 lines, and the four numbered traps are four real ones — the missing year, the half-real `pm`, the weekday, the button.
 class MaayaOverviewPageScraper(
     /** Clock for the year a year-less date is given; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

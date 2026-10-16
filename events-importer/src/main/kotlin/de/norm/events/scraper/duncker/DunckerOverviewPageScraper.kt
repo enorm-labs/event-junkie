@@ -3,6 +3,7 @@ package de.norm.events.scraper.duncker
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -49,7 +50,7 @@ import java.time.MonthDay
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
 class DunckerOverviewPageScraper(
     /** Clock for weekday-based year inference; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

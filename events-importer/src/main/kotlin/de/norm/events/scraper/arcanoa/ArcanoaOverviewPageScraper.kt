@@ -1,5 +1,6 @@
 package de.norm.events.scraper.arcanoa
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -54,7 +55,7 @@ import java.time.MonthDay
 @Suppress("LongComment", "TooManyFunctions") // 5 KDoc lines are the 1990s markup itself, which needs many small extractors to parse.
 class ArcanoaOverviewPageScraper(
     /** Clock for weekday-based year inference; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

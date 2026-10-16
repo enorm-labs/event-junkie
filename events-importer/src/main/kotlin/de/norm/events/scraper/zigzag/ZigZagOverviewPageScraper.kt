@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zigzag
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -29,7 +30,7 @@ import java.util.Locale
  */
 class ZigZagOverviewPageScraper(
     private val eventSource: EventSource,
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val hall = eventSource == EventSource.ZIG_ZAG_HALL
     private val logger = KotlinLogging.logger {}

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.roadrunner
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
@@ -67,7 +68,7 @@ import java.util.Locale
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the retro markup needs many small field extractors
 class RoadrunnerOverviewPageScraper(
     /** Clock for year inference; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

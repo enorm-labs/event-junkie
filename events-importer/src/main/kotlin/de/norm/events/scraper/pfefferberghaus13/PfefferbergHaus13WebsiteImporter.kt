@@ -2,6 +2,7 @@ package de.norm.events.scraper.pfefferberghaus13
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -23,7 +24,7 @@ import java.time.Clock
 @Component
 class PfefferbergHaus13WebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, PfefferbergHaus13OverviewPageScraper(clock)::scrape, PfefferbergHaus13DetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.PFEFFERBERG_HAUS_13
 

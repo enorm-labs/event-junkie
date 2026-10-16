@@ -1,6 +1,7 @@
 package de.norm.events.scraper.frannz
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -58,7 +59,7 @@ import java.util.Locale
 @Suppress("TooManyFunctions")
 class FrannzOverviewPageScraper(
     /** Clock for year-rollover date inference; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monsterronsons
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -46,7 +47,7 @@ import java.time.MonthDay
  */
 class MonsterRonsonsOverviewPageScraper(
     /** Clock for year inference and the past-event cutoff; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

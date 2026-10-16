@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pfefferberghaus13
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -23,7 +24,7 @@ import java.time.MonthDay
  * the doors when the event page names no start. Below the teaser sits a ticket link, `Abendkasse` or `Freier Eintritt`.
  */
 class PfefferbergHaus13OverviewPageScraper(
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

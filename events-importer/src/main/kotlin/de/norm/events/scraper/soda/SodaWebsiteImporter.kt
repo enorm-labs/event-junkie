@@ -2,6 +2,7 @@ package de.norm.events.scraper.soda
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -28,7 +29,7 @@ import java.time.Clock
 class SodaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, SodaOverviewPageScraper(clock)::scrape, SodaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SODA
     override val listsWholeProgramme: Boolean = true

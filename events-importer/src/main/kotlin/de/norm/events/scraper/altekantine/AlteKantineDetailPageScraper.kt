@@ -1,5 +1,6 @@
 package de.norm.events.scraper.altekantine
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -33,7 +34,7 @@ import java.time.Clock
  */
 class AlteKantineDetailPageScraper(
     /** Clock for year inference on the year-less `Wann:` date; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

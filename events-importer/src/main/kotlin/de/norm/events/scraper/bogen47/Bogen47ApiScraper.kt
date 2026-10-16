@@ -2,6 +2,7 @@ package de.norm.events.scraper.bogen47
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -93,7 +94,7 @@ internal class Bogen47ApiScraper(
     private val eventSource: EventSource,
     private val eventsUrl: String,
     private val eventTypes: Map<String, String>,
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

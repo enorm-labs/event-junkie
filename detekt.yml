@@ -42,6 +42,8 @@ style:
     methods:
       - reason: 'Pass a zone or a Clock: LocalDate.now(ClockConfiguration.BERLIN), or the service''s own clock.'
         value: 'java.time.LocalDate.now()'
+      - reason: 'The containers run in UTC, so the default zone is not Berlin (#3401). Use Clock.system(BERLIN).'
+        value: 'java.time.Clock.systemDefaultZone()'
 
 # This repository's own rules, implemented in the :detekt-rules module.
 event-junkie:

@@ -3,6 +3,7 @@ package de.norm.events.scraper.bogen47
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
@@ -125,14 +126,14 @@ abstract class AbstractBogen47WebsiteImporter(
 @Component
 class LarkWebsiteImporter(
     apiClient: ApiClient,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractBogen47WebsiteImporter(apiClient, EventSource.LARK, "https://larkberlin.com/events/", LARK_EVENT_TYPES, clock)
 
 /** Fitzroy — LARK's sister club next door; the site types every event `Party`, live shows included. */
 @Component
 class FitzroyWebsiteImporter(
     apiClient: ApiClient,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractBogen47WebsiteImporter(apiClient, EventSource.FITZROY, "https://fitzroy-berlin.de/events/", emptyMap(), clock)
 
 /**

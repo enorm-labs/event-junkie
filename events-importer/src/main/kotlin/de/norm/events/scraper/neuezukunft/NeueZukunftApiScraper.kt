@@ -1,6 +1,7 @@
 package de.norm.events.scraper.neuezukunft
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -59,7 +60,7 @@ private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/konzerte.html"
  * @see <a href="https://neue-zukunft.org/">Neue Zukunft</a>
  */
 class NeueZukunftApiScraper(
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.junctionbar
 
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
@@ -50,7 +51,7 @@ import java.time.LocalDate
 class JunctionBarWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the DJ scraper's year inference and the past-night cutoff on shop fetches; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 

@@ -2,6 +2,7 @@ package de.norm.events.scraper.arcanoa
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -28,7 +29,7 @@ import java.time.Clock
 class ArcanoaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the scraper's weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Arcanoa", ArcanoaOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.ARCANOA
     override val listsWholeProgramme: Boolean = true

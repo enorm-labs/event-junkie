@@ -2,6 +2,7 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -24,7 +25,7 @@ import java.time.Clock
 class RoadrunnerWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the scraper's past-event cutoff and year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Roadrunner's Paradise", RoadrunnerOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.ROADRUNNER
     override val listsWholeProgramme: Boolean = true

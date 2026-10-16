@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monsterronsons
 
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -48,7 +49,7 @@ import java.time.Clock
 class MonsterRonsonsWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's year inference and past-event cutoff; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 

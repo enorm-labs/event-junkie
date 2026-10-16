@@ -2,6 +2,7 @@ package de.norm.events.scraper.klunkerkranich
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -44,7 +45,7 @@ import java.time.Clock
 class KlunkerkranichWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the listing scraper's year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Klunkerkranich programme", KlunkerkranichOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.KLUNKERKRANICH
 

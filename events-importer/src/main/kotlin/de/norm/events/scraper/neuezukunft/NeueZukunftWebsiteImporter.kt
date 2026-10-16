@@ -3,6 +3,7 @@ package de.norm.events.scraper.neuezukunft
 import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
@@ -34,7 +35,7 @@ import java.time.Clock
 class NeueZukunftWebsiteImporter(
     apiClient: ApiClient,
     /** Clock anchoring the rolling recurrence horizon; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractJsonApiImporter(apiClient, "Neue Zukunft", { json, _ -> NeueZukunftApiScraper(clock).scrape(json) }) {
     override val eventSource: EventSource = EventSource.NEUE_ZUKUNFT
     override val listsWholeProgramme: Boolean = true
