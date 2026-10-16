@@ -9,6 +9,7 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
+import NearOriginControls from '@/components/NearOriginControls.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
@@ -30,16 +31,9 @@ import {
 import { districtLabel } from '@/lib/districts'
 import { feedbackMailto } from '@/lib/feedback'
 import { formatDistance, type Position } from '@/lib/geo'
-import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
+import { coarseAccuracy } from '@/lib/nearOrigin'
 import { CONTROLLER } from '@/lib/legal'
-import {
-  DEFAULT_RADIUS,
-  type MapPin,
-  nearby,
-  RADII,
-  radiusFromQuery,
-  venuePin,
-} from '@/lib/mapPins'
+import { type MapPin, nearby, radiusFromQuery, radiusQuery, venuePin } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, MAP_PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
@@ -215,11 +209,14 @@ const pins = computed<MapPin[]>(() =>
     .filter((pin): pin is MapPin => pin !== null),
 )
 
-const originLabel = computed(() => describeOrigin(origin.value, t))
 const coarse = computed(() => coarseAccuracy(origin.value, radiusKm.value, locale.value))
 
 function distance(km: number): string {
   return formatDistance(km, locale.value)
+}
+
+function selectRadius(radius: number) {
+  applyFilters({ radius: radiusQuery(radius) })
 }
 
 /** Venues without a coordinate: named, so a venue missing from the map is not taken for one we lack. */
@@ -386,28 +383,13 @@ const localePath = useLocalePath()
             <LocateFixed aria-hidden="true" />
             {{ t('map.near.useLocation') }}
           </Button>
-          <template v-if="origin">
-            <span>{{ t('map.near.from', { origin: originLabel }) }}</span>
-            <div :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
-              <Button
-                v-for="radius in RADII"
-                :key="radius"
-                :aria-pressed="radius === radiusKm"
-                :variant="radius === radiusKm ? 'default' : 'outline'"
-                size="sm"
-                type="button"
-                @click="
-                  applyFilters({ radius: radius === DEFAULT_RADIUS ? undefined : String(radius) })
-                "
-              >
-                {{ distance(radius) }}
-              </Button>
-            </div>
-            <Button size="sm" type="button" variant="ghost" @click="clearOrigin">
-              <X aria-hidden="true" />
-              {{ t('map.near.clear') }}
-            </Button>
-          </template>
+          <NearOriginControls
+            v-if="origin"
+            :origin="origin"
+            :radius-km="radiusKm"
+            @clear="clearOrigin"
+            @select="selectRadius"
+          />
         </div>
         <p
           v-if="locateState === 'locating'"

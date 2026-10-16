@@ -112,6 +112,11 @@ export function radiusFromQuery(value: string): number {
   return (RADII as readonly number[]).includes(radius) ? radius : DEFAULT_RADIUS
 }
 
+/** The query value for a chosen radius; the default carries no parameter, so the URL stays clean. */
+export function radiusQuery(radius: number): string | undefined {
+  return radius === DEFAULT_RADIUS ? undefined : String(radius)
+}
+
 /**
  * The items within `radiusKm` of `origin`, nearest first. An item whose venue has no coordinate
  * drops out; the view counts those itself.
