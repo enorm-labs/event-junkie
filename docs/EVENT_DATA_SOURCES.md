@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   135 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    40 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   136 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    39 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -157,6 +157,7 @@ schema change.
 | The Wall Comedy Club             | https://thewallcomedy.com/                                               | Comedy Club  | Spotagig JSON-LD; HTMX "Show more" partials               |
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                                   | Concert Hall | One row per performance; prices only in a leak            |
 | Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                               | Club         | Elementor; year from the weekday; blurb per event page    |
+| TIPI am Kanzleramt               | https://www.tipi-am-kanzleramt.de/de/programm/kalender.html              | Theater      | Bar jeder Vernunft parser; per-date JSON-LD               |
 | Tresor                           | https://tresorberlin.com/club/events/                                    | Techno Club  | WordPress; floor-grouped lineup; detail pages             |
 | Uber Arena                       | https://www.uber-arena.de/events/all                                     | Arena        | AEG CMS; list + detail; no sport imported                 |
 | Uber Eats Music Hall             | https://www.uber-eats-music-hall.de/events/all                           | Concert Hall | Shares the Uber Arena parsers; month names, no cats       |
@@ -176,10 +177,10 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-134 importer classes cover 135 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
+135 importer classes cover 136 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
-The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
+The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
 
 ## 🌐 Second language
 
@@ -197,7 +198,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-50 sources have a second language, 81 have none, and 4 are unknown. Eight translate the event text on a second page.
+51 sources have a second language, 81 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -205,10 +206,10 @@ it stores the row, and only when the scraper gave no second language. The second
 language. Each half must read as German or English, so a Russian half stays in the whole text. The SO36 and Zig Zag
 scrapers cut their own text first. Their cut reads line breaks or a pointer line that the stored text does not keep.
 
-Seven importers also read the page in the other language. They store its event text as the publisher's second language:
+Eight importers also read the page in the other language. They store its event text as the publisher's second language:
 
 - Bar Tausend and Columbiahalle read the English listing. This adds one request to each run.
-- Bar jeder Vernunft and Theater im Delphi read the English page of each production. This adds one request for each
+- Bar jeder Vernunft, TIPI am Kanzleramt and Theater im Delphi read the English page of each production. This adds one request for each
   production.
 - silent green reads the English page of each programme entry. This adds one request for each entry.
 - Orania.Berlin reads the German page of each concert. This adds one request for each concert.
@@ -339,6 +340,7 @@ the upsert stores none.
 | The Wall Comedy Club             | No              | —                                                            | —                  |                                                                                                                                    |
 | Theater im Delphi                | Yes             | `/en/` path                                                  | Translated         | https://theater-im-delphi.de/en/programm/                                                                                          |
 | Tiffany Club                     | No              | —                                                            | —                  |                                                                                                                                    |
+| TIPI am Kanzleramt               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.tipi-am-kanzleramt.de/en/whats-on/calendar.html                                                                        |
 | Tresor                           | No              | —                                                            | —                  |                                                                                                                                    |
 | Uber Arena                       | Unknown         | The page refused the request (406)                           | —                  |                                                                                                                                    |
 | Uber Eats Music Hall             | Yes             | `/en/` path                                                  | Unknown            | https://www.uber-eats-music-hall.de/en/events/all/                                                                                 |
@@ -386,7 +388,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend               |
 | Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint      |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices       |
-| TIPI am Kanzleramt       | https://www.tipi-am-kanzleramt.de/                        | Theater      | Medium   | Server-rendered overview; time, sold-out flag, genre        |
 | Zebrano Theater          | https://www.zebrano-theater.de/programm.html              | Theater      | Medium   | Month table; time, price, genre; year from the heading      |
 | Mad Monkey Room          | https://t.rausgegangen.de/tickets/shop/mad-monkey-2       | Comedy Club  | Medium   | rausgegangen ticket shop; ~470 dated shows with prices      |
 | Baiz                     | https://radar.squat.net/en/node/1609                      | Bar          | Medium   | radar group API, 66 upcoming; talks and quizzes too         |

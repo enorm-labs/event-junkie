@@ -10316,7 +10316,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# TIPI am Kanzleramt — not imported
+# TIPI am Kanzleramt
 # ————————————————————————————————————————————————————————————
 
 ### --- Create TIPI am Kanzleramt venue ---
@@ -10338,13 +10338,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["theatre", "live-venue"],
     "capacity": 550,
-    "programmeUrl": "https://www.tipi-am-kanzleramt.de/programm/kalender.html",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_tipi_am_kanzleramt", response.body.id);
     client.test("TIPI am Kanzleramt venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create TIPI am Kanzleramt event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_tipi_am_kanzleramt}},
+    "name": "TIPI am Kanzleramt",
+    "url": "https://www.tipi-am-kanzleramt.de/de/programm/kalender.html",
+    "sourceType": "TIPI_AM_KANZLERAMT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("TIPI am Kanzleramt event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial TIPI am Kanzleramt import ---
+POST {{importer-host}}/api/admin/event-sources/tipi-am-kanzleramt/import
+Accept: application/json
+
+> {%
+    client.test("TIPI am Kanzleramt import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

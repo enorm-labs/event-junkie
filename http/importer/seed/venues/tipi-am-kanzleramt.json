@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["theatre", "live-venue"],
         "capacity": 550,
-        "programmeUrl": "https://www.tipi-am-kanzleramt.de/programm/kalender.html",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "TIPI am Kanzleramt",
+            "url": "https://www.tipi-am-kanzleramt.de/de/programm/kalender.html",
+            "sourceType": "TIPI_AM_KANZLERAMT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
