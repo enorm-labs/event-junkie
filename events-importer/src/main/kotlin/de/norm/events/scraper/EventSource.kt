@@ -13,6 +13,9 @@ enum class EventSource {
     /** Abstand Berlin – a punk bar at Rigaer Straße 78 in Friedrichshain, with concerts and solidarity nights. */
     ABSTAND,
 
+    /** ACUD MACHT NEU Berlin – an arts house in a Mitte apartment block that artists took over in 1991, with a club, a studio and a gallery. */
+    ACUD_MACHT_NEU,
+
     /** ÆDEN Berlin – a techno club on the Spree in Kreuzberg with two floors and a garden. */
     AEDEN,
 

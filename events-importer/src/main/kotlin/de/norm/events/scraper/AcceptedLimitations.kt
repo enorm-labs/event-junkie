@@ -5,6 +5,7 @@ import de.norm.events.event.SpokenLanguage
 import de.norm.events.genretag.genreFamily
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.abstand.ABSTAND_LIMITATIONS
+import de.norm.events.scraper.acudmachtneu.ACUD_MACHT_NEU_LIMITATIONS
 import de.norm.events.scraper.admiralspalast.ADMIRALSPALAST_LIMITATIONS
 import de.norm.events.scraper.aeden.AEDEN_LIMITATIONS
 import de.norm.events.scraper.aeg.AEG_LIMITATIONS
@@ -157,6 +158,7 @@ object AcceptedLimitations {
         listOf(
             A_TRANE_LIMITATIONS,
             ABSTAND_LIMITATIONS,
+            ACUD_MACHT_NEU_LIMITATIONS,
             ADMIRALSPALAST_LIMITATIONS,
             AEDEN_LIMITATIONS,
             AEG_LIMITATIONS,

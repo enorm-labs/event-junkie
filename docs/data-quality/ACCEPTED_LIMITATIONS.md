@@ -23,6 +23,13 @@ says so.
 | `ABSTAND`              | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `ABSTAND`              | `PRICE`            | radar lists no price on most nights                                                                                                              | —     |
 | `ABSTAND`              | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
+| `ACUD_MACHT_NEU`       | `SUBTITLE`         | the programme has a title per event and no second title line                                                                                     | —     |
+| `ACUD_MACHT_NEU`       | `GENRE`            | the site files events only as club night, concert, performance, exhibition or workshop                                                           | —     |
+| `ACUD_MACHT_NEU`       | `END_TIME`         | the site prints one time per event and an end only in free text                                                                                  | —     |
+| `ACUD_MACHT_NEU`       | `PRICE_PRESALE`    | the site links a presale shop and prints only the door price                                                                                     | —     |
+| `ACUD_MACHT_NEU`       | `PROMOTERS`        | the site names a collective only in the event text                                                                                               | —     |
+| `ACUD_MACHT_NEU`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `ACUD_MACHT_NEU`       | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
 | `AEDEN`                | `PRICE`            | the month page carries no prices                                                                                                                 | —     |
 | `AEDEN`                | `PER_EVENT_PAGE`   | the month page links no page per night                                                                                                           | —     |
 | `AEDEN`                | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

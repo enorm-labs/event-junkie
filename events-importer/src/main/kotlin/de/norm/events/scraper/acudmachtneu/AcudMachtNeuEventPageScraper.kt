@@ -1,0 +1,138 @@
+package de.norm.events.scraper.acudmachtneu
+
+import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.euroAmounts
+import de.norm.events.scraper.htmlParagraphText
+import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parseClock
+import de.norm.events.scraper.splitBackToBack
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
+import java.time.LocalTime
+
+/**
+ * Pure parser for one ACUD event page. The header line names the room and one time, `ACUD CLUB 20h → Concert`. The
+ * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
+ * the doors time. `Doors:` and `Entrance:` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
+ * paragraph of one act per line are read where present.
+ */
+class AcudMachtNeuEventPageScraper {
+    fun scrape(
+        document: Document,
+        sourceUrl: String
+    ): ScrapedEvent? {
+        val article = document.selectFirst("article.event-article") ?: return null
+        val title = article.selectFirst("h1.t-title-header--event")?.text().blankToNull() ?: return null
+        val header =
+            HEADER.find(
+                article
+                    .selectFirst(".t-margin-header--t2")
+                    ?.text()
+                    ?.replace(' ', ' ')
+                    .orEmpty()
+            )
+        val content = article.selectFirst(".event-article__content")
+        val text = content?.let { htmlParagraphText(it.html()) }
+        val lines = text?.lines().orEmpty()
+        val startTime = lines.firstNotNullOfOrNull { labelledClock(it, START_LABELS) } ?: header?.let(::headerTime)
+        val entrance =
+            lines.firstNotNullOfOrNull {
+                ENTRANCE
+                    .find(it)
+                    ?.groupValues
+                    ?.get(1)
+                    .blankToNull()
+            }
+        val doorPrice = euroAmounts(entrance).singleOrNull()?.takeUnless { RANGE.containsMatchIn(entrance.orEmpty()) }
+        return ScrapedEvent(
+            title = title,
+            description = text,
+            eventDate = UNRESOLVED_EVENT_DATE,
+            startTime = startTime,
+            doorsTime = lines.firstNotNullOfOrNull { labelledClock(it, DOORS_LABELS) }?.takeIf { it != startTime },
+            room = header?.groupValues?.get(1)?.let(::roomName),
+            imageUrl = article.selectFirst(".event-article__figure img[src]")?.absUrl("src").blankToNull(),
+            ticketUrl = content?.let(::ticketUrl),
+            priceBoxOffice = doorPrice,
+            priceNote = entrance?.takeIf { doorPrice == null },
+            sourceUrl = sourceUrl,
+            sourceId = acudMachtNeuSourceId(sourceUrl),
+            artists = content?.let(::lineUp).orEmpty()
+        )
+    }
+
+    private fun headerTime(match: MatchResult): LocalTime? {
+        val (_, hour, minute) = match.destructured
+        return parseClock("$hour:${minute.ifEmpty { "00" }}")
+    }
+
+    /** `ACUD CLUB` is the Club, `ACUD GALERIE` the Galerie, as the site's Spaces menu names them. */
+    private fun roomName(raw: String): String? =
+        raw
+            .replace(ACUD_PREFIX, "")
+            .blankToNull()
+            ?.lowercase()
+            ?.replaceFirstChar { it.uppercase() }
+
+    /** The first link whose label just before it names a presale or tickets: `Presale: <a>`, `Ticketing<br><a>`. */
+    private fun ticketUrl(content: Element): String? =
+        content
+            .select("a[href]")
+            .firstOrNull { link -> textBefore(link)?.let { TICKET_LABEL.containsMatchIn(it) } == true }
+            ?.absUrl("href")
+            .blankToNull()
+
+    private fun textBefore(link: Element): String? {
+        var node: Node? = link.previousSibling()
+        while (node != null && node.isSpacing()) node = node.previousSibling()
+        return when (node) {
+            is TextNode -> node.text()
+            is Element -> node.text()
+            else -> null
+        }
+    }
+
+    /** Blank text or a line break between a label and its link. */
+    private fun Node.isSpacing(): Boolean = (this is TextNode && isBlank) || (this is Element && normalName() == "br")
+
+    /** The acts of the paragraph headed `Line up` or `LINE UP`, one per line; `Name – Track` bills the name. */
+    private fun lineUp(content: Element): List<ScrapedArtist> {
+        val paragraph = content.select("p").firstOrNull { LINE_UP.containsMatchIn(it.text()) } ?: return emptyList()
+        return htmlParagraphText(paragraph.html())
+            .orEmpty()
+            .lines()
+            .dropWhile { !LINE_UP.containsMatchIn(it) }
+            .map { it.replace(LINE_UP, "") }
+            .map { it.split(TRACK_TAIL, limit = 2).first() }
+            .flatMap(::splitBackToBack)
+            .mapNotNull { it.blankToNull() }
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it) }
+    }
+
+    private companion object {
+        /** `ACUD CLUB 20h → …`: the room, then the hour. */
+        val HEADER = Regex("""^\s*(.*?)\s*(\d{1,2})(?:[:.](\d{2}))?\s*h\b""", RegexOption.IGNORE_CASE)
+
+        val ACUD_PREFIX = Regex("""^\s*acud\s*""", RegexOption.IGNORE_CASE)
+
+        val ENTRANCE = Regex("""^\s*(?:entrance|eintritt)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
+
+        /** `15 - 18 €` is a sliding scale, kept as the venue wrote it. */
+        val RANGE = Regex("""\d\s*[-–]\s*\d""")
+
+        val TICKET_LABEL = Regex("""(?:presale|vorverkauf|vvk|tickets?|ticketing)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+
+        val LINE_UP = Regex("""^\s*line[\s-]?up\s*:?\s*""", RegexOption.IGNORE_CASE)
+
+        val TRACK_TAIL = Regex("""\s+[–—-]\s+""")
+    }
+}

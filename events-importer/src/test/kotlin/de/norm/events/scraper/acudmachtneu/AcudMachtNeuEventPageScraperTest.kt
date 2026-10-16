@@ -1,0 +1,88 @@
+package de.norm.events.scraper.acudmachtneu
+
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import org.jsoup.Jsoup
+import org.junit.jupiter.api.Test
+import java.time.LocalTime
+
+class AcudMachtNeuEventPageScraperTest {
+    private val scraper = AcudMachtNeuEventPageScraper()
+
+    private fun scrape(
+        name: String,
+        url: String
+    ) = scraper.scrape(document(name, url), url)!!
+
+    @Test
+    fun `reads the room and time from the header, the text, the picture and the presale link`() {
+        val event = scrape("acudmachtneu-event-burre.html", "https://acudmachtneu.de/events/2390/burre-w-heavenphetamine")
+
+        event.title shouldBe "Burre w/ Heavenphetamine"
+        event.sourceId shouldBe "acud_macht_neu:2390"
+        event.room shouldBe "Club"
+        event.startTime shouldBe LocalTime.of(20, 0)
+        event.doorsTime.shouldBeNull()
+        event.imageUrl shouldBe "https://acudmachtneu.de/resources/uploads/2026/10/blurred-frame-3.jpg"
+        event.ticketUrl shouldBe "https://ra.co/events/2554847"
+        event.description!! shouldContain "HEAVENPHETAMINE is coming back to Berlin"
+        event.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `prefers a labelled start in the text over the header's time and keeps a price without an amount as a note`() {
+        val event = scrape("acudmachtneu-event-ukrainian-party.html", "https://acudmachtneu.de/events/2381/ukrainian-film-festival-party")
+
+        event.startTime shouldBe LocalTime.of(22, 0)
+        event.priceNote shouldBe "Donation Based"
+        event.priceBoxOffice.shouldBeNull()
+        event.ticketUrl.shouldBeNull()
+    }
+
+    @Test
+    fun `bills the acts of the line-up paragraph, one per line, split at a b2b`() {
+        val event = scrape("acudmachtneu-event-syrup.html", "https://acudmachtneu.de/events/2389/syrup")
+
+        event.artists.map { it.name } shouldContainExactly
+            listOf("James Lotion", "maniaclina", "Charlotte Lion", "Dzoara", "Housekatze", "Keta Perry")
+    }
+
+    @Test
+    fun `reads doors equal to the header's time as the start, a price range as a note, and the act before a track`() {
+        val event = scrape("acudmachtneu-event-renatura.html", "https://acudmachtneu.de/events/2385/renatura-06-%e2%80%93-hexapoda-release-event")
+
+        event.startTime shouldBe LocalTime.of(19, 0)
+        event.doorsTime.shouldBeNull()
+        event.priceNote shouldBe "15 - 18 €"
+        event.ticketUrl shouldBe "https://www.eventbrite.com/e/releaseparty-renatura-06-hexapoda-tickets-2002290259065"
+        event.artists.map { it.name } shouldContainExactly listOf("Mark Ijzerman", "Pléyides")
+    }
+
+    @Test
+    fun `reads the gallery as the room of an exhibition`() {
+        val event = scrape("acudmachtneu-event-orbital-decay.html", "https://acudmachtneu.de/events/2379/orbital-decay")
+
+        event.room shouldBe "Galerie"
+        event.startTime shouldBe LocalTime.of(18, 0)
+    }
+
+    @Test
+    fun `returns null for a page without an event article`() {
+        val url = "https://acudmachtneu.de/events/1/gone"
+        scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", url), url).shouldBeNull()
+    }
+
+    private fun document(
+        name: String,
+        url: String
+    ) = Jsoup.parse(
+        javaClass.classLoader
+            .getResourceAsStream("scraper/acudmachtneu/$name")!!
+            .bufferedReader()
+            .readText(),
+        url
+    )
+}
