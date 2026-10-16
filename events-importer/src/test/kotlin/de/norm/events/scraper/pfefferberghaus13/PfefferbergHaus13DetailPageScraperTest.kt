@@ -50,6 +50,42 @@ class PfefferbergHaus13DetailPageScraperTest {
     }
 
     @Test
+    fun `bills the acts a blurbed list names, not the doors or price lists after it`() {
+        val event = page("resonanzen", "resonanzen-internationale-klaenge-rock-den-berg")
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { it.name } shouldBe listOf("Amptray", "Artikel 5", "Bentez")
+    }
+
+    @Test
+    fun `bills a colon list once, though the page lists it in two languages`() {
+        val event = page("lunar-harvest", "halloween-metal-festival-lunar-harvest-by-nox")
+
+        event.artists.map { it.name } shouldBe listOf("WR51", "Prey Vision", "Host of Nightmare", "NOX")
+    }
+
+    @Test
+    fun `reads an item as an act only with a short name and a blurb of words`() {
+        fun act(html: String) = blurbedAct(Jsoup.parseBodyFragment("<ul>$html</ul>").selectFirst("li")!!)
+
+        act("<li><strong>Artikel 5</strong> – energiegeladener Punkrock mit Haltung.</li>") shouldBe "Artikel 5"
+        act("<li><strong>Band - Name</strong> – spielt lauten Rock für alle.</li>") shouldBe "Band - Name"
+        act("<li><strong>WR51:</strong> Schon fünf Jahre suchen diese Seelen.</li>") shouldBe "WR51"
+        act("<li>Bentez - Berliner Alt-Pop-Künstlerin und Songwriterin.</li>") shouldBe "Bentez"
+        act("<li><strong>Einlass: 19:00 </strong></li>").shouldBeNull()
+        act("<li><strong>Regulär 10€/ Ermäßigt 7€ </strong></li>").shouldBeNull()
+        act("<li>Tickets: an der Kasse</li>").shouldBeNull()
+        act("<li>Eine sehr lange Reihe von Wörtern – und dann ein langer Satz danach.</li>").shouldBeNull()
+        act("<li>Limbo Boys</li>").shouldBeNull()
+    }
+
+    @Test
+    fun `bills a listed lineup for a festival, and none for a night that is neither a concert nor a festival`() {
+        actsOf("Lunar Harvest", EventType.FESTIVAL.name, listOf("NOX")).map { it.name } shouldBe listOf("NOX")
+        actsOf("Lesung am Berg", EventType.READING.name, listOf("Amptray")) shouldBe emptyList()
+    }
+
+    @Test
     fun `reads a free debate as a reading`() {
         val event = page("europa-kontrovers", "europa-kontrovers-frieden-sichern-was-zivile-resilienz-in-berlin-und-europa-leisten-kann")
 
