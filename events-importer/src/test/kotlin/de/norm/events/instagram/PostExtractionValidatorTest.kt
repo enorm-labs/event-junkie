@@ -79,6 +79,22 @@ class PostExtractionValidatorTest {
     }
 
     @Test
+    fun `an act may be the name a handle in the caption spells`() {
+        val event =
+            parse(
+                """
+                {"isEvent": true, "events": [{"date": "2026-12-31", "title": "NULL | RESET",
+                  "acts": ["Herve", "Henning Baer", "Amoral", "JASSS", "J As", "Ben Klock"],
+                  "evidence": "From December 31st", "confidence": 0.95}]}
+                """.trimIndent(),
+                caption = "From December 31st through January 4th\n___herve\nhenningbaer_\namoral___dj\njasss_inc",
+                postedAt = "2026-10-05T09:00:00Z"
+            )?.single()
+
+        event?.acts shouldBe listOf("Herve", "Henning Baer", "Amoral", "JASSS")
+    }
+
+    @Test
     fun `a price the caption names survives`() {
         val event =
             parse(
