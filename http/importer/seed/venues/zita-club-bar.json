@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zita Club & Bar",
+        "address": "Am Juliusturm 64",
+        "city": "Berlin",
+        "postalCode": "13599",
+        "district": "spandau",
+        "latitude": 52.541034,
+        "longitude": 13.212744,
+        "websiteUrl": "https://zita-club.de/",
+        "description": "A nightclub and cocktail bar under the stone vaults of the Renaissance Zitadelle Spandau, fitted out almost entirely with reclaimed materials and run by Channel Music, with DJ nights from current hits to classic rock.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein Nachtclub mit Cocktailbar unter den Steingewölben der Renaissancefestung Zitadelle Spandau, fast ganz aus wiederverwendeten Baustoffen ausgebaut und von Channel Music betrieben, mit DJ-Nächten von aktuellen Hits bis Classic Rock.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["club", "bar"]
+    },
+    "sources": [
+        {
+            "name": "Zita Club & Bar",
+            "url": "https://zita-club.de/",
+            "sourceType": "ZITA_CLUB",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

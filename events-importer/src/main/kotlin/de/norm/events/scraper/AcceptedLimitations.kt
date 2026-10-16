@@ -146,6 +146,7 @@ import de.norm.events.scraper.zebranotheater.ZEBRANO_THEATER_LIMITATIONS
 import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
 import de.norm.events.scraper.zigzag.ZIG_ZAG_LIMITATIONS
 import de.norm.events.scraper.zimmer16.ZIMMER_16_LIMITATIONS
+import de.norm.events.scraper.zitaclub.ZITA_CLUB_LIMITATIONS
 import de.norm.events.scraper.zitadelle.ZITADELLE_LIMITATIONS
 import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
 import de.norm.events.slug.SlugGenerator
@@ -302,6 +303,7 @@ object AcceptedLimitations {
             ZENNER_LIMITATIONS,
             ZIG_ZAG_LIMITATIONS,
             ZIMMER_16_LIMITATIONS,
+            ZITA_CLUB_LIMITATIONS,
             ZITADELLE_LIMITATIONS,
             ZUR_KLAPPE_LIMITATIONS
         )

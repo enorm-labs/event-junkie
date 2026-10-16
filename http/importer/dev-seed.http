@@ -12419,6 +12419,67 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Zita Club & Bar
+# ————————————————————————————————————————————————————————————
+
+### --- Create Zita Club & Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zita Club & Bar",
+    "address": "Am Juliusturm 64",
+    "city": "Berlin",
+    "postalCode": "13599",
+    "district": "spandau",
+    "latitude": 52.541034,
+    "longitude": 13.212744,
+    "websiteUrl": "https://zita-club.de/",
+    "description": "A nightclub and cocktail bar under the stone vaults of the Renaissance Zitadelle Spandau, fitted out almost entirely with reclaimed materials and run by Channel Music, with DJ nights from current hits to classic rock.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Nachtclub mit Cocktailbar unter den Steingewölben der Renaissancefestung Zitadelle Spandau, fast ganz aus wiederverwendeten Baustoffen ausgebaut und von Channel Music betrieben, mit DJ-Nächten von aktuellen Hits bis Classic Rock.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"]
+}
+
+> {%
+    client.global.set("venue_id_zita_club_bar", response.body.id);
+    client.test("Zita Club & Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Zita Club & Bar event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_zita_club_bar}},
+    "name": "Zita Club & Bar",
+    "url": "https://zita-club.de/",
+    "sourceType": "ZITA_CLUB",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Zita Club & Bar event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Zita Club & Bar import ---
+POST {{importer-host}}/api/admin/event-sources/zita-club-bar/import
+Accept: application/json
+
+> {%
+    client.test("Zita Club & Bar import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Zitadelle
 # ————————————————————————————————————————————————————————————
 
