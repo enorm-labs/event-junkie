@@ -15,15 +15,15 @@ import org.springframework.core.io.FileSystemResource
  */
 class ReadinessGroupConfigTest {
     @Test
-    fun `the shipped readiness group includes both database indicators`() {
+    fun `the shipped readiness group includes every database indicator`() {
         val readiness = probeGroup(MAIN_CONFIG, "readiness")
 
         withClue(
             "readiness must mean `can serve`, not `Spring started` (#438, ADR-018). `r2dbc` proves the " +
-                "database is reachable and `eventsSchema` proves the schema is migrated and readable; " +
-                "neither alone closes the window #263 measured. Found: $readiness"
+                "database is reachable, `eventsSchema` proves the schema is migrated and readable, and " +
+                "`schemaVersion` proves it has every migration this build reads (#3384). Found: $readiness"
         ) {
-            readiness shouldBe setOf("readinessState", "r2dbc", "eventsSchema")
+            readiness shouldBe setOf("readinessState", "r2dbc", "eventsSchema", "schemaVersion")
         }
     }
 
@@ -55,19 +55,21 @@ class ReadinessGroupConfigTest {
     }
 
     @Test
-    fun `the health component name still matches the indicator class`() {
-        val derived =
-            EventsSchemaHealthIndicator::class
-                .simpleName!!
-                .removeSuffix("HealthIndicator")
-                .replaceFirstChar { it.lowercase() }
+    fun `the health component names still match the indicator classes`() {
+        for (indicator in listOf(EventsSchemaHealthIndicator::class, SchemaVersionHealthIndicator::class)) {
+            val derived =
+                indicator
+                    .simpleName!!
+                    .removeSuffix("HealthIndicator")
+                    .replaceFirstChar { it.lowercase() }
 
-        withClue(
-            "Spring derives the health component name from the bean name with the `HealthIndicator` " +
-                "suffix removed, so renaming the class renames the component. `$derived` is not in the " +
-                "readiness group — the context would fail to start on group-membership validation."
-        ) {
-            (derived in probeGroup(MAIN_CONFIG, "readiness")) shouldBe true
+            withClue(
+                "Spring derives the health component name from the bean name with the `HealthIndicator` " +
+                    "suffix removed, so renaming the class renames the component. `$derived` is not in the " +
+                    "readiness group — the context would fail to start on group-membership validation."
+            ) {
+                (derived in probeGroup(MAIN_CONFIG, "readiness")) shouldBe true
+            }
         }
     }
 

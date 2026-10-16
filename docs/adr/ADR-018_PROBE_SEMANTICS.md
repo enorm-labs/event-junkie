@@ -2,8 +2,8 @@
 
 ## Status
 
-**Accepted (2026-08-18) — the BFF's readiness group is `readinessState, r2dbc, eventsSchema`, and its liveness group
-is `livenessState` and nothing else.**
+**Accepted (2026-08-18) — the BFF's readiness group is `readinessState, r2dbc, eventsSchema, schemaVersion`, and its
+liveness group is `livenessState` and nothing else.**
 
 **Implemented in [#438](https://github.com/enorm-labs/event-junkie/issues/438)**, which exists because
 [#263](https://github.com/enorm-labs/event-junkie/issues/263) measured the failure while installing the chart on k3d for the first time.
@@ -88,7 +88,7 @@ Service. Those numbers were previously arbitrary. They are now load-bearing.
 
 ## Decision
 
-**1. The BFF's readiness group is `readinessState, r2dbc, eventsSchema`.**
+**1. The BFF's readiness group is `readinessState, r2dbc, eventsSchema, schemaVersion`.**
 
 `include` replaces a group's default membership rather than adding to it, so `readinessState` is repeated explicitly.
 `eventsSchema` is `EventsSchemaHealthIndicator`, which runs `SELECT EXISTS (SELECT 1 FROM <schema>.event)`. That query
@@ -98,6 +98,15 @@ grows. And it exercises the real grant on the real table, rather than asking a c
 
 The two contributors are kept **separate rather than folded into one**. The endpoint then distinguishes "the database
 is gone" from "the schema is not migrated yet", and those have different operators and different fixes.
+
+**`schemaVersion` holds a new BFF back until the importer applies the migrations that the BFF reads** (#3384). The
+two Deployments roll at the same time. A release that adds a column can therefore start BFF pods before the importer
+applies the migration. `eventsSchema` cannot see this, because `events.event` already exists. The `events-bff`
+build writes the highest `V<n>` from the importer's migration directory into the resource
+`META-INF/expected-schema-version`. `SchemaVersionHealthIndicator` reads the highest successful numeric version in
+`events.flyway_schema_history`. It reports `DOWN` while that version is lower than the build's version. A database
+that is ahead of the build reports `UP`, so the old pods continue to serve during a rollback. The indicator writes one
+INFO line when it holds readiness and one when it releases it, not one line for each probe.
 
 **2. The BFF's liveness group is `livenessState`, and must stay that way.**
 
@@ -153,7 +162,7 @@ and add a value that `src/test/resources/application.yaml` must shadow correctly
 - **`helm install --wait` now genuinely couples the two workloads.** The BFF reaches Ready only after the importer's
   migrations finish. `scripts/k3d-rehearsal.sh` allows `--timeout 5m` against a measured 1.2-second gap. The staging
   `HelmRelease` sets `timeout: 3m`, and that is now a shared budget rather than two independent ones.
-- **Two extra connections per pod per 10 seconds**, one per contributor. Negligible against a pool sized 5–12, but it is new load that probes did not previously
+- **Three extra database round trips per pod per 10 seconds**, one per contributor. Negligible against a pool sized 5–12, but it is new load that probes did not previously
   place on the database.
 
 ### Revisit when

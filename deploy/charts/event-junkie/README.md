@@ -181,7 +181,7 @@ crash-loops for up to ninety seconds while the importer migrates, and that this 
 not crash-loop, which is **worse** — a crash-looping pod receives no traffic and a Ready one does.
 
 **Fixed in [#438](https://github.com/enorm-labs/event-junkie/issues/438).** The BFF's readiness group
-is now `readinessState, r2dbc, eventsSchema`: the database has to be reachable _and_ the `events`
+includes `r2dbc` and `eventsSchema`: the database has to be reachable _and_ the `events`
 schema readable before the pod joins the Service. On a first install the BFF therefore stays un-Ready
 until the importer's migrations land — which is what this section claimed in the first place and
 never had.
@@ -217,6 +217,13 @@ way. Two consequences belong here rather than there:
   3` — about 30 seconds of sustained failure. Traefik then answers `503` rather than every pod
   answering `200`-framed query errors. Those two probe numbers are load-bearing; `tests/probes_test.yaml`
   pins them so that changing one means reading ADR-018 first.
+
+**An upgrade waits for the schema version too** (#3384). The BFF and the importer roll at once, so a release that adds a
+column could start a BFF pod before the importer applied the migration, and that pod answered `500` until it did. The
+`schemaVersion` contributor compares the highest successful version in `events.flyway_schema_history` with the
+highest migration the BFF was built with, and keeps the pod un-Ready while the database is behind. The old pods keep
+serving meanwhile, and a database ahead of the build (a rollback) stays Ready. The pod logs `Readiness held` and
+`Readiness released` once each.
 
 The design decision itself is unchanged: **no init container and no Helm hook** ordering the two, because
 a startup dependency has to stay correct forever and Kubernetes already retries. Readiness is what makes

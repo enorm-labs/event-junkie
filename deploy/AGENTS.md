@@ -103,7 +103,7 @@ The audited API versions, the YAML boolean trap and the `restricted` Pod Securit
 - **Actuator is private because it is on its own port.** Never add an ingress path for `/actuator`, never route the `management` port, never make the
   importer's Service `NodePort` or `LoadBalancer` — its admin API has no authentication; unroutability is what protects it.
 - **The probes are one template and two meanings.** `event-junkie.jvmProbes` renders the same for both JVMs; each `application.yaml` decides what readiness
-  contains (the BFF's includes `r2dbc` and `eventsSchema`, the importer's does not — ADR-018). Readiness `periodSeconds: 10, failureThreshold: 3` is the
+  contains (the BFF's includes `r2dbc`, `eventsSchema` and `schemaVersion`, the importer's does not — ADR-018). Readiness `periodSeconds: 10, failureThreshold: 3` is the
   blip tolerance that decision rests on, not a default to tune, and **liveness must never gain a database indicator**: `startupProbe` watches the liveness
   path, so a first install would crash-loop at 30 × 5s.
 - **`readOnlyRootFilesystem: true` needs writable mounts** — `/tmp` for the JVMs, `/var/cache/nginx` and `/var/run` for nginx, which fails at startup without them.
