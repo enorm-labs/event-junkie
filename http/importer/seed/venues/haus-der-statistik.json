@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Haus der Statistik",
+        "address": "Otto-Braun-Straße 72",
+        "city": "Berlin",
+        "postalCode": "10178",
+        "district": "mitte",
+        "latitude": 52.523544,
+        "longitude": 13.419311,
+        "websiteUrl": "https://hausderstatistik.org/",
+        "instagramUrl": "https://www.instagram.com/hausderstatistik/",
+        "facebookUrl": "https://www.facebook.com/hausderstatistik/",
+        "description": "The former GDR statistics office at Alexanderplatz, saved from demolition by an art action and now a cooperative model quarter whose OTTO pavilion hosts concerts and talks.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die frühere Zentralverwaltung für Statistik der DDR am Alexanderplatz, durch eine Kunstaktion vor dem Abriss bewahrt, ist heute ein gemeinwohlorientiertes Modellquartier mit Konzerten und Vorträgen im Pavillon OTTO.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "Haus der Statistik",
+            "url": "https://hausderstatistik.org/programm/",
+            "sourceType": "HAUS_DER_STATISTIK",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
