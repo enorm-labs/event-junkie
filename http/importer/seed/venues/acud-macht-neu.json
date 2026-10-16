@@ -13,8 +13,16 @@
         "descriptionAlt": "Das Kunsthaus in einem 1991 von Kunstschaffenden bezogenen, zuvor leerstehenden Wohnhaus an der Veteranenstraße entging 2014 der Zwangsversteigerung; Club, Studio und Galerie zeigen Clubnächte, Konzerte, Ausstellungen und Lesungen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club", "gallery", "cultural-centre"],
-        "programmeUrl": "https://acudmachtneu.de/programm/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "ACUD MACHT NEU",
+            "url": "https://acudmachtneu.de/programm/",
+            "sourceType": "ACUD_MACHT_NEU",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

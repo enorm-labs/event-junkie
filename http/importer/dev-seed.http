@@ -294,7 +294,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# ACUD MACHT NEU — not imported
+# ACUD MACHT NEU
 # ————————————————————————————————————————————————————————————
 
 ### --- Create ACUD MACHT NEU venue ---
@@ -315,13 +315,43 @@ Content-Type: application/json
     "descriptionAlt": "Das Kunsthaus in einem 1991 von Kunstschaffenden bezogenen, zuvor leerstehenden Wohnhaus an der Veteranenstraße entging 2014 der Zwangsversteigerung; Club, Studio und Galerie zeigen Clubnächte, Konzerte, Ausstellungen und Lesungen.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "gallery", "cultural-centre"],
-    "programmeUrl": "https://acudmachtneu.de/programm/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_acud_macht_neu", response.body.id);
     client.test("ACUD MACHT NEU venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ACUD MACHT NEU event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_acud_macht_neu}},
+    "name": "ACUD MACHT NEU",
+    "url": "https://acudmachtneu.de/programm/",
+    "sourceType": "ACUD_MACHT_NEU",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ACUD MACHT NEU event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ACUD MACHT NEU import ---
+POST {{importer-host}}/api/admin/event-sources/acud-macht-neu/import
+Accept: application/json
+
+> {%
+    client.test("ACUD MACHT NEU import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
