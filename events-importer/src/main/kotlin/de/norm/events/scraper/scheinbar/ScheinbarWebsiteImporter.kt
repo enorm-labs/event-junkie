@@ -1,25 +1,20 @@
 package de.norm.events.scraper.scheinbar
 
 import de.norm.events.event.SpokenLanguage
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SharedPages
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.enrichFromSharedPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
  * Website importer for the Scheinbar Varieté in Schöneberg. `/programm/` lists about three months
  * on one page; each programme page is then read once, for its text and photo, and applied to every
- * evening that links it. A host's four Open Stage nights share one page, which is why this does not
- * use [de.norm.events.scraper.AbstractSinglePageWebsiteImporter.enrichFromEventPage], which reads a
- * page per evening. An evening whose page fails is flagged, so the upsert keeps what it stored.
+ * evening that links it. A host's four Open Stage nights share one page, which is why this sets
+ * [sharedPages] and not [enrichFromEventPage], which reads a page per evening. An evening whose page fails is flagged, so the upsert keeps what it stored.
  *
  * The stage plays one show a night, so the date is the evening's identity.
  *
@@ -28,39 +23,12 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ScheinbarWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Scheinbar Varieté", ScheinbarProgrammPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SCHEINBAR
-    override val fetchesBeyondEntryPage: Boolean = true
 
-    private val listingScraper = ScheinbarProgrammPageScraper()
-    private val detailScraper = ScheinbarDetailPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = listingScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from Scheinbar Varieté" }
-                ImportResult.Success(
-                    events = withProgrammePages(events),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
-
-    private suspend fun withProgrammePages(events: List<ScrapedEvent>): List<ScrapedEvent> =
-        htmlFetcher.enrichFromSharedPages(events, detailScraper::scrape, { programme, event ->
+    override val sharedPages: SharedPages<ScheinbarProgramme> =
+        SharedPages(ScheinbarDetailPageScraper()::scrape, { programme, event ->
             event.copy(description = programme.description, imageUrl = programme.imageUrl)
         })
 }

@@ -394,7 +394,7 @@ production links to the same `/programmuebersicht/<show>.html` page, so 28 calen
 `AbstractTwoPageWebsiteImporter` fetches a detail page per event, so it would re-request one page 20+ times per import.
 With [per-host throttling](#per-host-politeness-throttling) that is both wasteful and slow. It is also the load the
 [best practices](#scraping-best-practices) tell you to keep off a venue's server. Such an importer therefore
-implements `EventImporter` directly and de-duplicates the fetch itself. It groups the scraped events by detail URL,
+sets the `sharedPages` hook of `AbstractSinglePageWebsiteImporter`, which de-duplicates the fetch. It groups the scraped events by detail URL,
 fetches each distinct URL once, and applies the parsed result to every event that shares it.
 
 Two consequences follow for the parser split:

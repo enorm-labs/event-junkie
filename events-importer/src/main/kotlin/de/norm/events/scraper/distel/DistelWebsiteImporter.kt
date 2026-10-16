@@ -1,19 +1,15 @@
 package de.norm.events.scraper.distel
 
 import de.norm.events.event.SpokenLanguage
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.SharedPages
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.enrichFromSharedPages
-import de.norm.events.scraper.scrapeListingPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -35,49 +31,17 @@ import org.springframework.stereotype.Component
  */
 @Component
 class DistelWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "DISTEL", calendarScraper::scrape) {
     override val eventSource: EventSource = EventSource.DISTEL
-    override val fetchesBeyondEntryPage: Boolean = true
-
-    private val calendarScraper = DistelCalendarPageScraper()
-    private val showScraper = DistelShowPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val listing =
-                    htmlFetcher.scrapeListingPages(
-                        eventSource,
-                        fetchResult.document,
-                        url,
-                        MAX_MONTHS,
-                        { document, _ -> nextMonth(document) },
-                        calendarScraper::scrape
-                    )
-                logger.info { "Scraped ${listing.events.size} DISTEL performance(s) from the calendar" }
-
-                ImportResult.Success(
-                    events = htmlFetcher.enrichFromSharedPages(listing.events, showScraper::scrape, ::withShow, pageOwns = setOf(ScrapedField.IMAGE)),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = listing.complete
-                )
-            }
-        }
+    override val maxListingPages: Int = MAX_MONTHS
+    override val sharedPages: SharedPages<DistelShow> = SharedPages(DistelShowPageScraper()::scrape, ::withShow, pageOwns = setOf(ScrapedField.IMAGE))
 
     /** The navigation's latest `?month=` link, or null once a month lists nothing. */
-    private fun nextMonth(document: Document): String? =
+    override fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? =
         if (calendarScraper.isEmptyMonth(document)) {
             null
         } else {
@@ -98,6 +62,8 @@ class DistelWebsiteImporter(
         const val MAX_MONTHS = 12
 
         const val MONTH_DIGITS = 6
+
+        val calendarScraper = DistelCalendarPageScraper()
     }
 }
 
