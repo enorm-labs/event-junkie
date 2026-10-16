@@ -44,6 +44,10 @@ object PartyFeatureRules {
     private const val FLINTA = "flinta[*+]*"
     private const val DRESS_CODE = "(?:dress[\\s-]?code|kleiderordnung)"
     private const val NIGHT = "(?:party|partys|parties|rave|raves|night|nights|nacht|clubnacht|club[\\s-]?night|disco|tanzparty|tanznacht|ball)"
+    private const val AFTERHOUR_SOURCE = "${B}after[\\s-]?hours?$E"
+
+    /** The afterhour cue of [PartyFeature.OPEN_END], for the sources whose afterhour is known to be an open end (`EventFeatureSync`, #3386). */
+    val AFTERHOUR = pattern(AFTERHOUR_SOURCE)
 
     /**
      * "Kein Dresscode", "Dress code: none.", "Dresscode? Be yourself.": cancels both dress-code features. A "no" ends its clause
@@ -176,7 +180,7 @@ object PartyFeatureRules {
                 clear = listOf("${B}open[\\s-]?end$E", "${B}ende\\s*[:=]?\\s*offen$E"),
                 cues =
                     listOf(
-                        "${B}after[\\s-]?hours?$E",
+                        AFTERHOUR_SOURCE,
                         "$B(?:till|until|bis)\\s+(?:sunrise|dawn|sonnenaufgang|morgengrauen|the\\s+morning|in\\s+den\\s+(?:morgen|tag|vormittag))$E",
                         // A bare duration is prose ("24 Stunden geöffnet", "24 hours in jail"); a party word after it is the night's length.
                         "$B(?:24|36|48|72)[\\s-]*(?:h|hours?|stunden)[\\s-]+(?:of\\s+|non[\\s-]?stop\\s+)?" +

@@ -2,8 +2,11 @@ package de.norm.events.importing
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.event.EventEntity
+import de.norm.events.event.PartyFeature
+import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.event.PartyFeatureRules
 import de.norm.events.event.PinnedField
+import de.norm.events.scraper.EventSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -72,6 +75,12 @@ class EventFeatureRepository(
 }
 
 /**
+ * The sources whose bare "afterhour" means the night runs on with no stated end (#3386). Elsewhere an
+ * afterhour can be a short after-party, so the cue stays uncertain. A source joins only on the operator's word.
+ */
+val AFTERHOUR_OPEN_END_SOURCES: Set<EventSource> = setOf(EventSource.GOLDEN_GATE)
+
+/**
  * Reads the party features of each saved event off its stored title, subtitle and description
  * ([PartyFeatureRules]) and replaces its `event_feature` rows (#2631). A cue the rules cannot settle
  * goes to the data-quality worklist as [QualityFlagKind.UNCERTAIN_PARTY_FEATURE].
@@ -82,6 +91,8 @@ class EventFeatureRepository(
  *
  * An event that pins [PinnedField.FEATURES] keeps the features set by hand ([EventFeatureService]),
  * and gets no uncertain cue back: the operator has decided.
+ *
+ * An afterhour cue from one of [AFTERHOUR_OPEN_END_SOURCES] sets [PartyFeature.OPEN_END] instead of a flag.
  */
 @Service
 class EventFeatureSync(
@@ -98,7 +109,14 @@ class EventFeatureSync(
             val id = event.id ?: return@forEach
             val detection = PartyFeatureRules.detect(event.title, event.subtitle, event.description)
             detection.features.mapTo(rows) { EventFeatureRow(id, it.feature.slug, it.phrase) }
-            detection.uncertain.mapTo(flags) { EventQualityFlag(id, QualityFlagKind.UNCERTAIN_PARTY_FEATURE, "${it.feature.slug}: ${it.phrase}") }
+            detection.uncertain.forEach { cue ->
+                val afterhour = cue.afterhourOpenEnd(event.sourceId)
+                if (afterhour != null) {
+                    rows += EventFeatureRow(id, cue.feature.slug, afterhour)
+                } else {
+                    flags += EventQualityFlag(id, QualityFlagKind.UNCERTAIN_PARTY_FEATURE, "${cue.feature.slug}: ${cue.phrase}")
+                }
+            }
         }
         featureRepository.replaceFor(open.mapNotNull { it.id }, rows)
         qualityFlagRepository.add(flags)
@@ -110,4 +128,12 @@ class EventFeatureSync(
             }
         }
     }
+
+    /** The afterhour word of an [PartyFeature.OPEN_END] cue from one of [AFTERHOUR_OPEN_END_SOURCES], or null for any other cue. */
+    private fun PartyFeatureMatch.afterhourOpenEnd(sourceId: String): String? =
+        if (feature == PartyFeature.OPEN_END && AFTERHOUR_OPEN_END_SOURCES.any { sourceId.startsWith(it.sourceIdPrefix) }) {
+            PartyFeatureRules.AFTERHOUR.find(phrase)?.value
+        } else {
+            null
+        }
 }

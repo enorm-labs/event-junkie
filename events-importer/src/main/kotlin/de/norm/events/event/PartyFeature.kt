@@ -32,7 +32,10 @@ enum class PartyFeature(
     /** No photos inside, phones included. A ban on cameras that allows phones is not this. */
     NO_PHOTO_POLICY("no-photo-policy"),
 
-    /** The night states no end ("open end", "Ende offen"). An afterhour that says nothing more is uncertain. */
+    /**
+     * The night states no end ("open end", "Ende offen"). An afterhour that says nothing more is uncertain,
+     * except at a source in `AFTERHOUR_OPEN_END_SOURCES` (#3386).
+     */
     OPEN_END("open-end"),
 
     /** The night calls itself a day party or day rave. A daytime start alone is #2720's time-of-day filter. */

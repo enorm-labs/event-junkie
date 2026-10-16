@@ -3,6 +3,7 @@ package de.norm.events.importing
 import de.norm.events.BaseControllerTest
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.venue.VenueEntity
@@ -119,6 +120,51 @@ class EventFeatureSyncIntegrationTest : BaseControllerTest() {
             import(eventRepository.save(event.copy(title = "Day Rave im Garten")))
 
             featureRepository.findByEventIds(listOf(eventId)) shouldBe listOf(EventFeatureRow(eventId, "day-party", "Day Rave"))
+        }
+    }
+
+    private suspend fun importTitled(
+        sourceId: String,
+        title: String,
+        description: String? = null
+    ): Long {
+        val event = eventRepository.save(persistEvent(sourceId, description).copy(title = title))
+        import(event)
+        return requireNotNull(event.id)
+    }
+
+    private suspend fun uncertainCues(eventId: Long) =
+        qualityFlagRepository
+            .findByEventIds(listOf(eventId))
+            .filter { it.kind == QualityFlagKind.UNCERTAIN_PARTY_FEATURE }
+            .map { it.value }
+
+    @Test
+    fun `a Golden Gate afterhour is an open end, and the same title elsewhere stays an uncertain cue`() {
+        runBlocking {
+            val goldenGate = importTitled("${EventSource.GOLDEN_GATE.sourceIdPrefix}2026-10-16-klubnacht-afterhour", "Klubnacht + Afterhour")
+            val elsewhere = importTitled("${EventSource.BERGHAIN.sourceIdPrefix}2026-10-16-klubnacht-afterhour", "Klubnacht + Afterhour")
+
+            featureRepository.findByEventIds(listOf(goldenGate)) shouldBe listOf(EventFeatureRow(goldenGate, "open-end", "Afterhour"))
+            uncertainCues(goldenGate).shouldBeEmpty()
+            featureRepository.findByEventIds(listOf(elsewhere)).shouldBeEmpty()
+            uncertainCues(elsewhere) shouldBe listOf("open-end: Klubnacht + Afterhour")
+        }
+    }
+
+    @Test
+    fun `a Golden Gate night keeps every other uncertain cue, an open-end cue without an afterhour included`() {
+        runBlocking {
+            val eventId =
+                importTitled(
+                    "${EventSource.GOLDEN_GATE.sourceIdPrefix}2026-10-17-klubnacht",
+                    "Klubnacht",
+                    "Bis Sonnenaufgang mit FLINTA* DJs."
+                )
+
+            featureRepository.findByEventIds(listOf(eventId)).shouldBeEmpty()
+            uncertainCues(eventId) shouldContainExactlyInAnyOrder
+                listOf("flinta-only: Klubnacht Bis Sonnenaufgang mit FLINTA* DJs.", "open-end: Klubnacht Bis Sonnenaufgang mit FLINTA* DJs.")
         }
     }
 }
