@@ -13,8 +13,16 @@
         "descriptionAlt": "Nachtclub an der Potsdamer Straße für Black Music: am Wochenende Partys mit Afrobeats, Hip-Hop, RnB, Dancehall und Salsa.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://surprise-berlin.de/events-programs.php",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Surprise Club",
+            "url": "https://surprise-berlin.de/events-programs.php",
+            "sourceType": "SURPRISE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

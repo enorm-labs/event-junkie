@@ -405,6 +405,9 @@ enum class EventSource {
     /** Supamolly Berlin – a former squat turned collectively run venue near Traveplatz: punk, ska and hardcore concerts, theatre, film and socials. */
     SUPAMOLLY,
 
+    /** Surprise Club – a Potsdamer Straße nightclub for Black music, with weekend parties for Afrobeats, hip hop, RnB, dancehall and salsa. */
+    SURPRISE,
+
     /** Bar Tausend Berlin – the cocktail bar behind an unmarked steel door under the S-Bahn arches at Friedrichstraße, with house DJs and live nights. */
     TAUSEND,
 
