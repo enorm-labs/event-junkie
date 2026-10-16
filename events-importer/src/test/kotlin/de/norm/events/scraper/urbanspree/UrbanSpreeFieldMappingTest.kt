@@ -224,6 +224,35 @@ class UrbanSpreeFieldMappingTest {
         urbanSpreeDjSets("The night closes with a DJ set by the band's drummer.").shouldBeEmpty()
     }
 
+    // --- isUrbanSpreeKlubnacht and urbanSpreeBracketDjs (#3382) ---
+
+    @Test
+    fun `isUrbanSpreeKlubnacht matches the word in any case`() {
+        isUrbanSpreeKlubnacht("Urban Spree KLUBNACHT 005") shouldBe true
+        isUrbanSpreeKlubnacht("Human Tree x Urban Spree Klubnacht") shouldBe true
+        isUrbanSpreeKlubnacht("Coilguns - Berlin - Urban Spree") shouldBe false
+    }
+
+    @Test
+    fun `urbanSpreeBracketDjs splits a Klubnacht bracket on commas and ampersands`() {
+        urbanSpreeBracketDjs("Urban Spree KLUBNACHT (Kim, Kyra)") shouldContainExactly listOf("Kim", "Kyra")
+        urbanSpreeBracketDjs("Urban Spree Klubnacht (Albert Kraft, Key Clef & Daraio)") shouldContainExactly
+            listOf("Albert Kraft", "Key Clef", "Daraio")
+        urbanSpreeBracketDjs("Urban Spree KLUBNACHT (Kim)") shouldContainExactly listOf("Kim")
+    }
+
+    @Test
+    fun `urbanSpreeBracketDjs reads nothing from a title that is no Klubnacht or has no trailing bracket`() {
+        urbanSpreeBracketDjs("This Eternal Decay (Dark Wave IT) & Night Nail (Dark wave US/DE)").shouldBeEmpty()
+        urbanSpreeBracketDjs("Urban Spree KLUBNACHT 005").shouldBeEmpty()
+        urbanSpreeBracketDjs("Urban Spree KLUBNACHT (Kim, Kyra) Part 2").shouldBeEmpty()
+    }
+
+    @Test
+    fun `urbanSpreeBracketDjs drops a bracket item that names nobody`() {
+        urbanSpreeBracketDjs("Urban Spree KLUBNACHT (Kim, TBA)") shouldContainExactly listOf("Kim")
+    }
+
     // --- urbanSpreeFeaturedActs (#2350) ---
 
     @Test
