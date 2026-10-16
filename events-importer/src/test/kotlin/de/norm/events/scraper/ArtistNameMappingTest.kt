@@ -231,6 +231,7 @@ class ArtistNameMappingTest {
         isPlaceholderName("and more") shouldBe true
         isPlaceholderName("und mehr") shouldBe true
         isPlaceholderName("more tba") shouldBe true
+        isPlaceholderName("more to be announced") shouldBe true
     }
 
     @Test

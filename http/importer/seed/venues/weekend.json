@@ -13,8 +13,16 @@
         "descriptionAlt": "Ein Club im 15. Stock des früheren Haus des Reisens am Alexanderplatz, seit 2004 in Betrieb, mit Dachterrasse und Blick auf den Fernsehturm, Housemusik am Freitag und wechselnden Samstagen zwischen Techno, Hip-Hop und Reggaeton.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club", "open-air"],
-        "programmeUrl": "https://www.weekendclub.berlin/area/club",
         "reviewedAt": "2026-10-07T14:21:58Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Weekend",
+            "url": "https://www.weekendclub.berlin/upcoming",
+            "sourceType": "WEEKEND",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

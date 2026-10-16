@@ -11518,7 +11518,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Weekend — not imported
+# Weekend
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Weekend venue ---
@@ -11539,13 +11539,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein Club im 15. Stock des früheren Haus des Reisens am Alexanderplatz, seit 2004 in Betrieb, mit Dachterrasse und Blick auf den Fernsehturm, Housemusik am Freitag und wechselnden Samstagen zwischen Techno, Hip-Hop und Reggaeton.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "open-air"],
-    "programmeUrl": "https://www.weekendclub.berlin/area/club",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_weekend", response.body.id);
     client.test("Weekend venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Weekend event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_weekend}},
+    "name": "Weekend",
+    "url": "https://www.weekendclub.berlin/upcoming",
+    "sourceType": "WEEKEND",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Weekend event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Weekend import ---
+POST {{importer-host}}/api/admin/event-sources/weekend/import
+Accept: application/json
+
+> {%
+    client.test("Weekend import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

@@ -70,7 +70,7 @@ private val PLACEHOLDER_NAMES =
 
 /**
  * A "more acts to come" continuation: `+ more`, `& more`, `and more`, `+ more tba`, `more tba`,
- * `und mehr`, `many more`. A parser splitting on `+` hands it over as the next act (Kater stored
+ * `more to be announced`, `und mehr`, `many more`. A parser splitting on `+` hands it over as the next act (Kater stored
  * `+ more` and `+ more Tba`). A bare "More" does not match: it is the NWOBHM band. Only a
  * lead-in (`+`/`&`/`and`/`und`), a `many`/`viele` quantifier or a trailing `tba`/`tbc`/`tbd`
  * marks a continuation; the quantified form is what a comma-split lineup ends on once
@@ -80,7 +80,7 @@ private val MORE_TO_COME_PATTERN =
     Regex(
         """^(?:[+&]|and|und)\s*(?:many\s+|viele\s+)?(?:more|mehr)(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|^line[\s-]?up(?:\s+(?:tba|tbc|tbd))?\.*$""" +
-            """|^(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
+            """|^(?:more|mehr)\s+(?:tba|tbc|tbd|to\s+be\s+announced)\.*$""" +
             """|^(?:many|viele)\s+(?:more|mehr)\.*$""",
         RegexOption.IGNORE_CASE
     )
