@@ -2,6 +2,7 @@ package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -37,7 +38,7 @@ import java.time.Clock
 class CrackBellmerWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the listing scraper's past-event cutoff; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Crack Bellmer listing", CrackBellmerOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.CRACK_BELLMER
     override val listsWholeProgramme: Boolean = true

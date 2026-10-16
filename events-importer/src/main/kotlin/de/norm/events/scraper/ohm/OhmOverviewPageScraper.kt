@@ -1,6 +1,7 @@
 package de.norm.events.scraper.ohm
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -40,7 +41,7 @@ import java.time.MonthDay
  */
 class OhmOverviewPageScraper(
     /** Clock for year inference on the year-less dates; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.privatclub
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
@@ -57,7 +58,7 @@ import java.util.Locale
 @Suppress("TooManyFunctions")
 class PrivatclubOverviewPageScraper(
     /** Clock for the year-rollover fallback; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

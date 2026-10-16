@@ -1,6 +1,7 @@
 package de.norm.events.scraper.havanna
 
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
@@ -32,7 +33,7 @@ import java.time.Clock
 class HavannaWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock anchoring the rolling occurrence horizon. Defaults to the system clock; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 

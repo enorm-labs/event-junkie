@@ -3,6 +3,7 @@ package de.norm.events.scraper.berghain
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
@@ -47,7 +48,7 @@ import java.time.Clock
 class BerghainWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's past-event cutoff; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, BerghainOverviewPageScraper(clock)::scrape, BerghainDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.BERGHAIN
     override val listsWholeProgramme: Boolean = true

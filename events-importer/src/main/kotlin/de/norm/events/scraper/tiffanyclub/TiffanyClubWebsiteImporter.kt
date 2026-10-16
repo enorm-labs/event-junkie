@@ -2,6 +2,7 @@ package de.norm.events.scraper.tiffanyclub
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -25,7 +26,7 @@ import java.time.Clock
 @Component
 class TiffanyClubWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Tiffany Club listing", TiffanyClubOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.TIFFANY_CLUB
     override val listsWholeProgramme: Boolean = true

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.cassiopeia
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dropPastEvents
@@ -29,7 +30,7 @@ import java.time.LocalTime
  */
 class CassiopeiaOverviewPageScraper(
     /** Clock for the past-event cutoff. Defaults to the system clock; override in tests for determinism. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

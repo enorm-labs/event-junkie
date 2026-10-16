@@ -2,6 +2,7 @@ package de.norm.events.scraper.altekantine
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -30,7 +31,7 @@ import java.time.Clock
 class AlteKantineWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for year inference on the year-less dates; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, AlteKantineOverviewPageScraper(clock)::scrape, AlteKantineDetailPageScraper(clock)::scrape) {
     /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
     override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE, ScrapedField.ARTISTS)

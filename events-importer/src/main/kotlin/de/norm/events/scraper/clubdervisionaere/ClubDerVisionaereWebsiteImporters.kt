@@ -1,6 +1,7 @@
 package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -111,7 +112,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
 class ClubDerVisionaereWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.CLUB, clock)
 
 /**
@@ -121,7 +122,7 @@ class ClubDerVisionaereWebsiteImporter(
 class SonnenraumWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.SONNENRAUM, clock)
 
 /**
@@ -132,7 +133,7 @@ class SonnenraumWebsiteImporter(
 class MsHoppetosseWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.MS_HOPPETOSSE, clock)
 
 val CLUB_DER_VISIONAERE_LIMITATIONS =

@@ -3,6 +3,7 @@ package de.norm.events.scraper.humboldthain
 import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
@@ -38,7 +39,7 @@ import java.time.Clock
 class HumboldthainWebsiteImporter(
     apiClient: ApiClient,
     /** Clock anchoring the rolling recurrence horizon; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractJsonApiImporter(apiClient, "Humboldthain Club", { json, _ -> HumboldthainApiScraper(clock).scrape(json) }) {
     override val eventSource: EventSource = EventSource.HUMBOLDTHAIN
 }

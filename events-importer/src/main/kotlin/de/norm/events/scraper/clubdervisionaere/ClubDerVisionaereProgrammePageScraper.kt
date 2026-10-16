@@ -57,7 +57,7 @@ import java.time.MonthDay
  */
 class ClubDerVisionaereProgrammePageScraper(
     /** Clock for weekday-based year inference; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

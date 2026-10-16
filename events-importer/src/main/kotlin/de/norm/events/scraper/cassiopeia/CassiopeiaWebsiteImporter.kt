@@ -3,6 +3,7 @@ package de.norm.events.scraper.cassiopeia
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -32,7 +33,7 @@ import java.time.Clock
 class CassiopeiaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's past-event cutoff. Defaults to the system clock; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, CassiopeiaOverviewPageScraper(clock)::scrape, CassiopeiaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CASSIOPEIA
     override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)

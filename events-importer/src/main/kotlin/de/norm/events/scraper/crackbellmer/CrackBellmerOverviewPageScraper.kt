@@ -2,6 +2,7 @@ package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -54,7 +55,7 @@ import java.util.Locale
  */
 class CrackBellmerOverviewPageScraper(
     /** Clock for the past-event cutoff; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

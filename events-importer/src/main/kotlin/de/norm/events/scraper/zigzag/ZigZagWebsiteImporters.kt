@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zigzag
 
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -94,7 +95,7 @@ abstract class AbstractZigZagWebsiteImporter(
 @Component
 class ZigZagJazzClubWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractZigZagWebsiteImporter(htmlFetcher, EventSource.ZIG_ZAG_JAZZ_CLUB, clock) {
     override val keepsElsewhere: Boolean = false
 }
@@ -106,7 +107,7 @@ class ZigZagJazzClubWebsiteImporter(
 @Component
 class ZigZagHallWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractZigZagWebsiteImporter(htmlFetcher, EventSource.ZIG_ZAG_HALL, clock) {
     override val keepsElsewhere: Boolean = true
 }

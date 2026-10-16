@@ -2,6 +2,7 @@ package de.norm.events.scraper.humboldthain
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -58,7 +59,7 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  * @see HumboldthainWebsiteImporter for the HTTP fetch orchestrator.
  */
 class HumboldthainApiScraper(
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

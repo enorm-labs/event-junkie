@@ -2,6 +2,7 @@ package de.norm.events.scraper.maaya
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
@@ -32,7 +33,7 @@ import java.time.Clock
 class MaayaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the scraper's year inference on a year-less date; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.system(BERLIN)
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "MAAYA", MaayaOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.MAAYA
 }
