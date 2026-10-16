@@ -6078,7 +6078,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# L.U.X — not imported
+# L.U.X
 # ————————————————————————————————————————————————————————————
 
 ### --- Create L.U.X venue ---
@@ -6094,18 +6094,48 @@ Content-Type: application/json
     "latitude": 52.500415,
     "longitude": 13.443730,
     "websiteUrl": "https://www.lux-berlin.net/",
-    "description": "A Kreuzberg bar on Schlesische Straße that has no live music by design: vinyl DJs play, with free entry on many Thursdays.",
+    "description": "A Kreuzberg bar on Schlesische Straße where vinyl DJs play, with free entry on many Thursdays. Live music is not possible in the room.",
     "descriptionLanguage": "en",
-    "descriptionAlt": "Bar in der Schlesischen Straße, in der es bewusst keine Livemusik gibt: Hier legen Schallplatten-DJs auf, donnerstags oft bei freiem Eintritt.",
+    "descriptionAlt": "Bar in der Schlesischen Straße, in der Schallplatten-DJs auflegen, donnerstags oft bei freiem Eintritt. Livemusik ist in der L.U.X nicht möglich.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "club"],
-    "programmeUrl": "https://www.lux-berlin.net/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_l_u_x", response.body.id);
     client.test("L.U.X venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create L.U.X event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_l_u_x}},
+    "name": "L.U.X",
+    "url": "https://www.lux-berlin.net/",
+    "sourceType": "LUX",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("L.U.X event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial L.U.X import ---
+POST {{importer-host}}/api/admin/event-sources/l-u-x/import
+Accept: application/json
+
+> {%
+    client.test("L.U.X import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

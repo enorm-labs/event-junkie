@@ -79,6 +79,7 @@ import de.norm.events.scraper.kreuzwerk.KREUZWERK_LIMITATIONS
 import de.norm.events.scraper.kuehlspot.KUEHLSPOT_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
+import de.norm.events.scraper.lux.LUX_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
 import de.norm.events.scraper.madameclaude.MADAME_CLAUDE_LIMITATIONS
 import de.norm.events.scraper.madmonkeyroom.MAD_MONKEY_ROOM_LIMITATIONS
@@ -239,6 +240,7 @@ object AcceptedLimitations {
             LARK_LIMITATIONS,
             LIDO_LIMITATIONS,
             LOGE_LIMITATIONS,
+            LUX_LIMITATIONS,
             MAAYA_LIMITATIONS,
             MADAME_CLAUDE_LIMITATIONS,
             MAD_MONKEY_ROOM_LIMITATIONS,

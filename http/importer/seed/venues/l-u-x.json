@@ -8,13 +8,21 @@
         "latitude": 52.500415,
         "longitude": 13.443730,
         "websiteUrl": "https://www.lux-berlin.net/",
-        "description": "A Kreuzberg bar on Schlesische Straße that has no live music by design: vinyl DJs play, with free entry on many Thursdays.",
+        "description": "A Kreuzberg bar on Schlesische Straße where vinyl DJs play, with free entry on many Thursdays. Live music is not possible in the room.",
         "descriptionLanguage": "en",
-        "descriptionAlt": "Bar in der Schlesischen Straße, in der es bewusst keine Livemusik gibt: Hier legen Schallplatten-DJs auf, donnerstags oft bei freiem Eintritt.",
+        "descriptionAlt": "Bar in der Schlesischen Straße, in der Schallplatten-DJs auflegen, donnerstags oft bei freiem Eintritt. Livemusik ist in der L.U.X nicht möglich.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "club"],
-        "programmeUrl": "https://www.lux-berlin.net/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "L.U.X",
+            "url": "https://www.lux-berlin.net/",
+            "sourceType": "LUX",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
