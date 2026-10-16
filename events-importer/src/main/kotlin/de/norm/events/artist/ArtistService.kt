@@ -91,28 +91,7 @@ class ArtistService(
         // relying on the DB constraint, which would produce a generic 409 response.
         ensureSlugAvailable(request.name, slug)
 
-        // Route through the domain model to ensure any future business rules
-        // (e.g. validation, normalization) are consistently applied (see ADR-003).
-        val artist =
-            Artist(
-                name = request.name,
-                slug = slug,
-                description = request.description,
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                websiteUrl = request.websiteUrl,
-                facebookUrl = request.facebookUrl,
-                instagramUrl = request.instagramUrl,
-                youtubeUrl = request.youtubeUrl,
-                bandcampUrl = request.bandcampUrl,
-                soundcloudUrl = request.soundcloudUrl,
-                discogsUrl = request.discogsUrl,
-                wikidataUrl = request.wikidataUrl,
-                residentAdvisorUrl = request.residentAdvisorUrl,
-                spotifyUrl = request.spotifyUrl
-            )
+        val artist = request.applyTo(Artist(name = request.name, slug = slug), slug)
         val entity = ArtistEntity.fromDomain(artist)
         val saved = artistRepository.save(entity)
         logger.info { "Created artist '${saved.name}' with id ${saved.id}" }
@@ -145,35 +124,10 @@ class ArtistService(
         val pinsName = request.name != existing.name
         // A licensed text keeps its language, credit and other-language lead only while it is unchanged; an edited text is the editor's own.
         val keepsDescription = request.description == existing.description
+        val mapped = request.applyTo(existing.toDomain(), slug)
         val updated =
-            existing.copy(
-                name = request.name,
-                slug = slug,
-                description = request.description,
-                descriptionLanguage = existing.descriptionLanguage.takeIf { keepsDescription },
-                descriptionAttribution = existing.descriptionAttribution.takeIf { keepsDescription },
-                descriptionLicenceId = existing.descriptionLicenceId.takeIf { keepsDescription },
-                descriptionSourceUrl = existing.descriptionSourceUrl.takeIf { keepsDescription },
-                descriptionAlt = existing.descriptionAlt.takeIf { keepsDescription },
-                descriptionAltLanguage = existing.descriptionAltLanguage.takeIf { keepsDescription },
-                descriptionAltAttribution = existing.descriptionAltAttribution.takeIf { keepsDescription },
-                descriptionAltLicenceId = existing.descriptionAltLicenceId.takeIf { keepsDescription },
-                descriptionAltSourceUrl = existing.descriptionAltSourceUrl.takeIf { keepsDescription },
-                imageUrl = request.imageUrl,
-                imageAttribution = request.imageAttribution,
-                imageLicenceId = request.imageLicenceId,
-                imageSourceUrl = request.imageSourceUrl,
-                websiteUrl = request.websiteUrl,
-                facebookUrl = request.facebookUrl,
-                instagramUrl = request.instagramUrl,
-                youtubeUrl = request.youtubeUrl,
-                bandcampUrl = request.bandcampUrl,
-                soundcloudUrl = request.soundcloudUrl,
-                discogsUrl = request.discogsUrl,
-                wikidataUrl = request.wikidataUrl,
-                residentAdvisorUrl = request.residentAdvisorUrl,
-                spotifyUrl = request.spotifyUrl,
-                namePinned = existing.namePinned || pinsName
+            ArtistEntity.fromDomain(
+                (if (keepsDescription) mapped else mapped.withoutDescriptionProvenance()).copy(namePinned = existing.namePinned || pinsName)
             )
         val saved = artistRepository.save(updated)
         logger.info { "Updated artist '${saved.name}' (id=${saved.id})" }
@@ -278,3 +232,17 @@ class ArtistService(
         private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }
+
+/** This artist with the language, credit and other-language lead of its description cleared, for a text an editor changed. */
+private fun Artist.withoutDescriptionProvenance(): Artist =
+    copy(
+        descriptionLanguage = null,
+        descriptionAttribution = null,
+        descriptionLicenceId = null,
+        descriptionSourceUrl = null,
+        descriptionAlt = null,
+        descriptionAltLanguage = null,
+        descriptionAltAttribution = null,
+        descriptionAltLicenceId = null,
+        descriptionAltSourceUrl = null
+    )
