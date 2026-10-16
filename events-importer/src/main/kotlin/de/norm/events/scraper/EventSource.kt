@@ -49,6 +49,9 @@ enum class EventSource {
     /** Bar jeder Vernunft Berlin – a 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows. */
     BAR_JEDER_VERNUNFT,
 
+    /** Beate Uwe – a non-smoking house club by Jannowitzbrücke with label showcases on Saturdays and barefoot downtempo on Sundays. */
+    BEATE_UWE,
+
     /**
      * Berghain Berlin – the techno institution in a former power plant near Ostbahnhof.
      *

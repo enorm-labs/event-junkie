@@ -13,8 +13,16 @@
         "descriptionAlt": "Kleiner Club für elektronische Musik an der Jannowitzbrücke mit Schallplatten an der Decke: freitags und samstags House und Techno, sonntags bei „Beate Barfuß“ Downtempo auf ausgelegten bunten Teppichen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://beate-uwe.de/#Programm",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Beate Uwe",
+            "url": "https://beate-uwe.de/",
+            "sourceType": "BEATE_UWE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
