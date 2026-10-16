@@ -190,6 +190,27 @@ private fun parseWixInstant(
 private val FALLBACK_ZONE: ZoneId = BERLIN
 
 /**
+ * The paragraphs of a Wix rich-content node (an event's `longDescription`), each as one string.
+ *
+ * **A line is read per paragraph, not per text node.** Wix splits a styled line into one node per run, so a bold
+ * label and its value are siblings — `Einlass:` then ` 19:00 Uhr` — and neither half reads on its own.
+ */
+internal fun wixParagraphs(node: JsonNode): List<String> =
+    buildList {
+        if (node.stringOrNull("type") == WIX_PARAGRAPH) add(wixJoinedText(node))
+        node.path("nodes").forEach { child -> addAll(wixParagraphs(child)) }
+    }
+
+/** Every `textData.text` below [node], joined in document order, untrimmed: a run's edge space separates it from the next. */
+private fun wixJoinedText(node: JsonNode): String =
+    buildString {
+        append(node.path("textData").path("text").asString(""))
+        node.path("nodes").forEach { child -> append(wixJoinedText(child)) }
+    }
+
+private const val WIX_PARAGRAPH = "PARAGRAPH"
+
+/**
  * Maps Wix's numeric event `status` to a domain [EventStatus] name.
  *
  * Wix serialises its `EventStatus` enum as an ordinal in the warmup payload:
@@ -234,6 +255,15 @@ internal const val WIX_REGISTRATION_OPEN_TICKETS = 5
  * the detail page.
  */
 internal fun parseWixTicketPrice(price: JsonNode): BigDecimal? = price.stringOrNull("amount")?.toBigDecimalOrNull()
+
+/**
+ * The note for a detail page's ticket tiers, `€5.00 – €8.00`, in [wixPriceRangeNote]'s format; null for one price or none.
+ */
+internal fun wixTicketPriceRange(prices: List<BigDecimal>): String? {
+    val low = prices.minOrNull() ?: return null
+    val high = prices.max()
+    return if (low.compareTo(high) == 0) null else "€${low.setScale(2)} – €${high.setScale(2)}"
+}
 
 /**
  * Builds a price note only when an event has several ticket tiers, i.e. when the lowest and

@@ -543,6 +543,8 @@ venue's field mapping stays in its own scraper.
 | `WixEventsWarmupData.events(doc, source)` | Locates the `events.events` array under the global Wix Events appDefId and the per-page widget |
 | `JsonNode.stringOrNull(field)`            | Trimmed string field → null when missing, JSON `null`, or blank                                |
 | `parseWixSchedule(config)`                | UTC `startDate` + `timeZoneId` → Berlin-local `(LocalDate, LocalTime)`                         |
+| `wixParagraphs(node)`                     | The paragraphs of a detail page's rich-content `longDescription`, one string each              |
+| `wixTicketPriceRange(prices)`             | The `€5.00 – €8.00` note for a detail page's ticket tiers, null for one price                  |
 
 **`JsonLdEvents.kt`** — the one reader for a page's schema.org `Event` JSON-LD (priority 1 below). Venues wrap the block
 in different ways: a bare object, an array, an `@graph`, or a nesting of these. The reader unwraps every shape, so a

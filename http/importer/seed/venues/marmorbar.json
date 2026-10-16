@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "gallery", "club"],
         "capacity": 400,
-        "programmeUrl": "https://www.marmorbar.com/en/event-list",
         "reviewedAt": "2026-10-07T12:38:29Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Marmorbar",
+            "url": "https://www.marmorbar.com/en/event-list",
+            "sourceType": "MARMORBAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

@@ -219,6 +219,9 @@ enum class EventSource {
     /** Mad Monkey Room – a stand-up comedy club on Danziger Straße in Prenzlauer Berg, founded in 2017, with a show every night on two stages. */
     MAD_MONKEY_ROOM,
 
+    /** Marmorbar – a bar and gallery in a royal waterways office's brick former wheelhouse at Schlesisches Tor, with DJ nights and exhibitions. */
+    MARMORBAR,
+
     /** Maschinenhaus Berlin – the former machine house of the Schultheiss brewery, the Kesselhaus's small sister stage in the Kulturbrauerei. */
     MASCHINENHAUS,
 
