@@ -37,7 +37,7 @@ server:
 # cannot catch a typo in the main file, which is why `MetricsExposureConfigTest` and
 # `ReadinessGroupConfigTest` assert that file directly and that the two agree.
 #
-# Both contributors exist in every test context, all being full @SpringBootTest against a
+# The database contributors exist in every test context, all being full @SpringBootTest against a
 # Testcontainers PostgreSQL. A future @WebFluxTest would fail on group-membership validation; the
 # fix is to exclude the group, not the indicator.
 management:
@@ -53,7 +53,7 @@ management:
       show-details: always
       group:
         readiness:
-          include: readinessState,r2dbc,eventsSchema
+          include: readinessState,r2dbc,eventsSchema,schemaVersion
         liveness:
           include: livenessState
 

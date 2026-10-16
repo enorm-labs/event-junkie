@@ -132,12 +132,43 @@ kotlin {
     }
 }
 
+// The importer owns the migrations (ADR-005), and this BFF reads the columns they create, so the
+// build records the highest version it was compiled against. `SchemaVersionHealthIndicator` keeps
+// readiness DOWN until the database has reached it (#3384).
+val migrationDirectory = rootProject.layout.projectDirectory.dir("events-importer/src/main/resources/db/migration")
+val generateExpectedSchemaVersion by tasks.registering {
+    val migrations = migrationDirectory
+    val output = layout.buildDirectory.dir("generated/schema-version")
+    inputs.dir(migrations).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("migrations")
+    outputs.dir(output).withPropertyName("output")
+    doLast {
+        val highest =
+            migrations.asFile
+                .listFiles()
+                .orEmpty()
+                .mapNotNull {
+                    Regex("""^V(\d+)__""")
+                        .find(it.name)
+                        ?.groupValues
+                        ?.get(1)
+                        ?.toInt()
+                }.maxOrNull() ?: error("No V<n>__ migration in ${migrations.asFile}")
+        output.get().file("META-INF/expected-schema-version").asFile.apply {
+            parentFile.mkdirs()
+            writeText("$highest\n")
+        }
+    }
+}
+sourceSets.main {
+    resources.srcDir(generateExpectedSchemaVersion)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     // An absolute filesystem path, independent of the test working directory.
     systemProperty(
         "spring.flyway.locations",
-        "filesystem:${rootProject.projectDir}/events-importer/src/main/resources/db/migration"
+        "filesystem:${migrationDirectory.asFile}"
     )
     // The shared dataset (#272), read by FixtureTest through the same door as the migrations above.
     val fixture = rootProject.file("fixtures/events.sql")

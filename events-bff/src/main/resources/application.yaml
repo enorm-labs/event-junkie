@@ -71,7 +71,8 @@ management:
   # database can serve nothing, and reporting Ready puts traffic into a black hole (#438), while a
   # database-dependent liveness probe restarts every replica during an outage. `r2dbc` is
   # reachable, `eventsSchema` is migrated and readable (EventsSchemaHealthIndicator has why the
-  # first alone would not have closed the window #263 measured).
+  # first alone would not have closed the window #263 measured), and `schemaVersion` has reached
+  # the highest migration this build knows (#3384).
   endpoint:
     health:
       # `always` rather than `never`, so an operator can tell "the database is gone" from "the schema
@@ -79,7 +80,7 @@ management:
       show-details: always
       group:
         readiness:
-          include: readinessState,r2dbc,eventsSchema
+          include: readinessState,r2dbc,eventsSchema,schemaVersion
         liveness:
           include: livenessState
   info:

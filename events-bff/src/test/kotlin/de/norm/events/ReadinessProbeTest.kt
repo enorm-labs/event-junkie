@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono
  */
 class ReadinessProbeTest : BaseControllerTest() {
     @Test
-    fun `readiness is UP and names both database components`(): Unit =
+    fun `readiness is UP and names every database component`(): Unit =
         runBlocking {
             // `cleanUp` has truncated every table, so this runs against an empty events.event, the state of
             // a first install: a probe query returning no rows would report UNKNOWN and block readiness on a
@@ -41,6 +41,8 @@ class ReadinessProbeTest : BaseControllerTest() {
                 .jsonPath("$.components.r2dbc.status")
                 .isEqualTo("UP")
                 .jsonPath("$.components.eventsSchema.status")
+                .isEqualTo("UP")
+                .jsonPath("$.components.schemaVersion.status")
                 .isEqualTo("UP")
         }
 
@@ -61,6 +63,8 @@ class ReadinessProbeTest : BaseControllerTest() {
                 .jsonPath("$.components.r2dbc")
                 .doesNotExist()
                 .jsonPath("$.components.eventsSchema")
+                .doesNotExist()
+                .jsonPath("$.components.schemaVersion")
                 .doesNotExist()
         }
 
