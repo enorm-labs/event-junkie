@@ -4,12 +4,13 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.importEntryPage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.net.URI
@@ -63,21 +64,10 @@ abstract class AbstractClubDerVisionaereRoomImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = programmePageScraper.scrape(fetchResult.document, url, room)
-                logger.info { "Scraped ${events.size} event(s) for ${room.eventSource.name}" }
-
-                ImportResult.Success(
-                    events = if (events.isEmpty()) events else withStartTimes(events, url),
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
+        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
+            val events = programmePageScraper.scrape(document, url, room)
+            logger.info { "Scraped ${events.size} event(s) for ${room.eventSource.name}" }
+            ListingPages(if (events.isEmpty()) events else withStartTimes(events, url), complete = true)
         }
 
     /**

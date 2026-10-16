@@ -3,13 +3,14 @@ package de.norm.events.scraper.gretchen
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPages
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.importEntryPage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.CancellationException
@@ -45,22 +46,11 @@ class GretchenWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val popupUrl = URI(url).resolve(TICKET_POPUP_PATH).toString()
-                val events = overviewPageScraper.scrape(fetchResult.document, url).map { withTicketShop(it, popupUrl) }
-                logger.info { "Scraped ${events.size} event(s) from Gretchen, ${events.count { it.ticketUrl != null }} with a ticket link" }
-
-                ImportResult.Success(
-                    events = events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
+        htmlFetcher.importEntryPage(url, etag, lastModified) { document ->
+            val popupUrl = URI(url).resolve(TICKET_POPUP_PATH).toString()
+            val events = overviewPageScraper.scrape(document, url).map { withTicketShop(it, popupUrl) }
+            logger.info { "Scraped ${events.size} event(s) from Gretchen, ${events.count { it.ticketUrl != null }} with a ticket link" }
+            ListingPages(events, complete = true)
         }
 
     /** [event] with the shop its `TICKETS` popup names, or unchanged when the popup names none or fails. */
