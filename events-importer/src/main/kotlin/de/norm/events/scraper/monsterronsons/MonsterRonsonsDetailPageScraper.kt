@@ -78,7 +78,6 @@ class MonsterRonsonsDetailPageScraper {
     private fun parsePricesIn(text: String): List<BigDecimal> = euroAmounts(text).distinct()
 
     /** The ticket link, only when Webflow has not hidden the button as an empty CMS field. */
-    @Suppress("ReturnCount") // Guard clauses for the hidden button and the placeholder href read clearer than nesting
     private fun parseTicketUrl(
         document: Document,
         url: String

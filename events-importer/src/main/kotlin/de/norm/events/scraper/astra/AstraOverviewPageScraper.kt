@@ -207,7 +207,6 @@ internal data class AstraEventBlock(
  * `article.event` on the overview, `main.page-content` on a detail page (exactly one event).
  * `null` without a title link.
  */
-@Suppress("ReturnCount") // Guard clause for the required title is clearer than nesting
 internal fun parseAstraEventBlock(
     root: Element,
     baseUrl: String

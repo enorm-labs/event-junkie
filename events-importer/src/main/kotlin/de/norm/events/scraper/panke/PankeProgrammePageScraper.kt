@@ -83,7 +83,6 @@ class PankeProgrammePageScraper {
     }
 
     /** Parses one article into a [ScrapedEvent], or `null` without a date or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required id/date/title are clearer than nesting
     private fun parseArticle(
         article: Element,
         sourceUrl: String

@@ -68,7 +68,6 @@ class SodaOverviewPageScraper(
      * resolvable date — the two fields the listing must supply for the event to stand alone
      * without its detail page.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required link/title/date are clearer than nesting
     private fun parseSnippet(
         snippet: Element,
         baseUrl: String

@@ -50,7 +50,6 @@ class JunctionBarMusicOverviewPageScraper {
      * each event's `sourceUrl`.
      * @return one [ScrapedEvent] per dated night listing at least one real band.
      */
-    @Suppress("ReturnCount") // Guard clauses for a missing year and a missing container are clearer than nesting.
     fun scrape(
         document: Document,
         baseUrl: String
@@ -78,7 +77,6 @@ class JunctionBarMusicOverviewPageScraper {
     /** A date-bar child carries a `strong.datum` whose text holds a `DD.MM.` date. */
     internal fun isDateBar(child: Element): Boolean = child.selectFirst("strong.datum") != null && DATE_PATTERN.containsMatchIn(child.text())
 
-    @Suppress("ReturnCount") // Guard clauses for the required date and band list are clearer than nesting.
     private fun parseNight(
         night: Night,
         year: Int,

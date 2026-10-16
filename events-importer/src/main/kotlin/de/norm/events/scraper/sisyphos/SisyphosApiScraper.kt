@@ -64,7 +64,6 @@ class SisyphosApiScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required handle, title and date are clearer than nesting
     private fun parseProduct(
         node: JsonNode,
         baseUrl: String

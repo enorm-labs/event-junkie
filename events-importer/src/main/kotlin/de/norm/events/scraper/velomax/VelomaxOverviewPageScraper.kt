@@ -77,7 +77,6 @@ class VelomaxOverviewPageScraper {
     }
 
     /** Parses one `a.ticketWrap` entry, or `null` for a sport fixture or no title. */
-    @Suppress("ReturnCount") // Guard clauses for the type filter and required title are clearer than nesting
     private fun parseEntry(
         entry: Element,
         baseUrl: String,
@@ -122,7 +121,6 @@ class VelomaxOverviewPageScraper {
      * normalised and looked up separately, not parsed from the rendered text. The `.weekday`
      * span ("Samstag,") checks the result ([dateCheckedAgainstWeekday]).
      */
-    @Suppress("ReturnCount") // Guard clauses for each missing date part are clearer than nesting
     private fun parseListingDate(entry: Element): LocalDate? {
         val day = entry.textAt(".day")?.trim(',', '.', ' ')?.toIntOrNull() ?: return null
         val month = parseGermanMonthAbbreviation(entry.textAt(".month")) ?: return null

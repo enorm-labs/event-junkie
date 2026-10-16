@@ -53,7 +53,6 @@ internal object WixEventsWarmupData {
      *
      * @param source the venue whose page is being read, used only for log context.
      */
-    @Suppress("ReturnCount") // Sequential null-guards for each extraction step are clearer than nesting
     fun events(
         document: Document,
         source: EventSource

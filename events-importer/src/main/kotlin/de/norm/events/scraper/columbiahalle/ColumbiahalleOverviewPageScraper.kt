@@ -94,7 +94,6 @@ class ColumbiahalleOverviewPageScraper {
      * Parses one `.eventlist_event` card into a [ScrapedEvent], or `null` without the Contao event
      * id, a title, or a resolvable date.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required id / title / date are clearer than nesting
     private fun parseCard(
         card: Element,
         month: YearMonth?,

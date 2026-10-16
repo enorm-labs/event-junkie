@@ -52,7 +52,6 @@ class BadehausDetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing container/title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

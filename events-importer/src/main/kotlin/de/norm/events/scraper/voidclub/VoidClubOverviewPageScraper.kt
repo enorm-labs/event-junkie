@@ -77,7 +77,6 @@ class VoidClubOverviewPageScraper(
     }
 
     /** Parses one card into a [ScrapedEvent], or `null` without a title or usable date. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String,
@@ -148,7 +147,6 @@ class VoidClubOverviewPageScraper(
     }
 
     /** The rendered calendar block re-joined into one `FRI 07 AUG` string, or `null` if a part is missing. */
-    @Suppress("ReturnCount") // Guard clauses for the three missing parts are clearer than nesting
     private fun renderedDate(card: Element): String? {
         val weekday = card.textAt(".void-event-day") ?: return null
         val day = card.textAt(".void-event-number") ?: return null
@@ -157,7 +155,6 @@ class VoidClubOverviewPageScraper(
     }
 
     /** Parses a year-less weekday + month + day rendering, year from the weekday. */
-    @Suppress("ReturnCount") // Guard clauses for the blank / unparseable input are clearer than nesting
     private fun parseWeekdayDate(
         text: String?,
         formatter: DateTimeFormatter

@@ -49,7 +49,6 @@ class MehringhofProgrammPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun parseRow(
         row: Element,
         pageUrl: String,

@@ -42,7 +42,6 @@ class JonnyKnuppelOverviewPageScraper {
         return items.mapSkippingFailures(logger, "Jonny Knüppel night") { parseNight(it, baseUrl) }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title and date are clearer than nesting.
     private fun parseNight(
         item: Element,
         baseUrl: String

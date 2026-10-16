@@ -392,7 +392,6 @@ private fun resolveGenre(token: String): List<String> =
  * "Soul"]); else kept as a new genre only if it [looksLikeGenre]. Noise such as a lone letter or
  * a time ("from 8pm") returns an empty list. A token that is not a genre returns null.
  */
-@Suppress("ReturnCount") // Multiple early returns improve readability for this cascading lookup
 private fun resolveGenreOrNull(token: String): List<String>? {
     val lower = token.lowercase().trim()
 

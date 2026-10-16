@@ -49,7 +49,6 @@ class ZurKlappeOverviewPageScraper {
         return jsonMapper.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
     }
 
-    @Suppress("ReturnCount") // One guard clause per thing the payload can withhold reads better than nesting
     private fun toScrapedEvent(
         node: JsonNode,
         baseUrl: String

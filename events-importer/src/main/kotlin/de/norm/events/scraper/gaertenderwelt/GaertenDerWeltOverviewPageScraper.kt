@@ -75,7 +75,6 @@ class GaertenDerWeltOverviewPageScraper {
     ): String? = document.attrAt(NEXT_PAGE_SELECTOR, "href")?.let { resolveUrl(baseUrl, it) }
 
     /** Parses a single `.eventWrapper` row, or `null` when it is out of scope or unusable. */
-    @Suppress("ReturnCount") // Guard clauses for the skipped-row cases are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String

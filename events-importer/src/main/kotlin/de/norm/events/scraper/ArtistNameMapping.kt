@@ -1087,7 +1087,6 @@ private val CROSS_BILL_CONTINUATIONS: Set<String> = setOf("and", "und", "feat.",
  * here: [headlinersFromTitle] drops it first ([isCoBrandedSeriesTitle]). Public because a venue
  * parser that reads its line-up line by line asks the same question (Gretchen).
  */
-@Suppress("ReturnCount") // Guard clauses for the known duo and the no-cut case are clearer than nesting
 fun splitCrossBilled(segment: String): List<String> {
     if (isKnownSingleAct(segment)) return listOf(segment)
     val cuts =
@@ -1105,7 +1104,6 @@ fun splitCrossBilled(segment: String): List<String> {
     return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
 }
 
-@Suppress("ReturnCount") // Guard clauses for the prose and comma cases are clearer than nesting
 private fun splitOnConjunctionsOnly(segment: String): List<String> {
     if (isKnownSingleAct(segment)) return listOf(segment)
     // `Einzige und Exklusive Orchester-Show in Europa!` is billing prose, not two acts (#1580).
@@ -1122,7 +1120,6 @@ private fun splitOnConjunctionsOnly(segment: String): List<String> {
  * Each part is cut at its conjunctions by the per-boundary rules, so `A, B & The Cs` cuts at the comma only.
  * A [KNOWN_SINGLE_ACTS] entry such as `Kitty, Daisy & Lewis` stays whole.
  */
-@Suppress("ReturnCount") // Guard clauses for the known act and the no-list case are clearer than nesting
 fun commaListActs(line: String): List<String>? {
     if (isKnownSingleAct(line)) return listOf(line)
     val commas = topLevelCommas(line)
@@ -1426,7 +1423,6 @@ private val LINEUP_FEATURED_GUEST = Regex("""\s+(?:feat\.|featuring|ft\.)\s+""",
  * @param description the event's own blurb, which alone can decide a single comma — see
  * [commaBillOf]. Null keeps the title's answer.
  */
-@Suppress("ReturnCount") // Guard clauses for blank and denylisted titles are clearer than nesting
 fun splitHeadlinerTitle(
     title: String,
     splitOnSlash: Boolean = true,
@@ -1860,7 +1856,6 @@ private fun billedSideOfPres(
 private val WITH_FRAME_PATTERN = Regex("""^.+?(?:\bw/\s*|\smit\s+)""", RegexOption.IGNORE_CASE)
 
 /** The acts a [WITH_FRAME_PATTERN] title bills, or `null` when the title carries no such frame. */
-@Suppress("ReturnCount") // Two guard clauses (no frame, backing-band tail) read better than nesting
 private fun withFrameActs(title: String): List<ScrapedArtist>? {
     val frame = WITH_FRAME_PATTERN.find(title) ?: return null
     val tail = title.substring(frame.range.last + 1)
@@ -1939,7 +1934,6 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
  * @param unpackWithFrame forwarded to [headlinersFromTitle] for a concert.
  */
 
-@Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 fun buildArtistsForEventType(
     title: String,
     subtitle: String?,

@@ -82,7 +82,6 @@ class GretchenOverviewPageScraper {
      * Parses one `<div class="gig">` into a [ScrapedEvent], or `null` when the headline with its
      * `detail.php?id=…` link or a parseable date is missing.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required title/id/date fields are clearer than nesting
     private fun parseGig(
         gig: Element,
         baseUrl: String

@@ -79,7 +79,6 @@ class BerghainOverviewPageScraper(
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for missing title/date are clearer than nesting
     private fun parseBlock(
         block: Element,
         sourceUrl: String

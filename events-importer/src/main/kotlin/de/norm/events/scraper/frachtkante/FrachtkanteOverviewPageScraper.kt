@@ -39,7 +39,6 @@ class FrachtkanteOverviewPageScraper {
             .distinctBy { it.sourceId }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required title and date are clearer than nesting.
     private fun parseArticle(
         article: Element,
         baseUrl: String

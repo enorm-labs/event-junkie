@@ -66,7 +66,6 @@ class QuatschCalendarScraper {
                 toScrapedEvent(show)
             }.orEmpty()
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun toScrapedEvent(show: JsonNode): ScrapedEvent? {
         val date = show.stringOrNull("real_date")?.let(::parseDate) ?: return null
         val rawTitle = show.text("event_title")

@@ -56,7 +56,6 @@ class HuxleysDetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl], its date and [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing article / title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

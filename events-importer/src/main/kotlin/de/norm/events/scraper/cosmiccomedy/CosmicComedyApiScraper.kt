@@ -47,7 +47,6 @@ class CosmicComedyApiScraper {
     fun scrapePage(json: String): TecPage = parseTecPage(json, EventSource.COSMIC_COMEDY, ::toScrapedEvent)
 
     /** Maps one API event, or `null` when it lacks the slug or start date that identify it. */
-    @Suppress("ReturnCount") // Guard clauses for the required slug/date are clearer than nesting
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null

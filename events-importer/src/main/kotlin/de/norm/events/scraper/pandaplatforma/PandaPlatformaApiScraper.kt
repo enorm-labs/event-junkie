@@ -47,7 +47,6 @@ class PandaPlatformaApiScraper {
 
     fun scrapePage(json: String): TecPage = parseTecPage(json, EventSource.PANDA_PLATFORMA, ::toScrapedEvent)
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields and the venue are clearer than nesting
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null

@@ -71,7 +71,6 @@ class ColumbiaTheaterOverviewPageScraper {
     }
 
     /** Parses one `a.item` card into a [ScrapedEvent], or `null` when it has no href or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String
@@ -186,7 +185,6 @@ private val ACT_SEPARATOR = Regex("""\s+\+\s+""")
  * when a billing row confirms the convention. Headliners split on ` / ` and ` + `; billed acts
  * come from [supportRows] via [parseSupportRow].
  */
-@Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 internal fun columbiaTheaterArtists(
     title: String,
     supportRows: List<String>,
@@ -232,7 +230,6 @@ private val PRESENTER_INTRO = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\s+""", RegexO
  * [PRESENTER_INTRO] is read, so a differently-worded credit is skipped rather than stored verbatim.
  * The comma/`&` list is exactly what [splitSupportActs] splits.
  */
-@Suppress("ReturnCount") // Guard clauses for the missing / differently-worded credit are clearer than nesting
 internal fun parseColumbiaTheaterPresenters(content: Element): List<String> {
     val line = content.textAt(".header-promoters") ?: return emptyList()
     val names = PRESENTER_INTRO.find(line)?.let { line.substring(it.range.last + 1) } ?: return emptyList()

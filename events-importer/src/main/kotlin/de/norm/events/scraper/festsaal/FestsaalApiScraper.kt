@@ -87,10 +87,7 @@ class FestsaalApiScraper {
     }
 
     /** The response body's `items` array, or null if unparseable or without an array. */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-        "ReturnCount" // Guard clauses for the unparseable body and missing array are clearer than nesting.
-    )
+    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
     private fun parseItems(json: String): JsonNode? {
         val root =
             try {
@@ -107,7 +104,6 @@ class FestsaalApiScraper {
         return items
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required slug, title, and date are clearer than nesting.
     private fun parseEvent(node: FestsaalEventNode): ScrapedEvent? {
         val slug = node.meta?.slug.blankToNull() ?: node.id?.toString()
         if (slug == null) {

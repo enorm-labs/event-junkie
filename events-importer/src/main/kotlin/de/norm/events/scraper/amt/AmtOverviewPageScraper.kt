@@ -66,7 +66,6 @@ class AmtOverviewPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required date and title are clearer than nesting.
     private fun parseEvent(
         item: Element,
         baseUrl: String

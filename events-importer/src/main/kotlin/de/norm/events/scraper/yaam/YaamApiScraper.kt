@@ -31,7 +31,6 @@ class YaamApiScraper {
 
     fun scrapePage(json: String): TecPage = parseTecPage(json, EventSource.YAAM, ::toScrapedEvent)
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null

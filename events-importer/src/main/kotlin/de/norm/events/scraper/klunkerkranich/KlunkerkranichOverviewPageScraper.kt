@@ -84,7 +84,6 @@ class KlunkerkranichOverviewPageScraper(
     }
 
     /** Parses one card into a [ScrapedEvent], or `null` without link, title or usable date. */
-    @Suppress("ReturnCount") // Guard clauses for the required link/title/date are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String
@@ -123,7 +122,6 @@ class KlunkerkranichOverviewPageScraper(
      * The card's rendered German date ("Mittwoch, 05. August"), year from the stated weekday —
      * the listing never prints one.
      */
-    @Suppress("ReturnCount") // Guard clauses for the blank / unparseable input are clearer than nesting
     private fun parseRenderedDate(text: String?): LocalDate? {
         if (text.isNullOrBlank()) return null
         val parsed = runCatching { GERMAN_CARD_DATE.parse(text.trim()) }.getOrNull() ?: return null

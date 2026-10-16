@@ -43,7 +43,6 @@ class ModusDetailPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
-    @Suppress("ReturnCount") // A guard clause for the missing title is clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

@@ -53,7 +53,6 @@ class RitterButzkeOverviewPageScraper {
     }
 
     /** Parses one grid card into a [ScrapedEvent], or `null` without a link or title. */
-    @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String

@@ -116,7 +116,6 @@ class WuehlmaeuseApiScraper {
     private fun sourceIdOf(ticket: WuehlmaeuseTicket): String =
         "${EventSource.WUEHLMAEUSE.sourceIdPrefix}${ticket.eventUrl.trimEnd('/').substringAfterLast('/')}-${ticket.date}-${ticket.start.format(HHMM)}"
 
-    @Suppress("ReturnCount") // Guard clauses for each required line are clearer than nesting
     private fun toTicket(product: JsonNode): WuehlmaeuseTicket? {
         val lines = product.stringOrNull("name")?.split(LINE_BREAK)?.map { decodeHtmlEntities(it) } ?: return null
         val performance = lines.firstNotNullOfOrNull { PERFORMANCE.find(it) }

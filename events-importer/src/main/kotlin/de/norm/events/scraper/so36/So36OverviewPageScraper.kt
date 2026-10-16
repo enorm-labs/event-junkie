@@ -55,7 +55,6 @@ class So36OverviewPageScraper {
      * Parses one product anchor into a [ScrapedEvent], or `null` when it is not an event (no date
      * suffix) or already seen.
      */
-    @Suppress("ReturnCount") // Guard clauses for non-event links and duplicates are clearer than nesting
     private fun parseLink(
         link: Element,
         baseUrl: String,

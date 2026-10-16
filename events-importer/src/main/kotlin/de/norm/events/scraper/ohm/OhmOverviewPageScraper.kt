@@ -64,7 +64,6 @@ class OhmOverviewPageScraper(
     }
 
     /** Parses one `li.event-item` into a [ScrapedEvent], or `null` without a title or date. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseItem(
         item: Element,
         baseUrl: String

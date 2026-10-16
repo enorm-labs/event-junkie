@@ -127,7 +127,6 @@ class RoadrunnerOverviewPageScraper(
     }
 
     /** Parses one event block (a date line plus its following paragraphs) into a [ScrapedEvent]. */
-    @Suppress("ReturnCount") // Guard clauses for the required date/title are clearer than nesting
     private fun parseBlock(
         block: List<Element>,
         baseUrl: String

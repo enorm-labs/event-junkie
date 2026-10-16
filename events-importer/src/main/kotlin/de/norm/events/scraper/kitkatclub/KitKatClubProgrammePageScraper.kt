@@ -53,7 +53,6 @@ class KitKatClubProgrammePageScraper(
         return rows.mapSkippingFailures(logger, "KitKatClub night") { row -> parseRow(row, sourceUrl) }
     }
 
-    @Suppress("ReturnCount") // One guard clause per required field reads better than nesting
     private fun parseRow(
         row: Element,
         sourceUrl: String
@@ -99,7 +98,6 @@ class KitKatClubProgrammePageScraper(
     }
 
     /** The `Mi.` / `30. Sep` pair, year from the weekday ([inferYearForWeekday]). */
-    @Suppress("ReturnCount") // Guard clauses for each missing date part are clearer than nesting
     private fun parseDate(lines: List<String>): LocalDate? {
         val match = lines.firstNotNullOfOrNull { DAY_MONTH.find(it) } ?: return null
         val month = parseGermanMonthAbbreviation(match.groupValues[2]) ?: return null

@@ -81,7 +81,6 @@ class RenateOverviewPageScraper(
     }
 
     /** Parses one `.prog-row` into a [ScrapedEvent], or `null` without a title or usable date. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String
@@ -115,7 +114,6 @@ class RenateOverviewPageScraper(
      * The row's `Thu.` / `06.08.` date pair, year from the weekday: the programme prints no year
      * and runs across the turn of the year ([inferYearForWeekday]).
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing / unparseable date parts are clearer than nesting
     private fun parseRowDate(row: Element): LocalDate? {
         val match = DATE_PATTERN.find(row.textAt(".prog-date").orEmpty()) ?: return null
         val monthDay =

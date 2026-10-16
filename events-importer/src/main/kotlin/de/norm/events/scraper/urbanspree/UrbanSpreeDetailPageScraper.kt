@@ -52,7 +52,6 @@ class UrbanSpreeDetailPageScraper {
      *
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
      */
-    @Suppress("ReturnCount") // Guard clauses for the unparseable-page cases are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

@@ -161,7 +161,6 @@ internal class Bogen47ApiScraper(
             emptyMap()
         }
 
-    @Suppress("ReturnCount") // Guard clauses for the required id, date, and title are clearer than nesting.
     private fun parsePost(
         post: JsonNode,
         today: LocalDate

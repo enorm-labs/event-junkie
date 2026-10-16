@@ -44,7 +44,6 @@ class DownstairsTicketListScraper {
     /** Whether the frame offers a further page: a `page` field in its "100 weitere Ergebnisse" form. */
     fun nextPage(document: Document): Int? = document.selectFirst("#tickets_pagy input[name=page]")?.attr("value")?.toIntOrNull()
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun parseItem(item: Element): ScrapedEvent? {
         val id = item.id().removePrefix("tickets_ticket_").takeIf { it.isNotBlank() } ?: return null
         val url = item.selectFirst("[data-clickable-href-value]")?.absUrl("data-clickable-href-value")?.takeIf { it.isNotEmpty() } ?: return null

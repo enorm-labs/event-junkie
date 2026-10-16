@@ -84,7 +84,6 @@ class MinimalBarOverviewPageScraper {
             .firstOrNull { it.value > 1 && it.value * 2 > nodes.size }
             ?.key
 
-    @Suppress("ReturnCount") // One guard clause per thing the payload can withhold reads better than nesting
     private fun toScrapedEvent(
         node: JsonNode,
         baseUrl: String,

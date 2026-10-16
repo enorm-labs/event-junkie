@@ -46,7 +46,6 @@ class RosaOverviewPageScraper {
         return jsonMapper.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
     }
 
-    @Suppress("ReturnCount") // One guard clause per thing the payload can withhold reads better than nesting
     private fun toScrapedEvent(
         node: JsonNode,
         baseUrl: String
@@ -79,7 +78,6 @@ class RosaOverviewPageScraper {
     }
 
     /** `image-<hash>-1080x1350-png` is served as `<hash>-1080x1350.png`. */
-    @Suppress("ReturnCount") // A guard per missing part reads better than nesting
     private fun flyerUrl(node: JsonNode): String? {
         val reference = node.path("flyer").path("asset").stringOrNull("_ref") ?: return null
         val parts = SANITY_ASSET_REF.matchEntire(reference) ?: return null

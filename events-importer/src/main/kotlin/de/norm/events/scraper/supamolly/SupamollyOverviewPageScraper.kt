@@ -78,7 +78,6 @@ class SupamollyOverviewPageScraper {
      * Parses one `<tr class="event">` row into a [ScrapedEvent], or `null` without a
      * `YYYYMMDDHHMM` id or billed act name, or for a monthly programme poster.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required id/title fields and the poster row are clearer than nesting
     private fun parseEventRow(
         row: Element,
         baseUrl: String

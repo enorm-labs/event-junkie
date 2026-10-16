@@ -94,7 +94,6 @@ internal fun parseRadarEvents(
     return RadarListing(events, rowsRead = rows.size, count = root.path("count").asInt(rows.size))
 }
 
-@Suppress("ReturnCount") // Guard clauses for the required url, title and start are clearer than nesting.
 private fun parseRow(
     nodeId: Long?,
     row: JsonNode,

@@ -43,7 +43,6 @@ class VelomaxDetailPageScraper {
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its [ScrapedEvent.sourceId].
      * @param hall the hall this source imports, supplying the `sourceId` prefix.
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing Microdata block / name are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String,

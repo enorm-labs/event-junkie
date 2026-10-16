@@ -43,7 +43,6 @@ class BerghainDetailPageScraper {
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its [ScrapedEvent.sourceId].
      * @return the parsed event, or `null` without `<main>`, a title, or a parseable date.
      */
-    @Suppress("ReturnCount") // Guard clauses for the missing container/title/date are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

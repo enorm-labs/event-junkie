@@ -169,7 +169,6 @@ internal data class LidoEventBlock(
  * `article.event-ticket` on the overview, `header.event-ticket` on a detail page. `null`
  * without a title link.
  */
-@Suppress("ReturnCount") // Guard clauses for the required title/href are clearer than nesting
 internal fun parseLidoEventBlock(
     root: Element,
     baseUrl: String

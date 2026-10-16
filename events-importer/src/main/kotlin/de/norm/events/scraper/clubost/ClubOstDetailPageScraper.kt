@@ -39,7 +39,6 @@ class ClubOstDetailPageScraper {
      * [ScrapedEvent.sourceUrl][de.norm.events.scraper.ScrapedEvent.sourceUrl] and the `sourceId`
      * source.
      */
-    @Suppress("ReturnCount") // Guard clauses per missing required field read better than a nested let-chain
     fun scrape(
         document: Document,
         sourceUrl: String

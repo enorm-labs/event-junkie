@@ -45,7 +45,6 @@ class PunchlineTicketsPageScraper {
         }
     }
 
-    @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun toScrapedEvent(
         date: JsonNode,
         dates: List<JsonNode>,

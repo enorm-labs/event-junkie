@@ -62,7 +62,6 @@ class UrbanSpreeOverviewPageScraper {
     }
 
     /** Parses a single `a.card` anchor, or `null` when it carries no usable date or detail link. */
-    @Suppress("ReturnCount") // Guard clauses for the unusable-card cases are clearer than nesting
     private fun parseCard(card: Element): ScrapedEvent? {
         val sourceUrl = card.absUrl("href").takeIf { it.isNotBlank() } ?: return null
         val rawDateStart = card.attr(DATE_START_ATTR)

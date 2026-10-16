@@ -43,7 +43,6 @@ class MatrixNightPageScraper {
      *
      * @param url the night page's URL, which is the event's `sourceUrl`.
      */
-    @Suppress("ReturnCount") // Guard clauses for the required title and date are clearer than nesting.
     fun scrape(
         document: Document,
         url: String

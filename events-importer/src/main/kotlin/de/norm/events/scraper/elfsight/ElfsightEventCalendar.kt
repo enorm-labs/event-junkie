@@ -37,10 +37,7 @@ internal fun elfsightJsonMapper(): JsonMapper =
  * `settings.events` array (the `event-calendar` app) contribute. [venue] names the venue in
  * the warnings.
  */
-@Suppress(
-    "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-    "ReturnCount" // Guard clauses for the unparseable body and missing widgets are clearer than nesting.
-)
+@Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import.
 internal fun parseElfsightEventNodes(
     mapper: JsonMapper,
     json: String,
@@ -112,7 +109,6 @@ internal fun ElfsightEventNode.repeats(): Boolean = repeatPeriod.blankToNull()?.
  * Any other rule, and a fifth weekday that some months lack, keeps its start date and is logged:
  * a guess would invent dates the venue never announced.
  */
-@Suppress("ReturnCount") // Guard clauses for the non-repeating and unknown rules are clearer than nesting.
 internal fun elfsightOccurrenceDates(
     node: ElfsightEventNode,
     seriesStart: LocalDate,

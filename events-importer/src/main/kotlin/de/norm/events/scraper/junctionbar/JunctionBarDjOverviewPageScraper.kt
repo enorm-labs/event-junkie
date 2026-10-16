@@ -67,7 +67,6 @@ class JunctionBarDjOverviewPageScraper(
     /** A date-bar child holds a `<table>` whose text carries a `DD.MM.` date; content lines carry none. */
     internal fun isDateBar(child: Element): Boolean = child.selectFirst("table") != null && DATE_PATTERN.containsMatchIn(child.text())
 
-    @Suppress("ReturnCount") // Guard clauses for the required date and DJ name are clearer than nesting.
     private fun parseNight(
         night: Night,
         baseUrl: String
@@ -115,7 +114,6 @@ class JunctionBarDjOverviewPageScraper(
      * The `DD.MM.` date, year from the English weekday abbreviation via [inferYearForWeekday].
      * `null` when the date cannot be parsed.
      */
-    @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(dateBar: Element): LocalDate? {
         val text = dateBar.text()
         val match = DATE_PATTERN.find(text) ?: return null

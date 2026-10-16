@@ -40,7 +40,6 @@ class UraniaEventPageScraper {
      *
      * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its `sourceId`.
      */
-    @Suppress("ReturnCount") // A guard clause for the missing heading is clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String

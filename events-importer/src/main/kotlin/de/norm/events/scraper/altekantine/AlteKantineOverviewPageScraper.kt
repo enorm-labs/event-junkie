@@ -71,7 +71,6 @@ class AlteKantineOverviewPageScraper(
     }
 
     /** Parses one `.pt-cv-content-item` into a [ScrapedEvent], or `null` without a title link or post id. */
-    @Suppress("ReturnCount") // Guard clauses for the required link/post-id/title are clearer than nesting
     private fun parseItem(
         item: Element,
         baseUrl: String

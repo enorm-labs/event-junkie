@@ -59,7 +59,6 @@ class MorphineOverviewPageScraper {
      * Parses one listing row into a [ScrapedEvent], or `null` when it is not an event — the
      * dateless `ARCHIVE` row, or a row missing its title.
      */
-    @Suppress("ReturnCount") // Guard clauses for the non-event and malformed rows are clearer than nesting
     private fun parseRow(
         row: Element,
         baseUrl: String

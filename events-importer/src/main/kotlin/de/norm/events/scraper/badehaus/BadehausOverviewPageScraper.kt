@@ -66,7 +66,6 @@ class BadehausOverviewPageScraper {
     }
 
     /** Parses one card wrapper into a [ScrapedEvent], or `null` when required fields are missing. */
-    @Suppress("ReturnCount") // Guard clauses for the required title/date/url are clearer than nesting
     private fun parseCard(
         card: Element,
         baseUrl: String
