@@ -5,18 +5,17 @@
  * component holds no filter state; the local state is the search draft and whether "More filters"
  * is open. Below `sm` "More filters" is a bottom sheet holding the date inputs too (#2890).
  */
-import { ChevronDown, X } from '@lucide/vue'
+import { X } from '@lucide/vue'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import DateRangeInputs from '@/components/DateRangeInputs.vue'
 import EventFilterPanel from '@/components/EventFilterPanel.vue'
-import SearchInput from '@/components/SearchInput.vue'
+import FilterSearchRow from '@/components/FilterSearchRow.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { shareFilterLists } from '@/composables/useFilterLists'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
-import { useSearchDraft } from '@/composables/useSearchDraft'
 import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { languageFilterApplies } from '@/lib/spokenLanguages'
 import { useI18n } from 'vue-i18n'
@@ -69,8 +68,6 @@ function isPresetActive(key: string): boolean {
 
 const { genres, venues } = shareFilterLists()
 
-const { search, applySearch } = useSearchDraft()
-
 /**
  * How many of the filters behind "More filters" are set, so a closed section still says it is
  * narrowing the list. Each counts once, however many values it holds. Read from the URL alone: a
@@ -103,10 +100,10 @@ const sheetOpen = ref(false)
 const expanded = computed(() => (narrow.value ? sheetOpen.value : moreOpen.value))
 
 // Safari does not focus a button on a click, so the dialog has nothing to return to on its own.
-const toggle = useTemplateRef<{ $el: HTMLElement }>('toggle')
+const row = useTemplateRef<{ focusToggle: () => void }>('row')
 function focusToggle(event: Event) {
   event.preventDefault()
-  toggle.value?.$el.focus()
+  row.value?.focusToggle()
 }
 
 function toggleMore() {
@@ -144,32 +141,16 @@ onMounted(() => {
 
 <template>
   <div :class="PANEL_CLASS">
-    <div class="flex w-full flex-wrap items-center gap-2">
-      <form class="min-w-0 flex-1 basis-48" role="search" @submit.prevent="applySearch">
-        <SearchInput
-          v-model="search"
-          :placeholder="t('events.filters.searchPlaceholder')"
-          @change="applySearch"
-          @clear="applySearch"
-        />
-      </form>
-      <Button
-        ref="toggle"
-        :aria-controls="narrow ? undefined : 'more-filters'"
-        :aria-expanded="expanded"
-        :aria-haspopup="narrow ? 'dialog' : undefined"
-        type="button"
-        variant="outline"
-        @click="toggleMore"
-      >
-        {{ moreLabel }}
-        <ChevronDown
-          :class="['transition-transform', { 'rotate-180': expanded }]"
-          aria-hidden="true"
-        />
-      </Button>
-      <ClearAllFilters :compact="narrow" />
-    </div>
+    <FilterSearchRow
+      ref="row"
+      :compact="narrow"
+      :controls="narrow ? undefined : 'more-filters'"
+      :expanded="expanded"
+      :haspopup="narrow ? 'dialog' : undefined"
+      :label="moreLabel"
+      :placeholder="t('events.filters.searchPlaceholder')"
+      @toggle="toggleMore"
+    />
 
     <!-- Below `sm` the presets keep one row and scroll sideways; the date inputs are in the sheet. -->
     <div

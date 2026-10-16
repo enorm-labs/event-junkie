@@ -1,16 +1,11 @@
 <script lang="ts" setup>
 /**
- * The filter bar of the venue and promoter lists (#2694), in the events bar's shape: the search,
- * then "More filters", then "Clear all". The `more` slot holds the selects; a page without one
- * shows no toggle. The `actions` slot ends the first row.
+ * The filter bar of the venue and promoter lists (#2694), on the events bar's first row. The `more`
+ * slot holds the selects; a page without one shows no toggle. The `actions` slot ends the first row.
  */
-import { ChevronDown } from '@lucide/vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Button } from '@/components/ui/button'
-import ClearAllFilters from '@/components/ClearAllFilters.vue'
-import SearchInput from '@/components/SearchInput.vue'
-import { useSearchDraft } from '@/composables/useSearchDraft'
+import FilterSearchRow from '@/components/FilterSearchRow.vue'
 import { PANEL_CLASS } from '@/lib/utils'
 
 const props = withDefaults(
@@ -25,40 +20,30 @@ const props = withDefaults(
 const slots = defineSlots<{ more?: () => unknown; actions?: () => unknown }>()
 
 const { t } = useI18n()
-const { search, applySearch } = useSearchDraft()
 
 // Closed unless the URL already sets one of its filters, as on the events bar (#2347).
 const moreOpen = ref(props.moreCount > 0)
+
+// No label, no toggle: a page without selects has nothing to open.
+const moreLabel = computed(() => {
+  if (!slots.more) return undefined
+  return props.moreCount
+    ? t('events.filters.moreCount', { n: props.moreCount })
+    : t('events.filters.more')
+})
 </script>
 
 <template>
   <div :class="PANEL_CLASS">
-    <div class="flex w-full flex-wrap items-center gap-2">
-      <form class="min-w-0 flex-1 basis-48" role="search" @submit.prevent="applySearch">
-        <SearchInput
-          v-model="search"
-          :placeholder="placeholder"
-          @change="applySearch"
-          @clear="applySearch"
-        />
-      </form>
-      <Button
-        v-if="slots.more"
-        :aria-expanded="moreOpen"
-        aria-controls="more-filters"
-        type="button"
-        variant="outline"
-        @click="moreOpen = !moreOpen"
-      >
-        {{ moreCount ? t('events.filters.moreCount', { n: moreCount }) : t('events.filters.more') }}
-        <ChevronDown
-          :class="['transition-transform', { 'rotate-180': moreOpen }]"
-          aria-hidden="true"
-        />
-      </Button>
-      <ClearAllFilters />
-      <slot name="actions" />
-    </div>
+    <FilterSearchRow
+      controls="more-filters"
+      :expanded="moreOpen"
+      :label="moreLabel"
+      :placeholder="placeholder"
+      @toggle="moreOpen = !moreOpen"
+    >
+      <template #actions><slot name="actions" /></template>
+    </FilterSearchRow>
 
     <div v-if="slots.more" v-show="moreOpen" id="more-filters" class="w-full">
       <slot name="more" />
