@@ -17,7 +17,45 @@ class PostExtractionValidatorTest {
         caption: String = RSO_WEEK,
         postedAt: String = "2026-10-13T16:00:12Z",
         images: List<PostImage> = emptyList()
+    ) = parsed(answer, caption, postedAt, images)?.events
+
+    private fun parsed(
+        answer: String,
+        caption: String = RSO_WEEK,
+        postedAt: String = "2026-10-13T16:00:12Z",
+        images: List<PostImage> = emptyList()
     ) = PostExtractionValidator.parse(answer, PostInput("RSO", caption, OffsetDateTime.parse(postedAt), images), minConfidence = 0.7)
+
+    @Test
+    fun `each dropped event names the check it failed and the date the model gave`() {
+        val answer =
+            """
+            {"isEvent": true, "events": [
+              {"date": "16.10.", "title": "a", "evidence": "on Friday", "confidence": 0.9},
+              {"date": "2026-10-16", "title": "", "evidence": "on Friday", "confidence": 0.9},
+              {"date": "2026-10-16", "title": "c", "evidence": "on Friday", "confidence": 0.5},
+              {"date": "2026-10-16", "title": "d", "evidence": "on", "confidence": 0.9},
+              {"date": "2026-10-16", "title": "e", "evidence": "Friday at Berghain", "confidence": 0.9},
+              {"date": "2026-10-09", "title": "f", "evidence": "on Friday", "confidence": 0.9},
+              {"date": "2026-10-15", "title": "g", "evidence": "on the SUMME floor on Friday", "confidence": 0.9},
+              {"date": "2026-10-16", "title": "h", "evidence": "on the SUMME floor on Friday", "confidence": 0.9}
+            ]}
+            """.trimIndent()
+
+        val result = parsed(answer)
+
+        result?.events?.map { it.title } shouldBe listOf("h")
+        result?.dropped shouldBe
+            listOf(
+                DroppedEvent("16.10.", DraftCheck.DATE),
+                DroppedEvent("2026-10-16", DraftCheck.TITLE),
+                DroppedEvent("2026-10-16", DraftCheck.CONFIDENCE),
+                DroppedEvent("2026-10-16", DraftCheck.EVIDENCE_LENGTH),
+                DroppedEvent("2026-10-16", DraftCheck.EVIDENCE_NOT_QUOTED),
+                DroppedEvent("2026-10-09", DraftCheck.HORIZON),
+                DroppedEvent("2026-10-15", DraftCheck.WEEKDAY)
+            )
+    }
 
     @Test
     fun `weekdays counted from the post become two events`() {

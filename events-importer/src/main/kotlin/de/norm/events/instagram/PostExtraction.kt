@@ -45,6 +45,31 @@ data class DraftedEvent(
     val flyerText: String? = null
 )
 
+/** A check that drops a drafted event. [label] is what the log names. */
+enum class DraftCheck(
+    val label: String
+) {
+    DATE("the date is not an ISO date"),
+    TITLE("the title is empty or too long"),
+    CONFIDENCE("the confidence is under the floor"),
+    EVIDENCE_LENGTH("the evidence is too short or too long"),
+    EVIDENCE_NOT_QUOTED("the evidence is not in the caption or the image text"),
+    HORIZON("the date is before the post or too far after it"),
+    WEEKDAY("the date is not on the weekday the evidence names")
+}
+
+/** A drafted event a check dropped. [date] is the model's value as given, cut short. */
+data class DroppedEvent(
+    val date: String,
+    val check: DraftCheck
+)
+
+/** The events that passed every check, and the ones that did not. */
+data class ParsedAnswer(
+    val events: List<DraftedEvent>,
+    val dropped: List<DroppedEvent> = emptyList()
+)
+
 /** What one extraction call gave, and the tokens it cost. */
 sealed interface ExtractionResult {
     val tokens: Long
@@ -52,7 +77,8 @@ sealed interface ExtractionResult {
     /** The post announces these events. An empty list: it announces none, or none survived the checks. */
     data class Events(
         val events: List<DraftedEvent>,
-        override val tokens: Long
+        override val tokens: Long,
+        val dropped: List<DroppedEvent> = emptyList()
     ) : ExtractionResult
 
     /** The model answered, and the answer was no JSON object or a refusal. Asking again gives the same answer. */
@@ -86,6 +112,7 @@ object PostExtractionValidator {
     private const val MIN_EVIDENCE_LENGTH = 3
     private const val MAX_EVIDENCE_LENGTH = 500
     private const val MAX_TITLE_LENGTH = 200
+    private const val MAX_LOGGED_DATE_LENGTH = 20
 
     /** A flyer with a long lineup is a few hundred characters. More is not a copy of a flyer. */
     private const val MAX_FLYER_TEXT_LENGTH = 3000
@@ -118,7 +145,7 @@ object PostExtractionValidator {
         raw: String,
         input: PostInput,
         minConfidence: Double
-    ): List<DraftedEvent>? {
+    ): ParsedAnswer? {
         val root = readObject(raw) ?: return null
         val events =
             root
@@ -127,10 +154,29 @@ object PostExtractionValidator {
                 ?.toList()
                 .orEmpty()
         val flyerText = flyerText(root, input)
-        val kept = events.mapNotNull { event(it, input, flyerText, minConfidence) }
-        if (kept.size < events.size) logger.warn { "Dropped ${events.size - kept.size} of ${events.size} drafted event(s) that failed a check" }
+        // Everything the model read: a fact must be quoted from one of the two.
+        val read = listOfNotNull(input.caption.takeIf { it.isNotBlank() }, flyerText).joinToString("\n")
+        val dropped = mutableListOf<DroppedEvent>()
+        val kept =
+            events.mapNotNull { node ->
+                val failed = failedCheck(node, input, read, minConfidence)
+                if (failed == null) {
+                    event(node, flyerText, read)
+                } else {
+                    dropped +=
+                        DroppedEvent(
+                            node
+                                .path("date")
+                                .asString("")
+                                .trim()
+                                .take(MAX_LOGGED_DATE_LENGTH),
+                            failed
+                        )
+                    null
+                }
+            }
         // A post that names one night twice ("Friday … October 16th") gives one draft.
-        return kept.groupBy { it.date }.map { (_, same) -> same.maxBy { it.confidence } }
+        return ParsedAnswer(kept.groupBy { it.date }.map { (_, same) -> same.maxBy { it.confidence } }, dropped)
     }
 
     /** Read only when images were sent, so a caption-only answer cannot widen its own checks. */
@@ -145,30 +191,49 @@ object PostExtractionValidator {
             .takeIf { input.images.isNotEmpty() && it.isNotEmpty() }
             ?.take(MAX_FLYER_TEXT_LENGTH)
 
-    private fun event(
+    /** The first check [node] fails, or null when it passes all of them. */
+    private fun failedCheck(
         node: JsonNode,
         input: PostInput,
-        flyerText: String?,
+        read: String,
         minConfidence: Double
-    ): DraftedEvent? {
-        // Everything the model read: a fact must be quoted from one of the two.
-        val caption = listOfNotNull(input.caption.takeIf { it.isNotBlank() }, flyerText).joinToString("\n")
+    ): DraftCheck? {
         val evidence = node.path("evidence").asString("").trim()
-        val confidence = node.path("confidence").asDouble(-1.0)
         val date = date(node.path("date").asString(""))
-        val title = node.path("title").asString("").trim()
-        val valid =
-            date != null &&
-                title.length in 1..MAX_TITLE_LENGTH &&
-                confidence in minConfidence..1.0 &&
-                evidence.length in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH &&
-                QuotedText.occursIn(evidence, caption) &&
-                date in input.postedOn..input.postedOn.plusDays(HORIZON_DAYS) &&
-                weekdayAgrees(evidence, date)
-        if (!valid) return null
+        return when {
+            date == null -> DraftCheck.DATE
+
+            node
+                .path("title")
+                .asString("")
+                .trim()
+                .length !in 1..MAX_TITLE_LENGTH -> DraftCheck.TITLE
+
+            node.path("confidence").asDouble(-1.0) !in minConfidence..1.0 -> DraftCheck.CONFIDENCE
+
+            evidence.length !in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH -> DraftCheck.EVIDENCE_LENGTH
+
+            !QuotedText.occursIn(evidence, read) -> DraftCheck.EVIDENCE_NOT_QUOTED
+
+            date !in input.postedOn..input.postedOn.plusDays(HORIZON_DAYS) -> DraftCheck.HORIZON
+
+            // A quote that names a weekday must name the one the date falls on. A quote that names none passes.
+            WEEKDAYS.filterValues { it.containsMatchIn(evidence) }.keys.let { it.isNotEmpty() && date.dayOfWeek !in it } -> DraftCheck.WEEKDAY
+
+            else -> null
+        }
+    }
+
+    /** [node] after [failedCheck] passed it. */
+    private fun event(
+        node: JsonNode,
+        flyerText: String?,
+        caption: String
+    ): DraftedEvent {
+        val date = checkNotNull(date(node.path("date").asString("")))
         return DraftedEvent(
-            date = checkNotNull(date),
-            title = title,
+            date = date,
+            title = node.path("title").asString("").trim(),
             startTime = time(node.path("startTime").asString(""))?.takeIf { namesHour(it, caption) },
             doorsTime = time(node.path("doorsTime").asString(""))?.takeIf { namesHour(it, caption) },
             acts =
@@ -180,8 +245,8 @@ object PostExtractionValidator {
                     .distinct(),
             pricePresale = price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
             priceBoxOffice = price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
-            evidence = evidence,
-            confidence = confidence,
+            evidence = node.path("evidence").asString("").trim(),
+            confidence = node.path("confidence").asDouble(),
             flyerText = flyerText
         )
     }
@@ -199,15 +264,6 @@ object PostExtractionValidator {
     }
 
     private fun letters(text: String): String = QuotedText.normalise(text).replace(NOT_LETTER_OR_DIGIT, "")
-
-    /** A quote that names a weekday must name the one the date falls on. A quote that names none passes. */
-    private fun weekdayAgrees(
-        evidence: String,
-        date: LocalDate
-    ): Boolean {
-        val named = WEEKDAYS.filterValues { it.containsMatchIn(evidence) }.keys
-        return named.isEmpty() || date.dayOfWeek in named
-    }
 
     private fun date(value: String): LocalDate? =
         try {

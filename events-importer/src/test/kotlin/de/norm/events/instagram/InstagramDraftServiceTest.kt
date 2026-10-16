@@ -1,5 +1,9 @@
 package de.norm.events.instagram
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -8,6 +12,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import java.time.Clock
 import java.time.Instant
@@ -121,6 +126,38 @@ class InstagramDraftServiceTest {
             result.drafts shouldBe 1
             result.ofRejectedNights shouldBe 1
         }
+
+    @Test
+    fun `a dropped event and a refused answer are logged with the venue and the post`() =
+        runTest {
+            coEvery { client.recentPosts(any()) } returns DiscoveryResult.Posts(listOf(post("b"), post("c")))
+            coEvery { repository.knownMediaIds(any()) } returns emptySet()
+            coEvery { extractor.extract(match { it.caption == "caption b" }) } returns
+                ExtractionResult.Events(emptyList(), 40, listOf(DroppedEvent("2026-10-31", DraftCheck.EVIDENCE_NOT_QUOTED)))
+            coEvery { extractor.extract(match { it.caption == "caption c" }) } returns ExtractionResult.Rejected(30)
+
+            val warnings = logsOf { service.draftFrom(RSO, maxCalls = 10) }.filter { it.level == Level.WARN }.map { it.formattedMessage }
+
+            warnings shouldBe
+                listOf(
+                    "Instagram venue 'rso-berlin': a drafted event of https://www.instagram.com/p/b/ for '2026-10-31' was dropped: " +
+                        "the evidence is not in the caption or the image text",
+                    "Instagram venue 'rso-berlin': the answer for https://www.instagram.com/p/c/ was refused"
+                )
+        }
+
+    private suspend fun logsOf(block: suspend () -> Unit): List<ILoggingEvent> {
+        val log = LoggerFactory.getLogger(InstagramDraftService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        log.addAppender(appender)
+        try {
+            block()
+        } finally {
+            log.detachAppender(appender)
+            appender.stop()
+        }
+        return appender.list.toList()
+    }
 
     @Test
     fun `no handle and an unreadable account read nothing`() =
