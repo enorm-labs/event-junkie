@@ -325,6 +325,10 @@ says so.
 | `KALLASCH`             | `PROMOTERS`        | the bar programmes its own nights and names no promoter                                                                                          | —     |
 | `KALLASCH`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
 | `KALLASCH`             | `CANCELLATION`     | a cancelled date leaves the feed instead of being marked                                                                                         | —     |
+| `KAOS_BERLIN`          | `DOORS_TIME`       | the API holds one time per event, and the prose rarely names doors                                                                               | —     |
+| `KAOS_BERLIN`          | `IMAGE`            | most events set no featured image                                                                                                                | —     |
+| `KAOS_BERLIN`          | `GENRE`            | the categories name formats, and the styles are only in the prose                                                                                | —     |
+| `KAOS_BERLIN`          | `ARTISTS`          | a party or a series night bills its name, and its acts are in the prose                                                                          | —     |
 | `KATER`                | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |

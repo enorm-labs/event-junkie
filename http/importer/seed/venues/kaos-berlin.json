@@ -13,8 +13,16 @@
         "descriptionAlt": "Die Kreative Arbeitsgemeinschaft Oberschöneweide sitzt seit 2013 in einer Lagerhalle an der Spree; rund 100 Mitglieder teilen sich Coworking und Studios, abends gibt es Live-Konzerte, Impro-Comedy und einen queeren Treff.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["cultural-centre", "live-venue"],
-        "programmeUrl": "https://kaosberlin.de/veranstaltungen/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "KAOS Berlin",
+            "url": "https://kaosberlin.de/wp-json/tribe/events/v1/events",
+            "sourceType": "KAOS_BERLIN",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

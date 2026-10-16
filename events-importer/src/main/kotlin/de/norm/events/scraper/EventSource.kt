@@ -201,6 +201,9 @@ enum class EventSource {
     /** Kallasch& Berlin – a Moabit programme pub grown out of the Musique Maudite festival, with free concerts, a jazz series, quizzes and a poetry slam. */
     KALLASCH,
 
+    /** KAOS Berlin – the Kreative Arbeitsgemeinschaft Oberschöneweide, a Spree-side warehouse of studios with concerts, open airs and improv comedy. */
+    KAOS_BERLIN,
+
     /** Kater Berlin – the techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and weekend-spanning parties. */
     KATER,
 
