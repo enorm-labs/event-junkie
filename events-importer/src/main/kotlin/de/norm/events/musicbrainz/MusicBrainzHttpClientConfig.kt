@@ -1,13 +1,11 @@
 package de.norm.events.musicbrainz
 
-import de.norm.events.common.ApiUserAgent
+import de.norm.events.common.ApiWebClient
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
 
 /** Bean name of the MusicBrainz [WebClient]; inject with `@Qualifier(MUSICBRAINZ_WEB_CLIENT)`. */
 const val MUSICBRAINZ_WEB_CLIENT = "musicBrainzWebClient"
@@ -19,8 +17,8 @@ const val MUSICBRAINZ_WEB_CLIENT = "musicBrainzWebClient"
  * 200 ms per-host throttle; WS/2 is an API with published terms and a one-a-second limit, so it
  * gets a slower pace ([MusicBrainzClient] keeps it) and no robots check. The `User-Agent` is the
  * form MusicBrainz asks for — product, version and a contact URL — and it is not optional: a
- * request without a contact earns 503s (ADR-031). Redirects are followed because a merged MBID
- * answers 301 to its survivor, and an EXACT verdict can be a year old by the time step C reads it.
+ * request without a contact earns 503s (ADR-031). [ApiWebClient] follows the 301 a merged MBID
+ * answers with, because an EXACT verdict can be a year old by the time step C reads it.
  */
 @Configuration
 class MusicBrainzHttpClientConfig {
@@ -30,17 +28,8 @@ class MusicBrainzHttpClientConfig {
         properties: MusicBrainzProperties,
         buildProperties: ObjectProvider<BuildProperties>
     ): WebClient =
-        webClientBuilder
+        ApiWebClient
+            .builder(webClientBuilder, properties.timeout, buildProperties)
             .baseUrl(properties.baseUrl)
-            .clientConnector(
-                ReactorClientHttpConnector(
-                    HttpClient
-                        .create()
-                        .compress(true)
-                        .followRedirect(true)
-                        .responseTimeout(properties.timeout)
-                )
-            ).defaultHeader("User-Agent", ApiUserAgent.of(buildProperties.ifAvailable?.version))
-            .defaultHeader("Accept", "application/json")
             .build()
 }
