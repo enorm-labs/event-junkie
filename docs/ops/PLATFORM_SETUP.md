@@ -1106,7 +1106,7 @@ installer the node booted with. [K3S_UPGRADE.md](K3S_UPGRADE.md) is the cheap pa
 interactive. Run non-interactively from `unattended-upgrades`, that silently falls back to _list only_. The result is a machine that reports itself fully
 patched while every running process still has the old library mapped. `harden.sh` therefore sets `$nrconf{restart} = 'a'`, so a patched library takes effect
 within the hour rather than at the next reboot. It adds three exclusions to Ubuntu's own list, because restarting them cuts every connection on the node: k3s,
-`systemd-networkd` and PostgreSQL (#2318). The excluded services wait for the next reboot, and the timer below says when one is waiting. **Add keys to `$nrconf{override_rc}`, never assign it a new hash**: that
+`systemd-networkd` and PostgreSQL (#2318). A `systemd` upgrade still restarts `systemd-networkd` through the package itself, and the R2DBC pools of the BFF and the importer absorb that reset (#3383). The excluded services wait for the next reboot, and the timer below says when one is waiting. **Add keys to `$nrconf{override_rc}`, never assign it a new hash**: that
 replaces Ubuntu's exclusions, `dbus` and the apt units among them.
 
 **What tells you a reboot is pending, since nobody logs in for weeks at a time** ([#419](https://github.com/enorm-labs/event-junkie/issues/419)). On every

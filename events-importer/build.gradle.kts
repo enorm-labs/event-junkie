@@ -163,6 +163,8 @@ dependencies {
     // rejects a filesystem adapter for the same reason: key encoding, content type and streaming
     // faults would then appear only after a deploy.
     testImplementation("org.testcontainers:testcontainers-minio")
+    // A TCP proxy between the importer and PostgreSQL, so a test can reset every pooled connection (#3383).
+    testImplementation("org.testcontainers:testcontainers-toxiproxy")
 }
 
 kotlin {
