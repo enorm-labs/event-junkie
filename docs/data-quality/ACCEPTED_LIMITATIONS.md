@@ -180,6 +180,19 @@ says so.
 | `DRUGSTORE`            | `DOORS_TIME`       | radar gives one time per night, and the prose names the doors where it differs                                                                   | —     |
 | `DRUGSTORE`            | `PRICE`            | radar lists no price on most nights                                                                                                              | —     |
 | `DRUGSTORE`            | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
+| `DSTRKT`               | `SUBTITLE`         | each night is a title, a date, a start time and a ticket link                                                                                    | —     |
+| `DSTRKT`               | `DESCRIPTION`      | the venue leaves the collection's description field empty                                                                                        | —     |
+| `DSTRKT`               | `EVENT_TYPE`       | the site names no category; every listed night is a club night                                                                                   | —     |
+| `DSTRKT`               | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `DSTRKT`               | `END_TIME`         | the site prints at most a last day, never an end time                                                                                            | —     |
+| `DSTRKT`               | `IMAGE`            | the repeater carries no picture per night                                                                                                        | —     |
+| `DSTRKT`               | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `DSTRKT`               | `PRICE`            | prices are only on the ticket shop the site links                                                                                                | —     |
+| `DSTRKT`               | `ARTISTS`          | the site names the party, never its lineup                                                                                                       | —     |
+| `DSTRKT`               | `PROMOTERS`        | the site credits no promoter                                                                                                                     | —     |
+| `DSTRKT`               | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `DSTRKT`               | `CANCELLATION`     | the collection has no status field, so a cancelled night can only disappear                                                                      | —     |
+| `DSTRKT`               | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |

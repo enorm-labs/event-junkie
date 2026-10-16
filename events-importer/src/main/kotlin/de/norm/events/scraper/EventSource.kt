@@ -112,6 +112,9 @@ enum class EventSource {
     /** Drugstore Berlin – the city's oldest self-run youth centre, founded in 1972, with punk and hardcore concerts in the Rockhaus. */
     DRUGSTORE,
 
+    /** DSTRKT – a modular event space on Storkower Straße with three 1,000 m² halls and a garden, for techno nights, concerts and brand events. */
+    DSTRKT,
+
     /** Duncker Club Berlin – a long-running goth, wave and indie club in Prenzlauer Berg. */
     DUNCKER,
 

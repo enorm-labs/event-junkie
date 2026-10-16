@@ -13,8 +13,16 @@
         "descriptionAlt": "Eventlocation an der Storkower Straße mit einem Main Floor samt Funktion-One-Anlage, der kleineren Werkstatt, einem Restaurantsaal und einem Garten – für Clubnächte und gebuchte Veranstaltungen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://www.dstrkt.de/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "DSTRKT",
+            "url": "https://www.dstrkt.de/",
+            "sourceType": "DSTRKT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

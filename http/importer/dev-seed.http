@@ -2870,7 +2870,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# DSTRKT — not imported
+# DSTRKT
 # ————————————————————————————————————————————————————————————
 
 ### --- Create DSTRKT venue ---
@@ -2891,13 +2891,43 @@ Content-Type: application/json
     "descriptionAlt": "Eventlocation an der Storkower Straße mit einem Main Floor samt Funktion-One-Anlage, der kleineren Werkstatt, einem Restaurantsaal und einem Garten – für Clubnächte und gebuchte Veranstaltungen.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
-    "programmeUrl": "https://www.dstrkt.de/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_dstrkt", response.body.id);
     client.test("DSTRKT venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create DSTRKT event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_dstrkt}},
+    "name": "DSTRKT",
+    "url": "https://www.dstrkt.de/",
+    "sourceType": "DSTRKT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("DSTRKT event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial DSTRKT import ---
+POST {{importer-host}}/api/admin/event-sources/dstrkt/import
+Accept: application/json
+
+> {%
+    client.test("DSTRKT import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
