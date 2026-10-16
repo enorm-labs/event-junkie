@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   130 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   131 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    44 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
@@ -112,6 +112,7 @@ schema change.
 | Metropol                         | https://metropol-berlin.de/events                                        | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"        |
 | migas                            | https://migas.berlin/program/                                            | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+      |
 | Mikropol                         | https://mikropol-berlin.de/                                              | Club         | Events-Manager list + detail; "verlegt in den …"          |
+| Minimal Bar                      | https://minimal.berlin/dates/                                            | Bar          | Next.js; acts and set times in the flight payload         |
 | Modus Berlin                     | https://modus-berlin.de/events                                           | Club         | List + detail; rendered date wins over stale slug         |
 | Monarch                          | https://www.kottimonarch.de/                                             | Bar          | PHP /programm.php; type + status inline in title          |
 | Monster Ronson's Ichiban Karaoke | https://www.karaokemonster.de/                                           | Bar          | Webflow; paged listing; banded prices; closure cards      |
@@ -171,7 +172,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-129 importer classes cover 130 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+130 importer classes cover 131 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -192,7 +193,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-49 sources have a second language, 77 have none, and 4 are unknown. Eight translate the event text on a second page.
+49 sources have a second language, 78 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -288,6 +289,7 @@ the upsert stores none.
 | Metropol                         | No              | —                                                            | —                  |                                                                                                                                    |
 | migas                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Mikropol                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://mikropol-berlin.de/en/                                                                                                     |
+| Minimal Bar                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Modus Berlin                     | No              | —                                                            | —                  |                                                                                                                                    |
 | Monarch                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Monster Ronson's Ichiban Karaoke | No              | —                                                            | —                  |                                                                                                                                    |
@@ -515,11 +517,6 @@ shop adds prices, and the fan-run sisy.fan adds each weekend's line-up and set t
 **The blockers repeat, and not one of them is "the venue is too small".** They are worth reading as a group, because
 each is cheap to recognise before spending time on a candidate:
 
-- **The busiest venue on RA has no usable website.** Minimal Bar tops the Berlin listing with 58 events, and
-  `minimal-berlin.de` 303-redirects to `minimal-berlin.geo.io`. That is a generic business-directory page with a stock
-  bar photo and no programme. Its operator site, `birgit.club/minimal`, carries a stale Christmas note and no
-  programme either. This is the sharpest case for manual entry (#334). The club's entire published programme exists
-  only on RA, and RA is not a source.
 - **Squarespace accounts for two of them.** Bar Neun and Unkompress both serve a large page whose event
   content is client-side only. Bar Neun's 1.1 MB of HTML yields no event text at all. Prachtwerk above is the same
   story.
@@ -599,7 +596,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Beach Neukölln                    | https://www.beach-neukoelln.de/                     | Open Air     | Rental and public-viewing marketing, not a programme      | Promoter feed              |
 | RAW-Gelände                       | —                                                   | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone          | Covered by the houses      |
 | Genezarethkirche                  | https://www.mlg-neukoelln.de/events                 | Concert Hall | Parish calendar: services, rehearsals, courses            | Promoter feed              |
-| Minimal Bar                       | https://minimal-berlin.geo.io/                      | Techno Club  | No own site; redirects to a geo.io business page          | Site change / manual entry |
 | Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; RA only           | Site change / manual entry |
 | Insomnia                          | http://www.insomnia-berlin.de                       | Club         | WAF returns 403 with an empty body to scripts             | Request headers            |
 | Bulbul Berlin                     | https://www.bulbulberlin.de                         | Club         | Own site links out to RA for the programme                | Site change / manual entry |
@@ -789,8 +785,8 @@ each show.
 Where candidates come from, and what is deliberately left out:
 
 - **Resident Advisor** (<https://de.ra.co/events/de/berlin>). One eight-week window carried 1142 events at 201
-  distinct venues, **66 of them new to this document**. RA's own busiest Berlin room — Minimal Bar, 58 events — was not
-  recorded here at all, and it has no website of its own. It sits in [Blocked](#-blocked--deferred). That sweep read
+  distinct venues, **66 of them new to this document**. RA's busiest Berlin room, Minimal Bar with 58 events, is
+  [imported](#-imported) from its own site. That sweep read
   RA's `eventListings` GraphQL query by script, and RA's terms forbid that. A later sweep reads RA by hand, in a
   browser.
 - **The promoter listings** — Loft, Puschen, Landstreicher Booking and Trinity Music. They add venues RA does not

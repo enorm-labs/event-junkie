@@ -318,6 +318,16 @@ says so.
 | `MIGAS`                | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `MIKROPOL`             | `GENRE`            | the site names no musical style; its only category is Konzert or Club                                                                            | —     |
 | `MIKROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through a Dice link                                                                                 | —     |
+| `MINIMAL_BAR`          | `SUBTITLE`         | the site names the night's series and its lineup, no second line                                                                                 | —     |
+| `MINIMAL_BAR`          | `DESCRIPTION`      | every night carries the same text about the bar, never one about the night                                                                       | —     |
+| `MINIMAL_BAR`          | `DOORS_TIME`       | the bar opens at 18:00 every day and the site gives only the night's start                                                                       | —     |
+| `MINIMAL_BAR`          | `END_TIME`         | the site gives the bar's closing hours, not an end per night                                                                                     | —     |
+| `MINIMAL_BAR`          | `GENRE`            | the site states one sound for every night; each night takes it                                                                                   | —     |
+| `MINIMAL_BAR`          | `PRICE`            | entrance is free every night, so the site prints no price                                                                                        | —     |
+| `MINIMAL_BAR`          | `TICKET_URL`       | entrance is free and the venue sells no tickets                                                                                                  | —     |
+| `MINIMAL_BAR`          | `PROMOTERS`        | the site credits no promoter beside the series name                                                                                              | —     |
+| `MINIMAL_BAR`          | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `MINIMAL_BAR`          | `CANCELLATION`     | the payload has no status field, so a cancelled night can only disappear                                                                         | —     |
 | `MODUS`                | `PRICE`            | the event page prints no figure and sends buyers to the ticket shop                                                                              | —     |
 | `MODUS`                | `GENRE`            | the venue publishes no genre field; the style is only in the text                                                                                | —     |
 | `MODUS`                | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

@@ -7,14 +7,22 @@
         "district": "friedrichshain",
         "latitude": 52.516449,
         "longitude": 13.463941,
-        "websiteUrl": "https://birgit.club/minimal",
-        "description": "A bar on Rigaer Straße in northern Friedrichshain with a DJ every night of the week, mostly Berlin residents playing minimal and deep house, and table tennis in the back rooms.",
+        "websiteUrl": "https://minimal.berlin/",
+        "description": "A five-room bar on Rigaer Straße in Friedrichshain with a DJ every night playing house, minimal and dub techno, free entrance, an art space and a table-tennis table in the back room.",
         "descriptionLanguage": "en",
-        "descriptionAlt": "Eine Bar an der Rigaer Straße im nördlichen Friedrichshain, in der jeden Abend ein DJ auflegt, meist Minimal und Deep House von Berliner Künstlern, dazu Tischtennis in den Nebenräumen.",
+        "descriptionAlt": "Eine Bar mit fünf Räumen an der Rigaer Straße in Friedrichshain, in der jeden Abend ein DJ House, Minimal und Dub Techno auflegt, bei freiem Eintritt, mit Kunstraum und Tischtennisplatte im Hinterzimmer.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "club"],
-        "programmeUrl": "https://ra.co/clubs/23370",
-        "reviewedAt": "2026-10-07T12:38:29Z"
+        "reviewedAt": "2026-10-16T12:00:00Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Minimal Bar",
+            "url": "https://minimal.berlin/dates/",
+            "sourceType": "MINIMAL_BAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
