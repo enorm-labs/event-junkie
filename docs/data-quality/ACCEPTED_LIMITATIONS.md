@@ -52,6 +52,15 @@ says so.
 | `ART_STALKER`          | `ARTISTS`          | the weekly open session is a concert that bills no act                                                                                           | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `ASTRA`                | `PRICE`            | some nights print no figure and only link the promoter's outside ticket shop                                                                     | —     |
+| `AUSLAND`              | `EVENT_TYPE`       | the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk                 | —     |
+| `AUSLAND`              | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `AUSLAND`              | `DOORS_TIME`       | only concert nights state a doors time; the other formats give one clock                                                                         | —     |
+| `AUSLAND`              | `END_DATE`         | a residency, workshop or installation over several days is listed once, on its first day                                                         | —     |
+| `AUSLAND`              | `END_TIME`         | the listing gives one clock per event, and an end only appears in some texts                                                                     | —     |
+| `AUSLAND`              | `PRICE`            | a price appears only as prose in some event texts, kept as a note; the rest state none                                                           | —     |
+| `AUSLAND`              | `TICKET_URL`       | most nights sell only at the door; a ticket shop is linked only from a phrase in the text                                                        | —     |
+| `AUSLAND`              | `PROMOTERS`        | the site credits partners only as logos                                                                                                          | —     |
+| `AUSLAND`              | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
 | `BALLHAUS_WEDDING`     | `ARTISTS`          | the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act                                                           | —     |
 | `BALLHAUS_WEDDING`     | `IMAGE`            | only the entries with a Wix Events page have a poster; the programme has none                                                                    | —     |

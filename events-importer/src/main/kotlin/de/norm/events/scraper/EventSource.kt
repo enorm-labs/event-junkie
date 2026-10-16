@@ -34,6 +34,9 @@ enum class EventSource {
     /** Astra Kulturhaus Berlin – a large concert venue on the RAW-Gelände hosting touring rock, pop, indie and electronic acts. */
     ASTRA,
 
+    /** ausland – a basement venue in the former Lychi 60 squat in Prenzlauer Berg, for improvised and experimental music, film and performance. */
+    AUSLAND,
+
     /** Ballhaus Wedding Berlin – an 1899 back-courtyard ballroom with concerts, dance socials, slams, improv and variety evenings. */
     BALLHAUS_WEDDING,
 
