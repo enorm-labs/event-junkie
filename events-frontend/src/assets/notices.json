@@ -1,5 +1,5 @@
 {
-  "componentCount": 355,
+  "componentCount": 362,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1266,8 +1266,20 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "@babel/helper-string-parser",
+          "version": "8.0.6",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@babel/helper-validator-identifier",
           "version": "7.29.7",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@babel/helper-validator-identifier",
+          "version": "8.0.6",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1278,8 +1290,20 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "@babel/parser",
+          "version": "8.0.7",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@babel/types",
           "version": "7.29.8",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@babel/types",
+          "version": "8.0.6",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1327,25 +1351,25 @@
         },
         {
           "name": "@intlify/core-base",
-          "version": "11.4.13",
+          "version": "11.4.14",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/devtools-types",
-          "version": "11.4.13",
+          "version": "11.4.14",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/message-compiler",
-          "version": "11.4.13",
+          "version": "11.4.14",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/shared",
-          "version": "11.4.13",
+          "version": "11.4.14",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
@@ -1416,6 +1440,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "@types/estree",
+          "version": "1.0.9",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@types/geojson",
           "version": "7946.0.16",
           "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
@@ -1435,25 +1465,25 @@
         },
         {
           "name": "@vue/compiler-core",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-dom",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-sfc",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-ssr",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1483,31 +1513,31 @@
         },
         {
           "name": "@vue/reactivity",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-core",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-dom",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/server-renderer",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/shared",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1548,8 +1578,14 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "ast-kit",
+          "version": "3.0.0",
+          "url": "https://github.com/sxzz/ast-kit",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "ast-walker-scope",
-          "version": "0.9.0",
+          "version": "0.10.0",
           "url": "https://github.com/sxzz/ast-walker-scope",
           "ecosystem": "frontend"
         },
@@ -1603,12 +1639,6 @@
         },
         {
           "name": "confbox",
-          "version": "0.2.4",
-          "url": "https://github.com/unjs/confbox",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "confbox",
           "version": "0.3.1",
           "url": "https://github.com/unjs/confbox",
           "ecosystem": "frontend"
@@ -1628,6 +1658,12 @@
         {
           "name": "estree-walker",
           "version": "2.0.2",
+          "url": "https://github.com/Rich-Harris/estree-walker",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "estree-walker",
+          "version": "3.0.3",
           "url": "https://github.com/Rich-Harris/estree-walker",
           "ecosystem": "frontend"
         },
@@ -1680,6 +1716,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "magic-string",
+          "version": "1.4.3",
+          "url": "https://github.com/Rich-Harris/magic-string",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "magic-string-ast",
           "version": "1.0.3",
           "url": "https://github.com/sxzz/magic-string-ast",
@@ -1711,7 +1753,7 @@
         },
         {
           "name": "nanoid",
-          "version": "3.3.19",
+          "version": "3.3.20",
           "url": "https://github.com/ai/nanoid",
           "ecosystem": "frontend"
         },
@@ -1801,7 +1843,7 @@
         },
         {
           "name": "postcss",
-          "version": "8.5.28",
+          "version": "8.5.30",
           "url": "https://github.com/postcss/postcss",
           "ecosystem": "frontend"
         },
@@ -1903,19 +1945,19 @@
         },
         {
           "name": "vue",
-          "version": "3.5.43",
+          "version": "3.5.44",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "vue-i18n",
-          "version": "11.4.13",
+          "version": "11.4.14",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "vue-router",
-          "version": "5.3.1",
+          "version": "5.4.0",
           "url": "https://github.com/vuejs/router",
           "ecosystem": "frontend"
         },
