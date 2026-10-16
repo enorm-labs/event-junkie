@@ -130,9 +130,10 @@ class AnthropicPostExtractor(
             isEvent is false for a post that announces no dated event at this venue: a recap of a past night, a menu, an offer to rent the room, a product, a post about another venue.
             Each event is an object with these keys:
             - "date": the day of the event as YYYY-MM-DD. Count a weekday or "this week" from postedOn. A date without a year is the next one on or after postedOn. Leave out an event whose day the caption does not give, such as "NOV '26".
-            - "title": the event as the caption names it: the party series, the show or the act. Keep the caption's spelling. A bare Instagram handle stays as written.
+            - "title": the event as the caption names it: the party series, the show or the act. Keep the caption's spelling. Write a bare Instagram handle as the name it spells, as for an act.
             - "startTime": HH:mm, only when the caption gives the time the event starts. Doors or admission time is not the start time.
-            - "acts": the performing artists, bands and DJs the caption names for this event, each exactly as written. An artwork credit, a caterer or a host is not an act.
+            - "acts": the performing artists, bands and DJs the caption names for this event. Copy a name exactly as written. An artwork credit, a caterer or a host is not an act.
+              An act the caption gives only as an Instagram handle is written as the name the handle spells. Drop the @, the dots and the underscores, and a suffix such as dj, music, official, bln or berlin. Capitalise it as a name: "maria.kowal_" is "Maria Kowal", "nightshift_dj" is "Nightshift". Keep the handle as written when you cannot tell where its words break.
             - "pricePresale", "priceBoxOffice": euros as a number, only when the caption gives them.
             - "evidence": the passage of the caption that gives the day, copied word for word.
             - "confidence": a number from 0 to 1. Use a low number when the caption leaves room for doubt.

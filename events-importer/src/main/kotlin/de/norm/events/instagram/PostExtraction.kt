@@ -67,7 +67,8 @@ sealed interface ExtractionResult {
  *
  * A caption is a venue's promotional text, so the answer is untrusted. The date must quote the
  * caption, fall on the weekday the quote names, and lie between the post's day and [HORIZON_DAYS]
- * after it. An act, a start time and a price must each appear in the caption.
+ * after it. A start time and a price must each appear in the caption. An act must appear in it too,
+ * or spell a handle in it.
  */
 object PostExtractionValidator {
     private val logger = KotlinLogging.logger {}
@@ -85,6 +86,9 @@ object PostExtractionValidator {
     private val MAX_PRICE = BigDecimal("500")
     private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
     private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
+    private val HANDLE = Regex("[\\p{L}\\p{N}._]+")
+    private val NOT_LETTER_OR_DIGIT = Regex("[^\\p{L}\\p{N}]")
+    private const val MIN_NAME_LETTERS = 3
 
     /** Whole names only: "so", "do" and "sun" are words, and a false weekday would drop a right date. */
     private val WEEKDAYS: Map<DayOfWeek, Regex> =
@@ -145,7 +149,7 @@ object PostExtractionValidator {
                     .path("acts")
                     .toList()
                     .map { it.asString("").trim() }
-                    .filter { it.isNotEmpty() && QuotedText.occursIn(it, caption) }
+                    .filter { it.isNotEmpty() && namedIn(it, caption) }
                     .distinct(),
             pricePresale = price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
             priceBoxOffice = price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
@@ -153,6 +157,20 @@ object PostExtractionValidator {
             confidence = confidence
         )
     }
+
+    /** The act as written, or the name a handle spells: "henningbaer_" as "Henning Baer", "amoral___dj" as "Amoral". */
+    private fun namedIn(
+        act: String,
+        caption: String
+    ): Boolean {
+        if (QuotedText.occursIn(act, caption)) return true
+        val name = letters(act)
+        // Half the handle at least, so a short fragment of an unrelated handle does not pass as a name.
+        return name.length >= MIN_NAME_LETTERS &&
+            HANDLE.findAll(caption).map { letters(it.value) }.any { name in it && name.length * 2 >= it.length }
+    }
+
+    private fun letters(text: String): String = QuotedText.normalise(text).replace(NOT_LETTER_OR_DIGIT, "")
 
     /** A quote that names a weekday must name the one the date falls on. A quote that names none passes. */
     private fun weekdayAgrees(
