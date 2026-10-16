@@ -273,6 +273,9 @@ enum class EventSource {
     /** ORWOhaus – a former ORWO film factory in Marzahn, run by its musicians' association as a rehearsal complex with band nights and jam sessions. */
     ORWOHAUS,
 
+    /** Paloma – a club bar at Kottbusser Tor with a bar, a dance floor and DJ nights from Thursday to Sunday. */
+    PALOMA,
+
     /** PANDA platforma – a non-profit Kulturbrauerei art space for East European artists: jazz, experimental music, theatre and readings. */
     PANDA_PLATFORMA,
 

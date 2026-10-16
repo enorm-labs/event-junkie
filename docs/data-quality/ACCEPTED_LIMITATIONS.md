@@ -431,6 +431,19 @@ says so.
 | `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
 | `ORWOHAUS`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
 | `ORWOHAUS`             | `CANCELLATION`     | the feed marks no night cancelled or moved                                                                                                       | —     |
+| `PALOMA`               | `SUBTITLE`         | each night has a date line, party names and DJs, no second title line                                                                            | —     |
+| `PALOMA`               | `DESCRIPTION`      | the programme prints no text about a night                                                                                                       | —     |
+| `PALOMA`               | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
+| `PALOMA`               | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `PALOMA`               | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
+| `PALOMA`               | `IMAGE`            | the programme carries no pictures                                                                                                                | —     |
+| `PALOMA`               | `TICKET_URL`       | the site sells no tickets and links no ticket shop                                                                                               | —     |
+| `PALOMA`               | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `PALOMA`               | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `PALOMA`               | `PROMOTERS`        | the site credits no promoter beside the party's name                                                                                             | —     |
+| `PALOMA`               | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `PALOMA`               | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `PALOMA`               | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the programme                                                                     | —     |
 | `PANDA_PLATFORMA`      | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
 | `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |
