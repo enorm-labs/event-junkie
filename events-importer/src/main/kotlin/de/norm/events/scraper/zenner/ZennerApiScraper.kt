@@ -265,8 +265,7 @@ class ZennerApiScraper(
                 block.children
                     ?.mapNotNull { it.text }
                     ?.joinToString("")
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() }
+                    ?.blankToNull()
             }?.joinToString("\n")
             ?.trim()
             ?.takeIf { text -> text.any { it.isLetterOrDigit() } }

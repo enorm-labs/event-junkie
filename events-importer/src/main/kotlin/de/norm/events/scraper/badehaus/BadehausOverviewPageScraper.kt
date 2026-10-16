@@ -131,8 +131,7 @@ class BadehausOverviewPageScraper {
             .select(".nomargin > p")
             .firstOrNull { !it.hasClass("eventinfo") && it.selectFirst("a") == null }
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
 
     /**
      * The known genres in the subtitle line. The line is a style ("Metalcore"), a tour name and a

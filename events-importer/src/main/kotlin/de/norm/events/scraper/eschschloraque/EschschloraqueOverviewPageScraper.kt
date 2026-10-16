@@ -6,6 +6,7 @@ import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -113,8 +114,7 @@ class EschschloraqueOverviewPageScraper {
                 billingParagraphs
                     .firstOrNull()
                     ?.text()
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() },
+                    ?.blankToNull(),
             description = description,
             eventType =
                 if (presentedActs.isEmpty()) {

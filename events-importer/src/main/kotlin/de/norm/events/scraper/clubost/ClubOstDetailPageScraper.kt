@@ -3,6 +3,7 @@ package de.norm.events.scraper.clubost
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
@@ -99,8 +100,7 @@ class ClubOstDetailPageScraper {
             ?.text()
             ?.trim()
             ?.removePrefix(label)
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
     }
 
     companion object {

@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -136,8 +137,7 @@ class KitKatClubProgrammePageScraper(
                     lines
                         .firstOrNull()
                         ?.removePrefix(label)
-                        ?.trim()
-                        ?.takeIf { it.isNotBlank() }
+                        ?.blankToNull()
                 ) + lines.drop(1)
             label.trimEnd(':', ' ').lowercase() to value
         }

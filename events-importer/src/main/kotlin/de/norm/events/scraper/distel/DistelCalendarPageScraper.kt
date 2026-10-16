@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.classifyByGenreKeyword
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -59,7 +60,7 @@ class DistelCalendarPageScraper {
         heading: Pair<Month, Int>
     ): ScrapedEvent? {
         val link = item.selectFirst(".title a[href]") ?: return null
-        val title = link.text().trim().takeIf { it.isNotEmpty() } ?: return null
+        val title = link.text().blankToNull() ?: return null
         val subtitle = item.textAt(".subtitle")
         if (subtitle != null && TOURING_MARKER in subtitle) return null
         val eventDate = parseDate(item, heading) ?: return null

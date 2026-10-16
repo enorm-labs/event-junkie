@@ -2,6 +2,7 @@ package de.norm.events.scraper.so36
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -90,8 +91,7 @@ class So36OverviewPageScraper {
             .find(text.trim())
             ?.groupValues
             ?.get(1)
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
 
     private companion object {
         /**

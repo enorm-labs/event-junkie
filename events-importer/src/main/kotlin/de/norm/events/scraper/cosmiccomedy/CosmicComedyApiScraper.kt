@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.parseTecPage
@@ -98,8 +99,8 @@ class CosmicComedyApiScraper {
                 ?.split(TITLE_DASHES)
                 ?.takeIf { it.size > 1 }
                 ?.first()
-                ?.trim()
-        return listOfNotNull(performer?.takeIf { it.isNotBlank() }?.let { ScrapedArtist(name = it) })
+                ?.blankToNull()
+        return listOfNotNull(performer?.let { ScrapedArtist(name = it) })
     }
 
     /** Whether [categories] mark a named act: a [SPECIAL_CATEGORY] that is not also a showcase. */

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltDetailPageScraper.Companion.FIELD_LABELS
 import de.norm.events.scraper.hrefAt
@@ -183,8 +184,7 @@ class GaertenDerWeltDetailPageScraper {
         this[PROMOTER_LABEL]
             ?.firstOrNull()
             ?.substringBefore(',')
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
 
     private companion object {
         /** The `events2` single-view block holding the whole event. */

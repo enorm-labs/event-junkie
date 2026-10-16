@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -229,7 +230,7 @@ internal fun binuuRelocationNote(
     locationArticle: String?
 ): String? {
     val destination = locationNew?.trim()?.takeIf { it.isNotEmpty() && code?.trim()?.lowercase() in RELOCATION_CODES } ?: return null
-    return "Verlegt ${locationArticle?.trim()?.takeIf { it.isNotEmpty() } ?: "nach"} $destination"
+    return "Verlegt ${locationArticle.blankToNull() ?: "nach"} $destination"
 }
 
 private val RELOCATION_CODES = setOf("r", "rp")

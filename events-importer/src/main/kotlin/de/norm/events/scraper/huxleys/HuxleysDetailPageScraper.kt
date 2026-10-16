@@ -7,6 +7,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
@@ -153,8 +154,7 @@ class HuxleysDetailPageScraper {
                 ?: return null
         return raw
             .substringBeforeLast(SITE_TITLE_SUFFIX)
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
             ?.let(::cleanEventTitle)
     }
 

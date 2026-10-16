@@ -145,8 +145,7 @@ class DunckerOverviewPageScraper(
                 clone.select("span.eventname, a, img").remove()
                 clone.textNodes().filter { DJ_PATTERN.containsMatchIn(it.text().trim()) }.forEach { it.remove() }
             }.text()
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
 
     /**
      * The known genres in the style line. The line is sometimes prose ("80s Party & Die Ärzte"),

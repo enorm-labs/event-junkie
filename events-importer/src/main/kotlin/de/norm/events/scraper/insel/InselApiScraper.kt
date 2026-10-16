@@ -305,8 +305,7 @@ private fun prose(
         .filterNot { line -> line.length <= MAX_METADATA_LINE && METADATA_LINE_PATTERNS.any { it.containsMatchIn(line) } }
         .filterNot { line -> stripOriginTag(line).equals(stripOriginTag(title), ignoreCase = true) }
         .joinToString("\n")
-        .trim()
-        .takeIf { it.isNotBlank() }
+        .blankToNull()
 
 /** The support-billing line, kept verbatim as the event's subtitle. */
 private fun supportLine(lines: List<String>): String? = lines.firstOrNull { it.length <= MAX_METADATA_LINE && SUPPORT_PATTERN.containsMatchIn(it) }?.trim()
@@ -346,8 +345,7 @@ private fun promoter(lines: List<String>): String? =
     lines
         .take(PROMOTER_LINE_LIMIT)
         .firstNotNullOfOrNull { PROMOTER_PATTERN.find(it)?.groupValues?.get(1) }
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /**
  * Splits an HTML description into trimmed, non-blank lines. The CMS holds whatever the venue

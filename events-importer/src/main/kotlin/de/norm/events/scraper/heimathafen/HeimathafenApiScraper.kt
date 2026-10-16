@@ -9,6 +9,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.flatMapSkippingFailures
@@ -161,8 +162,7 @@ class HeimathafenApiScraper(
                     paragraph
                         .selectFirst("> strong")
                         ?.text()
-                        ?.trim()
-                        ?.takeIf { it.isNotBlank() }
+                        ?.blankToNull()
                 }
         val corroborated = leads.size >= MIN_CAST_ACTS && leads.all { title.contains(it, ignoreCase = true) }
         return leads
@@ -255,8 +255,8 @@ class HeimathafenApiScraper(
                 ?.substringBefore('/')
                 ?.trim()
                 ?.trimEnd(',', '.', '&')
-                ?.trim()
-        return listOfNotNull(name?.takeIf { it.isNotBlank() })
+                ?.blankToNull()
+        return listOfNotNull(name)
     }
 
     /**
@@ -300,8 +300,7 @@ class HeimathafenApiScraper(
         Jsoup
             .parse(html)
             .text()
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
 
     /**
      * One parsed page: how many posts it carried (the caller's signal for another page) and the

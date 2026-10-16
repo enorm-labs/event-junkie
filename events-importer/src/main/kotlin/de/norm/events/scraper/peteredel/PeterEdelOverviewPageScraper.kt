@@ -9,6 +9,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.billsChildrensShow
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractSupportFromSubtitle
@@ -248,8 +249,7 @@ class PeterEdelOverviewPageScraper {
                         .find(info)
                         ?.groupValues
                         ?.get(1)
-                        ?.trim()
-                        ?.takeIf { it.isNotBlank() }
+                        ?.blankToNull()
                 ),
             artists = buildArtistList(title, support)
         )
@@ -279,8 +279,7 @@ class PeterEdelOverviewPageScraper {
             .takeWhile { !it.hasClass("text-block") }
             .firstOrNull { it.tagName() == "p" }
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
 
     /** The paragraph after the description block carrying times, prices and promoter. */
     private fun infoParagraph(main: Element): Element? =

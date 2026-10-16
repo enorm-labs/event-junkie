@@ -9,6 +9,7 @@ import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
@@ -209,13 +210,11 @@ class RoadrunnerOverviewPageScraper(
         block
             .firstNotNullOfOrNull { titleElement(it) }
             ?.text()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            ?.blankToNull()
             ?: block
                 .firstNotNullOfOrNull { it.selectFirst("strong") }
                 ?.text()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
+                ?.blankToNull()
 
     /**
      * The labelled line-up, one [LineupEntry] per label in page order. A label's acts follow it on

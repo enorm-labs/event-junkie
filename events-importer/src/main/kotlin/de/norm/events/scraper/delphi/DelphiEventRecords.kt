@@ -1,6 +1,7 @@
 package de.norm.events.scraper.delphi
 
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.blankToNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Comment
 import org.jsoup.nodes.Document
@@ -87,8 +88,7 @@ private fun parseRecord(data: String): Pair<String, DelphiEventRecord>? {
 /** Reads a euro amount field, treating the venue's "0" placeholder as "no price stated". */
 private fun Map<String, String>.amount(field: String): BigDecimal? =
     get(field)
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
         ?.toBigDecimalOrNull()
         ?.takeIf { it.signum() > 0 }
 

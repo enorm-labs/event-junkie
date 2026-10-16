@@ -250,8 +250,7 @@ class MadameClaudeApiScraper {
             .lines()
             .joinToString("\n") { it.trim() }
             .replace(BLANK_LINE_RUN, "\n\n")
-            .trim()
-            .takeIf { it.isNotBlank() }
+            .blankToNull()
     }
 
     private companion object {

@@ -5,6 +5,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -85,8 +86,7 @@ class JunctionBarDjOverviewPageScraper(
             lines
                 .getOrNull(themeIndex)
                 ?.dropLast(THEME_SUFFIX.length)
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
+                ?.blankToNull()
         val djNames = lines.filterIndexed { index, _ -> index != themeIndex }
 
         val title = djNames.joinToString(TITLE_SEPARATOR).ifBlank { theme ?: return null }

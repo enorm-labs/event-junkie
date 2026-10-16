@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferConcertVenueType
@@ -182,7 +183,7 @@ class ArcanoaOverviewPageScraper(
         val dash = SPACED_DASH_PATTERN.find(body) ?: HALF_SPACED_DASH_PATTERN.find(body)
         val colon = body.indexOf(':').takeIf { it >= 0 && (dash == null || it < dash.range.first) }
         val separator = colon?.let { it..it } ?: dash?.range ?: return body.trim() to null
-        return body.substring(0, separator.first).trim() to body.substring(separator.last + 1).trim().ifBlank { null }
+        return body.substring(0, separator.first).trim() to body.substring(separator.last + 1).blankToNull()
     }
 
     /**

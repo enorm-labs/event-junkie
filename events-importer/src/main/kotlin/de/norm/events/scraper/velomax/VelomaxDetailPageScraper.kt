@@ -3,6 +3,7 @@ package de.norm.events.scraper.velomax
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -102,8 +103,7 @@ class VelomaxDetailPageScraper {
             document
                 .selectFirst("section.stage img[src]")
                 ?.attr("src")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() } ?: return null
+                ?.blankToNull() ?: return null
         return runCatching { resolveUrl(sourceUrl, src) }.getOrNull()
     }
 
@@ -131,8 +131,7 @@ private fun Element.attrAtProp(
 ): String? =
     selectFirst("[itemprop=$prop]")
         ?.attr(attribute)
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+        ?.blankToNull()
 
 /** The `HH:mm` clock part of a Microdata `yyyy-MM-dd HH:mm:ss` timestamp. */
 private fun String.clockTime(): String? = substringAfter(' ', "").takeIf { it.isNotBlank() }?.take(HH_MM_LENGTH)
