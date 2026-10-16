@@ -86,6 +86,17 @@ says so.
 | `BALLHAUS_WEDDING`     | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BAR_JEDER_VERNUNFT`   | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `BEATE_UWE`            | `DESCRIPTION`      | the list prints a title and a lineup per night, no text about it                                                                                 | —     |
+| `BEATE_UWE`            | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
+| `BEATE_UWE`            | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `BEATE_UWE`            | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
+| `BEATE_UWE`            | `IMAGE`            | the list carries no pictures                                                                                                                     | —     |
+| `BEATE_UWE`            | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `BEATE_UWE`            | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `BEATE_UWE`            | `PROMOTERS`        | a hosting collective is named only in the title                                                                                                  | —     |
+| `BEATE_UWE`            | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `BEATE_UWE`            | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `BEATE_UWE`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the homepage                                                                      | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
