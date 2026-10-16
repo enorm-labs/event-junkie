@@ -62,7 +62,7 @@ jobs:
       # on the runner for the A01 render.
       - name: Run /owasp-top-10
         id: claude
-        uses: anthropics/claude-code-action@58985842b834ed26087302ba27d07bc24ca8697a # v1
+        uses: anthropics/claude-code-action@1d6de8cb0c237e7c15e9e1bdf973826ebae490cc # v1
         env:
           ACTIONS_GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload the report
         if: success() || failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: agent-report
           path: agent-report.md
@@ -134,7 +134,7 @@ jobs:
           sparse-checkout: .github/actions/report-to-issue
 
       - name: Download the report
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: agent-report
 

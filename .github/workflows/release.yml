@@ -158,7 +158,7 @@ jobs:
       # 2026-08-12 — the `ignore` below: `setup-node` *can* cache in a publishing workflow; without
       # `cache:` it caches nothing.
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0  # zizmor: ignore[cache-poisoning]
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.0  # zizmor: ignore[cache-poisoning]
         with:
           node-version: '24' # should match the version specified in .nvmrc
           # No `cache: 'npm'` here, for the same cache-poisoning reason as Gradle above.
@@ -542,19 +542,19 @@ jobs:
       # upload cannot take the others down; the `hashFiles` guard skips a report the scan never produced.
       - name: Upload Trivy SARIF (bff)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-bff.sarif') != ''
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: trivy-bff.sarif
           category: trivy-bff
       - name: Upload Trivy SARIF (importer)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-importer.sarif') != ''
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: trivy-importer.sarif
           category: trivy-importer
       - name: Upload Trivy SARIF (frontend)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-frontend.sarif') != ''
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
@@ -564,7 +564,7 @@ jobs:
       # needs no token. A week is long enough to replay the run through that workflow's dispatch input.
       - name: Upload the Trivy tables
         if: (success() || failure()) && hashFiles('trivy-*.txt') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: trivy-reports
           path: trivy-*.txt
