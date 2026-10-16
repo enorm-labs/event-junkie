@@ -294,6 +294,10 @@ says so.
 | `KOEPI`                | `PRICE`            | radar carries no price for its concerts                                                                                                          | —     |
 | `KOEPI`                | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `KOEPI`                | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
+| `KREUZWERK`            | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ programme                                                                                  | —     |
+| `KREUZWERK`            | `DOORS_TIME`       | each event page prints one opening time, `ab HH:mm`, which is stored as the start                                                                | —     |
+| `KREUZWERK`            | `PRICE`            | the club sells through a third party and prints no figure; a night is flagged free only when its title says so                                   | —     |
+| `KREUZWERK`            | `PROMOTERS`        | the listing names no collective apart from the night's title                                                                                     | —     |
 | `KUEHLSPOT`            | `SUBTITLE`         | each night has a date line, a title and a line-up, no second title line                                                                          | —     |
 | `KUEHLSPOT`            | `END_TIME`         | the site states a curfew for musicians, not an end per night                                                                                     | —     |
 | `KUEHLSPOT`            | `IMAGE`            | the events section carries no pictures                                                                                                           | —     |

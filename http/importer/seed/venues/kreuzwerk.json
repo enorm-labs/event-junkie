@@ -13,8 +13,16 @@
         "descriptionAlt": "Ein Club am Moritzplatz, der queere und FLINTA*-Stimmen in den Mittelpunkt stellt: Fotos und Videos sind tabu, ein Awareness-Team ist vor Ort, gefeiert wird bei Techno-, House- und queeren Partyreihen wie tracey.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://kreuzwerk.club/events",
         "reviewedAt": "2026-10-07T09:58:32Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Kreuzwerk",
+            "url": "https://kreuzwerk.club/events",
+            "sourceType": "KREUZWERK",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

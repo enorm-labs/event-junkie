@@ -9,10 +9,13 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -20,7 +23,13 @@ import org.jsoup.nodes.Element
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for Ritter Butzke event detail pages (`/event/DDMMYY-<Name>`).
+ * Pure HTML parser for Ritter Butzke event detail pages (`/event/DDMMYY-<Name>`). KREUZWERK's
+ * pages are the same template, so [eventSource] names the venue. With [readsDescription] the
+ * first `div.mt-3` below the lineup is the blurb; Ritter Butzke mixes it with artist bios and refund terms.
+ * With [lineupFromJsonLd], on for both venues, the acts come from the JSON-LD `performer` list, which
+ * drops the notes the rendered rows append (`131bpm LIVE DEBUT`, `NINSA hybrid live`). A page whose
+ * JSON-LD names no performer falls back to the rendered rows, as the pages captured before the
+ * markup existed do.
  *
  * Each page restates the card's title and date — the date with a **four-digit year** — and
  * adds what the listing cannot carry: an `ab HH:mm` start time, the ticket shop, and a
@@ -35,7 +44,11 @@ import java.time.LocalTime
  * @see RitterButzkeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://club.ritterbutzke.com/event/070826-Unisonw-ZappedRecords-NizarSarakbi-JosefinaTapia">Example detail page</a>
  */
-class RitterButzkeDetailPageScraper {
+class RitterButzkeDetailPageScraper(
+    private val eventSource: EventSource = EventSource.RITTER_BUTZKE,
+    private val readsDescription: Boolean = false,
+    private val lineupFromJsonLd: Boolean = false
+) {
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -49,7 +62,7 @@ class RitterButzkeDetailPageScraper {
     ): ScrapedEvent? {
         val rawTitle = document.textAt("h1")
         if (rawTitle == null) {
-            logger.warn { "Ritter Butzke detail page has no title, skipping" }
+            logger.warn { "$eventSource detail page has no title, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
@@ -62,9 +75,10 @@ class RitterButzkeDetailPageScraper {
             startTime = parseStartTime(document.textAt(TIME_SELECTOR)),
             imageUrl = document.imgSrcAt("img.img-fluid"),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.RITTER_BUTZKE.sourceIdPrefix}$slug",
+            sourceId = "${eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
-            artists = parseLineup(document)
+            description = if (readsDescription) htmlParagraphText(document.selectFirst(DESCRIPTION_SELECTOR)?.html()) else null,
+            artists = if (lineupFromJsonLd) parseJsonLdLineup(document).ifEmpty { parseLineup(document) } else parseLineup(document)
         )
     }
 
@@ -109,6 +123,19 @@ class RitterButzkeDetailPageScraper {
             .map { ScrapedArtist(name = it, role = "DJ") }
     }
 
+    /** The acts in the page's schema.org `performer` list, each a `DJ` like the rendered rows. */
+    private fun parseJsonLdLineup(document: Document): List<ScrapedArtist> =
+        document
+            .jsonLdEvents()
+            .firstOrNull()
+            ?.path("performer")
+            ?.let { if (it.isArray) it.toList() else listOf(it) }
+            .orEmpty()
+            .mapNotNull { it.schemaName() }
+            .distinct()
+            .filterNot { isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = "DJ") }
+
     /** Whether [candidate] follows the `Line Up:` [label] in document order. */
     private fun isAfter(
         label: Element,
@@ -118,6 +145,9 @@ class RitterButzkeDetailPageScraper {
 
 /** The detail header's date cell, rendered with a four-digit year. */
 private const val DATE_SELECTOR = "h2.text-center.mb-0"
+
+/** The blurb block below the lineup, inside the grid row: the page container also carries `mt-3`. */
+private const val DESCRIPTION_SELECTOR = ".row div.mt-3"
 
 /** The detail header's opening-time line. */
 private const val TIME_SELECTOR = "h5.text-center"

@@ -15,10 +15,11 @@ import java.time.LocalTime
  * Unit tests for [RitterButzkeDetailPageScraper].
  *
  * Parses static snapshots of Ritter Butzke `/event/DDMMYY-<Name>` pages for deterministic,
- * offline-safe testing without HTTP fetching.
+ * offline-safe testing without HTTP fetching. The snapshots predate the pages' JSON-LD, so their
+ * lineups come from the rendered rows.
  */
 class RitterButzkeDetailPageScraperTest {
-    private val scraper = RitterButzkeDetailPageScraper()
+    private val scraper = RitterButzkeDetailPageScraper(lineupFromJsonLd = true)
 
     private fun scrape(
         fixture: String,
@@ -61,7 +62,7 @@ class RitterButzkeDetailPageScraperTest {
     }
 
     @Test
-    fun `stores the DJ lineup and never the title`() {
+    fun `falls back to the rendered DJ rows without JSON-LD, and never stores the title`() {
         val unison = scrape("unison", "070826-Unisonw-ZappedRecords-NizarSarakbi-JosefinaTapia")
         unison.artists.map { it.role }.toSet() shouldBe setOf("DJ")
         unison.artists.map { it.name } shouldBe
@@ -71,6 +72,20 @@ class RitterButzkeDetailPageScraperTest {
     @Test
     fun `reads a single-act lineup`() {
         scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").artists.map { it.name } shouldBe listOf("EXTRAWELT (live)")
+    }
+
+    @Test
+    fun `prefers the JSON-LD performers over the rendered rows and their notes`() {
+        val sourceUrl = "https://club.ritterbutzke.com/event/281126-Lexy-K-Paul-live"
+        val html =
+            """
+            <html><head><script type="application/ld+json">
+            [{"@type": "MusicEvent", "name": "Lexy & K-Paul", "performer": [{"@type": "MusicGroup", "name": "LEXY &amp; K-PAUL"}]}]
+            </script></head><body><h1>Lexy &amp; K-Paul</h1>
+            <div><p>Line Up:</p><div style="padding-left: 1rem"><a href="#">LEXY &amp; K-PAUL live</a></div></div>
+            </body></html>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.artists.map { it.name } shouldBe listOf("LEXY & K-PAUL")
     }
 
     @Test
@@ -93,6 +108,11 @@ class RitterButzkeDetailPageScraperTest {
         unison.pricePresale.shouldBeNull()
         unison.priceBoxOffice.shouldBeNull()
         unison.soldOut shouldBe false
+    }
+
+    @Test
+    fun `leaves the description out, because the first block can be the refund terms`() {
+        scrape("extrawelt", "100427-WeltauswahlbyExtrawelt").description.shouldBeNull()
     }
 
     @Test
