@@ -107,11 +107,17 @@ class InstagramDraftService(
             }
 
             is ExtractionResult.Rejected -> {
+                logger.warn { "Instagram venue '${venue.slug}': the answer for ${post.permalink} was refused" }
                 repository.insert(listOf(NewDraft(venue.id, post, DraftStatus.NOT_AN_EVENT, model = extractor.model)))
                 tally.copy(rejected = tally.rejected + 1)
             }
 
             is ExtractionResult.Events -> {
+                for (dropped in result.dropped) {
+                    logger.warn {
+                        "Instagram venue '${venue.slug}': a drafted event of ${post.permalink} for '${dropped.date}' was dropped: ${dropped.check.label}"
+                    }
+                }
                 val upcoming = result.events.filter { !it.date.isBefore(today) }
                 if (upcoming.isEmpty()) {
                     repository.insert(listOf(NewDraft(venue.id, post, DraftStatus.NOT_AN_EVENT, model = extractor.model)))

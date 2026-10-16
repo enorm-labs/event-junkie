@@ -71,7 +71,7 @@ class AnthropicPostExtractor(
             onSuccess = { (text, tokens) ->
                 text
                     ?.let { PostExtractionValidator.parse(it, input, properties.minConfidence) }
-                    ?.let { ExtractionResult.Events(it, tokens) }
+                    ?.let { ExtractionResult.Events(it.events, tokens, it.dropped) }
                     ?: ExtractionResult.Rejected(tokens)
             },
             onFailure = { error ->
