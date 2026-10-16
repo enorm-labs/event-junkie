@@ -314,8 +314,8 @@
             },
             "cron": {
               "type": "string",
-              "pattern": "^\\S+( \\S+){5}$",
-              "description": "When the daily pass runs: Spring's six-field cron, in UTC."
+              "pattern": "^(-|\\S+( \\S+){5})$",
+              "description": "When the daily pass runs: Spring's six-field cron, in UTC. \"-\" runs no daily pass, and the admin routes still read a venue by hand."
             }
           },
           "additionalProperties": false

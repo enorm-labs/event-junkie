@@ -190,7 +190,7 @@ importer:
     model: "claude-haiku-4-5"
     # Model calls one daily pass makes over every venue.
     maxPerRun: 50
-    # The daily pass, Spring's six fields in UTC. After the 04:00 classification pass.
+    # The daily pass, Spring's six fields in UTC. After the 04:00 classification pass. "-" runs no pass.
     cron: "0 30 4 * * *"
   # importer.discogs asks Discogs about every artist MusicBrainz marks NONE, and stores its id and an
   # empty link (#2026, ADR-035). Off by default: it sends a stage name to a third party.
