@@ -379,6 +379,17 @@ says so.
 | `KREUZWERK`            | `DOORS_TIME`       | each event page prints one opening time, `ab HH:mm`, which is stored as the start                                                                | —     |
 | `KREUZWERK`            | `PRICE`            | the club sells through a third party and prints no figure; a night is flagged free only when its title says so                                   | —     |
 | `KREUZWERK`            | `PROMOTERS`        | the listing names no collective apart from the night's title                                                                                     | —     |
+| `KONRAD_TOENZ`         | `DESCRIPTION`      | the page prints a name and a style line per night, no text about it                                                                              | —     |
+| `KONRAD_TOENZ`         | `EVENT_TYPE`       | the site names no category; every night is a record night                                                                                        | —     |
+| `KONRAD_TOENZ`         | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `KONRAD_TOENZ`         | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
+| `KONRAD_TOENZ`         | `IMAGE`            | the events block carries no pictures                                                                                                             | —     |
+| `KONRAD_TOENZ`         | `TICKET_URL`       | the bar sells no tickets and links no ticket shop                                                                                                | —     |
+| `KONRAD_TOENZ`         | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `KONRAD_TOENZ`         | `PROMOTERS`        | the site credits no promoter                                                                                                                     | —     |
+| `KONRAD_TOENZ`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `KONRAD_TOENZ`         | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `KONRAD_TOENZ`         | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `KUEHLSPOT`            | `SUBTITLE`         | each night has a date line, a title and a line-up, no second title line                                                                          | —     |
 | `KUEHLSPOT`            | `END_TIME`         | the site states a curfew for musicians, not an end per night                                                                                     | —     |
 | `KUEHLSPOT`            | `IMAGE`            | the events section carries no pictures                                                                                                           | —     |
