@@ -21,6 +21,11 @@ data class KnownQuietSource(
 /** The sources known to be quiet, keyed by the `event_source` slug the gauges carry. */
 val KNOWN_QUIET_SOURCES: Map<String, KnownQuietSource> =
     mapOf(
+        "club-der-visionaere" to
+            KnownQuietSource(
+                LocalDate.of(2026, 10, 16),
+                "the open-air season closed on 7 October; the winter programme runs on MS Hoppetosse and in the Sonnenraum (#3418)"
+            ),
         "gart-n" to
             KnownQuietSource(
                 LocalDate.of(2026, 9, 30),
