@@ -5202,7 +5202,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Kreuzwerk — not imported
+# Kreuzwerk
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Kreuzwerk venue ---
@@ -5223,13 +5223,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein Club am Moritzplatz, der queere und FLINTA*-Stimmen in den Mittelpunkt stellt: Fotos und Videos sind tabu, ein Awareness-Team ist vor Ort, gefeiert wird bei Techno-, House- und queeren Partyreihen wie tracey.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
-    "programmeUrl": "https://kreuzwerk.club/events",
     "reviewedAt": "2026-10-07T09:58:32Z"
 }
 
 > {%
+    client.global.set("venue_id_kreuzwerk", response.body.id);
     client.test("Kreuzwerk venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Kreuzwerk event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_kreuzwerk}},
+    "name": "Kreuzwerk",
+    "url": "https://kreuzwerk.club/events",
+    "sourceType": "KREUZWERK",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Kreuzwerk event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Kreuzwerk import ---
+POST {{importer-host}}/api/admin/event-sources/kreuzwerk/import
+Accept: application/json
+
+> {%
+    client.test("Kreuzwerk import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

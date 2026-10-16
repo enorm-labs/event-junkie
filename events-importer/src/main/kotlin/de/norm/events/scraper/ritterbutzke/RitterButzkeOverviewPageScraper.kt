@@ -17,10 +17,12 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for Ritter Butzke's `/events` listing page.
+ * Pure HTML parser for Ritter Butzke's `/events` listing page. KREUZWERK runs the same site build,
+ * so [eventSource] names the venue.
  *
  * The whole programme, unpaginated, as Bootstrap grid cards. Each holds an `a.event-link` to
- * the `/event/DDMMYY-<Name>` detail page wrapping the poster, a `DD.MM.YY` date and an `h2` title.
+ * the `/event/DDMMYY-<Name>` detail page wrapping the poster, a `DD.MM.YY` date and the title —
+ * an `h2` at Ritter Butzke, a `p.text-center` at KREUZWERK.
  *
  * The **rendered** date is read, never the slug's: the slug is minted once and keeps the
  * original date when a show moves (`310726-DeeportamentCommunityw-…` renders `04.09.2026`).
@@ -32,7 +34,9 @@ import org.jsoup.nodes.Element
  * @see RitterButzkeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://club.ritterbutzke.com/events">Ritter Butzke event listing</a>
  */
-class RitterButzkeOverviewPageScraper {
+class RitterButzkeOverviewPageScraper(
+    private val eventSource: EventSource = EventSource.RITTER_BUTZKE
+) {
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -45,9 +49,9 @@ class RitterButzkeOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val cards = document.select("div:has(> div > a.event-link[href])")
-        logger.info { "Found ${cards.size} event card(s) on Ritter Butzke overview" }
+        logger.info { "Found ${cards.size} event card(s) on $eventSource overview" }
 
-        return cards.mapSkippingFailures(logger, "Ritter Butzke event card") { card ->
+        return cards.mapSkippingFailures(logger, "$eventSource event card") { card ->
             parseCard(card, baseUrl)
         }
     }
@@ -61,9 +65,9 @@ class RitterButzkeOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
-        val title = card.textAt("h2")?.let { cleanEventTitle(it) }
+        val title = card.textAt(TITLE_SELECTOR)?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
-            logger.warn { "Ritter Butzke card '$slug' has no title, skipping" }
+            logger.warn { "$eventSource card '$slug' has no title, skipping" }
             return null
         }
 
@@ -76,7 +80,7 @@ class RitterButzkeOverviewPageScraper {
             eventDate = parseGermanShortDate(card.textAt(DATE_SELECTOR)) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = card.imgSrcAt("a.event-link img"),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.RITTER_BUTZKE.sourceIdPrefix}$slug"
+            sourceId = "${eventSource.sourceIdPrefix}$slug"
         )
     }
 }
@@ -87,3 +91,6 @@ class RitterButzkeOverviewPageScraper {
  * container on this template.
  */
 private const val DATE_SELECTOR = ".d-flex.flex-row > .pt-1"
+
+/** The card's title: an `h2` at Ritter Butzke, a centred paragraph under the date at KREUZWERK. */
+private const val TITLE_SELECTOR = "h2, p.text-center"

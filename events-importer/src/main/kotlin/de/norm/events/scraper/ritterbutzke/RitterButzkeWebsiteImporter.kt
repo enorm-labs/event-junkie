@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component
  * 1. [HtmlFetcher] fetches the unpaginated `/events` listing conditionally (ETag / Last-Modified).
  * 2. [RitterButzkeOverviewPageScraper] discovers every grid card — title, rendered date and poster.
  * 3. Each `/event/DDMMYY-<Name>` page via [RitterButzkeDetailPageScraper] — the only source for
- * start time, ticket shop and DJ lineup.
+ * start time, ticket shop and DJ lineup. The lineup is the page's JSON-LD `performer` list, without
+ * the `live` notes of the rendered rows.
  *
  * The `/calendarfile/<id>` links beside each date are `Disallow`ed by robots.txt and never fetched.
  *
@@ -25,7 +26,11 @@ import org.springframework.stereotype.Component
 @Component
 class RitterButzkeWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher, RitterButzkeOverviewPageScraper()::scrape, RitterButzkeDetailPageScraper()::scrape) {
+) : AbstractTwoPageWebsiteImporter(
+        htmlFetcher,
+        RitterButzkeOverviewPageScraper()::scrape,
+        RitterButzkeDetailPageScraper(lineupFromJsonLd = true)::scrape
+    ) {
     override val eventSource: EventSource = EventSource.RITTER_BUTZKE
     override val listsWholeProgramme: Boolean = true
 }
