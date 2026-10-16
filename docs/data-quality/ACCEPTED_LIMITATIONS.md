@@ -81,6 +81,11 @@ says so.
 | `BINUU`                | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
 | `BINUU`                | `PRICE`            | the payload carries no price field and the pages print no figure; tickets are sold through outside shops                                         | —     |
 | `BINUU`                | `GENRE`            | the payload and JSON-LD carry no genre; style appears only in the description                                                                    | —     |
+| `BKA_THEATER`          | `PRICE_PRESALE`    | the listing carries the shop price for its next 30 performances only                                                                             | —     |
+| `BKA_THEATER`          | `PRICE_BOX_OFFICE` | the site states no box-office price                                                                                                              | —     |
+| `BKA_THEATER`          | `ARTISTS`          | a production billed without an act names its cast only in prose                                                                                  | —     |
+| `BKA_THEATER`          | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
+| `BKA_THEATER`          | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |

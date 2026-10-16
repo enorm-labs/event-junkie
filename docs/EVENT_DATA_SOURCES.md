@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   134 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    41 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   135 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    40 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -57,6 +57,7 @@ schema change.
 | Bar Tausend                      | https://tausendberlin.com/                                               | Bar          | Divi JSON-LD graph; full and EN text from blocks          |
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                                  | Techno Club  | Server-rendered; list + detail                            |
 | Bi Nuu                           | https://binuu.de/                                                        | Club         | No genre or prices on site; only via ticket link          |
+| BKA Theater                      | https://www.bka-theater.de/spielplan/                                    | Theater      | PHP list a year out; JSON-LD prices for next 30           |
 | Cassiopeia                       | https://cassiopeia-berlin.de/                                            | Club         | Webflow; genre tags, badges; walks all pages              |
 | Clash Club                       | https://clash-berlin.de/                                                 | Club         | WordPress; prices, doors and blurb only as prose          |
 | Club der Visionäre               | https://clubdervisionaere.com/programm                                   | Techno Club  | WordPress; one listing, 3 rooms by CSS class              |
@@ -175,7 +176,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-133 importer classes cover 134 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+134 importer classes cover 135 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -196,7 +197,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-50 sources have a second language, 80 have none, and 4 are unknown. Eight translate the event text on a second page.
+50 sources have a second language, 81 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -238,6 +239,7 @@ the upsert stores none.
 | Bar Tausend                      | Yes             | Separate page, `hreflang` on the link                        | Translated         | https://tausendberlin.com/en/lineup/                                                                                               |
 | Berghain / Panorama Bar          | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/                                                                                            |
 | Bi Nuu                           | Yes             | `/en` path, `hreflang`                                       | Not on the listing | https://binuu.de/en                                                                                                                |
+| BKA Theater                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Cassiopeia                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Clash Club                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Club der Visionäre               | No              | —                                                            | —                  |                                                                                                                                    |
@@ -374,49 +376,48 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name                     | URL                                                       | Type         | Priority | Comment                                                      |
-| ------------------------ | --------------------------------------------------------- | ------------ | -------- | ------------------------------------------------------------ |
-| KAOS Berlin              | https://kaosberlin.de/veranstaltungen/                    | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
-| DSTRKT Club Berlin       | https://www.dstrkt.de/                                    | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| Alte Münze               | https://www.alte-muenze-berlin.de/programm/               | Other        | Low      | TEC REST API; 4 upcoming, mostly workshops; no prices        |
-| Konrad Tönz              | http://www.konradtoenzbar.de/                             | Bar          | Low      | Site-builder text blob; ~13 DJ nights, no per-event markup   |
-| L.U.X                    | https://www.lux-berlin.net/                               | Bar          | Low      | Hand-written HTML; ~10-day window; year-less dates           |
-| Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend                |
-| Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint       |
-| Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices        |
-| BKA Theater              | https://www.bka-theater.de/spielplan/                     | Theater      | Medium   | Server-rendered list; time and genre; year in a hidden field |
-| TIPI am Kanzleramt       | https://www.tipi-am-kanzleramt.de/                        | Theater      | Medium   | Server-rendered overview; time, sold-out flag, genre         |
-| Zebrano Theater          | https://www.zebrano-theater.de/programm.html              | Theater      | Medium   | Month table; time, price, genre; year from the heading       |
-| Mad Monkey Room          | https://t.rausgegangen.de/tickets/shop/mad-monkey-2       | Comedy Club  | Medium   | rausgegangen ticket shop; ~470 dated shows with prices       |
-| Baiz                     | https://radar.squat.net/en/node/1609                      | Bar          | Medium   | radar group API, 66 upcoming; talks and quizzes too          |
-| Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops     |
-| Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose         |
-| Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`            |
-| Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges      |
-| Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room           |
-| Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only                  |
-| Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups       |
-| Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar            |
-| KuBiZ                    | https://www.kubiz-wallenberg.de/                          | Other        | Low      | WordPress posts; date in the title; jazz about monthly       |
-| Galiläakirche            | https://galilaea-kirche.de/programm/                      | Other        | Medium   | Very Simple Event List; ~14 upcoming, mostly concerts        |
-| ORWO Haus                | https://www.orwohaus.de/veranstaltungen/                  | Concert Hall | Medium   | Events-Manager list; workshops need a filter                 |
-| Promenaden Eck           | https://promenaden-eck-berlin.de/                         | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming    |
-| ZK/U                     | https://www.zku-berlin.org/                               | Other        | Low      | TYPO3 calendar; club nights among talks and markets          |
-| Paloma                   | https://www.palomabar.de/programm.php                     | Bar          | Medium   | Custom PHP; programm.php, 15 dates in Oct; no year           |
-| KREUZWERK                | https://kreuzwerk.club/events                             | Techno Club  | Medium   | Ritter Butzke codebase; detail ld+json; 5 events             |
-| The Door Club            | https://thedoor.club/events/                              | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat           |
-| The Cloud                | https://thecloud.berlin/events/                           | Bar          | Medium   | TEC REST API; 6 events to mid-Nov; no prices                 |
-| Passionskirche           | https://www.halle-luja.berlin/kommende-events             | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"               |
-| Kallasch&                | https://kallasch.berlin/programm/                         | Bar          | Medium   | WordPress MEC; ?mec-ical-feed=1 iCal; expand RRULEs          |
-| M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links           |
-| Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only              |
-| Marmorbar                | https://www.marmorbar.com/en/event-list                   | Bar          | Medium   | Wix Events warmup JSON; prices include fees                  |
-| Giri                     | https://giri.berlin/programme/                            | Bar          | Medium   | WordPress; /programme/?month=; robots bars its JSON          |
-| ACUD MACHT NEU           | https://acudmachtneu.de/programm/                         | Club         | Medium   | WordPress; /programm/YYYY/M/ pages; time on detail           |
-| Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year               |
-| Weekend                  | https://www.weekendclub.berlin/upcoming                   | Club         | Medium   | Squarespace /upcoming HTML; robots bars JSON                 |
-| Beate Uwe                | https://beate-uwe.de/                                     | Club         | Medium   | WordPress/Elementor; homepage list; RA links                 |
-| Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
+| Name                     | URL                                                       | Type         | Priority | Comment                                                     |
+| ------------------------ | --------------------------------------------------------- | ------------ | -------- | ----------------------------------------------------------- |
+| KAOS Berlin              | https://kaosberlin.de/veranstaltungen/                    | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03     |
+| DSTRKT Club Berlin       | https://www.dstrkt.de/                                    | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme |
+| Alte Münze               | https://www.alte-muenze-berlin.de/programm/               | Other        | Low      | TEC REST API; 4 upcoming, mostly workshops; no prices       |
+| Konrad Tönz              | http://www.konradtoenzbar.de/                             | Bar          | Low      | Site-builder text blob; ~13 DJ nights, no per-event markup  |
+| L.U.X                    | https://www.lux-berlin.net/                               | Bar          | Low      | Hand-written HTML; ~10-day window; year-less dates          |
+| Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend               |
+| Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint      |
+| Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices       |
+| TIPI am Kanzleramt       | https://www.tipi-am-kanzleramt.de/                        | Theater      | Medium   | Server-rendered overview; time, sold-out flag, genre        |
+| Zebrano Theater          | https://www.zebrano-theater.de/programm.html              | Theater      | Medium   | Month table; time, price, genre; year from the heading      |
+| Mad Monkey Room          | https://t.rausgegangen.de/tickets/shop/mad-monkey-2       | Comedy Club  | Medium   | rausgegangen ticket shop; ~470 dated shows with prices      |
+| Baiz                     | https://radar.squat.net/en/node/1609                      | Bar          | Medium   | radar group API, 66 upcoming; talks and quizzes too         |
+| Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops    |
+| Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose        |
+| Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`           |
+| Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges     |
+| Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room          |
+| Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only                 |
+| Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups      |
+| Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar           |
+| KuBiZ                    | https://www.kubiz-wallenberg.de/                          | Other        | Low      | WordPress posts; date in the title; jazz about monthly      |
+| Galiläakirche            | https://galilaea-kirche.de/programm/                      | Other        | Medium   | Very Simple Event List; ~14 upcoming, mostly concerts       |
+| ORWO Haus                | https://www.orwohaus.de/veranstaltungen/                  | Concert Hall | Medium   | Events-Manager list; workshops need a filter                |
+| Promenaden Eck           | https://promenaden-eck-berlin.de/                         | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming   |
+| ZK/U                     | https://www.zku-berlin.org/                               | Other        | Low      | TYPO3 calendar; club nights among talks and markets         |
+| Paloma                   | https://www.palomabar.de/programm.php                     | Bar          | Medium   | Custom PHP; programm.php, 15 dates in Oct; no year          |
+| KREUZWERK                | https://kreuzwerk.club/events                             | Techno Club  | Medium   | Ritter Butzke codebase; detail ld+json; 5 events            |
+| The Door Club            | https://thedoor.club/events/                              | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat          |
+| The Cloud                | https://thecloud.berlin/events/                           | Bar          | Medium   | TEC REST API; 6 events to mid-Nov; no prices                |
+| Passionskirche           | https://www.halle-luja.berlin/kommende-events             | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"              |
+| Kallasch&                | https://kallasch.berlin/programm/                         | Bar          | Medium   | WordPress MEC; ?mec-ical-feed=1 iCal; expand RRULEs         |
+| M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links          |
+| Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only             |
+| Marmorbar                | https://www.marmorbar.com/en/event-list                   | Bar          | Medium   | Wix Events warmup JSON; prices include fees                 |
+| Giri                     | https://giri.berlin/programme/                            | Bar          | Medium   | WordPress; /programme/?month=; robots bars its JSON         |
+| ACUD MACHT NEU           | https://acudmachtneu.de/programm/                         | Club         | Medium   | WordPress; /programm/YYYY/M/ pages; time on detail          |
+| Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year              |
+| Weekend                  | https://www.weekendclub.berlin/upcoming                   | Club         | Medium   | Squarespace /upcoming HTML; robots bars JSON                |
+| Beate Uwe                | https://beate-uwe.de/                                     | Club         | Medium   | WordPress/Elementor; homepage list; RA links                |
+| Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks            |
 
 **The 7 rows from Soulcat to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
