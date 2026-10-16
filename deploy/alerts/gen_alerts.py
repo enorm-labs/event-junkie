@@ -155,6 +155,9 @@ def rule(
     so NO DATA is the healthy state. It never reaches OpenObserve: `--failure-only`
     prints these names for `check_alerts.py`, which then reports the rule as quiet
     when its `stream_name` exists, and as NO DATA only when that is missing too.
+    The stream must exist before `apply.sh` runs: OpenObserve answers 404 to an
+    alert on a missing stream. So register the failure counter at zero when the
+    service starts, as `InstagramMetrics` does (#3370).
     """
     if failure_only:
         _failure_only.append(name)
