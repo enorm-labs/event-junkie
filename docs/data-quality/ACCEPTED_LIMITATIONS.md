@@ -425,6 +425,12 @@ says so.
 | `ORANIA`               | `TICKET_URL`       | entry is free and the venue sells no tickets                                                                                                     | —     |
 | `ORANIA`               | `GENRE`            | the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz                                            | —     |
 | `ORANIA`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `ORWOHAUS`             | `PRICE`            | prices appear only in the prose, and a house night often names none                                                                              | —     |
+| `ORWOHAUS`             | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
+| `ORWOHAUS`             | `ARTISTS`          | the line-up appears only in the prose, and a series title names no act                                                                           | —     |
+| `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
+| `ORWOHAUS`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
+| `ORWOHAUS`             | `CANCELLATION`     | the feed marks no night cancelled or moved                                                                                                       | —     |
 | `PANDA_PLATFORMA`      | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
 | `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |

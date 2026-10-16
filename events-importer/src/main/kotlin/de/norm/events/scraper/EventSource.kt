@@ -270,6 +270,9 @@ enum class EventSource {
     /** Orania.Berlin – the bar of a Kreuzberg hotel in the 1912 Oranienpalast, with free jazz, piano and soul concerts booked by pianist Matti Klein. */
     ORANIA,
 
+    /** ORWOhaus – a former ORWO film factory in Marzahn, run by its musicians' association as a rehearsal complex with band nights and jam sessions. */
+    ORWOHAUS,
+
     /** PANDA platforma – a non-profit Kulturbrauerei art space for East European artists: jazz, experimental music, theatre and readings. */
     PANDA_PLATFORMA,
 
