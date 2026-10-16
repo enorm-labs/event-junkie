@@ -13,8 +13,16 @@
         "descriptionAlt": "Von den Geschwistern Nina und Nico Böhm 2017 gegründeter Stand-up-Club an der Danziger Straße, der an jedem Abend der Woche spielt – mit Open Mics, Mixed Shows, Soloprogrammen und Specials auf zwei Bühnen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["theatre"],
-        "programmeUrl": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Mad Monkey Room",
+            "url": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
+            "sourceType": "MAD_MONKEY_ROOM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

@@ -204,6 +204,9 @@ enum class EventSource {
     /** Madame Claude Berlin – a cosy upside-down-themed bar and live venue near Schlesisches Tor, with free-entry concerts and DJ nights. */
     MADAME_CLAUDE,
 
+    /** Mad Monkey Room – a stand-up comedy club on Danziger Straße in Prenzlauer Berg, founded in 2017, with a show every night on two stages. */
+    MAD_MONKEY_ROOM,
+
     /** Maschinenhaus Berlin – the former machine house of the Schultheiss brewery, the Kesselhaus's small sister stage in the Kulturbrauerei. */
     MASCHINENHAUS,
 

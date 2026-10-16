@@ -5895,7 +5895,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Mad Monkey Room — not imported
+# Mad Monkey Room
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Mad Monkey Room venue ---
@@ -5916,13 +5916,43 @@ Content-Type: application/json
     "descriptionAlt": "Von den Geschwistern Nina und Nico Böhm 2017 gegründeter Stand-up-Club an der Danziger Straße, der an jedem Abend der Woche spielt – mit Open Mics, Mixed Shows, Soloprogrammen und Specials auf zwei Bühnen.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["theatre"],
-    "programmeUrl": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_mad_monkey_room", response.body.id);
     client.test("Mad Monkey Room venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Mad Monkey Room event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_mad_monkey_room}},
+    "name": "Mad Monkey Room",
+    "url": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
+    "sourceType": "MAD_MONKEY_ROOM",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Mad Monkey Room event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Mad Monkey Room import ---
+POST {{importer-host}}/api/admin/event-sources/mad-monkey-room/import
+Accept: application/json
+
+> {%
+    client.test("Mad Monkey Room import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

@@ -68,6 +68,7 @@ import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
 import de.norm.events.scraper.madameclaude.MADAME_CLAUDE_LIMITATIONS
+import de.norm.events.scraper.madmonkeyroom.MAD_MONKEY_ROOM_LIMITATIONS
 import de.norm.events.scraper.matrix.MATRIX_LIMITATIONS
 import de.norm.events.scraper.maxxim.MAXXIM_LIMITATIONS
 import de.norm.events.scraper.mehringhof.MEHRINGHOF_LIMITATIONS
@@ -208,6 +209,7 @@ object AcceptedLimitations {
             LOGE_LIMITATIONS,
             MAAYA_LIMITATIONS,
             MADAME_CLAUDE_LIMITATIONS,
+            MAD_MONKEY_ROOM_LIMITATIONS,
             MATRIX_LIMITATIONS,
             MAXXIM_LIMITATIONS,
             MEHRINGHOF_LIMITATIONS,
