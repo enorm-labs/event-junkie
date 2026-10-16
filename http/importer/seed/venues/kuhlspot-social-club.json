@@ -13,8 +13,16 @@
         "descriptionAlt": "Ehrenamtlich getragener Verein in einem denkmalgeschützten Gewerbehof in Weißensee, der Free Jazz, improvisierte und zeitgenössische Musik, Performance und Tanz zeigt.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue", "cultural-centre"],
-        "programmeUrl": "https://kuehlspot.com/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Kühlspot Social Club",
+            "url": "https://kuehlspot.com/",
+            "sourceType": "KUEHLSPOT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

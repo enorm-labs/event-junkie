@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   133 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    42 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   134 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    41 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -98,6 +98,7 @@ schema change.
 | KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                              | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                                       | Bar          | WordPress; ISO date in slug; ~10-day horizon              |
 | KØPI                             | https://koepi137.net/                                                    | Club         | radar group API; bill read from the description           |
+| Kühlspot Social Club             | https://kuehlspot.com/                                                   | Other        | Elementor one-pager; line-up as Name – instrument         |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                              | Concert Hall | Gatsby static-query JSON; times in the blurb              |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
@@ -174,7 +175,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-132 importer classes cover 133 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+133 importer classes cover 134 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -195,7 +196,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-50 sources have a second language, 79 have none, and 4 are unknown. Eight translate the event text on a second page.
+50 sources have a second language, 80 have none, and 4 are unknown. Eight translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -278,6 +279,7 @@ the upsert stores none.
 | KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Klunkerkranich                   | Yes             | One field: German, `[EN]`, English                           | One field          | https://klunkerkranich.org/events/2026-10-09-trauma-mia-presents-bass-island-w-clavd-frau-kaufmann-confred-trauma-mia-resi-regelt/ |
 | KØPI                             | No              | —                                                            | —                  |                                                                                                                                    |
+| Kühlspot Social Club             | No              | —                                                            | —                  |                                                                                                                                    |
 | Kulturhaus Insel Berlin          | Yes             | One field: `[English below]`                                 | One field          | [captured page](../events-importer/src/test/resources/scraper/insel/insel-events.json)                                             |
 | Kulturhaus Peter Edel            | No              | —                                                            | —                  |                                                                                                                                    |
 | LARK                             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -382,7 +384,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Surprise Club            | https://surprise-berlin.de/events-programs.php            | Club         | Low      | Hand-built PHP page; only the current weekend                |
 | Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint       |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices        |
-| Kühlspot Social Club     | https://kuehlspot.com/                                    | Other        | Medium   | Home page section; dated nights with full line-ups           |
 | BKA Theater              | https://www.bka-theater.de/spielplan/                     | Theater      | Medium   | Server-rendered list; time and genre; year in a hidden field |
 | TIPI am Kanzleramt       | https://www.tipi-am-kanzleramt.de/                        | Theater      | Medium   | Server-rendered overview; time, sold-out flag, genre         |
 | Zebrano Theater          | https://www.zebrano-theater.de/programm.html              | Theater      | Medium   | Month table; time, price, genre; year from the heading       |
