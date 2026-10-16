@@ -405,6 +405,9 @@ enum class EventSource {
     /** YAAM – the Young African Art Market, a non-profit socio-cultural centre and beach on the Spree at Schillingbrücke. */
     YAAM,
 
+    /** Zebrano-Theater – a 65-seat stage by Ostkreuz in a former puppet theatre, run by a volunteer association for cabaret, chanson and readings. */
+    ZEBRANO_THEATER,
+
     /** Zenner Berlin – a riverside venue in Treptower Park with a historic Saal, a club, a beer garden and a wine garden. */
     ZENNER,
 
