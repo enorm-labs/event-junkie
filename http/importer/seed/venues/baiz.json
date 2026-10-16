@@ -13,8 +13,16 @@
         "descriptionAlt": "Raucherkneipe mit Einlass ab 18, deren Name für Berlin-Informationszentrum steht: mit Vorträgen, Lesungen, einem monatlichen Poetry Slam, Quizabenden und jeden Sonntag der Lesebühne Reformbühne Heim und Welt.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar"],
-        "programmeUrl": "https://baiz.info/programm",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Baiz",
+            "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1609&limit=500",
+            "sourceType": "BAIZ",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

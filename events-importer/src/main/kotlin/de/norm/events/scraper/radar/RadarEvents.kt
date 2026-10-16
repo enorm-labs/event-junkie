@@ -23,6 +23,9 @@ private val logger = KotlinLogging.logger {}
 /** The categories that make a row programme: the rest is bars, food, film, meetings and protest. */
 private val PROGRAMME_CATEGORIES = setOf("music/concert", "party")
 
+/** Whether a row is programme by radar's default: a `music/concert` or `party` category. */
+internal fun isRadarProgramme(event: RadarEvent): Boolean = event.categories.any { it in PROGRAMME_CATEGORIES }
+
 /** An open-decks night ("Open Breakbeat Decks"), which radar can file under concert: a DJ party, not a band. */
 private val OPEN_DECKS = Regex("""\b(?:open|offene)[\s-]+(?:\p{L}+\s+)?decks?\b""", RegexOption.IGNORE_CASE)
 
@@ -61,8 +64,8 @@ data class RadarListing(
 )
 
 /**
- * Parses a search response into its programme rows: kept when a category is `music/concert` or
- * `party`, and with repeats dropped.
+ * Parses a search response into its programme rows: kept when [isProgramme] holds, by default a
+ * `music/concert` or `party` category ([isRadarProgramme]), and with repeats dropped.
  *
  * **A row can repeat.** The same concert came back three times, one title, start and body under
  * three node ids at KØPI. One per start and title is kept, the lowest node id, so the
@@ -73,7 +76,8 @@ data class RadarListing(
 @Suppress("TooGenericExceptionCaught") // A malformed payload or row must degrade, never abort the import.
 internal fun parseRadarEvents(
     json: String,
-    venue: String
+    venue: String,
+    isProgramme: (RadarEvent) -> Boolean = ::isRadarProgramme
 ): RadarListing {
     val root =
         try {
@@ -87,7 +91,7 @@ internal fun parseRadarEvents(
         rows
             .mapSkippingFailures(logger, "a $venue radar row") { (key, row) ->
                 parseRow(key.toLongOrNull(), row, venue)
-            }.filter { event -> event.categories.any { it in PROGRAMME_CATEGORIES } }
+            }.filter(isProgramme)
             .sortedBy { it.nodeId }
             .distinctBy { it.start to it.title.lowercase() }
             .sortedBy { it.start }
