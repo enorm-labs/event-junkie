@@ -13,8 +13,16 @@
         "descriptionAlt": "Der achteckige Bau von 1986 auf dem früheren Gaswerksgelände im Ernst-Thälmann-Park ist eine kommunale Kulturstätte des Bezirks Pankow für Jazz, Pop, Blues, Theater und Comedy und spielt während der Sanierung in der Schönfließer Straße 7 in Prenzlauer Berg.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue", "cultural-centre"],
-        "programmeUrl": "https://www.wabe-berlin.info/vorschau/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "WABE",
+            "url": "https://www.wabe-berlin.info/",
+            "sourceType": "WABE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

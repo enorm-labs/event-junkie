@@ -564,6 +564,7 @@ says so.
 | `VOID_CLUB`            | `EVENT_TYPE`       | the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event   | —     |
 | `VOID_CLUB`            | `IMAGE`            | event cards carry no image; the hero slider shows other events than the listed nights                                                            | —     |
 | `VOID_CLUB`            | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
+| `WABE`                 | `DOORS_TIME`       | the site prints one time per night, the start                                                                                                    | —     |
 | `WILD_AT_HEART`        | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `WILD_AT_HEART`        | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |

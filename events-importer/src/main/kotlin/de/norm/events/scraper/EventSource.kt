@@ -378,6 +378,9 @@ enum class EventSource {
     /** VOID Club Berlin – a two-room techno club in a Lichtenberg backyard, programming drum & bass, hardtechno, trance and bass nights. */
     VOID_CLUB,
 
+    /** WABE – Pankow's octagonal 1986 hall for jazz, pop, song and theatre, playing in Schönfließer Straße 7 while it is renovated. */
+    WABE,
+
     /** Wild at Heart Berlin – a rock'n'roll bar and live club near Schlesisches Tor: rockabilly, punk, garage and surf. */
     WILD_AT_HEART,
 

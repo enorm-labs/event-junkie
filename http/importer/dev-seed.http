@@ -11006,7 +11006,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# WABE — not imported
+# WABE
 # ————————————————————————————————————————————————————————————
 
 ### --- Create WABE venue ---
@@ -11027,13 +11027,43 @@ Content-Type: application/json
     "descriptionAlt": "Der achteckige Bau von 1986 auf dem früheren Gaswerksgelände im Ernst-Thälmann-Park ist eine kommunale Kulturstätte des Bezirks Pankow für Jazz, Pop, Blues, Theater und Comedy und spielt während der Sanierung in der Schönfließer Straße 7 in Prenzlauer Berg.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "cultural-centre"],
-    "programmeUrl": "https://www.wabe-berlin.info/vorschau/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_wabe", response.body.id);
     client.test("WABE venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create WABE event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_wabe}},
+    "name": "WABE",
+    "url": "https://www.wabe-berlin.info/",
+    "sourceType": "WABE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("WABE event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial WABE import ---
+POST {{importer-host}}/api/admin/event-sources/wabe/import
+Accept: application/json
+
+> {%
+    client.test("WABE import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
