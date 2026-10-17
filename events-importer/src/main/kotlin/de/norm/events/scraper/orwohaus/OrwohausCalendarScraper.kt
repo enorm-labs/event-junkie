@@ -1,11 +1,9 @@
 package de.norm.events.scraper.orwohaus
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -21,11 +19,10 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZoneOffset
 
 /**
@@ -53,7 +50,7 @@ class OrwohausCalendarScraper(
     private fun parseEntry(entry: Map<String, CalendarProperty>): ScrapedEvent? {
         val title = entry["SUMMARY"]?.text?.let(::decodeHtmlEntities).blankToNull()
         val url = entry["URL"]?.value.blankToNull()
-        val start = entry["DTSTART"]?.let(::siteTime)
+        val start = entry["DTSTART"]?.siteTime(SITE_OFFSET)
         if (title == null || url == null || start == null) {
             logger.warn { "ORWOhaus calendar entry '$title' lacks a title, URL or start, skipping" }
             return null
@@ -65,7 +62,7 @@ class OrwohausCalendarScraper(
                 .split(',')
                 .mapNotNull { it.blankToNull() }
         if (categories.any { normalize(it) == WORKSHOP }) return null
-        val end = entry["DTEND"]?.let(::siteTime)?.takeIf { it > start }
+        val end = entry["DTEND"]?.siteTime(SITE_OFFSET)?.takeIf { it > start }
         val description = entry["DESCRIPTION"]?.text?.let(::htmlParagraphText)
         val eventType = eventType(title, categories)
         val (doors, startTime) =
@@ -118,21 +115,6 @@ class OrwohausCalendarScraper(
 
     /** The room a `LOCATION` names before its address, without the house's own name: `ORWOhaus e.V. - Showroom 104` is `Showroom 104`. */
     private fun room(location: String): String? = location.substringBefore(',').replace(HOUSE_NAME, "").blankToNull()
-
-    private fun siteTime(property: CalendarProperty): SiteTime {
-        val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, COMPACT_DATE), null)
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
-        val onSiteClock = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(SITE_OFFSET).toLocalDateTime() else local
-        return SiteTime(onSiteClock.toLocalDate(), onSiteClock.toLocalTime())
-    }
-
-    private data class SiteTime(
-        val date: LocalDate,
-        val time: LocalTime?
-    ) : Comparable<SiteTime> {
-        override fun compareTo(other: SiteTime): Int = compareValuesBy(this, other, { it.date }, { it.time })
-    }
 
     private companion object {
         const val HORIZON_MONTHS = 12L

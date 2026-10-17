@@ -15,6 +15,7 @@ import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
+import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import java.time.Duration
@@ -48,7 +49,7 @@ class KallaschCalendarScraper(
     private fun parseEntry(entry: Map<String, CalendarProperty>): List<ScrapedEvent> {
         val summary = entry["SUMMARY"]?.text?.let(::decodeHtmlEntities).blankToNull()
         val url = entry["URL"]?.value.blankToNull()
-        val start = entry["DTSTART"]?.value?.let(::localDateTime)
+        val start = entry["DTSTART"]?.siteTime()?.dateTime
         if (summary == null || url == null || start == null) {
             logger.warn { "Kallasch& calendar entry '$summary' lacks a title, URL or start, skipping" }
             return emptyList()
@@ -95,8 +96,8 @@ class KallaschCalendarScraper(
         start: LocalDateTime
     ): Duration? =
         entry["DTEND"]
-            ?.value
-            ?.let(::localDateTime)
+            ?.siteTime()
+            ?.dateTime
             ?.let { Duration.between(start, it) }
             ?.takeIf { !it.isNegative && !it.isZero }
 
@@ -132,13 +133,6 @@ class KallaschCalendarScraper(
                 LocalDate.parse(value.take(BASIC_DATE_LENGTH), DateTimeFormatter.BASIC_ISO_DATE)
             }
         }
-
-    /** A `TZID=Europe/Berlin` wall-clock time, the only zone the feed declares; a bare date is midnight. */
-    private fun localDateTime(value: String): LocalDateTime {
-        val raw = value.trim()
-        if (raw.length == BASIC_DATE_LENGTH) return LocalDate.parse(raw, DateTimeFormatter.BASIC_ISO_DATE).atStartOfDay()
-        return LocalDateTime.parse(raw, ICAL_LOCAL_DATE_TIME)
-    }
 
     private companion object {
         /** How far ahead a series is expanded, the window the Elfsight venues use. */

@@ -1,11 +1,8 @@
 package de.norm.events.scraper.zitaclub
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
-import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
@@ -13,11 +10,8 @@ import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneOffset
 
 /**
  * Pure parser for the Events Manager iCalendar feed of the Zita Club. The site's clock is
@@ -37,13 +31,13 @@ class ZitaClubCalendarScraper {
     private fun parseEntry(entry: Map<String, CalendarProperty>): ScrapedEvent? {
         val title = entry["SUMMARY"]?.text?.let(::decodeHtmlEntities).blankToNull()
         val url = entry["URL"]?.value.blankToNull()
-        val start = entry["DTSTART"]?.let(::siteTime)
+        val start = entry["DTSTART"]?.siteTime()
         if (title == null || url == null || start == null) {
             logger.warn { "Zita Club calendar entry '$title' lacks a title, URL or start, skipping" }
             return null
         }
         if (PRIVATE_HIRE.containsMatchIn(title)) return null
-        val end = entry["DTEND"]?.let(::siteTime)?.takeIf { it > start }
+        val end = entry["DTEND"]?.siteTime()?.takeIf { it > start }
         return ScrapedEvent(
             title = title,
             description = entry["DESCRIPTION"]?.text?.let(::decodeHtmlEntities).blankToNull(),
@@ -56,21 +50,6 @@ class ZitaClubCalendarScraper {
             sourceUrl = url,
             sourceId = "${EventSource.ZITA_CLUB.sourceIdPrefix}${extractEventSlug(url)}"
         )
-    }
-
-    private fun siteTime(property: CalendarProperty): SiteTime {
-        val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, COMPACT_DATE), null)
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
-        val onSiteClock = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(BERLIN).toLocalDateTime() else local
-        return SiteTime(onSiteClock.toLocalDate(), onSiteClock.toLocalTime())
-    }
-
-    private data class SiteTime(
-        val date: LocalDate,
-        val time: LocalTime?
-    ) : Comparable<SiteTime> {
-        override fun compareTo(other: SiteTime): Int = compareValuesBy(this, other, { it.date }, { it.time })
     }
 
     private companion object {

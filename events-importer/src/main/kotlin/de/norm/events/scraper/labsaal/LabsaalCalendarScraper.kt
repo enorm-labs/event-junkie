@@ -1,12 +1,9 @@
 package de.norm.events.scraper.labsaal
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
-import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
@@ -20,10 +17,8 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 /**
  * Pure parser for the Modern Events Calendar iCalendar feed of the LabSaal. The feed also carries
@@ -48,7 +43,7 @@ class LabsaalCalendarScraper {
                 ?.let(::cleanEventTitle)
                 .blankToNull()
         val url = entry["URL"]?.value.blankToNull()
-        val start = entry["DTSTART"]?.let(::siteTime)
+        val start = entry["DTSTART"]?.siteTime()?.dateTime
         if (title == null || url == null || start == null) {
             logger.warn { "LabSaal calendar entry '$title' lacks a title, URL or start, skipping" }
             return null
@@ -93,13 +88,6 @@ class LabsaalCalendarScraper {
             ?: DESCRIPTION_FORMATS.entries.firstOrNull { (cue, _) -> description != null && cue.containsMatchIn(description) }?.value
             ?: EventType.CONCERT.name.takeIf { MUSIC.containsMatchIn("$title\n${description.orEmpty()}") }
             ?: EventType.OTHER.name
-
-    private fun siteTime(property: CalendarProperty): LocalDateTime {
-        val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return LocalDate.parse(raw, COMPACT_DATE).atStartOfDay()
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
-        return if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(BERLIN).toLocalDateTime() else local
-    }
 
     companion object {
         /** The category of the public programme; the groups and courses file under `Alle Gruppen Termine` instead. */

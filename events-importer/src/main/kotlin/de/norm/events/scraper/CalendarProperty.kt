@@ -1,5 +1,11 @@
 package de.norm.events.scraper
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 /** One content line of an iCalendar component: the raw [value] and its parameters, upper-cased by name. */
 internal data class CalendarProperty(
     val value: String,
@@ -12,6 +18,31 @@ internal data class CalendarProperty(
         val TEXT_ESCAPE = Regex("""\\([nN,;\\"])""")
     }
 }
+
+/** A `DTSTART` or `DTEND` on the venue's clock: an all-day value has no [time]. */
+internal data class SiteTime(
+    val date: LocalDate,
+    val time: LocalTime?
+) : Comparable<SiteTime> {
+    /** The moment as one value, midnight for an all-day one. */
+    val dateTime: LocalDateTime get() = date.atTime(time ?: LocalTime.MIDNIGHT)
+
+    override fun compareTo(other: SiteTime): Int = compareValuesBy(this, other, { it.date }, { it.time })
+}
+
+/**
+ * A date or date-time property on the venue's clock. `VALUE=DATE`, or a bare `YYYYMMDD`, is all-day.
+ * A UTC time (trailing `Z`) is moved to [zone]; any other time is a `TZID` wall clock, read as printed.
+ */
+internal fun CalendarProperty.siteTime(zone: ZoneId = BERLIN): SiteTime {
+    val raw = value.trim()
+    if (params["VALUE"] == "DATE" || raw.length == COMPACT_DATE_LENGTH) return SiteTime(LocalDate.parse(raw, COMPACT_DATE), null)
+    val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
+    val onSiteClock = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(zone).toLocalDateTime() else local
+    return SiteTime(onSiteClock.toLocalDate(), onSiteClock.toLocalTime())
+}
+
+private const val COMPACT_DATE_LENGTH = 8
 
 /**
  * The `VEVENT` components of an iCalendar body, each as its properties by name; the first of a
