@@ -135,6 +135,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion` |
 | Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                            |
 | Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                          |
+| Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title or format line that names a `Workshop`                                   |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -148,7 +149,7 @@ Not modelled and not imported. Arena Berlin is the clearest case. All five of it
 deGUT, BUCHBERLIN, Einstieg Berlin. That is why it sits in _Blocked_ despite being trivially scrapable, and the blocker
 there was never the markup.
 
-Four imported venues mix one into their programme. Each drops it on the words its page uses:
+Five imported venues mix one into their programme. Each drops it on the words its page uses:
 
 | Venue                | Predicate                                        | Signal                                                     |
 | -------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
@@ -156,6 +157,7 @@ Four imported venues mix one into their programme. Each drops it on the words it
 | Theater im Delphi    | `billsTradeFairOrConference`                     | The same words in the title                                |
 | silent green         | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
 | Alte Münze           | `AlteMuenzeApiScraper.isProgramme`               | The `Tagung` category, or the same words in the title      |
+| Pastiche             | `PasticheProgrammePageScraper.isOutOfScope`      | A `Record Fair` in the title or format line                |
 
 A bare `Messe` is not a fair: SO36 bills a band of that name.
 

@@ -149,6 +149,7 @@ schema change.
 | Panke Culture                    | https://www.pankeculture.com/programme/                                  | Club         | WordPress/Divi; upcoming list only; no event pages        |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                                        | Open Air     | October CMS; ISO date in URL; seasonal, sold-out          |
 | PAS                              | https://pas-berlin.org/programme/                                        | Other        | TEC REST API; skips nights held elsewhere                 |
+| Pastiche                         | https://pasticheinternational.com/programme-1                            | Bar          | Cargo; one month, no year; drops workshops, fairs         |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
 | Privatclub                       | https://privatclub-berlin.de/                                            | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |
@@ -358,6 +359,7 @@ the upsert stores none.
 | Panke Culture                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Parkbühne Wuhlheide              | No              | —                                                            | —                  |                                                                                                                                    |
 | PAS                              | Yes             | German About page, `/pas-de/`                                | Not on the listing | https://pas-berlin.org/pas-de/                                                                                                     |
+| Pastiche                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Pfefferberg Haus 13              | No              | —                                                            | —                  |                                                                                                                                    |
 | Privatclub                       | Yes             | One field: `— english version —`                             | One field          | https://privatclub-berlin.de/                                                                                                      |
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |
@@ -453,7 +455,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks           |
 | Clärchens Ballhaus       | https://claerchensball.haus/programm/                     | Club         | Low      | Calendar JSON in the page; each event twice; dance courses |
 | PKH Warehouse            | https://www.pkh.events/                                   | Other        | Low      | Hand-written HTML copied from RA; month headings, no year  |
-| Pastiche                 | https://pasticheinternational.com/programme-1             | Bar          | Low      | Cargo; one month table in the HTML, no year                |
 | 8MM                      | https://www.8mmbar.de/program                             | Bar          | Low      | Squarespace list in HTML; the JSON feed is robots-barred   |
 
 **The 7 rows from Soulcat to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
