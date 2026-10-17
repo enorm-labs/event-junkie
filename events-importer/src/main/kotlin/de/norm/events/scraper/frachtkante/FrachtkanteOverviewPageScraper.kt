@@ -2,6 +2,7 @@ package de.norm.events.scraper.frachtkante
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_LONG_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferVenueFormatType
@@ -14,9 +15,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure HTML parser for the `Veranstaltungen` section of the Frachtkante homepage, one `article` per event.
@@ -88,7 +87,7 @@ class FrachtkanteOverviewPageScraper {
 
     private fun parseLongDate(text: String): LocalDate? =
         try {
-            LocalDate.parse(text.trim(), LONG_DATE)
+            LocalDate.parse(text.trim(), GERMAN_LONG_DATE)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -99,8 +98,6 @@ class FrachtkanteOverviewPageScraper {
 
         /** The last day of `28. November 2026 - 29. November 2026`. */
         val DAY_RANGE = Regex("""[-–]\s*(\d{1,2}\.\s*\p{L}+\s+\d{4})\s*$""")
-
-        val LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", Locale.GERMAN)
 
         /** `tickets via https://…`, the line that only carries the ticket link. */
         val TICKET_LINE = Regex("""^tickets?\b[^.]{0,20}https?://\S+$""", RegexOption.IGNORE_CASE)

@@ -1,9 +1,11 @@
 package de.norm.events.scraper.orwohaus
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -25,7 +27,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the Events Manager iCalendar feed of the ORWOhaus. **The site's clock is a fixed
@@ -120,8 +121,8 @@ class OrwohausCalendarScraper(
 
     private fun siteTime(property: CalendarProperty): SiteTime {
         val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, DATE_FORMAT), null)
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), DATE_TIME_FORMAT)
+        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, COMPACT_DATE), null)
+        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
         val onSiteClock = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(SITE_OFFSET).toLocalDateTime() else local
         return SiteTime(onSiteClock.toLocalDate(), onSiteClock.toLocalTime())
     }
@@ -136,8 +137,6 @@ class OrwohausCalendarScraper(
     private companion object {
         const val HORIZON_MONTHS = 12L
         val SITE_OFFSET: ZoneOffset = ZoneOffset.ofHours(1)
-        val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
 
         // The feed folds a long CATEGORIES line at a space and loses it, so categories compare without whitespace.
         const val WORKSHOP = "workshop"

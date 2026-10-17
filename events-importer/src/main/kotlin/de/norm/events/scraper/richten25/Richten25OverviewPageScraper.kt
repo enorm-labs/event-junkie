@@ -1,6 +1,7 @@
 package de.norm.events.scraper.richten25
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -12,9 +13,7 @@ import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure parser for the Richten25 events page, a Hostinger site builder page. The programme is a hand-written HTML
@@ -85,7 +84,7 @@ class Richten25OverviewPageScraper {
 
     private fun dateOf(text: String): LocalDate? =
         try {
-            LocalDate.parse(text, DATE_FORMAT)
+            LocalDate.parse(text, ENGLISH_LONG_DATE)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -108,7 +107,6 @@ class Richten25OverviewPageScraper {
     private companion object {
         val MAPPER: JsonMapper = JsonMapper.builder().build()
         const val UPCOMING = "Upcoming Events"
-        val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
         val NIGHT = Regex("""^([A-Z][a-z]+ \d{1,2}, \d{4}):\s*(.+)$""")
         val SET_SEPARATOR = Regex("""\s*//\s*""")
         val PREFIX = Regex("""^\s*([^:,&]+?):\s*(.+)$""")

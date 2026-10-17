@@ -2,6 +2,7 @@ package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -15,7 +16,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for a silent green detail page (`/programm/detail/<slug>`), which describes a
@@ -78,7 +78,7 @@ class SilentGreenDetailPageScraper {
         cssQuery: String
     ): LocalDate? =
         BLOCK_DATE.find(document.textAt(cssQuery).orEmpty())?.value?.let {
-            runCatching { LocalDate.parse(it, BLOCK_DATE_FORMAT) }.getOrNull()
+            runCatching { LocalDate.parse(it, PADDED_GERMAN_DATE) }.getOrNull()
         }
 
     /**
@@ -168,7 +168,6 @@ class SilentGreenDetailPageScraper {
 
         /** The date inside a date-block cell. */
         val BLOCK_DATE = Regex("""\d{2}\.\d{2}\.\d{4}""")
-        val BLOCK_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     }
 }
 

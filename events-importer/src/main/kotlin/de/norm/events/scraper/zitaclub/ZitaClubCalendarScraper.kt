@@ -2,8 +2,10 @@ package de.norm.events.scraper.zitaclub
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
@@ -16,7 +18,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the Events Manager iCalendar feed of the Zita Club. The site's clock is
@@ -59,8 +60,8 @@ class ZitaClubCalendarScraper {
 
     private fun siteTime(property: CalendarProperty): SiteTime {
         val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, DATE_FORMAT), null)
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), DATE_TIME_FORMAT)
+        if (property.params["VALUE"] == "DATE") return SiteTime(LocalDate.parse(raw, COMPACT_DATE), null)
+        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
         val onSiteClock = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(BERLIN).toLocalDateTime() else local
         return SiteTime(onSiteClock.toLocalDate(), onSiteClock.toLocalTime())
     }
@@ -73,8 +74,6 @@ class ZitaClubCalendarScraper {
     }
 
     private companion object {
-        val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
         val PRIVATE_HIRE = Regex("""^geschlossene\s+(?:veranstaltung|gesellschaft)""", RegexOption.IGNORE_CASE)
     }
 }

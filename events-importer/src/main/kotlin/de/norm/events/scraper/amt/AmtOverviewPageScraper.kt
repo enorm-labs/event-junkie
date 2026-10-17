@@ -1,6 +1,7 @@
 package de.norm.events.scraper.amt
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -18,9 +19,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure HTML parser for a single AMT `/month/<name>` page (e.g. `/month/june`).
@@ -123,7 +122,7 @@ class AmtOverviewPageScraper {
     private fun parseAmtDate(text: String?): LocalDate? {
         if (text.isNullOrBlank()) return null
         return try {
-            LocalDate.parse(text.trim(), AMT_DATE_FORMATTER)
+            LocalDate.parse(text.trim(), ENGLISH_LONG_DATE)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -141,9 +140,6 @@ class AmtOverviewPageScraper {
     }
 
     companion object {
-        /** English long date (`MMMM d, yyyy`) rendered in the `data-date` attribute of each event block. */
-        private val AMT_DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
-
         /** The `//` delimiter AMT uses between DJs in the `.perf` line. */
         private const val DJ_SEPARATOR = "//"
 

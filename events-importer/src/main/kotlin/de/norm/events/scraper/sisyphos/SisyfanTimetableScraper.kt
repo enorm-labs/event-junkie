@@ -3,6 +3,7 @@ package de.norm.events.scraper.sisyphos
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.mapSkippingFailures
@@ -12,7 +13,6 @@ import org.jsoup.nodes.Element
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
@@ -43,8 +43,8 @@ class SisyfanTimetableScraper {
         heading: MatchResult
     ): ScrapedEvent? {
         val (title, fromText, toText) = heading.destructured
-        val from = LocalDate.parse(fromText, DATE)
-        val to = LocalDate.parse(toText, DATE)
+        val from = LocalDate.parse(fromText, PADDED_GERMAN_DATE)
+        val to = LocalDate.parse(toText, PADDED_GERMAN_DATE)
         val artists = floors(block).flatMap { (floor, table) -> parseFloor(floor, table) }
         if (artists.isEmpty()) {
             logger.info { "sisy.fan weekend '$title' ($fromText) lists no sets yet, skipping" }
@@ -111,7 +111,6 @@ class SisyfanTimetableScraper {
     companion object {
         const val BASE_URL = "https://sisy.fan"
 
-        private val DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         private val HEADING_PATTERN = Regex("""(.+?)\s*\((\d{2}\.\d{2}\.\d{4})\s*-\s*(\d{2}\.\d{2}\.\d{4})\)""")
         private val TAB_PATTERN = Regex("""setActiveTab\((\d+)\)""")
         private val START_PATTERN = Regex("""currentStart:\s*'([^']+)'""")

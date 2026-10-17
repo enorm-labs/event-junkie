@@ -2,6 +2,7 @@ package de.norm.events.scraper.hau
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -92,7 +93,7 @@ class HauScheduleScraper(
             startTime = startTime,
             room = house.stages[stage],
             sourceUrl = page,
-            sourceId = "${house.eventSource.sourceIdPrefix}$slug-$date-${start?.format(SOURCE_ID_TIME).orEmpty()}",
+            sourceId = "${house.eventSource.sourceIdPrefix}$slug-$date-${start?.format(FOUR_DIGIT_CLOCK).orEmpty()}",
             status = item.textAt(".tagBox .tag")?.let(::parseEventStatus) ?: EventStatus.SCHEDULED.name,
             artists = artists(type, title, subtitle)
         )
@@ -161,7 +162,6 @@ class HauScheduleScraper(
     companion object {
         private val MONTH_HEADING: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
         private val MONTH_LINK_TITLE: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-yyyy")
-        private val SOURCE_ID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
         private val DOORS = Regex("""Doors:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
         private val DJ_SET = Regex("""\bDJ[ -]sets?\b(?:\s+by\s+(.+))?""", RegexOption.IGNORE_CASE)
         private val STAGED = setOf("performance", "dance", "theatre", "game")

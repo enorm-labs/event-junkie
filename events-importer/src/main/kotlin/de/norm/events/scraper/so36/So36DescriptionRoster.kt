@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
@@ -9,7 +10,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * The acts a festival page bills in its description: each a bold name with its origin in brackets after it,
@@ -96,7 +96,7 @@ private fun runDates(
         .select("a[href*=/produkte/][title]")
         .mapNotNull { PROGRAMME_LINK_TITLE.matchEntire(it.attr("title"))?.destructured }
         .filter { (linkTitle) -> linkTitle.equals(title, ignoreCase = true) }
-        .map { (_, date) -> LocalDate.parse(date, LINK_DATE) }
+        .map { (_, date) -> LocalDate.parse(date, PADDED_GERMAN_DATE) }
         .distinct()
         .sorted()
 
@@ -134,5 +134,3 @@ private val SUBTITLE_DAY = Regex("""\b(?:day|tag)\s*(\d)\b""", RegexOption.IGNOR
 private val ORIGIN_SUFFIX = Regex("""\s*\([^()]+\)$""")
 
 private val PROGRAMME_LINK_TITLE = Regex("""Tickets (.+) in Berlin am (\d{2}\.\d{2}\.\d{4})""")
-
-private val LINK_DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy")

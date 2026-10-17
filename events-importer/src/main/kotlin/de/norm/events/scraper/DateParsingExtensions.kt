@@ -7,13 +7,14 @@ import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 
 // Shared date parsing for venue scrapers; the clock readers are in TimeParsingExtensions, and the
 // dates a printed weekday decides are in WeekdayDateExtensions. Berlin
 // venue websites write a date as ISO 8601 in schema.org JSON-LD ([parseIsoDate]), as German
 // dotted `DD.MM.YYYY` / `DD.MM.YY` ([parseGermanDate], [parseGermanShortDate]), or as a
 // `YYYYMMDD` permalink prefix ([parseBasicIsoDatePrefix]). Every function returns null for
-// unparseable input rather than throwing.
+// unparseable input rather than throwing. The formatters a scraper parses with itself are here too.
 
 /**
  * Sentinel for a [ScrapedEvent.eventDate] the page being parsed could not resolve. Two-page
@@ -27,6 +28,21 @@ val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
  * the venue's local time, and to give a [Clock] the zone whose "today" decides a year-less date.
  */
 val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
+
+/** `20261017`: a compact date in a row id, a data attribute or an iCalendar all-day `DATE` value. */
+val COMPACT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+/** `20261017T200000`: an iCalendar `DATE-TIME`, read after a trailing UTC `Z` is removed. */
+val ICAL_LOCAL_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
+
+/** `17.10.2026`, two-digit day and month only. [parseGermanDate] also takes `7.1.2026`. */
+val PADDED_GERMAN_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+
+/** `17. Oktober 2026`, the German month spelled out. */
+val GERMAN_LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", Locale.GERMAN)
+
+/** `October 17, 2026`, as WordPress themes in English print a date. */
+val ENGLISH_LONG_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
 
 /** German dotted date format with a four-digit year (d.M.yyyy); accepts single- and double-digit day/month. */
 private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yyyy")
