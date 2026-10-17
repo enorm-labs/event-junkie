@@ -141,6 +141,31 @@ class ArtistNormalizerTest {
         }
     }
 
+    // Weekend billed `HB&P Soundsystem` (#3480) and The Door `ABF & Friends` (#3501), stored as `Hb&p …` and `Abf …` (#3507).
+    @Test
+    fun `keeps the initialisms of a billing that is not shouted`() {
+        assertSoftly {
+            canonicalArtistName("HB&P Soundsystem") shouldBe "HB&P Soundsystem"
+            canonicalArtistName("ABF & Friends") shouldBe "ABF & Friends"
+            canonicalArtistName("NVST b2b Ben Klock") shouldBe "NVST b2b Ben Klock"
+            // A billing in capitals throughout is shouted, as before.
+            canonicalArtistName("HB&P SOUNDSYSTEM") shouldBe "Hb&p Soundsystem"
+            canonicalArtistName("NVST B2B BEN KLOCK") shouldBe "Nvst B2B Ben Klock"
+            // Lowercase alone is not mixed case, so `b2b` does not stop a de-shout.
+            canonicalArtistName("NVST b2b MUNA") shouldBe "Nvst b2b Muna"
+            // `ß` has no capital in common use, so it does not make a billing mixed case.
+            canonicalArtistName("GROßE FREIHEIT") shouldBe "GROßE Freiheit"
+            // A Cyrillic billing in capitals de-shouts like a Latin one.
+            canonicalArtistName("ВУИНДЛИЯ") shouldBe "Вуиндлия"
+            // Two all-caps words side by side are a shouted name, also across a `&` (SO36, V089).
+            canonicalArtistName("Kai & Funky von TON STEINE SCHERBEN") shouldBe "Kai & Funky von Ton Steine Scherben"
+            canonicalArtistName("PÖBEL & GESOCKS Live") shouldBe "Pöbel & Gesocks Live"
+            // A long billing: each lone initialism stays, each shouted run de-shouts.
+            canonicalArtistName("THE ORB & Friends Featuring KLF And MGMT With Special Guests DJ KOZE") shouldBe
+                "The Orb & Friends Featuring KLF And MGMT With Special Guests DJ Koze"
+        }
+    }
+
     @Test
     fun `never strips a word from a band name`() {
         assertSoftly {
