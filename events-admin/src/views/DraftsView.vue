@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import {
-  CalendarPlus,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Pencil,
-  X,
-} from '@lucide/vue'
+import { CalendarPlus, Check, ExternalLink, Pencil, X } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -28,6 +20,7 @@ import {
   switchVenueOff,
 } from '@/api/instagramDrafts'
 import EventEditor from '@/components/EventEditor.vue'
+import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -206,24 +199,13 @@ function time(draft: InstagramDraft) {
       <p class="text-sm text-muted-foreground tabular-nums" data-testid="pending-count">
         {{ result?.totalElements ?? 0 }} pending
       </p>
-      <Button
-        :disabled="page === 0 || loading"
-        aria-label="Previous page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate(page - 1)"
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        :disabled="!hasNext || loading"
-        aria-label="Next page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate(page + 1)"
-      >
-        <ChevronRight />
-      </Button>
+      <PagerButtons
+        :has-next="hasNext"
+        :has-previous="page > 0"
+        :loading="loading"
+        @next="navigate(page + 1)"
+        @previous="navigate(page - 1)"
+      />
     </div>
   </div>
 

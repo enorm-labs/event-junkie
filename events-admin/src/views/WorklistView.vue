@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -12,8 +11,8 @@ import {
 } from '@/api/dataQuality'
 import { type EventSource, fetchAllSources } from '@/api/eventSources'
 import EventEditor from '@/components/EventEditor.vue'
+import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -129,24 +128,13 @@ const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)
         <template v-if="worklist?.count"> {{ offset + 1 }}–{{ offset + worklist.count }} </template>
         <template v-else>0</template>
       </p>
-      <Button
-        :disabled="offset === 0 || loading"
-        aria-label="Previous page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate({ offset: Math.max(0, offset - WORKLIST_LIMIT) })"
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        :disabled="!hasNext || loading"
-        aria-label="Next page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate({ offset: offset + WORKLIST_LIMIT })"
-      >
-        <ChevronRight />
-      </Button>
+      <PagerButtons
+        :has-next="hasNext"
+        :has-previous="offset > 0"
+        :loading="loading"
+        @next="navigate({ offset: offset + WORKLIST_LIMIT })"
+        @previous="navigate({ offset: Math.max(0, offset - WORKLIST_LIMIT) })"
+      />
     </div>
   </div>
 

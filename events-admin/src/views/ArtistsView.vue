@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -12,7 +11,7 @@ import {
 } from '@/api/artists'
 import { fetchAllVenues } from '@/api/venues'
 import ArtistReview from '@/components/ArtistReview.vue'
-import { Button } from '@/components/ui/button'
+import PagerButtons from '@/components/PagerButtons.vue'
 import { publicOrigin } from '@/lib/environments'
 
 const route = useRoute()
@@ -85,24 +84,13 @@ function onMatched(artist: ReviewArtist, candidate: MusicBrainzCandidate) {
       <p class="text-sm text-muted-foreground tabular-nums" data-testid="left-count">
         {{ left }} to review
       </p>
-      <Button
-        :disabled="page === 0 || loading"
-        aria-label="Previous page"
-        size="icon-sm"
-        variant="outline"
-        @click="goTo(page - 1)"
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        :disabled="!hasNext || loading"
-        aria-label="Next page"
-        size="icon-sm"
-        variant="outline"
-        @click="goTo(page + 1)"
-      >
-        <ChevronRight />
-      </Button>
+      <PagerButtons
+        :has-next="hasNext"
+        :has-previous="page > 0"
+        :loading="loading"
+        @next="goTo(page + 1)"
+        @previous="goTo(page - 1)"
+      />
     </div>
   </div>
 

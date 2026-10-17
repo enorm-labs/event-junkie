@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronLeft, ChevronRight, ExternalLink, X } from '@lucide/vue'
+import { Check, ExternalLink, X } from '@lucide/vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -13,6 +13,7 @@ import {
   type SuggestionPage,
 } from '@/api/suggestions'
 import EventEditor from '@/components/EventEditor.vue'
+import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { publicOrigin } from '@/lib/environments'
@@ -135,24 +136,13 @@ function percent(confidence: number) {
       <p class="text-sm text-muted-foreground tabular-nums" data-testid="open-count">
         {{ open }} open
       </p>
-      <Button
-        :disabled="page === 0 || loading"
-        aria-label="Previous page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate({ page: page - 1 })"
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        :disabled="!hasNext || loading"
-        aria-label="Next page"
-        size="icon-sm"
-        variant="outline"
-        @click="navigate({ page: page + 1 })"
-      >
-        <ChevronRight />
-      </Button>
+      <PagerButtons
+        :has-next="hasNext"
+        :has-previous="page > 0"
+        :loading="loading"
+        @next="navigate({ page: page + 1 })"
+        @previous="navigate({ page: page - 1 })"
+      />
     </div>
   </div>
 
