@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import java.time.Instant
@@ -84,9 +85,8 @@ data class EventRequest(
     @Schema(description = "Whether the event is free to attend (free entry)", example = "false")
     val free: Boolean = false,
     /** Artists performing at this event with their role and billing position. */
-    @field:Valid
     @Schema(description = "Artists performing at this event with their role and billing position")
-    val artists: List<EventArtistRequest> = emptyList(),
+    val artists: List<@Valid EventArtistRequest> = emptyList(),
     @Schema(description = "Database IDs of promoters associated with this event", example = "[3, 7]")
     val promoterIds: List<Long> = emptyList(),
     /**
@@ -113,6 +113,7 @@ data class EventRequest(
 @Schema(description = "An artist's participation in an event")
 data class EventArtistRequest(
     @field:NotNull(message = "Artist ID must not be null")
+    @field:Positive(message = "Artist ID must be positive")
     @Schema(description = "Database ID of the artist", example = "7", requiredMode = Schema.RequiredMode.REQUIRED)
     val artistId: Long,
     @Schema(description = "The artist's role in the event lineup", example = "HEADLINER")

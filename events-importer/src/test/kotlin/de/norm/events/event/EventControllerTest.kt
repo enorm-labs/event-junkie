@@ -632,6 +632,29 @@ class EventControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `POST event with an invalid nested artist returns 400 naming the field`() {
+        val venue = createVenue(VenueRequestFixtures.create(name = "Validation Artist Venue"))
+
+        webTestClient
+            .post()
+            .uri("/api/admin/events")
+            .bodyValue(
+                EventRequestFixtures.create(
+                    venueId = venue.id,
+                    sourceId = "test:invalid-nested-artist",
+                    artists = listOf(EventArtistRequest(artistId = 0))
+                )
+            ).exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectBody()
+            .jsonPath("$.detail")
+            .isEqualTo("Validation failed")
+            .jsonPath("$.errors[?(@.field == 'artists[0].artistId')]")
+            .exists()
+    }
+
+    @Test
     fun `PUT event with blank title returns 400`() {
         val venue = createVenue(VenueRequestFixtures.create(name = "Validation PUT Venue"))
         val created = createEvent(EventRequestFixtures.create(venueId = venue.id, sourceId = "test:put-blank-title"))

@@ -72,7 +72,8 @@ which helper lives where — is not repeated; `grep` answers that.
   needs no profile. How a line is written is [logging.instructions.md](logging.instructions.md).
 - **Errors**: `GlobalExceptionHandler` maps `*NotFoundException` → 404, `DataIntegrityViolationException` → 409, `WebExchangeBindException` → 400 with field
   details, `IllegalArgumentException` → 500 (an unknown enum value from a manual edit), as RFC 9457 `ProblemDetail`. Request DTOs carry `@field:NotBlank` /
-  `@field:NotNull` / `@field:Size`, nested ones `@field:Valid`, controllers `@Valid`.
+  `@field:NotNull` / `@field:Size`, a nested list `List<@Valid T>`, controllers `@Valid`. A `@field:Valid` on the container is
+  deprecated (HV000270). The element's `@Valid` reaches the bytecode only under `-Xemit-jvm-type-annotations`, which only `events-importer` sets.
 - **Pagination**: `Pageable` from the query string, `@PageableDefault` per controller, `findAllBy(pageable): Flow<Entity>`. The event list bulk-loads
   associations in three extra queries. Two traps:
     - **Both APIs answer a list in the same `PageResponse` envelope**, and the importer's did not until #810 — a bare array cannot say it was cut short, and a
