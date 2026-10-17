@@ -13,8 +13,16 @@
         "descriptionAlt": "Der Club für elektronische Musik liegt in der Dircksenstraße mitten in Berlin-Mitte und füllt die Wochenenden mit Nächten zwischen Goa, Psytrance, Techno und Bass.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "http://www.m-bia.de",
         "reviewedAt": "2026-10-07T12:38:29Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "M-BIA",
+            "url": "https://www.m-bia.de/wp-json/wp/v2/posts",
+            "sourceType": "M_BIA",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
