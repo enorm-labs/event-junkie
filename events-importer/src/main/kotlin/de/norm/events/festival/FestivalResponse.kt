@@ -25,10 +25,15 @@ data class FestivalResponse(
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
-    val updatedAt: Instant?
+    val updatedAt: Instant?,
+    @Schema(description = "How many events an operator linked to the festival, past ones included", example = "42")
+    val eventCount: Long = 0
 ) {
     companion object {
-        fun fromEntity(entity: FestivalEntity): FestivalResponse =
+        fun fromEntity(
+            entity: FestivalEntity,
+            eventCount: Long = 0
+        ): FestivalResponse =
             FestivalResponse(
                 id = requireNotNull(entity.id) { "Persisted festival must have an ID" },
                 slug = entity.slug,
@@ -39,7 +44,8 @@ data class FestivalResponse(
                 noticeDe = entity.noticeDe,
                 noticeEn = entity.noticeEn,
                 createdAt = entity.createdAt,
-                updatedAt = entity.updatedAt
+                updatedAt = entity.updatedAt,
+                eventCount = eventCount
             )
     }
 }

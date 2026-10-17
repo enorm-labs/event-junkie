@@ -46,6 +46,7 @@ flowchart TD
     enrichment --> wikimedia
     event --> artist
     event --> common
+    event --> festival
     event --> genretag
     event --> promoter
     event --> slug

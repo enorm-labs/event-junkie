@@ -42,8 +42,8 @@ Edit, in the same row menu, opens a form for `enabled`, the import interval and 
 fields, and the row shows the source the importer answers. A new source still needs an `EventSource` value in code, so `http/importer/dev-seed.http` creates it.
 
 Events (`src/views/EventsView.vue`) finds any event, to open it in the event editor (`src/components/EventEditor.vue`), as the worklist does. It searches
-`GET /api/admin/events` with a part of the title (`q`, any case), a venue (`venueId`) and, while "Show past events" is off, `from` = today in Berlin. Enter or
-Search sends the title; a venue or the switch searches at once. The list shows 20 events per page, by date and then start time: oldest first, or newest first while past events are shown. A save in the editor replaces
+`GET /api/admin/events` with a part of the title (`q`, any case), a venue (`venueId`), a festival (`festivalId`, #3273) and, while "Show past events" is off,
+`from` = today in Berlin. Enter or Search sends the title; a venue, a festival or the switch searches at once. The list shows 20 events per page, by date and then start time: oldest first, or newest first while past events are shown. A save in the editor replaces
 the row with the saved event. The query string holds the search, so a reload keeps it.
 
 Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
@@ -60,7 +60,11 @@ Festivals (`src/views/FestivalsView.vue`) lists every festival, the latest first
 run today or start within 14 days, each with its name, its days, the notice in the visitor's language and a link to its programme. New festival
 and Edit open a form (`src/components/FestivalForm.vue`) for the name, the programme URL, the first and the last day and the notice in German and in English.
 It POSTs a new festival to `/api/admin/festivals` and PUTs an edited one to `/api/admin/festivals/{id}`, with every field. The importer derives the slug from
-the name and answers 409 when another festival has that slug. The form shows that answer. Delete asks for a confirmation, then DELETEs the festival.
+the name and answers 409 when another festival has that slug. The form shows that answer. Delete asks for a confirmation, then DELETEs the festival. Its
+events stay, without the link. Each row shows how many events link to the festival, past ones included, and links the number to the Events page filtered by
+that festival with past events shown (#3273). The event editor has a Festival select: None, the festivals whose days include the event's date, and the
+stored festival when its days no longer do. Save sends `festivalId` with the rest of the event. When the festivals do not load, the select is hidden and the
+body leaves `festivalId` out, so the importer keeps the stored link.
 
 Artists to review (`src/views/ArtistsView.vue`) lists the artists whose MusicBrainz match is `AMBIGUOUS` and who play in the next 14 days, by name, 20 per
 page. Review opens a row: the events that bill the artist from today on, with the venue and the other acts (`GET /api/admin/events?artistId=`), and the

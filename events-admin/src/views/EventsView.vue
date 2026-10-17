@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { berlinToday } from '@/api/artists'
 import { type AdminEvent, type EventSearchPage, searchEvents } from '@/api/events'
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
+import { type Festival, fetchFestivals } from '@/api/festivals'
 import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +30,10 @@ const venueId = computed(() => {
   const id = Number(route.query.venue)
   return Number.isInteger(id) && id > 0 ? id : null
 })
+const festivalId = computed(() => {
+  const id = Number(route.query.festival)
+  return Number.isInteger(id) && id > 0 ? id : null
+})
 const past = computed(() => route.query.past === '1')
 const page = computed(() => Math.max(0, Number(route.query.page) || 0))
 
@@ -39,25 +44,35 @@ watch(title, (value) => (typedTitle.value = value))
 const result = shallowRef<EventSearchPage | null>(null)
 const events = ref<AdminEvent[]>([])
 const venues = shallowRef<AdminVenue[]>([])
+const festivals = shallowRef<Festival[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const editing = ref<number | null>(null)
 
 const venueNames = computed(() => new Map(venues.value.map((v) => [v.id, v.name])))
+const festivalNames = computed(() => new Map(festivals.value.map((f) => [f.id, f.name])))
 const hasNext = computed(() => page.value + 1 < (result.value?.totalPages ?? 0))
 
 const selectClass =
   'h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
 
-function navigate(next: { q?: string; venue?: number | null; past?: boolean; page?: number }) {
+function navigate(next: {
+  q?: string
+  venue?: number | null
+  festival?: number | null
+  past?: boolean
+  page?: number
+}) {
   const q = (next.q ?? title.value).trim()
   const venue = next.venue === undefined ? venueId.value : next.venue
+  const festival = next.festival === undefined ? festivalId.value : next.festival
   const showPast = next.past ?? past.value
   const nextPage = next.page ?? 0
   return router.replace({
     query: {
       ...(q ? { q } : {}),
       ...(venue !== null ? { venue: String(venue) } : {}),
+      ...(festival !== null ? { festival: String(festival) } : {}),
       ...(showPast ? { past: '1' } : {}),
       ...(nextPage ? { page: String(nextPage) } : {}),
     },
@@ -65,7 +80,7 @@ function navigate(next: { q?: string; venue?: number | null; past?: boolean; pag
 }
 
 /** Every control sends the title as typed, so a venue picked after typing searches both. */
-function search(next: { venue?: number | null; past?: boolean } = {}) {
+function search(next: { venue?: number | null; festival?: number | null; past?: boolean } = {}) {
   return navigate({ q: typedTitle.value, ...next })
 }
 
@@ -78,6 +93,7 @@ async function load() {
       venueId: venueId.value,
       // An event over midnight counts on the day it starts, so tonight's late show stays listed.
       from: past.value ? null : berlinToday(),
+      festivalId: festivalId.value,
       page: page.value,
     })
     events.value = [...result.value.content]
@@ -90,7 +106,7 @@ async function load() {
   }
 }
 
-watch([title, venueId, past, page], load, { immediate: true })
+watch([title, venueId, festivalId, past, page], load, { immediate: true })
 
 onMounted(async () => {
   // The venue list fills the picker and the venue column. Without it the search still works.
@@ -98,6 +114,15 @@ onMounted(async () => {
     venues.value = await fetchAllVenues()
   } catch {
     venues.value = []
+  }
+})
+
+onMounted(async () => {
+  // The festival list fills its picker. Without it a festival in the query still filters.
+  try {
+    festivals.value = await fetchFestivals()
+  } catch {
+    festivals.value = []
   }
 })
 
@@ -142,6 +167,22 @@ function statusVariant(status: string) {
         <option v-for="v in venues" :key="v.id" :value="v.id">
           {{ v.name }}{{ v.closedOn ? ` (closed ${v.closedOn})` : '' }}
         </option>
+      </select>
+    </label>
+    <label class="flex items-center gap-2 text-sm" for="events-festival">
+      Festival
+      <select
+        :class="selectClass"
+        :value="festivalId ?? ''"
+        id="events-festival"
+        name="festival"
+        @change="search({ festival: Number(($event.target as HTMLSelectElement).value) || null })"
+      >
+        <option value="">Any festival</option>
+        <option v-if="festivalId !== null && !festivalNames.has(festivalId)" :value="festivalId">
+          Festival #{{ festivalId }}
+        </option>
+        <option v-for="f in festivals" :key="f.id" :value="f.id">{{ f.name }}</option>
       </select>
     </label>
     <label class="flex items-center gap-2 text-sm" for="events-past">

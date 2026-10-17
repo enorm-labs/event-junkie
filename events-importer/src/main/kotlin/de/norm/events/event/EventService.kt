@@ -5,6 +5,8 @@ import de.norm.events.artist.ArtistRepository
 import de.norm.events.common.PageResponse
 import de.norm.events.common.containsIgnoringCase
 import de.norm.events.common.pageMatching
+import de.norm.events.festival.FestivalNotFoundException
+import de.norm.events.festival.FestivalRepository
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
@@ -39,6 +41,7 @@ class EventService(
     private val venueRepository: VenueRepository,
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
+    private val festivalRepository: FestivalRepository,
     private val eventPinService: EventPinService,
     private val contentStamp: EventContentStamp,
     private val changeLog: EventChangeLog,
@@ -103,7 +106,8 @@ class EventService(
                 filter.date?.let { Criteria.where("eventDate").`is`(it) },
                 billedIds?.let { Criteria.where("id").`in`(it) },
                 filter.title?.takeIf { it.isNotBlank() }?.let { containsIgnoringCase("title", it.trim()) },
-                filter.from?.let { Criteria.where("eventDate").greaterThanOrEquals(it) }
+                filter.from?.let { Criteria.where("eventDate").greaterThanOrEquals(it) },
+                filter.festivalId?.let { Criteria.where("festivalId").`is`(it) }
             ).reduceOrNull(Criteria::and)
         return when {
             billedIds?.isEmpty() == true -> emptyList<EventEntity>() to 0L
@@ -135,6 +139,7 @@ class EventService(
     suspend fun create(request: EventRequest): EventResponse {
         // Validate that referenced venue exists and retrieve its slug for event slug generation
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
+        festivalRepository.ensureFestivalOf(request)
 
         // The venue slug in the event slug, for "Open Decks" at two venues on one date.
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
@@ -198,6 +203,7 @@ class EventService(
     ): EventResponse {
         val existing = eventRepository.findById(id) ?: throw EventNotFoundException(id)
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
+        festivalRepository.ensureFestivalOf(request)
 
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
         // Remap via the shared factory, then keep what the request never owns: identity, audit, and
@@ -208,6 +214,8 @@ class EventService(
                 .keepingDerivedFrom(existing)
                 // A body without `featuredUntil` keeps the pick; an explicit null clears it (#1262).
                 .let { if (request.featuredUntil == null) it.copy(featuredUntil = existing.featuredUntil) else it }
+                // The festival link follows the same rule (#3273).
+                .let { if (request.festivalId == null) it.copy(festivalId = existing.festivalId) else it }
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
         // A hand edit moves the page as an import does, so the page says so either way (#2725).
@@ -460,7 +468,8 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
         priceNote = priceNote,
         soldOut = soldOut,
         free = free,
-        featuredUntil = featuredUntil?.orElse(null)
+        featuredUntil = featuredUntil?.orElse(null),
+        festivalId = festivalId?.orElse(null)
     )
 }
 
@@ -470,14 +479,22 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
  *
  * @property title a part of the title, in any case.
  * @property from the first `eventDate`: an event over midnight counts on the day it starts.
+ * @property festivalId only the events linked to this festival; an unknown one gives an empty page.
  */
 data class EventListFilter(
     val venueId: Long? = null,
     val date: LocalDate? = null,
     val artistId: Long? = null,
     val title: String? = null,
-    val from: LocalDate? = null
+    val from: LocalDate? = null,
+    val festivalId: Long? = null
 )
+
+/** A 404 for a festival ID that names no festival, before the foreign key refuses it with a 500. */
+private suspend fun FestivalRepository.ensureFestivalOf(request: EventRequest) {
+    val festivalId = request.festivalId?.orElse(null) ?: return
+    if (!existsById(festivalId)) throw FestivalNotFoundException(festivalId)
+}
 
 /** The id of a genre tag read back from the database, which is never null once it is persisted. */
 private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

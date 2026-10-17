@@ -9,6 +9,8 @@ import de.norm.events.event.EventArtistRequest
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventRequest
 import de.norm.events.event.EventResponse
+import de.norm.events.festival.FestivalRequest
+import de.norm.events.festival.FestivalResponse
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
@@ -179,6 +181,42 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
             stored.featuredUntil shouldBe until
         }
 
+    @Test
+    fun `a festival link pins nothing, and the next import keeps it`(): Unit =
+        runBlocking {
+            import(published())
+            val id = storedId()
+            val festivalId = createFestival()
+
+            put(id, get(id).toRequest().copy(festivalId = Optional.of(festivalId))).pinnedFields shouldBe emptyList()
+            import(published(priceNote = "Box office only"))
+
+            val stored = get(id)
+            stored.priceNote shouldBe "Box office only"
+            stored.festivalId shouldBe festivalId
+        }
+
+    private fun createFestival(): Long =
+        webTestClient
+            .post()
+            .uri("/api/admin/festivals")
+            .bodyValue(
+                FestivalRequest(
+                    name = "Import Festival",
+                    url = "https://festival.example/",
+                    firstDay = date,
+                    lastDay = date,
+                    noticeDe = "Auf Deutsch.",
+                    noticeEn = "In English."
+                )
+            ).exchange()
+            .expectStatus()
+            .isCreated
+            .expectBody<FestivalResponse>()
+            .returnResult()
+            .responseBody!!
+            .id
+
     /** Runs [block] with both import loggers captured at DEBUG. */
     private suspend fun <T> capturingLogs(block: suspend () -> T): Pair<T, List<ILoggingEvent>> {
         val loggers = listOf(EventUpsertService::class, AssociationSyncService::class).map { LoggerFactory.getLogger(it.java) as Logger }
@@ -262,6 +300,7 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
             free = free,
             artists = artists.map { EventArtistRequest(it.artistId, it.role, it.billingOrder, it.stage) },
             promoterIds = promoterIds,
-            featuredUntil = Optional.ofNullable(featuredUntil)
+            featuredUntil = Optional.ofNullable(featuredUntil),
+            festivalId = Optional.ofNullable(festivalId)
         )
 }

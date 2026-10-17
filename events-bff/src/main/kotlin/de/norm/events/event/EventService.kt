@@ -5,6 +5,8 @@ import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.ArtistSummaryResponse
 import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
+import de.norm.events.festival.FestivalRepository
+import de.norm.events.festival.FestivalSummaryResponse
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagOrigin
@@ -52,7 +54,8 @@ class EventService(
     private val eventChangeRepository: EventChangeRepository,
     private val clock: Clock,
     private val eventEnrichmentRepository: EventEnrichmentRepository,
-    private val postponementRepository: PostponementRepository
+    private val postponementRepository: PostponementRepository,
+    private val festivalRepository: FestivalRepository
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -215,7 +218,8 @@ class EventService(
             enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
             changes = eventChangeRepository.recent(eventId),
             postponedTo = postponementRepository.newDate(event),
-            derivedGenreTags = derivedGenreTags
+            derivedGenreTags = derivedGenreTags,
+            festival = event.festivalId?.let { festivalRepository.findById(it) }?.let(FestivalSummaryResponse::fromEntity)
         )
     }
 
@@ -314,6 +318,10 @@ class EventService(
             }
         val genreLinksByEvent = genreLinks.groupBy { it.eventId }
 
+        val festivalIds = events.mapNotNull { it.festivalId }.distinct()
+        val festivalsById =
+            if (festivalIds.isEmpty()) emptyMap() else festivalRepository.findByIdIn(festivalIds).toList().associateBy { it.id }
+
         return licensed.map { licensedEvent ->
             val event = licensedEvent.event
             val venue =
@@ -327,7 +335,8 @@ class EventService(
                 artistNames,
                 genreTags,
                 images.serve(event.imageUrl, POSTER_WIDTH),
-                imageWithheld = licensedEvent.imageWithheld
+                imageWithheld = licensedEvent.imageWithheld,
+                festival = event.festivalId?.let { festivalsById[it] }?.let(FestivalSummaryResponse::fromEntity)
             )
         }
     }

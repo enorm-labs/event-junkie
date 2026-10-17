@@ -188,7 +188,9 @@ class EventUpdateKeepsDerivedColumnsTest {
                 "soldOut",
                 "free",
                 // The operator's pick (#1262). A PUT that leaves the field out keeps it (EventService.update).
-                "featuredUntil"
+                "featuredUntil",
+                // The operator's festival link (#3273), kept the same way.
+                "festivalId"
             )
 
         /** Taken from the stored row by [keepingDerivedFrom]. */

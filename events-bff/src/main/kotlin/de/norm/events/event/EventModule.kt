@@ -11,6 +11,6 @@ import org.springframework.modulith.ApplicationModule
  * ours (ADR-019). Both edges are one-way: this module asks and applies the answer itself.
  */
 @ApplicationModule(
-    allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence", "licence", "image"]
+    allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence", "licence", "image", "festival"]
 )
 class EventModule

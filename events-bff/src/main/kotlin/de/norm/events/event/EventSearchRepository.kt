@@ -75,7 +75,9 @@ data class EventFilter(
      * alternative, as the venue list's character tags are (#2670). Empty imposes no constraint.
      * [EventFilterParams] normalizes them.
      */
-    val features: List<String> = emptyList()
+    val features: List<String> = emptyList(),
+    /** The festival an operator linked the event to (#3273); null imposes no constraint. */
+    val festivalSlug: String? = null
 ) {
     companion object {
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
@@ -310,7 +312,7 @@ class EventSearchRepository(
         return "($notEnded$grace)"
     }
 
-    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type, language, time of night). */
+    /** Applies filters on columns of the `event` table, its venue and its festival (type, venue, district, venue type, language, time of night). */
     private fun appendColumnFilters(
         filter: EventFilter,
         conditions: MutableList<String>,
@@ -323,6 +325,10 @@ class EventSearchRepository(
         filter.venueSlug?.takeIf { it.isNotBlank() }?.let {
             conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE slug = :venueSlug)"
             params["venueSlug"] = it.trim()
+        }
+        filter.festivalSlug?.let {
+            conditions += "e.festival_id IN (SELECT id FROM $EVENTS_SCHEMA.festival WHERE slug = :festivalSlug)"
+            params["festivalSlug"] = it
         }
         if (filter.districts.isNotEmpty()) {
             conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE district IN (:districts))"

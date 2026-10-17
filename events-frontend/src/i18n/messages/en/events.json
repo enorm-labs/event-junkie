@@ -80,6 +80,7 @@
     "featureHint": "As the event's own text states it. An event needs every feature chosen; what the venue says about itself does not count."
   },
   "card": {
+    "partOf": "Part of {name}",
     "ourPick": "Our pick",
     "soldOut": "Sold out",
     "free": "Free",
@@ -95,6 +96,7 @@
     "onNow": "On now"
   },
   "detail": {
+    "festivalEvents": "All events of {name}",
     "notFound": "Event not found",
     "notFoundBody": "This one's gone, like last call. Plenty more nights out there.",
     "lineup": "Lineup",

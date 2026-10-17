@@ -921,6 +921,21 @@ export interface components {
              *     ]
              */
             genreTags?: string[];
+            /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
+            festival?: components["schemas"]["FestivalSummaryResponse"] | null;
+        };
+        /** @description The festival an event belongs to */
+        FestivalSummaryResponse: {
+            /**
+             * @description URL-friendly identifier, the value of the events list's `festival` filter
+             * @example fete-de-la-musique-2027
+             */
+            slug?: string;
+            /**
+             * @description Display name of the festival
+             * @example Fête de la Musique 2027
+             */
+            name?: string;
         };
         /** @description Promoter list row */
         PromoterListItemResponse: {
@@ -1580,6 +1595,8 @@ export interface components {
             changes?: components["schemas"]["EventChangeResponse"][];
             /** @description For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every other status, and when no event or more than one matches. */
             postponedTo?: components["schemas"]["PostponedToResponse"] | null;
+            /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
+            festival?: components["schemas"]["FestivalSummaryResponse"] | null;
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {
@@ -2211,6 +2228,8 @@ export interface operations {
                 language?: string[];
                 /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
                 feature?: string[];
+                /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
+                festival?: string;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -2347,6 +2366,8 @@ export interface operations {
                 language?: string[];
                 /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
                 feature?: string[];
+                /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
+                festival?: string;
             };
             header?: never;
             path?: never;
@@ -2404,6 +2425,8 @@ export interface operations {
                 language?: string[];
                 /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
                 feature?: string[];
+                /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
+                festival?: string;
             };
             header?: never;
             path?: never;
@@ -2467,6 +2490,8 @@ export interface operations {
                 language?: string[];
                 /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
                 feature?: string[];
+                /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
+                festival?: string;
             };
             header?: never;
             path?: never;

@@ -74,16 +74,31 @@ const { t } = useI18n()
       />
     </template>
     <template #overlay>
-      <!-- The lead's pill says why this tile is larger: a person chose it (#1262). A sibling of the
-           image, not inside it, so it keeps its colour while the poster is grey. -->
-      <BaseBadge
-        v-if="lead"
-        variant="primary"
-        class="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 font-mono text-body tracking-eyebrow uppercase"
+      <!-- Siblings of the image, not inside it, so they keep their colour while the poster is grey. The
+           lead's pill says why this tile is larger: a person chose it (#1262). The festival's says
+           which city-wide week the night is part of (#3273). -->
+      <div
+        v-if="lead || event.festival?.name"
+        class="absolute top-3 right-3 left-3 z-10 flex flex-col items-start gap-2"
       >
-        <Sparkles aria-hidden="true" class="size-4" />
-        {{ t('events.card.ourPick') }}
-      </BaseBadge>
+        <BaseBadge
+          v-if="lead"
+          variant="primary"
+          class="inline-flex items-center gap-1.5 font-mono text-body tracking-eyebrow uppercase"
+        >
+          <Sparkles aria-hidden="true" class="size-4" />
+          {{ t('events.card.ourPick') }}
+        </BaseBadge>
+        <BaseBadge
+          v-if="event.festival?.name"
+          :title="t('events.card.partOf', { name: event.festival.name })"
+          class="max-w-full truncate"
+          data-testid="festival-badge"
+          variant="primary"
+        >
+          {{ event.festival.name }}
+        </BaseBadge>
+      </div>
     </template>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">

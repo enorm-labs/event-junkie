@@ -32,9 +32,10 @@ suppression carries its reason, as the one in `MultiSelectFilter.vue` does.
 | An arbitrary Tailwind value outside `components/ui/**`          | A built-in utility, then a `@theme` token. See the ladder in [vue](vue.instructions.md) | —                                                               |
 | A dependency whose classes nothing in `src/` uses               | Delete it                                                                               | [#1238](https://github.com/enorm-labs/event-junkie/issues/1238) |
 
-**A pill is a state that must stand out, or a small control. It is never a plain fact.** Four uses pass, and a fifth needs the same argument they carry: the
+**A pill is a state that must stand out, or a small control. It is never a plain fact.** Five uses pass, and a sixth needs the same argument they carry: the
 `beta` pill in the header, which is a link to its own explanation · the non-scheduled status pill on an event, which must not read as another word in a grey
-row · the lead card's "Our pick" on its poster (§5) · a filter link on a detail page, such as a venue's "Mostly plays", "Hosts" and "Features" rows, each opening the list filtered by it (#2379). On a card
+row · the lead card's "Our pick" on its poster (§5) · a festival's name on a card's poster and beside a row's title, an operator's mark as "Our pick" is
+([#3273](https://github.com/enorm-labs/event-junkie/issues/3273)) · a filter link on a detail page, such as a venue's "Mostly plays", "Hosts" and "Features" rows, each opening the list filtered by it (#2379). On a card
 the same values stay words in the meta line: the card is already one link, and a pill row under a poster is what #1248 removed.
 
 ### How a rule leaves this list

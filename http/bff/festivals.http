@@ -25,3 +25,18 @@ Accept: application/json
         });
     });
 %}
+
+### The events linked to a festival (#3273). An unknown slug is an empty page.
+GET {{bff-host}}/api/events?festival=fete-de-la-musique-2027
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("every event carries the festival", function () {
+        response.body.content.forEach(function (event) {
+            client.assert(event.festival && event.festival.slug === "fete-de-la-musique-2027", "Event " + event.slug + " lacks the festival");
+        });
+    });
+%}

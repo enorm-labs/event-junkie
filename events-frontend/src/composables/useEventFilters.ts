@@ -36,6 +36,7 @@ export function useEventFilters() {
       timeOfDay: timesOfDay.length ? timesOfDay : undefined,
       language: languages.length ? languages : undefined,
       feature: features.length ? features : undefined,
+      festival: queryString('festival') || undefined,
     }
   })
 

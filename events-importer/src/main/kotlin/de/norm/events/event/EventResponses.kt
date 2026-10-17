@@ -73,7 +73,9 @@ data class EventResponse(
     @Schema(description = "Fields fixed by hand, which the importer keeps until the pin is removed", example = "[\"title\", \"lineup\"]")
     val pinnedFields: List<String> = emptyList(),
     @Schema(description = "Until when the event is featured on the events list, or null", example = "2026-10-12T22:00:00Z")
-    val featuredUntil: Instant? = null
+    val featuredUntil: Instant? = null,
+    @Schema(description = "Database ID of the festival the event belongs to, or null", example = "1")
+    val festivalId: Long? = null
 ) {
     companion object {
         /**
@@ -120,7 +122,8 @@ data class EventResponse(
                 artists = artists,
                 promoterIds = promoterIds,
                 pinnedFields = entity.pinnedFields,
-                featuredUntil = entity.featuredUntil
+                featuredUntil = entity.featuredUntil,
+                festivalId = entity.festivalId
             )
     }
 }

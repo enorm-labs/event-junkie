@@ -37,14 +37,16 @@ class EventController(
     private val eventPinService: EventPinService
 ) {
     /**
-     * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title and a first date
-     * (#347, #3005, #3269). Returns a [List] instead of a `Flow` because
+     * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title, a first date and a
+     * festival (#347, #3005, #3269, #3273). Returns a [List] instead of a `Flow` because
      * batch loading artist/promoter/genre tag associations requires all events in memory
      * to avoid N+1 queries (4 queries per page regardless of event count).
      */
     @GetMapping
     @Suppress("LongParameterList") // One request parameter per filter, each documented in the OpenAPI listing.
-    @Operation(summary = "List events with pagination; `venueId`, `date`, `artistId`, `q` and `from` narrow the list, alone or together")
+    @Operation(
+        summary = "List events with pagination; `venueId`, `date`, `artistId`, `q`, `from` and `festivalId` narrow the list, alone or together"
+    )
     suspend fun findAll(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable,
@@ -81,8 +83,13 @@ class EventController(
             example = "2026-10-14"
         )
         @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate?
-    ): PageResponse<EventResponse> = eventService.findAll(pageable, EventListFilter(venueId, date, artistId, q, from))
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate?,
+        @Parameter(
+            description = "Database ID of a festival: only the events linked to it. An unknown ID gives an empty page, not a 404.",
+            example = "1"
+        )
+        @RequestParam(required = false) festivalId: Long?
+    ): PageResponse<EventResponse> = eventService.findAll(pageable, EventListFilter(venueId, date, artistId, q, from, festivalId))
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

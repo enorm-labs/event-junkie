@@ -33,6 +33,8 @@ export interface EventSearchParams {
   language?: string[]
   /** Every one of these party features (`PARTY_FEATURES`); sent as a repeated parameter. */
   feature?: string[]
+  /** The slug of a festival an operator linked the events to (#3273). */
+  festival?: string
   page?: number
   size?: number
   sort?: string[]
@@ -66,6 +68,7 @@ export type EventFilterValues = Pick<
   | 'timeOfDay'
   | 'language'
   | 'feature'
+  | 'festival'
 >
 
 /** Today's events for the Home "Today" section. */

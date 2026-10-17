@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { checkEvent, type ClassificationRun } from '@/api/dataQuality'
+import { type Festival, fetchFestivals, festivalsOn } from '@/api/festivals'
 
 import {
   type AdminEvent,
@@ -45,6 +46,11 @@ const subtitle = ref('')
 const description = ref('')
 const lineup = ref<EventArtist[]>([])
 const promoterIds = ref<number[]>([])
+/** The festival the select holds, or null for none. */
+const festivalId = ref<number | null>(null)
+const festivals = ref<Festival[]>([])
+/** A failed festival read leaves the rest of the editor usable, with the select hidden. */
+const festivalsError = ref<string | null>(null)
 /** The features as the importer answered them, and the slugs the checkboxes hold. */
 const storedFeatures = ref<EventFeatures | null>(null)
 const features = ref<string[]>([])
@@ -66,6 +72,27 @@ const checkRun = ref<ClassificationRun | null>(null)
 const checkError = ref<string | null>(null)
 
 const lineupIds = computed(() => lineup.value.map((artist) => artist.artistId))
+
+/**
+ * The festivals whose days hold the event's date, and the stored one even when they do not, so
+ * an edit never drops a link the operator did not touch.
+ */
+const festivalOptions = computed(() => {
+  const current = event.value
+  if (!current) return []
+  const matching = festivalsOn(festivals.value, current.eventDate)
+  const stored = festivals.value.find((festival) => festival.id === current.festivalId)
+  return stored && !matching.includes(stored) ? [...matching, stored] : matching
+})
+
+async function loadFestivals() {
+  festivalsError.value = null
+  try {
+    festivals.value = await fetchFestivals()
+  } catch (e) {
+    festivalsError.value = e instanceof Error ? e.message : String(e)
+  }
+}
 
 const featuresChanged = computed(() => {
   const stored = storedFeatures.value?.features.map((entry) => entry.feature) ?? []
@@ -139,6 +166,7 @@ function show(loaded: AdminEvent) {
     .sort((a, b) => a.billingOrder - b.billingOrder)
     .map(({ artistId, role, billingOrder, stage }) => ({ artistId, role, billingOrder, stage }))
   promoterIds.value = [...loaded.promoterIds]
+  festivalId.value = loaded.festivalId ?? null
   void loadNames('artists', lineupIds.value)
   void loadNames('promoters', promoterIds.value)
 }
@@ -205,6 +233,7 @@ watch(
     loading.value = true
     try {
       void loadFeatures(id)
+      void loadFestivals()
       show(await fetchEvent(id))
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
@@ -234,6 +263,8 @@ function save() {
         description: description.value,
         artists: lineup.value,
         promoterIds: promoterIds.value,
+        // Sent only when the festivals loaded, so a failed read cannot clear a link.
+        ...(festivalsError.value === null ? { festivalId: festivalId.value } : {}),
       }),
     )
     show(saved)
@@ -312,6 +343,30 @@ function unpin(field: string) {
             <Input id="edit-genre" v-model="genre" name="genre" placeholder="No genre" />
             <span class="text-xs text-muted-foreground">
               Tags now: {{ event.genreTags.length ? event.genreTags.join(', ') : 'none' }}
+            </span>
+          </label>
+
+          <label class="flex flex-col gap-1.5" for="edit-festival">
+            <span class="text-sm font-medium">Festival</span>
+            <p v-if="festivalsError" class="text-sm text-destructive" role="alert">
+              {{ festivalsError }}
+            </p>
+            <select
+              v-else
+              v-model="festivalId"
+              aria-describedby="edit-festival-hint"
+              class="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              id="edit-festival"
+              name="festivalId"
+            >
+              <option :value="null">None</option>
+              <option v-for="festival in festivalOptions" :key="festival.id" :value="festival.id">
+                {{ festival.name }}
+              </option>
+            </select>
+            <span id="edit-festival-hint" class="text-xs text-muted-foreground">
+              The festivals whose days include {{ event.eventDate }}. The site shows the festival's
+              name on the event, and no import changes it.
             </span>
           </label>
 

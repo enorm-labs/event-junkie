@@ -20,6 +20,7 @@ import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { languageFilterApplies } from '@/lib/spokenLanguages'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
+import type { Festival } from '@/api/types'
 
 const props = withDefaults(
   defineProps<{
@@ -30,8 +31,16 @@ const props = withDefaults(
     showOnNow?: boolean
     /** How many events the filters match, for the sheet's button; a view without a count omits it. */
     resultCount?: number
+    /** The festivals running today, one chip each beside the presets (#3273); a view without them omits it. */
+    festivals?: Festival[]
   }>(),
-  { showDateRange: true, defaultRange: undefined, showOnNow: false, resultCount: undefined },
+  {
+    showDateRange: true,
+    defaultRange: undefined,
+    showOnNow: false,
+    resultCount: undefined,
+    festivals: () => [],
+  },
 )
 
 const { t } = useI18n()
@@ -52,6 +61,18 @@ const onNow = computed(() => queryString('now') === '1')
 
 function toggleOnNow() {
   applyFilters(onNow.value ? { now: '' } : { now: '1', from: '', to: '' })
+}
+
+/**
+ * A festival chip narrows like any filter and leaves the dates alone: a festival is a place in the
+ * programme, not a time. The filter takes one festival, so pressing a second chip replaces the first.
+ */
+function festivalOn(slug: string) {
+  return queryString('festival') === slug
+}
+
+function toggleFestival(slug: string) {
+  applyFilters({ festival: festivalOn(slug) ? '' : slug })
 }
 
 /**
@@ -182,6 +203,19 @@ onMounted(() => {
       >
         {{ t(preset.key) }}
       </Button>
+      <template v-for="festival in festivals" :key="festival.slug">
+        <Button
+          v-if="festival.slug"
+          :aria-pressed="festivalOn(festival.slug)"
+          :variant="festivalOn(festival.slug) ? 'default' : 'outline'"
+          data-testid="festival-chip"
+          size="sm"
+          type="button"
+          @click="toggleFestival(festival.slug)"
+        >
+          {{ festival.name }}
+        </Button>
+      </template>
     </div>
 
     <!-- Rendered in one place at a time, so a control never exists twice. -->

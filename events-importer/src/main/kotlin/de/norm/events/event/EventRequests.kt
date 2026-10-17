@@ -104,7 +104,22 @@ data class EventRequest(
         nullable = true,
         example = "2026-10-12T22:00:00Z"
     )
-    val featuredUntil: Optional<Instant>? = null
+    val featuredUntil: Optional<Instant>? = null,
+    /**
+     * The festival the event belongs to (#3273); an import never sets it. Left out, an update keeps the
+     * stored link; an explicit JSON `null` arrives as [Optional.empty] and clears it.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description =
+            "Database ID of the festival the event belongs to. On an update, leaving the field out keeps the current " +
+                "festival, and null clears it. An unknown ID is a 404",
+        type = "integer",
+        format = "int64",
+        nullable = true,
+        example = "1"
+    )
+    val festivalId: Optional<Long>? = null
 )
 
 /**

@@ -3,7 +3,6 @@ package de.norm.events.festival
 import de.norm.events.common.PageResponse
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -11,18 +10,22 @@ import org.springframework.stereotype.Service
 /** Festival CRUD for the admin API. The slug is always `SlugGenerator.slugify(name)`. */
 @Service
 class FestivalService(
-    private val festivalRepository: FestivalRepository
+    private val festivalRepository: FestivalRepository,
+    private val eventCounts: FestivalEventCounts
 ) {
     private val logger = KotlinLogging.logger {}
 
-    suspend fun findAll(pageable: Pageable): PageResponse<FestivalResponse> =
-        PageResponse.of(
-            festivalRepository.findAllBy(pageable).map { FestivalResponse.fromEntity(it) }.toList(),
+    suspend fun findAll(pageable: Pageable): PageResponse<FestivalResponse> {
+        val festivals = festivalRepository.findAllBy(pageable).toList()
+        val counts = eventCounts.of(festivals.mapNotNull { it.id })
+        return PageResponse.of(
+            festivals.map { FestivalResponse.fromEntity(it, counts[it.id] ?: 0) },
             pageable,
             festivalRepository.count()
         )
+    }
 
-    suspend fun findById(id: Long): FestivalResponse = FestivalResponse.fromEntity(festivalRepository.findById(id) ?: throw FestivalNotFoundException(id))
+    suspend fun findById(id: Long): FestivalResponse = withCount(festivalRepository.findById(id) ?: throw FestivalNotFoundException(id))
 
     suspend fun create(request: FestivalRequest): FestivalResponse {
         val slug = SlugGenerator.slugify(request.name)
@@ -42,7 +45,7 @@ class FestivalService(
         if (slug != existing.slug) ensureSlugAvailable(request.name, slug)
         val saved = festivalRepository.save(request.applyTo(base = existing, slug = slug))
         logger.info { "Updated festival '${saved.name}' (id=${saved.id})" }
-        return FestivalResponse.fromEntity(saved)
+        return withCount(saved)
     }
 
     suspend fun delete(id: Long) {
@@ -50,6 +53,9 @@ class FestivalService(
         festivalRepository.deleteById(id)
         logger.info { "Deleted festival with id $id" }
     }
+
+    private suspend fun withCount(festival: FestivalEntity): FestivalResponse =
+        FestivalResponse.fromEntity(festival, festival.id?.let { eventCounts.of(listOf(it))[it] } ?: 0)
 
     // A clear 409 before the save, rather than the unique constraint's generic one.
     private suspend fun ensureSlugAvailable(

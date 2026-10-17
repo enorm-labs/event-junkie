@@ -18,6 +18,8 @@ export interface Festival extends FestivalRequest {
   slug: string
   createdAt: string | null
   updatedAt: string | null
+  /** How many events link to the festival, past ones included (#3273). */
+  eventCount: number
 }
 
 interface Page<T> {
@@ -44,6 +46,13 @@ export async function fetchFestivals(fetchFn: typeof fetch = fetch): Promise<Fes
     )
   }
   return body.content
+}
+
+/** The festivals whose days hold [eventDate] (`yyyy-MM-dd`), the ones an event of that date can belong to. */
+export function festivalsOn(festivals: Festival[], eventDate: string): Festival[] {
+  return festivals.filter(
+    (festival) => festival.firstDay <= eventDate && eventDate <= festival.lastDay,
+  )
 }
 
 /** Creates a festival when [id] is null, else replaces festival [id]. */

@@ -27,6 +27,7 @@ flowchart TD
     artist --> image
     event --> artist
     event --> common
+    event --> festival
     event --> genretag
     event --> image
     event --> licence

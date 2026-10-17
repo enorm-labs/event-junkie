@@ -316,3 +316,65 @@ describe('EventFilterBar on a phone', () => {
     expect(button('Filters').attributes('aria-expanded')).toBe('false')
   })
 })
+
+describe('EventFilterBar festival chips (#3273)', () => {
+  const fete = {
+    slug: 'fete-de-la-musique-2027',
+    name: 'Fête de la Musique 2027',
+    firstDay: '2027-06-21',
+    lastDay: '2027-06-21',
+  }
+  const jazz = {
+    slug: 'jazzfest-2027',
+    name: 'Jazzfest 2027',
+    firstDay: '2027-06-20',
+    lastDay: '2027-06-23',
+  }
+
+  const chips = () => wrapper!.findAll('[data-testid="festival-chip"]').map((chip) => chip.text())
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  it('shows no chip without a festival', async () => {
+    await mountAt('/events')
+    expect(chips()).toEqual([])
+  })
+
+  it('shows one chip per festival', async () => {
+    await mountAt('/events', { festivals: [fete] })
+    expect(chips()).toEqual(['Fête de la Musique 2027'])
+
+    wrapper!.unmount()
+    await mountAt('/events', { festivals: [jazz, fete] })
+    expect(chips()).toEqual(['Jazzfest 2027', 'Fête de la Musique 2027'])
+  })
+
+  it('sets the festival filter, keeps the dates, and clears it on a second press', async () => {
+    await mountAt('/events?from=2027-06-20&to=2027-06-22', { festivals: [fete] })
+    expect(pressed('Fête de la Musique 2027')).toBe('false')
+
+    await click('Fête de la Musique 2027')
+    expect(router.currentRoute.value.query).toMatchObject({
+      festival: 'fete-de-la-musique-2027',
+      from: '2027-06-20',
+      to: '2027-06-22',
+    })
+    expect(pressed('Fête de la Musique 2027')).toBe('true')
+
+    await click('Fête de la Musique 2027')
+    expect(router.currentRoute.value.query.festival).toBeUndefined()
+  })
+
+  it('replaces one festival with another, as the filter takes one', async () => {
+    await mountAt('/events?festival=jazzfest-2027', { festivals: [jazz, fete] })
+    expect(pressed('Jazzfest 2027')).toBe('true')
+
+    await click('Fête de la Musique 2027')
+    expect(router.currentRoute.value.query.festival).toBe('fete-de-la-musique-2027')
+    expect(pressed('Jazzfest 2027')).toBe('false')
+    expect(pressed('Fête de la Musique 2027')).toBe('true')
+  })
+})

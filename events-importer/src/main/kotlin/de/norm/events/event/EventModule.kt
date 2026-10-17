@@ -10,5 +10,5 @@ import org.springframework.modulith.ApplicationModule
  * - Validate that referenced entities exist before persisting associations
  * - Query join tables (event_artist, event_promoter, event_genre_tag) for response assembly
  */
-@ApplicationModule(allowedDependencies = ["artist", "venue", "promoter", "slug", "genretag", "common"])
+@ApplicationModule(allowedDependencies = ["artist", "venue", "promoter", "slug", "genretag", "festival", "common"])
 class EventModule
