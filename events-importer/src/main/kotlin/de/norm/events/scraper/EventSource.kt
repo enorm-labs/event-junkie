@@ -201,6 +201,9 @@ enum class EventSource {
     /** Lido Berlin – a former 1950s cinema on the Spree staging touring indie, rock and electronic acts as well as club nights. */
     LIDO,
 
+    /** Little Stage Bar – a Neukölln bar with its own small stage, run by Little Stage e.V., for jazz, jam sessions and band nights. */
+    LITTLE_STAGE_BAR,
+
     /** Loge Berlin – an intimate, collectively run bar and events space in Friedrichshain. */
     LOGE,
 

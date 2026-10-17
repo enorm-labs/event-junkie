@@ -13,8 +13,16 @@
         "descriptionAlt": "Kleine Neuköllner Bar mit eigener Bühne in der Jonasstraße, getragen vom Verein Little Stage e.V.: freitags Jazz, dazu Jamsessions und Bandabende zwischen Metal und Weltmusik.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "live-venue"],
-        "programmeUrl": "https://littlestageclubneukoelln.wordpress.com/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Little Stage Bar",
+            "url": "https://littlestageclubneukoelln.wordpress.com/feed/",
+            "sourceType": "LITTLE_STAGE_BAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

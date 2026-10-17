@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   142 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    33 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   143 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    32 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -106,6 +106,7 @@ schema change.
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
 | Lido                             | https://www.lido-berlin.de/                                              | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge           |
+| Little Stage Bar                 | https://littlestageclubneukoelln.wordpress.com/feed/                     | Bar          | WordPress.com RSS; date read from the prose               |
 | Loge                             | https://www.loge-berlin.org/                                             | Club         | Wix; tickets on-site; support via "+" in title            |
 | MAAYA                            | https://maaya.de/                                                        | Club         | Elementor home page; year-less dates; `pm` half real      |
 | Madame Claude                    | https://madameclaude.de/                                                 | Bar          | WordPress `event` REST API (ACF)                          |
@@ -183,7 +184,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-141 importer classes cover 142 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+142 importer classes cover 143 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
@@ -204,7 +205,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 87 have none, and 4 are unknown. Nine translate the event text on a second page.
+51 sources have a second language, 88 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -295,6 +296,7 @@ the upsert stores none.
 | Kulturhaus Peter Edel            | No              | —                                                            | —                  |                                                                                                                                    |
 | LARK                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Lido                             | No              | —                                                            | —                  |                                                                                                                                    |
+| Little Stage Bar                 | No              | —                                                            | —                  |                                                                                                                                    |
 | Loge                             | Yes             | `/en` path, `hreflang`                                       | Unknown            | https://www.loge-berlin.org/en                                                                                                     |
 | MAAYA                            | Unknown         | The page sent a bot challenge (403)                          | —                  |                                                                                                                                    |
 | Madame Claude                    | No              | —                                                            | —                  |                                                                                                                                    |
@@ -401,7 +403,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint      |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices       |
 | Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops    |
-| Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose        |
 | Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`           |
 | Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges     |
 | Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room          |

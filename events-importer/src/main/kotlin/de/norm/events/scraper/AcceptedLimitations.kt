@@ -67,6 +67,7 @@ import de.norm.events.scraper.klunkerkranich.KLUNKERKRANICH_LIMITATIONS
 import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
 import de.norm.events.scraper.kuehlspot.KUEHLSPOT_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
+import de.norm.events.scraper.littlestagebar.LITTLE_STAGE_BAR_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
 import de.norm.events.scraper.madameclaude.MADAME_CLAUDE_LIMITATIONS
@@ -212,6 +213,7 @@ object AcceptedLimitations {
             KUEHLSPOT_LIMITATIONS,
             LARK_LIMITATIONS,
             LIDO_LIMITATIONS,
+            LITTLE_STAGE_BAR_LIMITATIONS,
             LOGE_LIMITATIONS,
             MAAYA_LIMITATIONS,
             MADAME_CLAUDE_LIMITATIONS,

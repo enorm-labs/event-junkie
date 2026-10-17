@@ -308,6 +308,16 @@ says so.
 | `LARK`                 | `PRICE`            | the venue prints no figure; tickets link to hum-berlin.com                                                                                       | —     |
 | `LARK`                 | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |
 | `LIDO`                 | `GENRE`            | the venue labels each event only Concert or Party; style is described only in the prose                                                          | —     |
+| `LITTLE_STAGE_BAR`     | `SUBTITLE`         | a post has a title and prose, no second title line                                                                                               | —     |
+| `LITTLE_STAGE_BAR`     | `END_TIME`         | the posts rarely state an end time and never in one form                                                                                         | —     |
+| `LITTLE_STAGE_BAR`     | `TICKET_URL`       | the bar sells no tickets and links no ticket shop                                                                                                | —     |
+| `LITTLE_STAGE_BAR`     | `GENRE`            | the posts name styles only in prose and hashtags                                                                                                 | —     |
+| `LITTLE_STAGE_BAR`     | `PRICE`            | the posts state no price beside free entry and donations                                                                                         | —     |
+| `LITTLE_STAGE_BAR`     | `ARTISTS`          | the line-up is prose, often first names with instruments                                                                                         | —     |
+| `LITTLE_STAGE_BAR`     | `PROMOTERS`        | the posts credit no promoter                                                                                                                     | —     |
+| `LITTLE_STAGE_BAR`     | `SOLD_OUT`         | the bar states no ticket status                                                                                                                  | —     |
+| `LITTLE_STAGE_BAR`     | `CANCELLATION`     | the posts have no status field                                                                                                                   | —     |
+| `LITTLE_STAGE_BAR`     | `PAGINATION`       | the feed carries the ten newest posts, and older posts are past events                                                                           | —     |
 | `LOGE`                 | `EVENT_TYPE`       | the venue has no category field; a live-music venue, so an unmarked title defaults to a concert                                                  | —     |
 | `LOGE`                 | `ARTISTS`          | a title without a + separator can be a band or an event name, so no act is derived from one                                                      | —     |
 | `LOGE`                 | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
