@@ -7883,7 +7883,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Passionskirche — not imported
+# Passionskirche
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Passionskirche venue ---
@@ -7905,13 +7905,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue"],
     "capacity": 720,
-    "programmeUrl": "https://halle-luja.berlin/kommende-events",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("venue_id_passionskirche", response.body.id);
     client.test("Passionskirche venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Passionskirche event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_passionskirche}},
+    "name": "Passionskirche",
+    "url": "https://www.halle-luja.berlin/kommende-events",
+    "sourceType": "PASSIONSKIRCHE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Passionskirche event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Passionskirche import ---
+POST {{importer-host}}/api/admin/event-sources/passionskirche/import
+Accept: application/json
+
+> {%
+    client.test("Passionskirche import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
