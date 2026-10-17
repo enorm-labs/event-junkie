@@ -186,17 +186,17 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 person's call inside a window is lost too, so each hour's remainder is divided by the share of the hour that no window covers.
 
 **Find a new renderer with `renderers`.** The injector calls the detail endpoint once for each detail page that nginx serves. A second call for the
-same slug within 15 seconds comes from the SPA. `renderers` counts these per agent and gives the 5th to 95th percentile `delay`. An agent with a high
+same slug within 60 seconds comes from the SPA. `renderers` counts these per agent and gives the 5th to 90th percentile `delay`. An agent with a high
 `share` and `subtracted: false` goes into `RENDERERS`, with `delay` as its window. Use `--hours 24`: a short window misses slow crawlers.
 
 | Renderer      | Pages a day | Share rendered | Window (s) |
 | ------------- | ----------- | -------------- | ---------- |
-| AhrefsBot     | 5,700       | 99%            | 0–2        |
-| Reflectionbot | 1,000       | 92%            | 0–7        |
-| Baiduspider   | 700         | 75%            | 2–12       |
-| Googlebot     | 240         | 62%            | 1–12       |
+| AhrefsBot     | 5,700       | 99%            | 0–1        |
+| Reflectionbot | 1,000       | 93%            | 1–6        |
+| Baiduspider   | 700         | 87%            | 3–23       |
+| Googlebot     | 230         | 67%            | 2–12       |
 
-**A crawler that fetches every few seconds covers most of the hour.** AhrefsBot loads a page every 15 seconds, so its window alone covers 20% of the
+**A crawler that fetches every few seconds covers most of the hour.** AhrefsBot loads a page every 15 seconds, so its window alone covers 13% of the
 time. The scaling keeps the estimate unbiased, but its noise grows with the share covered. Read `frontend.page_loads` beside it.
 
 **Retention sets the limit.** OpenObserve keeps 14 days, so `--hours 336` is the longest useful window. Older traffic is gone.
