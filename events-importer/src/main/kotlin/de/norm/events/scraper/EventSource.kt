@@ -279,6 +279,9 @@ enum class EventSource {
     /** MAXXIM Berlin – a party club off the Ku'damm, open nightly with a 90s/2000s, pop and house DJ programme. */
     MAXXIM,
 
+    /** M-BIA Berlin – a club for electronic music on Dircksenstraße near Alexanderplatz, with goa, psytrance, techno and bass nights. */
+    M_BIA,
+
     /** Mehringhof-Theater – a 230-seat Kreuzberg Kabarett stage since 1985, a first address for German-language political Kabarett and stand-up. */
     MEHRINGHOF,
 
