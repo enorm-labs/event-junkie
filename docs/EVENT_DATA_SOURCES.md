@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   175 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    10 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   176 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     9 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
@@ -41,6 +41,7 @@ schema change.
 | Name                             | URL                                                                      | Type         | Comment                                                   |
 | -------------------------------- | ------------------------------------------------------------------------ | ------------ | --------------------------------------------------------- |
 | 808 Nachtklub Berlin             | https://808.berlin/                                                      | Club         | Astro island props; opening hours from JSON-LD            |
+| 8MM Bar                          | https://www.8mmbar.de/program                                            | Bar          | Squarespace noscript calendar list + event pages          |
 | A-Trane                          | https://a-trane.de/                                                      | Club         | EventON cards: JSON-LD, style tags, ticket prices         |
 | Abstand                          | https://radar.squat.net/en/node/1608                                     | Bar          | radar group API; bands only in prose                      |
 | ACUD MACHT NEU                   | https://acudmachtneu.de/programm/                                        | Club         | WordPress; this and next month + event pages              |
@@ -216,7 +217,7 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-174 importer classes cover 175 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+175 importer classes cover 176 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -238,7 +239,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-60 sources have a second language, 111 have none, and 4 are unknown. Twelve translate the event text on a second page.
+60 sources have a second language, 112 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -265,6 +266,7 @@ the upsert stores none.
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
 | -------------------------------- | --------------- | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | 808 Nachtklub Berlin             | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://808.berlin/en/                                                                                                             |
+| 8MM Bar                          | No              | —                                                            | —                  |                                                                                                                                    |
 | A-Trane                          | Yes             | One field: German, then `English`                            | One field          | https://a-trane.de/                                                                                                                |
 | Abstand                          | Unknown         | radar.squat.net sent a bot challenge                         | —                  |                                                                                                                                    |
 | ACUD MACHT NEU                   | No              | —                                                            | —                  |                                                                                                                                    |
@@ -469,7 +471,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot       | https://backsteinboot.org/program-(landing-page)-1 | Club    | Low      | Cargo; month in HTML; mostly workshops and talks          |
 | PKH Warehouse       | https://www.pkh.events/                            | Other   | Low      | Hand-written HTML copied from RA; month headings, no year |
 | Pastiche            | https://pasticheinternational.com/programme-1      | Bar     | Low      | Cargo; one month table in the HTML, no year               |
-| 8MM                 | https://www.8mmbar.de/program                      | Bar     | Low      | Squarespace list in HTML; the JSON feed is robots-barred  |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
