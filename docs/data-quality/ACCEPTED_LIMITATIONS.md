@@ -477,6 +477,15 @@ says so.
 | `QUATSCH`              | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `QUATSCH`              | `PROMOTERS`        | the calendar names no producer of a guest show                                                                                                   | —     |
 | `QUATSCH`              | `SOLD_OUT`         | the calendar marks no show as sold out                                                                                                           | —     |
+| `RENAISSANCE_THEATER`  | `DOORS_TIME`       | the site states one start time per performance                                                                                                   | —     |
+| `RENAISSANCE_THEATER`  | `IMAGE`            | a production page shows a picture only for some productions                                                                                      | —     |
+| `RENAISSANCE_THEATER`  | `PRICE_PRESALE`    | the site states prices only in its ticket shop                                                                                                   | —     |
+| `RENAISSANCE_THEATER`  | `PRICE_BOX_OFFICE` | the site states prices only in its ticket shop                                                                                                   | —     |
+| `RENAISSANCE_THEATER`  | `ARTISTS`          | the listing names performers only in its billing prose, and a production lists its cast on its own page                                          | —     |
+| `RENAISSANCE_THEATER`  | `EVENT_TYPE`       | the site names a format only for some nights, so the type comes from words in the billing, and a night without one is typed a play               | —     |
+| `RENAISSANCE_THEATER`  | `GENRE`            | the site names no genre                                                                                                                          | —     |
+| `RENAISSANCE_THEATER`  | `PROMOTERS`        | the site names a presenter only in a production's prose                                                                                          | —     |
+| `RENAISSANCE_THEATER`  | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
 | `RENATE`               | `EVENT_TYPE`       | the club states no category; its `.cat-btn` names the spaces in use, not a kind of event                                                         | —     |
 | `RENATE`               | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `RENATE`               | `START_TIME`       | a night with no opening time in any floor heading, as a CLUB-only night without one, has no start time                                           | —     |

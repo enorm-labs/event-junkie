@@ -303,6 +303,9 @@ enum class EventSource {
     /** Quatsch Comedy Club – Thomas Hermanns' stand-up club in the former Kleine Revue under the Friedrichstadt-Palast. */
     QUATSCH,
 
+    /** Renaissance-Theater Berlin – Europe's only fully preserved Art Deco theatre, in Charlottenburg, with plays and Bruckner-Foyer readings. */
+    RENAISSANCE_THEATER,
+
     /** Renate (Wilde Renate) Berlin – a warren of a techno club in a derelict Friedrichshain apartment house, with several floors and a summer garden. */
     RENATE,
 
