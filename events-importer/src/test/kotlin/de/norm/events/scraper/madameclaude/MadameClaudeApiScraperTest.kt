@@ -56,22 +56,21 @@ class MadameClaudeApiScraperTest {
     }
 
     @Test
-    fun `splits a concert co-bill from the title into headliners`() {
+    fun `splits a concert co-bill from the title into headliners and bills a DJ-named act as DJ`() {
         event("madame_claude:sam-therapy-jonathan-bergen-dj-lichene").artists shouldContainExactly
             listOf(
                 ScrapedArtist("SAM THERAPY", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Jonathan Bergen", "HEADLINER", titleDerived = true),
-                ScrapedArtist("DJ Lichene", "HEADLINER", titleDerived = true)
+                ScrapedArtist("DJ Lichene", "DJ", titleDerived = true)
             )
     }
 
     @Test
-    fun `strips a trailing DJ-Set marker from a concert act name`() {
-        // "… + EMMANUELLE 5 (DJ-Set)" on a Concert stays a headliner, with the suffix stripped.
+    fun `bills the DJ-Set act of a concert as DJ, with the marker stripped`() {
         val concert = event("madame_claude:schilf-plum-texes-bgtcb-emmanuelle-5-dj-set")
         concert.eventType shouldBe "CONCERT"
-        concert.artists.map { it.name } shouldContainExactly listOf("SCHILF", "PLUM TEXES", "BGTCB", "EMMANUELLE 5")
-        concert.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+        concert.artists.map { it.name to it.role } shouldContainExactly
+            listOf("SCHILF" to "HEADLINER", "PLUM TEXES" to "HEADLINER", "BGTCB" to "HEADLINER", "EMMANUELLE 5" to "DJ")
     }
 
     @Test
@@ -94,7 +93,15 @@ class MadameClaudeApiScraperTest {
         // "Open Mic L. J. Fox + M Love (DJ-Set)" — the recurring series name is not an artist.
         val openMic = event("madame_claude:open-mic-l-j-fox-m-love-dj-set")
         openMic.eventType shouldBe "CONCERT"
-        openMic.artists shouldContainExactly listOf(ScrapedArtist("M Love", "HEADLINER", titleDerived = true))
+        openMic.artists shouldContainExactly listOf(ScrapedArtist("M Love", "DJ", titleDerived = true))
+    }
+
+    @Test
+    fun `keeps a band a headliner when its name only resembles the DJ act`() {
+        concertArtists("Djembe Collective + Klub Marta (DJ-Set)").map { it.name to it.role } shouldContainExactly
+            listOf("Djembe Collective" to "HEADLINER", "Klub Marta" to "DJ")
+        concertArtists("Marta + Klub Marta (DJ-Set)").map { it.name to it.role } shouldContainExactly
+            listOf("Marta" to "HEADLINER", "Klub Marta" to "DJ")
     }
 
     @Test

@@ -182,8 +182,8 @@ class MadameClaudeApiScraper {
      * The lineup from the title, keyed off the authoritative [eventType]:
      * - **Concerts** — co-billed acts (`A + B + C`) split into headliners via [headlinersFromTitle]
      * with `splitOnSlash = false` (the venue uses `/` *inside* a single act name — `Morimoto / Wong
-     * duo` — so co-bills are delimited only by `+`); a trailing "(DJ-Set)" on the last act is
-     * stripped as an artist-name suffix.
+     * duo` — so co-bills are delimited only by `+`). The act that closes the night is marked
+     * "(DJ-Set)" or named `DJ …`; its marker is stripped and it is billed `DJ` ([concertArtists]).
      * - **Parties** — only a "(DJ-Set)" night names its DJs ([djSetArtistsFromTitle], role `DJ`);
      * a party titled as an event ("Summer Break Send-Off") mints none.
      * - **Everything else** (quiz, screening, festival) — the title names an event, no artists.
@@ -193,7 +193,7 @@ class MadameClaudeApiScraper {
         eventType: String?
     ): List<ScrapedArtist> =
         when (eventType) {
-            EventType.CONCERT.name -> headlinersFromTitle(title, splitOnSlash = false)
+            EventType.CONCERT.name -> concertArtists(title)
             EventType.PARTY.name -> if (isDjSetTitle(title)) djSetArtistsFromTitle(title) else emptyList()
             else -> emptyList()
         }
@@ -330,6 +330,26 @@ private val DJ_SET_TITLE_MARKER = Regex("""\(\s*dj[\s-]?set\s*\)""", RegexOption
 
 /** "+" separator between co-billed DJs (a "/" belongs to a single duo name). */
 private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")
+
+/** A `DJ ` prefix on one act of a concert bill: `DJ Troy Mytea`. */
+private val DJ_PREFIX = Regex("""^\s*dj\s""", RegexOption.IGNORE_CASE)
+
+/**
+ * The acts of a concert [title] as headliners, except an act whose `+` segment carries the
+ * "(DJ-Set)" marker or a `DJ ` prefix: that one plays the records after the bands, so it is `DJ`.
+ */
+internal fun concertArtists(title: String): List<ScrapedArtist> {
+    val djSegments =
+        title
+            .split(DJ_ACT_SEPARATOR)
+            .filter { DJ_SET_TITLE_MARKER.containsMatchIn(it) || DJ_PREFIX.containsMatchIn(it) }
+            .map { stripArtistSuffix(it.trim()).lowercase() }
+            .flatMap { listOf(it, it.replaceFirst(DJ_PREFIX, "")) }
+            .toSet()
+    return headlinersFromTitle(title, splitOnSlash = false).map { artist ->
+        if (artist.name.lowercase() in djSegments) artist.copy(role = "DJ") else artist
+    }
+}
 
 /**
  * Whether [title] carries the "(DJ-Set)" marker — a party whose lineup comes from the title
