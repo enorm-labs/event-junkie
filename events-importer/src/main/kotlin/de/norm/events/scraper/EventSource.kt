@@ -183,6 +183,9 @@ enum class EventSource {
     /** Kesselhaus Berlin – the listed Schwechten boiler house of the Schultheiss brewery in the Kulturbrauerei, a concert hall since the early 1990s. */
     KESSELHAUS,
 
+    /** Kiezkapelle – a former cemetery chapel on Hermannstraße, run by the Prinzessinnengarten Kollektiv as a neighbourhood hall. */
+    KIEZKAPELLE,
+
     /** KitKatClub Berlin – the hedonistic dress-code club in Mitte with a pool, sex-positive techno nights and its Saturday CarneBall Bizarre. */
     KITKATCLUB,
 

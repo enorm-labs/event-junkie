@@ -274,6 +274,16 @@ says so.
 | `KESSELHAUS`           | `GENRE`            | only some events carry a style topic; the others name a format such as festival or highlight                                                     | —     |
 | `KESSELHAUS`           | `PRICE_BOX_OFFICE` | most events list an online price and no box-office price                                                                                         | —     |
 | `KESSELHAUS`           | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `KIEZKAPELLE`          | `SUBTITLE`         | an entry has a presenter line and a title, no second title line                                                                                  | —     |
+| `KIEZKAPELLE`          | `EVENT_TYPE`       | the site names no category per entry                                                                                                             | —     |
+| `KIEZKAPELLE`          | `DOORS_TIME`       | the site prints one time range per entry                                                                                                         | —     |
+| `KIEZKAPELLE`          | `TICKET_URL`       | registration and tickets are named only in the entry's prose                                                                                     | —     |
+| `KIEZKAPELLE`          | `GENRE`            | the site names no style per entry                                                                                                                | —     |
+| `KIEZKAPELLE`          | `PRICE`            | prices appear only in the entry's prose                                                                                                          | —     |
+| `KIEZKAPELLE`          | `ARTISTS`          | the site names performers only in the entry's prose                                                                                              | —     |
+| `KIEZKAPELLE`          | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `KIEZKAPELLE`          | `CANCELLATION`     | the site has no status field, so a cancelled entry can only disappear                                                                            | —     |
+| `KIEZKAPELLE`          | `PER_EVENT_PAGE`   | the site publishes no page per entry, so every entry points at the programme                                                                     | —     |
 | `KITKATCLUB`           | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `KITKATCLUB`           | `DOORS_TIME`       | the programme prints one opening time per night; only the weekend notes add a start after a warm-up                                              | —     |
 | `KITKATCLUB`           | `PRICE`            | the club prints no admission and refers to each night's organiser                                                                                | —     |

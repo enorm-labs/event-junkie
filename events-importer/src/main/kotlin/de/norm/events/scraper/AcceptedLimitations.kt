@@ -62,6 +62,7 @@ import de.norm.events.scraper.jonnyknuppel.JONNY_KNUPPEL_LIMITATIONS
 import de.norm.events.scraper.junctionbar.JUNCTION_BAR_LIMITATIONS
 import de.norm.events.scraper.kater.KATER_LIMITATIONS
 import de.norm.events.scraper.kesselhaus.KESSELHAUS_LIMITATIONS
+import de.norm.events.scraper.kiezkapelle.KIEZKAPELLE_LIMITATIONS
 import de.norm.events.scraper.kitkatclub.KITKATCLUB_LIMITATIONS
 import de.norm.events.scraper.klunkerkranich.KLUNKERKRANICH_LIMITATIONS
 import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
@@ -206,6 +207,7 @@ object AcceptedLimitations {
             JUNCTION_BAR_LIMITATIONS,
             KATER_LIMITATIONS,
             KESSELHAUS_LIMITATIONS,
+            KIEZKAPELLE_LIMITATIONS,
             KITKATCLUB_LIMITATIONS,
             KLUNKERKRANICH_LIMITATIONS,
             KOEPI_LIMITATIONS,

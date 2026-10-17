@@ -4926,6 +4926,69 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Kiezkapelle
+# ————————————————————————————————————————————————————————————
+
+### --- Create Kiezkapelle venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kiezkapelle",
+    "address": "Hermannstraße 99-105",
+    "city": "Berlin",
+    "postalCode": "12051",
+    "district": "neukoelln",
+    "latitude": 52.469734,
+    "longitude": 13.429709,
+    "websiteUrl": "https://www.kiezkapelle.de/",
+    "description": "A mourning chapel of 1879 at the entrance to the Neuer St. Jacobi cemetery, run by the Prinzessinnengarten Kollektiv as a neighbourhood hall for readings, theatre, exhibitions and concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Trauerkapelle von 1879 am Eingang des Neuen St.-Jacobi-Friedhofs betreibt das Prinzessinnengarten Kollektiv als Nachbarschaftssaal für Lesungen, Theater, Ausstellungen und Konzerte.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"],
+    "capacity": 117,
+    "reviewedAt": "2026-10-17T05:23:13Z"
+}
+
+> {%
+    client.global.set("venue_id_kiezkapelle", response.body.id);
+    client.test("Kiezkapelle venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Kiezkapelle event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_kiezkapelle}},
+    "name": "Kiezkapelle",
+    "url": "https://www.kiezkapelle.de/programm/",
+    "sourceType": "KIEZKAPELLE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Kiezkapelle event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Kiezkapelle import ---
+POST {{importer-host}}/api/admin/event-sources/kiezkapelle/import
+Accept: application/json
+
+> {%
+    client.test("Kiezkapelle import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # KitKatClub
 # ————————————————————————————————————————————————————————————
 

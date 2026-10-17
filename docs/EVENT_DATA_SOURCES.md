@@ -22,11 +22,11 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   142 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   143 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    33 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    10 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -98,6 +98,7 @@ schema change.
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/              | Concert Hall | Shares BERGHAIN importer                                  |
 | Kater                            | https://www.katerclub.de/                                                | Techno Club  | Homepage programme; ___ floor rules mark lineups          |
 | Kesselhaus                       | https://www.kesselhaus.net/de/calendar                                   | Concert Hall | Angular transfer state; ?part= month windows              |
+| Kiezkapelle                      | https://www.kiezkapelle.de/programm/                                     | Other        | Lay Theme page; upcoming rows only; walks dropped         |
 | KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                              | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                                       | Bar          | WordPress; ISO date in slug; ~10-day horizon              |
 | KØPI                             | https://koepi137.net/                                                    | Club         | radar group API; bill read from the description           |
@@ -183,7 +184,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-141 importer classes cover 142 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+142 importer classes cover 143 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
@@ -204,7 +205,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 87 have none, and 4 are unknown. Nine translate the event text on a second page.
+51 sources have a second language, 88 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -287,6 +288,7 @@ the upsert stores none.
 | Kantine am Berghain              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/kantine-am-berghain/                                                                        |
 | Kater                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Kesselhaus                       | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
+| Kiezkapelle                      | No              | —                                                            | —                  |                                                                                                                                    |
 | KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Klunkerkranich                   | Yes             | One field: German, `[EN]`, English                           | One field          | https://klunkerkranich.org/events/2026-10-09-trauma-mia-presents-bass-island-w-clavd-frau-kaufmann-confred-trauma-mia-resi-regelt/ |
 | KØPI                             | No              | —                                                            | —                  |                                                                                                                                    |
@@ -767,7 +769,6 @@ no site of the venue's own.
 | Haus der Statistik    | https://hausderstatistik.org/programm/                       | Other        | Crunch Tapes                   |
 | HAU Hebbel am Ufer    | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/ | Theater      | Powerline Agency, Musikexpress |
 | K19                   | —                                                            | Club         | Patchanka Booking              |
-| Kiezkapelle           | https://www.kiezkapelle.de/programm/                         | Other        | Puschen                        |
 | Paradox Music Hall    | —                                                            | Club         | Diffus, Landstreicher Konzerte |
 | Trixxter              | —                                                            | Bar          | Metal Hammer                   |
 | Wowsville             | —                                                            | Bar          | Crunch Tapes                   |
