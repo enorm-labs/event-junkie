@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, Search } from '@lucide/vue'
+import { Search } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -7,6 +7,7 @@ import { berlinToday } from '@/api/artists'
 import { type AdminEvent, type EventSearchPage, searchEvents } from '@/api/events'
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import EventEditor from '@/components/EventEditor.vue'
+import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -160,26 +161,13 @@ function statusVariant(status: string) {
       <p class="text-sm text-muted-foreground tabular-nums" data-testid="result-count">
         {{ result?.totalElements ?? 0 }} events
       </p>
-      <Button
-        :disabled="page === 0 || loading"
-        aria-label="Previous page"
-        size="icon-sm"
-        type="button"
-        variant="outline"
-        @click="navigate({ page: page - 1 })"
-      >
-        <ChevronLeft />
-      </Button>
-      <Button
-        :disabled="!hasNext || loading"
-        aria-label="Next page"
-        size="icon-sm"
-        type="button"
-        variant="outline"
-        @click="navigate({ page: page + 1 })"
-      >
-        <ChevronRight />
-      </Button>
+      <PagerButtons
+        :has-next="hasNext"
+        :has-previous="page > 0"
+        :loading="loading"
+        @next="navigate({ page: page + 1 })"
+        @previous="navigate({ page: page - 1 })"
+      />
     </div>
   </form>
 
