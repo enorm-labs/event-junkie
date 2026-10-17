@@ -8,5 +8,8 @@
   "upcoming": "Upcoming",
   "seeAllUpcoming": "See all upcoming events",
   "thisWeek": "This week in Berlin",
-  "upcomingEmpty": "Nothing upcoming right now. Check back soon."
+  "upcomingEmpty": "Nothing upcoming right now. Check back soon.",
+  "festival": {
+    "link": "See the programme"
+  }
 }

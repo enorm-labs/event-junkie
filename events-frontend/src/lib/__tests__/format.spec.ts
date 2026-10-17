@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   eventLabel,
   formatDate,
+  formatDayRange,
   formatDaysAgo,
   formatShortDate,
   humaniseEventType,
@@ -308,5 +309,22 @@ describe('formatDaysAgo', () => {
 
   it('reads a change seen after today, by a skewed clock, as today', () => {
     expect(formatDaysAgo('2026-10-10T12:00:00+02:00', 'en-GB', '2026-10-09')).toBe('today')
+  })
+})
+
+describe('formatDayRange', () => {
+  const plain = (text: string) => text.replace(/\s+/g, ' ')
+
+  it('names the days of one month once', () => {
+    expect(plain(formatDayRange('2027-10-02', '2027-10-10', 'en-GB'))).toBe('2 – 10 October')
+    expect(plain(formatDayRange('2027-10-02', '2027-10-10', 'de-DE'))).toBe('2.–10. Oktober')
+  })
+
+  it('names both months of a range across a month end', () => {
+    expect(plain(formatDayRange('2027-06-28', '2027-07-02', 'de-DE'))).toBe('28. Juni – 2. Juli')
+  })
+
+  it('names one day alone', () => {
+    expect(formatDayRange('2027-06-21', '2027-06-21', 'en-GB')).toBe('21 June')
   })
 })

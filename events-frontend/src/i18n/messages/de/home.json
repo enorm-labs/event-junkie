@@ -8,5 +8,8 @@
   "upcoming": "Demnächst",
   "seeAllUpcoming": "Alle kommenden Events",
   "thisWeek": "Diese Woche in Berlin",
-  "upcomingEmpty": "Gerade steht nichts an. Schau bald wieder vorbei."
+  "upcomingEmpty": "Gerade steht nichts an. Schau bald wieder vorbei.",
+  "festival": {
+    "link": "Zum Programm"
+  }
 }

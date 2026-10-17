@@ -2,6 +2,7 @@ import { useI18n } from 'vue-i18n'
 
 import {
   daysBetween,
+  formatDayRange,
   formatDaysAgo,
   formatDate,
   formatMonthYear,
@@ -57,6 +58,10 @@ export function useFormat() {
 
     /** `formatMonthYear` bound to the active locale — "October 2026" / "Oktober 2026". */
     formatMonthYear: (isoDate?: string | null) => formatMonthYear(isoDate, intlLocale()),
+
+    /** `formatDayRange` bound to the active locale — "3 – 11 October" / "3.–11. Oktober". */
+    formatDayRange: (firstIso: string, lastIso: string) =>
+      formatDayRange(firstIso, lastIso, intlLocale()),
 
     /** `formatWeekday` bound to the active locale — "Fri" / "Fr.". */
     formatWeekday: (isoDate?: string | null) => formatWeekday(isoDate, intlLocale()),

@@ -86,7 +86,7 @@ abstract class BaseControllerTest {
                     "TRUNCATE TABLE events.data_quality_snapshot, events.event_source, events.event_genre_tag, " +
                         "events.event_promoter, events.event_artist, events.event, events.genre_tag, events.promoter, " +
                         "events.artist, events.venue, events.cached_image_variant, events.cached_image, " +
-                        "events.event_classification_usage CASCADE"
+                        "events.event_classification_usage, events.festival CASCADE"
                 ).await()
         }
 }

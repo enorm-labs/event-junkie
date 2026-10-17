@@ -613,6 +613,37 @@ ALTER TABLE events.event_suggestion ALTER COLUMN id ADD GENERATED ALWAYS AS IDEN
 );
 
 --
+-- Name: festival; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.festival (
+    id bigint NOT NULL,
+    slug text NOT NULL,
+    name text NOT NULL,
+    url text NOT NULL,
+    first_day date NOT NULL,
+    last_day date NOT NULL,
+    notice_de text NOT NULL,
+    notice_en text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT festival_days_ordered CHECK ((last_day >= first_day))
+);
+
+--
+-- Name: festival_id_seq; Type: SEQUENCE; Schema: events; Owner: -
+--
+
+ALTER TABLE events.festival ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME events.festival_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: genre_tag; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -1037,6 +1068,20 @@ ALTER TABLE ONLY events.event_suggestion
     ADD CONSTRAINT event_suggestion_pkey PRIMARY KEY (id);
 
 --
+-- Name: festival festival_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.festival
+    ADD CONSTRAINT festival_pkey PRIMARY KEY (id);
+
+--
+-- Name: festival festival_slug_key; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.festival
+    ADD CONSTRAINT festival_slug_key UNIQUE (slug);
+
+--
 -- Name: genre_tag genre_tag_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1290,6 +1335,12 @@ CREATE INDEX idx_event_title_search_trgm ON events.event USING gin (replace(titl
 CREATE INDEX idx_event_venue_id ON events.event USING btree (venue_id);
 
 --
+-- Name: idx_festival_last_day; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_festival_last_day ON events.festival USING btree (last_day);
+
+--
 -- Name: idx_genre_tag_family; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1372,6 +1423,12 @@ CREATE TRIGGER trg_event_source_updated_at BEFORE UPDATE ON events.event_source 
 --
 
 CREATE TRIGGER trg_event_updated_at BEFORE UPDATE ON events.event FOR EACH ROW EXECUTE FUNCTION events.set_updated_at();
+
+--
+-- Name: festival trg_festival_updated_at; Type: TRIGGER; Schema: events; Owner: -
+--
+
+CREATE TRIGGER trg_festival_updated_at BEFORE UPDATE ON events.festival FOR EACH ROW EXECUTE FUNCTION events.set_updated_at();
 
 --
 -- Name: genre_tag trg_genre_tag_updated_at; Type: TRIGGER; Schema: events; Owner: -

@@ -15,6 +15,7 @@ flowchart TD
     discogs["discogs"]
     enrichment["enrichment"]
     event["event"]
+    festival["festival"]
     genretag["genretag"]
     image["image"]
     importing["importing"]
@@ -49,6 +50,8 @@ flowchart TD
     event --> promoter
     event --> slug
     event --> venue
+    festival --> common
+    festival --> slug
     genretag --> common
     importing --> artist
     importing --> common

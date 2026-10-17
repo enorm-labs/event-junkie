@@ -40,6 +40,7 @@ lists what that includes and what it excludes.
 **Find events**
 
 - See **Today** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
+- See up to 3 **festivals** on the home page while they run, and in the 14 days before they start. Each notice links to the festival's own programme.
 - Filter the events list, the calendar and the map with one filter bar. The filters are date range, time of night, event type,
   venue, venue type, district, genre, price range, free-only and exclude-sold-out.
 - Use the **Today**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
@@ -135,6 +136,7 @@ the first column. It fails in two cases:
 | `/api/sitemaps/{kind}.xml`         | The detail sitemaps                                                         |
 | `/api/images/{contentHash}/{file}` | Cached venue images                                                         |
 | `/api/meta`                        | Version and commit of the running backend, for the footer                   |
+| `/api/festivals/current`           | Up to 3 festivals the home page announces, running first; `[]` for none     |
 | `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                     |
 | `events-filters.spec.ts`           | e2e: the filter bar                                                         |
 | `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                      |
