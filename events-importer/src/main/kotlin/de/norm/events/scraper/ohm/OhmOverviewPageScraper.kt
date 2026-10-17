@@ -122,6 +122,7 @@ class OhmOverviewPageScraper(
      * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
      * A set length in round brackets (`Pariah (4h set)`) comes off the act, or it mints a second one (#2439).
      * A room heading its acts in brackets (`Vorraum (Harba & Delta Division Live)`) bills each act on that stage.
+     * A numbered guest slot (`+ Guest 1`) is a placeholder, never an act (#3512).
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
         var inTalk = false
@@ -133,7 +134,7 @@ class OhmOverviewPageScraper(
                 !heading && !inTalk
             }.filterNot { SET_NOTE.matches(it) }
             .map { it.replace(SET_LENGTH_NOTE, "").trim() }
-            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
+            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) || GUEST_SLOT.matches(it) }
             .flatMap(::lineupEntries)
     }
 
@@ -147,6 +148,9 @@ class OhmOverviewPageScraper(
 
 /** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
 private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vjs?)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+
+/** An unnamed guest slot: `+ Guest 1`, `Guests`. `Guest Lister` is an act. */
+private val GUEST_SLOT = Regex("""\+?\s*guests?(?:\s*\d+)?""", RegexOption.IGNORE_CASE)
 
 /** A line wholly in square brackets: `[ All Night Long ]`, a note on the set billed above it. */
 private val SET_NOTE = Regex("""\s*\[[^\[\]]*]\s*""")
