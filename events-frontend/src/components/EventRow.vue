@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
+import BaseBadge from '@/components/BaseBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
@@ -71,6 +72,16 @@ const price = computed(() => formatPrice(props.event.pricePresale, props.event.p
       <span v-if="price" class="shrink-0 text-meta font-medium text-foreground">{{ price }}</span>
     </div>
     <p v-if="state || meta.length" class="truncate text-meta text-muted-foreground">
+      <!-- The row has no poster to carry it, so the festival's pill opens the second line and the
+           title keeps its width on a phone (#3273). -->
+      <BaseBadge
+        v-if="event.festival?.name"
+        :title="t('events.card.partOf', { name: event.festival.name })"
+        class="mr-2 py-0"
+        data-testid="festival-badge"
+      >
+        {{ event.festival.name }}
+      </BaseBadge>
       <span v-if="state" :class="['font-medium', state.class]">{{ state.label }}</span>
       <span v-if="state && meta.length" aria-hidden="true"> · </span>
       <span v-if="meta.length">{{ meta.join(' · ') }}</span>

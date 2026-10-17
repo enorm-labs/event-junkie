@@ -286,6 +286,8 @@ data class ScrapedEvent(
             contentChangedAt = existing?.contentChangedAt,
             // An operator's pick (#1262): no source knows of it, so an import keeps it.
             featuredUntil = existing?.featuredUntil,
+            // An operator's link to a festival (#3273), which no source knows of either.
+            festivalId = existing?.festivalId,
             venueId = venueId,
             room = room,
             eventSourceId = eventSourceId,

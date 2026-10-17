@@ -160,4 +160,15 @@ describe('EventRow', () => {
     })
     expect(wrapper.text()).toContain('Running since Fri')
   })
+
+  it('names the festival beside the title, and nothing without one (#3273)', () => {
+    const plain = mount(EventRow, { props: { event }, global: { stubs } })
+    expect(plain.find('[data-testid="festival-badge"]').exists()).toBe(false)
+
+    const linked = mount(EventRow, {
+      props: { event: { ...event, festival: { slug: 'fete', name: 'Fête de la Musique 2027' } } },
+      global: { stubs },
+    })
+    expect(linked.get('[data-testid="festival-badge"]').text()).toBe('Fête de la Musique 2027')
+  })
 })

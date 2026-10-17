@@ -62,6 +62,8 @@ data class EventEntity(
     val priceNote: String? = null,
     val soldOut: Boolean = false,
     val free: Boolean = false,
+    /** The festival an operator linked the event to (#3273), or null. */
+    val festivalId: Long? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

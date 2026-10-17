@@ -80,7 +80,8 @@ describe('EventsView with On now', () => {
   it("reads today's calendar with the filters, and lists only what isOnNow accepts", async () => {
     await mountAt('/en/events?now=1&venue=lido&district=kreuzberg&page=2')
 
-    expect(getMock).toHaveBeenCalledTimes(1)
+    // The festival chip asks for the current festival on its own (#3273).
+    expect(getMock.mock.calls.filter(([path]) => path !== '/api/festivals/current')).toHaveLength(1)
     expect(getMock).toHaveBeenCalledWith('/api/events/calendar', {
       params: {
         query: expect.objectContaining({
@@ -352,5 +353,57 @@ describe('EventsView sort', () => {
     await mountAt('/en/events?now=1')
 
     expect(wrapper!.find('[role="group"]').exists()).toBe(false)
+  })
+})
+
+describe('EventsView festival chips (#3273)', () => {
+  const fete = { slug: 'fete', name: 'Fête', firstDay: TODAY, lastDay: '2026-10-09' }
+  const jazz = { slug: 'jazz', name: 'Jazz', firstDay: '2026-10-01', lastDay: TODAY }
+  const upcoming = {
+    slug: 'upcoming',
+    name: 'Upcoming',
+    firstDay: '2026-10-08',
+    lastDay: '2026-10-09',
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(NOW))
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.useRealTimers()
+  })
+
+  async function chipsFor(current: unknown) {
+    wrapper?.unmount()
+    getMock.mockReset()
+    getMock.mockImplementation((path) =>
+      Promise.resolve(
+        path === '/api/festivals/current'
+          ? current
+          : { content: [later], page: 0, totalPages: 1, totalElements: 1 },
+      ),
+    )
+    await mountAt('/en/events')
+    return wrapper!.findComponent({ name: 'EventFilterBar' }).props('festivals')
+  }
+
+  it('offers a festival while it runs, on its first and its last day', async () => {
+    expect(await chipsFor([fete])).toEqual([fete])
+    expect(await chipsFor([jazz])).toEqual([jazz])
+  })
+
+  it('offers one chip per running festival, in the order the BFF lists them', async () => {
+    expect(await chipsFor([jazz, fete])).toEqual([jazz, fete])
+  })
+
+  it('offers nothing for a festival that starts later, or when there is none', async () => {
+    expect(await chipsFor([fete, upcoming])).toEqual([fete])
+    expect(await chipsFor([upcoming])).toEqual([])
+    expect(await chipsFor([])).toEqual([])
+    expect(await chipsFor(undefined)).toEqual([])
   })
 })

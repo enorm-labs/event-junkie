@@ -176,6 +176,7 @@ CREATE TABLE events.event (
     content_hash text,
     content_changed_at timestamp with time zone,
     featured_until timestamp with time zone,
+    festival_id bigint,
     CONSTRAINT event_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL) AND (description_alt_origin IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL) AND (description_alt_origin IS NOT NULL)))),
     CONSTRAINT event_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT event_description_alt_origin_valid CHECK (((description_alt_origin IS NULL) OR (description_alt_origin = ANY (ARRAY['PUBLISHER'::text, 'MACHINE'::text])))),
@@ -1269,6 +1270,12 @@ CREATE INDEX idx_event_feature_feature ON events.event_feature USING btree (feat
 CREATE INDEX idx_event_featured_until ON events.event USING btree (featured_until) WHERE (featured_until IS NOT NULL);
 
 --
+-- Name: idx_event_festival_id; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_festival_id ON events.event USING btree (festival_id) WHERE (festival_id IS NOT NULL);
+
+--
 -- Name: idx_event_genre_tag_event_id; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1517,6 +1524,13 @@ ALTER TABLE ONLY events.event
 
 ALTER TABLE ONLY events.event_feature
     ADD CONSTRAINT event_feature_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
+
+--
+-- Name: event event_festival_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event
+    ADD CONSTRAINT event_festival_id_fkey FOREIGN KEY (festival_id) REFERENCES events.festival(id) ON DELETE SET NULL;
 
 --
 -- Name: event_genre_tag event_genre_tag_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

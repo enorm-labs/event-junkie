@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { Rss } from '@lucide/vue'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
@@ -18,6 +18,7 @@ import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import type { EventPage } from '@/api/types'
 import { useAsync } from '@/composables/useAsync'
+import { useCurrentFestivals } from '@/composables/useCurrentFestivals'
 import { type EventSearchParams, fetchOnNowPage, searchEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useFilterLabels } from '@/composables/useFilterLabels'
@@ -43,6 +44,19 @@ const LATEST_FIRST = 'eventDate,desc'
 const NEWEST_ADDED = 'createdAt,desc'
 
 const onNow = computed(() => queryString('now') === '1')
+
+/**
+ * A festival chip shows only while its festival runs (#3273). The BFF also lists the ones that
+ * start within 14 days, for the home page, so the days decide here.
+ */
+const { festivals: currentFestivals, run: loadFestivals } = useCurrentFestivals()
+const runningFestivals = computed(() => {
+  const today = todayIso()
+  return currentFestivals.value.filter(
+    (f) => f.firstDay && f.lastDay && f.firstDay <= today && today <= f.lastDay,
+  )
+})
+onMounted(loadFestivals)
 
 /**
  * A range that ends before today is an archive and reads latest first; a range that reaches into
@@ -161,7 +175,7 @@ const feedLabel = computed(() =>
 
 /** The calendar subscription for these filters (#2719), named after them (#2772). */
 const { filterLabels } = useFilterLabels(provideFilterLists())
-const calendarLabels = computed(() => filterLabels(filters.value))
+const calendarLabels = computed(() => filterLabels(filters.value, currentFestivals.value))
 const calendarHref = computed(() =>
   calendarPath(locale.value as Locale, filters.value, calendarLabels.value),
 )
@@ -182,7 +196,7 @@ const mapLink = computed(() => ({
 
 <template>
   <ListPage :subtitle="t('events.subtitle')" :title="t('events.title')">
-    <EventFilterBar :result-count="page?.totalElements" show-on-now />
+    <EventFilterBar :festivals="runningFestivals" :result-count="page?.totalElements" show-on-now />
 
     <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>

@@ -10,7 +10,8 @@
       "noticeDe": "Am längsten Tag des Jahres spielt Musik an hunderten Orten der Stadt, draußen und kostenlos.",
       "noticeEn": "On the longest day of the year, music plays at hundreds of places across the city, outdoors and free.",
       "createdAt": "2026-10-17T18:00:00Z",
-      "updatedAt": "2026-10-17T18:00:00Z"
+      "updatedAt": "2026-10-17T18:00:00Z",
+      "eventCount": 0
     },
     {
       "id": 2,
@@ -22,7 +23,8 @@
       "noticeDe": "Neun Tage lang zeigen rund 80 Berliner Clubs und Kollektive, was Clubkultur ist. Viele der Abende stehen auch bei uns.",
       "noticeEn": "For nine days, around 80 Berlin clubs and collectives show what club culture is. Many of those nights are on our lists too.",
       "createdAt": "2026-09-30T18:00:00Z",
-      "updatedAt": "2026-09-30T18:00:00Z"
+      "updatedAt": "2026-09-30T18:00:00Z",
+      "eventCount": 46
     },
     {
       "id": 1,
@@ -34,7 +36,8 @@
       "noticeDe": "Musik an hunderten Orten der Stadt, draußen und kostenlos.",
       "noticeEn": "Music at hundreds of places across the city, outdoors and free.",
       "createdAt": "2026-06-01T18:00:00Z",
-      "updatedAt": "2026-06-01T18:00:00Z"
+      "updatedAt": "2026-06-01T18:00:00Z",
+      "eventCount": 12
     }
   ],
   "page": 0,

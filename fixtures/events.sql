@@ -242,6 +242,13 @@ UPDATE events.event SET lineup_source_url = 'https://timetable.example/sommerlau
 -- refusal (#2714). The page shows the German text alone.
 UPDATE events.event SET description_alt_refused_hash = 'fixture' WHERE source_id = 'fixture-festival';
 
+-- A festival week across the city (#3272), and the festival event linked to it by hand (#3273). It starts within 14 days, so
+-- the home page announces it.
+INSERT INTO events.festival (slug, name, url, first_day, last_day, notice_de, notice_en)
+VALUES ('gartenwoche-nord', 'Gartenwoche Nord', 'https://gartenwoche.example/programm', timezone('Europe/Berlin', now())::date + 9,
+        timezone('Europe/Berlin', now())::date + 13, 'Eine Woche Musik in den Gärten des Nordens.', 'A week of music in the gardens of the north.');
+UPDATE events.event SET festival_id = (SELECT id FROM events.festival WHERE slug = 'gartenwoche-nord') WHERE source_id = 'fixture-festival';
+
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-festival' AND g.slug = 'techno';
 

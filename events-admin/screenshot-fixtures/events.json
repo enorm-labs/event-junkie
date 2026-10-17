@@ -27,7 +27,8 @@
       "free": false,
       "artists": [],
       "promoterIds": [],
-      "pinnedFields": []
+      "pinnedFields": [],
+      "festivalId": 2
     },
     {
       "id": 5102,

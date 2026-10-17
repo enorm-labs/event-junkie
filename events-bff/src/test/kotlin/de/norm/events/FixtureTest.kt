@@ -112,6 +112,16 @@ class FixtureTest : BaseControllerTest() {
                 .isEqualTo("https://timetable.example/sommerlaune")
                 .jsonPath("$.promoters[0].slug")
                 .isEqualTo("sommerlaune-festival")
+                // Linked by hand to a festival week (#3273).
+                .jsonPath("$.festival.slug")
+                .isEqualTo("gartenwoche-nord")
+                .jsonPath("$.festival.name")
+                .isEqualTo("Gartenwoche Nord")
+            get("/events?festival=gartenwoche-nord")
+                .jsonPath("$.totalElements")
+                .isEqualTo(1)
+                .jsonPath("$.content[0].festival.slug")
+                .isEqualTo("gartenwoche-nord")
             // On the calendar it is present on its middle day, which is not its event_date.
             val middle = today.plusDays(11)
             get("/events/calendar?from=$middle&to=$middle")

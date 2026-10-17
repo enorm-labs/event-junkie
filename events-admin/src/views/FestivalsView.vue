@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Check, Pencil, Plus, Trash2, X } from '@lucide/vue'
 import { onMounted, ref, shallowRef } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import { deleteFestival, type Festival, fetchFestivals } from '@/api/festivals'
 import FestivalForm from '@/components/FestivalForm.vue'
@@ -116,6 +117,7 @@ async function remove(festival: Festival) {
           <TableRow>
             <TableHead>Festival</TableHead>
             <TableHead>Days</TableHead>
+            <TableHead class="text-right">Events</TableHead>
             <TableHead><span class="sr-only">Actions</span></TableHead>
           </TableRow>
         </TableHeader>
@@ -134,6 +136,17 @@ async function remove(festival: Festival) {
             <TableCell class="font-mono text-xs whitespace-normal">
               {{ festival.firstDay
               }}{{ festival.lastDay === festival.firstDay ? '' : ` – ${festival.lastDay}` }}
+            </TableCell>
+            <TableCell class="text-right tabular-nums">
+              <!-- Past events too, so the list holds what the count says. -->
+              <RouterLink
+                :aria-label="`${festival.eventCount} events of ${festival.name}`"
+                :to="{ path: '/events', query: { festival: String(festival.id), past: '1' } }"
+                class="underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                data-testid="festival-event-count"
+              >
+                {{ festival.eventCount ?? 0 }}
+              </RouterLink>
             </TableCell>
             <TableCell class="text-right whitespace-nowrap">
               <div class="flex justify-end gap-2">
@@ -158,7 +171,7 @@ async function remove(festival: Festival) {
             </TableCell>
           </TableRow>
           <TableRow v-if="!festivals.length">
-            <TableCell class="h-24 text-center" colspan="3">No festival yet.</TableCell>
+            <TableCell class="h-24 text-center" colspan="4">No festival yet.</TableCell>
           </TableRow>
         </TableBody>
       </Table>

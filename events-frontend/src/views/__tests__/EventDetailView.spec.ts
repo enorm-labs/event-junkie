@@ -79,6 +79,25 @@ function hrefOf(view: VueWrapper, text: string): string | undefined {
 }
 
 describe('EventDetailView', () => {
+  it('links the festival to its events in both locales, and shows nothing without one (#3273)', async () => {
+    const festival = { slug: 'fete-de-la-musique-2027', name: 'Fête de la Musique 2027' }
+    const plain = await mountEvent(night)
+    expect(plain.find('[data-testid="festival-link"]').exists()).toBe(false)
+    plain.unmount()
+
+    const en = await mountEvent({ ...night, festival })
+    const link = en.get('[data-testid="festival-link"]')
+    expect(link.text()).toBe('Fête de la Musique 2027')
+    expect(link.attributes('href')).toBe('/en/events?festival=fete-de-la-musique-2027')
+    expect(link.attributes('aria-label')).toBe('All events of Fête de la Musique 2027')
+    en.unmount()
+
+    const de = await mountEvent({ ...night, festival }, 'de')
+    expect(de.get('[data-testid="festival-link"]').attributes('href')).toBe(
+      '/de/events?festival=fete-de-la-musique-2027',
+    )
+  })
+
   it('tags the ticket and source links as referrals from this site (#2770)', async () => {
     const view = await mountEvent(night)
 

@@ -20,4 +20,7 @@ interface FestivalRepository : CoroutineCrudRepository<FestivalEntity, Long> {
         horizon: LocalDate,
         limit: Int
     ): Flow<FestivalEntity>
+
+    /** Batch-fetches the festivals of a page of events. */
+    fun findByIdIn(ids: Collection<Long>): Flow<FestivalEntity>
 }

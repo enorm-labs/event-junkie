@@ -442,10 +442,11 @@ describe('EventCard', () => {
     // A pill on the poster box, beside the image rather than inside it, so it keeps its colour
     // while the image is grey. It stays inside the link, so the link's name still says it.
     const poster = lead.get('a > div.relative')
-    const pill = poster.get('span.absolute.bg-primary')
+    const corner = poster.get('div.absolute')
+    expect(corner.classes()).toEqual(expect.arrayContaining(['absolute', 'top-3', 'left-3']))
+    expect(corner.classes()).not.toContain('grayscale')
+    const pill = corner.get('span.bg-primary')
     expect(pill.text()).toBe('Our pick')
-    expect(pill.classes()).toEqual(expect.arrayContaining(['absolute', 'top-3', 'left-3']))
-    expect(pill.classes()).not.toContain('grayscale')
     expect(pill.get('svg').attributes('aria-hidden')).toBe('true')
     expect(card.find('span.absolute.bg-primary').exists()).toBe(false)
   })
@@ -454,5 +455,20 @@ describe('EventCard', () => {
     const wrapper = mount(EventCard, { props: { event, lead: true }, global: { stubs } })
 
     expect(wrapper.get('[aria-hidden="true"]').classes()).toContain('aspect-lead')
+  })
+
+  it('names the festival on the poster, beside the lead pill, and nothing without one (#3273)', () => {
+    const festival = { slug: 'fete-de-la-musique-2027', name: 'Fête de la Musique 2027' }
+    const plain = mount(EventCard, { props: { event }, global: { stubs } })
+    expect(plain.find('[data-testid="festival-badge"]').exists()).toBe(false)
+
+    const linked = mount(EventCard, {
+      props: { event: { ...event, festival }, lead: true },
+      global: { stubs },
+    })
+    const badge = linked.get('[data-testid="festival-badge"]')
+    expect(badge.text()).toBe('Fête de la Musique 2027')
+    expect(badge.attributes('title')).toBe('Part of Fête de la Musique 2027')
+    expect(linked.text()).toContain('Our pick')
   })
 })

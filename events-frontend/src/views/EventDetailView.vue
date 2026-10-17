@@ -311,6 +311,17 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
         <!-- Two lines of one block, when and where then what kind: closer than the header's stride. -->
+        <!-- A filter link on a detail page, so a pill (design.instructions.md §1, #3273). -->
+        <p v-if="event.festival?.slug">
+          <RouterLink
+            :aria-label="t('events.detail.festivalEvents', { name: event.festival.name })"
+            :to="{ path: localePath('/events'), query: { festival: event.festival.slug } }"
+            class="inline-flex max-w-full rounded-full transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            data-testid="festival-link"
+          >
+            <BaseBadge class="truncate" variant="outline">{{ event.festival.name }}</BaseBadge>
+          </RouterLink>
+        </p>
         <div class="space-y-1">
           <EventMetaLine :items="metaItems" />
           <EventMetaLine

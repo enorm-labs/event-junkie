@@ -1,4 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Festival } from '@/api/festivals'
@@ -16,6 +16,7 @@ function festival(id: number, name: string, firstDay: string, lastDay = firstDay
     noticeEn: `${name} in English.`,
     createdAt: null,
     updatedAt: null,
+    eventCount: id * 3,
   }
 }
 
@@ -67,7 +68,10 @@ afterEach(() => {
 })
 
 async function mountView() {
-  const wrapper = mount(FestivalsView, { attachTo: document.body })
+  const wrapper = mount(FestivalsView, {
+    attachTo: document.body,
+    global: { stubs: { RouterLink: RouterLinkStub } },
+  })
   await flushPromises()
   return wrapper
 }
@@ -232,5 +236,19 @@ describe('FestivalsView', () => {
     expect(path).toBe('/api/admin/festivals/1')
     expect(init?.method).toBe('DELETE')
     expect(names()).toEqual(['Tag der Clubkultur 2026'])
+  })
+})
+
+describe('FestivalsView event count (#3273)', () => {
+  it("links each festival's count to its events on the Events page, past ones included", async () => {
+    const wrapper = await mountView()
+
+    const links = wrapper.findAllComponents(RouterLinkStub)
+    expect(links.map((link) => link.text())).toEqual(['6', '3'])
+    expect(links[0]!.props('to')).toEqual({
+      path: '/events',
+      query: { festival: '2', past: '1' },
+    })
+    expect(links[0]!.attributes('aria-label')).toBe('6 events of Tag der Clubkultur 2026')
   })
 })

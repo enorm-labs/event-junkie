@@ -21,14 +21,22 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
     formatPartyFeature,
   } = useFormat()
 
-  function filterLabels(filters: EventFilterValues): string[] {
+  /** [festivals] name the `festival` filter's slug when one of them has it; else the slug stands in. */
+  function filterLabels(
+    filters: EventFilterValues,
+    festivals: { slug?: string; name?: string }[] = [],
+  ): string[] {
     const tags = lists.genres.data.value ?? []
     const style =
       filters.genre && (tags.find((tag) => tag.slug === filters.genre)?.name ?? filters.genre)
     const venue =
       filters.venue &&
       ((lists.venues.data.value ?? []).find((v) => v.slug === filters.venue)?.name ?? filters.venue)
+    const festivalName =
+      filters.festival &&
+      (festivals.find((f) => f.slug === filters.festival)?.name || filters.festival)
     return [
+      festivalName,
       ...(filters.eventType ?? []).map((type) => formatEventType(type)),
       ...(filters.language ?? []).map((code) => formatSpokenLanguage([code])),
       ...(filters.timeOfDay ?? []).map((slot) => formatTimeOfDay(slot).replace(/\s*\(.*\)$/, '')),

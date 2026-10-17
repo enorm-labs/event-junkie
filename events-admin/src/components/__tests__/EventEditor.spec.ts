@@ -12,6 +12,7 @@ import type {
   updateEvent,
 } from '@/api/events'
 import { PARTY_FEATURES } from '@/api/events'
+import type { Festival, fetchFestivals } from '@/api/festivals'
 import type { fetchNames, NamedRow, searchByName } from '@/api/names'
 import EventEditor from '@/components/EventEditor.vue'
 
@@ -88,7 +89,43 @@ vi.mock('@/api/names', async (original) => ({
   ...names,
 }))
 
-async function mountEditor(event: AdminEvent = stored, features: EventFeatures = noFeatures) {
+function festival(id: number, name: string, firstDay: string, lastDay = firstDay): Festival {
+  return {
+    id,
+    name,
+    slug: `festival-${id}`,
+    url: 'https://festival.example/',
+    firstDay,
+    lastDay,
+    noticeDe: 'De.',
+    noticeEn: 'En.',
+    createdAt: null,
+    updatedAt: null,
+    eventCount: 0,
+  }
+}
+
+const festivalApi = vi.hoisted(() => ({ fetchFestivals: vi.fn<typeof fetchFestivals>() }))
+
+vi.mock('@/api/festivals', async (original) => ({
+  ...(await original<typeof import('@/api/festivals')>()),
+  ...festivalApi,
+}))
+
+/** The event is on 2026-09-12: the week holds it, the one-day festival is a day later. */
+const FESTIVALS = [
+  festival(1, 'Berlin Music Week', '2026-09-08', '2026-09-13'),
+  festival(2, 'Late Fest', '2026-09-13'),
+  festival(3, 'Opening Night', '2026-09-12'),
+]
+
+async function mountEditor(
+  event: AdminEvent = stored,
+  features: EventFeatures = noFeatures,
+  festivals: Festival[] | Error = FESTIVALS,
+) {
+  if (festivals instanceof Error) festivalApi.fetchFestivals.mockRejectedValue(festivals)
+  else festivalApi.fetchFestivals.mockResolvedValue(festivals)
   names.fetchNames.mockImplementation(
     async (kind, ids) =>
       new Map(ids.map((id) => [id, known[kind].find((row) => row.id === id) ?? null])),
@@ -498,5 +535,58 @@ describe('EventEditor', () => {
 
       expect(wrapper.emitted('close')).toHaveLength(1)
     })
+  })
+})
+
+describe('EventEditor festival (#3273)', () => {
+  const options = () =>
+    [...body().querySelectorAll<HTMLOptionElement>('select[name="festivalId"] option')].map(
+      (option) => option.textContent!.trim(),
+    )
+
+  async function choose(label: string) {
+    const select = body().querySelector<HTMLSelectElement>('select[name="festivalId"]')!
+    const option = [...select.options].find((candidate) => candidate.textContent!.trim() === label)!
+    select.value = option.value
+    option.selected = true
+    select.dispatchEvent(new Event('change'))
+    await flushPromises()
+  }
+
+  it('offers none and only the festivals whose days include the event date', async () => {
+    await mountEditor()
+    expect(options()).toEqual(['None', 'Berlin Music Week', 'Opening Night'])
+  })
+
+  it('keeps offering a stored festival whose days no longer include the date', async () => {
+    await mountEditor({ ...stored, festivalId: 2 })
+    expect(options()).toEqual(['None', 'Berlin Music Week', 'Opening Night', 'Late Fest'])
+    expect(body().querySelector<HTMLSelectElement>('select[name="festivalId"]')!.value).not.toBe('')
+  })
+
+  it('sends the chosen festival, and null to clear it', async () => {
+    api.updateEvent.mockImplementation(async (_, request) => ({
+      ...stored,
+      festivalId: request.festivalId ?? null,
+    }))
+    await mountEditor()
+
+    await choose('Opening Night')
+    await submit()
+    expect(api.updateEvent.mock.calls[0]![1].festivalId).toBe(3)
+
+    await choose('None')
+    await submit()
+    expect(api.updateEvent.mock.calls[1]![1]).toHaveProperty('festivalId', null)
+  })
+
+  it('leaves the festival out of the body when the festivals did not load, so the link stays', async () => {
+    api.updateEvent.mockResolvedValue(stored)
+    await mountEditor({ ...stored, festivalId: 1 }, noFeatures, new Error('HTTP 500'))
+
+    expect(body().querySelector('select[name="festivalId"]')).toBeNull()
+    expect(body().textContent).toContain('HTTP 500')
+    await submit()
+    expect(api.updateEvent.mock.calls[0]![1]).not.toHaveProperty('festivalId')
   })
 })

@@ -86,6 +86,8 @@ data class EventEntity(
     val contentChangedAt: Instant? = null,
     /** Until when an operator features the event on the events list (#1262); null when not. An import keeps it. */
     val featuredUntil: Instant? = null,
+    /** The festival an operator linked the event to (#3273); null when none. An import keeps it. */
+    val festivalId: Long? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 )

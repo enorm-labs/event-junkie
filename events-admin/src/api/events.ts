@@ -64,6 +64,8 @@ export interface AdminEvent {
   artists: EventArtist[]
   promoterIds: number[]
   pinnedFields: string[]
+  /** The festival an operator linked the event to (#3273), or null. */
+  festivalId?: number | null
 }
 
 /** `EventRequest`: the body of a POST or a PUT. */
@@ -91,6 +93,8 @@ export interface EventRequest {
   free: boolean
   artists: EventArtist[]
   promoterIds: number[]
+  /** Left out, the importer keeps the stored festival; null clears it (#3273). */
+  festivalId?: number | null
 }
 
 /** The fields this app edits. Every other field goes back as it was read. */
@@ -106,6 +110,8 @@ export interface EventEdit {
   artists?: EventArtist[]
   /** The promoters to save. Left out, the stored promoters go back. */
   promoterIds?: number[]
+  /** The festival to link, or null for none. Left out, the body omits it and the link stays. */
+  festivalId?: number | null
 }
 
 /**
@@ -144,6 +150,7 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
       stage,
     })),
     promoterIds: edit.promoterIds ?? event.promoterIds,
+    ...(edit.festivalId === undefined ? {} : { festivalId: edit.festivalId }),
   }
 }
 
@@ -447,6 +454,8 @@ export interface EventSearch {
   venueId: number | null
   /** The first `eventDate` (`yyyy-MM-dd`) to list, or null for past events too. */
   from: string | null
+  /** Only the events linked to this festival, or null for any (#3273). */
+  festivalId?: number | null
   page: number
 }
 
@@ -466,6 +475,7 @@ export function eventSearchUrl(search: EventSearch): string {
   if (title) params.set('q', title)
   if (search.venueId !== null) params.set('venueId', String(search.venueId))
   if (search.from) params.set('from', search.from)
+  if (search.festivalId != null) params.set('festivalId', String(search.festivalId))
   params.set('page', String(search.page))
   params.set('size', String(SEARCH_PAGE_SIZE))
   const direction = search.from ? 'asc' : 'desc'

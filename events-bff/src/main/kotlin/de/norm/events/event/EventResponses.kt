@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.artist.ArtistSummaryResponse
 import de.norm.events.common.AssumedStartTime
 import de.norm.events.common.PageResponse
+import de.norm.events.festival.FestivalSummaryResponse
 import de.norm.events.genretag.GenreTagOrigin
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
@@ -81,7 +82,9 @@ data class EventSummaryResponse(
     @Schema(description = "Artist names in billing order (headliner first)", example = "[\"The Adicts\", \"Maid Of Ace\"]")
     val artistNames: List<String>,
     @Schema(description = "Normalized genre tags", example = "[\"Punk\"]")
-    val genreTags: List<String>
+    val genreTags: List<String>,
+    @Schema(description = FESTIVAL_DESCRIPTION)
+    val festival: FestivalSummaryResponse? = null
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -91,7 +94,8 @@ data class EventSummaryResponse(
             artistNames: List<String>,
             genreTags: List<String>,
             image: ServedImage,
-            imageWithheld: Boolean
+            imageWithheld: Boolean,
+            festival: FestivalSummaryResponse? = null
         ): EventSummaryResponse =
             EventSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -122,7 +126,8 @@ data class EventSummaryResponse(
                 free = entity.free,
                 venue = venue,
                 artistNames = artistNames,
-                genreTags = genreTags
+                genreTags = genreTags,
+                festival = festival
             )
     }
 }
@@ -305,7 +310,9 @@ data class EventDetailResponse(
             "For a POSTPONED event, the one later SCHEDULED event at the same venue with the same act or title. Null for every " +
                 "other status, and when no event or more than one matches."
     )
-    val postponedTo: PostponedToResponse? = null
+    val postponedTo: PostponedToResponse? = null,
+    @Schema(description = FESTIVAL_DESCRIPTION)
+    val festival: FestivalSummaryResponse? = null
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -322,7 +329,8 @@ data class EventDetailResponse(
             enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
             changes: List<EventChangeResponse> = emptyList(),
             postponedTo: PostponedToResponse? = null,
-            derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap()
+            derivedGenreTags: Map<String, GenreTagOrigin> = emptyMap(),
+            festival: FestivalSummaryResponse? = null
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -371,7 +379,8 @@ data class EventDetailResponse(
                 enrichmentSources = enrichmentSources,
                 features = features,
                 changes = changes,
-                postponedTo = postponedTo
+                postponedTo = postponedTo,
+                festival = festival
             )
     }
 }
@@ -439,6 +448,8 @@ data class LineupEntryResponse(
 
 // The descriptions the summary and the detail response both carry, each stating a rule a client
 // acts on. Written once, so a correction cannot reach one response and miss the other.
+private const val FESTIVAL_DESCRIPTION =
+    "The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter"
 private const val CHANGES_DESCRIPTION =
     "What moved on the event in the last 14 days, newest first: its date, start, end, status or venue. " +
         "Empty for a new event and for one that has not moved."

@@ -73,7 +73,9 @@ data class EventFilterParams(
             "Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every " +
                 "given feature matches. The venue's character tags do not count. An unknown feature matches nothing."
     )
-    val feature: List<String>? = null
+    val feature: List<String>? = null,
+    @field:Parameter(description = "Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing.")
+    val festival: String? = null
 ) {
     /**
      * Combines these criteria with an optional date range into the repository-level [EventFilter].
@@ -105,7 +107,8 @@ data class EventFilterParams(
             onlyFree = free,
             timesOfDay = timeOfDay.orEmpty().map { it.lowercase() }.normalizedSlugs(),
             spokenLanguages = language.orEmpty().map { it.lowercase() }.normalizedSlugs(),
-            features = feature.orEmpty().map { it.lowercase() }.normalizedSlugs()
+            features = feature.orEmpty().map { it.lowercase() }.normalizedSlugs(),
+            festivalSlug = festival?.trim()?.takeIf { it.isNotEmpty() }
         )
 }
 
