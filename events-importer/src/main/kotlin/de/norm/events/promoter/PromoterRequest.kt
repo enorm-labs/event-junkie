@@ -2,6 +2,11 @@ package de.norm.events.promoter
 
 import de.norm.events.common.AttributableImage
 import de.norm.events.common.AttributedImage
+import de.norm.events.common.IMAGE_ATTRIBUTION_DESCRIPTION
+import de.norm.events.common.IMAGE_ATTRIBUTION_MAX_LENGTH
+import de.norm.events.common.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_LICENCE_ID_MAX_LENGTH
+import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -29,15 +34,15 @@ data class PromoterRequest(
     @field:Size(max = 2048, message = "Image URL must not exceed 2048 characters")
     @Schema(description = "URL of the promoter's logo image", example = "https://example.com/36-concerts-logo.jpg")
     override val imageUrl: String? = null,
-    @field:Size(max = 500, message = "Image attribution must not exceed 500 characters")
-    @Schema(description = "Who to credit for `imageUrl`, worded as the archive publishes it", example = "Photographer Name, via Wikimedia Commons")
+    @field:Size(max = IMAGE_ATTRIBUTION_MAX_LENGTH, message = "Image attribution must not exceed 500 characters")
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
     override val imageAttribution: String? = null,
-    @field:Size(max = 40, message = "Image licence identifier must not exceed 40 characters")
-    @Schema(description = "SPDX identifier of the licence `imageUrl` is published under", example = "CC-BY-SA-4.0")
+    @field:Size(max = IMAGE_LICENCE_ID_MAX_LENGTH, message = "Image licence identifier must not exceed 40 characters")
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
     override val imageLicenceId: String? = null,
     @field:Size(max = 2048, message = "Image source URL must not exceed 2048 characters")
     @Schema(
-        description = "The image's description page, which the rendered credit links to",
+        description = IMAGE_SOURCE_URL_DESCRIPTION,
         example = "https://commons.wikimedia.org/wiki/File:Example.jpg"
     )
     override val imageSourceUrl: String? = null,

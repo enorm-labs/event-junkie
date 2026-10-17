@@ -6,6 +6,12 @@ import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
+/** Longest image credit a request may carry. */
+const val IMAGE_ATTRIBUTION_MAX_LENGTH = 500
+
+/** Longest image licence identifier a request may carry. */
+const val IMAGE_LICENCE_ID_MAX_LENGTH = 40
+
 /**
  * A request that can carry an image, and must credit it.
  *
