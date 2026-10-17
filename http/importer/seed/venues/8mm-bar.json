@@ -14,8 +14,16 @@
         "descriptionAlt": "Die DIY-Musikbar an der Schönhauser Allee entstand 2002 aus der Punk-Szene, gehört seit 2014 mehrheitlich langjährigen Mitarbeitenden und überlässt Bands die gesamten Eintrittseinnahmen; Livekonzerte und Barbetrieb täglich bis 4 Uhr.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "live-venue"],
-        "programmeUrl": "https://www.8mmbar.de/program",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "8MM Bar",
+            "url": "https://www.8mmbar.de/program",
+            "sourceType": "EIGHT_MM",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
