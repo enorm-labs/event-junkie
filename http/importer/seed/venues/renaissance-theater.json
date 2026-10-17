@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "Renaissance-Theater",
+        "address": "Knesebeckstr. 100",
+        "city": "Berlin",
+        "postalCode": "10623",
+        "district": "charlottenburg",
+        "latitude": 52.510338,
+        "longitude": 13.323503,
+        "websiteUrl": "https://renaissance-theater.de/",
+        "description": "Europe's only fully preserved Art Deco theatre, opened in 1922 in Charlottenburg and run without a fixed ensemble: contemporary drama and music theatre in the main hall, readings and literary matinees in the Bruckner-Foyer.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Europas einziges vollständig erhaltenes Art-déco-Theater, 1922 in Charlottenburg eröffnet und ohne festes Ensemble geführt: Gegenwartsdramatik und Musiktheater im Saal, Lesungen und literarische Matineen im Bruckner-Foyer.",
+        "descriptionAltLanguage": "de",
+        "capacity": 545,
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Renaissance-Theater",
+            "url": "https://renaissance-theater.de/spielplan/",
+            "sourceType": "RENAISSANCE_THEATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

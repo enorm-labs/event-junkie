@@ -17,7 +17,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    `PROHIBITED`, and a person confirmed it. **Speakeazy was read on the same day**, for its importer. It is
    `PROHIBITED` as well, and a person confirmed it. **Surprise Club was read on 2026-10-17**, for its importer. It is
    `PROHIBITED`, and a person confirmed it. **Volksbühne Berlin and Volksbühne Prater were read on the
-   same day**, for their importer. They share one imprint. Both are `PROHIBITED`, and a person confirmed it.
+   same day**, for their importer. They share one imprint. Both are `PROHIBITED`, and a person confirmed it. **Renaissance-Theater was read on the same day**, for its importer.
+   It is `PROHIBITED`, and a person confirmed it.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,
@@ -25,7 +26,7 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    it with its review. §7 gives the rule.
 3. **The standard German copyright boilerplate is `UNCLEAR`, not `PROHIBITED`.** §2 says why, and it
    decides most of the corpus.
-4. **The six prohibitions are venues whose own wording names texts and images**, without the
+4. **The seven prohibitions are venues whose own wording names texts and images**, without the
    statutory carve-out the boilerplate carries.
 5. **This file is evidence, not a decision.** The display rule lives in
    [SCRAPING_POSITION.md](../SCRAPING_POSITION.md) §3.1.
@@ -81,9 +82,9 @@ Most German venue sites carry a version of this, usually from the e-recht24 Impr
 **An agent may set `UNCLEAR`. A person confirms `PERMITTED` and `PROHIBITED`.** One removes material
 from the site. The other is a claim we would rely on if a venue ever asked.
 
-## 4. The six prohibitions
+## 4. The seven prohibitions
 
-All six name texts **and** image material, and none carries the statutory carve-out.
+All seven name texts **and** image material, and none carries the statutory carve-out.
 
 **Der Weiße Hase**, <https://derweissehase.club/impressum>:
 
@@ -126,11 +127,19 @@ All six name texts **and** image material, and none carries the statutory carve-
 > bzw. Wiedergabe von Inhalten in Datenbanken oder anderen elektronischen Medien und Systemen ohne vorherige
 > Zustimmung der Volksbühne nicht gestattet.
 
+**Renaissance-Theater**, <https://renaissance-theater.de/impressum/>:
+
+<!-- ste-lint: allow verbatim quotation of the venue's own wording, which is the evidence for a PROHIBITED verdict -->
+
+> Das Layout der Homepage, die verwendeten Grafiken und Fotos sowie die einzelnen Beiträge sind
+> urheberrechtlich geschützt. Alles unterliegt dem Urheberrecht und darf nur nach schriftlicher Genehmigung
+> des Theaters außerhalb dieser Homepage genutzt werden.
+
 **The caveat belongs here rather than nowhere.** The first two are near-identical, so they are probably a
 second and older template rather than anything bespoke. They are stronger than the e-recht24 text.
 PANDA platforma's text is a different template, and it names any use, not only copying. Speakeazy's
 is an older disclaimer template that names graphics and texts. Surprise Club's bans any reproduction of the whole
-site or its parts, in any medium. The Volksbühne's also names storage in databases. None of the six is a venue that wrote
+site or its parts, in any medium. The Volksbühne's also names storage in databases. The Renaissance-Theater's requires written permission for any use outside the site. None of the seven is a venue that wrote
 a rule about us.
 
 ## 5. Three near-misses, so nobody re-checks them

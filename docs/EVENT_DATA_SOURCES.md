@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   180 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     6 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   181 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
@@ -164,6 +164,7 @@ schema change.
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |
 | Quasimodo                        | https://quasimodo.club/events                                            | Club         | Events-Manager; .club domain; genre tags + prices         |
 | Quatsch Comedy Club              | https://quatsch-comedy-club.de/tickets/                                  | Comedy Club  | Eventim calendar plugin; one admin-ajax POST per day      |
+| Renaissance-Theater              | https://renaissance-theater.de/spielplan/                                | Theater      | WordPress theme; year from weekday; play pages            |
 | Renate                           | https://www.renate.cc/                                                   | Techno Club  | Homepage programme; per-floor lineups and opening times   |
 | Richten25                        | https://richten25.de/events                                              | Other        | Hostinger; HTML embed in Astro props; lineups only        |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                                     | Techno Club  | Modus codebase, own template; stale slug dates            |
@@ -221,7 +222,7 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-179 importer classes cover 180 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+180 importer classes cover 181 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Eight other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -243,7 +244,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-62 sources have a second language, 114 have none, and 4 are unknown. Fourteen translate the event text on a second page.
+62 sources have a second language, 115 have none, and 4 are unknown. Fourteen translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -393,6 +394,7 @@ the upsert stores none.
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |
 | Quasimodo                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://quasimodo.club/en/events                                                                                                   |
 | Quatsch Comedy Club              | No              | —                                                            | —                  |                                                                                                                                    |
+| Renaissance-Theater              | No              | —                                                            | —                  |                                                                                                                                    |
 | Renate                           | No              | —                                                            | —                  |                                                                                                                                    |
 | Richten25                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Ritter Butzke                    | No              | —                                                            | —                  |                                                                                                                                    |
@@ -468,14 +470,13 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name                | URL                                                | Type    | Priority | Comment                                                   |
-| ------------------- | -------------------------------------------------- | ------- | -------- | --------------------------------------------------------- |
-| Little Stage Bar    | https://littlestageclubneukoelln.wordpress.com/    | Bar     | Low      | WordPress.com posts; date and time only in the prose      |
-| Renaissance-Theater | https://renaissance-theater.de/spielplan/          | Theater | Low      | Day blocks under month headings; plays only               |
-| KuBiZ               | https://www.kubiz-wallenberg.de/                   | Other   | Low      | WordPress posts; date in the title; jazz about monthly    |
-| Villa Kuriosum      | https://www.villakuriosum.net/veranstaltungen/     | Other   | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
-| Promenaden Eck      | https://promenaden-eck-berlin.de/                  | Bar     | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
-| Backsteinboot       | https://backsteinboot.org/program-(landing-page)-1 | Club    | Low      | Cargo; month in HTML; mostly workshops and talks          |
+| Name             | URL                                                | Type  | Priority | Comment                                                   |
+| ---------------- | -------------------------------------------------- | ----- | -------- | --------------------------------------------------------- |
+| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose      |
+| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly    |
+| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
+| Promenaden Eck   | https://promenaden-eck-berlin.de/                  | Bar   | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
+| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks          |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
