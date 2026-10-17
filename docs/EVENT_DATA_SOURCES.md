@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   162 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    23 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   163 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    22 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   129 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -192,6 +192,7 @@ schema change.
 | VOID Club                        | https://www.void-club.de/                                                | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms          |
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
 | Weekend                          | https://www.weekendclub.berlin/upcoming                                  | Club         | Squarespace list; Xceed tickets; DJs from blurb           |
+| Weltwirtschaft                   | https://weltwirtschaft.berlin/                                           | Bar          | TEC REST API; closure notices dropped                     |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
 | Zebrano-Theater                  | https://www.zebrano-theater.de/programm.html                             | Theater      | Hand-written month tables + event pages                   |
@@ -203,7 +204,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-161 importer classes cover 162 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+162 importer classes cover 163 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -225,7 +226,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-57 sources have a second language, 101 have none, and 4 are unknown. Twelve translate the event text on a second page.
+58 sources have a second language, 101 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -403,6 +404,7 @@ the upsert stores none.
 | VOID Club                        | Yes             | One field, in the club text only                             | Not on the listing | https://www.void-club.de/                                                                                                          |
 | WABE                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Weekend                          | No              | —                                                            | —                  |                                                                                                                                    |
+| Weltwirtschaft                   | Yes             | `/en/` site pages; events in German only                     | Not on the listing | https://weltwirtschaft.berlin/en/restaurant-2/                                                                                     |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
 | YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
 | Zebrano-Theater                  | No              | —                                                            | —                  |                                                                                                                                    |
@@ -434,7 +436,6 @@ least as heavily as an RA count when the next batch is prioritised.
 
 | Name                     | URL                                                       | Type         | Priority | Comment                                                    |
 | ------------------------ | --------------------------------------------------------- | ------------ | -------- | ---------------------------------------------------------- |
-| Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices      |
 | Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops   |
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose       |
 | Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`          |
@@ -458,8 +459,8 @@ least as heavily as an RA count when the next batch is prioritised.
 | Pastiche                 | https://pasticheinternational.com/programme-1             | Bar          | Low      | Cargo; one month table in the HTML, no year                |
 | 8MM                      | https://www.8mmbar.de/program                             | Bar          | Low      | Squarespace list in HTML; the JSON feed is robots-barred   |
 
-**The 7 rows from Soulcat to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
-on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
+**The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
+seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
 **The 11 rows from Labsaal to ZK/U were opened on 2026-10-04.** The first 9 came from the

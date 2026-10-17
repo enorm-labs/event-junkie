@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "open-air"],
         "capacity": 300,
-        "programmeUrl": "https://weltwirtschaft.berlin/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Weltwirtschaft",
+            "url": "https://weltwirtschaft.berlin/wp-json/tribe/events/v1/events",
+            "sourceType": "WELTWIRTSCHAFT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
