@@ -1,14 +1,16 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
+import java.time.LocalDate
 
 /**
- * A venue we know but do not import (#2766): no `event_source` row points at it. The list and the detail say so, the filter
- * splits on it, and the detail carries the programme link. When an importer lands, the source row flips it with no data change.
+ * A venue we know but do not import (#2766): no `event_source` row points at it and it has no upcoming event. The list and the
+ * detail say so, the filter splits on it, and the detail carries the programme link. A source row or an upcoming event flips it.
  */
 class VenueImportedTest : BaseControllerTest() {
     private var hinterhofId = 0L
@@ -88,6 +90,30 @@ class VenueImportedTest : BaseControllerTest() {
 
             expectSlugs("/venues?imported=false")
             expectSlugs("/venues?imported=true", "astra", "hinterhof-bar")
+        }
+
+    @Test
+    fun `a past event leaves a venue without a source not imported`(): Unit =
+        runBlocking {
+            insertEvent(hinterhofId, "Last month", "last-month", LocalDate.now(ClockConfiguration.BERLIN).minusDays(30))
+
+            expectSlugs("/venues?imported=false", "hinterhof-bar")
+        }
+
+    @Test
+    fun `an upcoming event makes a venue without a source imported`(): Unit =
+        runBlocking {
+            insertEvent(hinterhofId, "Next week", "next-week", LocalDate.now(ClockConfiguration.BERLIN).plusDays(7))
+
+            expectSlugs("/venues?imported=false")
+            expectSlugs("/venues?imported=true", "astra", "hinterhof-bar")
+            webTestClient
+                .get()
+                .uri("/venues/hinterhof-bar")
+                .exchange()
+                .expectBody()
+                .jsonPath("$.imported")
+                .isEqualTo(true)
         }
 
     private fun expectSlugs(

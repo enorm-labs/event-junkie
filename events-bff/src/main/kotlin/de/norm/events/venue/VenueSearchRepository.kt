@@ -137,7 +137,7 @@ class VenueSearchRepository(
                 filter.query?.let { TextSearch.predicate("v.name", it, bySimilarity) },
                 "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() },
                 CHARACTER_FILTER.takeIf { filter.characters.isNotEmpty() },
-                filter.imported?.let { if (it) "EXISTS ($HAS_SOURCE)" else "NOT EXISTS ($HAS_SOURCE)" },
+                filter.imported?.let { if (it) IMPORTED else "NOT $IMPORTED" },
                 if (filter.closed) CLOSED else "NOT $CLOSED"
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
@@ -177,7 +177,7 @@ class VenueSearchRepository(
         val rows =
             databaseClient
                 .sql(
-                    "SELECT v.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30, EXISTS ($HAS_SOURCE) AS imported " +
+                    "SELECT v.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30, $IMPORTED AS imported " +
                         "FROM $EVENTS_SCHEMA.venue v $where " +
                         "${order.clause(pageable, filter.query, bySimilarity)} LIMIT :limit OFFSET :offset"
                 ).bindAll(params + NextThirtyDays.params(now))
@@ -199,8 +199,13 @@ class VenueSearchRepository(
     }
 
     companion object {
-        /** A venue is imported while an `event_source` row points at it; there is no column for it (#2766). */
-        private const val HAS_SOURCE = "SELECT 1 FROM $EVENTS_SCHEMA.event_source s WHERE s.venue_id = v.id"
+        /**
+         * A venue is imported while an `event_source` row points at it or it has an event from today on; there is no column for
+         * it (#2766). The second half counts a venue whose events come from Instagram drafts or a hand edit (ADR-048).
+         */
+        private const val IMPORTED =
+            "(EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source s WHERE s.venue_id = v.id) " +
+                "OR EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id AND e.event_date >= :openOn))"
 
         /** `closed_on` is the last day open, so the venue is closed once today is past it. */
         private const val CLOSED = "(v.closed_on IS NOT NULL AND v.closed_on < :openOn)"

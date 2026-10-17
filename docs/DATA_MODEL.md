@@ -272,9 +272,10 @@ when the venue does not publish a figure. `VenueProgrammeStore` writes the two `
 the venue, and `VenueProgrammeSweep` writes them for every venue each night. Do not write them by hand: the next pass
 overwrites them.
 
-**A venue without an `event_source` row is one we know but do not import (#2766).** No column says so: the BFF derives
-`imported` from the source rows, so the state changes when an importer lands. Such a venue has no events. Its page links
-to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
+**A venue with no `event_source` row and no event from today on is one we know but do not import (#2766).** No column
+says so. The BFF derives `imported` from the source rows and the upcoming events. The state changes when an importer
+lands, or when an Instagram draft or a hand edit adds an event (ADR-048). Such a venue has no upcoming events. Its page
+links to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
 venue's facts. An import never sets it. The site check in `venue_site_check` reads it.
 
 **A venue that closes for good keeps its row (ADR-046).** A person sets `closed_on`, the last day the venue is open,

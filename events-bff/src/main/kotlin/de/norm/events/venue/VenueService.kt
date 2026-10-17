@@ -68,7 +68,7 @@ class VenueService(
         val entity = venueRepository.findBySlug(slug) ?: throw VenueNotFoundException(slug)
         val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         val tags = entity.id?.let { characterTagRepository.findByVenueIds(listOf(it))[it] }.orEmpty()
-        val imported = entity.id?.let { venueRepository.isImported(it) } ?: true
+        val imported = entity.id?.let { venueRepository.isImported(it, LocalDate.now(clock)) } ?: true
         return VenueDetailResponse.fromEntity(entity, image, tags.map { VenueCharacterTagResponse(it.tag, it.sourceUrl) }, imported)
     }
 
