@@ -571,6 +571,16 @@ says so.
 | `SPEICHES`             | `DOORS_TIME`       | the table prints one time per night                                                                                                              | —     |
 | `SPEICHES`             | `ARTISTS`          | the open stage and the radio broadcasts name no act in a form that can be read                                                                   | —     |
 | `SPEICHES`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `STUDIO_IIII`          | `SUBTITLE`         | each night has a date line, a title and a line-up, no second title line                                                                          | —     |
+| `STUDIO_IIII`          | `EVENT_TYPE`       | the site names no category per night                                                                                                             | —     |
+| `STUDIO_IIII`          | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `STUDIO_IIII`          | `TICKET_URL`       | the homepage links no ticket shop                                                                                                                | —     |
+| `STUDIO_IIII`          | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `STUDIO_IIII`          | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `STUDIO_IIII`          | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
+| `STUDIO_IIII`          | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `STUDIO_IIII`          | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `STUDIO_IIII`          | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the homepage                                                                      | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `SUPAMOLLY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

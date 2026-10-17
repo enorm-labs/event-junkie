@@ -9966,7 +9966,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Studio IIII — not imported
+# Studio IIII
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Studio IIII venue ---
@@ -9987,13 +9987,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein Kunst- und Social-Club an der Potsdamer Straße mit eigenem Residenzprogramm für Bewegtbild- und Lichtkunst, der Ausstellungen und Künstlergespräche mit audiovisuellen Live-Acts und DJ-Nächten von Donnerstag bis Samstag verbindet.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "bar", "gallery"],
-    "programmeUrl": "https://studioiiii.de/index#programme",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_studio_iiii", response.body.id);
     client.test("Studio IIII venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Studio IIII event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_studio_iiii}},
+    "name": "Studio IIII",
+    "url": "https://studioiiii.de/",
+    "sourceType": "STUDIO_IIII",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Studio IIII event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Studio IIII import ---
+POST {{importer-host}}/api/admin/event-sources/studio-iiii/import
+Accept: application/json
+
+> {%
+    client.test("Studio IIII import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
