@@ -1,5 +1,6 @@
 package de.norm.events.scraper.giri
 
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -42,6 +43,14 @@ class GiriProgrammePageScraperTest {
         october shouldHaveSize 5
         october.map { it.eventDate } shouldContainExactly listOf(21, 22, 23, 24, 28).map { LocalDate.of(2026, 10, it) }
         october.map { it.sourceId }.distinct() shouldHaveSize 5
+    }
+
+    @Test
+    fun `scrape reads the event key from the programme_event link the site uses since 2026-10`() {
+        val live = scrape("giri-overview-2026-10-17.html", octoberUrl)
+        live shouldHaveSize 5
+        live.map { it.eventDate } shouldContainExactly listOf(21, 22, 23, 24, 28).map { LocalDate.of(2026, 10, it) }
+        live.first().sourceId shouldBe "${EventSource.GIRI.sourceIdPrefix}f513b2e799a62e7115a31481"
     }
 
     @Test
