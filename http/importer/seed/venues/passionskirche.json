@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["live-venue"],
         "capacity": 720,
-        "programmeUrl": "https://halle-luja.berlin/kommende-events",
         "reviewedAt": "2026-10-07T12:38:29Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Passionskirche",
+            "url": "https://www.halle-luja.berlin/kommende-events",
+            "sourceType": "PASSIONSKIRCHE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

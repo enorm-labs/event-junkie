@@ -139,6 +139,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                |
 | Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`             |
 | ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course          |
+| Passionskirche      | `isOutOfScope` (`PassionskircheOverviewPageScraper.kt`)  | A caption or teaser that names a `Pop-up-Chor`, a sing-along, a `Gottesdienst` or an `Andacht` |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
