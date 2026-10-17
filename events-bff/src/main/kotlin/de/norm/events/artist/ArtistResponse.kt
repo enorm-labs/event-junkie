@@ -1,9 +1,9 @@
 package de.norm.events.artist
 
-import de.norm.events.image.IMAGE_ATTRIBUTION_DESCRIPTION
-import de.norm.events.image.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_ATTRIBUTION_DESCRIPTION
+import de.norm.events.common.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
 import de.norm.events.image.IMAGE_SOURCES_DESCRIPTION
-import de.norm.events.image.IMAGE_SOURCE_URL_DESCRIPTION
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse

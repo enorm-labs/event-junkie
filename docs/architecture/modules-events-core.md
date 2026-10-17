@@ -9,6 +9,7 @@ The application modules and the dependencies between them, as Spring Modulith re
 ```mermaid
 flowchart TD
     artist["artist"]
+    common["common"]
     event["event"]
     genretag["genretag"]
     licence["licence"]
