@@ -1,0 +1,123 @@
+### ============================================================
+### Admin: Festivals — CRUD lifecycle (#3272)
+###
+### A festival is one date range across many venues. The home
+### page announces up to 3 running today or starting within
+### 14 days (`GET /api/festivals/current` on the BFF). The slug
+### comes from the name.
+### ============================================================
+
+### List festivals — the latest first day first
+GET {{importer-host}}/api/admin/festivals
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("reports how much there is", function () {
+        client.assert(Array.isArray(response.body.content), "Expected a content array");
+        client.assert(typeof response.body.totalElements === "number", "Expected totalElements");
+    });
+%}
+
+### Create festival — Fête de la Musique 2027
+POST {{importer-host}}/api/admin/festivals
+Content-Type: application/json
+
+{
+    "name": "Fête de la Musique 2027",
+    "url": "https://www.fetedelamusique.de/",
+    "firstDay": "2027-06-21",
+    "lastDay": "2027-06-21",
+    "noticeDe": "Am längsten Tag des Jahres spielt Musik an hunderten Orten der Stadt, draußen und kostenlos.",
+    "noticeEn": "On the longest day of the year, music plays at hundreds of places across the city, outdoors and free."
+}
+
+> {%
+    client.global.set("festival_id", response.body.id);
+    client.test("status is 201 and the slug comes from the name", function () {
+        client.assert(response.status === 201, "Expected 201 Created");
+        client.assert(response.body.slug === "fete-de-la-musique-2027", "Unexpected slug " + response.body.slug);
+    });
+%}
+
+### Create festival — the same slug again is a 409
+POST {{importer-host}}/api/admin/festivals
+Content-Type: application/json
+
+{
+    "name": "Fete de la Musique 2027",
+    "url": "https://www.fetedelamusique.de/",
+    "firstDay": "2027-06-21",
+    "lastDay": "2027-06-21",
+    "noticeDe": "Doppelt.",
+    "noticeEn": "Twice."
+}
+
+> {%
+    client.test("status is 409", function () {
+        client.assert(response.status === 409, "Expected 409 but got " + response.status);
+    });
+%}
+
+### Create festival — a last day before the first day is a 400
+POST {{importer-host}}/api/admin/festivals
+Content-Type: application/json
+
+{
+    "name": "Backwards 2027",
+    "url": "https://example.com/",
+    "firstDay": "2027-06-21",
+    "lastDay": "2027-06-20",
+    "noticeDe": "Rückwärts.",
+    "noticeEn": "Backwards."
+}
+
+> {%
+    client.test("status is 400", function () {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+%}
+
+### Get festival by ID
+GET {{importer-host}}/api/admin/festivals/{{festival_id}}
+Accept: application/json
+
+### Replace festival — every field; a new name is a new slug
+PUT {{importer-host}}/api/admin/festivals/{{festival_id}}
+Content-Type: application/json
+
+{
+    "name": "Fête de la Musique 2027",
+    "url": "https://www.fetedelamusique.de/programm/",
+    "firstDay": "2027-06-21",
+    "lastDay": "2027-06-21",
+    "noticeDe": "Am längsten Tag des Jahres spielt Musik an hunderten Orten der Stadt, draußen und kostenlos.",
+    "noticeEn": "On the longest day of the year, music plays at hundreds of places across the city, outdoors and free."
+}
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Delete festival
+DELETE {{importer-host}}/api/admin/festivals/{{festival_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
+
+### Get the deleted festival — 404
+GET {{importer-host}}/api/admin/festivals/{{festival_id}}
+Accept: application/json
+
+> {%
+    client.test("status is 404", function () {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}

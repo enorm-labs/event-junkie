@@ -56,6 +56,12 @@ a venue's character tags (#2379) in the order of `VenueCharacterTag`, each with 
 Save PUTs `{ sourceUrl }` to `/api/admin/venues/{id}/character-tags/{tag}`, for a new tag and for a changed URL. The app takes only an `https://` URL and
 sends nothing for another. Clear asks for a confirmation, then DELETEs the tag. The page edits no other venue field.
 
+Festivals (`src/views/FestivalsView.vue`) lists every festival, the latest first day first (#3272). The public home page announces up to 3 festivals that
+run today or start within 14 days, each with its name, its days, the notice in the visitor's language and a link to its programme. New festival
+and Edit open a form (`src/components/FestivalForm.vue`) for the name, the programme URL, the first and the last day and the notice in German and in English.
+It POSTs a new festival to `/api/admin/festivals` and PUTs an edited one to `/api/admin/festivals/{id}`, with every field. The importer derives the slug from
+the name and answers 409 when another festival has that slug. The form shows that answer. Delete asks for a confirmation, then DELETEs the festival.
+
 Artists to review (`src/views/ArtistsView.vue`) lists the artists whose MusicBrainz match is `AMBIGUOUS` and who play in the next 14 days, by name, 20 per
 page. Review opens a row: the events that bill the artist from today on, with the venue and the other acts (`GET /api/admin/events?artistId=`), and the
 MusicBrainz candidates the importer finds for the name. No candidate is chosen at first. Choose, then Confirm, PUTs the candidate's MBID to

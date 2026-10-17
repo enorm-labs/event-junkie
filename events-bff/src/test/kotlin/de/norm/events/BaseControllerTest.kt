@@ -88,7 +88,7 @@ abstract class BaseControllerTest {
                 .sql(
                     "TRUNCATE TABLE events.cached_image_variant, events.cached_image, events.event_source, " +
                         "events.event_genre_tag, events.event_promoter, events.event_artist, " +
-                        "events.event, events.genre_tag, events.promoter, events.artist, events.venue CASCADE"
+                        "events.event, events.genre_tag, events.promoter, events.artist, events.venue, events.festival CASCADE"
                 ).await()
         }
 

@@ -462,6 +462,29 @@ the same language and all-or-nothing constraints V019 gave `venue`. A promoter's
 a row once it is a day old. It keeps a row with a `description` or an `image_url`. A pass does nothing while an import
 runs. `OrphanArtistSweep` does the same for `artist` at 03:30 UTC (#350).
 
+### Festival
+
+A festival is one date range across many venues, such as Fête de la Musique or Tag der Clubkultur (#3272). It is not an
+event series. No event refers to a festival yet.
+
+| Field        | Type          | Nullable | Description                                                           | Example                               |
+| ------------ | ------------- | -------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `id`         | `BIGINT` PK   | No       | Generated                                                             | `1`                                   |
+| `slug`       | `TEXT` (UQ)   | No       | `SlugGenerator.slugify(name)`, set by the importer                    | `fete-de-la-musique-2027`             |
+| `name`       | `TEXT`        | No       | The festival's name, with the year                                    | `Fête de la Musique 2027`             |
+| `url`        | `TEXT`        | No       | The festival's own programme page                                     | `https://www.fetedelamusique.de/`     |
+| `first_day`  | `DATE`        | No       | The first day, a Berlin date                                          | `2027-06-21`                          |
+| `last_day`   | `DATE`        | No       | The last day, a Berlin date. A CHECK keeps it on or after `first_day` | `2027-06-21`                          |
+| `notice_de`  | `TEXT`        | No       | One or two sentences for the home page, in German                     | `Musik an hunderten Orten der Stadt.` |
+| `notice_en`  | `TEXT`        | No       | The same notice in English                                            | `Music at hundreds of places.`        |
+| `created_at` | `TIMESTAMPTZ` | No       | Record creation timestamp                                             |                                       |
+| `updated_at` | `TIMESTAMPTZ` | No       | Last modification timestamp                                           |                                       |
+
+An operator writes the rows on the admin Festivals page, through `/api/admin/festivals`. The BFF reads them for
+`GET /api/festivals/current`. That route returns an array of at most 3 festivals. Each one runs today or starts in the next
+14 days. The running festivals come first, then the upcoming ones. Each group is in order of `first_day`, then `id`. When no
+festival matches, the array is empty. The home page shows one notice for each festival in the array.
+
 ### event_artist (Join Table)
 
 Links events to artists with role and billing order to model the lineup. Each application maps the table with its own

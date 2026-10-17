@@ -18,6 +18,7 @@ import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import EventRow from '@/components/EventRow.vue'
+import FestivalNotice from '@/components/FestivalNotice.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
@@ -125,6 +126,10 @@ async function expandToday() {
         </div>
       </div>
     </section>
+
+    <!-- Pulled up into the hero's bottom padding: with the section rhythm on top it sat about
+         100px below the buttons, further from them than from the list it introduces. -->
+    <FestivalNotice class="-mt-8 sm:-mt-10" />
 
     <!-- Headings by scale, not the mono eyebrow: at 14 px "Upcoming" sat in the grid's own rhythm
          and read as one more row of cards (#2347). The count stays outside the heading's name. -->

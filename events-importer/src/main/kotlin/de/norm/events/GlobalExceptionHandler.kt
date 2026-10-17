@@ -9,6 +9,9 @@ import de.norm.events.dataquality.EventSuggestionAlreadyDismissedException
 import de.norm.events.dataquality.EventSuggestionNotFoundException
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.UnknownPinnedFieldException
+import de.norm.events.festival.DuplicateFestivalSlugException
+import de.norm.events.festival.FestivalNotFoundException
+import de.norm.events.festival.InvalidFestivalDaysException
 import de.norm.events.genretag.GenreTagNotFoundException
 import de.norm.events.importing.EventSourceNotFoundException
 import de.norm.events.importing.InvalidSourceTypeException
@@ -46,6 +49,7 @@ class GlobalExceptionHandler {
         VenueNotFoundException::class,
         ArtistNotFoundException::class,
         PromoterNotFoundException::class,
+        FestivalNotFoundException::class,
         EventNotFoundException::class,
         EventSourceNotFoundException::class,
         GenreTagNotFoundException::class,
@@ -78,6 +82,7 @@ class GlobalExceptionHandler {
         DuplicateArtistSlugException::class,
         DuplicateVenueSlugException::class,
         DuplicatePromoterSlugException::class,
+        DuplicateFestivalSlugException::class,
         EventSuggestionAlreadyAcceptedException::class,
         EventSuggestionAlreadyDismissedException::class,
         EventClassificationDisabledException::class,
@@ -132,13 +137,13 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * Handles reserved slug violations — the source name generates a slug that conflicts
-     * with a reserved API path segment (e.g. "import", "retry"). This is a client input error.
+     * Handles client input the controller can only judge in full: a source name whose slug is a
+     * reserved API path segment (e.g. "import", "retry"), or a festival whose last day comes before its first.
      */
-    @ExceptionHandler(ReservedSlugException::class)
-    fun handleReservedSlug(ex: ReservedSlugException): ProblemDetail {
-        logger.debug { "Reserved slug violation: ${ex.message}" }
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Reserved slug")
+    @ExceptionHandler(ReservedSlugException::class, InvalidFestivalDaysException::class)
+    fun handleInvalidRequest(ex: RuntimeException): ProblemDetail {
+        logger.debug { "Invalid request: ${ex.message}" }
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid request")
     }
 
     /**

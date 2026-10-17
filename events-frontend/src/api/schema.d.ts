@@ -183,6 +183,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/festivals/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Up to 3 festivals running today or starting within 14 days
+         * @description Days are Berlin dates. Running festivals come first, then upcoming ones; each group by `firstDay`, then by id. No festival answers an empty array.
+         */
+        get: operations["current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events": {
         parameters: {
             query?: never;
@@ -1240,6 +1260,40 @@ export interface components {
              */
             family?: string | null;
         };
+        /** @description A festival across many venues, for the home-page notice */
+        FestivalResponse: {
+            /**
+             * @description URL-friendly identifier, derived from the name
+             * @example fete-de-la-musique-2027
+             */
+            slug?: string;
+            /**
+             * @description Display name of the festival
+             * @example Fête de la Musique 2027
+             */
+            name?: string;
+            /**
+             * @description The festival's own programme page
+             * @example https://www.fetedelamusique.de/
+             */
+            url?: string;
+            /**
+             * Format: date
+             * @description First day, Berlin date
+             * @example 2027-06-21
+             */
+            firstDay?: string;
+            /**
+             * Format: date
+             * @description Last day, Berlin date; equal to `firstDay` for a one-day festival
+             * @example 2027-06-21
+             */
+            lastDay?: string;
+            /** @description One or two sentences for the home page, in German */
+            noticeDe?: string;
+            /** @description One or two sentences for the home page, in English */
+            noticeEn?: string;
+        };
         /** @description A page of the events list, with the curated pick that leads its first page */
         EventListPage: {
             /** @description The items on this page */
@@ -2092,6 +2146,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GenreTagResponse"][];
+                };
+            };
+        };
+    };
+    current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The festivals to announce, possibly none */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FestivalResponse"][];
                 };
             };
         };

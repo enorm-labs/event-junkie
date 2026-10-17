@@ -43,6 +43,23 @@ export function formatDate(isoDate?: string | null, locale: string = 'en'): stri
   return dateFormatter(locale).format(new Date(year, month - 1, day))
 }
 
+/**
+ * An inclusive range of ISO dates without the year: "3–11 October" / "3.–11. Oktober", and one
+ * date alone when both are the same day. For a festival, which is never more than weeks away.
+ */
+export function formatDayRange(firstIso: string, lastIso: string, locale: string = 'en'): string {
+  const toDate = (iso: string) => {
+    const [year, month, day] = iso.split('-').map(Number)
+    return new Date(year!, month! - 1, day!)
+  }
+  // Typed by hand: the Vitest project's empty `lib` leaves out ES2021's `formatRange`.
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+  }) as unknown as { formatRange(start: Date, end: Date): string }
+  return formatter.formatRange(toDate(firstIso), toDate(lastIso))
+}
+
 /** The month and year alone — "October 2026" / "Oktober 2026" — for a venue's closure. */
 export function formatMonthYear(isoDate?: string | null, locale: string = 'en'): string {
   if (!isoDate) return ''

@@ -1,0 +1,27 @@
+### ============================================================
+### BFF: Festivals — the home page's festival notices (#3272)
+###
+### Read-only, no auth. Up to 3 festivals running today or
+### starting within 14 days (Berlin dates): running ones first,
+### then upcoming, each by first day. None is an empty array.
+### ============================================================
+
+### The current festivals, possibly none
+GET {{bff-host}}/api/festivals/current
+Accept: application/json
+
+> {%
+    client.test("status is 200 with an array of at most 3", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(Array.isArray(response.body), "Expected an array");
+        client.assert(response.body.length <= 3, "More than 3 festivals");
+    });
+    client.test("names each festival, its days and both notices", function () {
+        response.body.forEach(function (festival) {
+            ["slug", "name", "url", "firstDay", "lastDay", "noticeDe", "noticeEn"].forEach(function (field) {
+                client.assert(festival[field], "Missing " + field);
+            });
+            client.assert(festival.lastDay >= festival.firstDay, "lastDay before firstDay");
+        });
+    });
+%}
