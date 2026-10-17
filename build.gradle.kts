@@ -141,6 +141,19 @@ subprojects {
         version = "1.8.0"
     }
 
+    // ktlint and detekt each run on the Kotlin compiler they were built against. The Spring Boot
+    // plugin raises every `org.jetbrains.kotlin` artifact to the project's Kotlin version, the tool
+    // classpaths included: Kotlin 2.4.20 then fails ktlint with `Extensions storage is not
+    // registered`, and detekt refuses any compiler but its own. The rule is added after evaluation
+    // so that it runs after dependency management's own.
+    afterEvaluate {
+        configurations.matching { it.name.startsWith("ktlint") || it.name.startsWith("detekt") }.configureEach {
+            resolutionStrategy.eachDependency {
+                if (requested.group == "org.jetbrains.kotlin") useVersion(requested.version!!)
+            }
+        }
+    }
+
     // This repository's own detekt rules (see :detekt-rules), on every module's analysis classpath —
     // including the rules module itself, which lints its own source with them. Self-reference is
     // deliberate and not a cycle: `detekt` consumes the jar, and nothing in building the jar
