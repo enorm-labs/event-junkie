@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<!--
+
+        Made with cargo.site
+
+-->
+<html class="wf-initial-load">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="generator" content="Cargo (https://cargo.site)">
+
+		<title>Backsteinboot</title>
+
+		<style id="static-css">@keyframes page-transition-out{from{opacity:1}to{opacity:0}}@keyframes page-transition-in{from{opacity:0}to{opacity:1}}html:where([page-transition-intensity]){background-color:var(--site-background-color)}::view-transition{pointer-events:none;background-color:var(--site-background-color)}html[page-transition-intensity="1"]{--page-transition-out-duration: 120ms;--page-transition-in-duration: 160ms;--page-transition-join: -0.75;--page-transition-out-ease: ease-in-out;--page-transition-in-ease: ease-in}html[page-transition-intensity="2"]{--page-transition-out-duration: 175ms;--page-transition-in-duration: 220ms;--page-transition-join: -0.25;--page-transition-out-ease: ease-in-out;--page-transition-in-ease: ease-in}html[page-transition-intensity="3"]{--page-transition-out-duration: 230ms;--page-transition-in-duration: 280ms;--page-transition-join: 0.25;--page-transition-out-ease: ease-in-out;--page-transition-in-ease: ease-in}::view-transition-old(root){animation-name:page-transition-out;animation-duration:var(--page-transition-out-duration);animation-timing-function:var(--page-transition-out-ease);animation-fill-mode:both}::view-transition-new(root){animation-name:page-transition-in;animation-duration:var(--page-transition-in-duration);animation-timing-function:var(--page-transition-in-ease);animation-delay:max(0ms,var(--page-transition-out-duration)*(1 + var(--page-transition-join)));animation-fill-mode:both}.page{--pin-view-transition-name: none}html.page-transition-active .page.pinned.fixed,html.page-transition-active .page.pinned.overlay{view-transition-name:var(--pin-view-transition-name, none)}html.page-transition-hold::view-transition-old(root),html.page-transition-hold::view-transition-new(root){animation-play-state:paused}html.page-transition-hold::view-transition-group(*){animation-play-state:paused}html.page-transition-hold::view-transition-image-pair(*){animation-play-state:paused}html.page-transition-hold::view-transition-old(*){animation-play-state:paused}html.page-transition-hold::view-transition-new(*){animation-play-state:paused}@keyframes page-transition-overlay-exit{from{opacity:1;transform:translate3d(0, 0, 0);clip-path:var(--overlay-close-content-from-clip-mask, none)}to{opacity:var(--overlay-close-to-opacity, 1);transform:var(--overlay-close-content-to-transform, translate3d(0, 0, 0));clip-path:var(--overlay-close-content-to-clip-mask, none)}}html:has(body.editing)::-webkit-scrollbar{display:none !important}body.editing::-webkit-scrollbar{display:none !important}html:has(body.editing){-ms-overflow-style:none;scrollbar-width:none}body.editing{-ms-overflow-style:none;scrollbar-width:none}body.wf-initial-load *,html.wf-initial-load *{color:transparent !important;-webkit-text-stroke:0px transparent;text-stroke:0 transparent;text-shadow:0 0 transparent}html.wf-initial-load hr{background:none !important}body{--baseColor-accent: #FF0000;--baseColor-accent-rgb: 255, 0, 0;--baseColor-accent-reverse-rgb: 255, 255, 255}*{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}:focus{outline:0}select,select *{text-rendering:auto !important}html,body{min-height:var(--viewport-height, 100vh);margin:0;padding:0}html{--mobile-scale: 1;font-size:var(--base-size);touch-action:manipulation;position:relative}html.mobile{font-size:calc(var(--base-size)*var(--mobile-scale))}body{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:none;display:flex;flex-direction:column;width:100%;min-height:var(--viewport-height, 100vh);justify-content:flex-start;margin:0;padding:0;background-color:#fff;--noise-image: url("https://static.cargo.site/assets/C3/images/noise.png");--noise-bg-amount: 0;--noise-images-amount: 0;--noise-density-size: 256px;position:relative}body.no-scroll{overflow:hidden}customhtml>*{position:relative;z-index:10}.page a.active,bodycopy * a{text-decoration-color:unset;-webkit-text-decoration-color:unset}.content{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-height:100%;position:relative;flex-grow:1;border-color:transparent;border-width:0}.pages{width:100%;flex:1 0 auto}@supports(height: 100svh){.page.stacked-page:not(.fixed){--viewport-height: 100svh}.page.stacked-page+.page.stacked-page:not(.fixed){--viewport-height: 100vh}body.mobile .content:has(.stacked-page) .page.pinned.overlay:not(.fixed){--viewport-height: 100svh}}.overlay-content{mix-blend-mode:var(--overlay-mix, normal)}.page{--split-backdrop-height: calc(var(--min-viewport-height) / 2);--split-content-height: calc(var(--viewport-height) - var(--split-backdrop-height));--noise-bg-amount: 0;--noise-images-amount: 0;--noise-density-size: 256px;position:relative;isolation:isolate;display:flex;justify-content:center;flex-wrap:nowrap;flex-direction:row;max-width:100%;width:100%;flex:0;mix-blend-mode:var(--page-mix, normal)}.page.has-backdrop-filter{background-color:rgba(0, 0, 0, 0.01);backdrop-filter:var(--page-backdrop-filter, none);-webkit-backdrop-filter:var(--page-backdrop-filter, none)}.overlay-content .page{mix-blend-mode:unset}.overlay-content .page::after{content:" ";display:block;position:fixed;width:100dvw;height:100dvh;top:0;left:0;z-index:-1}.overlay-content.is-passthrough-overlay .page::after{display:none}.mobile .page{flex-wrap:wrap}.mobile .page.fixed{--viewport-height: 100dvh}.page.overlay{position:absolute}.page.pinned-top,.page.pinned-bottom{flex:0;z-index:2;left:0;right:0}.page.pinned-bottom{transform:unset}.page.pinned-bottom.loading{will-change:transform;transform:translate(0, 0, 0)}.page.pinned-top{top:0}.page.pinned-bottom{bottom:0}.page.fixed{position:fixed;max-height:var(--viewport-height, 100vh)}.page.fixed .page-layout{max-height:var(--viewport-height, 100vh)}.page.fixed.allow-scroll .page-content{max-height:var(--viewport-height, 100vh);scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;overflow-y:auto;overflow-x:hidden;align-items:flex-start !important}.page.fixed.allow-scroll .page-content{pointer-events:auto}.page.fixed.allow-scroll .page-content::-webkit-scrollbar{width:0;background:0 0;display:none}.page.overlay{position:absolute}.page.overlay,.page.overlay .page-layout,.page.fixed,.page.fixed .page-layout{pointer-events:none}body.editing .page.overlay .page-content,body.editing .page.overlay .page-content *,body.editing .page.fixed .page-content,body.editing .page.fixed .page-content *,body.editing .page.fixed.allow-scroll .page-content,body.editing .page.fixed.allow-scroll .page-content *,body.editing .page:not([editing=true]){-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;user-select:none}body.editing .page.overlay[editing=true] .page-content,body.editing .page.overlay[editing=true] .page-content *,body.editing .page.fixed[editing=true] .page-content,body.editing .page.fixed[editing=true] .page-content *,body.editing .page.fixed.allow-scroll[editing=true] .page-content,body.editing .page.fixed.allow-scroll[editing=true] .page-content *{pointer-events:auto;-moz-user-select:auto;-webkit-user-select:auto;-ms-user-select:auto;user-select:auto}.page.fixed .page-content bodycopy a,.page.overlay .page-content bodycopy a,.page.fixed .page-content bodycopy img,.page.overlay .page-content bodycopy img,.page.fixed .page-content bodycopy iframe,.page.overlay .page-content bodycopy iframe,.page.fixed .page-content bodycopy video,.page.overlay .page-content bodycopy video,.page.fixed .page-content bodycopy audio,.page.overlay .page-content bodycopy audio,.page.fixed .page-content bodycopy input,.page.overlay .page-content bodycopy input,.page.fixed .page-content bodycopy button,.page.overlay .page-content bodycopy button,.page.fixed .page-content bodycopy audio-player,.page.overlay .page-content bodycopy audio-player,.page.fixed .page-content bodycopy shop-product,.page.overlay .page-content bodycopy shop-product,.page.fixed .page-content bodycopy details,.page.overlay .page-content bodycopy details,.page.overlay .page-content bodycopy .linked,.page.overlay .page-content bodycopy .zoomable,.page.fixed .page-content bodycopy .linked,.page.fixed .page-content bodycopy .zoomable,.page.fixed .page-content bodycopy gallery-slideshow,.page.overlay .page-content bodycopy gallery-slideshow{pointer-events:auto}.page-layout{flex-grow:1;position:relative;display:flex;flex-direction:row;align-items:flex-start;justify-content:flex-start;width:0%;contain:layout;mix-blend-mode:var(--page-layout-mix, normal)}.page-content{display:flex;flex-direction:row;height:100%;align-items:flex-start;border-color:transparent;border-width:0;width:100%;filter:var(--page-content-filter, none);-webkit-filter:var(--page-content-filter, none)}.page-content{position:relative;isolation:isolate;--noise-bg-amount: 0;--noise-scale: 1}.page-content.has-content-backdrop-filter{backdrop-filter:var(--page-content-backdrop-filter, none);-webkit-backdrop-filter:var(--page-content-backdrop-filter, none)}.page,.page-content,.content{--noise-bg-alpha: var(--noise-bg-color-alpha, 1)}.page::before,.page-content::before{content:"";display:block;position:absolute;inset:0;pointer-events:none;z-index:-1;border-radius:inherit;background-image:var(--noise-image),var(--noise-image),var(--noise-image);background-repeat:repeat;background-size:calc(var(--noise-density-size, 256px)*var(--noise-scale, 1));background-position:0 0;opacity:calc(var(--noise-bg-amount, 0)*var(--noise-bg-alpha, 1)*1)}.content::before{content:"";display:block;position:absolute;inset:0;pointer-events:none;background-image:var(--noise-image),var(--noise-image),var(--noise-image);background-repeat:repeat;background-size:calc(var(--noise-density-size, 256px)*var(--noise-scale, 1));background-position:0 0;opacity:calc(var(--noise-bg-amount, 0)*var(--noise-bg-alpha, 1)*1)}.page.has-backdrop-filter::before,.page-content.has-content-backdrop-filter::before{background-blend-mode:normal;opacity:min(var(--noise-bg-amount, 0),var(--noise-bg-alpha, 1))}.page.fixed.allow-scroll .page-content bodycopy{anchor-name:--noise-content}.page.fixed.allow-scroll .page-content::before{content:"";position:absolute;position-anchor:--noise-content;top:0;left:0;right:0;height:calc(anchor-size(--noise-content height) + var(--page-content-pad-bottom, 0px) + var(--page-content-pad-top, 0px))}.page-content.has-content-backdrop-filter:has(.empty-editor)::after{content:" ";display:block;height:1px;width:1px;overflow:hidden;position:absolute;top:0;left:0;background:rgba(0, 0, 0, 0.01)}.page.accepts-pointer-events *,.page-content.accepts-pointer-events,.page-content.accepts-pointer-events *{pointer-events:auto}[position=fixed]{position:fixed;overflow-y:auto;overflow-x:hidden;max-height:100vh;pointer-events:none}[position=fixed] bodycopy{pointer-events:auto}[position=absolute]{position:absolute}[position=relative]{position:relative}.top-pins [position=fixed],.top-pins [position=absolute]{top:0;left:0;right:0;z-index:999}.bottom-pins [position=fixed],.bottom-pins [position=absolute]{bottom:0;left:0;right:0;z-index:999}h1,h2,h3,h4,h5,h6,h7,h8,h9{contain:layout}.caption-background h1,.caption-background h2,.caption-background h3,.caption-background h4,.caption-background h5,.caption-background h6,.caption-background h7,.caption-background h8,.caption-background h9{contain:none}.overlay-content{position:fixed;inset:0;max-height:100dvh;--viewport-height: 100dvh;overflow:auto;overscroll-behavior:none;--elastic-scroll: true;pointer-events:none}.overlay-content .backdrop{pointer-events:auto}.overlay-content .wallpaper-navigation .backdrop{pointer-events:none}.overlay-content::-webkit-scrollbar{display:none}.overlay-content .page-layout{min-height:fit-content}.overlay-content .page,.overlay-content .page-content,.overlay-content .page-layout{pointer-events:auto}.overlay-content.is-passthrough-overlay .page,.overlay-content.is-passthrough-overlay .page-layout{pointer-events:none}.overlay-content.is-passthrough-overlay .page-content{pointer-events:auto}.overlay-content.is-content-passthrough-overlay .page,.overlay-content.is-content-passthrough-overlay .page-layout,.overlay-content.is-content-passthrough-overlay .page-content,.overlay-content.is-content-passthrough-overlay .page-content bodycopy,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-freeform,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-grid,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-columnized,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-justify,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-slideshow{pointer-events:none}.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-freeform>*,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-grid>*,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-columnized>*,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-justify>*,.overlay-content.is-content-passthrough-overlay .page-content bodycopy gallery-slideshow>*{pointer-events:auto}.overlay-content.is-content-passthrough-overlay .page-content bodycopy>*:not(column-set,gallery-freeform,gallery-grid,gallery-columnized,gallery-justify),.overlay-content.is-content-passthrough-overlay .page-content bodycopy column-unit *{pointer-events:auto}body.editing .overlay-content .page[editing=true] bodycopy,body.editing .overlay-content .page[editing=true] bodycopy>*,body.editing .overlay-content .page[editing=true] gallery-freeform,body.editing .overlay-content .page[editing=true] gallery-columnized,body.editing .overlay-content .page[editing=true] gallery-justify,body.editing .overlay-content .page[editing=true] gallery-grid body.editing .overlay-content .page[editing=true] gallery-slideshow{pointer-events:auto}.overlay-content.overlay-open.overlay-animating .page{will-change:opacity,background-color;animation:overlayOpen var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out")}.overlay-content.overlay-open .page:has(.has-content-backdrop-filter):not(:has(.backdrop)){will-change:background-color;animation:overlayOpenWithoutOpacity var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out")}.overlay-content.overlay-close.overlay-animating .page{will-change:opacity,background-color;animation:overlayClose var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out")}.overlay-content.overlay-close .page:has(.has-content-backdrop-filter):not(:has(.backdrop)){will-change:background-color;animation:overlayCloseWithoutOpacity var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out")}.overlay-content.overlay-open.overlay-animating .page-content{will-change:transform,clip-path;animation:overlayOpenContent var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out")}.overlay-content.overlay-open.overlay-animating .page-content.has-content-backdrop-filter{will-change:transform,clip-path,opacity;animation:overlayOpenContent var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out"),overlayOpenOpacity var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out")}.overlay-content.overlay-close.overlay-animating .page-content{will-change:transform,clip-path;animation:overlayCloseContent var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out")}.overlay-content.overlay-close.overlay-animating .page-content.has-content-backdrop-filter{will-change:transform,clip-path,opacity;animation:overlayCloseContent var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out"),overlayCloseOpacity var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out")}.overlay-content.overlay-open.overlay-animating .page::before,.overlay-content.overlay-open.overlay-animating .page::after,.overlay-content.overlay-open.overlay-animating .page-content::before,.overlay-content.overlay-open.overlay-animating .page-content::after{will-change:opacity;animation:overlayOpenNoise var(--overlay-open-duration) var(--overlay-open-easing, "ease-in-out")}.overlay-content.overlay-close.overlay-animating .page::before,.overlay-content.overlay-close.overlay-animating .page::after,.overlay-content.overlay-close.overlay-animating .page-content::before,.overlay-content.overlay-close.overlay-animating .page-content::after{will-change:opacity;animation:overlayCloseNoise var(--overlay-close-duration) var(--overlay-close-easing, "ease-in-out")}.overlay-content.touch-overscroll-transform .page-content{transform:var(--touch-overscroll-transform, translate(0px, 0px)) !important}.overlay-content.overlay-animating .page-layout{contain:layout}.overlay-content.overlay-animating.disallow-interaction,.overlay-content.overlay-animating.disallow-interaction .page,.overlay-content.overlay-animating.disallow-interaction .page-content,.overlay-content.overlay-animating.disallow-interaction .page-layout,.overlay-content.overlay-animating.disallow-interaction .backdrop,.overlay-content.overlay-animating.disallow-interaction bodycopy,.overlay-content.overlay-animating.disallow-interaction bodycopy *{pointer-events:none !important}.overlay-content.overlay-animating.disallow-interaction{overflow:hidden}@keyframes scrollAnimationFadeIn-1{0%{opacity:0}15%{opacity:1}}@keyframes scrollAnimationFadeIn-2{0%{opacity:0}22.5%{opacity:1}100%{opacity:1}}@keyframes scrollAnimationFadeIn-3{0%{opacity:0}38%{opacity:1}100%{opacity:1}}@keyframes scrollAnimationFadeOut-1{85%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFadeOut-2{0%{opacity:1}77.5%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFadeOut-3{0%{opacity:1}65%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFadeInOut-1{0%{opacity:0}15%{opacity:1}85%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFadeInOut-2{0%{opacity:0}20%{opacity:1}82.5%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFadeInOut-3{0%{opacity:0}30%{opacity:1}75%{opacity:1}100%{opacity:0}}@keyframes scrollAnimationFlyIn-1{0%{transform:translateY(5vh)}15%{transform:scale(1)}85%{transform:scale(1)}100%{transform:scale(1)}}@keyframes scrollAnimationFlyIn-2{0%{transform:translateY(10vh)}30%{transform:scale(1)}70%{transform:scale(1)}100%{transform:scale(1)}}@keyframes scrollAnimationFlyIn-3{0%{transform:translateY(20vh)}35%{transform:scale(1)}65%{transform:scale(1)}100%{transform:scale(1)}}@keyframes scrollAnimationFlyInFadeIn-1{0%{opacity:.4;transform:translateY(25px)}50%{opacity:1;transform:translateY(0px)}}@keyframes scrollAnimationFlyInFadeIn-2{0%{opacity:0;transform:translateY(50px)}50%{opacity:1;transform:translateY(0vh)}}@keyframes scrollAnimationFlyInFadeIn-3{0%{opacity:0;transform:translateY(100px)}50%{opacity:1;transform:translateY(0vh)}}@keyframes scrollAnimationFlyOut-1{35%{transform:scale(1)}85%{transform:scale(1)}100%{transform:translateY(-5vh)}}@keyframes scrollAnimationFlyOut-2{35%{transform:scale(1)}70%{transform:scale(1)}100%{transform:translateY(-10vh)}}@keyframes scrollAnimationFlyOut-3{35%{transform:scale(1)}65%{transform:scale(1)}100%{transform:translateY(-20vh)}}@keyframes scrollAnimationFlyInOut-1{0%{transform:translateY(5vh)}35%{transform:scale(1)}85%{transform:scale(1)}100%{transform:translateY(-5vh)}}@keyframes scrollAnimationFlyInOut-2{0%{transform:translateY(10vh)}35%{transform:scale(1)}70%{transform:scale(1)}100%{transform:translateY(-10vh)}}@keyframes scrollAnimationFlyInOut-3{0%{transform:translateY(20vh)}35%{transform:scale(1)}65%{transform:scale(1)}100%{transform:translateY(-20vh)}}@keyframes scrollAnimationBlurIn-1{0%{filter:blur(5px)}10%{filter:blur(5px)}30%{filter:blur(0px)}}@keyframes scrollAnimationBlurIn-2{0%{filter:blur(8px)}12.5%{filter:blur(8px)}35%{filter:blur(0px)}}@keyframes scrollAnimationBlurIn-3{0%{filter:blur(13px)}15%{filter:blur(13px)}40%{filter:blur(0px)}}@keyframes scrollAnimationScaleInOut-1{0%{transform:scale(0.875);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 50%}100%{transform:scale(0.875);transform-origin:50% 100%}}@keyframes scrollAnimationScaleInOut-2{0%{transform:scale(0.6);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 50%}100%{transform:scale(0.6);transform-origin:50% 100%}}@keyframes scrollAnimationScaleInOut-3{0%{transform:scale(0.4);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 50%}100%{transform:scale(0.4);transform-origin:50% 100%}}@keyframes scrollAnimationScaleIn-1{0%{transform:scale(0.875);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 0%}100%{transform:scale(1);transform-origin:50% 0%}}@keyframes scrollAnimationScaleIn-2{0%{transform:scale(0.6);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 0%}100%{transform:scale(1);transform-origin:50% 0%}}@keyframes scrollAnimationScaleIn-3{0%{transform:scale(0.4);transform-origin:50% 0%}50%{transform:scale(1);transform-origin:50% 0%}100%{transform:scale(1);transform-origin:50% 0%}}@keyframes scrollAnimationScaleOut-1{0%{transform:scale(1);transform-origin:50% 100%}50%{transform:scale(1);transform-origin:50% 100%}100%{transform:scale(0.875);transform-origin:50% 100%}}@keyframes scrollAnimationScaleOut-2{0%{transform:scale(1);transform-origin:50% 100%}50%{transform:scale(1);transform-origin:50% 100%}100%{transform:scale(0.6);transform-origin:50% 100%}}@keyframes scrollAnimationScaleOut-3{0%{transform:scale(1);transform-origin:50% 100%}50%{transform:scale(1);transform-origin:50% 100%}100%{transform:scale(0.4);transform-origin:50% 100%}}@keyframes scrollAnimationHelix-1{0%{transform:perspective(4000px) rotatey(35deg) rotatez(1.5deg)}100%{transform:perspective(4000px) rotatey(-35deg) rotatez(-1.5deg)}}@keyframes scrollAnimationHelix-2{0%{transform:perspective(3000px) rotatey(60deg) rotatez(2deg)}100%{transform:perspective(3000px) rotatey(-60deg) rotatez(-2deg)}}@keyframes scrollAnimationHelix-3{0%{transform:perspective(2000px) rotatey(90deg) rotatez(3deg)}100%{transform:perspective(2000px) rotatey(-90deg) rotatez(-3deg)}}@keyframes scrollAnimationConveyor-1{0%{transform:perspective(2500px) translateZ(25em) rotateX(45deg)}40%{transform:perspective(2500px) rotateX(0deg)}100%{transform:perspective(2500px) rotateX(0deg)}}@keyframes scrollAnimationConveyor-2{0%{transform:perspective(2400px) translateZ(30em) rotateX(60deg)}50%{transform:perspective(2400px) rotateX(0deg)}100%{transform:perspective(2400px) rotateX(0deg)}}@keyframes scrollAnimationConveyor-3{0%{transform:perspective(2300px) translateZ(45em) rotateX(85deg)}60%{transform:perspective(2300px) rotateX(0deg)}100%{transform:perspective(2300px) rotateX(0deg)}}@keyframes scrollAnimationRebound-1{0%{transform:perspective(2100px) translateZ(-30em) rotateX(50deg);transform-origin:50% 100%}47%{transform:perspective(2100px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}53%{transform:perspective(2100px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}100%{transform:perspective(2100px) translateZ(-30em) rotateX(-50deg);transform-origin:50% 0%}}@keyframes scrollAnimationRebound-2{0%{transform:perspective(1800px) translateZ(-50em) rotateX(70deg);transform-origin:50% 100%}47%{transform:perspective(1800px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}53%{transform:perspective(1800px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}100%{transform:perspective(1800px) translateZ(-50em) rotateX(-70deg);transform-origin:50% 0%}}@keyframes scrollAnimationRebound-3{0%{transform:perspective(1300px) translateZ(-70em) rotateX(90deg);transform-origin:50% 100%}47%{transform:perspective(1300px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}53%{transform:perspective(1300px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}100%{transform:perspective(1300px) translateZ(-70em) rotateX(-90deg);transform-origin:50% 0%}}@keyframes scrollTransitionFadeUp-1{0%{opacity:0;transform:translateY(25px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollTransitionFadeUp-2{0%{opacity:0;transform:translateY(40px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollTransitionFadeUp-3{0%{opacity:0;transform:translateY(50px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollTransitionScaleUp-1{0%{opacity:0;transform:scale(0.95)}25%{opacity:1;transform:scale(1)}}@keyframes scrollTransitionScaleUp-2{0%{opacity:0;transform:scale(0.875)}25%{opacity:1;transform:scale(1)}}@keyframes scrollTransitionScaleUp-3{0%{opacity:0;transform:scale(0.75)}25%{opacity:1;transform:scale(1)}}@keyframes scrollAnimationTwistUp-1{0%{opacity:0;transform:translateY(25px) rotateY(27deg) rotateZ(1.5deg) perspective(4000px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollAnimationTwistUp-2{0%{opacity:0;transform:translateY(40px) rotateY(35deg) rotateZ(2deg) perspective(3000px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollAnimationTwistUp-3{0%{opacity:0;transform:translateY(65px) rotateY(40deg) rotateZ(3deg) perspective(2000px)}25%{opacity:1;transform:translateY(0vh)}}@keyframes scrollTransitionBlurIn-1{0%{filter:blur(5px);transform:scale(0.992)}25%{filter:blur(0px);transform:scale(1)}}@keyframes scrollTransitionBlurIn-2{0%{filter:blur(8px);transform:scale(0.992)}25%{filter:blur(0px);transform:scale(1)}}@keyframes scrollTransitionBlurIn-3{0%{filter:blur(13px);transform:scale(0.992)}25%{filter:blur(0px);transform:scale(1)}}@keyframes scrollTransitionColorIn-1{0%{filter:saturate(50%)}32%{filter:saturate(100%)}}@keyframes scrollTransitionColorIn-2{0%{filter:saturate(25%)}32%{filter:saturate(100%)}}@keyframes scrollTransitionColorIn-3{0%{filter:saturate(0%)}32%{filter:saturate(100%)}}@keyframes scrollTransitionRebound-1{0%{transform:perspective(1500px) translateZ(0em) rotateX(30deg);transform-origin:50% 100%;opacity:0}25%{transform:perspective(1500px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%;opacity:1}}@keyframes scrollTransitionRebound-2{0%{transform:perspective(1800px) translateZ(-50em) rotateX(70deg);transform-origin:50% 100%}47%{transform:perspective(1800px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}53%{transform:perspective(1800px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}100%{transform:perspective(1800px) translateZ(-50em) rotateX(-70deg);transform-origin:50% 0%}}@keyframes scrollTransitionRebound-3{0%{transform:perspective(1300px) translateZ(-70em) rotateX(90deg);transform-origin:50% 100%}47%{transform:perspective(1300px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}53%{transform:perspective(1300px) translateZ(0em) rotateX(0deg);transform-origin:50% 50%}100%{transform:perspective(1300px) translateZ(-70em) rotateX(-90deg);transform-origin:50% 0%}}@keyframes LooseHinge-1{0%{transform:rotate(5deg);transform-origin:0% 0%}50%{transform:rotate(0deg);transform-origin:50% 50%}100%{transform:rotate(5deg);transform-origin:100% 100%}}@keyframes LooseHinge-2{0%{transform:rotate(10deg);transform-origin:0% 0%}50%{transform:rotate(0deg);transform-origin:50% 50%}100%{transform:rotate(10deg);transform-origin:100% 100%}}@keyframes LooseHinge-3{0%{transform:rotate(30deg);transform-origin:0% 0%}50%{transform:rotate(0deg);transform-origin:50% 50%}100%{transform:rotate(30deg);transform-origin:100% 100%}}@keyframes overlayOpen{from{opacity:var(--overlay-open-from-opacity, 1);background-color:var(--overlay-open-from-background-color, transparent)}to{opacity:1}}@keyframes overlayOpenWithoutOpacity{from{background-color:var(--overlay-open-from-background-color, transparent)}}@keyframes overlayOpenOpacity{from{opacity:var(--overlay-open-from-opacity, 1)}to{opacity:1}}@keyframes overlayOpenContent{from{transform:var(--overlay-open-content-from-transform, translate3d(0, 0, 0));clip-path:var(--overlay-open-content-from-clip-mask, inset(0% 0% 0% 0%))}to{transform:translate3d(0, 0, 0);clip-path:var(--overlay-open-content-to-clip-mask, inset(0% 0% 0% 0%))}}@keyframes overlayClose{to{opacity:var(--overlay-close-to-opacity, 1);background-color:var(--overlay-close-to-background-color, transparent)}}@keyframes overlayCloseWithoutOpacity{to{background-color:var(--overlay-close-to-background-color, transparent)}}@keyframes overlayCloseOpacity{to{opacity:var(--overlay-close-to-opacity, 1)}}@keyframes overlayCloseContent{from{transform:translate3d(0, 0, 0);clip-path:var(--overlay-close-content-from-clip-mask, inset(0% 0% 0% 0%))}to{transform:var(--overlay-close-content-to-transform, translate3d(0, 0, 0));clip-path:var(--overlay-close-content-to-clip-mask, inset(0% 0% 0% 0%))}}@keyframes overlayOpenNoise{from{opacity:0}}@keyframes overlayCloseNoise{to{opacity:0}}.backdrop{contain:layout}.has-backdrop-filter .backdrop-contents::after{backdrop-filter:var(--page-backdrop-filter, none);-webkit-backdrop-filter:var(--page-backdrop-filter, none);position:absolute;width:100%;height:100%;content:"";inset:0;z-index:1;pointer-events:none}.backdrop:not(.clip){-webkit-transform:translate(0px, 0px)}.backdrop>.backdrop-contents{transition:opacity .5s ease-in-out;opacity:0;top:0;bottom:0;width:100%;position:sticky;height:100%;max-height:100vh;overflow:hidden}.backdrop-contents.loaded{opacity:1}.backdrop-contents.no-fade{transition:none}.backdrop.clip .backdrop-contents.above,.backdrop.clip .backdrop-contents.below{display:none}.backdrop.clip .backdrop-contents{will-change:display,opacity,transform,clip-path}.backdrop>.backdrop-contents [data-backdrop]{height:100%}.backdrop.clip{contain:none;overflow:hidden;clip-path:inset(0% 0% 0% 0%)}.clip>.backdrop-contents{height:calc(100vh + .5px);width:var(--backdrop-width, 100%);position:fixed}.backdrop{flex-shrink:0;width:100%;order:1;position:absolute;top:0;left:0;right:0;bottom:0}.wallpaper-navigation{position:absolute;inset:var(--pin-padding-top, 0) 0 var(--pin-padding-bottom, 0) 0;z-index:10;pointer-events:none !important;display:flex;justify-content:center;flex-wrap:wrap;flex-direction:row;max-width:100%;width:100%;flex:0}.wallpaper-navigation .page-content,.wallpaper-navigation .page-layout{background:none;background-color:transparent;visibility:hidden}.wallpaper-navigation .backdrop.clip{contain:none;overflow:hidden;clip-path:inset(0% 0% 0% 0%)}.wallpaper-navigation .backdrop.clip>.wallpaper-slideshow{position:fixed}.wallpaper-navigation .wallpaper-slideshow{top:0;bottom:0;position:sticky;transform:translate3d(0, 0, 0);height:calc(100% + .5px);max-height:calc(var(--viewport-height, 100vh) + .5px)}::part(slideshow-nav){transition:opacity 222ms ease-in-out;pointer-events:none;-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;--button-size: 30px;--button-inset: 20px;--button-icon-color: rgba(255, 255, 255, 0.9);--button-icon-scale: 1;--button-icon-stroke-width: 1.5px;--button-icon-stroke-linecap: butt;--button-background-color: rgba(87, 87, 87, 0.35);--button-background-radius: 50%;--button-active-opacity: 0.7}::part(slideshow-nav-previous-button){pointer-events:auto;cursor:pointer;position:absolute;top:0;left:0;bottom:0}::part(slideshow-nav-next-button){pointer-events:auto;cursor:pointer;position:absolute;top:0;right:0;bottom:0}::part(slideshow-nav-close-button){pointer-events:auto;cursor:pointer;position:absolute;top:0;right:0}::part(slideshow-nav-prev){position:absolute;top:0;bottom:0;left:var(--button-inset, 0px);margin:auto;width:36px;height:36px}::part(slideshow-nav-next){position:absolute;top:0;bottom:0;right:var(--button-inset, 0px);margin:auto;width:36px;height:36px;transform:scaleX(-1)}::part(slideshow-nav-close){position:absolute;top:var(--button-inset, 0px);right:var(--button-inset, 0px);margin:auto;width:36px;height:36px}::part(slideshow-nav-prev),::part(slideshow-nav-next),::part(slideshow-nav-close){height:var(--button-size);width:var(--button-size)}::part(slideshow-nav-previous-button):active,::part(slideshow-nav-next-button):active,::part(slideshow-nav-close-button):active{opacity:var(--button-active-opacity, 0.7)}::part(slideshow-nav-background){stroke:none !important;fill:var(--button-background-color);rx:var(--button-background-radius)}::part(slideshow-nav-arrow),::part(slideshow-nav-x){fill:none !important;stroke:var(--button-icon-color);stroke-width:var(--button-icon-stroke-width);stroke-linecap:var(--button-icon-stroke-linecap);transform:scale(var(--button-icon-scale));transform-origin:center}bodycopy{display:block;contain:layout;word-wrap:break-word;position:relative;max-width:100%;width:100%;-webkit-nbsp-mode:normal;--font-scale: 1}bodycopy *{border-width:0}a{color:inherit}a.image-link,a.image-link:hover,a.image-link:active,a.icon-link,a.icon-link:hover,a.icon-link:active{border-bottom:none;text-decoration:none}[contenteditable=true] a:active,[contenteditable=true] .linked:active,[contenteditable=true] .zoomable:active{opacity:1}s *{text-transform:inherit}small{max-width:100%;text-decoration:inherit}b,strong{font-weight:bolder}.small-caps{font-variant:small-caps;text-transform:lowercase}.no-wrap{white-space:nowrap}.page_background{position:absolute;top:0;left:0;width:100%;height:100%}media-item .caption.empty{display:none}.tag-separator:before{content:", "}media-item[drag=true]::part(media),[contenteditable=true] iframe{pointer-events:none}column-set+*{--gutter-expand: 1}gallery-grid+*{--gutter-expand: 1}gallery-columnized+*{--gutter-expand: 1}gallery-justify+*{--gutter-expand: 1}gallery-slideshow+*{--gutter-expand: 1}gallery-freeform+*{--gutter-expand: 1}media-item+*{--gutter-expand: 1}column-unit>*:first-child{--gutter-expand: 0}marquee-set h1,marquee-set h2,marquee-set h3,marquee-set h4,marquee-set h5,marquee-set h6,marquee-set h7,marquee-set h8,marquee-set h9{vertical-align:text-bottom;display:inline-block}marquee-set{pointer-events:auto}marquee-set media-item .caption{white-space:normal}gallery-slideshow media-item figcaption.caption{display:var(--display-slideshow-captions, none);transform:var(--slideshow-caption-transform, translateX(0px));opacity:var(--slideshow-caption-opacity, 0);text-align:var(--slideshow-caption-align);pointer-events:var(--slideshow-caption-pointer-events, initial);will-change:opacity,transform;position:relative}gallery-slideshow media-item::part(sizing-frame){margin:auto 0;flex-grow:0}gallery-slideshow media-item::part(frame){display:flex;flex-wrap:wrap;width:var(--item-width);height:var(--slide-height);align-content:var(--slideshow-vertical-align);align-self:var(--slideshow-horizontal-align)}body.slideshow-nav-arrow-display,body.slideshow-nav-arrow-display *:not(a,media-item[href],media-item.zoomable){cursor:var(--slideshow-cursor)}body.slideshow-dragging *{cursor:var(--slideshow-cursor) !important}body>media-item[no-component]{all:unset !important;border:none !important;padding:0 !important;position:fixed !important;z-index:5000 !important;pointer-events:none !important;background:none !important;inset:0 !important;overflow:hidden !important}button#edit.edit{appearance:none;-webkit-appearance:none;border:none;cursor:pointer;font-size:var(--fontSize-default);font-family:var(--fontFamily-default);padding:0;text-align:left;white-space:nowrap;background:transparent;display:flex;margin:0;border-radius:3px 0 0 3px;pointer-events:auto;position:fixed;top:50%;transform:translate(0, -50%);right:400px;height:36px;width:12px;z-index:999;cursor:pointer;background-color:rgba(140, 140, 140, 0.4);padding-left:2px;margin-right:5px;width:20px;cursor:pointer;margin:0;right:0}button#edit.edit:active{opacity:.7;user-select:none}button#edit.edit svg{padding:0;width:16px;height:36px;margin-left:2px;opacity:1}button#edit.edit svg path{fill:#fff}.quick-view{--font-scale: 1;--resize-parent-width: unset;width:80%;height:80%;margin-top:auto;margin-right:auto;margin-bottom:auto;margin-left:auto;padding:5rem;padding-top:5rem;padding-right:5rem;padding-bottom:5rem;padding-left:5rem;display:flex;z-index:5001;transform:translateZ(999px);position:fixed;top:0;left:0;right:0;bottom:0;-webkit-text-size-adjust:100%;-ms-touch-action:none;touch-action:none;line-height:initial;letter-spacing:initial}.quick-view .caption{font-size:clamp(14.5px,var(--font-scale, 1)*var(--font-size, 14.5px),2.4rem)}.quick-view-frame{position:relative;display:flex;height:100%;width:100%}.quick-view-content{height:100%;width:auto}.quick-view-background{backdrop-filter:var(--quick-view-backdrop-filter, none);-webkit-backdrop-filter:var(--quick-view-backdrop-filter, none);transition:backdrop-filter .2s ease}.quick-view.quick-view-navigation{display:block;z-index:5002;position:fixed;inset:0;pointer-events:none;transform:translateZ(999px)}.quick-view::part(slideshow-nav){transition:opacity 222ms ease-in-out;position:absolute;z-index:99;inset:0;pointer-events:none}.pagination-watcher{pointer-events:none;height:1px;margin-top:-1px;width:100%}html,body{overflow-anchor:none}.colorfilter-color,.colorfilter-base{position:absolute;inset:0;pointer-events:none}.colorfilter-color{z-index:9995;display:block;background-color:var(--colorfilter-color, #FF0000);mix-blend-mode:var(--colorfilter-mix, lighten);opacity:var(--colorfilter-color-opacity, 0)}.colorfilter-base{display:block;backdrop-filter:grayscale(clamp(0, var(--colorfilter-grayscale, 0), var(--colorfilter-color-opacity, 0))) brightness(var(--colorfilter-brightness, 1)) contrast(var(--colorfilter-contrast, 1)) invert(var(--colorfilter-invert, 0));-webkit-backdrop-filter:grayscale(clamp(0, var(--colorfilter-grayscale, 0), var(--colorfilter-color-opacity, 0))) brightness(var(--colorfilter-brightness, 1)) contrast(var(--colorfilter-contrast, 1)) invert(var(--colorfilter-invert, 0));z-index:9994}#editor-overlay.safari,.colorfilter-base.safari,.colorfilter-color.safari,#cargo-dotsite.safari{transform:translateZ(0px);animation:loopTranslate .5s steps(2, end) infinite}@keyframes loopTranslate{0%{transform:translateZ(0px)}50%{transform:translateZ(1px)}100%{transform:translateZ(0px)}}.flying-object{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;overflow:hidden}.flying-object media-item{position:fixed;top:0;left:0}.flying-object,.flying-object *{user-select:none;pointer-events:none !important}body.audio-player-dragging,body.audio-player-dragging audio-player,body.audio-player-dragging *{cursor:ew-resize}audio-player[browser-default=true]{padding:unset;margin:unset;outline:unset;background:unset;border:unset;transform:unset;height:unset;position:relative;display:inline-block}audio-player::part(button){background:transparent;cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;display:inline-flex;width:.7em;contain:layout}audio-player::part(separator){height:100%}audio-player::part(buffer){height:100%}audio-player::part(time-bar){height:100%;display:flex;justify-content:space-between;align-content:center;margin:auto 0;width:0%;flex-grow:1;height:100%}audio-player::part(progress){background:transparent;height:100%}audio-player::part(play-icon),audio-player::part(pause-icon){fill:currentColor;cursor:pointer;width:100%;height:auto}audio-player::part(label){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;user-select:none;margin:auto auto auto 0;flex:0 3 auto;min-width:0;width:100%}audio-player::part(total-time){flex:0 1 auto;margin:auto 0}audio-player::part(current-time),audio-player::part(play-text){flex:0 1 auto;margin:auto 0}audio-player::part(stream-anim):before{content:"Streaming"}audio-player::part(stream-anim){user-select:none;margin:auto auto auto 0}audio-player::part(buffer),audio-player::part(current-time),audio-player::part(note-svg),audio-player::part(play-text),audio-player::part(separator),audio-player::part(total-time){user-select:none;pointer-events:none}audio-player::part(buffer),audio-player::part(play-text),audio-player::part(progress){position:absolute}audio-player::part(time-bar),audio-player::part(button),audio-player::part(current-time),audio-player::part(note-icon),audio-player::part(pause),audio-player::part(play),audio-player::part(total-time){position:relative}audio-player::part(progress-indicator){border:1px solid currentColor;cursor:ew-resize;height:100%;right:0;position:absolute}audio-player{border:var(--border-lines);margin-bottom:.5em;overflow:hidden}audio-player::part(time-bar){background:var(--background-color)}audio-player::part(label),audio-player::part(current-time),audio-player::part(total-time){color:var(--text-color)}audio-player::part(play-icon),audio-player::part(pause-icon){fill:var(--icon-color, currentColor)}audio-player::part(separator){width:0px;background:none}audio-player::part(buffer){background:var(--buffer-background-color)}audio-player::part(progress){background:var(--progress-background-color)}audio-player::part(progress-indicator){border-top:0;border-bottom:0;border-left:0;border-right-width:2px}audio-player::part(button){height:100%;display:inline-flex;align-self:center;background:var(--background-color)}audio-player::part(button):after{color:var(--text-color)}audio-player[status=stopped]::part(button):after,audio-player:not([status])::part(button):after{content:var(--play-text)}audio-player[status=playing]::part(button):after{content:var(--pause-text)}audio-player::part(play-icon),audio-player::part(pause-icon){height:var(--icon-size, 1em);width:auto}audio-player::part(label),audio-player::part(stream-anim),audio-player::part(current-time),audio-player::part(total-time){padding:var(--text-padding)}shop-product{font-size:1.2rem;max-width:22rem;width:100%;position:relative;display:block}shop-product::part(price){line-height:1.1;color:inherit;font-family:inherit;font-style:inherit;font-weight:inherit;font-size:inherit;letter-spacing:inherit}shop-product::part(dropdown){width:100%;background:transparent;line-height:normal;color:inherit;font-family:inherit;font-style:inherit;font-weight:inherit;font-size:inherit;letter-spacing:inherit;white-space:nowrap;text-overflow:ellipsis;display:inline-block;-webkit-appearance:none;border:0;outline:0}shop-product::part(button),shop-product::part(error){line-height:normal;cursor:pointer;display:inline-block;color:inherit;font-family:inherit;font-style:inherit;font-weight:inherit;font-size:inherit;letter-spacing:inherit;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}shop-product::part(button):active{opacity:.7}a[rel=show-cart][show-count]:after{counter-reset:variable var(--cart-item-count);content:" (" counter(variable) ")";display:var(--cart-item-count-display, none)}.cargodotsite{position:fixed;bottom:1rem;right:1.4rem;mix-blend-mode:difference;z-index:9999;opacity:.2;cursor:pointer}.mobile .cargodotsite{bottom:.4rem;right:1rem}.cargodotsite:active{opacity:.14}.dl-duplicate{position:fixed;bottom:1rem;right:1.4rem;z-index:9999;cursor:pointer}.mobile .dl-duplicate{bottom:.4rem;right:1rem}.dl-duplicate:active{opacity:.7}</style>
+		<link rel="stylesheet" type="text/css" href="https://build.cargo.site/frontend/e1a2ed/index.css">
+		<script>!function(){function e(e,o,t){!1===e.prototype.hasOwnProperty(name)&&(e.prototype[o]=t)}e(Node,"saveable",!1),e(Node,"setSaveable",function(e){return this.saveable=e,this}),e(Node,"isSaveable",function(){return this.saveable}),Node.prototype.persistCloneNode=function(){var s=function(e,o,t){for(var i=0;i<e.childNodes.length;i++)t(e.childNodes[i],o.childNodes[i]),0<e.childNodes[i].childNodes.length&&s(e.childNodes[i],o.childNodes[i],t)},e=Node.prototype.cloneNode.apply(this,arguments);return this.isSaveable&&!0===this.isSaveable()&&e.setSaveable(!0),0<this.childNodes.length&&s(this,e,function(e,o){e.isSaveable&&!0===e.isSaveable()&&o.setSaveable(!0)}),e},this.core={markAsEditable:function(e){}}}(window.CargoEditor=window.CargoEditor||{});</script>
+		<link rel="icon" href="https://static.cargo.site/favicon/c3-favicon.ico" sizes="any">
+		<meta name="description" content="cargo.site">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="Backsteinboot">
+		<meta name="twitter:description" content="cargo.site">
+		<meta name="twitter:image" content="https://freight.cargo.site/w/1200/i/Z1768812241247977092690313773181/Aktionsraum-7.jpg">
+		<meta property="og:title" content="Backsteinboot">
+		<meta property="og:description" content="cargo.site">
+		<meta property="og:url" content="https://backsteinboot.org/program-(landing-page)-1">
+		<meta property="og:image" content="https://freight.cargo.site/w/1200/i/Z1768812241247977092690313773181/Aktionsraum-7.jpg">
+		<meta property="og:type" content="website">
+		<style>/*
+ * This CSS file has been generated and is served by Cargo Collective Inc
+ * and is authorized to be used on Cargo Collective Inc only.
+ *
+ * This CSS resource incorporates links to font software which is
+ * the valuable copyrighted property of Dinamo Typefaces. You may not
+ * attempt to copy, install, redistribute, convert, modify or reverse
+ * engineer this font software. Please contact Dinamo with any
+ * questions: https://abcdinamo.com/
+ */
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskItalicPlusVariable.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskItalicPlusVariable.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskPlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 900;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Monument Grotesk Mono Variable";
+    src: url("https://type.cargo.site/files/CargoMonumentGroteskItalicPlusVariable.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 900;
+}
+
+/*
+ * This CSS file has been generated and is served by Cargo Collective Inc
+ * and is authorized to be used on Cargo Collective Inc only.
+ *
+ * This CSS resource incorporates links to font software which is
+ * the valuable copyrighted property of Dinamo Typefaces. You may not
+ * attempt to copy, install, redistribute, convert, modify or reverse
+ * engineer this font software. Please contact Dinamo with any
+ * questions: https://abcdinamo.com/
+ */
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable-Italic.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 1000;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Semi-Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable-Italic.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2") format("woff2-variations");
+    font-style: normal;
+    font-weight: 200 700;
+}
+
+@font-face {
+    font-display: block;
+    font-family: "Diatype Mono Variable";
+    src: url("https://type.cargo.site/files/Cargo-DiatypePlusVariable-Italic.woff2") format("woff2-variations");
+    font-style: italic;
+    font-weight: 200 700;
+}
+
+</style>
+	</head>
+	<body style="opacity: 0;"><customhtml></customhtml><style>html {
+	--mobile-scale: 1.4;
+	--mobile-padding-offset: 1.4;
+}
+
+body {
+	--swatch-1: rgba(0, 0, 0, 0.85);
+	--swatch-2: rgba(0, 0, 0, 0.75);
+	--swatch-3: rgba(0, 0, 0, 0.6);
+	--swatch-4: rgba(0, 0, 0, 0.4);
+	--swatch-5: rgba(0, 0, 0, 0.25);
+	--swatch-6: rgba(0, 0, 0, 0.37);
+}
+
+body.mobile {
+}
+
+a:active,
+.linked:active,
+.zoomable::part(media):active {
+	opacity: 0.7;
+}
+
+.page a.active {
+	color: #afafff;
+}
+
+sub {
+	position: relative;
+	vertical-align: baseline;
+	top: 0.3em;
+}
+
+sup {
+	position: relative;
+	vertical-align: baseline;
+	top: -0.4em;
+}
+
+.small-caps {
+	font-variant: small-caps;
+	text-transform: lowercase;
+}
+
+ol {
+	margin: 0;
+	padding: 0 0 0 2.5em;
+	list-style-type: decimal-leading-zero;
+}
+
+ul {
+	margin: 0;
+	padding: 0 0 0 2.0em;
+}
+
+ul.lineated {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	margin: 0 0 0 3em;
+	text-indent: -3em;
+}
+
+blockquote {
+	margin: 0;
+	padding: 0 0 0 2em;
+}
+
+hr {
+	background: rgba(0, 0, 0, 0.6);
+	border: 0;
+	height: 1px;
+	display: block;
+	margin-top: 0.4rem;
+	margin-bottom: 0.5rem;
+}
+
+.content {
+	border-color: rgba(0,0,0,.85);
+}
+
+bodycopy {
+	font-size: 1.4rem;
+	font-weight: 400;
+	color: rgba(0, 0, 0, 0.75);
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+bodycopy a {
+	color: rgba(0, 0, 0, 0.75);
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+bodycopy a:hover {
+    color: #c8ff00;
+}
+
+h1 {
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	font-weight: 300;
+	margin: 0;
+	font-size: 3.6rem;
+	line-height: 1.2;
+	color: #000000;
+	letter-spacing: 0;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+h1 a {
+	color: #000000;
+	text-decoration: none;
+}
+
+h1 a:hover {
+}
+
+h2 {
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	font-weight: 700;
+	margin: 0;
+	color: rgba(0, 0, 0, 0.5);
+	font-size: 2.8rem;
+	line-height: 1.2;
+	letter-spacing: 0;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+h2 a {
+	color: rgba(0, 0, 0, 0.5);
+	text-decoration: none;
+}
+
+h2 a:hover {
+}
+
+.caption {
+	font-size: 1rem;
+	font-weight: 300;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1;
+	letter-spacing: 0;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.caption a {
+	text-decoration: underline;
+	color: #000000;
+}
+
+.caption a:hover {
+}
+
+media-item .caption {
+	margin-top: .5em;
+}
+
+gallery-grid .caption,
+gallery-columnized .caption,
+gallery-justify .caption {
+	margin-bottom: 2em;
+}
+
+[thumbnail-index] .caption {
+	text-align: center;
+}
+
+[thumbnail-index] .caption .tags {
+	margin-top: 0.25em;
+}
+
+.page {
+	justify-content: center;
+}
+
+.page-content {
+	padding: 1rem;
+	text-align: left;
+}
+
+.mobile [id] .page-layout {
+	max-width: 100%;
+}
+
+.page-layout {
+	align-items: flex-start;
+	max-width: 100%;
+	padding: 0.0rem;
+}
+
+media-item::part(media) {
+	border: 0;
+	padding: 0;
+}
+
+.quick-view {
+	height: 100%;
+	width: 100%;
+	padding: 5rem;
+	margin-top: auto;
+	margin-right: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+}
+
+.quick-view-background {
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+.quick-view .caption {
+	color: rgba(255, 255, 255, 1.0);
+	padding: 20px 0;
+	text-align: center;
+	transition: 100ms opacity ease-in-out;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.quick-view .caption-background {
+	padding: 0.5rem 1rem;
+	display: inline-block;
+	background: rgba(0, 0, 0, 0.5);
+	border-radius: .5rem;
+	text-align: left;
+	max-width: 50rem;
+}
+
+.mobile .quick-view {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 10px;
+}
+
+.mobile .quick-view .caption {
+	padding: 10px 0;
+}
+
+.menu {
+	--text-style: "menu";
+	font-size: 1.2rem;
+	font-weight: 300;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.menu a {
+	color: #000000;
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.menu a:hover {
+	
+}
+
+.title {
+	--text-style: "title";
+	font-size: 2.4rem;
+	font-weight: 300;
+	color: rgba(0, 0, 0, 0.25);
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.title a {
+	color: rgba(0, 0, 0, 0.25);
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.title a:hover {
+	
+}
+
+.subtitle {
+	--text-style: "subtitle";
+	font-size: 1.2rem;
+	font-weight: 500;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.subtitle a {
+	color: #000000;
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.subtitle a:hover {
+	
+}
+
+.date-and-time {
+	--text-style: "date and time";
+	font-size: 1.2rem;
+	font-weight: 300;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.date-and-time a {
+	color: #000000;
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.date-and-time a:hover {
+	
+}
+
+.text {
+	--text-style: "text";
+	font-size: 1.2rem;
+	font-weight: 400;
+	color: rgba(0, 0, 0, 0.37);
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.text a {
+	color: rgba(0, 0, 0, 0.37);
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.text a:hover {
+	
+}
+
+.credit {
+	--text-style: "credit";
+	font-size: 1rem;
+	font-weight: 400;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1;
+	letter-spacing: 0em;
+	display: block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.credit a {
+	color: #000000;
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.credit a:hover {
+	
+}
+
+.menu-title {
+	--text-style: "menu title";
+	font-size: 1.8rem;
+	font-weight: 500;
+	color: #000000;
+	font-family: "Monument Grotesk Variable";
+	font-style: normal;
+	line-height: 1.2;
+	letter-spacing: 0em;
+	display: inline-block;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+}
+
+.menu-title a {
+	color: #000000;
+	border-bottom: 0px solid rgba(127, 127, 127, 0.2);
+	text-decoration: none;
+}
+
+.menu-title a:hover {
+	
+}
+
+.mobile .quick-view .caption-background {
+	max-width: 100vw;
+}
+
+::part(slideshow-nav) {
+	--button-size: 30px;
+	--button-inset: 20px;
+	--button-icon-color: rgba(255, 255, 255, 0.9);
+	--button-icon-stroke-width: 1.5px;
+	--button-icon-stroke-linecap: none;
+	--button-background-color: rgba(87, 87, 87, 0.35);
+	--button-background-radius: 50%;
+	--button-active-opacity: 0.7;
+}
+
+gallery-slideshow::part(slideshow-nav) {
+	--button-inset: 15px;
+}
+
+.quick-view::part(slideshow-nav) {
+}
+
+.wallpaper-slideshow::part(slideshow-nav) {
+}
+
+.mobile ::part(slideshow-nav) {
+	--button-inset: 10px;
+}
+
+.mobile .quick-view::part(slideshow-nav) {
+	--button-inset: 25px;
+}
+
+shop-product {
+	font-size: 1.2rem;
+	max-width: 22rem;
+	font-family: "Diatype Variable";
+	font-style: normal;
+	font-weight: 400;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+	letter-spacing: 0em;
+	margin-bottom: 1em;
+}
+
+shop-product::part(price) {
+	color: rgba(0, 0, 0, 0.75);
+	line-height: 1.1;
+	margin-bottom: 0.5em;
+}
+
+shop-product::part(dropdown) {
+	width: 100%;
+	color: rgba(0, 0, 0, 0.85);
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	background-color: rgba(255, 255, 255, 0.0);
+	background-image: url(https://static.cargo.site/assets/images/select-line-arrows.svg);
+	background-repeat: no-repeat;
+	background-position: top 0em right .1em;
+	line-height: 1.2;
+	padding: 0.58em 2em 0.55em 0.9em;
+	border-radius: 10em;
+	margin-bottom: 0.5em;
+}
+
+shop-product::part(button) {
+	background: rgba(0, 0, 0, 0.15);
+	color: rgba(0, 0, 0, 0.75);
+	text-align: left;
+	line-height: normal;
+	padding: 0.5em 1em;
+	cursor: pointer;
+	border-radius: 10em;
+}
+
+shop-product::part(button):active {
+	opacity: .7;
+}
+
+audio-player {
+	--text-color: rgba(0, 0, 0, 0.85);
+	--text-padding: 0 1.2em 0 1.0em;
+	--background-color: rgba(255, 255, 255, 0);
+	--buffer-background-color: rgba(0, 0, 0, 0.03);
+	--progress-background-color: rgba(0, 0, 0, 0.075);
+	--border-lines: 1px solid rgba(0, 0, 0, 0.2);
+	font-size: 1.2rem;
+	width: 32rem;
+	height: 2.75em;
+	font-family: "Diatype Variable";
+	font-style: normal;
+	font-weight: 400;
+	font-variation-settings: 'slnt' 0, 'MONO' 0;
+	line-height: normal;
+	letter-spacing: 0em;
+	margin-bottom: 0.5em;
+	border-radius: 10em;
+}
+
+audio-player::part(button) {
+	--icon-color: rgba(0, 0, 0, 0.85);
+	--icon-size: 32%;
+	--play-text: '';
+	--pause-text: '';
+	width: 3.15em;
+	display: inline-flex;
+	justify-content: center;
+	cursor: pointer;
+}
+
+audio-player::part(play-icon) {
+	padding-left: 0.6em;
+}
+
+audio-player::part(pause-icon) {
+	padding-left: 0.4em;
+}
+
+audio-player::part(progress-indicator) {
+	border-right: 1px solid rgba(0, 0, 0, 0);
+	height: 100%;
+	cursor: ew-resize;
+}
+
+audio-player::part(separator) {
+	border-right: var(--border-lines);
+}
+
+body.mobile audio-player {
+	max-width: 100%;
+}</style><style id="mobile-offset-styles"></style><style id="text-style-font-sizes"></style><style id="link-styles"></style><style id="font-feature-settings-styles"></style><div class="content"><div id="Y0443799168" page-url="menu-(desktop)-1" class="page pinned pinned-top"><a id="menu-(desktop)-1"></a><div class="page-layout"><div class="page-content"><bodycopy style="--fit-height: 10px; --resize-parent-width: 100%;"><column-set gutter="4rem"><column-unit slot="0">
+
+<span class="menu-title"></span><span class="menu-title">Backsteinboot</span><span class="menu"><a href="about" rel="history">About</a><br /><a href="projectspace" rel="history">Project space</a><br /><a href="ateliers-1" rel="history">Ateliers (new studio available!)</a><br /><a href="residency" rel="history">Residency</a>
+
+</span></column-unit><column-unit slot="1">
+
+<span class="menu-title">Cultural events</span><span class="menu">
+
+<a href="program-(landing-page)-1" rel="history">Program (home)</a><br />
+<a href="2026" rel="history">Archives /year</a><br />
+
+
+<a href="sleepovers" rel="history">Archives /format</a><br />
+
+
+<a href="raum-für-kunst-e-v--1" rel="history">Archives /collaborator</a></span>
+
+</column-unit><column-unit slot="2">
+
+<span class="menu-title">Info</span><span class="menu"><a href="raum-für-kunst-e-v-" rel="history">Raum für Kunst e.V.</a><br /><a href="contact,-notice-to-visitors" rel="history">Contact, Notice to visitors</a><br />
+
+
+<a href="keep-in-touch" rel="history">Keep in touch</a><a href="partners-sponsors" rel="history"><br />Partners &#x26; Sponsors</a>
+</span></column-unit></column-set></bodycopy></div></div><style>[id="Y0443799168"] bodycopy {
+	
+}
+
+.outlined-text {
+  color: white; /* Inside color */
+  text-shadow: 
+    -1px -1px 0 black,  
+    1px -1px 0 black,
+    -1px 1px 0 black,
+    1px 1px 0 black; /* Shadows to simulate the outline */
+}</style><style id="mobile-offset-styles-Y0443799168"></style></div><div style="margin-top: 0px; margin-bottom: 0px;" class="pages"><div id="Z3925686660" page-url="program-(landing-page)-1" class="page"><a id="program-(landing-page)-1"></a><div class="page-layout"><div class="page-content"><bodycopy style="--fit-height: 10px; --resize-parent-width: 100%;"><hr /><span class="title">October 2026<br />
+<br />
+</span><column-set gutter="4rem" mobile-hide-empty="false" mobile-stack="true"><column-unit slot="0">
+
+
+
+
+
+
+<span class="subtitle"><b><gallery-slideshow autoplay="false" gutter="1rem" mobile-navigation="buttons" navigation="cursor-zones" show-captions="false" transition-speed="0.1"><media-item class="zoomable" hash="U3159841391616298970265891930237" limit-by="width" rotation="0" scale="100"></media-item><media-item class="zoomable" hash="O3159828703853491352467742687357" limit-by="width" rotation="0" scale="100"></media-item></gallery-slideshow><br />
+
+Hold Space Core Sample</b></span><br />
+
+<span class="date-and-time">04.10.2026<br />
+16:00 - Late</span><span class="text">
+<br />
+
+
+EXHIBITION<br />self organised<br /><br />
+
+artists: AMB, 
+
+Amos Turner, Augmented Flesh, Bin Cir, Cristiano Monga, 
+
+Damir,  Hostnazer, Inga Ivanova, Marcel Mattias, Melizards, Samin Son, Zingualistic<br />
+<br />
+<i>entry: based on donation<br />
+
+<br />
+
+
+
+<div style="text-align: center">~~~</div></i>
+
+<br /></span>
+
+<span class="text">
+
+</span><span class="text">
+</span>
+
+
+
+</column-unit><column-unit slot="1">
+
+
+<i></i>
+
+
+
+
+
+
+<span class="subtitle"><gallery-slideshow autoplay="false" gutter="1rem" mobile-navigation="buttons" navigation="cursor-zones" show-captions="false" transition-speed="0.1"><media-item class="" hash="B3159843020242439749934785003645" limit-by="width" rotation="0" scale="100"></media-item><media-item class="" hash="E3159843277242478184856258117757" limit-by="width" rotation="0" scale="100"></media-item></gallery-slideshow><br />
+Climate of Fear
+</span>
+
+<br />
+<span class="date-and-time">10 - 11.10.2026
+<br />
+23:59 - 23:59 (24 hours!)</span><span class="text">
+
+
+<br />
+CLUB
+<br />
+in collaboration with Climate of Fear
+<br />
+
+<br />
+artists: upsammy, Lechuga Zafiro, Gabrielle Kwarteng, Peach, DJ Travella, Kikelomo, Kontronatura, livwutang
+<br />
+
+<br />
+<i>entry: <u><a href="https://ra.co/events/2533830" target="_blank">https://ra.co/events/2533830</a></u> <text-icon icon="north-east-arrow"></text-icon></i><br />
+<br />
+
+
+<div style="text-align: center">~~~</div>
+
+<u>
+ 
+
+
+
+
+</u></span><i><u><br />
+</u></i>
+
+
+
+
+</column-unit><column-unit slot="2"><i>
+<span class="subtitle"><gallery-slideshow autoplay="false" gutter="1rem" mobile-navigation="buttons" navigation="cursor-zones" show-captions="false" transition-speed="0.1"><media-item class="" hash="N3159843843760435432550297796733" limit-by="width" rotation="0" scale="100"></media-item><media-item class="" hash="N3159844075543774718710813851773" limit-by="width" rotation="0" scale="100"></media-item><media-item class="" hash="Q3159844288898816675235487842429" limit-by="width" rotation="0" scale="100"></media-item></gallery-slideshow><br />
+Butoh Mutations and Baguazhang: Qi and the breath landscape</span>
+
+
+<br />
+<span class="date-and-time">21.10.2026
+<br />
+15:00 - 19:00</span>
+
+
+<br />
+<span class="text">WORKSHOP
+<br />
+self-organized with Dominique Savitri Bonarjee, Yunuen Rhi<br />
+<br />
+
+
+<a href="https://dominiquebaronb.wordpress.com/" target="_blank"><u>https://dominiquebaronb.wordpress.com/</u></a> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon><br /><u><a href="https://spaceofthenameless.art/" target="_blank">https://spaceofthenameless.art/</a></u> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon><br /><a href="https://butoh.co.uk/" target="_blank"><u>butoh.co.uk</u></a> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon>
+
+<br />
+<br />
+<u><a href="https://isuini.com/" target="_blank">https://isuini.com/</a></u> <text-icon icon="north-east-arrow"></text-icon><br />
+
+<br />
+<i>registration: butohmutations@gmail.com / yuehecatl@gmail.com</i></span>
+
+
+<br />
+
+
+<div style="text-align: center"><span class="text">~~~</span></div></i>
+
+
+
+
+
+
+
+
+</column-unit><column-unit slot="3">
+
+
+
+
+<i><span class="subtitle"><media-item class="zoomable" hash="U3159844856173090429951619137661"></media-item><br /><br />
+last Tuesday monthly noodle: <br />untangling artistic thinking<br />
+<br />
+</span>
+
+
+
+<span class="date-and-time">27.10.2026<br />
+20:00 - 23:00</span><span class="text"><br />TALK &#x26; DISCUSSIONS<br />self organised<br />
+
+<br />artist: TBA</span></i>
+
+<br />
+<span class="text"><i>entry: by invitation only<br />
+
+
+</i></span>
+<br />
+
+
+<i><div style="text-align: center"><span class="text">~~~</span></div></i>
+
+
+
+
+
+
+</column-unit><column-unit slot="4">
+
+
+
+<span class="subtitle"><i></i></span><span class="text"><i>
+
+</i></span>
+
+
+
+
+
+<span class="subtitle"></span>
+
+
+
+</column-unit><column-unit slot="5"><span class="subtitle"></span><br />
+
+
+
+
+
+
+
+</column-unit></column-set><br />
+
+
+
+
+
+
+
+
+
+
+<span class="text"><i></i></span>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span class="text">
+</span><span class="text"><i>
+
+</i>
+
+
+</span>
+
+
+
+<span class="text"><i>
+ </i></span>
+
+
+
+
+
+<u></u>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span class="text"><i></i>
+
+</span>
+
+
+
+
+
+
+
+
+
+<span class="text"></span><span class="text"></span>
+<hr /><span class="title">Weekly<br />
+<br />
+</span>
+<column-set gutter="4rem" mobile-hide-empty="false" mobile-stack="true"><column-unit slot="0"><gallery-slideshow autoplay="false" navigation="cursor-zones" show-captions="false" transition-speed="0.1" vertical-align="top"><media-item class="zoomable" hash="X2659469262074884334127447048317" limit-by="width" rotation="0" scale="100"></media-item><media-item class="zoomable" hash="G2659469618632000534859370233981" limit-by="width" rotation="0" scale="100"></media-item></gallery-slideshow></column-unit><column-unit slot="1"><span class="subtitle">
+
+Energy Ecology and Wu-Wei through Wudang Tai Chi Chaun<br />
+<br /></span><span class="date-and-time">Every Wednesday<br />11:00 - 12:30</span>
+<br /><span class="text">WORKSHOP<br />self-organized with Dominique Savitri Bonarjee<br /><br /><a href="https://dominiquebaronb.wordpress.com/" target="_blank"><u>https://dominiquebaronb.wordpress.com/</u></a> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon><br /><u><a href="https://spaceofthenameless.art/" target="_blank">https://spaceofthenameless.art/</a></u> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon><br /><i><a href="https://butoh.co.uk/" target="_blank"><u>butoh.co.uk</u></a> <text-icon icon="north-east-arrow" style="display: inline-block;"></text-icon></i><br /><br /><i>
+
+entry: 40€ for 4 classes or 12€ per class<br />
+<br />registration:
+
+spaceofthenameless@gmail.com</i></span>
+
+
+
+
+
+
+</column-unit><column-unit slot="2"></column-unit></column-set><br />
+
+
+<hr /><span class="title">Previously, an overview<br />
+<br /></span><column-set gutter="4rem"><column-unit slot="0"></column-unit><column-unit slot="1"><gallery-slideshow disable-zoom="true" limit-by="height" pause-on-hover="true" scale="55rem" shuffle="true" transition-speed="1"><media-item class="" hash="X2806472208042630853196863799421" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Climate of Fear: Sweet Earth Flying
+on December 31, 2019</figcaption></media-item><media-item class="" hash="B2807999003341523442126823915645" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Climate of Fear: Sweet Earth Flying on December 31, 2019</figcaption></media-item><media-item class="" hash="I2806491145783691572675615162493" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ōtone shot by Inga Ivanova <br />
+at Transgaïa on July 10, 2020</figcaption></media-item><media-item class="" hash="Q2806502102135100432095249727613" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Matias Brunacci shot by Inga Ivanova <br />
+at Audiovisuell #1 on September 3, 2020</figcaption></media-item><media-item class="" hash="S2806538646647743464761184256125" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Krzysztof Leon Dziemaszkiewicz shot by Clélia Ghelfenstein <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="K2806544176797149322147663216765" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Jade Lee Petersen shot by Adam Hruby <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="R2806546095645914613488931864701" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Kevin Bonono shot by Clélia Ghelfenstein <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="X2806549918420029240540441903229" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ixa shot by Adam Hruby <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="Z2806554549456682201249665548413" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">After-Show shot by Gabriela Zigova <br />
+at PETRICHOR on September 5, 2020<br />
+</figcaption></media-item><media-item class="" hash="T2806554549438235457175955996797" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">After-Show shot by Gabriela Zigova <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="F2806554549475128945323375100029" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">After-Show shot by Gabriela Zigova <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="Y2806554549032407087554345861245" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">After-Show shot by Gabriela Zigova <br />
+at PETRICHOR on September 5, 2020</figcaption></media-item><media-item class="" hash="X2806568418309172626449276108925" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">TAG DER CLUBKULTUR: NO SHADE on October 3, 2020</figcaption></media-item><media-item class="" hash="M2806575234085959956949245395069" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Nicky Miller shot by Xiaoer Liu
+<br />
+at New Moon Performance on May 25, 2021</figcaption></media-item><media-item class="" hash="M2806575234067513212875535843453" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">
+
+
+
+Tsuki shot by Xiaoer Liu
+<br />
+at New Moon Performance on May 25, 2021
+
+
+
+</figcaption></media-item><media-item class="" hash="X2806575233274303217706025123965" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">
+
+
+
+Stom Tom shot by Xiaoer Liu
+<br />
+at New Moon Performance on May 25, 2021
+
+
+
+</figcaption></media-item><media-item class="" hash="V2806587632714500963423882608765" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Berliner Blau on September 11, 2021</figcaption></media-item><media-item class="" hash="T2808044985300668304967912947837" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">SEH’ DIE WELT IN TRÜMMERN LIEGEN on July 1, 2022</figcaption></media-item><media-item class="" hash="T2806603556442047479498995433597" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">THE WORLD COLLAPSED WHILE WE WERE DANCING on July 15, 2022</figcaption></media-item><media-item class="" hash="F2806603557345937939110763462781" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">THE WORLD COLLAPSED WHILE WE WERE DANCING on July 15, 2022</figcaption></media-item><media-item class="" hash="V2806610264194701514355830456445" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Sofia Lambrou <br />
+at Climate of Fear on July 24, 2022</figcaption></media-item><media-item class="" hash="F2806617824131591522372821483645" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Butoh-Pan shot by Inga Ivanova <br />
+at BUTOH NIGHT on April 22, 2023</figcaption></media-item><media-item class="" hash="Y2806617825146162446426846822525" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Butoh-Pan shot by Inga Ivanova <br />
+at BUTOH NIGHT on April 22, 2023</figcaption></media-item><media-item class="" hash="B2806645326695925665196388155517" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Pauline Lavogez shot by Inga Ivanova <br />
+at Walk In Drei on July 14, 2023</figcaption></media-item><media-item class="" hash="E2806645327858070541840089907325" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Pauline Lavogez shot by Inga Ivanova <br />
+at Walk In Drei on July 14, 2023</figcaption></media-item><media-item class="" hash="C2806645327821177053692670804093" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Mariagiulia Serantoni shot by Inga Ivanova <br />
+at Walk In Drei on July 14, 2023</figcaption></media-item><media-item class="" hash="R2806645327839623797766380355709" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Clara C. shot by Inga Ivanova <br />
+at Walk In Drei on July 14, 2023</figcaption></media-item><media-item class="" hash="U2806663996682496154780997812349" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Evan Webb &#x26; Hannah Stein shot by Cecilia Murgia <br />
+at Our Constellation on August 26, 2023</figcaption></media-item><media-item class="" hash="S2806663998176682424751471493245" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Naomi Cassim shot by Cecilia Murgia <br />
+at Our Constellation on August 26, 2023</figcaption></media-item><media-item class="" hash="T2806663998195129168825181044861" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Markosh Kryzhak shot by Cecilia Murgia <br />
+at Our Constellation on August 26, 2023</figcaption></media-item><media-item class="" hash="H2806663998213575912898890596477" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Evan Webb &#x26; Hannah Stein shot by Cecilia Murgia <br />
+at Our Constellation on August 26, 2023</figcaption></media-item><media-item class="" hash="F2806663998232022656972600148093" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Dane Joe shot by Cecilia Murgia <br />
+at Our Constellation on August 26, 2023</figcaption></media-item><media-item class="" hash="F2806680366341633908710811402365" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">IMPRINTS on May 26, 2024</figcaption></media-item><media-item class="" hash="U2806680367762033202386446876797" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">IMPRINTS on May 26, 2024</figcaption></media-item><media-item class="" hash="X2806687878612137230262321053821" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">MODALITIES (Alias Error &#x26; O.N.A) shot by Chloé Binh-Cirlot <br />
+at HyperrTerra on July 6, 2024</figcaption></media-item><media-item class="" hash="W2806695689498533617024052265085" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Inga Ivanova <br />
+at System Dialog on August 10, 2024</figcaption></media-item><media-item class="" hash="H2806695687893666882611321274493" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Inga Ivanova <br />
+at System Dialog on August 10, 2024<br />
+
+
+</figcaption></media-item><media-item class="" hash="Z2806695689461640128876633161853" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Inga Ivanova <br />
+at System Dialog on August 10, 2024</figcaption></media-item><media-item class="" hash="Q2806695689480086872950342713469" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Inga Ivanova <br />
+at System Dialog on August 10, 2024</figcaption></media-item><media-item class="" hash="K2806700482829640938229911027837" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">TAG DER CLUBKULTUR 2024: Legacy in Rhythm on  October 3, 2024
+<br />
+</figcaption></media-item><media-item class="" hash="D2806703964043842296475363344509" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">System Dialog II on May 10, 2025<br />
+</figcaption></media-item><media-item class="" hash="N2806703967253575765300825325693" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">System Dialog II on May 10, 2025</figcaption></media-item><media-item class="" hash="L2806707527050906877548967526525" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Havy shot by Chloé Binh-Cirlot <br />
+at Revenants on May 20, 2025</figcaption></media-item><media-item class="" hash="I3027181107538217595731066519677" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by xaos<br />at 
+CCL + OBJEKT’S MAGJK SCHOOL BUS
+<br />
+Ride into the WORMGLOW SUBBY abyss on June 1, 2025
+<br />
+</figcaption></media-item><media-item class="" hash="Z2807952773550371948997908922493" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Dominique Savitri Bonarjee &#x26; Mika Satomi shot by Chloé Binh-Cirlot <br />
+at Scores for Unknowing: ai and AI on June 21, 2025<br />
+</figcaption></media-item><media-item class="" hash="X2807952773568818693071618474109" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Dominique Savitri Bonarjee shot by Chloé Binh-Cirlot <br />
+at Scores for Unknowing: ai and AI on June 21, 2025</figcaption></media-item><media-item class="" hash="O2807952773587265437145328025725" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Dominique Savitri Bonarjee shot by Chloé Binh-Cirlot <br />
+at Scores for Unknowing: ai and AI on June 21, 2025</figcaption></media-item><media-item class="" hash="J2807952773531925204924199370877" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Audience shot by Chloé Binh-Cirlot <br />
+at Scores for Unknowing: ai and AI on June 21, 2025
+
+</figcaption></media-item><media-item class="" hash="D2807959134264429725156949393533" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Arthur Violain-Jarry shot by Chloé Binh-Cirlot <br />
+at last Tuesday monthly noodle: 
+untangling artistic thinking on July 29, 2025<br />
+</figcaption></media-item><media-item class="" hash="I2807962579193885490415713681533" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by Chloé Binh-Cirlot <br />
+at Climate of Fear x Mamba Negra on August 17, 2025<br />
+</figcaption></media-item><media-item class="" hash="O2807972273861786684396855918717" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Kimi Recor shot by Chloé Binh-Cirlot <br />
+at Monument Festival Reunion on September 6, 2025<br />
+</figcaption></media-item><media-item class="" hash="A2807975479112696699947416060029" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Debut Solo Exhibition: Melissa Tannenbaum aka Melizards on September 20, 2025</figcaption></media-item><media-item class="" hash="D2807980197752937266703300329597" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Valentina Magaletti / Zongamin shot by Chloé Binh-Cirlot <br />
+at Backsteinboot x salo on October 24, 2025<br />
+</figcaption></media-item><media-item class="" hash="O3027185464898975478885382389885" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Ravers shot by xaos<br />
+at Halloween Minerals on October 31, 2025<br />
+
+</figcaption></media-item><media-item class="" hash="D2807985406762975544880195207293" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Next Stop — Spandau on November 6, 2025<br />
+</figcaption></media-item><media-item class="" hash="J2807985408829010881135664988285" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Next Stop — Spandau on November 6, 2025</figcaption></media-item><media-item class="" hash="T2807988358518728499514097041533" limit-by="width" rotation="0" scale="100"><figcaption class="caption" slot="caption">Stephanie Zarnic’s Atelier shot by Chloé Binh-Cirlot <br />
+at Open Studios on November 22, 2025<br />
+</figcaption></media-item></gallery-slideshow></column-unit><column-unit slot="2"></column-unit></column-set></bodycopy></div></div><style>[id="Z3925686660"] .page-layout {
+}</style><style id="mobile-offset-styles-Z3925686660"></style></div></div><div id="M1493217943" page-url="©-2024-raum-für-kunst-e-v-|-imprint-|-privacy-policy-|-terms-conditions" class="page pinned pinned-bottom fixed"><a id="©-2024-raum-für-kunst-e-v-|-imprint-|-privacy-policy-|-terms-conditions"></a><div class="page-layout"><div class="page-content"><bodycopy style="--fit-height: 10px; --resize-parent-width: 100%;"><column-set gutter="4rem" mobile-hide-empty="false" mobile-stack="true"><column-unit slot="0"></column-unit><column-unit slot="1">
+
+<a class="menu-title" href="https://mailchi.mp/9a4542df6cab/backsteinboot-newsletter" target="_blank"></a><a class="menu-title" href="https://mailchi.mp/9a4542df6cab/backsteinboot-newsletter" target="_blank">NEWSLETTER </a><br />
+<br />
+
+
+<span class="credit">© 2026 Raum für Kunst e.V.</span>
+
+</column-unit><column-unit slot="2"></column-unit></column-set></bodycopy></div></div><style>[id="M1493217943"] .page-content {
+	text-align: center;
+	align-items: flex-end;
+}
+
+[id="M1493217943"].page {
+	min-height: var(--viewport-height);
+}
+
+[id="M1493217943"] .page-layout {
+	align-items: flex-end;
+}
+
+.overlay-content:has([id="M1493217943"]) {
+}</style><style id="mobile-offset-styles-M1493217943"></style></div></div>
+		<script>window.__PRELOADED_STATE__={"structure":{"byParent":{"root":["Y0443799168","B3995147624","J1611755108","E1060108681","J0483498495","M1493217943"],"J1611755108":[],"E1060108681":["Z3925686660","W2672501500","N4072670148","W1873228680"],"W2672501500":["Y4007361244"],"N4072670148":["O4281459554"],"W1873228680":["F1352543408"],"J0483498495":[]},"bySort":{"Y0443799168":0,"B3995147624":1,"J1611755108":3,"E1060108681":9,"Z3925686660":10,"W2672501500":11,"Y4007361244":12,"N4072670148":23,"O4281459554":24,"W1873228680":37,"F1352543408":38,"J0483498495":65,"M1493217943":70},"indexById":{"Y0443799168":null,"B3995147624":null,"J1611755108":1,"E1060108681":2,"Z3925686660":0,"W2672501500":1,"Y4007361244":null,"N4072670148":2,"O4281459554":null,"W1873228680":3,"F1352543408":null,"J0483498495":3,"M1493217943":null},"liveIndexes":{}},"site":{"id":2349466,"direct_link":"https://backsteinboot.org","display_url":"backsteinboot.org","site_url":"502476","domain":"backsteinboot.org","domain_active":true,"domain_purchased":false,"domain_pending":false,"css_url":"https://backsteinboot.org/stylesheet","rss_url":"https://backsteinboot.org/rss","favicon_url":"https://static.cargo.site/favicon/c3-favicon.ico","website_title":"Backsteinboot","access_level":"public","is_private":false,"is_deleted":false,"is_upgraded":false,"is_template":false,"show_cargo_logo":false,"has_annex_upgrade":true,"has_domain_addon":true,"has_commerce_addon":false,"has_storage_addon":false,"can_duplicate":false,"can_copy":false,"site_password_enabled":false,"recent_date":"2026-10-01 14:13:29","upgrade_expire_date":"","version":"Cargo3","total_file_size":475142970,"promocode_type":null,"meta_tags":"","homepage_id":"Z3925686660","homepage_purl":"program-(landing-page)-1","mobile_homepage_id":"Z3925686660","mobile_homepage_purl":"program-(landing-page)-1","screenshot":{"id":88005190,"name":"screenshot-1251651061.jpg","hash":"A3159853655657395214955640553597","width":1792,"height":1120,"file_size":null,"file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false},"site_preview_type":"screenshot","site_preview_image":[],"site_preview_url":"https://freight.cargo.site/w/1000/i/A3159853655657395214955640553597/screenshot-1251651061.jpg","has_site_description":true,"site_description":"cargo.site","custom_html":"","shop_id":null,"fonts":[{"family":"Monument Grotesk Variable","provider":"cargo"},{"family":"Diatype Variable","provider":"cargo"}],"tags":[]},"pages":{"byId":{"Y0443799168":{"id":"Y0443799168","title":"Menu (Desktop)","purl":"menu-(desktop)-1","page_type":"page","content":"\u003ccolumn-set gutter=\"4rem\">\u003ccolumn-unit slot=\"0\">\n\n\u003cspan class=\"menu-title\">\u003c/span>\u003cspan class=\"menu-title\">Backsteinboot\u003c/span>\u003cspan class=\"menu\">\u003ca href=\"about\" rel=\"history\">About\u003c/a>\u003cbr />\u003ca href=\"projectspace\" rel=\"history\">Project space\u003c/a>\u003cbr />\u003ca href=\"ateliers-1\" rel=\"history\">Ateliers (new studio available!)\u003c/a>\u003cbr />\u003ca href=\"residency\" rel=\"history\">Residency\u003c/a>\n\n\u003c/span>\u003c/column-unit>\u003ccolumn-unit slot=\"1\">\n\n\u003cspan class=\"menu-title\">Cultural events\u003c/span>\u003cspan class=\"menu\">\n\n\u003ca href=\"program-(landing-page)-1\" rel=\"history\">Program (home)\u003c/a>\u003cbr />\n\u003ca href=\"2026\" rel=\"history\">Archives /year\u003c/a>\u003cbr />\n\n\n\u003ca href=\"sleepovers\" rel=\"history\">Archives /format\u003c/a>\u003cbr />\n\n\n\u003ca href=\"raum-für-kunst-e-v--1\" rel=\"history\">Archives /collaborator\u003c/a>\u003c/span>\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\">\n\n\u003cspan class=\"menu-title\">Info\u003c/span>\u003cspan class=\"menu\">\u003ca href=\"raum-für-kunst-e-v-\" rel=\"history\">Raum für Kunst e.V.\u003c/a>\u003cbr />\u003ca href=\"contact,-notice-to-visitors\" rel=\"history\">Contact, Notice to visitors\u003c/a>\u003cbr />\n\n\n\u003ca href=\"keep-in-touch\" rel=\"history\">Keep in touch\u003c/a>\u003ca href=\"partners-sponsors\" rel=\"history\">\u003cbr />Partners &#x26; Sponsors\u003c/a>\n\u003c/span>\u003c/column-unit>\u003c/column-set>","local_css":"[id=\"Y0443799168\"] bodycopy {\n\t\n}\n\n.outlined-text {\n  color: white; /* Inside color */\n  text-shadow: \n    -1px -1px 0 black,  \n    1px -1px 0 black,\n    -1px 1px 0 black,\n    1px 1px 0 black; /* Shadows to simulate the outline */\n}","display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"desktop","position":"top","overlay":false,"fixed":false,"adjust":true},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"B3995147624":{"id":"B3995147624","title":"Menu (Mobile) \"Menu\"","purl":"menu-(mobile)-menu","page_type":"page","content":"\u003cdiv style=\"text-align: right\">\u003ca class=\"menu-title\" href=\"menu-(mobile)\" rel=\"history\">MENU\u003c/a>\u003c/div>","local_css":null,"display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"mobile","position":"top","overlay":true,"fixed":true,"adjust":true},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"Z3925686660":{"id":"Z3925686660","title":"Program (landing page)","purl":"program-(landing-page)-1","page_type":"page","content":"\u003chr />\u003cspan class=\"title\">October 2026\u003cbr />\n\u003cbr />\n\u003c/span>\u003ccolumn-set gutter=\"4rem\" mobile-hide-empty=\"false\" mobile-stack=\"true\">\u003ccolumn-unit slot=\"0\">\n\n\n\n\n\n\n\u003cspan class=\"subtitle\">\u003cb>\u003cgallery-slideshow autoplay=\"false\" gutter=\"1rem\" mobile-navigation=\"buttons\" navigation=\"cursor-zones\" show-captions=\"false\" transition-speed=\"0.1\">\u003cmedia-item class=\"zoomable\" hash=\"U3159841391616298970265891930237\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003cmedia-item class=\"zoomable\" hash=\"O3159828703853491352467742687357\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003c/gallery-slideshow>\u003cbr />\n\nHold Space Core Sample\u003c/b>\u003c/span>\u003cbr />\n\n\u003cspan class=\"date-and-time\">04.10.2026\u003cbr />\n16:00 - Late\u003c/span>\u003cspan class=\"text\">\n\u003cbr />\n\n\nEXHIBITION\u003cbr />self organised\u003cbr />\u003cbr />\n\nartists: AMB, \n\nAmos Turner, Augmented Flesh, Bin Cir, Cristiano Monga, \n\nDamir,  Hostnazer, Inga Ivanova, Marcel Mattias, Melizards, Samin Son, Zingualistic\u003cbr />\n\u003cbr />\n\u003ci>entry: based on donation\u003cbr />\n\n\u003cbr />\n\n\n\n\u003cdiv style=\"text-align: center\">~~~\u003c/div>\u003c/i>\n\n\u003cbr />\u003c/span>\n\n\u003cspan class=\"text\">\n\n\u003c/span>\u003cspan class=\"text\">\n\u003c/span>\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"1\">\n\n\n\u003ci>\u003c/i>\n\n\n\n\n\n\n\u003cspan class=\"subtitle\">\u003cgallery-slideshow autoplay=\"false\" gutter=\"1rem\" mobile-navigation=\"buttons\" navigation=\"cursor-zones\" show-captions=\"false\" transition-speed=\"0.1\">\u003cmedia-item class=\"\" hash=\"B3159843020242439749934785003645\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003cmedia-item class=\"\" hash=\"E3159843277242478184856258117757\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003c/gallery-slideshow>\u003cbr />\nClimate of Fear\n\u003c/span>\n\n\u003cbr />\n\u003cspan class=\"date-and-time\">10 - 11.10.2026\n\u003cbr />\n23:59 - 23:59 (24 hours!)\u003c/span>\u003cspan class=\"text\">\n\n\n\u003cbr />\nCLUB\n\u003cbr />\nin collaboration with Climate of Fear\n\u003cbr />\n\n\u003cbr />\nartists: upsammy, Lechuga Zafiro, Gabrielle Kwarteng, Peach, DJ Travella, Kikelomo, Kontronatura, livwutang\n\u003cbr />\n\n\u003cbr />\n\u003ci>entry: \u003cu>\u003ca href=\"https://ra.co/events/2533830\" target=\"_blank\">https://ra.co/events/2533830\u003c/a>\u003c/u> \u003ctext-icon icon=\"north-east-arrow\">\u003c/text-icon>\u003c/i>\u003cbr />\n\u003cbr />\n\n\n\u003cdiv style=\"text-align: center\">~~~\u003c/div>\n\n\u003cu>\n \n\n\n\n\n\u003c/u>\u003c/span>\u003ci>\u003cu>\u003cbr />\n\u003c/u>\u003c/i>\n\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\">\u003ci>\n\u003cspan class=\"subtitle\">\u003cgallery-slideshow autoplay=\"false\" gutter=\"1rem\" mobile-navigation=\"buttons\" navigation=\"cursor-zones\" show-captions=\"false\" transition-speed=\"0.1\">\u003cmedia-item class=\"\" hash=\"N3159843843760435432550297796733\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003cmedia-item class=\"\" hash=\"N3159844075543774718710813851773\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Q3159844288898816675235487842429\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003c/gallery-slideshow>\u003cbr />\nButoh Mutations and Baguazhang: Qi and the breath landscape\u003c/span>\n\n\n\u003cbr />\n\u003cspan class=\"date-and-time\">21.10.2026\n\u003cbr />\n15:00 - 19:00\u003c/span>\n\n\n\u003cbr />\n\u003cspan class=\"text\">WORKSHOP\n\u003cbr />\nself-organized with Dominique Savitri Bonarjee, Yunuen Rhi\u003cbr />\n\u003cbr />\n\n\n\u003ca href=\"https://dominiquebaronb.wordpress.com/\" target=\"_blank\">\u003cu>https://dominiquebaronb.wordpress.com/\u003c/u>\u003c/a> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\u003cbr />\u003cu>\u003ca href=\"https://spaceofthenameless.art/\" target=\"_blank\">https://spaceofthenameless.art/\u003c/a>\u003c/u> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\u003cbr />\u003ca href=\"https://butoh.co.uk/\" target=\"_blank\">\u003cu>butoh.co.uk\u003c/u>\u003c/a> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\n\n\u003cbr />\n\u003cbr />\n\u003cu>\u003ca href=\"https://isuini.com/\" target=\"_blank\">https://isuini.com/\u003c/a>\u003c/u> \u003ctext-icon icon=\"north-east-arrow\">\u003c/text-icon>\u003cbr />\n\n\u003cbr />\n\u003ci>registration: butohmutations@gmail.com / yuehecatl@gmail.com\u003c/i>\u003c/span>\n\n\n\u003cbr />\n\n\n\u003cdiv style=\"text-align: center\">\u003cspan class=\"text\">~~~\u003c/span>\u003c/div>\u003c/i>\n\n\n\n\n\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"3\">\n\n\n\n\n\u003ci>\u003cspan class=\"subtitle\">\u003cmedia-item class=\"zoomable\" hash=\"U3159844856173090429951619137661\">\u003c/media-item>\u003cbr />\u003cbr />\nlast Tuesday monthly noodle: \u003cbr />untangling artistic thinking\u003cbr />\n\u003cbr />\n\u003c/span>\n\n\n\n\u003cspan class=\"date-and-time\">27.10.2026\u003cbr />\n20:00 - 23:00\u003c/span>\u003cspan class=\"text\">\u003cbr />TALK &#x26; DISCUSSIONS\u003cbr />self organised\u003cbr />\n\n\u003cbr />artist: TBA\u003c/span>\u003c/i>\n\n\u003cbr />\n\u003cspan class=\"text\">\u003ci>entry: by invitation only\u003cbr />\n\n\n\u003c/i>\u003c/span>\n\u003cbr />\n\n\n\u003ci>\u003cdiv style=\"text-align: center\">\u003cspan class=\"text\">~~~\u003c/span>\u003c/div>\u003c/i>\n\n\n\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"4\">\n\n\n\n\u003cspan class=\"subtitle\">\u003ci>\u003c/i>\u003c/span>\u003cspan class=\"text\">\u003ci>\n\n\u003c/i>\u003c/span>\n\n\n\n\n\n\u003cspan class=\"subtitle\">\u003c/span>\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"5\">\u003cspan class=\"subtitle\">\u003c/span>\u003cbr />\n\n\n\n\n\n\n\n\u003c/column-unit>\u003c/column-set>\u003cbr />\n\n\n\n\n\n\n\n\n\n\n\u003cspan class=\"text\">\u003ci>\u003c/i>\u003c/span>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u003cspan class=\"text\">\n\u003c/span>\u003cspan class=\"text\">\u003ci>\n\n\u003c/i>\n\n\n\u003c/span>\n\n\n\n\u003cspan class=\"text\">\u003ci>\n \u003c/i>\u003c/span>\n\n\n\n\n\n\u003cu>\u003c/u>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u003cspan class=\"text\">\u003ci>\u003c/i>\n\n\u003c/span>\n\n\n\n\n\n\n\n\n\n\u003cspan class=\"text\">\u003c/span>\u003cspan class=\"text\">\u003c/span>\n\u003chr />\u003cspan class=\"title\">Weekly\u003cbr />\n\u003cbr />\n\u003c/span>\n\u003ccolumn-set gutter=\"4rem\" mobile-hide-empty=\"false\" mobile-stack=\"true\">\u003ccolumn-unit slot=\"0\">\u003cgallery-slideshow autoplay=\"false\" navigation=\"cursor-zones\" show-captions=\"false\" transition-speed=\"0.1\" vertical-align=\"top\">\u003cmedia-item class=\"zoomable\" hash=\"X2659469262074884334127447048317\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003cmedia-item class=\"zoomable\" hash=\"G2659469618632000534859370233981\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003c/media-item>\u003c/gallery-slideshow>\u003c/column-unit>\u003ccolumn-unit slot=\"1\">\u003cspan class=\"subtitle\">\n\nEnergy Ecology and Wu-Wei through Wudang Tai Chi Chaun\u003cbr />\n\u003cbr />\u003c/span>\u003cspan class=\"date-and-time\">Every Wednesday\u003cbr />11:00 - 12:30\u003c/span>\n\u003cbr />\u003cspan class=\"text\">WORKSHOP\u003cbr />self-organized with Dominique Savitri Bonarjee\u003cbr />\u003cbr />\u003ca href=\"https://dominiquebaronb.wordpress.com/\" target=\"_blank\">\u003cu>https://dominiquebaronb.wordpress.com/\u003c/u>\u003c/a> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\u003cbr />\u003cu>\u003ca href=\"https://spaceofthenameless.art/\" target=\"_blank\">https://spaceofthenameless.art/\u003c/a>\u003c/u> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\u003cbr />\u003ci>\u003ca href=\"https://butoh.co.uk/\" target=\"_blank\">\u003cu>butoh.co.uk\u003c/u>\u003c/a> \u003ctext-icon icon=\"north-east-arrow\" style=\"display: inline-block;\">\u003c/text-icon>\u003c/i>\u003cbr />\u003cbr />\u003ci>\n\nentry: 40€ for 4 classes or 12€ per class\u003cbr />\n\u003cbr />registration:\n\nspaceofthenameless@gmail.com\u003c/i>\u003c/span>\n\n\n\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\">\u003c/column-unit>\u003c/column-set>\u003cbr />\n\n\n\u003chr />\u003cspan class=\"title\">Previously, an overview\u003cbr />\n\u003cbr />\u003c/span>\u003ccolumn-set gutter=\"4rem\">\u003ccolumn-unit slot=\"0\">\u003c/column-unit>\u003ccolumn-unit slot=\"1\">\u003cgallery-slideshow disable-zoom=\"true\" limit-by=\"height\" pause-on-hover=\"true\" scale=\"55rem\" shuffle=\"true\" transition-speed=\"1\">\u003cmedia-item class=\"\" hash=\"X2806472208042630853196863799421\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Climate of Fear: Sweet Earth Flying\non December 31, 2019\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"B2807999003341523442126823915645\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Climate of Fear: Sweet Earth Flying on December 31, 2019\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"I2806491145783691572675615162493\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ōtone shot by Inga Ivanova \u003cbr />\nat Transgaïa on July 10, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Q2806502102135100432095249727613\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Matias Brunacci shot by Inga Ivanova \u003cbr />\nat Audiovisuell #1 on September 3, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"S2806538646647743464761184256125\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Krzysztof Leon Dziemaszkiewicz shot by Clélia Ghelfenstein \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"K2806544176797149322147663216765\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Jade Lee Petersen shot by Adam Hruby \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"R2806546095645914613488931864701\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Kevin Bonono shot by Clélia Ghelfenstein \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"X2806549918420029240540441903229\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ixa shot by Adam Hruby \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Z2806554549456682201249665548413\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">After-Show shot by Gabriela Zigova \u003cbr />\nat PETRICHOR on September 5, 2020\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"T2806554549438235457175955996797\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">After-Show shot by Gabriela Zigova \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"F2806554549475128945323375100029\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">After-Show shot by Gabriela Zigova \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Y2806554549032407087554345861245\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">After-Show shot by Gabriela Zigova \u003cbr />\nat PETRICHOR on September 5, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"X2806568418309172626449276108925\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">TAG DER CLUBKULTUR: NO SHADE on October 3, 2020\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"M2806575234085959956949245395069\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Nicky Miller shot by Xiaoer Liu\n\u003cbr />\nat New Moon Performance on May 25, 2021\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"M2806575234067513212875535843453\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">\n\n\n\nTsuki shot by Xiaoer Liu\n\u003cbr />\nat New Moon Performance on May 25, 2021\n\n\n\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"X2806575233274303217706025123965\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">\n\n\n\nStom Tom shot by Xiaoer Liu\n\u003cbr />\nat New Moon Performance on May 25, 2021\n\n\n\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"V2806587632714500963423882608765\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Berliner Blau on September 11, 2021\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"T2808044985300668304967912947837\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">SEH’ DIE WELT IN TRÜMMERN LIEGEN on July 1, 2022\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"T2806603556442047479498995433597\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">THE WORLD COLLAPSED WHILE WE WERE DANCING on July 15, 2022\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"F2806603557345937939110763462781\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">THE WORLD COLLAPSED WHILE WE WERE DANCING on July 15, 2022\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"V2806610264194701514355830456445\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Sofia Lambrou \u003cbr />\nat Climate of Fear on July 24, 2022\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"F2806617824131591522372821483645\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Butoh-Pan shot by Inga Ivanova \u003cbr />\nat BUTOH NIGHT on April 22, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Y2806617825146162446426846822525\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Butoh-Pan shot by Inga Ivanova \u003cbr />\nat BUTOH NIGHT on April 22, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"B2806645326695925665196388155517\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Pauline Lavogez shot by Inga Ivanova \u003cbr />\nat Walk In Drei on July 14, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"E2806645327858070541840089907325\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Pauline Lavogez shot by Inga Ivanova \u003cbr />\nat Walk In Drei on July 14, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"C2806645327821177053692670804093\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Mariagiulia Serantoni shot by Inga Ivanova \u003cbr />\nat Walk In Drei on July 14, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"R2806645327839623797766380355709\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Clara C. shot by Inga Ivanova \u003cbr />\nat Walk In Drei on July 14, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"U2806663996682496154780997812349\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Evan Webb &#x26; Hannah Stein shot by Cecilia Murgia \u003cbr />\nat Our Constellation on August 26, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"S2806663998176682424751471493245\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Naomi Cassim shot by Cecilia Murgia \u003cbr />\nat Our Constellation on August 26, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"T2806663998195129168825181044861\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Markosh Kryzhak shot by Cecilia Murgia \u003cbr />\nat Our Constellation on August 26, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"H2806663998213575912898890596477\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Evan Webb &#x26; Hannah Stein shot by Cecilia Murgia \u003cbr />\nat Our Constellation on August 26, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"F2806663998232022656972600148093\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Dane Joe shot by Cecilia Murgia \u003cbr />\nat Our Constellation on August 26, 2023\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"F2806680366341633908710811402365\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">IMPRINTS on May 26, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"U2806680367762033202386446876797\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">IMPRINTS on May 26, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"X2806687878612137230262321053821\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">MODALITIES (Alias Error &#x26; O.N.A) shot by Chloé Binh-Cirlot \u003cbr />\nat HyperrTerra on July 6, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"W2806695689498533617024052265085\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Inga Ivanova \u003cbr />\nat System Dialog on August 10, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"H2806695687893666882611321274493\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Inga Ivanova \u003cbr />\nat System Dialog on August 10, 2024\u003cbr />\n\n\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Z2806695689461640128876633161853\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Inga Ivanova \u003cbr />\nat System Dialog on August 10, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Q2806695689480086872950342713469\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Inga Ivanova \u003cbr />\nat System Dialog on August 10, 2024\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"K2806700482829640938229911027837\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">TAG DER CLUBKULTUR 2024: Legacy in Rhythm on  October 3, 2024\n\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"D2806703964043842296475363344509\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">System Dialog II on May 10, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"N2806703967253575765300825325693\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">System Dialog II on May 10, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"L2806707527050906877548967526525\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Havy shot by Chloé Binh-Cirlot \u003cbr />\nat Revenants on May 20, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"I3027181107538217595731066519677\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by xaos\u003cbr />at \nCCL + OBJEKT’S MAGJK SCHOOL BUS\n\u003cbr />\nRide into the WORMGLOW SUBBY abyss on June 1, 2025\n\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"Z2807952773550371948997908922493\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Dominique Savitri Bonarjee &#x26; Mika Satomi shot by Chloé Binh-Cirlot \u003cbr />\nat Scores for Unknowing: ai and AI on June 21, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"X2807952773568818693071618474109\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Dominique Savitri Bonarjee shot by Chloé Binh-Cirlot \u003cbr />\nat Scores for Unknowing: ai and AI on June 21, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"O2807952773587265437145328025725\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Dominique Savitri Bonarjee shot by Chloé Binh-Cirlot \u003cbr />\nat Scores for Unknowing: ai and AI on June 21, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"J2807952773531925204924199370877\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Audience shot by Chloé Binh-Cirlot \u003cbr />\nat Scores for Unknowing: ai and AI on June 21, 2025\n\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"D2807959134264429725156949393533\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Arthur Violain-Jarry shot by Chloé Binh-Cirlot \u003cbr />\nat last Tuesday monthly noodle: \nuntangling artistic thinking on July 29, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"I2807962579193885490415713681533\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by Chloé Binh-Cirlot \u003cbr />\nat Climate of Fear x Mamba Negra on August 17, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"O2807972273861786684396855918717\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Kimi Recor shot by Chloé Binh-Cirlot \u003cbr />\nat Monument Festival Reunion on September 6, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"A2807975479112696699947416060029\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Debut Solo Exhibition: Melissa Tannenbaum aka Melizards on September 20, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"D2807980197752937266703300329597\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Valentina Magaletti / Zongamin shot by Chloé Binh-Cirlot \u003cbr />\nat Backsteinboot x salo on October 24, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"O3027185464898975478885382389885\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Ravers shot by xaos\u003cbr />\nat Halloween Minerals on October 31, 2025\u003cbr />\n\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"D2807985406762975544880195207293\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Next Stop — Spandau on November 6, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"J2807985408829010881135664988285\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Next Stop — Spandau on November 6, 2025\u003c/figcaption>\u003c/media-item>\u003cmedia-item class=\"\" hash=\"T2807988358518728499514097041533\" limit-by=\"width\" rotation=\"0\" scale=\"100\">\u003cfigcaption class=\"caption\" slot=\"caption\">Stephanie Zarnic’s Atelier shot by Chloé Binh-Cirlot \u003cbr />\nat Open Studios on November 22, 2025\u003cbr />\n\u003c/figcaption>\u003c/media-item>\u003c/gallery-slideshow>\u003c/column-unit>\u003ccolumn-unit slot=\"2\">\u003c/column-unit>\u003c/column-set>","local_css":"[id=\"Z3925686660\"] .page-layout {\n}","display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{},"overlay_options":{},"thumb_media_id":35969499,"thumbnail":{"id":35969499,"master_muid":14975101,"name":"Aktionsraum-7.jpg","display_name":null,"hash":"Z1768812241247977092690313773181","width":1989,"height":961,"file_size":551915,"file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"is_placeholder":false,"has_audio_track":null,"duration":null,"url":null,"url_id":null,"url_thumb":null,"url_type":null,"created_at":"2024-05-11 19:25:04.306889","updated_at":"2024-05-11 19:25:04.306889","options":null},"thumb_meta":{},"media":[{"id":35969499,"display_name":"Aktionsraum-7.jpg","name":"Aktionsraum-7.jpg","hash":"Z1768812241247977092690313773181","width":1989,"height":961,"file_size":551915,"file_size_human":"539.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2024-05-11T19:25:04.306889Z","updated_at":"2024-05-11T19:25:04.306889Z"},{"id":68792794,"display_name":"EmbraceChi_VLR.jpg","name":"EmbraceChi_VLR.jpg","hash":"X2659469262074884334127447048317","width":1062,"height":597,"file_size":220766,"file_size_human":"215.6KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2025-11-21T15:15:12.631158Z","updated_at":"2025-11-21T15:15:12.631158Z"},{"id":68792808,"display_name":"Energy-Ecology-and-Wu-Wei-through-Wudang-Tai-Chi-Chaun.jpg","name":"Energy-Ecology-and-Wu-Wei-through-Wudang-Tai-Chi-Chaun.jpg","hash":"G2659469618632000534859370233981","width":2667,"height":2667,"file_size":251377,"file_size_human":"245.5KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2025-11-21T15:15:31.298209Z","updated_at":"2025-11-21T15:15:31.298209Z"},{"id":74558289,"display_name":"DSCF0503_compressed.jpg","name":"DSCF0503_compressed.jpg","hash":"X2806472208042630853196863799421","width":4438,"height":2959,"file_size":235260,"file_size_human":"229.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T20:52:43.216819Z","updated_at":"2026-02-21T20:52:43.216819Z"},{"id":74558967,"display_name":"by-inga_R1-08046-0006_cargo.jpg","name":"by-inga_R1-08046-0006_cargo.jpg","hash":"I2806491145783691572675615162493","width":960,"height":1280,"file_size":185422,"file_size_human":"181.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T21:09:50.457491Z","updated_at":"2026-02-21T21:09:50.457491Z"},{"id":74559422,"display_name":"DSC_7422---frame-at-0m26s.jpg","name":"DSC_7422---frame-at-0m26s.jpg","hash":"Q2806502102135100432095249727613","width":1920,"height":1080,"file_size":193765,"file_size_human":"189.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T21:19:43.894613Z","updated_at":"2026-02-21T21:19:43.894613Z"},{"id":74560896,"display_name":"Bildschirmfoto-2021-09-28-um-22.25.55.jpg","name":"Bildschirmfoto-2021-09-28-um-22.25.55.jpg","hash":"S2806538646647743464761184256125","width":1762,"height":992,"file_size":177398,"file_size_human":"173.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T21:52:44.763986Z","updated_at":"2026-02-21T21:52:44.763986Z"},{"id":74561141,"display_name":"_DSF8205_compressed.jpg","name":"_DSF8205_compressed.jpg","hash":"K2806544176797149322147663216765","width":1558,"height":1039,"file_size":163058,"file_size_human":"159.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T21:57:44.554632Z","updated_at":"2026-02-21T21:57:44.554632Z"},{"id":74561202,"display_name":"Bildschirmfoto-2021-09-28-um-22.22.41.jpg","name":"Bildschirmfoto-2021-09-28-um-22.22.41.jpg","hash":"R2806546095645914613488931864701","width":1770,"height":994,"file_size":120041,"file_size_human":"117.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T21:59:28.595255Z","updated_at":"2026-02-21T21:59:28.595255Z"},{"id":74561319,"display_name":"_DSF8483_compressed.jpg","name":"_DSF8483_compressed.jpg","hash":"X2806549918420029240540441903229","width":1558,"height":1038,"file_size":121969,"file_size_human":"119.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:02:55.789548Z","updated_at":"2026-02-21T22:02:55.789548Z"},{"id":74561501,"display_name":"000072a.jpg","name":"000072a.jpg","hash":"F2806554549475128945323375100029","width":670,"height":449,"file_size":44846,"file_size_human":"43.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:07:06.822659Z","updated_at":"2026-02-21T22:07:06.822659Z"},{"id":74561503,"display_name":"000038a.jpg","name":"000038a.jpg","hash":"T2806554549438235457175955996797","width":670,"height":449,"file_size":67331,"file_size_human":"65.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:07:06.828718Z","updated_at":"2026-02-21T22:07:06.828718Z"},{"id":74561502,"display_name":"000052a.jpg","name":"000052a.jpg","hash":"Z2806554549456682201249665548413","width":670,"height":449,"file_size":51534,"file_size_human":"50.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:07:06.828842Z","updated_at":"2026-02-21T22:07:06.828842Z"},{"id":74561504,"display_name":"000007a.jpg","name":"000007a.jpg","hash":"Y2806554549032407087554345861245","width":670,"height":449,"file_size":56102,"file_size_human":"54.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:07:06.904613Z","updated_at":"2026-02-21T22:07:06.904613Z"},{"id":74562090,"display_name":"122628595_152959266534798_3320821808366033331_n-copyc_compressed.jpg","name":"122628595_152959266534798_3320821808366033331_n-copyc_compressed.jpg","hash":"X2806568418309172626449276108925","width":1500,"height":900,"file_size":172723,"file_size_human":"168.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:19:38.756790Z","updated_at":"2026-02-21T22:19:38.756790Z"},{"id":74562304,"display_name":"IMG_20210504_204540_compressed.jpg","name":"IMG_20210504_204540_compressed.jpg","hash":"M2806575234067513212875535843453","width":1200,"height":1500,"file_size":135914,"file_size_human":"132.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:25:48.235459Z","updated_at":"2026-02-21T22:25:48.235459Z"},{"id":74562302,"display_name":"IMG_20210504_205025_compressed.jpg","name":"IMG_20210504_205025_compressed.jpg","hash":"X2806575233274303217706025123965","width":1500,"height":1200,"file_size":118884,"file_size_human":"116.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:25:48.236136Z","updated_at":"2026-02-21T22:25:48.236136Z"},{"id":74562303,"display_name":"IMG_20210504_205004_compressed.jpg","name":"IMG_20210504_205004_compressed.jpg","hash":"M2806575234085959956949245395069","width":1500,"height":1200,"file_size":123295,"file_size_human":"120.4KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:25:48.236151Z","updated_at":"2026-02-21T22:25:48.236151Z"},{"id":74562851,"display_name":"DSC01542A_compressed.jpg","name":"DSC01542A_compressed.jpg","hash":"V2806587632714500963423882608765","width":1273,"height":1911,"file_size":133052,"file_size_human":"129.9KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:37:00.454553Z","updated_at":"2026-02-21T22:37:00.454553Z"},{"id":74563603,"display_name":"298457993_2771145076351277_2045710185161792707_n_compressed.jpg","name":"298457993_2771145076351277_2045710185161792707_n_compressed.jpg","hash":"T2806603556442047479498995433597","width":1394,"height":929,"file_size":119622,"file_size_human":"116.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:51:23.706795Z","updated_at":"2026-02-21T22:51:23.706795Z"},{"id":74563604,"display_name":"DSC08971_compressed.jpg","name":"DSC08971_compressed.jpg","hash":"F2806603557345937939110763462781","width":2402,"height":1602,"file_size":130722,"file_size_human":"127.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:51:23.709802Z","updated_at":"2026-02-21T22:51:23.709802Z"},{"id":74563835,"display_name":"64f70fde8e6a42c5a827fe6b_sofialambrou_events_Climate_of_Fear_sofialam04-09-2022-a-1.54.44-85_compressed.jpg","name":"64f70fde8e6a42c5a827fe6b_sofialambrou_events_Climate_of_Fear_sofialam04-09-2022-a-1.54.44-85_compressed.jpg","hash":"V2806610264194701514355830456445","width":5310,"height":3582,"file_size":255051,"file_size_human":"249.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T22:57:27.368026Z","updated_at":"2026-02-21T22:57:27.368026Z"},{"id":74564049,"display_name":"DSC09645_compressed.jpg","name":"DSC09645_compressed.jpg","hash":"F2806617824131591522372821483645","width":3377,"height":2251,"file_size":128172,"file_size_human":"125.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:04:17.223627Z","updated_at":"2026-02-21T23:04:17.223627Z"},{"id":74564050,"display_name":"DSC09652B_compressed.jpg","name":"DSC09652B_compressed.jpg","hash":"Y2806617825146162446426846822525","width":1487,"height":2229,"file_size":161984,"file_size_human":"158.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:04:17.238115Z","updated_at":"2026-02-21T23:04:17.238115Z"},{"id":74564939,"display_name":"DSC09897_compressed.jpg","name":"DSC09897_compressed.jpg","hash":"R2806645327839623797766380355709","width":1687,"height":1124,"file_size":103686,"file_size_human":"101.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:29:08.157051Z","updated_at":"2026-02-21T23:29:08.157051Z"},{"id":74564940,"display_name":"DSC09930_compressed.jpg","name":"DSC09930_compressed.jpg","hash":"E2806645327858070541840089907325","width":1124,"height":1687,"file_size":108011,"file_size_human":"105.5KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:29:08.171443Z","updated_at":"2026-02-21T23:29:08.171443Z"},{"id":74564941,"display_name":"DSC09767_compressed.jpg","name":"DSC09767_compressed.jpg","hash":"B2806645326695925665196388155517","width":704,"height":1057,"file_size":119310,"file_size_human":"116.5KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:29:08.182536Z","updated_at":"2026-02-21T23:29:08.182536Z"},{"id":74564942,"display_name":"DSC09810_compressed.jpg","name":"DSC09810_compressed.jpg","hash":"C2806645327821177053692670804093","width":1315,"height":877,"file_size":140038,"file_size_human":"136.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:29:08.224768Z","updated_at":"2026-02-21T23:29:08.224768Z"},{"id":74565554,"display_name":"R1-04983-0008_compressed.jpg","name":"R1-04983-0008_compressed.jpg","hash":"S2806663998176682424751471493245","width":1521,"height":2235,"file_size":169994,"file_size_human":"166.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:46:00.283034Z","updated_at":"2026-02-21T23:46:00.283034Z"},{"id":74565555,"display_name":"R1-04986-016A_compressed.jpg","name":"R1-04986-016A_compressed.jpg","hash":"U2806663996682496154780997812349","width":1521,"height":2235,"file_size":112682,"file_size_human":"110.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:46:00.293677Z","updated_at":"2026-02-21T23:46:00.293677Z"},{"id":74565556,"display_name":"R1-04984-021A_compressed.jpg","name":"R1-04984-021A_compressed.jpg","hash":"T2806663998195129168825181044861","width":1138,"height":1672,"file_size":196488,"file_size_human":"191.9KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:46:00.309451Z","updated_at":"2026-02-21T23:46:00.309451Z"},{"id":74565557,"display_name":"R1-04985-015AB_compressed.jpg","name":"R1-04985-015AB_compressed.jpg","hash":"H2806663998213575912898890596477","width":1521,"height":1035,"file_size":170745,"file_size_human":"166.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:46:00.419067Z","updated_at":"2026-02-21T23:46:00.419067Z"},{"id":74565558,"display_name":"R1-04985-033A_compressed.jpg","name":"R1-04985-033A_compressed.jpg","hash":"F2806663998232022656972600148093","width":1521,"height":2235,"file_size":183314,"file_size_human":"179.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-21T23:46:00.496505Z","updated_at":"2026-02-21T23:46:00.496505Z"},{"id":74566112,"display_name":"img020_compressed.jpg","name":"img020_compressed.jpg","hash":"F2806680366341633908710811402365","width":1044,"height":1663,"file_size":146598,"file_size_human":"143.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:00:48.251009Z","updated_at":"2026-02-22T00:00:48.251009Z"},{"id":74566113,"display_name":"img021_compressed.jpg","name":"img021_compressed.jpg","hash":"U2806680367762033202386446876797","width":1044,"height":1663,"file_size":140481,"file_size_human":"137.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:00:48.255655Z","updated_at":"2026-02-22T00:00:48.255655Z"},{"id":74566314,"display_name":"DSC03886_compressed.jpg","name":"DSC03886_compressed.jpg","hash":"X2806687878612137230262321053821","width":1200,"height":800,"file_size":171792,"file_size_human":"167.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:07:34.987526Z","updated_at":"2026-02-22T00:07:34.987526Z"},{"id":74566996,"display_name":"DSC04215A_compressed.jpg","name":"DSC04215A_compressed.jpg","hash":"Z2806695689461640128876633161853","width":2666,"height":4000,"file_size":126256,"file_size_human":"123.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:14:38.470134Z","updated_at":"2026-02-22T00:14:38.470134Z"},{"id":74566999,"display_name":"DSC04151_compressed.jpg","name":"DSC04151_compressed.jpg","hash":"W2806695689498533617024052265085","width":3161,"height":4741,"file_size":170037,"file_size_human":"166.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:14:38.484090Z","updated_at":"2026-02-22T00:14:38.484090Z"},{"id":74566997,"display_name":"DSC04179_compressed.jpg","name":"DSC04179_compressed.jpg","hash":"H2806695687893666882611321274493","width":2244,"height":3366,"file_size":110125,"file_size_human":"107.5KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:14:38.489617Z","updated_at":"2026-02-22T00:14:38.489617Z"},{"id":74566998,"display_name":"DSC04242A_compressed.jpg","name":"DSC04242A_compressed.jpg","hash":"Q2806695689480086872950342713469","width":5715,"height":3810,"file_size":201397,"file_size_human":"196.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:14:38.497306Z","updated_at":"2026-02-22T00:14:38.497306Z"},{"id":74567201,"display_name":"ross-alexander-payne_3-b_a_long_1-1920x1920_compressed.jpg","name":"ross-alexander-payne_3-b_a_long_1-1920x1920_compressed.jpg","hash":"K2806700482829640938229911027837","width":3000,"height":1800,"file_size":142056,"file_size_human":"138.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:18:59.125842Z","updated_at":"2026-02-22T00:18:59.125842Z"},{"id":74567262,"display_name":"DSC_4671_compressed.jpg","name":"DSC_4671_compressed.jpg","hash":"N2806703967253575765300825325693","width":2654,"height":1766,"file_size":198235,"file_size_human":"193.6KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:22:07.329117Z","updated_at":"2026-02-22T00:22:07.329117Z"},{"id":74567263,"display_name":"DSC_4688_compressed.jpg","name":"DSC_4688_compressed.jpg","hash":"D2806703964043842296475363344509","width":1005,"height":669,"file_size":158996,"file_size_human":"155.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:22:07.334352Z","updated_at":"2026-02-22T00:22:07.334352Z"},{"id":74567344,"display_name":"DSC_4710_compressed.jpg","name":"DSC_4710_compressed.jpg","hash":"L2806707527050906877548967526525","width":778,"height":1169,"file_size":170366,"file_size_human":"166.4KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T00:25:20.208555Z","updated_at":"2026-02-22T00:25:20.208555Z"},{"id":74604066,"display_name":"DSC_4761_compressed.jpg","name":"DSC_4761_compressed.jpg","hash":"Z2807952773550371948997908922493","width":2982,"height":4482,"file_size":187178,"file_size_human":"182.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:10:25.265665Z","updated_at":"2026-02-22T19:10:25.265665Z"},{"id":74604065,"display_name":"DSC_4804_compressed.jpg","name":"DSC_4804_compressed.jpg","hash":"X2807952773568818693071618474109","width":2078,"height":1383,"file_size":201302,"file_size_human":"196.6KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:10:25.267444Z","updated_at":"2026-02-22T19:10:25.267444Z"},{"id":74604067,"display_name":"DSC_4818_compressed.jpg","name":"DSC_4818_compressed.jpg","hash":"O2807952773587265437145328025725","width":3203,"height":4812,"file_size":156840,"file_size_human":"153.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:10:25.279003Z","updated_at":"2026-02-22T19:10:25.279003Z"},{"id":74604068,"display_name":"DSC_4838_compressed.jpg","name":"DSC_4838_compressed.jpg","hash":"J2807952773531925204924199370877","width":4024,"height":2677,"file_size":193293,"file_size_human":"188.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:10:25.287631Z","updated_at":"2026-02-22T19:10:25.287631Z"},{"id":74604302,"display_name":"20250903121859_002_with_compressed.jpg","name":"20250903121859_002_with_compressed.jpg","hash":"D2807959134264429725156949393533","width":2031,"height":1276,"file_size":101303,"file_size_human":"98.9KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:16:08.953023Z","updated_at":"2026-02-22T19:16:08.953023Z"},{"id":74604487,"display_name":"20250819174021_005_with_compressed.jpg","name":"20250819174021_005_with_compressed.jpg","hash":"I2807962579193885490415713681533","width":1276,"height":2031,"file_size":99023,"file_size_human":"96.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:19:16.366936Z","updated_at":"2026-02-22T19:19:16.366936Z"},{"id":74604882,"display_name":"img030_compressed.jpg","name":"img030_compressed.jpg","hash":"O2807972273861786684396855918717","width":1011,"height":1597,"file_size":116140,"file_size_human":"113.4KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:28:01.477573Z","updated_at":"2026-02-22T19:28:01.477573Z"},{"id":74605022,"display_name":"img038_compressed.jpg","name":"img038_compressed.jpg","hash":"A2807975479112696699947416060029","width":1049,"height":1644,"file_size":151682,"file_size_human":"148.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:30:55.341273Z","updated_at":"2026-02-22T19:30:55.341273Z"},{"id":74605190,"display_name":"20251112120957_009_with_compressed.jpg","name":"20251112120957_009_with_compressed.jpg","hash":"D2807980197752937266703300329597","width":1276,"height":2031,"file_size":93945,"file_size_human":"91.7KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:35:10.955005Z","updated_at":"2026-02-22T19:35:10.955005Z"},{"id":74605383,"display_name":"img040_compressed.jpg","name":"img040_compressed.jpg","hash":"D2807985406762975544880195207293","width":1049,"height":1630,"file_size":127417,"file_size_human":"124.4KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:39:53.403145Z","updated_at":"2026-02-22T19:39:53.403145Z"},{"id":74605384,"display_name":"20251122141208_002_with_compressed.jpg","name":"20251122141208_002_with_compressed.jpg","hash":"J2807985408829010881135664988285","width":2035,"height":1276,"file_size":200776,"file_size_human":"196.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:39:53.408932Z","updated_at":"2026-02-22T19:39:53.408932Z"},{"id":74605483,"display_name":"img054_compressed.jpg","name":"img054_compressed.jpg","hash":"T2807988358518728499514097041533","width":1035,"height":690,"file_size":141606,"file_size_human":"138.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:42:33.298125Z","updated_at":"2026-02-22T19:42:33.298125Z"},{"id":74605947,"display_name":"DSCF0501_compressed.jpg","name":"DSCF0501_compressed.jpg","hash":"B2807999003341523442126823915645","width":4643,"height":3096,"file_size":179844,"file_size_human":"175.6KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T19:52:13.089063Z","updated_at":"2026-02-22T19:52:13.089063Z"},{"id":74608015,"display_name":"unnamed_compressed.jpg","name":"unnamed_compressed.jpg","hash":"T2808044985300668304967912947837","width":1360,"height":1020,"file_size":181012,"file_size_human":"176.8KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-02-22T20:33:43.373182Z","updated_at":"2026-02-22T20:33:43.373182Z"},{"id":83523185,"display_name":"R1-02802-0016_compressed.jpg","name":"R1-02802-0016_compressed.jpg","hash":"I3027181107538217595731066519677","width":500,"height":746,"file_size":22453,"file_size_human":"21.9KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-07-10T08:23:31.029913Z","updated_at":"2026-07-10T08:23:31.029913Z"},{"id":83523317,"display_name":"R1-08175-0001_compressed.jpg","name":"R1-08175-0001_compressed.jpg","hash":"O3027185464898975478885382389885","width":2433,"height":3629,"file_size":195803,"file_size_human":"191.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-07-10T08:27:27.584202Z","updated_at":"2026-07-10T08:27:27.584202Z"},{"id":88003694,"display_name":"Hold-Space-Core-Sample.jpg","name":"Hold-Space-Core-Sample.jpg","hash":"O3159828703853491352467742687357","width":2667,"height":2667,"file_size":392170,"file_size_human":"383.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T13:50:57.379682Z","updated_at":"2026-10-01T13:50:57.379682Z"},{"id":88004511,"display_name":"Hold-Space-Core-Sample_poster.jpg","name":"Hold-Space-Core-Sample_poster.jpg","hash":"U3159841391616298970265891930237","width":2480,"height":3508,"file_size":249856,"file_size_human":"244.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:02:25.182618Z","updated_at":"2026-10-01T14:02:25.182618Z"},{"id":88004585,"display_name":"271a276823d512fb593a315a31b802b9af97aa42-2.jpg","name":"271a276823d512fb593a315a31b802b9af97aa42-2.jpg","hash":"B3159843020242439749934785003645","width":1256,"height":1775,"file_size":472229,"file_size_human":"461.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:03:53.360697Z","updated_at":"2026-10-01T14:03:53.360697Z"},{"id":88004596,"display_name":"Climate-of-Fear_10---11.10.2026.jpg","name":"Climate-of-Fear_10---11.10.2026.jpg","hash":"E3159843277242478184856258117757","width":2667,"height":2667,"file_size":409649,"file_size_human":"400.0KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:04:07.071039Z","updated_at":"2026-10-01T14:04:07.071039Z"},{"id":88004628,"display_name":"David-Suarez-photo-for-mexkalina.JPG","name":"David-Suarez-photo-for-mexkalina.JPG","hash":"N3159843843760435432550297796733","width":750,"height":869,"file_size":502394,"file_size_human":"490.6KB","file_type":"JPG","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:04:37.827228Z","updated_at":"2026-10-01T14:04:37.827228Z"},{"id":88004650,"display_name":"swus_11_LR_1.jpg","name":"swus_11_LR_1.jpg","hash":"N3159844075543774718710813851773","width":1752,"height":985,"file_size":319726,"file_size_human":"312.2KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:04:50.321731Z","updated_at":"2026-10-01T14:04:50.321731Z"},{"id":88004664,"display_name":"Qi-and-the-breath-landscape.jpg","name":"Qi-and-the-breath-landscape.jpg","hash":"Q3159844288898816675235487842429","width":2667,"height":2667,"file_size":351333,"file_size_human":"343.1KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:05:01.917278Z","updated_at":"2026-10-01T14:05:01.917278Z"},{"id":88004679,"display_name":"last-Tuesday-monthly-noodle--on-untangling-the-pasta-like-artistic-thinking_27.10.2026.jpg","name":"last-Tuesday-monthly-noodle--on-untangling-the-pasta-like-artistic-thinking_27.10.2026.jpg","hash":"U3159844856173090429951619137661","width":2667,"height":2667,"file_size":383297,"file_size_human":"374.3KB","file_type":"jpg","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2026-10-01T14:05:32.659627Z","updated_at":"2026-10-01T14:05:32.659627Z"}],"tags":[],"access_level":"public"},"Y4007361244":{"id":"Y4007361244","title":"/year","purl":"year-1","page_type":"page","content":"\u003cspan class=\"title\">ARCHIVES/year: \u003ca href=\"2026\" rel=\"history\">2026\u003c/a>, \u003ca href=\"2025\" rel=\"history\">2025\u003c/a>, \u003ca href=\"2024\" rel=\"history\">2024\u003c/a>, \u003ca href=\"2023\" rel=\"history\">2023\u003c/a>, \u003ca href=\"2022\" rel=\"history\">2022\u003c/a>, \u003ca href=\"2021\" rel=\"history\">2021\u003c/a>, \u003ca href=\"2020\" rel=\"history\">2020\u003c/a>, \u003ca href=\"2019\" rel=\"history\">2019\u003c/a>, \u003ca href=\"2018\" rel=\"history\">2018\u003c/a>, \u003ca href=\"2017\" rel=\"history\">2017\u003c/a>.\u003c/span>","local_css":null,"display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"all","position":"top","overlay":false,"fixed":false,"adjust":true},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"O4281459554":{"id":"O4281459554","title":"/format","purl":"format-1","page_type":"page","content":"\u003cspan class=\"title\">\u003ccolumn-set gutter=\"4rem\" mobile-hide-empty=\"false\" mobile-stack=\"true\">\u003ccolumn-unit slot=\"0\" span=\"2\">\n\nARCHIVES/format:\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"1\" span=\"3\">\n\n\n\n\u003ca href=\"club-experiences\" rel=\"history\">club experiences\u003c/a>\u003cbr />\n\n\u003ca href=\"electro-acoustic-concerts\" rel=\"history\">electro-acoustic concerts\u003c/a>\n\n\n\n\u003cbr />\n\u003ca href=\"exhibitions\" rel=\"history\">exhibitions\u003c/a>\u003cbr />\n\n\n\u003ca href=\"festivals\" rel=\"history\">festivals\u003c/a>\u003cbr />\n\n\u003ca href=\"lecturesreadings\" rel=\"history\">lectures/readings\u003c/a>\u003cbr />\n\n\u003ca href=\"open-studios\" rel=\"history\">open studios\u003c/a>\n\n\n\n\n\n\u003cbr />\n\u003ca href=\"screenings\" rel=\"history\">screenings\u003c/a>\u003cbr />\n\n\n\u003ca href=\"shows\" rel=\"history\">shows\u003c/a>\n\n\u003cbr />\n\n\n\u003ca href=\"sleepovers\" rel=\"history\">sleepovers\u003c/a>\u003cbr />\n\n\u003ca href=\"sonic-nests\" rel=\"history\">sonic nests\u003c/a>\u003cbr />\n\n\u003ca href=\"talksdiscussions\" rel=\"history\">talks/discussions\u003c/a>\n\n\n\n\n\n\u003cbr />\n\u003ca href=\"workshops\" rel=\"history\">workshops\u003c/a>\u003cbr />\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\" span=\"1\">\u003c/column-unit>\u003ccolumn-unit slot=\"3\" span=\"2\">\u003c/column-unit>\u003ccolumn-unit slot=\"4\" span=\"2\">\u003c/column-unit>\u003ccolumn-unit slot=\"5\" span=\"2\">\u003c/column-unit>\u003c/column-set>\u003c/span>","local_css":null,"display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"all","position":"top","overlay":false,"fixed":false,"adjust":true},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"F1352543408":{"id":"F1352543408","title":"/collaborator","purl":"collaborator","page_type":"page","content":"\u003cspan class=\"title\">ARCHIVES/collaborator:\u003cbr />\n\u003cbr />\n\u003ccolumn-set gutter=\"4rem\">\u003ccolumn-unit slot=\"0\" span=\"2\">\u003c/column-unit>\u003ccolumn-unit slot=\"1\" span=\"10\">\n\n \n\n\n\n \u003ca href=\"a-i-d\" rel=\"history\">A.I.D\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\n\n\u003ca href=\"art-lab-space\" rel=\"history\">Art Lab Space\u003c/a>\n\n\u003ctext-icon icon=\"dot\">\u003c/text-icon>\u003ca href=\"berlin-art-week\" rel=\"history\">Berlin Art Week\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"bruital-events\" rel=\"history\">Bruital Events\u003c/a>\n\n\n\n\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"cdm-link-establishment-records\" rel=\"history\">CDM.link &#x26; Establishment Records\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"climate-of-fear\" rel=\"history\">Climate of Fear\u003c/a>\n\n\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"daphné-lejeune\" rel=\"history\">Daphné Lejeune\u003c/a>\n\n\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"fandango\" rel=\"history\">Fandango\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\u003ca href=\"index-records\" rel=\"history\">INDEX: Records\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n \u003ca href=\"jeanne-duval-jordan-handcock\" rel=\"history\">Jeanne Duval &#x26; Jordan Handcock\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"libertine-records\" rel=\"history\">Libertine Records\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"lorena-izquierdo-aparicio\" rel=\"history\">Lorena Izquierdo Aparicio\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"modern-bön\" rel=\"history\">Modern Bön\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"moja-nights-8th-floor\" rel=\"history\">MoJa Nights 8th floor\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"moritz-zeisner\" rel=\"history\">Moritz Zeisner\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"objekt-call-super\" rel=\"history\">Objekt &#x26; Call Super\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"octavibes\" rel=\"history\">Octavibes\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"plural-musik\" rel=\"history\">Plural Musik\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"raum-für-kunst-e-v--1\" rel=\"history\">Raum für Kunst e.V.\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"sound-studies-and-sonic-arts-udk-berlin\" rel=\"history\">Sound Studies and Sonic Arts - UdK Berlin\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\u003ca href=\"system-dialog\" rel=\"history\">System Dialog\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\u003ca href=\"tszuki\" rel=\"history\">Tszuki\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"urban-base-community\" rel=\"history\">Urban Base Community\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"valentin-tszin\" rel=\"history\">Valentin Tszin\u003c/a>\u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"vorspiel-transmediale-ctm-festival\" rel=\"history\">Vorspiel transmediale &#x26; CTM Festival\u003c/a> \u003ctext-icon icon=\"dot\">\u003c/text-icon>\n\n\u003ca href=\"weeeirdos\" rel=\"history\">Weeeirdos\u003c/a>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\" span=\"-6\">\u003c/column-unit>\u003ccolumn-unit slot=\"3\" span=\"2\">\u003c/column-unit>\u003ccolumn-unit slot=\"4\" span=\"2\">\u003c/column-unit>\u003ccolumn-unit slot=\"5\" span=\"2\">\u003c/column-unit>\u003c/column-set>\u003c/span>","local_css":null,"display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":0,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"all","position":"top","overlay":false,"fixed":false,"adjust":true},"overlay_options":{},"thumb_media_id":47288870,"thumbnail":{"id":47288870,"master_muid":14975101,"name":"DSC08604.JPG","display_name":null,"hash":"F2106848173808239530430706253949","width":3936,"height":2624,"file_size":2646888,"file_type":"JPG","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"is_placeholder":false,"has_audio_track":null,"duration":null,"url":null,"url_id":null,"url_thumb":null,"url_type":null,"created_at":"2024-12-09 21:41:09.043070","updated_at":"2024-12-09 21:41:09.043070","options":null},"thumb_meta":{},"media":[{"id":47288870,"display_name":"DSC08604.JPG","name":"DSC08604.JPG","hash":"F2106848173808239530430706253949","width":3936,"height":2624,"file_size":2646888,"file_size_human":"2.5MB","file_type":"JPG","mime_type":"image/jpeg","is_image":true,"is_video":false,"is_url":false,"in_use":true,"created_at":"2024-12-09T21:41:09.043070Z","updated_at":"2024-12-09T21:41:09.043070Z"}],"tags":[],"access_level":"public"},"M1493217943":{"id":"M1493217943","title":"© 2024 Raum für Kunst e.V. | Imprint | Privacy Policy | Terms & Conditions","purl":"©-2024-raum-für-kunst-e-v-|-imprint-|-privacy-policy-|-terms-conditions","page_type":"page","content":"\u003ccolumn-set gutter=\"4rem\" mobile-hide-empty=\"false\" mobile-stack=\"true\">\u003ccolumn-unit slot=\"0\">\u003c/column-unit>\u003ccolumn-unit slot=\"1\">\n\n\u003ca class=\"menu-title\" href=\"https://mailchi.mp/9a4542df6cab/backsteinboot-newsletter\" target=\"_blank\">\u003c/a>\u003ca class=\"menu-title\" href=\"https://mailchi.mp/9a4542df6cab/backsteinboot-newsletter\" target=\"_blank\">NEWSLETTER \u003c/a>\u003cbr />\n\u003cbr />\n\n\n\u003cspan class=\"credit\">© 2026 Raum für Kunst e.V.\u003c/span>\n\n\u003c/column-unit>\u003ccolumn-unit slot=\"2\">\u003c/column-unit>\u003c/column-set>","local_css":"[id=\"M1493217943\"] .page-content {\n\ttext-align: center;\n\talign-items: flex-end;\n}\n\n[id=\"M1493217943\"].page {\n\tmin-height: var(--viewport-height);\n}\n\n[id=\"M1493217943\"] .page-layout {\n\talign-items: flex-end;\n}\n\n.overlay-content:has([id=\"M1493217943\"]) {\n}","display":true,"stack":false,"pin":true,"overlay":false,"password_enabled":false,"page_count":null,"page_design_options":null,"backdrops":{"activeBackdrop":"none"},"pin_options":{"screen_visibility":"all","position":"bottom","overlay":true,"fixed":true,"adjust":true},"overlay_options":{"closeOnClickout":true,"closeOnNavigate":true,"animateOnOpen":{"fade":false,"speed":0,"slideAmount":0,"slideDirection":"default","wipeShape":"default","easing":"linear","scaleAmount":0,"rotateAmount":0},"animateOnClose":{"fade":false,"speed":0,"slideAmount":0,"slideDirection":"default","wipeShape":"default","easing":"linear","scaleAmount":0,"rotateAmount":0}},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"}}},"sets":{"byId":{"root":{"id":"root","title":"Root","purl":null,"page_type":"set","content":"","local_css":null,"display":false,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":4,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"J1611755108":{"id":"J1611755108","title":"Backsteinboot","purl":"backsteinboot","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":5,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"E1060108681":{"id":"E1060108681","title":"Cultural events","purl":"cultural-events","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":4,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"W2672501500":{"id":"W2672501500","title":"Archives /year","purl":"archives-year","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":10,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"N4072670148":{"id":"N4072670148","title":"Archives /format","purl":"archives-format","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":12,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"W1873228680":{"id":"W1873228680","title":"Archives /collaborator","purl":"archives-collaborator","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":26,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"},"J0483498495":{"id":"J0483498495","title":"Info","purl":"info","page_type":"set","content":"","local_css":null,"display":true,"stack":false,"pin":false,"overlay":false,"password_enabled":false,"page_count":4,"page_design_options":null,"backdrops":null,"pin_options":{},"overlay_options":{},"thumb_media_id":null,"thumbnail":null,"thumb_meta":{},"media":[],"tags":[],"access_level":"public"}}},"media":{"data":[]},"css":{"id":276019,"stylesheet":"html {\n\t--mobile-scale: 1.4;\n\t--mobile-padding-offset: 1.4;\n}\n\nbody {\n\t--swatch-1: rgba(0, 0, 0, 0.85);\n\t--swatch-2: rgba(0, 0, 0, 0.75);\n\t--swatch-3: rgba(0, 0, 0, 0.6);\n\t--swatch-4: rgba(0, 0, 0, 0.4);\n\t--swatch-5: rgba(0, 0, 0, 0.25);\n\t--swatch-6: rgba(0, 0, 0, 0.37);\n}\n\nbody.mobile {\n}\n\na:active,\n.linked:active,\n.zoomable::part(media):active {\n\topacity: 0.7;\n}\n\n.page a.active {\n\tcolor: #afafff;\n}\n\nsub {\n\tposition: relative;\n\tvertical-align: baseline;\n\ttop: 0.3em;\n}\n\nsup {\n\tposition: relative;\n\tvertical-align: baseline;\n\ttop: -0.4em;\n}\n\n.small-caps {\n\tfont-variant: small-caps;\n\ttext-transform: lowercase;\n}\n\nol {\n\tmargin: 0;\n\tpadding: 0 0 0 2.5em;\n\tlist-style-type: decimal-leading-zero;\n}\n\nul {\n\tmargin: 0;\n\tpadding: 0 0 0 2.0em;\n}\n\nul.lineated {\n\tmargin: 0;\n\tpadding: 0;\n\tlist-style-type: none;\n\tmargin: 0 0 0 3em;\n\ttext-indent: -3em;\n}\n\nblockquote {\n\tmargin: 0;\n\tpadding: 0 0 0 2em;\n}\n\nhr {\n\tbackground: rgba(0, 0, 0, 0.6);\n\tborder: 0;\n\theight: 1px;\n\tdisplay: block;\n\tmargin-top: 0.4rem;\n\tmargin-bottom: 0.5rem;\n}\n\n.content {\n\tborder-color: rgba(0,0,0,.85);\n}\n\nbodycopy {\n\tfont-size: 1.4rem;\n\tfont-weight: 400;\n\tcolor: rgba(0, 0, 0, 0.75);\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\nbodycopy a {\n\tcolor: rgba(0, 0, 0, 0.75);\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\nbodycopy a:hover {\n    color: #c8ff00;\n}\n\nh1 {\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tfont-weight: 300;\n\tmargin: 0;\n\tfont-size: 3.6rem;\n\tline-height: 1.2;\n\tcolor: #000000;\n\tletter-spacing: 0;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\nh1 a {\n\tcolor: #000000;\n\ttext-decoration: none;\n}\n\nh1 a:hover {\n}\n\nh2 {\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tfont-weight: 700;\n\tmargin: 0;\n\tcolor: rgba(0, 0, 0, 0.5);\n\tfont-size: 2.8rem;\n\tline-height: 1.2;\n\tletter-spacing: 0;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\nh2 a {\n\tcolor: rgba(0, 0, 0, 0.5);\n\ttext-decoration: none;\n}\n\nh2 a:hover {\n}\n\n.caption {\n\tfont-size: 1rem;\n\tfont-weight: 300;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1;\n\tletter-spacing: 0;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.caption a {\n\ttext-decoration: underline;\n\tcolor: #000000;\n}\n\n.caption a:hover {\n}\n\nmedia-item .caption {\n\tmargin-top: .5em;\n}\n\ngallery-grid .caption,\ngallery-columnized .caption,\ngallery-justify .caption {\n\tmargin-bottom: 2em;\n}\n\n[thumbnail-index] .caption {\n\ttext-align: center;\n}\n\n[thumbnail-index] .caption .tags {\n\tmargin-top: 0.25em;\n}\n\n.page {\n\tjustify-content: center;\n}\n\n.page-content {\n\tpadding: 1rem;\n\ttext-align: left;\n}\n\n.mobile [id] .page-layout {\n\tmax-width: 100%;\n}\n\n.page-layout {\n\talign-items: flex-start;\n\tmax-width: 100%;\n\tpadding: 0.0rem;\n}\n\nmedia-item::part(media) {\n\tborder: 0;\n\tpadding: 0;\n}\n\n.quick-view {\n\theight: 100%;\n\twidth: 100%;\n\tpadding: 5rem;\n\tmargin-top: auto;\n\tmargin-right: auto;\n\tmargin-bottom: auto;\n\tmargin-left: auto;\n}\n\n.quick-view-background {\n\tbackground-color: rgba(0, 0, 0, 0.5);\n}\n\n.quick-view .caption {\n\tcolor: rgba(255, 255, 255, 1.0);\n\tpadding: 20px 0;\n\ttext-align: center;\n\ttransition: 100ms opacity ease-in-out;\n\tposition: absolute;\n\tbottom: 0;\n\tleft: 0;\n\tright: 0;\n}\n\n.quick-view .caption-background {\n\tpadding: 0.5rem 1rem;\n\tdisplay: inline-block;\n\tbackground: rgba(0, 0, 0, 0.5);\n\tborder-radius: .5rem;\n\ttext-align: left;\n\tmax-width: 50rem;\n}\n\n.mobile .quick-view {\n\twidth: 100%;\n\theight: 100%;\n\tmargin: 0;\n\tpadding: 10px;\n}\n\n.mobile .quick-view .caption {\n\tpadding: 10px 0;\n}\n\n.menu {\n\t--text-style: \"menu\";\n\tfont-size: 1.2rem;\n\tfont-weight: 300;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.menu a {\n\tcolor: #000000;\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.menu a:hover {\n\t\n}\n\n.title {\n\t--text-style: \"title\";\n\tfont-size: 2.4rem;\n\tfont-weight: 300;\n\tcolor: rgba(0, 0, 0, 0.25);\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.title a {\n\tcolor: rgba(0, 0, 0, 0.25);\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.title a:hover {\n\t\n}\n\n.subtitle {\n\t--text-style: \"subtitle\";\n\tfont-size: 1.2rem;\n\tfont-weight: 500;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.subtitle a {\n\tcolor: #000000;\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.subtitle a:hover {\n\t\n}\n\n.date-and-time {\n\t--text-style: \"date and time\";\n\tfont-size: 1.2rem;\n\tfont-weight: 300;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.date-and-time a {\n\tcolor: #000000;\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.date-and-time a:hover {\n\t\n}\n\n.text {\n\t--text-style: \"text\";\n\tfont-size: 1.2rem;\n\tfont-weight: 400;\n\tcolor: rgba(0, 0, 0, 0.37);\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.text a {\n\tcolor: rgba(0, 0, 0, 0.37);\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.text a:hover {\n\t\n}\n\n.credit {\n\t--text-style: \"credit\";\n\tfont-size: 1rem;\n\tfont-weight: 400;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1;\n\tletter-spacing: 0em;\n\tdisplay: block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.credit a {\n\tcolor: #000000;\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.credit a:hover {\n\t\n}\n\n.menu-title {\n\t--text-style: \"menu title\";\n\tfont-size: 1.8rem;\n\tfont-weight: 500;\n\tcolor: #000000;\n\tfont-family: \"Monument Grotesk Variable\";\n\tfont-style: normal;\n\tline-height: 1.2;\n\tletter-spacing: 0em;\n\tdisplay: inline-block;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n}\n\n.menu-title a {\n\tcolor: #000000;\n\tborder-bottom: 0px solid rgba(127, 127, 127, 0.2);\n\ttext-decoration: none;\n}\n\n.menu-title a:hover {\n\t\n}\n\n.mobile .quick-view .caption-background {\n\tmax-width: 100vw;\n}\n\n::part(slideshow-nav) {\n\t--button-size: 30px;\n\t--button-inset: 20px;\n\t--button-icon-color: rgba(255, 255, 255, 0.9);\n\t--button-icon-stroke-width: 1.5px;\n\t--button-icon-stroke-linecap: none;\n\t--button-background-color: rgba(87, 87, 87, 0.35);\n\t--button-background-radius: 50%;\n\t--button-active-opacity: 0.7;\n}\n\ngallery-slideshow::part(slideshow-nav) {\n\t--button-inset: 15px;\n}\n\n.quick-view::part(slideshow-nav) {\n}\n\n.wallpaper-slideshow::part(slideshow-nav) {\n}\n\n.mobile ::part(slideshow-nav) {\n\t--button-inset: 10px;\n}\n\n.mobile .quick-view::part(slideshow-nav) {\n\t--button-inset: 25px;\n}\n\nshop-product {\n\tfont-size: 1.2rem;\n\tmax-width: 22rem;\n\tfont-family: \"Diatype Variable\";\n\tfont-style: normal;\n\tfont-weight: 400;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n\tletter-spacing: 0em;\n\tmargin-bottom: 1em;\n}\n\nshop-product::part(price) {\n\tcolor: rgba(0, 0, 0, 0.75);\n\tline-height: 1.1;\n\tmargin-bottom: 0.5em;\n}\n\nshop-product::part(dropdown) {\n\twidth: 100%;\n\tcolor: rgba(0, 0, 0, 0.85);\n\tborder: 1px solid rgba(0, 0, 0, 0.2);\n\tbackground-color: rgba(255, 255, 255, 0.0);\n\tbackground-image: url(https://static.cargo.site/assets/images/select-line-arrows.svg);\n\tbackground-repeat: no-repeat;\n\tbackground-position: top 0em right .1em;\n\tline-height: 1.2;\n\tpadding: 0.58em 2em 0.55em 0.9em;\n\tborder-radius: 10em;\n\tmargin-bottom: 0.5em;\n}\n\nshop-product::part(button) {\n\tbackground: rgba(0, 0, 0, 0.15);\n\tcolor: rgba(0, 0, 0, 0.75);\n\ttext-align: left;\n\tline-height: normal;\n\tpadding: 0.5em 1em;\n\tcursor: pointer;\n\tborder-radius: 10em;\n}\n\nshop-product::part(button):active {\n\topacity: .7;\n}\n\naudio-player {\n\t--text-color: rgba(0, 0, 0, 0.85);\n\t--text-padding: 0 1.2em 0 1.0em;\n\t--background-color: rgba(255, 255, 255, 0);\n\t--buffer-background-color: rgba(0, 0, 0, 0.03);\n\t--progress-background-color: rgba(0, 0, 0, 0.075);\n\t--border-lines: 1px solid rgba(0, 0, 0, 0.2);\n\tfont-size: 1.2rem;\n\twidth: 32rem;\n\theight: 2.75em;\n\tfont-family: \"Diatype Variable\";\n\tfont-style: normal;\n\tfont-weight: 400;\n\tfont-variation-settings: 'slnt' 0, 'MONO' 0;\n\tline-height: normal;\n\tletter-spacing: 0em;\n\tmargin-bottom: 0.5em;\n\tborder-radius: 10em;\n}\n\naudio-player::part(button) {\n\t--icon-color: rgba(0, 0, 0, 0.85);\n\t--icon-size: 32%;\n\t--play-text: '';\n\t--pause-text: '';\n\twidth: 3.15em;\n\tdisplay: inline-flex;\n\tjustify-content: center;\n\tcursor: pointer;\n}\n\naudio-player::part(play-icon) {\n\tpadding-left: 0.6em;\n}\n\naudio-player::part(pause-icon) {\n\tpadding-left: 0.4em;\n}\n\naudio-player::part(progress-indicator) {\n\tborder-right: 1px solid rgba(0, 0, 0, 0);\n\theight: 100%;\n\tcursor: ew-resize;\n}\n\naudio-player::part(separator) {\n\tborder-right: var(--border-lines);\n}\n\nbody.mobile audio-player {\n\tmax-width: 100%;\n}","created_at":"2022-09-15T23:40:11.000000Z","updated_at":"2026-02-24T08:03:44.000000Z"},"siteDesign":{"images":{"image_zoom":true,"image_full_zoom":false,"scroll_animation":false,"scroll_transition":false,"limit_vertical_images":false,"mobile_image_width_maximize":true},"quick_view":{"show_ui":true,"captions":true,"close_on_scroll":false,"content-alignment":"center-center","contentAlignVertical":"center","contentAlignHorizontal":"center"},"site":{"enableColorFilter":false,"enableHomeLinkActiveStates":true,"enablePageTransition":false,"pageTransitionIntensity":2,"is_feed":false},"cart":{"theme":"light"},"contact_form":{"theme":"light"},"mobile_adjustments":{"view":"desktop","zoom":"21","padding":"-6","formatting":false,"pages_full_width":true,"images_full_width":true,"responsive_columns":"1","responsive_thumbnails_padding":"0.7"}},"frontendState":{"hasSiteModel":true,"hasScaffolding":true,"hasSiteDesign":true,"hasSiteCSS":true,"hasShopModel":false,"hasSitePackage":true,"pointerType":"mouse","quickView":{"mode":"default","inited":false,"autoScrolling":false,"elementArray":false,"activeIndex":0,"startingIndex":0},"contactForm":{"transition":false,"inited":false},"adminMode":false,"inAdminFrame":false,"renderedPages":[],"pwProtectedOverlays":[],"networkErrors":[],"pageNotFound":false,"fontsLoaded":["Monument Grotesk Variable","Diatype Variable"],"lastVisiblePid":null,"hostname":"backsteinboot.org","activePID":"Z3925686660"},"commerce":{"products":{},"cart":{},"shop":{}}}</script>
+		<script src="https://build.cargo.site/frontend/e1a2ed/index.js" async type="module"></script>
+	</body>
+
+</html>

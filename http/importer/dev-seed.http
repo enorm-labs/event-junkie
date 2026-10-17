@@ -881,7 +881,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Backsteinboot — not imported
+# Backsteinboot
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Backsteinboot venue ---
@@ -903,13 +903,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["cultural-centre", "club", "gallery"],
     "capacity": 700,
-    "programmeUrl": "https://backsteinboot.org/program-(landing-page)-1",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_backsteinboot", response.body.id);
     client.test("Backsteinboot venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Backsteinboot event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_backsteinboot}},
+    "name": "Backsteinboot",
+    "url": "https://backsteinboot.org/program-(landing-page)-1",
+    "sourceType": "BACKSTEINBOOT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Backsteinboot event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Backsteinboot import ---
+POST {{importer-host}}/api/admin/event-sources/backsteinboot/import
+Accept: application/json
+
+> {%
+    client.test("Backsteinboot import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

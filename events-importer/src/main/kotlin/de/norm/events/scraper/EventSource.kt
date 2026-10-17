@@ -46,6 +46,9 @@ enum class EventSource {
     /** Bar jeder Vernunft Berlin – a 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows. */
     BAR_JEDER_VERNUNFT,
 
+    /** Backsteinboot – artist studios in the former Royal Fireworks Laboratory on Eiswerder, with club nights, exhibitions and talks. */
+    BACKSTEINBOOT,
+
     /**
      * Berghain Berlin – the techno institution in a former power plant near Ostbahnhof.
      *

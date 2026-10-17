@@ -79,6 +79,15 @@ says so.
 | `BALLHAUS_WEDDING`     | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BAR_JEDER_VERNUNFT`   | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `BACKSTEINBOOT`        | `SUBTITLE`         | each entry has one title line                                                                                                                    | —     |
+| `BACKSTEINBOOT`        | `DESCRIPTION`      | the programme prints only credits and links, no text about an event                                                                              | —     |
+| `BACKSTEINBOOT`        | `DOORS_TIME`       | the site prints one start time per event                                                                                                         | —     |
+| `BACKSTEINBOOT`        | `GENRE`            | the site names a format, never a musical style                                                                                                   | —     |
+| `BACKSTEINBOOT`        | `PRICE`            | most entries say donation or invitation, and few print a figure                                                                                  | —     |
+| `BACKSTEINBOOT`        | `TICKET_URL`       | only some club nights link a ticket shop                                                                                                         | —     |
+| `BACKSTEINBOOT`        | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `BACKSTEINBOOT`        | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
+| `BACKSTEINBOOT`        | `PER_EVENT_PAGE`   | the site publishes no page per event, so every event points at the programme                                                                     | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |

@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["cultural-centre", "club", "gallery"],
         "capacity": 700,
-        "programmeUrl": "https://backsteinboot.org/program-(landing-page)-1",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Backsteinboot",
+            "url": "https://backsteinboot.org/program-(landing-page)-1",
+            "sourceType": "BACKSTEINBOOT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
