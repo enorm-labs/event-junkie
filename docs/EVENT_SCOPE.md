@@ -123,14 +123,15 @@ is a recurring night (§5).
 swamped the actual programme — the Arena concerts, the open-air cinema, the park festivals. It would present a concert
 venue as a tour operator. Each venue that mixes these into its programme has one predicate, on the signal its page gives:
 
-| Venue               | Predicate                                            | Signal                                                                 |
-| ------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
-| Gärten der Welt     | `GaertenDerWeltFieldMapping.isProgrammeCategory`     | The park's activity categories                                         |
-| Urania              | `UraniaEventFields.isParticipationFormat`            | The format names a `Workshop`, `Spaziergang` or `Rundgang`             |
-| Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop` | The `Workshops` category, or a title that opens with `Workshop`        |
-| silent green        | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`          |
-| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`        | The Eventfrog category `kurse-seminare`: the swing course              |
-| Baiz                | `BaizWebsiteImporter.isProgramme`                    | An uncategorised radar row that names `Schach`, `Beratung` or `Messer` |
+| Venue               | Predicate                                            | Signal                                                                                |
+| ------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Gärten der Welt     | `GaertenDerWeltFieldMapping.isProgrammeCategory`     | The park's activity categories                                                        |
+| Urania              | `UraniaEventFields.isParticipationFormat`            | The format names a `Workshop`, `Spaziergang` or `Rundgang`                            |
+| Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop` | The `Workshops` category, or a title that opens with `Workshop`                       |
+| silent green        | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`                         |
+| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`        | The Eventfrog category `kurse-seminare`: the swing course                             |
+| Baiz                | `BaizWebsiteImporter.isProgramme`                    | An uncategorised radar row that names `Schach`, `Beratung` or `Messer`                |
+| ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`) | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -144,13 +145,14 @@ Not modelled and not imported. Arena Berlin is the clearest case. All five of it
 deGUT, BUCHBERLIN, Einstieg Berlin. That is why it sits in _Blocked_ despite being trivially scrapable, and the blocker
 there was never the markup.
 
-Three imported venues mix one into their programme. Each drops it on the words its page uses:
+Four imported venues mix one into their programme. Each drops it on the words its page uses:
 
 | Venue                | Predicate                                        | Signal                                                     |
 | -------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
 | Uber Eats Music Hall | `billsTradeFairOrConference` (`TradeFair.kt`)    | A `…messe`, `Konferenz`, `Conference`, `Kongress` or `B2B` |
 | Theater im Delphi    | `billsTradeFairOrConference`                     | The same words in the title                                |
 | silent green         | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
+| ZK/U                 | `billsTradeFairOrConference`                     | The same words in the title or the subtitle                |
 
 A bare `Messe` is not a fair: SO36 bills a band of that name.
 

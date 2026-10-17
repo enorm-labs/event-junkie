@@ -438,6 +438,9 @@ enum class EventSource {
     /** Zitadelle Spandau – the Renaissance fortress whose courtyard hosts the Citadel Music Festival, an open-air concert series each summer. */
     ZITADELLE,
 
+    /** ZK/U Berlin – an artist-run residency and project space in a converted Moabit railway depot, with talks, film evenings, concerts and club nights. */
+    ZKU,
+
     /** Zur Klappe Berlin – a one-room club in a former public toilet at Yorckstraße and Mehringdamm in Kreuzberg. */
     ZUR_KLAPPE;
 

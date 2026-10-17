@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "ZK/U",
+        "address": "Siemensstraße 27",
+        "city": "Berlin",
+        "postalCode": "10551",
+        "district": "tiergarten",
+        "latitude": 52.533893,
+        "longitude": 13.336529,
+        "websiteUrl": "https://www.zku-berlin.org/",
+        "description": "An artist-run residency and project space in a converted railway depot in Moabit, with talks, film evenings, concerts and club nights in its hall and cellar.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Der von Künstler*innen geführte Residenz- und Projektraum in einem umgebauten Moabiter Güterbahnhof zeigt Vorträge, Filmabende, Konzerte und Clubnächte in Halle und Keller.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"]
+    },
+    "sources": [
+        {
+            "name": "ZK/U",
+            "url": "https://www.zku-berlin.org/",
+            "sourceType": "ZKU",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
