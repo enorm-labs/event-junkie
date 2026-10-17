@@ -169,7 +169,9 @@ dependencies {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.addAll("-Xjsr305=strict")
+        // `-Xemit-jvm-type-annotations` writes `List<@Valid EventArtistRequest>` into the bytecode;
+        // without it Hibernate Validator never sees the element's `@Valid` and skips the cascade (#3317).
+        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xemit-jvm-type-annotations")
     }
 }
 
