@@ -255,6 +255,37 @@ class OhmOverviewPageScraperTest {
         objekt.artists.map { it.name } shouldBe listOf("Objekt")
     }
 
+    // subglow, 18/10, as printed after the venue numbered its guest slots (#3512).
+    @Test
+    fun `drops numbered guest slots and keeps an act whose name starts with Guest`() {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>18/10</h2></div>
+                <div class="event-time">15:00</div>
+                <h2 class="event-title">subglow &#8211; Special Anniversary 12 hour Edition</h2>
+                <div class="event-lineup medium-type">CCL <br />
+            + Guest 1<br />
+            + Guest 2<br />
+            + Guest 3<br />
+            + Guest 4</div>
+            </li><li class="event-item">
+                <div class="event-date"><h2>19/10</h2></div>
+                <div class="event-time">22:00</div>
+                <h2 class="event-title">Guest Night</h2>
+                <div class="event-lineup medium-type">Guest Lister<br />
+            GUESTS<br />
+            +Guest<br />
+            Guest 12</div>
+            </li></ul>
+            """.trimIndent()
+
+        val (subglow, guestNight) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        subglow.artists.map { it.name to it.role } shouldBe listOf("CCL" to "DJ")
+        guestNight.artists.map { it.name } shouldBe listOf("Guest Lister")
+    }
+
     // The fixtures predate the posters, which the venue added in September 2026 (#1777).
     @Test
     fun `reads the night's poster and leaves the image empty where there is none`() {
