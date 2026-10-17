@@ -2,6 +2,7 @@ package de.norm.events.scraper.bkatheater
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -76,7 +77,7 @@ class BkaTheaterSpielplanPageScraper {
         val title = if (act != null) "$act: $programme" else heading.removeSuffix(":").trim()
         val badges = badgesOf(row)
         val note = row.textAt(".description")?.takeUnless { PREMIERE_MARKER.matches(it) }
-        val startTime = row.selectFirst("[data-eventtime]")?.attr("data-eventtime")?.let { parseTime(it, HHMM) }
+        val startTime = row.selectFirst("[data-eventtime]")?.attr("data-eventtime")?.let { parseTime(it, FOUR_DIGIT_CLOCK) }
         val eventType = bkaEventType(badges)
         return ScrapedEvent(
             title = title,
@@ -117,7 +118,6 @@ class BkaTheaterSpielplanPageScraper {
 
     private companion object {
         val YYYYMMDD: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /** A note that marks the performance, not the show: `Premiere`, `WELTPREMIERE`. */
         val PREMIERE_MARKER = Regex("""(?:welt|berlin)?premiere""", RegexOption.IGNORE_CASE)

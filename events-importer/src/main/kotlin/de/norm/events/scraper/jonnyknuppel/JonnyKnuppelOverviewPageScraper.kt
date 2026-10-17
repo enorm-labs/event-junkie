@@ -2,6 +2,7 @@ package de.norm.events.scraper.jonnyknuppel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.euroAmounts
@@ -20,7 +21,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.MonthDay
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
@@ -57,7 +57,7 @@ class JonnyKnuppelOverviewPageScraper {
             logger.warn { "Could not date Jonny Knüppel night '$title' (${item.textAt(".event-date")}, end '${item.attr("data-event-end")}'), skipping" }
             return null
         }
-        val startTime = parseTime(item.textAt(".event-time")?.substringBefore('-'), HHMM)
+        val startTime = parseTime(item.textAt(".event-time")?.substringBefore('-'), FOUR_DIGIT_CLOCK)
         val detail = item.selectFirst(".event-detail")
         val (priceBoxOffice, priceNote) = parsePrice(detail?.let { sectionAfter(it, ENTRY_HEADING) })
 
@@ -70,7 +70,7 @@ class JonnyKnuppelOverviewPageScraper {
             endDate = end.toLocalDate(),
             endTime = end.toLocalTime(),
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.JONNY_KNUPPEL.sourceIdPrefix}$eventDate${startTime?.let { "-${it.format(HHMM)}" }.orEmpty()}",
+            sourceId = "${EventSource.JONNY_KNUPPEL.sourceIdPrefix}$eventDate${startTime?.let { "-${it.format(FOUR_DIGIT_CLOCK)}" }.orEmpty()}",
             priceBoxOffice = priceBoxOffice,
             priceNote = priceNote,
             artists = detail?.let { sectionAfter(it, LINEUP_HEADING) }?.let(::lineup).orEmpty()
@@ -138,8 +138,6 @@ class JonnyKnuppelOverviewPageScraper {
         const val HEADING_CLASS = "legal-section-heading"
         const val LINEUP_HEADING = "Line-up"
         const val ENTRY_HEADING = "Eintritt"
-
-        val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /** The first `DDMM` of `0910-1010` or `0409`. */
         val PRINTED_DATE = Regex("""^\s*(\d{2})(\d{2})(?:\D|$)""")

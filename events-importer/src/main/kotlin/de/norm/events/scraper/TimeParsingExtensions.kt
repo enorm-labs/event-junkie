@@ -7,10 +7,16 @@ import java.time.format.DateTimeParseException
 // Shared clock parsing utilities for venue scrapers. A venue renders a time standalone
 // ("Einlass: 19:00"), behind a label on a line it shares with another time, or as the tail of an
 // ISO 8601 stamp. Every reader returns null for blank or unparseable input rather than throwing.
-// The date readers are in DateParsingExtensions.
+// FOUR_DIGIT_CLOCK also writes a time back out. The date readers are in DateParsingExtensions.
 
 /** Standard 24-hour time format (HH:mm) used by most Berlin venue websites. */
 private val HH_MM_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+/**
+ * The colonless four-digit clock (`19:30` → `1930`), read from a stamp a venue puts in an id or an
+ * attribute, and written into the `sourceId` of one performance of a run.
+ */
+val FOUR_DIGIT_CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
 /**
  * Attempts to parse [text] as a [LocalTime] using the given [formatter].

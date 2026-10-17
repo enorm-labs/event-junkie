@@ -3,6 +3,7 @@ package de.norm.events.scraper.wuehlmaeuse
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.billsChildrensShow
@@ -19,7 +20,6 @@ import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /** One page of the Wühlmäuse ticket shop: its ticket products, and how many products the response held. */
 data class WuehlmaeuseShopPage(
@@ -114,8 +114,10 @@ class WuehlmaeuseApiScraper {
             }.sortedWith(compareBy({ it.eventDate }, { it.startTime }))
 
     /** The show's slug, date and clock: one show plays many nights, and one night can hold two shows. */
-    private fun sourceIdOf(ticket: WuehlmaeuseTicket): String =
-        "${EventSource.WUEHLMAEUSE.sourceIdPrefix}${ticket.eventUrl.trimEnd('/').substringAfterLast('/')}-${ticket.date}-${ticket.start.format(HHMM)}"
+    private fun sourceIdOf(ticket: WuehlmaeuseTicket): String {
+        val slug = ticket.eventUrl.trimEnd('/').substringAfterLast('/')
+        return "${EventSource.WUEHLMAEUSE.sourceIdPrefix}$slug-${ticket.date}-${ticket.start.format(FOUR_DIGIT_CLOCK)}"
+    }
 
     private fun toTicket(product: JsonNode): WuehlmaeuseTicket? {
         val lines = product.stringOrNull("name")?.split(LINE_BREAK)?.map { decodeHtmlEntities(it) } ?: return null
@@ -151,7 +153,6 @@ class WuehlmaeuseApiScraper {
     }
 
     private companion object {
-        val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
         const val MIN_LINES = 4
         val LINE_BREAK = Regex("""<br\s*/?>""")
         val PERFORMANCE = Regex("""(\d{2}\.\d{2}\.\d{4}) um (\d{1,2}:\d{2})""")

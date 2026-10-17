@@ -2,6 +2,7 @@ package de.norm.events.scraper.zebranotheater
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -158,7 +159,7 @@ class ZebranoTheaterProgrammPageScraper {
                 .keys
         return events.map { event ->
             if (event.sourceId in shared) {
-                event.copy(sourceId = "${event.sourceId}-${event.startTime?.format(HOUR_MINUTE) ?: event.title.hashCode()}")
+                event.copy(sourceId = "${event.sourceId}-${event.startTime?.format(FOUR_DIGIT_CLOCK) ?: event.title.hashCode()}")
             } else {
                 event
             }
@@ -182,7 +183,6 @@ class ZebranoTheaterProgrammPageScraper {
         val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
         val AMOUNT = Regex("""(\d+(?:,\d{1,2})?)\s*(\*?)""")
         val SOLD_OUT = Regex("""ausverkauft""", RegexOption.IGNORE_CASE)
-        val HOUR_MINUTE: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /** The house's `Rubrik` words the shared table does not know. */
         val CATEGORY_TYPES =

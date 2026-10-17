@@ -3,6 +3,7 @@ package de.norm.events.scraper.admiralspalast
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -24,7 +25,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for an Admiralspalast production page (`/veranstaltung/<slug>.html`).
@@ -143,7 +143,7 @@ class AdmiralspalastDetailPageScraper {
             // reads as one token, matching the Uber and Heimathafen scrapers.
             sourceId =
                 "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate" +
-                    startTime?.format(SOURCE_ID_TIME)?.let { "-$it" }.orEmpty(),
+                    startTime?.format(FOUR_DIGIT_CLOCK)?.let { "-$it" }.orEmpty(),
             artists = billedActs(title, eventType),
             promoters = promoters
         )
@@ -222,9 +222,6 @@ class AdmiralspalastDetailPageScraper {
         }
 
     private companion object {
-        /** `19:30` → `1930`, the session marker appended to a performance's `sourceId`. */
-        val SOURCE_ID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
-
         /** Path prefix of a production page, stripped to obtain its slug. */
         const val PRODUCTION_PATH_PREFIX = "/veranstaltung/"
 

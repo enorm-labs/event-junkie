@@ -6,6 +6,7 @@ import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
@@ -192,7 +193,7 @@ class HeimathafenApiScraper(
             imageUrl = shared.imageUrl,
             sourceUrl = shared.sourceUrl,
             // The time is part of the key: a run can legitimately play twice on the same day.
-            sourceId = "${EventSource.HEIMATHAFEN.sourceIdPrefix}$postId-${startedAt.toLocalDate()}-${startedAt.toLocalTime().format(HH_MM)}",
+            sourceId = "${EventSource.HEIMATHAFEN.sourceIdPrefix}$postId-${startedAt.toLocalDate()}-${startedAt.toLocalTime().format(FOUR_DIGIT_CLOCK)}",
             ticketUrl = performance.path("performance_ticket").asString(null)?.takeIf { it.startsWith("http") },
             pricePresale = shared.pricePresale,
             priceBoxOffice = shared.priceBoxOffice,
@@ -385,9 +386,6 @@ class HeimathafenApiScraper(
 
         /** The US-format timestamp ACF stores, e.g. `11/27/2026 8:00 p.m.`. */
         val PERFORMANCE_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/uuuu h:mm a", Locale.ENGLISH)
-
-        /** `HH:mm` rendering used inside the `sourceId`, without the colon. */
-        val HH_MM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /**
          * Price labels naming a **concession** rather than a general-admission tier, excluded from
