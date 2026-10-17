@@ -34,6 +34,17 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `strips a release-night tail, so the title bills the act and not the album (#3515)`() {
+        stripFormatTail("Ahmed Maher - Maktoub Album Release") shouldBe "Ahmed Maher - Maktoub"
+        titleBilling("Ahmed Maher - Maktoub Album Release") shouldBe "Ahmed Maher"
+        titleBilling("Synkope - „ A’reshe عريشة’ - album release concert") shouldBe "Synkope"
+        titleBilling("Some Band - Debut Record Release") shouldBe "Some Band"
+        titleBilling("Some Band – Release Concert") shouldBe "Some Band"
+        stripFormatTail("Album Release") shouldBe "Album Release"
+        stripFormatTail("Release Party Ensemble") shouldBe "Release Party Ensemble"
+    }
+
+    @Test
     fun `a format-tailed title bills the act before the dash, and only then`() {
         titleBilling("Gibrana Cervantes — verdad y error Listening Session") shouldBe "Gibrana Cervantes"
         titleBilling("Raphael Rogiński – Qırım - Live Recording") shouldBe "Raphael Rogiński"

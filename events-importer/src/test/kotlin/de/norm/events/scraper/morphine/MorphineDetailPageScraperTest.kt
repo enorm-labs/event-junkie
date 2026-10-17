@@ -133,6 +133,15 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `bills the act of an album-release night, not the album, and keeps the published title (#3515)`() {
+        val url = "http://www.morphinerecords.com/events/ahmed-maher-maktoub"
+        val event = parse("morphine-detail-album-release.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Ahmed Maher - Maktoub Album Release"
+        event.artists.map { it.name } shouldBe listOf("Ahmed Maher")
+    }
+
+    @Test
     fun `credits the promoter a Presented by line names`() {
         val url = "http://www.morphinerecords.com/events/gibrana-cervantes-verdad-y-error-listening-session"
         val event = parse("morphine-detail-listening-session.html", url).shouldNotBeNull()
