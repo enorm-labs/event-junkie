@@ -50,12 +50,7 @@ class GiriProgrammePageScraper {
         dates: Map<String, String>
     ): ScrapedEvent? {
         val title = article.textAt("h2")
-        val eventKey =
-            article
-                .hrefAt("h2 a")
-                ?.substringAfter("giri_event=", "")
-                ?.substringBefore('&')
-                .blankToNull()
+        val eventKey = article.hrefAt("h2 a")?.let { EVENT_KEY.find(it)?.groupValues?.get(1) }
         val date = parseRealDate(dates[article.id().removePrefix("event-")])
         if (title == null || eventKey == null || date == null) {
             logger.warn { "Giri entry ${article.id()} lacks a title, an event key or a calendar date, skipping" }
@@ -164,6 +159,9 @@ class GiriProgrammePageScraper {
         const val YEAR_MONTH_LENGTH = 7
         const val HH_MM_LENGTH = 5
         val CLOCK = Regex("""\d{1,2}:\d{2}""")
+
+        /** The key in an event's link: `?giri_programme_event=<key>` since 2026-10, `?giri_event=<key>` before. */
+        val EVENT_KEY = Regex("""[?&]giri(?:_programme)?_event=([^&#]+)""")
 
         /** A trailing `(live)`, `(Live Performance)` or `(hybrid live+dj set)`; any other bracket stays in the name. */
         val ROLE_NOTE = Regex("""^(.+?)\s*\(([^()]*\b(?:live|dj|set|performance)\b[^()]*)\)$""", RegexOption.IGNORE_CASE)

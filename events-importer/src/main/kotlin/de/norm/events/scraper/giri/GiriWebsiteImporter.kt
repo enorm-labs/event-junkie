@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
  * never stops it: late in a month it can list nothing yet still link the next. `robots.txt` bars
  * the theme's JSON export (`/wp-json/giri/v1/events`), so the HTML is the source.
  *
- * The `?giri_event=` link of each event answers 404, so an event points at its entry in the
+ * The `?giri_programme_event=` link of each event answers 404, so an event points at its entry in the
  * month's list view, and the link's key is the event's identity.
  *
  * @see <a href="https://giri.berlin/programme/">Giri programme</a>
