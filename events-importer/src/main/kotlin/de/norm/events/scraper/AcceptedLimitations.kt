@@ -113,6 +113,7 @@ import de.norm.events.scraper.pandaplatforma.PANDA_PLATFORMA_LIMITATIONS
 import de.norm.events.scraper.panke.PANKE_LIMITATIONS
 import de.norm.events.scraper.pas.PAS_LIMITATIONS
 import de.norm.events.scraper.passionskirche.PASSIONSKIRCHE_LIMITATIONS
+import de.norm.events.scraper.pastiche.PASTICHE_LIMITATIONS
 import de.norm.events.scraper.peteredel.PETER_EDEL_LIMITATIONS
 import de.norm.events.scraper.pfefferberghaus13.PFEFFERBERG_HAUS_13_LIMITATIONS
 import de.norm.events.scraper.privatclub.PRIVATCLUB_LIMITATIONS
@@ -290,6 +291,7 @@ object AcceptedLimitations {
             PANKE_LIMITATIONS,
             PAS_LIMITATIONS,
             PASSIONSKIRCHE_LIMITATIONS,
+            PASTICHE_LIMITATIONS,
             PETER_EDEL_LIMITATIONS,
             PFEFFERBERG_HAUS_13_LIMITATIONS,
             PRIVATCLUB_LIMITATIONS,

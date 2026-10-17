@@ -8844,7 +8844,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Pastiche — not imported
+# Pastiche
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Pastiche venue ---
@@ -8866,13 +8866,43 @@ Content-Type: application/json
     "descriptionAlt": "Ein Hi-Fi-Hörraum an der Weserstraße, zugleich Plattenladen, Tagescafé und Label, mit kuratierten Listening-Sessions, Live-Sets, Workshops, Buchgesprächen, Quizabenden und Plattenbörsen samt DJ-Sets.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "gallery"],
-    "programmeUrl": "https://pasticheinternational.com/programme-1",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("venue_id_pastiche", response.body.id);
     client.test("Pastiche venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Pastiche event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_pastiche}},
+    "name": "Pastiche",
+    "url": "https://pasticheinternational.com/programme-1",
+    "sourceType": "PASTICHE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Pastiche event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Pastiche import ---
+POST {{importer-host}}/api/admin/event-sources/pastiche/import
+Accept: application/json
+
+> {%
+    client.test("Pastiche import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
