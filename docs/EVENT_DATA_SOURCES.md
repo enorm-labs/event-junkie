@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   159 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    26 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   160 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    25 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   129 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -148,6 +148,7 @@ schema change.
 | Panke Culture                    | https://www.pankeculture.com/programme/                                  | Club         | WordPress/Divi; upcoming list only; no event pages        |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                                        | Open Air     | October CMS; ISO date in URL; seasonal, sold-out          |
 | PAS                              | https://pas-berlin.org/programme/                                        | Other        | TEC REST API; skips nights held elsewhere                 |
+| Pastiche                         | https://pasticheinternational.com/programme-1                            | Bar          | Cargo; one month, no year; drops workshops, fairs         |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
 | Privatclub                       | https://privatclub-berlin.de/                                            | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |
@@ -200,7 +201,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-158 importer classes cover 159 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+159 importer classes cover 160 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -222,7 +223,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-56 sources have a second language, 99 have none, and 4 are unknown. Twelve translate the event text on a second page.
+56 sources have a second language, 100 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -356,6 +357,7 @@ the upsert stores none.
 | Panke Culture                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Parkbühne Wuhlheide              | No              | —                                                            | —                  |                                                                                                                                    |
 | PAS                              | Yes             | German About page, `/pas-de/`                                | Not on the listing | https://pas-berlin.org/pas-de/                                                                                                     |
+| Pastiche                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Pfefferberg Haus 13              | No              | —                                                            | —                  |                                                                                                                                    |
 | Privatclub                       | Yes             | One field: `— english version —`                             | One field          | https://privatclub-berlin.de/                                                                                                      |
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |
@@ -452,7 +454,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks           |
 | Clärchens Ballhaus       | https://claerchensball.haus/programm/                     | Club         | Low      | Calendar JSON in the page; each event twice; dance courses |
 | PKH Warehouse            | https://www.pkh.events/                                   | Other        | Low      | Hand-written HTML copied from RA; month headings, no year  |
-| Pastiche                 | https://pasticheinternational.com/programme-1             | Bar          | Low      | Cargo; one month table in the HTML, no year                |
 | 8MM                      | https://www.8mmbar.de/program                             | Bar          | Low      | Squarespace list in HTML; the JSON feed is robots-barred   |
 
 **The 7 rows from Soulcat to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)

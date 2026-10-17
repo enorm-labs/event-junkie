@@ -327,6 +327,9 @@ enum class EventSource {
     /** PAS – Petersburg Art Space, a non-profit art space and artist residency on the Spree in Moabit, for free improvisation and experimental music. */
     PAS,
 
+    /** Pastiche – a hi-fi listening room on Weserstraße that is also a record shop and day café, for seated listening sessions and live sets. */
+    PASTICHE,
+
     /** Kulturhaus Peter Edel Berlin – the Weißensee Bildungs- und Kulturzentrum, mixing concerts, comedy, theatre, readings and dance teas. */
     PETER_EDEL,
 

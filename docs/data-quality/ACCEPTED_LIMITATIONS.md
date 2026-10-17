@@ -560,6 +560,15 @@ says so.
 | `PAS`                  | `PRICE`            | most events set no cost                                                                                                                          | —     |
 | `PAS`                  | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PAS`                  | `ARTISTS`          | a series night bills only its name, and its acts are in the prose                                                                                | —     |
+| `PASTICHE`             | `PAGINATION`       | the programme page shows the current month only                                                                                                  | —     |
+| `PASTICHE`             | `EVENT_TYPE`       | the venue names a format only on some nights, so a night without one is read as a concert                                                        | —     |
+| `PASTICHE`             | `ARTISTS`          | the site has no line-up field, so only a night billed as live or DJ names its act                                                                | —     |
+| `PASTICHE`             | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `PASTICHE`             | `DOORS_TIME`       | each event states its start and end, no doors time                                                                                               | —     |
+| `PASTICHE`             | `PRICE`            | the price sits in a shop widget the page renders with JavaScript                                                                                 | —     |
+| `PASTICHE`             | `SOLD_OUT`         | the ticket status sits in the same shop widget                                                                                                   | —     |
+| `PASTICHE`             | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
+| `PASTICHE`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `PETER_EDEL`           | `EVENT_TYPE`       | the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas                              | —     |
 | `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
