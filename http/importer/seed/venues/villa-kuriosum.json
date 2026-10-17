@@ -1,0 +1,22 @@
+{
+    "venue": {
+        "name": "Villa Kuriosum",
+        "address": "Scheffelstraße 21",
+        "city": "Berlin",
+        "postalCode": "10367",
+        "district": "lichtenberg",
+        "latitude": 52.520151,
+        "longitude": 13.473189,
+        "websiteUrl": "https://www.villakuriosum.net/",
+        "instagramUrl": "https://www.instagram.com/villakuriosum/",
+        "facebookUrl": "https://www.facebook.com/pages/Villa%20Kuriosum/259028124215279/",
+        "description": "A self-run garden villa in Lichtenberg, open since 2012, mixing contemporary circus, botany and art with a garden bar, circus cabaret, punk and folk concerts and the Villapalooza festival.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine selbstverwaltete Gartenvilla in Lichtenberg, seit 2012 offen, die zeitgenössischen Zirkus, Botanik und Kunst verbindet, mit Gartenbar, Zirkuskabarett, Punk- und Folkkonzerten und dem Festival Villapalooza.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "open-air"],
+        "programmeUrl": "https://www.villakuriosum.net/veranstaltungen/",
+        "reviewedAt": "2026-10-17T12:42:42Z"
+    },
+    "sources": []
+}

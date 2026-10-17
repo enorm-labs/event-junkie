@@ -1,0 +1,22 @@
+{
+    "venue": {
+        "name": "Baketown",
+        "address": "Kolonnenstraße 27",
+        "city": "Berlin",
+        "postalCode": "10829",
+        "district": "schoeneberg",
+        "latitude": 52.484957,
+        "longitude": 13.366418,
+        "websiteUrl": "https://baketown.berlin/",
+        "instagramUrl": "https://www.instagram.com/baketownbaketown/",
+        "facebookUrl": "https://www.facebook.com/baketowncollective/",
+        "description": "A studio, residency and 300-capacity music venue on the Rote Insel in Schöneberg, with a Funktion-One system, concerts by international rap, soul and electronic acts, and listening sessions.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Studio, Residenz und Musikort für 300 Gäste auf der Roten Insel in Schöneberg, mit Funktion-One-Anlage, Konzerten internationaler Rap-, Soul- und Elektronik-Acts und Listening Sessions.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["live-venue"],
+        "capacity": 300,
+        "reviewedAt": "2026-10-17T12:42:42Z"
+    },
+    "sources": []
+}

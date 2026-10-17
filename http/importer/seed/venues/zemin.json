@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Zemin",
+        "address": "Urbanstraße 3",
+        "city": "Berlin",
+        "postalCode": "10961",
+        "district": "kreuzberg",
+        "latitude": 52.494149,
+        "longitude": 13.400844,
+        "websiteUrl": "https://www.zeminberlin.de/",
+        "instagramUrl": "https://www.instagram.com/zeminberlin/",
+        "description": "An independent art and production space on Urbanstraße in Kreuzberg, with exhibitions and workshops beside live analog, electroacoustic and audiovisual nights and DJ nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ein unabhängiger Kunst- und Produktionsraum in der Urbanstraße in Kreuzberg, mit Ausstellungen und Workshops neben Live-Analog-, Elektroakustik- und audiovisuellen Abenden und DJ-Nächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["gallery", "live-venue"],
+        "programmeUrl": "https://www.zeminberlin.de/",
+        "reviewedAt": "2026-10-17T12:42:42Z"
+    },
+    "sources": []
+}
