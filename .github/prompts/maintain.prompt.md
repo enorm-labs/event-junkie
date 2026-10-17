@@ -61,7 +61,8 @@ The first row that holds decides. Each row names its evidence; report it with th
 - **Stage 6**: give `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`, and the subjects that make it a
   product release. A release cut less than two hours ago has not settled: stage 7 waits for the rollout and the first imports, so it skips to stage 10.
 - **Stage 7**: a step's `due` has come when it is `now`, a date on or before today, `deploy+<N>d` with N days passed since the change reached that
-  environment, or a dark day that is today. [`/post-release`](post-release.prompt.md) § When a step is due says how to read each.
+  environment, or a dark day that is today. A `when:<text>` step has come only when its text holds. [`/post-release`](post-release.prompt.md)
+  § When a step is due says how to read each.
 - **Stage 8**: the review writes a file of proposals and applies nothing. Applying waits for the operator's word, as that prompt says.
 - **Stage 9**: `/refine-issues` asks the operator a question per issue, so this command names it and does not run it.
 - **Stage 10**: the next date is the earliest future `due`, the day the MusicBrainz review is due again, or the next dark day of a `dark-day` step.

@@ -73,7 +73,8 @@ new venue means the licence review ran from the wrong checkout.
 A step not yet due is **waiting until <date>**, not a failure, and gets no comment. For a dark-day step, count the source's events per day for the next
 14 days on that environment (the public API, one day per call, `size=100`) and name the first day with none. The deploy date of a change on production is the date of the first release that contains it
 (`git tag --contains <mergeCommit> --sort=creatordate | head -1`, then `git log -1 --format=%cs <tag>`); on staging it is the merge date, since every merge
-publishes a snapshot. `scripts/daily-check.sh` reports each step's `due` as the date, `deploy+<N>d`, `dark-day:<slug>` or `now`.
+publishes a snapshot. `scripts/daily-check.sh` reports each step's `due` as the date, `deploy+<N>d`, `dark-day:<slug>`, `when:<text>` for any other
+parenthesis, the date of an `on YYYY-MM-DD` in a step without one, or `now`. A `when:` step waits until its text holds, which only a reader can judge.
 
 A ticked box is done. A box stays unticked when its step failed, and the pull request's comment says why.
 

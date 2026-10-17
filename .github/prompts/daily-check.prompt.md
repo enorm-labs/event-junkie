@@ -86,7 +86,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   of `alerts@` to ignore mail (#1807, #1810).
 - **An unclosed issue**: ACT. Confirm the pull request did the work, then `gh issue close <n> --reason completed` with a comment naming it.
 - **An `after_deploy` entry**: `released: true` with a step whose `due` is `now`, a past date, a `deploy+<N>d` already passed, or a dark day is ACT, "run `/post-release`", with those
-  steps; production already runs the change. A step dated later is waiting until that date, and `released: false` is waiting for a release: one line each.
+  steps; production already runs the change. A step dated later is waiting until that date, a `when:<text>` step is waiting with that text, and
+  `released: false` is waiting for a release: one line each.
 - **Unreleased commits**: say whether they hold a product change. When they do, suggest a cut: `gh workflow run cut-release.yml -f dry_run=false`. Never cut.
 
 ## Step 4 — The logs
