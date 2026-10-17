@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   161 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    24 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   162 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    23 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   129 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -180,6 +180,7 @@ schema change.
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                                   | Concert Hall | One row per performance; prices only in a leak            |
 | Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                               | Club         | Elementor; year from the weekday; blurb per event page    |
 | TIPI am Kanzleramt               | https://www.tipi-am-kanzleramt.de/de/programm/kalender.html              | Theater      | Bar jeder Vernunft parser; per-date JSON-LD               |
+| Torhaus Berlin                   | https://torhausberlin.de/de                                              | Other        | Next.js; cards paired with flight keys; no Küfa           |
 | Tresor                           | https://tresorberlin.com/club/events/                                    | Techno Club  | WordPress; floor-grouped lineup; detail pages             |
 | Uber Arena                       | https://www.uber-arena.de/events/all                                     | Arena        | AEG CMS; list + detail; no sport imported                 |
 | Uber Eats Music Hall             | https://www.uber-eats-music-hall.de/events/all                           | Concert Hall | Shares the Uber Arena parsers; month names, no cats       |
@@ -202,7 +203,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-160 importer classes cover 161 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+161 importer classes cover 162 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -224,7 +225,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-56 sources have a second language, 101 have none, and 4 are unknown. Twelve translate the event text on a second page.
+57 sources have a second language, 101 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -390,6 +391,7 @@ the upsert stores none.
 | Theater im Delphi                | Yes             | `/en/` path                                                  | Translated         | https://theater-im-delphi.de/en/programm/                                                                                          |
 | Tiffany Club                     | No              | —                                                            | —                  |                                                                                                                                    |
 | TIPI am Kanzleramt               | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.tipi-am-kanzleramt.de/en/whats-on/calendar.html                                                                        |
+| Torhaus Berlin                   | Yes             | `/en` path, `hreflang`                                       | Not on the listing | https://torhausberlin.de/en                                                                                                        |
 | Tresor                           | No              | —                                                            | —                  |                                                                                                                                    |
 | Uber Arena                       | Unknown         | The page refused the request (406)                           | —                  |                                                                                                                                    |
 | Uber Eats Music Hall             | Yes             | `/en/` path                                                  | Unknown            | https://www.uber-eats-music-hall.de/en/events/all/                                                                                 |
@@ -432,7 +434,6 @@ least as heavily as an RA count when the next batch is prioritised.
 
 | Name                     | URL                                                       | Type         | Priority | Comment                                                    |
 | ------------------------ | --------------------------------------------------------- | ------------ | -------- | ---------------------------------------------------------- |
-| Torhaus Berlin           | https://torhausberlin.de/                                 | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint     |
 | Weltwirtschaft           | https://weltwirtschaft.berlin/                            | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices      |
 | Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops   |
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose       |

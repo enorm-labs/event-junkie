@@ -11250,6 +11250,67 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Torhaus Berlin
+# ————————————————————————————————————————————————————————————
+
+### --- Create Torhaus Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Torhaus Berlin",
+    "address": "Columbiadamm 10",
+    "city": "Berlin",
+    "postalCode": "12101",
+    "district": "tempelhof",
+    "latitude": 52.484018,
+    "longitude": 13.391198,
+    "websiteUrl": "https://torhausberlin.de/",
+    "description": "The former Air Force guardhouse at the gate of Tempelhof Airport, run since 2018 by a members' association as a community space, with THF Radio broadcasting from its studio, Friday bar nights with radio DJs, cooking workshops, concerts and exhibitions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das ehemalige Wachhaus der Air Force am Tor des Flughafens Tempelhof, seit 2018 ein Community Space eines Mitgliedervereins, mit dem Studio von THF Radio, Barabenden mit Radio-DJs am Freitag, Kochworkshops, Konzerten und Ausstellungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "bar"]
+}
+
+> {%
+    client.global.set("venue_id_torhaus_berlin", response.body.id);
+    client.test("Torhaus Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Torhaus Berlin event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_torhaus_berlin}},
+    "name": "Torhaus Berlin",
+    "url": "https://torhausberlin.de/de",
+    "sourceType": "TORHAUS_BERLIN",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Torhaus Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Torhaus Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/torhaus-berlin/import
+Accept: application/json
+
+> {%
+    client.test("Torhaus Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Torte — not imported
 # ————————————————————————————————————————————————————————————
 

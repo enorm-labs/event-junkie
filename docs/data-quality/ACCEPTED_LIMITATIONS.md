@@ -725,6 +725,17 @@ says so.
 | `TIFFANY_CLUB`         | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
 | `TIPI_AM_KANZLERAMT`   | `DOORS_TIME`       | the calendar and the show pages state one start time and never an Einlass                                                                        | —     |
 | `TIPI_AM_KANZLERAMT`   | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `TORHAUS_BERLIN`       | `PER_EVENT_PAGE`   | the event cards link to no page of their own                                                                                                     | —     |
+| `TORHAUS_BERLIN`       | `SUBTITLE`         | a card carries only a title and the times                                                                                                        | —     |
+| `TORHAUS_BERLIN`       | `DESCRIPTION`      | a card carries only a title and the times                                                                                                        | —     |
+| `TORHAUS_BERLIN`       | `IMAGE`            | the event cards show no image                                                                                                                    | —     |
+| `TORHAUS_BERLIN`       | `TICKET_URL`       | the site sells no tickets                                                                                                                        | —     |
+| `TORHAUS_BERLIN`       | `DOORS_TIME`       | the site publishes one opening time per event                                                                                                    | —     |
+| `TORHAUS_BERLIN`       | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `TORHAUS_BERLIN`       | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `TORHAUS_BERLIN`       | `PROMOTERS`        | the site credits no promoter beside the show name                                                                                                | —     |
+| `TORHAUS_BERLIN`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `TORHAUS_BERLIN`       | `CANCELLATION`     | the site has no cancelled marker for an event                                                                                                    | —     |
 | `TRESOR`               | `DOORS_TIME`       | the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start                     | —     |
 | `TRESOR`               | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
 | `TRESOR`               | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |

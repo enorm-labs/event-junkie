@@ -429,6 +429,9 @@ enum class EventSource {
     /** TIPI am Kanzleramt – a permanent tent theatre in the Tiergarten, sister stage of Bar jeder Vernunft, with cabaret, chanson, musicals and music shows. */
     TIPI_AM_KANZLERAMT,
 
+    /** Torhaus Berlin – a members' community space in the former gatehouse of Tempelhof Airport, home to THF Radio and a cooking collective. */
+    TORHAUS_BERLIN,
+
     /** Tresor Berlin – the techno institution in a disused power plant on Köpenicker Straße, with the Tresor vault, the Globus floor and the Aurora Bar. */
     TRESOR,
 
