@@ -6,6 +6,7 @@ import de.norm.events.scraper.SCRAPER_WEB_CLIENT
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import io.netty.channel.ConnectTimeoutException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
@@ -52,7 +53,7 @@ class VenueSiteProber(
             ?: ProbeResult(url = null, outcome = SiteOutcome.SKIPPED)
     }
 
-    /** Probes one URL. Never throws: a fault is an outcome. */
+    /** Probes one URL. A fault is an outcome, never a throw; only a cancellation propagates. */
     @Suppress("TooGenericExceptionCaught") // Every transport fault is an outcome; one dead site must not stop the pass.
     suspend fun probe(url: String): ProbeResult {
         if (ForbiddenHosts.isForbidden(url)) return ProbeResult(url, SiteOutcome.SKIPPED)
@@ -80,6 +81,8 @@ class VenueSiteProber(
                 payload = mapOf(LogFields.URL to url, LogFields.HTTP_STATUS to status)
             }
             ProbeResult(url, outcome, status)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             classify(url, e)
         }

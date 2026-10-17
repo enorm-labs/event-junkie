@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.venue.VenueProgrammeStore
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -29,11 +30,13 @@ class VenueProgrammeSweep(
 
     /** 03:45 UTC, after the orphan artist sweep, while no scheduled import is likely to run. */
     @Scheduled(cron = $$"${app.venues.programme-sweep-cron:0 45 3 * * *}")
-    @Suppress("TooGenericExceptionCaught") // Intentional: an uncaught exception cancels the task and shares the import scheduler
+    // Intentional: an uncaught exception cancels the task and shares the import scheduler
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     suspend fun sweep() {
         try {
             runOnce()
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.error(e) { "Venue programme sweep failed" }
         }
     }

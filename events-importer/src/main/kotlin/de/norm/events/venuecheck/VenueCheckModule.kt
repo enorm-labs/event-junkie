@@ -10,5 +10,5 @@ import org.springframework.modulith.ApplicationModule
  * candidates and the review list are read with raw SQL in [VenueSiteCheckStore], because all this needs is a few
  * columns.
  */
-@ApplicationModule(allowedDependencies = ["scraper"])
+@ApplicationModule(allowedDependencies = ["scraper", "common"])
 class VenueCheckModule

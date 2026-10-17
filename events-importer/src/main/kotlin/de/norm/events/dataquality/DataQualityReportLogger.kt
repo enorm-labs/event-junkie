@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.importing.EventSourceRepository
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
@@ -56,7 +57,7 @@ class DataQualityReportLogger(
      * repeat them. Failures are caught for the reason [snapshot] gives: a start must not fail on a
      * measurement.
      */
-    @Suppress("TooGenericExceptionCaught") // Intentional: measurement must not be able to fail the application
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: measurement must not be able to fail the application
     suspend fun publishStoredRegressions() {
         try {
             val today = LocalDate.now(clock)
@@ -71,6 +72,7 @@ class DataQualityReportLogger(
                     "${verdicts.size} series, ${verdicts.count { it.regressed }} regressed"
             }
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Could not republish the data-quality regression gauge at start; it stays empty until the nightly run" }
         }
     }
@@ -89,7 +91,7 @@ class DataQualityReportLogger(
      * — a gap in the series — and strictly better than a dead importer.
      */
     @Scheduled(cron = $$"${app.data-quality.snapshot-cron:0 0 3 * * *}")
-    @Suppress("TooGenericExceptionCaught") // Intentional: measurement must not be able to fail the application
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: measurement must not be able to fail the application
     suspend fun snapshot() {
         try {
             val report = service.report()
@@ -140,6 +142,7 @@ class DataQualityReportLogger(
 
             checkForRegressions(today, rows)
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Could not write or check the data-quality snapshot; the series may have a gap for today" }
         }
     }

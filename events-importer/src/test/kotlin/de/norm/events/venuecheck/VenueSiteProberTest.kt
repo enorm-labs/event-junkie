@@ -6,6 +6,10 @@ import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.shouldBe
 import io.netty.channel.ConnectTimeoutException
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -20,6 +24,7 @@ import java.net.ServerSocket
 import java.net.UnknownHostException
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLHandshakeException
 
 /**
@@ -101,6 +106,20 @@ class VenueSiteProberTest {
             forbidden.isRefused shouldBe true
             limited.isRefused shouldBe true
         }
+
+    @Test
+    fun `a cancelled probe stops instead of being stored as the site's outcome`() {
+        runBlocking {
+            routes["/slow"] = MockResponse.Builder().headersDelay(10, TimeUnit.SECONDS).build()
+            var returned: ProbeResult? = null
+            val probe = launch { returned = prober().probe(url("/slow")) }
+            while ("/slow" !in paths) delay(10)
+
+            probe.cancelAndJoin()
+
+            returned shouldBe null
+        }
+    }
 
     @Test
     fun `a forbidden host is skipped without a request`() =

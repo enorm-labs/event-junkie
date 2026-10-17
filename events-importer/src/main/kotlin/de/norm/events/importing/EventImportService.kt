@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.common.runCatchingCancellable
 import de.norm.events.licence.SourceLicences
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventImporter
@@ -180,7 +181,8 @@ class EventImportService(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught") // Intentional: record any failure; multiple early returns for error paths
+    // Intentional: record any failure. A cancellation is caught first and recorded as one (#2286).
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     private suspend fun runImportPipeline(
         source: EventSourceEntity,
         force: Boolean
@@ -413,9 +415,9 @@ class EventImportService(
     ) {
         metrics.recordUpsertOutcome(source.slug, upsert, result.droppedUnresolvedDate)
         fieldCoverageService.record(source, result.events)
-        runCatching { descriptionTranslationService.translateFor(source, venueName, licences) }
+        runCatchingCancellable { descriptionTranslationService.translateFor(source, venueName, licences) }
             .onFailure { logger.warn(it) { "TranslationRequest pass failed for '${source.slug}'" } }
-        runCatching {
+        runCatchingCancellable {
             venueProgrammeStore.refresh(
                 source.venueId,
                 LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS),

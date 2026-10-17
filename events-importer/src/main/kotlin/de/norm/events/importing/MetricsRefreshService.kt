@@ -1,6 +1,7 @@
 package de.norm.events.importing
 
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.enrichment.DiscogsLookupService
 import de.norm.events.enrichment.EnrichmentMetrics
 import de.norm.events.event.EventRepository
@@ -62,7 +63,7 @@ class MetricsRefreshService(
      * detectable (`changes()` over a window) and strictly better than a dead importer.
      */
     @Scheduled(fixedDelayString = $$"${app.metrics.refresh-interval-ms:60000}")
-    @Suppress("TooGenericExceptionCaught") // Intentional: monitoring must not be able to fail the application
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: monitoring must not be able to fail the application
     suspend fun refreshGauges() {
         try {
             metrics.updateEventCounts(
@@ -76,6 +77,7 @@ class MetricsRefreshService(
             republishSourceState()
             republishFailedSources()
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Could not refresh the metric gauges; they keep their previous values" }
         }
     }

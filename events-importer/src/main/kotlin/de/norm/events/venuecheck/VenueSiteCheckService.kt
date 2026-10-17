@@ -1,5 +1,6 @@
 package de.norm.events.venuecheck
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.scraper.LogFields
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -42,7 +43,7 @@ class VenueSiteCheckService(
     private val running = Mutex()
 
     /** Runs one pass, or returns `null` when a pass is already running. */
-    @Suppress("TooGenericExceptionCaught") // A pass that fails is logged here; the callers only start it.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // A pass that fails is logged here; the callers only start it.
     suspend fun runOnce(): SiteCheckSummary? {
         if (!running.tryLock()) {
             logger.info { "Venue site check skipped: a pass is already running" }
@@ -51,6 +52,7 @@ class VenueSiteCheckService(
         return try {
             pass().also { metrics.markSucceeded(Instant.now(clock)) }
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.error(e) { "Venue site check failed" }
             null
         } finally {
@@ -59,7 +61,7 @@ class VenueSiteCheckService(
     }
 
     /** Starts the gauge from the newest stored check, so a restart does not hide the age until the next pass. */
-    @Suppress("TooGenericExceptionCaught") // A start must not fail on a gauge; the gauge stays at 0 and the line says why.
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // A start must not fail on a gauge; the gauge stays at 0 and the line says why.
     suspend fun seedLastSuccess() {
         try {
             val newest = store.newestCheckedAt()
@@ -70,6 +72,7 @@ class VenueSiteCheckService(
             metrics.seed(newest)
             logger.info { "Venue site check gauge seeded from the newest check at $newest" }
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.warn(e) { "Venue site check gauge not seeded" }
         }
     }

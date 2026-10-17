@@ -78,6 +78,7 @@ flowchart TD
     translation --> event
     venue --> common
     venue --> slug
+    venuecheck --> common
     venuecheck --> scraper
     wikimedia --> common
 ```

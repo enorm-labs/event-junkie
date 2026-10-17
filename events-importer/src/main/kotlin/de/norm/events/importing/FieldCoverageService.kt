@@ -3,6 +3,7 @@ package de.norm.events.importing
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TrackedField
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.toList
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -46,6 +47,8 @@ class FieldCoverageService(
     ): List<CoverageFinding> =
         try {
             measure(source, events)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // A measurement that can fail an import is worse than no measurement, guaranteed here so every
             // caller gets it. This runs after the upsert committed, so a throw would report a failed run

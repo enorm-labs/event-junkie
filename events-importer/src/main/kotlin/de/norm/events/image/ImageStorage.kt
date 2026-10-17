@@ -1,6 +1,8 @@
 package de.norm.events.image
 
+import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.await
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.async.AsyncRequestBody
@@ -74,6 +76,8 @@ class ImageStorage(
                 ).await()
             logger.debug { "Stored $key (${bytes.size} bytes)" }
             key
+        } catch (e: CancellationException) {
+            throw e
         } catch (
             // The SDK wraps transport, signature and permission faults in different types, and the
             // caller does the same thing with all of them: record nothing and try again next pass.
@@ -155,7 +159,7 @@ class ImageStorage(
         var deleted = 0
 
         keys.forEach { key ->
-            runCatching {
+            runCatchingCancellable {
                 s3
                     .deleteObject(
                         DeleteObjectRequest
