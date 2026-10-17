@@ -23,8 +23,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   163 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    22 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   129 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    21 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
 
@@ -434,30 +434,29 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name                     | URL                                                       | Type         | Priority | Comment                                                    |
-| ------------------------ | --------------------------------------------------------- | ------------ | -------- | ---------------------------------------------------------- |
-| Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops   |
-| Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose       |
-| Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`          |
-| Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges    |
-| Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room         |
-| Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only                |
-| Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups     |
-| Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar          |
-| KuBiZ                    | https://www.kubiz-wallenberg.de/                          | Other        | Low      | WordPress posts; date in the title; jazz about monthly     |
-| Villa Kuriosum           | https://www.villakuriosum.net/veranstaltungen/            | Other        | Low      | TEC REST API; 37 events in 2026, mostly workshops          |
-| Promenaden Eck           | https://promenaden-eck-berlin.de/                         | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming  |
-| ZK/U                     | https://www.zku-berlin.org/                               | Other        | Low      | TYPO3 calendar; club nights among talks and markets        |
-| The Door Club            | https://thedoor.club/events/                              | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat         |
-| Passionskirche           | https://www.halle-luja.berlin/kommende-events             | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"             |
-| M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links         |
-| Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only            |
-| Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year             |
-| Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks           |
-| Clärchens Ballhaus       | https://claerchensball.haus/programm/                     | Club         | Low      | Calendar JSON in the page; each event twice; dance courses |
-| PKH Warehouse            | https://www.pkh.events/                                   | Other        | Low      | Hand-written HTML copied from RA; month headings, no year  |
-| Pastiche                 | https://pasticheinternational.com/programme-1             | Bar          | Low      | Cargo; one month table in the HTML, no year                |
-| 8MM                      | https://www.8mmbar.de/program                             | Bar          | Low      | Squarespace list in HTML; the JSON feed is robots-barred   |
+| Name                     | URL                                                       | Type         | Priority | Comment                                                   |
+| ------------------------ | --------------------------------------------------------- | ------------ | -------- | --------------------------------------------------------- |
+| Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops  |
+| Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose      |
+| Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`         |
+| Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges   |
+| Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room        |
+| Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only               |
+| Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups    |
+| Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar         |
+| KuBiZ                    | https://www.kubiz-wallenberg.de/                          | Other        | Low      | WordPress posts; date in the title; jazz about monthly    |
+| Villa Kuriosum           | https://www.villakuriosum.net/veranstaltungen/            | Other        | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
+| Promenaden Eck           | https://promenaden-eck-berlin.de/                         | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
+| ZK/U                     | https://www.zku-berlin.org/                               | Other        | Low      | TYPO3 calendar; club nights among talks and markets       |
+| The Door Club            | https://thedoor.club/events/                              | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat        |
+| Passionskirche           | https://www.halle-luja.berlin/kommende-events             | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"            |
+| M-BIA                    | https://www.m-bia.de/                                     | Techno Club  | Low      | WordPress posts; post date is event date; RA links        |
+| Hafenbar Berlin          | https://www.hafenbar-berlin.de                            | Bar          | Low      | WordPress; 2 weekly party pages, next date only           |
+| Studio1111               | https://studioiiii.de/                                    | Club         | Low      | Tilda; homepage text blocks; 3 events, no year            |
+| Backsteinboot            | https://backsteinboot.org/program-(landing-page)-1        | Club         | Low      | Cargo; month in HTML; mostly workshops and talks          |
+| PKH Warehouse            | https://www.pkh.events/                                   | Other        | Low      | Hand-written HTML copied from RA; month headings, no year |
+| Pastiche                 | https://pasticheinternational.com/programme-1             | Bar          | Low      | Cargo; one month table in the HTML, no year               |
+| 8MM                      | https://www.8mmbar.de/program                             | Bar          | Low      | Squarespace list in HTML; the JSON feed is robots-barred  |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -738,6 +737,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | M01                               | —                                                   | Techno Club  | No own site; RA only                                      | Site change / manual entry |
 | Loft 6                            | —                                                   | Other        | No own site; RA only                                      | Site change / manual entry |
 | 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve               | Site change / manual entry |
+| Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF returns 403 to the importer's client; curl gets 200   | Request headers            |
 
 ## 📣 Promoters
 
