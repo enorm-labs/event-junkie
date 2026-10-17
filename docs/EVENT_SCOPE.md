@@ -135,9 +135,11 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion` |
 | Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                            |
 | Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                          |
+| Clärchens Ballhaus  | `isProgramme` (`ClaerchensOverviewPageScraper.kt`)       | A course, workshop, tour, choir or dinner word, and no `Tanzabend` or `Milonga`  |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
-quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
+quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night. Clärchens Ballhaus's weekly
+Salsa, Tango and Swing nights stay for the same reason: a `Tanzabend` or a `Milonga` follows the beginners' course.
 
 Note the deliberate asymmetry. A row with **no** category is kept. The park files its one-off evening events under no
 category at all: a games night, a quiz show. Dropping an uncategorised row would lose them.
@@ -187,6 +189,7 @@ Hall. Nothing on those pages marks a show for small children, and adults go to t
 | ufaFabrik                   | `UfaFabrikMonthPageScraper.isChildrensShow`                    | A price per child, per Kita child or per Erzieher\*in                                            |
 | Peter Edel, Wühlmäuse, SO36 | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
 | Showfenster Theater         | `ShowfensterOverviewPageScraper.isOutOfScope`                  | The Eventfrog category `kinderveranstaltungen`, or `billsChildrensShow` on title + description   |
+| Clärchens Ballhaus          | `billsChildrensShow`, on the title, from `isProgramme`         | A `Kinderkonzert` or a `Familienkonzert`                                                         |
 
 `billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A
 new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it here.

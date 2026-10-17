@@ -116,6 +116,15 @@ says so.
 | `BKA_THEATER`          | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
 | `BKA_THEATER`          | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
+| `CLAERCHENS_BALLHAUS`  | `SUBTITLE`         | each calendar entry has one title line                                                                                                           | —     |
+| `CLAERCHENS_BALLHAUS`  | `EVENT_TYPE`       | the calendar names no category; the title decides the type                                                                                       | —     |
+| `CLAERCHENS_BALLHAUS`  | `END_TIME`         | the calendar's end field is a placeholder, often before the start                                                                                | —     |
+| `CLAERCHENS_BALLHAUS`  | `GENRE`            | the calendar names no style                                                                                                                      | —     |
+| `CLAERCHENS_BALLHAUS`  | `TICKET_URL`       | the one outside link is a ticket shop on some entries and an info page on others                                                                 | —     |
+| `CLAERCHENS_BALLHAUS`  | `ARTISTS`          | the calendar bills most nights by their series name, not by their acts                                                                           | —     |
+| `CLAERCHENS_BALLHAUS`  | `PROMOTERS`        | the calendar credits no promoter                                                                                                                 | —     |
+| `CLAERCHENS_BALLHAUS`  | `SOLD_OUT`         | the calendar states no ticket status                                                                                                             | —     |
+| `CLAERCHENS_BALLHAUS`  | `CANCELLATION`     | the calendar has no status field, so a cancelled night can only disappear                                                                        | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |
 | `CLASH`                | `PROMOTERS`        | the homepage listing is the whole source and names no promoter                                                                                   | —     |

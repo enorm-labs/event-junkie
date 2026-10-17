@@ -28,6 +28,7 @@ import de.norm.events.scraper.bkatheater.BKA_THEATER_LIMITATIONS
 import de.norm.events.scraper.bogen47.FITZROY_LIMITATIONS
 import de.norm.events.scraper.bogen47.LARK_LIMITATIONS
 import de.norm.events.scraper.cassiopeia.CASSIOPEIA_LIMITATIONS
+import de.norm.events.scraper.claerchens.CLAERCHENS_BALLHAUS_LIMITATIONS
 import de.norm.events.scraper.clash.CLASH_LIMITATIONS
 import de.norm.events.scraper.clubdervisionaere.CLUB_DER_VISIONAERE_LIMITATIONS
 import de.norm.events.scraper.clubost.CLUB_OST_LIMITATIONS
@@ -189,6 +190,7 @@ object AcceptedLimitations {
             BKA_THEATER_LIMITATIONS,
             BINUU_LIMITATIONS,
             CASSIOPEIA_LIMITATIONS,
+            CLAERCHENS_BALLHAUS_LIMITATIONS,
             CLASH_LIMITATIONS,
             CLUB_DER_VISIONAERE_LIMITATIONS,
             CLUB_OST_LIMITATIONS,
