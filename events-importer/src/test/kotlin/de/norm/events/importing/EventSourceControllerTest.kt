@@ -349,7 +349,6 @@ class EventSourceControllerTest : BaseControllerTest() {
         val venueId = createVenue().id
         val created = createSource(EventSourceRequestFixtures.cassiopeia(venueId = venueId))
 
-        // Set the source to FAILED state via the repository to simulate a real failure scenario
         runBlocking {
             val entity = eventSourceRepository.findBySlug(created.slug)!!
             eventSourceRepository.save(
@@ -391,7 +390,6 @@ class EventSourceControllerTest : BaseControllerTest() {
     fun `POST retry all resets failed sources to IDLE and returns count`() {
         val venueId = createVenue().id
 
-        // Create two sources and simulate failures via the repository
         val source1 = createSource(EventSourceRequestFixtures.create(venueId = venueId, name = "Source One"))
         val source2 = createSource(EventSourceRequestFixtures.create(venueId = venueId, name = "Source Two"))
 
@@ -406,7 +404,6 @@ class EventSourceControllerTest : BaseControllerTest() {
             )
         }
 
-        // Trigger retryAll
         val response =
             webTestClient
                 .post()
@@ -420,7 +417,6 @@ class EventSourceControllerTest : BaseControllerTest() {
 
         response["resetCount"] shouldBe 2
 
-        // Verify both sources are now IDLE
         webTestClient
             .get()
             .uri("/api/admin/event-sources/${source1.slug}")

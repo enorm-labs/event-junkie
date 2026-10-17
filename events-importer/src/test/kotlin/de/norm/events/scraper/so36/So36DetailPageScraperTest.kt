@@ -453,7 +453,6 @@ class So36DetailPageScraperTest {
 
     @Test
     fun `strips role labels and splits multi-act support lines, dropping label-only chunks`() {
-        // Build a minimal concert detail page with a messy SO36 support subtitle.
         fun concertWithSubtitle(subtitle: String) =
             Jsoup.parse(
                 """
