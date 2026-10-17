@@ -9786,6 +9786,67 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Schlosspark Theater
+# ————————————————————————————————————————————————————————————
+
+### --- Create Schlosspark Theater venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Schlosspark Theater",
+    "address": "Schloßstraße 48",
+    "city": "Berlin",
+    "postalCode": "12165",
+    "district": "steglitz",
+    "latitude": 52.454898,
+    "longitude": 13.317592,
+    "websiteUrl": "https://www.schlossparktheater.de/",
+    "description": "A playhouse in Steglitz since 1921, where Beckett's Waiting for Godot had its German-language premiere, run since 2008 by Dieter Hallervorden without a fixed ensemble: comedies, readings, concerts and Kabarett.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Theater in Steglitz seit 1921, in dem Becketts „Warten auf Godot“ seine deutschsprachige Erstaufführung erlebte, seit 2008 von Dieter Hallervorden ohne festes Ensemble geführt: Komödien, Lesungen, Konzerte und Kabarett.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"]
+}
+
+> {%
+    client.global.set("venue_id_schlosspark_theater", response.body.id);
+    client.test("Schlosspark Theater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Schlosspark Theater event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_schlosspark_theater}},
+    "name": "Schlosspark Theater",
+    "url": "https://www.schlossparktheater.de/spielplan/kalender.html",
+    "sourceType": "SCHLOSSPARK_THEATER",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Schlosspark Theater event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Schlosspark Theater import ---
+POST {{importer-host}}/api/admin/event-sources/schlosspark-theater/import
+Accept: application/json
+
+> {%
+    client.test("Schlosspark Theater import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Schokoladen
 # ————————————————————————————————————————————————————————————
 

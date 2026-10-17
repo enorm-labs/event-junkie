@@ -120,6 +120,7 @@ import de.norm.events.scraper.roadrunner.ROADRUNNER_LIMITATIONS
 import de.norm.events.scraper.rosa.ROSA_LIMITATIONS
 import de.norm.events.scraper.saalchen.SAALCHEN_LIMITATIONS
 import de.norm.events.scraper.scheinbar.SCHEINBAR_LIMITATIONS
+import de.norm.events.scraper.schlossparktheater.SCHLOSSPARK_THEATER_LIMITATIONS
 import de.norm.events.scraper.schokoladen.SCHOKOLADEN_LIMITATIONS
 import de.norm.events.scraper.showfenster.SHOWFENSTER_LIMITATIONS
 import de.norm.events.scraper.silentgreen.SILENT_GREEN_LIMITATIONS
@@ -286,6 +287,7 @@ object AcceptedLimitations {
             ROSA_LIMITATIONS,
             SAALCHEN_LIMITATIONS,
             SCHEINBAR_LIMITATIONS,
+            SCHLOSSPARK_THEATER_LIMITATIONS,
             SCHOKOLADEN_LIMITATIONS,
             SHOWFENSTER_LIMITATIONS,
             SILENT_GREEN_LIMITATIONS,
