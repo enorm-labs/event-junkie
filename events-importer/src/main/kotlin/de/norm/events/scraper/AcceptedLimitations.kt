@@ -118,6 +118,7 @@ import de.norm.events.scraper.speiches.SPEICHES_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.tausend.TAUSEND_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
+import de.norm.events.scraper.thedoor.THE_DOOR_LIMITATIONS
 import de.norm.events.scraper.thewall.THE_WALL_LIMITATIONS
 import de.norm.events.scraper.tiffanyclub.TIFFANY_CLUB_LIMITATIONS
 import de.norm.events.scraper.tipiamkanzleramt.TIPI_AM_KANZLERAMT_LIMITATIONS
@@ -264,6 +265,7 @@ object AcceptedLimitations {
             TAUSEND_LIMITATIONS,
             TEMPODROM_LIMITATIONS,
             THEATER_IM_DELPHI_LIMITATIONS,
+            THE_DOOR_LIMITATIONS,
             THE_WALL_LIMITATIONS,
             TIFFANY_CLUB_LIMITATIONS,
             TIPI_AM_KANZLERAMT_LIMITATIONS,

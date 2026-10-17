@@ -10249,7 +10249,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# The Door — not imported
+# The Door
 # ————————————————————————————————————————————————————————————
 
 ### --- Create The Door venue ---
@@ -10271,13 +10271,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
     "capacity": 160,
-    "programmeUrl": "https://thedoor.club/events/",
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_the_door", response.body.id);
     client.test("The Door venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create The Door event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_the_door}},
+    "name": "The Door",
+    "url": "https://thedoor.club/events/",
+    "sourceType": "THE_DOOR",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("The Door event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial The Door import ---
+POST {{importer-host}}/api/admin/event-sources/the-door/import
+Accept: application/json
+
+> {%
+    client.test("The Door import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
