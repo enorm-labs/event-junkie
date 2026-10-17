@@ -577,6 +577,16 @@ says so.
 | `PFEFFERBERG_HAUS_13`  | `END_TIME`         | the pages name doors and a start, no end                                                                                                         | —     |
 | `PFEFFERBERG_HAUS_13`  | `GENRE`            | no event names a style                                                                                                                           | —     |
 | `PFEFFERBERG_HAUS_13`  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `PKH_WAREHOUSE`        | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
+| `PKH_WAREHOUSE`        | `DOORS_TIME`       | the site prints one opening time per night                                                                                                       | —     |
+| `PKH_WAREHOUSE`        | `IMAGE`            | the site shows no picture per night                                                                                                              | —     |
+| `PKH_WAREHOUSE`        | `GENRE`            | the site names a style only in free text on some nights                                                                                          | —     |
+| `PKH_WAREHOUSE`        | `PRICE`            | the site prints no price                                                                                                                         | —     |
+| `PKH_WAREHOUSE`        | `TICKET_URL`       | the site links one ticket shop for the whole club, and a night's own shop only rarely                                                            | —     |
+| `PKH_WAREHOUSE`        | `PROMOTERS`        | the site names crews only in free text beside the theme                                                                                          | —     |
+| `PKH_WAREHOUSE`        | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `PKH_WAREHOUSE`        | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `PKH_WAREHOUSE`        | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
 | `PRIVATCLUB`           | `PRICE`            | about half the nights print a genre line and a start time but no price                                                                           | —     |
 | `PRIVATCLUB`           | `ARTISTS`          | the song slam is a concert that names none of its contestants                                                                                    | —     |
 | `PUNCHLINE`            | `IMAGE`            | the date list carries no image                                                                                                                   | —     |

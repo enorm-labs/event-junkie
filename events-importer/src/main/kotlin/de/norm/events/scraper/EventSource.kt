@@ -336,6 +336,9 @@ enum class EventSource {
     /** Pfefferberg Haus 13 Berlin – a hall on the old brewery site, run with Pfefferwerk trainees, for rock and metal concerts and book premieres. */
     PFEFFERBERG_HAUS_13,
 
+    /** PKH Warehouse – a club near Friedrichstraße station on two levels with five areas, for techno, trance and pop nights. */
+    PKH_WAREHOUSE,
+
     /** Privatclub Berlin – a club below the Markthalle near Schlesisches Tor, across soul, funk, indie, hip-hop and electronic music. */
     PRIVATCLUB,
 
