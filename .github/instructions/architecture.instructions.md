@@ -93,6 +93,8 @@ which helper lives where — is not repeated; `grep` answers that.
   Without it `Kėkė Søl` → `keke-sl` and `Søl`/`Sæl` collide. **Do not switch to slugify's `locale()` bundles** — `no` rewrites `å`→`aa`, `de` turns `ö`→`oe`,
   changing slugs that are already correct. **Changing the map is a data migration in disguise**: `AssociationSyncService` resolves artists and promoters by
   slug, so an old spelling is missed and re-inserted as a duplicate.
+  **A Cyrillic or Greek name with no Latin letter** is transliterated: Cyrillic BGN/PCGN-style without diacritics, Greek by ELOT 743 (`ВУИНДЛИЯ` →
+  `vuindliya`, `Кино 2` → `kino-2`, #3475). A name with a Latin letter keeps its plain slug: `Друга Ріка (Druha Rika)` stays `druha-rika`.
   **A second act whose name folds to a stored slug** (`Göre` beside `Gore`) gets a slug of its own from `ARTIST_SLUG_OVERRIDES`. Every artist
   slug goes through `artistSlugFor`, in the import and in the admin API alike, and each entry ships with a migration for the stored links (#2942).
 - **Money is scale 2** (`normalizeMoneyScale()` in `events-core`, applied where prices enter `EventEntity`), because `BigDecimal.equals()` is scale-sensitive
