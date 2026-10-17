@@ -426,6 +426,9 @@ enum class EventSource {
     /** Spindler & Klatt Berlin – an event location on the Spree at the former East-West border, whose club hosts themed party nights. */
     SPINDLER_KLATT,
 
+    /** Studio IIII – an art and social club on Potsdamer Straße with a residency for moving-image artists, installations and DJ nights. */
+    STUDIO_IIII,
+
     /** Supamolly Berlin – a former squat turned collectively run venue near Traveplatz: punk, ska and hardcore concerts, theatre, film and socials. */
     SUPAMOLLY,
 
