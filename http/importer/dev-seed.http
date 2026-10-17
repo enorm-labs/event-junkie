@@ -12186,7 +12186,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Weltwirtschaft — not imported
+# Weltwirtschaft
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Weltwirtschaft venue ---
@@ -12208,13 +12208,43 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "open-air"],
     "capacity": 300,
-    "programmeUrl": "https://weltwirtschaft.berlin/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_weltwirtschaft", response.body.id);
     client.test("Weltwirtschaft venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Weltwirtschaft event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_weltwirtschaft}},
+    "name": "Weltwirtschaft",
+    "url": "https://weltwirtschaft.berlin/wp-json/tribe/events/v1/events",
+    "sourceType": "WELTWIRTSCHAFT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Weltwirtschaft event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Weltwirtschaft import ---
+POST {{importer-host}}/api/admin/event-sources/weltwirtschaft/import
+Accept: application/json
+
+> {%
+    client.test("Weltwirtschaft import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

@@ -775,6 +775,11 @@ says so.
 | `WEEKEND`              | `PROMOTERS`        | the guest crew is named only in the title, as `WKND X <crew>`                                                                                    | —     |
 | `WEEKEND`              | `SOLD_OUT`         | the listing states no ticket status                                                                                                              | —     |
 | `WEEKEND`              | `CANCELLATION`     | the listing has no status field, so a cancelled night can only disappear                                                                         | —     |
+| `WELTWIRTSCHAFT`       | `DOORS_TIME`       | the calendar gives one time per event                                                                                                            | —     |
+| `WELTWIRTSCHAFT`       | `PRICE`            | `cost` is empty on nearly every event, and the description rarely names a price                                                                  | —     |
+| `WELTWIRTSCHAFT`       | `ARTISTS`          | the resident DJ of the monthly night is named only in the description prose                                                                      | —     |
+| `WELTWIRTSCHAFT`       | `GENRE`            | no event names a style; the DJ nights run across genres                                                                                          | —     |
+| `WELTWIRTSCHAFT`       | `PROMOTERS`        | the house presents its nights itself and names no organizer                                                                                      | —     |
 | `WILD_AT_HEART`        | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `WILD_AT_HEART`        | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |

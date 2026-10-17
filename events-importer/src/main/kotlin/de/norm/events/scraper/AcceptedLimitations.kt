@@ -145,6 +145,7 @@ import de.norm.events.scraper.velomax.VELOMAX_LIMITATIONS
 import de.norm.events.scraper.voidclub.VOID_CLUB_LIMITATIONS
 import de.norm.events.scraper.wabe.WABE_LIMITATIONS
 import de.norm.events.scraper.weekend.WEEKEND_LIMITATIONS
+import de.norm.events.scraper.weltwirtschaft.WELTWIRTSCHAFT_LIMITATIONS
 import de.norm.events.scraper.wildatheart.WILD_AT_HEART_LIMITATIONS
 import de.norm.events.scraper.wuehlmaeuse.WUEHLMAEUSE_LIMITATIONS
 import de.norm.events.scraper.wuhlheide.WUHLHEIDE_LIMITATIONS
@@ -309,6 +310,7 @@ object AcceptedLimitations {
             VOID_CLUB_LIMITATIONS,
             WABE_LIMITATIONS,
             WEEKEND_LIMITATIONS,
+            WELTWIRTSCHAFT_LIMITATIONS,
             WILD_AT_HEART_LIMITATIONS,
             WUEHLMAEUSE_LIMITATIONS,
             WUHLHEIDE_LIMITATIONS,

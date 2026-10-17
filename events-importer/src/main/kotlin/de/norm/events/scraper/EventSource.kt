@@ -465,6 +465,9 @@ enum class EventSource {
     /** Weekend – a club on the 15th floor of the former Haus des Reisens at Alexanderplatz, with a rooftop facing the TV tower. */
     WEEKEND,
 
+    /** Weltwirtschaft – the restaurant, beer garden and rooftop kiosk of the Haus der Kulturen der Welt, with a monthly DJ night. */
+    WELTWIRTSCHAFT,
+
     /** Wild at Heart Berlin – a rock'n'roll bar and live club near Schlesisches Tor: rockabilly, punk, garage and surf. */
     WILD_AT_HEART,
 
