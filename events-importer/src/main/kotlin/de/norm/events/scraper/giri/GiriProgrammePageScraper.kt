@@ -18,7 +18,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.time.LocalDate
 
 /**
  * Pure parser for one month of Giri's programme. The page renders the month twice: a calendar,

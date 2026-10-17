@@ -18,7 +18,6 @@ import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 
 /**
  * Pure HTML parser for Quasimodo Berlin event detail pages (`/events/<slug>-<postId>`).

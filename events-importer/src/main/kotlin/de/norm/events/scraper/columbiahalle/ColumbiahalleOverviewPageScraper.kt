@@ -14,7 +14,6 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseLabelledPrices
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines

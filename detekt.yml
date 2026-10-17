@@ -25,6 +25,11 @@ coroutines:
     excludes: ['**/test/**']
 
 style:
+  UnusedImport:
+    # Off in detekt's defaults, and ktlint dropped its own rule in 1.0, so nothing caught an import a
+    # refactor left behind: #3533 shipped 19 before a hand check found them.
+    active: true
+
   MaxLineLength:
     # Aligned with .editorconfig max_line_length = 160
     maxLineLength: 160

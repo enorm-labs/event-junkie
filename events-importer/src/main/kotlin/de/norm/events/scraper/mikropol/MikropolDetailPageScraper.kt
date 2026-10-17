@@ -18,7 +18,6 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt

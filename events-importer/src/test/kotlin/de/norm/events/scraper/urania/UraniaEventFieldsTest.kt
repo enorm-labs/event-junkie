@@ -2,9 +2,7 @@ package de.norm.events.scraper.urania
 
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 /** Unit tests for the field mapping in `UraniaEventFields.kt`. */

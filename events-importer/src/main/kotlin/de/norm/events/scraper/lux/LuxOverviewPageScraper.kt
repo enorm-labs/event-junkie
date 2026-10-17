@@ -21,7 +21,6 @@ import org.jsoup.nodes.TextNode
 import java.time.Clock
 import java.time.DateTimeException
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.MonthDay
 
 /**

@@ -19,7 +19,6 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
