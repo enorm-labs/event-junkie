@@ -8,7 +8,8 @@ import org.jsoup.nodes.Document
  * [monthLinkSelector] ([monthPageUrls]): fetch the entry page, read every linked month with [scrape], keep the others
  * when one fails. The entry page changes only when a month is added, so it is fetched
  * unconditionally; its validators would mask an edit inside a month. A venue whose rows link a
- * page of their own sets [enrichFromEventPage].
+ * page of their own sets [enrichFromEventPage]; rows that share one page per production set [sharedPages].
+ * Month links resolve against the entry page's `<base href>` where it declares one.
  */
 abstract class AbstractMonthPagesWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
@@ -34,7 +35,10 @@ abstract class AbstractMonthPagesWebsiteImporter(
     protected open fun monthPageUrls(
         entry: Document,
         url: String
-    ): List<String> = entry.absoluteLinksAt(monthLinkSelector, url)
+    ): List<String> = entry.absoluteLinksAt(monthLinkSelector, entry.baseUri().ifBlank { url })
+
+    /** The page that several rows share, as one production's performances do, read once per page. */
+    protected open val sharedPages: SharedPages<*>? = null
 
     final override suspend fun importEvents(
         url: String,
@@ -48,10 +52,12 @@ abstract class AbstractMonthPagesWebsiteImporter(
             readEach(monthUrls, { "Failed to read the $venueName month page $it, importing the other months" }) { monthUrl ->
                 scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
             }
-        val events = withEventPages(months.items.distinctBy { it.sourceId })
+        val events = withSharedPages(withEventPages(months.items.distinctBy { it.sourceId }))
         logger.info { "Scraped ${events.size} $venueName event(s) across ${monthUrls.size} month page(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = months.complete)
     }
+
+    private suspend fun withSharedPages(events: List<ScrapedEvent>): List<ScrapedEvent> = sharedPages?.applyTo(htmlFetcher, events) ?: events
 
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val enrich = enrichFromEventPage ?: return events

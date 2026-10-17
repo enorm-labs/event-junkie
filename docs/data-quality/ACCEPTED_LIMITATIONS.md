@@ -639,6 +639,13 @@ says so.
 | `SCHEINBAR`            | `PRICE_PRESALE`    | tickets are reserved online and paid at the box office, at one price                                                                             | —     |
 | `SCHEINBAR`            | `GENRE`            | the house names no genre; an Open Stage night mixes comedy, magic, music and artistry                                                            | —     |
 | `SCHEINBAR`            | `PROMOTERS`        | the house presents every evening itself                                                                                                          | —     |
+| `SCHLOSSPARK_THEATER`  | `DOORS_TIME`       | the site states one start time per performance                                                                                                   | —     |
+| `SCHLOSSPARK_THEATER`  | `PRICE_BOX_OFFICE` | the site states one price range per performance, not a box-office price                                                                          | —     |
+| `SCHLOSSPARK_THEATER`  | `ARTISTS`          | a production or a themed concert names its cast only in prose or a subtitle line                                                                 | —     |
+| `SCHLOSSPARK_THEATER`  | `EVENT_TYPE`       | the site names no category, so the type comes from words in the billing, and a night without one is typed a show                                 | —     |
+| `SCHLOSSPARK_THEATER`  | `GENRE`            | the site names no genre                                                                                                                          | —     |
+| `SCHLOSSPARK_THEATER`  | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
+| `SCHLOSSPARK_THEATER`  | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
 | `SCHOKOLADEN`          | `PRICE`            | the venue prints doors, show time and a ticket link, never a figure                                                                              | —     |
 | `SCHOKOLADEN`          | `GENRE`            | the genre comes only from a per-act `(genre, origin)` note; readings, parties and acts without one carry none                                    | —     |
 | `SHOWFENSTER`          | `SUBTITLE`         | the calendar gives each event a title and one short text                                                                                         | —     |

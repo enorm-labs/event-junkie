@@ -107,8 +107,9 @@ abstract class AbstractSinglePageWebsiteImporter(
 }
 
 /**
- * The [enrichFromSharedPages] arguments of an [AbstractSinglePageWebsiteImporter]: [parse] reads one
- * shared page, [apply] writes it into each row that links it, [pageOwns] and [secondLanguage] as there.
+ * The [enrichFromSharedPages] arguments of an [AbstractSinglePageWebsiteImporter] or an
+ * [AbstractMonthPagesWebsiteImporter]: [parse] reads one shared page, [apply] writes it into each
+ * row that links it, [pageOwns] and [secondLanguage] as there.
  */
 class SharedPages<T : Any>(
     private val parse: (Document) -> T?,

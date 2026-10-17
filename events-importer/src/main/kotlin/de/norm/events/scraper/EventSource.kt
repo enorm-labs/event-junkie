@@ -375,6 +375,9 @@ enum class EventSource {
     /** Scheinbar Varieté – Germany's smallest variety theatre, founded in Schöneberg in 1984, with an Open Stage of seven-minute acts four nights a week. */
     SCHEINBAR,
 
+    /** Schlosspark Theater – Dieter Hallervorden's Steglitz playhouse since 2008, with comedies, readings, concerts and Kabarett. */
+    SCHLOSSPARK_THEATER,
+
     /** Schokoladen Mitte Berlin – a collectively run cultural venue with roots in the post-Wende squat scene: intimate concerts, readings and club nights. */
     SCHOKOLADEN,
 

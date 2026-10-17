@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Schlosspark Theater",
+        "address": "Schloßstraße 48",
+        "city": "Berlin",
+        "postalCode": "12165",
+        "district": "steglitz",
+        "latitude": 52.454898,
+        "longitude": 13.317592,
+        "websiteUrl": "https://www.schlossparktheater.de/",
+        "description": "A playhouse in Steglitz since 1921, where Beckett's Waiting for Godot had its German-language premiere, run since 2008 by Dieter Hallervorden without a fixed ensemble: comedies, readings, concerts and Kabarett.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Theater in Steglitz seit 1921, in dem Becketts „Warten auf Godot“ seine deutschsprachige Erstaufführung erlebte, seit 2008 von Dieter Hallervorden ohne festes Ensemble geführt: Komödien, Lesungen, Konzerte und Kabarett.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Schlosspark Theater",
+            "url": "https://www.schlossparktheater.de/spielplan/kalender.html",
+            "sourceType": "SCHLOSSPARK_THEATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
