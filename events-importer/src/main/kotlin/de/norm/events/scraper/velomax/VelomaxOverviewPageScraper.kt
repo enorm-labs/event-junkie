@@ -1,6 +1,7 @@
 package de.norm.events.scraper.velomax
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -20,7 +21,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for the shared Velomax `/events` listing.
@@ -113,7 +113,7 @@ class VelomaxOverviewPageScraper {
         )
     }
 
-    private fun sessionSuffix(startTime: LocalTime?): String = startTime?.format(SOURCE_ID_TIME)?.let { "-$it" }.orEmpty()
+    private fun sessionSuffix(startTime: LocalTime?): String = startTime?.format(FOUR_DIGIT_CLOCK)?.let { "-$it" }.orEmpty()
 
     /**
      * The date from the separate day / month / year spans — `29`, `Aug`, `'26`. The two-digit
@@ -134,9 +134,6 @@ class VelomaxOverviewPageScraper {
     }
 
     private companion object {
-        /** `18:30` → `1830`, the session marker appended to a performance's `sourceId`. */
-        val SOURCE_ID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
-
         /** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
         const val EVENT_PATH_PREFIX = "/events/event/"
 

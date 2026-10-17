@@ -3,6 +3,7 @@ package de.norm.events.scraper.supamolly
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -196,7 +197,7 @@ class SupamollyOverviewPageScraper {
     /** The trailing `HHMM` time from a row's stamp id, or `null` when not a real time. */
     private fun parseStampTime(stamp: String): LocalTime? =
         try {
-            LocalTime.parse(stamp.drop(DATE_LENGTH), STAMP_TIME_FORMATTER)
+            LocalTime.parse(stamp.drop(DATE_LENGTH), FOUR_DIGIT_CLOCK)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -221,8 +222,6 @@ class SupamollyOverviewPageScraper {
         private const val DATE_LENGTH = 8
 
         private val STAMP_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-
-        private val STAMP_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /**
          * A title that opens with a German month name: "September Programm 2026", "Oktober Prog 2026",

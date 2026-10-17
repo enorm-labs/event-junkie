@@ -3,6 +3,7 @@ package de.norm.events.scraper.gaertenderwelt
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.classifyByGenreKeyword
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -16,7 +17,6 @@ import de.norm.events.scraper.parseTime
 import java.net.URI
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 // Field mapping shared by the Gärten der Welt scrapers: the park's category vocabulary and the
 // breadth filter on it, the badges it writes into titles, the identity, date and start time read
@@ -155,15 +155,12 @@ internal data class GaertenDerWeltEventPath(
 internal fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->
         parseIsoDate(stamp)?.let { date ->
-            GaertenDerWeltEventPath(date = date, startTime = parseTime(time, STAMP_TIME_FORMATTER), identity = "${stamp}_$time/$slug", slug = slug)
+            GaertenDerWeltEventPath(date = date, startTime = parseTime(time, FOUR_DIGIT_CLOCK), identity = "${stamp}_$time/$slug", slug = slug)
         }
     }
 
 /** The `YYYY-MM-DD_HHmm/<slug>` tail of a detail URL, anchored to the end of the path. */
 private val EVENT_PATH_PATTERN = Regex("""(\d{4}-\d{2}-\d{2})_(\d{4})/([^/]+)/?$""")
-
-/** The stamp's bare four-digit time, e.g. `1900` or `0900`. */
-private val STAMP_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
 /**
  * The `sourceId` of an exhibition run: the slug without the stamp, which every open day shares.

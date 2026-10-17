@@ -2,6 +2,7 @@ package de.norm.events.scraper.distel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -18,7 +19,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.Month
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for one month of the DISTEL calendar (`/spielplan/kalender/?month=YYYYMM`).
@@ -74,7 +74,7 @@ class DistelCalendarPageScraper {
             eventDate = eventDate,
             startTime = startTime,
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.DISTEL.sourceIdPrefix}$slug-$eventDate-${startTime?.format(HHMM).orEmpty()}",
+            sourceId = "${EventSource.DISTEL.sourceIdPrefix}$slug-$eventDate-${startTime?.format(FOUR_DIGIT_CLOCK).orEmpty()}",
             ticketUrl = item.selectFirst(".ce_button a[href*=event=]")?.absUrl("href")?.takeUnless { it.endsWith("event=") },
             soldOut = item.selectFirst(".available.sold_out") != null,
             artists = distelActs(title)
@@ -102,7 +102,6 @@ class DistelCalendarPageScraper {
 
     private companion object {
         const val TOURING_MARKER = "・"
-        val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         val GERMAN_MONTHS: Map<String, Month> =
             GERMAN_MONTH_NAMES.mapIndexed { index, name -> name.lowercase() to Month.of(index + 1) }.toMap()
