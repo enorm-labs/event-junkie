@@ -96,5 +96,8 @@
   "engines": {
     "node": ">=24.15.0"
   },
-  "//version": "A placeholder. No file carries the version (ADR-032), and no release changes this field. The version the site displays comes from GET /meta, never from here. See docs/LEGAL.md §4.6."
+  "//version": "A placeholder. No file carries the version (ADR-032), and no release changes this field. The version the site displays comes from GET /meta, never from here. See docs/LEGAL.md §4.6.",
+  "allowScripts": {
+    "esbuild": true
+  }
 }
