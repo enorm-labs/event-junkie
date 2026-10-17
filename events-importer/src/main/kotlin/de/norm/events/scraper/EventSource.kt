@@ -402,6 +402,12 @@ enum class EventSource {
     /** Velodrom Berlin – the cycling arena at Landsberger Allee that doubles as one of the city's larger concert venues. */
     VELODROM,
 
+    /** Volksbühne Berlin – Oskar Kaufmann's 1914 playhouse on Rosa-Luxemburg-Platz: theatre, dance, concerts and talks in its salons. */
+    VOLKSBUEHNE,
+
+    /** Volksbühne Prater – the Volksbühne's second house on Kastanienallee in Prenzlauer Berg, for theatre and talks. */
+    VOLKSBUEHNE_PRATER,
+
     /** VOID Club Berlin – a two-room techno club in a Lichtenberg backyard, programming drum & bass, hardtechno, trance and bass nights. */
     VOID_CLUB,
 

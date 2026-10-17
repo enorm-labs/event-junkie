@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Volksbühne Prater",
+        "address": "Kastanienallee 7-9",
+        "city": "Berlin",
+        "postalCode": "10435",
+        "district": "prenzlauer-berg",
+        "latitude": 52.539802,
+        "longitude": 13.410758,
+        "websiteUrl": "https://www.volksbuehne-berlin.de/",
+        "description": "The Volksbühne's second house, in the Prater on Kastanienallee and wheelchair accessible, for plays, talks and screenings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Die zweite, barrierefreie Spielstätte der Volksbühne im Prater an der Kastanienallee, für Inszenierungen, Gespräche und Filmabende.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Volksbühne Prater",
+            "url": "https://www.volksbuehne-berlin.de/",
+            "sourceType": "VOLKSBUEHNE_PRATER",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
