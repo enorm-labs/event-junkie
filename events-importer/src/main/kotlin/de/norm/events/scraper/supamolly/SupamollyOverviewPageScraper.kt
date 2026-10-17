@@ -245,11 +245,12 @@ class SupamollyOverviewPageScraper {
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")
 
         /**
-         * The weekly café social as a whole act name, in either order: "Kuchen & Kaffee",
-         * "Kaffee und Kuchen". Anchored, so a band name that merely contains the words keeps its artist.
+         * The weekly café social as a whole act name, in either order and however "Kaffee" is spelt:
+         * "Kuchen & Kaffee", "Kuchen & Kaffe", "Kaffee und Kuchen". Anchored, so a band name that
+         * merely contains the words keeps its artist.
          */
         private val CAFE_SOCIAL_PATTERN =
-            Regex("""(?:kuchen\s*(?:&|\+|und)\s*kaffee|kaffee\s*(?:&|\+|und)\s*kuchen)""", RegexOption.IGNORE_CASE)
+            Regex("""(?:kuchen\s*(?:&|\+|und)\s*kaff?ee?|kaff?ee?\s*(?:&|\+|und)\s*kuchen)""", RegexOption.IGNORE_CASE)
 
         /** An inline `HH:MM Uhr` schedule in an act name — the signature of a programme note, not a performer. */
         private val SCHEDULE_NOTE_PATTERN = Regex("""\d{1,2}[:.]\d{2}\s*uhr""", RegexOption.IGNORE_CASE)

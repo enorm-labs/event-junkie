@@ -231,6 +231,22 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
+        fun `recognises the cafe social with Kaffee misspelt`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202611011530"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Kuchen & Kaffe</b></div></div></td></tr></table>""",
+                    baseUrl
+                )
+
+            val event = scraper.scrape(document, baseUrl).single()
+
+            event.title shouldBe "Kuchen & Kaffe"
+            event.eventType shouldBe "OTHER"
+            event.artists.shouldBeEmpty()
+        }
+
+        @Test
         fun `keeps an act whose name only contains the cafe words`() {
             val document =
                 Jsoup.parse(
