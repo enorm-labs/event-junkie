@@ -57,6 +57,7 @@ import de.norm.events.scraper.gartn.GARTN_LIMITATIONS
 import de.norm.events.scraper.giri.GIRI_LIMITATIONS
 import de.norm.events.scraper.goldengate.GOLDEN_GATE_LIMITATIONS
 import de.norm.events.scraper.gretchen.GRETCHEN_LIMITATIONS
+import de.norm.events.scraper.hafenbar.HAFENBAR_LIMITATIONS
 import de.norm.events.scraper.hau.HAU_LIMITATIONS
 import de.norm.events.scraper.hausderstatistik.HAUS_DER_STATISTIK_LIMITATIONS
 import de.norm.events.scraper.havanna.HAVANNA_LIMITATIONS
@@ -231,6 +232,7 @@ object AcceptedLimitations {
             GRETCHEN_LIMITATIONS,
             HAU_LIMITATIONS,
             HAUS_DER_STATISTIK_LIMITATIONS,
+            HAFENBAR_LIMITATIONS,
             HAVANNA_LIMITATIONS,
             HEIDEGLUEHEN_LIMITATIONS,
             HEIMATHAFEN_LIMITATIONS,

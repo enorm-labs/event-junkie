@@ -13,8 +13,16 @@
         "descriptionAlt": "Seit 1967 eine Tanzgaststätte im Seefahrer-Stil, früher in der Chausseestraße und seit 2016 am Alexanderplatz; freitags läuft seit 1996 die Schlagerparty Stimmen in Aspik, samstags Pop und Dance-Klassiker.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club", "bar"],
-        "programmeUrl": "https://www.hafenbar-berlin.de/schlager-party-berlin/",
         "reviewedAt": "2026-10-07T09:58:32Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Hafenbar",
+            "url": "https://www.hafenbar-berlin.de/",
+            "sourceType": "HAFENBAR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
