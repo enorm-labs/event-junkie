@@ -584,6 +584,18 @@ says so.
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
 | `THEATER_IM_DELPHI`    | `GENRE`            | the labels are formats; only Kammermusik and Elektronische Musik name a style                                                                    | —     |
 | `THEATER_IM_DELPHI`    | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `THE_DOOR`             | `SUBTITLE`         | each night has a title and a lineup, no second title line                                                                                        | —     |
+| `THE_DOOR`             | `DESCRIPTION`      | the grid prints no text about a night                                                                                                            | —     |
+| `THE_DOOR`             | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
+| `THE_DOOR`             | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `THE_DOOR`             | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
+| `THE_DOOR`             | `TICKET_URL`       | entry is at the door; the site sells only table reservations                                                                                     | —     |
+| `THE_DOOR`             | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `THE_DOOR`             | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `THE_DOOR`             | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
+| `THE_DOOR`             | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `THE_DOOR`             | `CANCELLATION`     | the grid has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `THE_DOOR`             | `PER_EVENT_PAGE`   | the event permalinks redirect to the homepage, so every night points at the grid                                                                 | —     |
 | `THE_WALL`             | `DOORS_TIME`       | each producer states one time per show, doors for some and the start for others                                                                  | —     |
 | `THE_WALL`             | `PRICE`            | most shows are pay-what-you-want, and a fixed price appears only in the prose                                                                    | —     |
 | `THE_WALL`             | `TICKET_URL`       | reservations run through the club's own Spotagig pages, which the event page is                                                                  | —     |

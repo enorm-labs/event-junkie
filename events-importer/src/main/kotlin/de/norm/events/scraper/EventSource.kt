@@ -369,6 +369,9 @@ enum class EventSource {
     /** Theater im Delphi Berlin – a 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre and talks. */
     THEATER_IM_DELPHI,
 
+    /** The Door – a boutique club near Kurfürstendamm with a strict door, VIP tables and house nights on Fridays and Saturdays. */
+    THE_DOOR,
+
     /** The Wall Comedy Club – a Friedrichshain stand-up club named for the fall of the Berlin Wall, with English-language shows most nights. */
     THE_WALL,
 

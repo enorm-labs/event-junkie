@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
         "capacity": 160,
-        "programmeUrl": "https://thedoor.club/events/",
         "reviewedAt": "2026-10-07T14:21:58Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "The Door",
+            "url": "https://thedoor.club/events/",
+            "sourceType": "THE_DOOR",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
