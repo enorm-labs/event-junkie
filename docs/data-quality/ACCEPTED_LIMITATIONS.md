@@ -595,6 +595,13 @@ says so.
 | `PAS`                  | `PRICE`            | most events set no cost                                                                                                                          | —     |
 | `PAS`                  | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PAS`                  | `ARTISTS`          | a series night bills only its name, and its acts are in the prose                                                                                | —     |
+| `PASSIONSKIRCHE`       | `SUBTITLE`         | the site prints one title line per concert                                                                                                       | —     |
+| `PASSIONSKIRCHE`       | `GENRE`            | the site files no category and names no style                                                                                                    | —     |
+| `PASSIONSKIRCHE`       | `END_TIME`         | the site states a doors and a start time, not an end                                                                                             | —     |
+| `PASSIONSKIRCHE`       | `PRICE`            | the event pages name a price only rarely, as prose                                                                                               | —     |
+| `PASSIONSKIRCHE`       | `PROMOTERS`        | the site credits no promoter                                                                                                                     | —     |
+| `PASSIONSKIRCHE`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `PASSIONSKIRCHE`       | `CANCELLATION`     | the site has no status field, so a cancelled concert can only disappear                                                                          | —     |
 | `PETER_EDEL`           | `EVENT_TYPE`       | the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas                              | —     |
 | `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
