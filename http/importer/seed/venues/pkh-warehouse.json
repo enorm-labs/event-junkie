@@ -14,8 +14,16 @@
         "descriptionAlt": "Ein Club nahe dem Bahnhof Friedrichstraße, im Oktober 2026 eröffnet, mit zwei Ebenen und fünf Bereichen, wo freitags und samstags von 22 bis 8 Uhr Techno-, Trance- und Popnächte laufen.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://www.pkh.events/",
         "reviewedAt": "2026-10-07T12:38:29Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "PKH Warehouse",
+            "url": "https://www.pkh.events/",
+            "sourceType": "PKH_WAREHOUSE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
