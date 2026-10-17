@@ -675,6 +675,13 @@ says so.
 | `ZIMMER_16`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ZITADELLE`            | `GENRE`            | the open-air pages name no style                                                                                                                 | —     |
 | `ZITADELLE`            | `PRICE`            | the festival pages print no figure; tickets sell through Eventim                                                                                 | —     |
+| `ZKU`                  | `EVENT_TYPE`       | the site names no category, so the type comes from the entry's own words and an untyped one stays other                                          | —     |
+| `ZKU`                  | `DOORS_TIME`       | the site prints one time range per entry                                                                                                         | —     |
+| `ZKU`                  | `GENRE`            | the site names no style                                                                                                                          | —     |
+| `ZKU`                  | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `ZKU`                  | `CANCELLATION`     | the site has no status field, so a cancelled entry can only disappear                                                                            | —     |
+| `ZKU`                  | `ARTISTS`          | a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them                                             | —     |
+| `ZKU`                  | `PRICE`            | most pages print no entry line, and a ticket button links an outside shop without a price                                                        | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
 | `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |

@@ -11994,6 +11994,67 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# ZK/U
+# ————————————————————————————————————————————————————————————
+
+### --- Create ZK/U venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ZK/U",
+    "address": "Siemensstraße 27",
+    "city": "Berlin",
+    "postalCode": "10551",
+    "district": "tiergarten",
+    "latitude": 52.533893,
+    "longitude": 13.336529,
+    "websiteUrl": "https://www.zku-berlin.org/",
+    "description": "An artist-run residency and project space in a converted railway depot in Moabit, with talks, film evenings, concerts and club nights in its hall and cellar.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der von Künstler*innen geführte Residenz- und Projektraum in einem umgebauten Moabiter Güterbahnhof zeigt Vorträge, Filmabende, Konzerte und Clubnächte in Halle und Keller.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"]
+}
+
+> {%
+    client.global.set("venue_id_zk_u", response.body.id);
+    client.test("ZK/U venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ZK/U event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_zk_u}},
+    "name": "ZK/U",
+    "url": "https://www.zku-berlin.org/",
+    "sourceType": "ZKU",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ZK/U event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ZK/U import ---
+POST {{importer-host}}/api/admin/event-sources/zk-u/import
+Accept: application/json
+
+> {%
+    client.test("ZK/U import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Zuckerzauber — not imported
 # ————————————————————————————————————————————————————————————
 
