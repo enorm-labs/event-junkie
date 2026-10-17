@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   142 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    33 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   144 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    32 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -172,6 +172,8 @@ schema change.
 | Urban Spree                      | https://www.urbanspree.com/program/                                      | Club         | MODX; listing descending + paginated; walks pages         |
 | Velodrom                         | https://www.velomax.de/events                                            | Arena        | Shares the VELOMAX listing; Microdata details             |
 | VOID Club                        | https://www.void-club.de/                                                | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms          |
+| Volksbühne Berlin                | https://www.volksbuehne-berlin.de/                                       | Theater      | Wagtail Spielplan; one page per performance               |
+| Volksbühne Prater                | https://www.volksbuehne-berlin.de/                                       | Theater      | Volksbühne parser; Prater stages only                     |
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
@@ -183,10 +185,11 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-141 importer classes cover 142 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
+143 importer classes cover 144 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Six other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
-The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
+Three more are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
+The last group is Volksbühne Berlin with Volksbühne Prater.
 
 ## 🌐 Second language
 
@@ -204,7 +207,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 87 have none, and 4 are unknown. Nine translate the event text on a second page.
+53 sources have a second language, 87 have none, and 4 are unknown. Eleven translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -212,7 +215,7 @@ it stores the row, and only when the scraper gave no second language. The second
 language. Each half must read as German or English, so a Russian half stays in the whole text. The SO36 and Zig Zag
 scrapers cut their own text first. Their cut reads line breaks or a pointer line that the stored text does not keep.
 
-Eight importers also read the page in the other language. They store its event text as the publisher's second language:
+Ten importers also read the page in the other language. They store its event text as the publisher's second language:
 
 - Bar Tausend and Columbiahalle read the English listing. This adds one request to each run.
 - Bar jeder Vernunft, TIPI am Kanzleramt and Theater im Delphi read the English page of each production. This adds one request for each
@@ -220,6 +223,7 @@ Eight importers also read the page in the other language. They store its event t
 - silent green reads the English page of each programme entry. This adds one request for each entry.
 - Orania.Berlin reads the German page of each concert. This adds one request for each concert.
 - ausland reads the German page of each event. This adds one request for each event.
+- Volksbühne Berlin and Volksbühne Prater read the English page of each performance. This adds one request for each performance.
 
 The importer finds the other page through the `hreflang` link of the page that it reads. When that page does not load,
 the run keeps the first language and stores no second language. The upsert stores a second text only when the two
@@ -361,6 +365,8 @@ the upsert stores none.
 | Urban Spree                      | Yes             | English first; `/de/` and `/fr/` paths                       | Not on the listing | https://www.urbanspree.com/de/program/                                                                                             |
 | Velodrom                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | VOID Club                        | Yes             | One field, in the club text only                             | Not on the listing | https://www.void-club.de/                                                                                                          |
+| Volksbühne Berlin                | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.volksbuehne-berlin.de/en/                                                                                              |
+| Volksbühne Prater                | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.volksbuehne-berlin.de/en/                                                                                              |
 | WABE                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
 | YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
@@ -404,7 +410,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose        |
 | Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`           |
 | Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges     |
-| Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room          |
 | Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only                 |
 | Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups      |
 | Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar           |

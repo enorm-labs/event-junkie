@@ -621,6 +621,20 @@ says so.
 | `URBAN_SPREE`          | `GENRE`            | the concert pages name no style                                                                                                                  | —     |
 | `VELODROM`             | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `VELODROM`             | `GENRE`            | the listing and the event pages name no style, only tour prose                                                                                   | —     |
+| `VOLKSBUEHNE`          | `ARTISTS`          | a staged work's lines name a director, an author or a cast alike, so only concerts and parties bill acts                                         | —     |
+| `VOLKSBUEHNE`          | `DOORS_TIME`       | the programme gives one start time per performance                                                                                               | —     |
+| `VOLKSBUEHNE`          | `END_TIME`         | the performance page's end time is a 23:00 placeholder on many pages                                                                             | —     |
+| `VOLKSBUEHNE`          | `IMAGE`            | many performance pages show no picture                                                                                                           | —     |
+| `VOLKSBUEHNE`          | `GENRE`            | the venue names a format such as concert or dance, never a style                                                                                 | —     |
+| `VOLKSBUEHNE`          | `PRICE`            | neither the programme nor the performance page prints a price                                                                                    | —     |
+| `VOLKSBUEHNE`          | `PROMOTERS`        | the venue produces or presents every performance itself                                                                                          | —     |
+| `VOLKSBUEHNE_PRATER`   | `ARTISTS`          | a staged work's lines name a director, an author or a cast alike, so only concerts and parties bill acts                                         | —     |
+| `VOLKSBUEHNE_PRATER`   | `DOORS_TIME`       | the programme gives one start time per performance                                                                                               | —     |
+| `VOLKSBUEHNE_PRATER`   | `END_TIME`         | the performance page's end time is a 23:00 placeholder on many pages                                                                             | —     |
+| `VOLKSBUEHNE_PRATER`   | `IMAGE`            | many performance pages show no picture                                                                                                           | —     |
+| `VOLKSBUEHNE_PRATER`   | `GENRE`            | the venue names a format such as concert or dance, never a style                                                                                 | —     |
+| `VOLKSBUEHNE_PRATER`   | `PRICE`            | neither the programme nor the performance page prints a price                                                                                    | —     |
+| `VOLKSBUEHNE_PRATER`   | `PROMOTERS`        | the venue produces or presents every performance itself                                                                                          | —     |
 | `VOID_CLUB`            | `START_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`            | `DOORS_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |

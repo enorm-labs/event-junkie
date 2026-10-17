@@ -11243,7 +11243,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Volksbühne Berlin — not imported
+# Volksbühne Berlin
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Volksbühne Berlin venue ---
@@ -11265,13 +11265,104 @@ Content-Type: application/json
     "descriptionAltLanguage": "de",
     "venueTypes": ["theatre", "live-venue"],
     "capacity": 800,
-    "programmeUrl": "https://www.volksbuehne-berlin.de/konzerte/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_volksbuhne_berlin", response.body.id);
     client.test("Volksbühne Berlin venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Volksbühne Berlin event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_volksbuhne_berlin}},
+    "name": "Volksbühne Berlin",
+    "url": "https://www.volksbuehne-berlin.de/",
+    "sourceType": "VOLKSBUEHNE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Volksbühne Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Volksbühne Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/volksbuhne-berlin/import
+Accept: application/json
+
+> {%
+    client.test("Volksbühne Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Volksbühne Prater
+# ————————————————————————————————————————————————————————————
+
+### --- Create Volksbühne Prater venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Volksbühne Prater",
+    "address": "Kastanienallee 7-9",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.539802,
+    "longitude": 13.410758,
+    "websiteUrl": "https://www.volksbuehne-berlin.de/",
+    "description": "The Volksbühne's second house, in the Prater on Kastanienallee and wheelchair accessible, for plays, talks and screenings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die zweite, barrierefreie Spielstätte der Volksbühne im Prater an der Kastanienallee, für Inszenierungen, Gespräche und Filmabende.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"]
+}
+
+> {%
+    client.global.set("venue_id_volksbuhne_prater", response.body.id);
+    client.test("Volksbühne Prater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Volksbühne Prater event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_volksbuhne_prater}},
+    "name": "Volksbühne Prater",
+    "url": "https://www.volksbuehne-berlin.de/",
+    "sourceType": "VOLKSBUEHNE_PRATER",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Volksbühne Prater event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Volksbühne Prater import ---
+POST {{importer-host}}/api/admin/event-sources/volksbuhne-prater/import
+Accept: application/json
+
+> {%
+    client.test("Volksbühne Prater import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

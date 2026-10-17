@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["theatre", "live-venue"],
         "capacity": 800,
-        "programmeUrl": "https://www.volksbuehne-berlin.de/konzerte/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Volksbühne Berlin",
+            "url": "https://www.volksbuehne-berlin.de/",
+            "sourceType": "VOLKSBUEHNE",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
