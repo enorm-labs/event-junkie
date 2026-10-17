@@ -573,8 +573,8 @@ The page shape, the cursor walk and the field readers live here. The venue maps 
 | `JsonNode.tecTermNames(field)` / `tecOrganizerNames()` | The names of `categories` or `tags`; the organizers' names                                |
 | `JsonNode.tecImageUrl()`                               | The featured image's full-size URL                                                        |
 
-**`CalendarProperty.kt`** — the reader for an iCalendar feed. ORWOhaus reads the Events Manager feed and Kallasch& the
-Modern Events Calendar feed. Each venue reads the times, the recurrence and the fields in its own scraper.
+**`CalendarProperty.kt`** — the reader for an iCalendar feed. ORWOhaus reads the Events Manager feed, and Kallasch& and
+LabSaal the Modern Events Calendar feed. Each venue reads the times, the recurrence and the fields in its own scraper.
 
 | Extension / Function       | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------------------------------------ |

@@ -14,8 +14,16 @@
         "descriptionAltLanguage": "de",
         "venueTypes": ["cultural-centre"],
         "capacity": 200,
-        "programmeUrl": "https://labsaal.de/events/",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "LabSaal",
+            "url": "https://labsaal.de/events/",
+            "sourceType": "LABSAAL",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   163 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    21 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   164 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    20 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -117,6 +117,7 @@ schema change.
 | Kühlspot Social Club             | https://kuehlspot.com/                                                   | Other        | Elementor one-pager; line-up as Name – instrument         |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                              | Concert Hall | Gatsby static-query JSON; times in the blurb              |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
+| LabSaal                          | https://labsaal.de/events/                                               | Other        | MEC iCal feed; groups, courses, workshops dropped         |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
 | Lido                             | https://www.lido-berlin.de/                                              | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge           |
 | Loge                             | https://www.loge-berlin.org/                                             | Club         | Wix; tickets on-site; support via "+" in title            |
@@ -204,7 +205,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-162 importer classes cover 163 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+163 importer classes cover 164 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -226,7 +227,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-58 sources have a second language, 101 have none, and 4 are unknown. Twelve translate the event text on a second page.
+58 sources have a second language, 102 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -329,6 +330,7 @@ the upsert stores none.
 | Kühlspot Social Club             | No              | —                                                            | —                  |                                                                                                                                    |
 | Kulturhaus Insel Berlin          | Yes             | One field: `[English below]`                                 | One field          | [captured page](../events-importer/src/test/resources/scraper/insel/insel-events.json)                                             |
 | Kulturhaus Peter Edel            | No              | —                                                            | —                  |                                                                                                                                    |
+| LabSaal                          | No              | —                                                            | —                  |                                                                                                                                    |
 | LARK                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Lido                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Loge                             | Yes             | `/en` path, `hreflang`                                       | Unknown            | https://www.loge-berlin.org/en                                                                                                     |
@@ -436,7 +438,6 @@ least as heavily as an RA count when the next batch is prioritised.
 
 | Name                     | URL                                                       | Type         | Priority | Comment                                                   |
 | ------------------------ | --------------------------------------------------------- | ------------ | -------- | --------------------------------------------------------- |
-| Labsaal                  | https://labsaal.de/events/                                | Other        | Low      | Dated list in Lübars; music among readings and workshops  |
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose      |
 | Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`         |
 | Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges   |
@@ -462,8 +463,8 @@ least as heavily as an RA count when the next batch is prioritised.
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
-**The 11 rows from Labsaal to ZK/U were opened on 2026-10-04.** The first 9 came from the
-[Unanalyzed](#-not-analyzed-yet) table. The last two, Promenaden Eck and ZK/U, came from theclubmap.com. One row does
+**Ten rows here were opened on 2026-10-04: Little Stage Bar to KuBiZ, then Promenaden Eck and ZK/U.** The first eight came
+from the [Unanalyzed](#-not-analyzed-yet) table. Promenaden Eck and ZK/U came from theclubmap.com. One row does
 not point at the venue's own page:
 
 - **Jugendclub Café Köpenick** points at its radar.squat.net group, which `scraper/radar/` reads. Its own domain is

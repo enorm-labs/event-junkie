@@ -400,6 +400,16 @@ says so.
 | `KUEHLSPOT`            | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `KUEHLSPOT`            | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `KUEHLSPOT`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
+| `LABSAAL`              | `EVENT_TYPE`       | the venue names no format, so the type comes from words in the title and description, and a night without one is typed other                     | —     |
+| `LABSAAL`              | `ARTISTS`          | the feed has no line-up field, and a title mixes an act's name with the programme's                                                              | —     |
+| `LABSAAL`              | `GENRE`            | the feed names no style                                                                                                                          | —     |
+| `LABSAAL`              | `PRICE`            | the feed has no price field; an event page prints unlabelled tiers, and the prose rarely names one                                               | —     |
+| `LABSAAL`              | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
+| `LABSAAL`              | `END_TIME`         | the feed fills an end for every night, also where the site hides it, so no end is taken                                                          | —     |
+| `LABSAAL`              | `END_DATE`         | the feed fills an end for every night, also where the site hides it, so no end is taken                                                          | —     |
+| `LABSAAL`              | `PROMOTERS`        | an outside organiser is named only in the prose                                                                                                  | —     |
+| `LABSAAL`              | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
+| `LABSAAL`              | `CANCELLATION`     | the feed marks no night cancelled or moved                                                                                                       | —     |
 | `LARK`                 | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `LARK`                 | `PRICE`            | the venue prints no figure; tickets link to hum-berlin.com                                                                                       | —     |
 | `LARK`                 | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |

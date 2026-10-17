@@ -1,0 +1,779 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+METHOD:PUBLISH
+CALSCALE:GREGORIAN
+PRODID:-//WordPress - MECv7.37.0//EN
+X-ORIGINAL-URL:https://labsaal.de/
+X-WR-CALNAME:Der LabSaal, Veranstaltungen und Kultur in Berlin
+X-WR-CALDESC:Ein historischer Festsaal in Berlin, auch für Hochzeiten zu mieten. Kultur | Veranstaltungen | Hochzeiten | Vereinsarbeit | Lesungen | Tanz | Märkte | Events
+X-WR-TIMEZONE:Europe/Berlin
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+X-LIC-LOCATION:Europe/Berlin
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:20260329T030000
+RRULE:FREQ=YEARLY;BYMONTH=03;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:20261025T020000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=4SU
+END:STANDARD
+END:VTIMEZONE
+REFRESH-INTERVAL;VALUE=DURATION:PT1H
+X-PUBLISHED-TTL:PT1H
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-850af92f8d9903e7a4e0559a98ecc857@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261022T170000
+DTEND;TZID=Europe/Berlin:20261022T190000
+DTSTAMP:20190715T122119Z
+RRULE:FREQ=WEEKLY
+CREATED:20190715
+LAST-MODIFIED:20190715
+PRIORITY:5
+SEQUENCE:0
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Kreativ Gruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-kreativ-gruppe/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,LabSaal Kreativgruppe
+LOCATION:Alt-Lübars 8, 13469 Berlin,
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-21be9a4bd4f81549a9d1d241981cec3c@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261022T133000
+DTEND;TZID=Europe/Berlin:20261022T154500
+DTSTAMP:20190708T150512Z
+RRULE:FREQ=WEEKLY
+CREATED:20190708
+LAST-MODIFIED:20220428
+PRIORITY:5
+SEQUENCE:0
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Heilkräuter Gruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-heilkraeutergruppe-2/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Heilkräuter Gruppe
+LOCATION:Alt-Lübars 8, 13469 Berlin,
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-7eb7eabbe9bd03c2fc99881d04da9cbd@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261020T110000
+DTEND;TZID=Europe/Berlin:20261020T131500
+DTSTAMP:20190708T150255Z
+RRULE:FREQ=WEEKLY
+CREATED:20190708
+LAST-MODIFIED:20220428
+PRIORITY:5
+SEQUENCE:0
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Heilkräuter Gruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-heilkraeutergruppe/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Heilkräuter Gruppe
+LOCATION:Alt-Lübars 8, 13469 Berlin,
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-cf79ae6addba60ad018347359bd144d2@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261019T200000
+DTEND;TZID=Europe/Berlin:20261019T220000
+DTSTAMP:20211001T131538Z
+RRULE:FREQ=WEEKLY
+CREATED:20211001
+LAST-MODIFIED:20231006
+PRIORITY:5
+SEQUENCE:2
+TRANSP:OPAQUE
+SUMMARY:Treffen der TaFF Theatermitglieder
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-taff-theatermitglieder/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,TaFF Theatergruppe
+LOCATION:Schulzendorfer Str. 19-21, 13503 Berlin/Heiligensee
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-0f2c9a93eea6f38fabb3acb1c31488c6@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261021T190000
+DTEND;TZID=Europe/Berlin:20261021T210000
+DTSTAMP:20190625T192703Z
+RRULE:FREQ=WEEKLY
+CREATED:20190625
+LAST-MODIFIED:20231122
+PRIORITY:5
+SEQUENCE:2
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Fotogruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-fotogruppe/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Fotogruppe
+LOCATION:Alt-Lübars 8, 13469 Berlin,
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-ad5d64641d6cf8ab8e65e94a247918b4@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261019T150000
+DTEND;TZID=Europe/Berlin:20261019T180000
+DTSTAMP:20250709T140654Z
+RRULE:FREQ=WEEKLY
+CREATED:20250709
+LAST-MODIFIED:20250709
+PRIORITY:5
+SEQUENCE:10
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Freien Aquarellgruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-freien-aquarellgruppe-2/
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Freie Aquarellgruppe
+LOCATION:Alt-Lübars 24 13469 Berlin
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-eb484fced33f6d6dee921f3f7a4f9aca@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261021T150000
+DTEND;TZID=Europe/Berlin:20261021T160000
+DTSTAMP:20250825T153530Z
+RRULE:FREQ=WEEKLY
+CREATED:20250825
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:5
+TRANSP:OPAQUE
+SUMMARY:RÜCKEN FIT Kurse, Termine
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/ruecken-fit-kurse-termine/
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,RÜCKEN FIT Kurse
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-621765159ee1ea4299c0df3e1d29034b@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261021T103500
+DTEND;TZID=Europe/Berlin:20261021T120000
+DTSTAMP:20210820T124136Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250806T083500Z,20250813T083500Z,20250820T083500Z,20250827T083500Z,20250903T083500Z
+CREATED:20210820
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:3
+TRANSP:OPAQUE
+SUMMARY:TAIJI Kurs 2
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/taiji-kurs-2/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,QIGONG/TAIJI im LabSaal
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-419345a4c56c55ba30671ab8c25d2a73@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261021T090000
+DTEND;TZID=Europe/Berlin:20261021T103000
+DTSTAMP:20210820T123701Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250806T070000Z,20250813T070000Z,20250820T070000Z,20250827T070000Z,20250903T070000Z
+CREATED:20210820
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:3
+TRANSP:OPAQUE
+SUMMARY:QIGONG Kurs 1
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/qigong-kurs-1/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,QIGONG/TAIJI im LabSaal
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-a01ef14cfea1aaacee576832f80ab8da@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261020T200000
+DTEND;TZID=Europe/Berlin:20261020T220000
+DTSTAMP:20230623T160501Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250805T180000Z,20250812T180000Z,20250819T180000Z,20250826T180000Z,20250902T180000Z
+CREATED:20230623
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:5
+TRANSP:OPAQUE
+SUMMARY:Popsong Singers
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/popsong-singers/
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,Popsong Singers
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-3799b2e805a7fa8b076fc020574a73b2@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261023T183000
+DTEND;TZID=Europe/Berlin:20261023T200000
+DTSTAMP:20211008T134406Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250718T163000Z,20250725T163000Z,20250801T163000Z,20250808T163000Z,20250815T163000Z,20250822T163000Z,20250829T163000Z,20250905T163000Z
+CREATED:20211008
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:10
+TRANSP:OPAQUE
+SUMMARY:Tanzkurs im LabSaal
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/tanzkurs-3-im-labsaal/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,Tanzkurse im LabSaal
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-f3957fa3bea9138b3f54f0e18975a30c@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261023T170000
+DTEND;TZID=Europe/Berlin:20261023T183000
+DTSTAMP:20211008T134258Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250718T150000Z,20250725T150000Z,20250801T150000Z,20250808T150000Z,20250815T150000Z,20250822T150000Z,20250829T150000Z,20250905T150000Z
+CREATED:20211008
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:8
+TRANSP:OPAQUE
+SUMMARY:Tanzkurs im LabSaal
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/tanzkurs-2-im-labsaal/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,Tanzkurse im LabSaal
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-d5ab8dc7ef67ca92e41d730982c5c602@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261022T170000
+DTEND;TZID=Europe/Berlin:20261022T183000
+DTSTAMP:20211008T133954Z
+RRULE:FREQ=WEEKLY
+EXDATE:20250807T150000Z,20250814T150000Z,20250821T150000Z,20250828T150000Z,20250717T150000Z,20250724T150000Z,20250731T150000Z,20250904T150000Z
+CREATED:20211008
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:10
+TRANSP:OPAQUE
+SUMMARY:Tanzkurs im LabSaal
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/tanzkurs-1-im-labsaal/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,Tanzkurse im LabSaal
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-87ba276ebbe553ec05d2f5b37c20125f@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261021T180000
+DTEND;TZID=Europe/Berlin:20261021T211500
+DTSTAMP:20200406T151441Z
+RRULE:FREQ=WEEKLY
+CREATED:20200406
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:2
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Theatergruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-kreativ-gruppe-2/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Theatergruppe
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-e7e23670481ac78b3c4122a99ba60573@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261022T193000
+DTEND;TZID=Europe/Berlin:20261022T220000
+DTSTAMP:20190716T180805Z
+RRULE:FREQ=WEEKLY
+EXDATE:19700101T183000Z
+CREATED:20190716
+LAST-MODIFIED:20260119
+PRIORITY:5
+SEQUENCE:2
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Volkstanzgruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-volkstanzgruppe/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Volkstanzgruppe
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-2eace51d8f796d04991c831a07059758@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261026T170000
+DTEND;TZID=Europe/Berlin:20261026T180000
+DTSTAMP:20190713T104930Z
+RRULE:FREQ=DAILY;INTERVAL=14
+CREATED:20190713
+LAST-MODIFIED:20260905
+PRIORITY:5
+SEQUENCE:3
+TRANSP:OPAQUE
+SUMMARY:Treffen der LabSaal Malen und Zeichnen Gruppe
+DESCRIPTION:Gruppentreffen im LabSaal.\n
+URL:https://labsaal.de/events/treffen-der-labsaal-malen-und-zeichnen-gruppe/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Gruppen Termine,Alle Kalendereinträge,LabSaal Malen und Zeichnen Gruppe
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-ad5db5924e3e97ed8a387a499efa9fa0@labsaal.de
+DTSTART;TZID=Europe/Berlin:20270416T163000
+DTEND;TZID=Europe/Berlin:20270418T180000
+DTSTAMP:20261011T143803Z
+CREATED:20261011
+LAST-MODIFIED:20261011
+PRIORITY:5
+SEQUENCE:1
+TRANSP:OPAQUE
+SUMMARY:Die große Klangrotation nach Walter Häfner® im Klanggewölbe Delitzsch
+DESCRIPTION:Liebe Klangfreunde,\nwir freuen uns auch in 2027 zur großen Klangrotation nach Walter Häfner® ins Klanggewölbe Delitzsch einladen zu dürfen.\nBei der großen Klangrotation nach Walter Häfner® erzeugen zehn Klangspielende ein multidimensional wirkendes Klangfeld.\nDiese kraftvoll gespielten Rotationen basieren auf dem Schöpfungssymbol der Blume des Lebens und der heiligen Geometrie.\nDieses schwingungsreiche Klangspiel eröffnet einen Raum der Liebe, indem du tiefgreifende Erfahrungen machen kannst.\nDie rotierend und spiralförmig gespielten Klänge führen dich in einen Entspannungszustand und öffnen die Türe zu deinem Urvertrauen. In diesem Zustand des Seins begegnest du dir selbst und gehst mit den vielfältigen Ebenen der Wirklichkeit in Resonanz. Die Rotation erinnert dich an das Schöpferprinzip in dir.\nWir laden dich ein, dich in einer positiv ausgerichteten Haltung in diese Klangreise zu begeben.\nUm den Königsplatz in der Mitte sind die weiteren Liegeplätze sternförmig angeordnet.\nDich umgeben 25 Gongs, eine Klangliege, 104 Klangschalen und zahlreiche Kristallinstrumente.\nWährend einer guten Stunde kannst du dich den vielfältigen Schwingungsqualitäten hingeben.\nDie Stille rundet dein Erlebnis ab. Bei Bedarf hast du Raum für einen Austausch.\nTauche ein ins Klanguniversum, und lass dich überraschen!\nSpielzeiten:\nFreitag, 16.04.2027\n16.30 – 18.00 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/7570402d-c61e-48f0-97b9-f8b075508695 )\n20.00 – 21.30 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/e67077f2-41f1-4f77-8ca6-66d379c6fa0a )\nSamstag, 17.04.2027\n10.00 – 11.30 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/0c44f196-8234-4fd0-95a3-aa437dfde8dc )\n13.30 – 15.00 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/83530324-2627-400f-920a-2eab0d8b5052 )\n16.30 – 18.00 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/351c0e22-2b5a-4880-8c55-8bf5ab1f0b87 )\n20.00 – 21.30 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/caad5cc5-3da8-4be5-83f4-79b14d08a93e )\nSonntag, 18.04.2027\n10.00 – 11.30 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/e6c58053-4f65-4352-aa75-ebab81eea3f7 )\n13.30 – 15.00 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/a0dbaa77-9d4d-4312-9bf1-6a2382356c99 )\n16.30 – 18.00 Uhr, Online-Verkauf ( https://labsaal.leoticket.de/ed86777a-305d-4817-bc97-5ad606ec9c4d )\n\nEinlaß jeweils 30 Minuten vor der Spieleinheit\n\nPreise:\nPlatz im Kreis 60,- € \nKönigsplatz in der Mitte 150,- € ist nur über den Veranstalter, info@example.org zu buchen.\nRotationen können einmalig oder mehrmals besucht werden. Jede Rotation wird anders erlebt, öffnet andere innere und äußere Räume.\nLass uns gemeinsam die Frequenz heben!\n \n
+URL:https://labsaal.de/events/die-grosse-klangrotation-nach-walter-haefner-im-klanggewoelbe-delitzsch/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2025/11/Saal-bei-der-Klangrotation.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-594d4972c80e32661a4bb50f4b663bc5@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261214T190000
+DTEND;TZID=Europe/Berlin:20261214T200000
+DTSTAMP:20260906T111110Z
+CREATED:20260906
+LAST-MODIFIED:20260909
+PRIORITY:5
+SEQUENCE:8
+TRANSP:OPAQUE
+SUMMARY:Kooperation mit der Musikschule Reinickendorf
+DESCRIPTION:Jour fixe jeweils an einem Montag im Monat.\nEin abwechslungsreiches Programm aus Klassik, Jazz und Pop! Schüler:innen und Gruppen der Musikschule werden in unterschiedlicher Besetzung musizieren.\nDurch das Programm begleitet Gisela Meßollen.\nBeginn 19:00 Uhr, Eintritt frei\n \n
+URL:https://labsaal.de/events/kooperation-mit-der-musikschule-reinickendorf-33/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/webp:https://labsaal.de/wp-content/uploads/2026/01/MUSIKSCHULE-REINICKENDORF-e1768572843803.webp
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-632245ec65eb39b085d24c066adb2729@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261109T190000
+DTEND;TZID=Europe/Berlin:20261109T200000
+DTSTAMP:20260906T110642Z
+CREATED:20260906
+LAST-MODIFIED:20261007
+PRIORITY:5
+SEQUENCE:7
+TRANSP:OPAQUE
+SUMMARY:Kooperation mit der Musikschule Reinickendorf
+DESCRIPTION:Jour fixe jeweils an einem Montag im Monat.\nEin abwechslungsreiches Programm aus Klassik, Jazz und Pop! Schüler:innen und Gruppen der Musikschule werden in unterschiedlicher Besetzung musizieren.\nDurch das Programm begleitet Gisela Meßollen.\nBeginn 19:00 Uhr, Eintritt frei\nweiterer Termin: 14.12.2026\n
+URL:https://labsaal.de/events/kooperation-mit-der-musikschule-reinickendorf-32/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/webp:https://labsaal.de/wp-content/uploads/2026/01/MUSIKSCHULE-REINICKENDORF-e1768572843803.webp
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-96b794b7951888d2785387da9dfbe4cf@labsaal.de
+DTSTART;TZID=Europe/Berlin:20270206T200000
+DTEND;TZID=Europe/Berlin:20270206T230000
+DTSTAMP:20260904T144333Z
+CREATED:20260904
+LAST-MODIFIED:20260909
+PRIORITY:5
+SEQUENCE:10
+TRANSP:OPAQUE
+SUMMARY:Der Wilde Ballon
+DESCRIPTION:Im Juli 2023 feierte Der Wilde Ballon eine großartige Premiere und begeisterte das Publikum mit seiner mitreißenden Musik und nahm es mit auf eine musikalische Reise voller Energie, Rhythmus und Leidenschaft.\nDer Wilde Ballon besteht aus 10 versierten Musikern mit verschiedensten Instrumenten und einem breiten Klangspektrum. Das Repertoire ist bunt und vielfältig. Der Wilde Ballon schafft es, traditionelle Klänge mit modernen Elementen zu verbinden und einen wunderbar eigenen Sound zu kreieren. Eine Band voller Überraschungen, zum Tanzen und Träumen, zum Lachen und Weinen, zum Feiern und Genießen.\nBesetzung:\nArne Paul Neumann / Bass  –  atelierTheremin I Preslisa I Snorre Schwarz\nCathrin Pfeifer / Akkordeon – TREZOULÉ I Katharina Franck &amp; Club der toten Dichter I Etta Scollo\nEberhard Schulz / Saxophon – TrioVital I Crux of the Biscuit I Testbildtesters\nEike Grögel /  Saxophon – Sendeschluß I Volksbühnenband I Bolchewistische Kurkapelle\nFriedemann Winkler /  Trompete, Flügelhorn, Gesang – Testbildtesters I Bud’s Balooxe I Volksbühnenband\nJens Fischer Rodrian /  Schlagzeug &amp; Gesang – Blue Man Group I Wahn&amp;Sinn I Konstantin Wecker\nKerstin Kaernbach /  Geige, Flöten, Theremin, Singende Säge – Chor I 17 Hippies I Lüül I Film Riss Theater I Scenic Circus #\nLüül / Banjo, Gitarre, Ukulele, Gesang – Agitation Free I Nico I 17 Hippies\nRambald Bellmann /  Euphonium, Posaune, Cho – Udo Jürgens I Rodger Papst &amp; Swinging Strangers I Friedrichstadtpalast\nSilvia Christoph / Gesang &amp; Percussion – The Voice Senior I Wayne Grajeda Band I Insisters\nDer Wilde Ballon ( https://derwildeballon.de/ )\nOnline-Ticket ( https://labsaal.leoticket.de/8d52096f-d3ed-4ab8-b721-4dbba40059e5 )\n
+URL:https://labsaal.de/events/648/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/09/Der-Wilde-Ballon-EPK-2026_1.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-fd5503762b1f3ee8ba3a4a86bd604363@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261019T140000
+DTEND;TZID=Europe/Berlin:20261022T160000
+DTSTAMP:20260904T123107Z
+CREATED:20260904
+LAST-MODIFIED:20260904
+PRIORITY:5
+SEQUENCE:12
+TRANSP:OPAQUE
+SUMMARY:Kindertanzen im LabSaal – Workshop in den Herbstferien
+DESCRIPTION:Erneut findet ein Tanzworkshop für Kinder statt, diesmal in den Herbstferien. Tanz, Musik, Selbstbewusstsein und Bewegung für Kinder von 6 bis 10 Jahren. Der Kurs wird von Emilie Schwenzfeier geleitet. Sie hat dieses Jahr ihr Abitur gemacht und ist selbst eine begeisterte Tänzerin. Sie möchte gerne ihr Wissen und den Spaß am Tanz an die Kinder weitergeben. Der LabSaal ist in der Herbstferienwoche an vier Tagen geöffnet: Montag, 19.10. bis Donnerstag, 22.10. 2026 jeweils von 14:00 Uhr bis 16:00 Uhr. Kommt vorbei!\n\nWeitere Infos und Rückfragen an Emilie per Mail: info@example.org\n\n \n \n
+URL:https://labsaal.de/events/kindertanzen-im-labsaal-workshop-in-den-herbsferien/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/09/Flyer-fuer-Kindertanzworkshop-2.-_20260903_150026_0000.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-ecc55a04fb8a317e1733cf921f798162@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261213T180000
+DTEND;TZID=Europe/Berlin:20261213T200000
+DTSTAMP:20260827T180219Z
+CREATED:20260827
+LAST-MODIFIED:20260909
+PRIORITY:5
+SEQUENCE:7
+TRANSP:OPAQUE
+SUMMARY:Christmas-Singen mit den POPSONG SINGER
+DESCRIPTION:Zur Einstimmung auf das diesjährige Weihnachtsfest, präsentieren die Popsong Singers berühmte und bekannte Christmas-Songs, begleitet von feiner, besinnlicher Instrumentalmusik. Die sorgfaeltig arrangierten Chorsaetze verbinden vertraute Melodien mit harmonischen Klangfarben und schaffen eine warme, festliche Atmosphaere.\nPreise (EUR) 25,– (Karten über Eventim)\n \n
+URL:https://labsaal.de/events/247-646/
+ORGANIZER;CN=BLN Media GmbH:MAILTO:info@example.org
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2025/07/popsong_singers_Christmaspopsongs.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-0e9f1b15c7f9b9f6a72a4e9a51b35862@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261024T190000
+DTEND;TZID=Europe/Berlin:20261024T220000
+DTSTAMP:20260713T152015Z
+CREATED:20260713
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:17
+TRANSP:OPAQUE
+SUMMARY:Swinging TanzT und Swing-Workshop
+DESCRIPTION:An alle Swing-Begeisterten,\nwir machen eine kleine Zeitreise in den Big-Band-Sound der 20er bis 50er Jahre. Alle die Lust haben Lindy Hop, Boogie Woogie oder Charleston zu tanzen, sollten sich diesen Termin vormerken und auch gern in passender Garderobe erscheinen. Für absolute Anfängerpaare gibt es vorher einen einstündigen Workshop, in dem die Grundschritte des Lindy Hop vermittelt werden. Für den Workshop ist eine verbindliche Anmeldung unbedingt erforderlich. Wir empfehlen bequeme Schuhe.\nPreise pro Person:\nWorkshop 10 €\nSwinging TanzT 15 €\nKombikarte 20 €\nWorkshop 17.30 – 18.30 Uhr\nSwinging TanzT 19.00 – 22.00 Uhr\nEinlass ab 18.30 Uhr\nOnline-Ticket ( https://labsaal.leoticket.de/4d215d4f-b61a-4dd1-83a3-a0e62542040e )\n
+URL:https://labsaal.de/events/swinging-tanzt-und-swing-workshop/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/07/paar-2-150-dpi-2100-x-2100-pix-e1787243824908.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-a7c20df233e5af0c709cb37d7f5ba3fd@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261128T190000
+DTEND;TZID=Europe/Berlin:20261128T210000
+DTSTAMP:20260706T150349Z
+CREATED:20260706
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:6
+TRANSP:OPAQUE
+SUMMARY:Wohnzimmerkonzert zum Advent – KARWENDEL
+DESCRIPTION:Der Songwriter Sebastian Król aka Karwendel wirft einen warmherzigen, manchmal ironischen Blick auf die seltsamste und wunderschönste Zeit des Jahres. Zwischen Kerzenlicht, Hektik und leiser Sehnsucht entfalten sich Lieder über überfüllte Bahnhöfe, Familienrituale und stille Momente auf der Couch. Auf der „Festtage Tour“ bringt Sebastian Król (Gitarre, Gesang) diese Songs gemeinsam mit Jule Heidmann (Kontrabass, Gesang) und Mariama Ceesay (Piano, Gesang) vielstimmig und spielfreudig auf die Bühne. Neben eigenen Stücken aus „Das Fest“ und dem Karwendel-Repertoire erwarten das Publikum ausgewählte Weihnachtscover, Gedichte und ein feierlich-melancholischer Abend.\n„Eine Ode an die Nächstenliebe, an Zuversicht in schweren Zeiten. Denn, dass die Welt da draußen oft turbulent und düster ist, daran lässt Karwendel keinen Zweifel. Trotzdem hat seine Musik etwas sehr Tröstliches, Lebensbejahendes. “ DIE ZEIT\n„Król hat in seiner Stimme eine Sensibilität ähnlich der von Gisbert zu Knyphausen.“ Rolling Stone\nBesetzung:\nSebastian Król (Gitarre, Gesang)\nJule Heidmann (Kontrabass, Gesang)\nMariama Ceesay (Piano, Gesang)\nOnline-Ticket ( https://labsaal.leoticket.de/e223a525-066f-4a45-944b-3369119e6829 )\n \n
+URL:https://labsaal.de/events/wohnzimmerkonzert-zum-advent-karwendel/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/07/Karwendel-Festtage-1-x-credit-Ralph-Baiker.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-bb7b76330e286eb5f158ff2fd3d82d5d@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261115T170000
+DTEND;TZID=Europe/Berlin:20261115T190000
+DTSTAMP:20260706T123416Z
+CREATED:20260706
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:31
+TRANSP:OPAQUE
+SUMMARY:aCHORpella zu Gast im LabSaal
+DESCRIPTION:HUMAN = MenschLich\nDas Menschsein hat viele verschiedene Facetten – einige davon möchte aCHORpella an diesem Abend musikalisch beleuchten: Gemeinschaft, Freundschaft, Liebe und die Musik als verbindendes Element unterschiedlicher Menschen.\n„I’m only human“ beinhaltet Verständnis für sich und andere: niemand kann oder muss perfekt sein. Trotz – vielleicht auch gerade wegen unserer Fehler – können wir Liebe und Zusammenhalt finden und erfahren, dass es gut tut, zu uns selbst zu stehen. Wir laden euch ein zu einem gemeinsamen Erlebnis mit viel Freude am Singen, positiver Energie, unterschiedlichen Klangfarben, so bunt wie das Leben und wie immer mit einem Augenzwinkern auf so manche menschliche Unzulänglichkeit.\nOnline-Ticket ( https://labsaal.leoticket.de/9e53a164-a899-4235-b8af-3de98341207c )\n \n
+URL:https://labsaal.de/events/achorpella-zu-gast-im-labsaal/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/png:https://labsaal.de/wp-content/uploads/2026/07/HUMAN.png
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-ad48ef812e1189e7c488a956e7a3676c@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261129T120000
+DTEND;TZID=Europe/Berlin:20261129T180000
+DTSTAMP:20260705T134229Z
+CREATED:20260705
+LAST-MODIFIED:20260729
+PRIORITY:5
+SEQUENCE:19
+TRANSP:OPAQUE
+SUMMARY:Lübarser Weihnachtsmarkt 2026
+DESCRIPTION:Alle Jahre wieder… – auch dieses Jahr, am 29. November 2026 von 12:00 bis 18:00 Uhr, findet der Weihnachtsmarkt im Dorf Lübars statt.\nVon evangelischer Kirchengemeinde und LabSaal werden kunsthandwerkliche Gegenstände aus den unterschiedlichsten Materialien an den zahlreichen Ständen im und am LabSaal und im Bereich des evangelischen Gemeindehauses angeboten. Ein Erlebnis für die ganze Familie.\n \n
+URL:https://labsaal.de/events/luebarser-weihnachtsmarkt-2025/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+LOCATION:Alt Lübars
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/07/labsaal_weihnachtsmarkt.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-03e696f87d7c24d74e62fd51b81a7140@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261017T190000
+DTEND;TZID=Europe/Berlin:20261017T213000
+DTSTAMP:20260704T145452Z
+CREATED:20260704
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:11
+TRANSP:OPAQUE
+SUMMARY:Irischer Abend – Urban Beat Irish Dance Academy trifft Clover
+DESCRIPTION:Der irische Abend im LabSaal verspricht einen absoluten Hör- und Sehgenuss für die Freunde der irischen Klänge. Erstmalig treffen die Berliner Live-Band Clover und die Urban Beat Irish Dance Academy an einem gemeinsamen Abend im LabSaal auf.\nDie Tänzer und Tänzerinnen präsentieren die gesamte Vielfalt des irischen Tanzes, von anmutiger Eleganz bis zu geballter Stepp-Power. Clover spielt seit 1996 Irish Folk und ist eine der bekanntesten Formationen mit traditionellen Instrumenten (Geige, Banka, Mandoline, Akkordeon, Gitarre, Bass, Bodhran, Tin &amp; Low Whistle, Harmonica….)\nClover ( https://www.folkband-clover.de/sites/FBC_Band.htm )\nUrban Beat Irish Dance Academy ( https://www.urban-beat-academy.de/#!/ )\nOnline-Ticket ( https://labsaal.leoticket.de/812938a8-b766-48fd-8584-5742ee473a17 )\n \n
+URL:https://labsaal.de/events/112/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/07/CLOVER_Quartett4.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-2975c2a0df49e48104fc44a7838db7f7@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261206T170000
+DTEND;TZID=Europe/Berlin:20261206T190000
+DTSTAMP:20260701T215756Z
+CREATED:20260701
+LAST-MODIFIED:20260715
+PRIORITY:5
+SEQUENCE:12
+TRANSP:OPAQUE
+SUMMARY:»The Oskar Strock &amp; Eddie Rosner Orchestra«®
+DESCRIPTION:Das 2021 gegründete »The Oskar Strock &amp; Eddie Rosner Orchestra«® bringt als erstes und bislang einziges Ensemble weltweit die einst verfemte, totgeschwiegene und für verloren erklärte Musik von Oskar und Eddie samt Werken ihrer Zeitgenossen im exklusiven Auftrag zurück nach Deutschland und auch ihr Spätwerk aus den 40er- bis 70er-Jahren zu Gehör. Oskar Strock (1893, Lettland) und Eddie Rosner (1910, Berlin) feierten ihre ersten Erfolge in Berlin der späten Weimarer Republik, um bald zu den wegweisenden und wichtigsten Mitbegründern der Swing- und Tango-Traditionen von Ost-Europa bis nach Japan und Finnland zu werden. Trotzdem haben diktatorische Regime es beinahe geschafft, die Namen dieser beiden jüdischen Ausnahmetalente aus dem kulturellen Gedächtnis zu löschen. Wir feiern ihre Musik deshalb zum Auftakt der neuen Konzertreihe “ Von Swing bis Tango – verschwundene Klänge „. Ein Konzert der Extraklasse.\nSem Barlas – Trompete, Flügelhorn Gal Liraz – Saxophon, Klarinette\nGal Liraz – Saxophon, Klarinette\nSteffen IIner – Kontrabass\nFrank Winkelmann – Schlagzeug\nAnna Lukschina – Gesang, Kazoo\nDmitri Dragilew – Piano, künstl. Leitung\nhttp://The Oskar Strock &amp; Eddie Rosner Orchestra ( http://The Oskar Strock &amp; Eddie Rosner Orchestra )\nOnline-Ticket ( https://labsaal.leoticket.de/bc532d83-131e-44e6-b5c0-26ad9e788548 )\n \n
+URL:https://labsaal.de/events/119/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/06/Oskar-Strock-Eddie-Roessner.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-f69a675d7f12614552304ed2636e7044@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261219T190000
+DTEND;TZID=Europe/Berlin:20261219T210000
+DTSTAMP:20260627T125039Z
+CREATED:20260627
+LAST-MODIFIED:20260715
+PRIORITY:5
+SEQUENCE:19
+TRANSP:OPAQUE
+SUMMARY:Crocodile Princess Jazz Orchestra
+DESCRIPTION:Der Weihnachtsmann kommt … nach Lübars!\nKrokodile im Advent? In Lübars ist das möglich: Das Crocodile Princess Jazz Orchestra tourt durch die Metropole – große Jazz-Orchester sind heute eine Seltenheit. Zum Tourstart macht das Ensemble Station im LabSaal. Die 17-köpfige Bigband spielt an diesem Vorabend des großen Weihnachtsmarktes im LabSaal eine stimmungsvolle Mischung aus swingenden Weihnachtsliedern, besinnlichen Balladen und Klassikern aus Pop, Swing, Funk und Soul.\n1995 gegründet hat sich das Crocodile Princess Jazz Orchestra kontinuierlich zur festen Größe in der Berliner Jazz-Szene entwickelt. Von 2007 bis 2025 leitete Dietrich Koch das Orchester. Als geschätzter Saxophonist, versierter Komponist und routinierter Arrangeur prägte er maßgeblich den Sound und das Repertoire der Band. Im Juni 2025 konnte Marc Doffey für die Leitung der Band gewonnen werden. Marc wurde bereits in jungen Jahren mit vielen Jazz-Preisen ausgezeichnet und hat Erfahrung in renommierten Big Bands und Jazz-Formationen gesammelt. In der Arbeit mit dem Crocodile Princess Jazz Orchestra sorgt er dafür, dass die musikalische Qualität, die Spielfreude der Band und der Spaß für das Publikum „im Einklang“ stehen. Die klassische Bigband-Besetzung mit 13 Bläsern, Gitarre, Klavier, Bass und Drums wird ergänzt durch die Sängerin Charlotte Nörenberg, die mit flexibler Stimme, Groove und viel Gefühl das Publikum begeistert.\nFunk, der abgeht, Pop zum Mitsingen, Filmmusik, die jeder kennt, Latin, der in die Beine geht und natürlich jede Menge Swing-Klassiker von Count Basie bis Peter Herbolzheimer: Aus einem Repertoire von fast 200 Stücken spielt das Crocodile Princess Jazz Orchestra in ausgefeilten Arrangements nicht nur für Jazz-Fans, sondern für alle, die großen Sound und professionelle Performance lieben.\nFreuen Sie sich auf einen wunderbaren Konzertabend, der Sie swingend in die Weihnachtszeit leitet.\nCrocodile Princess Jazz Orchestra\nLeitung: Marc Doffey\nGesang: Charlotte Nörenberg\nwww.crocodile-princess.\nOnline-Ticket ( https://labsaal.leoticket.de/1ba8828f-cbac-4b3d-b3e4-457500769293 )\n
+URL:https://labsaal.de/events/crocodile-princess-jazz-orchestra-3/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2025/07/Bandbild-Adventskonzerte-mit-Logo-Marc.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-4fa87f4ab207dc8c3e6126a0b7734d3c@labsaal.de
+DTSTART;TZID=Europe/Berlin:20270214T170000
+DTEND;TZID=Europe/Berlin:20270214T190000
+DTSTAMP:20260701T214748Z
+CREATED:20260701
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:24
+TRANSP:OPAQUE
+SUMMARY:guitar4friends
+DESCRIPTION:Das Ensemble guitar4friends steht für einen kreativen Umgang mit seinem Instrument, der Gitarre. Zwei Gitarristinnen und zwei Gitarristen treten mit innovativen Arrangements in einen lebendigen Dialog und nehmen das Publikum mit auf eine musikalische Reise, bei der die rhythmische und klangliche Vielfalt der Gitarre voll zur Geltung kommt.\nDas individuelle Können der aus unterschiedlichen Richtungen kommenden 4friends ergibt eine dynamische Verbindung von Elementen aus Klassik, Latin, Swing, Flamenco und Jazz.\nDurch die viel“saitigen“ Kombinationen von Sologitarre über Duo, Trio bis hin zum Gitarrenorchester im Pocketformat entsteht eine spannungsreiche intensive Performance, die nicht nur Gitarrenfans in ihren Bann zieht.\nVeronika Vogel – Jazz\nSilke Fell – Swing\nVitaliy Schall – Klassik\nGeorg Kempa – Flamenco\nGuitar4Friends ( https://guitar4friends.de/ )\nOnline-Ticket ( https://labsaal.leoticket.de/461c8345-0f55-4578-91ed-4eb81c980494 )\n
+URL:https://labsaal.de/events/guitar4friends-2/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/07/guitar4-friends-Labsaal-klein-e1782935559745.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-a87c3e8f9b58723ac1c4f6ab69c0d0c9@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261018T170000
+DTEND;TZID=Europe/Berlin:20261018T183000
+DTSTAMP:20260612T110216Z
+CREATED:20260612
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:9
+TRANSP:OPAQUE
+SUMMARY:Lebenslinien – ein pantomimisches Solo-Programm von und mit Katja Grahl
+DESCRIPTION:Lebenslinien basiert auf fragmentarischen Erzählungen, die das Leben in all seinen\nFacetten widerspiegeln – Sehnsüchte, Hoffnungen, Ängste und Momente des Glücks.\nStets begleitet uns ein geschärfter Blick für das Paradoxe und die Brüche in menschlichen Lebenssituationen.\nLebenslinien lässt uns in sicherer Distanz mit Humor und Augenzwinkern in den Spiegel des eigenen Lebens blicken.\nAls Mimin möchte Katja Grahl vom Leben erzählen. Von ihrem und dem Leben der Zuschauer. Von dem Leben, das man gern hätte oder von jenem, welches gefürchtet wird.\nAls Ausgangspunkt einer Recherche hat sie sich  bewusst mit Ihrer jüdisch-deutschen Familiengeschichte beschäftigt, mit ihren Brüchen und dem vielen Ungesagten. Entstanden ist ein Programm, das die bitter-süße Heiterkeit des Lebens zeigt, oft mit einem Augenzwinkern, manchmal mit einem weinenden und manchmal mit einem lachenden Auge.\nGezeigt wird ein Bilderbogen einzelner Geschichten, die zunächst in die Welt der Pantomime einladen, die Bildsprache vorstellen und an bekannte Erwartungen anknüpfen, um dann das\nSpektrum der Themen und der pantomimischen Möglichkeiten zu erweitern:\n“Jung und Schön“ (oder: Der Wahn von ewiger Jugend) stellt ein Selbstbild in den Mittelpunkt, das wir vielerorts und in jeder Altersgruppe antreffen.\nIn “Aus der Feder des Meisters“ wird der Größenwahn oder die Angst vor der eigenen\nBedeutungslosigkeit gezeigt.\nKatja Grahl ( https://katjagrahl.de/ )\nOnline-Ticket ( https://labsaal.leoticket.de/0d3dade1-d03a-44e0-b908-23b5c1736212 )\n \n
+URL:https://labsaal.de/events/245/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/06/Katja-Krahl-1.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-3057aa0acb6d937295819f3d94f015e9@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261231T200000
+DTEND;TZID=Europe/Berlin:20270101T020000
+DTSTAMP:20260426T163420Z
+CREATED:20260426
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:43
+TRANSP:OPAQUE
+SUMMARY:Silvester im LabSaal
+DESCRIPTION:Wir haben mit dem LabSaal einen tollen Ballsaal. Zusammen mit dem renommierten Restaurant „Gasthof Alter Dorfkrug“ und DJ Mayaniko wollen wir auch dieses Jahr für Partystimmung sorgen.\nEinlass ab 19:00 Uhr.\nBeginn um 20:00 Uhr.\nEintritt mit Buffet und Getränke (ausgenommen Spirituosen und Cocktails),\nSekt und Pfannkuchen um Mitternacht vom Gasthof Alter Dorfkrug, 130,– €\nTickets* sichern und eine unvergessliche Silvesternacht erleben!\n*Tickets beinhalten 40.- € Eintritt (LabSaal) und 90.- € Buffet mit Getränken (Gasthof Alter Dorfkrug).\nOnline-Ticket ( https://labsaal.leoticket.de/50b5d3d6-a14a-4520-ac63-79ba49521bfc )\nDJ Mayaniko\n \n \n
+URL:https://labsaal.de/events/silvester-im-labsaal-4/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/04/Silvester-26.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-19a443dff441745da8693e0a9fee81d6@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261031T190000
+DTEND;TZID=Europe/Berlin:20261031T210000
+DTSTAMP:20260314T114805Z
+CREATED:20260314
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:13
+TRANSP:OPAQUE
+SUMMARY:Máire Breatnach &amp; Thomas Loefke – Celtic Fiddle, Harp and Song
+DESCRIPTION:Máire Breatnach ist eine musikalische Geschichtenerzählerin, eine moderne Vertreterin der keltischen Bardenzunft. Ihre Kompositionen handeln von den Liebespaaren der keltischen Mythologie, ihre Lieder sind die großen traditionellen Liebeslieder Irlands, natürlich in gälischer Sprache: “Sean nos” – voller Sehnsucht, Leidenschaft und Wehmut. Ihre packenden Tanzkompositionen, ob Reel, Jig oder Hornpipe sind längst eingegangen in den Schatz des traditionellen Repertoires der irischen Folkmusik.\nDie legendäre Riverdance Geigerin hat seit Jahrzehnten einen prägenden Einfluss auf die irische Musikszene: Sie war an zahllosen wichtigen Produktionen maßgeblich beteiligt: auf Geige, Viola, Whistle, Piano, Keyboards, Gitarre, als Produzentin, Komponistin, Arrangeurin oder Studiomusikerin. Sie ist die Geigerin der Riverdance CD und arbeitete u.a. mit Nigel Kennedy, Mike Oldfield, Clannad, Donovan, den Chieftains, Sinead O’Connor und Norland Wind zusammen.\nThomas Loefke, Harfenist von Norland Wind, begleitet Máire auf einer musikalischen Traumreise in die keltische Vergangenheit Irlands. Seine Harfenkompositionen, entstanden auf seinen jährlichen Reisen in die Inselwelt des Nordatlantik, sind ein weiterer Schwerpunkt in diesem Duo-Programm, das geprägt ist von der ungebrochenen musikalischen Tradition Irlands, den grandiosen Küsten- und Insellandschaften Nordwest-Europas, von packenden Geschichten, von starken Gefühlen und überbordender Lebensfreude und nicht zuletzt der spannenden emotionalen Verbindung von Geige, Harfe und einer grandiosen Stimme.\nLoefke &amp; Brettnach ( http://www.thomasloefke.eu/maire_d.html )\nOnline-Ticket ( https://labsaal.leoticket.de/c71d2e92-5aed-4a64-9cd2-82ba2ab667d8 )\n \n
+URL:https://labsaal.de/events/maire-breatnach-thomas-loefke-celtic-fiddle-harp-and-song/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/03/MBTLlive.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-79e410fb9488b208773459fa9249205f@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261122T170000
+DTEND;TZID=Europe/Berlin:20261122T193000
+DTSTAMP:20260214T154923Z
+CREATED:20260214
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:17
+TRANSP:OPAQUE
+SUMMARY:Eugène Ionesco:  „Die Nashörner“ – LabSaal Theater
+DESCRIPTION:Stellen Sie sich vor, Sie sitzen ganz entspannt in einem Straßencafé und plötzlich rast ein Nashorn an Ihnen vorbei! Das gibt Anlass zu Spekulationen und, wenn es nicht bei einem freilaufenden Rhinozeros bleibt, auch zu berechtigten Sorgen. Ionesco beschreibt in seinem Theaterstück, wie sich in einer Gesellschaft ein Mensch nach dem anderen in ein Nashorn verwandelt. Mit diesem abstrusen Einfall kreierte er 1959 eines der Hauptwerke des Absurden Theaters.\nAber was soll diese Absurdität? Ionesco lässt die Deutung offen. Wir selbst müssen als Zuschauer eigene Übertragungen politischer, psychologischer oder soziologischer Art anstellen, um das Stück mit Sinn zu füllen. Denn eines ist klar, im Absurden spiegeln sich die Realitäten unserer Gegenwart durchaus wider. Läuft denn nicht jeder von uns Gefahr, vom Strom des Zeitgeistes erfasst zu werden?\nAuch diesmal versucht die Theatergruppe im LabSaal ( https://labsaal.de/labsaal-theatergruppe/ ) das Thema mit komödiantischen Aspekten und bewährter Livemusik umzusetzen. Freuen Sie sich auf einen Abend, der Vergnügen und Diskussionsstoff zugleich liefert.\nOnline-Ticket ( https://labsaal.leoticket.de/8f54bd40-9f41-448b-94aa-c0d191be9d37 )\n
+URL:https://labsaal.de/events/eugene-ionesco-die-nashoerner-labsaal-theater-3/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/02/Die-Nashoerner-quer-fuer-Norbert-jpg.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-bcd85837d120277f190bc74c566ffd7a@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261121T190000
+DTEND;TZID=Europe/Berlin:20261121T213000
+DTSTAMP:20260214T154837Z
+CREATED:20260214
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:17
+TRANSP:OPAQUE
+SUMMARY:Eugène Ionesco:  „Die Nashörner“ – LabSaal Theater
+DESCRIPTION:Stellen Sie sich vor, Sie sitzen ganz entspannt in einem Straßencafé und plötzlich rast ein Nashorn an Ihnen vorbei! Das gibt Anlass zu Spekulationen und, wenn es nicht bei einem freilaufenden Rhinozeros bleibt, auch zu berechtigten Sorgen. Ionesco beschreibt in seinem Theaterstück, wie sich in einer Gesellschaft ein Mensch nach dem anderen in ein Nashorn verwandelt. Mit diesem abstrusen Einfall kreierte er 1959 eines der Hauptwerke des Absurden Theaters.\nAber was soll diese Absurdität? Ionesco lässt die Deutung offen. Wir selbst müssen als Zuschauer eigene Übertragungen politischer, psychologischer oder soziologischer Art anstellen, um das Stück mit Sinn zu füllen. Denn eines ist klar, im Absurden spiegeln sich die Realitäten unserer Gegenwart durchaus wider. Läuft denn nicht jeder von uns Gefahr, vom Strom des Zeitgeistes erfasst zu werden?\nAuch diesmal versucht die Theatergruppe im LabSaal ( https://labsaal.de/labsaal-theatergruppe/ ) das Thema mit komödiantischen Aspekten und bewährter Livemusik umzusetzen. Freuen Sie sich auf einen Abend, der Vergnügen und Diskussionsstoff zugleich liefert.\nOnline-Ticket ( https://labsaal.leoticket.de/c93e0e77-1738-40af-a6c4-c7a1560fb8ee )\n
+URL:https://labsaal.de/events/eugene-ionesco-die-nashoerner-labsaal-theater-2/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/02/Die-Nashoerner-quer-fuer-Norbert-jpg.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-7e53526fc58a32e5452294826783a54b@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261120T190000
+DTEND;TZID=Europe/Berlin:20261120T213000
+DTSTAMP:20260214T154742Z
+CREATED:20260214
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:17
+TRANSP:OPAQUE
+SUMMARY:Eugène Ionesco:  „Die Nashörner“ – LabSaal Theater
+DESCRIPTION:Stellen Sie sich vor, Sie sitzen ganz entspannt in einem Straßencafé und plötzlich rast ein Nashorn an Ihnen vorbei! Das gibt Anlass zu Spekulationen und, wenn es nicht bei einem freilaufenden Rhinozeros bleibt, auch zu berechtigten Sorgen. Ionesco beschreibt in seinem Theaterstück, wie sich in einer Gesellschaft ein Mensch nach dem anderen in ein Nashorn verwandelt. Mit diesem abstrusen Einfall kreierte er 1959 eines der Hauptwerke des Absurden Theaters.\nAber was soll diese Absurdität? Ionesco lässt die Deutung offen. Wir selbst müssen als Zuschauer eigene Übertragungen politischer, psychologischer oder soziologischer Art anstellen, um das Stück mit Sinn zu füllen. Denn eines ist klar, im Absurden spiegeln sich die Realitäten unserer Gegenwart durchaus wider. Läuft denn nicht jeder von uns Gefahr, vom Strom des Zeitgeistes erfasst zu werden?\nAuch diesmal versucht die  Theatergruppe im LabSaal ( https://labsaal.de/labsaal-theatergruppe/ ) das Thema mit komödiantischen Aspekten und bewährter Livemusik umzusetzen. Freuen Sie sich auf einen Abend, der Vergnügen und Diskussionsstoff zugleich liefert.\nOnline-Ticket ( https://labsaal.leoticket.de/6822d711-a2df-4e6e-b562-688651bb38fb )\n
+URL:https://labsaal.de/events/eugene-ionesco-die-nashoerner-labsaal-theater/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/02/Die-Nashoerner-quer-fuer-Norbert-jpg.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-96ddc5dc8fec52547e2b998e85bd2628@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261101T170000
+DTEND;TZID=Europe/Berlin:20261101T200000
+DTSTAMP:20260205T124245Z
+CREATED:20260205
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:7
+TRANSP:OPAQUE
+SUMMARY:Japan – im Land der aufgehenden Sonne
+DESCRIPTION:Japan – im Land der aufgehenden Sonne\nMulti-Visions-Show\nvon Roland Marske, Jules Verne Berlin\nMit einem Bein tief in der Tradition verwurzelt, mit dem anderen aber schon in ferner Zukunft, ist Japan ein Land verwirrender Gegensätze.\nEs überwältigt mit einer Hightech-Gesellschaft, in der die Menschen in pulsierenden, ausufernden Mega-Citys leben, zugleich aber fest in alten Traditionen verwurzelt sind. Es verzaubert mit atemberaubender Natur, ehrwürdigen Tempeln, herzerwärmender Freundlichkeit und unbeschreiblichen kulinarischen Genüssen. Es befremdet aber auch mit zersiedelten Landschaften und hässlichen, immer gleich aussehenden Städten. Und es ängstigt mit unberechenbaren Naturgewalten, überfüllten U-Bahnen, giftigem Fisch und komplizierten Toiletten.\nJapan ist eine Gesellschaft, die nach völlig anderen Regeln funktioniert als unsere. Der Berliner Journalist und Fotograf Roland Marske hat sich auf mehreren Reisen den Geheimnissen Japans genähert. Spannend und tiefgründig, mit viel Witz und Charme, berichtet er von den Feinheiten der japanischen Kultur, der fremdartigen japanischen Lebensart und atemberaubenden Landschaften.\nDer Zuschauer geht aus dieser fulminanten Multi-Visions-Show mit der erfrischenden Erkenntnis nach Hause, dass in Japan alles auch ganz anders, manches sogar besser geht, als bei uns. Und genau das ist es, was Japan als Reiseland so faszinierend macht.\n„Wer einen Matscha nicht von einem Manga unterscheiden kann, noch nie auf einem Futon auf Tatami-Matten geschlafen oder ein öffentliches Bad mit nackten Fremden geteilt hat, sollte sich die Japanshow von Roland Marske ansehen.“ ML 2025\nDas JULES VERNE Team begeistert seit Jahren mit Multi-Visions-Shows über die schönsten Regionen der Welt. Ihre Werke wurden u.a. in GEO und Merian veröffentlicht.\nEintrittskarten sind im Vorverkauf und an der Abendkasse erhältlich – das Fernweh gibt’s gratis dazu!\nhttp://www.rolandmarske.de ( http://www.rolandmarske.de )\nhttp://www.jules-verne-online.de ( http://www.jules-verne-online.de )\nOnline-Ticket ( https://labsaal.leoticket.de/4db29fe3-7009-4f39-8dc1-be0d3e9f4acc )\n
+URL:https://labsaal.de/events/neuseeland-gods-own-country-das-schoenste-ende-der-welt-315/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2026/02/JV-Presse-Bild-Noto-Halbinsel-Hatago-Iwa-Rock.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-a80c49e34cbf3a1eb1dab16597789c02@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261031T110000
+DTEND;TZID=Europe/Berlin:20261031T153000
+DTSTAMP:20260128T112432Z
+CREATED:20260128
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:3
+TRANSP:OPAQUE
+SUMMARY:VOLKSTANZ Workshop mit ANTOINE SENGERS
+DESCRIPTION:Für Anfänger und Fortgeschrittene!\nAntoine Sengers ist DER Folklore-Tanzcoach in Berlin überhaupt. In seiner unnachahmlich sanften und geduldigen Art vermittelt er uns die Lebensfreude der tanzenden Völker und zeigt uns die passenden Schrittfolgen!\nAuf der tänzerischen Reise wird eine große Bandbreite verschiedener Stile vorgestellt – vorwiegend aus dem östlichen Mittelmeerraum und dem Balkan. Oft temperamentvoll, zuweilen aber auch meditativ. Begonnen wird mit einfachen Schritten, später werden auch etwas komplexere Variationen der Kreistänze eingeübt.\nEin (Vorab-)Tanzpartner wird NICHT gebraucht.\nUnterrichts-Zeit netto 3,5 Stunden (4,5 Stunden Gesamtdauer mit 3 x 20 Minuten Pause)\nOnline-Ticket ( https://labsaal.leoticket.de/711d0680-93dd-4f4c-8726-7e3ed6bd5d48 )\n\n
+URL:https://labsaal.de/events/volkstanz-workshop-mit-antoine-sengers-4-916/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2020/09/Balkan_Taenze-Antoine-Senge.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-a0a052b2340749617466e56d7b8e74ef@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261114T190000
+DTEND;TZID=Europe/Berlin:20261114T220000
+DTSTAMP:20260124T190652Z
+CREATED:20260124
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:4
+TRANSP:OPAQUE
+SUMMARY:Tants in Gartn Eydn
+DESCRIPTION:Klezmermusik von Gartn Eydn zum Tanzen mit Tanzmeister Thomas Römer oder auch nur zum Zuhören. Tants in Gartn Eydn ist seit vielen Jahren ein regelmäßiger Gast im Labsaal. Wir laden euch ein zum Klezmerschwof.\ntants in gartn-eydn\nOnline-Ticket ( https://labsaal.leoticket.de/6d2513d0-e999-4833-a3e2-2f3b26b3bf8c )\n \n \n
+URL:https://labsaal.de/events/tants-in-gartn-eydn-4-995/
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2022/11/Tants-in-gartn-eydn.jpg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-75ac87b5cb3f269665b151d6f263b2b3@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261107T200000
+DTEND;TZID=Europe/Berlin:20261107T230000
+DTSTAMP:20251208T140917Z
+CREATED:20251208
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:13
+TRANSP:OPAQUE
+SUMMARY:Prince Party – lasst uns die Legende feiern
+DESCRIPTION:Prince Party – Lasst uns die Legende feiern! \nTaucht ein in die Welt von Prince und erlebt eine Nacht, die ganz im Zeichen des Purple Yoda steht! DJ TBT bringt die größten Hits, rare Tracks und ikonische Sounds des Musikgenies auf die Tanzfläche. Kommt vorbei, feiert, tanzt – und lasst uns gemeinsam die Legende ehren. \nLet’s go crazy! \n\nPrince Party – Let’s celebrate the legend! Immerse yourself in the world of Prince and experience a night dedicated to the Purple Yoda! DJ TBT will bring the music genius’s greatest hits, rare tracks, and iconic sounds to the dance floor. Come by, celebrate, dance – and let’s honor the legend together. \nLet’s go crazy! \nOnline-Ticket ( https://labsaal.leoticket.de/316b14d8-b257-433d-86ca-312ae4e21ea2 )\n
+URL:https://labsaal.de/events/prince-party-lasst-uns-die-legende-feiern/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2025/12/Prince-e1765198804698.jpeg
+END:VEVENT
+BEGIN:VEVENT
+CLASS:PUBLIC
+UID:MEC-b0f13a12e828374f22b1be5980afae58@labsaal.de
+DTSTART;TZID=Europe/Berlin:20261108T170000
+DTEND;TZID=Europe/Berlin:20261108T190000
+DTSTAMP:20251115T220803Z
+CREATED:20251115
+LAST-MODIFIED:20260820
+PRIORITY:5
+SEQUENCE:11
+TRANSP:OPAQUE
+SUMMARY:KlangArt-Berlin – Faszination Handpan  LabSaal LAB
+DESCRIPTION:Das Handpan ist eine schweizerische Erfindung. Äußerlich ähnelt es einem Wok mit Deckel oder einem UFO. Die Erfinder bezeichnen es als Klangskulptur. Es wird mit den Fingern und Händen gespielt, Perkussion und Melodie in nahezu unerschöpflicher Vielfalt. Wer immer das Handpan hört, scheint seiner Klang-Energie zu erliegen.\nHandpan-Klänge, Gitarren, Akkordeon und Ethno-Flute, sind die Grundfarben aus denen die Musiker von KlangArt-Berlin, Wolfgang Ohmer (Handpan/Flöte/Gitarre) und Peter Stein (Handpan/Akkordeon/Gitarre) ihre Klanglandschaften und Soundcollagen entwickeln. Kompositionen, die in faszinierende Klanggefilde führen, Gelassenheit, Ruhe und zugleich Lebensfreude transportieren.\nKlangArt Berlin sind prominente Vertreter von Handpan-Musik nicht nur in Deutschland. Ihre Musik hat allein bei Spotify die 50 Millionen-Marke bei Download und Streaming überschritten.\nKlangArtBerlin ( http://www.klangart-berlin.de )\nLabsaal – LAB  ( https://labsaal.de/neuer-eintrag-fuer-aktuelles-allgemein/ )\nOnline-Platzreservierung ( https://labsaal.leoticket.de/ab7a6944-2ed5-40e7-b068-96e039bf4baf )\n
+URL:https://labsaal.de/events/klangart-berlin-faszination-handpan-einladungskonzert/
+ORGANIZER;CN=Natur &amp; Kultur (LabSaal-Lübars) e. V.:MAILTO:kontor@labsaal.de
+CATEGORIES:Alle Kalendereinträge,Alle Veranstaltungen
+ATTACH;FMTTYPE=image/jpeg:https://labsaal.de/wp-content/uploads/2025/11/KlangArt-Berlin1-scaled.jpeg
+END:VEVENT
+END:VCALENDAR

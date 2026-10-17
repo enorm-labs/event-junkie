@@ -234,6 +234,9 @@ enum class EventSource {
     /** Kühlspot Social Club – a volunteer-run club in a listed Weißensee courtyard for improvised and experimental music and free jazz. */
     KUEHLSPOT,
 
+    /** LabSaal Lübars – the 1896 ballroom of the village inn on the Lübars green, with concerts, dance nights, theatre and talks. */
+    LABSAAL,
+
     /** LARK Berlin – a live-music club in the railway arches on Holzmarktstraße, programming indie, folk, pop and singer-songwriter shows. */
     LARK,
 
