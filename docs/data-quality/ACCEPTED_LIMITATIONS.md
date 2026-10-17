@@ -704,6 +704,18 @@ says so.
 | `SPEICHES`             | `DOORS_TIME`       | the table prints one time per night                                                                                                              | —     |
 | `SPEICHES`             | `ARTISTS`          | the open stage and the radio broadcasts name no act in a form that can be read                                                                   | —     |
 | `SPEICHES`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `SPINDLER_KLATT`       | `SUBTITLE`         | each night has a date line and a title, no second title line                                                                                     | —     |
+| `SPINDLER_KLATT`       | `DESCRIPTION`      | the club page prints no text about a night                                                                                                       | —     |
+| `SPINDLER_KLATT`       | `EVENT_TYPE`       | the site names no category; every night is a themed party                                                                                        | —     |
+| `SPINDLER_KLATT`       | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `SPINDLER_KLATT`       | `END_TIME`         | the site prints an end time only for an early night                                                                                              | —     |
+| `SPINDLER_KLATT`       | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `SPINDLER_KLATT`       | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
+| `SPINDLER_KLATT`       | `ARTISTS`          | the site publishes no line-ups                                                                                                                   | —     |
+| `SPINDLER_KLATT`       | `PROMOTERS`        | the site credits no promoter beside the party's name                                                                                             | —     |
+| `SPINDLER_KLATT`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `SPINDLER_KLATT`       | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
+| `SPINDLER_KLATT`       | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the club page                                                                     | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `SUPAMOLLY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

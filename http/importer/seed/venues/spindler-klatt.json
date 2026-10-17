@@ -13,8 +13,16 @@
         "descriptionAlt": "Eventlocation direkt an der Spree auf der früheren Ost-West-Grenze, mit einer Terrasse am Fluss: Im Club laufen Themenpartys wie Ü30, Ü60 oder 90er und 2000er.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club"],
-        "programmeUrl": "https://www.spindlerklatt.com/club",
         "reviewedAt": "2026-10-06T20:48:21Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Spindler & Klatt",
+            "url": "https://www.spindlerklatt.com/club",
+            "sourceType": "SPINDLER_KLATT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

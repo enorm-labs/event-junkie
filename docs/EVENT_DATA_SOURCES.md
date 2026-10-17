@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   166 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    18 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   167 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    17 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -175,6 +175,7 @@ schema change.
 | Soulcat                          | https://soulcat-berlin.com/                                              | Bar          | TEC REST API; title-only DJ nights, no Fussball           |
 | Speakeazy                        | https://www.speakeazyberlin.de/events                                    | Bar          | Squarespace HTML, robots bars `?format=json`; door prices |
 | Speiches Rock- und Blueskneipe   | http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php | Bar          | rockradio.de table; weekday picks the year                |
+| Spindler & Klatt                 | https://www.spindlerklatt.com/club                                       | Club         | Wix repeater HTML; no warmup data; date is the ID         |
 | Supamolly                        | https://www.supamolly.de/?p=programm                                     | Club         | Retro PHP; row id is the date stamp; no prices            |
 | Surprise Club                    | https://surprise-berlin.de/events-programs.php                           | Club         | Hand-built PHP; weekend only; date is the ID              |
 | Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/                           | Concert Hall | JSON-LD listing; promoter per event page                  |
@@ -207,7 +208,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-165 importer classes cover 166 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+166 importer classes cover 167 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -229,7 +230,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-58 sources have a second language, 104 have none, and 4 are unknown. Twelve translate the event text on a second page.
+59 sources have a second language, 104 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -390,6 +391,7 @@ the upsert stores none.
 | Soulcat                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Speakeazy                        | Yes             | One field: German, `EN`, English                             | One field          | https://www.speakeazyberlin.de/events                                                                                              |
 | Speiches Rock- und Blueskneipe   | No              | —                                                            | —                  |                                                                                                                                    |
+| Spindler & Klatt                 | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.spindlerklatt.com/en/club                                                                                              |
 | Supamolly                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Surprise Club                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Tempodrom                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.tempodrom.de/en/events-and-tickets/                                                                                    |
@@ -445,7 +447,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/    | Bar          | Low      | WordPress.com posts; date and time only in the prose      |
 | Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/        | Theater      | Low      | Concert page; 2 upcoming, with date, time and room        |
 | Renaissance-Theater      | https://renaissance-theater.de/spielplan/          | Theater      | Low      | Day blocks under month headings; plays only               |
-| Spindler & Klatt         | https://www.spindlerklatt.com/club                 | Club         | Low      | Wix list; party nights with date and time, no line-ups    |
 | Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188               | Club         | Low      | radar group; own site hdjk.de links a JS calendar         |
 | KuBiZ                    | https://www.kubiz-wallenberg.de/                   | Other        | Low      | WordPress posts; date in the title; jazz about monthly    |
 | Villa Kuriosum           | https://www.villakuriosum.net/veranstaltungen/     | Other        | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
