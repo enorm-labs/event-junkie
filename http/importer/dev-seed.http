@@ -3371,6 +3371,69 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Friedrichstadt-Palast
+# ————————————————————————————————————————————————————————————
+
+### --- Create Friedrichstadt-Palast venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Friedrichstadt-Palast",
+    "address": "Friedrichstraße 107",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.523624,
+    "longitude": 13.388621,
+    "websiteUrl": "https://www.palast.berlin/",
+    "instagramUrl": "https://www.instagram.com/friedrichstadt.palast/",
+    "facebookUrl": "https://www.facebook.com/friedrichstadt.palast",
+    "description": "Berlin's revue theatre, opened on Friedrichstraße in 1984 as the GDR's last grand showpiece, stages its own Grand Show and hosts concerts and guest shows.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Revuetheater an der Friedrichstraße, 1984 als letzter großer Prachtbau der DDR eröffnet, zeigt seine eigene Grand Show und holt Konzerte und Gastspiele ins Haus.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"]
+}
+
+> {%
+    client.global.set("venue_id_friedrichstadt_palast", response.body.id);
+    client.test("Friedrichstadt-Palast venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Friedrichstadt-Palast event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_friedrichstadt_palast}},
+    "name": "Friedrichstadt-Palast",
+    "url": "https://www.palast.berlin/gastspiele/",
+    "sourceType": "FRIEDRICHSTADTPALAST",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Friedrichstadt-Palast event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Friedrichstadt-Palast import ---
+POST {{importer-host}}/api/admin/event-sources/friedrichstadt-palast/import
+Accept: application/json
+
+> {%
+    client.test("Friedrichstadt-Palast import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Funkhaus Berlin — not imported
 # ————————————————————————————————————————————————————————————
 

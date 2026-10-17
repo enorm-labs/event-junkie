@@ -199,6 +199,14 @@ says so.
 | `FRANNZ`               | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
 | `FRANNZ`               | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `FRANNZ`               | `GENRE`            | the venue tags each event only with a type (Konzert, Party, Lesung), never a genre                                                               | —     |
+| `FRIEDRICHSTADTPALAST` | `ARTISTS`          | a tribute evening is billed by its genre and names none of its performers                                                                        | —     |
+| `FRIEDRICHSTADTPALAST` | `DOORS_TIME`       | each ticket button prints one start time                                                                                                         | —     |
+| `FRIEDRICHSTADTPALAST` | `END_TIME`         | the page prints no end time                                                                                                                      | —     |
+| `FRIEDRICHSTADTPALAST` | `GENRE`            | the page names no style per show                                                                                                                 | —     |
+| `FRIEDRICHSTADTPALAST` | `PRICE`            | prices sit with each outside promoter's ticket shop, not on the page                                                                             | —     |
+| `FRIEDRICHSTADTPALAST` | `SOLD_OUT`         | the page states no ticket status                                                                                                                 | —     |
+| `FRIEDRICHSTADTPALAST` | `CANCELLATION`     | the page has no status field, so a cancelled show can only disappear                                                                             | —     |
+| `FRIEDRICHSTADTPALAST` | `PER_EVENT_PAGE`   | a guest show has no page of its own, only an anchor on the list                                                                                  | —     |
 | `GAERTEN_DER_WELT`     | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GAERTEN_DER_WELT`     | `PRICE`            | an event sold through an outside ticket shop prints no figure on its page                                                                        | —     |
 | `GAERTEN_DER_WELT`     | `ARTISTS`          | the park names acts only in prose; a drone show, a flashlight Christmas concert or a score concert names no act at all                           | —     |
