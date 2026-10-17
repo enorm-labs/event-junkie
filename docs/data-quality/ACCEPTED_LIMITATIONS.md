@@ -342,6 +342,18 @@ says so.
 | `MAX_SCHMELING_HALLE`  | `GENRE`            | the listing and the event pages name no style, only tour prose                                                                                   | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `MAXXIM`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `M_BIA`                | `SUBTITLE`         | a post carries only the night's name                                                                                                             | —     |
+| `M_BIA`                | `DESCRIPTION`      | the body of every post is a single ticket link                                                                                                   | —     |
+| `M_BIA`                | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
+| `M_BIA`                | `DOORS_TIME`       | the site shows only the date of a night                                                                                                          | —     |
+| `M_BIA`                | `START_TIME`       | the site shows only the date; every post carries the same 23:00 scheduling time                                                                  | —     |
+| `M_BIA`                | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
+| `M_BIA`                | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `M_BIA`                | `PRICE`            | the site prints no entry price; tickets link to Resident Advisor                                                                                 | —     |
+| `M_BIA`                | `ARTISTS`          | a post names acts only in its title, and only some titles name any                                                                               | —     |
+| `M_BIA`                | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
+| `M_BIA`                | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `M_BIA`                | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `MEHRINGHOF`           | `DOORS_TIME`       | the programme states one time per performance                                                                                                    | —     |
 | `MEHRINGHOF`           | `END_TIME`         | the ticket shop gives every performance the same 6 a.m. end                                                                                      | —     |
 | `MEHRINGHOF`           | `EVENT_TYPE`       | the programme names no format; Kabarett, comedy, readings and song evenings share one table                                                      | —     |

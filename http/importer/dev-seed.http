@@ -5862,7 +5862,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# M-BIA — not imported
+# M-BIA
 # ————————————————————————————————————————————————————————————
 
 ### --- Create M-BIA venue ---
@@ -5883,13 +5883,43 @@ Content-Type: application/json
     "descriptionAlt": "Der Club für elektronische Musik liegt in der Dircksenstraße mitten in Berlin-Mitte und füllt die Wochenenden mit Nächten zwischen Goa, Psytrance, Techno und Bass.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club"],
-    "programmeUrl": "http://www.m-bia.de",
     "reviewedAt": "2026-10-07T12:38:29Z"
 }
 
 > {%
+    client.global.set("venue_id_m_bia", response.body.id);
     client.test("M-BIA venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create M-BIA event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_m_bia}},
+    "name": "M-BIA",
+    "url": "https://www.m-bia.de/wp-json/wp/v2/posts",
+    "sourceType": "M_BIA",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("M-BIA event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial M-BIA import ---
+POST {{importer-host}}/api/admin/event-sources/m-bia/import
+Accept: application/json
+
+> {%
+    client.test("M-BIA import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
