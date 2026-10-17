@@ -1408,6 +1408,12 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `buildArtistsForEventType bills no artist for the SPH Music Masters contest`() {
+        buildArtistsForEventType("SPH Music Masters", "Halbfinale Berlin", "CONCERT").shouldBeEmpty()
+        isNonArtistName("SPH Music Masters All Stars") shouldBe false
+    }
+
+    @Test
     fun `buildArtistsForEventType reads a numeric support act from the Huxleys merged subtitle`() {
         // The detail page's tour name and the listing's support line, joined by " | " (#2207).
         buildArtistsForEventType("Sampagne", subtitle = "TV TOUR 2026 | + Support: 234", eventType = "CONCERT") shouldContainExactly

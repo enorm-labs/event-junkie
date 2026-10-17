@@ -646,7 +646,9 @@ private val NON_ARTIST_NAMES: Set<String> =
         "generation xy",
         "unter meinem bett",
         "nightwash",
-        "smash comedy deluxe"
+        "smash comedy deluxe",
+        // A touring band contest billed as the act at Maschinenhaus; its acts are not named.
+        "sph music masters"
     ) + BILLED_SERIES_NAMES
 
 /**
