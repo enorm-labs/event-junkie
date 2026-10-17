@@ -311,7 +311,8 @@ data class VenueCharacterTagResponse(
 )
 
 private const val IMPORTED_DESCRIPTION =
-    "Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme."
+    "Whether we show this venue's events: an importer reads it, or it has an event from today on. False for a venue we know but do not import yet: " +
+        "it has no upcoming events here, and its page links to its programme."
 private const val CLOSED_ON_DESCRIPTION =
     "The last day the venue was open, when it closed for good or will close on a date it announced. Null while no closure is known. " +
         "The venue lists leave a venue out from the day after."

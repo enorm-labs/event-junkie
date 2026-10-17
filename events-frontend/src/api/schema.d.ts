@@ -516,7 +516,7 @@ export interface components {
              */
             characterTags?: string[];
             /**
-             * @description Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme.
+             * @description Whether we show this venue's events: an importer reads it, or it has an event from today on. False for a venue we know but do not import yet: it has no upcoming events here, and its page links to its programme.
              * @example true
              */
             imported?: boolean;
@@ -681,7 +681,7 @@ export interface components {
             /** @description What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it. Each carries the URL of the venue's own page that states it. */
             characterTags?: components["schemas"]["VenueCharacterTagResponse"][];
             /**
-             * @description Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme.
+             * @description Whether we show this venue's events: an importer reads it, or it has an event from today on. False for a venue we know but do not import yet: it has no upcoming events here, and its page links to its programme.
              * @example false
              */
             imported?: boolean;
