@@ -18,7 +18,8 @@ import java.time.LocalTime
  * Unit tests for [SupamollyOverviewPageScraper].
  *
  * Uses saved snapshots of the real Supamolly programme page as regression fixtures: September
- * 2026 bills the café social with its time in the name, October 2026 without. Every row id
+ * 2026 bills the café social with its time in the name, October 2026 without, and November 2026
+ * bills party names, a `Lieve:` label and a DJ list. Every row id
  * carries a full `YYYYMMDDHHMM` stamp, so no clock injection is needed for date inference.
  */
 class SupamollyOverviewPageScraperTest {
@@ -295,6 +296,71 @@ class SupamollyOverviewPageScraperTest {
     }
 
     @Nested
+    inner class PartyNightsAndRoleLabels {
+        @Test
+        fun `bills a misspelt live label as LIVE and a DJ list as DJs, never the party's name`() {
+            val event = eventWithStamp("202611062200", NOVEMBER)
+
+            event.title shouldBe "Bassfieber: Drum & Bass Party, Lieve: Subact, Djs Bain, Berry T, Kite & Domske"
+            event.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Subact", "LIVE"),
+                    ScrapedArtist("Bain", "DJ"),
+                    ScrapedArtist("Berry T", "DJ"),
+                    ScrapedArtist("Kite", "DJ"),
+                    ScrapedArtist("Domske", "DJ")
+                )
+        }
+
+        @Test
+        fun `keeps a soli party's name in the title only`() {
+            val event = eventWithStamp("202611202130", NOVEMBER)
+
+            event.title shouldBe "Soliparty Linienhof, Neofarius Orchestra #249, Option Weg"
+            event.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Neofarius Orchestra #249", "HEADLINER"),
+                    ScrapedArtist("Option Weg", "SUPPORT")
+                )
+        }
+
+        @Test
+        fun `drops a soli party named after its beneficiary`() {
+            eventWithStamp("202610242130", NOVEMBER).artists.map { it.name }.contains("Sea Punks Soliparty") shouldBe false
+        }
+
+        @Test
+        fun `bills a live act after a plain one as LIVE and keeps the plain one headliner`() {
+            eventWithStamp("202610172200", NOVEMBER).artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Flowers of Romance", "HEADLINER"),
+                    ScrapedArtist("MNGLXMPLR", "LIVE")
+                )
+        }
+
+        @Test
+        fun `keeps a band whose name only ends in Party`() {
+            billing("The Birthday Party", "Bloc Party").artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("The Birthday Party", "HEADLINER"),
+                    ScrapedArtist("Bloc Party", "SUPPORT")
+                )
+        }
+
+        @Test
+        fun `recognises a hyphenated soli party and a DJ list without a comma`() {
+            billing("Soli-Party für den Kiezladen", "DJ's Anna & Bo").artists shouldContainExactly
+                listOf(ScrapedArtist("Anna", "DJ"), ScrapedArtist("Bo", "DJ"))
+        }
+
+        private fun billing(vararg acts: String): ScrapedEvent {
+            val blocks = acts.joinToString("") { """<div class="even"><div class="tit"><b>$it</b></div></div>""" }
+            val document = Jsoup.parse("""<table><tr class="event" id="202611272130"><td class="evcont">$blocks</td></tr></table>""", baseUrl)
+            return scraper.scrape(document, baseUrl).single()
+        }
+    }
+
+    @Nested
     inner class MalformedInput {
         @Test
         fun `returns an empty list for a page without event rows`() {
@@ -358,5 +424,8 @@ class SupamollyOverviewPageScraperTest {
 
         /** The café social billed as "Kuchen & Kaffee", time only in the date cell. */
         const val OCTOBER = "supamolly-overview-2026-10.html"
+
+        /** Party names, a `Lieve:` label and a `Djs` list as act blocks. */
+        const val NOVEMBER = "supamolly-overview-2026-11.html"
     }
 }
