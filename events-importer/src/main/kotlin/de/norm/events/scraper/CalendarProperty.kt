@@ -5,11 +5,11 @@ internal data class CalendarProperty(
     val value: String,
     val params: Map<String, String> = emptyMap()
 ) {
-    /** The [value] as RFC 5545 TEXT: `\n` a line break, `\,` `\;` `\\` the character itself. */
+    /** The [value] as RFC 5545 TEXT: `\n` a line break, `\,` `\;` `\\` the character itself, and `\"` too, which kalender.digital writes. */
     val text: String get() = TEXT_ESCAPE.replace(value) { if (it.groupValues[1] in "nN") "\n" else it.groupValues[1] }
 
     private companion object {
-        val TEXT_ESCAPE = Regex("""\\([nN,;\\])""")
+        val TEXT_ESCAPE = Regex("""\\([nN,;\\"])""")
     }
 }
 
