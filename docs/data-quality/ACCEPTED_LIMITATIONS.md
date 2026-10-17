@@ -309,6 +309,15 @@ says so.
 | `HAUS_DER_STATISTIK`   | `PROMOTERS`        | the organiser line often names a private person with an e-mail address                                                                           | —     |
 | `HAUS_DER_STATISTIK`   | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `HAUS_DER_STATISTIK`   | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
+| `HAFENBAR`             | `DOORS_TIME`       | each page prints one opening time per night                                                                                                      | —     |
+| `HAFENBAR`             | `END_TIME`         | the pages print no end time                                                                                                                      | —     |
+| `HAFENBAR`             | `IMAGE`            | the announcement carries no poster, only the page's decoration and gallery                                                                       | —     |
+| `HAFENBAR`             | `TICKET_URL`       | the pages link no ticket shop                                                                                                                    | —     |
+| `HAFENBAR`             | `PRICE`            | the pages print no entry price                                                                                                                   | —     |
+| `HAFENBAR`             | `PROMOTERS`        | the pages credit no promoter beside the Hafenbar team                                                                                            | —     |
+| `HAFENBAR`             | `SOLD_OUT`         | the pages state no ticket status                                                                                                                 | —     |
+| `HAFENBAR`             | `CANCELLATION`     | the pages have no status, so a cancelled night can only disappear                                                                                | —     |
+| `HAFENBAR`             | `PER_EVENT_PAGE`   | each weekly party has one page that shows only its next night, so every night of a series points at that page                                    | —     |
 | `HAVANNA`              | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HAVANNA`              | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `HEIDEGLUEHEN`         | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |

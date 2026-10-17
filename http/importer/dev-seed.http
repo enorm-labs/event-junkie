@@ -4155,7 +4155,7 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Hafenbar — not imported
+# Hafenbar
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Hafenbar venue ---
@@ -4176,13 +4176,43 @@ Content-Type: application/json
     "descriptionAlt": "Seit 1967 eine Tanzgaststätte im Seefahrer-Stil, früher in der Chausseestraße und seit 2016 am Alexanderplatz; freitags läuft seit 1996 die Schlagerparty Stimmen in Aspik, samstags Pop und Dance-Klassiker.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "bar"],
-    "programmeUrl": "https://www.hafenbar-berlin.de/schlager-party-berlin/",
     "reviewedAt": "2026-10-07T09:58:32Z"
 }
 
 > {%
+    client.global.set("venue_id_hafenbar", response.body.id);
     client.test("Hafenbar venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Hafenbar event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_hafenbar}},
+    "name": "Hafenbar",
+    "url": "https://www.hafenbar-berlin.de/",
+    "sourceType": "HAFENBAR",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Hafenbar event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Hafenbar import ---
+POST {{importer-host}}/api/admin/event-sources/hafenbar/import
+Accept: application/json
+
+> {%
+    client.test("Hafenbar import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
