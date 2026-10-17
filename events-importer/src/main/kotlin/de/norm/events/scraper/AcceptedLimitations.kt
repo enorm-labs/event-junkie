@@ -89,6 +89,7 @@ import de.norm.events.scraper.madmonkeyroom.MAD_MONKEY_ROOM_LIMITATIONS
 import de.norm.events.scraper.marmorbar.MARMORBAR_LIMITATIONS
 import de.norm.events.scraper.matrix.MATRIX_LIMITATIONS
 import de.norm.events.scraper.maxxim.MAXXIM_LIMITATIONS
+import de.norm.events.scraper.mbia.M_BIA_LIMITATIONS
 import de.norm.events.scraper.mehringhof.MEHRINGHOF_LIMITATIONS
 import de.norm.events.scraper.metropol.METROPOL_LIMITATIONS
 import de.norm.events.scraper.migas.MIGAS_LIMITATIONS
@@ -261,6 +262,7 @@ object AcceptedLimitations {
             MARMORBAR_LIMITATIONS,
             MATRIX_LIMITATIONS,
             MAXXIM_LIMITATIONS,
+            M_BIA_LIMITATIONS,
             MEHRINGHOF_LIMITATIONS,
             METROPOL_LIMITATIONS,
             MIGAS_LIMITATIONS,

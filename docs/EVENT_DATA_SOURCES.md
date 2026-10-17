@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   171 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   172 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    12 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -132,6 +132,7 @@ schema change.
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                                            | Club         | Next.js; one page per night format; next date only        |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                                            | Arena        | Shared VELOMAX listing; no sport imported                 |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                                      | Club         | Wix Events warmup JSON; UTC dates; prices inline          |
+| M-BIA                            | https://www.m-bia.de/                                                    | Techno Club  | WordPress posts; the post date is the night               |
 | Mehringhof-Theater               | https://www.mehringhoftheater.de/programm/                               | Theater      | IONOS month tables; tickettoaster JSON-LD                 |
 | Metropol                         | https://metropol-berlin.de/events                                        | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"        |
 | migas                            | https://migas.berlin/program/                                            | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+      |
@@ -212,7 +213,7 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-170 importer classes cover 171 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+171 importer classes cover 172 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -234,7 +235,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-60 sources have a second language, 107 have none, and 4 are unknown. Twelve translate the event text on a second page.
+60 sources have a second language, 108 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -352,6 +353,7 @@ the upsert stores none.
 | Matrix Club Berlin               | Yes             | `/en/` path, language buttons                                | Translated         | https://www.matrix-berlin.de/en/night/social                                                                                       |
 | Max-Schmeling-Halle              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | Maxxim Club                      | No              | —                                                            | —                  |                                                                                                                                    |
+| M-BIA                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Mehringhof-Theater               | No              | —                                                            | —                  |                                                                                                                                    |
 | Metropol                         | No              | —                                                            | —                  |                                                                                                                                    |
 | migas                            | No              | —                                                            | —                  |                                                                                                                                    |
@@ -450,21 +452,20 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name                | URL                                                | Type        | Priority | Comment                                                   |
-| ------------------- | -------------------------------------------------- | ----------- | -------- | --------------------------------------------------------- |
-| Little Stage Bar    | https://littlestageclubneukoelln.wordpress.com/    | Bar         | Low      | WordPress.com posts; date and time only in the prose      |
-| Volksbühne          | https://www.volksbuehne-berlin.de/konzerte/        | Theater     | Low      | Concert page; 2 upcoming, with date, time and room        |
-| Renaissance-Theater | https://renaissance-theater.de/spielplan/          | Theater     | Low      | Day blocks under month headings; plays only               |
-| KuBiZ               | https://www.kubiz-wallenberg.de/                   | Other       | Low      | WordPress posts; date in the title; jazz about monthly    |
-| Villa Kuriosum      | https://www.villakuriosum.net/veranstaltungen/     | Other       | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
-| Promenaden Eck      | https://promenaden-eck-berlin.de/                  | Bar         | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
-| M-BIA               | https://www.m-bia.de/                              | Techno Club | Low      | WordPress posts; post date is event date; RA links        |
-| Hafenbar Berlin     | https://www.hafenbar-berlin.de                     | Bar         | Low      | WordPress; 2 weekly party pages, next date only           |
-| Studio1111          | https://studioiiii.de/                             | Club        | Low      | Tilda; homepage text blocks; 3 events, no year            |
-| Backsteinboot       | https://backsteinboot.org/program-(landing-page)-1 | Club        | Low      | Cargo; month in HTML; mostly workshops and talks          |
-| PKH Warehouse       | https://www.pkh.events/                            | Other       | Low      | Hand-written HTML copied from RA; month headings, no year |
-| Pastiche            | https://pasticheinternational.com/programme-1      | Bar         | Low      | Cargo; one month table in the HTML, no year               |
-| 8MM                 | https://www.8mmbar.de/program                      | Bar         | Low      | Squarespace list in HTML; the JSON feed is robots-barred  |
+| Name                | URL                                                | Type    | Priority | Comment                                                   |
+| ------------------- | -------------------------------------------------- | ------- | -------- | --------------------------------------------------------- |
+| Little Stage Bar    | https://littlestageclubneukoelln.wordpress.com/    | Bar     | Low      | WordPress.com posts; date and time only in the prose      |
+| Volksbühne          | https://www.volksbuehne-berlin.de/konzerte/        | Theater | Low      | Concert page; 2 upcoming, with date, time and room        |
+| Renaissance-Theater | https://renaissance-theater.de/spielplan/          | Theater | Low      | Day blocks under month headings; plays only               |
+| KuBiZ               | https://www.kubiz-wallenberg.de/                   | Other   | Low      | WordPress posts; date in the title; jazz about monthly    |
+| Villa Kuriosum      | https://www.villakuriosum.net/veranstaltungen/     | Other   | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
+| Promenaden Eck      | https://promenaden-eck-berlin.de/                  | Bar     | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
+| Hafenbar Berlin     | https://www.hafenbar-berlin.de                     | Bar     | Low      | WordPress; 2 weekly party pages, next date only           |
+| Studio1111          | https://studioiiii.de/                             | Club    | Low      | Tilda; homepage text blocks; 3 events, no year            |
+| Backsteinboot       | https://backsteinboot.org/program-(landing-page)-1 | Club    | Low      | Cargo; month in HTML; mostly workshops and talks          |
+| PKH Warehouse       | https://www.pkh.events/                            | Other   | Low      | Hand-written HTML copied from RA; month headings, no year |
+| Pastiche            | https://pasticheinternational.com/programme-1      | Bar     | Low      | Cargo; one month table in the HTML, no year               |
+| 8MM                 | https://www.8mmbar.de/program                      | Bar     | Low      | Squarespace list in HTML; the JSON feed is robots-barred  |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
