@@ -411,6 +411,9 @@ enum class EventSource {
     /** Speiches Rock- und Blueskneipe Berlin – the Prenzlauer Berg blues pub of Monokel bassist Jörg "Speiche" Schütze, with free live blues. */
     SPEICHES,
 
+    /** Spindler & Klatt Berlin – an event location on the Spree at the former East-West border, whose club hosts themed party nights. */
+    SPINDLER_KLATT,
+
     /** Supamolly Berlin – a former squat turned collectively run venue near Traveplatz: punk, ska and hardcore concerts, theatre, film and socials. */
     SUPAMOLLY,
 
