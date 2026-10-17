@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.commaListActs
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -31,12 +32,10 @@ import java.time.format.DateTimeParseException
 /**
  * Pure HTML parser for Supamolly Berlin's retro hand-coded single-page programme.
  *
- * The whole programme is one `<table>` on `?p=programm` (byte-identical to the homepage). Every
- * night is a `<tr class="event" id="YYYYMMDDHHMM">` whose **`id` is a date+time stamp** — the
- * most stable signal on the page (ADR-007 selector priority 4) and the basis for
- * [ScrapedEvent.eventDate] and a stable [ScrapedEvent.sourceId]. Its `td.date` carries a
- * year-less `DD.MM.`, an `HH:MM` time and an optional flyer; its `td.evcont` holds one
- * `div.even` per billed act, each a `.tit` name, an optional `.beschr` note and a `.lin` link.
+ * The whole programme is one `<table>` on `?p=programm` (byte-identical to the homepage). Every night is a
+ * `<tr class="event" id="YYYYMMDDHHMM">` whose **`id` is a date+time stamp** — the most stable signal on the page (ADR-007
+ * selector priority 4) and the basis for [ScrapedEvent.eventDate] and [ScrapedEvent.sourceId]. Its `td.date` carries a year-less
+ * `DD.MM.`, an `HH:MM` time and an optional flyer; its `td.evcont` holds one `div.even` per act: a `.tit` name, a `.beschr` note, a `.lin` link.
  *
  * - **The lineup is the billing.** No separate headline: the venue's own RSS renders a night as
  * its act names joined with ", ", so that joined string is the title and the `.even` names the
@@ -45,10 +44,11 @@ import java.time.format.DateTimeParseException
  * - **Monthly programme posters are rows.** A flyer-only row stamped 23:59 and titled after the month
  * ("September Programm 2026", "Oktober Supamolly", [PROGRAMME_POSTER_TITLE]) announces the printed
  * programme, not an event. The wording after the month changes; the 23:59 stamp has not.
- * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee" social is billed like an
- * act, its time only in `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but
- * is never an artist, so [inferUnmarkedTitleType] types the night instead of defaulting to a
- * concert. It is the social's name, or any name with an inline `HH:MM Uhr`, which no performer states.
+ * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee" social is billed like an act, its time only in
+ * `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but is never an artist, so [inferUnmarkedTitleType]
+ * types the night instead of defaulting to a concert. It is the social's name, any name with an inline `HH:MM Uhr`, which no
+ * performer states, or a party's name ([PARTY_NIGHT_PATTERN]).
+ * - **A block can carry a role label.** `Lieve: Subact` (sic) bills one act `LIVE`; `Djs Bain, Berry T, Kite & Domske` four `DJ`s.
  * - **An act's note is sometimes its style.** `.beschr` holds `Punk Rock` as often as
  * `Kaffee & Kuchen ab 19:30`, so only the genres the vocabulary knows become the night's
  * [ScrapedEvent.genre] ([parseGenre]); the whole note stays the description.
@@ -153,20 +153,39 @@ class SupamollyOverviewPageScraper {
     }
 
     /**
-     * The billed act names as artist entries, in billing order. Each is stripped of a leading
-     * co-bill conjunction (`"& Support"` → `"Support"`, so the shared [isNonArtistName] recognises
-     * the bare role label), a founding tagline ([FOUNDING_TAGLINE]) and a trailing tour/live/format tail ([stripArtistSuffix]), then dropped
-     * if not a performer ([isNonArtistName]) or a programme note ([isProgrammeNote]). First survivor
-     * is headliner, the rest support.
+     * The billed act names as artist entries, in billing order ([billedActs]), less the names that
+     * are not a performer ([isNonArtistName]) or a programme note ([isProgrammeNote]). An act without
+     * a role label is headliner when it is the first such survivor, support otherwise.
      */
-    private fun buildArtists(actNames: List<String>): List<ScrapedArtist> =
-        actNames
-            .map { stripArtistSuffix(stripArtistPrefix(it.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, ""))) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) && !isProgrammeNote(it) }
-            .distinct()
-            .mapIndexed { index, name ->
-                ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
-            }
+    private fun buildArtists(actNames: List<String>): List<ScrapedArtist> {
+        val acts =
+            actNames
+                .flatMap(::billedActs)
+                .filter { it.name.isNotBlank() && !isNonArtistName(it.name) && !isProgrammeNote(it.name) }
+                .distinctBy { it.name }
+        val headliner = acts.firstOrNull { it.role == null }
+        return acts.map { act ->
+            ScrapedArtist(name = act.name, role = act.role ?: if (act === headliner) "HEADLINER" else "SUPPORT")
+        }
+    }
+
+    /**
+     * One block's acts. The name loses a leading co-bill conjunction (`"& Support"` → `"Support"`, so
+     * [isNonArtistName] sees the bare role label), a founding tagline ([FOUNDING_TAGLINE]) and a
+     * trailing tour/live/format tail ([stripArtistSuffix]). A [DJ_LIST_LABEL] block splits into `DJ`
+     * acts and a [LIVE_LABEL] block bills one `LIVE` act; any other block is one act without a role.
+     */
+    private fun billedActs(block: String): List<BilledAct> {
+        val name = block.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, "").trim()
+        DJ_LIST_LABEL.find(name)?.let { label ->
+            val list = name.substring(label.range.last + 1)
+            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim()), "DJ") }
+        }
+        LIVE_LABEL.find(name)?.let { label ->
+            return listOf(BilledAct(stripArtistSuffix(name.substring(label.range.last + 1)), "LIVE"))
+        }
+        return listOf(BilledAct(stripArtistSuffix(stripArtistPrefix(name)), role = null))
+    }
 
     /**
      * The flyer URL from the row's thumbnail. The markup links a `flyer/small/<stamp>.jpg`
@@ -203,10 +222,19 @@ class SupamollyOverviewPageScraper {
         }
 
     /**
-     * True when an act name is a programme note: the café social's name ([CAFE_SOCIAL_PATTERN]) or
-     * an inline `HH:MM Uhr` schedule. It keeps service listings out of the artist table.
+     * True when an act name is a programme note: the café social's name ([CAFE_SOCIAL_PATTERN]), an
+     * inline `HH:MM Uhr` schedule or a party's name ([PARTY_NIGHT_PATTERN]). It keeps them out of the artist table.
      */
-    private fun isProgrammeNote(name: String): Boolean = CAFE_SOCIAL_PATTERN.matches(name.trim()) || SCHEDULE_NOTE_PATTERN.containsMatchIn(name)
+    private fun isProgrammeNote(name: String): Boolean =
+        CAFE_SOCIAL_PATTERN.matches(name.trim()) ||
+            SCHEDULE_NOTE_PATTERN.containsMatchIn(name) ||
+            PARTY_NIGHT_PATTERN.containsMatchIn(name.trim())
+
+    /** One act of a block, with the role its label states, or `null` when the billing order decides. */
+    private data class BilledAct(
+        val name: String,
+        val role: String?
+    )
 
     /** One billed `div.even` block: the act name and its note, either of which may be absent. */
     private data class ActBlock(
@@ -248,6 +276,22 @@ class SupamollyOverviewPageScraper {
          */
         private val CAFE_SOCIAL_PATTERN =
             Regex("""(?:kuchen\s*(?:&|\+|und)\s*kaff?ee?|kaff?ee?\s*(?:&|\+|und)\s*kuchen)""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A party's name: `Soliparty <beneficiary>`, `<crew> Soliparty`, or `<night>: <genre> Party`.
+         * A bare trailing `Party` is not enough, because Bloc Party and The Birthday Party are bands.
+         */
+        private val PARTY_NIGHT_PATTERN =
+            Regex("""^soli[- ]?party\b|soli-?party$|^[^:]+:.*\bparty$""", RegexOption.IGNORE_CASE)
+
+        /** A `Live:` label, also as the venue's `Lieve:` typo. The act it labels is billed `LIVE`. */
+        private val LIVE_LABEL = Regex("""^(?:live|lieve)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A `Djs` / `DJ's` label in front of a list of DJs: `Djs Bain, Berry T, Kite & Domske`. */
+        private val DJ_LIST_LABEL = Regex("""^dj'?s\b\s*:?\s*""", RegexOption.IGNORE_CASE)
+
+        /** Where a DJ list without a closing conjunction splits: `Djs A & B`, `Djs A, B`. */
+        private val DJ_LIST_SEPARATOR = Regex("""\s*(?:,|&|\+)\s*""")
 
         /** An inline `HH:MM Uhr` schedule in an act name — the signature of a programme note, not a performer. */
         private val SCHEDULE_NOTE_PATTERN = Regex("""\d{1,2}[:.]\d{2}\s*uhr""", RegexOption.IGNORE_CASE)
