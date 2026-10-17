@@ -78,10 +78,10 @@ class UfaFabrikMonthPageScraperTest {
     ) = ufaFabrikArtists(title, null, eventType.name).map { it.name to it.role }
 
     @Test
-    fun `splits a mit billing into its acts and bills a special guest as support`() {
+    fun `splits a mit billing into its acts and bills the partner and a special guest as support`() {
         billing("Nils Kercher mit Kira Kaipainen (FIN) & Special Guest Oumar Barou Kouyate (Mali)") shouldBe
-            listOf("Nils Kercher" to "HEADLINER", "Kira Kaipainen" to "HEADLINER", "Oumar Barou Kouyate" to "SUPPORT")
-        billing("Ulla Meinecke mit Reinmar Henschke") shouldBe listOf("Ulla Meinecke" to "HEADLINER", "Reinmar Henschke" to "HEADLINER")
+            listOf("Nils Kercher" to "HEADLINER", "Kira Kaipainen" to "SUPPORT", "Oumar Barou Kouyate" to "SUPPORT")
+        billing("Ulla Meinecke mit Reinmar Henschke") shouldBe listOf("Ulla Meinecke" to "HEADLINER", "Reinmar Henschke" to "SUPPORT")
         billing("David Anthony Rose & Manouche '26 – special guest: Dotschy Reinhardt") shouldBe
             listOf("David Anthony Rose" to "HEADLINER", "Manouche '26" to "HEADLINER", "Dotschy Reinhardt" to "SUPPORT")
         billing("Nils Kercher Trio mit Special Guest Oumar Barou Kouyaté (Mali)") shouldBe
@@ -98,7 +98,8 @@ class UfaFabrikMonthPageScraperTest {
 
     @Test
     fun `reads the billing of the month's concerts`() {
-        october.single { it.title.startsWith("Ulla Meinecke") }.artists.map { it.name } shouldBe listOf("Ulla Meinecke", "Reinmar Henschke")
+        october.single { it.title.startsWith("Ulla Meinecke") }.artists.map { it.name to it.role } shouldBe
+            listOf("Ulla Meinecke" to "HEADLINER", "Reinmar Henschke" to "SUPPORT")
         october.single { it.title.startsWith("Nils Kercher") }.artists.map { it.name to it.role } shouldBe
             listOf("Nils Kercher Trio" to "HEADLINER", "Oumar Barou Kouyaté" to "SUPPORT")
     }

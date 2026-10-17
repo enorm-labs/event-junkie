@@ -113,9 +113,9 @@ class UfaFabrikMonthPageScraper {
 
 /**
  * The acts of a row. A concert title bills people with the German `mit` and a mid-title `Special Guest`
- * (#3106): `Ulla Meinecke mit Reinmar Henschke` is two acts, and the guest of `… – special guest: Dotschy
- * Reinhardt` is support. Local, because at most venues `mit` opens a night's guests, which is why the shared
- * `WITH_FRAME_PATTERN` is opt-in. `Lacrimosa mit Orchester` and `X mit seiner Band` stay one act.
+ * (#3106): `Ulla Meinecke mit Reinmar Henschke` is two acts, the one after `mit` her accompanist and so
+ * support, and the guest of `… – special guest: Dotschy Reinhardt` is support too. Local, because at most
+ * venues `mit` opens a night's guests, which is why the shared `WITH_FRAME_PATTERN` is opt-in. `Lacrimosa mit Orchester` and `X mit seiner Band` stay one act.
  */
 internal fun ufaFabrikArtists(
     title: String,
@@ -142,7 +142,7 @@ private fun splitAtMit(artist: ScrapedArtist): List<ScrapedArtist> {
         .chunked(2)
         .map { (from, to) -> stripArtistSuffix(artist.name.substring(from, to)) }
         .filterNot { it.isBlank() || isNonArtistName(it) }
-        .map { artist.copy(name = it) }
+        .mapIndexed { index, name -> artist.copy(name = name, role = if (index == 0) artist.role else "SUPPORT") }
 }
 
 /** A mid-title guest credit, after a dash, `&`, `+`, a comma or `mit`; the guests follow. */
