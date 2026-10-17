@@ -8,7 +8,6 @@ import de.norm.events.slug.SlugGenerator
 import de.norm.events.venue.VenueNotFoundException
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable

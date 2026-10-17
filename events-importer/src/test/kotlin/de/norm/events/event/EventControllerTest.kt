@@ -11,24 +11,20 @@ import de.norm.events.promoter.PromoterResponse
 import de.norm.events.venue.VenueRequest
 import de.norm.events.venue.VenueRequestFixtures
 import de.norm.events.venue.VenueResponse
-import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.test.web.reactive.server.expectBody
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Instant
-import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class EventControllerTest : BaseControllerTest() {

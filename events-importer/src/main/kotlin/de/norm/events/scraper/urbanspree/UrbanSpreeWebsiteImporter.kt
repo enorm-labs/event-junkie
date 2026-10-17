@@ -1,6 +1,5 @@
 package de.norm.events.scraper.urbanspree
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter

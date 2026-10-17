@@ -12,7 +12,6 @@ import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging

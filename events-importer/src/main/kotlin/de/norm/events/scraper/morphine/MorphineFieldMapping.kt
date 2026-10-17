@@ -6,7 +6,6 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekday
 import de.norm.events.scraper.parseGermanShortDate
-import de.norm.events.scraper.parseTime
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime

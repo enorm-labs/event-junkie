@@ -16,7 +16,6 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseRelocation
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -28,7 +27,6 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /** Admin host serving the Wagtail API and CMS-rendered pages; rewritten to the public host for user-facing URLs. */

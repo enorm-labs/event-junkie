@@ -15,7 +15,6 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 
 /**
  * Pure HTML parser for Parkbühne Wuhlheide event detail pages (`/programm/<act>/YYYY-MM-DD`).

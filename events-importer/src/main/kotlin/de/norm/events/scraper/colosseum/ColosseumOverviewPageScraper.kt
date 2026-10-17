@@ -22,7 +22,6 @@ import de.norm.events.scraper.wixPriceRangeNote
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import java.math.BigDecimal
 
 /**
  * Pure parser for Colosseum's Wix Events programme page (`/event`).

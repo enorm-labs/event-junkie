@@ -29,7 +29,6 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 

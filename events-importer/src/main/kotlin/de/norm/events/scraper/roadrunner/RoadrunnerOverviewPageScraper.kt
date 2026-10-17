@@ -18,7 +18,6 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
