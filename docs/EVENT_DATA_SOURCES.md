@@ -22,11 +22,11 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   174 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   175 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    10 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -85,6 +85,7 @@ schema change.
 | Fitzroy                          | https://fitzroy-berlin.de/events/                                        | Club         | Shares the LARK parser; every event typed `Party`         |
 | Frachtkante                      | https://frachtkante.de/de/                                               | Open Air     | ProcessWire one-pager; no event pages; typed by title     |
 | Frannz Club                      | https://frannz.eu/                                                       | Club         |                                                           |
+| Friedrichstadt-Palast            | https://www.palast.berlin/gastspiele/                                    | Theater      | WordPress; one row per ticket button; no revue            |
 | Galiläakirche                    | https://galilaea-kirche.de/programm/                                     | Other        | Very Simple Event List + event pages; prices as prose     |
 | gART.n                           | https://www.gartn.xyz/                                                   | Techno Club  | Carrd one-pager; year from weekday; no prices             |
 | Gärten der Welt                  | https://www.gaertenderwelt.de/events/veranstaltungen/                    | Open Air     | TYPO3 events2; paged; park activities excluded            |
@@ -215,7 +216,7 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-173 importer classes cover 174 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+174 importer classes cover 175 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -237,7 +238,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-60 sources have a second language, 110 have none, and 4 are unknown. Twelve translate the event text on a second page.
+60 sources have a second language, 111 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -308,6 +309,7 @@ the upsert stores none.
 | Fitzroy                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Frachtkante                      | No              | —                                                            | —                  |                                                                                                                                    |
 | Frannz Club                      | No              | —                                                            | —                  |                                                                                                                                    |
+| Friedrichstadt-Palast            | No              | —                                                            | —                  |                                                                                                                                    |
 | Galiläakirche                    | No              | TranslatePress `/en/` path, machine translation only         | —                  |                                                                                                                                    |
 | gART.n                           | No              | —                                                            | —                  |                                                                                                                                    |
 | Gärten der Welt                  | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.gaertenderwelt.de/en/events/events/                                                                                    |
@@ -795,15 +797,14 @@ All rows come from the promoter sweep of 2026-10-04 (see the list below). **Foun
 showed a show there. A URL comes from a web search. Nobody opened it yet. A dash means that the search found
 no site of the venue's own.
 
-| Name                  | URL                                   | Type         | Found via                      |
-| --------------------- | ------------------------------------- | ------------ | ------------------------------ |
-| Ernst-Reuter-Saal     | —                                     | Concert Hall | New Berlin Konzerte            |
-| Friedrichstadt-Palast | https://www.palast.berlin/gastspiele/ | Theater      | Antenne Brandenburg            |
-| K19                   | —                                     | Club         | Patchanka Booking              |
-| Kiezkapelle           | https://www.kiezkapelle.de/programm/  | Other        | Puschen                        |
-| Paradox Music Hall    | —                                     | Club         | Diffus, Landstreicher Konzerte |
-| Trixxter              | —                                     | Bar          | Metal Hammer                   |
-| Wowsville             | —                                     | Bar          | Crunch Tapes                   |
+| Name               | URL                                  | Type         | Found via                      |
+| ------------------ | ------------------------------------ | ------------ | ------------------------------ |
+| Ernst-Reuter-Saal  | —                                    | Concert Hall | New Berlin Konzerte            |
+| K19                | —                                    | Club         | Patchanka Booking              |
+| Kiezkapelle        | https://www.kiezkapelle.de/programm/ | Other        | Puschen                        |
+| Paradox Music Hall | —                                    | Club         | Diffus, Landstreicher Konzerte |
+| Trixxter           | —                                    | Bar          | Metal Hammer                   |
+| Wowsville          | —                                    | Bar          | Crunch Tapes                   |
 
 Check these points when a row is opened:
 

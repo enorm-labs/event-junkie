@@ -145,6 +145,9 @@ enum class EventSource {
     /** Frannz Club Berlin – a club and concert venue in the Kulturbrauerei, across pop, indie, hip-hop and electronic music. */
     FRANNZ,
 
+    /** Friedrichstadt-Palast – the revue theatre on Friedrichstraße, home of the Grand Show, which also hosts concerts and guest shows. */
+    FRIEDRICHSTADTPALAST,
+
     /** Gärten der Welt Berlin – the Marzahn landscape park of international themed gardens, whose Arena stages open-air concerts and park festivals. */
     GAERTEN_DER_WELT,
 
