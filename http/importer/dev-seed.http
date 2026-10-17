@@ -1955,7 +1955,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Café Köpenick — not imported
+# Café Köpenick
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Café Köpenick venue ---
@@ -1976,13 +1976,43 @@ Content-Type: application/json
     "descriptionAlt": "Der vom Kreisjugendring Köpenick e.V. getragene Jugendclub versteht sich als Ort antifaschistischer Jugend- und Kulturarbeit: mit Bandkonzerten, Partys, Lesungen, wöchentlicher Open Jam und Proberäumen.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "live-venue", "cultural-centre"],
-    "programmeUrl": "https://hdjk.de/veranstaltungen-events/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("venue_id_cafe_kopenick", response.body.id);
     client.test("Café Köpenick venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Café Köpenick event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_cafe_kopenick}},
+    "name": "Café Köpenick",
+    "url": "https://export.kalender.digital/ics/2710942/25872d7326c4cadce48e/ffentlicheveranstaltungenangebote.ics?past_months=0&future_months=12",
+    "sourceType": "CAFE_KOEPENICK",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Café Köpenick event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Café Köpenick import ---
+POST {{importer-host}}/api/admin/event-sources/cafe-kopenick/import
+Accept: application/json
+
+> {%
+    client.test("Café Köpenick import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
