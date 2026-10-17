@@ -200,6 +200,17 @@ says so.
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
+| `EIGHT_MM`             | `PAGINATION`       | the calendar lists only the month it shows, and robots.txt bars the other months                                                                 | —     |
+| `EIGHT_MM`             | `END_TIME`         | every calendar entry ends one hour after it starts, a placeholder rather than a real end                                                         | —     |
+| `EIGHT_MM`             | `DOORS_TIME`       | only a concert blurb states a doors time; a DJ night has none                                                                                    | —     |
+| `EIGHT_MM`             | `SUBTITLE`         | an event carries a title and a blurb, no second title line                                                                                       | —     |
+| `EIGHT_MM`             | `GENRE`            | nothing on the calendar or the event pages names a style                                                                                         | —     |
+| `EIGHT_MM`             | `ARTISTS`          | a DJ night names its DJs only in a free-form title, so it bills nobody                                                                           | —     |
+| `EIGHT_MM`             | `PRICE`            | the site states no price; bands keep the door money                                                                                              | —     |
+| `EIGHT_MM`             | `TICKET_URL`       | a blurb points to the venue's Instagram for tickets, never to a shop                                                                             | —     |
+| `EIGHT_MM`             | `SOLD_OUT`         | nothing flags an event sold out                                                                                                                  | —     |
+| `EIGHT_MM`             | `CANCELLATION`     | nothing flags an event cancelled                                                                                                                 | —     |
+| `EIGHT_MM`             | `PROMOTERS`        | a guest promoter is named only inside the title or the blurb                                                                                     | —     |
 | `ERREICHBAR`           | `ARTISTS`          | the punk bar night plays records and bills no one                                                                                                | —     |
 | `ERREICHBAR`           | `IMAGE`            | the bar posts no image to radar                                                                                                                  | —     |
 | `ERREICHBAR`           | `TICKET_URL`       | the bar sells no tickets                                                                                                                         | —     |
