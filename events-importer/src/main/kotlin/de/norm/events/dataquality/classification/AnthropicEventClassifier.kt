@@ -2,6 +2,7 @@ package de.norm.events.dataquality.classification
 
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
+import de.norm.events.common.runCatchingCancellable
 import de.norm.events.event.EventType
 import de.norm.events.event.PartyFeature
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -81,7 +82,7 @@ class AnthropicEventClassifier(
 
     suspend fun classify(input: ClassificationInput): ClassifierResult {
         if (properties.apiKey.isEmpty()) return ClassifierResult.Failed
-        return runCatching { client.call(SYSTEM_PROMPT, userMessage(input)) }.fold(
+        return runCatchingCancellable { client.call(SYSTEM_PROMPT, userMessage(input)) }.fold(
             onSuccess = { reply ->
                 val usage = TokenUsage(reply.promptTokens, reply.completionTokens)
                 if (reply.refused) logger.warn { "The model declined to classify an event" }

@@ -1,6 +1,7 @@
 package de.norm.events.importing
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -74,6 +75,8 @@ class ImportJobLauncher(
                 logger.info { "Background import for $description started" }
                 block()
                 logger.info { "Background import for $description finished" }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.error(e) { "Background import for $description failed" }
             }

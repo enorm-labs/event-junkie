@@ -2,6 +2,7 @@ package de.norm.events.translation
 
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
+import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
@@ -59,7 +60,7 @@ class AnthropicTranslationEngine(
 
     override suspend fun translate(request: TranslationRequest): TranslationResult {
         if (properties.apiKey.isEmpty()) return TranslationResult.Failed
-        return runCatching { call(request) }.fold(
+        return runCatchingCancellable { call(request) }.fold(
             onSuccess = { translated ->
                 if (translated != null && isPlausible(request, translated)) {
                     TranslationResult.Translated(translated)

@@ -78,6 +78,8 @@ class EventClassificationCheck(
         return run("source '$slug'", repository.findSourceCandidateIds(slug), force, maxCalls, sourceSlug = slug)
     }
 
+    // A cancellation skips the error log, and getOrThrow rethrows it.
+    @Suppress("SuspendFunSwallowedCancellation")
     private suspend fun run(
         scope: String,
         eventIds: List<Long>,

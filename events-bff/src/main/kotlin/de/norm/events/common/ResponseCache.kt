@@ -84,7 +84,8 @@ class ResponseCache(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
+    // completeWith hands a cancellation to the waiters and getOrThrow rethrows it.
+    @Suppress("UNCHECKED_CAST", "SuspendFunSwallowedCancellation")
     private suspend fun <V : Any> loadAs(
         key: Any,
         mine: CompletableDeferred<Any>,

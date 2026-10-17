@@ -2,6 +2,7 @@ package de.norm.events.instagram
 
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
+import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
@@ -51,7 +52,7 @@ class AnthropicPostExtractor(
 
     suspend fun extract(input: PostInput): ExtractionResult {
         if (properties.apiKey.isEmpty()) return ExtractionResult.Failed
-        return runCatching { call(input) }.fold(
+        return runCatchingCancellable { call(input) }.fold(
             onSuccess = { (text, tokens) ->
                 text
                     ?.let { PostExtractionValidator.parse(it, input, properties.minConfidence) }

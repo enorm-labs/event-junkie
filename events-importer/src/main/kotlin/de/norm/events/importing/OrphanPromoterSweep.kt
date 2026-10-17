@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.common.rethrowIfCancelled
 import de.norm.events.promoter.UncreditedPromoterStore
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -29,11 +30,13 @@ class OrphanPromoterSweep(
 
     /** 03:40 UTC, after the orphan artist sweep and before the venue programme sweep. */
     @Scheduled(cron = $$"${app.promoters.orphan-sweep-cron:0 40 3 * * *}")
-    @Suppress("TooGenericExceptionCaught") // Intentional: an uncaught exception cancels the task and shares the import scheduler
+    // Intentional: an uncaught exception cancels the task and shares the import scheduler
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation")
     suspend fun sweep() {
         try {
             runOnce()
         } catch (e: Exception) {
+            rethrowIfCancelled()
             logger.error(e) { "Orphan promoter sweep failed" }
         }
     }

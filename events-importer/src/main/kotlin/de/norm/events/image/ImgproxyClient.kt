@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
@@ -56,6 +57,8 @@ class ImgproxyClient(
                     null
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (
             // A sidecar that is starting, out of memory or gone. All of them mean the same thing to
             // the caller: no variant this pass, try again on the next one.

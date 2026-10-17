@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import crawlercommons.robots.BaseRobotRules
 import crawlercommons.robots.SimpleRobotRules
 import crawlercommons.robots.SimpleRobotRulesParser
+import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -96,7 +97,7 @@ class RobotsRulesCache(
             return RobotsCheck(host = "", robotsTxtUrl = null, allowed = true, checkedAt = now())
         }
 
-        return runCatching {
+        return runCatchingCancellable {
             val cached = rulesFor(host, uri)
             RobotsCheck(
                 host = host,
@@ -144,7 +145,7 @@ class RobotsRulesCache(
         val port = if (uri.port == -1) "" else ":${uri.port}"
         val robotsUrl = "$scheme://$host$port/robots.txt"
 
-        return runCatching { fetchAndParse(robotsUrl, host) }
+        return runCatchingCancellable { fetchAndParse(robotsUrl, host) }
             .getOrElse { error ->
                 logger.warn(error) { "Could not reach $robotsUrl — treating $host as unrestricted" }
                 CachedRules(ALLOW_ALL, robotsTxtUrl = null, fetchedAt = now())

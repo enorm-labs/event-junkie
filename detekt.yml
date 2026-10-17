@@ -35,6 +35,11 @@ potential-bugs:
     active: true
 
 coroutines:
+  SuspendFunSwallowedCancellation:
+    # A cancelled coroutine must stop, not log a failure and run on (#3541). A test's scope is runTest's.
+    active: true
+    excludes: ['**/test/**']
+
   InjectDispatcher:
     # The rule keeps a hard-coded dispatcher out of production wiring so a test can substitute one.
     # A test *is* that substitution, and the `ioDispatcher` bean it asks for exists already.

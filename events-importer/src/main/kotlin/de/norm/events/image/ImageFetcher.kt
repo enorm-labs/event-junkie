@@ -2,6 +2,7 @@ package de.norm.events.image
 
 import de.norm.events.scraper.SCRAPER_WEB_CLIENT
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Qualifier
@@ -77,6 +78,8 @@ class ImageFetcher(
                         }
                     }
                 }
+        } catch (e: CancellationException) {
+            throw e
         } catch (
             // Every transport fault, deliberately: a reset, a DNS failure and a read timeout mean the same
             // to the caller. Nothing is rethrown, so one dead URL cannot stop the pass.

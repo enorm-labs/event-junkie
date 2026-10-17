@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.net.URI
@@ -87,6 +88,8 @@ class MigasWebsiteImporter(
             val fragment =
                 try {
                     htmlFetcher.postForm(ajaxUrl, mapOf("action" to "load_events", "paged" to "$page", "type" to "upcoming"))
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     logger.warn(e) { "migas page $page of $pageCount failed; importing the $read page(s) read" }
                     break
