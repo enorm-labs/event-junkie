@@ -1,6 +1,5 @@
 package de.norm.events.scraper.heidegluehen
 
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -13,7 +12,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 
 /**
  * The DJ lineup for one party, read from Heideglühen's `/aktuell/` ("Diese Woche") page.

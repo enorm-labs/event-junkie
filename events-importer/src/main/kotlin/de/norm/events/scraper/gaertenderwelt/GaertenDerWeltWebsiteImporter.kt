@@ -1,6 +1,5 @@
 package de.norm.events.scraper.gaertenderwelt
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource

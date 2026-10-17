@@ -8,7 +8,6 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
