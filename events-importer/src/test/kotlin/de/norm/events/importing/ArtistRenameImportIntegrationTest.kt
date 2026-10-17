@@ -70,7 +70,7 @@ class ArtistRenameImportIntegrationTest : BaseControllerTest() {
     fun `a second rename keeps both former slugs, and a rename back takes its slug back`() {
         runBlocking {
             val event = persistEvent("venue:chain")
-            val id = requireNotNull(createArtist("DJ Foo (live)").id)
+            val id = createArtist("DJ Foo (live)").id
 
             rename(id, "DJ Foo")
             rename(id, "Foo")
