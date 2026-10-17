@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Brotfabrik",
+        "address": "Caligariplatz 1",
+        "city": "Berlin",
+        "postalCode": "13086",
+        "district": "weissensee",
+        "latitude": 52.552592,
+        "longitude": 13.430592,
+        "websiteUrl": "https://brotfabrik-berlin.de",
+        "description": "An 1890 bakery at the Weißenseer Spitze, run as an arts centre since 1990 by the Glashaus association, with a cinema, a gallery, a pub and a stage for independent theatre, puppetry and readings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Bäckerei von 1890 an der Weißenseer Spitze, seit 1990 ein Kunst- und Kulturzentrum des Glashaus e. V., mit Kino, Galerie, Kneipe und einer Bühne für freies Theater, Puppenspiel und Lesungen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre", "theatre"]
+    },
+    "sources": [
+        {
+            "name": "Brotfabrik",
+            "url": "https://brotfabrik-berlin.de/wp-json/tribe/events/v1/events?categories=buehne,literatur",
+            "sourceType": "BROTFABRIK",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

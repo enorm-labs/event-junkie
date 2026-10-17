@@ -115,6 +115,10 @@ says so.
 | `BKA_THEATER`          | `ARTISTS`          | a production billed without an act names its cast only in prose                                                                                  | —     |
 | `BKA_THEATER`          | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
 | `BKA_THEATER`          | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
+| `BROTFABRIK`           | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
+| `BROTFABRIK`           | `END_TIME`         | every event ends two hours after it starts, the calendar's default rather than the show's                                                        | —     |
+| `BROTFABRIK`           | `GENRE`            | the house files its nights by room, not by style                                                                                                 | —     |
+| `BROTFABRIK`           | `ARTISTS`          | the stage bills productions, and the readings name their authors only in the title and the prose                                                 | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |

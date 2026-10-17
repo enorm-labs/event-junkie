@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   164 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    20 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   165 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    19 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -62,6 +62,7 @@ schema change.
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                                  | Techno Club  | Server-rendered; list + detail                            |
 | Bi Nuu                           | https://binuu.de/                                                        | Club         | No genre or prices on site; only via ticket link          |
 | BKA Theater                      | https://www.bka-theater.de/spielplan/                                    | Theater      | PHP list a year out; JSON-LD prices for next 30           |
+| Brotfabrik                       | https://brotfabrik-berlin.de/veranstaltungen/                            | Other        | The Events Calendar API; `Bühne`, `Literatur` only        |
 | Cassiopeia                       | https://cassiopeia-berlin.de/                                            | Club         | Webflow; genre tags, badges; walks all pages              |
 | Clash Club                       | https://clash-berlin.de/                                                 | Club         | WordPress; prices, doors and blurb only as prose          |
 | Club der Visionäre               | https://clubdervisionaere.com/programm                                   | Techno Club  | WordPress; one listing, 3 rooms by CSS class              |
@@ -205,7 +206,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-163 importer classes cover 164 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+164 importer classes cover 165 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -227,7 +228,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-58 sources have a second language, 102 have none, and 4 are unknown. Twelve translate the event text on a second page.
+58 sources have a second language, 103 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -275,6 +276,7 @@ the upsert stores none.
 | Berghain / Panorama Bar          | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/                                                                                            |
 | Bi Nuu                           | Yes             | `/en` path, `hreflang`                                       | Not on the listing | https://binuu.de/en                                                                                                                |
 | BKA Theater                      | No              | —                                                            | —                  |                                                                                                                                    |
+| Brotfabrik                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Cassiopeia                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Clash Club                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Club der Visionäre               | No              | —                                                            | —                  |                                                                                                                                    |
@@ -439,7 +441,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Name                     | URL                                                       | Type         | Priority | Comment                                                   |
 | ------------------------ | --------------------------------------------------------- | ------------ | -------- | --------------------------------------------------------- |
 | Little Stage Bar         | https://littlestageclubneukoelln.wordpress.com/           | Bar          | Low      | WordPress.com posts; date and time only in the prose      |
-| Brotfabrik               | https://brotfabrik-berlin.de/veranstaltungen/             | Other        | Low      | TEC REST API; mostly cinema; shows sit in `Bühne`         |
 | Schlosspark Theater      | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      | Low      | Server-rendered calendar; plays, readings, price ranges   |
 | Volksbühne               | https://www.volksbuehne-berlin.de/konzerte/               | Theater      | Low      | Concert page; 2 upcoming, with date, time and room        |
 | Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only               |
