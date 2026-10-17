@@ -2,6 +2,8 @@ package de.norm.events.artist
 
 import de.norm.events.common.deshoutWord
 import de.norm.events.common.foldTypedApostrophes
+import de.norm.events.common.isCapitals
+import de.norm.events.common.isMixedCase
 import de.norm.events.common.isShortInitialism
 import de.norm.events.slug.SlugGenerator
 
@@ -16,10 +18,15 @@ import de.norm.events.slug.SlugGenerator
 // ([foldTypedApostrophes]): no word is ever stripped, because every word in a
 // band name can be load-bearing ("The The", "Wolf Alice", "Arcade Fire Concerts"). Each shouted
 // ALL-CAPS word is title-cased by [deshoutWord], which `common` shares with the promoter
-// normalizer and which documents the tokens it leaves alone. One rule is applied here rather than
-// there: a name that is a *single* short all-caps token ("JJ", "MØ") is an initialism far more
-// often than a shouted word, and [isShortInitialism] keeps it verbatim. Scoped to the whole name,
-// so a short word inside a longer one still de-shouts ("WARS OF ATTRITION" -> "Wars of Attrition").
+// normalizer and which documents the tokens it leaves alone. Two rules read the whole name rather
+// than one token:
+//   - a name that is a *single* short all-caps token ("JJ", "MØ") is an initialism far more often
+//     than a shouted word, and [isShortInitialism] keeps it verbatim. A short word inside a longer
+//     shouted name still de-shouts ("WARS OF ATTRITION" -> "Wars of Attrition");
+//   - a name with a mixed-case word ([isMixedCase]) is not shouted, so a lone all-caps word in it
+//     is an initialism and stays as written ("HB&P Soundsystem", "ABF & Friends", #3507). Two
+//     all-caps words side by side are still a shouted name: "Kai & Funky von TON STEINE SCHERBEN"
+//     stores "Ton Steine Scherben". A token without letters ("&") does not separate them.
 
 /**
  * Returns the de-shouted display form of an artist [raw] name (see file header),
@@ -30,15 +37,24 @@ import de.norm.events.slug.SlugGenerator
 fun canonicalArtistName(raw: String): String {
     val trimmed = raw.trim().foldTypedApostrophes()
     val tokens = trimmed.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
-    // A whole name that is a single short all-caps token is an initialism/stylisation
-    // ("JJ", "MØ"), not a shouted word — keep it verbatim rather than minting "Jj"/"Mø".
     val canonical =
         if (tokens.size == 1 && tokens[0].isShortInitialism()) {
             tokens[0]
         } else {
-            tokens.joinToString(" ") { it.deshoutWord() }.ifBlank { trimmed }
+            tokens.deshoutBilling().joinToString(" ").ifBlank { trimmed }
         }
     return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
+}
+
+/** The tokens of a billing, de-shouted except for a lone all-caps word in a mixed-case billing (file header). */
+private fun List<String>.deshoutBilling(): List<String> {
+    if (none { it.isMixedCase() }) return map { it.deshoutWord() }
+    val worded = indices.filter { index -> this[index].any(Char::isLetter) }
+    return mapIndexed { index, token ->
+        val position = worded.indexOf(index)
+        val neighbours = listOfNotNull(worded.getOrNull(position - 1), worded.getOrNull(position + 1))
+        if (position >= 0 && neighbours.any { this[it].isCapitals() }) token.deshoutWord() else token
+    }
 }
 
 /**

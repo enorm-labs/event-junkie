@@ -31,4 +31,29 @@ class NameCasingTest {
     fun `leaves a mixed-case token as it is`() {
         "O'neill".deshoutWord() shouldBe "O'neill"
     }
+
+    @Test
+    fun `calls a token mixed case only when it has a capital and a lowercase letter`() {
+        assertSoftly {
+            "Soundsystem".isMixedCase() shouldBe true
+            "GreyZone".isMixedCase() shouldBe true
+            "Вуиндлия".isMixedCase() shouldBe true
+            "HB&P".isMixedCase() shouldBe false
+            "b2b".isMixedCase() shouldBe false
+            "&".isMixedCase() shouldBe false
+            "GROßE".isMixedCase() shouldBe false
+        }
+    }
+
+    @Test
+    fun `calls a token capitals when it has letters and no lowercase one but ß`() {
+        assertSoftly {
+            "HB&P".isCapitals() shouldBe true
+            "MC5".isCapitals() shouldBe true
+            "GROßE".isCapitals() shouldBe true
+            "Soundsystem".isCapitals() shouldBe false
+            "b2b".isCapitals() shouldBe false
+            "&".isCapitals() shouldBe false
+        }
+    }
 }

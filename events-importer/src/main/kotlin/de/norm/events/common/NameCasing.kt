@@ -15,10 +15,12 @@ package de.norm.events.common
 //   - nothing else: a short all-caps token ("JJ", "HB") is a word here, and the caller decides
 //     when a whole name is an initialism instead, via [isShortInitialism].
 //
-// A genuine all-caps name of three or more letters that is not in [ACRONYMS] ("NVST", "MGMT") is
-// title-cased here like any shouted word, since nothing here tells the two apart. MusicBrainz is the
-// lookup table: an artist with an EXACT match takes MusicBrainz's spelling when it differs from the
-// stored name in letter case only, and the slug stays (ArtistEnrichment, #2317). A promoter has no
+// The artist normalizer also reads the whole billing, via [isMixedCase] and [isCapitals], and keeps
+// "HB&P Soundsystem" as written. Otherwise a genuine all-caps name of three or more letters that is
+// not in [ACRONYMS] ("NVST", "MGMT") is title-cased here like any shouted word, since nothing here
+// tells the two apart. MusicBrainz is the lookup table: an artist with an EXACT match takes
+// MusicBrainz's spelling when it differs from the stored name in letter case only, and the slug
+// stays (ArtistEnrichment, #2317). A promoter has no
 // such lookup. Display-only either way: slugs are case-insensitive, so the resolved row is unaffected.
 
 /**
@@ -43,6 +45,17 @@ private fun String.deshoutPart(): String = if (isShoutedWord()) titleCaseKeeping
  * ("WARS OF ATTRITION" -> "Wars of Attrition").
  */
 fun String.isShortInitialism(): Boolean = length <= SHORT_INITIALISM_MAX_LEN && any { it.isLetter() } && none { it.isLowerCase() || it.isDigit() }
+
+/**
+ * Whether the token has a capital and a lowercase letter ("Soundsystem", "GreyZone"): a billing that
+ * holds one is styled, not shouted. `ß` has no capital in common use, so "GROßE" is not mixed case.
+ */
+fun String.isMixedCase(): Boolean = any { it.isUpperCase() } && any { it.isCasedLowercase() }
+
+/** Whether the token has letters and no lowercase one other than `ß` ("HB&P", "MC5", "GROßE"). */
+fun String.isCapitals(): Boolean = any { it.isLetter() } && none { it.isCasedLowercase() }
+
+private fun Char.isCasedLowercase(): Boolean = isLowerCase() && this != 'ß'
 
 /** Max length of an all-caps token kept as an initialism rather than de-shouted. */
 private const val SHORT_INITIALISM_MAX_LEN = 2
