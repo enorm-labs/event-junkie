@@ -127,7 +127,7 @@ DETAIL_PAGE='^\[[^]]+\] "GET /(de|en)/(events|venues|artists|promoters)/[^ /?]+/
 DETAIL_CALL='^/api/(events|venues|artists|promoters)/[^/]+$'
 # The crawlers that run the SPA on the pages they fetch, as `renderers` measures them, each with the
 # seconds after the page load in which its SPA calls the BFF.
-RENDERERS=(AhrefsBot:0:2 Reflectionbot:0:7 Baiduspider:2:12 Googlebot:1:12)
+RENDERERS=(AhrefsBot:0:1 Reflectionbot:1:6 Baiduspider:3:23 Googlebot:2:12)
 RENDERER=$(printf '%s\n' "${RENDERERS[@]}" | cut -d: -f1 | paste -sd '|' -)
 
 case "$VERB" in
@@ -237,14 +237,14 @@ case "$VERB" in
         ;;
     renderers)
         # The injector calls the detail endpoint once for every detail page nginx serves. A second call
-        # for the same slug within 15 seconds comes from the SPA, so the agent that fetched the page ran
+        # for the same slug within 60 seconds comes from the SPA, so the agent that fetched the page ran
         # it. One page per agent and slug is enough; a person on the same slug in that window is rare.
-        # Reads every line, so keep the window short: --hours 2 is about 1,000 pages.
+        # Baiduspider renders a fifth of its pages more than 12 seconds late, so the look is 60 seconds.
         search "SELECT _timestamp, body FROM default WHERE k8s_app_component = 'frontend'
             AND regexp_like(body, '$DETAIL_PAGE') AND regexp_like(body, '$NOT_A_PERSON') LIMIT 1000000" >"$WORK/pages.json"
         search "SELECT _timestamp, path FROM default WHERE k8s_app_component = 'bff'
             AND logger = 'de.norm.events.RequestLoggingFilter' AND regexp_like(path, '$DETAIL_CALL') LIMIT 1000000" >"$WORK/calls.json"
-        # `delay` is the spread of seconds from page load to the SPA's call, 5th to 95th percentile: the
+        # `delay` is the spread of seconds from page load to the SPA's call, 5th to 90th percentile: the
         # window to give a crawler added to RENDERERS.
         jq -n --arg environment "$ENVIRONMENT" --argjson hours "$HOURS" \
             --slurpfile pages "$WORK/pages.json" --slurpfile calls "$WORK/calls.json" --arg listed "$RENDERER" '
@@ -255,12 +255,12 @@ case "$VERB" in
                 | (.body | capture("\"(?<ua>[^\"]*)\"$").ua) as $ua
                 | (._timestamp | epoch) as $t
                 | {agent: ($ua | (capture("(?i)(?<a>[A-Za-z.-]*(bot|spider|crawl|slurp)[A-Za-z.-]*)").a // capture("(?<a>Nexus 5X|moto g power|facebookexternalhit)").a // $ua[0:60])),
-                   calls: [($at["/api/\($p.kind)/\($p.slug)"] // [])[] | select(. >= $t - 1 and . <= $t + 15) - $t] | sort}
+                   calls: [($at["/api/\($p.kind)/\($p.slug)"] // [])[] | select(. >= $t - 1 and . <= $t + 60) - $t] | sort}
                 | .rendered = (.calls | length >= 2) | .delay = .calls[-1]]
             | group_by(.agent)
             | map((map(select(.rendered) | .delay) | sort) as $d
                 | {agent: .[0].agent, detail_pages: length, rendered: ($d | length),
-                   delay: (if $d == [] then null else [$d[($d | length) * 5 / 100 | floor], $d[($d | length) * 95 / 100 | floor]] end)}
+                   delay: (if $d == [] then null else [$d[($d | length) * 5 / 100 | floor], $d[($d | length) * 90 / 100 | floor]] end)}
                 | .share = ((.rendered * 100 / .detail_pages) | floor)
                 | .subtracted = (.agent | test($listed)))
             | sort_by(-.rendered)
