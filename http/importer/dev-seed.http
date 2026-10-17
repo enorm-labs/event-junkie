@@ -128,6 +128,7 @@ Content-Type: application/json
     "latitude": 52.531337,
     "longitude": 13.411236,
     "websiteUrl": "https://www.8mmbar.de/",
+    "instagramUrl": "https://www.instagram.com/8mmbar/",
     "description": "A DIY music bar on Schönhauser Allee, founded in 2002 in the punk spirit and majority-owned by long-time staff since 2014, where bands keep all door money; open nightly until 4am.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Die DIY-Musikbar an der Schönhauser Allee entstand 2002 aus der Punk-Szene, gehört seit 2014 mehrheitlich langjährigen Mitarbeitenden und überlässt Bands die gesamten Eintrittseinnahmen; Livekonzerte und Barbetrieb täglich bis 4 Uhr.",
@@ -1130,6 +1131,40 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Baketown — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Baketown venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Baketown",
+    "address": "Kolonnenstraße 27",
+    "city": "Berlin",
+    "postalCode": "10829",
+    "district": "schoeneberg",
+    "latitude": 52.484957,
+    "longitude": 13.366418,
+    "websiteUrl": "https://baketown.berlin/",
+    "instagramUrl": "https://www.instagram.com/baketownbaketown/",
+    "facebookUrl": "https://www.facebook.com/baketowncollective/",
+    "description": "A studio, residency and 300-capacity music venue on the Rote Insel in Schöneberg, with a Funktion-One system, concerts by international rap, soul and electronic acts, and listening sessions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Studio, Residenz und Musikort für 300 Gäste auf der Roten Insel in Schöneberg, mit Funktion-One-Anlage, Konzerten internationaler Rap-, Soul- und Elektronik-Acts und Listening Sessions.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 300,
+    "reviewedAt": "2026-10-17T12:42:42Z"
+}
+
+> {%
+    client.test("Baketown venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Ballhaus Berlin — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -1146,6 +1181,7 @@ Content-Type: application/json
     "latitude": 52.532066,
     "longitude": 13.380114,
     "websiteUrl": "https://ballhaus-berlin.de/",
+    "instagramUrl": "https://www.instagram.com/ballhausberlin/",
     "description": "A ballroom on Chausseestraße, opened in 1905 and run by its current team since 2014, hosting swing and Latin dance nights, live dance bands, burlesque shows and themed balls.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Das 1905 eröffnete Ballhaus an der Chausseestraße, seit 2014 unter heutiger Leitung, mit Swing- und Latin-Tanzabenden, Live-Tanzbands, Burlesque-Shows und Themenbällen.",
@@ -1582,6 +1618,7 @@ Content-Type: application/json
     "latitude": 52.497597,
     "longitude": 13.450110,
     "websiteUrl": "https://www.birgit.club/",
+    "instagramUrl": "https://www.instagram.com/birgit.club/",
     "description": "A former taxi repair garage on the canal at Schlesisches Tor, opened in 2015 as a beer garden full of fairground rides, with three dance floors at weekends, a Thursday drag show and live music on Sundays.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine ehemalige Taxiwerkstatt am Schleusenufer, seit 2015 Biergarten mit alten Jahrmarktsfahrgeschäften und am Wochenende Club mit drei Tanzflächen, dazu donnerstags eine Dragshow und sonntags Livemusik.",
@@ -1675,6 +1712,7 @@ Content-Type: application/json
     "district": "kreuzberg",
     "latitude": 52.497563,
     "longitude": 13.424255,
+    "instagramUrl": "https://www.instagram.com/bohnengold/",
     "description": "A Kreuzberg bar on Reichenberger Straße with a living-room feel, drinks at the front and a dance floor at the back for disco, indie and electronic nights, including a free indie party every Thursday.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Bar in der Reichenberger Straße mit Wohnzimmeratmosphäre: vorne wird ausgeschenkt, hinten getanzt, zu Disco, Indie und Elektro, donnerstags bei der kostenlosen „Indietanzbar“.",
@@ -1740,6 +1778,7 @@ Content-Type: application/json
     "latitude": 52.520001,
     "longitude": 13.389847,
     "websiteUrl": "https://bredouille-bar.de/",
+    "instagramUrl": "https://www.instagram.com/bredouille.berlin/",
     "description": "A cocktail bar in an S-Bahn arch on Georgenstraße, run by two former Torstraße bartenders, with after-work lounges during the week, DJs at weekends and invited collectives and listening sessions.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Cocktailbar in einem S-Bahn-Bogen an der Georgenstraße, geführt von zwei Barleuten aus der Torstraße, mit Afterwork-Lounges unter der Woche, DJ-Abenden am Wochenende und Gastreihen von Kollektiven.",
@@ -1772,6 +1811,7 @@ Content-Type: application/json
     "latitude": 52.499358,
     "longitude": 13.424252,
     "websiteUrl": "https://www.bulbulberlin.de",
+    "instagramUrl": "https://www.instagram.com/bulbulberlin/",
     "description": "A small Kreuzberg club on Skalitzer Straße, open since 2019 in the rooms of the former Farbfernseher, with house, disco, funk and soul from local and visiting DJs from Thursday to Saturday.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Kleiner Club an der Skalitzer Straße, seit 2019 in den Räumen des früheren Farbfernsehers, mit House, Disco, Funk und Soul von Berliner und internationalen DJs, donnerstags bis samstags.",
@@ -1804,6 +1844,7 @@ Content-Type: application/json
     "latitude": 52.499102,
     "longitude": 13.272817,
     "websiteUrl": "https://www.c115.club/",
+    "instagramUrl": "https://www.instagram.com/c115c115/",
     "description": "A club in the glazed former commentators' booth of the AVUS grandstand above the A115 motorway, open since December 2025 for curated club nights, daytime and listening parties and cultural events.",
     "descriptionLanguage": "en",
     "descriptionAlt": "In der verglasten früheren Sprecherkanzel der denkmalgeschützten AVUS-Tribüne über der A115 liegt dieser Club, seit Dezember 2025 geöffnet für ausgewählte Clubnächte, Tagespartys, Listening-Sessions und kulturelle Veranstaltungen.",
@@ -1994,6 +2035,7 @@ Content-Type: application/json
     "latitude": 52.526474,
     "longitude": 13.396910,
     "websiteUrl": "https://claerchensball.haus/",
+    "instagramUrl": "https://www.instagram.com/claerchens_ballhaus/",
     "description": "A ballroom in Mitte, opened in 1913 and named after co-founder Clara Bühler, where tango, swing and party nights fill the historic mirrored hall upstairs above the Luna D'Oro restaurant.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Seit 1913 wird in diesem Ballhaus in der Auguststraße getanzt, heute im denkmalgeschützten Spiegelsaal im Obergeschoss mit Tango-Milongas, Swing, Tanzkursen, Konzerten und Partys.",
@@ -3040,6 +3082,7 @@ Content-Type: application/json
     "latitude": 52.495248,
     "longitude": 13.462778,
     "websiteUrl": "https://www.else.tv/",
+    "instagramUrl": "https://www.instagram.com/else_klub/",
     "description": "An open-air club beneath the S-Bahn tracks at Treptower Park, right on the Spree, with a house and techno programme.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Open-Air-Club unter der S-Bahn-Trasse am Treptower Park, direkt an der Spree, mit einem Programm aus House und Techno.",
@@ -3350,6 +3393,7 @@ Content-Type: application/json
     "latitude": 52.466453,
     "longitude": 13.365339,
     "websiteUrl": "https://foundberlin.com/",
+    "instagramUrl": "https://www.instagram.com/found.berlin/",
     "description": "A large club and event space opened in June 2026 in the red-brick former Schultheiss malt factory known as the Malzfabrik, with indoor halls, a garden and covered dancefloors for club nights and concerts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein großer Club, der im Juni 2026 in der backsteinroten Malzfabrik der früheren Schultheiss-Brauerei eröffnete, mit Hallen, Garten und überdachten Tanzflächen für Clubnächte, Open-Air-Partys und Konzerte.",
@@ -4840,6 +4884,7 @@ Content-Type: application/json
     "latitude": 52.514069,
     "longitude": 13.498525,
     "websiteUrl": "https://www.interkosmos.cc/",
+    "instagramUrl": "https://www.instagram.com/interkosmos.berlin/",
     "description": "A café and bar near Lichtenberg station, run by three partners under the motto café, bar, utopia, hosting author readings in its BuchBar series, comedy nights and poetry evenings.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Café und Bar nahe dem Bahnhof Lichtenberg, von drei Gesellschaftern unter dem Motto „café . bar . utopie“ betrieben, mit Lesungen in der Reihe BuchBar, Comedyabenden und Poesieabenden.",
@@ -4871,6 +4916,7 @@ Content-Type: application/json
     "district": "kreuzberg",
     "latitude": 52.497348,
     "longitude": 13.450797,
+    "instagramUrl": "https://www.instagram.com/ipse.ufer/",
     "description": "A riverside club by the Spree at Schlesisches Tor, mixing a warehouse room with a waterfront garden, where house and techno DJs play summer open airs and the beer garden hosts open-decks afternoons and markets.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Am Spreeufer nahe dem Schlesischen Tor verbindet dieser Club eine Lagerhalle mit einem Garten am Wasser, mit House- und Techno-Open-Airs im Sommer sowie Open-Decks-Nachmittagen und Märkten im Biergarten.",
@@ -6332,6 +6378,7 @@ Content-Type: application/json
     "latitude": 52.507170,
     "longitude": 13.451077,
     "websiteUrl": "https://lokschuppen-berlin.com/",
+    "instagramUrl": "https://www.instagram.com/lokschuppenberlin/",
     "description": "The techno club on the RAW grounds in Friedrichshain was long known as Suicide Circus, and now runs house, techno and hard techno nights on an indoor floor and an open-air area.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Lange hieß der Techno-Club auf dem RAW-Gelände in Friedrichshain Suicide Circus; heute laufen dort House-, Techno- und Hardtechno-Nächte auf einem Innenfloor und einer Open-Air-Fläche.",
@@ -7794,6 +7841,7 @@ Content-Type: application/json
     "latitude": 52.497313,
     "longitude": 13.449516,
     "websiteUrl": "https://www.oelgarten.com/en",
+    "instagramUrl": "https://www.instagram.com/oel.garten/",
     "description": "A summer beer and wine garden on Lohmühleninsel, named after the Latin motto ora et labora, with a free Wednesday open-air series of live musicians, from neoclassical strings to Irish folk.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Bier- und Weingarten auf der Lohmühleninsel, dessen Name auf das lateinische „Ora et labora“ zurückgeht, mit einer kostenlosen Open-Air-Reihe am Mittwoch, bei der Live-Musikerinnen und -Musiker von Neoklassik bis Irish Folk spielen.",
@@ -8448,6 +8496,7 @@ Content-Type: application/json
     "latitude": 52.484411,
     "longitude": 13.438526,
     "websiteUrl": "https://pasticheinternational.com/",
+    "instagramUrl": "https://www.instagram.com/pasticheinternational/",
     "description": "A hi-fi listening room in Neukölln that is also a record shop, day café and record label, hosting curated listening sessions, live sets, workshops, talks, quiz nights and record fairs with DJs.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Hi-Fi-Hörraum an der Weserstraße, zugleich Plattenladen, Tagescafé und Label, mit kuratierten Listening-Sessions, Live-Sets, Workshops, Buchgesprächen, Quizabenden und Plattenbörsen samt DJ-Sets.",
@@ -8574,6 +8623,7 @@ Content-Type: application/json
     "latitude": 52.519419,
     "longitude": 13.390822,
     "websiteUrl": "https://www.pkh.events/",
+    "instagramUrl": "https://www.instagram.com/pkhwarehouse/",
     "description": "A club near Friedrichstraße station that opened in October 2026 across two levels and five areas of one building, running techno, trance and pop nights from 22:00 to 08:00 on weekends.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club nahe dem Bahnhof Friedrichstraße, im Oktober 2026 eröffnet, mit zwei Ebenen und fünf Bereichen, wo freitags und samstags von 22 bis 8 Uhr Techno-, Trance- und Popnächte laufen.",
@@ -8639,6 +8689,7 @@ Content-Type: application/json
     "latitude": 52.479011,
     "longitude": 13.438757,
     "websiteUrl": "https://www.prachtwerkberlin.com/",
+    "instagramUrl": "https://www.instagram.com/prachtwerkberlin/",
     "description": "A live music bar and café in Neukölln that stocks coffee, beer and spirits from Berlin producers and puts on concerts almost every evening, with an open stage on Wednesdays.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Livemusikbar mit Café in Neukölln, die Kaffee, Bier und Spirituosen aus Berliner Herstellung ausschenkt und fast jeden Abend Konzerte bietet, mittwochs mit offener Bühne.",
@@ -9816,6 +9867,7 @@ Content-Type: application/json
     "latitude": 52.484018,
     "longitude": 13.391198,
     "websiteUrl": "https://silverwings.de",
+    "instagramUrl": "https://www.instagram.com/silverwings_club/",
     "description": "A club in the listed Tempelhof Airport building, opened by Americans over seventy years ago for GIs and young Berliners and run by Harmen de Keijzer since the 2000s, with concerts and party series.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Club im denkmalgeschützten Flughafengebäude Tempelhof entstand vor über siebzig Jahren als amerikanischer Treffpunkt für GIs und junge Berliner und zeigt heute unter Harmen de Keijzer Konzerte und Partyreihen.",
@@ -11091,6 +11143,7 @@ Content-Type: application/json
     "latitude": 52.541013,
     "longitude": 13.410605,
     "websiteUrl": "https://www.tipsybearberlin.com/",
+    "instagramUrl": "https://www.instagram.com/tipsy_bear_berlin/",
     "description": "A community-led queer bar in Prenzlauer Berg, open since 2019 with a zero-tolerance policy on hate, staging drag shows, karaoke and game nights, then DJs from ten on Wednesdays and weekends.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Seit 2019 eine gemeinschaftlich geführte queere Bar in Prenzlauer Berg, die keinerlei Diskriminierung duldet und Dragshows, Karaoke und Spieleabende zeigt, mittwochs und am Wochenende ab 22 Uhr mit DJs.",
@@ -11496,6 +11549,7 @@ Content-Type: application/json
     "latitude": 52.489455,
     "longitude": 13.413672,
     "websiteUrl": "https://www.unkompress.berlin/",
+    "instagramUrl": "https://www.instagram.com/unkompress/",
     "description": "A vinyl-first listening bar in Kreuzberg, founded by Kevin Rodriguez after Japanese listening rooms, playing whole albums over tube amplification and Klipsch horn speakers, with DJ sessions, label takeovers and live podcast recordings.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine 2023 eröffnete Listening-Bar in Kreuzberg nach dem Vorbild japanischer Hörräume, gegründet von Kevin Rodriguez, mit ganzen Vinyl-Alben über Röhrenverstärker und Klipsch-Hornlautsprecher, DJ-Sessions, Label-Takeovers und Live-Podcast-Aufnahmen.",
@@ -11697,6 +11751,40 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Villa Kuriosum — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Villa Kuriosum venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Villa Kuriosum",
+    "address": "Scheffelstraße 21",
+    "city": "Berlin",
+    "postalCode": "10367",
+    "district": "lichtenberg",
+    "latitude": 52.520151,
+    "longitude": 13.473189,
+    "websiteUrl": "https://www.villakuriosum.net/",
+    "instagramUrl": "https://www.instagram.com/villakuriosum/",
+    "facebookUrl": "https://www.facebook.com/pages/Villa%20Kuriosum/259028124215279/",
+    "description": "A self-run garden villa in Lichtenberg, open since 2012, mixing contemporary circus, botany and art with a garden bar, circus cabaret, punk and folk concerts and the Villapalooza festival.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine selbstverwaltete Gartenvilla in Lichtenberg, seit 2012 offen, die zeitgenössischen Zirkus, Botanik und Kunst verbindet, mit Gartenbar, Zirkuskabarett, Punk- und Folkkonzerten und dem Festival Villapalooza.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "open-air"],
+    "programmeUrl": "https://www.villakuriosum.net/veranstaltungen/",
+    "reviewedAt": "2026-10-17T12:42:42Z"
+}
+
+> {%
+    client.test("Villa Kuriosum venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Villa Neukölln — not imported
 # ————————————————————————————————————————————————————————————
 
@@ -11713,6 +11801,7 @@ Content-Type: application/json
     "latitude": 52.482064,
     "longitude": 13.425089,
     "websiteUrl": "http://www.villaneukoelln.de/",
+    "instagramUrl": "https://www.instagram.com/villaneukoelln/",
     "description": "A café-bar with a curtained stage in a former cinema on a Hermannstraße corner, hosting a live swing dance night every Thursday plus concerts, screenings and readings.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Café-Bar mit Vorhangbühne in einem früheren Kino an einer Ecke der Hermannstraße, mit einer Swing-Tanznacht mit Liveband jeden Donnerstag sowie Konzerten, Filmabenden und Lesungen.",
@@ -12258,6 +12347,39 @@ Accept: application/json
 > {%
     client.test("Zebrano-Theater import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Zemin — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Zemin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zemin",
+    "address": "Urbanstraße 3",
+    "city": "Berlin",
+    "postalCode": "10961",
+    "district": "kreuzberg",
+    "latitude": 52.494149,
+    "longitude": 13.400844,
+    "websiteUrl": "https://www.zeminberlin.de/",
+    "instagramUrl": "https://www.instagram.com/zeminberlin/",
+    "description": "An independent art and production space on Urbanstraße in Kreuzberg, with exhibitions and workshops beside live analog, electroacoustic and audiovisual nights and DJ nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein unabhängiger Kunst- und Produktionsraum in der Urbanstraße in Kreuzberg, mit Ausstellungen und Workshops neben Live-Analog-, Elektroakustik- und audiovisuellen Abenden und DJ-Nächten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["gallery", "live-venue"],
+    "programmeUrl": "https://www.zeminberlin.de/",
+    "reviewedAt": "2026-10-17T12:42:42Z"
+}
+
+> {%
+    client.test("Zemin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
