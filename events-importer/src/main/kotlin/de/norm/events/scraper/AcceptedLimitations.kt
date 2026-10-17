@@ -136,6 +136,7 @@ import de.norm.events.scraper.soulcat.SOULCAT_LIMITATIONS
 import de.norm.events.scraper.speakeazy.SPEAKEAZY_LIMITATIONS
 import de.norm.events.scraper.speiches.SPEICHES_LIMITATIONS
 import de.norm.events.scraper.spindlerklatt.SPINDLER_KLATT_LIMITATIONS
+import de.norm.events.scraper.studioiiii.STUDIO_IIII_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.surprise.SURPRISE_LIMITATIONS
 import de.norm.events.scraper.tausend.TAUSEND_LIMITATIONS
@@ -310,6 +311,7 @@ object AcceptedLimitations {
             SPEAKEAZY_LIMITATIONS,
             SPEICHES_LIMITATIONS,
             SPINDLER_KLATT_LIMITATIONS,
+            STUDIO_IIII_LIMITATIONS,
             SUPAMOLLY_LIMITATIONS,
             SURPRISE_LIMITATIONS,
             TAUSEND_LIMITATIONS,
