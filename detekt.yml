@@ -18,11 +18,37 @@ potential-bugs:
     # the value it reports as dropped never existed. Production code still fires.
     excludes: ['**/test/**']
 
+  # Off in detekt's defaults. Quiet on this code today, so they only stop a regression.
+  CharArrayToStringCall:
+    active: true
+  DontDowncastCollectionTypes:
+    active: true
+  ExitOutsideMain:
+    active: true
+  MissingSuperCall:
+    active: true
+  NullCheckOnMutableProperty:
+    active: true
+  UnconditionalJumpStatementInLoop:
+    active: true
+  UnnecessaryNotNullCheck:
+    active: true
+
 coroutines:
   InjectDispatcher:
     # The rule keeps a hard-coded dispatcher out of production wiring so a test can substitute one.
     # A test *is* that substitution, and the `ioDispatcher` bean it asks for exists already.
     excludes: ['**/test/**']
+
+  # Off in detekt's defaults. Quiet on this code today, so they only stop a regression.
+  CoroutineLaunchedInTestWithoutRunTest:
+    active: true
+  GlobalCoroutineUsage:
+    active: true
+  SuspendFunInFinallySection:
+    active: true
+  SuspendFunWithCoroutineScopeReceiver:
+    active: true
 
 style:
   UnusedImport:
@@ -55,6 +81,31 @@ style:
         value: 'java.time.LocalDate.now()'
       - reason: 'The containers run in UTC, so the default zone is not Berlin (#3401). Use Clock.system(BERLIN).'
         value: 'java.time.Clock.systemDefaultZone()'
+
+  # Off in detekt's defaults. Quiet on this code today, so they only stop a regression.
+  CollapsibleIfStatements:
+    active: true
+  DoubleNegativeExpression:
+    active: true
+  RangeUntilInsteadOfRangeTo:
+    active: true
+  UnnecessaryReversed:
+    active: true
+  UseEmptyCounterpart:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true
+  UseSumOfInsteadOfFlatMapSize:
+    active: true
+
+exceptions:
+  # Off in detekt's defaults. Quiet on this code today, so they only stop a regression.
+  ErrorUsageWithThrowable:
+    active: true
+  NotImplementedDeclaration:
+    active: true
+  ObjectExtendsThrowable:
+    active: true
 
 # This repository's own rules, implemented in the :detekt-rules module.
 event-junkie:

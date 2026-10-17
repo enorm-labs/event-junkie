@@ -291,7 +291,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             )
 
             val linked = eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().map { it.artistId }
-            linked shouldContain requireNotNull(xmal.id)
+            linked shouldContain xmal.id
             artistRepository.findBySlug("xmal-deutschland-sonic-morgue") shouldBe null
             artistRepository.findBySlug("alister-spence-within-without")?.name shouldBe "Alister Spence – Within Without"
             artistRepository.findBySlug("current-93-sonic-morgue")?.name shouldBe "Current 93 – Sonic Morgue"

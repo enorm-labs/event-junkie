@@ -120,7 +120,7 @@ class SlugIdentityMoveIntegrationTest : BaseControllerTest() {
             // A foreign row on the slug the incoming Spiritbox event would need.
             eventRepository.save(
                 EventEntity(
-                    venueId = requireNotNull(otherVenue.id),
+                    venueId = otherVenue.id,
                     eventSourceId = otherSource.id,
                     title = "Spiritbox",
                     slug = "$today-$venueSlug-spiritbox",

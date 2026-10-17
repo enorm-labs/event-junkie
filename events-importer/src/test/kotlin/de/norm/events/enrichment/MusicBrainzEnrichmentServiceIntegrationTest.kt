@@ -369,7 +369,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
 
             row(older).musicbrainzEnrichedAt.shouldNotBeNull()
             row(newer).musicbrainzEnrichedAt.shouldBeNull()
-            row(requireNotNull(none.id)).musicbrainzEnrichedAt.shouldBeNull()
+            row(none.id).musicbrainzEnrichedAt.shouldBeNull()
             coVerify(exactly = 0) { musicBrainz.artist("mbid-newer") }
         }
     }
