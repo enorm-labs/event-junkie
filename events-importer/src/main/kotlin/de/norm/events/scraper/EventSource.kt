@@ -142,6 +142,9 @@ enum class EventSource {
     /** Gretchen Berlin – a club in the vaulted former stables of a 19th-century Kreuzberg barracks, known for bass-driven electronic nights. */
     GRETCHEN,
 
+    /** Hafenbar – a maritime dance hall at Alexanderplatz, home of the Friday Schlagerparty since 1996 and a pop and dance night on Saturdays. */
+    HAFENBAR,
+
     /** Havanna Berlin – a multi-floor Latin dance club in Schöneberg running the same resident nights every week, with lessons before the party. */
     HAVANNA,
 
