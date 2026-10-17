@@ -149,15 +149,20 @@ class SchokoladenOverviewPageScraper {
      * `<strong>Time</strong>` label, varying — `"doors 19:00 - show 20:00"`, `"Doors 19h / Show
      * 20h"`, `"Einlass 19h Beginn 20h"`, `"Einlass: 18:30 Uhr"`, `"19:00 Einlass - 20:00 Konzert -
      * 22:00 DJ-Set"`. [timeBesideLabel] picks the two labelled times; the header's `span.d-none`
-     * (`"19:00 Uhr"`) is a doors fallback when the line has no parseable time.
+     * (`"19:00 Uhr"`) is a doors fallback when the line has no parseable time. A line that opens
+     * with a clock writes every time before its label, and without the dashes (`"19:00 Einlass
+     * 20:00 Konzert 22:00 Dj-Set"`) label-first would read doors 20:00 and start 22:00 (#3157).
      */
     private fun parseTimes(
         info: Element?,
         block: Element
     ): Pair<LocalTime?, LocalTime?> {
         val timeText = info?.textAt(".event-facts p:has(strong:contains(Time)) span").orEmpty()
-        val doors = timeBesideLabel(timeText, DOORS_LABEL_FIRST, DOORS_TIME_FIRST) ?: flexTime(HEADER_TIME_PATTERN.find(block.textAt("span.d-none").orEmpty()))
-        val start = timeBesideLabel(timeText, SHOW_LABEL_FIRST, SHOW_TIME_FIRST)
+        val timeFirst = LEADING_CLOCK.containsMatchIn(timeText)
+        val doors =
+            timeBesideLabel(timeText, DOORS_LABEL_FIRST, DOORS_TIME_FIRST, timeFirst)
+                ?: flexTime(HEADER_TIME_PATTERN.find(block.textAt("span.d-none").orEmpty()))
+        val start = timeBesideLabel(timeText, SHOW_LABEL_FIRST, SHOW_TIME_FIRST, timeFirst)
         return doors to start
     }
 
@@ -240,13 +245,17 @@ class SchokoladenOverviewPageScraper {
 
     /**
      * The time beside a label, whichever side the venue wrote it: "Einlass 19h" and "19:00
-     * Einlass" both name the doors. Label-first is tried first, then time-first (#1141).
+     * Einlass" both name the doors (#1141). Label-first is tried first, unless [preferTimeFirst].
      */
     private fun timeBesideLabel(
         text: String,
         labelFirst: Regex,
-        timeFirst: Regex
-    ): LocalTime? = flexTime(labelFirst.find(text)) ?: flexTime(timeFirst.find(text))
+        timeFirst: Regex,
+        preferTimeFirst: Boolean
+    ): LocalTime? {
+        val (first, second) = if (preferTimeFirst) timeFirst to labelFirst else labelFirst to timeFirst
+        return flexTime(first.find(text)) ?: flexTime(second.find(text))
+    }
 
     /** A [LocalTime] from a doors/show regex match whose groups are (hour, optional minute), or `null`. */
     private fun flexTime(match: MatchResult?): LocalTime? {
@@ -302,8 +311,8 @@ class SchokoladenOverviewPageScraper {
         /** The words the venue labels its doors time with. */
         private const val DOORS_WORDS = """(?:doors|einlass)"""
 
-        /** The words the venue labels its start time with; "Konzert" is the house format's own ("19:00 Einlass - 20:00 Konzert - 22:00 DJ-Set"). */
-        private const val SHOW_WORDS = """(?:show|beginn|konzert|start)"""
+        /** The words the venue labels its start time with; "Konzert" and "Lesung" are the house format's own ("19:00 Einlass - 20:00 Konzert"). */
+        private const val SHOW_WORDS = """(?:show|beginn|konzert|lesung|start)"""
 
         /** An hour with an optional `:mm`, the two capture groups [flexTime] reads. */
         private const val CLOCK = """(\d{1,2})(?:[:.](\d{2}))?"""
@@ -319,6 +328,9 @@ class SchokoladenOverviewPageScraper {
 
         /** Show time before its label — "20:00 Konzert", "20h Beginn". */
         private val SHOW_TIME_FIRST = Regex("""$CLOCK\s*(?:h|uhr)?\s+$SHOW_WORDS""", RegexOption.IGNORE_CASE)
+
+        /** A Time line that opens with a clock, "19:00 Einlass …", and so writes each time before its label. */
+        private val LEADING_CLOCK = Regex("""^\s*\d{1,2}[:.]\d{2}\s*(?:h|uhr)?\s+\p{L}""", RegexOption.IGNORE_CASE)
 
         /** Header `span.d-none` time ("19:00 Uhr"), used as a doors fallback. */
         private val HEADER_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")

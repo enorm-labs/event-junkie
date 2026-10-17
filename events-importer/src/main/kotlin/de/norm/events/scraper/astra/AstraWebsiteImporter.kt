@@ -56,6 +56,7 @@ class AstraWebsiteImporter(
 val ASTRA_LIMITATIONS =
     VenueLimitations(
         EventSource.ASTRA,
+        AcceptedLimitation(LimitedAspect.START_TIME, "some nights print only their doors, `Einlass 21:00`"),
         AcceptedLimitation(LimitedAspect.GENRE, "the event page carries no genre field"),
         AcceptedLimitation(LimitedAspect.PRICE, "some nights print no figure and only link the promoter's outside ticket shop")
     )

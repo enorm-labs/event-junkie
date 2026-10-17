@@ -118,7 +118,7 @@ class GretchenOverviewPageScraper {
 
         return ScrapedEvent(
             title = title,
-            eventType = inferEventType(title),
+            eventType = inferEventType(title, doorsTime, startTime),
             eventDate = eventDate,
             doorsTime = doorsTime,
             startTime = startTime,
@@ -148,18 +148,22 @@ class GretchenOverviewPageScraper {
      * a DJ set (`BALKANBEATS - Robert Soko DJ-Set`) as a party; a concert whose title names a
      * festival is a `FESTIVAL`. Only
      * the title, never the genre list, which carries literal tokens (`90's Rave`, `House`) that
-     * would mislabel a concert.
+     * would mislabel a concert. A club night (`GIRLS TOWN`, `PURO BARRIO`) names no format, but it
+     * prints only doors at [CLUB_NIGHT_DOORS] or later, where every concert prints a show time.
      */
-    private fun inferEventType(title: String): String =
-        inferConcertVenueType(title, null, DJ_SET_PARTY_KEYWORDS).let {
-            if (it == EventType.CONCERT.name &&
-                isFestivalTitle(title)
-            ) {
-                EventType.FESTIVAL.name
-            } else {
-                it
-            }
+    private fun inferEventType(
+        title: String,
+        doorsTime: LocalTime?,
+        startTime: LocalTime?
+    ): String {
+        val type = inferConcertVenueType(title, null, DJ_SET_PARTY_KEYWORDS)
+        return when {
+            type != EventType.CONCERT.name -> type
+            isFestivalTitle(title) -> EventType.FESTIVAL.name
+            startTime == null && doorsTime != null && doorsTime >= CLUB_NIGHT_DOORS -> EventType.PARTY.name
+            else -> type
         }
+    }
 
     /**
      * Parses the date from the `.date` cell's `<strong>`, a full `DD.MM.YYYY` ("10.07.2026"),
@@ -376,6 +380,9 @@ class GretchenOverviewPageScraper {
     }
 
     companion object {
+        /** The earliest doors of a club night; the latest concert doors are 20:00. */
+        private val CLUB_NIGHT_DOORS = LocalTime.of(22, 0)
+
         /** A pricing `<em>` is the one carrying a "Vorverkauf" or "Abendkasse" marker. */
         private val PRICE_MARKER_PATTERN = Regex("""Vorverkauf|Abendkasse|freier?\s+Eintritt|Eintritt\s+frei""", RegexOption.IGNORE_CASE)
 

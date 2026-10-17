@@ -38,6 +38,7 @@ class TempodromWebsiteImporter(
 val TEMPODROM_LIMITATIONS =
     VenueLimitations(
         EventSource.TEMPODROM,
+        AcceptedLimitation(LimitedAspect.START_TIME, "a run (Roncalli, Holiday on Ice) prints a date range with no clock, and some concerts print none either"),
         AcceptedLimitation(LimitedAspect.PRICE, "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line"),
         AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field")
     )
