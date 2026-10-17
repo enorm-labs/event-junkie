@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   169 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    15 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   170 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     7 |
@@ -181,6 +181,7 @@ schema change.
 | Surprise Club                    | https://surprise-berlin.de/events-programs.php                           | Club         | Hand-built PHP; weekend only; date is the ID              |
 | Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/                           | Concert Hall | JSON-LD listing; promoter per event page                  |
 | The Cloud                        | https://thecloud.berlin/events/                                          | Bar          | TEC REST API; live act from the title; no prices          |
+| The Door                         | https://thedoor.club/events/                                             | Club         | Oxygen grid; date is the ID; skips placeholders           |
 | The Wall Comedy Club             | https://thewallcomedy.com/                                               | Comedy Club  | Spotagig JSON-LD; HTMX "Show more" partials               |
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                                   | Concert Hall | One row per performance; prices only in a leak            |
 | Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                               | Club         | Elementor; year from the weekday; blurb per event page    |
@@ -210,7 +211,7 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-168 importer classes cover 169 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+169 importer classes cover 170 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -232,7 +233,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-60 sources have a second language, 105 have none, and 4 are unknown. Twelve translate the event text on a second page.
+60 sources have a second language, 106 have none, and 4 are unknown. Twelve translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -399,6 +400,7 @@ the upsert stores none.
 | Surprise Club                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Tempodrom                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.tempodrom.de/en/events-and-tickets/                                                                                    |
 | The Cloud                        | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
+| The Door                         | No              | —                                                            | —                  |                                                                                                                                    |
 | The Wall Comedy Club             | No              | —                                                            | —                  |                                                                                                                                    |
 | Theater im Delphi                | Yes             | `/en/` path                                                  | Translated         | https://theater-im-delphi.de/en/programm/                                                                                          |
 | Tiffany Club                     | No              | —                                                            | —                  |                                                                                                                                    |
@@ -454,7 +456,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | KuBiZ               | https://www.kubiz-wallenberg.de/                   | Other        | Low      | WordPress posts; date in the title; jazz about monthly    |
 | Villa Kuriosum      | https://www.villakuriosum.net/veranstaltungen/     | Other        | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
 | Promenaden Eck      | https://promenaden-eck-berlin.de/                  | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
-| The Door Club       | https://thedoor.club/events/                       | Club         | Low      | WordPress/Oxygen; weekly grid; placeholder Fri/Sat        |
 | Passionskirche      | https://www.halle-luja.berlin/kommende-events      | Concert Hall | Low      | IONOS; free text "<title> am <date> um <time>"            |
 | M-BIA               | https://www.m-bia.de/                              | Techno Club  | Low      | WordPress posts; post date is event date; RA links        |
 | Hafenbar Berlin     | https://www.hafenbar-berlin.de                     | Bar          | Low      | WordPress; 2 weekly party pages, next date only           |

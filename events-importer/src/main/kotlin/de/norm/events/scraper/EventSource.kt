@@ -435,6 +435,9 @@ enum class EventSource {
     /** The Cloud – a rentable event space at Alexanderplatz that hosts galas and private parties as well as weekend club nights and live shows. */
     THE_CLOUD,
 
+    /** The Door – a boutique club near Kurfürstendamm with a strict door, VIP tables and house nights on Fridays and Saturdays. */
+    THE_DOOR,
+
     /** The Wall Comedy Club – a Friedrichshain stand-up club named for the fall of the Berlin Wall, with English-language shows most nights. */
     THE_WALL,
 
