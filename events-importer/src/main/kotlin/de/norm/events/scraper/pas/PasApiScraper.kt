@@ -18,6 +18,7 @@ import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -77,7 +78,7 @@ class PasApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.PAS.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.PAS, slug),
             ticketUrl = event.stringOrNull("website")?.takeIf { it.isNotBlank() },
             genre =
                 event

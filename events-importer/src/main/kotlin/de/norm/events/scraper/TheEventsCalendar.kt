@@ -5,6 +5,8 @@ import org.jsoup.Jsoup
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
+import java.net.URI
+import java.net.URISyntaxException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -105,6 +107,46 @@ fun JsonNode.tecDateTime(field: String): LocalDateTime? =
         } catch (_: DateTimeParseException) {
             null
         }
+    }
+
+/**
+ * The event's `sourceId`: the [slug], and for one date of a recurring event the date its URL adds.
+ * TEC Pro gives every date of a recurring event the same `slug`, and a URL that appends the date
+ * and, for two shows a day, a number (`/event/<slug>/2026-05-30/2/`). Those segments join the key
+ * (`<slug>-2026-05-30-2`), so the dates stay apart. An event without them keeps the bare slug. The
+ * rule reads one entry only, so a series down to its last date keeps the key it had.
+ */
+fun JsonNode.tecSourceId(
+    source: EventSource,
+    slug: String
+): String {
+    val segments = stringOrNull("url")?.let(::urlPathSegments).orEmpty()
+    val slugAt = segments.indexOfFirst { it.equals(slug, ignoreCase = true) }
+    val occurrence =
+        segments
+            .drop(slugAt + 1)
+            .takeWhile { it.matches(TEC_OCCURRENCE_DATE) || it.matches(TEC_OCCURRENCE_NUMBER) }
+            .takeIf { slugAt >= 0 && it.firstOrNull()?.matches(TEC_OCCURRENCE_DATE) == true }
+            .orEmpty()
+    return (listOf("${source.sourceIdPrefix}$slug") + occurrence).joinToString("-")
+}
+
+/** The date segment TEC Pro appends to a recurring event's URL. */
+private val TEC_OCCURRENCE_DATE = Regex("""\d{4}-\d{2}-\d{2}""")
+
+/** The number TEC Pro appends after the date for a second show the same day. */
+private val TEC_OCCURRENCE_NUMBER = Regex("""\d+""")
+
+/** The non-empty segments of [url]'s raw path, percent-encoded as the API's `slug` is, or none for a URL that does not parse. */
+private fun urlPathSegments(url: String): List<String> =
+    try {
+        URI(url)
+            .rawPath
+            .orEmpty()
+            .split('/')
+            .filter { it.isNotEmpty() }
+    } catch (_: URISyntaxException) {
+        emptyList()
     }
 
 /** A text field with the HTML entities WordPress leaves in titles and taxonomy names decoded. */

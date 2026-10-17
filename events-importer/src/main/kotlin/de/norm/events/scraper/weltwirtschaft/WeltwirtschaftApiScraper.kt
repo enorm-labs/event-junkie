@@ -17,6 +17,7 @@ import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -74,7 +75,7 @@ class WeltwirtschaftApiScraper {
             endTime = until?.toLocalTime(),
             imageUrl = event.tecImageUrl() ?: body.selectFirst("img[src]")?.let(::largestSource),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.WELTWIRTSCHAFT.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.WELTWIRTSCHAFT, slug),
             ticketUrl =
                 event.stringOrNull("website") ?: body
                     .select("a[href]")

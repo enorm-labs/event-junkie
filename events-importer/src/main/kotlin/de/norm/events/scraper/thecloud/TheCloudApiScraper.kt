@@ -16,6 +16,7 @@ import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
@@ -57,7 +58,7 @@ class TheCloudApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.THE_CLOUD.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.THE_CLOUD, slug),
             ticketUrl = event.tecText("website")?.let(::withoutTracking),
             artists = listOfNotNull(liveAct?.let { ScrapedArtist(name = it) }),
             promoters = event.tecOrganizerNames()

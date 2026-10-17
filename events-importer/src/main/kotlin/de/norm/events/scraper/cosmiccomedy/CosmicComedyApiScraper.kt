@@ -14,6 +14,7 @@ import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -32,7 +33,7 @@ import tools.jackson.databind.JsonNode
  * a format or a language (`Showcase`, `Open Mic`, `Comedy Special`, `English Language`), never
  * a musical genre, so nothing is stored as one.
  * - **The programme is mostly one recurring house night.** 57 events resolve to 11 distinct
- * titles; the `slug` is unique per date and identifies an event.
+ * titles; the `slug` identifies an event, with the date [tecSourceId] adds for a recurring one.
  * - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
  * - **Sold out is only in the title** (`LATE SHOW (SOLD OUT!!!)`): the API has no stock field.
  * - **The description opens with an embedded Universe ticket widget**, whose target id is the
@@ -67,7 +68,7 @@ class CosmicComedyApiScraper {
             startTime = start.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.path("url").asString(""),
-            sourceId = "${EventSource.COSMIC_COMEDY.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.COSMIC_COMEDY, slug),
             ticketUrl = ticketUrl(event),
             soldOut = hasSoldOutMarker(title),
             artists = headlinerOf(title, categories),

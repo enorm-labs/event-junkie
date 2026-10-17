@@ -11,6 +11,7 @@ import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
@@ -65,7 +66,7 @@ class ComedyCafeApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.COMEDY_CAFE.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.COMEDY_CAFE, slug),
             pricePresale = price?.takeIf { it.signum() > 0 },
             free = price?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = hasSoldOutMarker(title)

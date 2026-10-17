@@ -17,6 +17,7 @@ import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -70,7 +71,7 @@ class KaosBerlinApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.KAOS_BERLIN.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.KAOS_BERLIN, slug),
             ticketUrl = ticketUrl(event),
             pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
             priceNote = cost?.takeIf { prices.size > 1 || (prices.isEmpty() && !UNKNOWN_COST.matches(it)) },
