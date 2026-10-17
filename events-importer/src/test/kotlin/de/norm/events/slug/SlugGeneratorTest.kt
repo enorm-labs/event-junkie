@@ -70,4 +70,37 @@ class SlugGeneratorTest {
         SlugGenerator.slugify("Søl") shouldBe "sol"
         SlugGenerator.slugify("Sæl") shouldBe "sael"
     }
+
+    @Test
+    fun `transliterates a Cyrillic name as a reader would type it`() {
+        SlugGenerator.slugify("ВУИНДЛИЯ") shouldBe "vuindliya"
+        SlugGenerator.slugify("Щедрик") shouldBe "shchedrik"
+        SlugGenerator.slugify("Ёлка и Йога") shouldBe "yolka-i-yoga"
+        SlugGenerator.slugify("Ґуцул Їжак") shouldBe "gutsul-yizhak"
+        SlugGenerator.slugify("Объект") shouldBe "obekt"
+        SlugGenerator.slugify("Юлия") shouldBe "yuliya"
+        SlugGenerator.slugify("Мумий Тролль") shouldBe "mumiy-troll"
+        SlugGenerator.slugify("Кино 2") shouldBe "kino-2"
+    }
+
+    @Test
+    fun `transliterates a Greek name`() {
+        SlugGenerator.slugify("Μουσική") shouldBe "mousiki"
+        SlugGenerator.slugify("ΨΥΧΗ") shouldBe "psychi"
+        SlugGenerator.slugify("Άγγελος Ευαγγέλου") shouldBe "angelos-evangelou"
+        SlugGenerator.slugify("Θάλασσα") shouldBe "thalassa"
+    }
+
+    @Test
+    fun `keeps the plain slug of a name with a Latin letter`() {
+        SlugGenerator.slugify("Друга Ріка (Druha Rika)") shouldBe "druha-rika"
+        SlugGenerator.slugify("Meduσa") shouldBe "medua"
+        SlugGenerator.slugify("ЯETURN: NEW YEAR'S DAY") shouldBe "eturn-new-year-s-day"
+    }
+
+    @Test
+    fun `leaves a name without letters empty`() {
+        SlugGenerator.slugify("–") shouldBe ""
+        SlugGenerator.slugify("★ ★") shouldBe ""
+    }
 }

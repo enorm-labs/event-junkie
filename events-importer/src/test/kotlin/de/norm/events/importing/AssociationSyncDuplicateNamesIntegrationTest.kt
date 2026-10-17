@@ -316,6 +316,24 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // #3475: a Cyrillic name is transliterated for the slug and keeps its script as the display name.
+    // The shouted-capitals rule lowers it as it lowers a Latin name in capitals.
+    @Test
+    fun `an artist named in Cyrillic is stored under a transliterated slug`() {
+        runBlocking {
+            val sourceId = "cyrillic-artist:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "ВУИНДЛИЯ"), ScrapedArtist(name = "Real Band"))))
+            )
+
+            artistRepository.findBySlug("vuindliya")?.name shouldBe "Вуиндлия"
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 2
+        }
+    }
+
     @Test
     fun `the first mention keeps its billing when an act is listed twice`() {
         runBlocking {
