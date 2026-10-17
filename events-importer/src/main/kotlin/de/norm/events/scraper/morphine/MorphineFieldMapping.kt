@@ -17,8 +17,9 @@ import java.time.LocalTime
 // MorphineFieldMappingTest, where the examples live.
 
 /**
- * Morphine's format tails, "… - Live Recording", "… Listening Session" and a bare "… Live" after
- * the work ("Evelyn Plaschg - Alphabet Live"), stripped from a **derived artist name** only.
+ * Morphine's format tails, "… - Live Recording", "… Listening Session", a release night ("Ahmed
+ * Maher - Maktoub Album Release", "… - album release concert", #3515) and a bare "… Live" after the
+ * work ("Evelyn Plaschg - Alphabet Live"), stripped from a **derived artist name** only.
  *
  * The room records most concerts for the label and bills that in both the title and the lineup
  * entry ("Invisible Weather - Live Recording", "Raphael Rogiński – Qırım - Live Recording"). It
@@ -31,7 +32,11 @@ import java.time.LocalTime
  * the space or the dash before it, so `Olive` keeps its name.
  */
 private val FORMAT_TAIL =
-    Regex("""(?:\s*[-–—]?\s*(?:live\s+recording|listening\s+session)|(?:\s*[-–—]\s*|\s+)live)\s*$""", RegexOption.IGNORE_CASE)
+    Regex(
+        """(?:\s*[-–—]?\s*(?:live\s+recording|listening\s+session|(?:album|record)\s+release(?:\s+concert)?|release\s+concert)""" +
+            """|(?:\s*[-–—]\s*|\s+)live)\s*$""",
+        RegexOption.IGNORE_CASE
+    )
 
 /**
  * Strips a trailing [FORMAT_TAIL] from a billed name; unchanged without such a tail or when
