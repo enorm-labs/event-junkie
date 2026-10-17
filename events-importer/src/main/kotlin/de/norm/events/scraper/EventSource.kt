@@ -121,6 +121,9 @@ enum class EventSource {
     /** Duncker Club Berlin – a long-running goth, wave and indie club in Prenzlauer Berg. */
     DUNCKER,
 
+    /** 8MM Bar – a DIY music bar on Schönhauser Allee since 2002, where bands keep all the door money. */
+    EIGHT_MM,
+
     /** Erreichbar – a bar in the back building of Reichenberger Straße 63a in Kreuzberg, with a punk bar night every second Thursday. */
     ERREICHBAR,
 
