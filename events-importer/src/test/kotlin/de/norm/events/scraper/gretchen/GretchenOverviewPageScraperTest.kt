@@ -4,6 +4,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.withWeekdayWarnings
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -480,6 +481,41 @@ class GretchenOverviewPageScraperTest {
         fun `types club-night and DJ-set titles as PARTY`() {
             eventWithId("3530").eventType shouldBe "PARTY" // "… CLUB NIGHT"
             eventWithId("3511").eventType shouldBe "PARTY" // "BALKANBEATS - Robert Soko DJ-Set"
+        }
+
+        @Test
+        fun `types a night with late doors and no show time as PARTY`() {
+            // "saHHara x UNDERGA33 present: DAZE" prints only "Doors: 23.59" (#3157).
+            eventWithId("3536").eventType shouldBe "PARTY"
+        }
+
+        @Test
+        fun `keeps a concert with a show time, a festival and an early doors-only night as they are`() {
+            assertSoftly {
+                // "TULIPA RUIZ": "Doors: 19.30 Show: 20.30".
+                eventWithId("3492").eventType shouldBe "CONCERT"
+                // The Afro Latin festival prints only "Doors: 23.59" and stays a festival.
+                eventWithId("3537").eventType shouldBe "FESTIVAL"
+            }
+        }
+
+        @Test
+        fun `types by the doors at the club-night boundary`() {
+            assertSoftly {
+                typeOf("Doors: 22.00") shouldBe "PARTY"
+                typeOf("Doors: 21.00") shouldBe "CONCERT"
+                typeOf("Doors: 22.00 <br/>Show: 23.00") shouldBe "CONCERT"
+                typeOf("Doors:") shouldBe "CONCERT"
+            }
+        }
+
+        private fun typeOf(times: String): String? {
+            val page =
+                """
+                <div class="gig"><span class="date">Fr. <strong>23.10.2026</strong><br> $times</span>
+                <div class="title">House<h2><a href="detail.php?id=1">GIRLS TOWN</a></h2></div></div>
+                """.trimIndent()
+            return scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single().eventType
         }
     }
 

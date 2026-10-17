@@ -35,6 +35,7 @@ val ROADRUNNER_LIMITATIONS =
     VenueLimitations(
         EventSource.ROADRUNNER,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme lives on one hand-coded page"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a night prints only its doors, `Einlass: 20:00`"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
             "the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert"

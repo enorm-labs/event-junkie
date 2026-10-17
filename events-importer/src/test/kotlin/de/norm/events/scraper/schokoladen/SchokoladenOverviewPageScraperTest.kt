@@ -295,6 +295,30 @@ class SchokoladenOverviewPageScraperTest {
             revolte.doorsTime shouldBe LocalTime.of(19, 0)
             revolte.startTime shouldBe LocalTime.of(20, 0)
         }
+
+        @Test
+        fun `reads a clock-first line without dashes time-first, with Lesung as the start`() {
+            // October 2026: the dashes are gone, and label-first read "Einlass 20:00" and "Konzert 22:00" (#3157).
+            assertSoftly {
+                timesOf("19:00 Einlass 20:00 Konzert 22:00 Dj-Set") shouldBe (LocalTime.of(19, 0) to LocalTime.of(20, 0))
+                timesOf("19:00 Doors 20:00 Konzert 22:00 Dj-Set") shouldBe (LocalTime.of(19, 0) to LocalTime.of(20, 0))
+                timesOf("19:00 Einlass 20:00 Lesung") shouldBe (LocalTime.of(19, 0) to LocalTime.of(20, 0))
+                timesOf("Einlass 19h Beginn 20h") shouldBe (LocalTime.of(19, 0) to LocalTime.of(20, 0))
+                timesOf("doors 19:00 - show 20:00 - DJs after 22:00") shouldBe (LocalTime.of(19, 0) to LocalTime.of(20, 0))
+            }
+        }
+
+        private fun timesOf(timeLine: String): Pair<LocalTime?, LocalTime?> {
+            val page =
+                """
+                <div class="event"><div class="container"><h2 class="fw-bold">Night</h2></div>
+                <div class="container"><div class="event-info" id="e20261018" data-event-date="2026-10-18">
+                <div class="event-facts"><p><strong>Time</strong><br><span>$timeLine</span></p></div>
+                </div></div></div>
+                """.trimIndent()
+            val event = scraper.scrape(Jsoup.parse(page, baseUrl), baseUrl).single()
+            return event.doorsTime to event.startTime
+        }
     }
 
     @Nested

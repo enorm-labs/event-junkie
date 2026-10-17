@@ -65,6 +65,7 @@ class BadehausWebsiteImporter(
 val BADEHAUS_LIMITATIONS =
     VenueLimitations(
         EventSource.BADEHAUS,
+        AcceptedLimitation(LimitedAspect.START_TIME, "the page prints one clock, `19:00 UHR` beside the date and `Doors 19:00` below it, and it is the doors"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
             "the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest"

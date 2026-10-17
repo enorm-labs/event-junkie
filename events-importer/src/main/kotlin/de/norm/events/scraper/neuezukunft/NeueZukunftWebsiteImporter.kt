@@ -50,6 +50,10 @@ val NEUE_ZUKUNFT_LIMITATIONS =
             LimitedAspect.GENRE,
             "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; every music night takes the house's Psychedelic"
         ),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a series night (Jazz After Dark, Future Bash Reloaded) names no act, and a fest bills its line-up only in prose"
+        ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the calendar widget sets no cover image on upcoming shows"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
         houseGenre = "Psychedelic"
