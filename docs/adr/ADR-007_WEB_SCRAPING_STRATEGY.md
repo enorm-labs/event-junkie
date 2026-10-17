@@ -573,13 +573,15 @@ The page shape, the cursor walk and the field readers live here. The venue maps 
 | `JsonNode.tecTermNames(field)` / `tecOrganizerNames()` | The names of `categories` or `tags`; the organizers' names                                |
 | `JsonNode.tecImageUrl()`                               | The featured image's full-size URL                                                        |
 
-**`CalendarProperty.kt`** — the reader for an iCalendar feed. ORWOhaus reads the Events Manager feed, and Kallasch& and
-LabSaal the Modern Events Calendar feed. Each venue reads the times, the recurrence and the fields in its own scraper.
+**`CalendarProperty.kt`** — the reader for an iCalendar feed. ORWOhaus reads the Events Manager feed, Kallasch& and
+LabSaal the Modern Events Calendar feed, and Café Köpenick the export of its kalender.digital calendar. Each venue reads
+the times, the recurrence and the fields in its own scraper.
 
-| Extension / Function       | Purpose                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| `calendarEvents(calendar)` | Every `VEVENT` as its properties by name, folded lines unfolded                |
-| `CalendarProperty.text`    | A property value as RFC 5545 TEXT: `\n` a line break, `\,` `\;` `\\` unescaped |
+| Extension / Function       | Purpose                                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `calendarEvents(calendar)` | Every `VEVENT` as its properties by name, folded lines unfolded                                                         |
+| `CalendarProperty.text`    | A property value as RFC 5545 TEXT: `\n` a line break, `\,` `\;` `\\` unescaped, and `\"`, which kalender.digital writes |
+| `CalendarProperty.params`  | The parameters by upper-case name, such as `VALUE=DATE` on an all-day entry                                             |
 
 **Design rationale**: a declarative selector map, from field names to CSS selectors, is rejected here. Each scraped
 field needs different extraction logic: sibling traversal, regex extraction from a `style` attribute, multi-element

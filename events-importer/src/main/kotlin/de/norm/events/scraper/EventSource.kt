@@ -76,6 +76,9 @@ enum class EventSource {
     /** Brotfabrik Berlin – an 1890 bakery in Weißensee, an arts centre since 1990 with a cinema, a gallery and a stage for theatre and readings. */
     BROTFABRIK,
 
+    /** Café Köpenick – an antifascist youth club on Seelenbinderstraße with punk and band nights, parties and a weekly open jam. */
+    CAFE_KOEPENICK,
+
     /** Cassiopeia Berlin – a multi-room club and cultural venue on the RAW-Gelände, from reggae and drum & bass to indie and electronic nights. */
     CASSIOPEIA,
 

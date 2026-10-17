@@ -119,6 +119,17 @@ says so.
 | `BROTFABRIK`           | `END_TIME`         | every event ends two hours after it starts, the calendar's default rather than the show's                                                        | —     |
 | `BROTFABRIK`           | `GENRE`            | the house files its nights by room, not by style                                                                                                 | —     |
 | `BROTFABRIK`           | `ARTISTS`          | the stage bills productions, and the readings name their authors only in the title and the prose                                                 | —     |
+| `CAFE_KOEPENICK`       | `START_TIME`       | most band nights are all-day calendar entries with no time                                                                                       | —     |
+| `CAFE_KOEPENICK`       | `DOORS_TIME`       | the calendar gives at most one time per night                                                                                                    | —     |
+| `CAFE_KOEPENICK`       | `DESCRIPTION`      | the calendar notes are the staff's own, not a text for visitors                                                                                  | —     |
+| `CAFE_KOEPENICK`       | `GENRE`            | the calendar names no style                                                                                                                      | —     |
+| `CAFE_KOEPENICK`       | `IMAGE`            | the calendar carries no poster                                                                                                                   | —     |
+| `CAFE_KOEPENICK`       | `PRICE`            | the calendar names no entry price                                                                                                                | —     |
+| `CAFE_KOEPENICK`       | `TICKET_URL`       | the calendar links no ticket shop                                                                                                                | —     |
+| `CAFE_KOEPENICK`       | `PROMOTERS`        | the calendar names no promoter                                                                                                                   | —     |
+| `CAFE_KOEPENICK`       | `END_TIME`         | an all-day calendar entry has no end time                                                                                                        | —     |
+| `CAFE_KOEPENICK`       | `ARTISTS`          | a band night bills its acts only in the title, and some titles say only bands                                                                    | —     |
+| `CAFE_KOEPENICK`       | `PER_EVENT_PAGE`   | the calendar has no page per event, so every event links the calendar                                                                            | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |
