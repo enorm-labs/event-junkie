@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   142 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    33 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   143 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    32 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -101,6 +101,7 @@ schema change.
 | KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                              | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                                       | Bar          | WordPress; ISO date in slug; ~10-day horizon              |
 | KØPI                             | https://koepi137.net/                                                    | Club         | radar group API; bill read from the description           |
+| KuBiZ                            | https://www.kubiz-wallenberg.de/                                         | Other        | WP posts via ?rest_route; date in the title               |
 | Kühlspot Social Club             | https://kuehlspot.com/                                                   | Other        | Elementor one-pager; line-up as Name – instrument         |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                              | Concert Hall | Gatsby static-query JSON; times in the blurb              |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
@@ -183,7 +184,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-141 importer classes cover 142 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+142 importer classes cover 143 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Five other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other three are Kesselhaus with Maschinenhaus, Uber Arena with the Uber Eats Music Hall, and Bar jeder Vernunft with TIPI am Kanzleramt.
@@ -204,7 +205,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-51 sources have a second language, 87 have none, and 4 are unknown. Nine translate the event text on a second page.
+51 sources have a second language, 88 have none, and 4 are unknown. Nine translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -290,6 +291,7 @@ the upsert stores none.
 | KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Klunkerkranich                   | Yes             | One field: German, `[EN]`, English                           | One field          | https://klunkerkranich.org/events/2026-10-09-trauma-mia-presents-bass-island-w-clavd-frau-kaufmann-confred-trauma-mia-resi-regelt/ |
 | KØPI                             | No              | —                                                            | —                  |                                                                                                                                    |
+| KuBiZ                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Kühlspot Social Club             | No              | —                                                            | —                  |                                                                                                                                    |
 | Kulturhaus Insel Berlin          | Yes             | One field: `[English below]`                                 | One field          | [captured page](../events-importer/src/test/resources/scraper/insel/insel-events.json)                                             |
 | Kulturhaus Peter Edel            | No              | —                                                            | —                  |                                                                                                                                    |
@@ -408,7 +410,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Renaissance-Theater      | https://renaissance-theater.de/spielplan/                 | Theater      | Low      | Day blocks under month headings; plays only                 |
 | Spindler & Klatt         | https://www.spindlerklatt.com/club                        | Club         | Low      | Wix list; party nights with date and time, no line-ups      |
 | Jugendclub Café Köpenick | https://radar.squat.net/en/node/8188                      | Club         | Low      | radar group; own site hdjk.de links a JS calendar           |
-| KuBiZ                    | https://www.kubiz-wallenberg.de/                          | Other        | Low      | WordPress posts; date in the title; jazz about monthly      |
 | Promenaden Eck           | https://promenaden-eck-berlin.de/                         | Bar          | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming   |
 | ZK/U                     | https://www.zku-berlin.org/                               | Other        | Low      | TYPO3 calendar; club nights among talks and markets         |
 | KREUZWERK                | https://kreuzwerk.club/events                             | Techno Club  | Medium   | Ritter Butzke codebase; detail ld+json; 5 events            |

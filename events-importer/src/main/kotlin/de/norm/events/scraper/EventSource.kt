@@ -192,6 +192,9 @@ enum class EventSource {
     /** KØPI Berlin – the squatted house project at Köpenicker Straße 137, running punk, hardcore and metal concerts. */
     KOEPI,
 
+    /** KuBiZ – a self-organised culture centre in a former Weißensee school, with jazz, films and talks in its hall. */
+    KUBIZ,
+
     /** Kühlspot Social Club – a volunteer-run club in a listed Weißensee courtyard for improvised and experimental music and free jazz. */
     KUEHLSPOT,
 

@@ -1,0 +1,28 @@
+{
+    "venue": {
+        "name": "KuBiZ",
+        "address": "Bernkasteler Straße 78",
+        "city": "Berlin",
+        "postalCode": "13088",
+        "district": "weissensee",
+        "latitude": 52.557718,
+        "longitude": 13.470273,
+        "websiteUrl": "https://www.kubiz-wallenberg.de/",
+        "description": "A self-organised culture and education centre in the former Raoul Wallenberg school in Weißensee, whose hall stages jazz concerts, films with discussions and theatre.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Selbstorganisiertes Kultur- und Bildungszentrum in der ehemaligen Raoul-Wallenberg-Oberschule in Weißensee, dessen Aula Jazzkonzerte, Filme mit Diskussion und Theater zeigt.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["cultural-centre"],
+        "reviewedAt": "2026-10-17T03:10:00Z"
+    },
+    "sources": [
+        {
+            "name": "KuBiZ",
+            "url": "https://www.kubiz-wallenberg.de/?rest_route=/wp/v2/posts",
+            "sourceType": "KUBIZ",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
