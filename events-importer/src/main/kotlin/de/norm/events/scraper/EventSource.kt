@@ -354,6 +354,9 @@ enum class EventSource {
     /** Passionskirche – a 1908 neo-Romanesque church on Marheinekeplatz, a concert hall since 1974 for rock, folk, jazz and gospel. */
     PASSIONSKIRCHE,
 
+    /** Pastiche – a hi-fi listening room on Weserstraße that is also a record shop and day café, for seated listening sessions and live sets. */
+    PASTICHE,
+
     /** Kulturhaus Peter Edel Berlin – the Weißensee Bildungs- und Kulturzentrum, mixing concerts, comedy, theatre, readings and dance teas. */
     PETER_EDEL,
 
