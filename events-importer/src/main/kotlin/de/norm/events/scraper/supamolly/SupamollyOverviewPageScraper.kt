@@ -2,6 +2,7 @@ package de.norm.events.scraper.supamolly
 
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
+import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
@@ -25,7 +26,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
@@ -189,7 +189,7 @@ class SupamollyOverviewPageScraper {
     /** The `YYYYMMDD` date from a row's stamp id, or `null` when not a real calendar date. */
     private fun parseStampDate(stamp: String): LocalDate? =
         try {
-            LocalDate.parse(stamp.take(DATE_LENGTH), STAMP_DATE_FORMATTER)
+            LocalDate.parse(stamp.take(DATE_LENGTH), COMPACT_DATE)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -220,8 +220,6 @@ class SupamollyOverviewPageScraper {
 
         /** Digits of the stamp that carry the date; the remainder is the `HHmm` time. */
         private const val DATE_LENGTH = 8
-
-        private val STAMP_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
         /**
          * A title that opens with a German month name: "September Programm 2026", "Oktober Prog 2026",

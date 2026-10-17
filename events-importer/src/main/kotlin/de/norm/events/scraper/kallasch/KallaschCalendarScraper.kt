@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -123,7 +124,7 @@ class KallaschCalendarScraper(
         orEmpty().split(',').mapNotNull { it.blankToNull() }.map { value ->
             if (value.endsWith('Z')) {
                 LocalDateTime
-                    .parse(value.removeSuffix("Z"), DATE_TIME)
+                    .parse(value.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
                     .atOffset(ZoneOffset.UTC)
                     .atZoneSameInstant(BERLIN)
                     .toLocalDate()
@@ -133,17 +134,17 @@ class KallaschCalendarScraper(
         }
 
     /** A `TZID=Europe/Berlin` wall-clock time, the only zone the feed declares; a bare date is midnight. */
-    private fun localDateTime(value: String): LocalDateTime =
-        value.trim().let { raw ->
-            if (raw.length == BASIC_DATE_LENGTH) LocalDate.parse(raw, DateTimeFormatter.BASIC_ISO_DATE).atStartOfDay() else LocalDateTime.parse(raw, DATE_TIME)
-        }
+    private fun localDateTime(value: String): LocalDateTime {
+        val raw = value.trim()
+        if (raw.length == BASIC_DATE_LENGTH) return LocalDate.parse(raw, DateTimeFormatter.BASIC_ISO_DATE).atStartOfDay()
+        return LocalDateTime.parse(raw, ICAL_LOCAL_DATE_TIME)
+    }
 
     private companion object {
         /** How far ahead a series is expanded, the window the Elfsight venues use. */
         const val HORIZON_WEEKS = 26L
         const val PATH_PREFIX = "/programm/"
         const val BASIC_DATE_LENGTH = 8
-        val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
 
         /** The `<CATEGORY> // ` head every title carries. */
         val CATEGORY_PREFIX = Regex("""^[^/]+?\s*//\s*""")

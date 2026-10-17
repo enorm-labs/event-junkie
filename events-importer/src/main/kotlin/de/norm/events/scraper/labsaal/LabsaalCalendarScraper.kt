@@ -2,9 +2,11 @@ package de.norm.events.scraper.labsaal
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
@@ -22,7 +24,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the Modern Events Calendar iCalendar feed of the LabSaal. The feed also carries
@@ -95,15 +96,12 @@ class LabsaalCalendarScraper {
 
     private fun siteTime(property: CalendarProperty): LocalDateTime {
         val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return LocalDate.parse(raw, DATE_FORMAT).atStartOfDay()
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), DATE_TIME_FORMAT)
+        if (property.params["VALUE"] == "DATE") return LocalDate.parse(raw, COMPACT_DATE).atStartOfDay()
+        val local = LocalDateTime.parse(raw.removeSuffix("Z"), ICAL_LOCAL_DATE_TIME)
         return if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(BERLIN).toLocalDateTime() else local
     }
 
     companion object {
-        private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        private val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
-
         /** The category of the public programme; the groups and courses file under `Alle Gruppen Termine` instead. */
         private const val PROGRAMME_CATEGORY = "Alle Veranstaltungen"
 

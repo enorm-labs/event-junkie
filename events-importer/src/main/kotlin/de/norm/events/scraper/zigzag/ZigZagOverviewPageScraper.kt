@@ -2,6 +2,7 @@ package de.norm.events.scraper.zigzag
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -14,9 +15,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 /**
  * Pure parser for Zig Zag's `/programmneu` page: Squarespace summary blocks, one per month plus a
@@ -91,7 +90,7 @@ class ZigZagOverviewPageScraper(
 
     private fun parseDate(text: String?): LocalDate? =
         try {
-            text?.let { LocalDate.parse(it.trim(), DATE_FORMATTER) }
+            text?.let { LocalDate.parse(it.trim(), ENGLISH_LONG_DATE) }
         } catch (_: DateTimeParseException) {
             null
         }
@@ -99,8 +98,6 @@ class ZigZagOverviewPageScraper(
     private companion object {
         const val EVENT_PATH = "/program-mai/"
         const val HALL_PREFIX = "ZIG ZAG HALL:"
-
-        val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
 
         /** A paragraph of its own, or one the blurb runs straight on from: `(Jazz)Tradition trifft …`. */
         val STYLE = Regex("""^\(([^()]+)\)""")

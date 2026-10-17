@@ -9,10 +9,10 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 // Field mapping shared by the Urban Spree scrapers: the venue's category labels and the title
 // cleanup both pages need. The venue writes its own name and city into almost every title
@@ -146,9 +146,6 @@ internal val URBAN_SPREE_LATE_PLACEHOLDER: LocalTime = LocalTime.of(23, 59)
  */
 private val HEADER_DATE_TIME = Regex("""\b(\d{1,2}\.\d{1,2}\.\d{2})\s+(\d{1,2}:\d{2})\b""")
 
-/** The stamp's date half, `25.09.26`. */
-private val HEADER_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yy")
-
 /** How far into the description the stamp is looked for: its opening line or two. */
 private const val HEADER_SCAN_LENGTH = 120
 
@@ -162,7 +159,7 @@ internal fun urbanSpreeHeaderStart(
 ): LocalTime? {
     val stamp = HEADER_DATE_TIME.find(description?.take(HEADER_SCAN_LENGTH).orEmpty()) ?: return null
     val (date, time) = stamp.destructured
-    val stampedDate = runCatching { LocalDate.parse(date, HEADER_DATE_FORMAT) }.getOrNull()
+    val stampedDate = parseGermanShortDate(date)
     return if (stampedDate == eventDate) parseTime(time) else null
 }
 

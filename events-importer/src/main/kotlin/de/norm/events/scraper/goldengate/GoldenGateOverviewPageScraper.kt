@@ -2,6 +2,7 @@ package de.norm.events.scraper.goldengate
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GERMAN_LONG_DATE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -18,10 +19,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -190,13 +189,10 @@ class GoldenGateOverviewPageScraper {
         /** How far a corrected date may sit from a confirmed date; the block runs Thursday to Saturday. */
         private const val BLOCK_SPAN_DAYS = 6L
 
-        /** The date format inside a heading, e.g. "30. Juli 2026". */
-        private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", Locale.GERMAN)
-
         /** Parses the German day/month/year part of a date heading, or `null` when it is not one. */
         private fun parseLongGermanDate(text: String): LocalDate? =
             try {
-                LocalDate.parse(text.trim(), GERMAN_DATE_FORMATTER)
+                LocalDate.parse(text.trim(), GERMAN_LONG_DATE)
             } catch (_: DateTimeParseException) {
                 null
             }

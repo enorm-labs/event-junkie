@@ -41,7 +41,7 @@ private fun sentenceGenres(sentence: String): List<String> {
 private fun vocabularyGenre(key: String): String? = if (key in AMBIGUOUS_IN_PROSE) null else GENRE_SYNONYMS[key]
 
 /** How many genres one description may give an event. */
-const val MAX_DESCRIPTION_GENRES = 3
+private const val MAX_DESCRIPTION_GENRES = 3
 
 private val SENTENCE_BREAK = Regex("""[.!?;\n]+""")
 

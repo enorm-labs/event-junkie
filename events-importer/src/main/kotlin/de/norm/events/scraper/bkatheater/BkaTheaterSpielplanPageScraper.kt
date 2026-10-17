@@ -1,6 +1,7 @@
 package de.norm.events.scraper.bkatheater
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.COMPACT_DATE
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
@@ -25,7 +26,6 @@ import org.jsoup.nodes.Element
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for the BKA Theater Spielplan (`/spielplan/`), one server-rendered page that
@@ -114,11 +114,9 @@ class BkaTheaterSpielplanPageScraper {
         title: String
     ): String = "$date $time ${title.replace(WHITESPACE, " ").trim().lowercase()}"
 
-    private fun parseCompactDate(value: String): LocalDate? = runCatching { LocalDate.parse(value, YYYYMMDD) }.getOrNull()
+    private fun parseCompactDate(value: String): LocalDate? = runCatching { LocalDate.parse(value, COMPACT_DATE) }.getOrNull()
 
     private companion object {
-        val YYYYMMDD: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-
         /** A note that marks the performance, not the show: `Premiere`, `WELTPREMIERE`. */
         val PREMIERE_MARKER = Regex("""(?:welt|berlin)?premiere""", RegexOption.IGNORE_CASE)
 
