@@ -138,6 +138,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und` |
 | Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                |
 | Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`             |
+| ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course          |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -159,6 +160,7 @@ Four imported venues mix one into their programme. Each drops it on the words it
 | Theater im Delphi    | `billsTradeFairOrConference`                     | The same words in the title                                |
 | silent green         | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
 | Alte Münze           | `AlteMuenzeApiScraper.isProgramme`               | The `Tagung` category, or the same words in the title      |
+| ZK/U                 | `billsTradeFairOrConference`                     | The same words in the title or the subtitle                |
 
 A bare `Messe` is not a fair: SO36 bills a band of that name.
 

@@ -516,6 +516,9 @@ enum class EventSource {
     /** Zita Club & Bar – a nightclub and cocktail bar under the stone vaults of the Zitadelle Spandau, with DJ nights from current hits to classic rock. */
     ZITA_CLUB,
 
+    /** ZK/U Berlin – an artist-run residency and project space in a converted Moabit railway depot, with talks, film evenings, concerts and club nights. */
+    ZKU,
+
     /** Zur Klappe Berlin – a one-room club in a former public toilet at Yorckstraße and Mehringdamm in Kreuzberg. */
     ZUR_KLAPPE;
 
