@@ -239,6 +239,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/security-report` — read-only: Dependency-Check findings and Dependabot alerts, reconciled and triaged
 - `/security-triage` — work the Security tab to zero: fix, file or dismiss; the mutating counterpart to `/security-report`
 - `/squash-commit-message` — a squash commit message for the current branch
+- `/traffic [production|staging] [--hours N]` — sessions and page loads per day for the 14 days kept, less the crawlers that run the SPA; finds a new one by its night-time sessions
 - `/ui-check` — every public page at four widths, both locales and both themes, probed against the design rules; drafts issues, files none
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/update-docs` — find documentation that stopped being true; correct, delete or leave it, with the proving check

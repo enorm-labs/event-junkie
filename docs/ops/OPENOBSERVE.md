@@ -16,7 +16,8 @@ kubectl --context event-junkie-staging -n observability \
   port-forward svc/openobserve-openobserve-standalone 5080:5080     # then http://localhost:5080/
 flux --context event-junkie-staging get helmrelease openobserve -n flux-system
 scripts/o2-query.sh staging sweep                                  # the last day's errors, warnings, events and alerts; /log-check
-scripts/o2-query.sh production traffic --hours 336                 # page loads and sessions per day, for all 14 days kept
+scripts/o2-query.sh production traffic --hours 336                 # page loads and sessions per day, for all 14 days kept; /traffic
+scripts/o2-query.sh production renderers --hours 24                # which crawlers run the SPA, and so must leave the sessions
 ```
 
 The production forms are the same commands with `--context event-junkie-production`, over that cluster's tunnel (`10.10.0.1`, CLUSTER_ACCESS.md §Two
@@ -169,19 +170,34 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 | `frontend.in_burst`             | Lines in an hour above `burst_threshold` (600). The weekly DAST run and a crawler that walks the sitemap cause these |
 | `frontend.own_monitoring`       | Better Stack, Lighthouse, headless Chrome, the injector and the `node` health check                                  |
 | `frontend.crawlers`             | Search and AI crawlers that name themselves                                                                          |
-| `frontend.rendered_by_crawlers` | Pages that Baiduspider fetched. It runs the SPA on each one, so each one also calls the BFF                          |
+| `frontend.rendered_by_crawlers` | Pages that a crawler in `RENDERERS` fetched. It runs the SPA on them, so they also call the BFF                      |
 | `bff.meta`                      | `/api/meta` calls. The SPA calls it once when it starts                                                              |
-| `bff.sessions`                  | `bff.meta` less `frontend.rendered_by_crawlers`                                                                      |
+| `bff.sessions`                  | `bff.meta` less the calls in a renderer's window, scaled up for the seconds the windows cover                        |
+| `bff.night_sessions`            | `bff.sessions` from 00:00 to 04:00 UTC. A steady count here is a renderer not yet in the list                        |
 | `bff.lists`                     | List and search calls. Only the SPA makes them                                                                       |
-| `bff.details_by_people`         | Detail calls less one per detail page that Baiduspider rendered and one per detail page a non-person agent fetched   |
+| `bff.details_by_people`         | Detail calls less one per detail page that a renderer fetched and one per detail page a non-person agent fetched     |
 | `bff.images`                    | Image calls. Rendered pages from crawlers are still in this count                                                    |
 
 **nginx sees only the first page of a visit.** The SPA changes pages in the browser, so later pages reach only the BFF. That is why `bff.sessions` and
 `bff.lists` are the better signal of use.
 
-**Baiduspider is the only crawler that is subtracted, because it is the only one measured to render.** 97% of its page fetches are followed by
-`/api/meta` within 15 seconds. For Googlebot and ClaudeBot, the rate is the same as chance, about 13%. When a new crawler runs the SPA, `bff.sessions`
-goes up at a steady rate by day and by night. Measure the crawler the same way, then add it to `RENDERER` in the script.
+**Crawlers that run the SPA are subtracted from `bff.sessions`.** The BFF log names no agent, so the script matches by time. Each crawler in
+`RENDERERS` has a window: the seconds after its page load in which its SPA calls the BFF. A `/api/meta` call inside a window is the crawler's. A
+person's call inside a window is lost too, so each hour's remainder is divided by the share of the hour that no window covers.
+
+**Find a new renderer with `renderers`.** The injector calls the detail endpoint once for each detail page that nginx serves. A second call for the
+same slug within 15 seconds comes from the SPA. `renderers` counts these per agent and gives the 5th to 95th percentile `delay`. An agent with a high
+`share` and `subtracted: false` goes into `RENDERERS`, with `delay` as its window. Use `--hours 24`: a short window misses slow crawlers.
+
+| Renderer      | Pages a day | Share rendered | Window (s) |
+| ------------- | ----------- | -------------- | ---------- |
+| AhrefsBot     | 5,700       | 99%            | 0–2        |
+| Reflectionbot | 1,000       | 92%            | 0–7        |
+| Baiduspider   | 700         | 75%            | 2–12       |
+| Googlebot     | 240         | 62%            | 1–12       |
+
+**A crawler that fetches every few seconds covers most of the hour.** AhrefsBot loads a page every 15 seconds, so its window alone covers 20% of the
+time. The scaling keeps the estimate unbiased, but its noise grows with the share covered. Read `frontend.page_loads` beside it.
 
 **Retention sets the limit.** OpenObserve keeps 14 days, so `--hours 336` is the longest useful window. Older traffic is gone.
 
