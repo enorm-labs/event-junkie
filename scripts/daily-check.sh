@@ -171,7 +171,8 @@ unclosed() {
 # A merged pull request labelled `after-deploy` keeps its label until `/post-release` ticks every step.
 # `released`: whether the latest release tag contains its merge commit, so production runs it.
 # `due` per step: the date of a `(from YYYY-MM-DD)`, `deploy+<N>d` for `(N days after deploy)`, `dark-day:<slug>`
-# for a `(dark day <slug>)`, else `now`.
+# for a `(dark day <slug>)`, `when:<text>` for any other parenthesis, the date of an `on YYYY-MM-DD` in a step
+# without one, else `now`. An unknown form is never `now`, or the step shows as due on every run.
 after_deploy() {
     local tag prs number sha
     tag=$(gh release view -R "$REPO" --json tagName -q .tagName 2>/dev/null || true)
@@ -191,6 +192,8 @@ after_deploy() {
                            due: ((capture("^ *- \\[ \\] [a-z]+ \\(from (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})\\)") | .d)
                                  // (capture("^ *- \\[ \\] [a-z]+ \\((?<n>[0-9]+) days? after deploy\\)") | "deploy+" + .n + "d")
                                  // (capture("^ *- \\[ \\] [a-z]+ \\(dark day (?<s>[a-z0-9-]+)\\)") | "dark-day:" + .s)
+                                 // (capture("^ *- \\[ \\] [a-z]+ \\((?<w>[^)]*)\\)") | "when:" + .w)
+                                 // (capture("^ *- \\[ \\] [a-z]+:.*\\bon (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})\\b") | .d)
                                  // "now")}]}'
     done | jq -s .
 }
