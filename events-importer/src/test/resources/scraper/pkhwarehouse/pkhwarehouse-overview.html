@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PKH Warehouse</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./favicon.svg">
+<style>
+/* Schrift liegt lokal, nicht bei Google. Das ist keine Geschmacksfrage: Das
+   LG Muenchen I hat 2022 entschieden, dass das Einbinden von Google Fonts die
+   IP-Adresse der Besucher ohne Einwilligung an einen Dritten uebertraegt
+   (Az. 3 O 17493/20). Seitdem ist das eine beliebte Abmahnvorlage. Die
+   Variable-Font-Datei deckt alle hier genutzten Schnitte ab. */
+@font-face{
+  font-family:"Space Grotesk";
+  src:url("./fonts/space-grotesk-v22-latin-variable.woff2") format("woff2-variations");
+  font-weight:300 700;
+  font-style:normal;
+  font-display:swap;
+}
+
+/*
+  Entwurf E — Schwarm.
+
+  Die Marke ist kein Koerper, sondern eine Wolke aus Punkten. Beim Scrollen
+  faellt sie auseinander und findet sich in neuen Formationen wieder: Marke,
+  Kugel, Wand, Tunnel, Marke. Der Zeiger draengt die Punkte beiseite, ein
+  Klick stupst sie an, im letzten Abschnitt dreht sich die Marke dauerhaft.
+
+  Schrift: eine einzige Familie, durchgehend Satzschreibung. Keine Versalien,
+  keine gesperrten Vorspann-Zeilen, kein zweiter Display-Schnitt — die
+  Hierarchie kommt aus Gewicht und Groesse.
+*/
+:root{
+  --grund:#050506;
+  --weiss:#eceef2;
+  --matt:#79818f;
+  --leise:#555c68;
+  --linie:rgba(255,255,255,.1);
+  --leit:#e9eaee;
+  --ease:cubic-bezier(.23,1,.32,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--grund);color:var(--weiss);
+  font-family:"Space Grotesk",Arial,sans-serif;font-weight:400;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums}
+::selection{background:var(--leit);color:#050506}
+::-webkit-scrollbar{width:9px}
+::-webkit-scrollbar-track{background:#050506}
+::-webkit-scrollbar-thumb{background:#26262c}
+::-webkit-scrollbar-thumb:hover{background:var(--leit)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--leit);outline-offset:3px}
+
+#buehne{position:fixed;inset:0;z-index:0;pointer-events:none}
+#buehne canvas{display:block;width:100%;height:100%}
+/* width/min-width sind hier nicht kosmetisch: .rahmen ist Flex-Kind von
+   <section>, und ein Flex-Kind schrumpft per Voreinstellung nicht unter die
+   Inhaltsbreite (min-width:auto). Ohne die beiden Zeilen wird der Aufmacher
+   auf dem Handy so breit wie seine laengste unumbrechbare Zeile und laeuft
+   rechts aus dem Bild. */
+.rahmen{max-width:1240px;width:100%;min-width:0;margin:0 auto;padding:0 24px;position:relative}
+/* Kleinschrift fuer Daten und Beschriftungen — Groesse und Farbe statt Kapitaelchen. */
+.klein{font-size:13px;font-weight:400;color:var(--matt);letter-spacing:0}
+
+header{position:fixed;inset:0 0 auto;z-index:30;mix-blend-mode:difference}
+.kopf{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
+.kopf a{color:#fff;text-decoration:none}
+.kopf .name{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:500;letter-spacing:-.01em}
+.kopf .name svg{display:block;width:21px;height:auto;fill:currentColor}
+nav{display:flex;gap:22px}
+nav a{font-size:14px;font-weight:400;letter-spacing:-.005em;opacity:.62;transition:opacity .2s}
+nav a:hover{opacity:1}
+.kopf .ticket{font-size:14px;font-weight:500;opacity:.9}
+
+section{position:relative;z-index:10;min-height:104vh;display:flex;align-items:center;padding:12vh 0}
+section .rahmen::before{content:"";position:absolute;inset:-17vh -17vw;z-index:-1;
+  background:rgba(5,5,6,.5);
+  -webkit-backdrop-filter:blur(9px) saturate(.92);
+  backdrop-filter:blur(9px) saturate(.92);
+  --schleier:radial-gradient(46% 46% at 50% 50%,#000 0%,#000 24%,rgba(0,0,0,.74) 44%,rgba(0,0,0,.36) 62%,rgba(0,0,0,.12) 80%,transparent 100%);
+  -webkit-mask-image:var(--schleier);mask-image:var(--schleier)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  section .rahmen::before{background:rgba(5,5,6,.72)}
+}
+
+/* Aufmacher — Gewicht traegt die Betonung, nicht Versalien. */
+/* "Warehouse" ist ~7 em breit: auf schmalen Handys (360 px) wuerde 2.9rem ueberlaufen,
+   deshalb zusaetzlich an die verfuegbare Breite (Viewport minus 2 x 24 px Rand) gekoppelt. */
+#s1 h1{margin:0;font-size:min(clamp(2.9rem,9vw,8.2rem),calc((100vw - 48px) / 7.4));line-height:.98;letter-spacing:-.045em;font-weight:300;max-width:11ch}
+#s1 h1 span{display:block;opacity:0;animation:auf 1.1s var(--ease) forwards;animation-delay:var(--v,0ms)}
+#s1 h1 .stark{font-weight:700}
+@keyframes auf{from{opacity:0;transform:translateY(24px) scale(.98);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
+.auf{opacity:0;transform:translateY(24px) scale(.98);filter:blur(10px);
+  transition:opacity .95s var(--ease),transform .95s var(--ease),filter .95s var(--ease);
+  transition-delay:var(--v,0ms)}
+.auf.da{opacity:1;transform:none;filter:blur(0)}
+#s1 .band{display:flex;gap:clamp(16px,3.4vw,42px);flex-wrap:wrap;margin-top:34px;padding-top:18px;
+  border-top:1px solid var(--linie);opacity:0;animation:auf 1.1s var(--ease) .5s forwards;max-width:860px}
+#s1 .band b{font-size:15px;font-weight:400;color:var(--matt);white-space:nowrap}
+#s1 .band b:first-child{color:var(--leit);font-weight:500}
+
+/* Abschnittstitel klein halten — die Inhalte sind gross genug. */
+h2{margin:0 0 36px;font-size:clamp(1.3rem,2.4vw,1.9rem);font-weight:500;letter-spacing:-.03em}
+.zeile{display:grid;grid-template-columns:4.2rem 1fr auto;gap:24px;align-items:baseline;padding:26px 0;
+  border-top:1px solid var(--linie);transition:border-color .25s,transform .35s var(--ease)}
+.zeile:last-of-type{border-bottom:1px solid var(--linie)}
+.zeile:hover{border-color:var(--leit);transform:translateX(10px)}
+.zeile .d{font-size:clamp(1.9rem,4vw,2.9rem);line-height:.9;font-weight:700;letter-spacing:-.05em;color:var(--leit)}
+.zeile .t{font-size:clamp(1.05rem,2vw,1.35rem);font-weight:500;letter-spacing:-.02em}
+/* Die zweite Zeile im Titel nennt, wer spielt. Sie steht bewusst im selben
+   Feld wie der Titel und nicht in einer eigenen Spalte: bei acht Namen
+   braeche eine dritte Spalte die Zeile auf dem Handy auseinander. */
+.zeile .mit a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.zeile .mit{display:block;margin-top:6px;font-size:13.5px;font-weight:400;
+  letter-spacing:0;line-height:1.55;color:var(--matt)}
+.weiter{margin:52px 0 22px;font-size:13px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--matt)}
+.crews{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:26px 34px;margin-top:34px}
+.crew b{display:block;font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--leit);
+  padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--linie)}
+.crew span{display:block;font-size:14px;line-height:1.95;color:var(--matt);
+  transition:color .18s,padding-left .18s}
+.crew span:hover{color:var(--weiss);padding-left:6px}
+
+p.lead{margin:0;max-width:48ch;font-size:clamp(1.1rem,2.2vw,1.55rem);font-weight:300;line-height:1.45;
+  letter-spacing:-.015em;color:#c9c9d0}
+/* Bereiche als Schnitt durch das Haus: drei Ebenen untereinander, jede um
+   eine Stufe eingerueckt. Das nimmt die Schichtung der Logo-Animation auf --
+   die Punkte stapeln sich dort ebenso in Lagen. Keine Kapazitaetszahlen:
+   "800" sagt niemandem etwas, "unten, die grosse Halle" schon. */
+#s4 .ebenen{margin-top:44px;display:flex;flex-direction:column;gap:clamp(26px,3.4vw,44px)}
+.ebene{padding-left:calc(var(--stufe) * clamp(18px,3.4vw,52px))}
+.ebene-kopf{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.ebene-linie{display:block;width:clamp(28px,6vw,72px);height:1px;background:var(--leit);opacity:.55;flex:none}
+.ebene-name{font-size:13px;font-weight:500;letter-spacing:.04em;color:var(--matt)}
+.ebene-raeume{display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,58px)}
+#s4 .f{max-width:26ch}
+#s4 .f .n{font-size:clamp(1.55rem,3.6vw,2.6rem);line-height:1.04;font-weight:600;
+  letter-spacing:-.035em;color:var(--leit)}
+#s4 .f .x{margin-top:7px;font-size:14px;font-weight:400;color:var(--matt);line-height:1.5}
+
+/* Der Videoabschnitt stapelt Text und Kinobahn, statt einen Block mittig zu
+   setzen — deshalb hier eine andere Achse als bei den uebrigen Abschnitten. */
+/* Der Videoabschnitt besteht nur noch aus der Kinobahn — kein Text, kein
+   Abstand: das Bild soll ohne Ansage uebernehmen. */
+#s3{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;min-height:0}
+
+/* ── Video: der Kinogang ───────────────────────────────────────────────────
+   Das Video haengt fest im Fenster und wird nur ausgeschnitten: bei k=0 auf
+   genau das Rechteck, das der Platzhalter im Textfluss einnimmt, bei k=1 auf
+   den ganzen Schirm. Es waechst also beim Scrollen aus seinem Platz heraus
+   auf Vollbild und danach wieder zurueck hinein — ohne dass dabei ein
+   einziges Mal das Layout neu gerechnet wird: geschnitten, verschoben und
+   ueberblendet wird auf der Grafikkarte.
+
+   An demselben k haengen Unschaerfe und Deckkraft. Heran kommt es aus dem
+   Weichen und Blassen, im Vollbild steht es scharf und voll da, hinaus geht
+   es denselben Weg zurueck. */
+.kinobahn{position:relative;height:250vh}
+/* Der Platzhalter steht waehrend der ganzen Bahn in der Bildschirmmitte und
+   gibt dem Schnitt sein kleines Rechteck vor. Er selbst ist leer — sichtbar
+   ist an ihm nur der Schatten, der mit dem Wachsen verschwindet. */
+.kinohalt{position:sticky;top:0;height:100vh;display:flex;align-items:center;
+  justify-content:center;padding:0 24px;pointer-events:none}
+.videoplatz{width:min(940px,100%);aspect-ratio:16/9;border-radius:16px;
+  box-shadow:0 40px 120px rgba(0,0,0,.55);opacity:var(--platz,0)}
+.videobox{position:fixed;inset:0;z-index:20;background:#000;opacity:var(--deck,0);
+  clip-path:inset(var(--o,100%) var(--r,0px) var(--u,0px) var(--l,0px) round var(--rad,16px))}
+.videobox video{display:block;width:100%;height:100%;object-fit:cover;background:#000;
+  filter:blur(calc((1 - var(--k,1)) * 15px));
+  /* Etwas ueber den Schnitt hinaus vergroessert: sonst franst die Unschaerfe
+     an der Schnittkante ins Durchsichtige aus. */
+  transform:scale(calc(1 + (1 - var(--k,1)) * .14))}
+.videobox.spielt video{filter:none;transform:none}
+/* Der Knopf sitzt in der unteren rechten Ecke des SICHTBAREN Ausschnitts,
+   nicht des Fensters — sonst laege er ausserhalb des Schnitts und waere
+   weder zu sehen noch zu treffen. */
+.tonknopf{position:absolute;right:calc(var(--r,0px) + 14px);bottom:calc(var(--u,0px) + 14px);
+  display:flex;align-items:center;gap:8px;
+  padding:9px 15px;border:1px solid rgba(255,255,255,.28);border-radius:999px;
+  background:rgba(5,5,6,.55);color:var(--weiss);font:inherit;font-size:13px;cursor:pointer;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  transition:background .2s var(--ease),border-color .2s var(--ease)}
+.tonknopf:hover{background:rgba(5,5,6,.8);border-color:var(--leit)}
+.tonsymbol{font-size:14px;line-height:1}
+
+#s5 .gr{margin:0 0 44px;font-size:clamp(1.9rem,5.5vw,4.2rem);line-height:1.02;font-weight:300;letter-spacing:-.045em;max-width:15ch}
+#s5 .gr em{font-style:normal;font-weight:700}
+#s5 .g{display:grid;grid-template-columns:1fr 1fr;gap:50px}
+#s5 h3{margin:0 0 10px;font-size:16px;font-weight:600;letter-spacing:-.015em;color:var(--leit)}
+#s5 p{margin:0;font-size:16px;font-weight:300;line-height:1.7;color:var(--matt);max-width:44ch}
+
+#s6 .gr{margin:0;font-size:min(4.6rem,9.2vw);line-height:1.05;font-weight:700;letter-spacing:-.05em}
+#s6 .ad{margin:30px 0 0;font-size:16px;font-weight:300;line-height:1.75;color:var(--matt)}
+.knopf{display:inline-block;margin-top:38px;border:1px solid var(--leit);color:var(--leit);text-decoration:none;
+  padding:15px 34px;font-size:15px;font-weight:500;letter-spacing:-.01em;
+  transition:background .25s var(--ease),color .25s var(--ease),transform .12s}
+.knopf:hover{background:var(--leit);color:#050506}
+.knopf:active{transform:scale(.975)}
+
+/* Der Laser laeuft auch ueber Schrift — aber nur dort, wo ohnehin Farbe
+   liegt: die Leitfarben-Zahlen, die beiden Ticket-Schaltflaechen und das
+   betonte Wort im Aufmacher. Ueber den langen Ueberschriften wirkte er wie
+   ein Effekt um seiner selbst willen.
+
+   Im Ruhezustand ist der Ring weit ausserhalb (--lx/--ly), es bleibt also
+   die zweite Ebene stehen: eine Flaeche in der Grundfarbe. Kein Verlauf im
+   Text, solange nichts passiert. */
+#s1 h1 .stark,#s1 .band b:first-child,.zeile .d,#s4 .f .z,#s5 h3,.kopf .ticket,.knopf{
+  --lx:-99999px;--ly:-99999px;--lr:0px;--lw:180px;--basis:var(--weiss);
+  /* Wie bei den Punkten wird das Spektrum nur ANTEILIG ueber die
+     Grundfarbe gelegt — daher die Alphawerte, durch die die zweite Ebene
+     durchscheint. Und nur drei Toene statt fuenf: sonst liegt der ganze
+     Regenbogen auf wenigen Buchstaben. Rot statt Magenta: naeher am
+     Rotlicht im Club als an Neonpink. */
+  background-image:
+    radial-gradient(circle at var(--lx) var(--ly),
+      transparent calc(var(--lr) - var(--lw)),
+      rgba(63,116,176,.45) calc(var(--lr) - var(--lw)*.42),
+      rgba(255,255,255,.92) var(--lr),
+      rgba(210,31,36,.5) calc(var(--lr) + var(--lw)*.42),
+      transparent calc(var(--lr) + var(--lw))),
+    linear-gradient(var(--basis),var(--basis));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+#s1 .band b:first-child,.zeile .d,#s4 .f .z,#s5 h3,.knopf{--basis:var(--leit)}
+.kopf .ticket{--basis:#fff}
+/* Der gefuellte Zustand des Buttons setzt `background` neu und wuerde den
+   Verlauf mitnehmen — die Schrift bekommt dort wieder eine feste Farbe. */
+.knopf:hover{-webkit-text-fill-color:#050506}
+
+footer{position:relative;z-index:10;border-top:1px solid var(--linie)}
+.fuss{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:24px 0 36px}
+#hinweis{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:35;font-size:12px;
+  color:var(--leise);transition:opacity .6s;pointer-events:none}
+#hinweis.weg{opacity:0}
+
+/* ── Kontaktkarten unter der Adresse ───────────────────────────────────────
+   Kleiner als die uebrigen Flaechen der Seite: sie sollen der Adresse
+   nachgeordnet sein, nicht mit ihr konkurrieren. Zwei Zeilen Text reichen —
+   die ausfuehrliche Beschreibung steht im Formular selbst. */
+.karten{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px;margin-top:26px;max-width:680px}
+.karte{display:flex;flex-direction:column;gap:5px;padding:16px 18px;text-decoration:none;
+  border:1px solid var(--linie);border-radius:12px;color:var(--weiss);
+  transition:border-color .25s var(--ease),transform .25s var(--ease)}
+.karte:hover{border-color:var(--leit);transform:translateY(-2px)}
+.karte .t{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.karte .t::after{content:" \203A";color:var(--matt)}
+.karte .d{font-size:13px;line-height:1.5;color:var(--matt)}
+@media (prefers-reduced-motion:reduce){.karte{transition:none}.karte:hover{transform:none}}
+
+@media (max-width:860px){#s5 .g{grid-template-columns:1fr}.crews{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:22px}
+  .zeile{grid-template-columns:3rem 1fr}
+  .zeile .z{grid-column:2;margin-top:6px}nav{display:none}
+  /* Die Einrueckung der Ebenen frisst auf dem Handy die halbe Zeile --
+     stattdessen markiert die Linie links die Stufe. */
+  .ebene{padding-left:0;border-left:1px solid var(--linie);
+    padding-left:calc(14px + var(--stufe) * 10px)}
+  .ebene-kopf{margin-bottom:10px}
+  .ebene-raeume{flex-direction:column;gap:18px}
+  #s4 .f{max-width:none}
+  .kinobahn{height:200vh}
+  .kinohalt{padding:0 16px}
+  .videobox video{filter:blur(calc((1 - var(--k,1)) * 9px))}
+  .karten{grid-template-columns:1fr;gap:10px;margin-top:20px}
+  .fuss{flex-direction:column;align-items:flex-start;gap:10px}
+  .fuss nav{gap:14px}}
+@media (max-width:520px){
+  .crews{grid-template-columns:1fr 1fr;gap:20px}
+  .band{gap:10px}
+  .ebene-name{font-size:12px}
+  .karte{padding:14px 16px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+  .auf{opacity:1;transform:none;filter:none}
+  /* Kein Kinogang: die Bahn schrumpft auf den Inhalt, das Video steht als
+     gewoehnlicher Abspieler im Fluss. */
+  .kinobahn{height:auto}
+  .kinohalt{position:static;height:auto;padding:0}
+  .videoplatz{display:none}
+  .videobox{position:relative;inset:auto;margin:30px auto 0;width:min(940px,100%);
+    aspect-ratio:16/9;border-radius:16px;overflow:hidden;clip-path:none;opacity:1}
+  .videobox video{filter:none;transform:none}
+  .tonknopf{right:14px;bottom:14px}}
+
+.sozial{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px}
+.sozial a{color:var(--weiss);text-decoration:none;font-size:15.5px;border-bottom:1px solid var(--linie);
+  padding-bottom:3px;transition:border-color .2s}
+.sozial a:hover{border-color:var(--leit)}
+
+/* Impressum: Pflichtangaben nach Paragraf 5 DDG. Kleiner gesetzt, aber
+   vollstaendig und lesbar — nicht versteckt. */
+.recht{font-size:14px;line-height:1.8;color:var(--matt);max-width:62ch}
+.recht b{color:var(--weiss);font-weight:500}
+.recht a{color:var(--leit)}
+.fuss a{color:var(--matt);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.fuss a:hover{border-color:var(--matt)}
+.fuss nav{display:flex;gap:18px;flex-wrap:wrap}
+
+</style>
+</head>
+<body>
+<div id="buehne" aria-hidden="true"></div>
+
+<header><div class="rahmen kopf">
+  <a class="name" href="#s1">
+    <svg viewBox="0 0 1000 852.76" aria-hidden="true"><path d="M533.70 0.00 L0.00 208.60 L0.00 340.50 L245.40 374.20 L306.70 365.00 L322.10 358.90 L322.10 260.70 L110.40 297.50 L638.00 116.60 L659.50 107.40 L659.50 89.00 L984.70 181.00Z"/><path d="M533.70 297.50 L3.10 469.30 L0.00 598.20 L257.70 638.00 L322.10 628.80 L322.10 530.70 L223.90 527.60 L668.70 395.70 L996.90 466.30Z"/><path d="M533.70 582.80 L6.10 717.80 L0.00 831.30 L263.80 852.80 L414.10 846.60 L420.20 837.40 L236.20 782.20 L674.80 684.00 L1000.00 742.30Z"/></svg>
+    <span>PKH Warehouse</span>
+  </a>
+  <nav><a href="#s2">Programm</a><a href="#s3">Raum</a><a href="#s4">Bereiche</a><a href="#s5">Haus</a><a href="#s6">Anfahrt</a></nav>
+  <a class="ticket" href="https://de.ra.co/clubs/302560" target="_blank" rel="noreferrer noopener">Tickets</a>
+</div></header>
+
+<main>
+  <section id="s1" data-leit="#e9eaee"><div class="rahmen">
+    <!-- Zeitlos statt Termin (User-Entscheid 2026-10-09): veraltet nie, das
+         Aktuelle steht direkt darunter im Programm. -->
+    <h1><span style="--v:60ms">PKH</span><span class="stark" style="--v:200ms">Warehouse</span></h1>
+    <div class="band">
+      <b>Dorotheenstraße 30</b><b>Freitag &amp; Samstag, 22 bis 8 Uhr</b><b>2 Ebenen</b><b>5 Bereiche</b>
+    </div>
+  </div></section>
+
+  <section id="s2" data-leit="#7f96b8"><div class="rahmen">
+    <h2>Programm</h2>
+    <!-- Stand 09.10.2026, abgeglichen mit Resident Advisor (de.ra.co/clubs/302560)
+         plus IRRENHOUSE, das Nina Queer nur bei aboutix fuehrt. Vergangene
+         Abende (Opening 02./03.10.) sind raus — das Programm zeigt, was kommt.
+         Uhrzeiten wie bei RA eingetragen; wo keine Endzeit bekannt ist, "ab". -->
+    <h3 class="weiter">Oktober</h3>
+    <div class="zeile"><div class="d">09</div><div class="t">Techno/Trance Classics<span class="mit">1. Festival of Lights Clubnight</span></div><div class="z klein">Fr 22:00 — 04:00</div></div>
+    <div class="zeile"><div class="d">10</div><div class="t">PARALLAX<span class="mit">xXETEXx · FeelNature · 7Chakras — Adam Vandal, Josephine Wedekind, TMH Tranzit, EMIRI TSUKUI, HypoGeo</span></div><div class="z klein">Sa 22:00 — 08:00</div></div>
+    <div class="zeile"><div class="d">12</div><div class="t">Festival of Lights Afterparty<span class="mit">Asem Shama, all night long</span></div><div class="z klein">Mo 21:00 — 04:00</div></div>
+    <div class="zeile"><div class="d">13</div><div class="t">Festival of Lights Afterparty<span class="mit">Charlotte Lion, CosmiKat</span></div><div class="z klein">Di 21:00 — 04:00</div></div>
+    <div class="zeile"><div class="d">14</div><div class="t">Festival of Lights Afterparty<span class="mit">Hila, selo, CosmiKat</span></div><div class="z klein">Mi 21:00 — 04:00</div></div>
+    <div class="zeile"><div class="d">15</div><div class="t">Festival of Lights Afterparty<span class="mit">A.D.H.S., Mehr is Mehr, Maurice Mino, ZweiE, Manu Strasse</span></div><div class="z klein">Do 21:00 — 04:00</div></div>
+    <div class="zeile"><div class="d">16</div><div class="t">GLXY<span class="mit">Millie Forsberg, SKKIN VELVET, MZR, JUICY (DE), Hanne B, Maris Shilton, Simon Stiglmeier, Asem Shama</span></div><div class="z klein">Fr 22:00 — 08:00</div></div>
+    <div class="zeile"><div class="d">17</div><div class="t">IRRENHOUSE · The Art of Light<span class="mit">Nina Queer · offizielle Party des Festival of Lights — Eleete, Stefan Biniak, Alex Blume · Pop Floor: U-Seven, Pomoz · Shows: Nina Queer, Sascha Glam, Katy Bam · <a href="https://aboutix.com/organizers/nina-queer/events/irrenhouse171026" target="_blank" rel="noreferrer noopener">Tickets</a></span></div><div class="z klein">Sa ab 22:00</div></div>
+    <div class="zeile"><div class="d">24</div><div class="t">ILLEGAL</div><div class="z klein">Sa 23:00 — 06:00</div></div>
+    <div class="zeile"><div class="d">31</div><div class="t">Halloween<span class="mit">Wurzelfestival × Praerie Festival — Andreas Henneberg, Joplyn, Gourski, Nina Hepburn, TraumaMia, Maurice Mino, Sarah Wild, Sin:port, Susi&amp;Paula, Bizzarro Universe, WIEK, Leevey, agls, KIMMO</span></div><div class="z klein">Sa 22:00 — 10:00</div></div>
+
+    <h3 class="weiter">November</h3>
+    <div class="zeile"><div class="d">07</div><div class="t">Clubnacht</div><div class="z klein">Sa 23:00 — 06:00</div></div>
+    <div class="zeile"><div class="d">13</div><div class="t">REVOLVER<span class="mit">Gay Fetish Party · Techno &amp; House — Ben Manson, Ari Denaro, Jaycap</span></div><div class="z klein">Fr 22:00 — 08:00</div></div>
+    <div class="zeile"><div class="d">21</div><div class="t">Symbiosis</div><div class="z klein">Sa 22:00 — 08:00</div></div>
+
+    <h3 class="weiter">Dezember</h3>
+    <div class="zeile"><div class="d">05</div><div class="t">Clubnacht mit Tragédie<span class="mit">Teenage Mutants</span></div><div class="z klein">Sa 23:00 — 06:00</div></div>
+  </div></section>
+
+  <section id="s3" data-leit="#d8dae0">
+    <!-- Die Bahn gibt nur den Scrollweg her: ueber ihre Laenge faehrt das
+         Video aus seinem Platz auf Vollbild, haelt dort, und geht denselben
+         Weg zurueck. Der Platzhalter steht dabei sticky in der Mitte und
+         sagt dem Schnitt, wo das kleine Rechteck liegt. -->
+    <div class="kinobahn" id="kinobahn">
+      <div class="kinohalt"><div class="videoplatz" id="videoplatz"></div></div>
+    </div>
+    <!-- Laeuft stumm von selbst. Ton nur auf Knopfdruck: Autoplay MIT Ton
+         wird von jedem Browser blockiert, und ungefragte Beschallung waere
+         ohnehin die falsche Begruessung. Erst beim Einscrollen gestartet,
+         damit das Video nicht im Hintergrund laedt, waehrend man oben liest. -->
+    <div class="videobox" id="videobox">
+      <video id="film" muted loop playsinline preload="none"
+             poster="./video/hero-poster.jpg" aria-label="Rundgang durch das Haus">
+        <source src="./video/hero-1080.av1.mp4" type="video/mp4; codecs=av01.0.05M.08">
+        <source src="./video/hero-1080.mp4" type="video/mp4">
+        Dein Browser kann dieses Video nicht abspielen.
+      </video>
+      <button type="button" class="tonknopf" id="tonknopf" aria-pressed="false">
+        <span class="tonsymbol" aria-hidden="true">♪</span><span class="tontext">Ton an</span>
+      </button>
+    </div>
+  </section>
+
+  <section id="s4" data-leit="#b9bec8"><div class="rahmen">
+    <p class="lead">Zwei Ebenen, fünf Bereiche, ein Haus. Von der Halle bis in die Küche läuft die Nacht ohne Bruch durch.</p>
+    <div class="ebenen" id="floors"></div>
+  </div></section>
+
+  <section id="s5" data-leit="#cf1f22"><div class="rahmen">
+    <p class="gr">Das Haus hat <em>drei Regeln</em> und eine Tür, die entscheidet.</p>
+    <div class="g" id="regeln"></div>
+  </div></section>
+
+  <section id="s6" data-leit="#6f7f92"><div class="rahmen">
+    <p class="gr">Dorotheenstraße 30</p>
+    <!-- Kein eigener Kontaktabschnitt mehr: wer bis hierher gescrollt ist,
+         steht ohnehin bei der Adresse. Die beiden Wege haengen als kleine
+         Karten direkt unter der Zeile, die Anfahrt und Zeiten stehen als
+         kleinere Schrift darunter — das Wichtigste zuerst. -->
+    <div class="karten">
+      <a class="karte" href="https://os.pkh.events/p/anfrage/stellen">
+        <span class="t">Booking &amp; Vermietung</span>
+        <span class="d">Party, Raummiete oder etwas Gemeinsames — mit Wunschtermin.</span>
+      </a>
+      <a class="karte" href="https://os.pkh.events/p/jobs">
+        <span class="t">Mitarbeiten</span>
+        <span class="d">Vor allem für den Tresen. Minijob, nachts, meist Freitag und Samstag.</span>
+      </a>
+    </div>
+    <p class="ad">10117 Berlin, S+U Friedrichstraße<br>Freitag und Samstag, 22 bis 8 Uhr</p>
+    <a class="knopf" href="https://de.ra.co/clubs/302560" target="_blank" rel="noreferrer noopener">Tickets</a>
+  </div></section>
+</main>
+      <div class="sozial">
+        <a href="https://www.instagram.com/pkhwarehouse/" target="_blank" rel="noreferrer noopener">Instagram</a>
+        <a href="https://de.ra.co/clubs/302560" target="_blank" rel="noreferrer noopener">Resident Advisor</a>
+      </div>
+    </div>
+
+  </div>
+
+  <footer><div class="rahmen fuss">
+    <span class="klein">© 2026 PKH Events GmbH</span>
+    <nav class="klein">
+      <a href="https://www.instagram.com/pkhwarehouse/" target="_blank" rel="noreferrer noopener">Instagram</a>
+      <a href="https://de.ra.co/clubs/302560" target="_blank" rel="noreferrer noopener">Resident Advisor</a>
+      <a href="./datenschutz.html">Datenschutz</a>
+      <a href="./impressum.html">Impressum</a>
+    </nav>
+  </div></footer>
+<p id="hinweis">Bewegen, klicken, scrollen</p>
+
+<script type="module">
+import * as THREE from "./vendor/three.module.js";
+
+/* Fuenf Bereiche, nach Ebenen gestapelt statt nach Kapazitaet sortiert.
+   Die Zahlen sind bewusst raus: "800" sagt niemandem etwas, "unten, die
+   grosse Halle" schon. Die Staffelung liest sich wie ein Schnitt durch das
+   Haus -- oben, unten, dahinter -- und nimmt damit die Schichtung der
+   Logo-Animation auf. */
+document.getElementById('floors').innerHTML=[
+  ["Obergeschoss",[["Gallery","Weite Halle mit Blick nach unten"],
+                   ["Bar","Wo die Nacht Pause macht"]]],
+  ["Untergeschoss",[["Main","Der grosse Raum, tief und laut"],
+                    ["Kitchen","Eng, warm, bis zuletzt offen"]]],
+  ["Dahinter",[["Backstage","Nur fuer Crew und Gaeste der Nacht"]]]
+].map(([ebene,raeume],i)=>`
+  <div class="ebene" style="--stufe:${i}">
+    <div class="ebene-kopf"><span class="ebene-linie"></span><span class="ebene-name">${ebene}</span></div>
+    <div class="ebene-raeume">${raeume.map(([n,x])=>
+      `<div class="f"><div class="n">${n}</div><div class="x">${x}</div></div>`).join('')}</div>
+  </div>`).join('');
+document.getElementById('regeln').innerHTML=[
+ ["Keine Fotos","Kameras werden am Eingang abgeklebt. Was hier passiert, bleibt hier."],
+ ["Awareness","Das Team ist die ganze Nacht ansprechbar, am Eingang, an der Bar und auf jedem Floor."],
+ ["Null Toleranz","Rassismus, Sexismus, Homo- und Transfeindlichkeit führen sofort zum Rausschmiss."],
+ ["Tür","Das Türteam entscheidet. Ein Ticket ist keine Garantie, und wir begründen nichts."]]
+ .map(([t,x])=>`<div><h3>${t}</h3><p>${x}</p></div>`).join('');
+
+/* Jedes Element kommt beim Scrollen so herein wie die Aufmacher-Zeile:
+   aus der Unschaerfe, leicht von unten, einmal und dann nie wieder. */
+const einblenden=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(!e.isIntersecting)return;
+    e.target.classList.add('da');
+    einblenden.unobserve(e.target);
+  });
+},{threshold:.12,rootMargin:"0px 0px -6% 0px"});
+
+document.querySelectorAll('section:not(#s1)').forEach(abschnitt=>{
+  const teile=abschnitt.querySelectorAll('h2, .gr, p.lead, .zeile, .crews, .weiter, .ebene, .g > div, .ad, .knopf');
+  teile.forEach((el,i)=>{
+    el.classList.add('auf');
+    el.style.setProperty('--v',Math.min(i,7)*85+'ms');
+    einblenden.observe(el);
+  });
+});
+
+/* Leitfarbe folgt der sichtbaren Sektion. */
+const sektionen=[...document.querySelectorAll('section')];
+const farben=sektionen.map(s=>new THREE.Color(s.dataset.leit));
+let aktiv=0;
+const beob=new IntersectionObserver(es=>{
+  let best=null;es.forEach(e=>{if(e.isIntersecting&&(!best||e.intersectionRatio>best.intersectionRatio))best=e});
+  if(best)aktiv=sektionen.indexOf(best.target);
+},{threshold:[.25,.5,.75]});
+sektionen.forEach(s=>beob.observe(s));
+
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const szene=new THREE.Scene();
+const kamera=new THREE.PerspectiveCamera(34,1,.1,100);kamera.position.set(0,0,4.64);
+const zeichner=new THREE.WebGLRenderer({antialias:true,alpha:true});
+zeichner.setPixelRatio(Math.min(devicePixelRatio,2));
+document.getElementById('buehne').appendChild(zeichner.domElement);
+
+/* --- Punkte aus der Marken-Geometrie ziehen (flaechengewichtet) --- */
+const PFADE=await fetch('./daten/marke-pfade.json').then(r=>r.json());
+const hoehe=PFADE.pfade.flat().reduce((m,[,y])=>Math.max(m,y),0);
+/* Die Marke bleibt flach: eine 2D-Flaeche, die anschliessend nach hinten
+   gezogen wird. Genau so liest sie sich auf den ersten Blick als Logo. */
+const TIEFE=.22;
+function formen(){
+  return PFADE.pfade.map(pfad=>{
+    const form=new THREE.Shape();
+    pfad.forEach(([x,y],k)=>{const px=x-.5,py=-(y-hoehe/2);k?form.lineTo(px,py):form.moveTo(px,py)});
+    form.closePath();
+    return form;
+  });
+}
+const FORMKANTEN=formen().map(form=>({form,z:0}));
+
+/* Flaeche: die ebene Silhouette, flaechengewichtet bestreut. */
+function flaeche(anzahl){
+  const dreiecke=[],grenze=[];let summe=0;
+  const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();
+  FORMKANTEN.forEach(({form,z})=>{
+    const g=new THREE.ShapeGeometry(form,1);
+    g.translate(0,0,z);
+    const pos=g.getAttribute('position'),idx=g.getIndex();
+    const n=idx?idx.count/3:pos.count/3;
+    for(let t=0;t<n;t++){
+      const i0=idx?idx.getX(t*3):t*3,i1=idx?idx.getX(t*3+1):t*3+1,i2=idx?idx.getX(t*3+2):t*3+2;
+      a.fromBufferAttribute(pos,i0);b.fromBufferAttribute(pos,i1);c.fromBufferAttribute(pos,i2);
+      const f=b.clone().sub(a).cross(c.clone().sub(a)).length()*.5;
+      if(f<=0)continue;
+      summe+=f;grenze.push(summe);dreiecke.push([a.clone(),b.clone(),c.clone()]);
+    }
+  });
+  const out=new Float32Array(anzahl*3);
+  for(let i=0;i<anzahl;i++){
+    const ziel=Math.random()*summe;
+    let lo=0,hi=grenze.length-1;
+    while(lo<hi){const m=(lo+hi)>>1;grenze[m]<ziel?lo=m+1:hi=m}
+    const [p,q,r]=dreiecke[lo];
+    let u=Math.random(),v=Math.random();
+    if(u+v>1){u=1-u;v=1-v}
+    out[i*3]  =p.x+u*(q.x-p.x)+v*(r.x-p.x);
+    out[i*3+1]=p.y+u*(q.y-p.y)+v*(r.y-p.y);
+    out[i*3+2]=p.z+u*(q.z-p.z)+v*(r.z-p.z);
+  }
+  return out;
+}
+
+function kontur(){
+  const strecken=[];let laenge=0;
+  PFADE.pfade.forEach(pfad=>{
+    for(let k=0;k<pfad.length;k++){
+      const [x1,y1]=pfad[k],[x2,y2]=pfad[(k+1)%pfad.length];
+      const ax=x1-.5,ay=-(y1-hoehe/2),bx=x2-.5,by=-(y2-hoehe/2);
+      const l=Math.hypot(bx-ax,by-ay);
+      if(l<=0)continue;
+      laenge+=l;strecken.push({ax,ay,bx,by,von:laenge-l,l,bis:laenge});
+    }
+  });
+  return {strecken,laenge};
+}
+
+/* Vordere Kante: gleichmaessig abgeschritten, nicht zufaellig gesetzt. */
+function umriss(anzahl){
+  const {strecken,laenge}=kontur();
+  const out=new Float32Array(anzahl*3);
+  let lo=0;
+  for(let i=0;i<anzahl;i++){
+    const ziel=(i+.5)/anzahl*laenge;
+    while(lo<strecken.length-1&&strecken[lo].bis<ziel)lo++;
+    const st=strecken[lo],t=(ziel-st.von)/st.l;
+    out[i*3]  =st.ax+(st.bx-st.ax)*t;
+    out[i*3+1]=st.ay+(st.by-st.ay)*t;
+    out[i*3+2]=(Math.random()-.5)*.003;
+  }
+  return out;
+}
+
+/* Zug nach hinten: derselbe Umriss, ueber die Tiefe verteilt. Das ist der
+   einzige raeumliche Anteil — der Rest der Marke bleibt eine Flaeche. */
+function zugNachHinten(anzahl){
+  const {strecken,laenge}=kontur();
+  const out=new Float32Array(anzahl*3);
+  const stufen=9;
+  for(let i=0;i<anzahl;i++){
+    const stufe=i%stufen;
+    const ziel=((i/stufen|0)+.5)/(anzahl/stufen)*laenge;
+    let lo=0,hi=strecken.length-1;
+    while(lo<hi){const m=(lo+hi)>>1;strecken[m].bis<ziel?lo=m+1:hi=m}
+    const st=strecken[lo],t=(ziel-st.von)/st.l;
+    out[i*3]  =st.ax+(st.bx-st.ax)*t;
+    out[i*3+1]=st.ay+(st.by-st.ay)*t;
+    out[i*3+2]=-(stufe/(stufen-1))*TIEFE;
+  }
+  return out;
+}
+
+const ANZAHL=still?5000:26000;
+const KANTE=Math.round(ANZAHL*.17);
+const HINTEN=Math.round(ANZAHL*.24);
+const VORN=ANZAHL-KANTE-HINTEN;
+const markePunkte=new Float32Array(ANZAHL*3);
+markePunkte.set(flaeche(VORN),0);
+markePunkte.set(umriss(KANTE),VORN*3);
+markePunkte.set(zugNachHinten(HINTEN),(VORN+KANTE)*3);
+/* Flaeche und Kante tragen das Logo und leuchten staerker als der Zug. */
+const istVorn=new Uint8Array(ANZAHL);
+istVorn.fill(1,0,VORN+KANTE);
+
+/* Weitere Formationen, gleiche Punktzahl. */
+function kugel(n){const o=new Float32Array(n*3),g=Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<n;i++){const y=1-(i/(n-1))*2,r=Math.sqrt(Math.max(0,1-y*y)),t=g*i;
+    o[i*3]=Math.cos(t)*r*1.22;o[i*3+1]=y*1.22;o[i*3+2]=Math.sin(t)*r*1.22}return o}
+function wand(n){const o=new Float32Array(n*3),s=Math.ceil(Math.sqrt(n));
+  for(let i=0;i<n;i++){const x=i%s,y=(i/s)|0;
+    o[i*3]=(x/(s-1)-.5)*3.0;o[i*3+1]=(y/(s-1)-.5)*1.68;o[i*3+2]=Math.sin(x*.4)*.06+Math.cos(y*.5)*.06}return o}
+/* Saeulenhalle fuer den Abschnitt ueber das Haus: zwei Reihen Pfeiler,
+   die nach hinten wegstehen. Vorher stand hier eine Spirale, die sich als
+   Schnecke las und mit dem Abschnitt nichts zu tun hatte. */
+function halle(n){
+  const o=new Float32Array(n*3);
+  const reihen=2, jeReihe=4, saeulen=reihen*jeReihe;
+  for(let i=0;i<n;i++){
+    const s=i%saeulen;
+    const spalte=s%jeReihe, reihe=(s/jeReihe)|0;
+    const t=Math.random()*Math.PI*2;
+    const rad=.115+(Math.random()-.5)*.012;
+    o[i*3]  =(spalte/(jeReihe-1)-.5)*3.0+Math.cos(t)*rad;
+    o[i*3+1]=(Math.random()-.5)*2.3;
+    o[i*3+2]=(reihe-.5)*2.2+Math.sin(t)*rad;
+  }
+  return o;
+}
+/* Im Videoabschnitt bleibt die Kugel stehen, statt sich zu einem Rechteck um
+   den Abspieler zu legen: das Video traegt dort die Flaeche, die Wolke soll
+   dahinter im Raum treiben und nicht mit ihm um dieselbe Kontur streiten. */
+const FORMEN=[markePunkte,kugel(ANZAHL),kugel(ANZAHL),wand(ANZAHL),halle(ANZAHL),markePunkte];
+
+/* Wo der Koerper in welchem Abschnitt steht. Er soll den Text rahmen oder
+   klar hinter ihm liegen — nie halb in ihn hineinlaufen. Negatives z
+   schiebt ihn zurueck, wodurch er zugleich kleiner wird. */
+const STAND=[
+  {x:1.20,y:.16,z:-.10},   // Aufmacher: rechts neben der Schrift
+  {x:-.15,y:.02,z:-.35},   // Programm: mittig dahinter, gross im Ruecken
+  {x:0,y:-.02,z:-.62},     // Raum: mittig und weit zurueck, hinter dem Video
+  {x:-1.10,y:-.05,z:-.55}, // Bereiche: nach links geraeumt
+  {x:1.05,y:.10,z:-.60},   // Haus: zurueck nach rechts
+  {x:0,y:.05,z:-.55},      // Anfahrt: mittig hinter dem Schluss
+];
+
+const jetzt=new Float32Array(markePunkte);
+const tempo=new Float32Array(ANZAHL*3);
+const traegheit=new Float32Array(ANZAHL);
+for(let i=0;i<ANZAHL;i++)traegheit[i]=.075+Math.random()*.06;
+
+/* Beim Laden liegen die Punkte ueber die ganze Flaeche verstreut, viele
+   davon ausserhalb des Bildes, und sammeln sich erst zur Marke. Die
+   Geschwindigkeit bleibt null, damit sie hereinziehen statt anzuspringen. */
+if(!still){
+  for(let i=0;i<ANZAHL;i++){
+    const k=i*3;
+    jetzt[k]  =(Math.random()-.5)*5.6-.8;
+    jetzt[k+1]=(Math.random()-.5)*3.6;
+    jetzt[k+2]=(Math.random()-.5)*2.2;
+  }
+}
+
+/* Die Welle ist eine Auslenkung, keine Kraft. Deshalb rechnet die Physik
+   weiter auf `jetzt`, und gezeichnet wird `anzeige` = Ruhelage plus
+   Wellenausschlag. Ein Geschwindigkeitsstoss wuerde von der Feder danach
+   zurueckgerissen — genau das soll hier nicht passieren. */
+const anzeige=new Float32Array(jetzt);
+/* Je Punkt: wie stark die Welle ihn gerade faerbt und an welcher Stelle
+   des Spektrums. */
+const glanz=new Float32Array(ANZAHL);
+const glanzTon=new Uint8Array(ANZAHL);
+
+
+const geo=new THREE.BufferGeometry();
+geo.setAttribute('position',new THREE.BufferAttribute(anzeige,3));
+const farbenAttr=new Float32Array(ANZAHL*3).fill(1);
+geo.setAttribute('color',new THREE.BufferAttribute(farbenAttr,3));
+const wolke=new THREE.Points(geo,new THREE.PointsMaterial({
+  size:.0082,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:.95,
+  depthWrite:false}));
+szene.add(wolke);
+
+/* Eingaben */
+const zeiger={x:0,y:0},weich={x:0,y:0};
+/* Jeder Klick startet eine Wellenfront, die vom Zeiger aus mit fester
+   Geschwindigkeit nach aussen laeuft. Jeder Punkt bekommt seinen Ausschlag
+   erst, wenn die Front bei ihm ankommt — man sieht die Welle wandern,
+   statt die ganze Wolke gleichzeitig aufzublaehen.
+
+   Mehrere Wellen koennen gleichzeitig laufen. Wuerde ein neuer Klick die
+   laufende Welle ersetzen, saessen die gerade ausgelenkten Punkte im
+   naechsten Bild woanders — ein Sprung ohne Bewegung. */
+const ringe=[];
+addEventListener('pointermove',e=>{
+  zeiger.x=(e.clientX/innerWidth-.5)*2;zeiger.y=(e.clientY/innerHeight-.5)*2;
+  document.getElementById('hinweis').classList.add('weg');
+},{passive:true});
+addEventListener('pointerdown',()=>{
+  /* Die Front beginnt sofort am Zeiger — kein Vorlauf, sonst passiert
+     nach dem Klick erst einmal nichts. Damit trotzdem nichts springt,
+     faehrt ihre Staerke in den ersten Millisekunden von null hoch. */
+  ringe.push({x:zeigerWelt.x,y:zeigerWelt.y,z:zeigerWelt.z,r:0,alter:0});
+  if(ringe.length>3)ringe.shift();
+  document.getElementById('hinweis').classList.add('weg');
+},{passive:true});
+
+let zentren=[];
+function messen(){
+  kamera.aspect=innerWidth/innerHeight;kamera.updateProjectionMatrix();
+  zeichner.setSize(innerWidth,innerHeight,false);
+  zentren=sektionen.map(el=>el.offsetTop+el.offsetHeight/2);
+}
+messen();addEventListener('resize',messen);
+
+/* Wie weit die Seite zwischen den Abschnitten steht: 0 = Mitte Aufmacher,
+   1 = Mitte Programm, und alles dazwischen als Bruchteil. */
+/* Der Abspieler kommt aus der Unschaerfe, waehrend sein Abschnitt in die
+   Mitte faehrt -- dieselbe Sprache wie die Einblendungen, aber an den
+   Scrollstand gekoppelt statt an ein einmaliges Ereignis. Sobald jemand auf
+   Abspielen drueckt, ist Schluss damit: ein Video, das beim Scrollen wieder
+   verschwimmt, waere eine Zumutung. */
+const videobox=document.getElementById('videobox');
+const kinobahn=document.getElementById('kinobahn');
+const videoplatz=document.getElementById('videoplatz');
+const film=document.getElementById('film');
+const tonknopf=document.getElementById('tonknopf');
+
+/* Erst laden und starten, wenn der Abschnitt in Sichtweite kommt. Ein Video,
+   das beim Seitenaufruf im Hintergrund laedt, kostet Datenvolumen fuer etwas,
+   das vielleicht nie jemand sieht. */
+if(film){
+  const anStarten=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      film.preload='auto';
+      film.play().catch(()=>{});   /* blockiert der Browser doch, bleibt das Standbild */
+      anStarten.unobserve(e.target);
+    });
+  },{rootMargin:"200px 0px"});
+  anStarten.observe(kinobahn);
+
+  /* Laeuft es nicht mehr im Bild, anhalten -- sonst dreht im Hintergrund ein
+     Video, das niemand sieht, und frisst Akku. */
+  const anhalten=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting) film.play().catch(()=>{}); else film.pause(); });
+  },{threshold:.05});
+  anhalten.observe(kinobahn);
+}
+
+if(tonknopf&&film){
+  tonknopf.addEventListener('click',()=>{
+    film.muted=!film.muted;
+    /* Mit Ton gehoeren auch Bedienelemente dazu: wer hoert, will auch
+       zurueckspulen und anhalten koennen. */
+    film.controls=!film.muted;
+    videobox.classList.toggle('spielt',!film.muted);
+    tonknopf.setAttribute('aria-pressed',String(!film.muted));
+    tonknopf.querySelector('.tontext').textContent=film.muted?'Ton an':'Ton aus';
+    tonknopf.querySelector('.tonsymbol').textContent=film.muted?'♪':'✕';
+  });
+}
+/* Der Kinogang. k ist der einzige Regler: 0 = klein an seinem Platz, weich
+   und blass; 1 = Vollbild, scharf und voll. Dazwischen wird alles daraus
+   abgeleitet — Schnitt, Eckenrundung, Unschaerfe, Deckkraft.
+
+   Das Profil hat bewusst ein Plateau in der Mitte: ohne Halt waere das
+   Vollbild nur ein Durchgangspunkt, den man im Vorbeiscrollen verpasst. */
+const KINO_STILL=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Beim Hinausgehen loest sich das Video in die Wolke auf: sein Bild wird auf
+   ein grobes Raster heruntergerechnet, und die Punkte uebernehmen es, waehrend
+   die Flaeche selbst verblasst. Am Ende traegt nicht mehr das Rechteck das
+   Bild, sondern die Punkte — und auch das verliert sich, bis die Wolke wieder
+   sie selbst ist.
+
+   48x27 reicht: mehr Bildpunkte als das Auge in einem zerfallenden Bild
+   unterscheiden kann, und klein genug, um es in jedem Bild neu abzutasten. */
+const VID_B=48, VID_H=27;
+const vidLeinwand=document.createElement('canvas');
+vidLeinwand.width=VID_B; vidLeinwand.height=VID_H;
+const vidStift=vidLeinwand.getContext('2d',{willReadFrequently:true});
+let vidDaten=null, zerfall=0;
+/* Halbe Ausdehnung der Kugel und daraus der 16:9-Ausschnitt, auf den das
+   Bild gelegt wird. */
+const ZER_B=1.30, ZER_H=ZER_B*9/16;
+function videoAbtasten(){
+  if(zerfall<=0||!film||film.readyState<2){vidDaten=null;return}
+  try{
+    vidStift.drawImage(film,0,0,VID_B,VID_H);
+    vidDaten=vidStift.getImageData(0,0,VID_B,VID_H).data;
+  }catch(e){vidDaten=null}   /* gesperrte Leinwand: dann eben ohne Bild */
+}
+const K_EIN_A=.06, K_EIN_B=.44, K_AUS_A=.62, K_AUS_B=.95;
+function kino(){
+  if(KINO_STILL||!videobox||!kinobahn)return;
+  const bahn=kinobahn.getBoundingClientRect();
+  /* Der Fortschritt zaehlt schon, waehrend die Bahn von unten hereinfaehrt,
+     nicht erst ab ihrem Halt: 0, wenn ihr Anfang unten am Fensterrand
+     auftaucht, 1, wenn ihr Ende oben hinauslaeuft. Nur so fallen Hereinfahren
+     und Wachsen in eine Bewegung zusammen — zaehlte man erst ab dem Halt,
+     traete das Video erst ein und legte dann getrennt davon los. */
+  const weg=Math.max(1,bahn.height-innerHeight);
+  const f=Math.max(0,Math.min(1,(innerHeight-bahn.top)/(innerHeight+weg)));
+  let k;
+  if(f<K_EIN_A)      k=0;
+  else if(f<K_EIN_B) k=(f-K_EIN_A)/(K_EIN_B-K_EIN_A);
+  else if(f<=K_AUS_A)k=1;
+  else if(f<K_AUS_B) k=1-(f-K_AUS_A)/(K_AUS_B-K_AUS_A);
+  else               k=0;
+  k=k*k*(3-2*k);
+
+  /* Der Schnitt liegt bei k=0 genau auf dem Platzhalter und bei k=1 auf dem
+     Fensterrand. Steht der Platzhalter ausserhalb des Fensters, ueberkreuzen
+     sich die Kanten und der Ausschnitt ist leer — das Video verschwindet von
+     selbst, ohne Sonderfall. */
+  const q=videoplatz.getBoundingClientRect(), g=1-k;
+  const st=videobox.style;
+  st.setProperty('--o',(q.top*g).toFixed(1)+'px');
+  st.setProperty('--l',(q.left*g).toFixed(1)+'px');
+  st.setProperty('--r',((innerWidth-q.right)*g).toFixed(1)+'px');
+  st.setProperty('--u',((innerHeight-q.bottom)*g).toFixed(1)+'px');
+  st.setProperty('--rad',(16*g).toFixed(1)+'px');
+  st.setProperty('--k',k.toFixed(3));
+  /* Mit Ton bleibt das Bild voll und geht auch nicht in die Punkte ueber: wer
+     zuhoert, soll nicht beim Weiterscrollen aufgeloest werden. Die Groesse
+     folgt weiter dem Scrollstand, sonst klebte ein Vollbild am Schirm. */
+  /* Der Uebergang in die Punkte gehoert nur zum Hinausgehen: er steigt an,
+     wenn das Bild zu schrumpfen beginnt, und ist wieder bei null, wenn der
+     Abschnitt durch ist — sonst truege die Wolke das Standbild bis unten. */
+  const spielt=videobox.classList.contains('spielt');
+  zerfall=(!spielt && f>K_AUS_A && f<K_AUS_B)
+    ? Math.sin(((f-K_AUS_A)/(K_AUS_B-K_AUS_A))*Math.PI) : 0;
+  st.setProperty('--deck',spielt?'1':((.38+.62*k)*(1-.8*zerfall)).toFixed(3));
+  videoplatz.style.setProperty('--platz',(g*g).toFixed(3));
+}
+
+function abschnittsStand(){
+  const mitte=scrollY+innerHeight/2;
+  if(!zentren.length||mitte<=zentren[0])return 0;
+  for(let i=0;i<zentren.length-1;i++){
+    if(mitte<=zentren[i+1])return i+(mitte-zentren[i])/(zentren[i+1]-zentren[i]);
+  }
+  return zentren.length-1;
+}
+
+/* Wie weit die Formation im Stand wogt. */
+const ATEM=.042;
+
+/* Wellenfront: Tempo in Einheiten je Bild (auf 60 Bilder bezogen), Dicke
+   der Front und maximale Auslenkung. */
+const RING_TEMPO=.027, RING_BREIT=1.5, RING_HUB=1.05, RING_WEITE=6.6;
+/* Das Spektrum, das die Wellenfront mit sich traegt. Kein Pastell-
+   Regenbogen, sondern das, was im Club tatsaechlich leuchtet: kaltes Blau,
+   ein weisser Strobokern, Rotlicht, dunkles Rot. Kein Cyan, kein Bernstein
+   — die ziehen die Seite ins Freundliche. Einmal in eine Tabelle
+   gerechnet, im Bild wird nur noch nachgeschlagen. */
+const SPEKTRUM=(()=>{
+  const stufen=[[0,0x0a1428],[.22,0x3f74b0],[.42,0xffffff],[.6,0xd21f24],[.8,0x62080e],[1,0x0c0204]];
+  const n=64,aus=new Float32Array(n*3),a=new THREE.Color(),b=new THREE.Color();
+  for(let i=0;i<n;i++){
+    const t=i/(n-1);
+    let k=0;while(k<stufen.length-2&&t>stufen[k+1][0])k++;
+    const [t0,c0]=stufen[k],[t1,c1]=stufen[k+1];
+    a.setHex(c0);b.setHex(c1);
+    a.lerp(b,(t-t0)/(t1-t0));
+    aus[i*3]=a.r;aus[i*3+1]=a.g;aus[i*3+2]=a.b;
+  }
+  return aus;
+})();
+
+/* Anlauf der Wellenstaerke, in Bildern zu 60 Hz — kurz genug, um nicht als
+   Verzoegerung aufzufallen, lang genug gegen den Sprung beim Start. */
+const RING_ANLAUF=9;
+
+/* Die Schriftzuege, ueber die der Laser laufen soll. */
+const laserZiele=[...document.querySelectorAll('#s1 h1 .stark,#s1 .band b:first-child,.zeile .d,#s4 .f .z,#s5 h3,.kopf .ticket,.knopf')];
+const laserMitte=new THREE.Vector3(), laserRand=new THREE.Vector3(), kameraRechts=new THREE.Vector3();
+let laserLief=false;
+
+/* Mittelpunkt und Radius der Welle in Bildschirmkoordinaten: der
+   Mittelpunkt wird projiziert, der Radius ueber einen zweiten Punkt, der
+   quer zur Blickrichtung um genau diesen Radius versetzt ist. Nur so
+   stimmt die Groesse auch in der Perspektive. */
+function laserAufSchirm(R){
+  laserMitte.set(R.x,R.y,R.z);
+  wolke.localToWorld(laserMitte);
+  kameraRechts.set(1,0,0).applyQuaternion(kamera.quaternion);
+  laserRand.copy(laserMitte).addScaledVector(kameraRechts,Math.max(.002,R.r));
+  laserMitte.project(kamera);laserRand.project(kamera);
+  const mx=(laserMitte.x*.5+.5)*innerWidth, my=(-laserMitte.y*.5+.5)*innerHeight;
+  const rx=(laserRand.x*.5+.5)*innerWidth,  ry=(-laserRand.y*.5+.5)*innerHeight;
+  const rpx=Math.hypot(rx-mx,ry-my);
+  /* Bandbreite in Pixeln aus demselben Massstab, gegen Ausreisser gedeckelt. */
+  const massstab=rpx/Math.max(.002,R.r);
+  /* Im Text darf das Band breiter sein als bei den Punkten: sonst laufen
+     alle Toene ueber zwei Buchstaben. */
+  return {x:mx,y:my,r:rpx,w:Math.min(640,Math.max(150,RING_BREIT*massstab*1.5))};
+}
+
+const farbeJetzt=new THREE.Color(0xe9eaee);
+let letzterTon='';
+const zeigerWelt=new THREE.Vector3();
+let pWeich=0,bilder=0,start=0,vorher=0,eigendreh=0,raumdreh=0;
+
+function bild(zeit){
+  requestAnimationFrame(bild);
+  if(document.hidden)return;
+  const s=zeit/1000;
+  /* Alles Nachziehende rechnet in verstrichener Zeit, nicht in Bildern:
+     sonst laeuft die Seite auf einem 120-Hz-Schirm doppelt so schnell und
+     auf einem ausgelasteten Rechner zu langsam. Auf 60 Bilder normiert. */
+  const schritt=vorher?Math.min(3,Math.max(.2,(zeit-vorher)/16.667)):1;
+  vorher=zeit;
+  const nach=(k)=>1-Math.pow(1-k,schritt);
+  const stand=abschnittsStand();
+  const p=stand/(sektionen.length-1);
+  kino();
+  /* Bewusst traege: bei schnellem Scrollen soll die Wolke hinterherziehen,
+     nicht mitschiessen. */
+  pWeich+=(p-pWeich)*nach(.028);
+  weich.x+=(zeiger.x-weich.x)*nach(.045);weich.y+=(zeiger.y-weich.y)*nach(.045);
+
+  /* Formation: vier Abschnitte zwischen fuenf Zustaenden. */
+  const lauf=pWeich*(FORMEN.length-1);
+  const abschnitt=Math.min(FORMEN.length-2,Math.floor(lauf));
+  const roh=lauf-abschnitt;
+  const t=roh*roh*(3-2*roh);
+  const A=FORMEN[abschnitt],B=FORMEN[abschnitt+1];
+
+  /* Zeiger als Punkt vor der Wolke. */
+  zeigerWelt.set(weich.x*1.9,-weich.y*1.25,.35);
+  /* Jede Front wandert mit gleichbleibendem Tempo nach aussen und flacht
+     dabei ab, wie eine Welle, die sich auf immer groesserem Umfang
+     verteilt. Ist sie durch, faellt sie aus der Liste. */
+  for(let i=ringe.length-1;i>=0;i--){
+    const w=ringe[i];
+    w.r+=RING_TEMPO*schritt;
+    w.alter+=schritt;
+    const anlauf=Math.min(1,w.alter/RING_ANLAUF);
+    w.kraft=Math.max(0,1-w.r/RING_WEITE)*anlauf*anlauf;
+    if(w.r>RING_WEITE)ringe.splice(i,1);
+  }
+  const wellen=ringe.length;
+
+  /* Das Sammeln beim Laden laeuft an, statt sofort zuzuschnappen: die
+     Feder greift erst schwach und zieht dann zunehmend fester. */
+  if(!start)start=zeit;
+  const einzug=still?1:Math.min(1,(zeit-start)/3600);
+  const zug=.12+.88*einzug*einzug;
+  const reibung=Math.pow(.79,schritt);
+  /* Zwei langsame Wellen ueber die Formation — gegeneinander laufend,
+     damit kein gleichmaessiges Pulsieren entsteht. */
+  const welleA=s*.42, welleB=-s*.31;
+
+  for(let i=0;i<ANZAHL;i++){
+    const k=i*3, tr=traegheit[i]*zug;
+    /* Die Form arbeitet, nicht der einzelne Punkt: der Ausschlag haengt an
+       der Lage in der Formation, nicht an einer Zufallsphase. Benachbarte
+       Punkte bekommen dadurch fast denselben Wert und wandern gemeinsam —
+       die Gestalt wogt, statt zu flimmern. */
+    const fx=A[k]+(B[k]-A[k])*t;
+    const fy=A[k+1]+(B[k+1]-A[k+1])*t;
+    const fz=A[k+2]+(B[k+2]-A[k+2])*t;
+    const w1=Math.sin(fx*1.5+welleA), w2=Math.sin(fy*1.9+welleB);
+    const zx=fx+w2*ATEM;
+    const zy=fy+w1*ATEM;
+    const zz=fz+(w1+w2)*ATEM*.45;
+    /* Feder zur Zielformation */
+    tempo[k]  +=(zx-jetzt[k])*tr*schritt;
+    tempo[k+1]+=(zy-jetzt[k+1])*tr*schritt;
+    tempo[k+2]+=(zz-jetzt[k+2])*tr*schritt;
+    /* Zeiger draengt weg, Klick schiebt als Welle */
+    const dx=jetzt[k]-zeigerWelt.x, dy=jetzt[k+1]-zeigerWelt.y, dz=jetzt[k+2]-zeigerWelt.z;
+    const d2=dx*dx+dy*dy+dz*dz+.02;
+    const kraft=.015/d2;
+    if(kraft>.0006){
+      const f=Math.min(kraft,.07);
+      tempo[k]+=dx*f*schritt;tempo[k+1]+=dy*f*schritt;tempo[k+2]+=dz*f*schritt;
+    }
+
+    tempo[k]*=reibung;tempo[k+1]*=reibung;tempo[k+2]*=reibung;
+    jetzt[k]+=tempo[k]*schritt;jetzt[k+1]+=tempo[k+1]*schritt;jetzt[k+2]+=tempo[k+2]*schritt;
+
+    /* Wellenausschlag obendrauf: Der Punkt hebt sich, wenn eine Front bei
+       ihm ankommt, und legt sich wieder, wenn sie durch ist. Weil das eine
+       Auslenkung ist und kein Stoss, gibt es kein Zurueckschnellen. */
+    let ax=jetzt[k],ay=jetzt[k+1],az=jetzt[k+2];
+    /* Staerke und Spektrumstelle des kraeftigsten Wellenbeitrags. */
+    let anteil=0,spektrum=0;
+    for(let w=0;w<wellen;w++){
+      const R=ringe[w];
+      const bx=jetzt[k]-R.x, by=jetzt[k+1]-R.y, bz=jetzt[k+2]-R.z;
+      const b=Math.sqrt(bx*bx+by*by+bz*bz);
+      const vorne=b-R.r, ab=vorne<0?-vorne:vorne;
+      if(ab<RING_BREIT&&b>1e-3){
+        /* weiche Glocke: 1 auf der Front, 0 an ihren Raendern */
+        const u=ab/RING_BREIT, glocke=.5+.5*Math.cos(u*Math.PI);
+        const hub=glocke*glocke*R.kraft*RING_HUB/b;
+        ax+=bx*hub;ay+=by*hub;az+=bz*hub;
+        const m=glocke*R.kraft;
+        if(m>anteil){
+          anteil=m;
+          /* Die Farbe haengt davon ab, WO im Band der Punkt sitzt — vor der
+             Front eine andere als dahinter. So zieht das Spektrum ueber ihn
+             hinweg, statt ihn nur einzufaerben. */
+          spektrum=(((vorne/RING_BREIT)*.5+.5)*63)|0;
+        }
+      }
+    }
+    anzeige[k]=ax;anzeige[k+1]=ay;anzeige[k+2]=az;
+    glanz[i]=anteil;glanzTon[i]=spektrum;
+  }
+  geo.attributes.position.needsUpdate=true;
+
+  /* Farbe wandert mit der Sektion. Sie kriecht so langsam, dass sie nicht
+     in jedem Bild neu geschrieben werden muss — das spart bei 26.000
+     Punkten spuerbar Arbeit. */
+  farbeJetzt.lerp(farben[aktiv],nach(.04));
+  /* Dieselbe Farbe geht an die Schrift. Nur bei echter Aenderung schreiben:
+     eine Variable auf :root zwingt sonst jedes Bild den ganzen Baum zur
+     Neuberechnung. */
+  if((bilder%3)===0){
+    const ton='#'+farbeJetzt.getHexString();
+    if(ton!==letzterTon){letzterTon=ton;document.documentElement.style.setProperty('--leit',ton)}
+  }
+  /* Waehrend eine Welle laeuft, muss die Farbe in JEDEM Bild stimmen —
+     sonst ruckelt das Spektrum. Sonst reicht jedes dritte. */
+  bilder++;
+  videoAbtasten();
+  /* Solange das Bild uebergeht, muss in JEDEM Bild gefaerbt werden — sonst
+     ruckelt der Film in den Punkten. */
+  const faerben=wellen>0||zerfall>0||(bilder%3)===0;
+  if(faerben)
+  for(let i=0;i<ANZAHL;i++){
+    const k=i*3;
+    const tiefe=istVorn[i]?1.15:(.3+Math.min(1,Math.max(0,(jetzt[k+2]+.4)/.8))*.45);
+    let r=farbeJetzt.r*tiefe,g=farbeJetzt.g*tiefe,b=farbeJetzt.b*tiefe;
+    const m=glanz[i];
+    if(m>.002){
+      const q=glanzTon[i]*3, mm=m*.92;
+      r+=(SPEKTRUM[q]  -r)*mm;
+      g+=(SPEKTRUM[q+1]-g)*mm;
+      b+=(SPEKTRUM[q+2]-b)*mm;
+    }
+    /* Das Videobild liegt als 16:9-Ausschnitt ueber der Kugel — u/v kommen
+       aus der Ruhelage des Punktes, nicht aus seiner Projektion: so klebt das
+       Bild auf der Wolke und dreht sich mit ihr, statt im Bildschirm zu
+       haengen. Zum Rand hin laeuft es weich aus, damit es nicht als Kante
+       endet. */
+    if(vidDaten){
+      const u=(jetzt[k]/ZER_B+1)*.5, v=(1-jetzt[k+1]/ZER_H)*.5;
+      if(u>=0&&u<1&&v>=0&&v<1){
+        const q=(((v*VID_H)|0)*VID_B+((u*VID_B)|0))*4;
+        const rand=Math.min(Math.min(u,1-u),Math.min(v,1-v))*2;
+        const mm=Math.min(1,rand*3.2)*zerfall;
+        r+=(vidDaten[q]  /255-r)*mm;
+        g+=(vidDaten[q+1]/255-g)*mm;
+        b+=(vidDaten[q+2]/255-b)*mm;
+      }
+    }
+    farbenAttr[k]=r;farbenAttr[k+1]=g;farbenAttr[k+2]=b;
+  }
+  if(faerben)geo.attributes.color.needsUpdate=true;
+
+  /* Derselbe Ring auf der Schrift. Die Werte je Element setzen, weil der
+     Verlauf am Elementkasten haengt und nicht am Fenster. */
+  if(wellen>0){
+    /* Bei mehreren Wellen treibt die kraeftigste die Schrift — sonst
+       fuehrt die aelteste, die gerade verebbt. */
+    let stark=ringe[0];
+    for(let i=1;i<wellen;i++)if(ringe[i].kraft>stark.kraft)stark=ringe[i];
+    const L=laserAufSchirm(stark);
+    for(const el of laserZiele){
+      const kasten=el.getBoundingClientRect();
+      if(kasten.bottom<-200||kasten.top>innerHeight+200)continue;
+      el.style.setProperty('--lx',(L.x-kasten.left)+'px');
+      el.style.setProperty('--ly',(L.y-kasten.top)+'px');
+      el.style.setProperty('--lr',L.r+'px');
+      el.style.setProperty('--lw',L.w+'px');
+    }
+    laserLief=true;
+  }else if(laserLief){
+    for(const el of laserZiele){
+      el.style.setProperty('--lx','-99999px');
+      el.style.setProperty('--lr','0px');
+    }
+    laserLief=false;
+  }
+
+  /* Stand des Koerpers: vom Abschnitt vorgegeben, weich ueberblendet. */
+  const stelle=Math.min(STAND.length-2,Math.floor(lauf));
+  const rohS=lauf-stelle;
+  const ts=rohS*rohS*(3-2*rohS);
+  const V=STAND[stelle],N=STAND[stelle+1];
+  wolke.position.set(
+    V.x+(N.x-V.x)*ts,
+    V.y+(N.y-V.y)*ts+Math.sin(s*.3)*.02,
+    V.z+(N.z-V.z)*ts
+  );
+  /* Im letzten Abschnitt hat sich die Marke wieder gefunden — dort dreht
+     sie sich dann dauerhaft um die eigene Achse. Der Anteil faehrt ueber
+     den vorletzten Abschnitt hoch, damit sie nicht schlagartig loslaeuft. */
+  /* Im Videoabschnitt treibt die Kugel durch den Raum: eine langsame Bahn in
+     allen drei Achsen plus eine eigene Drehung. Der Anteil steigt zum
+     Abschnitt hin an und faellt danach wieder ab, damit die Bewegung nicht
+     in die Nachbarabschnitte hineinlaeuft. */
+  const raum=Math.max(0,1-Math.abs(lauf-2)*1.25);
+  if(raum>0){
+    const r=raum*raum*(3-2*raum);
+    wolke.position.x+=Math.sin(s*.21)*.42*r;
+    wolke.position.y+=Math.cos(s*.16)*.26*r;
+    wolke.position.z+=Math.sin(s*.12+1.3)*.50*r;
+    raumdreh+=.0062*r*schritt;
+  }else raumdreh*=.97;
+
+  const schluss=Math.min(1,Math.max(0,(lauf-3.25)/.75));
+  eigendreh+=schluss*.0095*schritt;
+  if(schluss<=0)eigendreh=0;
+  /* Der erreichte Winkel wird beim Verlassen des Abschnitts wieder
+     herausgeblendet, sonst steht die Marke oben schief. */
+  wolke.rotation.y=weich.x*(.1+pWeich*.38)+pWeich*1.6+Math.sin(s*.13)*.035*pWeich+eigendreh*schluss+raumdreh;
+  wolke.rotation.x=weich.y*(.06+pWeich*.26)+Math.sin(s*.17)*.03*pWeich+raumdreh*.35;
+  kamera.position.z=4.64-Math.sin(pWeich*Math.PI)*.9;
+  kamera.position.x=Math.sin(pWeich*Math.PI*1.6)*.55;
+  kamera.lookAt(0,0,0);
+
+  zeichner.render(szene,kamera);
+}
+zeichner.render(szene,kamera);
+requestAnimationFrame(bild);
+</script>
+</body>
+</html>
