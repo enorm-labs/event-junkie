@@ -1,23 +1,20 @@
 package de.norm.events.scraper.cafekoepenick
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.SiteTime
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.calendarEvents
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.siteTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.net.URI
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure parser for the Café Köpenick's public calendar feed. The feed is the club's own diary: the
@@ -44,13 +41,13 @@ class CafeKoepenickCalendarScraper {
     ): ScrapedEvent? {
         val title = entry["SUMMARY"]?.text?.let(::decodeHtmlEntities).blankToNull()
         val uid = entry["UID"]?.value.blankToNull()
-        val start = entry["DTSTART"]?.let(::berlinTime)
+        val start = entry["DTSTART"]?.siteTime()
         if (title == null || uid == null || start == null) {
             logger.warn { "Café Köpenick calendar entry '$title' lacks a title, UID or start, skipping" }
             return null
         }
         val eventType = programmeType(title, entry["DESCRIPTION"]?.text) ?: return null
-        val end = entry["DTEND"]?.let(::berlinTime)?.let { endOf(start, it) }
+        val end = entry["DTEND"]?.siteTime()?.let { endOf(start, it) }
         return ScrapedEvent(
             title = title,
             eventType = eventType,
@@ -64,34 +61,16 @@ class CafeKoepenickCalendarScraper {
         )
     }
 
-    private fun berlinTime(property: CalendarProperty): CalendarTime {
-        val raw = property.value.trim()
-        if (property.params["VALUE"] == "DATE") return CalendarTime(LocalDate.parse(raw, DATE_FORMAT), null)
-        val local = LocalDateTime.parse(raw.removeSuffix("Z"), DATE_TIME_FORMAT)
-        val berlin = if (raw.endsWith('Z')) local.atOffset(ZoneOffset.UTC).atZoneSameInstant(BERLIN).toLocalDateTime() else local
-        return CalendarTime(berlin.toLocalDate(), berlin.toLocalTime())
-    }
-
     /** The end that says more than the start: a later time, or the last day of an all-day run, whose `DTEND` is the day after. */
     private fun endOf(
-        start: CalendarTime,
-        end: CalendarTime
-    ): CalendarTime? =
+        start: SiteTime,
+        end: SiteTime
+    ): SiteTime? =
         if (end.time == null) {
             end.copy(date = end.date.minusDays(1)).takeIf { it.date > start.date }
         } else {
             end.takeIf { start.time != null && LocalDateTime.of(end.date, end.time) > LocalDateTime.of(start.date, start.time) }
         }
-
-    private data class CalendarTime(
-        val date: LocalDate,
-        val time: LocalTime?
-    )
-
-    private companion object {
-        val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
-    }
 }
 
 /** A trip the club makes to another stage (`Cafe goes "Future is now" im Schlossplatztheater`): not a night at the club. */
