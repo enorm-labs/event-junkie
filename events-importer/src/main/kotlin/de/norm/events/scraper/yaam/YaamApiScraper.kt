@@ -12,6 +12,7 @@ import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -53,7 +54,7 @@ class YaamApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl() ?: flyerUrl(event),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.YAAM.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.YAAM, slug),
             ticketUrl = event.stringOrNull("website")
         )
     }

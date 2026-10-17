@@ -96,4 +96,18 @@ class SoulcatApiScraperTest {
     fun `leaves no marker in any title`() {
         events.forEach { it.title.lowercase() shouldNotContain "vinyl only" }
     }
+
+    @Test
+    fun `keeps apart two dates of a recurring night that share one slug`() {
+        val recurring =
+            listOf("2026-10-20", "2026-10-27").joinToString(",") { date ->
+                """{ "slug": "dj-krawallisch", "title": "DJ Krawallisch – Soul", "start_date": "$date 20:00:00",
+                     "url": "https://soulcat-berlin.com/event/dj-krawallisch/$date/" }"""
+            }
+
+        val page = SoulcatApiScraper().scrapePage("""{ "events": [$recurring] }""")
+
+        page.events.map { it.sourceId } shouldContainExactly
+            listOf("soulcat:dj-krawallisch-2026-10-20", "soulcat:dj-krawallisch-2026-10-27")
+    }
 }

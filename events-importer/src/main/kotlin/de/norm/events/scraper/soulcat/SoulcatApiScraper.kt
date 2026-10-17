@@ -8,6 +8,7 @@ import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import tools.jackson.databind.JsonNode
@@ -26,7 +27,7 @@ import tools.jackson.databind.JsonNode
  * `FREE ENTRY` marks the night free.
  * - **The bar also shows Werder Bremen matches**, filed under the `Fussball` category. Those are skipped.
  *
- * The `slug` is unique per date and identifies an event. Every night is a DJ night, so a [EventType.PARTY].
+ * The `slug` identifies an event, with the date [tecSourceId] adds for a recurring one. Every night is a DJ night, so a [EventType.PARTY].
  *
  * @see SoulcatWebsiteImporter for the HTTP fetch orchestrator.
  * @see de.norm.events.scraper.parseTecPage for the page shape and the field readers.
@@ -55,7 +56,7 @@ class SoulcatApiScraper {
             endDate = end?.toLocalDate(),
             endTime = end?.toLocalTime(),
             sourceUrl = event.path("url").asString(""),
-            sourceId = "${EventSource.SOULCAT.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.SOULCAT, slug),
             genre = genreOf(title, parts, djs != null),
             free = FREE_ENTRY.containsMatchIn(rawTitle),
             artists = djs?.split(NAME_SEPARATOR)?.map { ScrapedArtist(name = it.trim(), role = "DJ") }.orEmpty()

@@ -18,6 +18,7 @@ import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -75,7 +76,7 @@ class PandaPlatformaApiScraper {
             endTime = end?.toLocalTime(),
             imageUrl = event.tecImageUrl(),
             sourceUrl = event.stringOrNull("url") ?: return null,
-            sourceId = "${EventSource.PANDA_PLATFORMA.sourceIdPrefix}$slug",
+            sourceId = event.tecSourceId(EventSource.PANDA_PLATFORMA, slug),
             ticketUrl = event.stringOrNull("website")?.takeIf { it.isNotBlank() },
             genre = categories.mapNotNull { STYLE_BY_CATEGORY[it] }.joinToString(", ").ifEmpty { null },
             pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
