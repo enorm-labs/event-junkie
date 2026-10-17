@@ -357,6 +357,9 @@ enum class EventSource {
     /** Speiches Rock- und Blueskneipe Berlin – the Prenzlauer Berg blues pub of Monokel bassist Jörg "Speiche" Schütze, with free live blues. */
     SPEICHES,
 
+    /** Studio IIII – an art and social club on Potsdamer Straße with a residency for moving-image artists, installations and DJ nights. */
+    STUDIO_IIII,
+
     /** Supamolly Berlin – a former squat turned collectively run venue near Traveplatz: punk, ska and hardcore concerts, theatre, film and socials. */
     SUPAMOLLY,
 

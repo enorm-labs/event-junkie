@@ -115,6 +115,7 @@ import de.norm.events.scraper.soda.SODA_LIMITATIONS
 import de.norm.events.scraper.soulcat.SOULCAT_LIMITATIONS
 import de.norm.events.scraper.speakeazy.SPEAKEAZY_LIMITATIONS
 import de.norm.events.scraper.speiches.SPEICHES_LIMITATIONS
+import de.norm.events.scraper.studioiiii.STUDIO_IIII_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.tausend.TAUSEND_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
@@ -260,6 +261,7 @@ object AcceptedLimitations {
             SOULCAT_LIMITATIONS,
             SPEAKEAZY_LIMITATIONS,
             SPEICHES_LIMITATIONS,
+            STUDIO_IIII_LIMITATIONS,
             SUPAMOLLY_LIMITATIONS,
             TAUSEND_LIMITATIONS,
             TEMPODROM_LIMITATIONS,
