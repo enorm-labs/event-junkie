@@ -73,6 +73,9 @@ enum class EventSource {
     /** BKA Theater – the Berliner Kabarett Anstalt, on a fifth floor at Mehringdamm since 1988: queer and political cabaret, drag, improv and concerts. */
     BKA_THEATER,
 
+    /** Brotfabrik Berlin – an 1890 bakery in Weißensee, an arts centre since 1990 with a cinema, a gallery and a stage for theatre and readings. */
+    BROTFABRIK,
+
     /** Cassiopeia Berlin – a multi-room club and cultural venue on the RAW-Gelände, from reggae and drum & bass to indie and electronic nights. */
     CASSIOPEIA,
 

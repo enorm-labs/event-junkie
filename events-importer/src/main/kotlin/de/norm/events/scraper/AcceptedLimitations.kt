@@ -27,6 +27,7 @@ import de.norm.events.scraper.binuu.BINUU_LIMITATIONS
 import de.norm.events.scraper.bkatheater.BKA_THEATER_LIMITATIONS
 import de.norm.events.scraper.bogen47.FITZROY_LIMITATIONS
 import de.norm.events.scraper.bogen47.LARK_LIMITATIONS
+import de.norm.events.scraper.brotfabrik.BROTFABRIK_LIMITATIONS
 import de.norm.events.scraper.cassiopeia.CASSIOPEIA_LIMITATIONS
 import de.norm.events.scraper.clash.CLASH_LIMITATIONS
 import de.norm.events.scraper.clubdervisionaere.CLUB_DER_VISIONAERE_LIMITATIONS
@@ -191,6 +192,7 @@ object AcceptedLimitations {
             BERGHAIN_LIMITATIONS,
             BKA_THEATER_LIMITATIONS,
             BINUU_LIMITATIONS,
+            BROTFABRIK_LIMITATIONS,
             CASSIOPEIA_LIMITATIONS,
             CLASH_LIMITATIONS,
             CLUB_DER_VISIONAERE_LIMITATIONS,

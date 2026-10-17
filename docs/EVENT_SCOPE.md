@@ -136,6 +136,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                                          |
 | Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                                        |
 | LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und` |
+| Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -188,6 +189,7 @@ Hall. Nothing on those pages marks a show for small children, and adults go to t
 | ufaFabrik                   | `UfaFabrikMonthPageScraper.isChildrensShow`                    | A price per child, per Kita child or per Erzieher\*in                                            |
 | Peter Edel, Wühlmäuse, SO36 | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
 | Showfenster Theater         | `ShowfensterOverviewPageScraper.isOutOfScope`                  | The Eventfrog category `kinderveranstaltungen`, or `billsChildrensShow` on title + description   |
+| Brotfabrik                  | `BrotfabrikApiScraper.isChildrensShow`                         | `billsChildrensShow` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`   |
 
 `billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A
 new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it here.
