@@ -51,6 +51,7 @@ import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
 import de.norm.events.scraper.festsaal.FESTSAAL_LIMITATIONS
 import de.norm.events.scraper.frachtkante.FRACHTKANTE_LIMITATIONS
 import de.norm.events.scraper.frannz.FRANNZ_LIMITATIONS
+import de.norm.events.scraper.friedrichstadtpalast.FRIEDRICHSTADTPALAST_LIMITATIONS
 import de.norm.events.scraper.gaertenderwelt.GAERTEN_DER_WELT_LIMITATIONS
 import de.norm.events.scraper.galilaeakirche.GALILAEAKIRCHE_LIMITATIONS
 import de.norm.events.scraper.gartn.GARTN_LIMITATIONS
@@ -225,6 +226,7 @@ object AcceptedLimitations {
             FITZROY_LIMITATIONS,
             FRACHTKANTE_LIMITATIONS,
             FRANNZ_LIMITATIONS,
+            FRIEDRICHSTADTPALAST_LIMITATIONS,
             GAERTEN_DER_WELT_LIMITATIONS,
             GALILAEAKIRCHE_LIMITATIONS,
             GARTN_LIMITATIONS,

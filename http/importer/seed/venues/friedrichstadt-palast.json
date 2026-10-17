@@ -1,0 +1,29 @@
+{
+    "venue": {
+        "name": "Friedrichstadt-Palast",
+        "address": "Friedrichstraße 107",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.523624,
+        "longitude": 13.388621,
+        "websiteUrl": "https://www.palast.berlin/",
+        "instagramUrl": "https://www.instagram.com/friedrichstadt.palast/",
+        "facebookUrl": "https://www.facebook.com/friedrichstadt.palast",
+        "description": "Berlin's revue theatre, opened on Friedrichstraße in 1984 as the GDR's last grand showpiece, stages its own Grand Show and hosts concerts and guest shows.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Das Revuetheater an der Friedrichstraße, 1984 als letzter großer Prachtbau der DDR eröffnet, zeigt seine eigene Grand Show und holt Konzerte und Gastspiele ins Haus.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["theatre"]
+    },
+    "sources": [
+        {
+            "name": "Friedrichstadt-Palast",
+            "url": "https://www.palast.berlin/gastspiele/",
+            "sourceType": "FRIEDRICHSTADTPALAST",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
