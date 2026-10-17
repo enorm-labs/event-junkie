@@ -97,6 +97,20 @@ class OrangerieOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits a cross-billed pair after w-slash and leaves a single act whole`() {
+        val nights =
+            scrapeCards(
+                "Jazzmatazz w/ Aloo from Rome x Skyline Sun" to "",
+                "Naked Grapes w/ zodya" to "",
+                "Hang Jack w/ CRIES x Kallaloo, Vio PRG" to ""
+            )
+
+        nights[0].artists.map { it.name } shouldContainExactly listOf("Aloo from Rome", "Skyline Sun")
+        nights[1].artists.map { it.name } shouldContainExactly listOf("zodya")
+        nights[2].artists.map { it.name } shouldContainExactly listOf("CRIES", "Kallaloo", "Vio PRG")
+    }
+
+    @Test
     fun `names nobody for a crew or series night`() {
         events.first { it.title.startsWith("Gardens of Disco") }.artists.shouldBeEmpty()
         events.first { it.title.startsWith("Nice Tries") }.artists.shouldBeEmpty()
