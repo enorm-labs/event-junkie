@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   178 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     7 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   180 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     6 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
@@ -204,6 +204,8 @@ schema change.
 | Urban Spree                      | https://www.urbanspree.com/program/                                      | Club         | MODX; listing descending + paginated; walks pages         |
 | Velodrom                         | https://www.velomax.de/events                                            | Arena        | Shares the VELOMAX listing; Microdata details             |
 | VOID Club                        | https://www.void-club.de/                                                | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms          |
+| Volksbühne Berlin                | https://www.volksbuehne-berlin.de/                                       | Theater      | Wagtail Spielplan; one page per performance               |
+| Volksbühne Prater                | https://www.volksbuehne-berlin.de/                                       | Theater      | Volksbühne parser; Prater stages only                     |
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
 | Weekend                          | https://www.weekendclub.berlin/upcoming                                  | Club         | Squarespace list; Xceed tickets; DJs from blurb           |
 | Weltwirtschaft                   | https://weltwirtschaft.berlin/                                           | Bar          | TEC REST API; closure notices dropped                     |
@@ -219,11 +221,11 @@ schema change.
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-177 importer classes cover 178 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Seven other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
+179 importer classes cover 180 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Eight other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
-The last group is the three HAU Hebbel am Ufer houses.
+The three HAU Hebbel am Ufer houses are one more. The last group is Volksbühne Berlin with Volksbühne Prater.
 
 ## 🌐 Second language
 
@@ -241,7 +243,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-60 sources have a second language, 114 have none, and 4 are unknown. Twelve translate the event text on a second page.
+62 sources have a second language, 114 have none, and 4 are unknown. Fourteen translate the event text on a second page.
 Eleven put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
@@ -431,6 +433,8 @@ the upsert stores none.
 | Urban Spree                      | Yes             | English first; `/de/` and `/fr/` paths                       | Not on the listing | https://www.urbanspree.com/de/program/                                                                                             |
 | Velodrom                         | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.velomax.de/en/events                                                                                                   |
 | VOID Club                        | Yes             | One field, in the club text only                             | Not on the listing | https://www.void-club.de/                                                                                                          |
+| Volksbühne Berlin                | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.volksbuehne-berlin.de/en/                                                                                              |
+| Volksbühne Prater                | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.volksbuehne-berlin.de/en/                                                                                              |
 | WABE                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Weekend                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Weltwirtschaft                   | Yes             | `/en/` site pages; events in German only                     | Not on the listing | https://weltwirtschaft.berlin/en/restaurant-2/                                                                                     |
@@ -467,7 +471,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Name                | URL                                                | Type    | Priority | Comment                                                   |
 | ------------------- | -------------------------------------------------- | ------- | -------- | --------------------------------------------------------- |
 | Little Stage Bar    | https://littlestageclubneukoelln.wordpress.com/    | Bar     | Low      | WordPress.com posts; date and time only in the prose      |
-| Volksbühne          | https://www.volksbuehne-berlin.de/konzerte/        | Theater | Low      | Concert page; 2 upcoming, with date, time and room        |
 | Renaissance-Theater | https://renaissance-theater.de/spielplan/          | Theater | Low      | Day blocks under month headings; plays only               |
 | KuBiZ               | https://www.kubiz-wallenberg.de/                   | Other   | Low      | WordPress posts; date in the title; jazz about monthly    |
 | Villa Kuriosum      | https://www.villakuriosum.net/veranstaltungen/     | Other   | Low      | TEC REST API; 37 events in 2026, mostly workshops         |

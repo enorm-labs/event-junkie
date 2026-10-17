@@ -22,7 +22,7 @@ CASES = [
     ("PERMITTED", None, "PERMITTED"),
     # A review row with no description verdict still displays, so it translates too.
     ("", None, "PERMITTED"),
-    # The four PROHIBITED sources: never PERMITTED, and a stored grant is withdrawn.
+    # A PROHIBITED source: never PERMITTED, and a stored grant is withdrawn.
     ("PROHIBITED", None, "PROHIBITED"),
     ("PROHIBITED", "PERMITTED", "PROHIBITED"),
     ("PROHIBITED", "UNCLEAR", "PROHIBITED"),
