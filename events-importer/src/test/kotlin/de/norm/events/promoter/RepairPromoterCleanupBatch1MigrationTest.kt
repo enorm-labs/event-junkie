@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.flyway
+import de.norm.events.rows
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -81,15 +82,6 @@ class RepairPromoterCleanupBatch1MigrationTest {
         connection: Connection,
         slug: String
     ): String = rows(connection, "SELECT name FROM events.promoter WHERE slug = '$slug'") { it.getString(1) }.single()
-
-    private fun <T : Any> rows(
-        connection: Connection,
-        sql: String,
-        read: (java.sql.ResultSet) -> T
-    ): List<T> =
-        connection.createStatement().use { statement ->
-            statement.executeQuery(sql).use { rs -> generateSequence { if (rs.next()) read(rs) else null }.toList() }
-        }
 
     private companion object {
         val MIGRATION: Path = Path.of("src/main/resources/db/migration/V151__repair_promoter_cleanup_batch_1.sql")

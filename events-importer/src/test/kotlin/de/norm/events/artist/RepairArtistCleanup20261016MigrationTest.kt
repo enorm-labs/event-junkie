@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.flyway
+import de.norm.events.rows
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -145,15 +146,6 @@ class RepairArtistCleanup20261016MigrationTest {
         ) { it.getString(1) }
 
     private fun slugs(connection: Connection): List<String> = rows(connection, "SELECT slug FROM events.artist") { it.getString(1) }
-
-    private fun <T : Any> rows(
-        connection: Connection,
-        sql: String,
-        read: (java.sql.ResultSet) -> T
-    ): List<T> =
-        connection.createStatement().use { statement ->
-            statement.executeQuery(sql).use { rs -> generateSequence { if (rs.next()) read(rs) else null }.toList() }
-        }
 
     private companion object {
         val MIGRATION: Path = Path.of("src/main/resources/db/migration/V167__repair_artist_cleanup_2026_10_16.sql")
