@@ -49,6 +49,7 @@ import java.time.format.DateTimeParseException
  * types the night instead of defaulting to a concert. It is the social's name, any name with an inline `HH:MM Uhr`, which no
  * performer states, or a party's name ([PARTY_NIGHT_PATTERN]).
  * - **A block can carry a role label.** `Lieve: Subact` (sic) bills one act `LIVE`; `Djs Bain, Berry T, Kite & Domske` four `DJ`s.
+ * - **A night's name can fill an act slot, its DJ in the note.** [nightDj] bills `DjTerror Wave …` as `DJ Terror Wave` (#3564).
  * - **An act's note is sometimes its style.** `.beschr` holds `Punk Rock` as often as
  * `Kaffee & Kuchen ab 19:30`, so only the genres the vocabulary knows become the night's
  * [ScrapedEvent.genre] ([parseGenre]); the whole note stays the description.
@@ -109,7 +110,10 @@ class SupamollyOverviewPageScraper {
         }
 
         val title = cleanEventTitle(rawTitle)
-        val artists = buildArtists(actNames)
+        val nightDjs = blocks.mapNotNull(::nightDj)
+        val artists =
+            buildArtists(blocks.filter { nightDj(it) == null }.mapNotNull { it.name }) +
+                nightDjs.map { ScrapedArtist(name = it, role = "DJ") }
 
         return ScrapedEvent(
             title = title,
@@ -150,6 +154,15 @@ class SupamollyOverviewPageScraper {
         val work = block.clone()
         work.select(".progln, .lin").remove()
         return ActBlock(name = work.textAt(".tit"), description = work.textAt(".beschr"))
+    }
+
+    /**
+     * The DJ of a named night, as `DJ <name>`, when the block's note opens with a `Dj` glued to a capitalised name
+     * ([NIGHT_DJ_NOTE]): `DjTerror Wave synth wave …` is `DJ Terror Wave`. The lower-case genre words after the name are dropped.
+     */
+    private fun nightDj(block: ActBlock): String? {
+        if (block.name == null) return null
+        return NIGHT_DJ_NOTE.find(block.description.orEmpty())?.let { "DJ ${it.groupValues[1]}" }
     }
 
     /**
@@ -250,6 +263,9 @@ class SupamollyOverviewPageScraper {
     companion object {
         /** A row id is a `YYYYMMDDHHMM` stamp — 12 digits, nothing else. */
         private val STAMP_PATTERN = Regex("""\d{12}""")
+
+        /** A note opening with `Dj` glued to a name of capitalised words; `DJ antiauthoritarian …` is a style, not a name. */
+        private val NIGHT_DJ_NOTE = Regex("""^Dj(\p{Lu}\S*(?:\s+\p{Lu}\S*)*)""")
 
         /** Digits of the stamp that carry the date; the remainder is the `HHmm` time. */
         private const val DATE_LENGTH = 8
