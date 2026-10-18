@@ -354,12 +354,29 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
-        fun `bills a live act after a plain one as LIVE and keeps the plain one headliner`() {
-            eventWithStamp("202610172200", NOVEMBER).artists shouldContainExactly
-                listOf(
-                    ScrapedArtist("Flowers of Romance", "HEADLINER"),
-                    ScrapedArtist("MNGLXMPLR", "LIVE")
+        fun `bills a night's DJ from its note and keeps the night's name in the title only`() {
+            for ((stamp, fixture) in listOf("202610172130" to OCTOBER, "202610172200" to NOVEMBER)) {
+                val event = eventWithStamp(stamp, fixture)
+
+                event.title shouldBe "Flowers of Romance, Live: MNGLXMPLR"
+                event.artists shouldContainExactly
+                    listOf(
+                        ScrapedArtist("MNGLXMPLR", "LIVE"),
+                        ScrapedArtist("DJ Terror Wave", "DJ")
+                    )
+            }
+        }
+
+        @Test
+        fun `keeps an act whose note opens with DJ and a style`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202611272130"><td class="evcont"><div class="even"><div class="tit"><b>Some Band</b></div>
+                       <div class="beschr">DJ antiauthoritarian decolonial</div></div></td></tr></table>""",
+                    baseUrl
                 )
+
+            scraper.scrape(document, baseUrl).single().artists shouldContainExactly listOf(ScrapedArtist("Some Band", "HEADLINER"))
         }
 
         @Test
