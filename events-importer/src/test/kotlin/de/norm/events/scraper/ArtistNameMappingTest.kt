@@ -1735,7 +1735,9 @@ class ArtistNameMappingTest {
                 "Anchors & Hearts",
                 "Maël & Jonas",
                 "Mael & Jonas",
-                "Nie und Nimmer"
+                "Nie und Nimmer",
+                // Morphine Raum (#3565).
+                "Mitch & Mitch"
             ).forEach { title -> headlinersFromTitle(title).map { it.name } shouldContainExactly listOf(title) }
         }
     }

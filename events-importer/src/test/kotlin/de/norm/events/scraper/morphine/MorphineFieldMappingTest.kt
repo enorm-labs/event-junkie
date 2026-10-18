@@ -57,6 +57,21 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `cuts a tail naming the act's own backing line-up, in Italian or English (#3565)`() {
+        titleBilling("Mitch & Mitch con il loro Gruppo Etereofonico - Live Recording") shouldBe "Mitch & Mitch"
+        titleBilling("Mitch & Mitch con il loro Gruppo Etereofonico") shouldBe "Mitch & Mitch"
+        stripEnsembleTail("Anna Rossi con la loro Orchestra") shouldBe "Anna Rossi"
+        stripEnsembleTail("I Fratelli con i loro Amici") shouldBe "I Fratelli"
+        stripEnsembleTail("The Twins with their Ethereal Group") shouldBe "The Twins"
+        // A tail with nothing after it, or no act before it, stays.
+        stripEnsembleTail("Band con il loro") shouldBe "Band con il loro"
+        stripEnsembleTail("con il loro Gruppo") shouldBe "con il loro Gruppo"
+        stripEnsembleTail("Mitch & Mitch") shouldBe "Mitch & Mitch"
+        morphineSetLineActs("Mitch & Mitch con il loro Gruppo Etereofonico", "Mitch & Mitch con il loro Gruppo Etereofonico - Live Recording") shouldBe
+            listOf("Mitch & Mitch")
+    }
+
+    @Test
     fun `leaves a name that carries no billing tail unchanged`() {
         stripFormatTail("VINYL REDUCTION") shouldBe "VINYL REDUCTION"
     }

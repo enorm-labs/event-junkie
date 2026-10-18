@@ -10,7 +10,7 @@ import de.norm.events.scraper.stripArtistSuffix
 /**
  * The billed names on a `ul.lineup` set line, for the four shapes the venue writes beside a bare
  * name (#1674): a `<promoter> presents:` frame comes off the front, a `performs with <instrument>`
- * tail off the back, a ` - ` list is split when every segment is short enough to be an act (each
+ * tail and a backing line-up ([stripEnsembleTail]) off the back, a ` - ` list is split when every segment is short enough to be an act (each
  * may carry a `Live`) and there are three or more of them, a pair whose one segment equals the
  * event [title] is a film or a work beside its performer, and a ` - ` tail that lists members
  * (`PICI - A & B`), dates a work ([WORK_MARKER]) or is left out of a title that bills the head
@@ -25,7 +25,7 @@ internal fun morphineSetLineActs(
     line: String,
     title: String
 ): List<String> {
-    val framed = line.replace(PRESENTS_FRAME, "").replace(PERFORMS_WITH_TAIL, "").trim()
+    val framed = stripEnsembleTail(line.replace(PRESENTS_FRAME, "").replace(PERFORMS_WITH_TAIL, ""))
     val segments = framed.split(DASH).map { it.trim() }.filter { it.isNotBlank() }
     val separators = DASH.findAll(framed).map { it.value.trim() }.toSet()
     val names =

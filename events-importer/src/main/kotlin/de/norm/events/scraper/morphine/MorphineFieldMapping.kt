@@ -56,16 +56,33 @@ internal fun stripFormatTail(name: String): String {
  */
 internal fun titleBilling(title: String): String {
     val stripped = stripFormatTail(title)
-    return if (stripped == title.trim()) {
-        stripped
-    } else {
-        stripped
-            .split(DASH, limit = 2)
-            .first()
-            .trim()
-            .ifBlank { stripped }
-    }
+    val billing =
+        if (stripped == title.trim()) {
+            stripped
+        } else {
+            stripped
+                .split(DASH, limit = 2)
+                .first()
+                .trim()
+                .ifBlank { stripped }
+        }
+    return stripEnsembleTail(billing)
 }
+
+/**
+ * `Mitch & Mitch con il loro Gruppo Etereofonico`: a tail that names the act's own backing line-up,
+ * in Italian or English, is not a second act (#3565). The co-bill split would otherwise cut at the
+ * `&` and keep the tail on the second half.
+ */
+private val ENSEMBLE_TAIL = Regex("""\s+(?:con\s+(?:il|la|i|le|gli)\s+loro|with\s+their)\s+\S.*$""", RegexOption.IGNORE_CASE)
+
+/** Cuts an [ENSEMBLE_TAIL] off a billed name; unchanged without one or when cutting would leave nothing. */
+internal fun stripEnsembleTail(name: String): String =
+    name
+        .trim()
+        .replace(ENSEMBLE_TAIL, "")
+        .trim()
+        .ifBlank { name.trim() }
 
 /** A dash between two billed segments, padded so a hyphenated name stays whole. */
 internal val DASH = Regex("""\s+[-–—]\s+""")

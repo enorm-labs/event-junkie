@@ -142,6 +142,15 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `bills a band named with an ampersand alone, without its backing line-up (#3565)`() {
+        val url = "http://www.morphinerecords.com/events/mitch-mitch-con-il-loro-gruppo-etereofonico"
+        val event = parse("morphine-detail-con-il-loro.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Mitch & Mitch con il loro Gruppo Etereofonico - Live Recording"
+        event.artists.map { it.name to it.role } shouldBe listOf("Mitch & Mitch" to "HEADLINER")
+    }
+
+    @Test
     fun `credits the promoter a Presented by line names`() {
         val url = "http://www.morphinerecords.com/events/gibrana-cervantes-verdad-y-error-listening-session"
         val event = parse("morphine-detail-listening-session.html", url).shouldNotBeNull()
