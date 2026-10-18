@@ -107,7 +107,7 @@ which coverage questions are still open is in
 
 🚧 **Public beta.** The site is live at <https://event-junkie.de>.
 
-More than 90 Berlin sources are imported on a schedule. Production and staging run on Hetzner and are reconciled by Flux; staging has no public address. The site
+More than 180 Berlin sources are imported on a schedule. Production and staging run on Hetzner and are reconciled by Flux; staging has no public address. The site
 carries a `beta` badge until `1.0.0`, because coverage is incomplete and some details can be stale. `1.0.0` comes when the criteria on
 [#295](https://github.com/enorm-labs/event-junkie/issues/295) hold.
 

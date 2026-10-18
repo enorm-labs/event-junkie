@@ -215,5 +215,5 @@ a defect to fix, say so instead: the AcceptedLimitation for that source — aspe
 - **#474** builds the same comparison inside the importer and is blocked on #473; what this produces over weeks is the measurement #474 asks for first.
 - **A finding that recurs every night is a scraper defect**, whatever the limitations table says — a venue that started publishing start times after its row
   was declared is the case the table cannot see.
-- **The sample is small on purpose**: twenty fetches across up to 86 hosts is a rounding error next to the importer's traffic; two hundred is the venues'
+- **The sample is small on purpose**: twenty fetches across up to 180 hosts is a rounding error next to the importer's traffic; two hundred is the venues'
   bandwidth. Raise `--sample` for one run, not in the workflow.
