@@ -265,6 +265,52 @@ class SilentGreenDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape reads the end of a begin and end time cell`() {
+        // 18 October 2026: "15:00 -" then "19:00" (#3580).
+        val details = parse("silentgreen-detail-kantine-musik.html").shouldNotBeNull()
+
+        details.startTime shouldBe LocalTime.of(15, 0)
+        details.endTime shouldBe LocalTime.of(19, 0)
+        parse("silentgreen-detail-konzert.html").shouldNotBeNull().endTime.shouldBeNull()
+    }
+
+    @Test
+    fun `applyTo takes the page's end for a row that prints none, past midnight too, when the starts agree`() {
+        fun row(
+            start: LocalTime?,
+            end: LocalTime? = null
+        ) = ScrapedEvent(
+            title = "Kantine Musik",
+            eventDate = LocalDate.of(2026, 10, 18),
+            startTime = start,
+            endDate = end?.let { LocalDate.of(2026, 10, 18) },
+            endTime = end,
+            sourceUrl = "https://www.silent-green.net/programm/detail/kantine-musik-6",
+            sourceId = "silent_green:2026-10-18-kantine-musik-6"
+        )
+        val afternoon = SilentGreenEventDetails(startTime = LocalTime.of(15, 0), endTime = LocalTime.of(19, 0))
+        val night = SilentGreenEventDetails(startTime = LocalTime.of(22, 0), endTime = LocalTime.of(4, 0))
+
+        val filled = afternoon.applyTo(row(LocalTime.of(15, 0)))
+        filled.endDate shouldBe LocalDate.of(2026, 10, 18)
+        filled.endTime shouldBe LocalTime.of(19, 0)
+
+        val emptyRow = afternoon.applyTo(row(start = null))
+        emptyRow.startTime shouldBe LocalTime.of(15, 0)
+        emptyRow.endTime shouldBe LocalTime.of(19, 0)
+
+        val late = night.applyTo(row(LocalTime.of(22, 0)))
+        late.endDate shouldBe LocalDate.of(2026, 10, 19)
+        late.endTime shouldBe LocalTime.of(4, 0)
+
+        // The row's own end wins, and a page whose begin is another start's says nothing about this row's end.
+        afternoon.applyTo(row(LocalTime.of(15, 0), end = LocalTime.of(18, 0))).endTime shouldBe LocalTime.of(18, 0)
+        val otherStart = afternoon.applyTo(row(LocalTime.of(20, 0)))
+        otherStart.endDate.shouldBeNull()
+        otherStart.endTime.shouldBeNull()
+    }
+
+    @Test
     fun `scrape returns null when the page carries none of the run-level fields`() {
         val document = Jsoup.parse("<html><body><p>Seite nicht gefunden</p></body></html>", "https://www.silent-green.net/x")
 

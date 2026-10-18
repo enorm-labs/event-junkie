@@ -49,6 +49,7 @@ class SilentGreenDetailPageScraper {
             ticketPrice(document).copy(
                 doorsTime = parseLeadingTime(document, ".event-detail-time-entry"),
                 startTime = parseLeadingTime(document, ".event-detail-time-begin"),
+                endTime = parseLeadingTime(document, ".event-detail-time-end"),
                 runStart = runStart,
                 runEnd = parseBlockDate(document, ".event-detail-date-end"),
                 dailyHours = runStart?.let { dailyHours(document, it) }.orEmpty(),
@@ -213,6 +214,8 @@ data class SilentGreenEventDetails(
     val doorsTime: LocalTime? = null,
     /** Time the show starts ("Beginn"), a fallback for a row whose time cell is empty. */
     val startTime: LocalTime? = null,
+    /** Time the show ends, from the `"15:00 - 19:00"` time cell; a fallback for a row that prints no end. */
+    val endTime: LocalTime? = null,
     /** First day of the page's date block; the run's opening for an exhibition (ADR-029). */
     val runStart: LocalDate? = null,
     /** Last day of the page's date block; absent on a one-day page. */
@@ -280,9 +283,16 @@ data class SilentGreenEventDetails(
         return event.free || (event.ticketUrl == null && hasFreeEntryPhrase(blurb) && euroAmounts(blurb).isEmpty())
     }
 
-    /** The day's [dailyHours], unless a time cell already gives the start or the end. */
-    private fun openingHours(event: ScrapedEvent): SilentGreenOpeningHours? =
-        dailyHours[event.eventDate].takeIf { event.startTime == null && startTime == null && event.endTime == null }
+    /**
+     * The hours the row lacks: none when the row prints its end; the day's [dailyHours] when neither
+     * time cell gives a start; else the page's `begin – end` cell, when its begin is the row's start.
+     */
+    private fun openingHours(event: ScrapedEvent): SilentGreenOpeningHours? {
+        if (event.endTime != null) return null
+        if (event.startTime == null && startTime == null) return dailyHours[event.eventDate]
+        val start = startTime?.takeIf { event.startTime == null || event.startTime == it } ?: return null
+        return endTime?.let { SilentGreenOpeningHours(start, it) }
+    }
 }
 
 /** One day's opening hours; an [end] at or before [start] falls on the next day. */

@@ -11,12 +11,14 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Unit tests for [MonsterRonsonsDetailPageScraper].
  *
  * Parses static snapshots of two night pages captured on 2026-08-06: a hosted night with prose and
- * a door price, and the venue's "CLOSED" notice page.
+ * a door price, and the venue's "CLOSED" notice page; and of a night whose running time is a
+ * paragraph of its own, captured on 2026-10-18.
  */
 class MonsterRonsonsDetailPageScraperTest {
     private val scraper = MonsterRonsonsDetailPageScraper()
@@ -128,4 +130,46 @@ class MonsterRonsonsDetailPageScraperTest {
 
         MonsterRonsonsNightDetail(description = "from the night page").applyTo(card).description shouldBe "from the card"
     }
+
+    @Test
+    fun `ends a night at its running-time paragraph, on the next day past midnight`() {
+        // 18 October 2026: "<p>18:00 - 02:00</p><p>€5</p>" under a card that reads 18:00 (#3580).
+        val detail = scrape("running-time").shouldNotBeNull()
+        detail.runningTimes shouldBe listOf(MonsterRonsonsRunningTime(LocalTime.of(18, 0), LocalTime.of(2, 0)))
+        detail.priceBoxOffice shouldBe BigDecimal("5")
+
+        val night = detail.applyTo(card(LocalTime.of(18, 0)))
+        night.endDate shouldBe LocalDate.of(2026, 10, 19)
+        night.endTime shouldBe LocalTime.of(2, 0)
+    }
+
+    @Test
+    fun `reads no end from a tariff band, a host's slot in prose, or a running time the card's start disagrees with`() {
+        val banded = scrape("banded").shouldNotBeNull()
+        banded.runningTimes shouldBe emptyList()
+        banded.applyTo(card(LocalTime.of(18, 0))).endTime.shouldBeNull()
+        scrape("hosted").shouldNotBeNull().runningTimes shouldBe emptyList()
+
+        val other = scrape("running-time").shouldNotBeNull().applyTo(card(LocalTime.of(21, 0)))
+        other.endDate.shouldBeNull()
+        other.endTime.shouldBeNull()
+    }
+
+    @Test
+    fun `reads a running time with a one-digit hour and no spaces`() {
+        // "sing-with-soft-fantasy-4", 29 October 2026, prints "20:00-2:00".
+        val url = "https://www.karaokemonster.de/posts/sing-with-soft-fantasy-4"
+        val detail = scraper.scrape(Jsoup.parse("<div class='w-richtext'><p>Karaoke</p><p>20:00-2:00</p><p>€5</p></div>", url), url).shouldNotBeNull()
+
+        detail.runningTimes shouldBe listOf(MonsterRonsonsRunningTime(LocalTime.of(20, 0), LocalTime.of(2, 0)))
+    }
+
+    private fun card(start: LocalTime) =
+        ScrapedEvent(
+            title = "SING WITH SCOTTY TECHNOLOGY",
+            eventDate = LocalDate.of(2026, 10, 18),
+            startTime = start,
+            sourceUrl = "https://www.karaokemonster.de/posts/sing-with-scotty-technology-5",
+            sourceId = "monster_ronsons:2026-10-18-sing-with-scotty-technology-5"
+        )
 }

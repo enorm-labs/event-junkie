@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -17,6 +18,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.YearMonth
 
 /**
@@ -109,13 +111,17 @@ class SilentGreenMonthPageScraper {
                 ?.replace(NON_BREAKING_SPACE, ' ')
                 ?.blankToNull()
 
+        // The calendar's start time is the show's own start ("Beginn"); doors are on the detail page.
+        val startTime = parseTime(row.textAt(".eventList-event-starttime"))
+        val endTime = parseRowEndTime(row)
         return ScrapedEvent(
             title = title,
             subtitle = silentGreenSubtitle(subLine),
             eventType = eventType,
             eventDate = eventDate,
-            // The calendar's start time is the show's own start ("Beginn"); doors are on the detail page.
-            startTime = parseTime(row.textAt(".eventList-event-starttime")),
+            startTime = startTime,
+            endDate = endTime?.let { endOn(eventDate, startTime, it) },
+            endTime = endTime,
             room = row.textAt(".eventList-event-location"),
             sourceUrl = sourceUrl,
             // The date joins the slug because one detail URL serves every day of a run.
@@ -127,6 +133,9 @@ class SilentGreenMonthPageScraper {
             promoters = silentGreenPresenters(subLine)
         )
     }
+
+    /** The `HH:mm` of the row's `.eventList-event-endtime` cell (`"-19:00"`), behind its dash; `null` without one. */
+    private fun parseRowEndTime(row: Element): LocalTime? = row.textAt(".eventList-event-endtime")?.let { CLOCK.find(it)?.value }?.let(::parseTime)
 
     /**
      * The row's date from the day and month it renders (`"Sa 01.08."`) and the page's year.
@@ -161,6 +170,9 @@ class SilentGreenMonthPageScraper {
 
         /** The month switcher's current entry, e.g. "August 2026". */
         const val MONTH_HEADING_SELECTOR = "#calendar-timeline .current-month"
+
+        /** An `HH:mm` clock inside a time cell. */
+        val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
         /** The day and month of a year-less `"Sa 01.08."` date block. */
         val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")

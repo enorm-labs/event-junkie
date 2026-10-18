@@ -90,16 +90,20 @@ class KallaschCalendarScraper(
             ?.blankToNull()
             ?.let { CATEGORY_TYPES[it.lowercase()] } ?: EventType.OTHER.name
 
-    /** How long a night lasts from `DTSTART` to `DTEND`; `null` without a later end. */
+    /** How long a night lasts, from `DTSTART` to `DTEND`, else its `DURATION` (the jazz series'); `null` without a later end. */
     private fun duration(
         entry: Map<String, CalendarProperty>,
         start: LocalDateTime
-    ): Duration? =
-        entry["DTEND"]
-            ?.siteTime()
-            ?.dateTime
-            ?.let { Duration.between(start, it) }
-            ?.takeIf { !it.isNegative && !it.isZero }
+    ): Duration? {
+        val end = entry["DTEND"]?.siteTime()?.dateTime
+        val length = if (end != null) Duration.between(start, end) else entry["DURATION"]?.value?.let(::parseDuration)
+        return length?.takeIf { !it.isNegative && !it.isZero }
+    }
+
+    private fun parseDuration(value: String): Duration? =
+        runCatching { Duration.parse(value.trim()) }
+            .onFailure { logger.warn(it) { "Kallasch& DURATION '$value' does not parse, keeping no end" } }
+            .getOrNull()
 
     /** The series' dates from today to the horizon: `DTSTART`, its `RRULE` and its `RDATE`s, minus its `EXDATE`s. */
     private fun occurrenceDates(
