@@ -94,6 +94,19 @@ class BkaTheaterSpielplanPageScraperTest {
     }
 
     @Test
+    fun `keeps a pinned duo whole and still splits a two-act heading`() {
+        val duo = events.first { it.sourceId == "bka_theater:4285" }
+        duo.title shouldBe "Simon & Jan: Heiße Luft"
+        duo.artists shouldContainExactly listOf(ScrapedArtist(name = "Simon & Jan", titleDerived = true))
+
+        events.first { it.sourceId == "bka_theater:4595" }.artists.map { it.name } shouldContainExactly listOf("Jacky und Mahoni")
+        events.first { it.sourceId == "bka_theater:4503" }.artists.map { it.name } shouldContainExactly listOf("Evers & Eichhorn")
+        // The same heading shape bills two acts here (#1760).
+        events.first { it.sourceId == "bka_theater:4206" }.artists.map { it.name } shouldContainExactly
+            listOf("Tim Becker", "Zauberer Umeno")
+    }
+
+    @Test
     fun `bills the programme line of a house series`() {
         val concert = events.first { it.sourceId == "bka_theater:4397" }
 

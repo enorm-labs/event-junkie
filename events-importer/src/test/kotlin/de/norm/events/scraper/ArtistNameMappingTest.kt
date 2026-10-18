@@ -796,6 +796,18 @@ class ArtistNameMappingTest {
         splitSegmentOnConjunctions("Lichene & Neue K") shouldBe listOf("Lichene", "Neue K")
     }
 
+    @Test
+    fun `splitSegmentOnConjunctions keeps a pinned duo whole in both conjunction forms`() {
+        // BKA Theater (#3584) and Morphine Raum (#3565).
+        assertSoftly {
+            listOf("Simon & Jan", "Jacky & Mahoni", "Evers & Eichhorn", "Mitch & Mitch").forEach { duo ->
+                splitSegmentOnConjunctions(duo) shouldBe listOf(duo)
+                val und = duo.replace(" & ", " und ")
+                splitSegmentOnConjunctions(und) shouldBe listOf(und)
+            }
+        }
+    }
+
     // Audit T-5: a conjunction inside a parenthetical belongs to that act's own affiliation list,
     // never to a co-bill. Splitting there tore one act into fragments and left an unbalanced
     // bracket behind — Frannz Club stored "David J (Bauhaus", "Love" and "Rockets)".
