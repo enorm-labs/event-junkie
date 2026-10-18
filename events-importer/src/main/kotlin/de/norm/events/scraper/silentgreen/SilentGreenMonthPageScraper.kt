@@ -27,8 +27,8 @@ import java.time.YearMonth
  * page once and folds an exhibition's days into one run (ADR-029, #337), while a festival's days
  * keep their own lineups. The rendered date is year-less (`"Sa 01.08."`); the `.current-month`
  * heading (`"August 2026"`) supplies the year, and an unreadable heading yields nothing rather
- * than a guess. The venue publishes no prices and no genre; doors, poster and blurb are on the
- * detail page ([SilentGreenEventDetails]).
+ * than a guess. The calendar shows no price and the venue no genre; doors, poster, blurb and a
+ * blurb's `Tickets:` price are on the detail page ([SilentGreenEventDetails]).
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.silent-green.net/programm">silent green calendar</a>

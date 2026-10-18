@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -12,6 +13,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -190,6 +192,76 @@ class SilentGreenDetailPageScraperTest {
 
         details.runStart shouldBe LocalDate.of(2026, 8, 2)
         details.runEnd.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape reads the door price on a bold Tickets line`() {
+        // 18 October 2026: "Tickets: 10€ vor Ort" closes the blurb (#3581).
+        val details = parse("silentgreen-detail-kantine-musik.html").shouldNotBeNull()
+
+        details.priceBoxOffice shouldBe BigDecimal("10")
+        details.pricePresale.shouldBeNull()
+        details.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape stores no price for a page without a Tickets line`() {
+        listOf(
+            "silentgreen-detail-konzert.html",
+            "silentgreen-detail-ausstellung.html",
+            "silentgreen-detail-festival.html",
+            "silentgreen-detail-festival-hours.html",
+            "silentgreen-detail-fab-dimensional.html",
+            "silentgreen-detail-ledesma-de.html"
+        ).forEach { fixture ->
+            val details = parse(fixture).shouldNotBeNull()
+            withClue(fixture) {
+                details.pricePresale.shouldBeNull()
+                details.priceBoxOffice.shouldBeNull()
+                details.priceNote.shouldBeNull()
+            }
+        }
+    }
+
+    @Test
+    fun `scrape reads one amount as presale or door price and keeps several verbatim`() {
+        fun tickets(body: String) =
+            scraper.scrape(
+                Jsoup.parse(
+                    """<div class="news-detail"><div class="ce-bodytext"><p>Blurb</p><p>$body</p></div></div>""",
+                    "https://www.silent-green.net/programm/detail/x"
+                )
+            )
+
+        tickets("<strong>Tickets: 12 €</strong>").shouldNotBeNull().pricePresale shouldBe BigDecimal("12")
+        tickets("<strong>Ticket: 15,50€ Abendkasse</strong>").shouldNotBeNull().priceBoxOffice shouldBe BigDecimal("15.50")
+        tickets("<strong>Tickets: 18€ AK</strong>").shouldNotBeNull().priceBoxOffice shouldBe BigDecimal("18")
+        tickets("<strong>Tickets: 10/8,50€</strong>").shouldNotBeNull().priceNote shouldBe "10/8,50€"
+        tickets("<strong>Tickets: 15€ / 10€ ermäßigt</strong>").shouldNotBeNull().let {
+            it.priceNote shouldBe "15€ / 10€ ermäßigt"
+            it.pricePresale.shouldBeNull()
+        }
+        // No amount, or a price in plain prose, is no Tickets line to read.
+        tickets("<strong>Tickets: an der Abendkasse</strong>").shouldNotBeNull().priceBoxOffice.shouldBeNull()
+        tickets("Tickets: 10€ vor Ort").shouldNotBeNull().priceBoxOffice.shouldBeNull()
+    }
+
+    @Test
+    fun `applyTo fills the price the calendar row lacks`() {
+        val row =
+            ScrapedEvent(
+                title = "Kantine Musik",
+                eventType = "CONCERT",
+                eventDate = LocalDate.of(2026, 10, 18),
+                sourceUrl = "https://www.silent-green.net/programm/detail/kantine-musik-6",
+                sourceId = "silent_green:2026-10-18-kantine-musik-6"
+            )
+        val details = SilentGreenEventDetails(priceBoxOffice = BigDecimal("10"))
+
+        val merged = details.applyTo(row)
+        merged.priceBoxOffice shouldBe BigDecimal("10")
+        merged.free shouldBe false
+        SilentGreenEventDetails(priceNote = "10/8,50€").applyTo(row).priceNote shouldBe "10/8,50€"
     }
 
     @Test
