@@ -367,6 +367,16 @@ class PromoterNormalizerTest {
         }
     }
 
+    // #3577: the strip leaves one word that reads as a verb, so the name is pinned whole.
+    @Test
+    fun `keeps Join Live Events whole and restores the row the strip had reduced`() {
+        assertSoftly {
+            canonicalPromoterName("Join Live Events") shouldBe "Join Live Events"
+            canonicalPromoterName("Join") shouldBe "Join Live Events"
+            canonicalPromoterName("JOIN LIVE EVENTS GmbH") shouldBe "Join Live Events"
+        }
+    }
+
     // #2757: Tempodrom credits "B&C Productions GbR"; an "&"-joined initialism is one too.
     @Test
     fun `treats capitals joined by an ampersand as an initialism`() {

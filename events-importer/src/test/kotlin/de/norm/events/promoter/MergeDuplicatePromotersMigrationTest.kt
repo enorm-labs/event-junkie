@@ -15,7 +15,7 @@ import java.sql.DriverManager
 
 /**
  * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079, V086,
- * V103 — against the rows each names, planted on a database migrated to just before it.
+ * V103, V176 — against the rows each names, planted on a database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
  * Flyway records success (#987). Nothing seeds promoters, so `MigrationSlugTest` cannot check
@@ -97,6 +97,7 @@ class MergeDuplicatePromotersMigrationTest {
         plantThenMigrate("79", ::plantAdmiralspalastFragments)
         plantThenMigrate("86", ::plantSchokoladenOldAndFast)
         plantThenMigrate("103", ::plantTyposAndDomainCredits)
+        plantThenMigrate("176", ::plantJoinLiveEvents)
     }
 
     private fun plantThenMigrate(
@@ -318,6 +319,23 @@ class MergeDuplicatePromotersMigrationTest {
                 rows.next()
                 rows.getString(1) shouldBe "https://www.heesen-konzerte.de"
             }
+        }
+    }
+
+    @Test
+    fun `V176 renames the Join row onto the whole name and keeps its events`() {
+        val stored = promoters()
+        stored.containsKey("join") shouldBe false
+        stored["join-live-events"] shouldBe "Join Live Events"
+        eventsOf("join-live-events") shouldContainExactlyInAnyOrder listOf("jl1", "jl2")
+    }
+
+    /** V176: production's row, credited on its two Max-Schmeling-Halle nights. */
+    private fun plantJoinLiveEvents() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "Join", "join")
+            plantEvent(statement, "jl1", "join")
+            plantEvent(statement, "jl2", "join")
         }
     }
 

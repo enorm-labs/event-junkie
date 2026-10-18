@@ -344,6 +344,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "mfp" to "MFP Concerts",
         "spirit" to "Spirit Events",
         "leasingrent" to "LEASING&RENT OÜ",
+        // Max-Schmeling-Halle credits "Join Live Events"; both descriptors go, and "Join" reads as a verb (#3577).
+        "join" to "Join Live Events",
         // Admiralspalast credits "„Aufgeigen.at“ Künstler und Veranstaltungs GmbH"; the brand is the
         // domain (#2331).
         "aufgeigenatkünstler" to "Aufgeigen.at",
