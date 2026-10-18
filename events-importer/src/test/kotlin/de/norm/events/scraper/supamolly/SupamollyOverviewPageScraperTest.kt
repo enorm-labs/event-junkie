@@ -142,6 +142,12 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
+        fun `reads Experimental from an act note that opens with it`() {
+            // Bebawinigi's note: "experimental singer, composer, multi-instrumentalist".
+            eventWithStamp("202610182100", OCTOBER).genre shouldBe "Experimental"
+        }
+
+        @Test
         fun `keeps the notes as the description when they carry a style`() {
             val document =
                 Jsoup.parse(
