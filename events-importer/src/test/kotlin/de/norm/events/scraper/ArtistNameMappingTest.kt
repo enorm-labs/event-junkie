@@ -1798,6 +1798,17 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `splitHeadlinerTitle keeps a known single act with meets in its name whole`() {
+        // Morphine Raum bills the project led by Jung-Jae Kim as its whole title (#3573).
+        headlinersFromTitle("Where the River Meets the Sea").map { it.name } shouldContainExactly
+            listOf("Where the River Meets the Sea")
+        splitHeadlinerTitle("WHERE THE RIVER MEETS THE SEA") shouldContainExactly listOf("WHERE THE RIVER MEETS THE SEA")
+        // Beside a hard separator the segment is protected too.
+        splitHeadlinerTitle("Where the River Meets the Sea + Gomez") shouldContainExactly
+            listOf("Where the River Meets the Sea", "Gomez")
+    }
+
+    @Test
     fun `splitHeadlinerTitle keeps a denylisted act whole when it co-bills with others`() {
         // The whole-title denylist check cannot fire here, so the guard has to hold at the
         // segment level: split at the "+" boundaries only, never inside "BLOOD & SUN".
