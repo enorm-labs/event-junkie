@@ -896,7 +896,7 @@ private fun isTitleFragment(name: String): Boolean = name.contains('|')
 /**
  * Single acts whose name contains a conjunction [splitHeadlinerTitle] would read as a co-bill,
  * matched case-insensitively against the whole title. `AC/DC` needs no entry, being protected
- * by space-padding; this list is for the `" & "` / `" and "` / `" und "` cases. Entries are in
+ * by space-padding; this list is for the `" & "` / `" and "` / `" und "` / `" meets "` cases. Entries are in
  * `&` form and the title's conjunctions are normalized to `&` first.
  *
  * **Name by name, because no source carries the signal.** Klunkerkranich bills a duo and a pair
@@ -944,6 +944,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "maël & jonas",
         "mael & jonas",
         "nie & nimmer",
+        // A project whose name holds a padded `meets`, so [splitOnMeets] must leave it whole (#3573).
+        "where the river meets the sea",
         // Bands whose name is a comma list, which [commaListActs] would cut into three (#3419).
         "kitty, daisy & lewis",
         "frost, pisse & elend",
@@ -1510,6 +1512,7 @@ private val MEETS_SEPARATOR = Regex("""\s+meets\s+""", RegexOption.IGNORE_CASE)
  * (`Tresor meets ENIGMA`, `FALCO MEETS AMADEUS`), and a spaced dash marks a tagline (`… - Piano meets Percussion`).
  */
 private fun splitOnMeets(segment: String): List<String> {
+    if (isKnownSingleAct(segment)) return listOf(segment)
     val cuts =
         MEETS_SEPARATOR
             .findAll(segment)
