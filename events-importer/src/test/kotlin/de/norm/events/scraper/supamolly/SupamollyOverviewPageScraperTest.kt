@@ -330,6 +330,30 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
+        fun `bills the act behind an after-party lead-in by its own name, a DJ as DJ`() {
+            val event = eventWithStamp("202610242130", NOVEMBER)
+
+            event.title shouldBe
+                "Sea Punks Soliparty, Brezel Göring & Psychoanalyse, Ben Bloodygrave, Schnauze, Danach Party mit DJ Spikey Mikey"
+            event.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Brezel Göring & Psychoanalyse", "HEADLINER"),
+                    ScrapedArtist("Ben Bloodygrave", "SUPPORT"),
+                    ScrapedArtist("Schnauze", "SUPPORT"),
+                    ScrapedArtist("DJ Spikey Mikey", "DJ")
+                )
+        }
+
+        @Test
+        fun `bills a non-DJ act behind any after-party lead-in as support`() {
+            billing("Anschließend Party mit Kapelle Petra", "Aftershow-Party MIT dj Ruth").artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("Kapelle Petra", "SUPPORT"),
+                    ScrapedArtist("dj Ruth", "DJ")
+                )
+        }
+
+        @Test
         fun `bills a live act after a plain one as LIVE and keeps the plain one headliner`() {
             eventWithStamp("202610172200", NOVEMBER).artists shouldContainExactly
                 listOf(

@@ -173,10 +173,15 @@ class SupamollyOverviewPageScraper {
      * One block's acts. The name loses a leading co-bill conjunction (`"& Support"` → `"Support"`, so
      * [isNonArtistName] sees the bare role label), a founding tagline ([FOUNDING_TAGLINE]) and a
      * trailing tour/live/format tail ([stripArtistSuffix]). A [DJ_LIST_LABEL] block splits into `DJ`
-     * acts and a [LIVE_LABEL] block bills one `LIVE` act; any other block is one act without a role.
+     * acts, a [LIVE_LABEL] block bills one `LIVE` act and an [AFTER_PARTY_LEAD_IN] block one `DJ` or
+     * `SUPPORT` act; any other block is one act without a role.
      */
     private fun billedActs(block: String): List<BilledAct> {
         val name = block.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, "").trim()
+        AFTER_PARTY_LEAD_IN.find(name)?.let { label ->
+            val act = stripArtistSuffix(name.substring(label.range.last + 1))
+            return listOf(BilledAct(act, if (DJ_NAME_PREFIX.containsMatchIn(act)) "DJ" else "SUPPORT"))
+        }
         DJ_LIST_LABEL.find(name)?.let { label ->
             val list = name.substring(label.range.last + 1)
             return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim()), "DJ") }
@@ -286,6 +291,13 @@ class SupamollyOverviewPageScraper {
 
         /** A `Live:` label, also as the venue's `Lieve:` typo. The act it labels is billed `LIVE`. */
         private val LIVE_LABEL = Regex("""^(?:live|lieve)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** An after-party lead-in before the act who plays it: `Danach Party mit DJ Spikey Mikey`, `Aftershow mit …`. */
+        private val AFTER_PARTY_LEAD_IN =
+            Regex("""^(?:danach|anschließend|after(?:show)?)(?:[- ]?party)?\s+mit\s+""", RegexOption.IGNORE_CASE)
+
+        /** A `DJ` before a single name, as the after-party act carries it. */
+        private val DJ_NAME_PREFIX = Regex("""^dj\b""", RegexOption.IGNORE_CASE)
 
         /** A `Djs` / `DJ's` label in front of a list of DJs: `Djs Bain, Berry T, Kite & Domske`. */
         private val DJ_LIST_LABEL = Regex("""^dj'?s\b\s*:?\s*""", RegexOption.IGNORE_CASE)
