@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.flyway
+import de.norm.events.rows
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -102,15 +103,6 @@ class RepairArtistCleanupBatch2MigrationTest {
         connection: Connection,
         slug: String
     ): String = rows(connection, "SELECT name FROM events.artist WHERE slug = '$slug'") { it.getString(1) }.single()
-
-    private fun <T : Any> rows(
-        connection: Connection,
-        sql: String,
-        read: (java.sql.ResultSet) -> T
-    ): List<T> =
-        connection.createStatement().use { statement ->
-            statement.executeQuery(sql).use { rs -> generateSequence { if (rs.next()) read(rs) else null }.toList() }
-        }
 
     private companion object {
         val MIGRATION: Path = Path.of("src/main/resources/db/migration/V150__repair_artist_cleanup_batch_2.sql")

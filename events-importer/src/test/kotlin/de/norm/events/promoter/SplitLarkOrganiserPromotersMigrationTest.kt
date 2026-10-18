@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.flyway
+import de.norm.events.rows
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -58,15 +59,6 @@ class SplitLarkOrganiserPromotersMigrationTest {
 
     private fun credits(connection: Connection): List<String> =
         rows(connection, "SELECT p.slug FROM events.event_promoter ep JOIN events.promoter p ON p.id = ep.promoter_id") { it.getString(1) }
-
-    private fun <T : Any> rows(
-        connection: Connection,
-        sql: String,
-        read: (java.sql.ResultSet) -> T
-    ): List<T> =
-        connection.createStatement().use { statement ->
-            statement.executeQuery(sql).use { rs -> generateSequence { if (rs.next()) read(rs) else null }.toList() }
-        }
 
     private companion object {
         val MIGRATION: Path = Path.of("src/main/resources/db/migration/V153__split_lark_organiser_promoters.sql")

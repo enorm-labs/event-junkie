@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.flyway
+import de.norm.events.rows
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -88,15 +89,6 @@ class RepairTempodromClemensBrockMigrationTest {
         ) { it.getString(1) to it.getString(2) }
 
     private fun slugs(connection: Connection): List<String> = rows(connection, "SELECT slug FROM events.artist") { it.getString(1) }
-
-    private fun <T : Any> rows(
-        connection: Connection,
-        sql: String,
-        read: (java.sql.ResultSet) -> T
-    ): List<T> =
-        connection.createStatement().use { statement ->
-            statement.executeQuery(sql).use { rs -> generateSequence { if (rs.next()) read(rs) else null }.toList() }
-        }
 
     private companion object {
         const val BROCK_NIGHT = "tempodrom:clemens_brock-der_vadda_2026-10-05_20"
