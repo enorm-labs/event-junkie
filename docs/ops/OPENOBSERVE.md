@@ -285,10 +285,13 @@ A configured route is not a working route (#704). Each row is a rule that fired 
 | 2026-09-24 | staging    | `ej-site-down`: frontend scaled to zero at 07:57Z                    | yes — fired 08:03Z, mail at the forward target |
 | 2026-09-24 | production | none: `ej-image-store-unreachable` fired on its own after `apply.sh` | yes — fired 08:08Z, mail at the forward target |
 | 2026-10-15 | production | none: `ej-image-store-unreachable` fired on Hetzner fsn1 S3 503s     | yes — fired 23:30Z and 01:30Z, two mails       |
+| 2026-10-18 | production | none: `ej-image-store-unreachable` fired on Hetzner fsn1 S3 503s     | yes — fired 13:40Z, one mail                   |
 
 **The production rows are real firings, not induced ones.** They went through the same template, destination, SMTP login and egress rule as any other rule.
 The 2026-09-24 firing is a false alarm, tracked in #1807. The 2026-10-15 firing is a true alarm. From 23:00Z to 02:05Z, 57 BFF reads from Object Storage in
-fsn1 failed with 503 after all SDK retries. Hetzner had an open fsn1 Object Storage incident at that time.
+fsn1 failed with 503 after all SDK retries. Hetzner had an open fsn1 Object Storage incident at that time. The 2026-10-18 firing is a true alarm too. From 13:39Z
+to 14:16Z, 39 BFF reads failed the same way, 12 of them a manual check. Hetzner's status page showed no incident. OpenObserve keeps its own data in the same
+fsn1 storage, so its queries failed or came back empty during the outage.
 
 **Scaling a deployment down does not trip a rule on production.** The `event-junkie` HelmRelease has drift detection on, so helm-controller restores the
 replica count within minutes. `ej-site-down` needs five minutes at zero. To induce it there, suspend the HelmRelease first and resume it after. Staging's
