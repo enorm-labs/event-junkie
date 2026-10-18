@@ -747,7 +747,7 @@ says so.
 | `SHOWFENSTER`          | `ARTISTS`          | only a concert or comedy title names its act; a reading bills a duo by surnames, and shows, quizzes and the open stage name none                 | —     |
 | `SHOWFENSTER`          | `GENRE`            | only a concert's category names a style; comedy, readings and shows carry none                                                                   | —     |
 | `SHOWFENSTER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
-| `SILENT_GREEN`         | `PRICE`            | the venue names no event price — a ticket shop link, an "Eintritt frei" in the blurb, or nothing                                                 | —     |
+| `SILENT_GREEN`         | `PRICE`            | most nights link a ticket shop or name no figure; a `Tickets:` line in the blurb is read                                                         | —     |
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `SILENT_GREEN`         | `START_TIME`       | a multi-day festival entry without daily hours in its blurb prints its date span only and names no time                                          | —     |
 | `SILENT_GREEN`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |

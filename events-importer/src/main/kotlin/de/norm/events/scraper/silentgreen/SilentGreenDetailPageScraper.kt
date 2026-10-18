@@ -9,11 +9,13 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -30,6 +32,7 @@ import java.time.LocalTime
  * end of the blurb (`8. Oktober: 19–22 Uhr`, `10.+11. Oktober: 11–24 Uhr`). [dailyHours] reads
  * them as a per-day fallback. A programme highlight in the same blurb (`10. Oktober / 11 bis 18
  * Uhr`) has no colon after the month, so it does not match: it is one screening, not the opening.
+ * The same bold block may name the price (`Tickets: 10€ vor Ort`), which [ticketPrice] reads.
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -43,7 +46,7 @@ class SilentGreenDetailPageScraper {
     fun scrape(document: Document): SilentGreenEventDetails? {
         val runStart = parseBlockDate(document, ".event-detail-date-begin")
         val details =
-            SilentGreenEventDetails(
+            ticketPrice(document).copy(
                 doorsTime = parseLeadingTime(document, ".event-detail-time-entry"),
                 startTime = parseLeadingTime(document, ".event-detail-time-begin"),
                 runStart = runStart,
@@ -58,6 +61,27 @@ class SilentGreenDetailPageScraper {
             return null
         }
         return details
+    }
+
+    /**
+     * The price on the blurb's bold `Tickets:` line (#3581). One amount is the door price when the
+     * line says `vor Ort` or names the box office, else the presale price. Several figures stay
+     * verbatim as the note, since nothing tells a concession from a second tier; `10/8,50€` signs
+     * only the last one, so figures are counted, not amounts.
+     */
+    private fun ticketPrice(document: Document): SilentGreenEventDetails {
+        val line =
+            document
+                .select("$BODY_SELECTOR strong")
+                .firstNotNullOfOrNull { TICKETS_LINE.find(it.text().trim())?.groupValues?.get(1) }
+                ?: return SilentGreenEventDetails()
+        val amounts = euroAmounts(line)
+        return when {
+            amounts.isEmpty() -> SilentGreenEventDetails()
+            FIGURE.findAll(line).count() > 1 -> SilentGreenEventDetails(priceNote = line)
+            AT_THE_DOOR.containsMatchIn(line) || isBoxOfficeLabel(line) -> SilentGreenEventDetails(priceBoxOffice = amounts.single())
+            else -> SilentGreenEventDetails(pricePresale = amounts.single())
+        }
     }
 
     /**
@@ -166,6 +190,15 @@ class SilentGreenDetailPageScraper {
         /** The English page's credit line, `"silent green presents"`. */
         val ENGLISH_CREDIT_LINE = Regex("""^.{2,80}?\s+presents?$""", RegexOption.IGNORE_CASE)
 
+        /** A `Tickets:` line, capturing what follows the label. */
+        val TICKETS_LINE = Regex("""^Tickets?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+        /** One number on a `Tickets:` line, signed or not. */
+        val FIGURE = Regex("""\d+(?:[.,]\d{1,2})?""")
+
+        /** `vor Ort`, the venue's word for a price paid at the door. */
+        val AT_THE_DOOR = Regex("""(?<!\p{L})vor\s+ort(?!\p{L})""", RegexOption.IGNORE_CASE)
+
         /** The date inside a date-block cell. */
         val BLOCK_DATE = Regex("""\d{2}\.\d{2}\.\d{4}""")
     }
@@ -189,7 +222,13 @@ data class SilentGreenEventDetails(
     /** The full blurb, minus its leading credit line. */
     val description: String? = null,
     /** The event's poster, from the page's `og:image`. */
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    /** The single amount on a `Tickets:` line without a door label. */
+    val pricePresale: BigDecimal? = null,
+    /** The single amount on a `Tickets:` line paid `vor Ort` or at the box office. */
+    val priceBoxOffice: BigDecimal? = null,
+    /** A `Tickets:` line naming several amounts, verbatim. */
+    val priceNote: String? = null
 ) {
     /**
      * Returns [event] with the fields the calendar row could not supply filled from this page. An
@@ -201,18 +240,28 @@ data class SilentGreenEventDetails(
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart
         val hours = if (run) null else openingHours(event)
-        return event.copy(
-            free = isFree(event),
-            doorsTime = event.doorsTime ?: doorsTime,
-            startTime = event.startTime ?: startTime ?: hours?.start,
-            eventDate = if (run) runStart else event.eventDate,
-            endDate = if (run) runEnd else event.endDate ?: hours?.endDate(event.eventDate),
-            endTime = event.endTime ?: hours?.end,
-            description = event.description ?: description,
-            imageUrl = event.imageUrl ?: imageUrl,
-            artists = performersOr(event)
-        )
+        val merged =
+            event.copy(
+                free = isFree(event),
+                doorsTime = event.doorsTime ?: doorsTime,
+                startTime = event.startTime ?: startTime ?: hours?.start,
+                eventDate = if (run) runStart else event.eventDate,
+                endDate = if (run) runEnd else event.endDate ?: hours?.endDate(event.eventDate),
+                endTime = event.endTime ?: hours?.end,
+                description = event.description ?: description,
+                imageUrl = event.imageUrl ?: imageUrl,
+                artists = performersOr(event)
+            )
+        return withPrices(merged)
     }
+
+    /** The `Tickets:` line's price, where the row names none. */
+    private fun withPrices(event: ScrapedEvent): ScrapedEvent =
+        event.copy(
+            pricePresale = event.pricePresale ?: pricePresale,
+            priceBoxOffice = event.priceBoxOffice ?: priceBoxOffice,
+            priceNote = event.priceNote ?: priceNote
+        )
 
     /** A concert's [silentGreenPerformers] from the blurb, or the acts the calendar row read off the title. */
     private fun performersOr(event: ScrapedEvent): List<ScrapedArtist> =
