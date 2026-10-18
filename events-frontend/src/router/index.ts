@@ -20,6 +20,7 @@ import { waitForElement } from '../lib/waitForElement'
 import { i18n, setI18nLocale } from '../i18n'
 import { localisedView } from '../views/localisedView'
 import { currentIsoWeek, formatIsoWeek, parseIsoWeek } from '../lib/isoWeek'
+import { isChunkLoadError, reloadWhenBack } from '../lib/reloadWhenBack'
 import HomeView from '../views/HomeView.vue'
 
 declare module 'vue-router' {
@@ -251,6 +252,12 @@ router.afterEach((to) => {
   // Canonical, hreflang and og:locale follow the resolved route, so a redirect annotates the
   // destination. `to.path` excludes the query on purpose (updateSeoTags).
   updateSeoTags(localeOf(to), stripLocale(to.path))
+})
+
+// A view's chunk that fails to load aborts the navigation. Load the page in full once the server
+// answers again, which also picks up new chunk names after a deploy (#3569).
+router.onError((error, to) => {
+  if (isChunkLoadError(error)) void reloadWhenBack(to.fullPath)
 })
 
 export default router

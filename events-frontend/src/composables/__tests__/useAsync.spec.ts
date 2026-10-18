@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/client'
 import { useAsync } from '@/composables/useAsync'
@@ -101,5 +101,71 @@ describe('useAsync', () => {
     expect(data.value).toBeNull()
     expect(notFound.value).toBe(true)
     expect(error.value).not.toBeNull()
+  })
+
+  describe('while the server restarts (#3569)', () => {
+    afterEach(() => vi.useRealTimers())
+
+    it('stays loading, says it is retrying, and shows the answer once the server is back', async () => {
+      vi.useFakeTimers()
+      const loader = vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValueOnce(new ApiError(503, 'down'))
+        .mockResolvedValue('berghain')
+      const { data, error, loading, retrying, run } = useAsync(loader)
+
+      const running = run()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(loading.value).toBe(true)
+      expect(retrying.value).toBe(true)
+      expect(error.value).toBeNull()
+
+      await vi.advanceTimersByTimeAsync(5_000)
+      await running
+      expect(data.value).toBe('berghain')
+      expect(loading.value).toBe(false)
+      expect(retrying.value).toBe(false)
+    })
+
+    it('keeps the remembered answer on screen while it retries', async () => {
+      vi.useFakeTimers()
+      const key = () => 'spec:restart'
+      await useAsync(() => Promise.resolve('was fine'), undefined, key).run()
+
+      const { data, error, retrying, run } = useAsync<string>(
+        () => Promise.reject(new TypeError('Failed to fetch')),
+        undefined,
+        key,
+      )
+      const running = run()
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(data.value).toBe('was fine')
+      expect(error.value).toBeNull()
+      expect(retrying.value).toBe(true)
+
+      await vi.runAllTimersAsync()
+      await running
+      expect(data.value).toBeNull()
+      expect(error.value).toMatch(/connection/)
+      expect(retrying.value).toBe(false)
+    })
+
+    it('ends the retry when a newer run starts', async () => {
+      vi.useFakeTimers()
+      const loader = vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValueOnce(new ApiError(503, 'down'))
+        .mockResolvedValue('newer')
+      const { data, run } = useAsync(loader)
+
+      const first = run()
+      await vi.advanceTimersByTimeAsync(0)
+      await run()
+      await vi.runAllTimersAsync()
+      await first
+
+      expect(loader).toHaveBeenCalledTimes(2)
+      expect(data.value).toBe('newer')
+    })
   })
 })

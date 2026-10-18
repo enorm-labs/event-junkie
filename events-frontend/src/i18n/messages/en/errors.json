@@ -3,6 +3,7 @@
   "reload": "Couldn't load {subject}. Please try reloading.",
   "timeout": "Couldn't load {subject}. The request timed out. Please check your connection and reload.",
   "connection": "Couldn't load {subject}. Please check your connection and reload.",
+  "retrying": "Event Junkie is back in a moment. Retrying…",
   "subject": {
     "generic": "this content",
     "todaysEvents": "today's events",

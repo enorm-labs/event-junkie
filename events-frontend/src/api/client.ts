@@ -11,13 +11,23 @@ const REQUEST_TIMEOUT_MS = 8000
  * future per-request abort still works. A fresh `AbortSignal.timeout` is created on every call —
  * a single shared one would fire once and then abort all subsequent requests. `timeoutMs` is
  * injectable so tests can trigger the timeout without waiting the full production window.
+ * WebKit rejects a fetch that `AbortSignal.any` aborted with an `AbortError`, whatever the
+ * reason, so a timeout is named here: an abort reads as the caller's own and is not retried.
  */
-export function fetchWithTimeout(
+export async function fetchWithTimeout(
   request: Request,
   timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<Response> {
-  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(timeoutMs)])
-  return fetch(new Request(request, { signal }))
+  const timeout = AbortSignal.timeout(timeoutMs)
+  const signal = AbortSignal.any([request.signal, timeout])
+  try {
+    return await fetch(new Request(request, { signal }))
+  } catch (e) {
+    if (timeout.aborted && !request.signal.aborted) {
+      throw new DOMException('The request timed out.', 'TimeoutError')
+    }
+    throw e
+  }
 }
 
 // Single typed client for the public BFF. In dev, Vite proxies `/api` to the Spring Boot

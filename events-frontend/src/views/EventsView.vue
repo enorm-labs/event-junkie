@@ -98,6 +98,7 @@ const {
   data: page,
   error,
   loading,
+  retrying,
   run,
 } = useAsync<EventPage>(
   () => (onNow.value ? fetchOnNowPage(filters.value) : searchEvents(params.value)),
@@ -198,7 +199,9 @@ const mapLink = computed(() => ({
   <ListPage :subtitle="t('events.subtitle')" :title="t('events.title')">
     <EventFilterBar :festivals="runningFestivals" :result-count="page?.totalElements" show-on-now />
 
-    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">
+      {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
+    </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!--
       An empty result has to offer something to do. It used to be one sentence and no control at

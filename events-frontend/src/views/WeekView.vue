@@ -40,7 +40,7 @@ const { compact } = useCompactView()
 const week = computed(() => parseIsoWeek(route.params.isoWeek) ?? currentIsoWeek())
 const days = computed(() => daysOf(week.value))
 
-const { data, error, loading, run } = useAsync<EventSummary[]>(
+const { data, error, loading, retrying, run } = useAsync<EventSummary[]>(
   () => fetchCalendarEvents(days.value[0]!, days.value[6]!),
   'errors.subject.events',
   () => `/api/events/calendar?week=${formatIsoWeek(week.value)}`,
@@ -106,7 +106,9 @@ const HEADING_CLASS = 'text-section font-bold tracking-tight'
       </Button>
     </nav>
 
-    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">
+      {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
+    </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <template v-else>
       <section

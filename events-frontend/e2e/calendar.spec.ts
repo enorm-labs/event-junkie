@@ -1,5 +1,6 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 import { closeFilterSheet, openMoreFilters } from './filter-bar'
+import { outlastRetries } from './retry'
 
 /**
  * Calendar view e2e tests with a mocked BFF. The calendar refetches
@@ -226,12 +227,13 @@ test('keeps the active filter when navigating to another month', async ({ page }
 
 test('shows an error state when the calendar feed fails', async ({ page }) => {
   await page.route(calendarFeed, (route) => json(route, { message: 'boom' }, 500))
+  await page.clock.install()
 
   await page.goto('/calendar')
 
-  // The Calendar heading still renders; the feed failure surfaces the describeError copy.
+  // The Calendar heading still renders; once the retries end, the describeError copy shows.
   await expect(page.getByRole('heading', { level: 1, name: 'Calendar' })).toBeVisible()
-  await expect(page.getByText(/couldn't load the calendar/i)).toBeVisible()
+  await outlastRetries(page, page.getByText(/couldn't load the calendar/i))
 })
 
 test("marks today's day number in the month grid", async ({ page }) => {

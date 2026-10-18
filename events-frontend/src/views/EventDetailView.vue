@@ -36,7 +36,14 @@ import { useI18n } from 'vue-i18n'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
 
-const { data: event, error, notFound, loading, run: loadEvent } = useEvent(() => slug.value)
+const {
+  data: event,
+  error,
+  notFound,
+  loading,
+  retrying,
+  run: loadEvent,
+} = useEvent(() => slug.value)
 
 // "More like this" (#359): an extra, so a failure or an empty answer leaves no trace on the page.
 const { data: relatedData, run: loadRelated } = useRelatedEvents(() => slug.value)
@@ -290,7 +297,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
 
 <template>
   <main class="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
-    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">
+      {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
+    </p>
 
     <div v-else-if="notFound" class="space-y-3">
       <h1 class="text-page font-bold tracking-tight">{{ t('events.detail.notFound') }}</h1>

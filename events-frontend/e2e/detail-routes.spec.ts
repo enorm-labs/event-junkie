@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { outlastRetries } from './retry'
 
 /**
  * Detail-route e2e tests with a fully mocked BFF: Playwright's request routing intercepts it, so
@@ -138,12 +139,13 @@ for (const detail of detailRoutes) {
 
     test('shows a reloadable error state on a 500', async ({ page }) => {
       await page.route(detail.matcher, (route) => json(route, { message: 'boom' }, 500))
+      await page.clock.install()
 
       await page.goto(detail.path)
 
-      // A 500 is the `error` branch, not `notFound`: the describeError message opens with
-      // "Couldn't load …", which distinguishes it from success and the 404 empty state.
-      await expect(page.getByText(/couldn't load/i)).toBeVisible()
+      // A 500 is the `error` branch, not `notFound`: after the retries the describeError message
+      // opens with "Couldn't load …", which distinguishes it from success and the 404 empty state.
+      await outlastRetries(page, page.getByText(/couldn't load/i).first())
       await expect(page.getByRole('heading', { level: 1, name: detail.heading })).toHaveCount(0)
       await expect(
         page.getByRole('heading', { level: 1, name: detail.notFoundHeading }),

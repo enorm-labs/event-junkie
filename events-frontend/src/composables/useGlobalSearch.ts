@@ -1,6 +1,7 @@
 import { onScopeDispose, type Ref, ref, shallowRef, watch } from 'vue'
 
 import { api, describeError, unwrap } from '@/api/client'
+import { retryTransient } from '@/api/retry'
 import type { SearchResults } from '@/api/types'
 
 /** The BFF's own floor: one letter matches most of the catalogue (#2514). */
@@ -40,7 +41,10 @@ export function useGlobalSearch(term: Ref<string>, limit = 5, debounceMs = 250) 
     const controller = new AbortController()
     inFlight = controller
     try {
-      results.value = await fetchSearch(q, limit, { signal: controller.signal })
+      results.value = await retryTransient(
+        () => fetchSearch(q, limit, { signal: controller.signal }),
+        { isStale: () => controller.signal.aborted },
+      )
       error.value = null
     } catch (e) {
       if (controller.signal.aborted) return

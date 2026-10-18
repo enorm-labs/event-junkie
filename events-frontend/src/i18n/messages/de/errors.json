@@ -3,6 +3,7 @@
   "reload": "Beim Laden {subject} ist etwas schiefgegangen. Bitte lade die Seite neu.",
   "timeout": "Beim Laden {subject} hat die Anfrage zu lange gedauert. Prüfe bitte deine Verbindung und lade neu.",
   "connection": "Beim Laden {subject} ist etwas schiefgegangen. Prüfe bitte deine Verbindung und lade neu.",
+  "retrying": "Event Junkie ist gleich wieder da. Neuer Versuch läuft…",
   "subject": {
     "generic": "dieser Inhalte",
     "todaysEvents": "der Events für heute",

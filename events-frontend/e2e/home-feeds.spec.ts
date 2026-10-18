@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { outlastRetries } from './retry'
 
 /**
  * Home page feeds with a mocked BFF. Two independent feeds on mount:
@@ -101,11 +102,30 @@ test('shows empty states when both feeds are empty', async ({ page }) => {
 test('shows an error in one feed without affecting the other', async ({ page }) => {
   // Today fails; Upcoming keeps the default (successful) mock.
   await page.route(todayFeed, (route) => json(route, { message: 'boom' }, 500))
+  await page.clock.install()
 
   await page.goto('/')
 
-  await expect(page.getByText(/couldn't load today's events/i)).toBeVisible()
+  await expect(page.getByText(/back in a moment/i)).toBeVisible()
   await expect(eventHeading(page, 'Upcoming One')).toBeVisible()
+  await outlastRetries(page, page.getByText(/couldn't load today's events/i))
+})
+
+test('a feed that fails while the server restarts loads without a reload (#3569)', async ({
+  page,
+}) => {
+  let failures = 2
+  await page.route(todayFeed, (route) =>
+    failures-- > 0 ? json(route, { message: 'restarting' }, 503) : json(route, todayEvents),
+  )
+  await page.clock.install()
+
+  await page.goto('/')
+
+  await expect(page.getByText('Event Junkie is back in a moment. Retrying…')).toBeVisible()
+  await outlastRetries(page, eventHeading(page, 'Tonight Show'))
+  await expect(page.getByText(/back in a moment/i)).toHaveCount(0)
+  await expect(page.getByText(/couldn't load/i)).toHaveCount(0)
 })
 
 test('navigates to an event detail from a feed card', async ({ page }) => {
