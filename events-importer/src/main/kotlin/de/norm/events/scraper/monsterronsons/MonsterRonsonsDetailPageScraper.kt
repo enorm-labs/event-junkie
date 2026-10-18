@@ -1,13 +1,17 @@
 package de.norm.events.scraper.monsterronsons
 
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.math.BigDecimal
+import java.time.LocalTime
 
 /**
  * Pure HTML parser for a single Monster Ronson's night page (`/posts/<slug>`).
@@ -32,6 +36,9 @@ import java.math.BigDecimal
  * whitespace between, so the body's text as a whole reads `… - FREE19:00 - 20:00 - €5`.
  * 3. **The ticket button is always in the markup**, hidden with `w-condition-invisible` when
  * the CMS field is empty, so it is read through [hasVisibleWebflowFlag], not by presence.
+ * 4. **The running time is a paragraph of its own**, `18:00 - 02:00`, and gives the end. Only a
+ * paragraph that is exactly that counts: a tariff band reads `19:00 - 20:00 - €5`, and a host's
+ * slot sits inside prose.
  *
  * @see MonsterRonsonsOverviewPageScraper for the listing that supplies title, date, time and poster.
  */
@@ -70,12 +77,19 @@ class MonsterRonsonsDetailPageScraper {
             // one of them posing as *the* price.
             priceBoxOffice = prices.singleOrNull(),
             priceNote = paragraphs.filter { parsePricesIn(it).isNotEmpty() }.joinToString("; ").takeIf { prices.size > 1 },
+            runningTimes = paragraphs.mapNotNull(::parseRunningTime),
             ticketUrl = parseTicketUrl(document, url)
         )
     }
 
     /** Every distinct amount in one paragraph; both orders, `€5` and `5€`, sometimes share one list. */
     private fun parsePricesIn(text: String): List<BigDecimal> = euroAmounts(text).distinct()
+
+    /** A paragraph that is exactly `HH:mm - HH:mm`, as start and end; `null` for anything else. */
+    private fun parseRunningTime(text: String): MonsterRonsonsRunningTime? {
+        val (start, end) = RUNNING_TIME.matchEntire(text)?.destructured ?: return null
+        return MonsterRonsonsRunningTime(parseTime(start.padStart(HH_MM_LENGTH, '0')) ?: return null, parseTime(end.padStart(HH_MM_LENGTH, '0')) ?: return null)
+    }
 
     /** The ticket link, only when Webflow has not hidden the button as an empty CMS field. */
     private fun parseTicketUrl(
@@ -96,6 +110,9 @@ class MonsterRonsonsDetailPageScraper {
 
         /** Label text the ticket button carries. */
         private const val TICKET_BUTTON_LABEL = "Tickets"
+
+        /** A running-time paragraph, `18:00 - 02:00` or `20:00-2:00`, with nothing before or after it. */
+        private val RUNNING_TIME = Regex("""(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})""")
     }
 }
 
@@ -112,17 +129,34 @@ data class MonsterRonsonsNightDetail(
     /** The tariff lines verbatim, when the night prices by arrival time instead of one price. */
     val priceNote: String? = null,
     /** External ticket link, on the rare night that sells tickets in advance. */
-    val ticketUrl: String? = null
+    val ticketUrl: String? = null,
+    /** Every `HH:mm - HH:mm` paragraph of the body, in page order. */
+    val runningTimes: List<MonsterRonsonsRunningTime> = emptyList()
 ) {
     /**
      * Applies this page's fields to the [event] the card produced. Only fills what the card could
      * not carry — the card stays authoritative for title, date, time, poster and hosts.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent =
-        event.copy(
-            description = event.description ?: description,
-            priceBoxOffice = event.priceBoxOffice ?: priceBoxOffice,
-            priceNote = event.priceNote ?: priceNote,
-            ticketUrl = event.ticketUrl ?: ticketUrl
+        withEnd(
+            event.copy(
+                description = event.description ?: description,
+                priceBoxOffice = event.priceBoxOffice ?: priceBoxOffice,
+                priceNote = event.priceNote ?: priceNote,
+                ticketUrl = event.ticketUrl ?: ticketUrl
+            )
         )
+
+    /** The end of the running time that starts at the card's time; an end at or before it falls on the next day. */
+    private fun withEnd(event: ScrapedEvent): ScrapedEvent {
+        if (event.endTime != null) return event
+        val end = runningTimes.firstOrNull { it.start == event.startTime }?.end ?: return event
+        return event.copy(endDate = endOn(event.eventDate, event.startTime, end), endTime = end)
+    }
 }
+
+/** A night's running time as the body prints it, `18:00 - 02:00`. */
+data class MonsterRonsonsRunningTime(
+    val start: LocalTime,
+    val end: LocalTime
+)

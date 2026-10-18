@@ -96,6 +96,21 @@ class SilentGreenMonthPageScraperTest {
     }
 
     @Test
+    fun `scrape reads the end a row prints after its start, and none where it prints only a start`() {
+        // 18 October 2026: "15:00 - 19:00"; the month's other end cell is a guided tour, which is dropped (#3580).
+        val october = parse("silentgreen-month-october.html", "https://www.silent-green.net/programm/2026/10")
+        val kantine = october.single { it.sourceId == "silent_green:2026-10-18-kantine-musik-6" }
+
+        kantine.startTime shouldBe LocalTime.of(15, 0)
+        kantine.endDate shouldBe LocalDate.of(2026, 10, 18)
+        kantine.endTime shouldBe LocalTime.of(19, 0)
+        october.filter { it.endTime != null }.map { it.sourceId } shouldContainExactly listOf(kantine.sourceId)
+        october.filter { it.endTime == null }.all { it.endDate == null } shouldBe true
+        // The exhibition days print their opening hours; the run fold drops the clock (ADR-029).
+        august.filter { it.endTime != null }.map { it.endTime }.distinct() shouldContainExactly listOf(LocalTime.of(20, 0))
+    }
+
+    @Test
     fun `scrape takes the year from the month heading and the day and month from the row`() {
         september.map { it.eventDate }.distinct().all { it.year == 2026 && it.monthValue == 9 } shouldBe true
         september.first().eventDate shouldBe LocalDate.of(2026, 9, 2)

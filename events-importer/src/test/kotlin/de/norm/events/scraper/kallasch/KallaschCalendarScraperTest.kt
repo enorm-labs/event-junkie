@@ -3,7 +3,6 @@ package de.norm.events.scraper.kallasch
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -99,7 +98,8 @@ class KallaschCalendarScraperTest {
                 LocalDate.of(2026, 12, 20)
             )
         jazz.map { it.startTime }.distinct() shouldContainExactly listOf(LocalTime.of(20, 30))
-        jazz.first().endTime.shouldBeNull()
+        jazz.map { it.endTime }.distinct() shouldContainExactly listOf(LocalTime.of(22, 0))
+        jazz.first().endDate shouldBe LocalDate.of(2026, 10, 18)
         jazz.first().artists.shouldBeEmpty()
     }
 
@@ -119,6 +119,29 @@ class KallaschCalendarScraperTest {
             """.trimIndent()
 
         scraper.scrape(calendar).map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 11, 5))
+    }
+
+    @Test
+    fun `scrape carries a DURATION past midnight and drops one that does not parse`() {
+        fun entry(duration: String) =
+            """
+            BEGIN:VCALENDAR
+            BEGIN:VEVENT
+            DTSTART;TZID=Europe/Berlin:20261105T220000
+            DURATION:$duration
+            SUMMARY:KONZERT // Test
+            URL:https://kallasch.berlin/programm/test/
+            CATEGORIES:KONZERT
+            END:VEVENT
+            END:VCALENDAR
+            """.trimIndent()
+
+        val late = scraper.scrape(entry("PT5H")).single()
+        late.endDate shouldBe LocalDate.of(2026, 11, 6)
+        late.endTime shouldBe LocalTime.of(3, 0)
+        val broken = scraper.scrape(entry("1h30")).single()
+        broken.endDate shouldBe null
+        broken.endTime shouldBe null
     }
 
     @Test
