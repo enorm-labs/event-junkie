@@ -950,7 +950,11 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "kitty, daisy & lewis",
         "frost, pisse & elend",
         // A Warsaw band Morphine Raum bills as `Mitch & Mitch con il loro Gruppo Etereofonico` (#3565).
-        "mitch & mitch"
+        "mitch & mitch",
+        // Duos BKA Theater bills as the act before the colon, beside two-act headings like `Tim Becker & Zauberer Umeno` (#3584).
+        "simon & jan",
+        "jacky & mahoni",
+        "evers & eichhorn"
     )
 
 /**
