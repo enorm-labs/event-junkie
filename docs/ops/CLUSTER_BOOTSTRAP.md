@@ -749,10 +749,10 @@ scp -J ops@10.10.0.1 infra/modules/environment/cloud-init/harden.sh ops@10.0.1.2
 **Each line ends with `harden: done`, or it did not finish.** The first run can stop at `Connection to 10.0.1.20 closed by remote host` instead. needrestart restarts dbus after the install, and that cuts the SSH session. Nothing after the install
 ran. Run the same line again: it installs nothing the second time, so dbus stays up and the script finishes.
 
-**Check the metric, not the unit state.** node_exporter is bound to the private address alone, so ask it from the node:
+**Check the metric, not the unit state.** node_exporter is bound to the private address alone, so ask it from the node. Only root can read `bootstrap.env` (mode `0640`), so the command reads it through `sudo`:
 
 ```bash
-curl -s "$(. /etc/event-junkie/bootstrap.env; echo "$PRIVATE_IPV4"):9100/metrics" | grep ^node_
+curl -s "$(sudo sh -c '. /etc/event-junkie/bootstrap.env; echo "$PRIVATE_IPV4"'):9100/metrics" | grep ^node_
 ```
 
 Four lines: `node_reboot_required_age_seconds`, `node_service_restart_pending_age_seconds`, `node_unattended_upgrades_last_run_age_seconds`,
