@@ -244,7 +244,8 @@ class GretchenOverviewPageScraper {
      * flush against the first act with no `<br>`. Each line is then dropped if a credit or note
      * ([isCreditOrNoteLine]: "Hosted by …", "Live Visuals by …", "Ersatztermin vom …", an
      * instrument-credited member list, a bare "+ guests" or "+ more"); stripped of a role prefix
-     * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"); split on `feat.`/`ft.`
+     * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by", whose `A & B` remainder is two DJs,
+     * [splitSupportActs]); split on `feat.`/`ft.`
      * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); cleaned of country/`*live*`/`+tag`
      * decorations; split at a ` x ` co-bill ([splitCrossBilled]: "Marthe X Pilani Bubu"); stripped
      * of a format suffix ([stripArtistSuffix]: "Acid Arab DJ-Set"); and dropped if [isNonArtistName]
@@ -267,7 +268,8 @@ class GretchenOverviewPageScraper {
                         .takeUnless { lines -> lines.any(::isNoticeSentence) }
                         .orEmpty()
                 }.filterNot { it.isBlank() || isCreditOrNoteLine(it) }
-                .map { stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
+                // An opening-set line keeps its prefix here, so the step after the `ft.` cut splits its `A & B` (#3579).
+                .map { if (OPENING_SET_PREFIX.containsMatchIn(it)) it else stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
                 .map(::cleanArtistName)
@@ -473,6 +475,12 @@ class GretchenOverviewPageScraper {
                 """\((?:bass|keys|drums|guitar|gitarre|vocals?|voc|perc(?:ussion)?|synth|sax|trumpet|trompete|piano)\)""",
                 RegexOption.IGNORE_CASE
             )
+
+        /**
+         * The "Opening DJ-Set by " prefix, optionally after "+". Two DJs follow it as `A & B` (#3579),
+         * so its remainder goes through [splitSupportActs]; a `Support:` line does not.
+         */
+        private val OPENING_SET_PREFIX = Regex("""^\s*\+?\s*opening\s+dj[\s-]?set\s+by\s+""", RegexOption.IGNORE_CASE)
 
         /**
          * A leading role prefix: "Opening DJ-Set by " (literal "by"), or a [SUPPORT_LABELS] label or

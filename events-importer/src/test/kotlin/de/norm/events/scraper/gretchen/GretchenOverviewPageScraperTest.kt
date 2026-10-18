@@ -295,6 +295,36 @@ class GretchenOverviewPageScraperTest {
                 listOf("Àbáse", "ZENA", "Sean Steinfeger", "Mittelmeer Monologe")
         }
 
+        // detail.php?id=3575: production stored `Sean Steinfeger & Phonomat` as one act; Gretchen bills each DJ alone elsewhere (#3579).
+        @Test
+        fun `splits two DJs on an opening-set line and keeps a friends tail whole`() {
+            fun openingLine(line: String) =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">So. <strong>18.10.2026</strong><br> Doors: 19.00<br> Show: 20.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Jazz<h2><a href="detail.php?id=3575">Headliner</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Headliner (UK) *live*<br /></p></span>
+                        <span class="box"></span><span class="lineup">$line<em><br /><br />*Vorverkauf 12 € zzgl. Gebühren * Abendkasse 15 €*</em></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            fun artistsOf(line: String) = scraper.scrape(Jsoup.parse(openingLine(line), baseUrl), baseUrl).single().artists
+
+            artistsOf("Opening DJ-Set by Sean Steinfeger &amp; Phonomat") shouldContainExactly
+                listOf(
+                    ScrapedArtist("Headliner", "HEADLINER"),
+                    ScrapedArtist("Sean Steinfeger", "SUPPORT"),
+                    ScrapedArtist("Phonomat", "SUPPORT")
+                )
+            artistsOf("Opening DJ-Set by Feo &amp; Friends").map { it.name } shouldContainExactly listOf("Headliner", "Feo & Friends")
+            artistsOf("Opening DJ-Set by Allynx b2b Sean Steinfeger").map { it.name } shouldContainExactly
+                listOf("Headliner", "Allynx b2b Sean Steinfeger")
+        }
+
         // Production stored `Allynx b2b Sean Steinfeger` and `Slimzee b2b Grandmixxer` as one act each (#1844).
         @Test
         fun `a back-to-back slot splits into two acts at the import boundary`() {
