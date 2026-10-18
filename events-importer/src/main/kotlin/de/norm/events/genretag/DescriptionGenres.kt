@@ -79,6 +79,7 @@ private val AMBIGUOUS_IN_PROSE =
         "90s",
         "2000s",
         "karaoke",
+        "experimental",
         "oldschool",
         "newschool"
     )

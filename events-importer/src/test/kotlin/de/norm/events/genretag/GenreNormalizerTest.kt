@@ -513,6 +513,15 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `experimental is a genre word, and a compound keeps its own match`() {
+        normalizeGenre("experimental singer, composer, multi-instrumentalist").filter(::isGenreLabel).shouldContainExactly("Experimental")
+        normalizeGenre("Experimental Jazz").shouldContainExactly("Experimental", "Jazz")
+        normalizeGenre("Experimental Hip Hop").shouldContainExactly("Hip Hop")
+        normalizeGenre("Experimental-pop").shouldContainExactly("Experimental-pop")
+        isGenreLabel("Experimental") shouldBe true
+    }
+
+    @Test
     fun `a hyphen part names a genre only when the whole token would be dropped`() {
         normalizeGenre("Synth-Wave").shouldContainExactly("Synth-Wave")
         normalizeGenre("Art-Pop").shouldContainExactly("Art-Pop")

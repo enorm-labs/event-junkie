@@ -86,6 +86,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "techno" to "Techno",
         "house" to "House",
         "ambient" to "Ambient",
+        // Word-level, so a note such as "experimental singer, composer" gives the night a genre (#3583).
+        "experimental" to "Experimental",
         // Collapsed from "Trip Hop" and "Digi Core" by [preNormalize], so the word-level match sees one word.
         "triphop" to "Trip-Hop",
         "digicore" to "Digicore",

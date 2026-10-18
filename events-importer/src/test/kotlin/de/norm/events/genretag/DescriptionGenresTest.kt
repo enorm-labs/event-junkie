@@ -27,6 +27,8 @@ class DescriptionGenresTest {
     @Test
     fun `a vocabulary word that prose uses in another sense is skipped`() {
         descriptionGenres("Bands from around the world in the Opera House, the party is in full swing").shouldBeEmpty()
+        descriptionGenres("An experimental film about the Berlin techno scene") shouldBe listOf("Techno")
+        descriptionGenres("Experimental theatre with live music").shouldBeEmpty()
     }
 
     @Test
