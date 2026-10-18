@@ -29,6 +29,7 @@ const props = defineProps<{
   kind: string
   /** Entity fetch state (from `useAsync`). */
   loading: boolean
+  retrying?: boolean
   error: string | null
   notFound: boolean
   /** Whether the entity has loaded — guards the content branch. */
@@ -46,6 +47,7 @@ const props = defineProps<{
   /** Upcoming-events feed state (from `useEventSearch`). */
   events: EventPage | null
   eventsLoading: boolean
+  eventsRetrying?: boolean
   eventsError: string | null
   /** Copy shown when the events feed is empty. */
   emptyText: string
@@ -76,7 +78,9 @@ const { compact } = useCompactView()
        reading measure in a left-aligned column, 704 px as `max-w-3xl` less `sm:p-8` gives an event
        page, and the events take the width. -->
   <main class="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
-    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">
+      {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
+    </p>
 
     <div v-else-if="notFound" class="space-y-3">
       <!-- Interpolated rather than concatenated: German puts the negation last ("Location nicht
@@ -139,7 +143,7 @@ const { compact } = useCompactView()
         <section class="space-y-4">
           <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
           <p v-if="eventsLoading" class="text-body text-muted-foreground">
-            {{ t('common.states.loading') }}
+            {{ eventsRetrying ? t('errors.retrying') : t('common.states.loading') }}
           </p>
           <p v-else-if="eventsError" class="text-body text-destructive">{{ eventsError }}</p>
           <p v-else-if="!events?.content?.length" class="text-body text-muted-foreground">

@@ -25,7 +25,7 @@ const localePath = useLocalePath()
 const q = computed(() => (typeof route.query.q === 'string' ? route.query.q.trim() : ''))
 const searchable = computed(() => q.value.length >= MIN_SEARCH_LENGTH)
 
-const { data, error, loading, run } = useAsync(
+const { data, error, loading, retrying, run } = useAsync(
   () => fetchSearch(q.value, LIMIT, { past: true }),
   'errors.subject.search',
   () => `/api/search?${q.value}`,
@@ -97,7 +97,9 @@ function linksOf(key: string): { to: string; name: string }[] {
     </div>
 
     <p v-if="!searchable" class="text-body text-muted-foreground">{{ t('search.hint') }}</p>
-    <p v-else-if="loading" class="text-body text-muted-foreground">{{ t('search.loading') }}</p>
+    <p v-else-if="loading" class="text-body text-muted-foreground">
+      {{ retrying ? t('errors.retrying') : t('search.loading') }}
+    </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="data && !sections.length" class="space-y-3">

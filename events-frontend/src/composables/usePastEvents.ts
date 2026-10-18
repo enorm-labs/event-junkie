@@ -1,6 +1,7 @@
 import { computed, reactive, ref, shallowRef, type Ref } from 'vue'
 
 import { describeError } from '@/api/client'
+import { retryTransient } from '@/api/retry'
 import type { EventPage, EventSummary } from '@/api/types'
 import { yesterdayIso } from '@/lib/format'
 import { withoutUpcoming } from '@/lib/pastEvents'
@@ -78,7 +79,9 @@ export function usePastEvents(
     loadingMore.value = true
     error.value = null
     try {
-      const page = await searchEvents(params(later.value.length + 1))
+      const page = await retryTransient(() => searchEvents(params(later.value.length + 1)), {
+        isStale: () => call !== generation,
+      })
       if (call !== generation) return
       later.value = [...later.value, page]
     } catch (e) {

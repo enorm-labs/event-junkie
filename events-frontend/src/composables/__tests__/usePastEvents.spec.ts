@@ -137,10 +137,15 @@ describe('usePastEvents', () => {
   })
 
   it('keeps the shown events and the button after a failed page, and retries it', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout'] })
+    vi.setSystemTime(new Date('2026-10-04T08:00:00Z'))
     serve(45, { fail: [1] })
     const past = await pager()
 
-    await past.loadMore()
+    // A failure the server can recover from is retried for three minutes before it shows (#3569).
+    const failing = past.loadMore()
+    await vi.runAllTimersAsync()
+    await failing
 
     expect(past.events).toHaveLength(20)
     expect(past.hasMore).toBe(true)
@@ -153,5 +158,23 @@ describe('usePastEvents', () => {
     expect(past.error).toBeNull()
     expect(past.events).toHaveLength(40)
     expect(past.hasMore).toBe(true)
+  })
+
+  it('loads a page that fails while the server restarts, without a second click', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout'] })
+    vi.setSystemTime(new Date('2026-10-04T08:00:00Z'))
+    serve(45, { fail: [1] })
+    const past = await pager()
+
+    const loading = past.loadMore()
+    await flushPromises()
+    expect(past.loadingMore).toBe(true)
+    serve(45)
+    await vi.advanceTimersByTimeAsync(5_000)
+    await loading
+
+    expect(past.error).toBeNull()
+    expect(past.events).toHaveLength(40)
+    expect(past.loadingMore).toBe(false)
   })
 })

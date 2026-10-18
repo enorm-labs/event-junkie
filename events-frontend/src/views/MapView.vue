@@ -13,6 +13,7 @@ import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { EventSummary, VenueSummary } from '@/api/types'
 import { api, describeError, unwrap } from '@/api/client'
+import { retryTransient } from '@/api/retry'
 import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
@@ -73,21 +74,41 @@ const range = computed(() => {
 
 const events = shallowRef<EventSummary[]>([])
 const loading = ref(true)
+const retrying = ref(false)
 const error = ref<string | null>(null)
 const unavailable = ref(false)
 const selected = ref<string | null>(null)
 
+let generation = 0
+
 async function load() {
+  const call = ++generation
   loading.value = true
+  retrying.value = false
   const done = beginContentLoad()
   try {
-    events.value = await fetchCalendarEvents(range.value.from, range.value.to, filters.value)
+    const answer = await retryTransient(
+      () => fetchCalendarEvents(range.value.from, range.value.to, filters.value),
+      {
+        isStale: () => call !== generation,
+        onRetry: () => {
+          retrying.value = true
+          done()
+        },
+      },
+    )
+    if (call !== generation) return
+    events.value = answer
     error.value = null
   } catch (e) {
+    if (call !== generation) return
     events.value = []
     error.value = describeError(e, 'errors.subject.map')
   } finally {
-    loading.value = false
+    if (call === generation) {
+      loading.value = false
+      retrying.value = false
+    }
     done()
   }
 }
@@ -381,7 +402,7 @@ function distance(km: number): string {
     </section>
 
     <p v-if="loading" class="text-body text-muted-foreground">
-      {{ t('common.states.loading') }}
+      {{ retrying ? t('errors.retrying') : t('common.states.loading') }}
     </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->

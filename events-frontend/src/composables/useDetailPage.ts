@@ -36,11 +36,19 @@ export function useDetailPage<T extends DetailEntity>(
   const slug = computed(() => String(route.params.slug))
   const { t, locale } = useI18n()
 
-  const { data: entity, error, notFound, loading, run: loadEntity } = load(() => slug.value)
+  const {
+    data: entity,
+    error,
+    notFound,
+    loading,
+    retrying,
+    run: loadEntity,
+  } = load(() => slug.value)
   const {
     data: events,
     error: eventsError,
     loading: eventsLoading,
+    retrying: eventsRetrying,
     run: loadEvents,
   } = useEventSearch(() => ({ [kind]: slug.value, size: 50 }), `errors.subject.${kind}Events`)
   const { past, run: loadPastEvents } = usePastEvents(() => ({ [kind]: slug.value }), events)
@@ -75,6 +83,7 @@ export function useDetailPage<T extends DetailEntity>(
   const detail = computed(() => ({
     kind: kindLabel.value,
     loading: loading.value,
+    retrying: retrying.value,
     error: error.value,
     notFound: notFound.value,
     ready: Boolean(entity.value),
@@ -87,6 +96,7 @@ export function useDetailPage<T extends DetailEntity>(
     credit: imageCredit(entity.value),
     events: events.value,
     eventsLoading: eventsLoading.value,
+    eventsRetrying: eventsRetrying.value,
     eventsError: eventsError.value,
     emptyText: t(`detail.${kind}.empty`),
     past,

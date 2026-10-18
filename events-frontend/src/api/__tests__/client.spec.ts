@@ -56,6 +56,23 @@ describe('fetchWithTimeout', () => {
     })
   })
 
+  it('names a timeout that WebKit reports as a plain abort', async () => {
+    // WebKit rejects with an AbortError, not the TimeoutError the signal carries (#3569).
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      (input) =>
+        new Promise((_, reject) => {
+          const { signal } = input as Request
+          signal.addEventListener('abort', () =>
+            reject(new DOMException('Fetch is aborted', 'AbortError')),
+          )
+        }),
+    )
+
+    await expect(fetchWithTimeout(new Request('https://example.test/'), 5)).rejects.toMatchObject({
+      name: 'TimeoutError',
+    })
+  })
+
   it('propagates an abort from the caller-supplied signal', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(
       (input) =>

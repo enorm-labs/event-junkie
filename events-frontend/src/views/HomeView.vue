@@ -159,7 +159,7 @@ async function expandToday() {
         </Button>
       </div>
       <p v-if="today.loading.value" class="text-body text-muted-foreground">
-        {{ t('common.states.loading') }}
+        {{ today.retrying.value ? t('errors.retrying') : t('common.states.loading') }}
       </p>
       <p v-else-if="today.error.value" class="text-body text-destructive">
         {{ today.error.value }}
@@ -185,7 +185,7 @@ async function expandToday() {
     <section class="space-y-4 border-t border-border pt-8">
       <h2 :class="HEADING_CLASS">{{ t('home.upcoming') }}</h2>
       <p v-if="upcoming.loading.value" class="text-body text-muted-foreground">
-        {{ t('common.states.loading') }}
+        {{ upcoming.retrying.value ? t('errors.retrying') : t('common.states.loading') }}
       </p>
       <p v-else-if="upcoming.error.value" class="text-body text-destructive">
         {{ upcoming.error.value }}

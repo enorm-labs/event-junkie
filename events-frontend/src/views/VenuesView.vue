@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch 
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import type { VenueListItem } from '@/api/types'
 import { describeError } from '@/api/client'
+import { retryTransient } from '@/api/retry'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
@@ -85,7 +86,7 @@ const params = computed<VenueSearchParams>(() => ({
   size: PAGE_SIZE,
 }))
 
-const { data: page, error, loading, run } = useVenueSearch(() => params.value)
+const { data: page, error, loading, retrying, run } = useVenueSearch(() => params.value)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -138,21 +139,35 @@ watch(() => JSON.stringify(mapFilters.value), loadFeatureCounts, { immediate: tr
 
 const mapVenues = shallowRef<VenueListItem[]>([])
 const mapLoading = ref(false)
+const mapRetrying = ref(false)
 const mapError = ref<string | null>(null)
 const mapUnavailable = ref(false)
 const selected = ref<string | null>(null)
 
+let mapGeneration = 0
+
 async function loadMap() {
   if (!showMap.value) return
+  const call = ++mapGeneration
   mapLoading.value = true
+  mapRetrying.value = false
   try {
-    mapVenues.value = await fetchAllVenues(mapFilters.value)
+    const venues = await retryTransient(() => fetchAllVenues(mapFilters.value), {
+      isStale: () => call !== mapGeneration,
+      onRetry: () => (mapRetrying.value = true),
+    })
+    if (call !== mapGeneration) return
+    mapVenues.value = venues
     mapError.value = null
   } catch (e) {
+    if (call !== mapGeneration) return
     mapVenues.value = []
     mapError.value = describeError(e, 'errors.subject.venues')
   } finally {
-    mapLoading.value = false
+    if (call === mapGeneration) {
+      mapLoading.value = false
+      mapRetrying.value = false
+    }
   }
 }
 
@@ -349,7 +364,7 @@ const localePath = useLocalePath()
 
     <template v-if="showMap">
       <p v-if="mapLoading" class="text-body text-muted-foreground">
-        {{ t('common.states.loadingVenues') }}
+        {{ mapRetrying ? t('errors.retrying') : t('common.states.loadingVenues') }}
       </p>
       <p v-else-if="mapError" class="text-body text-destructive">{{ mapError }}</p>
       <div v-else-if="!pins.length" class="space-y-3">
@@ -495,7 +510,7 @@ const localePath = useLocalePath()
     </template>
 
     <p v-else-if="loading" class="text-body text-muted-foreground">
-      {{ t('common.states.loadingVenues') }}
+      {{ retrying ? t('errors.retrying') : t('common.states.loadingVenues') }}
     </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->

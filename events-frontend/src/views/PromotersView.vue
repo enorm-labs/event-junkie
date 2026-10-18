@@ -23,7 +23,7 @@ const params = computed<PromoterSearchParams>(() => ({
   size: PAGE_SIZE,
 }))
 
-const { data: page, error, loading, run } = usePromoterSearch(() => params.value)
+const { data: page, error, loading, retrying, run } = usePromoterSearch(() => params.value)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -36,7 +36,7 @@ const { t } = useI18n()
     <ListFilterBar :placeholder="t('promoters.searchPlaceholder')" />
 
     <p v-if="loading" class="text-body text-muted-foreground">
-      {{ t('common.states.loadingPromoters') }}
+      {{ retrying ? t('errors.retrying') : t('common.states.loadingPromoters') }}
     </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->

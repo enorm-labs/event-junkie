@@ -86,7 +86,7 @@ describe('useGlobalSearch', () => {
   })
 
   it('reports a failure and drops the stale results', async () => {
-    getMock.mockResolvedValueOnce(answer('lido')).mockRejectedValueOnce(new TypeError('offline'))
+    getMock.mockResolvedValueOnce(answer('lido')).mockRejectedValue(new TypeError('offline'))
     const { term, results, error } = setup()
     term.value = 'lido'
     await nextTick()
@@ -97,5 +97,35 @@ describe('useGlobalSearch', () => {
 
     expect(results.value).toBeNull()
     expect(error.value).toMatch(/search results/)
+  })
+
+  it('retries a failed search until the server answers (#3569)', async () => {
+    getMock.mockRejectedValueOnce(new TypeError('offline')).mockResolvedValueOnce(answer('lido'))
+    const { term, results, loading, error } = setup()
+    term.value = 'lido'
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(250)
+    expect(loading.value).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(5_000)
+
+    expect(getMock).toHaveBeenCalledTimes(2)
+    expect(results.value).toEqual(answer('lido'))
+    expect(error.value).toBeNull()
+    expect(loading.value).toBe(false)
+  })
+
+  it('stops retrying when the visitor types on', async () => {
+    getMock.mockRejectedValueOnce(new TypeError('offline')).mockResolvedValue(answer('lidos'))
+    const { term, results } = setup()
+    term.value = 'lido'
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(250)
+    term.value = 'lidos'
+    await nextTick()
+    await vi.runAllTimersAsync()
+
+    expect(getMock).toHaveBeenCalledTimes(2)
+    expect(results.value).toEqual(answer('lidos'))
   })
 })

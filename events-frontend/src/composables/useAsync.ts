@@ -1,6 +1,7 @@
 import { ref, shallowRef } from 'vue'
 
 import { ApiError, describeError } from '@/api/client'
+import { retryTransient } from '@/api/retry'
 import type { ErrorSubjectKey } from '@/i18n'
 
 import { beginContentLoad } from './useViewLoaded'
@@ -27,6 +28,8 @@ function remember(key: string, value: unknown) {
  * `cacheKey` identifies the request: when it was answered before, `run()` sets `data` from that
  * answer synchronously and leaves `loading` false while the loader refreshes it. Only the latest
  * `run()` writes its answer, so a slow response never paints over a newer one.
+ * A transient failure is retried for a few minutes (#3569). `retrying` is true meanwhile, and what
+ * is on screen stays: the remembered answer, or the loading state, which then says it is retrying.
  */
 export function useAsync<T>(
   loader: () => Promise<T>,
@@ -37,6 +40,7 @@ export function useAsync<T>(
   const error = ref<string | null>(null)
   const notFound = ref(false)
   const loading = ref(false)
+  const retrying = ref(false)
   let latest = 0
 
   async function run() {
@@ -48,8 +52,16 @@ export function useAsync<T>(
     const done = loading.value ? beginContentLoad() : undefined
     error.value = null
     notFound.value = false
+    retrying.value = false
     try {
-      const result = await loader()
+      const result = await retryTransient(loader, {
+        isStale: () => call !== latest,
+        // The page is as tall as it gets until the server is back, so the footer need not wait.
+        onRetry: () => {
+          retrying.value = true
+          done?.()
+        },
+      })
       if (key !== undefined) remember(key, result)
       if (call !== latest) return
       data.value = result
@@ -59,10 +71,13 @@ export function useAsync<T>(
       notFound.value = e instanceof ApiError && e.status === 404
       error.value = describeError(e, subjectKey)
     } finally {
-      if (call === latest) loading.value = false
+      if (call === latest) {
+        loading.value = false
+        retrying.value = false
+      }
       done?.()
     }
   }
 
-  return { data, error, notFound, loading, run }
+  return { data, error, notFound, loading, retrying, run }
 }
