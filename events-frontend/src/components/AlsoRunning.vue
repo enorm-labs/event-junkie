@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { EventSummary } from '@/api/types'
 import EventCard from '@/components/EventCard.vue'
@@ -22,10 +23,20 @@ withDefaults(
 
 const { t } = useI18n()
 const { compact } = useCompactView()
+
+// Kept on the history entry, beside the router's scroll position, so Back from an event in the
+// block reopens it where the visitor left off, while a fresh visit starts collapsed.
+const OPEN_STATE_KEY = 'alsoRunningOpen'
+const open = ref(window.history.state?.[OPEN_STATE_KEY] === true)
+
+function onToggle(event: Event) {
+  open.value = (event.target as HTMLDetailsElement).open
+  window.history.replaceState({ ...window.history.state, [OPEN_STATE_KEY]: open.value }, '')
+}
 </script>
 
 <template>
-  <details v-if="events.length" class="border-t border-border pt-4">
+  <details v-if="events.length" class="border-t border-border pt-4" :open="open" @toggle="onToggle">
     <summary class="cursor-pointer text-body font-medium">
       {{ t('events.alsoRunning.title') }}
       <span class="text-muted-foreground tabular-nums">({{ events.length }})</span>
