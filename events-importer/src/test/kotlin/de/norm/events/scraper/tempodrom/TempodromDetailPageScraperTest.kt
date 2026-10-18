@@ -19,6 +19,16 @@ class TempodromDetailPageScraperTest {
             sourceId = "tempodrom:jill_scott_2026-10-06_20"
         )
 
+    private val carrackRow =
+        listingRow.copy(
+            title = "Paul Carrack",
+            subtitle = "verlegt ins Huxley's neue Welt",
+            eventDate = LocalDate.of(2026, 10, 18),
+            sourceUrl = "https://www.tempodrom.de/event/paul_carrack_2026-10-18_19/",
+            sourceId = "tempodrom:paul_carrack_2026-10-18_19",
+            status = "CANCELLED"
+        )
+
     private fun fallbackRow(
         title: String,
         subtitle: String?
@@ -147,6 +157,35 @@ class TempodromDetailPageScraperTest {
         val show = fallbackRow("Ice Show", null).copy(eventType = "SHOW", typeIsFallback = false)
 
         scraper.addComedyType(show, descriptionPage("A comedy on ice")) shouldBeSameInstanceAs show
+    }
+
+    @Test
+    fun `reads the verlegt badge as RELOCATED over the JSON-LD's EventCancelled`() {
+        // paul_carrack_2026-10-18_19: JSON-LD `EventCancelled`, the page `big-btn relocated` (#3576).
+        val event = scraper.enrich(carrackRow, page("tempodrom-detail-paul-carrack-relocated.html"))
+
+        event.status shouldBe "RELOCATED"
+    }
+
+    @Test
+    fun `stores the house the subtitle names as relocatedTo`() {
+        val entity =
+            scraper
+                .enrich(carrackRow, page("tempodrom-detail-paul-carrack-relocated.html"))
+                .toEventEntity(venueId = 1L, venueSlug = "tempodrom", eventSourceId = 1L)
+
+        entity.status shouldBe "RELOCATED"
+        entity.relocatedTo shouldBe "Huxley's neue Welt"
+    }
+
+    @Test
+    fun `keeps the listing's status on a page with a ticket button`() {
+        listOf("tempodrom-detail-trinity-music.html", "tempodrom-detail-d2mberlin.html").forEach { name ->
+            listOf("SCHEDULED", "CANCELLED", "POSTPONED").forEach { status ->
+                val row = listingRow.copy(status = status)
+                scraper.enrich(row, page(name)).status shouldBe status
+            }
+        }
     }
 
     @Test

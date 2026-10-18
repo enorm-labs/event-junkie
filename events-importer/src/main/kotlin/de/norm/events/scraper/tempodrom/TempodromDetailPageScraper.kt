@@ -1,12 +1,13 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import org.jsoup.nodes.Document
 
 /**
  * Pure HTML parser for a Tempodrom `/event/<slug>/` page, read for what the listing's JSON-LD
- * lacks: the promoter, and the comedy a fallback night's blurb names.
+ * lacks: the promoter, the comedy a fallback night's blurb names, and a move to another house.
  *
  * Every page credits it once, in a `div.copy` below the share links: `Veranstalter <a
  * href=http://www.trinitymusic.de>Trinity Music GmbH</a>`. The link is the promoter's own site.
@@ -20,15 +21,27 @@ import org.jsoup.nodes.Document
  * #3380). The promoter credit is outside the Beschreibung, so "The Comedy Cornershop" is no cue:
  * that promoter also books a night whose blurb names no comedy.
  *
+ * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde
+ * verlegt</a>` where the ticket button would be. Its JSON-LD says `EventCancelled` beside "verlegt ins
+ * Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own word for this
+ * page, so it outranks the JSON-LD: the row becomes `RELOCATED`, and the subtitle names where it went
+ * ([addRelocation], #3576).
+ *
  * @see TempodromOverviewPageScraper for the listing parser, which supplies every other field.
  * @see <a href="https://www.tempodrom.de/event/jill_scott_2026-10-06_20/">A Tempodrom event page</a>
  */
 class TempodromDetailPageScraper {
-    /** [event] with every field the page adds: the promoter, then the comedy type. */
+    /** [event] with every field the page adds: the promoter, the comedy type, then a move. */
     fun enrich(
         event: ScrapedEvent,
         document: Document
-    ): ScrapedEvent = addComedyType(addPromoter(event, document), document)
+    ): ScrapedEvent = addRelocation(addComedyType(addPromoter(event, document), document), document)
+
+    /** [event] marked `RELOCATED` when the page shows the "verlegt" badge; unchanged otherwise. */
+    fun addRelocation(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent = if (document.selectFirst(RELOCATED_BADGE) != null) event.copy(status = EventStatus.RELOCATED.name) else event
 
     /**
      * [event] with the promoter the page credits, and its website when the credit links one.
@@ -87,6 +100,9 @@ class TempodromDetailPageScraper {
     private companion object {
         /** The block that holds the promoter credit. */
         const val CREDIT = "div.copy"
+
+        /** The badge that replaces the ticket button on a show moved to another house. */
+        const val RELOCATED_BADGE = "a.big-btn.relocated"
 
         /** An accordion button: "Beschreibung", "Hinweis zur Einlasskontrolle". */
         const val ACCORDION_BUTTON = "button.acc-button[aria-controls]"
