@@ -915,6 +915,12 @@ rule(
 # than an empty result, per trap 2. `node`, not `instance`: the gateway strips
 # `service.instance.id` from every metric, so `instance` is gone by the time the row
 # is stored, and a scrape relabel writes the target address into `node` instead.
+#
+# **A 15-minute window under an hourly evaluation**, because a window holds every
+# sample in it and fires on any one (#3588). With 60 minutes, the evaluation after a
+# reboot still read the pre-reboot samples and fired on a node that was already fixed.
+# The timer writes every 10 minutes and the gateway scrapes every minute, so 15 minutes
+# always holds a current sample and holds a stale one for 15 minutes at most.
 rule(
     "ej-reboot-pending",
     "A node has had `/var/run/reboot-required` set for more than three days. Its kernel or "
@@ -926,7 +932,7 @@ rule(
     ">",
     0,
     stream_name="node_reboot_required_age_seconds",
-    period_minutes=60,
+    period_minutes=15,
     frequency_minutes=60,
     silence_minutes=24 * 60,
 )
@@ -935,7 +941,7 @@ rule(
 # excludes because a restart cuts every connection on the node: k3s, systemd-networkd and
 # PostgreSQL (#2318). Those keep the old library until a reboot, and the timer writes
 # how long one has been waiting as `node_service_restart_pending_age_seconds`. Same
-# three days as the reboot rule, for the same reason.
+# three days and the same 15-minute window as the reboot rule, for the same reasons.
 rule(
     "ej-service-restart-pending",
     "A node has had a service waiting more than three days for a restart onto an updated "
@@ -947,7 +953,7 @@ rule(
     ">",
     0,
     stream_name="node_service_restart_pending_age_seconds",
-    period_minutes=60,
+    period_minutes=15,
     frequency_minutes=60,
     silence_minutes=24 * 60,
 )
