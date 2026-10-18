@@ -118,7 +118,7 @@ const MARKER_CLASS =
   'flex cursor-pointer items-center justify-center border-2 border-background font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid'
 /**
  * A pin with a count needs room for it; an empty badge is a plain disc still large enough to tap;
- * a pin without a badge is a dot, so 90 venues do not bury the map. The selected pin grows a step,
+ * a pin without a badge is a dot, so hundreds of venues do not bury the map. The selected pin grows a step,
  * so it reads as chosen without its colour (#2347).
  */
 const SIZE_CLASSES = {

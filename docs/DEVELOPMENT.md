@@ -181,7 +181,7 @@ POSTGRES_HOST_PORT=5555 ./gradlew :events-importer:bootRun
 ```
 
 Data lives on the **named volume** `postgres-data`, so it survives the container being stopped and recreated. That is deliberate: re-seeding means re-scraping ~
-86 sources, which is not something to do casually ([ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) on politeness). To reset the database on purpose:
+180 sources, which is not something to do casually ([ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) on politeness). To reset the database on purpose:
 
 ```bash
 docker compose down --volumes     # or: scripts/dev-env.sh db-reset
@@ -537,7 +537,7 @@ the one that gets run. What is worth knowing before you read it:
   other clusters — production ones among them — in the same kubeconfig. `down` restores whatever was current before.
 - **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs
   Flyway. Pointing that at `event_junkie` would have the in-cluster importer fighting a local `bootRun` over one
-  schema, with ~86 sources nobody wants to re-scrape.
+  schema, with ~180 sources nobody wants to re-scrape.
 - **Port 8080 must be free**, because that is where Traefik is published. It is also the BFF's `bootRun` port, so stop
   `dev-env.sh` first.
 - **CoreDNS needs a nudge.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation. The

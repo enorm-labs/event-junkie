@@ -156,7 +156,7 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
   the old comment anywhere: the entry lands in the `NodeHosts` key, not `Corefile`, and is watched by the _hosts_ plugin's own `reload 15s` over a volume mount,
   not by the Corefile `reload` plugin.
 - **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs Flyway; pointing that at `event_junkie`
-  would have the in-cluster importer fighting a local `bootRun` over one schema, and re-seeding means re-scraping ~86 sources.
+  would have the in-cluster importer fighting a local `bootRun` over one schema, and re-seeding means re-scraping ~180 sources.
 - **Port 8080 must be free on the host** — that is where Traefik is published, and it is also the BFF's local `bootRun` port. Stop `dev-env.sh` first.
 - **A green `up` now says more about the probes than it used to, and it is worth knowing why.** Until #438 the BFF reported Ready before the schema existed, so a
   successful install proved nothing about readiness. Since #438 its readiness group includes the database and the `events` schema, which means `helm install

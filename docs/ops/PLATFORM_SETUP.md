@@ -867,7 +867,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 - **`importer.events.dropped` counts only what shared code drops, and the gap is deliberate** (#982). Each reason is computed in one shared place. It therefore
   holds for every importer that reaches it: `past` in `EventUpsertService.dropPastEvents`, `duplicate` in `deduplicateScrapedEvents`, `slug_conflict` in
   `resolveBySlug`, and `unresolved_date` in `AbstractTwoPageWebsiteImporter`. **Rows that a scraper skips do not reach the counter.** A row
-  that throws goes through `mapSkippingFailures` in `RowParsing.kt`, one place for 90 scrapers. A row with no title or date returns null inside its scraper.
+  that throws goes through `mapSkippingFailures` in `RowParsing.kt`, one place for 135 scrapers. A row with no title or date returns null inside its scraper.
   Counting the rows that throw needs one more reason on this counter. It is not planned, because the logged remainder is small (#2540). Over seven days on staging (October 2026), scraper `WARN … skipping` lines named 40 drops beside 2,370
   counted ones. All 40 were non-events by design: sauna tickets with no date, and calendar entries with no title. A scraper that drops a row without a log
   line stays invisible, so 40 is a lower bound. `past` is usually the scraper working rather than failing — a calendar source republishing last month.

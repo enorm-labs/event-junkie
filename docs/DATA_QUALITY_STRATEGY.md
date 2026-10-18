@@ -47,7 +47,7 @@ resolve:
    visible. Since #2604 a regressed metric sets off an alert, but nothing stops the import that caused it.
 
 Measured against staging's 3,409 events, **3.5%** of concerts carry no artist (74 of 2,128). 119 events are typed `OTHER`. Title-as-headliner extraction
-runs in 49 scrapers.
+runs in 96 scrapers.
 
 **The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it.
 This document asserted ~40% in prose, that figure survived unchallenged into planning, and the first thing an actual
@@ -237,7 +237,7 @@ they are excluded rather than counted as unreviewed.
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 
 - **Title-as-headliner extraction** ([issue #321](https://github.com/enorm-labs/event-junkie/issues/321)). `buildArtistsForEventType` and
-  `headlinersFromTitle` take the headliner from the title in 49 scrapers. `isNonArtistName` and `stripArtistSuffix`
+  `headlinersFromTitle` take the headliner from the title in 96 scrapers. `isNonArtistName` and `stripArtistSuffix`
   guard against non-artist titles. §1 measures what is left: 3.5% of concerts carry no artist.
 - **One backfill pass** over the existing rows, done under [#1632](https://github.com/enorm-labs/event-junkie/issues/1632). On 2026-09-21 it force-imported
   all 86 sources on production, and the artist rows went from 4,933 to 5,006. Upcoming rows re-import every

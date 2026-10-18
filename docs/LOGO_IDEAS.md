@@ -302,7 +302,7 @@ badges on one page sharing a mask id renders the second as a solid block.
 **Not recommended.** It fails two criteria and one of them is strategic rather than visual.
 
 A magnifier is among the most-used shapes in software, so criterion 4 is gone before the drawing starts. But the real objection is criterion 5: it advertises
-searching to people who came here to stop searching. The product's claim is coverage — 86 sources, on a schedule — and a magnifying glass draws the work the
+searching to people who came here to stop searching. The product's claim is coverage — 180 sources, on a schedule — and a magnifying glass draws the work the
 product removes.
 
 ### Event signal — sources converging into one feed
