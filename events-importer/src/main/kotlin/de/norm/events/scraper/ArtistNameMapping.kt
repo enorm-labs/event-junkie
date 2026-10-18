@@ -946,7 +946,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "nie & nimmer",
         // Bands whose name is a comma list, which [commaListActs] would cut into three (#3419).
         "kitty, daisy & lewis",
-        "frost, pisse & elend"
+        "frost, pisse & elend",
+        // A Warsaw band Morphine Raum bills as `Mitch & Mitch con il loro Gruppo Etereofonico` (#3565).
+        "mitch & mitch"
     )
 
 /**
