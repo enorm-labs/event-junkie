@@ -28,6 +28,7 @@ describe('AlsoRunning', () => {
   const { compact } = useCompactView()
   afterEach(() => {
     compact.value = false
+    window.history.replaceState(null, '')
   })
 
   it('is collapsed, and draws each run as the same card the list above draws', () => {
@@ -57,5 +58,19 @@ describe('AlsoRunning', () => {
     const wrapper = mount(AlsoRunning, { props: { events: [] }, global: { stubs } })
 
     expect(wrapper.find('details').exists()).toBe(false)
+  })
+
+  it('keeps its open state on the history entry, so Back reopens it', async () => {
+    window.history.replaceState({ position: 3 }, '')
+    const first = mount(AlsoRunning, { props: { events: [exhibition] }, global: { stubs } })
+    const details = first.get('details').element as HTMLDetailsElement
+    details.open = true
+    await first.get('details').trigger('toggle')
+
+    expect(window.history.state).toEqual({ position: 3, alsoRunningOpen: true })
+    first.unmount()
+
+    const returned = mount(AlsoRunning, { props: { events: [exhibition] }, global: { stubs } })
+    expect(returned.get('details').attributes('open')).toBeDefined()
   })
 })
