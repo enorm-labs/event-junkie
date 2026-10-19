@@ -227,6 +227,8 @@ class FixtureTest : BaseControllerTest() {
                 .isEqualTo("RELOCATED")
                 .jsonPath("$.relocatedTo")
                 .isEqualTo("Kesselhaus Nord")
+                .jsonPath("$.relocatedOn")
+                .isEqualTo(today.plusDays(90).toString())
             get("/events/${slug("cancelled", 11)}").jsonPath("$.status").isEqualTo("CANCELLED")
             get("/events?size=100")
                 .jsonPath("$.content[?(@.slug == '${slug("relocated", 9)}')]")

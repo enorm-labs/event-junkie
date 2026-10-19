@@ -809,6 +809,12 @@ export interface components {
              */
             relocatedTo?: string | null;
             /**
+             * Format: date
+             * @description The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none
+             * @example 2027-04-13
+             */
+            relocatedOn?: string | null;
+            /**
              * @description What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, never German by default. Not the language of the description.
              * @example [
              *       "en"
@@ -1442,6 +1448,12 @@ export interface components {
              * @example Hole44
              */
             relocatedTo?: string | null;
+            /**
+             * Format: date
+             * @description The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none
+             * @example 2027-04-13
+             */
+            relocatedOn?: string | null;
             /**
              * @description What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, never German by default. Not the language of the description.
              * @example [

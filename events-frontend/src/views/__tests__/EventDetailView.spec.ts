@@ -160,6 +160,18 @@ describe('EventDetailView', () => {
     expect(hero).not.toContain('20:00')
   })
 
+  it('names the house and the new date of a show that moved both in the pill (#3613)', async () => {
+    const view = await mountEvent({
+      ...night,
+      status: 'RELOCATED',
+      relocatedTo: 'Hole 44',
+      relocatedOn: '2100-04-13',
+    })
+    const hero = view.find('h1').element.parentElement!.textContent ?? ''
+
+    expect(hero).toContain('Moved to Hole 44, 13 April 2100')
+  })
+
   it('strikes the date of a cancelled night in the hero and drops its time', async () => {
     const view = await mountEvent({ ...night, status: 'CANCELLED', startTime: '20:00:00' })
     const hero = view.find('h1').element.parentElement!.textContent ?? ''

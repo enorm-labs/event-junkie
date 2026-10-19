@@ -25,6 +25,7 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 class EventControllerTest : BaseControllerTest() {
@@ -299,7 +300,7 @@ class EventControllerTest : BaseControllerTest() {
         runBlocking {
             databaseClient
                 .sql(
-                    "UPDATE events.event SET room = 'Saal', end_date = event_date + 1, relocated_to = 'Hole44', " +
+                    "UPDATE events.event SET room = 'Saal', end_date = event_date + 1, relocated_to = 'Hole44', relocated_on = DATE '2027-04-13', " +
                         "description_withheld = true WHERE id = ${created.id}"
                 ).await()
         }
@@ -315,8 +316,10 @@ class EventControllerTest : BaseControllerTest() {
         val row =
             runBlocking {
                 databaseClient
-                    .sql("SELECT title, room, end_date - event_date AS nights, relocated_to, description_withheld FROM events.event WHERE id = ${created.id}")
-                    .fetch()
+                    .sql(
+                        "SELECT title, room, end_date - event_date AS nights, relocated_to, relocated_on, description_withheld " +
+                            "FROM events.event WHERE id = ${created.id}"
+                    ).fetch()
                     .one()
                     .awaitSingle()
             }
@@ -324,6 +327,7 @@ class EventControllerTest : BaseControllerTest() {
         row["room"] shouldBe "Saal"
         row["nights"] shouldBe 1
         row["relocated_to"] shouldBe "Hole44"
+        row["relocated_on"] shouldBe LocalDate.of(2027, 4, 13)
         row["description_withheld"] shouldBe true
     }
 

@@ -6,6 +6,9 @@
 nullable text, holding the destination as the venue's own note names it. The row at the house the show moved to is a
 plain `SCHEDULED` event.**
 
+**Amended by [ADR-051](ADR-051_A_MOVED_SHOW_KEEPS_ITS_NEW_DATE.md)**, which adds the new date of a show that moves house
+and date at once, as `relocated_on`.
+
 **Does not supersede anything.** [ADR-003](ADR-003_ENTITY_DOMAIN_SEPARATION.md) decided that a scraped event becomes a
 row at one boundary, `ScrapedEvent.toEventEntity`. This decision puts one more rule there. `EventStatus` carries
 `RELOCATED` since the first migration, without saying which end of a move it marks.

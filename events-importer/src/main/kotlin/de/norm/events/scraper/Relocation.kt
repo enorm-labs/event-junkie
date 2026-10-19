@@ -109,6 +109,38 @@ fun resolvePostponedMove(
     return if (to != null) EventStatus.RELOCATED.name to to else status to null
 }
 
+/**
+ * Decides whether a `RELOCATED` row that names no destination moved its date instead: Kesselhaus
+ * flags "verlegt auf 17.08.27" as a move. A new date in a note makes the row `POSTPONED`, so the
+ * page can link the new date's row. Any other status, or a row with a destination, passes through (#3613).
+ */
+fun resolveDatedRelocation(
+    status: String,
+    relocatedTo: String?,
+    notes: List<String>
+): String =
+    if (status == EventStatus.RELOCATED.name && relocatedTo == null && notes.any { note -> POSTPONED_TO_DATE.findAll(note).any { targetDate(it) != null } }) {
+        EventStatus.POSTPONED.name
+    } else {
+        status
+    }
+
+/**
+ * The new date of a show that moved house and date at once, as the note states it: Lido's
+ * "VERSCHOBEN UND VERLEGT AUF DEN 13.04.27 INS HOLE 44". Null on any status but `RELOCATED`, and
+ * for a note that names no date other than [eventDate]. No row is matched (ADR-030, #3613).
+ */
+fun relocatedOn(
+    status: String,
+    notes: List<String>,
+    eventDate: LocalDate
+): LocalDate? =
+    if (status == EventStatus.RELOCATED.name) {
+        notes.firstNotNullOfOrNull { note -> POSTPONED_TO_DATE.findAll(note).mapNotNull(::targetDate).firstOrNull { it != eventDate } }
+    } else {
+        null
+    }
+
 /** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26". */
 private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
 

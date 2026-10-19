@@ -324,9 +324,10 @@ WHERE v.slug = 'kesselhaus-nord';
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id IN ('fixture-room-floor', 'fixture-room-garden') AND g.slug = 'techno';
 
--- Relocated: the venue's note says where it went, and the row stays here (ADR-030).
-INSERT INTO events.event (venue_id, title, event_type, status, relocated_to, slug, event_date, start_time, source_url, source_id, genre, price_presale)
-SELECT v.id, 'Anna Kessel — verlegt', 'CONCERT', 'RELOCATED', 'Kesselhaus Nord', 'fixture-relocated-' || to_char(timezone('Europe/Berlin', now())::date + 9, 'YYYY-MM-DD'),
+-- Relocated: the venue's note says where and when it went, and the row stays here (ADR-030, #3613).
+INSERT INTO events.event (venue_id, title, event_type, status, relocated_to, relocated_on, slug, event_date, start_time, source_url, source_id, genre, price_presale)
+SELECT v.id, 'Anna Kessel — verlegt', 'CONCERT', 'RELOCATED', 'Kesselhaus Nord', timezone('Europe/Berlin', now())::date + 90,
+       'fixture-relocated-' || to_char(timezone('Europe/Berlin', now())::date + 9, 'YYYY-MM-DD'),
        timezone('Europe/Berlin', now())::date + 9, TIME '20:00', v.website_url || '/events/verlegt', 'fixture-relocated', 'Punk', 20.00
 FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 

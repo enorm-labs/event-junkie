@@ -175,6 +175,7 @@
     "CANCELLED": "Cancelled",
     "POSTPONED": "Postponed",
     "movedTo": "Moved to {venue}",
+    "movedToOn": "Moved to {venue}, {date}",
     "movedFrom": "was {venue}",
     "postponedNote": "Postponed: the venue names no new date yet.",
     "postponedTo": "Postponed to {date}"

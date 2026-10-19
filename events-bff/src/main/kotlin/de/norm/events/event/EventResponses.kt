@@ -40,6 +40,8 @@ data class EventSummaryResponse(
     val status: EventStatus,
     @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
+    @Schema(description = RELOCATED_ON_DESCRIPTION, example = "2027-04-13")
+    val relocatedOn: LocalDate? = null,
     @Schema(description = SPOKEN_LANGUAGES_DESCRIPTION, example = "[\"en\"]")
     val spokenLanguages: List<String>? = null,
     @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
@@ -109,6 +111,7 @@ data class EventSummaryResponse(
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
                 relocatedTo = entity.relocatedTo,
+                relocatedOn = entity.relocatedOn,
                 spokenLanguages = entity.spokenLanguages,
                 subtitleLanguage = entity.subtitleLanguage,
                 eventDate = entity.eventDate,
@@ -212,6 +215,8 @@ data class EventDetailResponse(
     val status: EventStatus,
     @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
+    @Schema(description = RELOCATED_ON_DESCRIPTION, example = "2027-04-13")
+    val relocatedOn: LocalDate? = null,
     @Schema(description = SPOKEN_LANGUAGES_DESCRIPTION, example = "[\"en\"]")
     val spokenLanguages: List<String>? = null,
     @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
@@ -353,6 +358,7 @@ data class EventDetailResponse(
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
                 relocatedTo = entity.relocatedTo,
+                relocatedOn = entity.relocatedOn,
                 spokenLanguages = entity.spokenLanguages,
                 subtitleLanguage = entity.subtitleLanguage,
                 eventDate = entity.eventDate,
@@ -469,6 +475,8 @@ private const val CHANGES_DESCRIPTION =
         "Empty for a new event and for one that has not moved."
 private const val RELOCATED_TO_DESCRIPTION =
     "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status"
+private const val RELOCATED_ON_DESCRIPTION =
+    "The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none"
 private const val SPOKEN_LANGUAGES_DESCRIPTION =
     "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
         "never German by default. Not the language of the description."

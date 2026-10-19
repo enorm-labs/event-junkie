@@ -5,6 +5,7 @@ import {
   formatDayRange,
   formatDaysAgo,
   formatDate,
+  formatLongDate,
   formatMonthYear,
   formatShortDate,
   formatTime,
@@ -224,14 +225,21 @@ export function useFormat() {
     /**
      * The one word for a status that changes whether the reader goes, `''` for `SCHEDULED`. A
      * relocated or postponed event that knows where it went says so ("Moved to Hole44",
-     * "Postponed to Sat, 8 May 2027"). Same fallback as `formatEventType`.
+     * "Moved to Hole 44, 13 April 2027", "Postponed to Sat, 8 May 2027"). Same fallback as
+     * `formatEventType`.
      */
     formatEventStatus: (
       status?: string | null,
       relocatedTo?: string | null,
       postponedTo?: string | null,
+      relocatedOn?: string | null,
     ) => {
       if (!status || status === 'SCHEDULED') return ''
+      if (status === 'RELOCATED' && relocatedTo && relocatedOn)
+        return t('events.status.movedToOn', {
+          venue: relocatedTo,
+          date: formatLongDate(relocatedOn, intlLocale()),
+        })
       if (status === 'RELOCATED' && relocatedTo)
         return t('events.status.movedTo', { venue: relocatedTo })
       if (status === 'POSTPONED' && postponedTo)

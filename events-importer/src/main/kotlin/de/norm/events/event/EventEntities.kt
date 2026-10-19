@@ -55,6 +55,8 @@ data class EventEntity(
     val status: String = EventStatus.SCHEDULED.name,
     /** Where a `RELOCATED` event moved to, as the venue's note names it; null when the note names nothing (#1551). */
     val relocatedTo: String? = null,
+    /** The new date of a `RELOCATED` event, as the venue's note states it; null when the note names none (#3613). */
+    val relocatedOn: LocalDate? = null,
     val slug: String,
     val eventDate: LocalDate,
     val doorsTime: LocalTime? = null,

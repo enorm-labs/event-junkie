@@ -60,6 +60,16 @@ export function formatDayRange(firstIso: string, lastIso: string, locale: string
   return formatter.formatRange(toDate(firstIso), toDate(lastIso))
 }
 
+/** The day, the month in full and the year — "13 April 2027" / "13. April 2027" — for a moved show's new date. */
+export function formatLongDate(isoDate?: string | null, locale: string = 'en'): string {
+  if (!isoDate) return ''
+  const [year, month, day] = isoDate.split('-').map(Number)
+  if (!year || !month || !day) return isoDate
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(
+    new Date(year, month - 1, day),
+  )
+}
+
 /** The month and year alone — "October 2026" / "Oktober 2026" — for a venue's closure. */
 export function formatMonthYear(isoDate?: string | null, locale: string = 'en'): string {
   if (!isoDate) return ''

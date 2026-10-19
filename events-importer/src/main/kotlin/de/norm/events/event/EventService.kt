@@ -397,6 +397,7 @@ internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity 
         pinnedFields = existing.pinnedFields,
         room = existing.room,
         relocatedTo = existing.relocatedTo,
+        relocatedOn = existing.relocatedOn,
         lineupSourceUrl = existing.lineupSourceUrl,
         descriptionWithheld = existing.descriptionWithheld,
         spokenLanguages = existing.spokenLanguages,

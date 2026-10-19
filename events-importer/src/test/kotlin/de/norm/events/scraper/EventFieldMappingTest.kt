@@ -472,6 +472,27 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `resolveDatedRelocation postpones a nameless move with a new date, and nothing else`() {
+        resolveDatedRelocation("RELOCATED", null, listOf("verlegt auf 17.08.27")) shouldBe "POSTPONED"
+        resolveDatedRelocation("RELOCATED", null, listOf("Verlegt / Relocated")) shouldBe "RELOCATED"
+        // An impossible date is no date.
+        resolveDatedRelocation("RELOCATED", null, listOf("verlegt auf 31.02.27")) shouldBe "RELOCATED"
+        resolveDatedRelocation("RELOCATED", "Hole 44", listOf("verlegt auf den 13.04.27 ins Hole 44")) shouldBe "RELOCATED"
+        resolveDatedRelocation("CANCELLED", null, listOf("verlegt auf 17.08.27")) shouldBe "CANCELLED"
+    }
+
+    @Test
+    fun `relocatedOn reads the new date of a relocated row, in either year form`() {
+        val day = LocalDate.of(2026, 10, 19)
+        relocatedOn("RELOCATED", listOf("VERLEGT AUF DEN 13.04.27 INS HOLE 44"), day) shouldBe LocalDate.of(2027, 4, 13)
+        relocatedOn("RELOCATED", listOf("verlegt auf 13.04.2027 ins Hole 44"), day) shouldBe LocalDate.of(2027, 4, 13)
+        // The row's own date is no new date; the next one is.
+        relocatedOn("RELOCATED", listOf("verlegt auf den 19.10.26 ins Hole 44", "auf den 20.10.26"), day) shouldBe LocalDate.of(2026, 10, 20)
+        relocatedOn("RELOCATED", listOf("verlegt ins Hole 44"), day).shouldBeNull()
+        relocatedOn("POSTPONED", listOf("auf den 13.04.27 verschoben"), day).shouldBeNull()
+    }
+
+    @Test
     fun `stripTitleStatusMarker removes a cancellation glued to either end of a name`() {
         stripTitleStatusMarker("Olga Myko - Abgesagt") shouldBe "Olga Myko"
         stripTitleStatusMarker("The Act [ABGESAGT!]") shouldBe "The Act"
