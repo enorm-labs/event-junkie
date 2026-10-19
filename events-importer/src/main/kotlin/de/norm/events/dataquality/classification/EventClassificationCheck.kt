@@ -1,6 +1,7 @@
 package de.norm.events.dataquality.classification
 
 import de.norm.events.event.EventNotFoundException
+import de.norm.events.event.EventType
 import de.norm.events.event.PartyFeature
 import de.norm.events.importing.EventFeatureRepository
 import de.norm.events.importing.EventQualityFlagRepository
@@ -236,10 +237,15 @@ class EventClassificationCheck(
 
         fun all(): List<NewSuggestion> = listOfNotNull(eventType(), artists(), features(), startTime(), pricePresale(), priceBoxOffice())
 
+        /** None against the venue's own type: accepting one would pin the model's guess over the venue's badge (#3607). */
         private fun eventType() =
-            answer.eventType?.confident(floor.eventType)?.takeIf { it.value.name != target.eventType }?.let {
-                NewSuggestion(target.id, FIELD_EVENT_TYPE, target.eventType, it.value.name, it.evidence, it.confidence, model)
-            }
+            answer.eventType
+                ?.confident(floor.eventType)
+                ?.takeIf { it.value.name != target.eventType }
+                ?.takeUnless { target.typeFromVenueCue && target.eventType != EventType.OTHER.name }
+                ?.let {
+                    NewSuggestion(target.id, FIELD_EVENT_TYPE, target.eventType, it.value.name, it.evidence, it.confidence, model)
+                }
 
         /**
          * Adds the acts the title names, and drops a title-derived artist the model does not call an act.

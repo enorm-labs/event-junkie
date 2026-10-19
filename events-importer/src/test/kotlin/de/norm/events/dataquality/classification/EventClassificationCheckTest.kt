@@ -77,7 +77,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
     }
 
     @Test
-    fun `a type the text contradicts is proposed with the model's evidence`(): Unit =
+    fun `a type the text contradicts is proposed with the model's evidence, where the source never sets the fallback flag`(): Unit =
         runBlocking {
             val event = insertEvent("Mario Barth live", description = "Der Comedian Mario Barth mit neuem Programm.", startTime = null)
             server.enqueue(answer("eventType" to finding("COMEDY", "Der Comedian Mario Barth")))
@@ -97,6 +97,26 @@ class EventClassificationCheckTest : BaseControllerTest() {
             check().checkEvent(event)
 
             suggestions(event).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "READING")
+        }
+
+    @Test
+    fun `no type is proposed against the venue's own badge, and one is for a fallback or an OTHER of the same source`(): Unit =
+        runBlocking {
+            val badge = insertEvent("Chaos Royal", type = "COMEDY", description = "Improvisationstheater mit Chaos Royal. Beginn 20 Uhr.", startTime = null)
+            val fallback = insertEvent("Gastro Slam", type = "SHOW", typeIsFallback = true, description = "Ein Lese-Slam ueber Gastronomie.")
+            val other = insertEvent("Wintermarkt", type = "OTHER", description = "Ein Wintermarkt mit Lesung.")
+            server.enqueue(answer("eventType" to finding("SHOW", "Improvisationstheater"), "startTime" to finding("20:00", "Beginn 20 Uhr")))
+            server.enqueue(answer("eventType" to finding("READING", "Ein Lese-Slam")))
+            server.enqueue(answer("eventType" to finding("READING", "mit Lesung")))
+
+            check().checkEvent(badge)
+            check().checkEvent(fallback)
+            check().checkEvent(other)
+
+            server.requestCount shouldBe 3
+            suggestions(badge).map { it.field to it.proposed } shouldContainExactly listOf("startTime" to "20:00")
+            suggestions(fallback).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "READING")
+            suggestions(other).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "READING")
         }
 
     @Test
@@ -525,6 +545,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
     private suspend fun insertEvent(
         title: String,
         type: String = "CONCERT",
+        typeIsFallback: Boolean = false,
         description: String? = null,
         startTime: String? = "20:00",
         presale: String? = "15.00",
@@ -533,8 +554,9 @@ class EventClassificationCheckTest : BaseControllerTest() {
         databaseClient
             .sql(
                 """
-                INSERT INTO events.event (venue_id, event_source_id, title, description, event_type, slug, event_date, start_time, price_presale, source_id)
-                SELECT $venueId, s.id, :title, :description, :type, :slug, CURRENT_DATE + $daysAhead,
+                INSERT INTO events.event (venue_id, event_source_id, title, description, event_type, type_is_fallback, slug, event_date, start_time,
+                                          price_presale, source_id)
+                SELECT $venueId, s.id, :title, :description, :type, $typeIsFallback, :slug, CURRENT_DATE + $daysAhead,
                        CAST(:startTime AS time), CAST(:presale AS numeric), :slug
                 FROM events.event_source s WHERE s.slug = '$SOURCE'
                 RETURNING id

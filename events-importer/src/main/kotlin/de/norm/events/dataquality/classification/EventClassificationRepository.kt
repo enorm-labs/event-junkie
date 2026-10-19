@@ -27,7 +27,12 @@ data class ClassificationTarget(
     val priceBoxOffice: BigDecimal?,
     val contentHash: String,
     /** The hash the last answered check saw, or null when the event was never checked. */
-    val checkedHash: String?
+    val checkedHash: String?,
+    /**
+     * The stored type is the venue's own cue. The row is no fallback, and its source has a fallback row, so its
+     * scraper tells the two apart. A source that never sets `type_is_fallback` says nothing either way (ADR-039).
+     */
+    val typeFromVenueCue: Boolean
 )
 
 /** One act of the lineup, in billing order. */
@@ -94,7 +99,10 @@ class EventClassificationRepository(
             .sql(
                 """
                 SELECT e.id, e.title, e.subtitle, e.description, e.event_type, e.start_time, e.price_presale, e.price_box_office,
-                       $CONTENT_HASH AS content_hash, c.content_hash AS checked_hash
+                       $CONTENT_HASH AS content_hash, c.content_hash AS checked_hash,
+                       NOT e.type_is_fallback AND EXISTS (
+                           SELECT 1 FROM $EVENTS_SCHEMA.event f WHERE f.event_source_id = e.event_source_id AND f.type_is_fallback
+                       ) AS type_from_venue_cue
                 FROM $EVENTS_SCHEMA.event e
                 LEFT JOIN $EVENTS_SCHEMA.event_classification_check c ON c.event_id = e.id
                 WHERE e.id = :id
@@ -111,7 +119,8 @@ class EventClassificationRepository(
                     pricePresale = row.get("price_presale", BigDecimal::class.java),
                     priceBoxOffice = row.get("price_box_office", BigDecimal::class.java),
                     contentHash = row.string("content_hash"),
-                    checkedHash = row.get("checked_hash", String::class.java)
+                    checkedHash = row.get("checked_hash", String::class.java),
+                    typeFromVenueCue = row.get("type_from_venue_cue", Boolean::class.javaObjectType) == true
                 )
             }.one()
             .awaitSingleOrNull()
