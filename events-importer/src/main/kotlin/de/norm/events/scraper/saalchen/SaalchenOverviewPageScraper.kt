@@ -17,6 +17,8 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -44,7 +46,10 @@ import java.time.format.DateTimeParseException
  * the machine-readable part. `atc_date_start` is a **UTC** timestamp, converted to
  * `Europe/Berlin`. `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
  * Eintritt / Tickets` block then the prose — the source for times, price, and the ticket link
- * on a row without the `a.link-ticket` button (#2792). The row's
+ * on a row without the `a.link-ticket` button (#2792). A dotted `Datum` (`23.11.2026`,
+ * `10.03.27`) wins over `atc_date_start` when the two disagree, because the widget can name the
+ * wrong day (see #3621). A `Datum` in any other shape (`19.-20. September 2026`,
+ * `October 5, 2026`) leaves the widget's date in place. The row's
  * `.body-content` renders the same prose in full where `atc_description` holds only its first
  * paragraph, so the description comes from there; a festival names its acts there in one
  * sentence ending `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
@@ -90,14 +95,13 @@ class SaalchenOverviewPageScraper {
             logger.warn { "Säälchen row '$slug' has no title, skipping" }
             return null
         }
-        // The AddToCalendar start is a UTC instant — the only machine-readable date on the page.
-        val eventDate = parseUtcStartDate(row.textAt("var.atc_date_start"))
+        val notice = parseNotice(row)
+        val eventDate = resolveDate(slug, parseUtcStartDate(row.textAt("var.atc_date_start")), parseLabelledDate(notice[DATE_LABEL]))
         if (eventDate == null) {
             logger.warn { "Säälchen row '$slug' has no parseable start date, skipping" }
             return null
         }
 
-        val notice = parseNotice(row)
         val category = row.textAt(".event-category")
         val eventType = mapEventType(category) ?: inferConcertVenueType(title)
         val entrance = notice[ENTRANCE_LABEL]
@@ -145,6 +149,18 @@ class SaalchenOverviewPageScraper {
             .orEmpty()
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it, role = "HEADLINER") }
+
+    /** The labelled `Datum` when it parses, else the widget's date; a disagreement is logged. */
+    private fun resolveDate(
+        slug: String,
+        widgetDate: LocalDate?,
+        labelledDate: LocalDate?
+    ): LocalDate? {
+        if (labelledDate != null && widgetDate != null && labelledDate != widgetDate) {
+            logger.warn { "Säälchen row '$slug' labels Datum $labelledDate but atc_date_start gives $widgetDate, using Datum" }
+        }
+        return labelledDate ?: widgetDate
+    }
 
     /**
      * The AddToCalendar `atc_date_start` UTC timestamp (`2026-11-14 19:00:00`) as the Berlin
@@ -280,6 +296,19 @@ private fun parseSinglePrice(text: String?): BigDecimal? {
 /** The `.location` value identifying this venue among the Holzmarkt site's shared calendar rows. */
 private const val VENUE_LOCATION = "Säälchen"
 
+/**
+ * The notice's `Datum` value as a date, in either dotted spelling: `23.11.2026` or `10.03.27`.
+ * `null` for any other shape, such as a range or an English date.
+ */
+private fun parseLabelledDate(text: String?): LocalDate? =
+    LABELLED_DATE_PATTERN.find(text?.trim().orEmpty())?.value?.let { parseGermanDate(it) ?: parseGermanShortDate(it) }
+
+/** A dotted date at the start of a `Datum` value, with a four- or two-digit year. */
+private val LABELLED_DATE_PATTERN = Regex("""^\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2})(?!\d)""")
+
+/** Notice label for the event date. */
+private const val DATE_LABEL = "datum"
+
 /** Notice label for the doors time. */
 private const val DOORS_LABEL = "einlass"
 
@@ -308,7 +337,7 @@ private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", Re
  * Every label the venue uses in its AddToCalendar metadata block. A line starting with one is
  * metadata; anything else is the event's own prose.
  */
-private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, TICKETS_LABEL)
+private val NOTICE_LABELS = setOf(DATE_LABEL, DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, TICKETS_LABEL)
 
 /** Splits the description on `<br>` and on paragraph boundaries. */
 private val LINE_BREAK_PATTERN = Regex("""<br\s*/?>|</p>\s*<p[^>]*>""", RegexOption.IGNORE_CASE)

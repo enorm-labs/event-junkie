@@ -1,5 +1,9 @@
 package de.norm.events.scraper.saalchen
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -14,6 +18,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -29,13 +34,51 @@ class SaalchenOverviewPageScraperTest {
     private val scraper = SaalchenOverviewPageScraper()
     private val baseUrl = "https://www.holzmarkt.com/kalender"
 
-    private val events: List<ScrapedEvent> by lazy {
+    private val events: List<ScrapedEvent> by lazy { scrapeFixture("saalchen-kalender.html") }
+
+    private fun scrapeFixture(name: String): List<ScrapedEvent> {
         val html =
             javaClass.classLoader
-                .getResourceAsStream("scraper/saalchen/saalchen-kalender.html")!!
+                .getResourceAsStream("scraper/saalchen/$name")!!
                 .bufferedReader()
                 .readText()
-        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    }
+
+    /** One synthetic Säälchen row with the given AddToCalendar start and description. */
+    private fun rowWithNotice(
+        notice: String,
+        atcDateStart: String = "2026-11-14 19:00:00"
+    ): ScrapedEvent? {
+        val escaped =
+            notice
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+        val html =
+            """
+            <div class="views-row"><article class="node-event">
+              <h2><a href="/veranstaltung/probe"><span>Probe</span></a></h2>
+              <span class="location">Säälchen</span>
+              <var class="atc_date_start">$atcDateStart</var>
+              <var class="atc_description">$escaped</var>
+            </article></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).singleOrNull()
+    }
+
+    /** Runs [block] and returns its result beside the `WARN` lines the scraper logged. */
+    private fun <T> withScraperWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(SaalchenOverviewPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == Level.WARN }
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
@@ -80,6 +123,47 @@ class SaalchenOverviewPageScraperTest {
     fun `converts the UTC calendar timestamp to the Berlin date`() {
         // atc_date_start is 2026-11-14 19:00:00 UTC, i.e. 20:00 Berlin on the 14th.
         event("saalchen:voodoo-juergens-und-die-ansa-panier-live").eventDate shouldBe LocalDate.of(2026, 11, 14)
+    }
+
+    @Test
+    fun `keeps the calendar date without a warning when the labelled Datum agrees`() {
+        // frytz labels `Datum: 27.11.2026`, and its widget starts 2026-11-27 19:00:00 UTC.
+        val (scraped, warnings) = withScraperWarnings { scrapeFixture("saalchen-kalender.html") }
+        scraped.single { it.sourceId == "saalchen:frytz-tour-2026" }.eventDate shouldBe LocalDate.of(2026, 11, 27)
+        warnings.none { it.formattedMessage.contains("atc_date_start") } shouldBe true
+    }
+
+    @Test
+    fun `takes the labelled Datum over a disagreeing calendar date and warns`() {
+        // The live JOBIM100 row: the widget starts 2026-11-19 18:00:00 UTC, the notice says `Datum: 23.11.2026` (#3621).
+        val (scraped, warnings) = withScraperWarnings { scrapeFixture("saalchen-jobim100-row.html") }
+        scraped.single().eventDate shouldBe LocalDate.of(2026, 11, 23)
+        val warning = warnings.single().formattedMessage
+        warning shouldContain "jobim100"
+        warning shouldContain "2026-11-23"
+        warning shouldContain "2026-11-19"
+    }
+
+    @Test
+    fun `reads a labelled Datum with a two-digit year`() {
+        val (scraped, warnings) =
+            withScraperWarnings { rowWithNotice("<p>Datum: 10.03.27<br>Einlass: 19:00</p>", atcDateStart = "2027-03-08 18:00:00") }
+        scraped.shouldNotBeNull().eventDate shouldBe LocalDate.of(2027, 3, 10)
+        warnings shouldHaveSize 1
+    }
+
+    @Test
+    fun `keeps the calendar date when the Datum line is missing or not a dotted date`() {
+        val (scraped, warnings) =
+            withScraperWarnings {
+                listOf(
+                    "<p>Einlass: 19:00<br>Beginn: 20:00</p>",
+                    "<p>Datum: 19.-20. September 2026<br>Einlass: 19:00</p>",
+                    "<p>Datum: October 5, 2026<br>Einlass: 19:00</p>"
+                ).map { rowWithNotice(it).shouldNotBeNull().eventDate }
+            }
+        scraped shouldContainExactly List(3) { LocalDate.of(2026, 11, 14) }
+        warnings.shouldBeEmpty()
     }
 
     @Test
@@ -189,25 +273,6 @@ class SaalchenOverviewPageScraperTest {
 
     @Test
     fun `ignores links outside the notice's Tickets line and relative ticket links`() {
-        fun rowWithNotice(notice: String): ScrapedEvent? {
-            val escaped =
-                notice
-                    .replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                    .replace("\"", "&quot;")
-            val html =
-                """
-                <div class="views-row"><article class="node-event">
-                  <h2><a href="/veranstaltung/probe"><span>Probe</span></a></h2>
-                  <span class="location">Säälchen</span>
-                  <var class="atc_date_start">2026-11-14 19:00:00</var>
-                  <var class="atc_description">$escaped</var>
-                </article></div>
-                """.trimIndent()
-            return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).singleOrNull()
-        }
-
         rowWithNotice("<p>Einlass: 19:00<br>Facebook:<br><a href=\"https://www.facebook.com/x\">Facebook</a></p>")
             .shouldNotBeNull()
             .ticketUrl
