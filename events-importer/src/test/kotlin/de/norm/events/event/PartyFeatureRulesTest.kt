@@ -182,6 +182,9 @@ class PartyFeatureRulesTest {
                     "Dancefloors für Queers"
                 ),
                 Arguments.of(PartyFeature.QUEER, "Two dancefloors for queer folks and allies", "dancefloors for queer folks"),
+                Arguments.of(PartyFeature.QUEER, "Queerer Tresen", "Queerer Tresen"),
+                Arguments.of(PartyFeature.QUEER, "Mittwochs: Queer-Tresen mit DJ", "Queer-Tresen"),
+                Arguments.of(PartyFeature.QUEER, "Ein Tresen für Queers und Freund*innen", "Tresen für Queers"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Eine sexpositive Nacht mit Darkroom", "sexpositive"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "A sex-positive party with a play area", "sex-positive"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Dresscode: ganz in Weiß", "Dresscode"),
@@ -291,6 +294,8 @@ class PartyFeatureRulesTest {
                 Arguments.of(PartyFeature.QUEER, "Ein Gespräch zu queeren Aspekten der Clubkultur"),
                 Arguments.of(PartyFeature.QUEER, "FLINTA* LOVE AUF DER TANZFLÄCHE"),
                 Arguments.of(PartyFeature.QUEER, "Zwei Dancefloors für alle"),
+                Arguments.of(PartyFeature.QUEER, "Tresen"),
+                Arguments.of(PartyFeature.QUEER, "Stammtisch am Tresen"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Ein Abend über Sexualität und Positivität"),
                 Arguments.of(PartyFeature.SEX_POSITIVE, "Sex Pistols tribute night"),
                 Arguments.of(PartyFeature.DRESS_CODE, "Kein Dresscode, komm wie du bist"),
