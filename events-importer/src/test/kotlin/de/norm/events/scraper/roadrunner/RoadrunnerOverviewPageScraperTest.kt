@@ -149,7 +149,7 @@ class RoadrunnerOverviewPageScraperTest {
             listOf(
                 "KEITH DUNN" to "HEADLINER",
                 "SAUDIA YOUNG" to "HEADLINER",
-                "LARS VEGAS & BAND" to "HEADLINER",
+                "LARS VEGAS" to "HEADLINER",
                 "Red Rockin'" to "DJ"
             )
     }

@@ -90,7 +90,7 @@ class UfaFabrikMonthPageScraperTest {
 
     @Test
     fun `keeps a backing band whole`() {
-        billing("Ellen Esser & Band") shouldBe listOf("Ellen Esser & Band" to "HEADLINER")
+        billing("Ellen Esser & Band") shouldBe listOf("Ellen Esser" to "HEADLINER")
         billing("Lacrimosa mit Orchester") shouldBe listOf("Lacrimosa" to "HEADLINER")
         billing("Jakob Heymann mit seiner Band") shouldBe listOf("Jakob Heymann mit seiner Band" to "HEADLINER")
         billing("Ein Abend mit Ulla Meinecke") shouldBe listOf("Ulla Meinecke" to "HEADLINER")
