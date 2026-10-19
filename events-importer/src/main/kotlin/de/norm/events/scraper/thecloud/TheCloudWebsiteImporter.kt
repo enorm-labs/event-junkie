@@ -35,5 +35,6 @@ val THE_CLOUD_LIMITATIONS =
         EventSource.THE_CLOUD,
         AcceptedLimitation(LimitedAspect.GENRE, "every event is filed under one `Night Club` category; the style is only in the prose"),
         AcceptedLimitation(LimitedAspect.PRICE, "`cost` is empty on every event; ticket tiers appear only in the promoters' prose"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a club night names its DJs only in free prose; only a live show bills its act in the title")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a club night names its DJs only in free prose; only a live show bills its act in the title"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the Events Calendar organizer field is empty; a promoter appears only in the title or the prose")
     )

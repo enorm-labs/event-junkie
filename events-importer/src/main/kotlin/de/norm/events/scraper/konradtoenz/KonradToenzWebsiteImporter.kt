@@ -35,6 +35,7 @@ val KONRAD_TOENZ_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.END_TIME, "the site prints no end time"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the events block carries no pictures"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the bar sells no tickets and links no ticket shop"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the Sunday jazz night prints a greeting from the bartender where the style line goes"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),

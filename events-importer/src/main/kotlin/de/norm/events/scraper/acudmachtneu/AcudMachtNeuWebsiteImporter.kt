@@ -53,6 +53,7 @@ val ACUD_MACHT_NEU_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the site files events only as club night, concert, performance, exhibition or workshop"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the site prints one time per event and an end only in free text"),
         AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "the site links a presale shop and prints only the door price"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "some pages print only a presale link and no door price"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names a collective only in the event text"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled event can only disappear")

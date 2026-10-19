@@ -40,5 +40,7 @@ class WabeWebsiteImporter(
 val WABE_LIMITATIONS =
     VenueLimitations(
         EventSource.WABE,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one time per night, the start")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one time per night, the start"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the category names a format such as `Konzert`, and a style appears only in the prose"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "most nights name a presenter only in the prose, if at all")
     )

@@ -27,6 +27,7 @@ says so.
 | `ACUD_MACHT_NEU`       | `GENRE`            | the site files events only as club night, concert, performance, exhibition or workshop                                                           | —     |
 | `ACUD_MACHT_NEU`       | `END_TIME`         | the site prints one time per event and an end only in free text                                                                                  | —     |
 | `ACUD_MACHT_NEU`       | `PRICE_PRESALE`    | the site links a presale shop and prints only the door price                                                                                     | —     |
+| `ACUD_MACHT_NEU`       | `PRICE_BOX_OFFICE` | some pages print only a presale link and no door price                                                                                           | —     |
 | `ACUD_MACHT_NEU`       | `PROMOTERS`        | the site names a collective only in the event text                                                                                               | —     |
 | `ACUD_MACHT_NEU`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `ACUD_MACHT_NEU`       | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
@@ -121,6 +122,7 @@ says so.
 | `BROTFABRIK`           | `END_TIME`         | every event ends two hours after it starts, the calendar's default rather than the show's                                                        | —     |
 | `BROTFABRIK`           | `GENRE`            | the house files its nights by room, not by style                                                                                                 | —     |
 | `BROTFABRIK`           | `ARTISTS`          | the stage bills productions, and the readings name their authors only in the title and the prose                                                 | —     |
+| `BROTFABRIK`           | `PROMOTERS`        | a visiting company is named as presenter only in the prose                                                                                       | —     |
 | `CAFE_KOEPENICK`       | `START_TIME`       | most band nights are all-day calendar entries with no time                                                                                       | —     |
 | `CAFE_KOEPENICK`       | `DOORS_TIME`       | the calendar gives at most one time per night                                                                                                    | —     |
 | `CAFE_KOEPENICK`       | `DESCRIPTION`      | the calendar notes are the staff's own, not a text for visitors                                                                                  | —     |
@@ -305,18 +307,21 @@ says so.
 | `HAU1`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
 | `HAU1`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
 | `HAU1`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU1`                 | `PRICE_PRESALE`    | some production pages print no price                                                                                                             | —     |
 | `HAU1`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
 | `HAU1`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
 | `HAU1`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
 | `HAU2`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
 | `HAU2`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
 | `HAU2`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU2`                 | `PRICE_PRESALE`    | some production pages print no price                                                                                                             | —     |
 | `HAU2`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
 | `HAU2`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
 | `HAU2`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
 | `HAU3`                 | `ARTISTS`          | a staged work's line names an artist, a company or a series alike, so only concerts and DJ sets bill acts                                        | —     |
 | `HAU3`                 | `DOORS_TIME`       | only a few concerts print a doors time                                                                                                           | —     |
 | `HAU3`                 | `GENRE`            | the venue names a format such as music or dance, never a style                                                                                   | —     |
+| `HAU3`                 | `PRICE_PRESALE`    | some production pages print no price                                                                                                             | —     |
 | `HAU3`                 | `PRICE_BOX_OFFICE` | one price per production, sold alike online and at the box office                                                                                | —     |
 | `HAU3`                 | `TICKET_URL`       | the ticket buttons load by script for each date and are not in the page                                                                          | —     |
 | `HAU3`                 | `PROMOTERS`        | the venue presents or co-produces every production itself                                                                                        | —     |
@@ -431,6 +436,7 @@ says so.
 | `KONRAD_TOENZ`         | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
 | `KONRAD_TOENZ`         | `IMAGE`            | the events block carries no pictures                                                                                                             | —     |
 | `KONRAD_TOENZ`         | `TICKET_URL`       | the bar sells no tickets and links no ticket shop                                                                                                | —     |
+| `KONRAD_TOENZ`         | `GENRE`            | the Sunday jazz night prints a greeting from the bartender where the style line goes                                                             | —     |
 | `KONRAD_TOENZ`         | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `KONRAD_TOENZ`         | `PROMOTERS`        | the site credits no promoter                                                                                                                     | —     |
 | `KONRAD_TOENZ`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
@@ -443,6 +449,7 @@ says so.
 | `KUEHLSPOT`            | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `KUEHLSPOT`            | `PRICE_PRESALE`    | admission is a donation at the door and nothing is sold in advance                                                                               | —     |
 | `KUEHLSPOT`            | `PRICE_BOX_OFFICE` | admission is a sliding-scale donation, kept as a price note                                                                                      | —     |
+| `KUEHLSPOT`            | `PROMOTERS`        | a night names its host only when a guest association runs it                                                                                     | —     |
 | `KUEHLSPOT`            | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `KUEHLSPOT`            | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `KUEHLSPOT`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
@@ -610,6 +617,7 @@ says so.
 | `ORWOHAUS`             | `PRICE`            | prices appear only in the prose, and a house night often names none                                                                              | —     |
 | `ORWOHAUS`             | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
 | `ORWOHAUS`             | `ARTISTS`          | the line-up appears only in the prose, and a series title names no act                                                                           | —     |
+| `ORWOHAUS`             | `GENRE`            | the feed files most nights by room or series and names a style on few                                                                            | —     |
 | `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
 | `ORWOHAUS`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
 | `ORWOHAUS`             | `CANCELLATION`     | the feed marks no night cancelled or moved                                                                                                       | —     |
@@ -847,6 +855,7 @@ says so.
 | `THE_CLOUD`            | `GENRE`            | every event is filed under one `Night Club` category; the style is only in the prose                                                             | —     |
 | `THE_CLOUD`            | `PRICE`            | `cost` is empty on every event; ticket tiers appear only in the promoters' prose                                                                 | —     |
 | `THE_CLOUD`            | `ARTISTS`          | a club night names its DJs only in free prose; only a live show bills its act in the title                                                       | —     |
+| `THE_CLOUD`            | `PROMOTERS`        | the Events Calendar organizer field is empty; a promoter appears only in the title or the prose                                                  | —     |
 | `THE_DOOR`             | `SUBTITLE`         | each night has a title and a lineup, no second title line                                                                                        | —     |
 | `THE_DOOR`             | `DESCRIPTION`      | the grid prints no text about a night                                                                                                            | —     |
 | `THE_DOOR`             | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
@@ -931,6 +940,8 @@ says so.
 | `VOID_CLUB`            | `IMAGE`            | event cards carry no image; the hero slider shows other events than the listed nights                                                            | —     |
 | `VOID_CLUB`            | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
 | `WABE`                 | `DOORS_TIME`       | the site prints one time per night, the start                                                                                                    | —     |
+| `WABE`                 | `GENRE`            | the category names a format such as `Konzert`, and a style appears only in the prose                                                             | —     |
+| `WABE`                 | `PROMOTERS`        | most nights name a presenter only in the prose, if at all                                                                                        | —     |
 | `WEEKEND`              | `SUBTITLE`         | the listing prints a title and a blurb, no second title line                                                                                     | —     |
 | `WEEKEND`              | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
 | `WEEKEND`              | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
@@ -1004,6 +1015,7 @@ says so.
 | `ZKU`                  | `CANCELLATION`     | the site has no status field, so a cancelled entry can only disappear                                                                            | —     |
 | `ZKU`                  | `ARTISTS`          | a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them                                             | —     |
 | `ZKU`                  | `PRICE`            | most pages print no entry line, and a ticket button links an outside shop without a price                                                        | —     |
+| `ZKU`                  | `PROMOTERS`        | only some pages carry a `hosted by` credit                                                                                                       | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
 | `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |
