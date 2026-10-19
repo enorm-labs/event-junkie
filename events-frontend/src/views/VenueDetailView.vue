@@ -24,7 +24,7 @@ import type { Locale } from '@/i18n/locales'
 
 const { t, locale } = useI18n()
 
-const { entity: venue, description, detail } = useDetailPage('venue', useVenue, venuePageMeta)
+const { entity: venue, detail } = useDetailPage('venue', useVenue, venuePageMeta)
 
 /** "Holzmarktstr. 25 · Friedrichshain": a part the venue lacks drops out with its separator. */
 const addressLine = computed(() =>
@@ -217,14 +217,6 @@ const programme = computed(() => {
       </p>
       <DetailLinks :links="links" />
     </template>
-
-    <p
-      v-if="description"
-      :lang="description.lang ?? undefined"
-      class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
-    >
-      {{ description.text }}
-    </p>
 
     <!-- Every pill here opens a filtered list, which makes it a control (design.instructions.md §1). -->
     <section

@@ -54,14 +54,8 @@ const descriptionCredit = computed(() =>
       </p>
     </template>
 
-    <div v-if="description" class="space-y-2">
-      <p
-        :lang="description.lang ?? undefined"
-        class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
-      >
-        {{ description.text }}
-      </p>
+    <template #description-credit>
       <CreditLine v-if="descriptionCredit" :credit="descriptionCredit" kind="text" />
-    </div>
+    </template>
   </BaseDetailView>
 </template>

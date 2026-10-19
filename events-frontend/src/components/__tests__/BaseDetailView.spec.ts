@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import type { EventPage, EventSummary } from '@/api/types'
 import type { PastEvents } from '@/composables/usePastEvents'
+import type { ChosenDescription } from '@/lib/description'
 
 const stubs = {
   RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] },
@@ -28,7 +29,12 @@ function pager(events: EventSummary[], more: Partial<PastEvents> = {}): PastEven
   }
 }
 
-function mountWith(events: EventPage, past: PastEvents) {
+function mountWith(
+  events: EventPage,
+  past: PastEvents,
+  description: ChosenDescription | null = null,
+  slots: Record<string, string> = {},
+) {
   return mount(BaseDetailView, {
     props: {
       kind: 'Artist',
@@ -43,7 +49,9 @@ function mountWith(events: EventPage, past: PastEvents) {
       eventsError: null,
       emptyText: '',
       past,
+      description,
     },
+    slots,
     global: { stubs },
   })
 }
@@ -130,5 +138,58 @@ describe('BaseDetailView', () => {
     const header = wrapper.find('header')
     expect(header.element.firstElementChild?.tagName).toBe('H1')
     expect(header.text()).not.toContain('Artist')
+  })
+
+  describe('description', () => {
+    const text = (value: string, lang: ChosenDescription['lang'] = 'de'): ChosenDescription => ({
+      text: value,
+      lang,
+      machine: false,
+      side: 'original',
+    })
+    const credit = { 'description-credit': '<p data-testid="credit">Text: Wikipedia</p>' }
+
+    it('renders no paragraph and no credit without a description', () => {
+      const wrapper = mountWith(page(), pager([]), null, credit)
+
+      expect(wrapper.find('.text-prose').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="credit"]').exists()).toBe(false)
+    })
+
+    it('renders no paragraph and no credit for an empty text', () => {
+      const wrapper = mountWith(page(), pager([]), text(''), credit)
+
+      expect(wrapper.find('.text-prose').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="credit"]').exists()).toBe(false)
+    })
+
+    it('renders the text in its own language, line breaks kept, a long word broken anywhere', () => {
+      const word = 'Donaudampfschifffahrtsgesellschaftskapitän'.repeat(5)
+      const wrapper = mountWith(page(), pager([]), text(`${word}\nZweite Zeile`))
+
+      const paragraph = wrapper.get('[data-testid="detail-profile"] p.text-prose')
+      expect(paragraph.attributes('lang')).toBe('de')
+      expect(paragraph.text()).toContain(word)
+      expect(paragraph.classes()).toEqual(
+        expect.arrayContaining(['whitespace-pre-line', 'wrap-anywhere']),
+      )
+    })
+
+    it('declares no language it does not know', () => {
+      const wrapper = mountWith(page(), pager([]), text('Unbekannt', null))
+
+      expect(wrapper.get('p.text-prose').attributes('lang')).toBeUndefined()
+    })
+
+    it('puts the credit slot under the paragraph, before the default slot', () => {
+      const wrapper = mountWith(page(), pager([]), text('Ein Text'), {
+        ...credit,
+        default: '<section data-testid="extras" />',
+      })
+
+      const block = wrapper.get('p.text-prose').element.parentElement
+      expect(block?.lastElementChild?.getAttribute('data-testid')).toBe('credit')
+      expect(block?.nextElementSibling?.getAttribute('data-testid')).toBe('extras')
+    })
   })
 })

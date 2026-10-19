@@ -12,6 +12,7 @@ import EventRow from '@/components/EventRow.vue'
 import ReportLine from '@/components/ReportLine.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
+import type { ChosenDescription } from '@/lib/description'
 import type { ImageCredit } from '@/lib/imageCredit'
 import type { PastEvents } from '@/composables/usePastEvents'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
@@ -20,9 +21,9 @@ import { useI18n } from 'vue-i18n'
 
 /**
  * Presentational shell shared by the artist, venue and promoter detail pages: the loading /
- * not-found / error scaffold, the hero header and both event feeds. Slots: `meta` for
- * entity-specific header metadata under the name, default for content between the header and
- * the events feed.
+ * not-found / error scaffold, the hero header, the description and both event feeds. Slots: `meta`
+ * for entity-specific header metadata under the name, `description-credit` for a line under the
+ * description, default for content between the description and the events feed.
  */
 const props = defineProps<{
   /** Entity kind label, e.g. "Artist" — for the not-found heading. */
@@ -44,6 +45,8 @@ const props = defineProps<{
   intrinsicHeight?: number | null
   /** Who to credit for the image, or null where it carries no credit (#1275). */
   credit?: ImageCredit | null
+  /** The description in the visitor's language where one exists (`descriptionFor`). */
+  description?: ChosenDescription | null
   /** Upcoming-events feed state (from `useEventSearch`). */
   events: EventPage | null
   eventsLoading: boolean
@@ -127,6 +130,16 @@ const { compact } = useCompactView()
           <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
           <slot name="meta" />
         </header>
+
+        <div v-if="description?.text" class="space-y-2">
+          <p
+            :lang="description.lang ?? undefined"
+            class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
+          >
+            {{ description.text }}
+          </p>
+          <slot name="description-credit" />
+        </div>
 
         <slot />
 

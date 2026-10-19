@@ -25,7 +25,7 @@ interface DetailEntity extends Described, AttributedImage {
 /**
  * The data side of a venue, artist or promoter page: the entity by the route's slug, its upcoming
  * and past events, the page meta, and the props `BaseDetailView` takes, as `detail` for a
- * `v-bind`. The view adds only what is its own: the `meta` slot, the description, the extras.
+ * `v-bind`. The view adds only what is its own: the `meta` slot and the extras.
  */
 export function useDetailPage<T extends DetailEntity>(
   kind: DetailKind,
@@ -94,6 +94,7 @@ export function useDetailPage<T extends DetailEntity>(
     intrinsicWidth: entity.value?.intrinsicWidth,
     intrinsicHeight: entity.value?.intrinsicHeight,
     credit: imageCredit(entity.value),
+    description: description.value,
     events: events.value,
     eventsLoading: eventsLoading.value,
     eventsRetrying: eventsRetrying.value,
