@@ -35,6 +35,7 @@ val KUEHLSPOT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "admission is a donation at the door and nothing is sold in advance"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "admission is a sliding-scale donation, kept as a price note"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a night names its host only when a guest association runs it"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled night can only disappear"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site publishes no page per night, so every night points at the home page")

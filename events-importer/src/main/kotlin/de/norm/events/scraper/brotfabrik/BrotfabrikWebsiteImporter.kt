@@ -38,5 +38,6 @@ val BROTFABRIK_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the api carries one start time per event and no doors time"),
         AcceptedLimitation(LimitedAspect.END_TIME, "every event ends two hours after it starts, the calendar's default rather than the show's"),
         AcceptedLimitation(LimitedAspect.GENRE, "the house files its nights by room, not by style"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the stage bills productions, and the readings name their authors only in the title and the prose")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the stage bills productions, and the readings name their authors only in the title and the prose"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a visiting company is named as presenter only in the prose")
     )

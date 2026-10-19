@@ -47,5 +47,6 @@ val ZKU_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no status field, so a cancelled entry can only disappear"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them"),
-        AcceptedLimitation(LimitedAspect.PRICE, "most pages print no entry line, and a ticket button links an outside shop without a price")
+        AcceptedLimitation(LimitedAspect.PRICE, "most pages print no entry line, and a ticket button links an outside shop without a price"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "only some pages carry a `hosted by` credit")
     )

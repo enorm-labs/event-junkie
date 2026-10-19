@@ -78,6 +78,7 @@ val HAU_LIMITATIONS =
                 ),
                 AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a few concerts print a doors time"),
                 AcceptedLimitation(LimitedAspect.GENRE, "the venue names a format such as music or dance, never a style"),
+                AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "some production pages print no price"),
                 AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "one price per production, sold alike online and at the box office"),
                 AcceptedLimitation(LimitedAspect.TICKET_URL, "the ticket buttons load by script for each date and are not in the page"),
                 AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents or co-produces every production itself")

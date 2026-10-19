@@ -43,6 +43,7 @@ val ORWOHAUS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, and a house night often names none"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the line-up appears only in the prose, and a series title names no act"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the feed files most nights by room or series and names a style on few"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the feed marks no night sold out"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the feed marks no night cancelled or moved")
