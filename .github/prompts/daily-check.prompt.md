@@ -158,10 +158,11 @@ curl -s 'http://localhost:28081/api/admin/instagram-drafts?status=PENDING&size=1
 - **Count** the pending drafts and the nights they form: one night is one `venueName` and `eventDate`. Count how many have a `createdAt` inside the last
   `$HOURS`.
 - **The pass.** Confirm it ran. A `refused`, a `failed`, or no line at all is ACT, with the line. A refused access is a token to renew
-  (`scripts/instagram-page-token.sh`, `docs/ops/SECRETS.md`):
+  (`scripts/instagram-page-token.sh`, `docs/ops/SECRETS.md`). The query matches the pass's own lines: a bare `Instagram` also matches the nginx lines of
+  the Instagram in-app browser, which fill the 20 rows:
 
     ```sh
-    scripts/o2-query.sh production sql "SELECT _timestamp, body FROM default WHERE str_match(body, 'Instagram') ORDER BY _timestamp DESC LIMIT 20" --hours "$HOURS"
+    scripts/o2-query.sh production sql "SELECT _timestamp, body FROM default WHERE str_match(body, 'Instagram pass') OR str_match(body, 'Instagram venue') OR str_match(body, 'Instagram access') ORDER BY _timestamp DESC LIMIT 20" --hours "$HOURS"
     ```
 
 - **Age.** The pass deletes a draft nobody judged in 14 days, caption included. A pending draft with a `createdAt` older than 10 days is ACT: "review N
