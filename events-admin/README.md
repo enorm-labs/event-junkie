@@ -46,6 +46,12 @@ Events (`src/views/EventsView.vue`) finds any event, to open it in the event edi
 `from` = today in Berlin. Enter or Search sends the title; a venue, a festival or the switch searches at once. The list shows 20 events per page, by date and then start time: oldest first, or newest first while past events are shown. A save in the editor replaces
 the row with the saved event. The query string holds the search, so a reload keeps it.
 
+Picks (`src/views/PicksView.vue`) lists the current picks (#3064): the events whose `featuredUntil` is still ahead
+(`GET /api/admin/events?featured=true`), earliest start first, with the venue, the start and the end of the pick in Berlin time. The public events list leads
+with the earliest pick that matches the visitor's filters (#1262), so a second pick shows here and not there. A title opens the event editor. Clear reads the
+event again and PUTs it back with `featuredUntil: null`. The event editor has an "Our pick until" field, a Berlin date and time. Save sends the instant it
+names, sends `null` when the field is cleared, and leaves `featuredUntil` out when the field is untouched, so the importer keeps the stored pick.
+
 Venues to review (`src/views/VenueReviewView.vue`) lists `GET /api/admin/venues/needs-review`: the venues without an importer whose site failed three monthly checks
 in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. "Closed on…" asks for the last open day and sets `closedOn` (ADR-046). The default
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.

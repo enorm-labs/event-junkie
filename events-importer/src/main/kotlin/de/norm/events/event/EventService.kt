@@ -24,6 +24,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -107,7 +108,8 @@ class EventService(
                 billedIds?.let { Criteria.where("id").`in`(it) },
                 filter.title?.takeIf { it.isNotBlank() }?.let { containsIgnoringCase("title", it.trim()) },
                 filter.from?.let { Criteria.where("eventDate").greaterThanOrEquals(it) },
-                filter.festivalId?.let { Criteria.where("festivalId").`is`(it) }
+                filter.festivalId?.let { Criteria.where("festivalId").`is`(it) },
+                Criteria.where("featuredUntil").greaterThan(Instant.now()).takeIf { filter.featured }
             ).reduceOrNull(Criteria::and)
         return when {
             billedIds?.isEmpty() == true -> emptyList<EventEntity>() to 0L
@@ -480,6 +482,7 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
  * @property title a part of the title, in any case.
  * @property from the first `eventDate`: an event over midnight counts on the day it starts.
  * @property festivalId only the events linked to this festival; an unknown one gives an empty page.
+ * @property featured only the current picks: `featuredUntil` is set and still ahead. False does not narrow.
  */
 data class EventListFilter(
     val venueId: Long? = null,
@@ -487,7 +490,8 @@ data class EventListFilter(
     val artistId: Long? = null,
     val title: String? = null,
     val from: LocalDate? = null,
-    val festivalId: Long? = null
+    val festivalId: Long? = null,
+    val featured: Boolean = false
 )
 
 /** A 404 for a festival ID that names no festival, before the foreign key refuses it with a 500. */
