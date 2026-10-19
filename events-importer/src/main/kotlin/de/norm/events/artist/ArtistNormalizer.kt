@@ -105,6 +105,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // rule of its own: `KOS:MO` and `RE:NI` would come out no better.
         "ccosmo" to "CCOSMO",
         "formatb" to "Format:B",
+        // The act writes its name in capitals, and ESNS, festivalinfo.nl and Säälchen bill it so (#3623).
+        "micha" to "MICHA",
         // One DJ billed with and without the prefix: the same club, or the same scene at two (/artist-cleanup).
         "djbenwashington" to "Ben Washington",
         "djbuttchin" to "Buttchin",
