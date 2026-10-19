@@ -96,9 +96,9 @@ Unless `--no-logs`, or the tunnel is down: run [`/log-check`](log-check.prompt.m
 report is its own file. Carry its verdict lines and its NEW items into this report, and link the file. It reads the same `alert_history` against the logs:
 where its alert rows give a cause Step 3 did not, its answer replaces Step 3's line.
 
-## Step 5 — The data: new artists, the worklist, the suggestions and the Instagram drafts
+## Step 5 — The data: new artists, the worklist, the suggestions, the Instagram drafts and the manual venues
 
-Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all four, even with `--no-logs`.
+Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all five, even with `--no-logs`.
 
 **New artists.**
 
@@ -173,6 +173,14 @@ curl -s 'http://localhost:28081/api/admin/instagram-drafts?status=PENDING&size=1
 
 Apply nothing. The operator creates or rejects on the admin app's "Instagram drafts" page.
 
+**The manual venues** (#2993). Print one line, `<n> manual venues overdue`: the venues without an importer that nobody checked, or checked 14 or more
+days ago. The 14 is `PROGRAMME_CHECK_DAYS` in `events-admin/src/api/venues.ts`. The operator works them on the admin app's "Manual venues" page.
+
+```sh
+curl -s 'http://localhost:28081/api/admin/venues/manual' | jq --arg cut "$(date -u -v-14d +%FT%TZ 2>/dev/null || date -u -d '14 days ago' +%FT%TZ)" \
+  '[.[] | select(.programmeCheckedAt == null or (.programmeCheckedAt | sub("\\.[0-9]+"; "")) <= $cut)] | "\(length) manual venues overdue"' -r
+```
+
 ## Step 6 — The bot pull requests
 
 For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]` (`app/…` in the JSON), in that order:
@@ -195,7 +203,7 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists with their verdicts, the `/worklist` line: its draft and proposal counts, and the link to its report, and the
    suggestions: the open and new counts by check and field, the night's run result, any pattern drafted, and the numbered verdicts. The Instagram
-   drafts: the pending and new counts, the pass result, and the numbered verdicts.
+   drafts: the pending and new counts, the pass result, and the numbered verdicts. The manual venues: the overdue line.
 5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
    one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.

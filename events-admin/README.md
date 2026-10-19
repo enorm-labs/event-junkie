@@ -57,6 +57,12 @@ in a row (#2812), longest-failing first. "Still open" sets `reviewedAt` to now. 
 day is the day the site began to fail. Each action reads the venue and sends it back in full with one field changed, because the PUT replaces the whole venue.
 "Check now" starts one pass of the site check in the background.
 
+Manual venues (`src/views/ManualVenuesView.vue`, `/manual-venues`) lists `GET /api/admin/venues/manual`: the open venues without an importer, whose events
+a person enters by hand (#2993). A venue is due `PROGRAMME_CHECK_DAYS` (14) days after its last check, so about 8 of 110 venues are due each day. The never
+checked come first, then the oldest check, and a due row carries a Due badge. A row links the programme and shows the day its newest event was entered.
+New event opens the New event form with `?venue=<id>`, which chooses the venue. Checked calls `PUT /api/admin/venues/{id}/programme-checked`, and the row
+moves to the end.
+
 Venues (`src/views/VenuesView.vue`) lists every venue by name, with a name filter in the browser. Closed venues (`closedOn` set) come last, greyed. Tags opens
 a venue's character tags (#2379) in the order of `VenueCharacterTag`, each with the source URL the importer stores (`src/components/VenueCharacterTags.vue`).
 Save PUTs `{ sourceUrl }` to `/api/admin/venues/{id}/character-tags/{tag}`, for a new tag and for a changed URL. The app takes only an `https://` URL and

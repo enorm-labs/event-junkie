@@ -3,6 +3,7 @@ import {
   Building2,
   CalendarPlus,
   CalendarSearch,
+  ClipboardCheck,
   Database,
   GlobeX,
   Inbox,
@@ -38,6 +39,7 @@ const NAV = [
   { title: 'Artists to review', to: '/artists', icon: MicVocal },
   { title: 'Venues to review', to: '/venues/review', icon: GlobeX },
   { title: 'Venues', to: '/venues', icon: Building2 },
+  { title: 'Manual venues', to: '/manual-venues', icon: ClipboardCheck },
   { title: 'Festivals', to: '/festivals', icon: PartyPopper },
   { title: 'New event', to: '/events/new', icon: CalendarPlus },
 ]

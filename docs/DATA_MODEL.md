@@ -53,6 +53,7 @@ classDiagram
         List programmeEventTypes
         String? programmeUrl
         Instant? reviewedAt
+        Instant? programmeCheckedAt
         LocalDate? closedOn
         Instant? createdAt
         Instant? updatedAt
@@ -262,6 +263,7 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 | `programme_event_types`    | `TEXT[]`       | No       | `EventType` names, derived from the venue's events              | `{CONCERT,PARTY}`                                 |
 | `programme_url`            | `TEXT`         | Yes      | Where a venue we do not import publishes its programme          | `https://ra.co/clubs/185172`                      |
 | `reviewed_at`              | `TIMESTAMPTZ`  | Yes      | When a person last confirmed address, coordinates and opening   | `2026-10-06 18:00:00+00`                          |
+| `programme_checked_at`     | `TIMESTAMPTZ`  | Yes      | When a person last read `programme_url` for new events          | `2026-10-12 09:00:00+00`                          |
 | `closed_on`                | `DATE`         | Yes      | The last day the venue is open, when it closes for good         | `2026-10-31`                                      |
 | `created_at`               | `TIMESTAMPTZ`  | No       | Record creation timestamp                                       |                                                   |
 | `updated_at`               | `TIMESTAMPTZ`  | No       | Last modification timestamp                                     |                                                   |
@@ -277,6 +279,12 @@ says so. The BFF derives `imported` from the source rows and the upcoming events
 lands, or when an Instagram draft or a hand edit adds an event (ADR-048). Such a venue has no upcoming events. Its page
 links to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
 venue's facts. An import never sets it. The site check in `venue_site_check` reads it.
+
+**A person enters the events of a venue we do not import by hand (#2993).** `GET /api/admin/venues/manual` lists every
+open venue that no `event_source` row points at. Each row carries `programme_checked_at` and the `created_at` of the
+newest event at the venue. The list starts with the venues nobody checked, then the oldest check.
+`PUT /api/admin/venues/{id}/programme-checked` sets `programme_checked_at` to now. A venue PUT keeps the column, and an
+import never sets it. It is not `reviewed_at`: that column records the review of the venue's facts.
 
 **A venue that closes for good keeps its row (ADR-046).** A person sets `closed_on`, the last day the venue is open,
 through the admin API or a data migration. From the day after, the BFF venue list leaves the venue out unless the request

@@ -62,6 +62,8 @@ data class Venue(
     val programmeUrl: String? = null,
     /** When a person last confirmed the address, coordinates and opening. `null` when nobody has. Never set by an import. */
     val reviewedAt: Instant? = null,
+    /** When a person last read [programmeUrl] to enter new events by hand (#2993). `null` when nobody has. Never set by an import. */
+    val programmeCheckedAt: Instant? = null,
     /** The last day the venue was open, when it closed for good (ADR-046). `null` while it is open. Never set by an import. */
     val closedOn: LocalDate? = null,
     /** Timestamp when this record was first created. Set by the database. */

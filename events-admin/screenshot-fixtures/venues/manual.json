@@ -1,0 +1,42 @@
+[
+  {
+    "id": 9101,
+    "slug": "funkloch",
+    "name": "Funkloch",
+    "programmeUrl": "https://funkloch.example/programm",
+    "programmeCheckedAt": null,
+    "newestEventCreatedAt": null
+  },
+  {
+    "id": 9102,
+    "slug": "kellerkind",
+    "name": "Kellerkind",
+    "programmeUrl": null,
+    "programmeCheckedAt": null,
+    "newestEventCreatedAt": "2026-07-12T18:40:00Z"
+  },
+  {
+    "id": 9104,
+    "slug": "salon-am-kanal",
+    "name": "Salon am Kanal",
+    "programmeUrl": "https://ra.example/clubs/salon-am-kanal",
+    "programmeCheckedAt": "2026-09-21T08:15:00Z",
+    "newestEventCreatedAt": "2026-09-21T08:30:00Z"
+  },
+  {
+    "id": 9103,
+    "slug": "hinterhof-bar",
+    "name": "Hinterhof Bar",
+    "programmeUrl": "https://hinterhof-bar.example/events",
+    "programmeCheckedAt": "2026-10-03T09:00:00Z",
+    "newestEventCreatedAt": "2026-10-03T09:20:00Z"
+  },
+  {
+    "id": 9105,
+    "slug": "zum-goldenen-hahn",
+    "name": "Zum goldenen Hahn",
+    "programmeUrl": "https://goldener-hahn.example/konzerte",
+    "programmeCheckedAt": "2026-10-16T19:00:00Z",
+    "newestEventCreatedAt": "2026-10-16T19:05:00Z"
+  }
+]

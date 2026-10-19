@@ -95,6 +95,60 @@ export async function runSiteCheck(fetchFn: typeof fetch = fetch): Promise<void>
   await ensureOk(response, `POST ${path}`)
 }
 
+/** One row of `GET /api/admin/venues/manual`. `ManualVenueResponse` in `ManualVenueStore.kt`. */
+export interface ManualVenue {
+  id: number
+  slug: string
+  name: string
+  programmeUrl: string | null
+  /** When a person last read the programme; null when nobody has. */
+  programmeCheckedAt: string | null
+  /** When the newest event at the venue was entered; null when it has none. */
+  newestEventCreatedAt: string | null
+}
+
+/** A venue is due again this many days after its last check: about 8 of 110 venues a day (#2993). */
+export const PROGRAMME_CHECK_DAYS = 14
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** When [venue] is due: at once when nobody checked it, else [PROGRAMME_CHECK_DAYS] after the check. */
+export function dueAt(venue: ManualVenue): number {
+  return venue.programmeCheckedAt === null
+    ? -Infinity
+    : Date.parse(venue.programmeCheckedAt) + PROGRAMME_CHECK_DAYS * DAY_MS
+}
+
+/** Whether [venue] is due at [now]. A check exactly [PROGRAMME_CHECK_DAYS] ago is due. */
+export function isDue(venue: ManualVenue, now: number = Date.now()): boolean {
+  return dueAt(venue) <= now
+}
+
+/** Never checked first, then the oldest check, then by name. The importer sorts the same way. */
+export function sortManualVenues(venues: readonly ManualVenue[]): ManualVenue[] {
+  return [...venues].sort((a, b) => dueAt(a) - dueAt(b) || a.name.localeCompare(b.name))
+}
+
+/** The open venues no event source points at, whose events a person enters by hand (#2993). */
+export async function fetchManualVenues(fetchFn: typeof fetch = fetch): Promise<ManualVenue[]> {
+  const path = `${VENUES}/manual`
+  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
+  await ensureOk(response, `GET ${path}`)
+  return (await response.json()) as ManualVenue[]
+}
+
+/** Records that the programme of venue [id] was read now. Answers with the venue; this is what the page reads of it. */
+export async function markProgrammeChecked(
+  id: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<Pick<ManualVenue, 'id' | 'programmeCheckedAt'>> {
+  const path = `${VENUES}/${id}/programme-checked`
+  const response = await fetchFn(path, { method: 'PUT', headers: { Accept: 'application/json' } })
+  await ensureOk(response, `PUT ${path}`)
+  const { programmeCheckedAt } = (await response.json()) as ManualVenue
+  return { id, programmeCheckedAt }
+}
+
 /**
  * `VenueRequest.kt`: the body of `PUT /api/admin/venues/{id}`. The PUT replaces the whole venue,
  * so a field left out resets to its default.

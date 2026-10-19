@@ -39,6 +39,22 @@ class VenueController(
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
     ): PageResponse<VenueResponse> = venueService.findAll(pageable)
 
+    /**
+     * The open venues no event source points at, whose events a person enters by hand (#2993): never checked
+     * first, then the oldest check. Each carries when its newest event was entered.
+     */
+    @GetMapping("/manual")
+    @Operation(summary = "List the open venues without an importer, the longest unchecked first")
+    suspend fun findManual(): List<ManualVenueResponse> = venueService.findManual()
+
+    /** Records that a person read the venue's programme now. Never set by an import. */
+    @PutMapping("/{id}/programme-checked")
+    @Operation(summary = "Mark the programme of a venue without an importer as checked now")
+    suspend fun markProgrammeChecked(
+        @Parameter(description = "Database ID of the venue.", example = "1")
+        @PathVariable id: Long
+    ): VenueResponse = venueService.markProgrammeChecked(id)
+
     /** Retrieves a single venue by its database ID. */
     @GetMapping("/{id}")
     @Operation(summary = "Get a single venue by ID")
