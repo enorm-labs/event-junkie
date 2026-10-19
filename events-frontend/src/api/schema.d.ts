@@ -923,6 +923,11 @@ export interface components {
             genreTags?: string[];
             /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
             festival?: components["schemas"]["FestivalSummaryResponse"] | null;
+            /**
+             * @description True while an operator features the event as a pick. The page marks it as one. The value is cached like the rest of the response.
+             * @example false
+             */
+            featured?: boolean;
         };
         /** @description The festival an event belongs to */
         FestivalSummaryResponse: {
@@ -1597,6 +1602,11 @@ export interface components {
             postponedTo?: components["schemas"]["PostponedToResponse"] | null;
             /** @description The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter */
             festival?: components["schemas"]["FestivalSummaryResponse"] | null;
+            /**
+             * @description True while an operator features the event as a pick. The page marks it as one. The value is cached like the rest of the response.
+             * @example false
+             */
+            featured?: boolean;
         };
         /** @description An artist's participation in an event lineup */
         LineupEntryResponse: {

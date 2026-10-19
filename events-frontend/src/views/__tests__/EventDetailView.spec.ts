@@ -98,6 +98,40 @@ describe('EventDetailView', () => {
     )
   })
 
+  it('puts our pick on the poster corner of a featured night only, in both locales (#3065)', async () => {
+    const poster = { ...night, imageUrl: 'https://img.example/a.jpg' }
+    const plain = await mountEvent(poster)
+    expect(plain.find('[data-testid="pick-badge"]').exists()).toBe(false)
+    plain.unmount()
+
+    const en = await mountEvent({ ...poster, featured: true })
+    const pill = en.get('[data-testid="pick-badge"]')
+    expect(pill.text()).toBe('Our pick')
+    expect(pill.classes()).toEqual(expect.arrayContaining(['absolute', 'top-3', 'left-3']))
+    // A sibling of the image, inside the poster's box, not inside the picture.
+    expect(pill.element.parentElement?.querySelector('img')).not.toBeNull()
+    expect(pill.element.closest('picture')).toBeNull()
+    en.unmount()
+
+    const de = await mountEvent({ ...poster, featured: true }, 'de')
+    expect(de.get('[data-testid="pick-badge"]').text()).toBe('Unser Tipp')
+  })
+
+  it('puts our pick in the header of a featured night with no poster (#3065)', async () => {
+    const view = await mountEvent({ ...night, featured: true })
+    const pill = view.get('[data-testid="pick-badge"]')
+
+    expect(pill.element.closest('header')).not.toBeNull()
+    expect(pill.classes()).not.toContain('absolute')
+    expect(view.findAll('[data-testid="pick-badge"]')).toHaveLength(1)
+  })
+
+  it('keeps our pick on a cancelled featured night (#3065)', async () => {
+    const view = await mountEvent({ ...night, featured: true, status: 'CANCELLED' })
+
+    expect(view.find('[data-testid="pick-badge"]').exists()).toBe(true)
+  })
+
   it('tags the ticket and source links as referrals from this site (#2770)', async () => {
     const view = await mountEvent(night)
 

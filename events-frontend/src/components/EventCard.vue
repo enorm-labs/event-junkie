@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import { Sparkles } from '@lucide/vue'
 import { computed } from 'vue'
 import type { EventSummary } from '@/api/types'
 import EventPoster from '@/components/EventPoster.vue'
 import PosterCardShell from '@/components/PosterCardShell.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
+import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
@@ -81,14 +81,7 @@ const { t } = useI18n()
         v-if="lead || event.festival?.name"
         class="absolute top-3 right-3 left-3 z-10 flex flex-col items-start gap-2"
       >
-        <BaseBadge
-          v-if="lead"
-          variant="primary"
-          class="inline-flex items-center gap-1.5 font-mono text-body tracking-eyebrow uppercase"
-        >
-          <Sparkles aria-hidden="true" class="size-4" />
-          {{ t('events.card.ourPick') }}
-        </BaseBadge>
+        <PickBadge v-if="lead" />
         <BaseBadge
           v-if="event.festival?.name"
           :title="t('events.card.partOf', { name: event.festival.name })"

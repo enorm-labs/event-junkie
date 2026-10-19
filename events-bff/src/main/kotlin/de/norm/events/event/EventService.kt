@@ -170,8 +170,7 @@ class EventService(
         val artistsById = fetchArtists(artistLinks.map { it.artistId })
 
         val promoterIds = eventPromoterRepository.findByEventId(eventId).toList().map { it.promoterId }
-        val promoterEntities =
-            if (promoterIds.isEmpty()) emptyList() else promoterRepository.findByIdIn(promoterIds).toList()
+        val promoterEntities = if (promoterIds.isEmpty()) emptyList() else promoterRepository.findByIdIn(promoterIds).toList()
 
         val genreLinks = eventGenreTagRepository.findByEventId(eventId).toList()
         val genreTagsById =
@@ -215,6 +214,7 @@ class EventService(
             images.serve(event.imageUrl, DETAIL_WIDTH),
             descriptionWithheld = licensed.descriptionWithheld,
             imageWithheld = licensed.imageWithheld,
+            now = Instant.now(clock),
             enrichmentSources = eventEnrichmentRepository.findByEventId(eventId),
             changes = eventChangeRepository.recent(eventId),
             postponedTo = postponementRepository.newDate(event),
@@ -321,6 +321,7 @@ class EventService(
         val festivalIds = events.mapNotNull { it.festivalId }.distinct()
         val festivalsById =
             if (festivalIds.isEmpty()) emptyMap() else festivalRepository.findByIdIn(festivalIds).toList().associateBy { it.id }
+        val now = Instant.now(clock)
 
         return licensed.map { licensedEvent ->
             val event = licensedEvent.event
@@ -336,6 +337,7 @@ class EventService(
                 genreTags,
                 images.serve(event.imageUrl, POSTER_WIDTH),
                 imageWithheld = licensedEvent.imageWithheld,
+                now = now,
                 festival = event.festivalId?.let { festivalsById[it] }?.let(FestivalSummaryResponse::fromEntity)
             )
         }

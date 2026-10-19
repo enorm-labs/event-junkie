@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import BaseBadge from '@/components/BaseBadge.vue'
+import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
@@ -21,8 +22,13 @@ const props = withDefaults(
     event: EventSummary
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
+    /**
+     * Whether a featured event shows its "Our pick" pill (#3065). The page decides: `/events` marks
+     * a pick, and the home page, the map and the calendar do not.
+     */
+    marksPick?: boolean
   }>(),
-  { as: 'h3' },
+  { as: 'h3', marksPick: false },
 )
 
 const { formatShortDate, formatEventTime } = useFormat()
@@ -42,11 +48,14 @@ const meta = computed(() =>
 )
 
 const price = computed(() => formatPrice(props.event.pricePresale, props.event.priceCurrency))
+
+const showsPick = computed(() => props.marksPick && props.event.featured === true)
 </script>
 
 <template>
   <RouterLink :to="localePath(`/events/${event.slug}`)" class="group block py-3">
-    <div class="flex items-baseline gap-3">
+    <!-- A pick's line may wrap, so on a phone the title moves under the pill instead of shrinking to a word. -->
+    <div :class="['flex items-baseline gap-x-3', showsPick && 'flex-wrap gap-y-1']">
       <span class="shrink-0 text-meta text-muted-foreground tabular-nums">
         {{ formatShortDate(event.eventDate) }}
         ·
@@ -62,10 +71,14 @@ const price = computed(() => formatPrice(props.event.pricePresale, props.event.p
         <span class="relative inline-flex size-2 rounded-full bg-primary" />
         <span class="sr-only">{{ t('events.card.onNow') }}</span>
       </span>
+      <PickBadge v-if="showsPick" small class="shrink-0 self-center" />
       <component
         :is="as"
         :title="eventLabel(event.title, event.venue?.name)"
-        class="min-w-0 flex-1 truncate text-body font-medium group-hover:underline group-hover:underline-offset-4"
+        :class="[
+          'min-w-0 flex-1 truncate text-body font-medium group-hover:underline group-hover:underline-offset-4',
+          showsPick && 'basis-40',
+        ]"
       >
         {{ event.title }}
       </component>

@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
 import type { EventSummary } from '@/api/types'
+import { useCompactView } from '@/composables/useCompactView'
 
 const { getMock } = vi.hoisted(() => ({
   getMock: vi.fn<(path: string, init: { params: { query: unknown } }) => Promise<unknown>>(),
@@ -36,7 +37,10 @@ const stubs = {
     template: '<article :data-slug="event.slug" :data-lead="lead || undefined" />',
     props: { event: Object, lead: Boolean },
   },
-  EventRow: { template: '<article :data-slug="event.slug" />', props: ['event'] },
+  EventRow: {
+    template: '<article :data-slug="event.slug" :data-marks-pick="marksPick || undefined" />',
+    props: { event: Object, marksPick: Boolean },
+  },
   EventFilterBar: true,
 }
 
@@ -278,6 +282,27 @@ describe('EventsView lead', () => {
 
     expect(slugs()).toEqual(['started', 'later'])
     expect(wrapper!.find('[data-lead]').exists()).toBe(false)
+  })
+
+  it('keeps the pick in its place in the compact view, and asks the rows to mark it (#3065)', async () => {
+    const { toggle } = useCompactView()
+    getMock.mockResolvedValue({
+      content: [started, { ...later, featured: true }],
+      page: 0,
+      totalPages: 1,
+      totalElements: 2,
+      lead: { ...later, featured: true },
+    })
+    toggle()
+    try {
+      await mountAt('/en/events')
+
+      expect(slugs()).toEqual(['started', 'later'])
+      expect(wrapper!.find('[data-lead]').exists()).toBe(false)
+      expect(wrapper!.findAll('[data-marks-pick]')).toHaveLength(2)
+    } finally {
+      toggle()
+    }
   })
 })
 

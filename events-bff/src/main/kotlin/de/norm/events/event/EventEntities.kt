@@ -64,6 +64,8 @@ data class EventEntity(
     val free: Boolean = false,
     /** The festival an operator linked the event to (#3273), or null. */
     val festivalId: Long? = null,
+    /** Until when an operator features the event (#1262), or null. */
+    val featuredUntil: Instant? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

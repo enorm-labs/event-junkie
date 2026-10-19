@@ -13,6 +13,7 @@ import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.venue.VenueSummaryResponse
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
@@ -84,7 +85,9 @@ data class EventSummaryResponse(
     @Schema(description = "Normalized genre tags", example = "[\"Punk\"]")
     val genreTags: List<String>,
     @Schema(description = FESTIVAL_DESCRIPTION)
-    val festival: FestivalSummaryResponse? = null
+    val festival: FestivalSummaryResponse? = null,
+    @Schema(description = FEATURED_DESCRIPTION, example = "false")
+    val featured: Boolean = false
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -95,6 +98,7 @@ data class EventSummaryResponse(
             genreTags: List<String>,
             image: ServedImage,
             imageWithheld: Boolean,
+            now: Instant,
             festival: FestivalSummaryResponse? = null
         ): EventSummaryResponse =
             EventSummaryResponse(
@@ -127,7 +131,8 @@ data class EventSummaryResponse(
                 venue = venue,
                 artistNames = artistNames,
                 genreTags = genreTags,
-                festival = festival
+                festival = festival,
+                featured = entity.isFeaturedAt(now)
             )
     }
 }
@@ -312,7 +317,9 @@ data class EventDetailResponse(
     )
     val postponedTo: PostponedToResponse? = null,
     @Schema(description = FESTIVAL_DESCRIPTION)
-    val festival: FestivalSummaryResponse? = null
+    val festival: FestivalSummaryResponse? = null,
+    @Schema(description = FEATURED_DESCRIPTION, example = "false")
+    val featured: Boolean = false
 ) {
     companion object {
         @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
@@ -326,6 +333,7 @@ data class EventDetailResponse(
             image: ServedImage,
             imageWithheld: Boolean,
             descriptionWithheld: Boolean,
+            now: Instant,
             enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
             changes: List<EventChangeResponse> = emptyList(),
             postponedTo: PostponedToResponse? = null,
@@ -380,7 +388,8 @@ data class EventDetailResponse(
                 features = features,
                 changes = changes,
                 postponedTo = postponedTo,
-                festival = festival
+                festival = festival,
+                featured = entity.isFeaturedAt(now)
             )
     }
 }
@@ -446,8 +455,13 @@ data class LineupEntryResponse(
     val setEnd: OffsetDateTime? = null
 )
 
+/** Whether an operator features the event at [now]: its window ends after [now] (#1262). */
+private fun EventEntity.isFeaturedAt(now: Instant): Boolean = featuredUntil?.isAfter(now) == true
+
 // The descriptions the summary and the detail response both carry, each stating a rule a client
 // acts on. Written once, so a correction cannot reach one response and miss the other.
+private const val FEATURED_DESCRIPTION =
+    "True while an operator features the event as a pick. The page marks it as one. The value is cached like the rest of the response."
 private const val FESTIVAL_DESCRIPTION =
     "The festival an operator linked the event to, or null. Its slug is the events list's `festival` filter"
 private const val CHANGES_DESCRIPTION =
