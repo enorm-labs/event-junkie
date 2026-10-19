@@ -491,6 +491,9 @@ An operator links an event to a festival in the admin event editor. The link goe
 admin list shows the count of linked events per festival, and `GET /api/admin/events?festivalId=` lists them. The BFF adds
 `festival` (`slug`, `name`) to every event response, and `GET /api/events?festival=<slug>` lists the linked events.
 
+`scripts/festival-match.sh` proposes the links from the festival's published programme. It matches on venue and date only.
+It writes the proposals to `build/festival-match/<slug>.tsv` and writes nothing to the database or the API.
+
 ### event_artist (Join Table)
 
 Links events to artists with role and billing order to model the lineup. Each application maps the table with its own
