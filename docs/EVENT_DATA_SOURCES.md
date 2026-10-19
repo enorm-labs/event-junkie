@@ -24,7 +24,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   181 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   130 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   131 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
 
@@ -735,6 +735,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | SOLID                             | https://solid.stadtlandladen.org/events             | Bar          | Wix Events; talks, films and food nights, no music        | Scope decision             |
 | Zemin                             | https://www.zeminberlin.de/                         | Other        | Art space; JSON-LD has five events, last on 2026-09-11    | More events                |
 | Baketown                          | https://baketown.berlin/                            | Other        | No programme page; concerts announced on Instagram        | Site change / manual entry |
+| Berndhain                         | https://berndhain.com/                              | Bar          | No programme page; concerts announced on Instagram        | Site change / manual entry |
 | Slap'd                            | https://slapd.de/                                   | Club         | Event-agency site, rendered in the browser; no programme  | Site change                |
 | Alte Feuerwache THF               | https://alte-feuerwache-thf.de/calendar             | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
 | Ballhaus Berlin                   | https://ballhaus-berlin.de/de/termine/              | Club         | `robots.txt` answers 500; Termine lists ~27 dated events  | Site change                |
