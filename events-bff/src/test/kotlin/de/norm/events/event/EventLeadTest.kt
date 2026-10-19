@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
 import java.time.LocalDate
 
-/** The curated pick that leads the first page of `/events` (#1262). */
+/** The curated pick that leads the first page of `/events` (#1262), and the `featured` flag that marks it everywhere (#3065). */
 class EventLeadTest : BaseControllerTest() {
     private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
 
@@ -81,6 +81,33 @@ class EventLeadTest : BaseControllerTest() {
 
             leadSlug("/events").shouldBeNull()
         }
+
+    @Test
+    fun `featured is true on the list item and the detail of a current pick only`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            feature(insertEvent(venueId, "Current pick", "current-pick", today.plusDays(1)), "7 days")
+            feature(insertEvent(venueId, "Expired pick", "expired-pick", today.plusDays(2)), "-1 minute")
+            insertEvent(venueId, "Unpicked", "unpicked", today.plusDays(3))
+
+            @Suppress("UNCHECKED_CAST")
+            (page("/events")["content"] as List<Map<String, Any?>>).associate { it["slug"] to it["featured"] } shouldBe
+                mapOf("current-pick" to true, "expired-pick" to false, "unpicked" to false)
+            detail("current-pick")["featured"] shouldBe true
+            detail("expired-pick")["featured"] shouldBe false
+            detail("unpicked")["featured"] shouldBe false
+        }
+
+    @Test
+    fun `the lead carries featured too`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            feature(insertEvent(venueId, "Pick", "pick", today.plusDays(1)), "7 days")
+
+            (page("/events")["lead"] as Map<*, *>)["featured"] shouldBe true
+        }
+
+    private fun detail(slug: String): Map<*, *> = page("/events/$slug")
 
     private suspend fun feature(
         eventId: Long,

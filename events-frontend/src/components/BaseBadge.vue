@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
  * The small pill, for a state that must stand out or a small control: a non-scheduled status, the
- * lead card's "Our pick" (#1262), the `beta` link, and a filter link on a detail page. A plain fact is a word in a meta line (#1248):
+ * "Our pick" (`PickBadge`, #1262), the `beta` link, and a filter link on a detail page. A plain fact is a word in a meta line (#1248):
  * five pills under a title read as decoration even when each is true.
  *
  * Variants rather than per-call-site classes, so a new pill cannot invent its own colour.

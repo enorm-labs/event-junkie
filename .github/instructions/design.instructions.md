@@ -34,7 +34,7 @@ suppression carries its reason, as the one in `MultiSelectFilter.vue` does.
 
 **A pill is a state that must stand out, or a small control. It is never a plain fact.** Five uses pass, and a sixth needs the same argument they carry: the
 `beta` pill in the header, which is a link to its own explanation · the non-scheduled status pill on an event, which must not read as another word in a grey
-row · the lead card's "Our pick" on its poster (§5) · a festival's name on a card's poster and beside a row's title, an operator's mark as "Our pick" is
+row · "Our pick" on the lead card's poster, on the event page's poster and before a compact row's title (§5) · a festival's name on a card's poster and beside a row's title, an operator's mark as "Our pick" is
 ([#3273](https://github.com/enorm-labs/event-junkie/issues/3273)) · a filter link on a detail page, such as a venue's "Mostly plays", "Hosts" and "Features" rows, each opening the list filtered by it (#2379). On a card
 the same values stay words in the meta line: the card is already one link, and a pill row under a poster is what #1248 removed.
 
@@ -113,6 +113,10 @@ have their own edge, down parts one card's last line of text from the next card'
   no matching pick, or on a later page, the grid stays even. Never lead with whichever event is first by date: that tile lands on an arbitrary night, which
   is why [#1247](https://github.com/enorm-labs/event-junkie/issues/1247) was rejected. Not on the home page, where a lead under the hero stacks two large
   images, and not in the compact view, which is a plain list.
+- **A pick carries its "Our pick" pill where it is not the lead** ([#3065](https://github.com/enorm-labs/event-junkie/issues/3065)). The BFF sends
+  `featured` on every list item and on the detail response. `/events` in the compact view puts the pill (`PickBadge` `small`) before the row's title, and
+  the row keeps its place in time order. The event page puts it on the poster's top-left corner, or in the header when there is no poster. Not on the
+  calendar, the map, the home page or On now: a calendar cell is too small, and a pill there reads as a category.
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
 - **Below `sm` the filter bar is at most two rows: the search, then the presets.** "More filters" opens a bottom sheet with the second tier and the date inputs,
   and nothing opens it by itself ([#2890](https://github.com/enorm-labs/event-junkie/issues/2890)). A control renders in one place at a time, never twice.

@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import EventRow from '@/components/EventRow.vue'
 import type { EventSummary } from '@/api/types'
 import { todayIso } from '@/lib/format'
+import { i18n } from '@/i18n'
 
 /**
  * The compact row carries the card's text and none of its picture. "None" is the assertion that
@@ -170,5 +171,45 @@ describe('EventRow', () => {
       global: { stubs },
     })
     expect(linked.get('[data-testid="festival-badge"]').text()).toBe('Fête de la Musique 2027')
+  })
+
+  it('marks a featured event as our pick before the title, only where the page asks (#3065)', () => {
+    const featured = { ...event, featured: true }
+    const row = mount(EventRow, { props: { event: featured, marksPick: true }, global: { stubs } })
+
+    const pill = row.get('[data-testid="pick-badge"]')
+    expect(pill.text()).toBe('Our pick')
+    expect(pill.get('svg').attributes('aria-hidden')).toBe('true')
+    // Before the title, in the same line, and not a heading of its own.
+    expect(pill.element.nextElementSibling?.tagName).toBe('H3')
+    expect(row.findAll('h1, h2, h3, h4')).toHaveLength(1)
+
+    const unpicked = mount(EventRow, { props: { event, marksPick: true }, global: { stubs } })
+    expect(unpicked.find('[data-testid="pick-badge"]').exists()).toBe(false)
+    // The home page, the map and the calendar leave the prop off.
+    const elsewhere = mount(EventRow, { props: { event: featured }, global: { stubs } })
+    expect(elsewhere.find('[data-testid="pick-badge"]').exists()).toBe(false)
+  })
+
+  it('says our pick in German too (#3065)', () => {
+    i18n.global.locale.value = 'de'
+    try {
+      const row = mount(EventRow, {
+        props: { event: { ...event, featured: true }, marksPick: true },
+        global: { stubs },
+      })
+      expect(row.get('[data-testid="pick-badge"]').text()).toBe('Unser Tipp')
+    } finally {
+      i18n.global.locale.value = 'en'
+    }
+  })
+
+  it('keeps the pill beside the state word of a cancelled pick (#3065)', () => {
+    const row = mount(EventRow, {
+      props: { event: { ...event, featured: true, status: 'CANCELLED' }, marksPick: true },
+      global: { stubs },
+    })
+    expect(row.find('[data-testid="pick-badge"]').exists()).toBe(true)
+    expect(row.text()).toContain('Cancelled')
   })
 })

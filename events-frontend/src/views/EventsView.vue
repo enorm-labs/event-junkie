@@ -257,7 +257,13 @@ const mapLink = computed(() => ({
            detail pages), so the cards are the second level of the outline. The compact view swaps
            the whole grid rather than hiding the posters: a hidden image is still downloaded. -->
       <div v-if="compact" :class="CARD_LIST_CLASS">
-        <EventRow v-for="event in listed.cards" :key="event.slug" :event="event" as="h2" />
+        <EventRow
+          v-for="event in listed.cards"
+          :key="event.slug"
+          :event="event"
+          as="h2"
+          marks-pick
+        />
       </div>
       <div v-else :class="CARD_GRID_CLASS">
         <!-- The lead keeps the cards' `h2`: a bigger tile is not a higher rank in the outline. -->

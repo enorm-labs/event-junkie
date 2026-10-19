@@ -11,6 +11,7 @@ import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import ListenLinks from '@/components/ListenLinks.vue'
+import PickBadge from '@/components/PickBadge.vue'
 import ReportLine from '@/components/ReportLine.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -319,6 +320,8 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       <header class="mb-5 space-y-3">
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
+        <!-- With no poster to sit on, the pick's pill opens the header's pills instead (#3065). -->
+        <p v-if="event.featured && !event.imageUrl"><PickBadge /></p>
         <!-- Two lines of one block, when and where then what kind: closer than the header's stride. -->
         <!-- A filter link on a detail page, so a pill (design.instructions.md §1, #3273). -->
         <p v-if="event.festival?.slug">
@@ -368,7 +371,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         `space-y-8` margin. No poster, no placeholder: here the title is the content, and a 3:2 void
         would push it off the screen. `priority` because the poster is the LCP element (#1207).
       -->
-      <div v-if="event.imageUrl">
+      <div v-if="event.imageUrl" class="relative">
+        <!-- On the poster's corner, as on the lead card (#3065). -->
+        <PickBadge v-if="event.featured" class="absolute top-3 left-3 z-10" />
         <CachedImage
           :src="event.imageUrl"
           :sources="event.imageSources"
