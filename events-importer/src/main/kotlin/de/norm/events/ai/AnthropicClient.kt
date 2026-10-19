@@ -1,6 +1,7 @@
 package de.norm.events.ai
 
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.springframework.ai.anthropic.AnthropicChatModel
@@ -42,6 +43,8 @@ data class AnthropicReply(
  * inside its own bean, so a missing key or a disabled feature builds nothing.
  */
 class AnthropicClient(
+    /** Which caller this is, such as `translation`. It tags the client's meters, so two callers never share one. */
+    role: String,
     settings: AnthropicSettings,
     /** The importer's own registry, so token use and latency land beside every other meter (ADR-015). */
     meterRegistry: MeterRegistry,
@@ -64,7 +67,7 @@ class AnthropicClient(
         AnthropicChatModel
             .builder()
             .options(chatOptions)
-            .meterRegistry(meterRegistry)
+            .meterRegistry(taggedWith(role, meterRegistry))
             .build()
 
     /**
@@ -105,6 +108,21 @@ class AnthropicClient(
             AnthropicReply(text, refused, prompt, completion)
         }
 
+    /**
+     * A view of [registry] that adds the role tag to every meter registered through it.
+     *
+     * Spring AI tags the pool gauges only with `client.kind`, and it resets any tag a customizer sets. Without the
+     * role, a second caller's gauges collide with the first one's and Micrometer drops them.
+     */
+    private fun taggedWith(
+        role: String,
+        registry: MeterRegistry
+    ): MeterRegistry =
+        CompositeMeterRegistry().apply {
+            config().commonTags(ROLE_TAG, role)
+            add(registry)
+        }
+
     private fun tokensOf(response: ChatResponse): Pair<Long, Long> {
         // Typed nullable, because the Java getters promise a value that a mocked response can lack.
         val usage: Usage? = response.metadata.usage
@@ -112,6 +130,9 @@ class AnthropicClient(
     }
 
     companion object {
+        /** The tag that tells the callers' OkHttp pool gauges apart (#3316). */
+        const val ROLE_TAG = "client.role"
+
         const val DEFAULT_BASE_URL = "https://api.anthropic.com"
 
         /** What Anthropic reports when a safety classifier declines the request. */

@@ -66,6 +66,7 @@ class AnthropicEventClassifier(
 
     private val client =
         AnthropicClient(
+            "classification",
             AnthropicSettings(properties.apiKey, properties.model, properties.timeout, properties.maxRetries, MAX_TOKENS),
             meterRegistry,
             ioDispatcher,

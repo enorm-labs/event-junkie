@@ -36,6 +36,7 @@ class AnthropicPostExtractor(
 
     private val client =
         AnthropicClient(
+            "instagram",
             AnthropicSettings(properties.apiKey, properties.model, properties.modelTimeout, properties.maxRetries, MAX_TOKENS),
             meterRegistry,
             ioDispatcher,

@@ -42,6 +42,7 @@ class AnthropicTranslationEngine(
 
     private val client =
         AnthropicClient(
+            "translation",
             AnthropicSettings(properties.apiKey, properties.model, properties.timeout, properties.maxRetries, MAX_TOKENS),
             meterRegistry,
             ioDispatcher,

@@ -59,14 +59,14 @@ The constraints:
 - `dataquality`, `translation` and `instagram` depend on `ai`. `ai` depends on no other module.
 - A change to the client changes all three callers. Their tests run the real Spring AI pipeline against a local server, so a change that breaks one
   caller fails its test.
-- Each caller still builds its own `AnthropicChatModel`. Each model registers its own HTTP client meters. [#3316](https://github.com/enorm-labs/event-junkie/issues/3316)
-  tracks the duplicate meter, and this ADR does not fix it.
+- Each caller still builds its own `AnthropicChatModel`. Each model registers its own OkHttp pool gauges. A `client.role` tag with the caller's role
+  keeps the gauges of two callers apart ([#3316](https://github.com/enorm-labs/event-junkie/issues/3316)).
 - A caller that needs a different temperature needs a new field in `AnthropicSettings`.
 
 ## References
 
 - [#3396](https://github.com/enorm-labs/event-junkie/issues/3396), the decision issue
-- [#3316](https://github.com/enorm-labs/event-junkie/issues/3316), the duplicate meter
+- [#3316](https://github.com/enorm-labs/event-junkie/issues/3316), the role tag on the pool gauges
 - [ADR-041](ADR-041_AI_ASSISTED_DATA_QUALITY.md) rule 1, which this ADR amends
 - [ADR-006](ADR-006_SPRING_MODULITH.md), the module structure
 - `docs/architecture/modules-events-importer.md`, the module diagram
