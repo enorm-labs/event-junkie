@@ -161,6 +161,10 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         // Classical — the venues' German label and the English one fold together.
         "klassik" to "Classical",
         "classical" to "Classical",
+        // Contemporary art music, as BKA Theater and Gretchen label it (#3608). Whole-token only: a word-level
+        // `zeitgenössisch` would make "Zeitgenössischer Tanz" a music genre. [lookupKey] drops the ö.
+        "zeitgenssischeskonzert" to "Classical",
+        "contemporaryvocalmusic" to "Classical",
         // World Music
         "world" to "World Music",
         "worldmusic" to "World Music",
