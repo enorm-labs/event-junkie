@@ -42,6 +42,7 @@ says so.
 | `AMT`                  | `IMAGE`            | the event page carries icons and one picture shared by every night, no poster of its own                                                         | —     |
 | `AMT`                  | `GENRE`            | the event pages name no style                                                                                                                    | —     |
 | `AMT`                  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `ALTE_KANTINE`         | `TICKET_URL`       | the night states a door price, and the venue sells no tickets online                                                                             | —     |
 | `ALTE_KANTINE`         | `PRICE`            | some nights leave the Eintritt field empty ("Eintritt: €"), so no figure is published                                                            | —     |
 | `ALTE_KANTINE`         | `GENRE`            | each post's labels name kind, price, date, time and DJ, never a style                                                                            | —     |
 | `ALTE_KANTINE`         | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
@@ -62,6 +63,7 @@ says so.
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ART_STALKER`          | `ARTISTS`          | the weekly open session is a concert that bills no act                                                                                           | —     |
 | `ASTRA`                | `START_TIME`       | some nights print only their doors, `Einlass 21:00`                                                                                              | —     |
+| `ASTRA`                | `IMAGE`            | a night an outside presenter books can carry only the presenter's logo, and no poster                                                            | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `ASTRA`                | `PRICE`            | some nights print no figure and only link the promoter's outside ticket shop                                                                     | —     |
 | `AUSLAND`              | `EVENT_TYPE`       | the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk                 | —     |
@@ -260,6 +262,7 @@ says so.
 | `FRACHTKANTE`          | `PROMOTERS`        | the organising collective is named only in the title                                                                                             | —     |
 | `FRACHTKANTE`          | `DESCRIPTION`      | an event carries at most a ticket line, no blurb                                                                                                 | —     |
 | `FRANNZ`               | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
+| `FRANNZ`               | `IMAGE`            | the programme page lists some nights with their times and billing and no poster                                                                  | —     |
 | `FRANNZ`               | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `FRANNZ`               | `GENRE`            | the venue tags each event only with a type (Konzert, Party, Lesung), never a genre                                                               | —     |
 | `FRIEDRICHSTADTPALAST` | `ARTISTS`          | a tribute evening is billed by its genre and names none of its performers                                                                        | —     |
