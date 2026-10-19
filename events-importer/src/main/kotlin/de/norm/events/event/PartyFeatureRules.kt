@@ -44,6 +44,9 @@ object PartyFeatureRules {
     private const val FLINTA = "flinta[*+]*"
     private const val DRESS_CODE = "(?:dress[\\s-]?code|kleiderordnung)"
     private const val NIGHT = "(?:party|partys|parties|rave|raves|night|nights|nacht|clubnacht|club[\\s-]?night|disco|tanzparty|tanznacht|ball)"
+
+    /** [NIGHT] and a bar night, "Queerer Tresen" (#3585), for the queer phrases only: [NIGHT] also feeds DOOR_CLAUSE and the open-end cue. */
+    private const val QUEER_NIGHT = "(?:$NIGHT|tresen)"
     private const val AFTERHOUR_SOURCE = "${B}after[\\s-]?hours?$E"
 
     /** The afterhour cue of [PartyFeature.OPEN_END], for the sources whose afterhour is known to be an open end (`EventFeatureSync`, #3386). */
@@ -118,9 +121,10 @@ object PartyFeatureRules {
                 PartyFeature.QUEER,
                 clear =
                     listOf(
-                        "${B}queer(?:e|en|er|es)?[\\s-]+$NIGHT$E",
-                        "$B(?:gay|lesbian|lesbische?n?|schwule?n?|lgbt[qia+*]*)[\\s-]+$NIGHT$E",
-                        "$B$NIGHT\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E",
+                        "${B}queer(?:e|en|er|es)?[\\s-]+$QUEER_NIGHT$E",
+                        "$B(?:gay|lesbian|lesbische?n?|schwule?n?|lgbt[qia+*]*)[\\s-]+$QUEER_NIGHT$E",
+                        "$B$QUEER_NIGHT\\s+(?:$FUER|for)\\s+" +
+                            "(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E",
                         // Not a NIGHT word: NIGHT also feeds DOOR_CLAUSE and the open-end duration cue.
                         "${B}queer\\p{L}*[\\s-]+(?:dancefloors?|tanzfläche)$E",
                         "$B(?:dancefloors?|tanzflächen?)\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?))$E"
