@@ -141,6 +141,19 @@ class ArtistNormalizerTest {
         }
     }
 
+    // Säälchen bills `MICHA`, and the artist writes it so (#3623).
+    @Test
+    fun `keeps MICHA in capitals however it is billed, and leaves a longer name alone`() {
+        assertSoftly {
+            canonicalArtistName("MICHA") shouldBe "MICHA"
+            canonicalArtistName("Micha") shouldBe "MICHA"
+            canonicalArtistName("micha") shouldBe "MICHA"
+            canonicalArtistName("Micha Moor") shouldBe "Micha Moor"
+            canonicalArtistName("MICHAEL") shouldBe "Michael"
+            canonicalArtistName("Michael") shouldBe "Michael"
+        }
+    }
+
     // Weekend billed `HB&P Soundsystem` (#3480) and The Door `ABF & Friends` (#3501), stored as `Hb&p …` and `Abf …` (#3507).
     @Test
     fun `keeps the initialisms of a billing that is not shouted`() {
