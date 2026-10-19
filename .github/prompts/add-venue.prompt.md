@@ -97,8 +97,9 @@ A borderline case is a question for the operator, not a call to make.
     Then run `scripts/dev-seed-parity.sh` to regenerate `http/importer/dev-seed.http`, and commit both. Never edit `dev-seed.http` by hand.
 
 8. **Prove it locally.** Start the importer on an empty database (`COMPOSE_PROJECT_NAME=<own> POSTGRES_HOST_PORT=<free>`, never the shared one another
-   checkout migrated), run `python3 scripts/seed-sources.py --host http://localhost:8081 --apply`, and check each `GET /api/venues/<slug>` answers
-   `"imported": false` with its `programmeUrl`. Tear the database down afterwards.
+   checkout migrated), run `python3 scripts/seed-sources.py --host http://localhost:8081 --apply`, and check each row with
+   `scripts/dev-env.sh psql "SELECT slug, programme_url, instagram_url, latitude FROM events.venue WHERE slug = '<slug>'"`. `GET /api/venues/<slug>`
+   and its `"imported"` field are the BFF's, and the admin venue list has no search. Tear the database down afterwards.
 
 9. **Open the pull request** with [`/open-pr`](open-pr.prompt.md). `Part of #2766` until the last batch, then `Closes #2766`. Its `## After deploy` carries:
 
