@@ -84,7 +84,7 @@ class EventContentStamp(
     companion object {
         /**
          * SHA-256 of what the event page shows. In: the title, subtitle and description, the second
-         * language the venue wrote itself, the type, the status and where it moved to, the dates and
+         * language the venue wrote itself, the type, the status and where and when it moved to, the dates and
          * times, the venue and room, the prices, the sold-out and free flags, the ticket link, the lineup
          * with its roles, order, stages and set times, and the promoters.
          *
@@ -108,6 +108,7 @@ class EventContentStamp(
                     event.eventType,
                     event.status,
                     event.relocatedTo,
+                    event.relocatedOn,
                     event.eventDate,
                     event.doorsTime,
                     event.startTime,

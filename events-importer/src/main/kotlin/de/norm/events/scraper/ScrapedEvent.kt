@@ -262,7 +262,7 @@ data class ScrapedEvent(
         val relocation = notes.firstNotNullOfOrNull(::parseRelocation)
         val (relocatedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         // A "verschoben" note sits on both dates of a move too; the row the show moved to takes place (#2206).
-        val postponedStatus = resolvePostponement(relocatedStatus, notes, eventDate)
+        val postponedStatus = resolvePostponement(resolveDatedRelocation(relocatedStatus, relocatedTo, notes), notes, eventDate)
         // A new date can come with a new house; on the date the show left, that is a move (#2708).
         val (storedStatus, postponedTo) = resolvePostponedMove(postponedStatus, notes, venueSlug)
         val storedTitle = storedTitle()
@@ -307,6 +307,7 @@ data class ScrapedEvent(
             typeIsFallback = storedTypeIsFallback(),
             status = storedStatus,
             relocatedTo = relocatedTo ?: postponedTo,
+            relocatedOn = relocatedOn(storedStatus, notes, eventDate),
             slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),
             eventDate = eventDate,
             doorsTime = doors,

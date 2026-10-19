@@ -228,6 +228,14 @@ describe('EventCard', () => {
     })
     expect(moved.text()).toContain('Moved to Hole44')
     expect(moved.text()).not.toContain('Relocated')
+    // And when it went, where the note says (#3613).
+    const movedOn = mount(EventCard, {
+      props: {
+        event: { ...event, status: 'RELOCATED', relocatedTo: 'Hole 44', relocatedOn: '2027-04-13' },
+      },
+      global: { stubs },
+    })
+    expect(movedOn.text()).toContain('Moved to Hole 44, 13 April 2027')
 
     // Scheduled says nothing; past says only that.
     const scheduled = mount(EventCard, {

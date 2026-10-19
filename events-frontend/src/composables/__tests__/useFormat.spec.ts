@@ -71,3 +71,30 @@ describe('formatUpcoming', () => {
     expect(format().formatUpcoming({})).toEqual([])
   })
 })
+
+describe('formatEventStatus', () => {
+  afterEach(() => {
+    i18n.global.locale.value = 'en'
+  })
+
+  it('names the house and the new date of a show that moved both, and the house alone otherwise (#3613)', () => {
+    const { formatEventStatus } = format()
+
+    expect(formatEventStatus('RELOCATED', 'Hole 44', null, '2027-04-13')).toBe(
+      'Moved to Hole 44, 13 April 2027',
+    )
+    expect(formatEventStatus('RELOCATED', 'Hole 44')).toBe('Moved to Hole 44')
+    expect(formatEventStatus('RELOCATED', null, null, '2027-04-13')).toBe('Relocated')
+    expect(formatEventStatus('POSTPONED', null, null, '2027-04-13')).toBe('Postponed')
+  })
+
+  it('says it in German', () => {
+    i18n.global.locale.value = 'de'
+    const { formatEventStatus } = format()
+
+    expect(formatEventStatus('RELOCATED', 'Hole 44', null, '2027-04-13')).toBe(
+      'Verlegt: Hole 44, 13. April 2027',
+    )
+    expect(formatEventStatus('RELOCATED', 'Hole 44')).toBe('Verlegt: Hole 44')
+  })
+})

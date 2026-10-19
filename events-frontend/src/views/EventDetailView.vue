@@ -235,7 +235,7 @@ const relatedHeading = computed(() =>
 const metaItems = computed<MetaItem[]>(() => {
   const e = event.value
   if (!e) return []
-  const status = formatEventStatus(e.status, e.relocatedTo, e.postponedTo?.eventDate)
+  const status = formatEventStatus(e.status, e.relocatedTo, e.postponedTo?.eventDate, e.relocatedOn)
   // A postponed or cancelled show does not happen on this date, so its date is struck and its time dropped.
   const offDate = e.status === 'POSTPONED' || e.status === 'CANCELLED'
   const items: (MetaItem | null)[] = [

@@ -175,6 +175,7 @@
     "CANCELLED": "Abgesagt",
     "POSTPONED": "Verschoben",
     "movedTo": "Verlegt: {venue}",
+    "movedToOn": "Verlegt: {venue}, {date}",
     "movedFrom": "vorher {venue}",
     "postponedNote": "Verschoben: Die Location nennt noch keinen neuen Termin.",
     "postponedTo": "Verschoben auf {date}"

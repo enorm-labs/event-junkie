@@ -360,6 +360,7 @@ Core entity representing a single music event at a venue on a specific date.
 | `subtitle_language`    | `TEXT`          | Yes      | The subtitles of a screening in the original version                             | `de`                                                       |
 | `status`               | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`)                  | `SCHEDULED`                                                |
 | `relocated_to`         | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)                    | `Hole44`                                                   |
+| `relocated_on`         | `DATE`          | Yes      | The new date of a `RELOCATED` show, as its note says (ADR-051)                   | `2027-04-13`                                               |
 | `slug`                 | `TEXT`          | No       | URL-friendly identifier                                                          | `2026-06-12-the-adicts`                                    |
 | `event_date`           | `DATE`          | No       | Calendar date of the event                                                       | `2026-06-12`                                               |
 | `doors_time`           | `TIME`          | Yes      | When doors open                                                                  | `19:00`                                                    |
@@ -771,6 +772,10 @@ persistence boundary and stores the destination's name in `relocated_to`. The ro
 own date after "auf", the importer stores `SCHEDULED`, because the show takes place on that date ([#2206](https://github.com/enorm-labs/event-junkie/issues/2206)).
 A note can also name a new house after the new date: "auf den 18.03.27 im Säälchen verschoben". When that house is another venue, the row that the show left
 is `RELOCATED`, with that house in `relocated_to` ([#2708](https://github.com/enorm-labs/event-junkie/issues/2708)).
+
+A `RELOCATED` row keeps the new date its note states in `relocated_on`. Lido's "verlegt auf den 13.04.27 ins Hole 44" stores `Hole 44` and 13 April 2027. A
+`RELOCATED` row whose note names a new date and no house is stored `POSTPONED`, because only the date moved
+([ADR-051](adr/ADR-051_A_MOVED_SHOW_KEEPS_ITS_NEW_DATE.md)).
 
 ### `slug` Fields on All Main Entities
 

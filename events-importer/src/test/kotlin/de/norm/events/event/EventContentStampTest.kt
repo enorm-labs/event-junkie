@@ -77,6 +77,7 @@ class EventContentStampTest {
                 event.copy(eventType = EventType.FESTIVAL.name),
                 event.copy(status = EventStatus.CANCELLED.name),
                 event.copy(relocatedTo = "Lido"),
+                event.copy(relocatedOn = event.eventDate.plusDays(30)),
                 event.copy(eventDate = event.eventDate.plusDays(1)),
                 event.copy(doorsTime = LocalTime.of(22, 0)),
                 event.copy(startTime = LocalTime.of(23, 30)),
