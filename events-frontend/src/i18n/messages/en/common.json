@@ -55,7 +55,6 @@
     "upcoming": "Busiest next 30 days",
     "newest": "Newest added"
   },
-  "pastEvents": "Past events",
   "pastEventsCount": "Past events · {count}",
   "pastEventsNote": "Our archive starts when we started watching. Earlier nights never made it into the books.",
   "locale": {
