@@ -273,7 +273,10 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
     word of the title is capitalised and is not a tour suffix. It removes a title-derived artist only on evidence beyond the title. Each
     field that differs from the stored value becomes one `event_suggestion` row with `check_name = event-classification`.
     The fields are `eventType`, `artists`, `features`, `startTime`, `pricePresale` and `priceBoxOffice`. The check
-    never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
+    proposes no type against a type that the venue stated. The type is stated when the row is not a fallback and its
+    source has at least one fallback row ([#3607](https://github.com/enorm-labs/event-junkie/issues/3607)). Only a
+    scraper that tells a stated type from its own default writes fallback rows (ADR-039). A type of `OTHER` always gets
+    a proposal. The check never writes to `event`. `event_classification_check` keeps a hash of the title, subtitle and description, and the
     check skips an event whose text did not change since its last answer. `app.data-quality.classification.enabled`
     switches it on. It is off by default.
 
