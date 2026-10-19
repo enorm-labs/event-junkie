@@ -140,7 +140,7 @@ class SlaughterhouseOverviewPageScraper {
                 ?.split('&')
                 ?.firstOrNull { it.startsWith("u=") }
                 ?.substringAfter('=')
-        return target?.let { URLDecoder.decode(it, StandardCharsets.UTF_8).replace(FBCLID, "").removeSuffix("?") } ?: url
+        return target?.let { URLDecoder.decode(it, StandardCharsets.UTF_8) } ?: url
     }
 
     private companion object {
@@ -150,7 +150,6 @@ class SlaughterhouseOverviewPageScraper {
         val STYLE_LINE = Regex("""^:\s*(.+?)\s*:$""")
         val TIME = Regex("""(\d{1,2})(?:[:.](\d{2}))?\s*(?:Uhr)?""")
         val SIZE_SUFFIX = Regex("""-\d+x\d+(?=\.\w+$)""")
-        val FBCLID = Regex("""[?&]fbclid=[^&]*""")
 
         /** `Capper: Rockin And Clubbin – …` names its band before the colon, and the rest is the night's name. */
         val ACT_PREFIX = Regex("""^([^:]+):\s+""")

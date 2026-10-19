@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -32,8 +33,9 @@ class SlaughterhouseOverviewPageScraperTest {
     }
 
     @Test
-    fun `unwraps a ticket link pasted through Facebook's redirect`() {
-        on(16).ticketUrl shouldBe "https://www.tixforgigs.com/Event/67150"
+    fun `unwraps a ticket link pasted through Facebook's redirect, and stores it without the click ID`() {
+        on(16).ticketUrl!! shouldStartWith "https://www.tixforgigs.com/Event/67150?fbclid="
+        on(16).toEventEntity(venueId = 1L, venueSlug = "slaughterhouse", eventSourceId = 1L).ticketUrl shouldBe "https://www.tixforgigs.com/Event/67150"
         on(17).ticketUrl shouldBe "https://www.eventim-light.com/de/a/5c8824131eb12100019a7054/"
     }
 
