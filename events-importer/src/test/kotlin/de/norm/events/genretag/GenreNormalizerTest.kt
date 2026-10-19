@@ -528,4 +528,14 @@ class GenreNormalizerTest {
         normalizeGenre("Groove-Songs").shouldContainExactly("Groove-Songs")
         normalizeGenre("Very Long Musik-Show").shouldBeEmpty()
     }
+
+    @Test
+    fun `contemporary art music labels are Classical, while the dance and the bare format stay dropped`() {
+        normalizeGenre("Zeitgenössisches Konzert").shouldContainExactly("Classical")
+        normalizeGenre("Alternative Pop, Global Sounds, Contemporary Vocal Music").shouldContain("Classical")
+        normalizeGenre("Contemporary Vocal Music").shouldContainExactly("Classical")
+        normalizeGenre("Zeitgenössischer Tanz").shouldBeEmpty()
+        normalizeGenre("Konzert").shouldBeEmpty()
+        nonGenreTokens("Zeitgenössisches Konzert, Zeitgenössischer Tanz").shouldContainExactly("Zeitgenössischer Tanz")
+    }
 }
