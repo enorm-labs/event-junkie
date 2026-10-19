@@ -1349,6 +1349,29 @@ class ArtistNameMappingTest {
         }
     }
 
+    @Test
+    fun `a show name in straight quotes after a dash is cut before the title is split`() {
+        // Säälchen (#3622): the `+` inside the quotes split the show into two acts.
+        assertSoftly {
+            headlinersFromTitle("SPIELHAGEN - \"HARMONY + ECSTASY\"").map { it.name } shouldBe listOf("SPIELHAGEN")
+            headlinersFromTitle("SPIELHAGEN – \"HARMONY + ECSTASY\"").map { it.name } shouldBe listOf("SPIELHAGEN")
+            headlinersFromTitle("SPIELHAGEN — \"HARMONY + ECSTASY\"").map { it.name } shouldBe listOf("SPIELHAGEN")
+            stripArtistSuffix("Spielhagen - \"Harmony und Ecstasy\"") shouldBe "Spielhagen"
+        }
+    }
+
+    @Test
+    fun `a straight quote inside the name, or one that does not close the title, stays`() {
+        assertSoftly {
+            stripArtistSuffix("Michael \"Mike\" Smith") shouldBe "Michael \"Mike\" Smith"
+            headlinersFromTitle("Michael \"Mike\" Smith").map { it.name } shouldBe listOf("Michael \"Mike\" Smith")
+            headlinersFromTitle("SPIELHAGEN - \"HARMONY + ECSTASY\" + GUESTS").map { it.name } shouldContain "SPIELHAGEN - \"HARMONY"
+            headlinersFromTitle("SPIELHAGEN - \"HARMONY + ECSTASY").map { it.name } shouldContain "SPIELHAGEN - \"HARMONY"
+            // One quoted word can finish the act's own name.
+            stripArtistSuffix("DZ - \"DEATHRAY\"") shouldBe "DZ - \"DEATHRAY\""
+        }
+    }
+
     // --- buildArtistList ---
 
     @Test

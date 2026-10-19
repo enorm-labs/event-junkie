@@ -219,6 +219,12 @@ private val SCORE_CONCERT_PATTERN =
 fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.containsMatchIn(title.replace(WHITESPACE, " "))
 
 /**
+ * A show name of two words or more in straight quotes after a dash, closing the title: `SPIELHAGEN - "HARMONY + ECSTASY"` (#3622).
+ * One quoted word can finish the act's own name, so `DZ - "DEATHRAY"` stays.
+ */
+private const val DASHED_QUOTED_SHOW = """\s+[-–—]\s+"[^"\s][^"]*\s[^"]*[^"\s]"\s*$"""
+
+/**
  * Trailing suffixes that decorate a real act name, stripped by [stripArtistSuffix]; every case
  * is asserted in `ArtistNameMappingTest`.
  *
@@ -253,6 +259,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """|(?<=\S)\s+\d+\s+(?:years\s+of|jahre\s+jubil(?:ä|ae)um)\b.*$""" +
             """|\s+[-–—]\s*zusatz(?:show|konzert|termin)\s*$""" +
             """|(?<=\S)\s+„[^„“]+“\s*$""" +
+            "|$DASHED_QUOTED_SHOW" +
             """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|(?<=\S):\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|(?:\s*[-–—]\s*|\s+(?:[&+]|and|und)\s+)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
@@ -1673,7 +1680,9 @@ fun headlinersFromTitle(
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     // A `Vorprogramm:` names the support act, so it bills like `+ Support:` (#1841).
-    val (billing, guests) = splitFeaturedGuests(title.replace(VORPROGRAMM_MARKER, " + Support: "))
+    // The quoted show goes before the split, which would cut `"HARMONY + ECSTASY"` at the `+` (#3622).
+    val (billing, guests) =
+        splitFeaturedGuests(title.replace(DASHED_QUOTED_SHOW_TAIL, "").replace(VORPROGRAMM_MARKER, " + Support: "))
     presentsFrameActs(billing)?.let { return it + guests }
     coPresentedNightActs(billing)?.let { return it + guests }
     val heads =
@@ -1705,6 +1714,8 @@ private fun anniversaryQuotedAct(title: String): List<ScrapedArtist>? =
 /** A leading `<n> Jahre "<act>"` or `<n> Years of "<act>"`, in straight, German or guillemet quotes. */
 private val ANNIVERSARY_QUOTED_ACT =
     Regex("""^\d+\.?\s+(?:jahre|jahr|years?)(?:\s+of)?\s+["„“»]([^"„“”»«]+)["“”«]""", RegexOption.IGNORE_CASE)
+
+private val DASHED_QUOTED_SHOW_TAIL = Regex(DASHED_QUOTED_SHOW)
 
 /** The German opening-act marker inside a title: `KARAT „45 Jahre …“ Vorprogramm: Dirk Michaelis`. */
 private val VORPROGRAMM_MARKER = Regex("""\s+vorprogramm\s*:\s*""", RegexOption.IGNORE_CASE)
