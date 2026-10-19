@@ -309,13 +309,20 @@ fun stripArtistSuffix(name: String): String {
     // A footnote star (`Sinkane live*`) comes off first, or it hides the `live` in front of it (#1845).
     var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, "").replace(FOOTNOTE_STAR, ""))
     repeat(MAX_SUFFIX_PASSES) {
-        val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").trim()
+        val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").replace(BACKING_BAND_TAIL, "").trim()
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
     val untailed = stripPlaysTail(stripWorkTitle(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
     return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(untailed)))
 }
+
+/**
+ * An unnamed backing band after the act: `Matze Rossi & Band`, `KLAUS IGNATZEK und BAND`, `JACK KAYS AND HIS BAND` (#3325).
+ * A `Solo` in front of it goes too. `the` is no possessive, so `Ann & the Band` names a band and stays.
+ */
+private val BACKING_BAND_TAIL =
+    Regex("""(?<=\S)(?:\s+solo)?\s+(?:&|und|and)\s+(?:(?:his|her|seine|seiner|ihre|ihrer)\s+)?band\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Tails no separator marks, where the casing change alone shows where the act ends (#1841). Case-sensitive

@@ -844,7 +844,7 @@ class ArtistNameMappingTest {
     @Test
     fun `headlinersFromTitle cuts a conjoined tour or prose tail before splitting`() {
         // Production minted `Fury Tour 2026`, `new songs` and `Mike Kraus live 2027` (#1842).
-        headlinersFromTitle("Joe Jackson & Band - Hope and Fury Tour 2026").map { it.name } shouldBe listOf("Joe Jackson & Band")
+        headlinersFromTitle("Joe Jackson & Band - Hope and Fury Tour 2026").map { it.name } shouldBe listOf("Joe Jackson")
         headlinersFromTitle("LYAPIS TRUBETSKOY - the best & new songs").map { it.name } shouldBe listOf("LYAPIS TRUBETSKOY")
         headlinersFromTitle("Peter Kraus & Mike Kraus live 2027").map { it.name } shouldBe listOf("Peter Kraus", "Mike Kraus")
         // A `mit` tail names the performers, so it is not cut as prose.
@@ -1303,6 +1303,50 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Sickboyrari (Black Kray)") shouldBe "Sickboyrari (Black Kray)"
         // "Release" without a format word / Party·Show tail is a plausible band name — kept.
         stripArtistSuffix("Release") shouldBe "Release"
+    }
+
+    @Test
+    fun `stripArtistSuffix strips an unnamed backing band after the act`() {
+        // Each spelling production stores (#3325).
+        assertSoftly {
+            mapOf(
+                "Matze Rossi & Band" to "Matze Rossi",
+                "KLAUS IGNATZEK und BAND" to "KLAUS IGNATZEK",
+                "CLEO UND BAND" to "CLEO",
+                "Keith Tynes And Band" to "Keith Tynes",
+                "JACK KAYS AND HIS BAND" to "JACK KAYS",
+                "Hieke Hoffmann Solo & Band" to "Hieke Hoffmann",
+                "Max Mustermann und seine Band" to "Max Mustermann",
+                "Joe Jackson & Band - Hope and Fury Tour 2026" to "Joe Jackson",
+                // The same act as the bare `Wenzel` on production, though MusicBrainz lists both.
+                "Wenzel & Band" to "Wenzel",
+                "Wenzel und Band" to "Wenzel"
+            ).forEach { (name, act) -> stripArtistSuffix(name) shouldBe act }
+        }
+    }
+
+    @Test
+    fun `stripArtistSuffix keeps a band name and a guest list`() {
+        assertSoftly {
+            listOf(
+                // A named backing band, or one that is not a band (#3325).
+                "Brian Fallon & The Painkillers",
+                "Tom Gaebel & His Orchestra",
+                "Charlotte Wessels & The Obsession",
+                "Ann & the Band",
+                "Dennis & Jesko Band",
+                // `& Friends` names guests who play (#2888).
+                "The Hamburg Blues Band & Friends",
+                "Taylor & Friends",
+                // `Band` in the name itself, with no conjunction in front.
+                "The Band",
+                "Big Band",
+                "Bigband",
+                "SWR Big Band",
+                "Band",
+                "& Band"
+            ).forEach { stripArtistSuffix(it) shouldBe it }
+        }
     }
 
     // --- buildArtistList ---
