@@ -147,7 +147,8 @@
         }
       ],
       "promoterIds": [],
-      "pinnedFields": []
+      "pinnedFields": [],
+      "featuredUntil": "2026-10-22T21:59:00Z"
     },
     {
       "id": 9203,
@@ -248,7 +249,8 @@
       "free": false,
       "artists": [],
       "promoterIds": [],
-      "pinnedFields": []
+      "pinnedFields": [],
+      "featuredUntil": "2026-10-15T21:59:00Z"
     },
     {
       "id": 9206,

@@ -14,10 +14,12 @@ import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.expectBody
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Optional
 
-/** The filters of `GET /api/admin/events`: `venueId`, `date`, `artistId`, `q` and `from`, alone and together. */
+/** The filters of `GET /api/admin/events`: `venueId`, `date`, `artistId`, `q`, `from` and `featured`, alone and together. */
 class EventListFilterTest : BaseControllerTest() {
     private fun createVenue(name: String): VenueResponse =
         webTestClient
@@ -230,6 +232,54 @@ class EventListFilterTest : BaseControllerTest() {
             idsWhere("q=jam&from=2026-10-09&venueId=${astra.id}&date=2026-10-10") shouldBe (listOf(astraSaturday.id) to 1L)
             idsWhere("q=quiz&artistId=${act.id}") shouldBe (emptyList<Long>() to 0L)
         }
+    }
+
+    // #3064: the Picks page of events-admin lists the events that still lead the public list.
+    @Test
+    fun `GET events featured lists only picks still ahead, and combines with venue, date and artist`() {
+        val lido = createVenue("Featured Filter Lido")
+        val astra = createVenue("Featured Filter Astra")
+        val act = createArtist("Featured Filter Act")
+        val friday = LocalDate.of(2026, 10, 9)
+        val saturday = LocalDate.of(2026, 10, 10)
+        val billing = listOf(EventArtistRequest(artistId = act.id, role = ArtistRole.HEADLINER, billingOrder = 0))
+        val now = Instant.now()
+
+        fun picked(
+            request: EventRequest,
+            until: Instant?
+        ) = createEvent(request.copy(featuredUntil = Optional.ofNullable(until)))
+
+        val lidoFriday = picked(EventRequestFixtures.create(venueId = lido.id, sourceId = "test:f-lido-fri", eventDate = friday), now.plusSeconds(86_400))
+        val lidoSaturday =
+            picked(
+                EventRequestFixtures.create(venueId = lido.id, sourceId = "test:f-lido-sat", eventDate = saturday, artists = billing),
+                now.plusSeconds(3_600)
+            )
+        val astraSaturday = picked(EventRequestFixtures.create(venueId = astra.id, sourceId = "test:f-astra-sat", eventDate = saturday), now.plusSeconds(60))
+        picked(
+            EventRequestFixtures.create(venueId = astra.id, title = "Expired Pick", sourceId = "test:f-astra-expired", eventDate = saturday, artists = billing),
+            now.minusSeconds(60)
+        )
+        picked(EventRequestFixtures.create(venueId = lido.id, title = "No Pick", sourceId = "test:f-lido-none", eventDate = friday), null)
+
+        assertSoftly {
+            idsWhere("featured=true&sort=eventDate").first shouldContainExactlyInAnyOrder listOf(lidoFriday.id, lidoSaturday.id, astraSaturday.id)
+            idsWhere("featured=true").second shouldBe 3L
+            idsWhere("featured=false").second shouldBe 5L
+            idsWhere("featured=true&venueId=${lido.id}&sort=eventDate") shouldBe (listOf(lidoFriday.id, lidoSaturday.id) to 2L)
+            idsWhere("featured=true&date=2026-10-10").first shouldContainExactlyInAnyOrder listOf(lidoSaturday.id, astraSaturday.id)
+            idsWhere("featured=true&artistId=${act.id}") shouldBe (listOf(lidoSaturday.id) to 1L)
+            idsWhere("featured=true&venueId=${astra.id}&date=2026-10-09") shouldBe (emptyList<Long>() to 0L)
+        }
+    }
+
+    @Test
+    fun `GET events featured with no pick at all returns an empty page`() {
+        val venue = createVenue("Featured None Lido")
+        createEvent(EventRequestFixtures.create(venueId = venue.id, sourceId = "test:f-none"))
+
+        idsWhere("featured=true") shouldBe (emptyList<Long>() to 0L)
     }
 
     @Test

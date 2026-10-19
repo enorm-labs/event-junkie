@@ -590,3 +590,89 @@ describe('EventEditor festival (#3273)', () => {
     expect(api.updateEvent.mock.calls[0]![1]).not.toHaveProperty('festivalId')
   })
 })
+
+describe('EventEditor "Our pick until" (#3064)', () => {
+  const pickInput = () => body().querySelector<HTMLInputElement>('input[name="featuredUntil"]')!
+
+  async function typePick(value: string) {
+    pickInput().value = value
+    pickInput().dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('shows a stored pick as Berlin time', async () => {
+    await mountEditor({ ...stored, featuredUntil: '2026-09-12T21:59:30Z' })
+    expect(pickInput().value).toBe('2026-09-12T23:59')
+  })
+
+  it('sends a set pick as the instant of the Berlin time', async () => {
+    api.updateEvent.mockImplementation(async (_, request) => ({
+      ...stored,
+      featuredUntil: request.featuredUntil ?? null,
+    }))
+    await mountEditor()
+
+    await typePick('2026-09-13T04:00')
+    await submit()
+
+    expect(api.updateEvent.mock.calls[0]![1]).toHaveProperty(
+      'featuredUntil',
+      '2026-09-13T02:00:00.000Z',
+    )
+    expect(pickInput().value).toBe('2026-09-13T04:00')
+  })
+
+  it('sends null when the field is cleared, by the button or by hand', async () => {
+    api.updateEvent.mockResolvedValue({ ...stored, featuredUntil: null })
+    const picked = { ...stored, featuredUntil: '2026-09-12T21:59:30Z' }
+
+    await mountEditor(picked)
+    click('Clear the pick')
+    await flushPromises()
+    await submit()
+    expect(api.updateEvent.mock.calls[0]![1]).toHaveProperty('featuredUntil', null)
+
+    document.body.innerHTML = ''
+    await mountEditor(picked)
+    await typePick('')
+    await submit()
+    expect(api.updateEvent.mock.calls[1]![1]).toHaveProperty('featuredUntil', null)
+  })
+
+  it('leaves an untouched pick out of the body, so the stored instant keeps its seconds', async () => {
+    api.updateEvent.mockResolvedValue(stored)
+    await mountEditor({ ...stored, featuredUntil: '2026-09-12T21:59:30Z' })
+
+    await submit()
+    expect(api.updateEvent.mock.calls[0]![1]).not.toHaveProperty('featuredUntil')
+  })
+
+  it('leaves an event with no pick out of the body when the field stays empty', async () => {
+    api.updateEvent.mockResolvedValue(stored)
+    await mountEditor()
+
+    expect(pickInput().value).toBe('')
+    await submit()
+    expect(api.updateEvent.mock.calls[0]![1]).not.toHaveProperty('featuredUntil')
+  })
+
+  it('sends a pick whose time passed a minute ago as it was typed', async () => {
+    const aMinuteAgo = new Date(Date.now() - 60_000)
+    api.updateEvent.mockResolvedValue(stored)
+    await mountEditor()
+
+    const local = new Intl.DateTimeFormat('sv-SE', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'Europe/Berlin',
+    })
+      .format(aMinuteAgo)
+      .replace(' ', 'T')
+    await typePick(local)
+    await submit()
+
+    const sent = api.updateEvent.mock.calls[0]![1].featuredUntil!
+    expect(Date.parse(sent)).toBeLessThan(Date.now())
+    expect(Date.now() - Date.parse(sent)).toBeLessThan(2 * 60_000)
+  })
+})

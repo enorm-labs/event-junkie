@@ -54,6 +54,24 @@ function adminEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
 }
 
 describe('toEventRequest', () => {
+  it('sends featuredUntil only when the edit names it, null included (#3064)', () => {
+    const event = adminEvent({ featuredUntil: '2026-09-12T21:59:30Z' })
+
+    expect(toEventRequest(event, { eventType: 'OTHER', genre: '' })).not.toHaveProperty(
+      'featuredUntil',
+    )
+    expect(
+      toEventRequest(event, { eventType: 'OTHER', genre: '', featuredUntil: null }),
+    ).toHaveProperty('featuredUntil', null)
+    expect(
+      toEventRequest(event, {
+        eventType: 'OTHER',
+        genre: '',
+        featuredUntil: '2026-09-13T02:00:00.000Z',
+      }),
+    ).toHaveProperty('featuredUntil', '2026-09-13T02:00:00.000Z')
+  })
+
   it('sends every stored value back, with only the edited fields changed', () => {
     const event = adminEvent()
 

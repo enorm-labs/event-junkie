@@ -66,6 +66,8 @@ export interface AdminEvent {
   pinnedFields: string[]
   /** The festival an operator linked the event to (#3273), or null. */
   festivalId?: number | null
+  /** The instant until which the event is "Our pick" on the public list (#1262), or null. */
+  featuredUntil?: string | null
 }
 
 /** `EventRequest`: the body of a POST or a PUT. */
@@ -95,6 +97,8 @@ export interface EventRequest {
   promoterIds: number[]
   /** Left out, the importer keeps the stored festival; null clears it (#3273). */
   festivalId?: number | null
+  /** An ISO instant. Left out, the importer keeps the stored pick; null clears it (#1262). */
+  featuredUntil?: string | null
 }
 
 /** The fields this app edits. Every other field goes back as it was read. */
@@ -112,6 +116,8 @@ export interface EventEdit {
   promoterIds?: number[]
   /** The festival to link, or null for none. Left out, the body omits it and the link stays. */
   festivalId?: number | null
+  /** The pick's end as an ISO instant, or null for no pick. Left out, the body omits it and the pick stays. */
+  featuredUntil?: string | null
 }
 
 /**
@@ -151,6 +157,7 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
     })),
     promoterIds: edit.promoterIds ?? event.promoterIds,
     ...(edit.festivalId === undefined ? {} : { festivalId: edit.festivalId }),
+    ...(edit.featuredUntil === undefined ? {} : { featuredUntil: edit.featuredUntil }),
   }
 }
 
@@ -494,4 +501,34 @@ export async function searchEvents(
   })
   await failOnError(response, 'GET /api/admin/events')
   return (await response.json()) as EventSearchPage
+}
+
+/** The Picks page reads one page; the public list shows one pick at a time, so a few are the norm. */
+export const PICKS_PAGE_SIZE = 100
+
+/** The current picks, `featuredUntil` still ahead, the earliest start first. */
+export async function fetchPicks(fetchFn: typeof fetch = fetch): Promise<EventSearchPage> {
+  const params = new URLSearchParams({ featured: 'true', size: String(PICKS_PAGE_SIZE) })
+  params.append('sort', 'eventDate,asc')
+  params.append('sort', 'startTime,asc')
+  const response = await fetchFn(`/api/admin/events?${params}`, {
+    headers: { Accept: 'application/json' },
+  })
+  await failOnError(response, 'GET /api/admin/events')
+  return (await response.json()) as EventSearchPage
+}
+
+/**
+ * Ends the pick on event [id]. The event is read again first, so the PUT sends back what is stored
+ * now rather than what the list read, and pins nothing an import changed since (ADR-042).
+ */
+export async function clearPick(id: number, fetchFn: typeof fetch = fetch): Promise<AdminEvent> {
+  const event = await fetchEvent(id, fetchFn)
+  const request = toEventRequest(event, {
+    eventType: event.eventType,
+    genre: event.genre ?? '',
+    featuredUntil: null,
+  })
+  // `toEventRequest` trims the genre; the stored text goes back as it was read.
+  return updateEvent(id, { ...request, genre: event.genre }, fetchFn)
 }

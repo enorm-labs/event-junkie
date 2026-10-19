@@ -107,7 +107,7 @@ have their own edge, down parts one card's last line of text from the next card'
   ([#1246](https://github.com/enorm-labs/event-junkie/issues/1246)). Its poster box is 3:2, filled with `object-cover`, chosen by measuring crop loss across
   the real corpus (BRANDING §5.4).
 - **One card may lead `/events` at double width, and only a curated pick earns it**
-  ([#1262](https://github.com/enorm-labs/event-junkie/issues/1262)). An operator sets `event.featured_until` through `PUT /api/admin/events/{id}`. On the
+  ([#1262](https://github.com/enorm-labs/event-junkie/issues/1262)). An operator sets `event.featured_until` in the `events-admin` event editor, and its Picks page lists the current picks. On the
   first page, the earliest-starting featured event that matches the filters comes first, with `lead`: both columns from `sm` up (`CARD_LEAD_CLASS`), a 2:1
   poster (`aspect-lead`, since a 3:2 box twice as wide is 640 px tall), an "Our pick" pill on the poster's top-left corner (`BaseBadge` `primary`, outside the grayscale image, so it keeps its colour; [#1262](https://github.com/enorm-labs/event-junkie/issues/1262)) and a `text-section` title. The heading level stays the page's, as on every card. With
   no matching pick, or on a later page, the grid stays even. Never lead with whichever event is first by date: that tile lands on an arbitrary night, which

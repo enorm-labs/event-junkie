@@ -11,6 +11,7 @@ import {
   MicVocal,
   ShieldCheck,
   Sparkles,
+  Star,
 } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -30,6 +31,7 @@ import {
 const NAV = [
   { title: 'Sources', to: '/sources', icon: Database },
   { title: 'Events', to: '/events', icon: CalendarSearch },
+  { title: 'Picks', to: '/picks', icon: Star },
   { title: 'Worklist', to: '/worklist', icon: ListChecks },
   { title: 'Suggested fixes', to: '/suggestions', icon: Sparkles },
   { title: 'Instagram drafts', to: '/drafts', icon: Inbox },

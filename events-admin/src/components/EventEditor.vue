@@ -23,6 +23,7 @@ import {
 } from '@/api/events'
 import { fetchNames, type NameKind, type NamedRow } from '@/api/names'
 import NamePicker from '@/components/NamePicker.vue'
+import { fromBerlinLocal, toBerlinLocal } from '@/lib/berlinTime'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,6 +50,9 @@ const promoterIds = ref<number[]>([])
 /** The festival the select holds, or null for none. */
 const festivalId = ref<number | null>(null)
 const festivals = ref<Festival[]>([])
+/** "Our pick until" as Berlin time, `YYYY-MM-DDTHH:mm`, and as the editor showed it; '' is no pick. */
+const pickUntil = ref('')
+const shownPickUntil = ref('')
 /** A failed festival read leaves the rest of the editor usable, with the select hidden. */
 const festivalsError = ref<string | null>(null)
 /** The features as the importer answered them, and the slugs the checkboxes hold. */
@@ -167,6 +171,8 @@ function show(loaded: AdminEvent) {
     .map(({ artistId, role, billingOrder, stage }) => ({ artistId, role, billingOrder, stage }))
   promoterIds.value = [...loaded.promoterIds]
   festivalId.value = loaded.festivalId ?? null
+  pickUntil.value = toBerlinLocal(loaded.featuredUntil)
+  shownPickUntil.value = pickUntil.value
   void loadNames('artists', lineupIds.value)
   void loadNames('promoters', promoterIds.value)
 }
@@ -244,6 +250,12 @@ watch(
   { immediate: true },
 )
 
+/** The pick to send: left out when untouched, so the stored instant keeps its seconds. */
+function pickEdit(): { featuredUntil?: string | null } {
+  if (pickUntil.value === shownPickUntil.value) return {}
+  return { featuredUntil: pickUntil.value === '' ? null : fromBerlinLocal(pickUntil.value) }
+}
+
 function save() {
   const current = event.value
   if (!current) return
@@ -265,6 +277,7 @@ function save() {
         promoterIds: promoterIds.value,
         // Sent only when the festivals loaded, so a failed read cannot clear a link.
         ...(festivalsError.value === null ? { festivalId: festivalId.value } : {}),
+        ...pickEdit(),
       }),
     )
     show(saved)
@@ -369,6 +382,35 @@ function unpin(field: string) {
               name on the event, and no import changes it.
             </span>
           </label>
+
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-end gap-2">
+              <label class="flex min-w-0 flex-1 flex-col gap-1.5" for="edit-pick-until">
+                <span class="text-sm font-medium">Our pick until</span>
+                <Input
+                  id="edit-pick-until"
+                  v-model="pickUntil"
+                  aria-describedby="edit-pick-until-hint"
+                  name="featuredUntil"
+                  type="datetime-local"
+                />
+              </label>
+              <Button
+                :disabled="pickUntil === ''"
+                aria-label="Clear the pick"
+                size="sm"
+                type="button"
+                variant="outline"
+                @click="pickUntil = ''"
+              >
+                Clear
+              </Button>
+            </div>
+            <span id="edit-pick-until-hint" class="text-xs text-muted-foreground">
+              Berlin time. Until then the event leads the first page of the site's events list as
+              "Our pick". Empty: not picked.
+            </span>
+          </div>
 
           <fieldset class="flex flex-col gap-2" aria-describedby="features-hint">
             <legend class="mb-2 text-sm font-medium">Kind of night</legend>

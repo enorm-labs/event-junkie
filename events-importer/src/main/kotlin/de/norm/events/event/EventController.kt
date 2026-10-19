@@ -37,15 +37,15 @@ class EventController(
     private val eventPinService: EventPinService
 ) {
     /**
-     * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title, a first date and a
-     * festival (#347, #3005, #3269, #3273). Returns a [List] instead of a `Flow` because
+     * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title, a first date, a
+     * festival and the current picks (#347, #3005, #3269, #3273, #3064). Returns a [List] instead of a `Flow` because
      * batch loading artist/promoter/genre tag associations requires all events in memory
      * to avoid N+1 queries (4 queries per page regardless of event count).
      */
     @GetMapping
     @Suppress("LongParameterList") // One request parameter per filter, each documented in the OpenAPI listing.
     @Operation(
-        summary = "List events with pagination; `venueId`, `date`, `artistId`, `q`, `from` and `festivalId` narrow the list, alone or together"
+        summary = "List events with pagination; `venueId`, `date`, `artistId`, `q`, `from`, `festivalId` and `featured` narrow the list, alone or together"
     )
     suspend fun findAll(
         @ParameterObject
@@ -88,8 +88,19 @@ class EventController(
             description = "Database ID of a festival: only the events linked to it. An unknown ID gives an empty page, not a 404.",
             example = "1"
         )
-        @RequestParam(required = false) festivalId: Long?
-    ): PageResponse<EventResponse> = eventService.findAll(pageable, EventListFilter(venueId, date, artistId, q, from, festivalId))
+        @RequestParam(required = false) festivalId: Long?,
+        @Parameter(
+            description =
+                "`true`: only the current picks, the events whose `featuredUntil` is still ahead. A passed or null `featuredUntil` is no pick. " +
+                    "`false` or omitted lists every event.",
+            example = "true"
+        )
+        @RequestParam(defaultValue = "false") featured: Boolean
+    ): PageResponse<EventResponse> =
+        eventService.findAll(
+            pageable,
+            EventListFilter(venueId = venueId, date = date, artistId = artistId, title = q, from = from, festivalId = festivalId, featured = featured)
+        )
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

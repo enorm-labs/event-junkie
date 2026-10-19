@@ -7,8 +7,9 @@
 //
 // GET  /api/admin/<path>   <fixtures>/<path>.json. Else the item of <fixtures>/<parent>.json's `content` whose slug or
 //                          id is the last segment. A list is filtered by `name` and `q` (part of the name or title, any
-//                          case), `musicbrainzMatch`, `artistId`, `venueId` and `from` (the first `eventDate`), and paged by
-//                          `page` and `size`, at most 100, as the importer does. Other query parameters are ignored.
+//                          case), `musicbrainzMatch`, `artistId`, `venueId`, `from` (the first `eventDate`) and `featured`
+//                          (any `featuredUntil`), and paged by `page` and `size`, at most 100, as the importer does. Other
+//                          query parameters are ignored.
 // Other methods            the first rule in <fixtures>/writes.json whose method and path match, and whose `when`
 //                          fields equal the request body's. `{name}` in a rule's path matches one segment.
 //
@@ -151,6 +152,11 @@ async function api(req, res, url) {
               (!from || item.eventDate >= from),
           )
           .sort((a, b) => a.eventDate.localeCompare(b.eventDate) || String(a.startTime ?? '~').localeCompare(String(b.startTime ?? '~')))
+        found = { ...found, content, totalElements: content.length, totalPages: undefined }
+      }
+      // The Picks page lists the events with a pick. The time is ignored, so the fixtures do not age out of the list.
+      if (url.searchParams.get('featured') === 'true') {
+        const content = found.content.filter((item) => item.featuredUntil).sort((a, b) => a.eventDate.localeCompare(b.eventDate))
         found = { ...found, content, totalElements: content.length, totalPages: undefined }
       }
       // The importer caps a page at 100, whatever `size` asks for.

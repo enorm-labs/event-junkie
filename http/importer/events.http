@@ -36,6 +36,10 @@ Accept: application/json
 # `venueId` and `date` (ISO yyyy-MM-dd, matched against eventDate) are optional, alone or together.
 # An unknown venue is an empty page, not a 404.
 GET {{importer-host}}/api/admin/events?venueId={{venue_id}}&date=2026-06-12&sort=startTime,asc
+
+### List the current picks — the Picks page of events-admin (#3064)
+# `featured=true` keeps the events whose `featuredUntil` is still ahead; it combines with every other filter.
+GET {{importer-host}}/api/admin/events?featured=true&size=100&sort=eventDate,asc&sort=startTime,asc
 Accept: application/json
 
 > {%
