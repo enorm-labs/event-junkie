@@ -374,4 +374,12 @@ describe('NewEventView', () => {
     expect(api.approveDraft).toHaveBeenCalledWith(12, 9001)
     expect(router.currentRoute.value.name).toBe('drafts')
   })
+
+  it('chooses the venue that ?venue= names, as the Manual venues page links it', async () => {
+    const router = await routerAt('/events/new?venue=7')
+    mount(NewEventView, { attachTo: document.body, global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(field<HTMLSelectElement>('venueId').value).toBe('7')
+  })
 })

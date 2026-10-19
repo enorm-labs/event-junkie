@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class VenueService(
-    private val venueRepository: VenueRepository
+    private val venueRepository: VenueRepository,
+    private val manualVenueStore: ManualVenueStore
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -85,6 +86,21 @@ class VenueService(
         val saved = venueRepository.save(updated)
         logger.info { "Updated venue '${saved.name}' (id=${saved.id})" }
         return VenueResponse.fromDomain(saved.toDomain())
+    }
+
+    /** The open venues without an importer, for the operator to check by hand (#2993). */
+    suspend fun findManual(): List<ManualVenueResponse> = manualVenueStore.findManual()
+
+    /**
+     * Records that a person read the programme of venue [id] just now, and returns the venue.
+     *
+     * @throws VenueNotFoundException if no venue with the given [id] exists.
+     */
+    suspend fun markProgrammeChecked(id: Long): VenueResponse {
+        if (!manualVenueStore.markProgrammeChecked(id)) throw VenueNotFoundException(id)
+        val venue = findById(id)
+        logger.info { "Programme of venue '${venue.slug}' checked (id=$id)" }
+        return venue
     }
 
     /**

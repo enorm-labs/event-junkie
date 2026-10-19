@@ -115,7 +115,15 @@ SPDX = {
 # admin API has no PATCH, so the PUT carries everything else the GET returned: a list of fields to
 # keep erases every field added after it. A new read-only field makes the PUT a 400, which stops the
 # run instead of erasing data.
-READ_ONLY_FIELDS = ("id", "slug", "createdAt", "updatedAt", "programmeFamilies", "programmeEventTypes")
+READ_ONLY_FIELDS = (
+    "id",
+    "slug",
+    "createdAt",
+    "updatedAt",
+    "programmeFamilies",
+    "programmeEventTypes",
+    "programmeCheckedAt",
+)
 
 
 def venue_body(venue):

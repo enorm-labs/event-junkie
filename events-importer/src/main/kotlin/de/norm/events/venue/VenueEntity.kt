@@ -43,6 +43,7 @@ data class VenueEntity(
     val programmeEventTypes: List<String> = emptyList(),
     val programmeUrl: String? = null,
     val reviewedAt: Instant? = null,
+    val programmeCheckedAt: Instant? = null,
     val closedOn: LocalDate? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
@@ -75,6 +76,7 @@ data class VenueEntity(
             programmeEventTypes = programmeEventTypes,
             programmeUrl = programmeUrl,
             reviewedAt = reviewedAt,
+            programmeCheckedAt = programmeCheckedAt,
             closedOn = closedOn,
             createdAt = createdAt,
             updatedAt = updatedAt
@@ -109,6 +111,7 @@ data class VenueEntity(
                 programmeEventTypes = venue.programmeEventTypes,
                 programmeUrl = venue.programmeUrl,
                 reviewedAt = venue.reviewedAt,
+                programmeCheckedAt = venue.programmeCheckedAt,
                 closedOn = venue.closedOn,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt

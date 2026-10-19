@@ -87,6 +87,9 @@ onMounted(async () => {
       error.value = e instanceof Error ? e.message : String(e)
     }
   }
+  // "New event" on the Manual venues page opens the form with the venue chosen.
+  const venueId = Number(route.query.venue)
+  if (!draft.value && venueId > 0) form.venueId = venueId
   try {
     venues.value = await fetchAllVenues()
   } catch (e) {

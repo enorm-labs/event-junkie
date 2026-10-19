@@ -71,6 +71,8 @@ data class VenueResponse(
     val programmeUrl: String?,
     @Schema(description = "When a person last confirmed the address, coordinates and opening; null when nobody has")
     val reviewedAt: Instant?,
+    @Schema(description = "When a person last read the programme to enter new events by hand; null when nobody has. Read-only: PUT …/programme-checked sets it")
+    val programmeCheckedAt: Instant?,
     @Schema(description = "The last day the venue was open, when it closed for good; null while it is open", example = "2026-10-31")
     val closedOn: LocalDate?,
     @Schema(description = "Timestamp when this record was first created")
@@ -107,6 +109,7 @@ data class VenueResponse(
                 programmeEventTypes = venue.programmeEventTypes,
                 programmeUrl = venue.programmeUrl,
                 reviewedAt = venue.reviewedAt,
+                programmeCheckedAt = venue.programmeCheckedAt,
                 closedOn = venue.closedOn,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt

@@ -829,6 +829,7 @@ CREATE TABLE events.venue (
     closed_on date,
     instagram_url text,
     facebook_url text,
+    programme_checked_at timestamp with time zone,
     CONSTRAINT venue_capacity_check CHECK ((capacity > 0)),
     CONSTRAINT venue_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),
     CONSTRAINT venue_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),

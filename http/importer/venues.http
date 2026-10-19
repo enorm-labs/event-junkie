@@ -103,6 +103,29 @@ Content-Type: application/json
     });
 %}
 
+### Mark the venue's programme as checked now (#2993)
+PUT {{importer-host}}/api/admin/venues/{{venue_id}}/programme-checked
+Accept: application/json
+
+> {%
+    client.test("status is 200 and the check time is set", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.programmeCheckedAt !== null, "Expected programmeCheckedAt to be set");
+    });
+%}
+
+### List the open venues without an importer, the longest unchecked first (#2993)
+GET {{importer-host}}/api/admin/venues/manual
+Accept: application/json
+
+> {%
+    client.test("the venue without a source is listed with its check", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        const venue = response.body.find(v => v.id === client.global.get("venue_id"));
+        client.assert(venue && venue.programmeCheckedAt !== null, "Expected the checked venue on the list");
+    });
+%}
+
 ### Set a character tag with the venue's own page that states it (#2379)
 PUT {{importer-host}}/api/admin/venues/{{venue_id}}/character-tags/awareness-team
 Content-Type: application/json
