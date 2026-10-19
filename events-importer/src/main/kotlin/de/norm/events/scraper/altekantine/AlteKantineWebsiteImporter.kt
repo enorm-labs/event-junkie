@@ -62,6 +62,7 @@ class AlteKantineWebsiteImporter(
 val ALTE_KANTINE_LIMITATIONS =
     VenueLimitations(
         EventSource.ALTE_KANTINE,
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the night states a door price, and the venue sells no tickets online"),
         AcceptedLimitation(LimitedAspect.PRICE, "some nights leave the Eintritt field empty (\"Eintritt: €\"), so no figure is published"),
         AcceptedLimitation(LimitedAspect.GENRE, "each post's labels name kind, price, date, time and DJ, never a style"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
