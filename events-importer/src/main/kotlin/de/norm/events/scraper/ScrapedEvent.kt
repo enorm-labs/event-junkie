@@ -318,9 +318,9 @@ data class ScrapedEvent(
             imageUrl = if (licences.withholdsImage()) null else imageUrl,
             // What the licence took out is recorded as a fact, so the page can say so (#2130).
             imageWithheld = licences.withholdsImage() && !imageUrl.isNullOrBlank(),
-            sourceUrl = sourceUrl,
+            sourceUrl = stripClickIdentifiers(sourceUrl),
             lineupSourceUrl = lineupSourceUrl,
-            ticketUrl = ticketUrl,
+            ticketUrl = ticketUrl?.let(::stripClickIdentifiers),
             genre = storedGenre(),
             pricePresale = pricePresale?.normalizeMoneyScale(),
             priceBoxOffice = priceBoxOffice?.normalizeMoneyScale(),
