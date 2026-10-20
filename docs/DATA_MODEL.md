@@ -552,8 +552,10 @@ When block.
 | `seen_at`   | `TIMESTAMPTZ` | No       | When the import or the admin edit wrote it                                                |              |
 
 The importer writes a row when it updates an event it matched by `source_id` and a tracked field differs. An admin edit
-writes one the same way. An insert writes nothing, and neither does a row matched by slug, so a new source or a re-keyed
-event logs no change. A null on either side is not a change: a lost start time is a scrape gap, and a new one was not
+writes one the same way. An insert writes nothing, and neither does a row matched by slug, so a new source logs no change.
+One exception applies to a source whose `source_id` carries the date. There, one import can remove a future event and
+insert one with the same title on a different date. When no other event of the source has that title, the importer
+writes the change on the new event (#3067). A null on either side is not a change: a lost start time is a scrape gap, and a new one was not
 published before. Each import deletes its source's rows of ended events and rows older than 14 days.
 
 ### GenreTag

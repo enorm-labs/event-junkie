@@ -79,8 +79,8 @@ class EventUpsertService(
         val upcomingEvents = dropPastEvents(foldedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
-        removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
-        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
+        val removed = removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
+        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences, removed)
             // Counted here rather than where they are dropped, because the tag needs the source slug and
             // this service holds only the numeric id (#982).
             .copy(
@@ -134,6 +134,7 @@ class EventUpsertService(
      * business-relevant fields changed, avoiding UPDATEs and inflated `updated_at`; new events are
      * inserted. Associations are [AssociationSyncService]'s.
      *
+     * @param removed the rows [removeStaleEvents] deleted in this run, for [recordDateMoves].
      * @return inserted / updated / skipped. Not extra work: the split was already computed for the
      * debug log, and `skipped` is the `unchanged` partition change detection produces (#415).
      */
@@ -142,7 +143,8 @@ class EventUpsertService(
         venueId: Long,
         venueSlug: String,
         eventSourceId: Long,
-        licences: SourceLicences
+        licences: SourceLicences,
+        removed: List<EventEntity>
     ): UpsertOutcome {
         val existingBySourceId =
             eventRepository
@@ -166,13 +168,11 @@ class EventUpsertService(
 
         val entities = resolved.kept
         val (changed, unchanged) = partitionByChanged(entities, existingBySourceId, resolved.movedSourceIds)
-        val savedEvents =
-            if (changed.isNotEmpty()) {
-                eventRepository.saveAll(changed).toList() + unchanged
-            } else {
-                unchanged
-            }
+        val savedChanged = if (changed.isNotEmpty()) eventRepository.saveAll(changed).toList() else emptyList()
+        val savedEvents = savedChanged + unchanged
 
+        val insertedRows = savedChanged.filter { it.sourceId !in existingBySourceId && it.sourceId !in resolved.movedSourceIds }
+        recordDateMoves(removed, insertedRows, eventSourceId)
         recordChanges(changed, existingBySourceId, resolved.movedSourceIds, eventSourceId)
 
         val ownFields = sourceRows.associate { (scraped, row) -> scraped.sourceId to scraped.setsOf(row) }
@@ -250,8 +250,9 @@ class EventUpsertService(
 
     /**
      * Logs what moved on the updated rows matched by `sourceId` (#2725), then prunes the source's
-     * spent changes. A new row and one matched by slug log nothing: the first has no stored row, and
-     * the second is the same event under a new identity, which is not news to a visitor.
+     * spent changes. A new row and one matched by slug log nothing here: the first has no stored row
+     * ([recordDateMoves] covers one that replaces a removed row), and the second is the same event
+     * under a new identity, which is not news to a visitor.
      */
     private suspend fun recordChanges(
         changed: List<EventEntity>,
@@ -266,6 +267,27 @@ class EventUpsertService(
         val recorded = changeLog.record(pairs)
         if (recorded > 0) logger.info { "Logged $recorded change(s) to a date, time, status or venue on event source $eventSourceId" }
         changeLog.prune(eventSourceId, LocalDate.now(clock))
+    }
+
+    /**
+     * Logs a moved date on a source whose `sourceId` carries the date (#3067): there a move arrives
+     * as a stale removal plus an insert, which [recordChanges] never sees. [datesMovedByRekey] decides
+     * which pairs are one event. The `sourceSlug` comes from the run's log context.
+     */
+    private suspend fun recordDateMoves(
+        removed: List<EventEntity>,
+        inserted: List<EventEntity>,
+        eventSourceId: Long
+    ) {
+        if (removed.isEmpty() || inserted.isEmpty()) return
+        val removedTitles = removed.mapTo(mutableSetOf()) { it.title.normalizedTitle() }
+        if (inserted.none { it.title.normalizedTitle() in removedTitles }) return
+        val today = LocalDate.now(clock)
+        val remaining = eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, today).toList()
+        val pairs = datesMovedByRekey(removed, inserted, remaining, today)
+        if (pairs.isEmpty()) return
+        changeLog.record(pairs)
+        logger.info { "Logged ${pairs.size} date move(s) across a re-keyed source id on event source $eventSourceId" }
     }
 
     /**
@@ -449,16 +471,17 @@ class EventUpsertService(
      *
      * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
      * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
+     * @return the deleted rows.
      */
     private suspend fun removeStaleEvents(
         scrapedEvents: List<ScrapedEvent>,
         eventSourceId: Long,
         staleCleanup: StaleCleanup
-    ) {
-        if (scrapedEvents.isEmpty()) return
+    ): List<EventEntity> {
+        if (scrapedEvents.isEmpty()) return emptyList()
         if (staleCleanup == StaleCleanup.SKIPPED) {
             logger.info { "Skipped the stale cleanup for event source $eventSourceId: the scrape is incomplete" }
-            return
+            return emptyList()
         }
 
         val tomorrow = LocalDate.now(clock).plusDays(1)
@@ -487,6 +510,7 @@ class EventUpsertService(
             val window = if (staleCleanup == StaleCleanup.OPEN_ENDED) "from $tomorrow, open-ended" else "from $tomorrow to $maxScrapedDate"
             logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId ($window)" }
         }
+        return staleEvents
     }
 
     /**
@@ -629,6 +653,36 @@ private fun ScrapedEvent.setsOf(row: EventEntity): Set<PinnedField> =
                 else -> !field.isEmptyOn(row)
             }
         }.toSet()
+
+/**
+ * The removed and inserted rows of one import that are one event whose date moved (#3067), each as
+ * the removed row beside the inserted one. The removed row carries the inserted row's id, so the
+ * change lands on the event that stays. A pair has one normalised title, a removed date after
+ * [today], no other row with that title on either side or in [remaining], and two different dates.
+ * One source is one venue, so the venue always matches.
+ *
+ * @param remaining the source's rows from [today] on, after the import.
+ */
+internal fun datesMovedByRekey(
+    removed: List<EventEntity>,
+    inserted: List<EventEntity>,
+    remaining: List<EventEntity>,
+    today: LocalDate
+): List<Pair<EventEntity, EventEntity>> {
+    val removedByTitle = removed.groupBy { it.title.normalizedTitle() }
+    val insertedByTitle = inserted.groupBy { it.title.normalizedTitle() }
+    return removedByTitle.mapNotNull { (title, olds) ->
+        val old = olds.singleOrNull() ?: return@mapNotNull null
+        val new = insertedByTitle[title]?.singleOrNull() ?: return@mapNotNull null
+        val others = remaining.any { it.id != new.id && it.title.normalizedTitle() == title }
+        if (others || !old.eventDate.isAfter(today) || old.eventDate == new.eventDate) null else old.copy(id = new.id) to new
+    }
+}
+
+/** A title compared case-blind and with its whitespace collapsed. */
+private fun String.normalizedTitle(): String = trim().replace(WHITESPACE, " ").lowercase()
+
+private val WHITESPACE = Regex("\\s+")
 
 /** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
 enum class StaleCleanup {
