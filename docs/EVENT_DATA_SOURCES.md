@@ -23,7 +23,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   181 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
@@ -470,12 +470,13 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name             | URL                                                | Type  | Priority | Comment                                                |
-| ---------------- | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
-| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
-| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
-| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
-| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
+| Name             | URL                                                | Type  | Priority | Comment                                                                                                                       |
+| ---------------- | -------------------------------------------------- | ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose                                                                          |
+| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly                                                                        |
+| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops                                                                             |
+| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks                                                                              |
+| KARA KAS Bar     | https://karakasbar.com/comedy-shows                | Bar   | Medium   | GoDaddy; all events are one JSON blob in the published `script.js`, whose URL changes on every publish; 16 dated comedy shows |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -826,8 +827,8 @@ Matrix importer covers it. **arkaoda** closed (see above). Crunch Tapes still li
 stale. **Die Spirale**, a youth and culture centre in Wilmersdorf, is out of scope. Its own domain is dead, and its
 concerts appear only in promoter and aggregator listings.
 
-Three more bars host comedy several nights a week but have no working site to record: KARA KAS Bar, Valentin Stüberl
-and Z-Bar. The aggregator Comedy in English lists all three. Its Events Calendar API gives a venue and an address for
+Two more bars host comedy several nights a week but have no working site to record: Valentin Stüberl and Z-Bar. The
+aggregator Comedy in English lists both. Its Events Calendar API gives a venue and an address for
 each show.
 
 Where candidates come from, and what is deliberately left out:
