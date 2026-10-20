@@ -65,6 +65,26 @@ class SpeichesOverviewPageScraperTest {
         on("2026-10-20", "18:00").artists.map { it.name } shouldContainExactly listOf("Kurt Buschmann", "Proud Fools")
     }
 
+    private fun actsOfRow(text: String): List<String> {
+        val link = "javascript:va_info1(\"veranstaltungen_info.php?auswahl_lfdnr=48310\")"
+        val html =
+            "<table><tr><td><a href='$link'>Sa&nbsp;24.10.</a></td><td><a href='$link'>20.00</a></td>" +
+                "<td><a href='$link'>Konzert</a><br>Ort: Speiche</td><td></td><td><a href='$link'>$text</a></td></tr></table>"
+        return SpeichesOverviewPageScraper(clock)
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name }
+    }
+
+    @Test
+    fun `cuts a genre list glued to the last act or its country tag`() {
+        actsOfRow("Emiliano Degl´Innocenti & Tom Blacksmith (ITA/D )- Blues, Soul, Rock´n´Roll - Eintritt frei") shouldContainExactly
+            listOf("Emiliano Degl'Innocenti", "Tom Blacksmith")
+        actsOfRow("Kurt Buschmann ( USA / D )- Blues - Eintritt frei") shouldContainExactly listOf("Kurt Buschmann")
+        actsOfRow("Kurt Buschmann- Blues, Folk") shouldContainExactly listOf("Kurt Buschmann")
+    }
+
     @Test
     fun `a house series names its band before spielt, and the repeat note leaves the subtitle`() {
         val jazz = on("2026-10-11")
