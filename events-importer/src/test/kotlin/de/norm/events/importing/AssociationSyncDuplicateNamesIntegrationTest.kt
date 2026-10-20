@@ -16,7 +16,10 @@ import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotEndWith
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -236,6 +239,32 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             artistRepository.findBySlug("regis")?.name shouldBe "Regis"
             artistRepository.findBySlug("c3d-e-live") shouldBe null
             eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 3
+        }
+    }
+
+    // #3642: a title's closing mark is not the act's; a line-up's mark is.
+    @Test
+    fun `a title's closing mark comes off a title-derived act, and a line-up act keeps its own`() {
+        runBlocking {
+            val sourceId = "title-mark:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(
+                        sourceId,
+                        artists =
+                            listOf(
+                                ScrapedArtist(name = "MC UNCUT GEM!", role = "HEADLINER", titleDerived = true),
+                                ScrapedArtist(name = "DALOY!", role = "SUPPORT")
+                            )
+                    )
+                )
+            )
+
+            artistRepository.findBySlug("mc-uncut-gem")?.name.shouldNotBeNull() shouldNotEndWith "!"
+            artistRepository.findBySlug("daloy")?.name.shouldNotBeNull() shouldEndWith "!"
         }
     }
 

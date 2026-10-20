@@ -308,21 +308,38 @@ private val BRACKETED_GUEST =
  * Strips a trailing tour/live/anniversary suffix or format annotation from an act name.
  * Unchanged when there is none or stripping would leave nothing, so `"Live"` and
  * `"Sickboyrari (Black Kray)"` survive. [ARTIST_SUFFIX_PATTERN] has the boundaries.
+ * With [fromTitle], the title's closing `!` or `?` comes off too ([stripTitleMark]).
  */
-fun stripArtistSuffix(name: String): String {
+fun stripArtistSuffix(
+    name: String,
+    fromTitle: Boolean = false
+): String {
     // One suffix can hide another (`Lacrimosa mit Orchester - … in Europa!`), so strip until stable.
     // The separator comes off first as well as last: `Tweaken – live –` hides its format word
     // behind a dash (#301).
     // A footnote star (`Sinkane live*`) comes off first, or it hides the `live` in front of it (#1845).
     var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, "").replace(FOOTNOTE_STAR, ""))
     repeat(MAX_SUFFIX_PASSES) {
-        val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").replace(BACKING_BAND_TAIL, "").trim()
+        val suffixless = stripped.replace(ARTIST_SUFFIX_PATTERN, "").replace(BACKING_BAND_TAIL, "").trim()
+        val next = if (fromTitle) stripTitleMark(suffixless) else suffixless
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
     val untailed = stripPlaysTail(stripWorkTitle(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
     return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(untailed)))
 }
+
+/** A `!` or `?` glued to the last word, which a title closes on: `SING WITH FAUXPAS & MC UNCUT GEM!` (#3642). */
+private val TITLE_MARK = Regex("""(?<=[\p{L}\p{N}])[!?]+$""")
+
+/** Acts whose own name ends in `!`, each a MusicBrainz `EXACT` row, compared in lower case. */
+private val BANG_NAMED_ACTS = setOf("agatha is dead!", "cc:disco!", "ludique!", "nein danke!", "wham!")
+
+/**
+ * [name] without the title's closing `!` or `?`. A name in [BANG_NAMED_ACTS] keeps it, and so does a Spanish
+ * `¡…!` pair. A line-up names the act itself, so only a title-derived name comes here.
+ */
+fun stripTitleMark(name: String): String = if (name.lowercase() in BANG_NAMED_ACTS || '¡' in name || '¿' in name) name else name.replace(TITLE_MARK, "")
 
 /**
  * An unnamed backing band after the act: `Matze Rossi & Band`, `KLAUS IGNATZEK und BAND`, `JACK KAYS AND HIS BAND` (#3325).

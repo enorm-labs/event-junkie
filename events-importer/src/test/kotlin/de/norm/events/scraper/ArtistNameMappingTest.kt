@@ -1061,6 +1061,28 @@ class ArtistNameMappingTest {
     // --- stripArtistSuffix ---
 
     @Test
+    fun `stripArtistSuffix takes a title's closing mark off a title-derived act`() {
+        stripArtistSuffix("MC UNCUT GEM!", fromTitle = true) shouldBe "MC UNCUT GEM"
+        stripArtistSuffix("ARTig?", fromTitle = true) shouldBe "ARTig"
+        stripArtistSuffix("Sinkane live!", fromTitle = true) shouldBe "Sinkane"
+        stripArtistSuffix("Lacrimosa mit Orchester - Einzige Orchester-Show in Europa!", fromTitle = true) shouldBe "Lacrimosa"
+        // A line-up names the act itself, so its mark stays.
+        stripArtistSuffix("DALOY!") shouldBe "DALOY!"
+        stripArtistSuffix("Agent!") shouldBe "Agent!"
+    }
+
+    @Test
+    fun `stripArtistSuffix keeps an act whose own name ends in a mark`() {
+        // CC:DISCO! is a MusicBrainz EXACT row on production.
+        stripArtistSuffix("CC:DISCO!", fromTitle = true) shouldBe "CC:DISCO!"
+        stripArtistSuffix("Wham!", fromTitle = true) shouldBe "Wham!"
+        stripArtistSuffix("Ludique!", fromTitle = true) shouldBe "Ludique!"
+        stripArtistSuffix("!!!", fromTitle = true) shouldBe "!!!"
+        stripArtistSuffix("¡Ya voy!", fromTitle = true) shouldBe "¡Ya voy!"
+        stripArtistSuffix("Yeah! Yeah! Yeah !", fromTitle = true) shouldBe "Yeah! Yeah! Yeah !"
+    }
+
+    @Test
     fun `stripArtistSuffix drops a footnote star`() {
         // Production stored all of these as written (#1845).
         stripArtistSuffix("Sinkane live*") shouldBe "Sinkane"

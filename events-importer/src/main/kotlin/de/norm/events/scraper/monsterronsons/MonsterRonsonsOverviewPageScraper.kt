@@ -13,6 +13,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stripTitleMark
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -140,10 +141,10 @@ class MonsterRonsonsOverviewPageScraper(
      * The night's host(s) from a `SING WITH <HOST>` title — the only named performers the source
      * publishes. A title off the pattern (`BOXHOPPING!`) names a format, not a person, and yields
      * no artists. Hosts are [de.norm.events.event.ArtistRole.DJ]: they run the night from the
-     * booth rather than performing a set.
+     * booth rather than performing a set. The title's closing `!` is not the last host's (#3642).
      */
     private fun hostsFromTitle(title: String): List<ScrapedArtist> {
-        val hosts = HOST_TITLE_PATTERN.find(title)?.groupValues?.get(1) ?: return emptyList()
+        val hosts = HOST_TITLE_PATTERN.find(stripTitleMark(title.trim()))?.groupValues?.get(1) ?: return emptyList()
         return hosts
             .split(HOST_SEPARATOR_PATTERN)
             .map { it.trim() }
