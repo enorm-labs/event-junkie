@@ -256,6 +256,17 @@ class ImageFetcherTest {
         }
 
     @Test
+    fun `fetches a URL whose filename is Cyrillic, percent-encoded as UTF-8`() =
+        runTest {
+            server.enqueue(imageResponse(pngBytes(width = 8, height = 8)))
+            val cyrillic = "${url().substringBefore("/poster.png")}/uploads/пост_берлин-1960x2450.png"
+
+            fetcher().fetch(cyrillic).shouldBeInstanceOf<ImageFetchResult.Success>()
+
+            server.takeRequest().target shouldBe "/uploads/%D0%BF%D0%BE%D1%81%D1%82_%D0%B1%D0%B5%D1%80%D0%BB%D0%B8%D0%BD-1960x2450.png"
+        }
+
+    @Test
     fun `refuses a body that is not an image at all`() =
         runTest {
             server.enqueue(imageResponse("<html><body>Not found</body></html>".toByteArray()))

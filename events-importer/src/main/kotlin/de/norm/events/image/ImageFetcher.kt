@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import de.norm.events.scraper.SCRAPER_WEB_CLIENT
+import de.norm.events.scraper.encodeForUri
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher

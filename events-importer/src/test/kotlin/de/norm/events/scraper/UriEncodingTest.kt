@@ -1,10 +1,10 @@
-package de.norm.events.image
+package de.norm.events.scraper
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.net.URI
 
-class ImageUrlsTest {
+class UriEncodingTest {
     @Test
     fun `encodes square brackets in the path, so URI accepts the Delphi poster`() {
         val delphi = "https://theater-im-delphi.de/wp-content/uploads/programm/bild/Kunstlieder_[no_text_3_2_1920x1280_300dpi]_(c)R.jpg"
@@ -19,6 +19,22 @@ class ImageUrlsTest {
     fun `encodes every character URI refuses, in the path and the query`() {
         "https://example.test/a b|c{d}e^f`g\\h\"i<j>.jpg?x=[1]".encodeForUri() shouldBe
             "https://example.test/a%20b%7Cc%7Bd%7De%5Ef%60g%5Ch%22i%3Cj%3E.jpg?x=%5B1%5D"
+    }
+
+    @Test
+    fun `encodes a non-ASCII path as UTF-8, which the Privatclub host needs`() {
+        val privatclub = "https://privatclub-berlin.de/wp-content/uploads/2026/08/пост_берлин-1960x2450.png"
+
+        val encoded = privatclub.encodeForUri()
+
+        encoded shouldBe "https://privatclub-berlin.de/wp-content/uploads/2026/08/%D0%BF%D0%BE%D1%81%D1%82_%D0%B1%D0%B5%D1%80%D0%BB%D0%B8%D0%BD-1960x2450.png"
+        URI(encoded).toASCIIString() shouldBe encoded
+        encoded.encodeForUri() shouldBe encoded
+    }
+
+    @Test
+    fun `encodes an umlaut and a character outside the BMP by their UTF-8 bytes`() {
+        "https://example.test/Bühne 🎸.jpg".encodeForUri() shouldBe "https://example.test/B%C3%BChne%20%F0%9F%8E%B8.jpg"
     }
 
     @Test

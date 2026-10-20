@@ -1,5 +1,6 @@
 package de.norm.events.image
 
+import de.norm.events.scraper.encodeForUri
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
