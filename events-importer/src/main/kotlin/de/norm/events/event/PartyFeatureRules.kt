@@ -47,6 +47,16 @@ object PartyFeatureRules {
 
     /** [NIGHT] and a bar night, "Queerer Tresen" (#3585), for the queer phrases only: [NIGHT] also feeds DOOR_CLAUSE and the open-end cue. */
     private const val QUEER_NIGHT = "(?:$NIGHT|tresen)"
+
+    /**
+     * One word between "queer" and the night ("a queer, high-energy party", #3650). An article, a preposition or a performer
+     * starts another phrase ("queer artists at a party", "queeren Aspekten der Clubnacht"), so it is no such word.
+     */
+    private const val QUEER_GAP_WORD =
+        "(?!(?:the|a|an|of|at|in|im|on|to|der|die|das|des|dem|den|ein|eine|einer|einem|einen|am|auf|zu|zur|zum|von|vom|bei|mit|" +
+            "artists?|acts?|djs?|musicians?|performers?|bands?|künstler\\p{L}*|kuenstler\\p{L}*|musiker\\p{L}*)$E)" +
+            "[\\p{L}\\p{N}]+(?:-[\\p{L}\\p{N}]+)*"
+
     private const val AFTERHOUR_SOURCE = "${B}after[\\s-]?hours?$E"
 
     /** The afterhour cue of [PartyFeature.OPEN_END], for the sources whose afterhour is known to be an open end (`EventFeatureSync`, #3386). */
@@ -127,7 +137,9 @@ object PartyFeatureRules {
                             "(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E",
                         // Not a NIGHT word: NIGHT also feeds DOOR_CLAUSE and the open-end duration cue.
                         "${B}queer\\p{L}*[\\s-]+(?:dancefloors?|tanzfläche)$E",
-                        "$B(?:dancefloors?|tanzflächen?)\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?))$E"
+                        "$B(?:dancefloors?|tanzflächen?)\\s+(?:$FUER|for)\\s+(?:queers|queer\\s+(?:people|folks?))$E",
+                        // Horizontal space only, so a title and the next text line never join into one phrase.
+                        "${B}queer(?:e|en|er|es)?(?:,?[\\h-]+$QUEER_GAP_WORD){1,2},?[\\h-]+$QUEER_NIGHT$E"
                     ),
                 cues = listOf("${B}queer", "${B}lgbt")
             ),
