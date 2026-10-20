@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Year
 import java.time.ZoneOffset
+import kotlin.time.TimeMark
 
 /**
  * Asks Discogs about every artist MusicBrainz does not know, and stores the verdict (#2026, ADR-035).
@@ -56,10 +57,13 @@ class DiscogsLookupService(
      *
      * @return what the tick owed and stored, or [LookupPass.OFF] without both consumer credentials.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+    suspend fun sweep(
+        touchedArtistIds: Set<Long>,
+        deadline: TimeMark = LookupPass.noDeadline()
+    ): LookupPass {
         if (!properties.active) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates))
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
     }
 
     /**
@@ -69,11 +73,19 @@ class DiscogsLookupService(
      */
     suspend fun backlog(): Long = if (properties.active) artistRepository.countUncheckedByDiscogs() else 0
 
-    /** One lookup per row; the run stops after [STOP_AFTER_CONSECUTIVE_FAILURES] unavailable rows in a row. */
-    private suspend fun storeVerdicts(candidates: List<ArtistEntity>): Int {
+    /** One lookup per row; the run stops after [STOP_AFTER_CONSECUTIVE_FAILURES] unavailable rows in a row, or at [deadline]. */
+    private suspend fun storeVerdicts(
+        candidates: List<ArtistEntity>,
+        deadline: TimeMark
+    ): Int {
         var stored = 0
         var consecutiveFailures = 0
-        for (artist in candidates) {
+        for ((done, artist) in candidates.withIndex()) {
+            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
+                LookupPass.budgetSpent(deadline, "Discogs lookup", done, candidates.size)
+            ) {
+                break
+            }
             try {
                 if (lookup(artist)) stored++
                 consecutiveFailures = 0
@@ -81,7 +93,6 @@ class DiscogsLookupService(
                 metrics.recordDiscogsLookup(STATE_ERROR)
                 consecutiveFailures++
                 logger.warn(e) { "Discogs unavailable for '${artist.name}' ($consecutiveFailures in a row)" }
-                if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
             }
         }
         logger.info { "Stored $stored Discogs verdict(s) of ${candidates.size} owed" }

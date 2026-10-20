@@ -10,6 +10,7 @@ import de.norm.events.musicbrainz.MusicBrainzUnavailableException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import kotlin.time.TimeMark
 
 /**
  * Looks every artist an import billed up in MusicBrainz, and stores the verdict (ADR-031, step B).
@@ -21,7 +22,8 @@ import org.springframework.stereotype.Service
  * **Every tick also drains the backfill.** The rows imports touched since the last tick come first;
  * the slice is then filled up to [MusicBrainzProperties.maxPerRun] with the oldest rows nobody has
  * looked at. `importer.musicbrainz.unchecked` shows it draining, and stays at zero afterwards. The
- * tick is the only caller and never overlaps itself, so no lock guards the slice (#1604).
+ * tick is the only caller and never overlaps itself, so no lock guards the slice (#1604). The tick
+ * also sets the pass a deadline, so a MusicBrainz brownout cannot hold it for hours (#2896).
  *
  * **Nothing but the three columns is written.** The name is never rewritten from a verdict, and
  * the head pass — the part before ` - ` or `: ` of a name MusicBrainz did not know — is a log line
@@ -42,21 +44,32 @@ class MusicBrainzLookupService(
      * @return what the tick owed and stored, or [LookupPass.OFF] when the lookup is disabled. A
      *   MusicBrainz outage shows as fewer stored than owed, never as an exception.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+    suspend fun sweep(
+        touchedArtistIds: Set<Long>,
+        deadline: TimeMark = LookupPass.noDeadline()
+    ): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates))
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
     }
 
     /**
      * One lookup per row. A row MusicBrainz will not answer for is counted and left for the next
      * run; the run itself stops only after [STOP_AFTER_CONSECUTIVE_FAILURES] such rows in a row,
-     * which is an outage rather than a burst (#1610).
+     * which is an outage rather than a burst (#1610), or at [deadline].
      */
-    private suspend fun storeVerdicts(candidates: List<ArtistEntity>): Int {
+    private suspend fun storeVerdicts(
+        candidates: List<ArtistEntity>,
+        deadline: TimeMark
+    ): Int {
         var stored = 0
         var consecutiveFailures = 0
-        for (artist in candidates) {
+        for ((done, artist) in candidates.withIndex()) {
+            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
+                LookupPass.budgetSpent(deadline, "MusicBrainz lookup", done, candidates.size)
+            ) {
+                break
+            }
             try {
                 if (lookup(artist)) stored++
                 consecutiveFailures = 0
@@ -64,7 +77,6 @@ class MusicBrainzLookupService(
                 metrics.recordMusicBrainzLookup(STATE_ERROR)
                 consecutiveFailures++
                 logger.warn { "MusicBrainz unavailable for '${artist.name}' ($consecutiveFailures in a row): ${e.message}" }
-                if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
             }
         }
         logger.info { "Stored $stored MusicBrainz verdict(s) of ${candidates.size} owed" }

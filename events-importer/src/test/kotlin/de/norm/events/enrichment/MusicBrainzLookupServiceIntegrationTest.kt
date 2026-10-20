@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /**
  * The sweep against a real PostgreSQL (Testcontainers), with MusicBrainz replaced by a scripted
@@ -165,6 +168,30 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             ids.forEach { matchOf(it) shouldBe MusicBrainzMatch.UNCHECKED.name }
             lookups("error") shouldBe 3.0
             coVerify(exactly = 3) { client.search(any()) }
+        }
+    }
+
+    @Test
+    fun `a brownout that answers two rows in three ends the run at its budget, not on failures in a row (#2896)`() {
+        runBlocking {
+            val ids = ('A'..'I').map { requireNotNull(artist("Act $it").id) }
+            val clock = TestTimeSource()
+            var calls = 0
+            coEvery { client.search(any()) } coAnswers {
+                calls++
+                if (calls % 3 == 0) {
+                    clock += 70.seconds
+                    throw MusicBrainzUnavailableException("503 four times")
+                }
+                clock += 1.seconds
+                emptyList()
+            }
+
+            val pass = service().sweep(ids.toSet(), clock.markNow() + 2.minutes)
+
+            pass shouldBe LookupPass(owed = 9, stored = 4)
+            coVerify(exactly = 6) { client.search(any()) }
+            ids.count { matchOf(it) == MusicBrainzMatch.UNCHECKED.name } shouldBe 5
         }
     }
 

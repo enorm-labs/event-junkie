@@ -516,20 +516,24 @@ rule(
     silence_minutes=24 * 60,
 )
 
-# The three lookups run on one scheduled tick (#2051), which writes the gauge when it
+# The lookups run on one scheduled tick (#2051), which writes the gauge when it
 # finishes. The backlog rules above only see a stopped tick while a backlog exists, so
 # a tick that died with nothing owed would stay silent until new artists arrived. An
-# hour is about four missed ticks, and the longest real tick is about fifteen minutes.
+# hour is about four missed ticks. Each of the four passes stops at a 12-minute budget
+# (#2896), so even a tick in a brownout ends inside the hour.
 # The gauge reads 0 until the first tick finishes and stays 0 while the tick is off, so
 # the age is multiplied by `> bool 0`. Not `and (… > 0)`: OpenObserve's `and` did not
 # drop the steps where the right side was false, and the rule fired on a pod's first
 # two minutes with the whole epoch as the age.
 rule(
     "ej-artist-lookup-tick-stale",
-    "The artist lookup tick (MusicBrainz, its enrichment, Discogs) has not finished in an "
-    "hour, against a five-minute interval. New artists get no verdict and no links. Read "
-    "the importer log for `Artist lookup tick`. `timestamp(x) - x` because OpenObserve "
-    "freezes `time()` at the window start.",
+    "The artist lookup tick (MusicBrainz, its enrichment, Discogs, the occupations) has "
+    "not finished in an hour, against a five-minute interval. New artists get no verdict "
+    "and no links. First search the importer log for `MusicBrainz unavailable`: many lines "
+    "mean a MusicBrainz brownout. A pass it holds ends with `stopped at its time budget`, "
+    "then the tick writes `Artist lookup tick`. A stopped tick writes nothing after its last "
+    "`Artist lookup tick` line. `timestamp(x) - x` because OpenObserve freezes `time()` at "
+    "the window start.",
     "((timestamp(max(importer_artists_lookup_tick_last_success)) "
     "- max(importer_artists_lookup_tick_last_success)) / 60) "
     "* (max(importer_artists_lookup_tick_last_success) > bool 0)",

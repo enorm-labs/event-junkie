@@ -396,7 +396,7 @@
     "stream_name": "importer_artists_lookup_tick_last_success",
     "is_real_time": false,
     "enabled": true,
-    "description": "The artist lookup tick (MusicBrainz, its enrichment, Discogs) has not finished in an hour, against a five-minute interval. New artists get no verdict and no links. Read the importer log for `Artist lookup tick`. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "description": "The artist lookup tick (MusicBrainz, its enrichment, Discogs, the occupations) has not finished in an hour, against a five-minute interval. New artists get no verdict and no links. First search the importer log for `MusicBrainz unavailable`: many lines mean a MusicBrainz brownout. A pass it holds ends with `stopped at its time budget`, then the tick writes `Artist lookup tick`. A stopped tick writes nothing after its last `Artist lookup tick` line. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
     "query_condition": {
       "type": "promql",
       "promql": "((timestamp(max(importer_artists_lookup_tick_last_success)) - max(importer_artists_lookup_tick_last_success)) / 60) * (max(importer_artists_lookup_tick_last_success) > bool 0)",

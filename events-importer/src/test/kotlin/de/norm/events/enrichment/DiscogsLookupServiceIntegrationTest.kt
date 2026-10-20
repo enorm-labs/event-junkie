@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Year
 import java.time.ZoneOffset
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TestTimeSource
 
 /**
  * The Discogs sweep against a real PostgreSQL (Testcontainers), with Discogs replaced by a scripted
@@ -198,6 +200,21 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             cleared.discogsId.shouldBeNull()
             cleared.discogsUrl.shouldBeNull()
             reload(venueLinked.id).discogsUrl shouldBe "https://www.discogs.com/artist/1-Venue-Supplied"
+        }
+    }
+
+    @Test
+    fun `a spent budget asks nothing, and the rows wait for the next tick (#2896)`() {
+        runBlocking {
+            val late = artist("Late")
+            val clock = TestTimeSource()
+            val deadline = clock.markNow() + 1.minutes
+            clock += 2.minutes
+
+            service().sweep(setOfNotNull(late.id), deadline) shouldBe LookupPass(owed = 1, stored = 0)
+
+            reload(late.id).discogsMatch shouldBe DiscogsMatch.UNCHECKED.name
+            coVerify(exactly = 0) { client.search(any()) }
         }
     }
 

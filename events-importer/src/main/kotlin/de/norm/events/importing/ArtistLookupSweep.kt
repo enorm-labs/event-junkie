@@ -10,6 +10,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+import kotlin.time.toKotlinDuration
 
 /**
  * Runs the artist lookups on their own tick: the MusicBrainz lookup, then its enrichment, then the
@@ -23,6 +27,10 @@ import java.util.concurrent.ConcurrentHashMap
  * **Imports hand over the artists they touched.** A new row is queued by its `UNCHECKED` verdict
  * anyway, but a renamed one only by this hand-off. The set lives in memory, so a restart loses it
  * and a renamed row waits for its next import.
+ *
+ * **Each pass has a time budget**, counted from its own start (#2896). A MusicBrainz brownout
+ * answers some requests, so no pass stops on failures alone; the budget ends it, and the rows it
+ * owes wait for the next tick. Four budgets and the delay stay under the stale alert's hour.
  */
 @Service
 @Suppress("LongParameterList") // One service per pass of the tick, run in a fixed order.
@@ -34,8 +42,13 @@ class ArtistLookupSweep(
     private val performerTyping: PerformerTyping,
     private val metrics: ImporterMetrics,
     @Value($$"${app.artists.lookup-enabled:true}")
-    private val enabled: Boolean = true
+    private val enabled: Boolean = true,
+    @Value($$"${app.artists.lookup-pass-budget:12m}")
+    passBudget: java.time.Duration = DEFAULT_PASS_BUDGET,
+    private val timeSource: TimeSource = TimeSource.Monotonic
 ) {
+    private val passBudget: Duration = passBudget.toKotlinDuration()
+
     private val logger = KotlinLogging.logger {}
     private val touched: MutableSet<Long> = ConcurrentHashMap.newKeySet()
 
@@ -68,10 +81,10 @@ class ArtistLookupSweep(
      */
     suspend fun sweep() {
         val ids = takeQueued()
-        val lookup = pass("MusicBrainz lookup") { musicBrainzLookupService.sweep(ids) }
-        val enrichment = pass("MusicBrainz enrichment") { musicBrainzEnrichmentService.sweep(ids) }
-        val discogs = pass("Discogs lookup") { discogsLookupService.sweep(ids) }
-        val occupations = pass("Occupation read") { artistOccupationService.sweep() }
+        val lookup = pass("MusicBrainz lookup") { musicBrainzLookupService.sweep(ids, it) }
+        val enrichment = pass("MusicBrainz enrichment") { musicBrainzEnrichmentService.sweep(ids, it) }
+        val discogs = pass("Discogs lookup") { discogsLookupService.sweep(ids, it) }
+        val occupations = pass("Occupation read") { artistOccupationService.sweep(it) }
         val retyped = pass("Comedy retype") { performerTyping.retypeStored() }
         logger.info {
             "Artist lookup tick: ${ids.size} touched · MusicBrainz $lookup · enrichment $enrichment · Discogs $discogs · " +
@@ -80,12 +93,12 @@ class ArtistLookupSweep(
         metrics.markArtistLookupTickSucceeded()
     }
 
-    /** The pass's outcome, or `failed` after its `WARN`. */
+    /** The pass's outcome, or `failed` after its `WARN`. [block] gets the pass's deadline. */
     private suspend fun pass(
         name: String,
-        block: suspend () -> Any
+        block: suspend (TimeMark) -> Any
     ): String =
-        runCatchingCancellable { block().toString() }
+        runCatchingCancellable { block(timeSource.markNow() + passBudget).toString() }
             .onFailure { logger.warn(it) { "$name pass failed" } }
             .getOrElse { FAILED }
 
@@ -93,5 +106,6 @@ class ArtistLookupSweep(
 
     private companion object {
         const val FAILED = "failed"
+        val DEFAULT_PASS_BUDGET: java.time.Duration = java.time.Duration.ofMinutes(12)
     }
 }

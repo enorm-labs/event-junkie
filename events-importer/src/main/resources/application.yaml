@@ -182,6 +182,10 @@ app:
     # each import (#2051). Off stops all three; the per-service switches still apply when on.
     lookup-enabled: true
     lookup-tick-millis: 300000
+    # Each pass stops here and leaves the rest for the next tick: a MusicBrainz brownout answers
+    # some requests, so the stop on failures in a row never comes (#2896). Four passes and the
+    # delay stay under ej-artist-lookup-tick-stale's hour; a healthy lookup pass takes about ten.
+    lookup-pass-budget: 12m
   images:
     # Off means nothing is fetched or stored. Not the hotlink-versus-cache switch, which is
     # `app.images.serving.enabled` in the BFF; this has to be on first (ADR-019 §2.10).

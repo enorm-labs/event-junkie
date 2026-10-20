@@ -46,6 +46,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.test.web.reactive.server.expectBody
 import java.time.LocalDate
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TestTimeSource
 
 /**
  * Step C against a real PostgreSQL, with MusicBrainz and Wikimedia replaced by scripted clients.
@@ -401,6 +403,21 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             row(first).musicbrainzEnrichedAt.shouldBeNull()
             row(second).musicbrainzEnrichedAt.shouldNotBeNull()
             enriched("error") shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `a spent budget reads nothing, and the rows wait for the next tick (#2896)`() {
+        runBlocking {
+            val id = exact("Late")
+            val clock = TestTimeSource()
+            val deadline = clock.markNow() + 1.minutes
+            clock += 2.minutes
+
+            service().sweep(setOf(id), deadline) shouldBe LookupPass(owed = 1, stored = 0)
+
+            row(id).musicbrainzEnrichedAt.shouldBeNull()
+            coVerify(exactly = 0) { musicBrainz.artist(any()) }
         }
     }
 
