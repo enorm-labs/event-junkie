@@ -25,10 +25,15 @@ import java.net.URI
  *
  * Every event registers externally. Its link is the ticket link unless it points to Instagram or back to this site,
  * which sell nothing. The type and the acts come from the title, since the payload carries no category or lineup.
- * The house writes `<act> | Album Pre Event`, `<act> - … Concert …`, `<label>: <act>; <act>` and
- * `<festival> | <act> + <act>`; any other title goes to the shared title reader. A title that only ends in "Concert"
- * names no act it can be cut from (`Ragde Lobo Medicine Music Concert`), so it bills none. The two list shapes are a
- * lineup, not a title read as an act, so they are not title-derived: a festival title keeps them.
+ * The house writes `<act> | Album Pre Event`, `<act> - … Concert …`, `<label>: <act>; <act>`,
+ * `<festival> | <act> + <act>` and `<series> w/ <act> + <act>`; any other title goes to the shared title reader. A
+ * title that only ends in "Concert" names no act it can be cut from (`Ragde Lobo Medicine Music Concert`), so it bills
+ * none. The three list shapes are a lineup, not a title read as an act, so they are not title-derived: a festival
+ * title keeps them.
+ *
+ * The house also lets its room to a meetup (`Ableton User Group Berlin: Track Feedback Session`) and a film night
+ * (`Free DrinkWatchTalk short movie evening`). Its own words type these, and they bill no act. A title that names a
+ * concert stays one, so a soundtrack concert is not read as a film night.
  */
 class HouseOfMusicOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -51,7 +56,7 @@ class HouseOfMusicOverviewPageScraper {
         require(title.isNotBlank()) { "House of Music event '$slug' has no title" }
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val date = requireNotNull(schedule.date) { "House of Music event '$slug' has no start date" }
-        val type = inferConcertVenueType(title)
+        val type = if (OCCASION.containsMatchIn(title)) inferConcertVenueType(title) else inferConcertVenueType(title, null, VENUE_KEYWORDS)
         return ScrapedEvent(
             title = title,
             description = node.stringOrNull("description"),
@@ -82,11 +87,11 @@ class HouseOfMusicOverviewPageScraper {
             when {
                 LABEL_LIST.matches(title) -> title.substringAfter(':').split(';')
                 tail.isNotEmpty() && isFestivalTitle(head) -> tail.split(" + ")
-                else -> null
+                else -> SERIES_LINEUP.matchEntire(title)?.let { it.groupValues[1].split(" + ") }
             }
         val names =
             when {
-                type == EventType.QUIZ.name -> emptyList()
+                type in ACTLESS_TYPES -> emptyList()
                 lineup != null -> lineup
                 tail.isNotEmpty() && OCCASION.containsMatchIn(tail) -> listOf(head)
                 OCCASION.containsMatchIn(title) -> emptyList()
@@ -110,5 +115,14 @@ class HouseOfMusicOverviewPageScraper {
         val SEPARATOR = Regex("""\s+[|\-–]\s+""")
         val LABEL_LIST = Regex("""^[^:;]+:\s*[^;]+(?:;[^;]+)+$""")
         val OCCASION = Regex("""\b(?:album|release|pre event|concert|konzert)\b""", RegexOption.IGNORE_CASE)
+        val SERIES_LINEUP = Regex("""^[^\s/]+\s+w/\s+(.+)$""", RegexOption.IGNORE_CASE)
+        val VENUE_KEYWORDS =
+            mapOf(
+                "user group" to EventType.OTHER.name,
+                "feedback session" to EventType.OTHER.name,
+                "movie" to EventType.SCREENING.name,
+                "film" to EventType.SCREENING.name
+            )
+        val ACTLESS_TYPES = setOf(EventType.QUIZ.name, EventType.OTHER.name, EventType.SCREENING.name)
     }
 }
