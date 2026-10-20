@@ -12,6 +12,10 @@ spring:
   r2dbc:
     properties:
       schema: events
+      # No cached prepared statements. `findById` selects `table.*`, so a column the next release's
+      # migration adds changes a cached statement's result type and aborts its transaction: five
+      # 500s from the outgoing pods beside V178 and V179 (#3648). The cost is a parse per query.
+      preparedStatementCacheQueries: 0
     # A connection that died without the pool noticing, as when PostgreSQL restarts while the network
     # is down, fails the first query sent on it. A round trip on acquire finds it first, and one retry
     # per pooled connection lets every dead one be replaced before a request fails (#2318).
