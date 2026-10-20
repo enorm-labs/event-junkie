@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.Clock
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Why a nightly pass ended before its last source. */
@@ -39,7 +40,7 @@ data class NightlyPassResult(
  */
 @Component
 @ConditionalOnProperty(name = ["app.data-quality.classification.enabled"], havingValue = "true")
-@Suppress("LongParameterList") // The pass orders sources from two reads and spends two limits.
+@Suppress("LongParameterList") // The pass orders sources from two reads, spends two limits and stamps its end.
 class ClassificationRunner(
     private val check: EventClassificationCheck,
     private val repository: EventClassificationRepository,
@@ -47,10 +48,16 @@ class ClassificationRunner(
     private val metrics: DataQualityMetrics,
     private val ledger: ClassificationTokenLedger,
     private val properties: ClassificationProperties,
-    @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher
+    private val passMetrics: ClassificationMetrics,
+    @Qualifier("ioDispatcher") ioDispatcher: CoroutineDispatcher,
+    private val clock: Clock = Clock.systemUTC()
 ) : DisposableBean {
     private val logger = KotlinLogging.logger {}
     private val lock = Mutex()
+
+    init {
+        passMetrics.seed(clock.instant())
+    }
 
     /** Outlives the request, so a run is not cancelled when the caller's port-forward times out. */
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
@@ -113,7 +120,10 @@ class ClassificationRunner(
         }
     }
 
-    private suspend fun pass(): NightlyPassResult? {
+    /** Every pass that ends is stamped, a spent month's skip too: `ej-classification-budget` reports that one. */
+    private suspend fun pass(): NightlyPassResult? = runPass().also { passMetrics.markSucceeded(clock.instant()) }
+
+    private suspend fun runPass(): NightlyPassResult? {
         val used = ledger.monthTotal()
         if (used >= ledger.budget) {
             logger.warn { "Nightly event classification skipped: $used of ${ledger.budget} tokens used this month" }
