@@ -26,9 +26,9 @@ import org.springframework.stereotype.Component
  * a page that offers more names the next `page` in its form, so the walk reads two pages today.
  * The frame sends no validators, so every run reads it.
  *
- * Each show's first ticket page is then read once, for the text, image and price that its other
- * performances share; a failed page leaves them with the list's fields, flagged so the upsert
- * keeps what it stored.
+ * Each performance's ticket page is then read for the text, image, doors and price tiers. Not once
+ * per show: the nights of one title differ in time and tiers (Allstars at 18:00 and 20:00, and on
+ * New Year's Eve). A failed page leaves the list's fields, flagged so the upsert keeps what it stored.
  *
  * @see DownstairsTicketListScraper for the list.
  * @see <a href="https://www.downstairscomedy.shop/tickets">Downstairs tickets</a>
@@ -62,8 +62,14 @@ class DownstairsWebsiteImporter(
 
     private suspend fun enrichFromTicketPages(events: List<ScrapedEvent>): List<ScrapedEvent> =
         htmlFetcher.enrichFromSharedPages(events, ticketScraper::scrape, { show, event ->
-            event.copy(description = show.description, imageUrl = show.imageUrl, pricePresale = show.price)
-        }, key = ScrapedEvent::title)
+            event.copy(
+                description = show.description,
+                imageUrl = show.imageUrl,
+                pricePresale = show.price,
+                priceNote = show.priceNote,
+                doorsTime = show.doorsTime
+            )
+        })
 
     private companion object {
         const val FRAME = "tickets"
@@ -76,7 +82,10 @@ class DownstairsWebsiteImporter(
 val DOWNSTAIRS_LIMITATIONS =
     VenueLimitations(
         EventSource.DOWNSTAIRS,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the shop states one time per performance"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "a show the club sells through another ticket shop links there, and only the club's own shop is read, so the night keeps no price"
+        ),
         AcceptedLimitation(LimitedAspect.END_TIME, "the shop gives every performance the same 6 a.m. end"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the club's own nights bill a format, and the comedians appear only in prose"),
         AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
