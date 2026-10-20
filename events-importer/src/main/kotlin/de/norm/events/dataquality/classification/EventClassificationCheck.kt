@@ -119,7 +119,8 @@ class EventClassificationCheck(
         logger.at(Level.INFO) {
             message =
                 "Event classification of $scope finished: ${result.checked} checked, ${result.unchanged} unchanged, ${result.failed} failed, " +
-                "${result.overCap} over the cap, ${result.overBudget} over the token budget; suggested ${result.suggested}"
+                "${result.overCap} over the cap, ${result.overBudget} over the token budget; suggested ${result.suggested}; " +
+                "skipped ${tally.comedyShowSkipped} COMEDY/SHOW type(s) and ${tally.dismissedForShow} dismissed on another date"
             payload = sourcePayload
         }
         return result
@@ -161,6 +162,8 @@ class EventClassificationCheck(
         var overCap = 0
         var overBudget = 0
         val suggested = mutableMapOf<String, Int>()
+        var comedyShowSkipped = 0
+        var dismissedForShow = 0
     }
 
     private suspend fun classify(
@@ -186,7 +189,9 @@ class EventClassificationCheck(
         if (result != ClassifierResult.Failed) tally.monthTokens = ledger.record(result.usage)
         when (result) {
             is ClassifierResult.Answered -> {
-                suggestions += Proposals(target, lineup, musicBrainzActs, features, result.answer).all()
+                val proposals = Proposals(target, lineup, musicBrainzActs, features, result.answer)
+                suggestions += proposals.all()
+                if (proposals.comedyShowSkipped) tally.comedyShowSkipped++
                 repository.recordChecked(target.id, target.contentHash, classifier.model)
                 outcome(OUTCOME_ANSWERED)
             }
@@ -201,9 +206,19 @@ class EventClassificationCheck(
                 outcome(OUTCOME_FAILED)
             }
         }
-        suggestions.filter { repository.insertUnlessOpen(it) }.forEach { suggestion ->
-            tally.suggested.merge(suggestion.field, 1, Int::plus)
-            meterRegistry.counter(SUGGESTIONS_METER, TAG_CHECK, CHECK_NAME, TAG_FIELD, suggestion.field).increment()
+        suggestions.forEach { suggestion ->
+            when (repository.insertUnlessOpen(suggestion)) {
+                SuggestionInsert.INSERTED -> {
+                    tally.suggested.merge(suggestion.field, 1, Int::plus)
+                    meterRegistry.counter(SUGGESTIONS_METER, TAG_CHECK, CHECK_NAME, TAG_FIELD, suggestion.field).increment()
+                }
+
+                SuggestionInsert.DISMISSED_FOR_SHOW -> {
+                    tally.dismissedForShow++
+                }
+
+                SuggestionInsert.OPEN -> {}
+            }
         }
     }
 
@@ -235,17 +250,29 @@ class EventClassificationCheck(
         private val model = classifier.model
         private val floor = properties.minConfidence
 
+        /** The model proposed COMEDY for a SHOW or SHOW for a COMEDY, and [eventType] dropped it. */
+        var comedyShowSkipped = false
+            private set
+
         fun all(): List<NewSuggestion> = listOfNotNull(eventType(), artists(), features(), startTime(), pricePresale(), priceBoxOffice())
 
-        /** None against the venue's own type: accepting one would pin the model's guess over the venue's badge (#3607). */
-        private fun eventType() =
-            answer.eventType
-                ?.confident(floor.eventType)
-                ?.takeIf { it.value.name != target.eventType }
-                ?.takeUnless { target.typeFromVenueCue && target.eventType != EventType.OTHER.name }
-                ?.let {
-                    NewSuggestion(target.id, FIELD_EVENT_TYPE, target.eventType, it.value.name, it.evidence, it.confidence, model)
-                }
+        /**
+         * None against the venue's own type: accepting one would pin the model's guess over the venue's badge (#3607).
+         * None between COMEDY and SHOW at any venue: the venue's own genre decides, and the model argues with it (#3658).
+         */
+        private fun eventType(): NewSuggestion? {
+            val found =
+                answer.eventType
+                    ?.confident(floor.eventType)
+                    ?.takeIf { it.value.name != target.eventType }
+                    ?.takeUnless { target.typeFromVenueCue && target.eventType != EventType.OTHER.name }
+                    ?: return null
+            if (setOf(target.eventType, found.value.name) == COMEDY_OR_SHOW) {
+                comedyShowSkipped = true
+                return null
+            }
+            return NewSuggestion(target.id, FIELD_EVENT_TYPE, target.eventType, found.value.name, found.evidence, found.confidence, model)
+        }
 
         /**
          * Adds the acts the title names, and drops a title-derived artist the model does not call an act.
@@ -332,6 +359,7 @@ class EventClassificationCheck(
         private const val MUSICBRAINZ_CONFIDENCE = 0.9
 
         private const val MIN_SEGMENT_LENGTH = 2
+        private val COMEDY_OR_SHOW = setOf(EventType.COMEDY.name, EventType.SHOW.name)
         private const val LIST_SEPARATOR = "; "
         private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
 
