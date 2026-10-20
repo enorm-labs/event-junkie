@@ -126,7 +126,7 @@ class MbiaApiScraper(
  * `GOA Herbst Edition [pres. Naturalize, Vertigos]`, `9Y TEKKNOLOGIE • D-FENCE • FABITEKK`. What
  * stands before the marker is the night's name.
  */
-internal fun actsFromTitle(title: String): List<ScrapedArtist> {
+private fun actsFromTitle(title: String): List<ScrapedArtist> {
     val billing =
         PRESENTED_ACTS.find(title)?.groupValues?.get(1)
             ?: WITH_MARKER.find(title)?.let { title.substring(it.range.last + 1) }
