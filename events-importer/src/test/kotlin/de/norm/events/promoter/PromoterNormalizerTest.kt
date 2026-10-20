@@ -282,6 +282,7 @@ class PromoterNormalizerTest {
             // Listen Agency is Listen Collective, whose site calls itself that, not Friendly Reminder (#3643).
             canonicalPromoterName("Listen") shouldBe "Listen"
             canonicalPromoterName("Listen Agency") shouldBe "Listen"
+            canonicalPromoterName("listenagency") shouldBe "Listen"
         }
     }
 
