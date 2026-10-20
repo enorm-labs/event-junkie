@@ -830,6 +830,10 @@ kubectl --context event-junkie-<env> -n observability delete pod o2c-openobserve
 
 `ej-k8s-events-stalled` fires after an hour without events. This check finds the stall before the alert does.
 
+**Production's `default` stream has no log lines for about 10 minutes after the k3s node boots.** Metrics continue. The cause is not known
+([#3587](https://github.com/enorm-labs/event-junkie/issues/3587)). The node keeps the lines, so read that window with
+`kubectl --context event-junkie-production logs`.
+
 ### Upgrading k3s is not a rebuild
 
 **A `k3s_version` bump does not need one.** k3s upgrades in place through the same installer the node
