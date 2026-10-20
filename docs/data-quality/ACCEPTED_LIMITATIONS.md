@@ -107,7 +107,7 @@ says so.
 | `BEATE_UWE`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the homepage                                                                      | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary, as do live-only club nights                 | —     |
 | `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
-| `BADEHAUS`             | `START_TIME`       | the page prints one clock, `19:00 UHR` beside the date and `Doors 19:00` below it, and it is the doors                                           | —     |
+| `BADEHAUS`             | `START_TIME`       | some pages print only the doors, `19:00 UHR` beside the date and at most an `Einlass` or `Doors` line below it, and no start                     | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`             | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BADEHAUS`             | `GENRE`            | the subtitle names a style on some nights and is prose or a tour name on others, so about four in ten nights carry no genre                      | —     |
