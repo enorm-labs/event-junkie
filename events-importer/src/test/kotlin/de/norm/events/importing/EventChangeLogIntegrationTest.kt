@@ -26,7 +26,8 @@ import java.time.LocalTime
 /**
  * `event_change` against a real PostgreSQL (#2725): an insert logs nothing, an update logs each
  * tracked field it moves, a pinned field the source would move logs nothing, an admin edit logs what
- * it pins, and a deleted event takes its changes with it.
+ * it pins, and a deleted event takes its changes with it. A source that keys by date logs a move
+ * as a removal plus an insert, but not a series or a re-key (#3067).
  */
 class EventChangeLogIntegrationTest : BaseControllerTest() {
     @Autowired
@@ -87,7 +88,21 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
         priceNote = priceNote
     )
 
-    private suspend fun import(event: ScrapedEvent) = eventUpsertService.upsertAndCleanup(listOf(event), venueId, venueSlug, eventSourceId)
+    private suspend fun import(event: ScrapedEvent) = importAll(event)
+
+    private suspend fun importAll(vararg events: ScrapedEvent) = eventUpsertService.upsertAndCleanup(events.toList(), venueId, venueSlug, eventSourceId)
+
+    /** The night as a source publishes it that puts the date in the `sourceId`. */
+    private fun keyedByDate(eventDate: LocalDate) = published(eventDate = eventDate).copy(sourceId = "festsaal:long-night-$eventDate")
+
+    private suspend fun changedEventIds(): List<Long> =
+        databaseClient
+            .sql("SELECT event_id FROM events.event_change")
+            .map { row -> requireNotNull(row.get("event_id", Long::class.javaObjectType)) }
+            .all()
+            .collectList()
+            .awaitFirstOrNull()
+            .orEmpty()
 
     private suspend fun storedId(): Long =
         requireNotNull(
@@ -195,6 +210,48 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
                 .awaitFirstOrNull()
 
             import(published(eventDate = date.plusDays(1), startTime = LocalTime.of(20, 0)).copy(sourceId = "festsaal:other-night"))
+
+            changes().shouldBeEmpty()
+        }
+
+    @Test
+    fun `a date in the source id logs a move on the new event when the old one is removed`(): Unit =
+        runBlocking {
+            importAll(keyedByDate(date))
+            importAll(keyedByDate(date.plusDays(2)))
+
+            changes() shouldContainExactlyInAnyOrder
+                listOf(
+                    Triple("EVENT_DATE", "$date", "${date.plusDays(2)}"),
+                    Triple("END_DATE", "${date.plusDays(1)}", "${date.plusDays(3)}")
+                )
+            val moved = eventRepository.findBySourceIdIn(listOf("festsaal:long-night-${date.plusDays(2)}")).toList().single()
+            changedEventIds().distinct() shouldBe listOf(moved.id)
+        }
+
+    @Test
+    fun `a weekly series that drops one date and adds the next logs nothing`(): Unit =
+        runBlocking {
+            importAll(keyedByDate(date), keyedByDate(date.plusDays(7)))
+            importAll(keyedByDate(date.plusDays(7)), keyedByDate(date.plusDays(14)))
+
+            changes().shouldBeEmpty()
+        }
+
+    @Test
+    fun `two added dates with the title log nothing`(): Unit =
+        runBlocking {
+            importAll(keyedByDate(date))
+            importAll(keyedByDate(date.plusDays(2)), keyedByDate(date.plusDays(3)))
+
+            changes().shouldBeEmpty()
+        }
+
+    @Test
+    fun `a new source id on the same date logs nothing`(): Unit =
+        runBlocking {
+            importAll(keyedByDate(date))
+            importAll(keyedByDate(date).copy(sourceId = "festsaal:long-night-v2"))
 
             changes().shouldBeEmpty()
         }

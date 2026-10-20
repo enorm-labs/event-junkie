@@ -8,8 +8,8 @@ import java.time.LocalDate
 
 /**
  * Writes `event_change`: what moved on an existing event, for the event page (#2725). The importer
- * calls it for each row it updates, and the admin edit for the row it saves. An insert has no stored
- * row, so a new source or a re-keyed event logs nothing.
+ * calls it for each row it updates, and for a removed row that an insert replaces with a new date
+ * (#3067). The admin edit calls it for the row it saves.
  */
 @Service
 class EventChangeLog(
