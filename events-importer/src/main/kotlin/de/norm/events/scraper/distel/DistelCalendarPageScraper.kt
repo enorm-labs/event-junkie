@@ -24,9 +24,9 @@ import java.time.Month
  * Pure HTML parser for one month of the DISTEL calendar (`/spielplan/kalender/?month=YYYYMM`).
  *
  * Each `div.event_list` is one performance: the day, a `Sa<br>Okt` weekday-and-month line, the
- * clock, the show's title and subtitle, and a link into the ticket shop. The shop's `event` id is
- * empty until presale opens, so a performance is keyed by show, date and clock. The year comes
- * from the month navigation's current entry. Availability is a class on `div.available`: `sold_out` when no seat is left.
+ * clock, the show's title and subtitle, and a link into the ticket shop, or into a guest's own shop
+ * (#3673). The shop's `event` id is empty until presale opens, so a performance is keyed by show,
+ * date and clock. The year comes from the month navigation's current entry. Availability is a class on `div.available`: `sold_out` when no seat is left.
  *
  * A touring date names its town and hall in the subtitle (`Aurich・Stadthalle Aurich`) on the show
  * pages; the calendar lists the home stage only, and a row with that marker is skipped.
@@ -75,7 +75,7 @@ class DistelCalendarPageScraper {
             startTime = startTime,
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.DISTEL.sourceIdPrefix}$slug-$eventDate-${startTime?.format(FOUR_DIGIT_CLOCK).orEmpty()}",
-            ticketUrl = item.selectFirst(".ce_button a[href*=event=]")?.absUrl("href")?.takeUnless { it.endsWith("event=") },
+            ticketUrl = item.selectFirst(".ce_button a[href]")?.absUrl("href")?.takeUnless { it.isEmpty() || it.endsWith("event=") },
             soldOut = item.selectFirst(".available.sold_out") != null,
             artists = distelActs(title)
         )

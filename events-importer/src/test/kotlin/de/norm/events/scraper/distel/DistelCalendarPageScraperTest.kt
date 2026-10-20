@@ -60,6 +60,14 @@ class DistelCalendarPageScraperTest {
     }
 
     @Test
+    fun `links a guest show's own ticket shop`() {
+        val schnack = scraper.scrape(document("distel-kalender-202612.html"), url).single { it.title.startsWith("SCHNACK") }
+
+        schnack.eventDate shouldBe LocalDate.of(2026, 12, 14)
+        schnack.ticketUrl shouldBe "https://tickets.schnackstandup.de/s/EKZXeX05"
+    }
+
+    @Test
     fun `bills the guest and host of a talk from the calendar`() {
         val talk = scraper.scrape(document("distel-kalender.html"), url).first { "Masala" in it.title }
 
