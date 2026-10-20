@@ -207,7 +207,7 @@ data class ScrapedEvent(
     /**
      * The type the event is stored with — the source's own, or the festival/format override
      * [resolveEventType] applies at the boundary. Scrapers build their artists before this is
-     * known; `AssociationSyncService` reads it to drop a headliner minted from a festival title (#300).
+     * known; `ArtistAssociationSync` reads it to drop a headliner minted from a festival title (#300).
      */
     fun resolvedEventType(): EventType = resolveEventType(eventType, storedTitle(), genre)
 

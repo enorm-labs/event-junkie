@@ -96,7 +96,7 @@ class AssociationSyncArtistSlugOverrideIntegrationTest : BaseControllerTest() {
     }
 
     private suspend fun warningsDuring(block: suspend () -> Unit): List<String> {
-        val logger = LoggerFactory.getLogger(AssociationSyncService::class.java) as Logger
+        val logger = LoggerFactory.getLogger(ArtistAssociationSync::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>().apply { start() }
         logger.addAppender(appender)
         try {

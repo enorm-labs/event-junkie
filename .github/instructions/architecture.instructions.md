@@ -91,8 +91,8 @@ which helper lives where — is not repeated; `grep` answers that.
 - **Slugs are server-side** (`SlugGenerator`, the `slug` module, never accepted in a request). Slugify's NFD stripping deletes a letter that does not decompose,
   so `NON_DECOMPOSING_LATIN` maps `ø æ ð þ ł đ ı ß œ` to their base form (`ø`→`o` beside `ö`→`o`; `æ`, `œ`, `ß`, `þ` to their two-letter romanisation).
   Without it `Kėkė Søl` → `keke-sl` and `Søl`/`Sæl` collide. **Do not switch to slugify's `locale()` bundles** — `no` rewrites `å`→`aa`, `de` turns `ö`→`oe`,
-  changing slugs that are already correct. **Changing the map is a data migration in disguise**: `AssociationSyncService` resolves artists and promoters by
-  slug, so an old spelling is missed and re-inserted as a duplicate.
+  changing slugs that are already correct. **Changing the map is a data migration in disguise**: `ArtistAssociationSync` and `PromoterAssociationSync`
+  resolve artists and promoters by slug, so an old spelling is missed and re-inserted as a duplicate.
   **A Cyrillic or Greek name with no Latin letter** is transliterated: Cyrillic BGN/PCGN-style without diacritics, Greek by ELOT 743 (`ВУИНДЛИЯ` →
   `vuindliya`, `Кино 2` → `kino-2`, #3475). A name with a Latin letter keeps its plain slug: `Друга Ріка (Druha Rika)` stays `druha-rika`.
   **A second act whose name folds to a stored slug** (`Göre` beside `Gore`) gets a slug of its own from `ARTIST_SLUG_OVERRIDES`. Every artist
@@ -101,7 +101,7 @@ which helper lives where — is not repeated; `grep` answers that.
   and `10.0 != 10.00` would defeat the scraper's change detection.
 - **Genre tags**: `genre` on an event is the raw text for display; `genre_tag` + `event_genre_tag` hold the normalised many-to-many. `GenreNormalizer` splits
   on `,`, `//`, `&`, `/`, strips noise suffixes, maps synonyms (`Hip-Hop`/`Rap` → `Hip Hop`), keeps unknowns in title case; shared by `EventService` and
-  `AssociationSyncService`. No manual tag CRUD. **`event_genre_tag.origin` says where a tag comes from** (ADR-047): `SOURCE`, or derived by
+  `GenreTagAssociationSync`. No manual tag CRUD. **`event_genre_tag.origin` says where a tag comes from** (ADR-047): `SOURCE`, or derived by
   `GenreDerivationService` for an event with no source tag — `ARTIST` from the acts' other source tags, `DESCRIPTION` from vocabulary words in the
   description. A derived tag never feeds another derivation, and a source tag replaces every derived one.
 - **Web scraping** (ADR-007), the `scraper` module: Jsoup, a throttled `WebClient` (`PerHostThrottlingFilter`, `app.scraper.polite-delay-millis`, 200ms per
@@ -113,9 +113,9 @@ which helper lives where — is not repeated; `grep` answers that.
       `importing` is the pipeline: the sources, the run, the upsert, the sweeps, `ImporterMetrics`. `enrichment` is the MusicBrainz, Discogs and Wikipedia
       lookups. `importing` depends on both, and neither depends on it (#2855). A new importer reads only `scraper`.
     - `EventImportService` orchestrates (RUNNING → SUCCESS/FAILED/MISCONFIGURED, concurrent under `app.import.max-concurrency`, 4) and delegates to
-      `EventUpsertService` (dedupe, change detection, upsert, stale cleanup) and `AssociationSyncService` (artists and promoters by slug, created on
-      `DataIntegrityViolationException` for concurrent safety, join tables diffed). Sources are rows created through `POST /api/admin/event-sources`, never
-      Flyway.
+      `EventUpsertService` (dedupe, change detection, upsert, stale cleanup) and `AssociationSyncService` (one step class per kind —
+      artists, promoters, genre tags — each resolving by slug, created by `INSERT … ON CONFLICT DO NOTHING` for concurrent safety, join tables diffed).
+      Sources are rows created through `POST /api/admin/event-sources`, never Flyway.
     - **Shapes**: `AbstractTwoPageWebsiteImporter` for overview → detail (the common case; `grep -rl 'AbstractTwoPageWebsiteImporter('` is the list, and
       subclasses pass their two scrapers to the constructor as `<Scraper>()::scrape`, and override `fillGapsFromOverview` only for a field the listing owns — the default, `ScrapedEvent.withGapsFrom`, fills every gap, #2139); `AbstractSinglePageWebsiteImporter` for one listing, given its scraper as `<Scraper>()::scrape` (#2242), paged by a next link through `maxListingPages` and `nextListingPage`, and for a list whose rows share a detail page through `sharedPages` (`enrichFromSharedPages` fetches each distinct URL once — Bar jeder Vernunft resolves 28 cards to 2 pages); `AbstractMonthPagesWebsiteImporter` for an entry page that only links month pages, with the same `sharedPages`;
       `AbstractJsonApiImporter` for a JSON feed in one response and `AbstractTecImporter` for The Events Calendar, each with one pure
