@@ -6,6 +6,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.SharedPages
@@ -18,9 +19,9 @@ import org.springframework.stereotype.Component
  *
  * `/spielplan/kalender/` shows the current month; its navigation links the next as `?month=YYYYMM`,
  * and every month links a next one, so the walk stops at the first month with no performance:
- * about five months today. Each show page is then read once, for its text and photo, and applied
- * to every performance of the show; a failed show page flags its performances, so the upsert keeps
- * the text and photo stored last time.
+ * about five months today. Each show page is then read once, for its text, photo and any `LINE UP`,
+ * and applied to every performance of the show; a failed show page flags its performances, so the
+ * upsert keeps the text, photo and acts stored last time.
  *
  * A calendar page weighs about 7 MB, almost all of it an animated SVG ticket icon inlined per
  * performance. The ticket shop has no listing to read instead, and its `robots.txt` disallows it.
@@ -35,7 +36,8 @@ class DistelWebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "DISTEL", calendarScraper::scrape) {
     override val eventSource: EventSource = EventSource.DISTEL
     override val maxListingPages: Int = MAX_MONTHS
-    override val sharedPages: SharedPages<DistelShow> = SharedPages(DistelShowPageScraper()::scrape, ::withShow, pageOwns = setOf(ScrapedField.IMAGE))
+    override val sharedPages: SharedPages<DistelShow> =
+        SharedPages(DistelShowPageScraper()::scrape, ::withShow, pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS))
 
     /** The navigation's latest `?month=` link, or null once a month lists nothing. */
     override fun nextListingPage(
@@ -55,7 +57,13 @@ class DistelWebsiteImporter(
     private fun withShow(
         show: DistelShow,
         event: ScrapedEvent
-    ): ScrapedEvent = event.copy(description = show.description, imageUrl = show.imageUrl)
+    ): ScrapedEvent =
+        event.copy(
+            description = show.description,
+            imageUrl = show.imageUrl,
+            // A guest show's named cast replaces the series name its title bills.
+            artists = show.lineup.map { ScrapedArtist(name = it) }.ifEmpty { event.artists }
+        )
 
     private companion object {
         /** A runaway guard; the calendar runs about five months ahead. */

@@ -74,8 +74,23 @@ class DistelWebsiteImporterTest {
             event.description.shouldBeNull()
             event.ticketUrl.shouldNotBeNull()
             event.detailUnavailable shouldBe true
-            event.detailPageOwns shouldBe setOf(ScrapedField.IMAGE)
+            event.detailPageOwns shouldBe setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
             result.events.filter { it.sourceUrl != show }.forEach { it.detailUnavailable shouldBe false }
+        }
+
+    @Test
+    fun `bills a show page's LINE UP in place of the act its title names`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(match { "/spielplan/event/" in it && "masala" in it }) } answers {
+                loadDocument("distel-show-line-up.html", firstArg())
+            }
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val billed = result.events.first { "Masala" in it.title }.artists
+            billed.map { it.name } shouldBe listOf("Alex Stoldt", "Roger G", "Karo Bender", "Falk Pyrczek", "Yannick de la Peche")
+            billed.none { it.titleDerived } shouldBe true
         }
 
     @Test
