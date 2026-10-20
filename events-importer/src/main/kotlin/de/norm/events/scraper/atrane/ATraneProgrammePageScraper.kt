@@ -1,6 +1,6 @@
 package de.norm.events.scraper.atrane
 
-import de.norm.events.common.deshoutWord
+import de.norm.events.common.deshout
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -148,8 +148,6 @@ class ATraneProgrammePageScraper {
         act: String,
         guest: String
     ): Boolean = Regex("""(?<![\p{L}\d])${Regex.escape(guest)}(?![\p{L}\d])""", RegexOption.IGNORE_CASE).containsMatchIn(act)
-
-    private fun deshout(name: String): String = name.trim().split(' ').joinToString(" ") { it.deshoutWord() }
 
     /**
      * The act without the album or programme title it names in quotes, or the club's own name a homecoming adds
