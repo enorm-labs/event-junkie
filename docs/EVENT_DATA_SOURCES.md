@@ -23,10 +23,10 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   181 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   131 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     6 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -470,24 +470,19 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name             | URL                                                | Type  | Priority | Comment                                                   |
-| ---------------- | -------------------------------------------------- | ----- | -------- | --------------------------------------------------------- |
-| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose      |
-| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly    |
-| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops         |
-| Promenaden Eck   | https://promenaden-eck-berlin.de/                  | Bar   | Medium   | SPA; public Supabase `calendar_events` table, 26 upcoming |
-| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks          |
+| Name             | URL                                                | Type  | Priority | Comment                                                |
+| ---------------- | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
+| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
+| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
+| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
+| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
-**The rows from Little Stage Bar to KuBiZ, and Promenaden Eck and ZK/U, were opened on 2026-10-04.** The rows up to KuBiZ
-came from the [Unanalyzed](#-not-analyzed-yet) table. Promenaden Eck and ZK/U came from theclubmap.com.
-
-**Promenaden Eck** renders in the browser. The page reads its events from a public Supabase table, with the anon key
-that the page itself ships. That is a JSON endpoint behind the page, like the Wix warmup data. Confirm that
-[ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) covers it before the importer is built.
+**The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
+table.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -755,6 +750,8 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Loft 6                            | —                                                   | Other        | No own site; RA only                                      | Site change / manual entry |
 | 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve               | Site change / manual entry |
 | Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF returns 403 to the importer's client; curl gets 200   | Request headers            |
+| Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | `/programm/` points to Instagram; lists only past walks   | Site change / Instagram    |
+| Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
 
 ## 📣 Promoters
 
@@ -805,14 +802,13 @@ All rows come from the promoter sweep of 2026-10-04 (see the list below). **Foun
 showed a show there. A URL comes from a web search. Nobody opened it yet. A dash means that the search found
 no site of the venue's own.
 
-| Name               | URL                                  | Type         | Found via                      |
-| ------------------ | ------------------------------------ | ------------ | ------------------------------ |
-| Ernst-Reuter-Saal  | —                                    | Concert Hall | New Berlin Konzerte            |
-| K19                | —                                    | Club         | Patchanka Booking              |
-| Kiezkapelle        | https://www.kiezkapelle.de/programm/ | Other        | Puschen                        |
-| Paradox Music Hall | —                                    | Club         | Diffus, Landstreicher Konzerte |
-| Trixxter           | —                                    | Bar          | Metal Hammer                   |
-| Wowsville          | —                                    | Bar          | Crunch Tapes                   |
+| Name               | URL | Type         | Found via                      |
+| ------------------ | --- | ------------ | ------------------------------ |
+| Ernst-Reuter-Saal  | —   | Concert Hall | New Berlin Konzerte            |
+| K19                | —   | Club         | Patchanka Booking              |
+| Paradox Music Hall | —   | Club         | Diffus, Landstreicher Konzerte |
+| Trixxter           | —   | Bar          | Metal Hammer                   |
+| Wowsville          | —   | Bar          | Crunch Tapes                   |
 
 Check these points when a row is opened:
 

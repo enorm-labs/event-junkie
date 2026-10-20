@@ -83,6 +83,11 @@ Two implemented importers already take this path and skip HTML entirely:
   "Event Calendar" widget**. The widget has a public JSON boot API (`core.service.elfsight.com/p/boot/?w=<id>`) that
   returns every event. Neither client-side rendering nor OCR of the PDF flyer is necessary.
 
+**An endpoint that needs a key is not a source, even when the page publishes the key.** The rule above covers an
+endpoint that answers without one, such as the Wagtail API, the Elfsight boot API or radar's search API. Promenaden
+Eck's page reads its events from a Supabase project, with the anon key that its bundle ships. The maintainer refused
+that source on 2026-10-20 (#3567), and it is in Blocked.
+
 A JSON/API importer uses **`ApiClient`** (below) in place of `HtmlFetcher`, and is otherwise identical. It implements
 `EventImporter` and delegates parsing to a pure `*OverviewPageScraper`. That scraper takes the raw JSON string rather
 than a Jsoup `Document`, and returns `List<ScrapedEvent>`. An I/O-free parser keeps snapshot-based testability exactly
