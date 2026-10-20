@@ -4,7 +4,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
-/** Unit tests for [deshoutWord] around an apostrophe (#2914). */
+/** Unit tests for [deshoutWord] around an apostrophe (#2914), and for [deshout] over a whole name. */
 class NameCasingTest {
     @Test
     fun `keeps the capital after an Irish O prefix, with either apostrophe`() {
@@ -30,6 +30,16 @@ class NameCasingTest {
     @Test
     fun `leaves a mixed-case token as it is`() {
         "O'neill".deshoutWord() shouldBe "O'neill"
+    }
+
+    @Test
+    fun `de-shouts a name word by word after a trim`() {
+        assertSoftly {
+            deshout("  TC THE 3RD ") shouldBe "TC The 3RD"
+            deshout("DJ KOZE") shouldBe "DJ Koze"
+            deshout("Max MUSTERMANN") shouldBe "Max Mustermann"
+            deshout("A  B") shouldBe "A  B"
+        }
     }
 
     @Test

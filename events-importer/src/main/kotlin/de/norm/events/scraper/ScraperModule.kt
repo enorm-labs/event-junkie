@@ -9,7 +9,7 @@ import org.springframework.modulith.ApplicationModule
  * - `genretag` — `normalizeGenre` and `isGenreLabel`, which turn a venue's style text into genres
  * - `slug` — `SlugGenerator.slugify`, which builds a source id from a title when the venue gives none
  * - `licence` — `SourceLicences`, which `ScrapedEvent` reads to drop a field the source may not give
- * - `common` — the name-casing helpers `deshoutWord`, `isShortInitialism` and `foldTypedApostrophes`
+ * - `common` — the name-casing helpers `deshoutWord`, `deshout`, `isShortInitialism` and `foldTypedApostrophes`
  */
 @ApplicationModule(allowedDependencies = ["event", "genretag", "slug", "licence", "common"])
 class ScraperModule

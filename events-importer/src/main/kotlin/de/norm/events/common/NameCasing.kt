@@ -35,6 +35,12 @@ fun String.deshoutWord(): String =
         else -> deshoutPart()
     }
 
+/**
+ * De-shouts a name word by word with [deshoutWord], splitting on single spaces after a trim:
+ * "TC THE 3RD" to "TC The 3RD". A venue scraper calls it on a name it has already cut from the billing.
+ */
+fun deshout(name: String): String = name.trim().split(' ').joinToString(" ") { it.deshoutWord() }
+
 private fun String.deshoutPart(): String = if (isShoutedWord()) titleCaseKeepingPunctuation() else this
 
 /**

@@ -1,6 +1,6 @@
 package de.norm.events.scraper.wabe
 
-import de.norm.events.common.deshoutWord
+import de.norm.events.common.deshout
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.euroAmounts
@@ -109,8 +109,6 @@ private fun presenterName(match: MatchResult): String {
     val name = match.groupValues[2].trim().trimEnd('.')
     return if (match.groupValues[1].equals("des", ignoreCase = true)) name.replaceFirst(GENITIVE_S, "$1") else name
 }
-
-private fun deshout(name: String): String = name.trim().split(' ').joinToString(" ") { it.deshoutWord() }
 
 private const val LINE_MARK = "¶"
 private val PRESENTER = Regex("""(?:eine\s+)?veranstaltung\s+(des|der|von)\s+(.+)""", RegexOption.IGNORE_CASE)
