@@ -136,7 +136,8 @@ class SpeichesOverviewPageScraper(
 
     /**
      * The acts of a concert: the band before `spielt` in a house series, otherwise the title's names
-     * without a country tag, an instrument note (`Marcos Coll m-harp`), a band's line-up after `=`, or a series label before `:`.
+     * without a country tag, an instrument note (`Marcos Coll m-harp`), a band's line-up after `=`, a series label before `:`,
+     * or a genre list glued on with a dash (`Tom Blacksmith (ITA/D )- Blues, Soul`).
      */
     private fun actsOf(
         title: String,
@@ -148,6 +149,7 @@ class SpeichesOverviewPageScraper(
         val names =
             title
                 .substringBefore(" = ")
+                .let(::withoutGenreTail)
                 .replace(COUNTRY_TAG, "")
                 .replace(SERIES_LABEL, "")
         return names
@@ -155,6 +157,13 @@ class SpeichesOverviewPageScraper(
             .map { INSTRUMENT_NOTE.replace(it, "").trim() }
             .flatMap { headlinersFromTitle(it) }
             .distinctBy { it.name }
+    }
+
+    /** [names] without a `- Blues, Soul` tail, cut only when every part of it is a genre. */
+    private fun withoutGenreTail(names: String): String {
+        val tail = GENRE_TAIL.find(names) ?: return names
+        val genres = tail.groupValues[1].split(",").map { it.trim() }
+        return if (genres.all { it.isNotEmpty() && isGenreLabel(it) }) names.substring(0, tail.range.first) else names
     }
 
     private companion object {
@@ -185,7 +194,10 @@ class SpeichesOverviewPageScraper(
 
         val HOUSE_SERIES = Regex("""(?i)^(?:jazz am sonntag|speiches open stage|beste handgemachte musik)""")
         val PLAYS = Regex("""^(.+?)\s+spielt\b""")
-        val COUNTRY_TAG = Regex("""\s*\([A-Z]{1,3}(?:/[A-Z]{1,3})*\)""")
+        val COUNTRY_TAG = Regex("""\s*\(\s*[A-Z]{1,3}(?:\s*/\s*[A-Z]{1,3})*\s*\)""")
+
+        /** A dash glued to the last act or its country tag; [SEGMENT_DASH] has already split on a spaced one. */
+        val GENRE_TAIL = Regex("""\s*[-–]\s+(.+)$""")
         val SERIES_LABEL = Regex("""^[^:]+:\s+""")
 
         /** Lower-case words after a name, the instrument abbreviations of `Remy Bankyln g. voc`. */
