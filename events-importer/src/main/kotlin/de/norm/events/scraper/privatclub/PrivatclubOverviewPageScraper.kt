@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.encodeForUri
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdEvents
@@ -16,7 +17,6 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
-import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper.Companion.GERMAN_DATE_FORMATTER
 import de.norm.events.scraper.resolveUrl
@@ -123,8 +123,8 @@ class PrivatclubOverviewPageScraper(
         val doorsTime = jsonLd?.doorsTime ?: htmlDoorsTime
         val startTime = jsonLd?.startTime ?: htmlStartTime
 
-        // JSON-LD image is full resolution
-        val imageUrl = jsonLd?.imageUrl ?: parseImageUrl(detail)
+        // JSON-LD image is full resolution. The theme prints a Cyrillic file name raw, and the host answers 400 to it.
+        val imageUrl = (jsonLd?.imageUrl ?: parseImageUrl(detail))?.encodeForUri()
 
         val htmlTicketUrl = detail?.hrefAt("a.ticketlink")
         val ticketUrl = jsonLd?.ticketUrl ?: htmlTicketUrl
@@ -278,7 +278,8 @@ class PrivatclubOverviewPageScraper(
 
     /**
      * Prices from the ticket/entry section:
-     * - `"Tickets: 25€ (Early Bird) + 30€ (Standard)"` → presale
+     * - `"Tickets: 23 € zzgl. Gebühren"` → presale
+     * - `"Tickets: Early Bird 25€ / Standard 30€ / Last Call 35€"` → the lowest tier as presale, every tier in priceNote (#2083)
      * - `"AK: 35€"` → box office
      * - `"Eintritt: 4€ - ab 24h 6€"` → priceNote
      *
@@ -300,7 +301,7 @@ class PrivatclubOverviewPageScraper(
                 priceBoxOffice = allPrices.single()
             } else {
                 // Conditional pricing ("Eintritt: 4€ - ab 24h 6€") → note
-                priceNote = akText.replace(Regex("""^[^:]*:\s*"""), "").trim()
+                priceNote = akText.replace(PRICE_LABEL, "").trim()
             }
         }
 
@@ -312,9 +313,15 @@ class PrivatclubOverviewPageScraper(
             val ticketText = vkkDiv.closest(".flex_wrapper")?.text().orEmpty()
             val combinedText = "$linkbarText $ticketText"
 
-            val vkkPrice = parsePriceValue(combinedText.substringBefore("AK"))
+            val vkkPrice = euroAmounts(combinedText.substringBefore("AK")).minOrNull()
             if (vkkPrice != null && vkkPrice != priceBoxOffice) {
                 pricePresale = vkkPrice
+            }
+
+            // Beside a door note, both keep their labels, so a reader can tell the door from the presale.
+            val tiers = vkkDiv.text()
+            if (euroAmounts(tiers).distinct().size > 1) {
+                priceNote = if (priceNote == null) tiers.replace(PRICE_LABEL, "").trim() else "$akText; $tiers"
             }
         }
 
@@ -390,6 +397,9 @@ class PrivatclubOverviewPageScraper(
         private const val SONG_SLAM = "Songslam"
 
         private val VENUE_EVENT_TYPES = mapOf(SONG_SLAM.lowercase() to EventType.CONCERT.name)
+
+        /** The label before a price line's amounts: `AK: `, `Eintritt: `, `Tickets: `. */
+        private val PRICE_LABEL = Regex("""^[^:]*:\s*""")
 
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")

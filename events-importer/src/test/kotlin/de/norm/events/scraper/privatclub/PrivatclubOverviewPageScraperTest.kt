@@ -42,7 +42,7 @@ class PrivatclubOverviewPageScraperTest {
         val document = Jsoup.parse(html, baseUrl)
         val events = scraper.scrape(document, baseUrl)
 
-        events shouldHaveSize 6
+        events shouldHaveSize 7
     }
 
     @Nested
@@ -195,6 +195,60 @@ class PrivatclubOverviewPageScraperTest {
             val event = events.first { it.title == "Sandra Hesch" }
 
             event.priceBoxOffice shouldBe BigDecimal("35")
+        }
+
+        @Test
+        fun `keeps the lowest of three presale tiers and names every tier in the note`() {
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
+
+            event.pricePresale shouldBe BigDecimal("25")
+            event.priceBoxOffice shouldBe null
+            event.priceNote shouldBe "Early Bird 25€ / Standard 30€ / Last Call 35€"
+        }
+
+        @Test
+        fun `keeps the door note beside the presale tiers`() {
+            val tiered =
+                """
+                <div class="event_wrapper skewed">
+                    <a class="event_header" href="/event/tiered/">
+                        <span class="titel">Tiered</span>
+                        <span class="datum_part1">Sa. 16.</span>
+                        <span class="datum_part2">Mai</span>
+                    </a>
+                    <div class="event_detail">
+                        <div class="linkbar">
+                            <div class="flex_wrapper ticketlinks">
+                                <div class="flex"><div class="tickets_vkk">Tickets: Emäßigtes Ticket 10€ / Standard Ticket 15,30€</div></div>
+                            </div>
+                        </div>
+                        <div class="tickets_ak">AK: 11€ / 17€</div>
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(tiered, baseUrl), baseUrl).single()
+
+            event.pricePresale shouldBe BigDecimal("10")
+            event.priceNote shouldBe "AK: 11€ / 17€; Tickets: Emäßigtes Ticket 10€ / Standard Ticket 15,30€"
+        }
+
+        @Test
+        fun `leaves a single presale price without a note`() {
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sandra Hesch" }
+
+            event.priceNote shouldBe null
+        }
+    }
+
+    @Nested
+    inner class ImageParsing {
+        @Test
+        fun `percent-encodes a Cyrillic poster file name from JSON-LD`() {
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Sonya Shats" }
+
+            event.imageUrl shouldBe
+                "https://privatclub-berlin.de/wp-content/uploads/2026/08/%D0%BF%D0%BE%D1%81%D1%82_%D0%B1%D0%B5%D1%80%D0%BB%D0%B8%D0%BD-1960x2450.png"
         }
     }
 

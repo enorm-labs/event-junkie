@@ -54,6 +54,7 @@ flowchart TD
     festival --> common
     festival --> slug
     genretag --> common
+    image --> scraper
     importing --> artist
     importing --> common
     importing --> enrichment

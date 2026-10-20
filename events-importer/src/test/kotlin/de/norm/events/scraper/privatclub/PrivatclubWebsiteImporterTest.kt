@@ -44,7 +44,7 @@ class PrivatclubWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 6
+            result.events shouldHaveSize 7
         }
 
     @Test
