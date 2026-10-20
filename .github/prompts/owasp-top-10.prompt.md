@@ -74,7 +74,7 @@ when the window moved it; read the last commit's diff when it did not, and say `
 ### A03 · Software Supply Chain Failures
 
 - **Evidence:** `.github/workflows/release.yml` (the `attest-build-provenance` and `cosign sign` steps, and their `if:`), `deploy/clusters/*/oci-repository.yaml`
-  (`spec.verify` on each — production is expected to lack it until the first signed release, #1425), `.github/renovate.json5` and `.github/dependabot.yml`
+  (`spec.verify` with `provider: cosign` on each — a cluster without it is a finding), `.github/renovate.json5` and `.github/dependabot.yml`
   (ADR-024's boundary), `.trivyignore` (every entry dated), every `uses:` in `.github/workflows/*.yml` a 40-character SHA
   (`grep -rhoE 'uses: [^@]+@[^ ]+' .github/workflows | grep -vE '@[0-9a-f]{40}'` must print nothing), and the required checks on `main`
   (`gh api repos/{owner}/{repo}/rulesets --jq '.[] | select(.name=="main") | .id'`, then the ruleset's `required_status_checks`).
