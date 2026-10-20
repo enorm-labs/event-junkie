@@ -25,6 +25,8 @@ it produces an alert that never fires rather than an error.
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
     artist lookup tick stopped     -> ej-artist-lookup-tick-stale (#2059)
     venue site check stopped       -> ej-venue-site-check-stale   (#3147)
+    nightly passes stopped         -> ej-classification-stale, ej-instagram-stale (#3645)
+    classification budget running out -> ej-classification-budget (#3645)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -559,6 +561,67 @@ rule(
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,
+)
+
+# The two daily passes that call a model: classification at 04:00 UTC, the Instagram
+# drafts at 04:30 (#3645). A failed pass leaves only an ERROR line. Each gauge stamps a
+# pass that ended, and the runner seeds it with its start time, so a release that
+# breaks the pass ages from the deploy instead of hiding at 0. 28 hours covers a day,
+# the pass itself and a start just after one. The gauge is 0 where the pass is off
+# (classification on staging), and `> bool 0` keeps that quiet, as in
+# `ej-artist-lookup-tick-stale`. A refused Instagram access is not stamped, so a token
+# left unfixed for a day fires this too, after `ej-instagram-access-refused`.
+rule(
+    "ej-classification-stale",
+    "The nightly event classification has not ended a pass in 28 hours. It runs at 04:00 "
+    "UTC, so that pass failed or did not start. Unsure events get no suggestion. Read the "
+    "importer log for `Nightly event classification`.",
+    "((timestamp(max(importer_classification_last_success)) "
+    "- max(importer_classification_last_success)) / 3600) "
+    "* (max(importer_classification_last_success) > bool 0)",
+    ">",
+    28,
+    stream_name="importer_classification_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+rule(
+    "ej-instagram-stale",
+    "The Instagram pass has not ended in 28 hours. It runs at 04:30 UTC, so that pass "
+    "failed, did not start, or was refused access. No venue's posts become drafts. Read "
+    "the importer log for `The Instagram pass`.",
+    "((timestamp(max(instagram_pass_last_success)) "
+    "- max(instagram_pass_last_success)) / 3600) "
+    "* (max(instagram_pass_last_success) > bool 0)",
+    ">",
+    28,
+    stream_name="instagram_pass_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# Classification stops before its next call once the month's tokens reach
+# `monthly-token-budget`, and then no pass runs until the 1st. 80 % warns first. In
+# October 2026 production spent about 72,000 tokens a night, 74 % of the 3 M budget
+# over a month, so the rule fires only when spending rises. The budget is a gauge
+# because the chart sets it per cluster. Staging has no tokens series (the check is
+# off there), so the query is empty, which `failure_only` reports as quiet.
+rule(
+    "ej-classification-budget",
+    "Event classification has used 80 % of this month's token budget. At 100 % every run "
+    "stops until the 1st. Raise `importer.eventClassification.monthlyTokenBudget` or "
+    "lower `maxPerRun`, or let it stop.",
+    "max(importer_data_quality_classification_tokens) / max(importer_classification_token_budget)",
+    ">",
+    0.8,
+    stream_name="importer_classification_token_budget",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+    failure_only=True,
 )
 
 # --- Data quality, against its own week (#2604) --------------------------------

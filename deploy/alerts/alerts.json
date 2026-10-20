@@ -450,6 +450,96 @@
     ]
   },
   {
+    "name": "ej-classification-stale",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_classification_last_success",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The nightly event classification has not ended a pass in 28 hours. It runs at 04:00 UTC, so that pass failed or did not start. Unsure events get no suggestion. Read the importer log for `Nightly event classification`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "((timestamp(max(importer_classification_last_success)) - max(importer_classification_last_success)) / 3600) * (max(importer_classification_last_success) > bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 28
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-instagram-stale",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "instagram_pass_last_success",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The Instagram pass has not ended in 28 hours. It runs at 04:30 UTC, so that pass failed, did not start, or was refused access. No venue's posts become drafts. Read the importer log for `The Instagram pass`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "((timestamp(max(instagram_pass_last_success)) - max(instagram_pass_last_success)) / 3600) * (max(instagram_pass_last_success) > bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 28
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-classification-budget",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_classification_token_budget",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Event classification has used 80 % of this month's token budget. At 100 % every run stops until the 1st. Raise `importer.eventClassification.monthlyTokenBudget` or lower `maxPerRun`, or let it stop.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max(importer_data_quality_classification_tokens) / max(importer_classification_token_budget)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0.8
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-data-quality-regression",
     "org_id": "default",
     "stream_type": "metrics",

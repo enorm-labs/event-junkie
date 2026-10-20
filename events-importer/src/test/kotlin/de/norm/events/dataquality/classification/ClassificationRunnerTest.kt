@@ -26,6 +26,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import java.time.Clock
+import java.time.Instant
 
 /** The nightly pass and the background source run, against a mocked check (#2996). The check's own caps are in [EventClassificationCheckTest]. */
 class ClassificationRunnerTest {
@@ -34,6 +36,11 @@ class ClassificationRunnerTest {
     private val sources = mockk<EventSourceRepository> { coEvery { findBySlug(any()) } returns mockk<EventSourceEntity>() }
     private val metrics = DataQualityMetrics(SimpleMeterRegistry())
     private val ledger = mockk<ClassificationTokenLedger> { every { budget } returns BUDGET }
+    private val registry = SimpleMeterRegistry()
+    private val properties = ClassificationProperties(enabled = true, monthlyTokenBudget = BUDGET)
+    private val passMetrics = ClassificationMetrics(registry, properties)
+    private var now = START
+    private val clock = mockk<Clock> { every { instant() } answers { now } }
 
     private lateinit var appender: ListAppender<ILoggingEvent>
     private val logger = LoggerFactory.getLogger(ClassificationRunner::class.java) as Logger
@@ -176,6 +183,53 @@ class ClassificationRunnerTest {
             runner.runNightly() shouldBe NightlyPassResult(emptyList(), calls = 0, stoppedBy = null)
         }
 
+    @Test
+    fun `the age starts with the runner and moves when a pass ends, a spent month's skip included`(): Unit =
+        runBlocking {
+            candidates("a" to 1)
+            checks("a" to 1)
+            val runner = runner()
+            lastSuccess() shouldBe START.epochSecond.toDouble()
+            registry.find(ClassificationMetrics.TOKEN_BUDGET).gauge()!!.value() shouldBe BUDGET.toDouble()
+
+            now = START.plusSeconds(3600)
+            runner.runNightly()
+            lastSuccess() shouldBe now.epochSecond.toDouble()
+
+            coEvery { ledger.monthTotal() } returns BUDGET
+            now = START.plusSeconds(7200)
+            runner.runNightly().shouldBeNull()
+            lastSuccess() shouldBe now.epochSecond.toDouble()
+        }
+
+    @Test
+    fun `a pass that throws, or that the lock skips, leaves the age where it was`(): Unit =
+        runBlocking {
+            candidates("a" to 1)
+            coEvery { check.checkSource("a", false, any()) } throws IllegalStateException("database gone")
+            val runner = runner()
+            now = START.plusSeconds(3600)
+
+            runner.nightly()
+            lastSuccess() shouldBe START.epochSecond.toDouble()
+
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            coEvery { check.checkSource("held", true, any()) } coAnswers {
+                started.complete(Unit)
+                release.await()
+                ClassificationRunResult(0, 0, 0, 0, 0, emptyMap())
+            }
+            val job = runner.startSource("held", force = true)
+            started.await()
+            runner.runNightly().shouldBeNull()
+            release.complete(Unit)
+            job.join()
+            lastSuccess() shouldBe START.epochSecond.toDouble()
+        }
+
+    private fun lastSuccess() = registry.find(ClassificationMetrics.LAST_SUCCESS).gauge()!!.value()
+
     private fun runner(maxPerRun: Int = 50) =
         ClassificationRunner(
             check,
@@ -183,8 +237,10 @@ class ClassificationRunnerTest {
             sources,
             metrics,
             ledger,
-            ClassificationProperties(enabled = true, maxPerRun = maxPerRun),
-            Dispatchers.IO
+            properties.copy(maxPerRun = maxPerRun),
+            passMetrics,
+            Dispatchers.IO,
+            clock
         )
 
     private fun candidates(vararg counts: Pair<String, Int>) {
@@ -212,5 +268,6 @@ class ClassificationRunnerTest {
 
     private companion object {
         const val BUDGET = 1_000L
+        val START: Instant = Instant.parse("2026-10-20T04:00:00Z")
     }
 }

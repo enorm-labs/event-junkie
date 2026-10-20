@@ -831,6 +831,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.data_quality.suggestions{check,field}` | Counter                               | Suggestion rows a check wrote, per field — event-classification's six (#3241)      |
 | `importer.data_quality.classifications{outcome}` | Counter                               | answered / rejected / failed / unchanged — events the classification check read    |
 | `importer.data_quality.classification.tokens`    | Gauge                                 | Tokens the classification check used this UTC month, against its budget (#2996)    |
+| `importer.classification.token_budget`           | Gauge                                 | The month's token budget, so `ej-classification-budget` can divide (#3645)         |
+| `importer.classification.last_success`           | Gauge                                 | Epoch seconds of the last ended nightly pass; the start time first; 0 while off    |
 | `images.urls{state}`                             | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
 | `images.derivatives.backlog`                     | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
 | `images.fetch{outcome}`                          | Counter                               | fetched / unchanged / failed                                                       |
@@ -845,6 +847,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.discogs.unchecked`                     | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                |
 | `importer.artists.lookup_tick.last_success`      | Gauge                                 | Epoch seconds of the last finished lookup tick; 0 while off                        |
 | `importer.venues.site_check.last_success`        | Gauge                                 | Epoch seconds of the last finished site check; seeded at start from the table      |
+| `instagram.pass.last_success`                    | Gauge                                 | Epoch seconds of the last ended Instagram pass; the start time first; 0 while off  |
 | `images.sweep.candidates{kind}`                  | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
 | `images.sweep.deleted{kind}`                     | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
 | `bff.images.served{outcome}`                     | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |

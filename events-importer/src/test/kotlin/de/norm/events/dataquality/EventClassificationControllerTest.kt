@@ -3,6 +3,7 @@ package de.norm.events.dataquality
 import de.norm.events.BaseControllerTest
 import de.norm.events.GlobalExceptionHandler
 import de.norm.events.dataquality.classification.AnthropicEventClassifier
+import de.norm.events.dataquality.classification.ClassificationMetrics
 import de.norm.events.dataquality.classification.ClassificationProperties
 import de.norm.events.dataquality.classification.ClassificationRunResult
 import de.norm.events.dataquality.classification.ClassificationRunner
@@ -152,6 +153,7 @@ class EventClassificationControllerTest : BaseControllerTest() {
             DataQualityMetrics(SimpleMeterRegistry()),
             ledger,
             ClassificationProperties(enabled = true),
+            ClassificationMetrics(SimpleMeterRegistry(), ClassificationProperties(enabled = true)),
             Dispatchers.IO
         )
     }

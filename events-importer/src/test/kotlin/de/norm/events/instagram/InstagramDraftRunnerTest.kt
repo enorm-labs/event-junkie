@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldContain
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -29,17 +30,20 @@ class InstagramDraftRunnerTest {
     private val venues = mockk<InstagramVenueRepository>()
     private val registry = SimpleMeterRegistry()
     private val clock = Clock.fixed(Instant.parse("2026-10-15T04:30:00Z"), ZoneOffset.UTC)
+    private val metrics = InstagramMetrics(registry)
 
-    private fun runner(maxPerRun: Int = 50) =
-        InstagramDraftRunner(
-            service = service,
-            repository = repository,
-            venues = venues,
-            metrics = InstagramMetrics(registry),
-            properties = InstagramProperties(enabled = true, maxPerRun = maxPerRun),
-            ioDispatcher = Dispatchers.IO,
-            clock = clock
-        )
+    private fun runner(
+        maxPerRun: Int = 50,
+        clock: Clock = this.clock
+    ) = InstagramDraftRunner(
+        service = service,
+        repository = repository,
+        venues = venues,
+        metrics = metrics,
+        properties = InstagramProperties(enabled = true, maxPerRun = maxPerRun),
+        ioDispatcher = Dispatchers.IO,
+        clock = clock
+    )
 
     private fun venue(slug: String) = InstagramVenue(slug.length.toLong(), slug, slug, "https://www.instagram.com/$slug/")
 
@@ -186,6 +190,35 @@ class InstagramDraftRunnerTest {
             .counter()!!
             .count() shouldBe 0.0
     }
+
+    @Test
+    fun `the age starts with the runner, moves when a pass ends, and stays after a refused access`() =
+        runTest {
+            val lastSuccess = registry.find(InstagramMetrics.LAST_SUCCESS).gauge()!!
+            lastSuccess.value() shouldBe 0.0
+            var now = clock.instant()
+            val moving =
+                mockk<Clock> {
+                    every { instant() } answers { now }
+                    every { zone } returns ZoneOffset.UTC
+                }
+            coEvery { venues.findVenues() } returns listOf(venue("prisma"))
+            coEvery { service.draftFrom(venue("prisma"), any()) } returns read(drafts = 1, calls = 1)
+
+            val runner = runner(clock = moving)
+            lastSuccess.value() shouldBe now.epochSecond.toDouble()
+
+            now = now.plusSeconds(3600)
+            runner.runDaily()
+            lastSuccess.value() shouldBe now.epochSecond.toDouble()
+
+            val stamped = now
+            coEvery { service.draftFrom(venue("prisma"), any()) } returns
+                VenueDraftResult.NotRead(DiscoveryResult.AccessRefused(190, "Session has expired"))
+            now = now.plusSeconds(86_400)
+            runner.runDaily()
+            lastSuccess.value() shouldBe stamped.epochSecond.toDouble()
+        }
 
     @Test
     fun `a refused access stops the pass with an error line, and an unreadable account does not`() =

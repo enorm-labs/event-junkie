@@ -56,6 +56,10 @@ class InstagramDraftRunner(
     /** Outlives the request, so a run is not cancelled when the caller's port-forward times out. */
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
+    init {
+        metrics.seedPass(clock.instant())
+    }
+
     /** Starts a read of one venue in the background. An unknown or switched-off venue and a running pass fail here. */
     suspend fun startVenue(slug: String): Job {
         val venue = venues.findVenues().firstOrNull { it.slug == slug } ?: throw InstagramVenueNotFoundException(slug)
@@ -135,6 +139,8 @@ class InstagramDraftRunner(
                 if (result is VenueDraftResult.NotRead && result.result is DiscoveryResult.AccessRefused) stop = InstagramPassStop.ACCESS_REFUSED
             }
         }
+        // A refused access is not stamped, though `ej-instagram-access-refused` fires first: the pass did not read the venues.
+        if (stop != InstagramPassStop.ACCESS_REFUSED) metrics.passSucceeded(clock.instant())
         return InstagramPassResult(read, drafts, calls, removed, stop).also { report(it, switchedOn.size) }
     }
 

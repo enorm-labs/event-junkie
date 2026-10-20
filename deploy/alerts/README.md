@@ -28,7 +28,7 @@ Four states, and they are different questions:
 | `WOULD FIRE` | the query crosses its threshold right now                                                                      |
 | `ok`         | returns data, below the threshold                                                                              |
 
-**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the six rules whose series a failure creates, and
+**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the rules whose series a failure creates, and
 `gen_alerts.py --failure-only` lists them for the check. Unmarked, the same silence stays `NO DATA`, because a typo in a metric name looks exactly like a
 counter that has not incremented yet — the #1964 defect. The mark is a claim, and a drill is what backs it.
 
@@ -146,6 +146,9 @@ next evaluation if its condition is true when the apply runs (#3445). `test_appl
 | `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                      | —                  |
 | `ej-artist-lookup-tick-stale`  | the artist lookup tick has not finished in an hour ([#2059](https://github.com/enorm-labs/event-junkie/issues/2059))                               | —                  |
 | `ej-venue-site-check-stale`    | the monthly venue site check has not finished a pass in 33 days ([#3147](https://github.com/enorm-labs/event-junkie/issues/3147))                  | —                  |
+| `ej-classification-stale`      | the nightly event classification has not ended a pass in 28 hours ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                | —                  |
+| `ej-instagram-stale`           | the daily Instagram pass has not ended in 28 hours ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                               | —                  |
+| `ej-classification-budget`     | event classification has used 80 % of the month's token budget ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                   | —                  |
 | `ej-rate-limit-storm`          | Traefik's rate limits rejected more than 100 requests in 15 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455))              | —                  |
 | `ej-4xx-flood`                 | client errors other than 429 and 499 average more than 5 a second for 30 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455)) | —                  |
 
