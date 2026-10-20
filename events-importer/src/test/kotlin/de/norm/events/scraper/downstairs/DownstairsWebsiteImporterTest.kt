@@ -17,6 +17,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.LocalTime
 
 class DownstairsWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
@@ -43,7 +44,7 @@ class DownstairsWebsiteImporterTest {
     }
 
     @Test
-    fun `reads both frame pages and each show's ticket page once`() =
+    fun `reads both frame pages and every performance's ticket page`() =
         runTest {
             val result = importer.importEvents(sourceUrl)
 
@@ -58,12 +59,23 @@ class DownstairsWebsiteImporterTest {
             allstars.description.shouldNotBeNull() shouldStartWith "DOWNSTAIRS - Der Comedy Club von Felix Lobrecht"
             allstars.imageUrl.shouldNotBeNull()
             allstars.pricePresale shouldBe BigDecimal("25.5")
-            val shows =
-                result.events
-                    .map { it.title }
-                    .distinct()
-                    .size
-            coVerify(exactly = shows) { htmlFetcher.fetchDocument(any()) }
+            allstars.doorsTime shouldBe LocalTime.of(17, 40)
+            coVerify(exactly = result.events.size) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    @Test
+    fun `gives each night of a show the tiers of its own page`() =
+        runTest {
+            val first = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
+            val (night, other) = first.filter { it.title == first.first().title }.take(2)
+            coEvery { htmlFetcher.fetchDocument(night.sourceUrl) } returns loadDocument("downstairs-ticket-tiers.html", night.sourceUrl)
+
+            val events = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
+
+            events.first { it.sourceId == night.sourceId }.pricePresale shouldBe BigDecimal("15.5")
+            events.first { it.sourceId == night.sourceId }.priceNote.shouldNotBeNull()
+            events.first { it.sourceId == other.sourceId }.pricePresale shouldBe BigDecimal("25.5")
+            events.first { it.sourceId == other.sourceId }.priceNote.shouldBeNull()
         }
 
     @Test

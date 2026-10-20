@@ -76,7 +76,7 @@ schema change.
 | Crack Bellmer                    | https://www.crackbellmer.de/program/this-month                           | Bar          | Webflow; month tabs filter one list; no prices            |
 | Der Weiße Hase                   | https://derweissehase.club/events                                        | Club         | Contao; invalid `<p>` nesting; RA ticket links            |
 | Die Wühlmäuse                    | https://wuehlmaeuse.de/                                                  | Theater      | WooCommerce Store API; one product per seat tier          |
-| Downstairs Comedy Club           | https://www.downstairscomedy.shop/tickets                                | Comedy Club  | tickettoaster Turbo frame; JSON-LD per show               |
+| Downstairs Comedy Club           | https://www.downstairscomedy.shop/tickets                                | Comedy Club  | tickettoaster Turbo frame; JSON-LD per performance        |
 | Drugstore                        | https://drugstore-berlin.de/                                             | Other        | radar group API; bands only in prose                      |
 | DSTRKT                           | https://www.dstrkt.de/                                                   | Club         | Wix Data collection in warmup JSON; no lineup             |
 | Duncker Club                     | https://www.dunckerclub.de/                                              | Club         |                                                           |
