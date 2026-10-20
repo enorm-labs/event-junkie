@@ -131,7 +131,7 @@ class RenaissanceTheaterSpielplanPageScraper(
  * or a slam, then Kabarett, then a play, then a concert, then any other staged show. A reading
  * comes first because a `Konzertlesung` is one; a play before a concert because a `Songdrama` is one.
  */
-internal fun renaissanceEventType(
+private fun renaissanceEventType(
     title: String,
     subtitle: String?,
     badges: List<String>
@@ -153,7 +153,7 @@ internal fun renaissanceEventType(
  * Vasiliki Roussi`). Only a run of capitalised names counts, so `mit kleinem Orchester` and
  * `mit Florian Illies‘ großartiger „Chronik …“` bill nobody.
  */
-internal fun renaissanceActs(
+private fun renaissanceActs(
     title: String,
     subtitle: String?
 ): List<ScrapedArtist> {
