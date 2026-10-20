@@ -750,7 +750,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Loft 6                            | —                                                   | Other        | No own site; RA only                                      | Site change / manual entry |
 | 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve               | Site change / manual entry |
 | Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF returns 403 to the importer's client; curl gets 200   | Request headers            |
-| Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | `/programm/` points to Instagram; lists only past walks   | Site change / Instagram    |
+| Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music | A regular programme        |
 | Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
 
 ## 📣 Promoters
