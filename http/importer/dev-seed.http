@@ -5675,6 +5675,40 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Kiezkapelle — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Kiezkapelle venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kiezkapelle",
+    "address": "Hermannstraße 99–105",
+    "city": "Berlin",
+    "postalCode": "12051",
+    "district": "neukoelln",
+    "latitude": 52.469741,
+    "longitude": 13.429751,
+    "websiteUrl": "https://www.kiezkapelle.de/",
+    "instagramUrl": "https://www.instagram.com/kiezkapelle/",
+    "description": "A former cemetery chapel from 1879 on the Neuer St. Jacobi-Friedhof in Neukölln, run since 2024 by the Prinzessinnengarten Kollektiv as a neighbourhood space for concerts, talks, readings, exhibitions and performances.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine ehemalige Friedhofskapelle von 1879 auf dem Neuen St. Jacobi-Friedhof in Neukölln, die das Prinzessinnengarten Kollektiv seit 2024 als Nachbarschaftsort für Konzerte, Gespräche, Lesungen, Ausstellungen und Performances betreibt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"],
+    "capacity": 117,
+    "programmeUrl": "https://www.kiezkapelle.de/programm/",
+    "reviewedAt": "2026-10-20T12:37:17Z"
+}
+
+> {%
+    client.test("Kiezkapelle venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # KitKatClub
 # ————————————————————————————————————————————————————————————
 
