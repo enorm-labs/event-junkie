@@ -66,14 +66,14 @@ milestone and board fields.
         Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label,
         or [`/refine-issues`](refine-issues.prompt.md) can later.
 
-    - **Milestone**: `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` is the path to launch; `Phase 2 — Coverage & polish` is post-launch;
-      `Phase 3` / `Phase 4` hold epics. **No milestone is a valid answer** — it means unscheduled.
+    - **Milestone**: `1.0.0 — Out of beta` takes fixes, importer work and polish until the beta badge goes (#295); `Phase 3` / `Phase 4` hold
+      epics. **No milestone is a valid answer** — it means unscheduled.
 
 5. **Create it.**
 
     ```sh
     gh issue create --title '…' --body-file - --type Task \
-      --milestone 'Phase 2 — Coverage & polish' \
+      --milestone '1.0.0 — Out of beta' \
       --label importer --label 'area:data-quality' --label 'size:M' <<'EOF'
     …body…
     EOF

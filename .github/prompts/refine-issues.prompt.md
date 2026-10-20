@@ -4,8 +4,8 @@ Take open issues one at a time, with the user present, and make each one workabl
 user the one question that keeps it from `afk-ok`, write the answer into the body, and add the label. The interactive half of the loop that `/afk` runs
 unattended.
 
-Usage: `/refine-issues Phase 2 — Coverage & polish` takes the open issues of that milestone. `/refine-issues 313 412` takes those issues, in that
-order. `/refine-issues` alone takes the first milestone on the launch path that has open issues, and otherwise `Phase 2`. Append `max <n>` to stop
+Usage: `/refine-issues 1.0.0 — Out of beta` takes the open issues of that milestone. `/refine-issues 313 412` takes those issues, in that
+order. `/refine-issues` alone takes `1.0.0 — Out of beta`, and otherwise the first open milestone with open issues. Append `max <n>` to stop
 after _n_ issues.
 
 ## Important

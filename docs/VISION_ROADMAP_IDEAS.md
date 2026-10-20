@@ -89,7 +89,8 @@ Turn the working prototype into a live public product. → **[v0.2 — Deployabl
 
 ### Phase 2 — Coverage & polish 📈 _(post-launch)_
 
-Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & polish](https://github.com/enorm-labs/event-junkie/milestone/5)**
+Make it comprehensive, discoverable and pleasant. The milestone closed on 2026-10-20. The work that continues goes to
+**[1.0.0 — Out of beta](https://github.com/enorm-labs/event-junkie/milestone/8)**.
 
 - Scale importer coverage toward the full venue list in [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md), and enrich
   venue metadata.
