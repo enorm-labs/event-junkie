@@ -175,6 +175,54 @@ class LidoOverviewPageScraperTest {
         teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", "HEADLINER", titleDerived = true))
     }
 
+    // The 2026-10-20 home page: the teaser's second line is the tour name, which cost Gus G his billing (#3637).
+    @Test
+    fun `bills a teaser's acts from its first line, not the tour name below it`() {
+        val html =
+            """
+            <html><body>
+              <div class="teaser__next-events__wrapper__event">
+                <div class="teaser__next-events__wrapper__event__date__time">19:00</div>
+                <div class="teaser__next-events__wrapper__event__title"><a href="/events/2026-10-20-ronnie-romero---gus-g"><div class="boad-line board-line--0">RONNIE ROMERO &amp; GUS G </div><div class="boad-line board-line--1">„Convergence Fest 2026" </div></a></div>
+              </div>
+            </body></html>
+            """.trimIndent()
+
+        val romero = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        romero.title shouldBe "RONNIE ROMERO & GUS G „Convergence Fest 2026\""
+        romero.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("RONNIE ROMERO", "HEADLINER", titleDerived = true),
+                ScrapedArtist("GUS G", "HEADLINER", titleDerived = true)
+            )
+    }
+
+    // #3637: the 2027-02-04 and 2027-01-29 articles, a band with two members, and a name the `&` belongs to.
+    @Test
+    fun `bills every act of a dashed co-bill and keeps a name with an ampersand whole`() {
+        val html =
+            """
+            <html><body>
+            <article class="event-ticket" data-realdate="2027-02-04 19:00:00 +0100">
+              <div class="event-ticket__type__label">Konzert</div>
+              <div class="event-ticket__content__title"><a href="/events/2027-02-04-bad-company-legacy---dave-colwell---robert-hart">BAD COMPANY LEGACY – Dave Colwell &amp; Robert Hart</a></div>
+              <div class="event-ticket__content__subtitle">+ M.O.N.O.K.E.L.</div>
+            </article>
+            <article class="event-ticket" data-realdate="2027-01-29 19:00:00 +0100">
+              <div class="event-ticket__type__label">Konzert</div>
+              <div class="event-ticket__content__title"><a href="/events/2027-01-29-reverend-hardy-hardon---the-church-of-elvis">REVEREND HARDY HARDON &amp; THE CHURCH OF ELVIS</a></div>
+              <div class="event-ticket__content__subtitle">„Kong of Rock’n'Roll Tour" + Support</div>
+            </article>
+            </body></html>
+            """.trimIndent()
+
+        val (badCompany, reverend) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        badCompany.artists.map { it.name } shouldContainExactly listOf("BAD COMPANY LEGACY", "Dave Colwell", "Robert Hart")
+        reverend.artists.map { it.name } shouldContainExactly listOf("REVEREND HARDY HARDON & THE CHURCH OF ELVIS")
+    }
+
     @Test
     fun `adds nothing for a teaser the article list already carries`() {
         val html =

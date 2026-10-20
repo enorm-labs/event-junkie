@@ -1686,7 +1686,8 @@ fun headlinersFromTitle(
     presentsFrameActs(billing)?.let { return it + guests }
     coPresentedNightActs(billing)?.let { return it + guests }
     val heads =
-        splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
+        cutConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)))
+            .flatMap { splitHeadlinerTitle(it, splitOnSlash, description) }
             .map { segment ->
                 // The role is decided from the *raw* segment, before its label is stripped: a title
                 // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
@@ -1727,16 +1728,36 @@ private val VORPROGRAMM_MARKER = Regex("""\s+vorprogramm\s*:\s*""", RegexOption.
  * Tour 2026`. The tail goes only when that pattern matches from the dash, or when the tail opens
  * in lowercase, which an act billed after a dash does not (`LYAPIS TRUBETSKOY - the best & new
  * songs`). A `mit`/`with` tail names performers (`Schund und Asche - mit Moritz Neumeier und Till
- * Reiners`), and any other conjoined tail can be a co-bill, so both stay.
+ * Reiners`) and stays. A shouted head before [coBilledNames] is a band billed with its members, so
+ * the dash bills the head on its own (#3637): `BAD COMPANY LEGACY – Dave Colwell & Robert Hart` is
+ * three acts. Any other conjoined tail stays.
  */
-private fun stripConjoinedTail(title: String): String {
-    val dash = DASH_SEPARATOR.findAll(title).lastOrNull() ?: return title
+private fun cutConjoinedTail(title: String): List<String> {
+    val dash = DASH_SEPARATOR.findAll(title).lastOrNull() ?: return listOf(title)
     val head = title.substring(0, dash.range.first).trim()
     val tail = title.substring(dash.range.last + 1).trim()
     val conjoined = head.isNotBlank() && tail.isNotBlank() && CONJUNCTION_SEPARATOR.containsMatchIn(tail)
+    if (!conjoined) return listOf(title)
     val suffixFromDash = ARTIST_SUFFIX_PATTERN.find(title)?.range?.first == dash.range.first
-    val proseTail = tail.firstOrNull()?.isLowerCase() == true && !PERFORMER_LEAD.containsMatchIn(tail)
-    return if (conjoined && (suffixFromDash || proseTail)) head else title
+    val performerLead = PERFORMER_LEAD.containsMatchIn(tail)
+    val proseTail = tail.first().isLowerCase() && !performerLead
+    val shoutedHead = head.none { it.isLowerCase() }
+    return when {
+        suffixFromDash || proseTail -> listOf(head)
+        shoutedHead && !performerLead && coBilledNames(tail) -> listOf(head, tail)
+        else -> listOf(title)
+    }
+}
+
+/**
+ * Whether [tail] splits into two acts or more, each in mixed case and opening every word with a capital: `Dave
+ * Colwell & Robert Hart`. A shouted tail fails it (`GLITTER & GLAM`), and so do a lowercase word (`Große und kleine
+ * Fragen`) and an act that opens with a digit (`2000s & 2010s Party`).
+ */
+private fun coBilledNames(tail: String): Boolean {
+    val acts = splitSegmentOnConjunctions(tail).map { it.trim() }
+    return acts.size >= 2 &&
+        acts.all { act -> act.first().isUpperCase() && act.any { it.isLowerCase() } && act.split(WHITESPACE).none { it.first().isLowerCase() } }
 }
 
 /** A tail that goes on to name who performs: `mit …`, `with …`, `w/ …`, `feat. …`. */

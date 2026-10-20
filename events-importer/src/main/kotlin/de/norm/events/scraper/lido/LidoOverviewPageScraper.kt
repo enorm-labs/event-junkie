@@ -80,7 +80,9 @@ class LidoOverviewPageScraper {
      * reads. A teaser entry the list also carries is dropped by the caller; one it does not carry
      * becomes an event with the date from its `/events/<yyyy-MM-dd-…>` slug, the teaser's time as
      * the doors (the venue prints doors there — 19:00 for a 20:00 start) and the board lines as
-     * the title. The detail page fills in the rest.
+     * the title. The acts come from the first line and the support lines below it, as on an
+     * article, because the second line can be a tour name (`„Convergence Fest 2026"`, #3637).
+     * The detail page fills in the rest.
      */
     private fun parseTeaser(
         document: Document,
@@ -91,12 +93,8 @@ class LidoOverviewPageScraper {
             val sourceUrl = resolveUrl(baseUrl, link.attr("href"))
             val slug = extractEventSlug(sourceUrl)
             val eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: return@mapNotNull null
-            val title =
-                link
-                    .select(".boad-line")
-                    .joinToString(" ") { it.text().trim() }
-                    .trim()
-                    .ifBlank { link.text().trim() }
+            val boardLines = link.select(".boad-line").map { it.text().trim() }.filter { it.isNotBlank() }
+            val title = boardLines.joinToString(" ").ifBlank { link.text().trim() }
             if (title.isBlank()) return@mapNotNull null
             val eventType = refineConcertVenueType(null, title)
             ScrapedEvent(
@@ -106,7 +104,12 @@ class LidoOverviewPageScraper {
                 doorsTime = parseTime(entry.textAt(".teaser__next-events__wrapper__event__date__time")),
                 sourceUrl = sourceUrl,
                 sourceId = "${EventSource.LIDO.sourceIdPrefix}$slug",
-                artists = buildArtistsForEventType(title, null, eventType)
+                artists =
+                    buildArtistsForEventType(
+                        boardLines.firstOrNull() ?: title,
+                        supportSubtitleLines(boardLines.drop(1)),
+                        eventType
+                    )
             )
         }
 
