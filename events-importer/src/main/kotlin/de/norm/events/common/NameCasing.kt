@@ -146,7 +146,12 @@ private val ACRONYMS: Set<String> =
         "BRT",
         "TC",
         // `Potsa Lotsa XL` (Maschinenhaus).
-        "XL"
+        "XL",
+        // Acts split alone from a mixed-case title, which the billing rule never sees (#3641): silent green's `HMOT`,
+        // Schokoladen's `D'CO` and `LVFT`. Not a correction: Soulcat's dub DJ `DCO` is another act.
+        "HMOT",
+        "D'CO",
+        "LVFT"
     )
 
 /**
