@@ -18,7 +18,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    `PROHIBITED` as well, and a person confirmed it. **Surprise Club was read on 2026-10-17**, for its importer. It is
    `PROHIBITED`, and a person confirmed it. **Volksbühne Berlin and Volksbühne Prater were read on the
    same day**, for their importer. They share one imprint. Both are `PROHIBITED`, and a person confirmed it. **Renaissance-Theater was read on the same day**, for its importer.
-   It is `PROHIBITED`, and a person confirmed it.
+   It is `PROHIBITED`, and a person confirmed it. **ZK/U's images were confirmed `PROHIBITED` on 2026-10-20** (#3567). Its press page limits
+   them to press about ZK/U. Its texts stay `UNCLEAR`.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,
@@ -141,6 +142,18 @@ PANDA platforma's text is a different template, and it names any use, not only c
 is an older disclaimer template that names graphics and texts. Surprise Club's bans any reproduction of the whole
 site or its parts, in any medium. The Volksbühne's also names storage in databases. The Renaissance-Theater's requires written permission for any use outside the site. None of the seven is a venue that wrote
 a rule about us.
+
+### One prohibition of images only
+
+**ZK/U**, <https://www.zku-berlin.org/press/>:
+
+<!-- ste-lint: allow verbatim quotation of the venue's own wording, which is the evidence for a PROHIBITED verdict -->
+
+> The use of visual material from our website is only permitted in the context of press coverage about ZK/U Berlin and
+> the KUNSTrePUBLIK association.
+
+It names the images of the whole website, not of a press kit. That is the difference from Gärten der Welt in §5. It
+says nothing about texts, so the texts stay `UNCLEAR`. A person confirmed `PROHIBITED` for the images on 2026-10-20.
 
 ## 5. Three near-misses, so nobody re-checks them
 
