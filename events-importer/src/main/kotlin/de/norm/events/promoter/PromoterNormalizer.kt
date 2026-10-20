@@ -265,8 +265,6 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "atokberlin" to "ATOK Berlin",
         "audiolithinternational" to "Audiolith",
         "streetlife" to "Streetlife International",
-        // The agency renamed itself, and one venue still credits the old name.
-        "listenagency" to "Friendly Reminder",
         "fkpscorpio" to "FKP Scorpio",
         "greyzone" to "Greyzone Concerts",
         "greyzoneconcertspromotiongreyvonbronikowski" to "Greyzone Concerts",

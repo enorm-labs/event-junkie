@@ -268,7 +268,6 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Audiolith International") shouldBe "Audiolith"
             canonicalPromoterName("Streetlife") shouldBe "Streetlife International"
             canonicalPromoterName("Streetlife International") shouldBe "Streetlife International"
-            canonicalPromoterName("listenagency") shouldBe "Friendly Reminder"
             canonicalPromoterName("GreyZone Concerts") shouldBe "Greyzone Concerts"
             canonicalPromoterName("Greyzone") shouldBe "Greyzone Concerts"
             canonicalPromoterName("Greyzone Concerts & Promotion Grey & von Bronikowski") shouldBe "Greyzone Concerts"
@@ -280,8 +279,9 @@ class PromoterNormalizerTest {
             canonicalPromoterName("PRK DreamHaus") shouldBe "PRK DreamHaus"
             canonicalPromoterName("Rausgeganger") shouldBe "Rausgegangen"
             canonicalPromoterName("Punkfilmfestival Berlin") shouldBe "punkfilmfest berlin"
-            // "Listen" is Listen Collective, a different company from listenagency, and stays.
+            // Listen Agency is Listen Collective, whose site calls itself that, not Friendly Reminder (#3643).
             canonicalPromoterName("Listen") shouldBe "Listen"
+            canonicalPromoterName("Listen Agency") shouldBe "Listen"
         }
     }
 
