@@ -12,7 +12,12 @@ class HouseOfMusicOverviewPageScraperTest {
     private val baseUrl = "https://www.houseofmusic.berlin/"
     private val events = HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(fixture(), baseUrl), baseUrl)
 
+    private val later =
+        HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(fixture("houseofmusic-overview-2026-10-20.html"), baseUrl), baseUrl)
+
     private fun titled(title: String) = events.first { it.title == title }
+
+    private fun titledLater(title: String) = later.first { it.title == title }
 
     @Test
     fun `reads every event from the Wix warmup payload in Berlin time`() {
@@ -68,13 +73,52 @@ class HouseOfMusicOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a meetup and a film night by the house's words and bills no act for them`() {
+        val meetup = titledLater("Ableton User Group Berlin: Track Feedback Session")
+        val film = titledLater("Free DrinkWatchTalk short movie evening")
+
+        meetup.eventType shouldBe EventType.OTHER.name
+        meetup.artists.shouldBeEmpty()
+        film.eventType shouldBe EventType.SCREENING.name
+        film.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads the acts after a series name and w-slash as a lineup`() {
+        val night = titledLater("jazzexzess w/ Luise Volkmann’s Punk-Jazz-Projekt + Vehicle/Passenger")
+
+        night.eventType shouldBe EventType.CONCERT.name
+        night.artists.map { it.name } shouldBe listOf("Luise Volkmann’s Punk-Jazz-Projekt", "Vehicle/Passenger")
+        night.artists.map { it.titleDerived } shouldBe listOf(false, false)
+    }
+
+    @Test
+    fun `keeps a concert that names a film a concert`() {
+        val html = fixture().replace("JAZZTICK - Undertale Concert Determination", "JAZZTICK - Ghibli Film Concert")
+        val concert = HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "JAZZTICK - Ghibli Film Concert" }
+
+        concert.eventType shouldBe EventType.CONCERT.name
+        concert.artists.map { it.name } shouldBe listOf("JAZZTICK")
+    }
+
+    @Test
+    fun `keeps the house's other shapes on the later programme`() {
+        later.size shouldBe 7
+        titledLater("House of Music Quiz").eventType shouldBe EventType.QUIZ.name
+        titledLater("Madcat Records: AI Girlfriend; Leo Trovato; In:Numbers").artists.map { it.name } shouldBe
+            listOf("AI Girlfriend", "Leo Trovato", "In:Numbers")
+        titledLater("Gris Festival | Grey River & The Smoky Mountain + Lia Hide").artists.map { it.name } shouldBe
+            listOf("Grey River & The Smoky Mountain", "Lia Hide")
+    }
+
+    @Test
     fun `yields nothing for a page without the warmup payload`() {
         HouseOfMusicOverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
 
-    private fun fixture(): String =
+    private fun fixture(name: String = "houseofmusic-overview.html"): String =
         javaClass.classLoader
-            .getResourceAsStream("scraper/houseofmusic/houseofmusic-overview.html")!!
+            .getResourceAsStream("scraper/houseofmusic/$name")!!
             .bufferedReader()
             .readText()
 }
