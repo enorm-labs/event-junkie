@@ -854,6 +854,24 @@ class ArtistNameMappingTest {
             listOf("Night Series - Wendy Eisenberg", "Mary Halvorson")
     }
 
+    // #3637: Lido's band billed with two of its members. The split fused the band with the first member,
+    // and the operator's rename of that fused artist hid the member from the line-up.
+    @Test
+    fun `headlinersFromTitle bills the head and each act of a co-billed dash tail`() {
+        headlinersFromTitle("BAD COMPANY LEGACY – Dave Colwell & Robert Hart").map { it.name } shouldBe
+            listOf("BAD COMPANY LEGACY", "Dave Colwell", "Robert Hart")
+        headlinersFromTitle("RONNIE ROMERO & GUS G").map { it.name } shouldBe listOf("RONNIE ROMERO", "GUS G")
+        // Only a shouted head billed with mixed-case names: a genre, a show or a shouted tail keeps the title as it was.
+        headlinersFromTitle("FLEEZE - FLIRT RECORDS & BREEZE").map { it.name } shouldNotContain "FLEEZE"
+        headlinersFromTitle("DJ Kassettendeck – Soul & RnB").map { it.name } shouldNotContain "DJ Kassettendeck"
+        headlinersFromTitle("REPLAY – 2000s & 2010s Party").map { it.name } shouldNotContain "REPLAY"
+        headlinersFromTitle("LIEFERS + BROICHER - LIVE: Große und kleine Fragen").map { it.name } shouldNotContain "BROICHER"
+        headlinersFromTitle("REVEREND HARDY HARDON & THE CHURCH OF ELVIS").map { it.name } shouldBe
+            listOf("REVEREND HARDY HARDON & THE CHURCH OF ELVIS")
+        headlinersFromTitle("Reverend Hardy Hardon & The Church of Elvis").map { it.name } shouldBe
+            listOf("Reverend Hardy Hardon & The Church of Elvis")
+    }
+
     // #1560: the marker comes off the title at persistence, after the acts were built from it.
     @Test
     fun `headlinersFromTitle bills the act, not the cancellation glued to it`() {
