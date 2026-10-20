@@ -17,6 +17,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
@@ -67,7 +68,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
             server = MockWebServer()
             server.start()
             registry = SimpleMeterRegistry()
-            venueId = insertVenue()
+            venueId = insertVenue("v")
             insertSource(SOURCE)
         }
 
@@ -117,6 +118,51 @@ class EventClassificationCheckTest : BaseControllerTest() {
             suggestions(badge).map { it.field to it.proposed } shouldContainExactly listOf("startTime" to "20:00")
             suggestions(fallback).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "READING")
             suggestions(other).map { it.field to it.proposed } shouldContainExactly listOf("eventType" to "READING")
+        }
+
+    @Test
+    fun `no type is proposed between COMEDY and SHOW in either direction, a READING still is, and the run counts the skipped ones`(): Unit =
+        runBlocking {
+            val comedy = insertEvent("Spaeti-Ritter", type = "COMEDY", description = "Kabarett mit Musik.", startTime = null, daysAhead = 7)
+            val show = insertEvent("Drag Revue", type = "SHOW", description = "Stand-up und Drag.", startTime = null, daysAhead = 8)
+            val reading = insertEvent("Anna liest", type = "COMEDY", description = "Anna liest aus ihrem Roman.", startTime = null, daysAhead = 9)
+            server.enqueue(answer("eventType" to finding("SHOW", "Kabarett mit Musik")))
+            server.enqueue(answer("eventType" to finding("COMEDY", "Stand-up und Drag")))
+            server.enqueue(answer("eventType" to finding("READING", "Anna liest aus ihrem Roman")))
+
+            val lines = captureLogs { check().checkSource(SOURCE) }
+
+            suggestions(comedy).shouldBeEmpty()
+            suggestions(show).shouldBeEmpty()
+            suggestions(reading).map { Triple(it.field, it.stored, it.proposed) } shouldContainExactly listOf(Triple("eventType", "COMEDY", "READING"))
+            lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldEndWith
+                "suggested {eventType=1}; skipped 2 COMEDY/SHOW type(s) and 0 dismissed on another date"
+        }
+
+    @Test
+    fun `a suggestion dismissed on one date of a show is not stored for its other dates, and is for another venue or value`(): Unit =
+        runBlocking {
+            val first = insertEvent("Spaeti-Ritter", type = "OTHER", daysAhead = 7)
+            server.enqueue(answer("eventType" to finding("READING", "Spaeti-Ritter")))
+            check().checkEvent(first)
+            databaseClient.sql("UPDATE events.event_suggestion SET status = 'DISMISSED' WHERE event_id = $first").await()
+
+            val second = insertEvent("Spaeti-Ritter", type = "OTHER", daysAhead = 14)
+            val elsewhere = insertEvent("Spaeti-Ritter", type = "OTHER", daysAhead = 21)
+            databaseClient.sql("UPDATE events.event SET venue_id = ${insertVenue("w")} WHERE id = $elsewhere").await()
+            val otherValue = insertEvent("Spaeti-Ritter", type = "OTHER", daysAhead = 28)
+            server.enqueue(answer("eventType" to finding("READING", "Spaeti-Ritter")))
+            server.enqueue(answer("eventType" to finding("READING", "Spaeti-Ritter")))
+            server.enqueue(answer("eventType" to finding("CONCERT", "Spaeti-Ritter")))
+
+            val lines = captureLogs { check().checkSource(SOURCE) }
+
+            withClue("the first date is unchanged and not sent again") { server.requestCount shouldBe 4 }
+            suggestions(second).shouldBeEmpty()
+            suggestions(elsewhere).map { it.proposed } shouldContainExactly listOf("READING")
+            suggestions(otherValue).map { it.proposed } shouldContainExactly listOf("CONCERT")
+            lines.single { it.formattedMessage.contains("finished") }.formattedMessage shouldEndWith
+                "suggested {eventType=2}; skipped 0 COMEDY/SHOW type(s) and 1 dismissed on another date"
         }
 
     @Test
@@ -362,7 +408,7 @@ class EventClassificationCheckTest : BaseControllerTest() {
                 listOf(
                     "Event classification of source '$SOURCE' started: 1 candidate(s), at most 50 model call(s), 0 of 3000000 tokens used this month",
                     "Event classification of source '$SOURCE' finished: 1 checked, 0 unchanged, 0 failed, 0 over the cap, " +
-                        "0 over the token budget; suggested {eventType=1}"
+                        "0 over the token budget; suggested {eventType=1}; skipped 0 COMEDY/SHOW type(s) and 0 dismissed on another date"
                 )
             withClue("each line names the source as a field, so the log can be filtered by it") {
                 info.forEach { line -> line.keyValuePairs.associate { it.key to it.value } shouldBe mapOf("sourceSlug" to SOURCE) }
@@ -526,9 +572,9 @@ class EventClassificationCheckTest : BaseControllerTest() {
         return appender.list.toList()
     }
 
-    private suspend fun insertVenue(): Long =
+    private suspend fun insertVenue(slug: String): Long =
         databaseClient
-            .sql("INSERT INTO events.venue (name, slug, address, city, postal_code) VALUES ('V', 'v', 'Somewhere 1', 'Berlin', '10999') RETURNING id")
+            .sql("INSERT INTO events.venue (name, slug, address, city, postal_code) VALUES ('$slug', '$slug', 'Somewhere 1', 'Berlin', '10999') RETURNING id")
             .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .one()
             .awaitSingle()

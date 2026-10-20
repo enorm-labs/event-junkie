@@ -52,6 +52,17 @@ data class NewSuggestion(
     val model: String?
 )
 
+/** What [EventClassificationRepository.insertUnlessOpen] did with one suggestion. */
+enum class SuggestionInsert {
+    INSERTED,
+
+    /** The same suggestion is already open for the event. */
+    OPEN,
+
+    /** The same suggestion was dismissed on another date of the show. */
+    DISMISSED_FOR_SHOW
+}
+
 /**
  * The reads and writes of the classification check. Hand-written SQL, as in the rest of the module.
  *
@@ -152,18 +163,35 @@ class EventClassificationRepository(
                 .toList()
         }
 
-    /** Inserts [suggestion] unless an OPEN one has the same event, field and value. Returns whether it inserted. */
-    suspend fun insertUnlessOpen(suggestion: NewSuggestion): Boolean =
+    /**
+     * Inserts [suggestion] unless an OPEN one has the same event, field and value, or a DISMISSED one has the same
+     * field and value on an event of the same venue and title: a dismissal holds for every date of a show (#3658).
+     */
+    suspend fun insertUnlessOpen(suggestion: NewSuggestion): SuggestionInsert =
         template.databaseClient
             .sql(
                 """
-                INSERT INTO $EVENTS_SCHEMA.event_suggestion
-                    (event_id, field, stored_value, proposed_value, evidence, confidence, check_name, model)
-                SELECT :eventId, :field, :storedValue, :proposedValue, :evidence, :confidence, :checkName, :model
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM $EVENTS_SCHEMA.event_suggestion
-                    WHERE event_id = :eventId AND field = :field AND proposed_value = :proposedValue AND status = 'OPEN'
+                WITH dismissed AS (
+                    SELECT EXISTS (
+                        SELECT 1 FROM $EVENTS_SCHEMA.event_suggestion d
+                        JOIN $EVENTS_SCHEMA.event de ON de.id = d.event_id
+                        JOIN $EVENTS_SCHEMA.event te ON te.id = :eventId
+                        WHERE d.status = 'DISMISSED' AND d.field = :field AND d.proposed_value = :proposedValue
+                          AND de.venue_id = te.venue_id AND de.title = te.title
+                    ) AS hit
+                ), already_open AS (
+                    SELECT EXISTS (
+                        SELECT 1 FROM $EVENTS_SCHEMA.event_suggestion
+                        WHERE event_id = :eventId AND field = :field AND proposed_value = :proposedValue AND status = 'OPEN'
+                    ) AS hit
+                ), inserted AS (
+                    INSERT INTO $EVENTS_SCHEMA.event_suggestion
+                        (event_id, field, stored_value, proposed_value, evidence, confidence, check_name, model)
+                    SELECT :eventId, :field, :storedValue, :proposedValue, :evidence, :confidence, :checkName, :model
+                    WHERE NOT (SELECT hit FROM dismissed) AND NOT (SELECT hit FROM already_open)
+                    RETURNING id
                 )
+                SELECT EXISTS (SELECT 1 FROM inserted) AS inserted, (SELECT hit FROM dismissed) AS dismissed
                 """.trimIndent()
             ).bind("eventId", suggestion.eventId)
             .bind("field", suggestion.field)
@@ -173,9 +201,14 @@ class EventClassificationRepository(
             .bind("confidence", suggestion.confidence)
             .bind("checkName", EventClassificationCheck.CHECK_NAME)
             .bindNullable("model", suggestion.model)
-            .fetch()
-            .rowsUpdated()
-            .awaitSingle() > 0
+            .map { row, _ ->
+                when {
+                    row.get("inserted", Boolean::class.javaObjectType) == true -> SuggestionInsert.INSERTED
+                    row.get("dismissed", Boolean::class.javaObjectType) == true -> SuggestionInsert.DISMISSED_FOR_SHOW
+                    else -> SuggestionInsert.OPEN
+                }
+            }.one()
+            .awaitSingle()
 
     /** Records that [model] answered for [contentHash], so the same text is not sent again. */
     suspend fun recordChecked(
