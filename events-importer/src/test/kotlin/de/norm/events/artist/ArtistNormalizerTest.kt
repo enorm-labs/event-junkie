@@ -154,6 +154,23 @@ class ArtistNormalizerTest {
         }
     }
 
+    // silent green bills `Andrea Pensado + HMOT + bela`, Schokoladen `… + D'CO (…)` and `… + LVFT (…)`; each act is split off alone (#3641).
+    @Test
+    fun `keeps HMOT, D'CO and LVFT in capitals, alone or in a shouted billing`() {
+        assertSoftly {
+            canonicalArtistName("HMOT") shouldBe "HMOT"
+            canonicalArtistName("D'CO") shouldBe "D'CO"
+            canonicalArtistName("LVFT") shouldBe "LVFT"
+            canonicalArtistName("HMOT LIVE") shouldBe "HMOT Live"
+            // A spelling the venue styles itself is kept, as for every other entry.
+            canonicalArtistName("Hmot") shouldBe "Hmot"
+            // Soulcat's dub DJ `DCO` is another act, and still de-shouts to its own slug.
+            canonicalArtistName("DCO") shouldBe "Dco"
+            artistSlugFor("DCO") shouldBe "dco"
+            artistSlugFor("D'CO") shouldBe "d-co"
+        }
+    }
+
     // Weekend billed `HB&P Soundsystem` (#3480) and The Door `ABF & Friends` (#3501), stored as `Hb&p …` and `Abf …` (#3507).
     @Test
     fun `keeps the initialisms of a billing that is not shouted`() {
