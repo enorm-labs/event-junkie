@@ -40,6 +40,8 @@ class ImageStorageConfig {
             // defaults to `bucket.endpoint`, which resolves to nothing here and fails as a DNS
             // error rather than as a configuration one.
             .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+            // The SDK's legacy retry default stays: four attempts, each retry costing 5 of 500 quota tokens.
+            // An outage empties the quota, so calls fail on attempt 1. That is wanted: a failed store leaves no row for the next cache pass to skip.
             .build()
     }
 }
