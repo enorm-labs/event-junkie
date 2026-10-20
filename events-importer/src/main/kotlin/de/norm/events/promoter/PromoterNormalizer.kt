@@ -265,6 +265,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "atokberlin" to "ATOK Berlin",
         "audiolithinternational" to "Audiolith",
         "streetlife" to "Streetlife International",
+        // Listen Collective's booking name, written as one word, so the "agency" strip never reaches it (#3670).
+        "listenagency" to "Listen",
         "fkpscorpio" to "FKP Scorpio",
         "greyzone" to "Greyzone Concerts",
         "greyzoneconcertspromotiongreyvonbronikowski" to "Greyzone Concerts",
