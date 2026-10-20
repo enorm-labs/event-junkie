@@ -50,6 +50,9 @@ import java.util.Locale
  * <venue> –"` prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a
  * venue it will not play.
  *
+ * A closure notice ("Frannz Biergarten bleibt heute geschlossen!") is published as an article too,
+ * and is skipped by its title ([CLOSURE_NOTICE], #3669).
+ *
  * The stable identity is the WordPress post id (`<article id="post-9874">`), used for the
  * `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
  *
@@ -98,6 +101,10 @@ class FrannzOverviewPageScraper(
         val rawTitle = article.textAt("h2.event-title")
         if (rawTitle.isNullOrBlank()) {
             logger.warn { "Frannz event article has no title, skipping" }
+            return null
+        }
+        if (CLOSURE_NOTICE.containsMatchIn(rawTitle)) {
+            logger.debug { "Frannz article '$rawTitle' is a closure notice, skipping" }
             return null
         }
         // Read the status off the *raw* title first — cleanEventTitle strips the very note it comes
@@ -356,6 +363,13 @@ class FrannzOverviewPageScraper(
     companion object {
         /** How many years past this one a year-less date may fall in; the listing reaches about 13 months. */
         private const val YEARS_AHEAD = 2
+
+        /**
+         * A title that closes the house: "… bleibt heute geschlossen!", "… bleiben zu". The verb ends
+         * the title, so an act named "Wir bleiben zu Hause" or "Die Tür bleibt geschlossen – Live" stays.
+         */
+        private val CLOSURE_NOTICE =
+            Regex("""\b(?:bleibt|bleiben)\b.*\b(?:geschlossen|zu)\W*$""", RegexOption.IGNORE_CASE)
 
         private const val EVENT_TYP_PREFIX = "event_typ-"
         private const val HIGHLIGHT_CLASS = "event_typ-highlight"

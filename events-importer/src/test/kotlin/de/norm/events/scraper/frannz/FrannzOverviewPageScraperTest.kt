@@ -231,6 +231,60 @@ class FrannzOverviewPageScraperTest {
     }
 
     @Nested
+    inner class ClosureNotice {
+        private val notice =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/frannz/frannz-closure-notice.html")!!
+                .bufferedReader()
+                .readText()
+
+        private fun titled(title: String) =
+            """
+            <article id="post-1" class="events event_typ-konzert">
+                <h2 class="event-title">$title</h2>
+                <div class="event-day">26</div>
+                <div class="event-month">September</div>
+            </article>
+            """.trimIndent()
+
+        // Stored as a CONCERT with its title as the act (#3669).
+        @Test
+        fun `skips an article whose title closes the house`() {
+            scraper.scrape(Jsoup.parse(notice, baseUrl), baseUrl).shouldBeEmpty()
+        }
+
+        // The fixture is a whole article: under another title it is an event, so the title is what drops it.
+        @Test
+        fun `reads the same article under an act's title`() {
+            val renamed = notice.replace("Frannz Biergarten bleibt heute geschlossen!", "Rebel Yell")
+
+            scraper.scrape(Jsoup.parse(renamed, baseUrl), baseUrl).single().title shouldBe "Rebel Yell"
+        }
+
+        @Test
+        fun `skips the short and plural forms of the notice`() {
+            listOf("Biergarten bleibt heute zu", "CLUB UND BIERGARTEN BLEIBEN GESCHLOSSEN").forEach { title ->
+                scraper.scrape(Jsoup.parse(titled(title), baseUrl), baseUrl).shouldBeEmpty()
+            }
+        }
+
+        @Test
+        fun `keeps a title that says geschlossen, bleiben or zu in another sense`() {
+            val titles =
+                listOf(
+                    "Geschlossene Gesellschaft",
+                    "Wir bleiben zu Hause",
+                    "Die Tür bleibt geschlossen – Live",
+                    "Augen zu und durch"
+                )
+
+            titles.forEach { title ->
+                scraper.scrape(Jsoup.parse(titled(title), baseUrl), baseUrl).single().title shouldBe title
+            }
+        }
+    }
+
+    @Nested
     inner class RelocationStatus {
         // The venue announces a show that moved *out* of the house as a title suffix. Left unread
         // it was stored SCHEDULED at a venue it will not play, with the note baked into both the
