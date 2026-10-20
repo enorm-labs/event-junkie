@@ -31,7 +31,7 @@ Recommend what to work on next, and explain **why** — not just what.
     | Signal                                     | Why it matters                                                                                                                       |
     | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
     | **Unblocking value**                       | An issue that unblocks three others outranks its own priority. Check what names it in a `Blocked by:` footer.                        |
-    | **Milestone urgency**                      | `v0.2 — Deployable` gates `v0.3`, which gates `v1.0`. Nothing in the launch path should wait behind Phase 2 polish.                  |
+    | **Milestone urgency**                      | `1.0.0 — Out of beta` comes before `Phase 3` and `Phase 4`. Nothing that drops the beta badge should wait behind an epic.            |
     | **Priority**                               | `P0 — now` · `P1 — next` · `P2 — later`, from the board.                                                                             |
     | **Size against the user's available time** | A `size:L` recommended to someone with an hour is a bad recommendation however important it is.                                      |
     | **Batching**                               | Several cross-cutting parser fixes each need a `--full` re-seed and a diff. Doing three together costs barely more than one. Say so. |

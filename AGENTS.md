@@ -312,8 +312,8 @@ form asks **whether the fix needs a `--full` re-seed** — usually the differenc
 start: `blocked`, `needs-decision`, `needs-deployment` — the last is work that cannot exist yet, not neglect. `after-deploy` is on a merged **pull request**:
 its `## After deploy` steps wait for a release, and [`/post-release`](.github/prompts/post-release.prompt.md) runs them, so no session waits open for one.
 
-**Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` lead to launch; `Phase 2/3/4` are post-launch buckets. No milestone means
-unscheduled. Reasoning in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
+**Milestones.** `1.0.0 — Out of beta` takes fixes, importer work and polish until the beta badge goes (#295); `Phase 3/4` hold the later epics. No
+milestone means unscheduled. Reasoning in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
 
 **Closing.** `Closes #NNN` in the **PR body**, one line per issue, `Closes` not `Fixes`. A commit message would work too under rebase-merge, but the body
 survives amending and is one line to fix. Give the PR the issue's milestone; every closed PR here carries one. **A negated keyword still closes**: GitHub
