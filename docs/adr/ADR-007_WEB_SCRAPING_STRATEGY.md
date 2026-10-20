@@ -167,12 +167,26 @@ classDiagram
     }
 
     class AssociationSyncService {
-        +resolveAndSyncAssociations(saved, scraped)
-        -resolveAllArtists(events): Map
-        -syncArtistAssociations(saved, scraped, cache)
-        -resolveAllPromoters(events): Map
-        -syncPromoterAssociations(saved, scraped, cache)
-        -resolveOrCreate(name, cache, save, findBySlug): T
+        +resolveAndSyncAssociations(saved, scraped, keepStored): AssociationOutcome
+        +fillEmptyAssociations(events, genreFilled): AssociationFill
+        -keptPins(pins, billed, events): Int
+        -syncQualityFlags(saved, scraped, heldBack)
+    }
+
+    class ArtistAssociationSync {
+        +billedArtists(events): Pair
+        +resolveAllArtists(artists): Map
+        +syncArtistAssociations(saved, billed, cache, detailless)
+    }
+
+    class PromoterAssociationSync {
+        +resolveAllPromoters(events): Map
+        +syncPromoterAssociations(saved, scraped, cache, detailless)
+    }
+
+    class GenreTagAssociationSync {
+        +resolveAllGenreTags(events): Map
+        +syncGenreTagAssociations(saved, scraped, cache)
     }
 
     class EventSourceService {
@@ -216,6 +230,9 @@ classDiagram
     EventImportService --> EventSourceEntity: reads config & updates status
     EventImportService --> EventUpsertService: delegates persistence
     EventUpsertService --> AssociationSyncService: delegates associations
+    AssociationSyncService --> ArtistAssociationSync: syncs the lineup
+    AssociationSyncService --> PromoterAssociationSync: syncs the promoters
+    AssociationSyncService --> GenreTagAssociationSync: syncs the genre tags
     EventSourceService --> EventSourceEntity: CRUD
     EventSourceController --> EventImportService: triggers imports (async, via ImportJobLauncher)
     EventSourceController --> EventSourceService: manages sources
@@ -227,6 +244,9 @@ classDiagram
     style EventImportService fill: #bbf, stroke: #333
     style EventUpsertService fill: #bbf, stroke: #333
     style AssociationSyncService fill: #bbf, stroke: #333
+    style ArtistAssociationSync fill: #bbf, stroke: #333
+    style PromoterAssociationSync fill: #bbf, stroke: #333
+    style GenreTagAssociationSync fill: #bbf, stroke: #333
     style ConcreteWebsiteImporter fill: #bfb, stroke: #333
     style ConcreteOverviewScraper fill: #bfb, stroke: #333
     style ConcreteDetailScraper fill: #bfb, stroke: #333
@@ -271,9 +291,11 @@ Key components:
   events, upserts them (insert new, update existing by `sourceId`), and removes stale future events that the source
   website no longer lists. It delegates artist and promoter resolution and association syncing to
   `AssociationSyncService`.
-- **`AssociationSyncService`** — resolves artists and promoters by slug, and creates an unknown one with a
-  concurrent-safe fallback. It synchronizes many-to-many join-table associations with a diff strategy: insert new,
-  update a changed role or billing order, delete stale.
+- **`AssociationSyncService`** — syncs the artists, promoters and genre tags of the upserted events. It keeps a pinned
+  join table and writes the quality flags. One step class per kind does the work: `ArtistAssociationSync`,
+  `PromoterAssociationSync` and `GenreTagAssociationSync`. Each step resolves names by slug, and creates an unknown one
+  with a concurrent-safe fallback. Each step syncs its join table with a diff strategy: insert new, update a changed
+  role or billing order, delete stale.
 - **`EventSourceService`** — CRUD service for managing event source configuration.
 - **`event_source` table** — tracks per-venue import metadata: URL, ETag, Last-Modified, last import timestamp, event count, status, and error messages.
 

@@ -189,14 +189,15 @@ class EventImportServiceTest {
     private fun buildServices() {
         associationSyncService =
             AssociationSyncService(
-                eventArtistRepository = eventArtistRepository,
-                eventPromoterRepository = eventPromoterRepository,
-                eventGenreTagRepository = eventGenreTagRepository,
-                artistRepository = artistRepository,
-                promoterRepository = promoterRepository,
-                genreTagRepository = genreTagRepository,
+                artistSync =
+                    ArtistAssociationSync(
+                        eventArtistRepository = eventArtistRepository,
+                        artistRepository = artistRepository,
+                        artistSlugAliasStore = mockk { coEvery { artistIdsBySlug(any()) } returns emptyMap() }
+                    ),
+                promoterSync = PromoterAssociationSync(eventPromoterRepository = eventPromoterRepository, promoterRepository = promoterRepository),
+                genreTagSync = GenreTagAssociationSync(eventGenreTagRepository = eventGenreTagRepository, genreTagRepository = genreTagRepository),
                 qualityFlagRepository = mockk(relaxed = true),
-                artistSlugAliasStore = mockk { coEvery { artistIdsBySlug(any()) } returns emptyMap() },
                 genreDerivation = mockk(relaxed = true)
             )
 

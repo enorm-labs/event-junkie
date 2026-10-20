@@ -330,7 +330,7 @@ class EventService(
         if (genreNames.isEmpty()) return emptyList()
 
         // Resolves each genre tag individually (N+1), deliberately simpler than
-        // AssociationSyncService's batch strategy: the admin API handles one event with 1–5 tags.
+        // GenreTagAssociationSync's batch strategy: the admin API handles one event with 1–5 tags.
         val entities =
             genreNames.map { name ->
                 val slug = SlugGenerator.slugify(name)
