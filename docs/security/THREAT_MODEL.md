@@ -30,6 +30,7 @@ flowchart LR
         le["Let's Encrypt"]
         claude["Claude API"]
         wiki["MusicBrainz · Wikidata · Commons · Wikipedia · Discogs"]
+        meta["Meta Graph API · Instagram CDN"]
         ext["healthchecks.io · Better Stack"]
     end
 
@@ -70,6 +71,7 @@ flowchart LR
     importer -->|"80 · 443 · public addresses only"| venue
     importer --> claude
     importer -->|"names and ids only"| wiki
+    importer -->|"venue handles · image fetch"| meta
     importer --> pg
     importer -->|"write"| s3
     certmgr --> le
@@ -120,6 +122,7 @@ Every namespace under the chart starts from default deny. Each arrow below is a 
 | importer     | Object Storage, 443                                                                                                                | `allow-scraping` covers it, since the bucket is a public address                                                                                     |
 | importer     | MusicBrainz, Wikidata, Commons, Wikipedia                                                                                          | `allow-scraping` covers them, since they are public addresses. B5 lists what is sent                                                                 |
 | importer     | Discogs                                                                                                                            | `allow-scraping` covers it, since it is a public address. B5 lists what is sent                                                                      |
+| importer     | `graph.facebook.com` and Instagram's CDN, for the Instagram drafts                                                                 | `allow-scraping` covers them, since they are public addresses. B11 lists what is sent                                                                |
 | importer     | Enrichment sources, such as promoter and fan sites ([ADR-043](../adr/ADR-043_ONE_MAIN_SOURCE_PER_VENUE_AND_ENRICHMENT_SOURCES.md)) | `allow-scraping`. The scraper client applies `RobotsTxtFilter.kt` and `PerHostThrottlingFilter.kt`, as for a venue. B4 lists what a source can write |
 | importer     | The sites of venues with no importer, once a month (`venuecheck/`)                                                                 | `allow-scraping`. `VenueSiteProber.kt` uses the scraper client, so the robots and throttling filters apply. `ForbiddenHosts.kt` skips some hosts, B4 |
 | BFF          | PostgreSQL, Object Storage on 443                                                                                                  | `allow-database` and `allow-object-storage`. The BFF never reaches a venue                                                                           |
@@ -196,7 +199,7 @@ reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia
 
 | Threat                                                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                               |
 | ------------------------------------------------------------------------------------- | ------ | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Venue text instructs the translation model                                            | T      | medium     | low    | Accepted. The output is a translation stored as text and rendered escaped. The worst case is a wrong translation of one event                                                                                        |
+| Venue text instructs the model                                                        | T      | medium     | low    | Accepted. A translation is stored as text and rendered escaped. A suggestion or an Instagram draft (B11) changes nothing until a person accepts it                                                                   |
 | The key leaks and someone spends against the workspace                                | I      | low        | low    | Mitigated. Hand-made, never in git, a spend cap on the workspace. SECRETS.md § `event-junkie-anthropic`                                                                                                              |
 | The Discogs consumer credentials leak and someone searches as our application         | I      | low        | low    | Mitigated. Hand-made, never in git, never logged: `DiscogsProperties.toString` hides them and `DiscogsClientTest` asserts it. SECRETS.md § `event-junkie-discogs`                                                    |
 | A Discogs entry gives a wrong act the same name, and its link reaches an artist page  | T      | medium     | low    | Accepted. Only a single exact title match with a release in the last 15 years is stored, only as a link. A hand review of 40 links precedes production (#2054)                                                       |
@@ -265,6 +268,24 @@ job, `notify`, with `issues: write` (#1499). The agent never runs in that job.
 | The images key reaches the backups bucket   | T, I   | low        | high   | Accepted. A Hetzner key reads and writes every bucket of the project until a bucket policy narrows it. This repository applies none. SECRETS.md § `event-junkie-images` |
 | A hostile image reaches a visitor's browser | T      | low        | low    | Mitigated. Every derivative is re-encoded by imgproxy at import time ([ADR-020](../adr/ADR-020_IMAGE_PROCESSING.md))                                                    |
 
+### B11 · Importer → Meta Graph API and Instagram's CDN
+
+Once a day the importer asks Business Discovery for the recent posts of each venue on its Instagram list
+([ADR-048](../adr/ADR-048_INSTAGRAM_POSTS_THROUGH_BUSINESS_DISCOVERY.md)). It sends a venue's handle and our Page token to `graph.facebook.com`. It
+fetches each post's images from Instagram's CDN, and the model reads the caption and the images
+([ADR-049](../adr/ADR-049_INSTAGRAM_DRAFTS_READ_THE_POST_IMAGES.md)). The result is a draft for a person to review. The chart ships the pass off
+(`importer.instagram.enabled`), and both clusters turn it on.
+
+| Threat                                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The Page token leaks and someone reads public accounts as our app     | I      | low        | low    | Mitigated. Hand-made, never in git. It gives no data of ours and no write permission, only Meta's rate limit. SECRETS.md § `event-junkie-instagram`                                                                                                                                                                                                                                |
+| The token expires or loses a permission, and no venue is read, unseen | D      | medium     | low    | Mitigated. Meta's codes 10, 200 and 190 stop the pass, and `ej-instagram-access-refused` mails `alerts@` (#3366)                                                                                                                                                                                                                                                                   |
+| An image URL in a Graph answer points the fetch somewhere hostile     | I, D   | low        | low    | Mitigated. `InstagramImageFetcher.kt` fetches only an `https` URL on `cdninstagram.com` or `fbcdn.net`, and only a JPEG, PNG or WebP of at most 5 MB. `InstagramHttpClientConfig.kt` follows no redirect, so the host check holds. The bytes stay in memory for one model call and are not stored                                                                                  |
+| A caption or a flyer instructs the model and plants an event          | T      | medium     | low    | Mitigated. `AnthropicPostExtractor.kt` sends the caption as a JSON document, and the system prompt calls the caption and the image text data. `PostExtractionValidator` checks each answer against them. The module writes no event: a person creates it, then calls `POST /api/admin/instagram-drafts/{id}/approve` (ADR-048 rule 5), which only the operator can reach (ADR-023) |
+
+`allow-scraping` is per workload, not per host. So the new upstream widened no NetworkPolicy, and no test failed when it arrived. §4's trigger for a
+new outbound connection is the check for this.
+
 ### Cluster-wide
 
 | Threat                                       | STRIDE | Likelihood | Impact | Status                                                                                                                   |
@@ -292,7 +313,7 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 - The images key can read and write every bucket of the project, the backups and the OpenTofu state included. A Hetzner key has that reach until a
   bucket policy narrows it, and this repository applies none.
 - The database backups are not encrypted. Whoever holds a key of the project can read them.
-- Venue text can steer a translation. The result is text, rendered escaped.
+- Venue text can steer the model. A translation is text, rendered escaped. A suggestion or an Instagram draft waits for a person (B5, B11).
 - The map-assets image has no signature. The frontend image copies it by digest, and the signature on the frontend image covers the copied files.
 - The map tiles are not checked against a digest, because Protomaps publishes none. TLS to `build.protomaps.com` and the review of the pull request
   that moves the digest are the checks.
