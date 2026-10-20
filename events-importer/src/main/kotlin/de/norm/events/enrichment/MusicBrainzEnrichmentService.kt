@@ -14,6 +14,7 @@ import de.norm.events.wikimedia.WikipediaExtract
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import kotlin.time.TimeMark
 
 /**
  * Reads the MusicBrainz entity behind every EXACT verdict and fills what the row lacks: links, type,
@@ -45,16 +46,27 @@ class MusicBrainzEnrichmentService(
      *
      * @return the rows owed and the rows stamped as read, or [LookupPass.OFF] when the lookup is disabled.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+    suspend fun sweep(
+        touchedArtistIds: Set<Long>,
+        deadline: TimeMark = LookupPass.noDeadline()
+    ): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else enrich(candidates))
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else enrich(candidates, deadline))
     }
 
-    private suspend fun enrich(candidates: List<ArtistEntity>): Int {
+    private suspend fun enrich(
+        candidates: List<ArtistEntity>,
+        deadline: TimeMark
+    ): Int {
         var stored = 0
         var consecutiveFailures = 0
-        for (artist in candidates) {
+        for ((done, artist) in candidates.withIndex()) {
+            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
+                LookupPass.budgetSpent(deadline, "MusicBrainz enrichment", done, candidates.size)
+            ) {
+                break
+            }
             val failure = readOrFailure(artist)
             if (failure == null) {
                 stored++
@@ -63,7 +75,6 @@ class MusicBrainzEnrichmentService(
                 consecutiveFailures++
                 metrics.recordMusicBrainzEnrichmentError()
                 logger.warn(failure) { "Entity read for '${artist.name}' failed ($consecutiveFailures in a row)" }
-                if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
             }
         }
         logger.info { "Read $stored MusicBrainz entity(ies) of ${candidates.size} owed" }

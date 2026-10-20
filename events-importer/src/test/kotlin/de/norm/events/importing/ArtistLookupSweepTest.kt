@@ -17,11 +17,15 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TestTimeSource
+import kotlin.time.TimeMark
 
 class ArtistLookupSweepTest {
     private val musicBrainzLookupService: MusicBrainzLookupService = mockk()
@@ -36,10 +40,10 @@ class ArtistLookupSweepTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { musicBrainzLookupService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
-        coEvery { musicBrainzEnrichmentService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
-        coEvery { discogsLookupService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
-        coEvery { artistOccupationService.sweep() } returns LookupPass(owed = 0, stored = 0)
+        coEvery { musicBrainzLookupService.sweep(any(), any()) } returns LookupPass(owed = 0, stored = 0)
+        coEvery { musicBrainzEnrichmentService.sweep(any(), any()) } returns LookupPass(owed = 0, stored = 0)
+        coEvery { discogsLookupService.sweep(any(), any()) } returns LookupPass(owed = 0, stored = 0)
+        coEvery { artistOccupationService.sweep(any()) } returns LookupPass(owed = 0, stored = 0)
         coEvery { performerTyping.retypeStored() } returns 0
         appender = ListAppender<ILoggingEvent>().apply { start() }
         logger.addAppender(appender)
@@ -51,6 +55,8 @@ class ArtistLookupSweepTest {
         appender.stop()
     }
 
+    private val clock = TestTimeSource()
+
     private fun sweep(enabled: Boolean = true) =
         ArtistLookupSweep(
             musicBrainzLookupService,
@@ -59,7 +65,8 @@ class ArtistLookupSweepTest {
             artistOccupationService,
             performerTyping,
             ImporterMetrics(registry),
-            enabled
+            enabled,
+            timeSource = clock
         )
 
     private fun tickLines() = appender.list.filter { it.level == Level.INFO && it.formattedMessage.startsWith("Artist lookup tick:") }
@@ -83,10 +90,10 @@ class ArtistLookupSweepTest {
     @Test
     fun `the line names a switched-off lookup and a failed pass, and the tick still counts as run`() =
         runTest {
-            coEvery { musicBrainzLookupService.sweep(any()) } returns LookupPass(owed = 3, stored = 2)
-            coEvery { musicBrainzEnrichmentService.sweep(any()) } throws IllegalStateException("boom")
-            coEvery { discogsLookupService.sweep(any()) } returns LookupPass.OFF
-            coEvery { artistOccupationService.sweep() } returns LookupPass(owed = 5, stored = 5)
+            coEvery { musicBrainzLookupService.sweep(any(), any()) } returns LookupPass(owed = 3, stored = 2)
+            coEvery { musicBrainzEnrichmentService.sweep(any(), any()) } throws IllegalStateException("boom")
+            coEvery { discogsLookupService.sweep(any(), any()) } returns LookupPass.OFF
+            coEvery { artistOccupationService.sweep(any()) } returns LookupPass(owed = 5, stored = 5)
             coEvery { performerTyping.retypeStored() } returns 2
             val sweep = sweep()
             sweep.queue(setOf(1L, 2L, 3L))
@@ -119,10 +126,10 @@ class ArtistLookupSweepTest {
             sweep.tick()
 
             coVerifyOrder {
-                musicBrainzLookupService.sweep(setOf(1L, 2L, 3L))
-                musicBrainzEnrichmentService.sweep(setOf(1L, 2L, 3L))
-                discogsLookupService.sweep(setOf(1L, 2L, 3L))
-                artistOccupationService.sweep()
+                musicBrainzLookupService.sweep(setOf(1L, 2L, 3L), any())
+                musicBrainzEnrichmentService.sweep(setOf(1L, 2L, 3L), any())
+                discogsLookupService.sweep(setOf(1L, 2L, 3L), any())
+                artistOccupationService.sweep(any())
                 performerTyping.retypeStored()
             }
         }
@@ -136,19 +143,19 @@ class ArtistLookupSweepTest {
             sweep.tick()
             sweep.tick()
 
-            coVerify(exactly = 1) { musicBrainzLookupService.sweep(setOf(7L)) }
-            coVerify(exactly = 1) { musicBrainzLookupService.sweep(emptySet()) }
+            coVerify(exactly = 1) { musicBrainzLookupService.sweep(setOf(7L), any()) }
+            coVerify(exactly = 1) { musicBrainzLookupService.sweep(emptySet(), any()) }
         }
 
     @Test
     fun `a pass that throws does not stop the passes after it`() =
         runTest {
-            coEvery { musicBrainzLookupService.sweep(any()) } throws IllegalStateException("boom")
-            coEvery { musicBrainzEnrichmentService.sweep(any()) } throws IllegalStateException("boom")
+            coEvery { musicBrainzLookupService.sweep(any(), any()) } throws IllegalStateException("boom")
+            coEvery { musicBrainzEnrichmentService.sweep(any(), any()) } throws IllegalStateException("boom")
 
             sweep().tick()
 
-            coVerify { discogsLookupService.sweep(any()) }
+            coVerify { discogsLookupService.sweep(any(), any()) }
         }
 
     @Test
@@ -159,7 +166,25 @@ class ArtistLookupSweepTest {
 
             sweep.tick()
 
-            coVerify(exactly = 0) { musicBrainzLookupService.sweep(any()) }
-            coVerify(exactly = 0) { discogsLookupService.sweep(any()) }
+            coVerify(exactly = 0) { musicBrainzLookupService.sweep(any(), any()) }
+            coVerify(exactly = 0) { discogsLookupService.sweep(any(), any()) }
+        }
+
+    @Test
+    fun `each pass gets its own budget, so a pass that ran long does not shorten the next`() =
+        runTest {
+            val lookupDeadline = slot<TimeMark>()
+            val enrichmentDeadline = slot<TimeMark>()
+            coEvery { musicBrainzLookupService.sweep(any(), capture(lookupDeadline)) } coAnswers {
+                clock += 30.minutes
+                LookupPass(owed = 500, stored = 120)
+            }
+            coEvery { musicBrainzEnrichmentService.sweep(any(), capture(enrichmentDeadline)) } returns LookupPass(owed = 0, stored = 0)
+
+            sweep().tick()
+
+            lookupDeadline.captured.hasPassedNow() shouldBe true
+            enrichmentDeadline.captured.hasPassedNow() shouldBe false
+            (-enrichmentDeadline.captured.elapsedNow()) shouldBe 12.minutes
         }
 }

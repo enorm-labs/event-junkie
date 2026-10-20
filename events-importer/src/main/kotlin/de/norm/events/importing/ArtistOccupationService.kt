@@ -9,6 +9,7 @@ import de.norm.events.wikimedia.WikimediaUnavailableException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import kotlin.time.TimeMark
 
 /**
  * Reads the Wikidata occupations of every EXACT artist with a Wikidata link, and stores one fact:
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service
  *
  * Runs on [ArtistLookupSweep]'s tick after the enrichment, which writes the link. One request per
  * row at the Wikimedia pace, [WikimediaProperties.occupationMaxPerRun] rows a tick. A failure is a
- * retry on the next tick; three in a row end this tick's pass.
+ * retry on the next tick; three in a row, or the tick's deadline, end this tick's pass.
  */
 @Service
 class ArtistOccupationService(
@@ -27,20 +28,28 @@ class ArtistOccupationService(
     private val logger = KotlinLogging.logger {}
 
     /** Reads the unread rows; [LookupPass.OFF] when the Wikimedia reads are off. */
-    suspend fun sweep(): LookupPass {
+    suspend fun sweep(deadline: TimeMark = LookupPass.noDeadline()): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
         val candidates = occupations.findUnreadOccupations(properties.occupationMaxPerRun).toList()
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else readAll(candidates))
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else readAll(candidates, deadline))
     }
 
     /** Reads [candidates] in order; the number stored. */
-    private suspend fun readAll(candidates: List<ArtistEntity>): Int {
+    private suspend fun readAll(
+        candidates: List<ArtistEntity>,
+        deadline: TimeMark
+    ): Int {
         var stored = 0
         var comedians = 0
         var consecutiveFailures = 0
         var switchedOff = false
-        for (artist in candidates) {
-            if (switchedOff || consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
+        for ((done, artist) in candidates.withIndex()) {
+            if (switchedOff ||
+                consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
+                LookupPass.budgetSpent(deadline, "Occupation read", done, candidates.size)
+            ) {
+                break
+            }
             try {
                 val comedian = read(artist)
                 switchedOff = comedian == null
