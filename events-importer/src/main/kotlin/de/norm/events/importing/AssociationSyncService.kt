@@ -394,7 +394,7 @@ class AssociationSyncService(
                         .flatMap { artist -> splitGuest(artist) }
                         .flatMap { artist -> splitOnEmoji(artist) }
                         .flatMap { artist -> splitBackToBack(artist) }
-                        .map { it.copy(name = stripArtistSuffix(it.name)) }
+                        .map { it.copy(name = stripArtistSuffix(it.name, fromTitle = it.titleDerived)) }
                         .filterNot { refusal(it.name) != null || (it.titleDerived && festival) }
             }
         val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::artistSlugFor).toSet() }

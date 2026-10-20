@@ -95,6 +95,28 @@ class MonsterRonsonsOverviewPageScraperTest {
     }
 
     @Test
+    fun `leaves the title's closing exclamation mark off the last host`() {
+        val html =
+            """
+            <div class="grid-container">
+              <div class="grid-item">
+                <a href="/posts/sing-with-fauxpas" class="w-inline-block"><img class="grid-img" src="https://example.test/p.jpg"/></a>
+                <h3 class="event-overview-hp-head">SING WITH FAUXPAS &amp; MC UNCUT GEM!</h3>
+                <div class="when-time-parent">
+                  <div class="when-child"><div class="text-block-9 link">Fri</div></div>
+                  <div class="when-child"><div class="date-text link">7 Aug</div></div>
+                  <div class="when-child last"><div class="text-block-8 link">20:00</div></div>
+                </div>
+              </div>
+            </div>
+            """.trimIndent()
+
+        val night = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.title shouldBe "SING WITH FAUXPAS & MC UNCUT GEM!"
+        night.artists.map { it.name } shouldBe listOf("FAUXPAS", "MC UNCUT GEM")
+    }
+
+    @Test
     fun `names no artist for a night titled by format rather than host`() {
         // "BOXHOPPING!" is the venue's roaming-box format; nobody is billed in the title.
         event("monster_ronsons:2026-08-10-boxhopping-7").artists.shouldBeEmpty()
