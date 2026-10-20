@@ -41,6 +41,8 @@ class ImageStorageConfig {
             // Path style, because Hetzner's endpoint does not serve virtual-host buckets; the default
             // `bucket.endpoint` fails as a DNS error rather than a configuration one.
             .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+            // The SDK's legacy retry default stays: four attempts, each retry costing 5 of 500 quota tokens.
+            // An outage empties the quota, so reads fail on attempt 1. That is wanted: images fail soft (see #3591).
             .build()
     }
 }
