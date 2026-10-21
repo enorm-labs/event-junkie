@@ -51,6 +51,19 @@
 # single entry went away in September. **A waiver written to expire is a waiver that expires**;
 # that is why the reason has to say what would end it.
 #
-# **imgproxy has now been the cause twice** — #1273 (grpc-go) and #3071 (the Go stdlib). It is a
-# third-party image on someone else's build cadence, so a third episode is the signal the note
-# above describes: the question becomes how imgproxy is built, not whether one finding is reachable.
+# **imgproxy has now been the cause three times** — #1273 (grpc-go), #3071 and #3703 (the Go
+# stdlib). The third episode asked the question the note above names, and on 2026-10-21 the answer
+# was to waive and wait: each episode ended with an upstream release within weeks, and the
+# alternatives (our own build of imgproxy, or ADR-020's option B) cost more than a dated waiver. A
+# fourth episode is where our own build on a current Go toolchain becomes the default.
+# ---------------------------------------------------------------------------------------------
+
+# 2026-10-21 — CVE-2026-111943, Go `crypto/x509`, in the imgproxy sidecar (#3703). Fixed in Go
+# 1.26.10 and 1.27.3. The fix cannot be taken: v4.0.18 is the newest imgproxy release and is built
+# with Go 1.27.2, and the `latest` tag carries the same Go. We cannot rebuild their image (ADR-020).
+# Reachability: imgproxy binds to localhost in the importer pod and only the importer calls it
+# (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage at the fixed endpoint in the
+# chart, for the originals it reads from our bucket. It fetches nothing from a venue.
+# Delete when an imgproxy release is built with Go 1.27.3 or later, by bumping the chart digest.
+# Revisit on 2026-11-18 if no such release exists by then.
+CVE-2026-111943
