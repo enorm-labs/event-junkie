@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Moda",
+        "address": "Weichselstraße 54",
+        "city": "Berlin",
+        "postalCode": "12045",
+        "district": "neukoelln",
+        "latitude": 52.485948,
+        "longitude": 13.434914,
+        "websiteUrl": "https://moda.gmbh/",
+        "instagramUrl": "https://www.instagram.com/moda.bar.berlin/",
+        "description": "A bar opened in 2024 beside its sister bar o.T. on Weichselstraße in Neukölln, with live music by Turkish singers, stand-up comedy, theatre, philosophy evenings and karaoke nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar, 2024 neben ihrer Schwesterbar o.T. an der Weichselstraße in Neukölln eröffnet, mit Livemusik türkischer Sänger:innen, Stand-up-Comedy, Theater, Philosophieabenden und Karaoke.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-21T08:36:50Z"
+    },
+    "sources": []
+}
