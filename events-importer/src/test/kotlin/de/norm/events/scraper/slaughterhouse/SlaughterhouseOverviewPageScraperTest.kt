@@ -63,6 +63,20 @@ class SlaughterhouseOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the co-bill after a night's name and keeps the title`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">13.11.2026<br><strong>Konzert+Party: Stoner&#8217;s Fall &#8211; Sheev + Ghostones + Caosonora</strong></p>
+            <p class="wp-block-paragraph">Beginn: 21:00</p>
+            </div>
+            """.trimIndent()
+        val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.title shouldBe "Stoner’s Fall – Sheev + Ghostones + Caosonora"
+        night.artists.map { it.name to it.role } shouldBe listOf("Sheev" to "HEADLINER", "Ghostones" to "HEADLINER", "Caosonora" to "HEADLINER")
+    }
+
+    @Test
     fun `yields nothing for a page without the post`() {
         SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
