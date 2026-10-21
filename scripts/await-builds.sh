@@ -3,7 +3,8 @@
 # await-builds.sh — pass only when every named build workflow passed on this commit of `main`.
 #
 # Usage:
-#   scripts/await-builds.sh <sha> <workflow-file>...   # e.g. "$GITHUB_SHA" build-backend.yml build-frontend.yml
+#   scripts/await-builds.sh <sha> <workflow-file>[:<job name>]...
+#   # e.g. "$GITHUB_SHA" 'build-backend.yml:Build & Test (backend)' 'build-frontend.yml:Build & Test (frontend)'
 #
 # Requires: gh, authenticated (GH_TOKEN in CI). Reads GITHUB_REPOSITORY, or asks gh for the current
 # repository. Reaches the GitHub API only, read-only: `actions: read` is the permission it needs.
@@ -16,6 +17,10 @@
 # no such run, so the latest finished run on an ancestor of <sha> decides instead. A red `main` then
 # stays unpublished through a docs-only commit on top of it. A cancelled run proves nothing and is
 # passed over. APPEAR_SECONDS (180), COMPLETE_SECONDS (1800) and POLL_SECONDS (15) tune the waits.
+#
+# A `:<job name>` after the file waits for that job of the commit's run, not the whole run. The
+# backend's informational OWASP job can outlast the wait, and it failed publishes whose gate job had
+# passed in minutes (#3690).
 
 set -euo pipefail
 
@@ -45,6 +50,22 @@ POLL_SECONDS="${POLL_SECONDS:-15}"
 run_for() {
     gh api "repos/$REPO/actions/workflows/$1/runs?branch=main&head_sha=$SHA&per_page=5" \
         --jq '.workflow_runs | sort_by(.created_at) | last | select(. != null) | "\(.id) \(.status) \(.conclusion // "-") \(.html_url)"'
+}
+
+# job_for <run id> <job name> — "<status> <conclusion>" of that job in the run. A job not started yet
+# reads as queued. A run that finished without it reads "completed no-such-job", so a misspelt name
+# fails at once rather than after the whole wait.
+job_for() {
+    local found
+    found="$(gh api "repos/$REPO/actions/runs/$1/jobs?per_page=100" \
+        --jq '.jobs[] | select(.name == "'"$2"'") | "\(.status) \(.conclusion // "-")"')"
+    if [[ -n "$found" ]]; then
+        echo "$found"
+    elif [[ "$(gh api "repos/$REPO/actions/runs/$1" --jq .status)" == "completed" ]]; then
+        echo "completed no-such-job"
+    else
+        echo "queued -"
+    fi
 }
 
 # is_ancestor <sha> — whether <sha> is SHA or behind it on the same line. An API error ends the
@@ -80,7 +101,10 @@ summary() {
 }
 
 failed=0
-for workflow in "$@"; do
+for argument in "$@"; do
+    workflow="${argument%%:*}"
+    job=""
+    [[ "$argument" == *:* ]] && job="${argument#*:}"
     started=$SECONDS
     run=""
     while [[ -z "$run" && $((SECONDS - started)) -lt $APPEAR_SECONDS ]]; do
@@ -108,18 +132,26 @@ for workflow in "$@"; do
     fi
 
     read -r id status conclusion url <<<"$run"
+    if [[ -n "$job" ]]; then
+        read -r status conclusion <<<"$(job_for "$id" "$job")"
+    fi
     while [[ "$status" != "completed" && $((SECONDS - started)) -lt $COMPLETE_SECONDS ]]; do
         sleep "$POLL_SECONDS"
-        read -r id status conclusion url <<<"$(run_for "$workflow")"
+        if [[ -n "$job" ]]; then
+            read -r status conclusion <<<"$(job_for "$id" "$job")"
+        else
+            read -r id status conclusion url <<<"$(run_for "$workflow")"
+        fi
     done
     waited=$((SECONDS - started))
+    what="$workflow${job:+ ($job)}"
     if [[ "$status" != "completed" ]]; then
-        summary "✗ $workflow: run $id still $status after ${waited}s ($url)"
+        summary "✗ $what: run $id still $status after ${waited}s ($url)"
         failed=1
     elif [[ "$conclusion" == "success" ]]; then
-        summary "✓ $workflow: passed on ${SHA:0:8} after ${waited}s ($url)"
+        summary "✓ $what: passed on ${SHA:0:8} after ${waited}s ($url)"
     else
-        summary "✗ $workflow: ended $conclusion on ${SHA:0:8} ($url)"
+        summary "✗ $what: ended $conclusion on ${SHA:0:8} ($url)"
         failed=1
     fi
 done

@@ -287,7 +287,8 @@ jobs:
         if: github.event_name == 'push' && steps.version.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/await-builds.sh "$GITHUB_SHA" build-backend.yml build-frontend.yml
+        # The gate jobs, not the whole runs: the backend's informational OWASP job can outlast the wait (#3690).
+        run: scripts/await-builds.sh "$GITHUB_SHA" 'build-backend.yml:Build & Test (backend)' 'build-frontend.yml:Build & Test (frontend)'
 
       # `sbom: true` (#443): buildx generates one per image and attaches it to the index, so a consumer can
       # ask "is this image affected by CVE-X" without scanning. Chosen over `actions/attest-sbom`, which

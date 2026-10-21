@@ -116,7 +116,8 @@ chart therefore pulls `repo:VERSION@sha256:…`: the bytes the run built and sig
 Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that asks), so a trigger added later cannot silently become a publishing one.
 
 **A push publishes only a commit both build workflows passed** (#2185). `scripts/await-builds.sh` runs after the image build and scan, and before the
-first push. It waits for `Build & Test Backend` and `Build & Test Frontend` on the commit. A workflow whose path filter skipped the push has no run on it.
+first push. It waits for the gate job of each build workflow on the commit, `Build & Test (backend)` and `Build & Test (frontend)`, not for the whole run.
+The backend's informational OWASP job can take an hour, and it failed two publishes on 2026-10-21 (#3690). A workflow whose path filter skipped the push has no run on it.
 Then the latest finished run on an earlier `main` commit decides, so a docs-only commit on top of a red `main` stays unpublished as well. A red build fails
 the publish at that step, and `publish-failure-issue.yml` opens its blocker issue. The wait overlaps the image build, so it rarely adds time. A release is
 gated by `cut-release.yml` instead, and a dispatch is the operator's call.
