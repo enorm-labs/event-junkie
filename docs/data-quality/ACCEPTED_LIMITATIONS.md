@@ -1037,6 +1037,15 @@ says so.
 | `ZKU`                  | `ARTISTS`          | a concert page bills its acts in free prose blocks, so only a `Line up` list or the title names them                                             | —     |
 | `ZKU`                  | `PRICE`            | most pages print no entry line, and a ticket button links an outside shop without a price                                                        | —     |
 | `ZKU`                  | `PROMOTERS`        | only some pages carry a `hosted by` credit                                                                                                       | —     |
+| `ZOSCH`                | `PER_EVENT_PAGE`   | the nights have no working page of their own, so each points at the start page                                                                   | —     |
+| `ZOSCH`                | `DESCRIPTION`      | a night carries a one-line style and no prose                                                                                                    | —     |
+| `ZOSCH`                | `PRICE`            | the page prints no price                                                                                                                         | —     |
+| `ZOSCH`                | `TICKET_URL`       | the bar sells no tickets; a night links only to the band's website                                                                               | —     |
+| `ZOSCH`                | `DOORS_TIME`       | the page prints one time per night                                                                                                               | —     |
+| `ZOSCH`                | `END_TIME`         | the page prints no end time                                                                                                                      | —     |
+| `ZOSCH`                | `PROMOTERS`        | the bar presents every night itself                                                                                                              | —     |
+| `ZOSCH`                | `SOLD_OUT`         | the page states no ticket status                                                                                                                 | —     |
+| `ZOSCH`                | `CANCELLATION`     | the page has no status, so a cancelled night can only disappear                                                                                  | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
 | `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |

@@ -561,6 +561,9 @@ enum class EventSource {
     /** ZK/U Berlin – an artist-run residency and project space in a converted Moabit railway depot, with talks, film evenings, concerts and club nights. */
     ZKU,
 
+    /** Zosch – a pub on Tucholskystraße in Mitte that calls itself a Veranstaltungskneipe, with a jazz band on most Wednesday and Thursday evenings. */
+    ZOSCH,
+
     /** Zur Klappe Berlin – a one-room club in a former public toilet at Yorckstraße and Mehringdamm in Kreuzberg. */
     ZUR_KLAPPE;
 

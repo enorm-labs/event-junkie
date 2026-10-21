@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   183 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   184 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   138 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -222,6 +222,7 @@ schema change.
 | Zita Club & Bar                  | https://zita-club.de/                                                    | Club         | Events-Manager iCal + event pages for tags, price         |
 | Zitadelle                        | https://citadel-music-festival.de/events                                 | Open Air     | Festival site; WordPress/EM; summer season only           |
 | ZK/U                             | https://www.zku-berlin.org/                                              | Other        | TYPO3 homepage calendar; markets, workshops dropped       |
+| Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
 180 importer classes cover 181 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
@@ -454,6 +455,7 @@ the upsert stores none.
 | Zita Club & Bar                  | No              | TranslatePress `/en/` path, event text untranslated          | —                  |                                                                                                                                    |
 | Zitadelle                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://citadel-music-festival.de/en/events/                                                                                       |
 | ZK/U                             | Yes             | `/de/` path, `hreflang`; many pages untranslated             | Translated         | https://www.zku-berlin.org/de/                                                                                                     |
+| Zosch                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Zur Klappe                       | No              | —                                                            | —                  |                                                                                                                                    |
 
 ## 🔨 Ready to implement
