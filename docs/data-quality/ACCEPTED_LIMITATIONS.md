@@ -400,6 +400,16 @@ says so.
 | `KAOS_BERLIN`          | `IMAGE`            | most events set no featured image                                                                                                                | —     |
 | `KAOS_BERLIN`          | `GENRE`            | the categories name formats, and the styles are only in the prose                                                                                | —     |
 | `KAOS_BERLIN`          | `ARTISTS`          | a party or a series night bills its name, and its acts are in the prose                                                                          | —     |
+| `KARAKAS`              | `PER_EVENT_PAGE`   | the shows have no page of their own, so each points at its programme page                                                                        | —     |
+| `KARAKAS`              | `ARTISTS`          | a show is billed by its title, and its comedians appear only in prose                                                                            | —     |
+| `KARAKAS`              | `PROMOTERS`        | the site names no producer beside a show's title                                                                                                 | —     |
+| `KARAKAS`              | `GENRE`            | the bar names no genre                                                                                                                           | —     |
+| `KARAKAS`              | `PRICE`            | the site prints no price; each show links to an outside ticket shop                                                                              | —     |
+| `KARAKAS`              | `DOORS_TIME`       | the calendar prints a start and an end, no doors time                                                                                            | —     |
+| `KARAKAS`              | `START_TIME`       | a tour card or a quiz announcement prints only the date; the time is on the outside ticket shop                                                  | —     |
+| `KARAKAS`              | `IMAGE`            | the calendar sets no image; only the tour cards and the quiz announcements carry one                                                             | —     |
+| `KARAKAS`              | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `KARAKAS`              | `CANCELLATION`     | the site has no status, so a cancelled show can only disappear                                                                                   | —     |
 | `KATER`                | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Karakas",
+        "address": "Kurfürstenstraße 9",
+        "city": "Berlin",
+        "postalCode": "10785",
+        "district": "tiergarten",
+        "latitude": 52.499327,
+        "longitude": 13.367452,
+        "websiteUrl": "https://karakasbar.com",
+        "description": "A cellar bar from the late 1980s under a rose ceiling, made by its first owner, a Mexican artist known as El Diablo, with stand-up comedy several nights a week, pub quizzes, karaoke and live music.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine Kellerbar aus den späten 1980ern unter einer Rosendecke, gestaltet von ihrem ersten Wirt, einem mexikanischen Künstler namens El Diablo, mit Stand-up-Comedy an mehreren Abenden pro Woche, Pub-Quiz, Karaoke und Livemusik.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Karakas",
+            "url": "https://karakasbar.com/",
+            "sourceType": "KARAKAS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

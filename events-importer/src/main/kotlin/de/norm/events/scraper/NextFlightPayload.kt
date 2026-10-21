@@ -51,8 +51,11 @@ private fun flightChunks(script: String): Sequence<String> =
         }
     }
 
-/** The index of the quote closing the literal that starts at [opening], or -1 when it is unclosed. */
-private fun endOfStringLiteral(
+/**
+ * The index of the quote closing the literal that starts at [opening], or -1 when it is unclosed.
+ * Shared with the GoDaddy calendar props (Karakas), another literal too long for a regex.
+ */
+internal fun endOfStringLiteral(
     script: String,
     opening: Int
 ): Int {

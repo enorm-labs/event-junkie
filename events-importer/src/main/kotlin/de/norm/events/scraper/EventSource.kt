@@ -225,6 +225,9 @@ enum class EventSource {
     /** KAOS Berlin – the Kreative Arbeitsgemeinschaft Oberschöneweide, a Spree-side warehouse of studios with concerts, open airs and improv comedy. */
     KAOS_BERLIN,
 
+    /** Karakas – a cellar bar on Kurfürstenstraße from the late 1980s, under a rose ceiling, with stand-up comedy several nights a week and pub quizzes. */
+    KARAKAS,
+
     /** Kater Berlin – the techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and weekend-spanning parties. */
     KATER,
 
