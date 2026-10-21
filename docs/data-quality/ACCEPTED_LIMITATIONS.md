@@ -987,6 +987,14 @@ says so.
 | `YAAM`                 | `TICKET_URL`       | `website` is empty on every event                                                                                                                | —     |
 | `YAAM`                 | `ARTISTS`          | a jam session names only its host series, and no act                                                                                             | —     |
 | `YAAM`                 | `PROMOTERS`        | every event names the venue itself as organizer                                                                                                  | —     |
+| `Z_BAR`                | `PER_EVENT_PAGE`   | the nights have no page of their own, so each points at the programme page                                                                       | —     |
+| `Z_BAR`                | `ARTISTS`          | a night is billed by its title, and its comedians appear only in prose                                                                           | —     |
+| `Z_BAR`                | `GENRE`            | the bar names no genre                                                                                                                           | —     |
+| `Z_BAR`                | `PRICE`            | the page prints no price; a night links to an outside ticket shop or says entry is free                                                          | —     |
+| `Z_BAR`                | `DOORS_TIME`       | the page prints one time per night                                                                                                               | —     |
+| `Z_BAR`                | `END_TIME`         | the page prints no end time                                                                                                                      | —     |
+| `Z_BAR`                | `SOLD_OUT`         | the page states no ticket status                                                                                                                 | —     |
+| `Z_BAR`                | `CANCELLATION`     | the page has no status, so a cancelled night can only disappear                                                                                  | —     |
 | `ZEBRANO_THEATER`      | `DOORS_TIME`       | the programme prints one time per evening                                                                                                        | —     |
 | `ZEBRANO_THEATER`      | `PRICE_PRESALE`    | the house sells one price, by e-mail reservation or through its ticket shop                                                                      | —     |
 | `ZEBRANO_THEATER`      | `GENRE`            | the programme names a category per evening, not a musical style                                                                                  | —     |

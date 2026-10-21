@@ -13265,6 +13265,67 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Z Bar
+# ————————————————————————————————————————————————————————————
+
+### --- Create Z Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Z Bar",
+    "address": "Bergstraße 2",
+    "city": "Berlin",
+    "postalCode": "10115",
+    "district": "mitte",
+    "latitude": 52.529586,
+    "longitude": 13.395860,
+    "websiteUrl": "https://zbarberlin.com/",
+    "description": "A cocktail bar in a former bakery on Bergstraße in Mitte, open since 1993 and run by a cultural association, with stand-up comedy in several languages, reading stages, a poetry slam and its own small cinema.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Cocktailbar in einer früheren Bäckerei an der Bergstraße in Mitte, seit 1993 geöffnet und von einem Kulturverein betrieben, mit Stand-up-Comedy in mehreren Sprachen, Lesebühnen, einem Poetry Slam und einem eigenen kleinen Kino.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "cinema"]
+}
+
+> {%
+    client.global.set("venue_id_z_bar", response.body.id);
+    client.test("Z Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Z Bar event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_z_bar}},
+    "name": "Z Bar",
+    "url": "https://zbarberlin.com/kulturprogramm/",
+    "sourceType": "Z_BAR",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Z Bar event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Z Bar import ---
+POST {{importer-host}}/api/admin/event-sources/z-bar/import
+Accept: application/json
+
+> {%
+    client.test("Z Bar import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Zebrano-Theater
 # ————————————————————————————————————————————————————————————
 
