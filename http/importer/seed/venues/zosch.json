@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Zosch",
+        "address": "Tucholskystraße 30",
+        "city": "Berlin",
+        "postalCode": "10117",
+        "district": "mitte",
+        "latitude": 52.526004,
+        "longitude": 13.393731,
+        "websiteUrl": "https://www.zosch-berlin.de/",
+        "description": "A pub on Tucholskystraße in Mitte that calls itself a Veranstaltungskneipe, with a jazz band on most Wednesday and Thursday evenings.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kneipe an der Tucholskystraße in Mitte, die sich Veranstaltungskneipe nennt, mit einer Jazzband an den meisten Mittwoch- und Donnerstagabenden.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"]
+    },
+    "sources": [
+        {
+            "name": "Zosch",
+            "url": "https://www.zosch-berlin.de/",
+            "sourceType": "ZOSCH",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}
