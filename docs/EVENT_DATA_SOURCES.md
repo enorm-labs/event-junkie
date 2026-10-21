@@ -630,7 +630,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Haus der Visionäre                | —                                                   | Bar          | No own site; not in the CdV listing either                | Site change / manual entry |
 | Ikii                              | https://ikiiberlin.com/                             | Bar          | GoDaddy splash page; no programme                         | Site change                |
 | Atemporal                         | —                                                   | Club         | No own site; RA and DICE only                             | Site change / manual entry |
-| Süss war gestern                  | —                                                   | Bar          | Facebook only; the `.de` domain is an unrelated blog      | Site change                |
+| Süss war gestern                  | —                                                   | Bar          | No own site; events and DJ line-ups on Instagram          | Site change / manual entry |
 | Wendel                            | http://www.nstp.de/nstp/frameset-wendel.htm         | Bar          | Café one-pager, no programme; HTTPS handshake fails       | Site change                |
 | Funkhaus Berlin                   | https://www.funkhaus-berlin.net/                    | Concert Hall | Blogger site; the events archive ends in 2019             | Site change / promoter     |
 | Kraftwerk Berlin                  | https://kraftwerkberlin.de/de/programm              | Concert Hall | Programme page empty between festivals (Atonal, CONTRA)   | Site change / promoter     |
