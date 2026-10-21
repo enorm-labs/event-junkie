@@ -33,6 +33,7 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | -------------------------------- | ----------------------------------------------- |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Building, running, quality checks, dependencies |
 | [WORKTREES.md](WORKTREES.md)     | Running two sessions or two agents in parallel  |
+| [LOCAL_LLM.md](LOCAL_LLM.md)     | A local model with Ollama, and in IntelliJ IDEA |
 
 ## The data
 
