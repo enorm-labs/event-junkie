@@ -24,6 +24,9 @@ import java.nio.charset.StandardCharsets
  * whose kind is `Konzert`, `Party` or `Konzert+Party`. A `Beginn:` or `Doors:` line, a `Tickets:` link and an
  * `Eintritt:` price follow, and a party adds a `: minimal : synth : wave :` style line and a `djs:` line.
  *
+ * A title's dash reads two ways. `Blutgott – Blutfest 2026` names the band and its festival, so the band is on the
+ * left. `Stoner’s Fall – Sheev + Ghostones + Caosonora` names the night and its `+` co-bill, so the acts are on the right.
+ *
  * No entry has its own page, so the source id is the date. A ticket link the editor pasted through Facebook's
  * `l.php` redirect is unwrapped to its target.
  */
@@ -127,8 +130,15 @@ class SlaughterhouseOverviewPageScraper {
                 .orEmpty()
         } else {
             ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = "HEADLINER", titleDerived = true)) }
-                ?: buildArtistsForEventType(title, subtitle = null, eventType = type)
+                ?: buildArtistsForEventType(billedSideOfDash(title), subtitle = null, eventType = type)
         }
+
+    private fun billedSideOfDash(title: String): String =
+        SERIES_DASH
+            .find(title)
+            ?.groupValues
+            ?.get(1)
+            ?.takeIf { CO_BILL.containsMatchIn(it) } ?: title
 
     private fun isFieldLine(line: String): Boolean = FIELD_LINE.containsMatchIn(line) || STYLE_LINE.matches(line) || DIVIDER.matches(line)
 
@@ -153,6 +163,8 @@ class SlaughterhouseOverviewPageScraper {
 
         /** `Capper: Rockin And Clubbin – …` names its band before the colon, and the rest is the night's name. */
         val ACT_PREFIX = Regex("""^([^:]+):\s+""")
+        val SERIES_DASH = Regex("""^.+?\s+[–—-]\s+(.+)$""")
+        val CO_BILL = Regex("""\s\+\s""")
         val DIVIDER = Regex("""^[–\-\s]+$""")
         val OWN_HTTP = Regex("""^http://(?=slaughterhouse-berlin\.de/)""")
     }
