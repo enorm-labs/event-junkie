@@ -4220,6 +4220,38 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Göttin der Weisheit — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Göttin der Weisheit venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Göttin der Weisheit",
+    "address": "Lenaustraße 5",
+    "city": "Berlin",
+    "postalCode": "12047",
+    "district": "neukoelln",
+    "latitude": 52.489962,
+    "longitude": 13.425536,
+    "websiteUrl": "https://goettinderweisheit.com/",
+    "instagramUrl": "https://www.instagram.com/goettinderweisheit/",
+    "description": "A cocktail and beer bar on Lenaustraße in Neukölln with a back room and stage, jam sessions, stand-up comedy and party nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Cocktail- und Bierbar an der Lenaustraße in Neukölln mit Hinterzimmer und Bühne, Jam-Sessions, Stand-up-Comedy und Partynächten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-21T09:39:18Z"
+}
+
+> {%
+    client.test("Göttin der Weisheit venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Gretchen
 # ————————————————————————————————————————————————————————————
 
@@ -5888,6 +5920,37 @@ Accept: application/json
 > {%
     client.test("Klunkerkranich import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Kollektiv Bar Kleinod — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Kollektiv Bar Kleinod venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kollektiv Bar Kleinod",
+    "address": "Niemetzstraße 24",
+    "city": "Berlin",
+    "postalCode": "12055",
+    "district": "neukoelln",
+    "latitude": 52.471628,
+    "longitude": 13.451170,
+    "instagramUrl": "https://www.instagram.com/kollektiv_bar_kleinod/",
+    "description": "A volunteer-run collective bar in Rixdorf, Neukölln, with stand-up comedy in its side room, readings, a monthly pub quiz, a Thursday dice league and German courses.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ehrenamtlich betriebene Kollektivbar in Rixdorf, Neukölln, mit Stand-up-Comedy im Nebenraum, Lesungen, monatlichem Kneipenquiz, Würfelliga am Donnerstag und Deutschkursen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-21T09:41:36Z"
+}
+
+> {%
+    client.test("Kollektiv Bar Kleinod venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -8253,6 +8316,37 @@ Content-Type: application/json
 
 > {%
     client.test("Musikbrauerei venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Mysliwska — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Mysliwska venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mysliwska",
+    "address": "Schlesische Straße 35",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.499443,
+    "longitude": 13.445431,
+    "instagramUrl": "https://www.instagram.com/mysliwska_berlin/",
+    "description": "A bar on Schlesische Straße in Kreuzberg, open since about 1990, with DJ nights, talks at the counter and English-language stand-up comedy.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar an der Schlesischen Straße in Kreuzberg, seit etwa 1990 geöffnet, mit DJ-Abenden, Tresengesprächen und englischsprachiger Stand-up-Comedy.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-21T09:28:03Z"
+}
+
+> {%
+    client.test("Mysliwska venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -12573,6 +12667,39 @@ Accept: application/json
 > {%
     client.test("Urban Spree import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
+# Valentin Stüberl — not imported
+# ————————————————————————————————————————————————————————————
+
+### --- Create Valentin Stüberl venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Valentin Stüberl",
+    "address": "Donaustraße 112",
+    "city": "Berlin",
+    "postalCode": "12043",
+    "district": "neukoelln",
+    "latitude": 52.483188,
+    "longitude": 13.434204,
+    "websiteUrl": "https://lagari-berlin.de/lagari-und-valentin-stueberl/valentin-stueberl/",
+    "instagramUrl": "https://www.instagram.com/valentinstueberl.berlin/",
+    "description": "A pub on Donaustraße in Neukölln, open every evening, with a stage in its back room for stand-up comedy several nights a week, a monthly karaoke Saturday, pub quizzes and live bands.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kneipe an der Donaustraße in Neukölln, jeden Abend geöffnet, mit einer Bühne im Hinterzimmer für Stand-up-Comedy an mehreren Abenden pro Woche, monatlichem Karaoke-Samstag, Pub-Quiz und Livebands.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "capacity": 80,
+    "reviewedAt": "2026-10-21T09:17:59Z"
+}
+
+> {%
+    client.test("Valentin Stüberl venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 

@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Mysliwska",
+        "address": "Schlesische Straße 35",
+        "city": "Berlin",
+        "postalCode": "10997",
+        "district": "kreuzberg",
+        "latitude": 52.499443,
+        "longitude": 13.445431,
+        "instagramUrl": "https://www.instagram.com/mysliwska_berlin/",
+        "description": "A bar on Schlesische Straße in Kreuzberg, open since about 1990, with DJ nights, talks at the counter and English-language stand-up comedy.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Bar an der Schlesischen Straße in Kreuzberg, seit etwa 1990 geöffnet, mit DJ-Abenden, Tresengesprächen und englischsprachiger Stand-up-Comedy.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-21T09:28:03Z"
+    },
+    "sources": []
+}

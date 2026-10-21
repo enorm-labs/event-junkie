@@ -1,0 +1,19 @@
+{
+    "venue": {
+        "name": "Kollektiv Bar Kleinod",
+        "address": "Niemetzstraße 24",
+        "city": "Berlin",
+        "postalCode": "12055",
+        "district": "neukoelln",
+        "latitude": 52.471628,
+        "longitude": 13.451170,
+        "instagramUrl": "https://www.instagram.com/kollektiv_bar_kleinod/",
+        "description": "A volunteer-run collective bar in Rixdorf, Neukölln, with stand-up comedy in its side room, readings, a monthly pub quiz, a Thursday dice league and German courses.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Ehrenamtlich betriebene Kollektivbar in Rixdorf, Neukölln, mit Stand-up-Comedy im Nebenraum, Lesungen, monatlichem Kneipenquiz, Würfelliga am Donnerstag und Deutschkursen.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-21T09:41:36Z"
+    },
+    "sources": []
+}
