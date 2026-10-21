@@ -534,6 +534,9 @@ enum class EventSource {
     /** YAAM – the Young African Art Market, a non-profit socio-cultural centre and beach on the Spree at Schillingbrücke. */
     YAAM,
 
+    /** Z Bar – a cocktail bar in a former Mitte bakery since 1993, with stand-up comedy several nights a week, reading stages and a small cinema. */
+    Z_BAR,
+
     /** Zebrano-Theater – a 65-seat stage by Ostkreuz in a former puppet theatre, run by a volunteer association for cabaret, chanson and readings. */
     ZEBRANO_THEATER,
 

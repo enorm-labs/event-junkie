@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   182 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   183 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -213,6 +213,7 @@ schema change.
 | Weltwirtschaft                   | https://weltwirtschaft.berlin/                                           | Bar          | TEC REST API; closure notices dropped                     |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
+| Z Bar                            | https://zbarberlin.com/kulturprogramm/                                   | Bar          | WordPress.com page typed by hand; date line per night     |
 | Zebrano-Theater                  | https://www.zebrano-theater.de/programm.html                             | Theater      | Hand-written month tables + event pages                   |
 | Zenner                           | https://zenner.berlin/programm                                           | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive          |
 | Zig Zag Hall                     | https://www.zigzag-jazzclub.berlin/programmneu                           | Concert Hall | Shares the Zig Zag list; `ZIG ZAG HALL:` items only       |
@@ -444,6 +445,7 @@ the upsert stores none.
 | Weltwirtschaft                   | Yes             | `/en/` site pages; events in German only                     | Not on the listing | https://weltwirtschaft.berlin/en/restaurant-2/                                                                                     |
 | Wild at Heart                    | No              | —                                                            | —                  |                                                                                                                                    |
 | YAAM                             | No              | GTranslate widget, machine translation only                  | —                  |                                                                                                                                    |
+| Z Bar                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Zebrano-Theater                  | No              | —                                                            | —                  |                                                                                                                                    |
 | Zenner                           | Yes             | Script switch, no URL                                        | Unknown            | https://zenner.berlin/programm                                                                                                     |
 | Zig Zag Hall                     | Yes             | One field: `(for English please scroll down)`                | One field          | [captured page](../events-importer/src/test/resources/scraper/zigzag/zigzag-hall-detail.html)                                      |
@@ -829,8 +831,8 @@ Matrix importer covers it. **arkaoda** closed (see above). Crunch Tapes still li
 stale. **Die Spirale**, a youth and culture centre in Wilmersdorf, is out of scope. Its own domain is dead, and its
 concerts appear only in promoter and aggregator listings.
 
-Two more bars host comedy several nights a week but have no working site to record: Valentin Stüberl and Z-Bar. The
-aggregator Comedy in English lists both. Its Events Calendar API gives a venue and an address for
+One more bar hosts comedy several nights a week but has no working site to record: Valentin Stüberl. The
+aggregator Comedy in English lists it. Its Events Calendar API gives a venue and an address for
 each show.
 
 Where candidates come from, and what is deliberately left out:
