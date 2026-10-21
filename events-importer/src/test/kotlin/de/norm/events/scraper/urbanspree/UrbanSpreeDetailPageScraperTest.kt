@@ -225,6 +225,54 @@ class UrbanSpreeDetailPageScraperTest {
             listOf("WISBORG" to "HEADLINER", "The Fright" to "SUPPORT")
     }
 
+    private fun detailPage(
+        title: String,
+        description: String = ""
+    ): Document =
+        Jsoup.parse(
+            """
+            <html><head><base href="https://www.urbanspree.com/"></head><body><div id="pseudo-card">
+              <div class="parent-name">Concerts</div>
+              <h1 class="title">$title</h1>
+              <div class="ct-dates"><ul>
+                <li class="list-group-item infos">Nov 4, 2026</li>
+                <li class="list-group-item infos">20:00</li>
+              </ul></div>
+            </div><div class="rte tv-content"><p>$description</p></div></body></html>
+            """.trimIndent(),
+            concertUrl
+        )
+
+    // #3704 — the three nights the issue names.
+    @Test
+    fun `scrape bills the act without the show name after it`() {
+        val event = scraper.scrape(detailPage("Winona Riders - El Sueño de Dominar el Planeta se Renueva"), concertUrl).shouldNotBeNull()
+
+        event.title shouldBe "Winona Riders - El Sueño de Dominar el Planeta se Renueva"
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Winona Riders" to "HEADLINER")
+    }
+
+    @Test
+    fun `scrape bills the headliner without its Live Berlin tail and keeps the featured acts`() {
+        val title = "DIAMONDSONYMYDICK LIVE BERLIN ft. Aachen demon, Psyke, Lil Jibo, 1dontlie"
+        val event = scraper.scrape(detailPage(title), concertUrl).shouldNotBeNull()
+
+        event.artists.first().name shouldBe "DIAMONDSONYMYDICK"
+        event.artists.drop(1).map { it.name } shouldContainExactly listOf("Aachen demon", "Psyke", "Lil Jibo", "1dontlie")
+    }
+
+    @Test
+    fun `scrape bills the DJ above each bio of a Klubnacht`() {
+        val description =
+            "◼︎ 23.10.26 ⏱ 00:00 — LATE One night of dub textures. ALBERT KRAFT — DJ SET Originally from Mexico and raised in " +
+                "Ecuador, Albert Kraft is a DJ and producer drawn to experimental sounds. MARIO MANARA (MNR) — DJ SET Mario Manara, " +
+                "also known as MNR, is an Italian DJ on Mojuba Records. ◼︎ KLUB — from 00:00 Albert Kraft Mario Manara (MNR)"
+        val event = scraper.scrape(detailPage("Urban Spree KLUBNACHT 23.10.2026", description), concertUrl).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Albert Kraft" to "DJ", "Mario Manara (MNR)" to "DJ")
+    }
+
     @Test
     fun `scrape returns null when the page carries no event hero`() {
         val html = """<html><body><main><h1>Page not found</h1></main></body></html>"""

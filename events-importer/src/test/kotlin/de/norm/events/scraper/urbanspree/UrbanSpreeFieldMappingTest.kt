@@ -103,6 +103,29 @@ class UrbanSpreeFieldMappingTest {
             "THIS ETERNAL DECAY ( Dark Wave IT) + NIGHT NAIL (Dark Wave US/DE)"
     }
 
+    // --- urbanSpreeActName (#3704) ---
+
+    @Test
+    fun `urbanSpreeActName cuts a show name after a dash`() {
+        urbanSpreeActName("Winona Riders - El Sueño de Dominar el Planeta se Renueva") shouldBe "Winona Riders"
+    }
+
+    @Test
+    fun `urbanSpreeActName cuts a Live Berlin tail`() {
+        urbanSpreeActName("DIAMONDSONYMYDICK LIVE BERLIN") shouldBe "DIAMONDSONYMYDICK"
+        urbanSpreeActName("Band X Live in Berlin") shouldBe "Band X"
+    }
+
+    @Test
+    fun `urbanSpreeActName keeps an act that only looks like a show billing`() {
+        // A shouted head, a short tail, a lowercase word over three letters, a place in the name, or nothing before the tail.
+        urbanSpreeActName("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
+        urbanSpreeActName("Sinem - Hatun") shouldBe "Sinem - Hatun"
+        urbanSpreeActName("Winona Riders - El Sueño with the Planeta") shouldBe "Winona Riders - El Sueño with the Planeta"
+        urbanSpreeActName("Isolation Berlin") shouldBe "Isolation Berlin"
+        urbanSpreeActName("Live Berlin") shouldBe "Live Berlin"
+    }
+
     // --- urbanSpreeStatus ---
 
     @Test
@@ -217,6 +240,29 @@ class UrbanSpreeFieldMappingTest {
     @Test
     fun `urbanSpreeDjSets reads each running-order entry once, in order`() {
         urbanSpreeDjSets(klubnacht) shouldContainExactly listOf("Albert Kraft", "Key Clef", "Daraio")
+    }
+
+    // #3704 — each DJ heads a bio, and nothing but the closing line separates the shouted names from the prose.
+    private val klubnachtWithBios =
+        "URBAN SPREE KLUBNACHT One night of deep house and dub textures. ALBERT KRAFT — DJ SET Originally from Mexico and " +
+            "raised in Ecuador, Albert Kraft is a DJ and producer drawn to experimental sounds. MARIO MANARA (MNR) — DJ SET " +
+            "Mario Manara, also known as MNR, is an Italian DJ with releases on Mojuba Records. ◼︎ 23.10.26 ⏱ 00:00 — LATE " +
+            "◼︎ KLUB — from 00:00 Albert Kraft Mario Manara (MNR) 📍 Urban Spree Revaler Str. 99, Berlin"
+
+    @Test
+    fun `urbanSpreeDjSets reads the shouted name above each bio, never the bio`() {
+        urbanSpreeDjSets(klubnachtWithBios) shouldContainExactly listOf("Albert Kraft", "Mario Manara (MNR)")
+    }
+
+    @Test
+    fun `urbanSpreeDjSets keeps a shouted name the description spells nowhere else`() {
+        urbanSpreeDjSets("A night of dub. KIM — DJ SET Kim plays records.") shouldContainExactly listOf("Kim")
+        urbanSpreeDjSets("A night of dub. KYRA — DJ SET A set of records.") shouldContainExactly listOf("KYRA")
+    }
+
+    @Test
+    fun `urbanSpreeDjSets reads no mixed-case sentence before a DJ set`() {
+        urbanSpreeDjSets("A long night. The resident closes it — DJ set until late.").shouldBeEmpty()
     }
 
     @Test
