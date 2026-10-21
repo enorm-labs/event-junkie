@@ -24,7 +24,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   182 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -754,6 +754,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF returns 403 to the importer's client; curl gets 200   | Request headers            |
 | Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music | A regular programme        |
 | Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
+| Moda                              | https://moda.gmbh/                                  | Bar          | No programme page; events announced on Instagram          | Site change / manual entry |
 
 ## 📣 Promoters
 
