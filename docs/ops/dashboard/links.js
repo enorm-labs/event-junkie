@@ -55,8 +55,8 @@ window.EJ_LINKS = {
         {
           "url": "https://github.com/enorm-labs/event-junkie/actions",
           "label": "github.com/enorm-labs/event-junkie/actions",
-          "what": "CI — 36 workflows",
-          "whatText": "CI — 36 workflows",
+          "what": "CI — 45 workflows",
+          "whatText": "CI — 45 workflows",
           "status": "",
           "statusText": ""
         },
