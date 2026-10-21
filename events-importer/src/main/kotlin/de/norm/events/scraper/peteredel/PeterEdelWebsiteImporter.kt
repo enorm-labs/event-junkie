@@ -42,7 +42,7 @@ val PETER_EDEL_LIMITATIONS =
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed"
+            "without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the title links straight to the ticket shop")

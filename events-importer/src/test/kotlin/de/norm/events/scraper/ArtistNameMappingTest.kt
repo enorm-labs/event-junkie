@@ -1412,6 +1412,17 @@ class ArtistNameMappingTest {
         }
     }
 
+    @Test
+    fun `a quoted show after a dash bills the act before it, and any other title bills none`() {
+        assertSoftly {
+            dashedQuotedShowActs("FIL - \"Lieder of the world\"") shouldBe listOf(ScrapedArtist("FIL", "HEADLINER", titleDerived = true))
+            dashedQuotedShowActs("SPIELHAGEN – \"HARMONY + ECSTASY\"").map { it.name } shouldBe listOf("SPIELHAGEN")
+            dashedQuotedShowActs("DZ - \"DEATHRAY\"").shouldBeEmpty()
+            dashedQuotedShowActs("Tanztee im PETER EDEL").shouldBeEmpty()
+            dashedQuotedShowActs("Talkshow \"Woher Wohin - Veronika Fischer persönlich\"").shouldBeEmpty()
+        }
+    }
+
     // --- buildArtistList ---
 
     @Test

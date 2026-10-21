@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -381,6 +382,51 @@ class PeterEdelOverviewPageScraperTest {
                 .readText()
         val parsed = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
         parsed.single { it.eventDate == date && it.title == title }.eventType shouldBe type
+    }
+
+    /** Two boxes cut from the live page of 2026-10-21: FIL's extra show of 2027-02-20, and the night that points to it. */
+    private fun extraShowEvents(): List<ScrapedEvent> {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/peteredel/peteredel-extra-show-2026-10.html")!!
+                .bufferedReader()
+                .readText()
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+    }
+
+    @Test
+    fun `bills the act before a quoted show and types the comedian's night`() {
+        val event = extraShowEvents().single { it.eventDate == LocalDate.of(2027, 2, 20) }
+        event.title shouldBe "FIL - \"Lieder of the world\""
+        event.artists shouldContainExactly listOf(ScrapedArtist("FIL", "HEADLINER", titleDerived = true))
+        // "Als erster Komiker der Welt": the blurb names no joke, but it names a comedian.
+        event.eventType shouldBe "COMEDY"
+    }
+
+    @Test
+    fun `keeps an extra-show line out of the subtitle`() {
+        val events = extraShowEvents()
+        events.map { it.subtitle } shouldContainExactly listOf(null, null)
+        events.map { it.statusNote } shouldContainExactly
+            listOf("Zusatzshow am 20.02.2027 - Tickets jetzt erhältlich!", "ZUSATZSHOW!")
+        events.map { it.status } shouldContainExactly listOf("SCHEDULED", "SCHEDULED")
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            // One quoted word can finish the act's own name, so it confirms no act.
+            "FIL - \"Lieder\"",
+            // A party's title names the night, quoted show or not.
+            "Tanztee im PETER EDEL - \"Die goldenen Zwanziger\""
+        ]
+    )
+    fun `bills no act where the quoted show is one word or the night is a party`(title: String) {
+        scraper
+            .scrape(grid("OKTOBER 2026", "FR | 16.10.", "<h3>$title</h3>"), baseUrl)
+            .single()
+            .artists
+            .shouldBeEmpty()
     }
 
     @ParameterizedTest
