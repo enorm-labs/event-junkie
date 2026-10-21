@@ -678,7 +678,7 @@ says so.
 | `PASTICHE`             | `CANCELLATION`     | the site has no status field, so a cancelled event can only disappear                                                                            | —     |
 | `PASTICHE`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `PETER_EDEL`           | `EVENT_TYPE`       | the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas                              | —     |
-| `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
+| `PETER_EDEL`           | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act needs a support billing or a quoted show         | —     |
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `PETER_EDEL`           | `PER_EVENT_PAGE`   | the title links straight to the ticket shop                                                                                                      | —     |
 | `PFEFFERBERG_HAUS_13`  | `START_TIME`       | some nights print only their doors, `Einlass: 19:00`                                                                                             | —     |

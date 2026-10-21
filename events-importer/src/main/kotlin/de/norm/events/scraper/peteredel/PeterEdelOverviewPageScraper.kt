@@ -6,12 +6,14 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dashedQuotedShowActs
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
@@ -80,7 +82,9 @@ import java.time.LocalTime
  * [inferUnmarkedTitleType] over title and subtitle. A support billing then makes a concert, and
  * last the blurb's own words decide ([DESCRIPTION_CUES], #2992). Else `OTHER` — never a default
  * `CONCERT`, which would also mint the event's name as a headliner. For the same reason [buildArtistList] takes an act
- * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. Seating
+ * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. The one other confirmation
+ * is a quoted show after a dash, `FIL - "Lieder of the world"`: the act is the part before it ([dashedQuotedShowActs]).
+ * A `ZUSATZSHOW!` line in the subtitle slot is a booking note and goes to [ScrapedEvent.statusNote]. Seating
  * badges ("Bestuhlt", "Freie Platzwahl") are dropped on purpose: seating is not part of the event model.
  *
  * @see PETER_EDEL_LIMITATIONS for what the venue does not publish.
@@ -211,7 +215,9 @@ class PeterEdelOverviewPageScraper {
             return null
         }
 
-        val subtitle = subtitleOf(main)
+        val subtitleLine = subtitleOf(main)
+        val extraShowNote = subtitleLine?.takeIf { EXTRA_SHOW_NOTE.containsMatchIn(it) }
+        val subtitle = subtitleLine.takeIf { extraShowNote == null }
         val support = extractSupportFromSubtitle(subtitle)
         if (billsChildrensShow(title, subtitle)) {
             logger.info { "Skipping Peter Edel children's show '$title': out of scope" }
@@ -221,11 +227,12 @@ class PeterEdelOverviewPageScraper {
         val (doors, start) = parseTimes(info)
         val note = priceNote(ticketColumn)
         val description = main.textAt(".text-block .text-container")
+        val eventType = typeOf(title, subtitle, hasSupport = support.isNotEmpty(), description = description)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
             description = description,
-            eventType = typeOf(title, subtitle, hasSupport = support.isNotEmpty(), description = description),
+            eventType = eventType,
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
@@ -242,6 +249,7 @@ class PeterEdelOverviewPageScraper {
             priceNote = note,
             soldOut = ticketColumn?.text()?.contains(SOLD_OUT_MARKER, ignoreCase = true) == true,
             status = resolveStatus(rawTitle, ticketColumn),
+            statusNote = extraShowNote,
             promoters =
                 listOfNotNull(
                     PROMOTER
@@ -250,7 +258,7 @@ class PeterEdelOverviewPageScraper {
                         ?.get(1)
                         ?.blankToNull()
                 ),
-            artists = buildArtistList(title, support)
+            artists = actsOf(title, support, eventType)
         )
     }
 
@@ -357,6 +365,12 @@ class PeterEdelOverviewPageScraper {
         /** The `[Abgesagt!]` marker on a cancelled event's title, stripped from the stored title. */
         private val CANCELLED_TITLE_MARKER = Regex("""\s*\[\s*Abgesagt!?\s*]""", RegexOption.IGNORE_CASE)
 
+        /**
+         * A subtitle line that announces an extra date (`ZUSATZSHOW!`, `Zusatzshow am 20.02.2027 - Tickets jetzt
+         * erhältlich!`). It is a note about the booking, so it goes to the status note and not to the subtitle.
+         */
+        private val EXTRA_SHOW_NOTE = Regex("""^zusatz(?:show|konzert|termin)\b""", RegexOption.IGNORE_CASE)
+
         /** The German sold-out word the ticket column shows instead of a price. */
         private const val SOLD_OUT_MARKER = "ausverkauft"
 
@@ -381,14 +395,14 @@ class PeterEdelOverviewPageScraper {
             )
 
         /**
-         * The blurb's words for a night the title leaves untyped, first match wins: jokes, then a
+         * The blurb's words for a night the title leaves untyped, first match wins: jokes or a comedian, then a
          * book or a podcast on stage, then a dancefloor, then a Varieté or musical revue, then albums,
          * concerts or an orchestra. The revue goes before the concert because its blurb may name a
          * concert too. `show` is no cue: comedians and singers alike play "live shows" (#3324).
          */
         private val DESCRIPTION_CUES: Map<Regex, String> =
             linkedMapOf(
-                Regex("""witze|comedy|kabarett|stand-?up""", RegexOption.IGNORE_CASE) to EventType.COMEDY.name,
+                Regex("""witze|komiker|comedy|kabarett|stand-?up""", RegexOption.IGNORE_CASE) to EventType.COMEDY.name,
                 Regex("""lesung|(?<!\p{L})buch(?:es|s)?(?!\p{L})|podcast""", RegexOption.IGNORE_CASE) to EventType.READING.name,
                 Regex("""party|dancefloor|tanzfläche""", RegexOption.IGNORE_CASE) to EventType.PARTY.name,
                 Regex("""varieté|variete|musical""", RegexOption.IGNORE_CASE) to EventType.SHOW.name,
@@ -406,5 +420,18 @@ class PeterEdelOverviewPageScraper {
                 ?: EventType.CONCERT.name.takeIf { hasSupport }
                 ?: description?.let { text -> DESCRIPTION_CUES.entries.firstOrNull { (cue, _) -> cue.containsMatchIn(text) }?.value }
                 ?: EventType.OTHER.name
+
+        /**
+         * The acts a support billing confirms, else the act before a quoted show (`FIL - "Lieder of the world"`).
+         * A party's title names the night, so a quoted show there confirms no act.
+         */
+        fun actsOf(
+            title: String,
+            support: List<String>,
+            eventType: String
+        ): List<ScrapedArtist> =
+            buildArtistList(title, support).ifEmpty {
+                dashedQuotedShowActs(title).takeUnless { eventType == EventType.PARTY.name }.orEmpty()
+            }
     }
 }

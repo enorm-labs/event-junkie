@@ -1735,6 +1735,12 @@ private val ANNIVERSARY_QUOTED_ACT =
 
 private val DASHED_QUOTED_SHOW_TAIL = Regex(DASHED_QUOTED_SHOW)
 
+/**
+ * The act a `<act> - "<show>"` title bills, or none when the title has no quoted show after a dash.
+ * The quoted show is the evidence that the head names a performer, for a venue that bills an act on no other signal.
+ */
+fun dashedQuotedShowActs(title: String): List<ScrapedArtist> = if (DASHED_QUOTED_SHOW_TAIL.containsMatchIn(title)) headlinersFromTitle(title) else emptyList()
+
 /** The German opening-act marker inside a title: `KARAT „45 Jahre …“ Vorprogramm: Dirk Michaelis`. */
 private val VORPROGRAMM_MARKER = Regex("""\s+vorprogramm\s*:\s*""", RegexOption.IGNORE_CASE)
 
