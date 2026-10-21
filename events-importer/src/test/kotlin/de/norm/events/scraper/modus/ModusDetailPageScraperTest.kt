@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -120,6 +121,25 @@ class ModusDetailPageScraperTest {
                 ScrapedArtist("Ludwig Benecke", "SUPPORT"),
                 ScrapedArtist("Anna Bomhard", "SUPPORT")
             )
+    }
+
+    @Test
+    fun `bills every act behind a series name and a mit, the first one included`() {
+        val justSigned = scrape("just-signed", "181126-JustSigned-mitYasola-VictoriaWest-PARA")
+
+        justSigned.eventType shouldBe EventType.CONCERT.name
+        justSigned.artists.map { it.name to it.role } shouldBe
+            listOf("Yasola" to "HEADLINER", "Victoria West" to "HEADLINER", "PARA" to "HEADLINER")
+    }
+
+    @Test
+    fun `reads a doors clock that a zero-width space splits`() {
+        // The page prints "Einlass … beginnt um 19:\u200B30 Uhr"; the invisible character hides the clock.
+        val justSigned = scrape("just-signed", "181126-JustSigned-mitYasola-VictoriaWest-PARA")
+
+        justSigned.doorsTime shouldBe LocalTime.of(19, 30)
+        justSigned.startTime shouldBe LocalTime.of(20, 0)
+        justSigned.description!! shouldNotContain "\u200B"
     }
 
     @Test

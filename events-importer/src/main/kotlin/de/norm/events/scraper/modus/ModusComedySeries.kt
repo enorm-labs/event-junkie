@@ -3,6 +3,7 @@ package de.norm.events.scraper.modus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.textLines
@@ -14,6 +15,22 @@ import org.jsoup.nodes.Element
  * leaves a bare "comedy" alone, because a band can be called that (#2398).
  */
 internal fun modusEventType(title: String): String = if (isModusComedySeries(title)) EventType.COMEDY.name else inferConcertVenueType(title)
+
+/**
+ * The acts a Modus page bills. The comedy series bills its lineup in [description] only, so a
+ * listing tile passes `null` and bills nobody. Any other title is read with the `<night> mit <acts>`
+ * frame unpacked: `Just Signed! | mit Yasola, Victoria West & PARA` bills the three acts, not the night.
+ */
+internal fun modusLineup(
+    title: String,
+    eventType: String,
+    description: Element?
+): List<ScrapedArtist> =
+    if (isModusComedySeries(title)) {
+        comedySeriesLineup(description)
+    } else {
+        buildArtistsForEventType(title, subtitle = null, eventType = eventType, unpackWithFrame = true)
+    }
 
 /** Whether [title] is the venue's own comedy series, whose name is never an act. */
 internal fun isModusComedySeries(title: String): Boolean = COMEDY_SERIES.containsMatchIn(title)

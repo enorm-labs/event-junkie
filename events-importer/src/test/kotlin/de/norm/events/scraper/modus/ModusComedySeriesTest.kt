@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -33,5 +34,30 @@ class ModusComedySeriesTest {
     @Test
     fun `bills nobody when the description opens with prose`() {
         lineup("<p>Feinster Standup aus der Hauptstadt. Till Reiners</p><p>Rebecca Pap</p>") shouldBe emptyList()
+    }
+
+    @Test
+    fun `bills a listing tile's night by the acts after its mit`() {
+        // A listing tile has no description, so this is the overview's path.
+        val title = "Just Signed! | mit Yasola, Victoria West & PARA"
+
+        modusLineup(title, modusEventType(title), description = null) shouldBe
+            listOf(
+                ScrapedArtist("Yasola", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Victoria West", "HEADLINER", titleDerived = true),
+                ScrapedArtist("PARA", "HEADLINER", titleDerived = true)
+            )
+    }
+
+    @Test
+    fun `bills an act's own backing as the act alone`() {
+        val title = "Lacrimosa mit Orchester"
+
+        modusLineup(title, modusEventType(title), description = null).map { it.name } shouldBe listOf("Lacrimosa")
+    }
+
+    @Test
+    fun `bills nobody on a comedy series tile`() {
+        modusLineup("Modus Comedy", modusEventType("Modus Comedy"), description = null) shouldBe emptyList()
     }
 }

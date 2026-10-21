@@ -4,7 +4,6 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
-import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
@@ -78,8 +77,7 @@ class ModusOverviewPageScraper {
             // cleanEventTitle strips — so the status is read from the raw title.
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
-            // The comedy series bills its lineup only on the detail page; its name is never an act.
-            artists = if (isModusComedySeries(title)) emptyList() else buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists = modusLineup(title, eventType, description = null)
         )
     }
 }

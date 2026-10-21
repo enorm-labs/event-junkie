@@ -4,7 +4,6 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
-import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
@@ -56,7 +55,7 @@ class ModusDetailPageScraper {
         val title = cleanEventTitle(rawTitle)
         val eventType = modusEventType(title)
         val dateLine = document.textAt(".event-view-right h2")
-        val description = document.textAt(".event-description")
+        val description = document.textAt(".event-description")?.replace(INVISIBLE_FORMAT_CHARS, "")
 
         return ScrapedEvent(
             title = title,
@@ -71,12 +70,7 @@ class ModusDetailPageScraper {
             ticketUrl = document.hrefAt(".all-events-button a"),
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
-            artists =
-                if (isModusComedySeries(title)) {
-                    comedySeriesLineup(document.selectFirst(".event-description"))
-                } else {
-                    buildArtistsForEventType(title, subtitle = null, eventType = eventType)
-                }
+            artists = modusLineup(title, eventType, document.selectFirst(".event-description"))
         )
     }
 
@@ -84,10 +78,26 @@ class ModusDetailPageScraper {
      * The doors time out of the description prose, the only place the venue states one. Both
      * spellings are accepted — the English `"Doors: 19:30"` and the German `"Einlass 19:30"` —
      * while a `"Start"` / `"Beginn"` line is ignored because the `h2` already carries the start in
-     * markup. `null` when the prose names no doors time, the common case.
+     * markup. A sentence that puts words between the label and the clock is read too:
+     * `"Der Einlass zu den Konzerten beginnt um 19:30 Uhr"`. `null` when the prose names no doors
+     * time, the common case.
      */
-    private fun parseDoorsFromDescription(description: String?): LocalTime? = labelledClock(description, DOORS_LABELS)
+    private fun parseDoorsFromDescription(description: String?): LocalTime? =
+        labelledClock(description, DOORS_LABELS)
+            ?: description
+                ?.let { DOORS_SENTENCE.find(it) }
+                ?.destructured
+                ?.let { (hour, minute) -> parseTime("$hour:$minute") }
 }
 
 /** The separator the detail `h2` puts between the date and the start time (`"24.09.2026 - 20:00"`). */
 private const val DATE_TIME_SEPARATOR = " - "
+
+/**
+ * Invisible characters the venue's editor leaves in the prose: zero-width space, non-joiner and joiner,
+ * word joiner, byte-order mark, soft hyphen. One inside the doors clock (`19:` U+200B `30`) hides it.
+ */
+private val INVISIBLE_FORMAT_CHARS = Regex("""[\u200B-\u200D\u2060\uFEFF\u00AD]""")
+
+/** `Einlass`, a few words within the sentence, then `um` or `ab` and the clock. */
+private val DOORS_SENTENCE = Regex("""(?<!\p{L})einlass(?!\p{L})[^.!?\n]{0,40}?\s(?:um|ab)\s+(\d{1,2})[:.](\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
