@@ -91,9 +91,10 @@ class UrbanSpreeDetailPageScraper {
                 else -> heroStart
             }
         // `DJ JONAS POPPE (OUM SHATT)`: a DJ billed with the band he sings in, which is an affiliation, not his name.
+        // A show name after the act is no part of it either ([urbanSpreeActName]).
         val titleArtists =
             buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
-                .map(::withoutDjAffiliation)
+                .map { withoutDjAffiliation(it.copy(name = urbanSpreeActName(it.name))) }
         val artists = titleArtists.ifEmpty { urbanSpreeClubNightLineUp(title, description) }
         // A Concerts night whose running order bills DJ sets is a club night.
         val billsDjSets = titleArtists.isEmpty() && artists.any { it.role == DJ_ROLE }

@@ -135,6 +135,29 @@ internal fun cleanUrbanSpreeTitle(title: String): String {
     return cleanEventTitle(current).ifBlank { title.trim() }
 }
 
+/** A `Live Berlin` or `Live in Berlin` billing after the act: `DIAMONDSONYMYDICK LIVE BERLIN` (#3704). */
+private val LIVE_IN_BERLIN_TAIL = Regex("""(?<=\S)\s+live\s+(?:in\s+)?berlin$""", RegexOption.IGNORE_CASE)
+
+/** The longest lowercase word a [SHOW_NAME_TAIL] keeps without ceasing to be a show name. */
+private const val SHOW_NAME_SMALL_WORD_LENGTH = 3
+
+/**
+ * A show name after a spaced dash: three words or more, the first capitalised, and every other
+ * word capitalised or a lowercase word of [SHOW_NAME_SMALL_WORD_LENGTH] letters at most. The
+ * short words cover the articles and particles of any language (`El Sueño de Dominar el Planeta se Renueva`).
+ */
+private val SHOW_NAME_TAIL = Regex("""^(.*\p{Ll}.*?)\s+[-–—]\s+(\p{Lu}\S*(?:\s+(?:\p{Lu}\S*|\p{Ll}{1,$SHOW_NAME_SMALL_WORD_LENGTH})){2,})$""")
+
+/**
+ * The act a title-billed [name] names, without the show the venue writes after it (#3704):
+ * `Winona Riders - El Sueño de Dominar el Planeta se Renueva` and `DIAMONDSONYMYDICK LIVE BERLIN`.
+ * The head before a dash must carry a lowercase letter, so a shouted name with a dash (`DZ - DEATHRAY`) stays.
+ */
+internal fun urbanSpreeActName(name: String): String {
+    val withoutShow = SHOW_NAME_TAIL.matchEntire(name)?.groupValues?.get(1) ?: name
+    return withoutShow.replace(LIVE_IN_BERLIN_TAIL, "")
+}
+
 /**
  * The start both `data-dateStart` and the detail hero give a late club night (#1904). It is a
  * placeholder there, not a time, unless the prose says the same ("Doors open at 23:59").
@@ -200,24 +223,6 @@ internal fun urbanSpreeDoorsAndStart(
         }
     return if (start != null && doors == heroStart && heroStart < start) heroStart to start else null
 }
-
-/**
- * One `<name> — DJ set` entry of a club night's running order. The venue's paragraph breaks fall
- * inside entries, so the flat text is read: a name follows a clock time or the previous entry's
- * `DJ set`, which a lookahead leaves for the next match.
- */
-private val DJ_SET_ENTRY = Regex("""(?:\d{1,2}:\d{2}|DJ set)\s+([^\s\d—–→][^\d—–→]*?)\s+[—–]\s+(?=DJ set\b)""", RegexOption.IGNORE_CASE)
-
-/** The DJs a description bills as `<name> — DJ set`, in order, each once. */
-internal fun urbanSpreeDjSets(description: String?): List<String> =
-    description
-        ?.let { text ->
-            DJ_SET_ENTRY
-                .findAll(text)
-                .map { it.groupValues[1].trim() }
-                .distinct()
-                .toList()
-        }.orEmpty()
 
 /**
  * A description sentence that opens with `Featuring` and lists the night's acts (#2350): `…
