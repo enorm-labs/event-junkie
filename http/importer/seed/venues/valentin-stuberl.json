@@ -1,0 +1,21 @@
+{
+    "venue": {
+        "name": "Valentin Stüberl",
+        "address": "Donaustraße 112",
+        "city": "Berlin",
+        "postalCode": "12043",
+        "district": "neukoelln",
+        "latitude": 52.483188,
+        "longitude": 13.434204,
+        "websiteUrl": "https://lagari-berlin.de/lagari-und-valentin-stueberl/valentin-stueberl/",
+        "instagramUrl": "https://www.instagram.com/valentinstueberl.berlin/",
+        "description": "A pub on Donaustraße in Neukölln, open every evening, with a stage in its back room for stand-up comedy several nights a week, a monthly karaoke Saturday, pub quizzes and live bands.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Kneipe an der Donaustraße in Neukölln, jeden Abend geöffnet, mit einer Bühne im Hinterzimmer für Stand-up-Comedy an mehreren Abenden pro Woche, monatlichem Karaoke-Samstag, Pub-Quiz und Livebands.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "capacity": 80,
+        "reviewedAt": "2026-10-21T09:17:59Z"
+    },
+    "sources": []
+}

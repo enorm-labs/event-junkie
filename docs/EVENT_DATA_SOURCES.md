@@ -24,7 +24,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   183 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   138 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -757,6 +757,10 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music | A regular programme        |
 | Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
 | Moda                              | https://moda.gmbh/                                  | Bar          | No programme page; events announced on Instagram          | Site change / manual entry |
+| Valentin Stüberl                  | https://lagari-berlin.de/                           | Bar          | Events page lists one undated weekly show; Instagram only | Site change / manual entry |
+| Mysliwska                         | —                                                   | Bar          | Venue row only: few Instagram posts, comedy on Eventbrite | Site change / manual entry |
+| Göttin der Weisheit               | https://goettinderweisheit.com/                     | Bar          | Shopify site with reservations only; events on Instagram  | Site change / manual entry |
+| Kollektiv Bar Kleinod             | —                                                   | Bar          | No own site; monthly programme on Instagram               | Site change / manual entry |
 
 ## 📣 Promoters
 
@@ -830,10 +834,6 @@ Three venues the sweep found are deliberately left out. **Narva Lounge** is the 
 Matrix importer covers it. **arkaoda** closed (see above). Crunch Tapes still lists shows there, but the listing is
 stale. **Die Spirale**, a youth and culture centre in Wilmersdorf, is out of scope. Its own domain is dead, and its
 concerts appear only in promoter and aggregator listings.
-
-One more bar hosts comedy several nights a week but has no working site to record: Valentin Stüberl. The
-aggregator Comedy in English lists it. Its Events Calendar API gives a venue and an address for
-each show.
 
 Where candidates come from, and what is deliberately left out:
 

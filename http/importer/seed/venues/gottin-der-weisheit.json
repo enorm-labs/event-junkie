@@ -1,0 +1,20 @@
+{
+    "venue": {
+        "name": "Göttin der Weisheit",
+        "address": "Lenaustraße 5",
+        "city": "Berlin",
+        "postalCode": "12047",
+        "district": "neukoelln",
+        "latitude": 52.489962,
+        "longitude": 13.425536,
+        "websiteUrl": "https://goettinderweisheit.com/",
+        "instagramUrl": "https://www.instagram.com/goettinderweisheit/",
+        "description": "A cocktail and beer bar on Lenaustraße in Neukölln with a back room and stage, jam sessions, stand-up comedy and party nights.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Cocktail- und Bierbar an der Lenaustraße in Neukölln mit Hinterzimmer und Bühne, Jam-Sessions, Stand-up-Comedy und Partynächten.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar"],
+        "reviewedAt": "2026-10-21T09:39:18Z"
+    },
+    "sources": []
+}
