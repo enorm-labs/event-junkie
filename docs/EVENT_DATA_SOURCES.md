@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   181 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   182 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
@@ -112,6 +112,7 @@ schema change.
 | Kallasch&                        | https://kallasch.berlin/programm/                                        | Bar          | MEC iCal feed; RRULE/RDATE series expanded                |
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/              | Concert Hall | Shares BERGHAIN importer                                  |
 | KAOS Berlin                      | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | TEC REST API; title markers type concerts                 |
+| Karakas                          | https://karakasbar.com/                                                  | Bar          | GoDaddy; calendar JSON in the page script; quiz page      |
 | Kater                            | https://www.katerclub.de/                                                | Techno Club  | Homepage programme; ___ floor rules mark lineups          |
 | Kesselhaus                       | https://www.kesselhaus.net/de/calendar                                   | Concert Hall | Angular transfer state; ?part= month windows              |
 | KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                              | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
@@ -342,6 +343,7 @@ the upsert stores none.
 | Kallasch&                        | No              | —                                                            | —                  |                                                                                                                                    |
 | Kantine am Berghain              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/kantine-am-berghain/                                                                        |
 | KAOS Berlin                      | No              | —                                                            | —                  |                                                                                                                                    |
+| Karakas                          | No              | —                                                            | —                  |                                                                                                                                    |
 | Kater                            | No              | —                                                            | —                  |                                                                                                                                    |
 | Kesselhaus                       | Yes             | `/en/` path                                                  | Not on the listing | https://www.kesselhaus.net/en/calendar                                                                                             |
 | KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
@@ -470,13 +472,12 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name             | URL                                                | Type  | Priority | Comment                                                                                                                       |
-| ---------------- | -------------------------------------------------- | ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose                                                                          |
-| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly                                                                        |
-| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops                                                                             |
-| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks                                                                              |
-| KARA KAS Bar     | https://karakasbar.com/comedy-shows                | Bar   | Medium   | GoDaddy; all events are one JSON blob in the published `script.js`, whose URL changes on every publish; 16 dated comedy shows |
+| Name             | URL                                                | Type  | Priority | Comment                                                |
+| ---------------- | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
+| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
+| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
+| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
+| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,

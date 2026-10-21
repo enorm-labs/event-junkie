@@ -5551,6 +5551,67 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Karakas
+# ————————————————————————————————————————————————————————————
+
+### --- Create Karakas venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Karakas",
+    "address": "Kurfürstenstraße 9",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "tiergarten",
+    "latitude": 52.499327,
+    "longitude": 13.367452,
+    "websiteUrl": "https://karakasbar.com",
+    "description": "A cellar bar from the late 1980s under a rose ceiling, made by its first owner, a Mexican artist known as El Diablo, with stand-up comedy several nights a week, pub quizzes, karaoke and live music.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Kellerbar aus den späten 1980ern unter einer Rosendecke, gestaltet von ihrem ersten Wirt, einem mexikanischen Künstler namens El Diablo, mit Stand-up-Comedy an mehreren Abenden pro Woche, Pub-Quiz, Karaoke und Livemusik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"]
+}
+
+> {%
+    client.global.set("venue_id_karakas", response.body.id);
+    client.test("Karakas venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Karakas event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_karakas}},
+    "name": "Karakas",
+    "url": "https://karakasbar.com/",
+    "sourceType": "KARAKAS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Karakas event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Karakas import ---
+POST {{importer-host}}/api/admin/event-sources/karakas/import
+Accept: application/json
+
+> {%
+    client.test("Karakas import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Kater
 # ————————————————————————————————————————————————————————————
 
