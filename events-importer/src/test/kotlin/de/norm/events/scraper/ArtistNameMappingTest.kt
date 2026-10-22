@@ -1061,6 +1061,12 @@ class ArtistNameMappingTest {
     // --- stripArtistSuffix ---
 
     @Test
+    fun `stripArtistSuffix drops a soft hyphen from any act`() {
+        stripArtistSuffix("Jean-\u00ADLuc Guionnet") shouldBe "Jean-Luc Guionnet"
+        stripArtistSuffix("Kraft\u00ADwerk live", fromTitle = true) shouldBe "Kraftwerk"
+    }
+
+    @Test
     fun `stripArtistSuffix takes a title's closing mark off a title-derived act`() {
         stripArtistSuffix("MC UNCUT GEM!", fromTitle = true) shouldBe "MC UNCUT GEM"
         stripArtistSuffix("ARTig?", fromTitle = true) shouldBe "ARTig"

@@ -318,7 +318,15 @@ fun stripArtistSuffix(
     // The separator comes off first as well as last: `Tweaken – live –` hides its format word
     // behind a dash (#301).
     // A footnote star (`Sinkane live*`) comes off first, or it hides the `live` in front of it (#1845).
-    var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, "").replace(FOOTNOTE_STAR, ""))
+    // A soft hyphen is invisible on the page but not in a stored name: PAS bills `Jean-\u00ADLuc` (#3752).
+    var stripped =
+        stripTrailingSeparator(
+            name
+                .replace(SOFT_HYPHEN, "")
+                .trim()
+                .replace(AFFILIATION_OPENER_INSIDE, "")
+                .replace(FOOTNOTE_STAR, "")
+        )
     repeat(MAX_SUFFIX_PASSES) {
         val suffixless = stripped.replace(ARTIST_SUFFIX_PATTERN, "").replace(BACKING_BAND_TAIL, "").trim()
         val next = if (fromTitle) stripTitleMark(suffixless) else suffixless
@@ -328,6 +336,8 @@ fun stripArtistSuffix(
     val untailed = stripPlaysTail(stripWorkTitle(stripPlaceTail(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
     return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(untailed)))
 }
+
+private const val SOFT_HYPHEN = "\u00AD"
 
 /** A `!` or `?` glued to the last word, which a title closes on: `SING WITH FAUXPAS & MC UNCUT GEM!` (#3642). */
 private val TITLE_MARK = Regex("""(?<=[\p{L}\p{N}])[!?]+$""")
