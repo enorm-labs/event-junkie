@@ -84,13 +84,14 @@ is_ancestor() {
 ancestor_run() {
     local run_sha conclusion url
     # fd 3, not stdin: `gh api` inside the loop reads stdin and would swallow the remaining rows.
+    # No `status=completed`: beside `branch=` the API answers with no runs at all (#3769).
     while read -r -u 3 run_sha conclusion url; do
         [[ "$conclusion" == "success" || "$conclusion" == "failure" ]] || continue
         if is_ancestor "$run_sha"; then
             echo "$run_sha $conclusion $url"
             return
         fi
-    done 3< <(gh api "repos/$REPO/actions/workflows/$1/runs?branch=main&status=completed&per_page=30" \
+    done 3< <(gh api "repos/$REPO/actions/workflows/$1/runs?branch=main&per_page=30" \
         --jq '.workflow_runs[] | select(.head_sha != "'"$SHA"'") | "\(.head_sha) \(.conclusion) \(.html_url)"')
 }
 
