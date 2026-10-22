@@ -157,7 +157,9 @@ private val ACRONYMS: Set<String> =
         // Schokoladen's `D'CO` and `LVFT`. Not a correction: Soulcat's dub DJ `DCO` is another act.
         "HMOT",
         "D'CO",
-        "LVFT"
+        "LVFT",
+        // The songwriter and comedian FIL (Philip Tägert), billed `FIL - MIT NEUER SHOW`; no other act uses the token.
+        "FIL"
     )
 
 /**

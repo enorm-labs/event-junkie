@@ -171,6 +171,12 @@ class ArtistNormalizerTest {
         }
     }
 
+    @Test
+    fun `keeps FIL in capitals`() {
+        canonicalArtistName("FIL") shouldBe "FIL"
+        artistSlugFor("FIL") shouldBe "fil"
+    }
+
     // Weekend billed `HB&P Soundsystem` (#3480) and The Door `ABF & Friends` (#3501), stored as `Hb&p …` and `Abf …` (#3507).
     @Test
     fun `keeps the initialisms of a billing that is not shouted`() {

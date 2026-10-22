@@ -200,7 +200,7 @@ schema change.
 | Tresor                           | https://tresorberlin.com/club/events/                                    | Techno Club  | WordPress; floor-grouped lineup; detail pages             |
 | Uber Arena                       | https://www.uber-arena.de/events/all                                     | Arena        | AEG CMS; list + detail; no sport imported                 |
 | Uber Eats Music Hall             | https://www.uber-eats-music-hall.de/events/all                           | Concert Hall | Shares the Uber Arena parsers; month names, no cats       |
-| ufaFabrik                        | https://ufafabrik.de/spielplan.html                                      | Theater      | Drupal month pages; this month + next; no kids' shows     |
+| ufaFabrik                        | https://ufafabrik.de/spielplan.html                                      | Theater      | Drupal month pages; this month + next two; no kids' shows |
 | UFO im Velodrom                  | https://www.velomax.de/events                                            | Concert Hall | Shares the VELOMAX listing                                |
 | Urania                           | https://www.urania.de/kalender/                                          | Concert Hall | One house; no source attributes an event to a hall        |
 | Urban Spree                      | https://www.urbanspree.com/program/                                      | Club         | MODX; listing descending + paginated; walks pages         |

@@ -2,11 +2,13 @@ package de.norm.events.scraper.mehringhof
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.performersBilledWith
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -25,7 +27,7 @@ import java.time.LocalTime
  * without a link takes the year of the page's other rows.
  *
  * A title reads `<Act> mit <Programme>`, `<Act>: <Programme>` or a series with guests (`FUN FACTS
- * mit …`); a performer's name before ` mit ` is billed.
+ * mit …`); a performer's name before ` mit ` is billed, and so are the performers named after it.
  */
 class MehringhofProgrammPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -85,9 +87,17 @@ class MehringhofProgrammPageScraper {
             sourceId = "${EventSource.MEHRINGHOF.sourceIdPrefix}${product?.groupValues?.get(1) ?: "$date-${start?.hour}"}",
             ticketUrl = ticketUrl,
             soldOut = SOLD_OUT_RED in cells[2].attr("style").replace(" ", ""),
-            artists = buildArtistsForEventType(title.replaceFirst(" mit ", " – "), null, EventType.COMEDY.name)
+            artists = billedActs(title)
         )
     }
+
+    /**
+     * The act before ` mit `, read as a solo bill, then the performers named after it: `FUN FACTS mit
+     * Victoria Reichelt & Maik Martschinkowsky` bills the guests, `Helene Bockhorst mit Lebefrau` the act.
+     */
+    private fun billedActs(title: String): List<ScrapedArtist> =
+        (buildArtistsForEventType(title.replaceFirst(" mit ", " – "), null, EventType.COMEDY.name) + performersBilledWith(title))
+            .distinctBy { it.name }
 
     private companion object {
         const val CELLS = 3

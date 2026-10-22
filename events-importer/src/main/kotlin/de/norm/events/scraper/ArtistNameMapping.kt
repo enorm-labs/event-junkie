@@ -1986,6 +1986,26 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
         ?.takeIf { performer -> performer.any { it.isLowerCase() } && !isNonArtistName(performer) }
         ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
         .orEmpty()
+        .ifEmpty { knownSoloPerformer(title) }
+
+/**
+ * One-word stage names, lower-cased. [SOLO_BILL] needs two words, because one word before a dash
+ * is far more often a production (`Hamlet – …`) than a performer.
+ */
+private val KNOWN_SOLO_PERFORMERS: Set<String> = setOf("fil")
+
+/** `<Name> – `, `<Name>: ` or `<Name>'s ` at the start of a title; the possessive is Peter Edel's `FIL'S TESTSHOWS`. */
+private val SOLO_PERFORMER_HEAD = Regex("""^([\p{L}]+)(?:['’]s\b|\s*(?:[-–—]|:)\s)""", RegexOption.IGNORE_CASE)
+
+/**
+ * The [KNOWN_SOLO_PERFORMERS] act a show title opens with: Mehringhof's `Fil mit Lieder of the
+ * World`, Peter Edel's `FIL - MIT NEUER SHOW`. A bare title that is only the name bills it too.
+ */
+fun knownSoloPerformer(title: String): List<ScrapedArtist> {
+    val text = stripTitleStatusMarker(title).trim()
+    val name = SOLO_PERFORMER_HEAD.find(text)?.groupValues?.get(1) ?: text
+    return if (name.lowercase() in KNOWN_SOLO_PERFORMERS) listOf(ScrapedArtist(name = name, role = "HEADLINER", titleDerived = true)) else emptyList()
+}
 
 /** Two to four capitalised words with lower case in them: `Till Reiners`, `Hans-Joachim Heist`; not `Lebefrau`, not `LIVE`. */
 private val PERSON_NAME = Regex("""^\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3}$""")

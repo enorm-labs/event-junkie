@@ -230,9 +230,10 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
-    fun `takes artists only where the venue bills a support act`() {
+    fun `takes artists only where the venue bills a support act, or the title names FIL`() {
         val withArtists = events.filter { it.artists.isNotEmpty() }
-        withArtists.map { it.title } shouldContainExactly listOf("Poliça - Dreams Go Tour 2026", "Buffalo Tom")
+        withArtists.map { it.title } shouldContainExactly
+            listOf("Poliça - Dreams Go Tour 2026", "Buffalo Tom", "FIL'S TESTSHOWS", "FIL'S TESTSHOWS", "FIL", "FIL")
         withArtists[1].artists shouldContainExactly
             listOf(
                 ScrapedArtist("Buffalo Tom", "HEADLINER", titleDerived = true),
@@ -403,6 +404,15 @@ class PeterEdelOverviewPageScraperTest {
         event.eventType shouldBe "COMEDY"
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["FIL - MIT NEUER SHOW", "FIL'S TESTSHOWS"])
+    fun `bills FIL off a title that only names him`(title: String) {
+        scraper
+            .scrape(grid("DEZEMBER 2026", "SA | 12.12.", "<h3>$title</h3>"), baseUrl)
+            .single()
+            .artists shouldContainExactly listOf(ScrapedArtist("FIL", "HEADLINER", titleDerived = true))
+    }
+
     @Test
     fun `keeps an extra-show line out of the subtitle`() {
         val events = extraShowEvents()
@@ -416,7 +426,7 @@ class PeterEdelOverviewPageScraperTest {
     @ValueSource(
         strings = [
             // One quoted word can finish the act's own name, so it confirms no act.
-            "FIL - \"Lieder\"",
+            "KOSMOS - \"Lieder\"",
             // A party's title names the night, quoted show or not.
             "Tanztee im PETER EDEL - \"Die goldenen Zwanziger\""
         ]

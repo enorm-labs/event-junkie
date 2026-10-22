@@ -1,6 +1,5 @@
 package de.norm.events.scraper.mehringhof
 
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -46,12 +45,13 @@ class MehringhofProgrammPageScraperTest {
     }
 
     @Test
-    fun `reads plenty of tickets as not sold out and bills no act for a series`() {
+    fun `reads plenty of tickets as not sold out and bills a series' guest, not the series`() {
         val flash = scrape("mehringhof-programm.html").first { it.eventDate == LocalDate.of(2026, 10, 3) }
         val funFacts = scrape("mehringhof-programm-dezember.html").first { it.title.startsWith("FUN FACTS") }
 
         flash.soldOut shouldBe false
-        funFacts.artists.shouldBeEmpty()
+        funFacts.title shouldBe "FUN FACTS mit Bahar Kizil & Live Show"
+        funFacts.artists.map { it.name } shouldContainExactly listOf("Bahar Kizil")
     }
 
     @Test

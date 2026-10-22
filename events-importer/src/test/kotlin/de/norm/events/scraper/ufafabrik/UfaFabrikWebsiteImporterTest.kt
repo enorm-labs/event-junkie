@@ -20,12 +20,13 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.io.IOException
 
-/** Unit tests for [UfaFabrikWebsiteImporter]: this month, the next, then one show page per row. */
+/** Unit tests for [UfaFabrikWebsiteImporter]: this month, the next two, then one show page per row. */
 class UfaFabrikWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = UfaFabrikWebsiteImporter(htmlFetcher)
     private val sourceUrl = "https://ufafabrik.de/spielplan.html"
     private val novemberUrl = "https://ufafabrik.de/program/202611"
+    private val decemberUrl = "https://ufafabrik.de/program/202612"
     private val elsaUrl = "https://ufafabrik.de/veranstaltung/40154/elsa"
     private val bozkusUrl = "https://ufafabrik.de/veranstaltung/40877/ahmet-bozkus"
 
@@ -39,9 +40,10 @@ class UfaFabrikWebsiteImporterTest {
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(Jsoup.parse(fixture("ufafabrik-spielplan.html"), sourceUrl), "\"ufa-etag\"", null)
         coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns Jsoup.parse(fixture("ufafabrik-program-202611.html"), novemberUrl)
+        coEvery { htmlFetcher.fetchDocument(decemberUrl) } returns Jsoup.parse(fixture("ufafabrik-program-202612.html"), decemberUrl)
         coEvery { htmlFetcher.fetchDocument(elsaUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-elsa.html"), elsaUrl)
         coEvery { htmlFetcher.fetchDocument(bozkusUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-ahmet-bozkus.html"), bozkusUrl)
-        coEvery { htmlFetcher.fetchDocument(match { it !in setOf(novemberUrl, elsaUrl, bozkusUrl) }) } throws IOException("refused")
+        coEvery { htmlFetcher.fetchDocument(match { it !in setOf(novemberUrl, decemberUrl, elsaUrl, bozkusUrl) }) } throws IOException("refused")
     }
 
     @Test
@@ -50,15 +52,17 @@ class UfaFabrikWebsiteImporterTest {
     }
 
     @Test
-    fun `reads this month and the next, and stops there`() =
+    fun `reads this month and the next two, and stops there`() =
         runTest {
             stubPages()
             val result = importer.importEvents(sourceUrl, null, null)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 59
+            result.events shouldHaveSize 93
             result.etag shouldBe "\"ufa-etag\""
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(novemberUrl) }
-            coVerify(exactly = 0) { htmlFetcher.fetchDocument("https://ufafabrik.de/program/202612") }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(decemberUrl) }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument("https://ufafabrik.de/program/202701") }
+            result.events.filter { it.title.startsWith("FIL") }.map { it.eventDate.dayOfMonth } shouldBe listOf(26, 27, 28, 29, 30, 31)
         }
 
     @Test
