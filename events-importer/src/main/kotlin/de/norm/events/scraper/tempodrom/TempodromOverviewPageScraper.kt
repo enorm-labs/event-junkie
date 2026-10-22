@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.common.deshout
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -252,7 +253,8 @@ private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
  * The shared comedy rule wants "<Performer> – <Show>" in the title, and Tempodrom never writes it.
  * A format line that opens with `mit` names the acts instead of the title. Two acts joined by `&`
  * lose the show after the last ` - ` first, or the second act keeps it: `"Beisenherz & Polak - Friendly
- * Fire"` billed `Polak - Friendly Fire` (#3415).
+ * Fire"` billed `Polak - Friendly Fire` (#3415). A tribute show names its band after `performed by`, and the title is
+ * the show: "Nights on Broadway" / "A Tribute to the BEE GEES performed by NIGHT FEVER" bills `Night Fever` (#3746).
  */
 private fun tempodromArtists(
     title: String,
@@ -261,6 +263,7 @@ private fun tempodromArtists(
 ): List<ScrapedArtist> {
     val acts = tempodromActs(title)
     return subtitle?.let(::castFromFormatLine)?.takeIf { it.isNotEmpty() }
+        ?: subtitle?.let(::performerFromFormatLine)?.takeIf { it.isNotEmpty() }
         ?: if (eventType == EventType.COMEDY.name) {
             buildArtistsForEventType(acts, subtitle = null, eventType = EventType.CONCERT.name)
         } else {
@@ -288,6 +291,23 @@ private fun castFromFormatLine(subtitle: String): List<ScrapedArtist> =
         ?.filterNot { isNonArtistName(it) || BACKING.matches(it) }
         ?.map { ScrapedArtist(it, "HEADLINER") }
         .orEmpty()
+
+/**
+ * The act a format line names after `performed by`, de-shouted: "… performed by NIGHT FEVER" is `Night Fever`.
+ * The rest of the line is one band, so an `&` in it is kept: a tribute band is often named "<A> & <B>".
+ */
+private fun performerFromFormatLine(subtitle: String): List<ScrapedArtist> =
+    PERFORMED_BY
+        .find(subtitle)
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+        ?.takeUnless { isNonArtistName(it) || BACKING.matches(it) }
+        ?.let { listOf(ScrapedArtist(deshout(it), "HEADLINER")) }
+        .orEmpty()
+
+/** The act after `performed by`, to the end of the line. */
+private val PERFORMED_BY = Regex("""\bperformed\s+by\s+(\S.*)$""", RegexOption.IGNORE_CASE)
 
 /** "comedy" as a word in Tempodrom's format line: "Comedy Perle", "MUSIK-COMEDY-STAND-UP-SHOW". */
 private val COMEDY_FORMAT = Regex("""\bcomedy\b""", RegexOption.IGNORE_CASE)
