@@ -325,6 +325,42 @@ class GretchenOverviewPageScraperTest {
                 listOf("Headliner", "Allynx b2b Sean Steinfeger")
         }
 
+        // detail.php?id=3552: production stored `Lxst Cxntury & Æstral` as one support act; both tour separately (#3747).
+        @Test
+        fun `splits two acts on a support line and keeps an annotation or a friends tail whole`() {
+            fun supportLine(line: String) =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Fr. <strong>23.10.2026</strong><br> Doors: 19.30<br> Show: 20.30</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Phonk<h2><a href="detail.php?id=3552">Trinity presents: SKELER - Nightfall World Tour</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>SKELER (UK) *live*<br />$line<br /></p></span>
+                        <span class="box"></span><span class="lineup"><em>*Vorverkauf 25 € zzgl. Gebühren * Abendkasse 30 €*</em></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            fun namesOf(line: String) =
+                scraper
+                    .scrape(Jsoup.parse(supportLine(line), baseUrl), baseUrl)
+                    .single()
+                    .artists
+                    .map { it.name }
+
+            scraper.scrape(Jsoup.parse(supportLine("Support: LXST CXNTURY &amp; ÆSTRAL"), baseUrl), baseUrl).single().artists shouldContainExactly
+                listOf(
+                    ScrapedArtist("SKELER", "HEADLINER"),
+                    ScrapedArtist("LXST CXNTURY", "SUPPORT"),
+                    ScrapedArtist("ÆSTRAL", "SUPPORT")
+                )
+            namesOf("Support: Carly Cosgrove (US) *live* &amp; GiGi Girls (Papercup Rec./D/IT)") shouldContainExactly
+                listOf("SKELER", "Carly Cosgrove", "GiGi Girls")
+            namesOf("Support: GiGi Girls (Papercup Rec./D/IT)") shouldContainExactly listOf("SKELER", "GiGi Girls")
+            namesOf("Support: Feo &amp; Friends") shouldContainExactly listOf("SKELER", "Feo & Friends")
+        }
+
         // Production stored `Allynx b2b Sean Steinfeger` and `Slimzee b2b Grandmixxer` as one act each (#1844).
         @Test
         fun `a back-to-back slot splits into two acts at the import boundary`() {

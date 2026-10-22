@@ -247,8 +247,8 @@ class GretchenOverviewPageScraper {
      * flush against the first act with no `<br>`. Each line is then dropped if a credit or note
      * ([isCreditOrNoteLine]: "Hosted by …", "Live Visuals by …", "Ersatztermin vom …", an
      * instrument-credited member list, a bare "+ guests" or "+ more"); stripped of a role prefix
-     * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by", whose `A & B` remainder is two DJs,
-     * [splitSupportActs]); split on `feat.`/`ft.`
+     * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"; a support or opening-set remainder
+     * `A & B` is two acts, [splitCreditList]); split on `feat.`/`ft.`
      * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); cleaned of country/`*live*`/`+tag`
      * decorations; split at a ` x ` co-bill ([splitCrossBilled]: "Marthe X Pilani Bubu"); stripped
      * of a format suffix ([stripArtistSuffix]: "Acid Arab DJ-Set"); and dropped if [isNonArtistName]
@@ -258,13 +258,13 @@ class GretchenOverviewPageScraper {
         val names =
             lineupLines(gig)
                 .filterNot { it.isBlank() || isCreditOrNoteLine(it) }
-                // An opening-set line keeps its prefix here, so the step after the `ft.` cut splits its `A & B` (#3579).
-                .map { if (OPENING_SET_PREFIX.containsMatchIn(it)) it else stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
+                // An opening-set or support line keeps its prefix here, so the step after the `ft.` cut splits its `A & B` (#3579, #3747).
+                .map { if (LIST_CREDIT_PREFIX.containsMatchIn(it)) it else stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
                 .map(::cleanArtistName)
                 // A credit after `ft.` (`Àbáse ft. special guests: A & B`) is only exposed by the cut above.
-                .flatMap { if (CREDIT_PREFIX_PATTERN.containsMatchIn(it)) splitSupportActs(stripCreditPrefix(it)) else listOf(it) }
+                .flatMap { if (CREDIT_PREFIX_PATTERN.containsMatchIn(it)) splitCreditList(it) else listOf(it) }
                 .flatMap(::splitCrossBilled)
                 .map(::stripArtistSuffix)
                 .filter { it.isNotBlank() && !isNonArtistName(it) && !isProseNote(it) }
@@ -372,6 +372,14 @@ class GretchenOverviewPageScraper {
      * "opening DJ-set" the literal "by", so "Showtek" is intact.
      */
     private fun stripCreditPrefix(line: String): String = line.replaceFirst(CREDIT_PREFIX_PATTERN, "")
+
+    /**
+     * A support or opening-set line to its acts: the prefix stripped, every `(country)` / `(label/country)`
+     * annotation removed so its `/` cannot split a name, then [splitSupportActs] (`LXST CXNTURY & ÆSTRAL`
+     * to two acts, `Feo & Friends` whole).
+     */
+    private fun splitCreditList(line: String): List<String> =
+        splitSupportActs(stripCreditPrefix(line).replace(PARENS_ANNOTATION, " ").replace(WHITESPACE, " ").trim())
 
     /**
      * A prose note that leaked into the lineup ("Die Show wird … verlegt.", a long blurb). Real act
@@ -505,10 +513,14 @@ class GretchenOverviewPageScraper {
             )
 
         /**
-         * The "Opening DJ-Set by " prefix, optionally after "+". Two DJs follow it as `A & B` (#3579),
-         * so its remainder goes through [splitSupportActs]; a `Support:` line does not.
+         * The "Opening DJ-Set by " or [SUPPORT_LABELS] prefix, optionally after "+". Two acts follow it as
+         * `A & B` (#3579, #3747), so its remainder goes through [splitCreditList]; a `Show:` line does not.
          */
-        private val OPENING_SET_PREFIX = Regex("""^\s*\+?\s*opening\s+dj[\s-]?set\s+by\s+""", RegexOption.IGNORE_CASE)
+        private val LIST_CREDIT_PREFIX =
+            Regex("""^\s*\+?\s*(?:opening\s+dj[\s-]?set\s+by\s+|(?:$SUPPORT_LABELS)\s*:\s*)""", RegexOption.IGNORE_CASE)
+
+        /** A parenthesised annotation anywhere on a credit line: `(US)`, `(Papercup Rec./D/IT)`. */
+        private val PARENS_ANNOTATION = Regex("""\s*\([^)]*\)""")
 
         /**
          * A leading role prefix: "Opening DJ-Set by " (literal "by"), or a [SUPPORT_LABELS] label or
