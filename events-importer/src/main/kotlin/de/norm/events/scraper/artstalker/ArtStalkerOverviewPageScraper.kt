@@ -92,19 +92,24 @@ internal fun splitTagline(raw: String): Pair<String, String?> {
 /**
  * The part of a title that names the acts. A one-word format label before them is no act
  * (`Doppelkonzert: Glam Jam + Mission BlueZ`), and a tribute night names the band after
- * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`).
+ * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`). A trailing
+ * `live` or `live und in Farbe` is billing, not a second act after `und` (#3749).
  */
-internal fun billedActs(title: String): String =
-    PRESENTED_BY
-        .find(title)
-        ?.groupValues
-        ?.get(1)
-        ?.trim()
-        ?: title.replaceFirst(FORMAT_LABEL, "").ifBlank { title }
+internal fun billedActs(title: String): String {
+    val acts =
+        PRESENTED_BY
+            .find(title)
+            ?.groupValues
+            ?.get(1)
+            ?.trim()
+            ?: title.replaceFirst(FORMAT_LABEL, "").ifBlank { title }
+    return acts.replaceFirst(LIVE_TAIL, "").ifBlank { acts }
+}
 
 /** The shop's event number, the last path segment: `…-am-3-10-2026/e2535642`. */
 internal val SHOP_EVENT_ID = Regex("""/e(\d+)$""")
 
 private val TAGLINE_SEPARATOR = Regex("""\s-\s""")
 private val FORMAT_LABEL = Regex("""^\p{L}+:\s+""")
+private val LIVE_TAIL = Regex("""\s+live(?:\s+und\s+in\s+farbe)?$""", RegexOption.IGNORE_CASE)
 private val PRESENTED_BY = Regex("""\spräsentiert\s+von\s+(.+)$""", RegexOption.IGNORE_CASE)

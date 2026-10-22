@@ -72,6 +72,29 @@ class ArtStalkerOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a trailing live und in Farbe as billing, not as a second act`() {
+        cardArtists("Die Gabys live und in Farbe - Disco-, Rock- und Pop-Hits und legendäre Soulklassiker") shouldBe
+            listOf("Die Gabys" to "HEADLINER")
+        cardArtists("Die Gabys live") shouldBe listOf("Die Gabys" to "HEADLINER")
+        cardArtists("Glam Jam und Mission BlueZ - Rock") shouldBe
+            listOf("Glam Jam" to "HEADLINER", "Mission BlueZ" to "HEADLINER")
+    }
+
+    private fun cardArtists(title: String) =
+        ArtStalkerOverviewPageScraper()
+            .scrape(
+                Jsoup.parse(
+                    """
+                    <ul data-testid="event-list"><li><a data-sync-id="1" href="https://art-stalker.reservix.de/tickets-x/e1">
+                    <time datetime="2026-11-27T20:00"></time><h2>$title</h2></a></li></ul>
+                    """.trimIndent(),
+                    baseUrl
+                )
+            ).single()
+            .artists
+            .map { it.name to it.role }
+
+    @Test
     fun `types the house formats and bills no act for them`() {
         val session = bySourceId("2560217")
         session.eventType shouldBe EventType.CONCERT.name
