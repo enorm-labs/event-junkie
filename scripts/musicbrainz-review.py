@@ -10,7 +10,9 @@
 the admin API, keeps the AMBIGUOUS ones the billing names, and asks MusicBrainz for the candidates
 whose name, sort name or alias equals ours (the rule of musicbrainz-match.py, at its one request a
 second). The TSV has an empty `decision` and `mbid` column per artist; the JSON beside it holds the
-same rows unflattened, for a reader that judges them.
+same rows unflattened, for a reader that judges them. A name whose lookup still fails after the
+matcher's retries keeps its row, with no candidates and `lookup failed: <cause>` in the `candidates`
+column (`lookup_failed` in the JSON), and `apply` never writes that row.
 
 `apply` reads the rows marked `PROPOSE` with an `mbid`, and is a dry run unless given `--apply`.
 Both read each artist's match first and skip a row no longer AMBIGUOUS, because someone settled it
@@ -22,7 +24,7 @@ A row the importer refuses (404 for an unknown id, 400 for an MBID that is not a
 Both talk to the forwards `scripts/ej.sh up <env>` starts, and `apply` refuses to write unless a
 `kubectl --context event-junkie-<env>` port-forward holds the importer port.
 
-Exit 0 on success, 1 when `apply` saw a failed write, 2 when it could not run.
+Exit 0 on success, 1 when `collect` saw a failed lookup or `apply` a failed write, 2 when it could not run.
 """
 
 import argparse
@@ -43,6 +45,7 @@ MAX_PAGES = 200
 EXIT_FAILED = 1
 EXIT_CANNOT_RUN = 2
 COLUMNS = ["decision", "artist_id", "slug", "name", "mbid", "candidates", "events"]
+LOOKUP_FAILED = "lookup failed: "
 
 
 def parse_args(argv=None) -> argparse.Namespace:
@@ -136,6 +139,26 @@ def candidates(mb, name: str) -> list:
     ]
 
 
+def ask_musicbrainz(mb, rows: list) -> int:
+    """Sets each row's candidates; returns how many lookups failed. A failed row is marked, and the run goes on."""
+    failed = 0
+    for row in rows:
+        try:
+            row["candidates"] = candidates(mb, row["name"])
+        except (urllib.error.URLError, OSError) as error:
+            failed += 1
+            cause = f"HTTP {error.code}" if isinstance(error, urllib.error.HTTPError) else str(error)
+            row["candidates"], row["lookup_failed"] = [], cause
+            print(f"skipped {row['name']}: {cause}", file=sys.stderr)
+    return failed
+
+
+def flat_candidates(row: dict) -> str:
+    if "lookup_failed" in row:
+        return LOOKUP_FAILED + row["lookup_failed"]
+    return " ;; ".join(flat_candidate(c) for c in row["candidates"])
+
+
 def flat_candidate(c: dict) -> str:
     parts = [c["mbid"], c.get("type"), c.get("country") or c.get("area"), c.get("disambiguation"), c.get("begin")]
     return " · ".join(str(p) for p in parts if p) + (f" [{', '.join(c['tags'])}]" if c.get("tags") else "")
@@ -158,9 +181,7 @@ def collect(args) -> int:
 
     rows = billed_ambiguous(events, artists)
     print(f"{len(events)} events in {args.days} days, {len(rows)} AMBIGUOUS artists billed; asking MusicBrainz")
-    mb = matcher()
-    for row in rows:
-        row["candidates"] = candidates(mb, row["name"])
+    failed = ask_musicbrainz(matcher(), rows)
 
     out = args.out or REPO / "temp" / f"musicbrainz-review-{args.env}-{today}.tsv"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -175,12 +196,15 @@ def collect(args) -> int:
                     "slug": row["slug"],
                     "name": row["name"],
                     "mbid": "",
-                    "candidates": " ;; ".join(flat_candidate(c) for c in row["candidates"]),
+                    "candidates": flat_candidates(row),
                     "events": " ;; ".join(flat_event(e) for e in row["events"]),
                 }
             )
     out.with_suffix(".json").write_text(json.dumps(rows, indent=1, ensure_ascii=False))
     print(f"wrote {out} and {out.with_suffix('.json').name}")
+    if failed:
+        print(f"{failed} of {len(rows)} lookups failed; run collect again to fill their rows", file=sys.stderr)
+        return EXIT_FAILED
     return 0
 
 
@@ -197,7 +221,9 @@ def proposals(tsv: pathlib.Path) -> list:
         return [
             (int(r["artist_id"]), r["mbid"].strip())
             for r in csv.DictReader(f, delimiter="\t")
-            if r["decision"].strip().upper() == "PROPOSE" and r["mbid"].strip()
+            if r["decision"].strip().upper() == "PROPOSE"
+            and r["mbid"].strip()
+            and not r["candidates"].startswith(LOOKUP_FAILED)
         ]
 
 

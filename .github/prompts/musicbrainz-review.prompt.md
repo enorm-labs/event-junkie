@@ -37,6 +37,10 @@ python3 scripts/musicbrainz-review.py collect <env> --days <N>
 It writes `temp/musicbrainz-review-<env>-<date>.tsv`, with empty `decision` and `mbid` columns, and a `.json` with the same rows unflattened. It takes about
 one second per artist. Run it in the background and wait for it to finish.
 
+A name whose MusicBrainz lookup still fails after the retries keeps its row. The `candidates` column says `lookup failed: HTTP 503` or another cause, and the
+`.json` row has no candidates and a `lookup_failed` field. The script then names each failed artist on stderr, prints the count and exits 1. A marked row has
+no candidates to judge, and `apply` never writes it. Run `collect` again later for those names, or judge them `KEEP`.
+
 ## Step 2 — Judge each row
 
 Read the `.json`. For each artist, set `decision` and, for `PROPOSE`, `mbid`:
