@@ -675,7 +675,8 @@ web scraping pitfalls documented in industry literature (see References).
     **A disallow fails the run.** `app.scraper.robots-enforced` defaults to `true`, so honouring a venue's rules is the
     fail-safe rather than a configured extra. The failure carries its own tag. `robots_disallowed` is a rule the venue
     published. `robots_unreadable` is a server that could not answer, which RFC 9309 §2.3.1.4 makes a complete disallow
-    (#887). The first needs the URL changed or the venue dropped. The second is a venue outage that recovers.
+    (#887). The first needs the URL changed or the venue dropped. The second is a venue outage that recovers. The cache
+    keeps a 5xx answer for one hour, not a day, so the next retry reads the file again (#3754).
 
     Setting it to `false` downgrades a disallow to a log line and sends the request. That mode is how the estate was
     surveyed before enforcement went on (#790, #795). It is not a state to leave a deployment in.

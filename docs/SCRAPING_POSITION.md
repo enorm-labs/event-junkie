@@ -69,7 +69,7 @@ way an event poster is. Those three columns are written by the admin API rather 
 
 **`robots.txt` is read on every request, and a disallow blocks it.** `RobotsTxtFilter` sits on the shared scraper
 client, so each outbound request is checked against the host's rules. `RobotsRulesCache` reads the file once per host
-per day. A forbidden URL fails the run rather than being fetched — see §3.3.
+per day. It reads a 5xx answer again after one hour. A forbidden URL fails the run rather than being fetched — see §3.3.
 
 ## 3. The questions, and our answers
 

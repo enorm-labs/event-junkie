@@ -5,6 +5,7 @@ import crawlercommons.robots.SimpleRobotRules
 import crawlercommons.robots.SimpleRobotRulesParser
 import de.norm.events.common.runCatchingCancellable
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.springframework.beans.factory.annotation.Qualifier
@@ -61,6 +62,9 @@ data class RobotsCheck(
  * could not be read, which is a complete disallow. **A transport failure is not a status.** A venue
  * whose server we cannot reach at all has told us nothing, so that case permits everything —
  * treating silence as a prohibition would stop imports on any network blip.
+ *
+ * **A 5xx is held for [ScraperProperties.robotsUnreadableCacheTtl], not a day.** It is a disallow
+ * the venue never wrote, so the next retry reads the file again rather than failing on our cache (#3754).
  */
 @Component
 class RobotsRulesCache(
@@ -87,7 +91,8 @@ class RobotsRulesCache(
      * Returns what the host's rules say about [url], reading `robots.txt` on a cache miss.
      *
      * Safe to call for every request: the fetch happens once per host per
-     * [ScraperProperties.robotsCacheTtl] and every later call is a map read.
+     * [ScraperProperties.robotsCacheTtl], or [ScraperProperties.robotsUnreadableCacheTtl] after a 5xx,
+     * and every later call is a map read.
      */
     suspend fun check(url: String): RobotsCheck {
         val uri = runCatching { URI.create(url) }.getOrNull()
@@ -166,7 +171,7 @@ class RobotsRulesCache(
                 val body = response.awaitBodyOrNull<ByteArray>() ?: ByteArray(0)
 
                 if (response.statusCode().isError) {
-                    logger.info { "No usable robots.txt for $host (HTTP $status)" }
+                    logUnusable(robotsUrl, host, status)
                     // A 4xx lands here too and is harmless: failedFetch treats it as allow-all, so
                     // it never reaches the disallowed branch and the status is never reported.
                     CachedRules(
@@ -194,12 +199,38 @@ class RobotsRulesCache(
                 }
             }
 
+    /** A 5xx is a WARN with the status as a field, so a `robots_unreadable` failure finds its cause by `sourceSlug`. */
+    private fun logUnusable(
+        robotsUrl: String,
+        host: String,
+        status: Int
+    ) {
+        if (status in SERVER_ERRORS) {
+            logger.at(Level.WARN) {
+                message =
+                    "robots.txt for $host could not be read (HTTP $status): a complete disallow, read again after " +
+                    "${scraperProperties.robotsUnreadableCacheTtl}"
+                payload = mapOf(LogFields.URL to robotsUrl, LogFields.HTTP_STATUS to status)
+            }
+        } else {
+            logger.info { "No robots.txt for $host (HTTP $status): allow-all, read again after ${scraperProperties.robotsCacheTtl}" }
+        }
+    }
+
     private fun crawlDelayOf(rules: SimpleRobotRules): kotlin.time.Duration? =
         rules.crawlDelay.takeIf { it != BaseRobotRules.UNSET_CRAWL_DELAY && it > 0 }?.milliseconds
 
     private fun now(): Instant = Instant.now(clock)
 
-    private fun CachedRules.isFresh(): Boolean = Duration.between(fetchedAt, now()) < scraperProperties.robotsCacheTtl
+    private fun CachedRules.isFresh(): Boolean = Duration.between(fetchedAt, now()) < ttl()
+
+    /** A 5xx is a server that may recover by the next retry, so it is not held as long as a file that was read (#3754). */
+    private fun CachedRules.ttl(): Duration =
+        if (unreadableStatus in SERVER_ERRORS) {
+            scraperProperties.robotsUnreadableCacheTtl
+        } else {
+            scraperProperties.robotsCacheTtl
+        }
 
     companion object {
         /**
@@ -212,6 +243,7 @@ class RobotsRulesCache(
         val ROBOT_NAMES = listOf("eventjunkie")
 
         private const val PLAIN_TEXT = "text/plain"
+        private val SERVER_ERRORS = 500..599
         private val ALLOW_ALL = SimpleRobotRules(SimpleRobotRules.RobotRulesMode.ALLOW_ALL)
     }
 }

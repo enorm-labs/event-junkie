@@ -47,6 +47,14 @@ data class ScraperProperties(
      */
     val robotsCacheTtl: Duration = Duration.ofHours(DEFAULT_ROBOTS_CACHE_TTL_HOURS),
     /**
+     * How long a 5xx answer for `robots.txt` is reused, in place of [robotsCacheTtl].
+     *
+     * A 5xx reads as a complete disallow, so a day of it fails every retry of that day even when the
+     * venue recovered minutes later (#3754). An hour is under the six-hour retry interval, so the next
+     * retry reads the file again, and still keeps one run's detail pages from re-reading it.
+     */
+    val robotsUnreadableCacheTtl: Duration = Duration.ofHours(DEFAULT_ROBOTS_UNREADABLE_CACHE_TTL_HOURS),
+    /**
      * The longest `Crawl-delay` we wait between two requests to one host. A host that asks for more is
      * read as disallowing everything, because waiting less than it asks is not honouring it. Five
      * minutes is the `crawler-commons` default. A list-and-detail source at that pace outlasts the
@@ -66,6 +74,7 @@ data class ScraperProperties(
         private const val DEFAULT_RESPONSE_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_POLITE_DELAY_MILLIS = 200L
         private const val DEFAULT_ROBOTS_CACHE_TTL_HOURS = 24L
+        private const val DEFAULT_ROBOTS_UNREADABLE_CACHE_TTL_HOURS = 1L
         private const val DEFAULT_MAX_CRAWL_DELAY_SECONDS = 300L
         private const val DEFAULT_CONNECTION_MAX_IDLE_SECONDS = 20L
         private const val DEFAULT_CONNECTION_EVICTION_SECONDS = 30L

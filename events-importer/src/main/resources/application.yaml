@@ -75,6 +75,8 @@ app:
     # adds a rule (#795).
     robots-enforced: true
     robots-cache-ttl: 24h
+    # A 5xx reads as a complete disallow, so it is read again by the next retry, not the next day (#3754).
+    robots-unreadable-cache-ttl: 1h
     # A host's Crawl-delay spaces our requests to it. Above this, the host reads as a complete disallow.
     max-crawl-delay: 300s
   anthropic:
