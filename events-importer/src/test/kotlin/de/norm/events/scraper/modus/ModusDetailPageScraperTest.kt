@@ -133,6 +133,25 @@ class ModusDetailPageScraperTest {
     }
 
     @Test
+    fun `bills the three acts behind a series name and a dash`() {
+        val twist = scrape("with-a-twist", "191126-WithaTwist")
+
+        twist.title shouldBe "With a Twist - Goldie333, JnnrHndrxx & ORANYA"
+        twist.eventType shouldBe EventType.CONCERT.name
+        twist.artists.map { it.name to it.role } shouldBe
+            listOf("Goldie333" to "HEADLINER", "JnnrHndrxx" to "HEADLINER", "ORANYA" to "HEADLINER")
+    }
+
+    @Test
+    fun `bills no act on a session night whose line-up is secret`() {
+        val session = scrape("pit-session", "211126-CorruptedBloodPitSession004")
+
+        session.title shouldBe "Corrupted Blood Pit Session 004"
+        session.artists shouldBe emptyList()
+        session.doorsTime shouldBe LocalTime.of(19, 0)
+    }
+
+    @Test
     fun `reads a doors clock that a zero-width space splits`() {
         // The page prints "Einlass … beginnt um 19:\u200B30 Uhr"; the invisible character hides the clock.
         val justSigned = scrape("just-signed", "181126-JustSigned-mitYasola-VictoriaWest-PARA")

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.modus
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.buildArtistsForEventType
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -54,6 +55,30 @@ class ModusComedySeriesTest {
         val title = "Lacrimosa mit Orchester"
 
         modusLineup(title, modusEventType(title), description = null).map { it.name } shouldBe listOf("Lacrimosa")
+    }
+
+    @Test
+    fun `bills the acts behind a series name and a dash, not the series`() {
+        val title = "With a Twist - Goldie333, JnnrHndrxx & ORANYA"
+
+        modusLineup(title, modusEventType(title), description = null).map { it.name } shouldBe
+            listOf("Goldie333", "JnnrHndrxx", "ORANYA")
+    }
+
+    @Test
+    fun `keeps an act's dash-joined tour or record name as before`() {
+        listOf("Yorick Thiede - Polygon", "Andy Strauß - Dosenpfandbetrug", "Spree vom Weizen - Poetry Slam & Stand Up Show").forEach { title ->
+            val eventType = modusEventType(title)
+            modusLineup(title, eventType, description = null) shouldBe
+                buildArtistsForEventType(title, subtitle = null, eventType = eventType, unpackWithFrame = true)
+        }
+    }
+
+    @Test
+    fun `bills nobody on a numbered session whose line-up is secret`() {
+        val title = "Corrupted Blood Pit Session 004"
+
+        modusLineup(title, modusEventType(title), description = null) shouldBe emptyList()
     }
 
     @Test
