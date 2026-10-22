@@ -160,6 +160,20 @@ class CrackBellmerOverviewPageScraperTest {
         lineupOfStayToxic("Smuda, cupidstunt") shouldContainExactly listOf("Smuda", "cupidstunt")
     }
 
+    @Test
+    fun `drops the more an open-ended billing ends on`() {
+        // https://www.crackbellmer.de/events/inline-x-stories-of-her (#3748)
+        lineupOfStayToxic("Ôneyra, Degen, Unikhatu, Rovin, X Tin, Gio, Pink Panther, Linda Shiro &amp; more") shouldContainExactly
+            listOf("Ôneyra", "Degen", "Unikhatu", "Rovin", "X Tin", "Gio", "Pink Panther", "Linda Shiro")
+    }
+
+    @Test
+    fun `keeps a name the venue writes with brackets`() {
+        // https://www.crackbellmer.de/events/holyshift-vii (#3748): `(K` is not an unclosed annotation.
+        lineupOfStayToxic("Aphty Khéa, Vibrant as Fu)(K, TBC") shouldContainExactly listOf("Aphty Khéa", "Vibrant as Fu)(K")
+        lineupOfStayToxic("Fagatta (Host), Rovin (Live)") shouldContainExactly listOf("Fagatta", "Rovin")
+    }
+
     /** The 29 August night with its withheld `Secret Line-Up` replaced by [lineup]. */
     private fun lineupOfStayToxic(lineup: String): List<String> {
         val html = fixture().replace("fs-list-field=\"lineup\">Secret Line-Up<", "fs-list-field=\"lineup\">$lineup<")
