@@ -77,6 +77,11 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
   A plan in the tree becomes documentation nobody updates; a plan only in the terminal is gone at the next compaction. Format it by name —
   `scripts/format-markdown.sh temp/<file>.md` — because nothing else reaches `temp/`, and a plan pasted unformatted into an issue is the usual tell.
   **Delete it when the work lands.**
+- **An agent changes files only in a worktree of its own, never in the main checkout.** Sessions run side by side, and one that switches the main
+  checkout's branch carries every uncommitted file onto its own branch. Start with `EnterWorktree` (then `git branch -m <type>/<slug>`) or
+  `git worktree add ../event-junkie-<slug> -b <type>/<slug> origin/main`. In the main checkout an agent reads and runs gates, and never switches the
+  branch or commits. Before `git add`, check that `git branch --show-current` names the branch the session cut. [docs/WORKTREES.md](docs/WORKTREES.md)
+  has the setup and the shared-runtime traps.
 - **No unsolicited git commits, pushes or rebases.** Only when the user asks.
 - **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change amends it; push with
   `git push --force-with-lease`, never bare `--force`. `main` allows only **Rebase and merge**, so every branch commit lands on `main` as written. A branch

@@ -23,11 +23,12 @@ fresh context every time.
 ### 1. Pick the venue
 
 ```bash
-git --no-pager status --short          # must be clean
-git checkout main && git pull
+git fetch origin
+git worktree add ../event-junkie-<slug> -b feat/importer-<slug> origin/main    # once the venue below is picked
 ```
 
-A dirty tree means an earlier run left work behind — stop and report instead of sweeping it into this PR.
+Work in that worktree, never in the main checkout ([AGENTS.md](../../AGENTS.md) § Agent Instructions). A leftover worktree of an earlier run that holds
+uncommitted files means that run left work behind. Stop and report it instead of sweeping it into this PR.
 
 Read the **🔨 Ready to implement** table. Take the requested venue, or else the topmost row of the highest priority present (High, then Medium,
 then Low) whose `EventSource` enum value does not yet exist in `events-importer/src/main/kotlin/de/norm/events/scraper/EventSource.kt`. The table is not
