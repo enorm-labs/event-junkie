@@ -572,6 +572,81 @@ class GretchenOverviewPageScraperTest {
             event.statusNote shouldBe "neuer Ort  verlegt ins Metropol"
             event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).relocatedTo shouldBe "Metropol"
         }
+
+        @Test
+        fun `a concert with no sold-out sign is not sold out`() {
+            eventWithId("3492").soldOut shouldBe false
+        }
+    }
+
+    @Nested
+    inner class SoldOut {
+        // Event 3554 from the listing on 2026-10-22: the badge, the headline tail and a lineup line all say it.
+        private fun gig(
+            badge: String = "<span class=\"rotated\"> Ausverkauft</span>",
+            headline: String = "daoud  // SOLD OUT",
+            notice: String = "Ausverkauft - keine Abendkasse"
+        ) = """
+            <div class="gig">
+                <span class="date">Mi. <strong>04.11.2026</strong><br> Doors: 19.30 <br/>Show: 20.30</span>
+                <span class="img">$badge<a href="detail.php?id=3554"><img class="img" src="./bilder_upload/daoud.jpg" alt=""></a></span>
+                <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                    <span class="title">Jazz<h2><a href="detail.php?id=3554">$headline</a></h2></span>
+                    <span class="box"></span>
+                    <span class="lineup"><p>daoud  (ACT, Le Studio du Renard/FR) *live*<br /></p></span><span class="box">
+                    </span><span class="lineup">$notice</span>
+                </div></div></div>
+            </div>
+            """.trimIndent()
+
+        private fun scrapeGig(html: String) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        @Test
+        fun `bills the act alone and stores the night sold out`() {
+            val event = scrapeGig(gig())
+
+            assertSoftly {
+                event.title shouldBe "daoud"
+                event.artists shouldContainExactly listOf(ScrapedArtist("daoud", "HEADLINER"))
+                event.soldOut shouldBe true
+                event.status shouldBe "SCHEDULED"
+                event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).soldOut shouldBe true
+            }
+        }
+
+        @Test
+        fun `the headline tail alone marks it sold out`() {
+            scrapeGig(gig(badge = "", notice = "")).soldOut shouldBe true
+        }
+
+        @Test
+        fun `the lineup line alone marks it sold out and is not billed`() {
+            val event = scrapeGig(gig(badge = "", headline = "daoud"))
+
+            event.soldOut shouldBe true
+            event.artists.map { it.name } shouldContainExactly listOf("daoud")
+        }
+
+        @Test
+        fun `the badge alone marks it sold out`() {
+            scrapeGig(gig(headline = "daoud", notice = "")).soldOut shouldBe true
+        }
+
+        @Test
+        fun `an act with the word later in its name is billed and sells nothing`() {
+            val event = scrapeGig(gig(badge = "", headline = "daoud", notice = "The Sold Out Club"))
+
+            event.soldOut shouldBe false
+            event.artists.map { it.name } shouldContainExactly listOf("daoud", "The Sold Out Club")
+        }
+
+        @Test
+        fun `a cancelled sold-out night is stored cancelled, not sold out`() {
+            val event = scrapeGig(gig(headline = "daoud // CANCELLED"))
+
+            event.status shouldBe "CANCELLED"
+            event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).soldOut shouldBe false
+        }
     }
 
     @Test
