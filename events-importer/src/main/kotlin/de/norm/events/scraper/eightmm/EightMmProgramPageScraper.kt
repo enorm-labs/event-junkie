@@ -1,8 +1,10 @@
 package de.norm.events.scraper.eightmm
 
 import de.norm.events.common.BERLIN
+import de.norm.events.common.deshout
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
@@ -28,6 +30,8 @@ import java.util.Locale
  * - **The end time is a placeholder**: every event ends one hour after it starts, so it is not read.
  * - **The residency repeats one slug on each date**, so the `sourceId` keeps the `/program/<y>/<m>/<d>/` path.
  * - **A `LIVE` title is a concert, a `DJ` title a party**; the bands come from a concert's title only.
+ * - **A `<name> (<act>) … DJ RESIDENCY` title bills its DJ**; the bracketed band names where the DJ comes from and does not play.
+ *   Every other DJ title is free-form and bills nobody.
  */
 class EightMmProgramPageScraper(
     private val clock: Clock = Clock.system(BERLIN)
@@ -71,7 +75,7 @@ class EightMmProgramPageScraper(
             imageUrl = item.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
             sourceUrl = url,
             sourceId = "${EventSource.EIGHT_MM.sourceIdPrefix}${extractEventSlug(url, "/program/").replace('/', '-')}",
-            artists = buildArtistsForEventType(billing(title), null, eventType)
+            artists = residencyDj(title, eventType)?.let { listOf(it) } ?: buildArtistsForEventType(billing(title), null, eventType)
         )
     }
 
@@ -92,6 +96,18 @@ class EightMmProgramPageScraper(
     /** The acts of `8MM Live: SOFT PALMS (US)` or `RMFC LIVE in 8MM`, without the house's frame. */
     private fun billing(title: String): String = title.replace(HOUSE_PREFIX, "").replace(HOUSE_SUFFIX, "").trim()
 
+    /** `JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY` bills `Jeff Clark`. */
+    private fun residencyDj(
+        title: String,
+        eventType: String
+    ): ScrapedArtist? =
+        RESIDENCY
+            .takeIf { eventType == EventType.PARTY.name }
+            ?.find(title)
+            ?.groups
+            ?.get("name")
+            ?.let { ScrapedArtist(name = deshout(it.value), role = "DJ") }
+
     private companion object {
         /** Squarespace puts U+202F before the meridiem, which `\s` does not match. */
         val DATE_LINE = Regex("""(?<date>\p{L}+ \d{1,2}, \d{4}),\s*(?<clock>\d{1,2}:\d{2})[\s\u202F\u00A0]*(?<meridiem>[AP]M)?""", RegexOption.IGNORE_CASE)
@@ -101,6 +117,8 @@ class EightMmProgramPageScraper(
         val LIVE = Regex("""\bLIVE\b""", RegexOption.IGNORE_CASE)
 
         val DJ = Regex("""\bDJ\b""", RegexOption.IGNORE_CASE)
+
+        val RESIDENCY = Regex("""^(?<name>[^()]+?)\s*\([^)]+\)\s+.*\bDJ\s+RESIDENCY\b""", RegexOption.IGNORE_CASE)
 
         /** `8MM Live:` or `8MM + Shameless Limitless pres:` in front of the acts. */
         val HOUSE_PREFIX = Regex("""^8MM\b[^:]*:\s*""", RegexOption.IGNORE_CASE)

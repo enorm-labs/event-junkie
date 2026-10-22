@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -63,6 +64,19 @@ class EightMmWebsiteImporterTest {
                 .first { it.sourceUrl.contains("/18/") }
                 .description
                 .shouldBeNull()
+        }
+
+    @Test
+    fun `a residency night keeps its DJ through the event page`() =
+        runTest {
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val residency = result.events.filter { it.sourceUrl.contains("jeff-clark") }
+            residency shouldHaveSize 2
+            residency.forEach { night ->
+                night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to "DJ")
+            }
         }
 
     @Test
