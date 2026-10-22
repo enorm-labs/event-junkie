@@ -15,11 +15,11 @@ file is what the venues published. This is what we ask them.
 3. **The mail states what happens without a reply.** Silence keeps the listing exactly as it is
    today. That is the fail-open rule from [#283](https://github.com/enorm-labs/event-junkie/issues/283),
    and hiding it would make the question dishonest.
-4. **No contact address is in this repository.** [LEGAL.md](../LEGAL.md) §7.3a says no email
-   addresses are stored anywhere, and that scope is what the Hetzner AVV of 2026-08-19 declares. The
+4. **No contact address is in this repository.** [LEGAL.md](../LEGAL.md) §7.3a lists mail to the
+   role mailboxes as communication data, and the Hetzner AVV covers it. It lists no contact list. The
    addresses and the replies stay in the mailbox and in a local file.
-5. **Fourteen first, then a decision.** The point of a first batch is the yes, no and silence ratio.
-   All 86 at once spends the whole audience before we know what the mail achieves.
+5. **Eighteen mails first, then a decision.** The point of a first batch is the yes, no and silence
+   ratio. Every source at once spends the whole audience before we know what the mail achieves.
 6. **The batch links the live site.** The mail links the venue's own page on `event-junkie.de`,
    which is public since 2026-09-24. A link that fails makes the ask both weak and
    promotional-looking, which is the one reading § 7 UWG punishes. Check each link before a mail
@@ -134,24 +134,37 @@ Information for venues: https://event-junkie.de/en/legal/for-venues
 Imprint: https://event-junkie.de/en/legal/imprint
 ```
 
-## 3. The four venues that require prior approval
+## 3. The nine sources with a prohibition
 
-Der Weiße Hase and Kulturhaus Peter Edel both write that the use of texts, parts of texts and images
-needs their prior approval. PANDA platforma writes that any use of its texts, images or other data
-needs its express written approval. Speakeazy writes that the use of its graphics and texts needs its
-express approval. That is why the four are `PROHIBITED` rather than `UNCLEAR`.
-Their own wording names the material, and it carries none of the statutory carve-out the common
-boilerplate has.
+`RESULTS.tsv` records nine sources as `PROHIBITED`. Eight prohibit descriptions and images. ZK/U
+prohibits only its images. Each one's own wording restricts the material beyond copyright law, and
+none carries the statutory carve-out the common boilerplate has. That is why they are `PROHIBITED`
+rather than `UNCLEAR`.
+
+| Source                                  | Descriptions | Images     | Where      | What it says                                                                                         |
+| --------------------------------------- | ------------ | ---------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| Der Weiße Hase                          | PROHIBITED   | PROHIBITED | Imprint    | The use of texts, parts of texts and images needs prior approval                                     |
+| Kulturhaus Peter Edel                   | PROHIBITED   | PROHIBITED | Imprint    | The same clause                                                                                      |
+| PANDA platforma                         | PROHIBITED   | PROHIBITED | Imprint    | Any use of its texts, images or other data needs express written approval                            |
+| Speakeazy                               | PROHIBITED   | PROHIBITED | Disclaimer | The use of its graphics and texts needs express approval                                             |
+| Surprise Club                           | PROHIBITED   | PROHIBITED | Imprint    | Any reproduction of the site or of parts of it is not permitted, in any medium                       |
+| Renaissance-Theater                     | PROHIBITED   | PROHIBITED | Imprint    | Its graphics, photos and contributions are for use outside the site only with its written permission |
+| Volksbühne Berlin and Volksbühne Prater | PROHIBITED   | PROHIBITED | Imprint    | Texts, graphics and images need prior consent to copy, distribute or store in databases              |
+| ZK/U                                    | UNCLEAR      | PROHIBITED | Press page | The visual material of the website is for press coverage about ZK/U only                             |
+
+**The two Volksbühne sources get one mail.** They share one site, one imprint and one operator. The
+mail names both houses and links both venue pages, one line each.
 
 **They get a mail of their own, because their answer is the only thing that can change anything.**
 For them the enquiry is not "may we keep doing this". It is a request for the approval their terms
 ask for.
 
 **What we do for them today, and the mail says it first.** `PROHIBITED` withholds at import rather
-than at display ([#807](https://github.com/enorm-labs/event-junkie/issues/807)). Nothing of theirs
-is stored: 0 descriptions and 0 image URLs across the first two venues' 54 events on production.
-PANDA platforma's and Speakeazy's events are stored the same way. Their listings carry the title, the date, the
-time, the venue and a link.
+than at display ([#807](https://github.com/enorm-labs/event-junkie/issues/807)). It withholds each
+column on its own. Nothing of theirs is stored in a prohibited column: 0 descriptions and 0 image
+URLs across the first two venues' 54 events on production. The other venues' events are stored the
+same way. Their listings carry the title, the date, the time, the venue and a link. ZK/U's listings
+also carry the description, because its texts are `UNCLEAR`.
 
 **For PANDA platforma, change one sentence of the mail to quote its own terms.** Its imprint names
 "Texte, Bilder oder andere Daten" and asks for written approval, not for prior approval of "Textteile
@@ -164,6 +177,35 @@ for express approval. The German mail then says "Ihr Disclaimer verlangt fuer di
 Texten und Grafiken Ihre ausdrueckliche Zustimmung." The English mail says "Your disclaimer requires
 your express approval for the use of texts and graphics."
 
+**For Renaissance-Theater, change the same sentence.** Its imprint asks for written permission. The
+German mail then says "Ihr Impressum erlaubt die Nutzung Ihrer Beitraege, Grafiken und Fotos
+ausserhalb Ihrer Seite nur mit Ihrer schriftlichen Genehmigung." The English mail says "Your imprint
+allows the use of your contributions, graphics and photos outside your site only with your written
+permission."
+
+**For the Volksbühne, change the same sentence.** Its imprint asks for prior consent. The German
+mail then says "Ihr Impressum verlangt Ihre vorherige Zustimmung, bevor Texte, Grafiken und Bilder
+vervielfaeltigt, verbreitet oder in Datenbanken gespeichert werden." The English mail says "Your
+imprint requires your prior consent before texts, graphics and images are copied, distributed or
+stored in databases."
+
+**For Surprise Club, change two sentences.** Its imprint asks for no approval. It forbids the
+reproduction outright, and it does not name texts and images.
+
+1. The German mail says "Ihr Impressum untersagt jede Reproduktion oder Wiedergabe Ihrer Seite oder
+   von Teilen davon." The English mail says "Your imprint forbids any reproduction of your site or of
+   parts of it."
+2. The German question becomes "ob Sie dafuer eine Ausnahme zulassen moechten", then "Getrennt nach
+   Texten und Bildern". The English question becomes "whether you want to make an exception", then
+   "separately for texts and images".
+
+**ZK/U gets §1's mail, not this one.** Its texts are `UNCLEAR`, so §1's two questions fit it. Add
+one paragraph after the venue link. The German mail says "Ihre Presseseite erlaubt die Nutzung der
+Bilder Ihrer Website nur fuer Presseberichte ueber das ZK/U. Daran halte ich mich: von Ihrer Seite
+ist bei mir kein Bild gespeichert." The English mail says "Your press page allows the use of the
+images on your website only for press coverage about ZK/U. I follow that: I store no image from your
+site."
+
 <!-- ste-lint: allow German mail text, scanned as English prose it is not -->
 
 ```text
@@ -171,7 +213,7 @@ Betreff: Anfrage auf Zustimmung - Ihre Veranstaltungstexte auf event-junkie.de
 
 Sehr geehrte Damen und Herren,
 
-wir betreiben event-junkie.de, einen nicht-kommerziellen Veranstaltungskalender
+ich betreibe event-junkie.de, einen nicht-kommerziellen Veranstaltungskalender
 fuer Berlin. Die Seite listet Konzerte und Veranstaltungen und verlinkt fuer
 Tickets und Details immer auf die Seite des Veranstaltungsortes.
 
@@ -248,36 +290,43 @@ Information for venues: https://event-junkie.de/en/legal/for-venues
 Imprint: https://event-junkie.de/en/legal/imprint
 ```
 
-## 4. The first batch of fourteen
+## 4. The first batch of eighteen mails
 
 Chosen from the production event counts and the review in `RESULTS.tsv`. The mix is the point: a
 ratio from ten clubs of one kind says less than a ratio across the kinds we actually list. The last
-four are §3's, and they are here so the batch is one send rather than two.
+eight are §3's, and they are here so the batch is one send rather than two. The §3 rows without a
+count are in the batch for their prohibition, not for their size.
 
-| Venue                 | Events | Why this one                                                                                       |
-| --------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| Admiralspalast        | 229    | The largest listing we hold. Its licence page is an operator press area, so a media contact exists |
-| Tempodrom             | 155    | Second largest, and a house that runs its own site and its own press work                          |
-| SO36                  | 116    | Independent and self-run. The kind of venue most likely to answer a mail at all                    |
-| Lido                  | 113    | A mid-size independent club, which is the shape of most of the corpus                              |
-| Heimathafen Neukölln  | 112    | A cultural house rather than a club, and the sector most likely to have a press office             |
-| Badehaus              | 107    | Small and independent, and the counterweight to the two arenas below                               |
-| Uber Arena            | 96     | A corporate arena. The clearest test of whether a commercial operator answers at all               |
-| silent green          | 60     | A cultural institution that publishes its own press material                                       |
-| Bar jeder Vernunft    | 51     | Variety and theatre, a sector this batch would otherwise miss                                      |
-| Cosmic Comedy Club    | 54     | English-language programming, and the one that gets the English variant                            |
-| Der Weiße Hase        | 10     | Requires prior approval, so §3's mail. Its answer is the only thing that can change anything       |
-| Kulturhaus Peter Edel | 44     | The same, and the larger of the two listings                                                       |
-| PANDA platforma       | 21     | The same, in its own wording. A non-profit association, and the count is from the first import     |
-| Speakeazy             | 9      | The same, in an older template. A small stage, and the count is from the first import              |
+| Venue                                   | Events | Why this one                                                                                       |
+| --------------------------------------- | ------ | -------------------------------------------------------------------------------------------------- |
+| Admiralspalast                          | 229    | The largest listing we hold. Its licence page is an operator press area, so a media contact exists |
+| Tempodrom                               | 155    | Second largest, and a house that runs its own site and its own press work                          |
+| SO36                                    | 116    | Independent and self-run. The kind of venue most likely to answer a mail at all                    |
+| Lido                                    | 113    | A mid-size independent club, which is the shape of most of the corpus                              |
+| Heimathafen Neukölln                    | 112    | A cultural house rather than a club, and the sector most likely to have a press office             |
+| Badehaus                                | 107    | Small and independent, and the counterweight to the two arenas below                               |
+| Uber Arena                              | 96     | A corporate arena. The clearest test of whether a commercial operator answers at all               |
+| silent green                            | 60     | A cultural institution that publishes its own press material                                       |
+| Bar jeder Vernunft                      | 51     | Variety and theatre, a sector this batch would otherwise miss                                      |
+| Cosmic Comedy Club                      | 54     | English-language programming, and the one that gets the English variant                            |
+| Der Weiße Hase                          | 10     | Requires prior approval, so §3's mail. Its answer is the only thing that can change anything       |
+| Kulturhaus Peter Edel                   | 44     | The same, and the larger of the two listings                                                       |
+| PANDA platforma                         | 21     | The same, in its own wording. A non-profit association, and the count is from the first import     |
+| Speakeazy                               | 9      | The same, in an older template. A small stage, and the count is from the first import              |
+| Surprise Club                           | —      | The same, with two sentences changed. Its imprint forbids rather than asks for approval            |
+| Renaissance-Theater                     | —      | The same, in its own wording. A theatre, and its imprint asks for written permission               |
+| Volksbühne Berlin and Volksbühne Prater | —      | One mail for two sources. One operator, an institution of the Land Berlin                          |
+| ZK/U                                    | —      | Its images only, so §1's mail with §3's paragraph for ZK/U. Its texts stay `UNCLEAR`               |
 
 **Check the operator before you send.** Two of these may belong to the same company as another venue
 we list. Two mails into one press office read as a campaign rather than as an enquiry. The review
 already shows one such case: Admiralspalast's licence page is on `atgentertainment.de`. Confirm the
-rest by hand, the way every other venue fact here is confirmed.
+rest by hand, the way every other venue fact here is confirmed. The two Volksbühne sources are one
+operator, so they share one mail.
 
-**The last four get §3's mail, not §1's.** Everything else about them is the same: one send, one
-answer, one row written back.
+**The last eight get §3's mail, not §1's.** ZK/U is the exception: it gets §1's mail with its
+paragraph from §3. Everything else about them is the same: one send, one answer, one verdict written
+back per source.
 
 ## 5. Where the contacts and the replies live
 
@@ -312,7 +361,7 @@ derived from a text we then hold no justification for ([ADR-027](../adr/ADR-027_
 
 ## 7. What the ratio decides
 
-Record the twelve answers, then decide whether the remaining 74 get the same mail. Two outcomes make
+Record the outcome of the eighteen mails, then decide whether the remaining sources get the same mail. Two outcomes make
 that decision for us:
 
 - **Several yes answers.** The mail works, and `SCRAPING_POSITION.md` §3.1 gets stronger with every
