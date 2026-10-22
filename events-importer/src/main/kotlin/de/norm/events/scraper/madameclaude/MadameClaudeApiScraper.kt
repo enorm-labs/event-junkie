@@ -334,8 +334,15 @@ private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")
 private val DJ_PREFIX = Regex("""^\s*dj\s""", RegexOption.IGNORE_CASE)
 
 /**
+ * The format a live night is billed under after the act's name: `343 Labs Live Electronic Showcase` (#3753).
+ * The bare `Live Electronic Showcase` is the house night and names no act.
+ */
+private val SHOWCASE_FORMAT_TAIL = Regex("""(?:^|\s+)(?:live\s+(?:electronic|music)\s+)?showcase$""", RegexOption.IGNORE_CASE)
+
+/**
  * The acts of a concert [title] as headliners, except an act whose `+` segment carries the
  * "(DJ-Set)" marker or a `DJ ` prefix: that one plays the records after the bands, so it is `DJ`.
+ * A [SHOWCASE_FORMAT_TAIL] is cut from each name, and a name that was only the format is dropped.
  */
 internal fun concertArtists(title: String): List<ScrapedArtist> {
     val djSegments =
@@ -345,9 +352,11 @@ internal fun concertArtists(title: String): List<ScrapedArtist> {
             .map { stripArtistSuffix(it.trim()).lowercase() }
             .flatMap { listOf(it, it.replaceFirst(DJ_PREFIX, "")) }
             .toSet()
-    return headlinersFromTitle(title, splitOnSlash = false).map { artist ->
-        if (artist.name.lowercase() in djSegments) artist.copy(role = "DJ") else artist
-    }
+    return headlinersFromTitle(title, splitOnSlash = false)
+        .map { artist ->
+            val billed = if (artist.name.lowercase() in djSegments) artist.copy(role = "DJ") else artist
+            billed.copy(name = billed.name.replace(SHOWCASE_FORMAT_TAIL, "").trim())
+        }.filterNot { it.name.isBlank() }
 }
 
 /**
