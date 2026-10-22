@@ -89,7 +89,7 @@ class UfaFabrikMonthPageScraper {
             priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: prices[ADMISSION_LABEL],
             soldOut = row.selectFirst(".sold-out.event-banner") != null,
             status = if (row.selectFirst(".canceled.event-banner") != null) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
-            artists = ufaFabrikArtists(title, subtitle, eventType)
+            artists = ufaFabrikArtists(title, subtitle, eventType, label)
         )
     }
 
@@ -116,13 +116,20 @@ class UfaFabrikMonthPageScraper {
  * (#3106): `Ulla Meinecke mit Reinmar Henschke` is two acts, the one after `mit` her accompanist and so
  * support, and the guest of `… – special guest: Dotschy Reinhardt` is support too. Local, because at most
  * venues `mit` opens a night's guests, which is why the shared `WITH_FRAME_PATTERN` is opt-in. `Lacrimosa mit Orchester` and `X mit seiner Band` stay one act.
+ * A subtitle that bills `<Act> & Special Guest <Guest>` names the acts of a night the title only names
+ * (`Balkan Christmas Night`), and a `Karaoke` label bills nobody (#3731).
  */
 internal fun ufaFabrikArtists(
     title: String,
     subtitle: String?,
-    eventType: String
+    eventType: String,
+    label: String? = null
 ): List<ScrapedArtist> {
+    if (label?.contains(KARAOKE, ignoreCase = true) == true) return emptyList()
     if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle, eventType)
+    if (subtitle != null && SPECIAL_GUEST.find(title) == null && (SPECIAL_GUEST.find(subtitle)?.range?.first ?: 0) > 0) {
+        return ufaFabrikArtists(subtitle, null, eventType)
+    }
     val cut = SPECIAL_GUEST.find(title)?.takeIf { it.range.first > 0 }
     val billing = cut?.let { title.substring(0, it.range.first) } ?: title
     val guests =
@@ -148,6 +155,8 @@ private fun splitAtMit(artist: ScrapedArtist): List<ScrapedArtist> {
 /** A mid-title guest credit, after a dash, `&`, `+`, a comma or `mit`; the guests follow. */
 private val SPECIAL_GUEST =
     Regex("""\s*(?:(?:[-–—&+,]|\bmit\b)\s*)?\bspecial\s+guests?\b\s*:?\s*""", RegexOption.IGNORE_CASE)
+
+private const val KARAOKE = "karaoke"
 
 /** A ` mit ` between two acts; the group is the next word, which can keep the name whole. */
 private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)

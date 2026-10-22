@@ -105,6 +105,17 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `reads the acts of a named night off its special guest subtitle, and bills nobody at a karaoke night`() {
+        val december = month("ufafabrik-program-202612.html")
+        december.single { it.title == "Balkan Christmas Night" }.artists.map { it.name to it.role } shouldBe
+            listOf("Jovanović Trio" to "HEADLINER", "Oana Cǎtǎlina Chiţu" to "SUPPORT")
+        (october + december).filter { it.title == "Berliner Ukulele Sing & Strum" }.let { nights ->
+            nights shouldHaveSize 2
+            nights.flatMap { it.artists }.shouldBeEmpty()
+        }
+    }
+
+    @Test
     fun `leaves a mit in a show that is not a concert to the shared rules`() {
         ufaFabrikArtists("Schalala - Das Mitsingding", null, EventType.SHOW.name) shouldBe
             de.norm.events.scraper
