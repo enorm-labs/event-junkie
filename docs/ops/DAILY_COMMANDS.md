@@ -43,7 +43,8 @@ curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&s
 
 `/daily-check` does all of this and more, and writes one report with an action list. Without an agent, check these in this order:
 
-1. **Both clusters.** `ej.sh status` shows no pod that is not Ready. `ej.sh versions` shows staging on the newest snapshot and production on the latest release.
+1. **Both clusters.** `ej.sh status` shows nothing under `not ready`. That list names each Flux object that is not Ready. It also names each pod that is
+   down, not ready, or restarted in the last hour. `ej.sh versions` shows staging on the newest snapshot and production on the latest release.
    The `alert_history` query lists every alert that fired in the last 24 hours. Name a cause for each one, or open an issue. An alert that fires for no
    reason teaches you to ignore the mail.
 2. **Failed workflows.** A red `release.yml` on `main` blocks every release. See [RELEASING.md § Publishing is blocked](RELEASING.md#publishing-is-blocked).

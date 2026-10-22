@@ -30,7 +30,7 @@ one report with an action list on top. The GitHub half comes from `scripts/daily
 ## Step 1 — The state now
 
 ```sh
-scripts/ej.sh status                                 # 1a: tunnels, both clusters, anything not Ready
+scripts/ej.sh status                                 # 1a: tunnels, both clusters, any Flux object or pod not Ready
 scripts/ej.sh versions                               # 1b: what each cluster runs, and what Flux would resolve next
 for env in staging production; do                    # 1c: every alert that fired in the window
   scripts/o2-query.sh "$env" sql "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200" --hours "$HOURS"
