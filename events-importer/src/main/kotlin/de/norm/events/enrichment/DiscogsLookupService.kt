@@ -68,7 +68,15 @@ class DiscogsLookupService(
                 touchedRows = artistRepository::findNeedingDiscogsLookup,
                 backfillRows = artistRepository::findUncheckedByDiscogs
             )
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
+        return LookupPass.drain("Discogs lookup", candidates, deadline) { artist ->
+            try {
+                lookup(artist)
+                LookupPass.Row.Stored
+            } catch (e: DiscogsUnavailableException) {
+                metrics.recordDiscogsLookup(STATE_ERROR)
+                LookupPass.Row.Failed(e)
+            }
+        }
     }
 
     /**
@@ -78,35 +86,9 @@ class DiscogsLookupService(
      */
     suspend fun backlog(): Long = if (properties.active) artistRepository.countUncheckedByDiscogs() else 0
 
-    /** One lookup per row; the run stops after [STOP_AFTER_CONSECUTIVE_FAILURES] unavailable rows in a row, or at [deadline]. */
-    private suspend fun storeVerdicts(
-        candidates: List<ArtistEntity>,
-        deadline: TimeMark
-    ): Int {
-        var stored = 0
-        var consecutiveFailures = 0
-        for ((done, artist) in candidates.withIndex()) {
-            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
-                LookupPass.budgetSpent(deadline, "Discogs lookup", done, candidates.size)
-            ) {
-                break
-            }
-            try {
-                if (lookup(artist)) stored++
-                consecutiveFailures = 0
-            } catch (e: DiscogsUnavailableException) {
-                metrics.recordDiscogsLookup(STATE_ERROR)
-                consecutiveFailures++
-                logger.warn(e) { "Discogs unavailable for '${artist.name}' ($consecutiveFailures in a row)" }
-            }
-        }
-        logger.info { "Stored $stored Discogs verdict(s) of ${candidates.size} owed" }
-        return stored
-    }
-
     /** The search, then for an EXACT match its newest release (rule 5, #2054): one more request for about one row in six. */
-    private suspend fun lookup(artist: ArtistEntity): Boolean {
-        val id = artist.id ?: return false
+    private suspend fun lookup(artist: ArtistEntity) {
+        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
         val found = DiscogsMatcher.decide(artist.name, client.search(artist.name))
         val newestRelease = found.discogsId?.let { client.newestReleaseYear(it) }
         val earliestYear = Year.now(ZoneOffset.UTC).value - properties.recentReleaseYears
@@ -121,12 +103,10 @@ class DiscogsLookupService(
             metrics.recordDiscogsLookup(verdict.match.name.lowercase())
         }
         artistRepository.storeDiscogsVerdict(id, verdict.match.name, verdict.discogsId, verdict.discogsUrl)
-        return true
     }
 
     private companion object {
         const val STATE_ERROR = "error"
         const val STATE_INACTIVE = "inactive"
-        const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
     }
 }

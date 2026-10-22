@@ -57,33 +57,12 @@ class MusicBrainzEnrichmentService(
                 touchedRows = artistRepository::findNeedingMusicBrainzEnrichment,
                 backfillRows = artistRepository::findUnenrichedByMusicBrainz
             )
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else enrich(candidates, deadline))
-    }
-
-    private suspend fun enrich(
-        candidates: List<ArtistEntity>,
-        deadline: TimeMark
-    ): Int {
-        var stored = 0
-        var consecutiveFailures = 0
-        for ((done, artist) in candidates.withIndex()) {
-            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
-                LookupPass.budgetSpent(deadline, "MusicBrainz enrichment", done, candidates.size)
-            ) {
-                break
-            }
-            val failure = readOrFailure(artist)
-            if (failure == null) {
-                stored++
-                consecutiveFailures = 0
-            } else {
-                consecutiveFailures++
+        return LookupPass.drain("MusicBrainz enrichment", candidates, deadline) { artist ->
+            readOrFailure(artist)?.let { failure ->
                 metrics.recordMusicBrainzEnrichmentError()
-                logger.warn(failure) { "Entity read for '${artist.name}' failed ($consecutiveFailures in a row)" }
-            }
+                LookupPass.Row.Failed(failure)
+            } ?: LookupPass.Row.Stored
         }
-        logger.info { "Read $stored MusicBrainz entity(ies) of ${candidates.size} owed" }
-        return stored
     }
 
     /** Null when the row was read and stamped; the exception when MusicBrainz or Wikimedia would not answer. */
@@ -146,7 +125,6 @@ class MusicBrainzEnrichmentService(
     ): List<WikipediaExtract> = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.extractsFor(it, languages) }.orEmpty()
 
     private companion object {
-        const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
         const val NO_ARTICLE = "no-article"
     }
 }

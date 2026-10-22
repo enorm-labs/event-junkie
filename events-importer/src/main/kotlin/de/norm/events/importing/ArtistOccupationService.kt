@@ -31,38 +31,21 @@ class ArtistOccupationService(
     suspend fun sweep(deadline: TimeMark = LookupPass.noDeadline()): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
         val candidates = occupations.findUnreadOccupations(properties.occupationMaxPerRun).toList()
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else readAll(candidates, deadline))
-    }
-
-    /** Reads [candidates] in order; the number stored. */
-    private suspend fun readAll(
-        candidates: List<ArtistEntity>,
-        deadline: TimeMark
-    ): Int {
-        var stored = 0
         var comedians = 0
-        var consecutiveFailures = 0
-        var switchedOff = false
-        for ((done, artist) in candidates.withIndex()) {
-            if (switchedOff ||
-                consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
-                LookupPass.budgetSpent(deadline, "Occupation read", done, candidates.size)
-            ) {
-                break
+        val pass =
+            LookupPass.drain("Occupation read", candidates, deadline) { artist ->
+                try {
+                    when (read(artist)) {
+                        null -> LookupPass.Row.Stop
+                        true -> LookupPass.Row.Stored.also { comedians++ }
+                        false -> LookupPass.Row.Stored
+                    }
+                } catch (e: WikimediaUnavailableException) {
+                    LookupPass.Row.Failed(e)
+                }
             }
-            try {
-                val comedian = read(artist)
-                switchedOff = comedian == null
-                if (comedian != null) stored++
-                if (comedian == true) comedians++
-                consecutiveFailures = 0
-            } catch (e: WikimediaUnavailableException) {
-                consecutiveFailures++
-                logger.warn(e) { "Occupation read for '${artist.name}' failed ($consecutiveFailures in a row)" }
-            }
-        }
-        logger.info { "Read the occupations of $stored artist(s) of ${candidates.size} owed; $comedians comedian(s)" }
-        return stored
+        if (candidates.isNotEmpty()) logger.info { "$comedians comedian(s) among ${pass.stored} occupation(s) read" }
+        return pass
     }
 
     /** Whether the row's act is a comedian, now stored; null when the read is off. */
@@ -82,8 +65,6 @@ class ArtistOccupationService(
     }
 
     private companion object {
-        const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
-
         /** The item id at the end of a Wikidata link: `https://www.wikidata.org/wiki/Q76152`. */
         val WIKIDATA_ID = Regex("""/(Q\d+)/?$""")
 
