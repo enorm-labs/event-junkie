@@ -52,7 +52,9 @@ import java.time.LocalTime
  * Two quirks: times use a dot separator (`Doors: 19.30`, `Show: 20.30`), rebuilt to `HH:mm`
  * for [parseTime]; status is signalled two ways, a rotated overlay badge (`.rotated`, "Abgesagt"
  * / "neuer Ort") and/or a `// CANCELLED` / `// verlegt …` headline suffix, folded into one
- * decision with the suffix stripped. The identity is the `detail.php?id=<n>` query id.
+ * decision with the suffix stripped. A sold-out night says so three times: the badge, a `// SOLD
+ * OUT` tail and an `Ausverkauft - keine Abendkasse` lineup line ([isSoldOut]). The identity is the
+ * `detail.php?id=<n>` query id.
  *
  * @see GretchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.gretchen-club.de/">Gretchen Berlin</a>
@@ -137,6 +139,7 @@ class GretchenOverviewPageScraper {
             priceNote = priceNote,
             status = status,
             statusNote = statusNote,
+            soldOut = isSoldOut(gig, statusTail),
             artists = parseArtists(gig).ifEmpty { headlinerFromPresentsTitle(title) },
             promoters = parsePromoters(gig)
         )
@@ -253,21 +256,8 @@ class GretchenOverviewPageScraper {
      */
     private fun parseArtists(gig: Element): List<ScrapedArtist> {
         val names =
-            gig
-                .select(".lineup")
-                .flatMap { lineup ->
-                    // On a clone: the pricing <em> and the <b> floor headers become line breaks, not nothing,
-                    // because an <em> can hold the only <br> between two lines (#1755).
-                    val work = lineup.clone()
-                    work.select("em, b").forEach { it.replaceWith(TextNode("\n")) }
-                    work.select("br").forEach { it.replaceWith(TextNode("\n")) }
-                    work
-                        .wholeText()
-                        .split(LINE_BREAK)
-                        .map { it.trim() }
-                        .takeUnless { lines -> lines.any(::isNoticeSentence) }
-                        .orEmpty()
-                }.filterNot { it.isBlank() || isCreditOrNoteLine(it) }
+            lineupLines(gig)
+                .filterNot { it.isBlank() || isCreditOrNoteLine(it) }
                 // An opening-set line keeps its prefix here, so the step after the `ft.` cut splits its `A & B` (#3579).
                 .map { if (OPENING_SET_PREFIX.containsMatchIn(it)) it else stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
@@ -284,6 +274,36 @@ class GretchenOverviewPageScraper {
             ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
         }
     }
+
+    /**
+     * The `.lineup` blocks' lines, trimmed, without a block that is a cancellation notice
+     * ([isNoticeSentence]). On a clone: the pricing `<em>` and the `<b>` floor headers become line
+     * breaks, not nothing, because an `<em>` can hold the only `<br>` between two lines (#1755).
+     */
+    private fun lineupLines(gig: Element): List<String> =
+        gig.select(".lineup").flatMap { lineup ->
+            val work = lineup.clone()
+            work.select("em, b").forEach { it.replaceWith(TextNode("\n")) }
+            work.select("br").forEach { it.replaceWith(TextNode("\n")) }
+            work
+                .wholeText()
+                .split(LINE_BREAK)
+                .map { it.trim() }
+                .takeUnless { lines -> lines.any(::isNoticeSentence) }
+                .orEmpty()
+        }
+
+    /**
+     * Whether the night is sold out: the `.rotated` badge, the headline's `//` tail or a lineup line
+     * opens with the word ([SOLD_OUT_NOTE]). The shared title rule never sees the tail, because the
+     * stored title is cut at `//`.
+     */
+    private fun isSoldOut(
+        gig: Element,
+        statusTail: String
+    ): Boolean =
+        (listOf(gig.textAt(".rotated").orEmpty(), statusTail) + lineupLines(gig))
+            .any { SOLD_OUT_NOTE.containsMatchIn(it) }
 
     /**
      * Fallback headliner for a concert whose `.lineup` carries no names: a few promoter-booked shows
@@ -335,7 +355,7 @@ class GretchenOverviewPageScraper {
 
     /**
      * True when a line is a credit or note rather than an act: "Hosted by …" / "Live Visuals by …",
-     * "Ersatztermin vom …", "verlegt vom <venue>", an instrument-credited member list ("… (Bass), …
+     * "Ersatztermin vom …", "verlegt vom <venue>", "Ausverkauft - keine Abendkasse", an instrument-credited member list ("… (Bass), …
      * (Drums)"), a bare "+ (special) guests", a "+ more" continuation ([isPlaceholderName]) —
      * read before [cleanArtistName] strips the `+` and leaves "more", which is also a band's name.
      */
@@ -343,7 +363,8 @@ class GretchenOverviewPageScraper {
         isPlaceholderName(line) ||
             DROP_LINE_PATTERN.containsMatchIn(line) ||
             INSTRUMENT_CREDIT_PATTERN.containsMatchIn(line) ||
-            SCHEDULE_NOTE_PATTERN.containsMatchIn(line)
+            SCHEDULE_NOTE_PATTERN.containsMatchIn(line) ||
+            SOLD_OUT_NOTE.containsMatchIn(line)
 
     /**
      * Strips a leading role prefix: "Support: Steinza" to "Steinza", "+ SHOW: Yenny Stark" to "Yenny
@@ -468,6 +489,13 @@ class GretchenOverviewPageScraper {
                 """\b(?:verlegt|verschoben|ersatztermin|nachholtermin)\b""",
                 RegexOption.IGNORE_CASE
             )
+
+        /**
+         * A note that opens with a sold-out word: the badge `Ausverkauft`, the tail ` SOLD OUT`, the line
+         * `Ausverkauft - keine Abendkasse`. Anchored at the start, so an act with the word later in its name is kept.
+         */
+        private val SOLD_OUT_NOTE =
+            Regex("""^[\s\p{P}]*(?:ausverkauft|ausgebucht|sold[\s-]?out)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /** A parenthesised instrument credit ("… (Bass), … (Drums)"), the signature of a band-member list line. */
         private val INSTRUMENT_CREDIT_PATTERN =
