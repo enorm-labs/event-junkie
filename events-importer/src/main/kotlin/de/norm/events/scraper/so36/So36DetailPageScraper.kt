@@ -22,6 +22,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.performersBilledWith
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.schemaDate
@@ -218,7 +219,9 @@ class So36DetailPageScraper {
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
      * then support acts from the subtitle ([parseSupportActs]), else from a bold `Support:` line in the
      * description ([descriptionSupport]). A festival bills the acts of its
-     * description ([descriptionRoster]); any other night (parties, shows, readings) carries no roster.
+     * description ([descriptionRoster]); a show or comedy night bills the performers its subtitle
+     * names after `mit` (`Qualitätspodcast mit Till Reiners und Moritz Neumeier`,
+     * [performersBilledWith]); any other night (parties, readings) carries no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
      * M.IKARUS"), so the shared billing frame is switched on: the acts after the marker are the
@@ -233,6 +236,7 @@ class So36DetailPageScraper {
         subtitle: String?,
         eventType: String?
     ): List<ScrapedArtist> {
+        if (eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) return performersBilledWith(subtitle)
         if (eventType != EventType.CONCERT.name) return emptyList()
 
         val supportActs =

@@ -2507,6 +2507,43 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Some Act - Summer Tour", "Support: Other Act", "SHOW").map { it.name } shouldBe listOf("Some Act", "Other Act")
     }
 
+    @Test
+    fun `buildArtistsForEventType reads the performers a show title names after mit`() {
+        buildArtistsForEventType("Schund und Asche - mit Moritz Neumeier und Till Reiners", null, "COMEDY").map { it.name } shouldBe
+            listOf("Moritz Neumeier", "Till Reiners")
+        buildArtistsForEventType("FUN FACTS mit Victoria Reichelt & Maik Martschinkowsky", null, "COMEDY").map { it.name } shouldBe
+            listOf("Victoria Reichelt", "Maik Martschinkowsky")
+        // The show's own format beside the host is dropped, not billed.
+        buildArtistsForEventType("FUN FACTS mit Pinar Atalay & Live Show", null, "COMEDY").map { it.name } shouldBe listOf("Pinar Atalay")
+        buildArtistsForEventType("FUN FACTS mit Ruth Moschner & Comedy Mix Show", null, "COMEDY").map { it.name } shouldBe listOf("Ruth Moschner")
+        buildArtistsForEventType("Comedy & Chill mit Pierre Hover", null, "COMEDY").map { it.name } shouldBe listOf("Pierre Hover")
+    }
+
+    @Test
+    fun `buildArtistsForEventType bills nobody when a part after mit is not a name`() {
+        buildArtistsForEventType("Was ist los mit der Welt?!", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Komödie mit Maria Hartmann, Heinrich Schafmeister u.a.", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("GöREN am Montag mit Kalle Zilske — Stand-Up Comedy Show", null, "COMEDY").shouldBeEmpty()
+        buildArtistsForEventType("Lesung mit Musik", null, "SHOW").shouldBeEmpty()
+    }
+
+    @Test
+    fun `performersBilledWith reads a subtitle and ignores a line without mit`() {
+        performersBilledWith("Qualitätspodcast mit Till Reiners und Moritz Neumeier").map { it.name } shouldBe listOf("Till Reiners", "Moritz Neumeier")
+        performersBilledWith("Komödie mit Hans-Joachim Heist").map { it.name } shouldBe listOf("Hans-Joachim Heist")
+        performersBilledWith("Die Indie-Pop Party").shouldBeEmpty()
+        performersBilledWith(null).shouldBeEmpty()
+    }
+
+    @Test
+    fun `buildArtistsForEventType bills a bare-name show title only when the description introduces the performer`() {
+        val copy = "Mit seiner Tour kommt der Comedian Till Reiners am 6. November 2027 in die Uber Arena nach Berlin."
+        buildArtistsForEventType("Till Reiners", null, "COMEDY", description = copy).map { it.name } shouldBe listOf("Till Reiners")
+        buildArtistsForEventType("TILL REINERS", null, "COMEDY", description = copy).map { it.name } shouldBe listOf("Till Reiners")
+        buildArtistsForEventType("Till Reiners", null, "COMEDY").shouldBeEmpty()
+        buildArtistsForEventType("Der Kirschgarten", null, "SHOW", description = "Tschechows Der Kirschgarten in neuer Regie.").shouldBeEmpty()
+    }
+
     // #2637 — an ice show's title names a production, whatever type the venue gives it.
     @Test
     fun `buildArtistsForEventType reads no act off an ice show's title`() {

@@ -66,7 +66,7 @@ class So36DetailPageScraperTest {
     }
 
     @Test
-    fun `reads the format a Konzert page names in its subtitle or title, and bills no act for it`() {
+    fun `reads the format a Konzert page names in its subtitle or title, and bills only the performers it names`() {
         // Upcoming SO36 rows on 2026-09-30, each filed under "Konzert".
         fun typeAndActs(
             title: String,
@@ -83,7 +83,8 @@ class So36DetailPageScraperTest {
         typeAndActs("(TH)INK ABOUT THAT", "queere antifaschistische Tattoo Convention") shouldBe (EventType.OTHER.name to emptyList())
         typeAndActs("PANEL: ¡MASH-IT-UP! WE WERE ALWAYS THERE!", "BIPoC and FLINTA* Perspectives on 50 Years of Punk") shouldBe
             (EventType.OTHER.name to emptyList())
-        typeAndActs("TALK OHNE GAST", "Qualitätspodcast mit Till Reiners und Moritz Neumeier") shouldBe (EventType.SHOW.name to emptyList())
+        typeAndActs("TALK OHNE GAST", "Qualitätspodcast mit Till Reiners und Moritz Neumeier") shouldBe
+            (EventType.SHOW.name to listOf("Till Reiners", "Moritz Neumeier"))
         typeAndActs("Bingo Night", "mit DJ Bingobongo") shouldBe (EventType.SHOW.name to emptyList())
         typeAndActs("BINGOBONGO", "Live").first shouldBe EventType.CONCERT.name
         // A support line naming a festival band is still a concert.
@@ -138,6 +139,17 @@ class So36DetailPageScraperTest {
         event.title shouldBe "SADTEMBER mit TAHA, JOHNBOY M.IKARUS"
         event.artists.map { it.name to it.role } shouldBe
             listOf("TAHA" to "HEADLINER", "JOHNBOY M.IKARUS" to "HEADLINER", "Arbok 48" to "SUPPORT")
+    }
+
+    @Test
+    fun `bills the performers a show's subtitle names after mit`() {
+        // "TALK OHNE GAST", subtitle "Qualitätspodcast mit Till Reiners und Moritz Neumeier", 3 December 2026.
+        val url = "https://www.so36.com/produkte/100408-tickets-talk-ohne-gast-so36-berlin-am-03-12-2026"
+        val event = scraper.scrape(fixture("so36-detail-show-mit-performers.html", url), url)
+        event.shouldNotBeNull()
+
+        event.eventType shouldBe "SHOW"
+        event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to "HEADLINER", "Moritz Neumeier" to "HEADLINER")
     }
 
     @Test

@@ -213,6 +213,7 @@ class AdmiralspalastDetailPageScraperTest {
                 Arguments.of("Karat 50+1", "Konzert", listOf("Karat")),
                 Arguments.of("Alexander Eder Unplugged - Die Akustik Tour Live mit Band", "Konzert", listOf("Alexander Eder")),
                 Arguments.of("Comedy Champions Slam - Kiezpoeten Berlin", "Comedy", emptyList<String>()),
+                Arguments.of("Schund und Asche - mit Moritz Neumeier und Till Reiners", "Comedy", listOf("Moritz Neumeier", "Till Reiners")),
                 // No structural cue; the class KDoc names both as the accepted cost.
                 Arguments.of("Kosmos & Orchester", "Konzert", listOf("Kosmos & Orchester")),
                 Arguments.of("Jahresausklang - Wo die Lerche singt", "Konzert", listOf("Jahresausklang")),
