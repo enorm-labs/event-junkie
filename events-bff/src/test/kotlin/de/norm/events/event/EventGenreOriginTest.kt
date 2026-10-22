@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -12,10 +12,10 @@ class EventGenreOriginTest : BaseControllerTest() {
     fun `GET event by slug names the origin of each derived genre tag and none of a source tag`(): Unit =
         runBlocking {
             val venueId = insertVenue("SO36", "so36")
-            val eventId = insertEvent(venueId, "Night", "derived-night", LocalDate.now(ClockConfiguration.BERLIN))
+            val eventId = insertEvent(venueId, "Night", "derived-night", LocalDate.now(BERLIN))
             linkGenre(eventId, insertGenreTag("Punk", "punk"), origin = "ARTIST")
             linkGenre(eventId, insertGenreTag("Ska", "ska"), origin = "DESCRIPTION")
-            val sourceEventId = insertEvent(venueId, "Other", "source-night", LocalDate.now(ClockConfiguration.BERLIN))
+            val sourceEventId = insertEvent(venueId, "Other", "source-night", LocalDate.now(BERLIN))
             linkGenre(sourceEventId, insertGenreTag("Jazz", "jazz"))
 
             webTestClient

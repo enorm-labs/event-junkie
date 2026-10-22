@@ -1,7 +1,7 @@
 package de.norm.events.scraper.sisyphos
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException

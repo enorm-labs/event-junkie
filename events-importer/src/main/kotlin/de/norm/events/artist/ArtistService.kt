@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.common.BERLIN
 import de.norm.events.common.PageResponse
 import de.norm.events.common.pageByName
 import de.norm.events.common.pageMatching
@@ -11,7 +12,6 @@ import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * Service encapsulating artist business logic.
@@ -227,9 +227,6 @@ class ArtistService(
     companion object {
         /** The widest window `upcomingWithinDays` accepts. */
         const val MAX_UPCOMING_DAYS = 90
-
-        /** The events' own time zone, which decides what "today" is. */
-        private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }
 

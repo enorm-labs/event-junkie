@@ -1,6 +1,6 @@
 package de.norm.events.scraper.insel
 
-import de.norm.events.scraper.BERLIN
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty

@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -13,9 +13,9 @@ class EventTypeFilterTest : BaseControllerTest() {
     fun `GET events filters by several event types, any of them matching`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Gig", "gig", LocalDate.now(ClockConfiguration.BERLIN), eventType = "CONCERT")
-            insertEvent(venueId, "Rave", "rave", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1), eventType = "PARTY")
-            insertEvent(venueId, "Quiz", "quiz", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2), eventType = "QUIZ")
+            insertEvent(venueId, "Gig", "gig", LocalDate.now(BERLIN), eventType = "CONCERT")
+            insertEvent(venueId, "Rave", "rave", LocalDate.now(BERLIN).plusDays(1), eventType = "PARTY")
+            insertEvent(venueId, "Quiz", "quiz", LocalDate.now(BERLIN).plusDays(2), eventType = "QUIZ")
 
             // One value, repeated values, the comma form and mixed case all bind to the same list.
             mapOf(
@@ -46,16 +46,16 @@ class EventTypeFilterTest : BaseControllerTest() {
     fun `GET events calendar filters by several event types`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Gig", "gig", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1), eventType = "CONCERT")
-            insertEvent(venueId, "Rave", "rave", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2), eventType = "PARTY")
-            insertEvent(venueId, "Quiz", "quiz", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), eventType = "QUIZ")
+            insertEvent(venueId, "Gig", "gig", LocalDate.now(BERLIN).plusDays(1), eventType = "CONCERT")
+            insertEvent(venueId, "Rave", "rave", LocalDate.now(BERLIN).plusDays(2), eventType = "PARTY")
+            insertEvent(venueId, "Quiz", "quiz", LocalDate.now(BERLIN).plusDays(3), eventType = "QUIZ")
 
             webTestClient
                 .get()
                 .uri(
                     "/events/calendar?from=${LocalDate.now(
-                        ClockConfiguration.BERLIN
-                    )}&to=${LocalDate.now(ClockConfiguration.BERLIN).plusDays(7)}&eventType=QUIZ&eventType=CONCERT"
+                        BERLIN
+                    )}&to=${LocalDate.now(BERLIN).plusDays(7)}&eventType=QUIZ&eventType=CONCERT"
                 ).exchange()
                 .expectStatus()
                 .isOk

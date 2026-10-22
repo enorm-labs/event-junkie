@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -167,7 +167,7 @@ class VenueControllerTest : BaseControllerTest() {
             val busy = insertVenue("Lido", "lido", district = "kreuzberg")
             val spent = insertVenue("Astra", "astra", district = "friedrichshain")
             val quiet = insertVenue("Bi Nuu", "bi-nuu", district = "kreuzberg")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             insertEvent(busy, "Tonight", "tonight", today)
             insertEvent(busy, "Next week", "next-week", today.plusDays(7))
             insertEvent(busy, "In two days", "in-two-days", today.plusDays(2))
@@ -214,7 +214,7 @@ class VenueControllerTest : BaseControllerTest() {
         runBlocking {
             val farAhead = insertVenue("Admiralspalast", "admiralspalast")
             val busy = insertVenue("Lido", "lido")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             insertEvent(farAhead, "Soon", "soon", today.plusDays(3))
             (40L..44L).forEach { insertEvent(farAhead, "Later $it", "later-$it", today.plusDays(it)) }
             listOf(1L, 10L, 29L).forEach { insertEvent(busy, "Gig $it", "gig-$it", today.plusDays(it)) }

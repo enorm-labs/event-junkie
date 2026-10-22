@@ -1,7 +1,7 @@
 package de.norm.events.sourcelicence
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -259,7 +259,7 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
             .bind("withheld", withheld)
             .let { spec -> sourceId?.let { spec.bind("sourceId", it) } ?: spec.bindNull("sourceId", Long::class.javaObjectType) }
             .bind("slug", slug)
-            .bind("eventDate", LocalDate.now(ClockConfiguration.BERLIN).plusDays(7))
+            .bind("eventDate", LocalDate.now(BERLIN).plusDays(7))
             .bind("sourceKey", "test:$slug")
             .map { row -> row.get("id", Long::class.javaObjectType)!! }
             .awaitSingle()

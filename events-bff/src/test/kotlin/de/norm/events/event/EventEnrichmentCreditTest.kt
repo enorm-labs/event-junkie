@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.awaitOne
@@ -27,7 +27,7 @@ class EventEnrichmentCreditTest : BaseControllerTest() {
     fun `GET event by slug lists each enrichment source with the fields it filled, and none on a plain event`(): Unit =
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             val eventId = insertEvent(venueId, "Alpha Band", "alpha-band", today)
             insertEvent(venueId, "Plain", "plain", today)
             val first = insertEnrichmentSource(venueId, "puschen")

@@ -1,7 +1,7 @@
 package de.norm.events.scraper.mbia
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize

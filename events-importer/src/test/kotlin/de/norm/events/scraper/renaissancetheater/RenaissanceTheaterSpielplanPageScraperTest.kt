@@ -1,7 +1,7 @@
 package de.norm.events.scraper.renaissancetheater
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly

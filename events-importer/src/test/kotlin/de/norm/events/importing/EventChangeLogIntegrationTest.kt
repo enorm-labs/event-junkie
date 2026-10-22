@@ -1,12 +1,12 @@
 package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventArtistRequest
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventRequest
 import de.norm.events.event.EventResponse
 import de.norm.events.event.EventStatus
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository

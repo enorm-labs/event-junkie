@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 /** An event's festival (#3273): the `festival` field on every shape, and the `festival` filter. */
 class EventFestivalTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     private suspend fun insertFestival(
         slug: String,

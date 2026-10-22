@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
@@ -12,7 +12,7 @@ class EventVenueCapacityTest : BaseControllerTest() {
     @Test
     fun `the embedded venue carries its capacity, and null where none is known`(): Unit =
         runBlocking {
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             val small = insertVenue("Schokoladen", "schokoladen")
             val unknown = insertVenue("Somewhere", "somewhere")
             databaseClient.sql("UPDATE events.venue SET capacity = 120 WHERE id = $small").await()

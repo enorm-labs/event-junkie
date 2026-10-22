@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
@@ -13,7 +14,6 @@ import de.norm.events.event.EventRepository
 import de.norm.events.event.EventStatus
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagRepository
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.venue.VenueEntity

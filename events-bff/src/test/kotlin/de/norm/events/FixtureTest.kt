@@ -1,5 +1,6 @@
 package de.norm.events
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import kotlinx.coroutines.reactive.awaitSingle
@@ -17,7 +18,7 @@ import java.time.LocalDate
  * `dev-env.sh seed-fixture` and the DAST scan, would only find out later or not at all.
  */
 class FixtureTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     private suspend fun loadFixture() {
         val sql = File(System.getProperty("fixture.sql")).readText()

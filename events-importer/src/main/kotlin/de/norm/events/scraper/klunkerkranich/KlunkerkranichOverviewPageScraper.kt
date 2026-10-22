@@ -1,7 +1,7 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.PRESENTS_VERBS

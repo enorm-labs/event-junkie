@@ -1,14 +1,14 @@
 package de.norm.events.festival
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
 import java.time.LocalDate
 
 class FestivalControllerTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     private suspend fun insertFestival(
         name: String,

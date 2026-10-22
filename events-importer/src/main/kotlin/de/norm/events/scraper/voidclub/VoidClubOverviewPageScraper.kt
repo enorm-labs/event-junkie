@@ -1,8 +1,8 @@
 package de.norm.events.scraper.voidclub
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent

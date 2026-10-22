@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -12,7 +12,7 @@ import java.time.LocalDate
  */
 class EventRelatedTest : BaseControllerTest() {
     /** The BFF's day, not the runner's: they differ between midnight in Berlin and midnight UTC. */
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     @Test
     fun `ranks a shared artist above a genre at another venue, and that genre above the venue alone`(): Unit =

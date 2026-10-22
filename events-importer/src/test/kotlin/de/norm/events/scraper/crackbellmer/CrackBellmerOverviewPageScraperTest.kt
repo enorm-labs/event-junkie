@@ -1,5 +1,6 @@
 package de.norm.events.scraper.crackbellmer
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -13,7 +14,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 /**
  * Unit tests for [CrackBellmerOverviewPageScraper].
@@ -174,9 +174,5 @@ class CrackBellmerOverviewPageScraperTest {
     fun `returns no events for a page without a programme`() {
         val document = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
         CrackBellmerOverviewPageScraper(captureDate).scrape(document, sourceUrl).shouldBeEmpty()
-    }
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }

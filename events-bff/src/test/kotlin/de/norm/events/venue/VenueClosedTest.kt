@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -13,7 +13,7 @@ import java.time.LocalDate
  * keep it through that day and leave it out from the day after. `closed=true` lists the closed ones instead.
  */
 class VenueClosedTest : BaseControllerTest() {
-    private val today = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today = LocalDate.now(BERLIN)
 
     @BeforeEach
     fun seed(): Unit =

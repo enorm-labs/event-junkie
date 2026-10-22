@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
@@ -16,9 +16,9 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events returns only upcoming events with pagination metadata`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "Future Show", "future-show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(5))
-            insertEvent(venueId, "Past Show", "past-show", LocalDate.now(ClockConfiguration.BERLIN).minusDays(5))
+            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(BERLIN))
+            insertEvent(venueId, "Future Show", "future-show", LocalDate.now(BERLIN).plusDays(5))
+            insertEvent(venueId, "Past Show", "past-show", LocalDate.now(BERLIN).minusDays(5))
 
             webTestClient
                 .get()
@@ -47,7 +47,7 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events clamps an oversized page size rather than serving it`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(BERLIN))
 
             // The wiring is what this covers: WebFluxConfiguration constructs the resolver by hand, and the
             // servlet-only `spring.data.web.pageable.max-page-size` cannot do it here (#268).
@@ -67,8 +67,8 @@ class EventControllerTest : BaseControllerTest() {
         runBlocking {
             val astra = insertVenue("Astra", "astra")
             val lido = insertVenue("Lido", "lido")
-            insertEvent(astra, "At Astra", "at-astra", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(lido, "At Lido", "at-lido", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(astra, "At Astra", "at-astra", LocalDate.now(BERLIN))
+            insertEvent(lido, "At Lido", "at-lido", LocalDate.now(BERLIN))
 
             webTestClient
                 .get()
@@ -91,11 +91,11 @@ class EventControllerTest : BaseControllerTest() {
             val techno = insertGenreTag("Techno", "techno")
             val artist = insertArtist("The Adicts", "the-adicts")
 
-            val punkEvent = insertEvent(venueId, "Punk Night", "punk-night", LocalDate.now(ClockConfiguration.BERLIN))
+            val punkEvent = insertEvent(venueId, "Punk Night", "punk-night", LocalDate.now(BERLIN))
             linkGenre(punkEvent, punk)
             linkArtist(punkEvent, artist)
 
-            val technoEvent = insertEvent(venueId, "Techno Night", "techno-night", LocalDate.now(ClockConfiguration.BERLIN))
+            val technoEvent = insertEvent(venueId, "Techno Night", "techno-night", LocalDate.now(BERLIN))
             linkGenre(technoEvent, techno)
 
             webTestClient
@@ -135,11 +135,11 @@ class EventControllerTest : BaseControllerTest() {
             val house = insertGenreTag("House", "house", family = "electronic")
             val metal = insertGenreTag("Metal", "metal", family = "metal")
 
-            val technoNight = insertEvent(venueId, "Techno Night", "techno-night", LocalDate.now(ClockConfiguration.BERLIN))
+            val technoNight = insertEvent(venueId, "Techno Night", "techno-night", LocalDate.now(BERLIN))
             linkGenre(technoNight, techno)
-            val houseNight = insertEvent(venueId, "House Night", "house-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
+            val houseNight = insertEvent(venueId, "House Night", "house-night", LocalDate.now(BERLIN).plusDays(1))
             linkGenre(houseNight, house)
-            val metalNight = insertEvent(venueId, "Metal Night", "metal-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2))
+            val metalNight = insertEvent(venueId, "Metal Night", "metal-night", LocalDate.now(BERLIN).plusDays(2))
             linkGenre(metalNight, metal)
 
             webTestClient
@@ -184,8 +184,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events filters by price range and search query`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Cheap Gig", "cheap-gig", LocalDate.now(ClockConfiguration.BERLIN), pricePresale = BigDecimal("10.00"))
-            insertEvent(venueId, "Pricey Gig", "pricey-gig", LocalDate.now(ClockConfiguration.BERLIN), pricePresale = BigDecimal("80.00"))
+            insertEvent(venueId, "Cheap Gig", "cheap-gig", LocalDate.now(BERLIN), pricePresale = BigDecimal("10.00"))
+            insertEvent(venueId, "Pricey Gig", "pricey-gig", LocalDate.now(BERLIN), pricePresale = BigDecimal("80.00"))
 
             webTestClient
                 .get()
@@ -217,13 +217,13 @@ class EventControllerTest : BaseControllerTest() {
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
             // Presale known — matched on presale.
-            insertEvent(venueId, "Presale Gig", "presale-gig", LocalDate.now(ClockConfiguration.BERLIN), pricePresale = BigDecimal("80.00"))
+            insertEvent(venueId, "Presale Gig", "presale-gig", LocalDate.now(BERLIN), pricePresale = BigDecimal("80.00"))
             // No presale, but a box-office price within range — matched via COALESCE fallback.
-            insertEvent(venueId, "Door Gig", "door-gig", LocalDate.now(ClockConfiguration.BERLIN), priceBoxOffice = BigDecimal("60.00"))
+            insertEvent(venueId, "Door Gig", "door-gig", LocalDate.now(BERLIN), priceBoxOffice = BigDecimal("60.00"))
             // Box-office price below the bound — excluded.
-            insertEvent(venueId, "Door Cheap", "door-cheap", LocalDate.now(ClockConfiguration.BERLIN), priceBoxOffice = BigDecimal("20.00"))
+            insertEvent(venueId, "Door Cheap", "door-cheap", LocalDate.now(BERLIN), priceBoxOffice = BigDecimal("20.00"))
             // No price at all — excluded by any bound.
-            insertEvent(venueId, "Free Gig", "free-gig", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(venueId, "Free Gig", "free-gig", LocalDate.now(BERLIN))
 
             webTestClient
                 .get()
@@ -248,8 +248,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events excludes sold-out events only when excludeSoldOut is set`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Available Gig", "available-gig", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "Sold Out Gig", "sold-out-gig", LocalDate.now(ClockConfiguration.BERLIN), soldOut = true)
+            insertEvent(venueId, "Available Gig", "available-gig", LocalDate.now(BERLIN))
+            insertEvent(venueId, "Sold Out Gig", "sold-out-gig", LocalDate.now(BERLIN), soldOut = true)
 
             // Default: both events are returned.
             webTestClient
@@ -291,8 +291,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events returns only free events when free is set`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Paid Gig", "paid-gig", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "Free Gig", "free-gig", LocalDate.now(ClockConfiguration.BERLIN), free = true)
+            insertEvent(venueId, "Paid Gig", "paid-gig", LocalDate.now(BERLIN))
+            insertEvent(venueId, "Free Gig", "free-gig", LocalDate.now(BERLIN), free = true)
 
             // Default: both events are returned.
             webTestClient
@@ -325,7 +325,7 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events orders same-day events by start time`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            val date = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
+            val date = LocalDate.now(BERLIN).plusDays(1)
             insertEvent(venueId, "Late Show", "late-show", date, startTime = LocalTime.of(22, 0))
             insertEvent(venueId, "Early Show", "early-show", date, startTime = LocalTime.of(18, 0))
 
@@ -346,8 +346,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events today returns only today's events`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Today", "today", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "Tomorrow", "tomorrow", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
+            insertEvent(venueId, "Today", "today", LocalDate.now(BERLIN))
+            insertEvent(venueId, "Tomorrow", "tomorrow", LocalDate.now(BERLIN).plusDays(1))
 
             webTestClient
                 .get()
@@ -366,7 +366,7 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events carries a stated end on the summary and the detail, and null otherwise`(): Unit =
         runBlocking {
             val venueId = insertVenue("Sisyphos", "sisyphos")
-            val friday = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
+            val friday = LocalDate.now(BERLIN).plusDays(1)
             insertEvent(venueId, "Weekender", "weekender", friday, startTime = LocalTime.of(23, 0), endDate = friday.plusDays(3), endTime = LocalTime.of(10, 0))
             insertEvent(venueId, "Night", "night", friday.plusDays(4))
 
@@ -405,8 +405,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events calendar returns events within range and rejects inverted range`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            val from = LocalDate.now(ClockConfiguration.BERLIN)
-            val to = LocalDate.now(ClockConfiguration.BERLIN).plusDays(7)
+            val from = LocalDate.now(BERLIN)
+            val to = LocalDate.now(BERLIN).plusDays(7)
             insertEvent(venueId, "In Range", "in-range", from.plusDays(3))
             insertEvent(venueId, "Out Of Range", "out-of-range", from.plusDays(40))
             // A run that opened before the window and is still on is in it (#1405); one that closed the day before is not.
@@ -437,7 +437,7 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events with running keeps a run that started before the range`(): Unit =
         runBlocking {
             val venueId = insertVenue("Kater Blau", "kater-blau")
-            val day = LocalDate.now(ClockConfiguration.BERLIN).plusDays(10)
+            val day = LocalDate.now(BERLIN).plusDays(10)
             insertEvent(venueId, "Weekender", "weekender", day.minusDays(1), endDate = day.plusDays(2))
             insertEvent(venueId, "Night Before", "night-before", day.minusDays(2))
             // An earlier night that ends on the day before noon is that night's, not the day's (#2923).
@@ -476,12 +476,12 @@ class EventControllerTest : BaseControllerTest() {
             val techno = insertGenreTag("Techno", "techno")
 
             val technoNight =
-                insertEvent(astra, "Techno Night", "techno-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2), pricePresale = BigDecimal("15.00"))
+                insertEvent(astra, "Techno Night", "techno-night", LocalDate.now(BERLIN).plusDays(2), pricePresale = BigDecimal("15.00"))
             linkGenre(technoNight, techno)
-            insertEvent(lido, "Jazz Night", "jazz-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), pricePresale = BigDecimal("40.00"))
+            insertEvent(lido, "Jazz Night", "jazz-night", LocalDate.now(BERLIN).plusDays(3), pricePresale = BigDecimal("40.00"))
 
-            val from = LocalDate.now(ClockConfiguration.BERLIN)
-            val to = LocalDate.now(ClockConfiguration.BERLIN).plusDays(7)
+            val from = LocalDate.now(BERLIN)
+            val to = LocalDate.now(BERLIN).plusDays(7)
 
             // Each filter narrows the range down to the one event that satisfies it.
             listOf(
@@ -525,7 +525,7 @@ class EventControllerTest : BaseControllerTest() {
             val promoter = insertPromoter("36 Concerts", "36-concerts")
             val punk = insertGenreTag("Punk", "punk")
 
-            val eventId = insertEvent(venueId, "The Adicts", "the-adicts-live", LocalDate.now(ClockConfiguration.BERLIN), subtitle = "Tour 2026")
+            val eventId = insertEvent(venueId, "The Adicts", "the-adicts-live", LocalDate.now(BERLIN), subtitle = "Tour 2026")
             linkArtist(eventId, headliner, role = "HEADLINER", billingOrder = 0)
             linkArtist(eventId, support, role = "SUPPORT", billingOrder = 1)
             linkPromoter(eventId, promoter)
@@ -574,7 +574,7 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET event by slug resolves an event that has already happened`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Last Month", "last-month", LocalDate.now(ClockConfiguration.BERLIN).minusDays(30))
+            insertEvent(venueId, "Last Month", "last-month", LocalDate.now(BERLIN).minusDays(30))
 
             webTestClient
                 .get()
@@ -591,12 +591,12 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events returns past events when the range asks for them`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Last Month", "last-month", LocalDate.now(ClockConfiguration.BERLIN).minusDays(30))
-            insertEvent(venueId, "Next Month", "next-month", LocalDate.now(ClockConfiguration.BERLIN).plusDays(30))
+            insertEvent(venueId, "Last Month", "last-month", LocalDate.now(BERLIN).minusDays(30))
+            insertEvent(venueId, "Next Month", "next-month", LocalDate.now(BERLIN).plusDays(30))
 
             webTestClient
                 .get()
-                .uri("/events?to=${LocalDate.now(ClockConfiguration.BERLIN).minusDays(1)}")
+                .uri("/events?to=${LocalDate.now(BERLIN).minusDays(1)}")
                 .exchange()
                 .expectStatus()
                 .isOk
@@ -611,13 +611,13 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events sorts a past range newest first when asked`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Older", "older", LocalDate.now(ClockConfiguration.BERLIN).minusDays(30))
-            insertEvent(venueId, "Newer", "newer", LocalDate.now(ClockConfiguration.BERLIN).minusDays(2))
+            insertEvent(venueId, "Older", "older", LocalDate.now(BERLIN).minusDays(30))
+            insertEvent(venueId, "Newer", "newer", LocalDate.now(BERLIN).minusDays(2))
 
             // Descending has to survive the resolver that appends `id` to every sort.
             webTestClient
                 .get()
-                .uri("/events?to=${LocalDate.now(ClockConfiguration.BERLIN).minusDays(1)}&sort=eventDate,desc")
+                .uri("/events?to=${LocalDate.now(BERLIN).minusDays(1)}&sort=eventDate,desc")
                 .exchange()
                 .expectStatus()
                 .isOk
@@ -632,8 +632,8 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events ignores an unknown or malicious sort parameter`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Later", "later", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2))
-            insertEvent(venueId, "Sooner", "sooner", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
+            insertEvent(venueId, "Later", "later", LocalDate.now(BERLIN).plusDays(2))
+            insertEvent(venueId, "Sooner", "sooner", LocalDate.now(BERLIN).plusDays(1))
 
             // An unmapped sort property (a SQL-injection attempt) is dropped by the ORDER BY whitelist, so
             // the request succeeds with the default order.
@@ -670,7 +670,7 @@ class EventControllerTest : BaseControllerTest() {
             // `app.images.serving.enabled` is false until an environment holds a full set of derivatives
             // (ADR-019); a null here would blank the cards on every such environment.
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2), imageUrl = "https://venue.test/poster.jpg")
+            insertEvent(venueId, "Show", "show", LocalDate.now(BERLIN).plusDays(2), imageUrl = "https://venue.test/poster.jpg")
 
             webTestClient
                 .get()

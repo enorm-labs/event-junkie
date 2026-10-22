@@ -1,5 +1,6 @@
 package de.norm.events.scraper.humboldthain
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 /**
  * Unit tests for [HumboldthainApiScraper], parsing the saved Elfsight widget boot response.
@@ -241,10 +241,6 @@ class HumboldthainApiScraperTest {
                 LocalDate.of(2026, 8, 18),
                 LocalDate.of(2026, 9, 15)
             )
-    }
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 
     // "EN" opens the English half, and the line-up after it belongs to both (#330).

@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -95,7 +95,7 @@ class VenueImportedTest : BaseControllerTest() {
     @Test
     fun `a past event leaves a venue without a source not imported`(): Unit =
         runBlocking {
-            insertEvent(hinterhofId, "Last month", "last-month", LocalDate.now(ClockConfiguration.BERLIN).minusDays(30))
+            insertEvent(hinterhofId, "Last month", "last-month", LocalDate.now(BERLIN).minusDays(30))
 
             expectSlugs("/venues?imported=false", "hinterhof-bar")
         }
@@ -103,7 +103,7 @@ class VenueImportedTest : BaseControllerTest() {
     @Test
     fun `an upcoming event makes a venue without a source imported`(): Unit =
         runBlocking {
-            insertEvent(hinterhofId, "Next week", "next-week", LocalDate.now(ClockConfiguration.BERLIN).plusDays(7))
+            insertEvent(hinterhofId, "Next week", "next-week", LocalDate.now(BERLIN).plusDays(7))
 
             expectSlugs("/venues?imported=false")
             expectSlugs("/venues?imported=true", "astra", "hinterhof-bar")

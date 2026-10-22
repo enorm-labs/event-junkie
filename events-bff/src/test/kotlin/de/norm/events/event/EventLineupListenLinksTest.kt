@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.awaitRowsUpdated
@@ -15,7 +15,7 @@ class EventLineupListenLinksTest : BaseControllerTest() {
             val venueId = insertVenue("Astra", "astra")
             val headliner = insertArtist("The Adicts", "the-adicts")
             val support = insertArtist("Maid Of Ace", "maid-of-ace")
-            val eventId = insertEvent(venueId, "The Adicts", "the-adicts-live", LocalDate.now(ClockConfiguration.BERLIN))
+            val eventId = insertEvent(venueId, "The Adicts", "the-adicts-live", LocalDate.now(BERLIN))
             linkArtist(eventId, headliner, role = "HEADLINER", billingOrder = 0)
             linkArtist(eventId, support, role = "SUPPORT", billingOrder = 1)
             databaseClient

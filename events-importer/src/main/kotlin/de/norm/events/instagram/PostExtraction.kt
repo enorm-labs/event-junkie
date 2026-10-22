@@ -1,5 +1,6 @@
 package de.norm.events.instagram
 
+import de.norm.events.common.BERLIN
 import de.norm.events.common.QuotedText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
@@ -11,7 +12,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeParseException
 
 /** What the model reads for one post. Nothing else about the venue or the post leaves the platform. [caption] is empty for a post without one. */
@@ -23,10 +23,6 @@ data class PostInput(
 ) {
     /** The post's day in Berlin, which a caption's "Friday" and "next Saturday" count from. */
     val postedOn: LocalDate get() = postedAt.atZoneSameInstant(BERLIN).toLocalDate()
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-    }
 }
 
 /** One event the model drafted from a caption, after [PostExtractionValidator] checked it. */

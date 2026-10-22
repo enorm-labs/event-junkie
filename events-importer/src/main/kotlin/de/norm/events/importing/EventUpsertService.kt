@@ -1,5 +1,6 @@
 package de.norm.events.importing
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventChangeLog
 import de.norm.events.event.EventContentStamp
 import de.norm.events.event.EventEntity
@@ -7,7 +8,6 @@ import de.norm.events.event.EventRepository
 import de.norm.events.event.PinnedField
 import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.canonicalPromoterName
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dropPastEvents

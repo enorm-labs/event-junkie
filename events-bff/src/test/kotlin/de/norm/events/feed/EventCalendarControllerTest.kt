@@ -1,7 +1,7 @@
 package de.norm.events.feed
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -23,7 +23,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class EventCalendarControllerTest : BaseControllerTest() {
-    private val today = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today = LocalDate.now(BERLIN)
 
     /** Ten days ahead: inside the window, and never over during a run. */
     private val night = today.plusDays(10)
@@ -89,7 +89,7 @@ class EventCalendarControllerTest : BaseControllerTest() {
     ): String =
         DateTimeFormatter
             .ofPattern("yyyyMMdd'T'HHmmss'Z'")
-            .format(date.atTime(time).atZone(ClockConfiguration.BERLIN).withZoneSameInstant(ZoneOffset.UTC))
+            .format(date.atTime(time).atZone(BERLIN).withZoneSameInstant(ZoneOffset.UTC))
 
     private suspend fun setColumn(
         eventId: Long,

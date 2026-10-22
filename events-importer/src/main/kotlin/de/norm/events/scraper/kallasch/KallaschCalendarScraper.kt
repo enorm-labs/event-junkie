@@ -1,7 +1,7 @@
 package de.norm.events.scraper.kallasch
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.CalendarProperty
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ICAL_LOCAL_DATE_TIME

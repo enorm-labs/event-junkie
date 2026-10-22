@@ -2,10 +2,10 @@ package de.norm.events.importing
 
 import de.norm.events.artist.ArtistOccupationRepository
 import de.norm.events.artist.artistSlugFor
+import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toSet

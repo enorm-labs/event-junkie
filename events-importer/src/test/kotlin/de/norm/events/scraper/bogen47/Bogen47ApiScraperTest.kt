@@ -1,5 +1,6 @@
 package de.norm.events.scraper.bogen47
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 /**
  * Unit tests for [Bogen47ApiScraper], parsing the saved WordPress REST fixtures of LARK and Fitzroy.
@@ -378,10 +378,6 @@ class Bogen47ApiScraperTest {
     @Test
     fun `drops a description that only says TBA`() {
         fitzroy.first { it.title == "Essential Delights" }.description.shouldBeNull()
-    }
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 
     @Test

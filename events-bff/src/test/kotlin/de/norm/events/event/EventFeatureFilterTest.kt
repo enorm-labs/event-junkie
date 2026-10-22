@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -13,7 +13,7 @@ import java.time.LocalDate
  * tags never stand in for a night that states nothing.
  */
 class EventFeatureFilterTest : BaseControllerTest() {
-    private val today = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today = LocalDate.now(BERLIN)
 
     @BeforeEach
     fun seed(): Unit =

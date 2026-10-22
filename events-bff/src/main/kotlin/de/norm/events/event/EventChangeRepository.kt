@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.BERLIN
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Repository
 import java.time.Clock
 import java.time.Duration
 import java.time.OffsetDateTime
-import java.time.ZoneId
 
 /**
  * Reads `event_change`, which the importer writes when a date, time, status or venue of an event
@@ -54,6 +54,5 @@ class EventChangeRepository(
     private companion object {
         /** The importer prunes on the same window (`EventChangeLog.KEPT_DAYS`). */
         const val KEPT_DAYS = 14L
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }

@@ -5,13 +5,13 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventArtistRequest
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventRequest
 import de.norm.events.event.EventResponse
 import de.norm.events.festival.FestivalRequest
 import de.norm.events.festival.FestivalResponse
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent

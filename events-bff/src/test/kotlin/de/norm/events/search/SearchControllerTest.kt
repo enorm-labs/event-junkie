@@ -1,7 +1,7 @@
 package de.norm.events.search
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -14,9 +14,9 @@ class SearchControllerTest : BaseControllerTest() {
         runBlocking {
             val venue = insertVenue("Berghain", "berghain")
             val other = insertVenue("SO36", "so36")
-            insertEvent(venue, "Klubnacht", "klubnacht", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
-            insertEvent(other, "Berghain Afterhour", "berghain-afterhour", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2))
-            insertEvent(other, "Punk Night", "punk-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3))
+            insertEvent(venue, "Klubnacht", "klubnacht", LocalDate.now(BERLIN).plusDays(1))
+            insertEvent(other, "Berghain Afterhour", "berghain-afterhour", LocalDate.now(BERLIN).plusDays(2))
+            insertEvent(other, "Punk Night", "punk-night", LocalDate.now(BERLIN).plusDays(3))
             insertArtist("Berghain Ostgut Ton Allstars", "berghain-ostgut-ton-allstars")
             insertArtist("Dixon", "dixon")
             insertPromoter("Berghain Booking", "berghain-booking")
@@ -100,7 +100,7 @@ class SearchControllerTest : BaseControllerTest() {
     fun `GET search leaves out past events`(): Unit =
         runBlocking {
             val venue = insertVenue("Lido", "lido")
-            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(ClockConfiguration.BERLIN).minusDays(1))
+            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(BERLIN).minusDays(1))
 
             webTestClient
                 .get()
@@ -119,7 +119,7 @@ class SearchControllerTest : BaseControllerTest() {
     fun `GET search finds an event that started before today and is still running, as the list does (#2853)`(): Unit =
         runBlocking {
             val venue = insertVenue("Gärten der Welt", "gaerten-der-welt")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             insertEvent(venue, "Running Show", "running-show", today.minusDays(1), endDate = today.plusDays(1))
             insertEvent(venue, "Running Overnight", "running-overnight", today.minusDays(1), startTime = LocalTime.of(23, 0), endDate = today)
             insertEvent(venue, "Running Ended", "running-ended", today.minusDays(3), endDate = today.minusDays(1))
@@ -182,7 +182,7 @@ class SearchControllerTest : BaseControllerTest() {
     @Test
     fun `GET search with past lists the events that are over, latest first, and keeps them out of events`(): Unit =
         runBlocking {
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             val venue = insertVenue("Lido", "lido")
             insertEvent(venue, "Lido Older", "lido-older", today.minusDays(10))
             insertEvent(venue, "Lido Recent", "lido-recent", today.minusDays(2))
@@ -224,7 +224,7 @@ class SearchControllerTest : BaseControllerTest() {
     fun `GET search without past leaves the past group empty`(): Unit =
         runBlocking {
             val venue = insertVenue("Lido", "lido")
-            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(ClockConfiguration.BERLIN).minusDays(1))
+            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(BERLIN).minusDays(1))
 
             webTestClient
                 .get()
@@ -244,7 +244,7 @@ class SearchControllerTest : BaseControllerTest() {
     @Test
     fun `GET search caps the past group at limit and stops counting it at 100`(): Unit =
         runBlocking {
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             val venue = insertVenue("SO36", "so36")
             repeat(101) { insertEvent(venue, "Archive Night $it", "archive-night-$it", today.minusDays(it + 1L)) }
 

@@ -1,9 +1,9 @@
 package de.norm.events
 
+import de.norm.events.common.BERLIN
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
-import java.time.ZoneId
 
 /**
  * The one [Clock] the BFF reads "today" from, in Berlin.
@@ -17,8 +17,4 @@ import java.time.ZoneId
 class ClockConfiguration {
     @Bean
     fun clock(): Clock = Clock.system(BERLIN)
-
-    companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-    }
 }
