@@ -58,13 +58,14 @@ abstract class AbstractAegVenueImporter(
 
     /**
      * The merged roster: the detail page's `Line Up:` list when it has one (#3215). Otherwise the
-     * listing's, unless it is a single act the detail page's description shows to be a whole bill (#1832).
+     * listing's, unless the detail page's description shows it to be a whole bill (#1832) or names its act.
      *
      * `D-Block Europe, French Montana` is one artist row on the listing, because a single comma
      * decides nothing about a title; the description reads `D-Block Europe und French Montana …`
-     * and settles it. The re-derivation is deliberately narrow: **only a one-act roster can grow**,
-     * so a listing that already bills a co-bill correctly is never rebuilt, and the description can
-     * only ever add acts the title already named.
+     * and settles it. The re-derivation is deliberately narrow: **only an empty or one-act roster can
+     * grow**, so a listing that already bills a co-bill correctly is never rebuilt, and the description
+     * can only ever add acts the title already named. An empty one grows when a bare-name comedy title
+     * is introduced as a performer: `der Comedian Till Reiners`.
      */
     private fun billedActs(
         primary: ScrapedEvent,
@@ -73,7 +74,7 @@ abstract class AbstractAegVenueImporter(
         val pageBilled = primary.artists.isNotEmpty()
         val roster = primary.artists.ifEmpty { fallback.artists }
         val description = primary.description
-        if (pageBilled || roster.size != 1 || description.isNullOrBlank()) return roster
+        if (pageBilled || roster.size > 1 || description.isNullOrBlank()) return roster
         val corroborated =
             buildArtistsForEventType(
                 fallback.title,

@@ -1987,6 +1987,58 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
         ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
         .orEmpty()
 
+/** Two to four capitalised words with lower case in them: `Till Reiners`, `Hans-Joachim Heist`; not `Lebefrau`, not `LIVE`. */
+private val PERSON_NAME = Regex("""^\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3}$""")
+
+private fun isPersonShaped(name: String): Boolean = PERSON_NAME.matches(name) && name.any { it.isLowerCase() }
+
+/** A show's own format named beside its host: `FUN FACTS mit Pinar Atalay & Live Show`. */
+private val SHOW_FORMAT_PART = Regex("""\b(?:Show|Mix|Special)$""")
+
+/** `<show> mit <names>`, the dash optional: `Schund und Asche - mit Moritz Neumeier und Till Reiners`. */
+private val BILLED_WITH = Regex("""^.+?\s+(?:[-–—]\s+)?mit\s+(.+)$""")
+
+private val BILLED_WITH_SEPARATOR = Regex(""",\s*|\s+(?:und|&)\s+""")
+
+/**
+ * The performers a show or comedy line bills after `mit`: `Schund und Asche - mit Moritz Neumeier
+ * und Till Reiners` (Admiralspalast), `Qualitätspodcast mit Till Reiners und Moritz Neumeier`
+ * (SO36's subtitle). Stricter than the concert frame [withFrameActs]: every part must be a
+ * person's name, or the line bills nobody — `Helene Bockhorst mit Lebefrau` names a programme,
+ * `Komödie mit Maria Hartmann, Heinrich Schafmeister u.a.` an open cast. A part naming the
+ * show's format is dropped, not fatal.
+ */
+fun performersBilledWith(line: String?): List<ScrapedArtist> {
+    val tail = line?.let { BILLED_WITH.find(stripTitleStatusMarker(it).trim()) }?.groupValues?.get(1) ?: return emptyList()
+    val names = tail.split(BILLED_WITH_SEPARATOR).map { it.trim() }.filterNot { SHOW_FORMAT_PART.containsMatchIn(it) }
+    if (names.isEmpty() || !names.all { isPersonShaped(it) && !isNonArtistName(it) }) return emptyList()
+    return names.map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+}
+
+/** A performer noun before a name, as an arena's copy introduces its act: `kommt der Comedian Till Reiners`. */
+private const val PERFORMER_NOUN = """(?:Comedian|Komiker|Kabarettist|Entertainer|Zauberer|Magier)(?:in)?"""
+
+/**
+ * The solo act a bare-name show title bills when the description introduces that very name as a
+ * performer: Uber Arena's `Till Reiners`, whose copy says `kommt der Comedian Till Reiners`.
+ * The title alone decides nothing — `Der Kirschgarten` is person-shaped too — so the noun is the
+ * evidence. The description's spelling wins over a shouted title.
+ */
+private fun soloActNamedInDescription(
+    title: String,
+    description: String?
+): List<ScrapedArtist> {
+    val name = stripTitleStatusMarker(title).trim()
+    if (description.isNullOrBlank() || !PERSON_NAME.matches(name)) return emptyList()
+    return Regex("""\b$PERFORMER_NOUN\s+(${Regex.escape(name)})\b""", RegexOption.IGNORE_CASE)
+        .find(description)
+        ?.groupValues
+        ?.get(1)
+        ?.takeIf { isPersonShaped(it) && !isNonArtistName(it) }
+        ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
+        .orEmpty()
+}
+
 /**
  * Builds an artist list from the source's own event type, for venues with a clean `kind` label
  * (Astra, Lido): festivals and parties extract none; a show or comedy night with no support line
@@ -2022,7 +2074,11 @@ fun buildArtistsForEventType(
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
     if (isIceShow(title, subtitle)) return supportActs
-    if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) return soloBillOf(title)
+    if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) {
+        return soloBillOf(title)
+            .ifEmpty { performersBilledWith(title) }
+            .ifEmpty { soloActNamedInDescription(title, description) }
+    }
     if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.

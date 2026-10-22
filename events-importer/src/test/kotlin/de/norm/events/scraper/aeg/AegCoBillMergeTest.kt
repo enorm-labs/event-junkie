@@ -13,7 +13,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
 /**
- * The one place a comma in an AEG title can be decided (#1832).
+ * The one place a comma in an AEG title can be decided (#1832), and a bare comedy title read as an act.
  *
  * The listing owns the title and mints the roster from it; the description lives on the detail
  * page. So a bill the listing stores as one artist is only re-read at the merge, and this drives
@@ -30,10 +30,14 @@ class AegCoBillMergeTest {
             .bufferedReader()
             .readText()
 
-    private suspend fun importedEvent(detailPage: String?): de.norm.events.scraper.ScrapedEvent {
+    private suspend fun importedEvent(
+        detailPage: String?,
+        overviewPage: String = "ubereatsmusichall-overview-cobill.html",
+        detailUrl: String = this.detailUrl
+    ): de.norm.events.scraper.ScrapedEvent {
         coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
             FetchResult.Success(
-                document = Jsoup.parse(readFixture("ubereatsmusichall-overview-cobill.html"), overviewUrl),
+                document = Jsoup.parse(readFixture(overviewPage), overviewUrl),
                 etag = null,
                 lastModified = null
             )
@@ -62,5 +66,24 @@ class AegCoBillMergeTest {
         runTest {
             // The fallback path: without the description the comma decides nothing, exactly as before.
             importedEvent(null).artists.map { it.name } shouldBe listOf("D-Block Europe, French Montana")
+        }
+
+    @Test
+    fun `bills a bare-name comedy title the description introduces as a comedian`() =
+        runTest {
+            val event =
+                importedEvent(
+                    "ubereatsmusichall-detail-solo-comedy.html",
+                    overviewPage = "ubereatsmusichall-overview-solo-comedy.html",
+                    detailUrl = "https://www.uber-eats-music-hall.de/events/detail/till-reiners/2027-11-06-2000"
+                )
+            event.eventType shouldBe "COMEDY"
+            event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to "HEADLINER")
+        }
+
+    @Test
+    fun `bills no act off a bare-name comedy title without a detail page`() =
+        runTest {
+            importedEvent(null, overviewPage = "ubereatsmusichall-overview-solo-comedy.html").artists shouldBe emptyList()
         }
 }
