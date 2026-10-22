@@ -75,8 +75,48 @@ class EightMmProgramPageScraperTest {
                 "eight_mm:2026-10-18-jeff-clark-black-lips-sundays-in-october-dj-residency"
             )
         residency.map { it.eventType }.distinct() shouldContainExactly listOf("PARTY")
-        residency.flatMap { it.artists }.shouldBeEmpty()
     }
+
+    @Test
+    fun `bills the DJ a residency title names, not the band in brackets`() {
+        val residency = scrape(now = "2026-09-01T10:00:00Z").filter { it.sourceId.contains("jeff-clark") }
+
+        residency shouldHaveSize 4
+        residency.forEach { night ->
+            night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to "DJ")
+        }
+    }
+
+    @Test
+    fun `any other DJ night bills nobody`() {
+        scrape(now = "2026-09-01T10:00:00Z")
+            .filter { it.eventType == "PARTY" && !it.sourceId.contains("jeff-clark") }
+            .flatMap { it.artists }
+            .shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a residency DJ only from the name before the bracket`() {
+        fun billed(title: String) =
+            EightMmProgramPageScraper(Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+                .scrape(Jsoup.parse(listing(title), sourceUrl), sourceUrl)
+                .single()
+                .artists
+                .map { it.name to it.role }
+
+        billed("ANNA LOU (THE CRAMPS) FRIDAYS IN MAY DJ RESIDENCY") shouldContainExactly listOf("Anna Lou" to "DJ")
+        billed("ANNA LOU SUNDAY DJ RESIDENCY").shouldBeEmpty()
+        billed("ANNA LOU (THE CRAMPS) DJ SET").shouldBeEmpty()
+        billed("SOUL NIGHT WITH DJ ANNA LOU (THE CRAMPS)").shouldBeEmpty()
+    }
+
+    private fun listing(title: String) =
+        """
+        <noscript><ul><li>
+          <h1><a href="/program/2026/10/4/x">$title</a></h1>
+          <div>Sunday, October 4, 2026, 7:00 PM – 8:00 PM</div>
+        </li></ul></noscript>
+        """.trimIndent()
 
     @Test
     fun `strips the house frame from a concert billing`() {
