@@ -47,5 +47,9 @@ val GOLDEN_GATE_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page is one block per night with no ticket link"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page carries no flyer"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the programme page carries no text beyond the date, the title and the DJs"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the page prints one time per night (23:59) and no doors"),
         houseGenre = "Techno, House"
     )

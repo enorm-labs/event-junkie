@@ -91,5 +91,6 @@ val MADAME_CLAUDE_LIMITATIONS =
         EventSource.MADAME_CLAUDE,
         AcceptedLimitation(LimitedAspect.GENRE, "the venue leaves its genre field empty on every event; style appears only in the description"),
         AcceptedLimitation(LimitedAspect.PRICE, "entry is mostly by donation, kept as the note with no figure"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "admission is by donation at the door and nothing is sold in advance")
     )
