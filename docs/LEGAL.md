@@ -708,10 +708,18 @@ extract as a database. Two venues, AMT and Sonnenraum, hold coordinates from Goo
 
 **Target: WCAG 2.1 Level AA** — the level German and EU law reference (BFSG / EN 301 549).
 
-What enforces it: `eslint-plugin-vuejs-accessibility` on source, and an `@axe-core/playwright` sweep over every static route **in both locales and both
-themes**. German is reliably longer than English, so it is where an overflow or contrast regression actually appears.
-The sweep already caught two real contrast failures, and both were fixed at the design tokens rather than at the call
-sites.
+What enforces it: four automated checks.
+
+1. `eslint-plugin-vuejs-accessibility` checks the source. `events-frontend/eslint.config.ts` loads its `flat/recommended` rules into `npm run lint`.
+2. An `@axe-core/playwright` sweep checks every static route **in both locales and both themes**. It is `events-frontend/e2e/a11y.spec.ts`. German is
+   reliably longer than English, so it is where an overflow or contrast regression actually appears. The sweep already caught two real contrast failures.
+   Both were fixed at the design tokens rather than at the call sites.
+3. The keyboard flows complete each main flow with the keyboard alone (#2989). They are `events-frontend/e2e/keyboard-flows.spec.ts`. Each stop asserts a
+   visible focus indicator (WCAG 2.4.7). They run in the desktop Chromium and Firefox projects only.
+4. The Lighthouse gate requires an accessibility score of 100. It is `scripts/lighthouse.sh`, on `/de/events` and one event detail page, mobile and desktop.
+
+`build-frontend.yml` runs the first three on each pull request that changes the frontend. `lighthouse.yml` runs the fourth against production, after each
+production deployment and once a week.
 
 **Do not claim conformance publicly** until something measures it end to end. axe finds roughly a third of WCAG
 issues. An accessibility statement is a _claim_, so it can only be published once the target is actually met.
@@ -733,7 +741,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                                    | `CODE_OF_CONDUCT.md` |
 | 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                               | §8.4                 |
 | 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                                            | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                                                   | §12                  |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting, an axe sweep, keyboard flows and a Lighthouse gate enforcing it                                                                | §12                  |
 | 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                              | §9.1                 |
 | 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                                                                                | §4.1                 |
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                    | `ops/EMAIL.md`       |

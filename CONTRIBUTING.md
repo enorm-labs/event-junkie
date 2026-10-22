@@ -161,7 +161,7 @@ The pull request template asks two questions that are easy to skip and expensive
   so, the privacy notice needs updating in the same PR — **both language versions**
   ([English](./events-frontend/src/views/legal/PrivacyView.en.vue), [German](./events-frontend/src/views/legal/PrivacyView.de.vue)). The list of triggers is in
   [AGENTS.md](./AGENTS.md#privacy--gdpr--re-check-when-infrastructure-or-features-change) — they rarely look like privacy work.
-- **Accessibility.** The project targets WCAG 2.1 AA, and both the linter and an axe sweep enforce it. Do not disable a rule to go green.
+- **Accessibility.** The project targets WCAG 2.1 AA, and the linter, an axe sweep, keyboard-flow tests and a Lighthouse gate enforce it. Do not disable a rule to go green.
 
 For an importer change it also asks whether existing rows need a `--full` re-seed and a diff, the same question the importer-defect form asks.
 

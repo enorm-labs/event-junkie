@@ -65,11 +65,13 @@ two of its suggestions are deliberately not: focus is not moved to the top on ro
 - **`<html lang>` is dynamic**: `index.html` ships `en`, `src/i18n/index.ts` rewrites it per locale. Never blank it or hard-code it — axe's `html-has-lang`
   passes while German announces itself as English.
 
-### The two checks — neither may be silenced to make a build pass
+### The checks — none may be silenced to make a build pass
 
 - **`eslint-plugin-vuejs-accessibility`** (`flat/recommended`) in `npm run lint` — what is visible in the source.
 - **`@axe-core/playwright`** via `e2e/a11y.spec.ts` in `npm run test:e2e`; `npm run test:a11y` (`-- --project=chromium` for the fast loop) is a **filter over
   the same suite**, so CI needs nothing extra. A contrast failure is fixed in the token, never by excluding the rule.
+- **`e2e/keyboard-flows.spec.ts`** in `npm run test:e2e` — each main flow by key presses alone, with a visible focus indicator at every stop (#2989).
+- **`scripts/lighthouse.sh`** against production, from `lighthouse.yml` — accessibility at 100, after each production deployment and weekly.
 
 Three passes: **static routes, no BFF**, both locales plus a light-theme pass; **data-driven routes, BFF mocked** — home feeds, events list with filter bar and
 pagination, venues, an event detail, the calendar grid — because an error state renders none of the interactive markup, so **a new data-driven view is added
@@ -79,5 +81,5 @@ did); a rule nobody has looked at stays a report. **The mock matchers must not o
 consults handlers in reverse registration order, and a feed served an object renders an empty state axe passes happily.
 
 **Not the axe CLI**: it drives ChromeDriver against URLs, so no state behind an interaction, no BFF mock, one browser, a second automation dependency.
-`@axe-core/playwright` is the same engine without those limits. axe finds roughly a third of WCAG issues; keyboard and screen-reader passes stay manual
+`@axe-core/playwright` is the same engine without those limits. axe finds roughly a third of WCAG issues; the screen-reader pass stays manual
 (LEGAL.md §12).
