@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.slf4j.MDCContext
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
@@ -75,7 +76,9 @@ class RobotsTxtFilter(
     ): Mono<ClientResponse> {
         val url = request.url().toString()
 
-        return mono { rulesCache.check(url) }
+        // MDCContext carries the run's sourceSlug into this coroutine, which `mono` starts on another
+        // dispatcher, so a robots.txt line names the source it failed (#3754).
+        return mono(MDCContext()) { rulesCache.check(url) }
             .flatMap { check ->
                 if (check.allowed) {
                     next.exchange(request.withCrawlDelay(check))
