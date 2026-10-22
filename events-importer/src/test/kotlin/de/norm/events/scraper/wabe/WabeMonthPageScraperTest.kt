@@ -3,6 +3,7 @@ package de.norm.events.scraper.wabe
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -47,13 +48,36 @@ class WabeMonthPageScraperTest {
         event.eventType shouldBe EventType.CONCERT.name
         event.genre shouldBe "Jazz, Pop"
         event.startTime shouldBe LocalTime.of(20, 0)
-        event.priceBoxOffice shouldBe BigDecimal("10")
+        event.priceBoxOffice shouldBe BigDecimal("15")
         event.pricePresale shouldBe BigDecimal("12")
         event.sourceUrl shouldBe "https://www.wabe-berlin.info/okt-2026/3/"
         event.sourceId shouldBe "wabe:2026-10-03-all-these-feelings"
         event.imageUrl shouldBe
             "https://image.jimcdn.com/app/cms/image/transf/dimension=450x10000:format=jpg/path/sf912d3cc5e447890/image/ib2e9b67e15546748/version/1790327837/image.jpg"
         event.artists shouldContainExactly listOf(ScrapedArtist(name = "Laura Grandy"))
+    }
+
+    @Test
+    fun `stores the first amount of a price line as the full price, not a concession`() {
+        // 15 € / 10 € / 5 € (Abendkasse), no presale
+        scrape("okt").on("2026-10-01").priceBoxOffice shouldBe BigDecimal("15")
+        // 5 € (Abendkasse)
+        scrape("okt").on("2026-10-07").priceBoxOffice shouldBe BigDecimal("5")
+
+        val bielfeldt = scrape("nov").on("2026-11-05") // 20 € / 15 € (Abendkasse), 18 € zzgl. Gebühren (Online-Vorverkauf)
+        bielfeldt.priceBoxOffice shouldBe BigDecimal("20")
+        bielfeldt.pricePresale shouldBe BigDecimal("18")
+
+        val impro = scrape("okt").on("2026-10-29") // 17 € / 14 € (Abendkasse), 15 € / 12 € zzgl. Gebühren (Online-Vorverkauf)
+        impro.priceBoxOffice shouldBe BigDecimal("17")
+        impro.pricePresale shouldBe BigDecimal("15")
+    }
+
+    @Test
+    fun `stores no presale above its box office`() {
+        listOf("okt", "nov", "dez").flatMap(::scrape).filter { it.pricePresale != null }.forEach { event ->
+            withClue("${event.eventDate} ${event.title}") { (event.pricePresale!! <= event.priceBoxOffice!!) shouldBe true }
+        }
     }
 
     @Test
