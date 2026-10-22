@@ -304,6 +304,10 @@ says so.
 | `GOLDEN_GATE`          | `PER_EVENT_PAGE`   | there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source                    | —     |
 | `GOLDEN_GATE`          | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
 | `GOLDEN_GATE`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `GOLDEN_GATE`          | `TICKET_URL`       | the programme page is one block per night with no ticket link                                                                                    | —     |
+| `GOLDEN_GATE`          | `IMAGE`            | the programme page carries no flyer                                                                                                              | —     |
+| `GOLDEN_GATE`          | `DESCRIPTION`      | the programme page carries no text beyond the date, the title and the DJs                                                                        | —     |
+| `GOLDEN_GATE`          | `DOORS_TIME`       | the page prints one time per night (23:59) and no doors                                                                                          | —     |
 | `GRETCHEN`             | `DESCRIPTION`      | the text is only on each night's detail page; the import reads the homepage and the ticket popups, not those pages                               | —     |
 | `GRETCHEN`             | `START_TIME`       | a club night prints only its doors, `Doors: 22.00`; a concert prints doors and a show time                                                       | —     |
 | `GRETCHEN`             | `PRICE`            | club nights print no price, and a cancelled show loses its line; presale concerts list theirs                                                    | —     |
@@ -504,6 +508,7 @@ says so.
 | `MADAME_CLAUDE`        | `GENRE`            | the venue leaves its genre field empty on every event; style appears only in the description                                                     | —     |
 | `MADAME_CLAUDE`        | `PRICE`            | entry is mostly by donation, kept as the note with no figure                                                                                     | —     |
 | `MADAME_CLAUDE`        | `PROMOTERS`        | a presenter is named only on a rare night                                                                                                        | —     |
+| `MADAME_CLAUDE`        | `TICKET_URL`       | admission is by donation at the door and nothing is sold in advance                                                                              | —     |
 | `MAD_MONKEY_ROOM`      | `DESCRIPTION`      | the shop list carries no text; each date's shop page repeats its series' text                                                                    | —     |
 | `MAD_MONKEY_ROOM`      | `DOORS_TIME`       | the shop list prints only the start; doors appear only in each date's page text                                                                  | —     |
 | `MAD_MONKEY_ROOM`      | `END_TIME`         | the shop list prints only the start                                                                                                              | —     |
@@ -530,6 +535,8 @@ says so.
 | `MAX_SCHMELING_HALLE`  | `GENRE`            | the listing and the event pages name no style, only tour prose                                                                                   | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `MAXXIM`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `MAXXIM`               | `TICKET_URL`       | the site sells tickets in a Wix in-page checkout with no link of its own (the shape `A_TRANE` uses)                                              | —     |
+| `MAXXIM`               | `ARTISTS`          | the DJ is named only in the event prose                                                                                                          | —     |
 | `M_BIA`                | `SUBTITLE`         | a post carries only the night's name                                                                                                             | —     |
 | `M_BIA`                | `DESCRIPTION`      | the body of every post is a single ticket link                                                                                                   | —     |
 | `M_BIA`                | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
@@ -863,6 +870,7 @@ says so.
 | `TEMPODROM`            | `START_TIME`       | a run (Roncalli, Holiday on Ice) prints a date range with no clock, and some concerts print none either                                          | —     |
 | `TEMPODROM`            | `PRICE`            | a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line                                                       | —     |
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
+| `TEMPODROM`            | `DESCRIPTION`      | the detail page's `Beschreibung` region is read only to classify a comedy night and is never stored                                              | —     |
 | `THEATER_IM_DELPHI`    | `GENRE`            | the labels are formats; only Kammermusik and Elektronische Musik name a style                                                                    | —     |
 | `THEATER_IM_DELPHI`    | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `THE_CLOUD`            | `GENRE`            | every event is filed under one `Night Club` category; the style is only in the prose                                                             | —     |
@@ -912,10 +920,10 @@ says so.
 | `TRESOR`               | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
 | `TRESOR`               | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
 | `TRESOR`               | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
-| `UBER_ARENA`           | `PRICE`            | the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none                                         | —     |
+| `UBER_ARENA`           | `PRICE`            | the parser reads the listing, which shows a from-price only once presale opens; the detail page's ticket offers are not read                     | —     |
 | `UBER_ARENA`           | `GENRE`            | the platform files events only as Konzert, Comedy, Show or Sport, never a genre                                                                  | —     |
 | `UBER_ARENA`           | `PROMOTERS`        | the arena page names no promoter                                                                                                                 | —     |
-| `UBER_EATS_MUSIC_HALL` | `PRICE`            | the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none                                         | —     |
+| `UBER_EATS_MUSIC_HALL` | `PRICE`            | the parser reads the listing, which shows a from-price only once presale opens; the detail page's ticket offers are not read                     | —     |
 | `UBER_EATS_MUSIC_HALL` | `GENRE`            | the platform files events only as Konzert, Comedy, Show or Sport, never a genre                                                                  | —     |
 | `UBER_EATS_MUSIC_HALL` | `PROMOTERS`        | the arena page names no promoter                                                                                                                 | —     |
 | `UFA_FABRIK`           | `PAGINATION`       | the calendar is one page per month, and only this month and the next two are read                                                                | —     |

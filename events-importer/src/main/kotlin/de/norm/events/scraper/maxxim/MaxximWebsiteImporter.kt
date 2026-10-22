@@ -37,5 +37,10 @@ val MAXXIM_LIMITATIONS =
         EventSource.MAXXIM,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "the site sells tickets in a Wix in-page checkout with no link of its own (the shape `A_TRANE` uses)"
+        ),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ is named only in the event prose"),
         houseGenre = "Disco, Charts"
     )

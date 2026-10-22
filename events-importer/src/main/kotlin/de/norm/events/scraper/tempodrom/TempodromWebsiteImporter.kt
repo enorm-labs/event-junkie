@@ -40,5 +40,9 @@ val TEMPODROM_LIMITATIONS =
         EventSource.TEMPODROM,
         AcceptedLimitation(LimitedAspect.START_TIME, "a run (Roncalli, Holiday on Ice) prints a date range with no clock, and some concerts print none either"),
         AcceptedLimitation(LimitedAspect.PRICE, "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field")
+        AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field"),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "the detail page's `Beschreibung` region is read only to classify a comedy night and is never stored"
+        )
     )

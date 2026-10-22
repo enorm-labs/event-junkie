@@ -115,7 +115,7 @@ val AEG_LIMITATIONS =
             listOf(
                 AcceptedLimitation(
                     LimitedAspect.PRICE,
-                    "the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none"
+                    "the parser reads the listing, which shows a from-price only once presale opens; the detail page's ticket offers are not read"
                 ),
                 AcceptedLimitation(LimitedAspect.GENRE, "the platform files events only as Konzert, Comedy, Show or Sport, never a genre"),
                 AcceptedLimitation(LimitedAspect.PROMOTERS, "the arena page names no promoter")
