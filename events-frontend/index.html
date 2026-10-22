@@ -51,16 +51,22 @@
     <script>
       // Apply the theme and the view before first paint, so a reload never flashes the wrong mode
       // and the compact view never draws posters it is about to collapse.
-      // New visitors default to dark (nightlife brand); an explicit stored choice always wins.
+      // No stored choice means System, the default: follow the OS (#3715). A stored choice wins.
       try {
-        if (localStorage.getItem('theme') !== 'light') {
+        var theme = localStorage.getItem('theme')
+        if (
+          theme === 'dark' ||
+          (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
           document.documentElement.classList.add('dark')
         }
         if (localStorage.getItem('view') === 'compact') {
           document.documentElement.classList.add('compact')
         }
       } catch {
-        document.documentElement.classList.add('dark')
+        if (matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark')
+        }
       }
     </script>
   </head>

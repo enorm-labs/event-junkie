@@ -206,9 +206,9 @@ test('app shell exposes the display settings, and only there', async ({ page }) 
   const theme = popover.getByRole('group', { name: 'Theme', exact: true })
   const events = popover.getByRole('group', { name: 'Events', exact: true })
 
-  // New visitors start in dark and posters (the defaults), and each group says so.
+  // New visitors start in System (dark, on the suite's dark OS) and posters, and each group says so.
   await expect(page.locator('html')).toHaveClass(/dark/)
-  await expect(theme.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(theme.getByRole('button', { name: 'System' })).toHaveAttribute('aria-pressed', 'true')
   await expect(events.getByRole('button', { name: 'Posters' })).toHaveAttribute(
     'aria-pressed',
     'true',

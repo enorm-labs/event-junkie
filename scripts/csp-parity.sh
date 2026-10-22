@@ -80,7 +80,8 @@ source = open(sys.argv[1], encoding="utf-8").read()
 match = re.search(r"export const CSP_DIRECTIVES = \[(.*?)\n\]", source, re.S)
 if not match:
     sys.exit("could not find `export const CSP_DIRECTIVES = [ ... ]`")
-body = re.sub(r"//[^\n]*", "", match.group(1))
+# Whole-line comments only: a base64 hash can hold `//`.
+body = re.sub(r"^\s*//[^\n]*", "", match.group(1), flags=re.M)
 directives = re.findall(r'"([^"]*)"', body)
 if not directives:
     sys.exit("CSP_DIRECTIVES parsed as empty")

@@ -345,7 +345,7 @@ ingress:
         - "form-action 'self'"
         # The hash is of the theme script in `events-frontend/index.html`, which runs before first paint. A
         # nonce cannot work: this header is one static string on every response.
-        - "script-src 'self' 'sha256-DuAtP0bDA+RpucmlfZGOJZext9f2E8NeIekOECvRyQ4='"
+        - "script-src 'self' 'sha256-BVa7hd2BT4RfZl6TZTtKsBkP473npXvbnrnK6P//4P8='"
         # No `'unsafe-inline'`: the SPA has no `:style` bindings and the build emits one stylesheet.
         - "style-src 'self'"
         # Both self-hosted, which is the same fact the privacy notice states as embedding no fonts

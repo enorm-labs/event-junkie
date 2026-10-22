@@ -65,6 +65,9 @@ export default defineConfig({
     // Headless everywhere: a headed run opens a window per worker and steals focus on every one.
     // `--headed`, `--ui` or `--debug` shows the browser when you want to watch.
     headless: true,
+    // A fresh visitor follows the OS (#3715). A dark OS keeps every scan on the theme it ran on
+    // before; dark-mode.spec.ts switches the scheme where it is the subject.
+    colorScheme: 'dark',
   },
 
   projects: [
