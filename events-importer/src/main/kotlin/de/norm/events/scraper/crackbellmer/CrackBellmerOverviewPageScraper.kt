@@ -228,8 +228,9 @@ class CrackBellmerOverviewPageScraper(
         /**
          * What the venue writes in the lineup field with no billing to state: activities rather than
          * performers ("Ping Pong, Music And Hangout" for the open-decks nights), an open slot ("open
-         * decks slot"), or a lineup withheld ("Secret Line-Up", "Spontaneous :)", misspelt "Spntaneous :)"). The shared
-         * [isNonArtistName] denylist covers only the bare `TBA`/`more tba` tokens the venue also uses.
+         * decks slot"), a lineup withheld ("Secret Line-Up", "Spontaneous :)", misspelt "Spntaneous :)"), or the `more`
+         * a `… & more` billing leaves once the `&` is split off. The shared [isNonArtistName] denylist covers only the
+         * bare `TBA`/`more tba` tokens the venue also uses, and keeps a bare `More`, a band elsewhere.
          *
          * Fully anchored on the whitespace-collapsed value, so a real act whose name merely contains
          * one of these words is untouched. Curated and reactive, like every such list in the
@@ -237,7 +238,7 @@ class CrackBellmerOverviewPageScraper(
          */
         val PROGRAMME_FILLER =
             Regex(
-                """secret\s+line\s*-?\s*up|line\s*-?\s*up|spo?ntaneous\b.*|open\s+decks(\s+slot)?|ping\s+pong|music|hangouts?""",
+                """secret\s+line\s*-?\s*up|line\s*-?\s*up|spo?ntaneous\b.*|open\s+decks(\s+slot)?|ping\s+pong|music|hangouts?|(?:(?:and|&)\s+)?more""",
                 RegexOption.IGNORE_CASE
             )
     }

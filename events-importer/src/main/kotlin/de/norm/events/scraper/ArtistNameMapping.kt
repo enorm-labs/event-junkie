@@ -440,8 +440,11 @@ private const val AFFILIATION_OPENER = """(?:ex-|(?:ex|von|of|formerly)\s)"""
 /** An opener affiliation before the rest of a billing: `Steve Norman (von Spandau Ballet) & The Sleevz`. */
 private val AFFILIATION_OPENER_INSIDE = Regex("""\s*\($AFFILIATION_OPENER[^()]*\)(?=\s)""", RegexOption.IGNORE_CASE)
 
-/** A bracket the page opened and never closed, at the end of a name: `Sean Steinfeger (OHSHITF*CKYES`. */
-private val UNCLOSED_TRAILING_BRACKET = Regex("""\s*\([^()]*$""")
+/**
+ * A bracket the page opened and never closed, at the end of a name: `Sean Steinfeger (OHSHITF*CKYES`.
+ * A `(` right after a `)` is part of a stylised name, so `Vibrant as Fu)(K` stays whole (#3748).
+ */
+private val UNCLOSED_TRAILING_BRACKET = Regex("""(?<!\))\s*\([^()]*$""")
 
 /**
  * Drops an [ORIGIN_TAG], a [SQUARE_TAG], an [AFFILIATION_TAG], an [ALIAS_TAG], a [NUMBER_DISAMBIGUATOR] or an

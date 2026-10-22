@@ -1091,6 +1091,8 @@ class ArtistNameMappingTest {
         // A star inside the name stays.
         stripArtistSuffix("*n8") shouldBe "*n8"
         stripArtistSuffix("Sean Steinfeger (OHSHITF*CKYES") shouldBe "Sean Steinfeger"
+        // A `(` right after a `)` belongs to a stylised name (#3748).
+        stripArtistSuffix("Vibrant as Fu)(K") shouldBe "Vibrant as Fu)(K"
     }
 
     @Test
