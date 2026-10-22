@@ -62,9 +62,8 @@ spec:
         enabled: true
     manager:
       # **No `collectorImage`, because it can do nothing**: the OpenObserve chart pins `spec.image` on both
-      # collectors. **The smaller `-k8s` distribution fails today**: the gateway's `traces` pipeline uses
-      # the contrib-only `servicegraph` connector, and nothing sends traces there. Retiring that pipeline
-      # is its own change.
+      # collectors. The smaller `-k8s` distribution failed on the contrib-only `servicegraph` connector,
+      # which chart 0.7.0 no longer wires into any pipeline; it is untested since.
       resources:
         requests:
           memory: "64Mi"
@@ -330,10 +329,10 @@ spec:
               - k8sattributes
               - batch
           metrics:
-            # The chart's three plus the node scrape above — restated, because Helm replaces lists.
+            # The chart's two plus the node scrape above — restated, because Helm replaces lists. No
+            # `servicegraph`: chart 0.7.0 dropped its exporter side, and the gateway refuses to start with it.
             receivers:
               - otlp
-              - servicegraph
               - prometheus
               - prometheus/nodes
             # **Restated in full because Helm replaces lists**; naming only the new processor would drop the
