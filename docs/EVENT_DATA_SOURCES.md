@@ -23,8 +23,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   184 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   138 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   137 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -476,12 +476,13 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name             | URL                                                | Type  | Priority | Comment                                                |
-| ---------------- | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
-| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
-| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
-| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
-| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
+| Name               | URL                                                | Type  | Priority | Comment                                                |
+| ------------------ | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
+| Little Stage Bar   | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
+| KuBiZ              | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
+| Villa Kuriosum     | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
+| Backsteinboot      | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
+| Kulturhaus Spandau | https://kulturhaus-spandau.de/programm/            | Other | Medium   | Theme REST API; 41 of 110 upcoming are concerts        |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -489,6 +490,12 @@ festivals, agencies and associations, or are recorded already.
 
 **The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
 table.
+
+**Kulturhaus Spandau moved here from Blocked on 2026-10-22 (#3721).** Its `/programm/` HTML holds only teasers. The
+theme's script reads the list from `/wp-json/eventmanager/v1/events`, which answers without a key. That endpoint returns
+250 events with date, time, place, prices, artists and categories, and 110 of them are upcoming. Import the `Konzert`,
+`Show` and `Comedy und Kabarett` rows. Drop the children's shows, talks, tours, workshops and exhibitions
+([EVENT_SCOPE.md](EVENT_SCOPE.md)). A title can carry a hidden `<p hidden …>` tag, which the parser must strip.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -732,7 +739,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | GöRE Comedy                       | https://www.eventbrite.com/cc/gore-shows-4785723/   | Comedy Club  | Eventbrite only; its terms likely forbid scraping         | Eventbrite API token       |
 | SaliGari Bar                      | —                                                   | Bar          | No own site; Facebook only; mostly comedy nights          | Site change / manual entry |
 | 800A Bar & Cabaret                | https://www.800aberlin.com/                         | Bar          | Two dated shows on the home page; the rest on Instagram   | More events                |
-| Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | Squarespace; one highlight, then weekly bingo and karaoke | More events                |
+| Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | One highlight; the list is a SociableKit Eventbrite embed | Eventbrite API token       |
 | SOLID                             | https://solid.stadtlandladen.org/events             | Bar          | Wix Events; talks, films and food nights, no music        | Scope decision             |
 | Zemin                             | https://www.zeminberlin.de/                         | Other        | Art space; JSON-LD has five events, last on 2026-09-11    | More events                |
 | Baketown                          | https://baketown.berlin/                            | Other        | No programme page; concerts announced on Instagram        | Site change / manual entry |
@@ -746,7 +753,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Blackmore's – Berlins Musikzimmer | https://www.blackmores-musikzimmer.de/de/programm   | Concert Hall | Scrapable Contao list, but classical recitals             | Scope decision             |
 | Sama32                            | https://radar.squat.net/en/node/1614                | Bar          | radar group; nights for association members only          | Scope decision             |
 | Revier Südost                     | https://www.reviersuedost.de/programm               | Open Air     | Wix Events; the open-air season ends on 2026-10-09        | Next season                |
-| Kulturhaus Spandau                | https://kulturhaus-spandau.de/programm/             | Other        | The browser fills the list; the HTML has teasers only     | Headless browser           |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                   | Bar          | Jimdo behind Cloudflare; 403 to every script              | Request headers            |
 | Block1                            | https://block1berlin.com/                           | Other        | SPA; events hard-coded in the bundle, one upcoming        | More events / re-check     |
 | Salon Wellenmaschine              | https://www.diewellenmaschine.com/                  | Other        | Event-agency site; a music series, no dated programme     | Site change                |
@@ -755,7 +761,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | M01                               | —                                                   | Techno Club  | No own site; RA only                                      | Site change / manual entry |
 | Loft 6                            | —                                                   | Other        | No own site; RA only                                      | Site change / manual entry |
 | 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve               | Site change / manual entry |
-| Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF returns 403 to the importer's client; curl gets 200   | Request headers            |
+| Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF 403s the importer's User-Agent; curl's UA gets 200    | Request headers            |
 | Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music | A regular programme        |
 | Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
 | Moda                              | https://moda.gmbh/                                  | Bar          | No programme page; events announced on Instagram          | Site change / manual entry |
