@@ -105,6 +105,19 @@ class MadameClaudeApiScraperTest {
     }
 
     @Test
+    fun `cuts the showcase format from the billed act and keeps the DJ`() {
+        concertArtists("343 Labs Live Electronic Showcase + Oberst Panizza (DJ-Set)").map { it.name to it.role } shouldContainExactly
+            listOf("343 Labs" to "HEADLINER", "Oberst Panizza" to "DJ")
+        concertArtists("Some Band Showcase").map { it.name } shouldContainExactly listOf("Some Band")
+    }
+
+    @Test
+    fun `mints no act from a title that is only the showcase format`() {
+        concertArtists("Live Electronic Showcase").shouldBeEmpty()
+        concertArtists("The Spotlight Lounge | Live Music Showcase").shouldBeEmpty()
+    }
+
+    @Test
     fun `types a music quiz as QUIZ with no artists and a free-entry flag`() {
         val quiz = event("madame_claude:music-quiz-154")
         quiz.eventType shouldBe "QUIZ"
