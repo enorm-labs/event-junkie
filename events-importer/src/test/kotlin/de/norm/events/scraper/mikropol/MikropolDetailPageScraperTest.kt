@@ -16,7 +16,8 @@ import java.time.LocalTime
  *
  * Uses real detail-page snapshots: a fully-populated sold-out concert (support,
  * description, image, ticket link), a cancelled show, a relocated show whose title prefix
- * is stripped, a plain concert with no support act, and a free night with a zero door price.
+ * is stripped, a plain concert with no support act, a free night with a zero door price, and a
+ * title that repeats its support act.
  */
 class MikropolDetailPageScraperTest {
     private val scraper = MikropolDetailPageScraper()
@@ -56,6 +57,27 @@ class MikropolDetailPageScraperTest {
                 ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
                 ScrapedArtist("noise of the voiceless", "SUPPORT")
             )
+    }
+
+    @Test
+    fun `cuts a support act the title repeats from the headliner`() {
+        val url = "https://mikropol-berlin.de/event/2026-11-14-tomas-tulpe/"
+        val event = parse("mikropol-detail-support-in-title.html", url).shouldNotBeNull()
+
+        event.title shouldBe "tomas tulpe DJANE SHEENA"
+        event.artists shouldBe
+            listOf(
+                ScrapedArtist("tomas tulpe", "HEADLINER", titleDerived = true),
+                ScrapedArtist("djane sheena", "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `keeps a title that is only the support act or holds it inside a word`() {
+        withoutTrailingSupport("DJANE SHEENA", "support: djane sheena") shouldBe "DJANE SHEENA"
+        withoutTrailingSupport("Superhans", "support: Hans") shouldBe "Superhans"
+        withoutTrailingSupport("Band A Band B", "support: Band B, Other") shouldBe "Band A"
+        withoutTrailingSupport("Band A", null) shouldBe "Band A"
     }
 
     @Test
