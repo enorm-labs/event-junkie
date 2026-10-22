@@ -6,8 +6,9 @@
 The model drafts date, start time, title and acts from each caption. A person approves every draft in the admin app. Nothing reads an image, and no
 caption reaches the public site.**
 
-Decided in [#2592](https://github.com/enorm-labs/event-junkie/issues/2592), option 1. **Not implemented yet.** The Meta app exists, and a test call on
-2026-10-15 read the posts of eight venue accounts.
+Decided in [#2592](https://github.com/enorm-labs/event-junkie/issues/2592), option 1. **Implemented.** Release v0.56.1 is the first release that
+switches on the pass on production. The pass runs daily at 04:30 UTC on staging and on production. The Meta app exists, and a test call on 2026-10-15 read
+the posts of eight venue accounts.
 
 **Rule 3 is superseded by [ADR-049](ADR-049_INSTAGRAM_DRAFTS_READ_THE_POST_IMAGES.md) (2026-10-16).** The model now reads the images of a post as well as
 its caption. No image is stored or shown.
