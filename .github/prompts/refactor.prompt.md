@@ -83,8 +83,9 @@ part of the work.** If you cannot run one, the honest move is to stop and say wh
 3. **Apply, and re-run the suite after each one.** The suite is the proof; running it once at the end tells you something broke and not what.
 4. **Read the diff as a reviewer would.** If a hunk cannot be explained as "same behaviour, better shape", it does not belong in this branch.
 5. **Verify.** [`/verify`](verify.prompt.md) in full — this touches code, so the backend gate, the frontend gate and the comment checks all apply. Coverage must
-   not fall. **CI compiles with `-PwarningsAsErrors` and local builds do not**, so a green local build can still fail `Build & Test`; a refactor that leaves an
-   unused import is the classic way to meet that.
+   not fall. **A green `./gradlew build` can still fail CI.** CI also runs `detektMain` and `detektTest`, which resolve types, and compiles with
+   `-PwarningsAsErrors`. A refactor that leaves an unused extension import is the classic case: the compiler and the plain `detekt` task pass it, and
+   `detektMain`'s `UnusedImport` fails it.
 6. **Ship** with [`/open-pr`](open-pr.prompt.md), and say in the body what the shape was before.
 
 ## Running unattended
