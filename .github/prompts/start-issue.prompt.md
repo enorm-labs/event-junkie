@@ -7,8 +7,9 @@ Usage: `/start-issue 313`
 ## Important
 
 - **Plan, don't implement.** This skill ends with a plan the user approves. It is the deliberate pause between "which issue" and "here is a diff".
-- **Never start from another feature branch.** `git checkout -b` from one stacks the new branch on the old, so the PR carries the parent's commits and its diff
-  is wider than the change. It merges cleanly and still says "into main", which is exactly why it gets missed. Always `git checkout main` first.
+- **Never start from another feature branch, and never in the main checkout.** A branch cut from a feature branch stacks on it, so the PR carries the
+  parent's commits and its diff is wider than the change. It merges cleanly and still says "into main", which is exactly why it gets missed. So branch from
+  `origin/main`, in a worktree of the session's own ([AGENTS.md](../../AGENTS.md) § Agent Instructions).
 - Claiming an issue and moving it to _In progress_ is visible on a public board. That's fine and expected — but don't do it for an issue the user is only asking
   about.
 
@@ -46,12 +47,14 @@ Usage: `/start-issue 313`
     scripts/issue-board.sh status <n> 'In progress'
     ```
 
-5. **Cut the branch from `main`.**
+5. **Cut the branch from `origin/main`, in a new worktree.**
 
     ```sh
-    git checkout main && git pull
-    git checkout -b <type>/<n>-<slug>     # fix/313-heimathafen-genre-taxonomy
+    git fetch origin
+    git worktree add ../event-junkie-<n> -b <type>/<n>-<slug> origin/main     # fix/313-heimathafen-genre-taxonomy
     ```
+
+    Then work in `../event-junkie-<n>`. `EnterWorktree` does the same, and names the branch `worktree-<name>`: rename it with `git branch -m`.
 
     The type comes from the issue's own type and area: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`. Including the issue number makes the branch
     self-documenting in `git branch` and in the PR list.

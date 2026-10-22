@@ -7,6 +7,17 @@ sessions, or two AI agents, on two importers at the same time.
 Background: [Claude Code: run parallel sessions with worktrees](https://code.claude.com/docs/en/worktrees) ·
 [Git worktrees for parallel AI coding](https://www.mindstudio.ai/blog/git-worktrees-parallel-ai-coding-agents).
 
+## The short version
+
+```bash
+git fetch origin && git worktree add ../event-junkie-<slug> -b <type>/<slug> origin/main
+export COMPOSE_PROJECT_NAME=event-junkie     # before any bootRun or dev-env.sh up in the worktree
+```
+
+- An agent changes files only in a worktree of its own. The main checkout belongs to the operator.
+- Files, the branch and `build/` are isolated. Postgres, the ports and the `ej.sh` forwards are shared.
+- Run the stack in one worktree at a time.
+
 ## What is and isn't isolated
 
 **Isolated:** source files, the branch, Gradle `build/` output.
@@ -18,6 +29,10 @@ single-tenant resources.
 another checkout started. `down` in any checkout stops them.
 
 So the rule is: **edit in parallel, run the stack one worktree at a time.**
+
+**An agent always works in a worktree of its own.** The main checkout belongs to the operator. An agent reads there and runs gates there. It does not
+switch the branch there and does not commit there. Another session that switches the main checkout's branch takes every uncommitted file with it.
+AGENTS.md § Agent Instructions has the rule.
 
 ## 1. Create a worktree
 

@@ -23,10 +23,11 @@ This is the standard "ship it" flow — the manual equivalent of
 
 3. **Create the branch.** Derive a short, descriptive branch name from the change using the Conventional Commits type and scope, e.g.
    `feat/events-venue-filter`, `fix/importer-null-price`, `docs/agents-pr-flow`.
-    - If currently on `main`: `git checkout -b <type>/<slug>`.
+    - If currently on `main` in the main checkout, which [AGENTS.md](../../AGENTS.md) § Agent Instructions keeps for the operator: cut the branch there
+      only when the operator made the change there or asks for it, `git checkout -b <type>/<slug>`.
     - If already on a non-`main` feature branch: assume it's the intended branch and reuse it (mention this). Only ask if the branch name clearly doesn't match
       the current change.
-    - **If the change is a _new_ one and you are still on the last one's branch, go back to `main` first.** `git checkout -b` from a feature branch stacks the
+    - **If the change is a _new_ one and you are still on the last one's branch, start a new worktree from `origin/main`.** `git checkout -b` from a feature branch stacks the
       new branch on the old one, so the PR carries the parent's commits too and its diff is wider than the change — a reviewer approves files you never meant
       to put in front of them. It is easy to miss precisely because the PR still says "into main" and merges cleanly. Recovery once the parent has merged is
       `git rebase --onto origin/main <parent-head>`, then force-push. Happened on 2026-08-08: #249 carried #248's whole frontend i18n change.
