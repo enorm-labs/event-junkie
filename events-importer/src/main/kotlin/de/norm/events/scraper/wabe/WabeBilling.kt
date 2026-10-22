@@ -21,12 +21,15 @@ internal class WabeBilling(
     val presenter: String?,
     private val priceLines: List<String>
 ) {
-    val boxOffice: BigDecimal? get() = lowestAmount(BOX_OFFICE)
-    val presale: BigDecimal? get() = lowestAmount(PRESALE)
+    val boxOffice: BigDecimal? get() = fullPrice(BOX_OFFICE)
+    val presale: BigDecimal? get() = fullPrice(PRESALE)
     val free: Boolean get() = detectFree(presale, boxOffice, priceLines.joinToString(" ").ifEmpty { null })
 
-    /** The cheapest tier of the line that names [label]: `15 € / 10 € (Abendkasse)` is a 10 € door. */
-    private fun lowestAmount(label: Regex): BigDecimal? = priceLines.filter { label.containsMatchIn(it) }.flatMap(::euroAmounts).minOrNull()
+    /**
+     * The first amount of the line that names [label]. The amounts after it are concessions, which the
+     * footer's `Ermäßigungsberechtigung` link defines: `20 € / 15 € (Abendkasse)` is a 20 € door (#2069, #3707).
+     */
+    private fun fullPrice(label: Regex): BigDecimal? = priceLines.filter { label.containsMatchIn(it) }.firstNotNullOfOrNull { euroAmounts(it).firstOrNull() }
 }
 
 /**
