@@ -8,7 +8,6 @@ import de.norm.events.discogs.DiscogsProperties
 import de.norm.events.discogs.DiscogsUnavailableException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Year
 import java.time.ZoneOffset
@@ -62,7 +61,13 @@ class DiscogsLookupService(
         deadline: TimeMark = LookupPass.noDeadline()
     ): LookupPass {
         if (!properties.active) return LookupPass.OFF
-        val candidates = candidatesFor(touchedArtistIds)
+        val candidates =
+            artistCandidateSlice(
+                touchedArtistIds,
+                limit = properties.maxPerRun,
+                touchedRows = artistRepository::findNeedingDiscogsLookup,
+                backfillRows = artistRepository::findUncheckedByDiscogs
+            )
         return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
     }
 
@@ -97,21 +102,6 @@ class DiscogsLookupService(
         }
         logger.info { "Stored $stored Discogs verdict(s) of ${candidates.size} owed" }
         return stored
-    }
-
-    /** The touched rows that owe a verdict, then the oldest unasked rows, bounded together. */
-    private suspend fun candidatesFor(touchedArtistIds: Set<Long>): List<ArtistEntity> {
-        val touched =
-            if (touchedArtistIds.isEmpty()) {
-                emptyList()
-            } else {
-                artistRepository.findNeedingDiscogsLookup(touchedArtistIds).toList().take(properties.maxPerRun)
-            }
-        val room = properties.maxPerRun - touched.size
-        if (room <= 0) return touched
-        val touchedIds = touched.mapTo(mutableSetOf()) { it.id }
-        val backlog = artistRepository.findUncheckedByDiscogs(room + touched.size).toList().filterNot { it.id in touchedIds }
-        return touched + backlog.take(room)
     }
 
     /** The search, then for an EXACT match its newest release (rule 5, #2054): one more request for about one row in six. */

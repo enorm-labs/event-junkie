@@ -8,7 +8,6 @@ import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.musicbrainz.MusicBrainzProperties
 import de.norm.events.musicbrainz.MusicBrainzUnavailableException
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import kotlin.time.TimeMark
 
@@ -49,7 +48,13 @@ class MusicBrainzLookupService(
         deadline: TimeMark = LookupPass.noDeadline()
     ): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
-        val candidates = candidatesFor(touchedArtistIds)
+        val candidates =
+            artistCandidateSlice(
+                touchedArtistIds,
+                limit = properties.maxPerRun,
+                touchedRows = artistRepository::findNeedingMusicBrainzLookup,
+                backfillRows = artistRepository::findUncheckedByMusicBrainz
+            )
         return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
     }
 
@@ -81,21 +86,6 @@ class MusicBrainzLookupService(
         }
         logger.info { "Stored $stored MusicBrainz verdict(s) of ${candidates.size} owed" }
         return stored
-    }
-
-    /** The touched rows that owe a verdict, then the oldest unchecked rows, bounded together. */
-    private suspend fun candidatesFor(touchedArtistIds: Set<Long>): List<ArtistEntity> {
-        val touched =
-            if (touchedArtistIds.isEmpty()) {
-                emptyList()
-            } else {
-                artistRepository.findNeedingMusicBrainzLookup(touchedArtistIds).toList().take(properties.maxPerRun)
-            }
-        val room = properties.maxPerRun - touched.size
-        if (room <= 0) return touched
-        val touchedIds = touched.mapTo(mutableSetOf()) { it.id }
-        val backlog = artistRepository.findUncheckedByMusicBrainz(room + touched.size).toList().filterNot { it.id in touchedIds }
-        return touched + backlog.take(room)
     }
 
     private suspend fun lookup(artist: ArtistEntity): Boolean {
