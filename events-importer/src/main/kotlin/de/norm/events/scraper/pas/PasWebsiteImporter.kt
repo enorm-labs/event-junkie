@@ -35,5 +35,6 @@ val PAS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.START_TIME, "most concerts print the doors and `music a bit later`, no start"),
         AcceptedLimitation(LimitedAspect.PRICE, "most events set no cost"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "most events set no ticket link of their own"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a series night bills only its name, and its acts are in the prose")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a series night bills only its name, and its acts are in the prose"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "most events set no organizer, and the house's own record is the venue")
     )

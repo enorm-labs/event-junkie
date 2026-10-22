@@ -668,6 +668,7 @@ says so.
 | `PAS`                  | `PRICE`            | most events set no cost                                                                                                                          | —     |
 | `PAS`                  | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PAS`                  | `ARTISTS`          | a series night bills only its name, and its acts are in the prose                                                                                | —     |
+| `PAS`                  | `PROMOTERS`        | most events set no organizer, and the house's own record is the venue                                                                            | —     |
 | `PASSIONSKIRCHE`       | `SUBTITLE`         | the site prints one title line per concert                                                                                                       | —     |
 | `PASSIONSKIRCHE`       | `GENRE`            | the site files no category and names no style                                                                                                    | —     |
 | `PASSIONSKIRCHE`       | `END_TIME`         | the site states a doors and a start time, not an end                                                                                             | —     |
