@@ -106,6 +106,10 @@ jobs:
       - name: Assert what cosign-sign.sh retries and refuses
         run: scripts/cosign-sign-test.sh
 
+      # Flux called everything Ready for five hours while a pod crash-looped, and `not ready` said "(nothing)" (#3762).
+      - name: Assert what ej.sh status lists as not ready
+        run: scripts/ej-status-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'

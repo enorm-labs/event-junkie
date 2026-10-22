@@ -6,7 +6,7 @@
 #   scripts/ej.sh up <staging|production>       # tunnel, handshake check, /etc/hosts check, then the forwards
 #   scripts/ej.sh down [staging|production] [--keep-tunnel]
 #                                               # every forward this script started, then the tunnel(s)
-#   scripts/ej.sh status                        # tunnels, forwards, both clusters, anything not Ready
+#   scripts/ej.sh status                        # tunnels, forwards, both clusters, any Flux object or pod not Ready
 #   scripts/ej.sh versions                      # what each cluster runs, and what Flux would resolve next
 #   scripts/ej.sh urls [staging|production]     # the local URLs the forwards serve
 #
@@ -476,6 +476,47 @@ cmd_urls() {
     done
 }
 
+# `status` lists pods as well as Flux objects: Flux calls a HelmRelease Ready once the chart renders,
+# so a crash-looping pod an operator made from it showed nowhere here for five hours (#3762). A pod is
+# listed when its phase is not Running or Succeeded, a container of a running pod is not ready, or a
+# container exited in the last hour.
+not_ready_pods() {
+    kubectl --context "$(context_of "$1")" --request-timeout=15s get pods -A -o json 2>/dev/null |
+        EJ_ENV="$1" python3 -c '
+import json, os, sys
+from datetime import datetime, timedelta, timezone
+try:
+    pods = json.load(sys.stdin)["items"]
+except ValueError:
+    sys.exit(0)
+hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+def recent(c):
+    end = c.get("lastState", {}).get("terminated", {}).get("finishedAt")
+    return bool(end) and datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) > hour_ago
+for pod in pods:
+    status = pod.get("status", {})
+    phase = status.get("phase", "Unknown")
+    main = status.get("containerStatuses", [])
+    every = status.get("initContainerStatuses", []) + main
+    unready = phase == "Running" and any(not c.get("ready") for c in main)
+    exited = [c for c in every if recent(c)]
+    if phase in ("Running", "Succeeded") and not unready and not exited:
+        continue
+    waiting = [c["state"]["waiting"].get("reason") for c in every if "waiting" in c.get("state", {})]
+    reason = next((r for r in waiting if r), None) or status.get("reason")
+    if not reason:
+        if phase not in ("Running", "Succeeded"):
+            reason = phase
+        elif unready:
+            reason = "not ready"
+        else:
+            reason = "exited " + (exited[0]["lastState"]["terminated"].get("reason") or "")
+    restarts = sum(c.get("restartCount", 0) for c in every)
+    meta = pod["metadata"]
+    print("  %s: pod %s/%s (%s, %d restarts)" % (os.environ["EJ_ENV"], meta["namespace"], meta["name"], reason.strip(), restarts))
+' || true
+}
+
 # Reports "not ready" rather than "all good": a listing empty when healthy cannot be mistaken for a
 # stale success. The Flux objects are parsed, not `flux get all`'s table. Unknown is reported beside
 # False — `--status-selector ready=false` omits it, and a stuck install reports it. Suspended
@@ -517,11 +558,14 @@ cmd_status() {
     echo "not ready:"
     local out any=0
     for env in "${ENVS[@]}"; do
-        out=$(kubectl --context "$(context_of "$env")" --request-timeout=15s get \
-            gitrepositories,ocirepositories,helmrepositories,helmcharts,helmreleases,kustomizations,alerts,providers \
-            -A --no-headers \
-            -o 'custom-columns=KIND:.kind,NAME:.metadata.name,SUSPEND:.spec.suspend,READY:.status.conditions[?(@.type=="Ready")].status' \
-            2>/dev/null | awk -v ctx="$env" '$3 != "true" && ($4 == "False" || $4 == "Unknown") { printf "  %s: %s/%s (%s)\n", ctx, $1, $2, $4 }')
+        out=$({
+            kubectl --context "$(context_of "$env")" --request-timeout=15s get \
+                gitrepositories,ocirepositories,helmrepositories,helmcharts,helmreleases,kustomizations,alerts,providers \
+                -A --no-headers \
+                -o 'custom-columns=KIND:.kind,NAME:.metadata.name,SUSPEND:.spec.suspend,READY:.status.conditions[?(@.type=="Ready")].status' \
+                2>/dev/null | awk -v ctx="$env" '$3 != "true" && ($4 == "False" || $4 == "Unknown") { printf "  %s: %s/%s (%s)\n", ctx, $1, $2, $4 }'
+            not_ready_pods "$env"
+        })
         if [ -n "$out" ]; then
             any=1
             printf '%s\n' "$out"
@@ -544,6 +588,9 @@ cmd_versions() {
     done
     write_status_js
 }
+
+# Sourced by scripts/ej-status-test.sh, which then calls the functions with stubs in place.
+[ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 
 case "${1:-}" in
     up)
