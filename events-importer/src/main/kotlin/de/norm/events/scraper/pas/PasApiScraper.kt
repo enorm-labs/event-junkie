@@ -35,6 +35,7 @@ import tools.jackson.databind.JsonNode
  * - **The title is the lineup**: sets split by `/`, players by commas and `&`. A series or label opens the title before a colon
  *   (`Music for Cosmos: RAFGAK`), and an ensemble opens a later set before its players (`RAFGAK: Bryan Eubanks & …`).
  *   A surname billed alone (`Tuerlinckx & Cusack`) takes the full name from a credit line (`Anaïs Tuerlinckx – piano`).
+ * - **A `Kick-off:` title names the occasion, not the acts** (`Kick-off: Jazzfest Community Week & Kiez-Session #1`), so it bills none.
  * - **The tags mix styles with formats**, so only the styles are the genre.
  */
 class PasApiScraper {
@@ -117,7 +118,7 @@ class PasApiScraper {
         title: String,
         descriptionHtml: String
     ): List<ScrapedArtist> {
-        if (!BILLING_SEPARATOR.containsMatchIn(title)) return emptyList()
+        if (!BILLING_SEPARATOR.containsMatchIn(title) || KICK_OFF.containsMatchIn(title)) return emptyList()
         val billing =
             title
                 .split(SET_SEPARATOR)
@@ -154,6 +155,9 @@ class PasApiScraper {
 
         /** A title that bills more than one act, or an act after a series or label. A bare name is a series night. */
         val BILLING_SEPARATOR = Regex("""[/,&+:]""")
+
+        /** A title that opens a festival or a season, `Kick-off: …`: what follows the colon is the occasion. */
+        val KICK_OFF = Regex("""^kick-?off\s*:""", RegexOption.IGNORE_CASE)
 
         val SET_SEPARATOR = Regex("""\s+/\s+""")
 

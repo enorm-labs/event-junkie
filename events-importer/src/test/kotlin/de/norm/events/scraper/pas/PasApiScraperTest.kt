@@ -136,6 +136,12 @@ class PasApiScraperTest {
     }
 
     @Test
+    fun `bills no act from a kick-off title`() {
+        variant("Kick-off: Jazzfest Community Week & Kiez-Session #1").shouldNotBeNull().artists.shouldBeEmpty()
+        variant("KICKOFF: Season Opening / Open Stage").shouldNotBeNull().artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `keeps a price range as a note and infers the type of an uncategorised event`() {
         val songs = event("slightly-imperfect-songs-of-ivor-cutler")
 
