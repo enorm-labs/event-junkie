@@ -2,9 +2,12 @@ package de.norm.events.dataquality
 
 import de.norm.events.importing.EventQualityFlag
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.OffsetDateTime
 
 /**
  * The report payload.
@@ -134,7 +137,13 @@ data class WorklistEntryResponse(
     @Schema(description = "Source slug, or 'manual'", example = "badehaus")
     val sourceSlug: String,
     @Schema(description = "What the latest import kept out of this event. Empty for most events")
-    val flags: List<WorklistFlagResponse>
+    val flags: List<WorklistFlagResponse>,
+    @Schema(
+        description = "The md5 of the values the check flagged. Send it to POST .../worklist/dismissals. Null when the issue cannot be dismissed",
+        example = "9e107d9d372bb6826bd81d3542a419d6",
+        nullable = true
+    )
+    val fingerprint: String?
 ) {
     companion object {
         fun fromRow(
@@ -149,7 +158,8 @@ data class WorklistEntryResponse(
                 startTime = row.startTime,
                 venueId = row.venueId,
                 sourceSlug = row.sourceSlug,
-                flags = flags.map { WorklistFlagResponse(kind = it.kind.name, value = it.value) }
+                flags = flags.map { WorklistFlagResponse(kind = it.kind.name, value = it.value) },
+                fingerprint = row.fingerprint
             )
     }
 }
@@ -184,6 +194,67 @@ data class WorklistResponse(
     val source: String?,
     @Schema(description = "Number of entries in this page", example = "20")
     val count: Int,
+    @Schema(
+        description = "Offending events the operator judged correct as they are, under the same source filter. They are not in entries",
+        example = "12"
+    )
+    val dismissed: Long,
     @Schema(description = "The offending events")
     val entries: List<WorklistEntryResponse>
 )
+
+@Schema(description = "A worklist row to judge correct as it is")
+data class WorklistDismissalRequest(
+    @field:NotBlank(message = "issue is required")
+    @Schema(description = "The metric, as GET /worklist names it", example = "titleDerivedSingletons", requiredMode = Schema.RequiredMode.REQUIRED)
+    val issue: String?,
+    @field:NotNull(message = "eventId is required")
+    @Schema(example = "418", requiredMode = Schema.RequiredMode.REQUIRED)
+    val eventId: Long?,
+    @field:NotBlank(message = "fingerprint is required")
+    @Schema(
+        description = "The entry's fingerprint, as GET /worklist returned it. A value that has changed since is a 409",
+        example = "9e107d9d372bb6826bd81d3542a419d6",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    val fingerprint: String?
+)
+
+@Schema(description = "A worklist row the operator judged correct as it is")
+data class WorklistDismissalResponse(
+    @Schema(description = "The id DELETE .../worklist/dismissals/{id} takes", example = "7")
+    val id: Long,
+    @Schema(example = "titleDerivedSingletons")
+    val issue: String,
+    @Schema(example = "418")
+    val eventId: Long,
+    @Schema(example = "badehaus-die-nerven-2026-09-12")
+    val eventSlug: String,
+    @Schema(example = "Die Nerven")
+    val eventTitle: String,
+    @Schema(example = "2026-09-12")
+    val eventDate: LocalDate,
+    @Schema(description = "Source slug, or 'manual'", example = "badehaus")
+    val sourceSlug: String,
+    @Schema(example = "operator")
+    val dismissedBy: String,
+    val dismissedAt: OffsetDateTime,
+    @Schema(description = "False once a flagged value changed or the event stopped failing the check. The row is then back on the worklist")
+    val active: Boolean
+) {
+    companion object {
+        fun from(row: WorklistDismissalRow): WorklistDismissalResponse =
+            WorklistDismissalResponse(
+                id = row.id,
+                issue = row.issue.key,
+                eventId = row.eventId,
+                eventSlug = row.eventSlug,
+                eventTitle = row.eventTitle,
+                eventDate = row.eventDate,
+                sourceSlug = row.sourceSlug,
+                dismissedBy = row.dismissedBy,
+                dismissedAt = row.dismissedAt,
+                active = row.active
+            )
+    }
+}

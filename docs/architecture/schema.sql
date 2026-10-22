@@ -882,6 +882,32 @@ CREATE TABLE events.venue_site_check (
 );
 
 --
+-- Name: worklist_dismissal; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.worklist_dismissal (
+    id bigint NOT NULL,
+    issue text NOT NULL,
+    event_id bigint NOT NULL,
+    fingerprint text NOT NULL,
+    dismissed_by text DEFAULT 'operator'::text NOT NULL,
+    dismissed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: worklist_dismissal_id_seq; Type: SEQUENCE; Schema: events; Owner: -
+--
+
+ALTER TABLE events.worklist_dismissal ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME events.worklist_dismissal_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: artist artist_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1176,6 +1202,20 @@ ALTER TABLE ONLY events.venue
     ADD CONSTRAINT venue_slug_key UNIQUE (slug);
 
 --
+-- Name: worklist_dismissal worklist_dismissal_issue_event_id_key; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.worklist_dismissal
+    ADD CONSTRAINT worklist_dismissal_issue_event_id_key UNIQUE (issue, event_id);
+
+--
+-- Name: worklist_dismissal worklist_dismissal_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.worklist_dismissal
+    ADD CONSTRAINT worklist_dismissal_pkey PRIMARY KEY (id);
+
+--
 -- Name: artist_comedian_unread_idx; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1410,6 +1450,12 @@ CREATE INDEX idx_venue_programme_families ON events.venue USING gin (programme_f
 CREATE INDEX idx_venue_venue_types ON events.venue USING gin (venue_types);
 
 --
+-- Name: idx_worklist_dismissal_event; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_worklist_dismissal_event ON events.worklist_dismissal USING btree (event_id);
+
+--
 -- Name: artist trg_artist_name_changed_at; Type: TRIGGER; Schema: events; Owner: -
 --
 
@@ -1631,3 +1677,10 @@ ALTER TABLE ONLY events.venue_character_tag
 
 ALTER TABLE ONLY events.venue_site_check
     ADD CONSTRAINT venue_site_check_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;
+
+--
+-- Name: worklist_dismissal worklist_dismissal_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.worklist_dismissal
+    ADD CONSTRAINT worklist_dismissal_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;

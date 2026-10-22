@@ -3,16 +3,22 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
+  dismissWorklistRow,
+  fetchDismissals,
   fetchWorklist,
   QUALITY_ISSUES,
   type QualityIssueKey,
+  undoDismissal,
   WORKLIST_LIMIT,
   type Worklist,
+  type WorklistDismissal,
+  type WorklistEntry,
 } from '@/api/dataQuality'
 import { type EventSource, fetchAllSources } from '@/api/eventSources'
 import EventEditor from '@/components/EventEditor.vue'
 import PagerButtons from '@/components/PagerButtons.vue'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -39,6 +45,10 @@ const sources = shallowRef<EventSource[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const editing = ref<number | null>(null)
+const busy = ref(false)
+const actionError = ref<string | null>(null)
+const showDismissed = ref(false)
+const dismissals = shallowRef<WorklistDismissal[]>([])
 
 const selectClass =
   'h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
@@ -72,6 +82,38 @@ async function load() {
 }
 
 watch([issue, source, offset], load, { immediate: true })
+
+async function loadDismissals() {
+  dismissals.value = showDismissed.value ? await fetchDismissals(issue.value) : []
+}
+
+watch([issue, showDismissed], () => loadDismissals().catch(failed))
+
+function failed(e: unknown) {
+  actionError.value = e instanceof Error ? e.message : String(e)
+}
+
+// Each action reloads the page, so the row and the dismissed count stay what the importer says.
+async function act(action: () => Promise<unknown>) {
+  busy.value = true
+  actionError.value = null
+  try {
+    await action()
+    await Promise.all([load(), loadDismissals()])
+  } catch (e) {
+    failed(e)
+  } finally {
+    busy.value = false
+  }
+}
+
+function dismiss(entry: WorklistEntry) {
+  return act(() => dismissWorklistRow(issue.value, entry))
+}
+
+function undo(dismissal: WorklistDismissal) {
+  return act(() => undoDismissal(dismissal.id))
+}
 
 onMounted(async () => {
   // The source list only fills the filter. Without it the worklist still works for every source.
@@ -128,6 +170,17 @@ const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)
         <template v-if="worklist?.count"> {{ offset + 1 }}–{{ offset + worklist.count }} </template>
         <template v-else>0</template>
       </p>
+      <Button
+        v-if="worklist?.dismissed || showDismissed"
+        :aria-expanded="showDismissed"
+        aria-controls="worklist-dismissals"
+        data-testid="dismissed-count"
+        size="sm"
+        variant="ghost"
+        @click="showDismissed = !showDismissed"
+      >
+        {{ worklist?.dismissed ?? 0 }} correct as is
+      </Button>
       <PagerButtons
         :has-next="hasNext"
         :has-previous="offset > 0"
@@ -138,6 +191,7 @@ const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)
     </div>
   </div>
 
+  <p v-if="actionError" class="text-destructive" role="alert">{{ actionError }}</p>
   <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
   <div v-else class="overflow-hidden rounded-lg border">
     <Table>
@@ -148,11 +202,12 @@ const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)
           <TableHead>Title</TableHead>
           <TableHead>Source</TableHead>
           <TableHead>Import flags</TableHead>
+          <TableHead><span class="sr-only">Actions</span></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         <TableRow v-if="loading">
-          <TableCell class="h-24 text-center text-muted-foreground" colspan="5">
+          <TableCell class="h-24 text-center text-muted-foreground" colspan="6">
             Loading the worklist…
           </TableCell>
         </TableRow>
@@ -182,14 +237,73 @@ const hasNext = computed(() => (worklist.value?.count ?? 0) >= WORKLIST_LIMIT)
                 </Badge>
               </span>
             </TableCell>
+            <TableCell class="text-right">
+              <Button
+                v-if="entry.fingerprint"
+                :aria-label="`Correct as is: ${entry.title}`"
+                :disabled="busy"
+                size="sm"
+                variant="outline"
+                @click="dismiss(entry)"
+              >
+                Correct as is
+              </Button>
+            </TableCell>
           </TableRow>
           <TableRow v-if="!worklist?.entries.length">
-            <TableCell class="h-24 text-center" colspan="5">No event fails this check.</TableCell>
+            <TableCell class="h-24 text-center" colspan="6">No event fails this check.</TableCell>
           </TableRow>
         </template>
       </TableBody>
     </Table>
   </div>
+
+  <section v-if="showDismissed" id="worklist-dismissals" class="flex flex-col gap-2">
+    <h2 class="text-sm font-medium">Correct as is</h2>
+    <p class="text-sm text-muted-foreground">
+      A row comes back by itself when a value the check flagged changes.
+    </p>
+    <div class="overflow-hidden rounded-lg border">
+      <Table>
+        <TableHeader class="bg-muted">
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Source</TableHead>
+            <TableHead>Dismissed</TableHead>
+            <TableHead><span class="sr-only">Actions</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-for="d in dismissals" :key="d.id" data-testid="dismissal">
+            <TableCell class="tabular-nums">{{ d.eventDate }}</TableCell>
+            <TableCell class="whitespace-normal">
+              {{ d.eventTitle }}
+              <Badge v-if="!d.active" variant="outline">changed, back on the list</Badge>
+            </TableCell>
+            <TableCell class="font-mono">{{ d.sourceSlug }}</TableCell>
+            <TableCell class="tabular-nums">{{ d.dismissedAt.slice(0, 10) }}</TableCell>
+            <TableCell class="text-right">
+              <Button
+                :aria-label="`Undo: ${d.eventTitle}`"
+                :disabled="busy"
+                size="sm"
+                variant="outline"
+                @click="undo(d)"
+              >
+                Undo
+              </Button>
+            </TableCell>
+          </TableRow>
+          <TableRow v-if="!dismissals.length">
+            <TableCell class="h-16 text-center" colspan="5"
+              >Nothing is dismissed for this check.</TableCell
+            >
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  </section>
 
   <EventEditor :event-id="editing" @close="editing = null" @saved="load" />
 </template>

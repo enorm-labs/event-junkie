@@ -40,6 +40,7 @@ class DataQualityReportLogger(
     private val snapshots: DataQualitySnapshotRepository,
     private val metrics: DataQualityMetrics,
     private val eventSources: EventSourceRepository,
+    private val dismissals: WorklistDismissalService,
     private val clock: Clock = Clock.systemUTC()
 ) : ApplicationRunner {
     private val logger = KotlinLogging.logger {}
@@ -144,6 +145,19 @@ class DataQualityReportLogger(
         } catch (e: Exception) {
             rethrowIfCancelled()
             logger.warn(e) { "Could not write or check the data-quality snapshot; the series may have a gap for today" }
+        }
+        purgePastDismissals()
+    }
+
+    /** Its own catch, so a failed snapshot still purges, and a failed purge leaves the snapshot alone. */
+    @Suppress("TooGenericExceptionCaught", "SuspendFunSwallowedCancellation") // Intentional: measurement must not be able to fail the application
+    private suspend fun purgePastDismissals() {
+        try {
+            val purged = dismissals.purgePastDismissals()
+            logger.info { "Deleted $purged worklist dismissal(s) of past events" }
+        } catch (e: Exception) {
+            rethrowIfCancelled()
+            logger.warn(e) { "Could not delete the worklist dismissals of past events; they hide nothing and the next run retries" }
         }
     }
 

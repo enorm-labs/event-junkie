@@ -171,6 +171,9 @@ The keystone. Everything else is judged against these numbers.
   growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. A steward acts on the worklist in
   `events-admin` ([ADR-045](adr/ADR-045_ADMIN_FRONTEND_IS_A_LOCAL_APP.md)). Its event editor saves through
   `PUT /api/admin/events/{id}`.
+  The operator can also mark a row correct as it is. The row then leaves the worklist until a value that the check
+  flagged changes ([ADR-052](adr/ADR-052_A_WORKLIST_DISMISSAL_ENDS_WHEN_THE_FLAGGED_VALUE_CHANGES.md)). The report
+  counts do not change.
 
 _Exit criterion:_ a per-source number for each headline metric, chartable in an external tool (§4). Pillars 3–4 are
 then judged by whether those numbers move.

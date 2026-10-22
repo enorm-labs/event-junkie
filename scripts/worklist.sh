@@ -7,8 +7,9 @@
 #   scripts/worklist.sh staging --out temp/worklist.json
 #   scripts/worklist.sh production --summary             # one line per issue and source, the largest first
 #
-# The JSON is one object per issue, {"issue": …, "count": …, "entries": [ …WorklistEntryResponse… ]}. --summary prints
-# `issue<TAB>source<TAB>count<TAB>flag kinds` instead, which is what /worklist reads first.
+# The JSON is one object per issue, {"issue": …, "count": …, "dismissed": …, "entries": [ …WorklistEntryResponse… ]}. --summary
+# prints `issue<TAB>source<TAB>count<TAB>flag kinds` instead, which is what /worklist reads first. The rows judged correct as they
+# are (ADR-052) are not entries: --summary gives each issue that has some one line with the source `(dismissed)`.
 #
 # Needs the forward scripts/ej.sh up <environment> opens (importer on 18081 for staging, 28081 for production);
 # EJ_IMPORTER_URL overrides it. Reads only. The issue keys come from the endpoint's own refusal of an unknown key, so a
@@ -78,15 +79,16 @@ for issue in $keys; do
         [ "$(jq '.entries | length' <<<"$page")" -lt "$PAGE" ] && break
         offset=$((offset + PAGE))
     done
-    jq -s --arg issue "$issue" '{issue: $issue, count: (map(.entries | length) | add), entries: (map(.entries) | add)}' \
+    jq -s --arg issue "$issue" '{issue: $issue, count: (map(.entries | length) | add), dismissed: (.[0].dismissed // 0), entries: (map(.entries) | add)}' \
         "$WORK/$issue.pages" >"$WORK/$issue.json"
 done
 
 result="$(jq -s '.' "$WORK"/*.json)"
 
 if [ "$SUMMARY" = true ]; then
-    jq -r '[.[] | .issue as $i | .entries | group_by(.sourceSlug)[]
-            | {issue: $i, source: .[0].sourceSlug, count: length, kinds: ([.[].flags[].kind] | unique | join(","))}]
+    jq -r '([.[] | .issue as $i | .entries | group_by(.sourceSlug)[]
+             | {issue: $i, source: .[0].sourceSlug, count: length, kinds: ([.[].flags[].kind] | unique | join(","))}]
+            + [.[] | select(.dismissed > 0) | {issue, source: "(dismissed)", count: .dismissed, kinds: ""}])
            | sort_by(-.count)[] | [.issue, .source, .count, (if .kinds == "" then "-" else .kinds end)] | @tsv' <<<"$result"
 elif [ -n "$OUT" ]; then
     printf '%s\n' "$result" >"$OUT"

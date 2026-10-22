@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { checkEvent, checkSource, fetchWorklist, QUALITY_ISSUES } from '../dataQuality'
+import {
+  checkEvent,
+  checkSource,
+  dismissWorklistRow,
+  fetchDismissals,
+  fetchWorklist,
+  QUALITY_ISSUES,
+  undoDismissal,
+} from '../dataQuality'
 
 function respond(body: unknown, status = 200) {
   return vi.fn<typeof fetch>(async () => new Response(JSON.stringify(body), { status }))
@@ -88,6 +96,48 @@ describe('the classification check', () => {
   ])('carries the detail of a 409 for %s', async (_, call) => {
     await expect(call()).rejects.toThrow(
       /HTTP 409: The event-classification check is off: set app.data-quality.classification.enabled and a key$/,
+    )
+  })
+})
+
+describe('worklist dismissals', () => {
+  it('posts the issue, the event and the fingerprint the page showed', async () => {
+    const fetchFn = respond({ id: 7 }, 201)
+
+    await dismissWorklistRow('missingGenre', { id: 418, fingerprint: 'abc' }, fetchFn)
+
+    expect(fetchFn).toHaveBeenCalledExactlyOnceWith(
+      '/api/admin/data-quality/worklist/dismissals',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ issue: 'missingGenre', eventId: 418, fingerprint: 'abc' }),
+      }),
+    )
+  })
+
+  it('carries the detail of a 409 for a row that changed', async () => {
+    const fetchFn = respond(
+      { detail: 'Event 418 changed since the missingGenre worklist was read' },
+      409,
+    )
+
+    await expect(
+      dismissWorklistRow('missingGenre', { id: 418, fingerprint: 'abc' }, fetchFn),
+    ).rejects.toThrow(/HTTP 409: Event 418 changed/)
+  })
+
+  it('lists one issue and undoes by id', async () => {
+    const list = respond([])
+    await fetchDismissals('flaggedAtImport', list)
+    expect(String(list.mock.calls[0]?.[0])).toBe(
+      '/api/admin/data-quality/worklist/dismissals?issue=flaggedAtImport',
+    )
+
+    const undo = vi.fn<typeof fetch>(async () => new Response(null, { status: 204 }))
+    await undoDismissal(7, undo)
+    expect(undo).toHaveBeenCalledExactlyOnceWith(
+      '/api/admin/data-quality/worklist/dismissals/7',
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 })

@@ -2,6 +2,7 @@
   "issue": "concertsWithoutArtist",
   "source": null,
   "count": 7,
+  "dismissed": 2,
   "entries": [
     {
       "id": 2864,
@@ -16,7 +17,8 @@
           "kind": "NON_GENRE_TOKEN",
           "value": "Bingo"
         }
-      ]
+      ],
+      "fingerprint": "5ecb05896dde21842c500996bcc311c0"
     },
     {
       "id": 1555,
@@ -31,7 +33,8 @@
           "kind": "NON_ARTIST_NAME",
           "value": "Support: tba"
         }
-      ]
+      ],
+      "fingerprint": "40d9a2c8861b0a0ad614f7a83beceafb"
     },
     {
       "id": 711,
@@ -41,7 +44,8 @@
       "startTime": "20:00:00",
       "venueId": 35,
       "sourceSlug": "huxleys-neue-welt",
-      "flags": []
+      "flags": [],
+      "fingerprint": "4c08517eb5fb97b0e860b2e0b82d5f05"
     },
     {
       "id": 2200,
@@ -51,7 +55,8 @@
       "startTime": "19:40:00",
       "venueId": 43,
       "sourceSlug": "lido",
-      "flags": []
+      "flags": [],
+      "fingerprint": "c65e672b4e4a94a75100bc15e76ce7aa"
     },
     {
       "id": 2198,
@@ -61,7 +66,8 @@
       "startTime": "20:00:00",
       "venueId": 43,
       "sourceSlug": "lido",
-      "flags": []
+      "flags": [],
+      "fingerprint": "e88fa8d9f5a0833a00b379d25cc36160"
     },
     {
       "id": 364,
@@ -71,7 +77,8 @@
       "startTime": "19:30:00",
       "venueId": 25,
       "sourceSlug": "frannz-club",
-      "flags": []
+      "flags": [],
+      "fingerprint": "fe1675056fb642e9a2532abeb8428889"
     },
     {
       "id": 4546,
@@ -81,7 +88,8 @@
       "startTime": "18:30:00",
       "venueId": 12,
       "sourceSlug": "cassiopeia",
-      "flags": []
+      "flags": [],
+      "fingerprint": "f3f97de67c80480904f958df15b8a57b"
     }
   ]
 }
