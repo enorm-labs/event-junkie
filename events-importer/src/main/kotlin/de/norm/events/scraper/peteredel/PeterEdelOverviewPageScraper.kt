@@ -17,6 +17,7 @@ import de.norm.events.scraper.dashedQuotedShowActs
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
+import de.norm.events.scraper.knownSoloPerformer
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseLabelledPrices
@@ -422,8 +423,8 @@ class PeterEdelOverviewPageScraper {
                 ?: EventType.OTHER.name
 
         /**
-         * The acts a support billing confirms, else the act before a quoted show (`FIL - "Lieder of the world"`).
-         * A party's title names the night, so a quoted show there confirms no act.
+         * The acts a support billing confirms, else the act before a quoted show (`FIL - "Lieder of the world"`),
+         * else a [knownSoloPerformer] (`FIL - MIT NEUER SHOW`). A party's title names the night, so neither confirms an act there.
          */
         fun actsOf(
             title: String,
@@ -431,7 +432,7 @@ class PeterEdelOverviewPageScraper {
             eventType: String
         ): List<ScrapedArtist> =
             buildArtistList(title, support).ifEmpty {
-                dashedQuotedShowActs(title).takeUnless { eventType == EventType.PARTY.name }.orEmpty()
+                if (eventType == EventType.PARTY.name) emptyList() else dashedQuotedShowActs(title).ifEmpty { knownSoloPerformer(title) }
             }
     }
 }

@@ -918,7 +918,7 @@ says so.
 | `UBER_EATS_MUSIC_HALL` | `PRICE`            | the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none                                         | —     |
 | `UBER_EATS_MUSIC_HALL` | `GENRE`            | the platform files events only as Konzert, Comedy, Show or Sport, never a genre                                                                  | —     |
 | `UBER_EATS_MUSIC_HALL` | `PROMOTERS`        | the arena page names no promoter                                                                                                                 | —     |
-| `UFA_FABRIK`           | `PAGINATION`       | the calendar is one page per month, and only this month and the next are read                                                                    | —     |
+| `UFA_FABRIK`           | `PAGINATION`       | the calendar is one page per month, and only this month and the next two are read                                                                | —     |
 | `UFA_FABRIK`           | `DOORS_TIME`       | the house publishes one time per show                                                                                                            | —     |
 | `UFA_FABRIK`           | `PROMOTERS`        | the house names no promoter                                                                                                                      | —     |
 | `UFA_FABRIK`           | `GENRE`            | the genre label names a format (Comedy, Kabarett, Varieté) on most shows                                                                         | —     |

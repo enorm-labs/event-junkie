@@ -2544,6 +2544,17 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Der Kirschgarten", null, "SHOW", description = "Tschechows Der Kirschgarten in neuer Regie.").shouldBeEmpty()
     }
 
+    @Test
+    fun `knownSoloPerformer bills a pinned one-word name at the head of a title and nothing else`() {
+        knownSoloPerformer("FIL - MIT NEUER SHOW").map { it.name } shouldBe listOf("FIL")
+        knownSoloPerformer("FIL'S TESTSHOWS").map { it.name } shouldBe listOf("FIL")
+        knownSoloPerformer("FIL").map { it.name } shouldBe listOf("FIL")
+        knownSoloPerformer("Hamlet – Ein Abend").shouldBeEmpty()
+        knownSoloPerformer("Filow - Keine Tour macht arm").shouldBeEmpty()
+        // Through the shared builder, as Mehringhof hands it `Fil mit Lieder of the World` with the `mit` made a dash.
+        buildArtistsForEventType("Fil – Lieder of the World (Neues Programm)", null, "COMEDY").map { it.name } shouldBe listOf("Fil")
+    }
+
     // #2637 — an ice show's title names a production, whatever type the venue gives it.
     @Test
     fun `buildArtistsForEventType reads no act off an ice show's title`() {
