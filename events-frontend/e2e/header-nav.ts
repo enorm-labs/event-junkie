@@ -20,7 +20,7 @@ export async function sectionLink(
 }
 
 /**
- * One option in the header's display settings (#2568): Theme (Light, Dark) or Events (Posters, Compact). The same
+ * One option in the header's display settings (#2568): Theme (Light, Dark, System) or Events (Posters, Compact). The same
  * button at every width; the popover is opened first unless it already is.
  */
 export async function displaySetting(page: Page, group: string, option: string): Promise<Locator> {

@@ -8,7 +8,7 @@
 #     --base <ref>           before side (default origin/main)
 #     --tree <dir>           after side: a checkout of the branch (default this one)
 #     --widths 390,1280      viewport widths; a width under 768 is a phone
-#     --themes light,dark    dark is what a first visit sees
+#     --themes light,dark    each stored as a choice; a first visit follows the OS
 #     --views poster         poster, compact or both: the events list's view setting
 #     --click <selector>     click the first match before the shot, to open a menu or a popover
 #     --scroll <selector>    scroll the first match to the middle of the frame before the shot

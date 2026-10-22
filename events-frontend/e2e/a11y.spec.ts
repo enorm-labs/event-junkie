@@ -70,7 +70,7 @@ for (const path of staticRoutes) {
 }
 
 test('both themes pass contrast, not just the default', async ({ page }) => {
-  // New visitors get dark; the display settings are the only way into light, a separate set of
+  // The suite runs on a dark OS; the display settings are the way into light, a separate set of
   // tokens no other test exercises for contrast.
   await page.goto('/about')
   await (await displaySetting(page, 'Theme', 'Light')).click()

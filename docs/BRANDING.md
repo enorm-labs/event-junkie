@@ -379,12 +379,11 @@ not in tension with a rubber stamp; it is what rubber stamps have been inked wit
 modes for a hue shift of roughly 55°. **Worth trying rather than deciding** (a #374 question): `ClubStamp` uses `currentColor`, so printing the stamp _in_ the
 accent on a secondary surface — the About page, the 404 — is a one-class change, and a violet stamp is authentic in a way a violet glow never was.
 
-### 5.2 Dark-mode-first
+### 5.2 Dark mode follows the visitor
 
-Nightlife skews dark. **Done:** dark mode is now the **default for first-time visitors**, set by the pre-paint script in `index.html` so there's no flash. An
-explicit light choice is remembered in
-`localStorage` and always wins on later visits. The default is unconditional (not gated on
-`prefers-color-scheme`) — a deliberate brand call; revisit if it proves user-hostile for light-OS users. The accent is tuned to glow on the dark surface.
+Nightlife skews dark, so the accent is tuned to glow on the dark surface. A first-time visitor gets the **System** theme: the site follows the operating
+system's `prefers-color-scheme`, and it follows a live switch too. The pre-paint script in `index.html` applies it, so there is no flash. A choice of Light or
+Dark is stored in `localStorage` and wins on later visits. Picking System again removes the stored choice (#3715).
 
 ### 5.3 Typography
 
@@ -724,7 +723,7 @@ different things and both should find this; the stack half is also what makes th
 
 - [x] Applied the **UV violet** accent to the tokens, AA-verified in both modes (§5.1).
 - [x] Prototyped the waveform wordmark and shipped it as the favicon + header lockup (§4).
-- [x] Dark mode is the default for new visitors (§5.2).
+- [x] New visitors get the theme their operating system asks for (§5.2).
 - [x] Self-hosted Geist via `@fontsource-variable/geist`, so it actually renders with no external request (§5.3).
 - [x] Decided the display/hero type face question: **stay all-Geist**, and make that true by pinning the mono to Geist Mono (§5.3, #377).
 - [x] Add an `apple-touch-icon` PNG (iOS home screen doesn't render SVG favicons).

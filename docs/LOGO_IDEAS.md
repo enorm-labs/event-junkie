@@ -30,7 +30,7 @@ Not taste. Five things, four of them from §4 and §3 and one of them learned th
 | --- | ------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | 1   | **Legible at 16 px**      | §4 — favicon, tab icon, app icon                                                                        | Internal detail turns to mud. This kills more logos than every other line combined |
 | 2   | **One strong silhouette** | §4                                                                                                      | If it needs two inks or a fill to be recognisable, it is an illustration           |
-| 3   | **Monochrome-first**      | §4 — must invert cleanly, and dark is the default (§5.2)                                                | Colour is a highlight, never the thing that makes it readable                      |
+| 3   | **Monochrome-first**      | §4 — must invert cleanly, and both themes are common (§5.2)                                             | Colour is a highlight, never the thing that makes it readable                      |
 | 4   | **Uncrowded**             | §4a — the pulse mark was a single round-capped ECG stroke on a violet gradient, and so is SprintPulse's | A silhouette thousands of products already use is a collision waiting to be found  |
 | 5   | **Ours, not a genre's**   | §3 — playful, inclusive, never actually about drugs                                                     | A mark that could sit on any nightlife product is not doing brand work             |
 

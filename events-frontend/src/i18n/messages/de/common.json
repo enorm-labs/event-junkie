@@ -19,6 +19,7 @@
     "theme": "Farbschema",
     "light": "Hell",
     "dark": "Dunkel",
+    "system": "System",
     "events": "Events",
     "posters": "Poster",
     "compact": "Kompakt"
