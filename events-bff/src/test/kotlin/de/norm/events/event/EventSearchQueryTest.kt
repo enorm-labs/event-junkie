@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -15,10 +15,10 @@ class EventSearchQueryTest : BaseControllerTest() {
     fun `GET events treats a wildcard in the query as a letter`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "100% Live", "100-live", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "Goodlive", "goodlive", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "a_b", "a-b", LocalDate.now(ClockConfiguration.BERLIN))
-            insertEvent(venueId, "axb", "axb", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(venueId, "100% Live", "100-live", LocalDate.now(BERLIN))
+            insertEvent(venueId, "Goodlive", "goodlive", LocalDate.now(BERLIN))
+            insertEvent(venueId, "a_b", "a-b", LocalDate.now(BERLIN))
+            insertEvent(venueId, "axb", "axb", LocalDate.now(BERLIN))
 
             webTestClient
                 .get()

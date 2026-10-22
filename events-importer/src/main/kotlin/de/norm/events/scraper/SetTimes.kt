@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.BERLIN
 import de.norm.events.slug.SlugGenerator
 import java.time.Instant
 import java.time.LocalDate

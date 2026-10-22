@@ -1,8 +1,8 @@
 package de.norm.events.scraper.madameclaude
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult

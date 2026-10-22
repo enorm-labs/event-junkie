@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
@@ -9,7 +9,7 @@ import java.time.LocalDate
 
 /** `GET /events/{slug}`: a postponed event names its new date when exactly one row matches (#3093). */
 class EventPostponedToTest : BaseControllerTest() {
-    private val day: LocalDate = LocalDate.now(ClockConfiguration.BERLIN).plusDays(5)
+    private val day: LocalDate = LocalDate.now(BERLIN).plusDays(5)
 
     @Test
     fun `links the later scheduled night at the same venue that bills the same act`(): Unit =

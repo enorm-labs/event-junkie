@@ -1,6 +1,6 @@
 package de.norm.events.scraper.delphi
 
-import de.norm.events.scraper.BERLIN
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.blankToNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Comment

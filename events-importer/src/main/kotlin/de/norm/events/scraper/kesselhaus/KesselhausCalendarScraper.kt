@@ -1,8 +1,8 @@
 package de.norm.events.scraper.kesselhaus
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.LabelledPrices
 import de.norm.events.scraper.ScrapedArtist

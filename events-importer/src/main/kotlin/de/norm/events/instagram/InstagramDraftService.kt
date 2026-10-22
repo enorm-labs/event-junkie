@@ -1,11 +1,11 @@
 package de.norm.events.instagram
 
+import de.norm.events.common.BERLIN
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.LocalDate
-import java.time.ZoneId
 
 /** What one venue's read gave. */
 sealed interface VenueDraftResult {
@@ -143,8 +143,4 @@ class InstagramDraftService(
             EarlierJudgement.Rejected -> NewDraft(venue.id, post, DraftStatus.REJECTED, event, extractor.model)
             null -> NewDraft(venue.id, post, DraftStatus.PENDING, event, extractor.model)
         }
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-    }
 }

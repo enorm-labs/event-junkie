@@ -1,9 +1,9 @@
 package de.norm.events.scraper.humboldthain
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations

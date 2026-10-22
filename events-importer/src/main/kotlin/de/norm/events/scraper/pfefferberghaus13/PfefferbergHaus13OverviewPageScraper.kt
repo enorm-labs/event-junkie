@@ -1,6 +1,6 @@
 package de.norm.events.scraper.pfefferberghaus13
 
-import de.norm.events.scraper.BERLIN
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle

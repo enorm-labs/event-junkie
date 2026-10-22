@@ -1,10 +1,8 @@
 package de.norm.events.scraper
 
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
@@ -22,12 +20,6 @@ import java.util.Locale
  * [AbstractTwoPageWebsiteImporter] drops any event still carrying it after the merge.
  */
 val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
-
-/**
- * The wall clock every venue here programmes in: to read an epoch or offset-stamped instant as
- * the venue's local time, and to give a [Clock] the zone whose "today" decides a year-less date.
- */
-val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 
 /** `20261017`: a compact date in a row id, a data attribute or an iCalendar all-day `DATE` value. */
 val COMPACT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")

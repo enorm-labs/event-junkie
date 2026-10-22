@@ -1,6 +1,9 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.BERLIN
 import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
@@ -8,6 +11,19 @@ import java.time.format.DateTimeParseException
 // ("Einlass: 19:00"), behind a label on a line it shares with another time, or as the tail of an
 // ISO 8601 stamp. Every reader returns null for blank or unparseable input rather than throwing.
 // FOUR_DIGIT_CLOCK also writes a time back out. The date readers are in DateParsingExtensions.
+
+/**
+ * Reads an offset-stamped instant (`2026-10-17T18:00:00Z`, `…+02:00`) as the [BERLIN] wall clock,
+ * or null when blank or unparseable. The caller reports the unparseable value, as it knows the event.
+ */
+fun String?.parseOffsetToBerlin(): ZonedDateTime? =
+    blankToNull()?.let {
+        try {
+            OffsetDateTime.parse(it).atZoneSameInstant(BERLIN)
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
 
 /** Standard 24-hour time format (HH:mm) used by most Berlin venue websites. */
 private val HH_MM_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")

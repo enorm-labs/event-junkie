@@ -1,8 +1,8 @@
 package de.norm.events.importing
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.monsterronsons.MonsterRonsonsOverviewPageScraper
 import io.kotest.matchers.collections.shouldContain

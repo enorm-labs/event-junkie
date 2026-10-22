@@ -1,7 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -98,7 +98,7 @@ class PromoterControllerTest : BaseControllerTest() {
             val busy = insertPromoter("Trinity Music", "trinity-music")
             val spent = insertPromoter("Bygone Concerts", "bygone-concerts")
             val quiet = insertPromoter("Quiet Agency", "quiet-agency")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             linkPromoter(insertEvent(venue, "Tonight", "tonight", today), busy)
             linkPromoter(insertEvent(venue, "Next week", "next-week", today.plusDays(7)), busy)
             linkPromoter(insertEvent(venue, "In two days", "in-two-days", today.plusDays(2)), busy)
@@ -146,7 +146,7 @@ class PromoterControllerTest : BaseControllerTest() {
             val venue = insertVenue("Lido", "lido")
             val farAhead = insertPromoter("Far Ahead Concerts", "far-ahead-concerts")
             val busy = insertPromoter("Busy Agency", "busy-agency")
-            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val today = LocalDate.now(BERLIN)
             linkPromoter(insertEvent(venue, "Soon", "soon", today.plusDays(3)), farAhead)
             (40L..44L).forEach { linkPromoter(insertEvent(venue, "Later $it", "later-$it", today.plusDays(it)), farAhead) }
             listOf(1L, 10L, 29L).forEach { linkPromoter(insertEvent(venue, "Gig $it", "gig-$it", today.plusDays(it)), busy) }

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.bogen47
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * Unit tests for [LarkWebsiteImporter] and [FitzroyWebsiteImporter].
@@ -192,8 +192,4 @@ class Bogen47WebsiteImportersTest {
                 .shouldBeNull()
             urls.last() shouldStartWith "https://fitzroy-berlin.de/wp-json/wp/v2/media?include="
         }
-
-    private companion object {
-        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
-    }
 }

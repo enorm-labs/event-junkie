@@ -1,8 +1,8 @@
 package de.norm.events.scraper.bogen47
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist

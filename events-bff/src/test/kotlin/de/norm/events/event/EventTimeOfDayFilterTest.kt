@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import kotlinx.coroutines.runBlocking
@@ -15,7 +15,7 @@ import java.time.LocalTime
  * every slot it runs through; a row without one matches the slot of its start, else its doors time.
  */
 class EventTimeOfDayFilterTest : BaseControllerTest() {
-    private val day = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
+    private val day = LocalDate.now(BERLIN).plusDays(1)
 
     @BeforeEach
     fun seed(): Unit =

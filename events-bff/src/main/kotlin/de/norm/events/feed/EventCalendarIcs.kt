@@ -1,5 +1,6 @@
 package de.norm.events.feed
 
+import de.norm.events.common.BERLIN
 import de.norm.events.common.Site
 import de.norm.events.event.CalendarEvent
 import de.norm.events.event.EventStatus
@@ -8,7 +9,6 @@ import de.norm.events.event.EventType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -60,7 +60,6 @@ object EventCalendarIcs {
 
     private const val VENUE = "{venue}"
 
-    private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     private val UTC_STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
     private val DATE_STAMP: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
     private val UID_HOST = Site.URL.substringAfter("://")

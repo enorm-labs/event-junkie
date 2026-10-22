@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
@@ -11,7 +11,7 @@ import java.time.LocalDate
 
 /** The curated pick that leads the first page of `/events` (#1262), and the `featured` flag that marks it everywhere (#3065). */
 class EventLeadTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     @Test
     fun `the first page leads with the earliest featured event that matches`(): Unit =

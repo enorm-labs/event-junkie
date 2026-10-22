@@ -1,7 +1,6 @@
 package de.norm.events.common
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -100,7 +99,7 @@ class TextSearchQueryTest : BaseControllerTest() {
         runBlocking {
             val aeden = insertVenue("ÆDEN", "aeden")
             val astra = insertVenue("Astra", "astra")
-            val day = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
+            val day = LocalDate.now(BERLIN).plusDays(1)
             insertEvent(aeden, "Open Air", "open-air", day)
             insertEvent(astra, "Straßenfest", "strassenfest", day)
             insertEvent(astra, "Tour", "tour", day, subtitle = "with Kit Kat Band")

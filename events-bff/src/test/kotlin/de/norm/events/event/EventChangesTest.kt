@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -10,7 +10,7 @@ import java.time.OffsetDateTime
 
 /** `GET /events/{slug}` carries what moved on the event in the last 14 days, newest first (#2725). */
 class EventChangesTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
+    private val today: LocalDate = LocalDate.now(BERLIN)
 
     private suspend fun insertChange(
         eventId: Long,

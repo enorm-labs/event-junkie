@@ -1,8 +1,8 @@
 package de.norm.events.scraper.clubdervisionaere
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.NIGHT_ENDS
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist

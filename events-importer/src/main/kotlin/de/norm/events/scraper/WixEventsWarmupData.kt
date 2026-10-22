@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.WixEventsWarmupData.WIX_EVENTS_APP_DEF_ID
 import io.github.oshai.kotlinlogging.KotlinLogging

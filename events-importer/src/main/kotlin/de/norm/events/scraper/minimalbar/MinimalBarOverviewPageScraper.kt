@@ -1,8 +1,8 @@
 package de.norm.events.scraper.minimalbar
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist

@@ -1,7 +1,7 @@
 package de.norm.events.scraper.binuu
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull

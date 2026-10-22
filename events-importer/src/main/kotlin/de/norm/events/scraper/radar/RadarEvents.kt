@@ -1,17 +1,15 @@
 package de.norm.events.scraper.radar
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseOffsetToBerlin
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
-import java.time.OffsetDateTime
 import java.time.ZonedDateTime
-import java.time.format.DateTimeParseException
 
 // Shared reader for radar.squat.net's search API, `api/1.2/search/events.json?facets[group][]=<nid>`
 // (#2166). Squat and DIY venues post their own programme there as a radar group; each group is one
@@ -114,7 +112,7 @@ private fun parseRow(
         return null
     }
     val dateTime = row.path("date_time").firstOrNull()
-    val start = dateTime?.path("time_start")?.asString("").toBerlinTime()
+    val start = dateTime?.path("time_start")?.asString("").parseOffsetToBerlin()
     if (start == null) {
         logger.warn { "$venue radar row $nodeId has no parseable start, skipping" }
         return null
@@ -127,7 +125,7 @@ private fun parseRow(
             dateTime
                 ?.path("time_end")
                 ?.asString("")
-                .toBerlinTime()
+                .parseOffsetToBerlin()
                 ?.takeIf { it.isAfter(start) },
         description = htmlParagraphText(row.path("body").path("value").asString("")),
         url = url,
@@ -140,12 +138,3 @@ private fun parseRow(
         categories = row.path("category").mapNotNull { it.path("name").asString("").blankToNull() }
     )
 }
-
-private fun String?.toBerlinTime(): ZonedDateTime? =
-    this.blankToNull()?.let {
-        try {
-            OffsetDateTime.parse(it).atZoneSameInstant(BERLIN)
-        } catch (_: DateTimeParseException) {
-            null
-        }
-    }

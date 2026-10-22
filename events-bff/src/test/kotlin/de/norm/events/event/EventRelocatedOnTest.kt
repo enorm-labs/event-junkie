@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
-import de.norm.events.ClockConfiguration
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
@@ -9,7 +9,7 @@ import java.time.LocalDate
 
 /** A relocated event carries the new date its note states, on the list item and the detail (#3613). */
 class EventRelocatedOnTest : BaseControllerTest() {
-    private val day: LocalDate = LocalDate.now(ClockConfiguration.BERLIN).plusDays(5)
+    private val day: LocalDate = LocalDate.now(BERLIN).plusDays(5)
     private val newDate: LocalDate = day.plusMonths(6)
 
     @Test

@@ -1,9 +1,9 @@
 package de.norm.events.scraper.zenner
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
@@ -20,6 +20,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseOffsetToBerlin
 import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,9 +28,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
-import java.time.OffsetDateTime
-import java.time.ZonedDateTime
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for Zenner's programme from the Gatsby page-data artefact
@@ -150,7 +148,7 @@ class ZennerApiScraper(
             return null
         }
 
-        val start = parseStart(node.eventDate)
+        val start = node.eventDate.parseOffsetToBerlin()
         if (start == null) {
             logger.warn { "Zenner event '$id' has no parseable eventDate '${node.eventDate}', skipping" }
             return null
@@ -186,20 +184,6 @@ class ZennerApiScraper(
             status = description?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name,
             artists = buildArtists(title, eventType)
         )
-    }
-
-    /**
-     * Converts the node's UTC `eventDate` to the [BERLIN] wall clock, or null. `OffsetDateTime`
-     * rather than `Instant` so an explicitly offset value (`…+02:00`) parses too.
-     */
-    private fun parseStart(raw: String?): ZonedDateTime? {
-        val value = raw.blankToNull() ?: return null
-        @Suppress("SwallowedException") // The unparseable value is reported by the caller, which knows the event id.
-        return try {
-            OffsetDateTime.parse(value).atZoneSameInstant(BERLIN)
-        } catch (e: DateTimeParseException) {
-            null
-        }
     }
 
     /**

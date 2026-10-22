@@ -1,7 +1,7 @@
 package de.norm.events.scraper.insel
 
+import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.COUNTRY_NAMES
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -21,6 +21,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.parseOffsetToBerlin
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -29,9 +30,6 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZonedDateTime
-import java.time.format.DateTimeParseException
 
 /**
  * Pure parser for Kulturhaus Insel Berlin's programme from a Gatsby static-query artefact
@@ -147,7 +145,7 @@ class InselApiScraper(
         }
         val title = cleanEventTitle(rawName.replace(SOLD_OUT_PREFIX, ""))
 
-        val start = parseInstant(node.time)
+        val start = node.time.parseOffsetToBerlin()
         if (start == null) {
             logger.warn { "Insel event '$title' has no parseable time '${node.time}', skipping" }
             return null
@@ -243,17 +241,6 @@ class InselApiScraper(
         title: String,
         cmsType: String?
     ): String = if (isClosedFunction(title, cmsType)) EventType.OTHER.name else inferConcertVenueType(title)
-
-    /** Converts the node's offset-stamped `time` to the venue's own [BERLIN] wall clock, or null when unparseable. */
-    private fun parseInstant(raw: String?): ZonedDateTime? {
-        val value = raw.blankToNull() ?: return null
-        @Suppress("SwallowedException") // The unparseable value is reported by the caller, which knows the event name.
-        return try {
-            OffsetDateTime.parse(value).atZoneSameInstant(BERLIN)
-        } catch (e: DateTimeParseException) {
-            null
-        }
-    }
 
     private companion object {
         /** The DatoCMS GraphQL collection holding the programme. */

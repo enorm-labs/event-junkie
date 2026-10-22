@@ -1,6 +1,6 @@
 package de.norm.events.scraper.arcanoa
 
-import de.norm.events.scraper.BERLIN
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist

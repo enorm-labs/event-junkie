@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.ArtistSummaryResponse
+import de.norm.events.common.BERLIN
 import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.festival.FestivalRepository
@@ -27,7 +28,6 @@ import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * Read service assembling the public event responses. List/calendar/today responses batch-load
@@ -354,9 +354,6 @@ class EventService(
 
         /** How many related events an event page shows: two rows of its two-column card grid. */
         private const val RELATED_LIMIT = 4
-
-        /** The zone a set time is shown in: the venue's clock, whatever the server's. */
-        private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 
         /**
          * How wide each image is drawn, in CSS pixels, which decides the derivatives offered: a card

@@ -1,5 +1,6 @@
 package de.norm.events
 
+import de.norm.events.common.BERLIN
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -19,7 +20,7 @@ class ResponseCachingIntegrationTest : BaseControllerTest() {
     fun `serves a response whose rows have since been deleted, until the cache is emptied`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(venueId, "Today Show", "today-show", LocalDate.now(BERLIN))
 
             expectTodayCount(1)
 
@@ -38,7 +39,7 @@ class ResponseCachingIntegrationTest : BaseControllerTest() {
             // The collision a cache keyed on one shared string would have. Both keys carry "astra";
             // only their types differ.
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "Astra Show", "astra", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(venueId, "Astra Show", "astra", LocalDate.now(BERLIN))
 
             webTestClient
                 .get()

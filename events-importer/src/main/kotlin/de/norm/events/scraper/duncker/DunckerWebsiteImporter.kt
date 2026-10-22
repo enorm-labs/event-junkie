@@ -1,8 +1,8 @@
 package de.norm.events.scraper.duncker
 
+import de.norm.events.common.BERLIN
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
