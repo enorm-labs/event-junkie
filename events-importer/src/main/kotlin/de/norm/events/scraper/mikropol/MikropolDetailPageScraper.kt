@@ -10,6 +10,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -100,7 +101,7 @@ class MikropolDetailPageScraper {
             soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus("$statusBadge $rawTitle"),
             statusNote = rawTitle,
-            artists = buildArtistsForEventType(title, support, eventType),
+            artists = buildArtistsForEventType(withoutTrailingSupport(title, support), support, eventType),
             promoters = parsePromoters(content)
         )
     }
@@ -122,3 +123,18 @@ class MikropolDetailPageScraper {
         private const val SOLD_OUT_TEXT = "ausverkauft"
     }
 }
+
+/**
+ * The title with a support act the support line names cut from its end. Mikropol repeats the
+ * support act in the title — `tomas tulpe DJANE SHEENA` over `support: djane sheena` — which
+ * would bill the whole title as one headliner (#3750). Only the artists read this; the stored
+ * title stays as the venue writes it.
+ */
+internal fun withoutTrailingSupport(
+    title: String,
+    support: String?
+): String =
+    extractSupportFromSubtitle(support).fold(title.trim()) { headliners, act ->
+        val cut = headliners.dropLast(act.length)
+        if (headliners.endsWith(act, ignoreCase = true) && cut.endsWith(' ') && cut.isNotBlank()) cut.trimEnd() else headliners
+    }

@@ -91,7 +91,7 @@ class MikropolOverviewPageScraper {
             soldOut = card.hasClass(SOLD_OUT_CLASS),
             status = parseEventStatus("${card.className()} $rawTitle"),
             statusNote = rawTitle,
-            artists = buildArtistsForEventType(title, support, eventType)
+            artists = buildArtistsForEventType(withoutTrailingSupport(title, support), support, eventType)
         )
     }
 
