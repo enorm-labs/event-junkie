@@ -12,7 +12,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitBody
+import org.springframework.web.reactive.function.client.awaitBodyOrNull
 import org.springframework.web.reactive.function.client.awaitExchange
 import java.io.ByteArrayInputStream
 import java.net.URI
@@ -71,8 +71,13 @@ class ImageFetcher(
                         }
 
                         else -> {
+                            // `awaitBody` throws a bare NoSuchElementException on an empty 2xx body: Alte Kantine
+                            // links a directory that answers 200 with no bytes (#3708).
+                            val bytes =
+                                response.awaitBodyOrNull<ByteArray>()?.takeIf { it.isNotEmpty() }
+                                    ?: return@awaitExchange ImageFetchResult.Rejected("empty body")
                             describe(
-                                bytes = response.awaitBody<ByteArray>(),
+                                bytes = bytes,
                                 etag = response.headers().header(HttpHeaders.ETAG).firstOrNull(),
                                 lastModified = response.headers().header(HttpHeaders.LAST_MODIFIED).firstOrNull()
                             )

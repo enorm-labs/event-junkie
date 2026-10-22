@@ -274,6 +274,38 @@ class ImageFetcherTest {
             fetcher().fetch(url()).shouldBeInstanceOf<ImageFetchResult.Rejected>()
         }
 
+    @Test
+    fun `refuses a 200 with no body as an empty body`() =
+        runTest {
+            // Chunked and empty, so no Content-Length either: `awaitBody` threw NoSuchElementException here,
+            // and the row read "fetch failed: NoSuchElementException" (#3708).
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(200)
+                    .setHeader("Content-Type", "image/jpeg")
+                    .chunkedBody(Buffer(), 1)
+                    .build()
+            )
+
+            val result = fetcher().fetch(url())
+
+            result.shouldBeInstanceOf<ImageFetchResult.Rejected>()
+            result.reason shouldBe "empty body"
+        }
+
+    @Test
+    fun `refuses a 200 with Content-Length 0 as an empty body`() =
+        runTest {
+            // What Alte Kantine's image directory answers: `HTTP/2 200`, `content-length: 0`, `text/html`.
+            server.enqueue(imageResponse(ByteArray(0), contentType = "text/html"))
+
+            val result = fetcher().fetch(url())
+
+            result.shouldBeInstanceOf<ImageFetchResult.Rejected>()
+            result.reason shouldBe "empty body"
+        }
+
     /** A minimal RIFF/WEBP header: enough for the sniffer, not a decodable image. */
     private fun webpHeaderBytes(): ByteArray =
         "RIFF".toByteArray(Charsets.US_ASCII) +
