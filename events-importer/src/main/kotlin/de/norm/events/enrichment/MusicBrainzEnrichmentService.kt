@@ -12,7 +12,6 @@ import de.norm.events.wikimedia.WikimediaClient
 import de.norm.events.wikimedia.WikimediaUnavailableException
 import de.norm.events.wikimedia.WikipediaExtract
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import kotlin.time.TimeMark
 
@@ -51,7 +50,13 @@ class MusicBrainzEnrichmentService(
         deadline: TimeMark = LookupPass.noDeadline()
     ): LookupPass {
         if (!properties.enabled) return LookupPass.OFF
-        val candidates = candidatesFor(touchedArtistIds)
+        val candidates =
+            artistCandidateSlice(
+                touchedArtistIds,
+                limit = properties.enrichMaxPerRun,
+                touchedRows = artistRepository::findNeedingMusicBrainzEnrichment,
+                backfillRows = artistRepository::findUnenrichedByMusicBrainz
+            )
         return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else enrich(candidates, deadline))
     }
 
@@ -91,21 +96,6 @@ class MusicBrainzEnrichmentService(
         } catch (e: WikimediaUnavailableException) {
             e
         }
-
-    private suspend fun candidatesFor(touchedArtistIds: Set<Long>): List<ArtistEntity> {
-        val limit = properties.enrichMaxPerRun
-        val touched =
-            if (touchedArtistIds.isEmpty()) {
-                emptyList()
-            } else {
-                artistRepository.findNeedingMusicBrainzEnrichment(touchedArtistIds).toList().take(limit)
-            }
-        val room = limit - touched.size
-        if (room <= 0) return touched
-        val touchedIds = touched.mapTo(mutableSetOf()) { it.id }
-        val backlog = artistRepository.findUnenrichedByMusicBrainz(room + touched.size).toList().filterNot { it.id in touchedIds }
-        return touched + backlog.take(room)
-    }
 
     private suspend fun enrich(artist: ArtistEntity) {
         val id = requireNotNull(artist.id) { "A candidate row is persisted" }
