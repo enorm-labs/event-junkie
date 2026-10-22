@@ -50,12 +50,13 @@ object PartyFeatureRules {
 
     /**
      * One word between "queer" and the night ("a queer, high-energy party", #3650). An article, a preposition or a performer
-     * starts another phrase ("queer artists at a party", "queeren Aspekten der Clubnacht"), so it is no such word.
+     * starts another phrase ("queer artists at a party", "queeren Aspekten der Clubnacht"), so it is no such word. A gender star
+     * ends a word, as in "a queer FLINTA* Halloween party".
      */
     private const val QUEER_GAP_WORD =
         "(?!(?:the|a|an|of|at|in|im|on|to|der|die|das|des|dem|den|ein|eine|einer|einem|einen|am|auf|zu|zur|zum|von|vom|bei|mit|" +
             "artists?|acts?|djs?|musicians?|performers?|bands?|künstler\\p{L}*|kuenstler\\p{L}*|musiker\\p{L}*)$E)" +
-            "[\\p{L}\\p{N}]+(?:-[\\p{L}\\p{N}]+)*"
+            "[\\p{L}\\p{N}]+(?:-[\\p{L}\\p{N}]+)*[*+]?"
 
     private const val AFTERHOUR_SOURCE = "${B}after[\\s-]?hours?$E"
 
