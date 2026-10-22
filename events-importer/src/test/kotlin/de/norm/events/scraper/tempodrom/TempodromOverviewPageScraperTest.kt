@@ -248,6 +248,30 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the band a tribute show names after performed by, not the show title`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/tempodrom/tempodrom-programme-performed-by.html")!!
+                .bufferedReader()
+                .readText()
+        val nights = scraper.scrape(Jsoup.parse(html, baseUrl))
+
+        nights.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 10, 22), LocalDate.of(2026, 10, 23))
+        nights.forEach {
+            it.title shouldBe "Nights on Broadway"
+            it.subtitle shouldBe "A Tribute to the BEE GEES performed by NIGHT FEVER"
+            it.eventType shouldBe "CONCERT"
+            it.artists shouldContainExactly listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+        }
+    }
+
+    @Test
+    fun `keeps a performed-by band whole and its styling as written`() {
+        scrapeOne("The Music of Abba", "A Tribute performed by Waterloo & The Dancing Queens").artists.map { it.name } shouldContainExactly
+            listOf("Waterloo & The Dancing Queens")
+    }
+
+    @Test
     fun `bills the act in front of sings and of a bracketed show`() {
         event("thomas_anders_sings_modern_talking_2027-05-16_20").artists.map { it.name } shouldContainExactly listOf("Thomas Anders")
         scrapeOne("SHADEN (أنا إمرأة تعبانة) Show", "// Berlin | Kleine Arena").artists.map { it.name } shouldContainExactly listOf("SHADEN")
