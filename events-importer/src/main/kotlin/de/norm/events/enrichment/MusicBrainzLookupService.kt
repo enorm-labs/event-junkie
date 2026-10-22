@@ -55,46 +55,23 @@ class MusicBrainzLookupService(
                 touchedRows = artistRepository::findNeedingMusicBrainzLookup,
                 backfillRows = artistRepository::findUncheckedByMusicBrainz
             )
-        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates, deadline))
-    }
-
-    /**
-     * One lookup per row. A row MusicBrainz will not answer for is counted and left for the next
-     * run; the run itself stops only after [STOP_AFTER_CONSECUTIVE_FAILURES] such rows in a row,
-     * which is an outage rather than a burst (#1610), or at [deadline].
-     */
-    private suspend fun storeVerdicts(
-        candidates: List<ArtistEntity>,
-        deadline: TimeMark
-    ): Int {
-        var stored = 0
-        var consecutiveFailures = 0
-        for ((done, artist) in candidates.withIndex()) {
-            if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES ||
-                LookupPass.budgetSpent(deadline, "MusicBrainz lookup", done, candidates.size)
-            ) {
-                break
-            }
+        return LookupPass.drain("MusicBrainz lookup", candidates, deadline) { artist ->
             try {
-                if (lookup(artist)) stored++
-                consecutiveFailures = 0
+                lookup(artist)
+                LookupPass.Row.Stored
             } catch (e: MusicBrainzUnavailableException) {
                 metrics.recordMusicBrainzLookup(STATE_ERROR)
-                consecutiveFailures++
-                logger.warn { "MusicBrainz unavailable for '${artist.name}' ($consecutiveFailures in a row): ${e.message}" }
+                LookupPass.Row.Failed(e)
             }
         }
-        logger.info { "Stored $stored MusicBrainz verdict(s) of ${candidates.size} owed" }
-        return stored
     }
 
-    private suspend fun lookup(artist: ArtistEntity): Boolean {
-        val id = artist.id ?: return false
+    private suspend fun lookup(artist: ArtistEntity) {
+        val id = requireNotNull(artist.id) { "A candidate row is persisted" }
         val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name))
         metrics.recordMusicBrainzLookup(verdict.match.name.lowercase())
         artistRepository.storeMusicBrainzVerdict(id, verdict.match.name, verdict.musicbrainzId)
         if (verdict.match == MusicBrainzMatch.NONE) reportHead(artist.name)
-        return true
     }
 
     /**
@@ -118,6 +95,5 @@ class MusicBrainzLookupService(
 
     private companion object {
         const val STATE_ERROR = "error"
-        const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
     }
 }
