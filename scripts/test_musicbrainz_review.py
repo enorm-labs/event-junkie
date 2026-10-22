@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Asserts that musicbrainz-review.py keeps billed AMBIGUOUS artists and writes only the MBID, by the narrow PUT.
+"""Asserts that musicbrainz-review.py keeps billed AMBIGUOUS artists, keeps a row whose lookup failed, and writes
+only the MBID, by the narrow PUT.
 
 Usage:
     python3 scripts/test_musicbrainz_review.py
 
 A plain script, not pytest: it counts its checks and exits non-zero on the first failed run.
-validate-python.yml runs it. Reaches no network and writes nothing.
+validate-python.yml runs it. Reaches no network, and writes only to a temporary directory.
 """
 
 import argparse
+import contextlib
+import csv
 import importlib.util
+import io
+import json
 import pathlib
 import sys
+import tempfile
+import types
 import urllib.error
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -32,6 +39,39 @@ def artist(artist_id, name, match="AMBIGUOUS", **fields):
 
 def event(slug, date, names):
     return {"slug": slug, "eventDate": date, "title": slug, "artistNames": names, "venue": {"name": "Venue"}}
+
+
+class StubMatcher:
+    """musicbrainz-match.py's three functions; `search` raises the error mapped to a name, as six 503s end in."""
+
+    def __init__(self, errors):
+        self.errors = errors
+
+    def fold(self, s):
+        return s.casefold()
+
+    def names_of(self, candidate):
+        yield candidate["name"]
+
+    def search(self, name):
+        if name in self.errors:
+            raise self.errors[name]
+        return [{"id": f"mbid-{name.lower()}", "name": name}]
+
+
+def collect_with(review, events, artists, errors, out):
+    """Runs `collect` against stubbed forwards and a stubbed matcher; returns the exit code and stderr."""
+    by_path = {"/api/events": events, "/api/admin/artists": artists}
+
+    def http(method, url, body=None):
+        path = url.split("//", 1)[1].split("/", 1)[1].split("?")[0]
+        return {"content": by_path["/" + path], "totalPages": 1}
+
+    review.http, review.matcher = http, lambda: StubMatcher(errors)
+    stderr = io.StringIO()
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+        code = review.collect(types.SimpleNamespace(env="staging", days=14, out=out))
+    return code, stderr.getvalue()
 
 
 def main() -> int:
@@ -103,6 +143,40 @@ def main() -> int:
 
     assert review.apply_rows([(1, "mbid-1")], get, put_not_stored, write=True) == 1, "an id not stored fails its row"
     checks += 1
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = pathlib.Path(tmp) / "review.tsv"
+        events = [event("x", "2026-10-10", ["Polaris", "Gore", "Cassius"])]
+        artists = [artist(1, "Polaris"), artist(2, "Gore"), artist(3, "Cassius")]
+        busy = urllib.error.HTTPError("https://musicbrainz.test", 503, "Service Temporarily Unavailable", None, None)
+        code, stderr = collect_with(review, events, artists, {"Gore": busy}, out)
+        assert code == review.EXIT_FAILED, "a failed lookup makes collect exit non-zero"
+        assert "skipped Gore: HTTP 503" in stderr and "1 of 3 lookups failed" in stderr, "stderr names the failure"
+        with out.open(newline="") as f:
+            tsv = {r["name"]: r for r in csv.DictReader(f, delimiter="\t")}
+        assert sorted(tsv) == ["Cassius", "Gore", "Polaris"], "the TSV holds every row, the failed one too"
+        assert tsv["Gore"]["candidates"] == "lookup failed: HTTP 503", "the failed row is marked in the TSV"
+        assert tsv["Cassius"]["candidates"] == "mbid-cassius", "the row after the failure is still looked up"
+        json_rows = {r["name"]: r for r in json.loads(out.with_suffix(".json").read_text())}
+        assert sorted(json_rows) == ["Cassius", "Gore", "Polaris"], "the JSON holds every row"
+        assert json_rows["Gore"]["candidates"] == [] and json_rows["Gore"]["lookup_failed"] == "HTTP 503", (
+            "the failed row has no candidates and is marked in the JSON"
+        )
+        checks += 7
+
+        with out.open(newline="") as f:
+            edited = list(csv.DictReader(f, delimiter="\t"))
+        for row in edited:
+            row["decision"], row["mbid"] = "PROPOSE", f"mbid-{row['name'].lower()}"
+        with out.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=review.COLUMNS, delimiter="\t")
+            writer.writeheader()
+            writer.writerows(edited)
+        assert sorted(i for i, _ in review.proposals(out)) == [1, 3], "apply never takes a row whose lookup failed"
+        checks += 1
+
+        assert collect_with(review, events, artists, {}, out)[0] == 0, "a run with no failed lookup exits 0"
+        checks += 1
 
     print(f"musicbrainz-review: {checks} checks passed")
     return 0
