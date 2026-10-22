@@ -5,6 +5,9 @@ import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.r2dbc.core.awaitSingle
+import org.springframework.r2dbc.core.awaitSingleOrNull
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 import java.time.LocalTime
@@ -48,14 +51,8 @@ class DataQualityWorklistRepository(
         limit: Int,
         offset: Int
     ): Flow<WorklistRow> {
-        val sourceFilter =
-            when (sourceSlug) {
-                null -> ""
-                MANUAL_BUCKET -> "AND e.event_source_id IS NULL"
-                else -> "AND s.slug = :sourceSlug"
-            }
-
-        var spec =
+        val fingerprint = issue.fingerprint?.let { "md5(($it)::text)" } ?: "NULL"
+        val spec =
             template
                 .databaseClient
                 .sql(
@@ -66,19 +63,19 @@ class DataQualityWorklistRepository(
                            e.event_date    AS event_date,
                            e.start_time    AS start_time,
                            e.venue_id      AS venue_id,
-                           s.slug          AS source_slug
+                           s.slug          AS source_slug,
+                           $fingerprint    AS fingerprint
                     FROM $EVENTS_SCHEMA.event e
                     LEFT JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
                     WHERE (${issue.predicate})
-                    $sourceFilter
+                    ${sourceFilter(sourceSlug)}
+                    AND NOT ${dismissed(issue)}
                     ORDER BY e.event_date DESC, e.id DESC
                     LIMIT :limit OFFSET :offset
                     """.trimIndent()
                 ).bind("limit", limit)
                 .bind("offset", offset)
-        if (sourceSlug != null && sourceSlug != MANUAL_BUCKET) {
-            spec = spec.bind("sourceSlug", sourceSlug)
-        }
+                .bindIssueAndSource(issue, sourceSlug)
 
         return spec
             .map { row, _ ->
@@ -89,10 +86,72 @@ class DataQualityWorklistRepository(
                     eventDate = row.required("event_date", LocalDate::class.java),
                     startTime = row.get("start_time", LocalTime::class.java),
                     venueId = row.required("venue_id", Number::class.java).toLong(),
-                    sourceSlug = row.get("source_slug", String::class.java) ?: MANUAL_BUCKET
+                    sourceSlug = row.get("source_slug", String::class.java) ?: MANUAL_BUCKET,
+                    fingerprint = row.get("fingerprint", String::class.java)
                 )
             }.all()
             .asFlow()
+    }
+
+    /** The offenders a still-matching dismissal leaves out, under the same filter as [findOffenders]. */
+    suspend fun countDismissed(
+        issue: QualityIssue,
+        sourceSlug: String?
+    ): Long {
+        if (issue.fingerprint == null) return 0
+        return template
+            .databaseClient
+            .sql(
+                """
+                SELECT COUNT(*) AS dismissed
+                FROM $EVENTS_SCHEMA.event e
+                LEFT JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
+                WHERE (${issue.predicate})
+                ${sourceFilter(sourceSlug)}
+                AND ${dismissed(issue)}
+                """.trimIndent()
+            ).bindIssueAndSource(issue, sourceSlug)
+            .map { row, _ -> row.required("dismissed", Number::class.java).toLong() }
+            .awaitSingle()
+    }
+
+    /**
+     * The fingerprint of one event as [issue] judges it now, or `null` when the event does not fail it.
+     * A dismissal stores this value, never one a client sends.
+     */
+    suspend fun currentFingerprint(
+        issue: QualityIssue,
+        eventId: Long
+    ): String? {
+        val fingerprint = requireNotNull(issue.fingerprint) { "${issue.key} has no fingerprint" }
+        return template
+            .databaseClient
+            .sql("SELECT md5(($fingerprint)::text) AS fingerprint FROM $EVENTS_SCHEMA.event e WHERE e.id = :eventId AND (${issue.predicate})")
+            .bind("eventId", eventId)
+            .map { row, _ -> row.required("fingerprint", String::class.java) }
+            .awaitSingleOrNull()
+    }
+
+    private fun sourceFilter(sourceSlug: String?): String =
+        when (sourceSlug) {
+            null -> ""
+            MANUAL_BUCKET -> "AND e.event_source_id IS NULL"
+            else -> "AND s.slug = :sourceSlug"
+        }
+
+    /** True while a dismissal of [issue] still matches the event's flagged values. Always false for an issue with no fingerprint. */
+    private fun dismissed(issue: QualityIssue): String =
+        issue.fingerprint?.let {
+            "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.worklist_dismissal d " +
+                "WHERE d.issue = :issue AND d.event_id = e.id AND d.fingerprint = md5(($it)::text))"
+        } ?: "FALSE"
+
+    private fun DatabaseClient.GenericExecuteSpec.bindIssueAndSource(
+        issue: QualityIssue,
+        sourceSlug: String?
+    ): DatabaseClient.GenericExecuteSpec {
+        val bound = if (issue.fingerprint != null) bind("issue", issue.name) else this
+        return if (sourceSlug != null && sourceSlug != MANUAL_BUCKET) bound.bind("sourceSlug", sourceSlug) else bound
     }
 
     companion object {
@@ -112,7 +171,9 @@ data class WorklistRow(
     val eventDate: LocalDate,
     val startTime: LocalTime?,
     val venueId: Long,
-    val sourceSlug: String
+    val sourceSlug: String,
+    /** Null for an issue no person can dismiss. */
+    val fingerprint: String?
 )
 
 /**

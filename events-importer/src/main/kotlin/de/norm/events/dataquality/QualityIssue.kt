@@ -14,6 +14,16 @@ private const val TITLE_DERIVED_UNMATCHED_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_
 
 private const val FLAGGED_AT_IMPORT_PREDICATE = "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f WHERE f.event_id = e.id)"
 
+/** The title-derived acts of `e` with their MusicBrainz verdicts, in a stable order. */
+private const val TITLE_DERIVED_ARTISTS =
+    "(SELECT json_agg(json_build_array(a.name, a.musicbrainz_match) ORDER BY a.name, a.id) " +
+        "FROM $EVENTS_SCHEMA.event_artist ea JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id " +
+        "WHERE ea.event_id = e.id AND ea.title_derived)"
+
+private const val IMPORT_FLAGS =
+    "(SELECT json_agg(json_build_array(f.kind, f.value) ORDER BY f.kind, f.value) " +
+        "FROM $EVENTS_SCHEMA.event_quality_flag f WHERE f.event_id = e.id)"
+
 /**
  * The metrics this pillar measures, and the single place each one's definition lives.
  *
@@ -29,11 +39,16 @@ private const val FLAGGED_AT_IMPORT_PREDICATE = "EXISTS (SELECT 1 FROM $EVENTS_S
  *
  * The `dimension` is from `DATA_QUALITY_STRATEGY.md` §2.1, so a reader can group by what kind of
  * problem each one is rather than by which query produced it.
+ *
+ * The `fingerprint` lists the values the check judges, so a dismissal ends when one of them changes (ADR-052).
+ * It is interpolated on the same closed-enum terms as the predicate.
  */
 enum class QualityIssue(
     val dimension: Dimension,
     /** A boolean SQL expression over `event e`. See the class KDoc for why interpolating it is safe. */
-    val predicate: String
+    val predicate: String,
+    /** A `json` SQL expression over `event e`, or `null` when no person can judge a row correct as it is. */
+    val fingerprint: String?
 ) {
     /**
      * The ~40% gap, and the headline number for the whole pillar. A concert with no artist is an
@@ -41,17 +56,19 @@ enum class QualityIssue(
      */
     CONCERTS_WITHOUT_ARTIST(
         Dimension.COMPLETENESS,
-        "e.event_type = 'CONCERT' AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id)"
+        "e.event_type = 'CONCERT' AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id)",
+        "json_build_array(e.title, e.event_type)"
     ),
 
     /** `OTHER` is what the classifier falls back to, so a rising count is a classifier losing ground. */
-    EVENTS_TYPED_OTHER(Dimension.VALIDITY, "e.event_type = 'OTHER'"),
+    EVENTS_TYPED_OTHER(Dimension.VALIDITY, "e.event_type = 'OTHER'", "json_build_array(e.title, e.event_type)"),
 
-    MISSING_GENRE(Dimension.COMPLETENESS, "e.genre IS NULL OR e.genre = ''"),
+    MISSING_GENRE(Dimension.COMPLETENESS, "e.genre IS NULL OR e.genre = ''", "json_build_array(e.title, e.genre)"),
 
     MISSING_PROMOTER(
         Dimension.COMPLETENESS,
-        "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id)"
+        "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id)",
+        "json_build_array(e.title)"
     ),
 
     /**
@@ -62,10 +79,11 @@ enum class QualityIssue(
      */
     MISSING_PRICE(
         Dimension.COMPLETENESS,
-        "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL"
+        "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL",
+        "json_build_array(e.title, e.price_presale, e.price_box_office, e.free, e.price_note)"
     ),
 
-    MISSING_START_TIME(Dimension.COMPLETENESS, "e.start_time IS NULL"),
+    MISSING_START_TIME(Dimension.COMPLETENESS, "e.start_time IS NULL", "json_build_array(e.title, e.start_time)"),
 
     /**
      * Events whose source has never had its copyright position reviewed (#283).
@@ -87,7 +105,9 @@ enum class QualityIssue(
     UNREVIEWED_LICENCE(
         Dimension.COMPLETENESS,
         "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es " +
-            "WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL)"
+            "WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL)",
+        // Not dismissable: the review is work of ours, and only doing it clears the row.
+        null
     ),
 
     /**
@@ -96,20 +116,20 @@ enum class QualityIssue(
      * Nazis`, `DLTLLY`, `Sadtember`, `Vinyl Reduction` all matched it before their fixes — and also
      * of a real act on its first Berlin date, so the count is a queue to read, not a defect count.
      */
-    TITLE_DERIVED_SINGLETONS(Dimension.ACCURACY, TITLE_DERIVED_SINGLETON_PREDICATE),
+    TITLE_DERIVED_SINGLETONS(Dimension.ACCURACY, TITLE_DERIVED_SINGLETON_PREDICATE, "json_build_array(e.title, $TITLE_DERIVED_ARTISTS)"),
 
     /**
      * The same one-event, title-derived headliner, where MusicBrainz knows no artist of that name
      * (ADR-031) instead of the name matching the title. Shorter and denser than the name test.
      */
-    TITLE_DERIVED_UNMATCHED(Dimension.ACCURACY, TITLE_DERIVED_UNMATCHED_PREDICATE),
+    TITLE_DERIVED_UNMATCHED(Dimension.ACCURACY, TITLE_DERIVED_UNMATCHED_PREDICATE, "json_build_array($TITLE_DERIVED_ARTISTS)"),
 
     /**
      * Events the import's sync gate kept a value out of: an artist name it refused or held back, a
      * genre that repeats the title, or a genre word that names no genre (#320). The worklist entry
      * carries each flag's kind and value.
      */
-    FLAGGED_AT_IMPORT(Dimension.VALIDITY, FLAGGED_AT_IMPORT_PREDICATE);
+    FLAGGED_AT_IMPORT(Dimension.VALIDITY, FLAGGED_AT_IMPORT_PREDICATE, "json_build_array($IMPORT_FLAGS)");
 
     /** The JSON name, and the `?issue=` value: `concertsWithoutArtist`. */
     val key: String =

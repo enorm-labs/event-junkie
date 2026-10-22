@@ -7,6 +7,8 @@ import de.norm.events.dataquality.EventClassificationDisabledException
 import de.norm.events.dataquality.EventSuggestionAlreadyAcceptedException
 import de.norm.events.dataquality.EventSuggestionAlreadyDismissedException
 import de.norm.events.dataquality.EventSuggestionNotFoundException
+import de.norm.events.dataquality.StaleWorklistRowException
+import de.norm.events.dataquality.WorklistDismissalNotFoundException
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.UnknownPinnedFieldException
 import de.norm.events.festival.DuplicateFestivalSlugException
@@ -55,7 +57,8 @@ class GlobalExceptionHandler {
         GenreTagNotFoundException::class,
         EventSuggestionNotFoundException::class,
         InstagramVenueNotFoundException::class,
-        InstagramDraftNotFoundException::class
+        InstagramDraftNotFoundException::class,
+        WorklistDismissalNotFoundException::class
     )
     fun handleNotFound(ex: RuntimeException): ProblemDetail {
         logger.debug { "Entity not found: ${ex.message}" }
@@ -89,7 +92,8 @@ class GlobalExceptionHandler {
         ClassificationRunInProgressException::class,
         InstagramDraftsDisabledException::class,
         InstagramRunInProgressException::class,
-        InstagramDraftAlreadyJudgedException::class
+        InstagramDraftAlreadyJudgedException::class,
+        StaleWorklistRowException::class
     )
     fun handleDuplicateSlug(ex: RuntimeException): ProblemDetail {
         logger.debug { "Duplicate slug or conflicting state: ${ex.message}" }

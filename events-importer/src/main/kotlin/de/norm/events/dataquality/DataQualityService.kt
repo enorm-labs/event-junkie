@@ -55,7 +55,13 @@ class DataQualityService(
         val rows = worklistRepository.findOffenders(issue, source, limit, offset).toList()
         val flagsByEventId = qualityFlagRepository.findByEventIds(rows.map { it.id }).groupBy { it.eventId }
         val entries = rows.map { WorklistEntryResponse.fromRow(it, flagsByEventId[it.id].orEmpty()) }
-        return WorklistResponse(issue = issue.key, source = source, count = entries.size, entries = entries)
+        return WorklistResponse(
+            issue = issue.key,
+            source = source,
+            count = entries.size,
+            dismissed = worklistRepository.countDismissed(issue, source),
+            entries = entries
+        )
     }
 
     /**

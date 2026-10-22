@@ -6,8 +6,9 @@ also runs alone.
 
 ## Important
 
-- **Invoking this command is permission to read, nothing more.** No issue filed, no event or artist written, no import triggered. Drafts and proposed
-  fixes go in the report. `/new-issue` files a draft, and Step 7 applies a fix, only for the numbers the operator names.
+- **Invoking this command is permission to read, nothing more.** No issue filed, no event or artist written, no row dismissed, no import triggered.
+  Drafts, proposed fixes and proposed dismissals go in the report. `/new-issue` files a draft, and Step 7 applies a fix or a dismissal, only for the
+  numbers the operator names.
 - **A worklist row is a lead, not evidence.** Re-measure every finding before you draft it: the event on the public API, the venue's own page, and the
   parser's code path. On 2026-10-06 three of eight report findings did not hold. A finding that does not hold is one line under "Not a defect".
 - **Never hand-fix what a parser fix would repair.** A hand edit pins the field (ADR-042), and the pin stays until someone removes it. The next import
@@ -37,8 +38,8 @@ scripts/worklist.sh <env> --out temp/worklist-$TAG.json
 scripts/worklist.sh <env> --summary > temp/worklist-$TAG.tsv
 ```
 
-The JSON holds one object per issue, with every entry. The summary holds one line per issue and source, the largest first: issue, source, count and
-the flag kinds. **One summary row is the unit of work.** With `--issue` or `--source`, keep only the matching rows and entries, with `jq` or `awk`. The
+The JSON holds one object per issue, with every entry and the `dismissed` count. The summary holds one line per issue and source, the largest first:
+issue, source, count and the flag kinds. **One summary row is the unit of work.** With `--issue` or `--source`, keep only the matching rows and entries, with `jq` or `awk`. The
 script always pulls the whole worklist.
 
 Compare with the newest earlier file of the same environment (`ls -t temp/worklist-*.json`). For each row, name the entries that are new since then and
@@ -50,15 +51,17 @@ as the venue published it.
 
 Read the entries in the JSON for each row, then give it one verdict:
 
-| Verdict                 | When                                                                                                         | What the report gets                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| **Parser defect**       | The venue publishes the value, and we drop or mangle it, on many rows                                        | DRAFTED: one 🔍 Importer / data defect per venue and cause          |
-| **Accepted limitation** | The venue never publishes the value                                                                          | CLEAR if the scraper's `VenueLimitations` declares it, else DRAFTED |
-| **Curated list**        | A `NON_GENRE_TOKEN`, a non-artist name or a party cue that belongs on a shared list                          | DRAFTED: one draft per list, with the values                        |
-| **Hand fix**            | One event the parser cannot be expected to get right: a typo on the venue's page, a one-off layout           | A numbered proposal (Step 5)                                        |
-| **Correct as it is**    | A title-derived singleton that is a real act, a party that is a party, a free event with no price to publish | CLEAR, one line with the count                                      |
+| Verdict                 | When                                                                                                            | What the report gets                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Parser defect**       | The venue publishes the value, and we drop or mangle it, on many rows                                           | DRAFTED: one 🔍 Importer / data defect per venue and cause          |
+| **Accepted limitation** | The venue never publishes the value                                                                             | CLEAR if the scraper's `VenueLimitations` declares it, else DRAFTED |
+| **Curated list**        | A `NON_GENRE_TOKEN`, a non-artist name or a party cue that belongs on a shared list                             | DRAFTED: one draft per list, with the values                        |
+| **Hand fix**            | One event the parser cannot be expected to get right: a typo on the venue's page, a one-off layout              | A numbered proposal (Step 5)                                        |
+| **Correct as it is**    | A title-derived singleton that is a real act, a party that is a party, a free event with no price to publish    | CLEAR, one line with the count, and a proposed dismissal (Step 5)   |
+| **Dismissed**           | The summary row's source is `(dismissed)`: the operator judged these rows correct, and no flagged value changed | CLEAR, one line with the count. Do not read the rows                |
 
-- **Read every entry** of a row that is DRAFTED or a hand fix. For a CLEAR or KNOWN row, read a sample of five.
+- **Read every entry** of a row that is DRAFTED or a hand fix. For a CLEAR or KNOWN row, read a sample of five. A dismissed row is not an entry, and a
+  dismissal ends by itself when a value the check flagged changes (ADR-052). So a row that comes back is new work, not a repeat.
 - **Duplicate check before every draft**: `gh issue list --state all --search '<venue or value>'`. An open issue makes the row KNOWN; name it. A closed
   issue whose fix has shipped, while the rows remain, is a regression: draft it, and link the closed issue.
 - **An accepted limitation** is declared in the venue's `*_LIMITATIONS` value, in the scraper package, and listed in `AcceptedLimitations.kt`. Read it
@@ -104,6 +107,14 @@ Each hand fix that is left gets one numbered line:
 The admin id, the public link, the field, the value stored now and the new value. A line-up fix names each artist and its role. Where the new value is an
 artist the database does not hold, say "new artist". Where it is an artist whose stored name is wrong, propose the rename of that artist instead.
 
+Each **Correct as it is** row gets one numbered dismissal, after the fixes, with the admin ids it covers:
+
+```text
+D2. titleDerivedSingletons · cassiopeia · 14 rows · real acts on a first Berlin date · #41873 #41880 …
+```
+
+A dismissal covers only the entries you judged. Leave out an entry you did not read, or one you doubt. `unreviewedLicence` has no dismissal.
+
 ## Step 6 — The report
 
 Write `temp/worklist-$TAG.md`, then `scripts/format-markdown.sh temp/worklist-$TAG.md`. Use this shape:
@@ -112,16 +123,17 @@ Write `temp/worklist-$TAG.md`, then `scripts/format-markdown.sh temp/worklist-$T
 2. **Since last time**: the rows that grew, shrank, appeared or went away, with the file they were compared with.
 3. **Rows by verdict**: one line per summary row, with its count, its verdict, and the issue for a KNOWN row. Group them by verdict.
 4. **Not a defect**: each finding that did not hold, with what the page or the code showed.
-5. **Proposed fixes**, numbered, as Step 5 says, and the tally from Step 4.
+5. **Proposed fixes and dismissals**, numbered, as Step 5 says, and the tally from Step 4.
 6. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict by
    `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing one
    rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
 7. **Applied**: empty until Step 7 runs.
 
-Then stop. Offer to file the drafts with `/new-issue` and to apply the proposed fixes. File none and apply none until the operator says which. Filing applies
+Then stop. Offer to file the drafts with `/new-issue` and to apply the proposed fixes and dismissals. File none and apply none until the operator says
+which. Filing applies
 each draft's `afk-ok` verdict as the label, sets the board fields in one `scripts/issue-board.sh batch`, and rewrites the heading to `(filed #N)`.
 
-## Step 7 — Apply the named fixes
+## Step 7 — Apply the named fixes and dismissals
 
 Apply only the numbers the operator names, one at a time, on the environment's importer:
 
@@ -170,4 +182,16 @@ Apply only the numbers the operator names, one at a time, on the environment's i
     The rename keeps the old slug as an alias of the artist (#3289). The next import resolves the old name through it, so the events that bill the
     artist keep billing it under the new name. A new artist, or another rename, cannot take that slug: the PUT answers 409.
 
-6. **Record each fix** under **Applied** in the report: its number, `applied`, and the pinned fields the PUT answered. A skipped fix gets its reason.
+6. **A dismissal**: post each admin id of the named `D` number with the `fingerprint` its entry has in the JSON of Step 1. Never read a new fingerprint
+   for it: a 409 means a value changed after you judged the row, so skip that id and say so.
+
+    ```sh
+    jq -c --arg issue <issue> --argjson id <id> '.[] | select(.issue == $issue) | .entries[] | select(.id == $id)
+          | {issue: $issue, eventId: .id, fingerprint}' temp/worklist-$TAG.json \
+      | curl -sf -X POST -H 'Content-Type: application/json' --data @- localhost:$PORT/api/admin/data-quality/worklist/dismissals | jq '{id, active}'
+    ```
+
+    The admin worklist lists the dismissals per issue, with an Undo. The API is `GET` and `DELETE` on the same path.
+
+7. **Record each fix and dismissal** under **Applied** in the report: its number, `applied`, and the pinned fields the PUT answered or the ids
+   dismissed. A skipped one gets its reason.

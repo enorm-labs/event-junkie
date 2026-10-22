@@ -206,3 +206,62 @@ Accept: application/json
         });
     }
 %}
+
+### ============================================================
+### Worklist dismissals (ADR-052): a row judged correct as it is
+### leaves GET /worklist until a value the check flagged changes.
+### POST takes the entry's fingerprint from GET /worklist; a value
+### that changed since is a 409.
+### ============================================================
+
+### Read one entry's fingerprint
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingGenre&limit=1
+Accept: application/json
+
+> {%
+    client.test("each entry carries a fingerprint, and the page a dismissed count", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(typeof response.body.dismissed === "number", "No dismissed count: " + JSON.stringify(response.body));
+    });
+    if (response.body.entries.length > 0) {
+        client.global.set("dismissEventId", response.body.entries[0].id);
+        client.global.set("dismissFingerprint", response.body.entries[0].fingerprint);
+    }
+%}
+
+### Judge that entry correct as it is
+POST {{importer-host}}/api/admin/data-quality/worklist/dismissals
+Content-Type: application/json
+Accept: application/json
+
+{
+  "issue": "missingGenre",
+  "eventId": {{dismissEventId}},
+  "fingerprint": "{{dismissFingerprint}}"
+}
+
+> {%
+    client.test("201", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+    client.global.set("dismissalId", response.body.id);
+%}
+
+### List the dismissals of one issue
+GET {{importer-host}}/api/admin/data-quality/worklist/dismissals?issue=missingGenre
+Accept: application/json
+
+> {%
+    client.test("200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Undo it
+DELETE {{importer-host}}/api/admin/data-quality/worklist/dismissals/{{dismissalId}}
+
+> {%
+    client.test("204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}

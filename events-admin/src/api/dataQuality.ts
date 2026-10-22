@@ -35,12 +35,16 @@ export interface WorklistEntry {
   venueId: number
   sourceSlug: string
   flags: WorklistFlag[]
+  /** What a dismissal is keyed to. `null` for an issue nobody can dismiss. */
+  fingerprint: string | null
 }
 
 export interface Worklist {
   issue: string
   source: string | null
   count: number
+  /** Offenders judged correct as they are, under the same filter. They are not in `entries`. */
+  dismissed: number
   entries: WorklistEntry[]
 }
 
@@ -71,6 +75,55 @@ export async function fetchWorklist(
     throw new Error(`GET /api/admin/data-quality/worklist: HTTP ${response.status}`)
   }
   return (await response.json()) as Worklist
+}
+
+/** A row judged correct as it is. It hides the row only while `active`: a changed value brings it back. */
+export interface WorklistDismissal {
+  id: number
+  issue: string
+  eventId: number
+  eventSlug: string
+  eventTitle: string
+  eventDate: string
+  sourceSlug: string
+  dismissedBy: string
+  dismissedAt: string
+  active: boolean
+}
+
+const DISMISSALS = '/api/admin/data-quality/worklist/dismissals'
+
+/** Judges [entry] correct as it is. A `409` means the row changed since the page was read. */
+export async function dismissWorklistRow(
+  issue: QualityIssueKey,
+  entry: Pick<WorklistEntry, 'id' | 'fingerprint'>,
+  fetchFn: typeof fetch = fetch,
+): Promise<WorklistDismissal> {
+  const response = await fetchFn(DISMISSALS, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue, eventId: entry.id, fingerprint: entry.fingerprint }),
+  })
+  await ensureOk(response, `POST ${DISMISSALS}`)
+  return (await response.json()) as WorklistDismissal
+}
+
+/** Every dismissal of [issue], the newest first. */
+export async function fetchDismissals(
+  issue: QualityIssueKey,
+  fetchFn: typeof fetch = fetch,
+): Promise<WorklistDismissal[]> {
+  const path = `${DISMISSALS}?${new URLSearchParams({ issue })}`
+  const response = await fetchFn(path, { headers: { Accept: 'application/json' } })
+  await ensureOk(response, `GET ${path}`)
+  return (await response.json()) as WorklistDismissal[]
+}
+
+/** Undoes a dismissal, so its row is back on the worklist. */
+export async function undoDismissal(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+  const path = `${DISMISSALS}/${id}`
+  const response = await fetchFn(path, { method: 'DELETE' })
+  await ensureOk(response, `DELETE ${path}`)
 }
 
 /** What one run of the event-classification check did. */

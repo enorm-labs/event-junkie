@@ -1,0 +1,38 @@
+[
+  {
+    "id": 9,
+    "issue": "concertsWithoutArtist",
+    "eventId": 2870,
+    "eventSlug": "2026-10-14-so36-sadtember",
+    "eventTitle": "Sadtember",
+    "eventDate": "2026-10-14",
+    "sourceSlug": "so36",
+    "dismissedBy": "operator",
+    "dismissedAt": "2026-10-12T09:12:00Z",
+    "active": true
+  },
+  {
+    "id": 8,
+    "issue": "concertsWithoutArtist",
+    "eventId": 2201,
+    "eventSlug": "2026-10-12-lido-vinyl-reduction",
+    "eventTitle": "Vinyl Reduction",
+    "eventDate": "2026-10-12",
+    "sourceSlug": "lido",
+    "dismissedBy": "operator",
+    "dismissedAt": "2026-10-11T18:40:00Z",
+    "active": true
+  },
+  {
+    "id": 7,
+    "issue": "concertsWithoutArtist",
+    "eventId": 1999,
+    "eventSlug": "2026-10-11-urban-spree-octoberfail",
+    "eventTitle": "Octoberfail",
+    "eventDate": "2026-10-11",
+    "sourceSlug": "urban-spree",
+    "dismissedBy": "operator",
+    "dismissedAt": "2026-10-09T15:03:00Z",
+    "active": false
+  }
+]

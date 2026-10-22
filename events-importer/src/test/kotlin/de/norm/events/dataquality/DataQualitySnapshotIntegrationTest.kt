@@ -51,10 +51,13 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var eventSources: EventSourceRepository
 
+    @Autowired
+    private lateinit var dismissals: WorklistDismissalService
+
     private val today = LocalDate.of(2026, 8, 19)
     private val clock = Clock.fixed(Instant.parse("2026-08-19T03:00:00Z"), ZoneOffset.UTC)
 
-    private fun logger(withMetrics: DataQualityMetrics = metrics) = DataQualityReportLogger(service, snapshots, withMetrics, eventSources, clock)
+    private fun logger(withMetrics: DataQualityMetrics = metrics) = DataQualityReportLogger(service, snapshots, withMetrics, eventSources, dismissals, clock)
 
     private fun captureLogs(block: suspend () -> Unit): List<ILoggingEvent> {
         val appender = ListAppender<ILoggingEvent>().apply { start() }
