@@ -18,8 +18,8 @@ newest handover, without working any issue.
 - **The handover file is the state.** Context is summarized during a long run, and a summary loses detail. After a compaction, read
   `temp/afk-handover-<date>.md` before doing anything else. It says which issues are done, parked and next.
 - **Merging is the user's, and so is auto-merge.** The merge guide proposes the next PR and prepares it; the user merges. See [The merge guide](#the-merge-guide).
-- **Two lanes.** The heavy lane runs one issue at a time, in this checkout: any issue whose gates need Gradle, `scripts/dev-env.sh` or
-  `/importer-smoke`. Those share ports, the dev database and the Gradle daemon, and parallel gates flake. The light lane runs up to three issues at once,
+- **Two lanes.** The heavy lane runs one issue at a time, in one worktree that every heavy issue reuses: any issue whose gates need Gradle,
+  `scripts/dev-env.sh` or `/importer-smoke`. AGENTS.md keeps branch work out of the main checkout. Those share ports, the dev database and the Gradle daemon, and parallel gates flake. The light lane runs up to three issues at once,
   each in its own worktree: docs, scripts, workflows, prompts and frontend. See [Lanes](#lanes).
 
 ## Steps
@@ -43,8 +43,9 @@ newest handover, without working any issue.
    same day, continue it.
 
 4. **Sort the queue into lanes**, then start one subagent per issue (`general-purpose`, `run_in_background`). A fresh context per issue keeps the main
-   session small. The main session holds only the queue and the handover. Give the subagent the issue number, the base to branch from, its lane, and
-   this brief:
+   session small. The main session holds only the queue and the handover. Before the first heavy issue, create the heavy lane's worktree once:
+   `git worktree add --detach ../event-junkie-afk-heavy origin/main`, then symlink `events-frontend/node_modules` into it as the light lane does. The
+   commit hook needs it. Give the subagent the issue number, the base to branch from, its lane, and this brief:
 
     > Work issue #N to a draft PR, unattended. The user is away and answers nothing.
     >
@@ -74,6 +75,10 @@ newest handover, without working any issue.
     > Decide reversible choices yourself: take the option that changes less, and write it under `## Decisions I made`. If the issue needs something
     > irreversible, a product or legal call, a cluster, or a Privacy & GDPR category from AGENTS.md, park it: open no PR. Leave the branch pushed if it holds
     > useful work. Never: merge, mark ready, auto-merge, close or comment on an issue, run tofu/flux/cluster commands, start another issue.
+    >
+    > Heavy lane: you are in `../event-junkie-afk-heavy`, and you are the only heavy agent. Run
+    > `export COMPOSE_PROJECT_NAME=event-junkie` before any `bootRun` or `scripts/dev-env.sh up`, or the worktree starts a second, empty Postgres.
+    > Run each gate on its own, never beside a Gradle task. Stop the dev stack with `scripts/dev-env.sh down` before you report.
     >
     > Light lane: you are in your own worktree. First run `ln -s <main checkout>/events-frontend/node_modules events-frontend/node_modules`. Run no
     > Gradle task, no `scripts/dev-env.sh`, no dev server and no Playwright suite. If the work turns out to need one, stop and report "heavy".
@@ -108,8 +113,7 @@ newest handover, without working any issue.
       and fails again; it needs a rebase after the fix merges.
 
 7. **End the run.**
-    - `git checkout --detach origin/main` so the checkout holds no branch of this run. Remove each light-lane worktree with `git worktree remove`; its
-      branch is pushed. Stop anything this run started: `scripts/dev-env.sh down`, and every
+    - Remove the heavy lane's worktree and each light-lane worktree with `git worktree remove`. Each branch is pushed. Stop anything this run started: `scripts/dev-env.sh down`, and every
       background watcher.
     - Write the handover's **Merge order** (see [The handover](#the-handover)), finish its summary, then run
       `scripts/format-markdown.sh temp/afk-handover-<date>.md`.
@@ -120,10 +124,10 @@ newest handover, without working any issue.
 
 Sort by the files the issue will change, from its body, its `area:*` labels and the code it names.
 
-| Lane  | Files                                                                                          | At once | Where             |
-| ----- | ---------------------------------------------------------------------------------------------- | ------- | ----------------- |
-| Heavy | `events-core/`, `events-bff/`, `events-importer/`, `detekt-rules/`, `*.gradle.kts`, migrations | 1       | This checkout     |
-| Light | `docs/`, `scripts/`, `.github/`, `events-frontend/`, `deploy/` rendering only, any `.md`       | 3       | One worktree each |
+| Lane  | Files                                                                                          | At once | Where               |
+| ----- | ---------------------------------------------------------------------------------------------- | ------- | ------------------- |
+| Heavy | `events-core/`, `events-bff/`, `events-importer/`, `detekt-rules/`, `*.gradle.kts`, migrations | 1       | One shared worktree |
+| Light | `docs/`, `scripts/`, `.github/`, `events-frontend/`, `deploy/` rendering only, any `.md`       | 3       | One worktree each   |
 
 - **When unsure, heavy.** A wrong heavy costs time. A wrong light can break another lane's gate.
 - **Two issues that change the same file run one after the other, in one lane.** Stack the second if it needs the first; otherwise wait for the first
