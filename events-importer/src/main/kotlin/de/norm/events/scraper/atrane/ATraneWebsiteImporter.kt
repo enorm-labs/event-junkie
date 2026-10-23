@@ -30,6 +30,7 @@ val A_TRANE_LIMITATIONS =
         EventSource.A_TRANE,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the end time is a calendar default, 23:50 on most nights"),
+        AcceptedLimitation(LimitedAspect.PRICE, "some nights print the price only in a day-of seats notice, in free prose and tiered by concession"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the site sells one price online and holds reserved seats at that price"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "tickets sell in a shop inside the venue's own event card"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the club presents every night itself"),

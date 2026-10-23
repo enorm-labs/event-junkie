@@ -12,6 +12,7 @@ says so.
 | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
 | `A_TRANE`              | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
 | `A_TRANE`              | `END_TIME`         | the end time is a calendar default, 23:50 on most nights                                                                                         | —     |
+| `A_TRANE`              | `PRICE`            | some nights print the price only in a day-of seats notice, in free prose and tiered by concession                                                | —     |
 | `A_TRANE`              | `PRICE_BOX_OFFICE` | the site sells one price online and holds reserved seats at that price                                                                           | —     |
 | `A_TRANE`              | `TICKET_URL`       | tickets sell in a shop inside the venue's own event card                                                                                         | —     |
 | `A_TRANE`              | `PROMOTERS`        | the club presents every night itself                                                                                                             | —     |
@@ -236,6 +237,7 @@ says so.
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
 | `EIGHT_HUNDRED_A`      | `GENRE`            | the categories name a format, such as Music or Burlesque, not a style                                                                            | —     |
 | `EIGHT_HUNDRED_A`      | `PRICE_BOX_OFFICE` | a row has one price, the ticket price                                                                                                            | —     |
+| `EIGHT_HUNDRED_A`      | `PROMOTERS`        | 800A presents its own nights, and `host_name` names a promoter only for an external host                                                         | —     |
 | `EIGHT_HUNDRED_A`      | `SOLD_OUT`         | the rows carry no sold-out flag                                                                                                                  | —     |
 | `EIGHT_HUNDRED_A`      | `ARTISTS`          | most rows name no performers, and the text bills them in free prose                                                                              | —     |
 | `EIGHT_MM`             | `PAGINATION`       | the calendar lists only the month it shows, and robots.txt bars the other months                                                                 | —     |
@@ -398,6 +400,7 @@ says so.
 | `INSEL`                | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
 | `INTERKOSMOS`          | `GENRE`            | the event types name a format, not a music style                                                                                                 | —     |
 | `INTERKOSMOS`          | `DOORS_TIME`       | an event has a start and an end time, no doors                                                                                                   | —     |
+| `INTERKOSMOS`          | `PRICE`            | `ik_price` is empty on most one-off events                                                                                                       | —     |
 | `INTERKOSMOS`          | `PRICE_BOX_OFFICE` | `ik_price` is one number, and most events leave it empty                                                                                         | —     |
 | `INTERKOSMOS`          | `SOLD_OUT`         | the API carries no sold-out flag                                                                                                                 | —     |
 | `INTERKOSMOS`          | `CANCELLATION`     | a recurring night is a rule with no exceptions, so a cancelled night still shows                                                                 | —     |
@@ -487,6 +490,7 @@ says so.
 | `KUEHLSPOT`            | `IMAGE`            | the events section carries no pictures                                                                                                           | —     |
 | `KUEHLSPOT`            | `TICKET_URL`       | admission is a donation at the door and nothing is sold online                                                                                   | —     |
 | `KUEHLSPOT`            | `GENRE`            | the site names no style per night                                                                                                                | —     |
+| `KUEHLSPOT`            | `PRICE`            | entry is a donation range with no single figure, so the wording is kept as the note                                                              | —     |
 | `KUEHLSPOT`            | `PRICE_PRESALE`    | admission is a donation at the door and nothing is sold in advance                                                                               | —     |
 | `KUEHLSPOT`            | `PRICE_BOX_OFFICE` | admission is a sliding-scale donation, kept as a price note                                                                                      | —     |
 | `KUEHLSPOT`            | `PROMOTERS`        | a night names its host only when a guest association runs it                                                                                     | —     |

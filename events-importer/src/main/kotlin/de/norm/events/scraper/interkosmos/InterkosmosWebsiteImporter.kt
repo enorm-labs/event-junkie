@@ -53,6 +53,7 @@ val INTERKOSMOS_LIMITATIONS =
         EventSource.INTERKOSMOS,
         AcceptedLimitation(LimitedAspect.GENRE, "the event types name a format, not a music style"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "an event has a start and an end time, no doors"),
+        AcceptedLimitation(LimitedAspect.PRICE, "`ik_price` is empty on most one-off events"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "`ik_price` is one number, and most events leave it empty"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the API carries no sold-out flag"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a recurring night is a rule with no exceptions, so a cancelled night still shows"),

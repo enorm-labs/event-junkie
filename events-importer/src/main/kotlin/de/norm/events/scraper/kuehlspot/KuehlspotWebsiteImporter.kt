@@ -33,6 +33,7 @@ val KUEHLSPOT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the events section carries no pictures"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "admission is a donation at the door and nothing is sold online"),
         AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is a donation range with no single figure, so the wording is kept as the note"),
         AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "admission is a donation at the door and nothing is sold in advance"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "admission is a sliding-scale donation, kept as a price note"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "a night names its host only when a guest association runs it"),
