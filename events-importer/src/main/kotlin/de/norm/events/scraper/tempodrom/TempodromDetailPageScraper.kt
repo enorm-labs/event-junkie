@@ -1,13 +1,16 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.common.deshout
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.isNonArtistName
 import org.jsoup.nodes.Document
 
 /**
  * Pure HTML parser for a Tempodrom `/event/<slug>/` page, read for what the listing's JSON-LD
- * lacks: the promoter, the comedy a fallback night's blurb names, and a move to another house.
+ * lacks: the promoter, the comedy a fallback night's blurb names, a tribute night's band, and a move to another house.
  *
  * Every page credits it once, in a `div.copy` below the share links: `Veranstalter <a
  * href=http://www.trinitymusic.de>Trinity Music GmbH</a>`. The link is the promoter's own site.
@@ -21,6 +24,10 @@ import org.jsoup.nodes.Document
  * #3380). The promoter credit is outside the Beschreibung, so "The Comedy Cornershop" is no cue:
  * that promoter also books a night whose blurb names no comedy.
  *
+ * A tribute night's format line names its band after `performed by`. Without that, the listing bills the show's title
+ * ("NIGHTS ON BROADWAY: Anniversary Tour '27" / "60 Jahre BEE GEES - 20 Jahre BEE GEES Tribute"). The blurb then names the band:
+ * "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band", so that band is billed instead ([addTributeBand], #3828).
+ *
  * A show moved to another house carries `<a class="btn big-btn relocated">Veranstaltung wurde
  * verlegt</a>` where the ticket button would be. Its JSON-LD says `EventCancelled` beside "verlegt ins
  * Huxley's neue Welt", so the listing reads it `CANCELLED`. The badge is the venue's own word for this
@@ -31,11 +38,32 @@ import org.jsoup.nodes.Document
  * @see <a href="https://www.tempodrom.de/event/jill_scott_2026-10-06_20/">A Tempodrom event page</a>
  */
 class TempodromDetailPageScraper {
-    /** [event] with every field the page adds: the promoter, the comedy type, then a move. */
+    /** [event] with every field the page adds: the promoter, the comedy type, a tribute band, then a move. */
     fun enrich(
         event: ScrapedEvent,
         document: Document
-    ): ScrapedEvent = addRelocation(addComedyType(addPromoter(event, document), document), document)
+    ): ScrapedEvent = addRelocation(addTributeBand(addComedyType(addPromoter(event, document), document), document), document)
+
+    /**
+     * [event] billing the band the Beschreibung names, when the format line bills a tribute and names no band after
+     * `performed by`. [event] unchanged when the blurb names none: a show that names no band keeps what the listing billed.
+     */
+    fun addTributeBand(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent {
+        val subtitle = event.subtitle ?: return event
+        if (!TRIBUTE.containsMatchIn(subtitle) || PERFORMED_BY.containsMatchIn(subtitle)) return event
+        val band =
+            description(document)
+                ?.let(TRIBUTE_BAND::find)
+                ?.groupValues
+                ?.get(1)
+                ?.let(::deshout)
+                ?.takeUnless(::isNonArtistName)
+                ?: return event
+        return event.copy(artists = listOf(ScrapedArtist(band, "HEADLINER")))
+    }
 
     /** [event] marked `RELOCATED` when the page shows the "verlegt" badge; unchanged otherwise. */
     fun addRelocation(
@@ -112,6 +140,15 @@ class TempodromDetailPageScraper {
 
         /** A word that bills a comedy night: "standup comedian", "Ein Abend voller Comedy", "Kabarettistin". */
         val COMEDY_CUE = Regex("""\b(?:comedy|comedians?|stand-?up|kabarett(?:ist(?:in|en)?)?)\b""", RegexOption.IGNORE_CASE)
+
+        /** A format line that bills a tribute: "20 Jahre BEE GEES Tribute", "A Tribute to the BEE GEES". */
+        val TRIBUTE = Regex("""\btribute\b""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A band in capitals that the blurb calls a tribute band: "NIGHT FEVER gilt als die erfolgreichste … Tribute-Band".
+         * Capitals only, so a sentence's opening words are never part of the name.
+         */
+        val TRIBUTE_BAND = Regex("""\b(\p{Lu}[\p{Lu}\p{N}&'’-]*(?:\s+[\p{Lu}\p{N}&'’-]+)*)\s+gilt\s+als\b[^.]*?\b(?i:tribute[\s-]?band)\b""")
 
         /** The label in front of the promoter's name. */
         val PROMOTER_LABEL = Regex("""^\s*Veranstalter(?:\*in)?\s*:?\s*""", RegexOption.IGNORE_CASE)

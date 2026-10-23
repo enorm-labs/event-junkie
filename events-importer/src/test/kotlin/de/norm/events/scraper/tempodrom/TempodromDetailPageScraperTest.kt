@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
@@ -186,6 +187,69 @@ class TempodromDetailPageScraperTest {
                 scraper.enrich(row, page(name)).status shouldBe status
             }
         }
+    }
+
+    private fun tributeRow(day: Int) =
+        listingRow.copy(
+            title = "NIGHTS ON BROADWAY: Anniversary Tour '27",
+            subtitle = "60 Jahre BEE GEES - 20 Jahre BEE GEES Tribute",
+            eventDate = LocalDate.of(2027, 10, day),
+            sourceUrl = "https://www.tempodrom.de/event/nights_on_broadway-anniversary_tour-27_2027-10-0${day}_20/",
+            sourceId = "tempodrom:nights_on_broadway-anniversary_tour-27_2027-10-0${day}_20",
+            artists = listOf(ScrapedArtist("Nights On Broadway: Anniversary Tour '27", "HEADLINER"))
+        )
+
+    @Test
+    fun `bills the tribute band the blurb names when the format line names none`() {
+        // Both 2027 nights print "NIGHT FEVER gilt als die erfolgreichste … BEE GEES Tribute-Band" (#3828).
+        listOf(6, 7).forEach { day ->
+            val event = scraper.enrich(tributeRow(day), page("tempodrom-detail-tribute-band-in-blurb.html"))
+
+            event.artists shouldBe listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+            event.title shouldBe "NIGHTS ON BROADWAY: Anniversary Tour '27"
+            event.promoters shouldBe listOf("Concertbüro Zahlmann GmbH")
+        }
+    }
+
+    @Test
+    fun `keeps the band a performed-by line names`() {
+        val row =
+            tributeRow(6).copy(
+                subtitle = "A Tribute to the BEE GEES performed by NIGHT FEVER",
+                artists = listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+            )
+
+        scraper.addTributeBand(row, descriptionPage("THE BROTHERS gilt als die beste Tribute-Band")) shouldBeSameInstanceAs row
+    }
+
+    @Test
+    fun `keeps the listing's artists when the blurb names no tribute band`() {
+        listOf(
+            "Weitere Infos folgen.",
+            "Die Band gilt als die beste Tribute-Band Europas.",
+            "NIGHT FEVER gilt als Legende. Die Tribute-Band spielt alle Hits."
+        ).forEach { blurb ->
+            val row = tributeRow(6)
+            scraper.addTributeBand(row, descriptionPage(blurb)) shouldBeSameInstanceAs row
+        }
+    }
+
+    @Test
+    fun `reads no tribute band for a night whose format line bills no tribute`() {
+        val row = listingRow.copy(subtitle = "Live 2027", artists = listOf(ScrapedArtist("Jill Scott", "HEADLINER")))
+
+        scraper.addTributeBand(row, descriptionPage("NIGHT FEVER gilt als die beste Tribute-Band")) shouldBeSameInstanceAs row
+    }
+
+    @Test
+    fun `reads a long band name with digits, an ampersand and an apostrophe`() {
+        val event =
+            scraper.addTributeBand(
+                tributeRow(7),
+                descriptionPage("Seit 20 Jahren auf Tour: THE 4 BROTHERS & SISTER'S SPECIAL GUEST BAND gilt als die beste ABBA Tribute Band.")
+            )
+
+        event.artists.map { it.name } shouldBe listOf("The 4 Brothers & Sister's Special Guest Band")
     }
 
     @Test
