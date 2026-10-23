@@ -320,4 +320,27 @@ class ScrapingExtensionsTest {
             extractEventSlug("https://example.com/other/thing") shouldBe "/other/thing"
         }
     }
+
+    @Nested
+    inner class ParagraphText {
+        @Test
+        fun `joins the trimmed texts one per line, dropping blank ones`() {
+            val el = html("""<div><p>  One  </p><p> </p><p>Two</p></div>""")
+            el.select("p").paragraphText() shouldBe "One\nTwo"
+        }
+
+        @Test
+        fun `keeps a repeated paragraph unless distinct is set`() {
+            val el = html("""<div><p>Bio</p><p>Blurb</p><p>Bio</p></div>""")
+            el.select("p").paragraphText() shouldBe "Bio\nBlurb\nBio"
+            el.select("p").paragraphText(distinct = true) shouldBe "Bio\nBlurb"
+        }
+
+        @Test
+        fun `returns null when every paragraph is blank or none matches`() {
+            val el = html("""<div><p> </p><p>&nbsp;</p></div>""")
+            el.select("p").paragraphText() shouldBe null
+            el.select("h1").paragraphText() shouldBe null
+        }
+    }
 }

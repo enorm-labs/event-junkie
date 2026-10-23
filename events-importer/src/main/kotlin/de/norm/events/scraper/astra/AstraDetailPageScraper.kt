@@ -6,6 +6,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePresaleAndBoxOfficePrices
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -100,9 +101,5 @@ class AstraDetailPageScraper {
     private fun parseDescription(content: Element): String? =
         content
             .select(".gig__description p, .detail__description p")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .distinct()
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText(distinct = true)
 }

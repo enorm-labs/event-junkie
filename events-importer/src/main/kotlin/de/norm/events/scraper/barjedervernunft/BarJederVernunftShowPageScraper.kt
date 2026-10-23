@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -82,10 +83,7 @@ class BarJederVernunftShowPageScraper {
         document
             .select("#ueberblick, #at-a-glance")
             .select(".indent-contentcollection .vivomedia-text p")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
 }
 
 /**

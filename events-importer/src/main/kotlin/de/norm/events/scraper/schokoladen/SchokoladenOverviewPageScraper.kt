@@ -11,6 +11,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -186,10 +187,7 @@ class SchokoladenOverviewPageScraper {
         val description = info?.selectFirst(".event-description") ?: return null
         return description
             .select("p")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
     }
 
     /**

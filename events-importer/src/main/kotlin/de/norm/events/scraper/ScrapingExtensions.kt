@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // Small single-purpose readers and URL helpers that every scraper shares.
+
 package de.norm.events.scraper
 
 import org.jsoup.nodes.Element
@@ -143,6 +145,19 @@ fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
     lines.add(current.toString())
     return lines.map { it.trim() }.filter { keepBlankLines || it.isNotBlank() }
 }
+
+/**
+ * These elements' texts, trimmed, blank ones dropped, one per line; `null` when none is left.
+ *
+ * The shape of a detail page's description: its prose paragraphs, joined. With [distinct] a
+ * paragraph that two layouts both carry (Lido's and Astra's bio and blurb blocks) is kept once.
+ */
+fun Iterable<Element>.paragraphText(distinct: Boolean = false): String? =
+    map { it.text().trim() }
+        .filter { it.isNotBlank() }
+        .let { if (distinct) it.distinct() else it }
+        .joinToString("\n")
+        .takeIf { it.isNotBlank() }
 
 /**
  * Resolves a potentially relative [href] against the [baseUrl].

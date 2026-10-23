@@ -2,6 +2,7 @@ package de.norm.events.scraper.orania
 
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -35,8 +36,5 @@ class OraniaDetailPageScraper {
         content
             .select(".text p")
             .filterNot { paragraph -> paragraph.text() == paragraph.selectFirst("strong")?.text() }
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
 }
