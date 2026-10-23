@@ -206,6 +206,35 @@ class ColumbiahalleOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a show whose blurb names its comedians COMEDY, and bills the comedians of its Live mit line`() {
+        // The Bratwurst & Baklava card from the live listing on 2026-10-23 (#3767).
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-comedy.html")!!
+                .bufferedReader()
+                .readText()
+        val show = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        show.title shouldBe "Bratwurst & Baklava"
+        show.eventType shouldBe "COMEDY"
+        show.eventDate shouldBe LocalDate.of(2026, 11, 4)
+        show.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Bastian Bielendorfer", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Özcan Cosar", "HEADLINER", titleDerived = true)
+            )
+    }
+
+    @Test
+    fun `keeps billing the comedians a comedy card names in its title`() {
+        // The same show in the earlier layout: the comedians in the h2, the format in the h3.
+        val show = event("9744")
+        show.eventType shouldBe "COMEDY"
+        show.artists.map { it.name } shouldContainExactly listOf("Bastian Bielendorfer", "Özcan Cosar")
+        events.filter { it.eventType == "COMEDY" }.map { it.sourceId } shouldContainExactly listOf("columbiahalle:9744")
+    }
+
+    @Test
     fun `stores the destination a relocation sticker names`() {
         // The Betontod card from the live listing on 2026-09-30.
         val html =
