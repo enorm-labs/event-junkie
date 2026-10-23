@@ -75,9 +75,16 @@ internal val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—]\s+\S.*!\s*$""" +
             """|\s+[-–—]\s+(?:a\s+)?tribute\s+to\s+\S.*$""" +
             """|\s+[-–—]\s+tribute\s?band\s*$""" +
+            """|(?<=\S)\s+(?:$TOUR_REGION[\s-]+tour|(?:$TOUR_REGION[\s-]+)?\p{L}*tournee)\s*$""" +
             """|(?<=\S)\s+tribute\s+band\s*$""",
         RegexOption.IGNORE_CASE
     )
+
+/**
+ * The region before a dashless tour word: `Europa Tournee`, `UK Tour` (#3827). Any `Tournee` goes, but a bare `Tour` needs
+ * the region, as a band can end in `Tour`. No city, so `Isolation Berlin Tour` keeps its act.
+ */
+private const val TOUR_REGION = """(?:europa|europe|european|welt|world|deutschland|germany|uk|usa|us)"""
 
 /**
  * Splits a guest out of a trailing bracket: `Dosenstolz (feat. Tancred)` and `Warhammer (+ Corrode)`
@@ -195,7 +202,8 @@ private val ISO_COUNTRY_CODES: String =
 /**
  * A trailing origin tag: two- or three-letter country codes (`(NL)`, `(PL/USA)`), a genre in front
  * of them (`(Dark Wave US/DE)`), or a spelled-out country with an optional `Live` (`(Thailand-Live)`)
- * (#314). Lifted from a venue's local rule and widened to the spelled-out form.
+ * (#314), or a note naming where the act is from (`(Hip Hop aus Australien)`, #3827). Lifted from a venue's local rule
+ * and widened to the spelled-out form.
  */
 private val ORIGIN_TAG =
     Regex(
@@ -203,6 +211,7 @@ private val ORIGIN_TAG =
         // spelled-out names and the ISO list match in any case.
         """\s*\((?:[^()]*?\s)?[A-Z]{2,3}(?:\s*[/,+&-]\s*[A-Z]{2,3})*\)\s*$""" +
             """|(?i:\s*\((?:$COUNTRY_NAMES)(?:\s*[-–—/]?\s*live)?\)\s*$)""" +
+            """|(?i:\s*\([^()]*?\b(?:aus|from)\s+(?:$COUNTRY_NAMES)\)\s*$)""" +
             """|(?i:\s*\((?:$ISO_COUNTRY_CODES)(?:\s*[/,+&-]\s*(?:$ISO_COUNTRY_CODES))*\)\s*$)"""
     )
 
