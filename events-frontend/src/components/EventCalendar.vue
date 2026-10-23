@@ -122,7 +122,8 @@ const options = computed<CalendarOptions>(() => ({
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
   buttons: {
-    today: { text: t('calendar.today') },
+    // The locale's own hint labels it "This month", which drops the visible "Today" (WCAG 2.5.3, #3823).
+    today: { text: t('calendar.today'), hint: t('calendar.today') },
     dayGridMonth: { text: t('calendar.view.month') },
     [GRID_WEEK]: { text: t('calendar.view.week') },
     [LIST_WEEK_NARROW]: { text: t('calendar.view.week') },
