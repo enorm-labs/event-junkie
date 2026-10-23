@@ -34,6 +34,16 @@ describe('EventCalendar', () => {
     expect(buttons).not.toContain('Today')
   })
 
+  it.each([
+    ['en', 'Today'],
+    ['de', 'Heute'],
+  ] as const)('names the %s today button by its visible text', async (locale, text) => {
+    const wrapper = await render(locale)
+
+    const today = wrapper.findAll('button').find((button) => button.text() === text)
+    expect(today?.attributes('aria-label')).toContain(text)
+  })
+
   it('shows an event time on the 24-hour clock', async () => {
     const wrapper = await render('de')
 
