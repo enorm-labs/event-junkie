@@ -49,12 +49,12 @@
     "tailwindcss": "4.3.3",
     "temporal-polyfill": "1.0.5",
     "vue": "3.5.44",
-    "vue-i18n": "11.4.14",
+    "vue-i18n": "11.4.16",
     "vue-router": "5.4.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
-    "@intlify/unplugin-vue-i18n": "11.2.5",
+    "@intlify/unplugin-vue-i18n": "11.2.7",
     "@playwright/test": "1.64.0",
     "@shadcn/lint": "0.2.1",
     "@tailwindcss/vite": "4.3.3",
