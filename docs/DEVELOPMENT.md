@@ -10,9 +10,7 @@ project's conventions written down, and it is more complete than any other docum
 ## The short version
 
 ```sh
-sdk env                                   # the JDK from .sdkmanrc
-brew install pre-commit && pre-commit install     # gitleaks + formatting hooks, before your first commit
-git config blame.ignoreRevsFile .git-blame-ignore-revs   # blame skips the formatting-only commits
+scripts/setup-mac.sh contributor          # macOS: Brewfile, JDK, Node, npm ci, commit hooks; `check` reports what is missing
 
 scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
 scripts/dev-env.sh seed-fixture           # the fixed dataset, no network — or the two lines below for real data
@@ -61,6 +59,10 @@ scripts/format-markdown.sh                # any .md change
 | `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                  |
 | `gh`         | any recent                                | GitHub from the CLI — `brew install gh`, then `gh auth login`     |
 
+**On macOS, `scripts/setup-mac.sh contributor` installs everything on this page.** The tools are in the root [`Brewfile`](../Brewfile). The script also
+installs the JDK and Node versions, runs `npm ci` in both apps and installs the commit hooks. `operator` adds the cluster tools, the Keychain items, the key
+files and the SSH config. `/setup-machine` in Claude Code walks a new Mac through both tiers. On another system, follow the sections below by hand.
+
 The [GitHub CLI](https://cli.github.com/) is required, not optional. The agent prompts under [`.github/prompts/`](../.github/prompts) reach for it constantly.
 They open pull requests, file issues and read CI status. A vendored skill in [`.claude/skills/gh/`](../.claude/skills/gh/SKILL.md) documents how to drive it,
 copied from [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh). That skill documents the flags, not the install. Without the binary it is a page of
@@ -90,6 +92,7 @@ to keep secrets out of the history. **Install it before your first commit** — 
 ```bash
 brew install pre-commit   # macOS
 pre-commit install        # installs the hook into .git/hooks
+git config blame.ignoreRevsFile .git-blame-ignore-revs   # blame skips the formatting-only commits
 ```
 
 It then runs on every `git commit`. To scan without committing:
@@ -120,7 +123,7 @@ repository. Third-party hook repositories would each need their own pinning.
 All of them are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-python.yml`,
 `validate-dockerfiles.yml`, `validate-migrations.yml` and `validate-docs.yml`. The hooks move the deterministic half of that
 feedback before the push. Without the tools installed the hooks fail. Install them with
-`brew install opentofu shellcheck shfmt helm ruff hadolint` and `pipx install squawk-cli`, or skip them with `git commit --no-verify`
+`scripts/setup-mac.sh contributor`, or `brew install opentofu shellcheck shfmt helm ruff hadolint` and `uv tool install squawk-cli`, or skip them with `git commit --no-verify`
 on a change that touches none of those paths.
 
 `format-markdown` is the exception to "uses what is already on your machine". It deliberately calls the oxfmt pinned in
