@@ -130,6 +130,9 @@ enum class EventSource {
     /** Duncker Club Berlin – a long-running goth, wave and indie club in Prenzlauer Berg. */
     DUNCKER,
 
+    /** 800A Bar & Cabaret – an international bar with a cabaret stage in Wedding, for burlesque, comedy, theatre and an open stage every Thursday. */
+    EIGHT_HUNDRED_A,
+
     /** 8MM Bar – a DIY music bar on Schönhauser Allee since 2002, where bands keep all the door money. */
     EIGHT_MM,
 

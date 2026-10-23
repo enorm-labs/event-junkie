@@ -47,6 +47,7 @@ import de.norm.events.scraper.downstairs.DOWNSTAIRS_LIMITATIONS
 import de.norm.events.scraper.drugstore.DRUGSTORE_LIMITATIONS
 import de.norm.events.scraper.dstrkt.DSTRKT_LIMITATIONS
 import de.norm.events.scraper.duncker.DUNCKER_LIMITATIONS
+import de.norm.events.scraper.eighthundreda.EIGHT_HUNDRED_A_LIMITATIONS
 import de.norm.events.scraper.eightmm.EIGHT_MM_LIMITATIONS
 import de.norm.events.scraper.erreichbar.ERREICHBAR_LIMITATIONS
 import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
@@ -232,6 +233,7 @@ object AcceptedLimitations {
             DRUGSTORE_LIMITATIONS,
             DSTRKT_LIMITATIONS,
             DUNCKER_LIMITATIONS,
+            EIGHT_HUNDRED_A_LIMITATIONS,
             EIGHT_MM_LIMITATIONS,
             ERREICHBAR_LIMITATIONS,
             ESCHSCHLORAQUE_LIMITATIONS,

@@ -18,7 +18,7 @@
 ### ============================================================
 
 # ————————————————————————————————————————————————————————————
-# 800A Bar & Cabaret — not imported
+# 800A Bar & Cabaret
 # ————————————————————————————————————————————————————————————
 
 ### --- Create 800A Bar & Cabaret venue ---
@@ -39,13 +39,43 @@ Content-Type: application/json
     "descriptionAlt": "Eine internationale Bar mit Kabarettbühne im Wedding, seit 2017 in Betrieb und 2024 offizieller Gastgeber beim Tag der Clubkultur, mit Burlesque, Drag, Comedy, Theater, Zauberei, Lyrik und Livemusik.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "theatre"],
-    "programmeUrl": "https://www.800aberlin.com/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_800a_bar_cabaret", response.body.id);
     client.test("800A Bar & Cabaret venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create 800A Bar & Cabaret event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_800a_bar_cabaret}},
+    "name": "800A Bar & Cabaret",
+    "url": "https://www.800aberlin.com/",
+    "sourceType": "EIGHT_HUNDRED_A",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("800A Bar & Cabaret event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial 800A Bar & Cabaret import ---
+POST {{importer-host}}/api/admin/event-sources/800a-bar-cabaret/import
+Accept: application/json
+
+> {%
+    client.test("800A Bar & Cabaret import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

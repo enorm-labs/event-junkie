@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   187 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   188 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -40,6 +40,7 @@ schema change.
 
 | Name                             | URL                                                                      | Type         | Comment                                                   |
 | -------------------------------- | ------------------------------------------------------------------------ | ------------ | --------------------------------------------------------- |
+| 800A Bar & Cabaret               | https://www.800aberlin.com/                                              | Bar          | Astro island props; Supabase rows; workshops dropped      |
 | 808 Nachtklub Berlin             | https://808.berlin/                                                      | Club         | Astro island props; opening hours from JSON-LD            |
 | 8MM Bar                          | https://www.8mmbar.de/program                                            | Bar          | Squarespace noscript calendar list + event pages          |
 | A-Trane                          | https://a-trane.de/                                                      | Club         | EventON cards: JSON-LD, style tags, ticket prices         |
@@ -733,7 +734,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Ashawo Cafe                       | —                                                   | Other        | No own site; events on Eventbrite                               | Site change / manual entry |
 | GöRE Comedy                       | https://www.eventbrite.com/cc/gore-shows-4785723/   | Comedy Club  | Eventbrite only; its terms likely forbid scraping               | Eventbrite API token       |
 | SaliGari Bar                      | —                                                   | Bar          | No own site; Facebook only; mostly comedy nights                | Site change / manual entry |
-| 800A Bar & Cabaret                | https://www.800aberlin.com/                         | Bar          | 33 dated in escaped home-page JSON; comedy and cabaret          | Scope decision             |
 | Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | One highlight; the list is a SociableKit Eventbrite embed       | Eventbrite API token       |
 | SOLID                             | https://solid.stadtlandladen.org/events             | Bar          | Wix Events; talks, films and food nights, no music              | Scope decision             |
 | Zemin                             | https://www.zeminberlin.de/                         | Other        | Art space; JSON-LD has five events, last on 2026-09-11          | More events                |
