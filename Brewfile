@@ -22,6 +22,10 @@ cask "docker-desktop" unless File.exist?("/Applications/Docker.app")
 cask "ijhttp" unless on_path?("ijhttp")
 cask "claude-code" unless on_path?("claude")
 
+# The language servers the kotlin-lsp and typescript-lsp plugins in .claude/settings.json start
+cask "kotlin-lsp" unless on_path?("kotlin-lsp")
+brew "typescript-language-server"
+
 # The commit hooks and the /verify gates
 brew "pre-commit"
 brew "gitleaks"
