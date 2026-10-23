@@ -53,7 +53,7 @@ body:
       label: Where it happens
       description: File and function. The point of this field is that the next person does not repeat the hunt.
       placeholder: |
-        `splitHeadlinerTitle` in `events-importer/.../scraper/ArtistNameMapping.kt` — cuts only on
+        `splitHeadlinerTitle` in `events-importer/.../scraper/ActSplitting.kt` — cuts only on
         `/`, `+` and conjunctions; `stripArtistSuffix` recognises a ` - ` tail only for tours, years
         and releases.
     validations:

@@ -123,7 +123,7 @@ which helper lives where — is not repeated; `grep` answers that.
       `EventImporter` directly for a single page that needs more than one fetch or its own result, for a listing read through its own fetch without validators (Downstairs,
       silent green), and for an undated weekly programme expanded over a rolling horizon with
       conditional requests off (Havanna; **never for a venue that publishes dates**). The shared helpers — `ScrapingExtensions.kt`, `DateParsingExtensions.kt`,
-      `EventTypeMapping.kt`, `ArtistNameMapping.kt`, `EventFieldMapping.kt` — are used, not reimplemented.
+      `EventTypeMapping.kt`, `ArtistNameMapping.kt` and its siblings, `EventFieldMapping.kt` — are used, not reimplemented.
 - **Scheduled imports** (ADR-008): one `@Scheduled(fixedDelay = 60s)` tick finds due sources (`import_interval_minutes`, default 1440) and imports them
   concurrently. Retries back off exponentially **capped at six hours** — doubling a daily interval produced a retry slower than the healthy cadence (#659) —
   and a source that spends its budget returns to its interval, never dropped, because a source not attempted is indistinguishable from one with nothing to

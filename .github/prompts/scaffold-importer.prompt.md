@@ -79,8 +79,8 @@ it into every music event that names no genre of its own.
 
 `ScrapingExtensions.kt` (`textAt`, `attrAt`, `imgSrcAt`, `hrefAt`, `resolveUrl`), `DateParsingExtensions.kt` (`parseTime`, `parseIsoDate`, `parseIsoTime`),
 `WeekdayDateExtensions.kt` (`inferYearForWeekday`; `neighbouringMonthOnWeekday`, for a full date whose printed weekday names another month),
-`EventTypeMapping.kt` (`mapEventType`, `refineConcertVenueType`, `isFestivalTitle`), `ArtistNameMapping.kt` (`isPlaceholderName`, `isNonArtistName`,
-`buildArtistList`, `extractSupportFromSubtitle`), `EventFieldMapping.kt` (`parseEventStatus`, `orderDoorsBeforeStart`, `cleanEventTitle`, `detectFree`),
+`EventTypeMapping.kt` (`mapEventType`, `refineConcertVenueType`, `isFestivalTitle`), `ArtistNameMapping.kt` (`buildArtistList`), `NonArtistNames.kt` (`isPlaceholderName`, `isNonArtistName`),
+`SupportLines.kt` (`extractSupportFromSubtitle`), `EventFieldMapping.kt` (`parseEventStatus`, `orderDoorsBeforeStart`, `cleanEventTitle`, `detectFree`),
 `JsonLdEvents.kt` (`jsonLdEvents`, `schemaDate`, `schemaTime`, `schemaImageUrl`, `schemaSoldOut`). A helper two venues need
 goes into the extension file and ADR-007's utility table, not the venue package.
 
