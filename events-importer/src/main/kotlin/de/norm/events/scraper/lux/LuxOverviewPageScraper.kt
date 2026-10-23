@@ -5,8 +5,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
@@ -73,9 +73,9 @@ class LuxOverviewPageScraper(
             paragraphs
                 .lastOrNull { PRICE_LINE.containsMatchIn(it.text()) }
                 ?.text()
-                ?.clean()
+                ?.collapseWhitespace()
                 .blankToNull()
-        val lines = paragraphs.filterNot { it.text().clean() == priceNote }.flatMap { it.brLines() }
+        val lines = paragraphs.filterNot { it.text().collapseWhitespace() == priceNote }.flatMap { it.brLines() }
         val clock = lines.firstNotNullOfOrNull { TIME_LINE.matchEntire(it) }
         val time = clock?.let { parseTime("${it.groupValues[HOUR_GROUP].padStart(2, '0')}:${it.groupValues[MINUTE_GROUP]}") }
         val isDoors = !clock?.groupValues?.get(DOORS_GROUP).isNullOrEmpty()
@@ -113,16 +113,14 @@ class LuxOverviewPageScraper(
             .filterNot { TIME_LINE.matches(it) || isNonArtistName(it) }
             .distinct()
 
-    private fun Element.flatTextAt(selector: String): String? = selectFirst(selector)?.text()?.clean().blankToNull()
+    private fun Element.flatTextAt(selector: String): String? = selectFirst(selector)?.text()?.collapseWhitespace().blankToNull()
 
     /** The element's text split at every `<br>`, nested ones included, each line flattened, blank ones dropped. */
     private fun Element.brLines(): List<String> {
         val copy = clone()
         copy.select("br").forEach { it.replaceWith(TextNode(LINE_BREAK)) }
-        return copy.text().split(LINE_BREAK).mapNotNull { it.clean().blankToNull() }
+        return copy.text().split(LINE_BREAK).mapNotNull { it.collapseWhitespace().blankToNull() }
     }
-
-    private fun String.clean(): String = replace(WHITESPACE, " ").trim()
 
     private companion object {
         /** `Do 15.10.`, the `.when` cell with its line break flattened. */

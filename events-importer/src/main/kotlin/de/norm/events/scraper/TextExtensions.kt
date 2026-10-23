@@ -33,6 +33,15 @@ fun String.querySeparator(): Char = if ('?' in this) '&' else '?'
 /** A run of whitespace, for splitting a line into words or flattening one to single spaces. */
 val WHITESPACE = Regex("""\s+""")
 
+/**
+ * Flattens every run of whitespace in this string to one space, and trims both ends.
+ *
+ * A hand-authored page wraps a title or a billing line across source lines, and the readers that
+ * keep that layout — `ownText()`, `wholeText()`, a `<br>`-split line — hand the break through to
+ * the stored value.
+ */
+fun String.collapseWhitespace(): String = replace(WHITESPACE, " ").trim()
+
 /** Length of the leading `HH:mm` a venue prefixes to a longer clock string (`HH:mm:ss`). */
 const val HH_MM_LENGTH = 5
 

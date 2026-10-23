@@ -4,9 +4,9 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapSkippingFailures
@@ -53,13 +53,13 @@ class ZkuCalendarScraper {
             item
                 .selectFirst("h2")
                 ?.text()
-                ?.clean()
+                ?.collapseWhitespace()
                 .blankToNull() ?: return null
         val subtitle =
             item
                 .selectFirst("p.list-item__description")
                 ?.text()
-                ?.clean()
+                ?.collapseWhitespace()
                 .blankToNull()
         if (isZkuParticipationFormat(title, subtitle) || billsTradeFairOrConference(title, subtitle)) {
             logger.debug { "Skipping ZK/U entry '$title': not a stage programme" }
@@ -111,8 +111,6 @@ class ZkuCalendarScraper {
             ?.get(1)
             ?.let { listOf(ScrapedArtist(name = it)) }
             .orEmpty()
-
-    private fun String.clean(): String = replace(WHITESPACE, " ").trim()
 
     private companion object {
         val CLOCK_RANGE = Regex("""(\d{1,2}[:.]\d{2})(?:\s*[–-]\s*(\d{1,2}[:.]\d{2}))?""")

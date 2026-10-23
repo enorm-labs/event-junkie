@@ -4,9 +4,9 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
@@ -89,7 +89,7 @@ class SurpriseOverviewPageScraper {
                     .nextElementSibling()
                     ?.takeIf { it.tagName() == "p" }
                     ?.text()
-                    ?.clean()
+                    ?.collapseWhitespace()
                     ?.blankToNull()
             if (gate == null || price == null) null else gate to price
         }
@@ -101,10 +101,8 @@ class SurpriseOverviewPageScraper {
         return line
             .text()
             .split(SEPARATOR)
-            .mapNotNull { it.trim(' ', '-').clean().blankToNull() }
+            .mapNotNull { it.trim(' ', '-').collapseWhitespace().blankToNull() }
     }
-
-    private fun String.clean(): String = replace(WHITESPACE, " ").trim()
 
     private companion object {
         val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH)
