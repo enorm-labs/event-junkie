@@ -83,6 +83,12 @@ says so.
 | `BAIZ`                 | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `BAIZ`                 | `PRICE`            | radar lists no price for the pub's nights                                                                                                        | —     |
 | `BAIZ`                 | `PROMOTERS`        | radar names no promoter                                                                                                                          | —     |
+| `BALLHAUS_BERLIN`      | `EVENT_TYPE`       | the list has no category, so the house's own words type a night                                                                                  | —     |
+| `BALLHAUS_BERLIN`      | `GENRE`            | the list names no music style                                                                                                                    | —     |
+| `BALLHAUS_BERLIN`      | `ARTISTS`          | the title names the night or the company, and the text bills the acts in prose                                                                   | —     |
+| `BALLHAUS_BERLIN`      | `PER_EVENT_PAGE`   | a date has no page of its own                                                                                                                    | —     |
+| `BALLHAUS_BERLIN`      | `SOLD_OUT`         | the list carries no sold-out mark                                                                                                                | —     |
+| `BALLHAUS_BERLIN`      | `PROMOTERS`        | the list names no organiser                                                                                                                      | —     |
 | `BALLHAUS_WEDDING`     | `EVENT_TYPE`       | the venue names no category, so the type comes from words in the title, and a night without one is typed other                                   | —     |
 | `BALLHAUS_WEDDING`     | `ARTISTS`          | the programme has no line-up field; only a bare `<name> - Konzert` entry bills its act                                                           | —     |
 | `BALLHAUS_WEDDING`     | `IMAGE`            | only the entries with a Wix Events page have a poster; the programme has none                                                                    | —     |

@@ -19,6 +19,7 @@ import de.norm.events.scraper.atrane.A_TRANE_LIMITATIONS
 import de.norm.events.scraper.ausland.AUSLAND_LIMITATIONS
 import de.norm.events.scraper.badehaus.BADEHAUS_LIMITATIONS
 import de.norm.events.scraper.baiz.BAIZ_LIMITATIONS
+import de.norm.events.scraper.ballhausberlin.BALLHAUS_BERLIN_LIMITATIONS
 import de.norm.events.scraper.ballhauswedding.BALLHAUS_WEDDING_LIMITATIONS
 import de.norm.events.scraper.barjedervernunft.BAR_JEDER_VERNUNFT_LIMITATIONS
 import de.norm.events.scraper.beateuwe.BEATE_UWE_LIMITATIONS
@@ -209,6 +210,7 @@ object AcceptedLimitations {
             AUSLAND_LIMITATIONS,
             BADEHAUS_LIMITATIONS,
             BAIZ_LIMITATIONS,
+            BALLHAUS_BERLIN_LIMITATIONS,
             BALLHAUS_WEDDING_LIMITATIONS,
             BAR_JEDER_VERNUNFT_LIMITATIONS,
             BEATE_UWE_LIMITATIONS,

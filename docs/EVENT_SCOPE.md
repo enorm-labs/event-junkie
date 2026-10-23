@@ -147,6 +147,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Kulturhaus Spandau  | `KulturhausSpandauApiScraper.isOutOfScope`               | The `Führung`, `Workshop` and `Ausstellung` categories, or a `Mitsing…` sing-along title       |
 | 800A Bar & Cabaret  | `EightHundredAHomePageScraper.toEvent`                   | The `workshop` category: the paid improv and songwriting courses                               |
 | Interkosmos         | `InterkosmosApiScraper.event`                            | The `Yoga` event type: the weekly Hatha class                                                  |
+| Ballhaus Berlin     | `BallhausBerlinTerminePageScraper.OUT_OF_SCOPE`          | The `Vintage Market`, a `Geschlossene Gesellschaft` and the `Yes Choir !` sing-along           |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
