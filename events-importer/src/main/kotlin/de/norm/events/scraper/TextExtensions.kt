@@ -36,9 +36,8 @@ val WHITESPACE = Regex("""\s+""")
 /**
  * Flattens every run of whitespace in this string to one space, and trims both ends.
  *
- * A hand-authored page wraps a title or a billing line across source lines, and the readers that
- * keep that layout — `ownText()`, `wholeText()`, a `<br>`-split line — hand the break through to
- * the stored value.
+ * Jsoup's `text()` and `ownText()` already do this. A string from anywhere else — `wholeText()`,
+ * a `<br>`-split line, a JSON field — can still carry the source's line breaks.
  */
 fun String.collapseWhitespace(): String = replace(WHITESPACE, " ").trim()
 

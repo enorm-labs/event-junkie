@@ -9,6 +9,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
@@ -185,10 +186,7 @@ class BerghainDetailPageScraper {
     private fun parseDescription(content: Element): String? =
         content
             .select(".rich-text")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
 
     /** Parsed contents of the "Tickets" block. */
     private data class Tickets(

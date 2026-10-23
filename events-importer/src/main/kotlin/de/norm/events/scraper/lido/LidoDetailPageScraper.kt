@@ -6,6 +6,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePresaleAndBoxOfficePrices
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -77,9 +78,5 @@ class LidoDetailPageScraper {
     private fun parseDescription(content: Element): String? =
         content
             .select(".gig__description p, .event-description__text p")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .distinct()
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText(distinct = true)
 }

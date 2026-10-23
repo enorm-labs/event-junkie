@@ -13,6 +13,7 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -217,10 +218,7 @@ class EschschloraqueOverviewPageScraper {
         node
             .select(PROSE_PARAGRAPHS)
             .filterNot { paragraph -> billingParagraphs.any { it === paragraph } }
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
 
     /**
      * The lineup from the `.redsubtitle` spans of the [billingParagraphs], each act once. Each span

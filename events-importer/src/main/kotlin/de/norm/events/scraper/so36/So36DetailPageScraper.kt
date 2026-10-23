@@ -22,6 +22,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.performersBilledWith
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
@@ -154,10 +155,7 @@ class So36DetailPageScraper {
     private fun parseDescription(document: Document): String? =
         document
             .select(".product_description p")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
+            .paragraphText()
 
     /** [parseDescription] with each `<br>` kept: a text in both languages is one `<p>`, broken where the halves meet (#330). */
     private fun lineBrokenDescription(document: Document): String? =
