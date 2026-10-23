@@ -5,8 +5,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -61,7 +61,7 @@ class PasticheProgrammePageScraper(
             row
                 .unit(TITLE_SLOT)
                 ?.text()
-                ?.clean()
+                ?.collapseWhitespace()
                 ?.let { formatLine(it, title) }
         if (isOutOfScope(title, format)) {
             logger.debug { "Pastiche '$title' is a workshop or a record fair, skipping" }
@@ -106,8 +106,8 @@ class PasticheProgrammePageScraper(
             endTime = end,
             sourceUrl = pageUrl ?: sourceUrl,
             sourceId = EventSource.PASTICHE.sourceIdPrefix + (pageUrl?.let(::pageSlug) ?: "$date-${SlugGenerator.slugify(title)}"),
-            ticketUrl = pageUrl?.takeIf { button.text().clean().equals(TICKETS, ignoreCase = true) },
-            free = button?.text()?.clean().equals(FREE, ignoreCase = true),
+            ticketUrl = pageUrl?.takeIf { button.text().collapseWhitespace().equals(TICKETS, ignoreCase = true) },
+            free = button?.text()?.collapseWhitespace().equals(FREE, ignoreCase = true),
             artists = artistsOf(title, format)
         )
     }
@@ -194,12 +194,10 @@ class PasticheProgrammePageScraper(
 
         private fun pageSlug(url: String): String = URI(url).path.trim('/')
 
-        private fun String.clean(): String = replace(WHITESPACE, " ").trim()
-
         private fun Element.unit(slot: Int): Element? = selectFirst("> column-unit[slot=$slot]")
 
         /** The first column's text: the date, then the time range. */
-        private fun Element.schedule(): String = unit(DATE_SLOT)?.text()?.clean().orEmpty()
+        private fun Element.schedule(): String = unit(DATE_SLOT)?.text()?.collapseWhitespace().orEmpty()
 
         private fun Element.titleText(): String? =
             unit(TITLE_SLOT)
@@ -207,7 +205,7 @@ class PasticheProgrammePageScraper(
                 ?.firstNotNullOfOrNull {
                     it
                         .text()
-                        .clean()
+                        .collapseWhitespace()
                         .trimEnd('*')
                         .trim()
                         .blankToNull()

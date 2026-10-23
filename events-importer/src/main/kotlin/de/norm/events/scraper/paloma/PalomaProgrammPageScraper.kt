@@ -5,8 +5,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -40,7 +40,7 @@ class PalomaProgrammPageScraper(
         document: Document,
         sourceUrl: String
     ): List<ScrapedEvent> {
-        val headings = document.select("b").filter { HEADING.matches(it.text().clean()) }
+        val headings = document.select("b").filter { HEADING.matches(it.text().collapseWhitespace()) }
         logger.info { "Found ${headings.size} night(s) on the Paloma programme" }
         return headings.mapSkippingFailures(logger, "a Paloma night") { parseNight(it, sourceUrl) }
     }
@@ -49,7 +49,7 @@ class PalomaProgrammPageScraper(
         heading: Element,
         sourceUrl: String
     ): ScrapedEvent? {
-        val text = heading.text().clean()
+        val text = heading.text().collapseWhitespace()
         val match = HEADING.matchEntire(text) ?: return null
         val (weekday, day, month) = match.destructured
         val date = parseDate(day, month, weekday) ?: return null
@@ -89,12 +89,10 @@ class PalomaProgrammPageScraper(
             .mapNotNull {
                 it
                     .text()
-                    .clean()
+                    .collapseWhitespace()
                     .uppercase(Locale.GERMAN)
                     .blankToNull()
             }.distinct()
-
-    private fun String.clean(): String = replace(WHITESPACE, " ").trim()
 
     private companion object {
         /** `FREITAG 16/10 22:00`. */

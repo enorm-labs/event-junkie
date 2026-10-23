@@ -6,8 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
@@ -66,7 +66,7 @@ class PkhWarehouseOverviewPageScraper(
                 row
                     .selectFirst(".z")
                     ?.text()
-                    ?.clean()
+                    ?.collapseWhitespace()
                     .orEmpty()
             )
         val date = parseDate(day, month, times?.groupValues?.get(WEEKDAY_GROUP))
@@ -78,7 +78,7 @@ class PkhWarehouseOverviewPageScraper(
             row
                 .selectFirst(".t")
                 ?.ownText()
-                ?.clean()
+                ?.collapseWhitespace()
                 .blankToNull()
         if (title == null) {
             logger.warn { "PKH Warehouse night on $date has no title, skipping" }
@@ -88,7 +88,7 @@ class PkhWarehouseOverviewPageScraper(
         val lineupText =
             lineup
                 ?.text()
-                ?.clean()
+                ?.collapseWhitespace()
                 ?.removeSuffix(TICKETS_LINK)
                 ?.trim(' ', '·')
                 .blankToNull()
@@ -117,7 +117,7 @@ class PkhWarehouseOverviewPageScraper(
 
     private fun parseMonth(heading: String): Month? =
         GERMAN_MONTH_NAMES
-            .indexOfFirst { it.equals(heading.clean(), ignoreCase = true) }
+            .indexOfFirst { it.equals(heading.collapseWhitespace(), ignoreCase = true) }
             .takeIf { it >= 0 }
             ?.let { Month.of(it + 1) }
 
@@ -133,8 +133,6 @@ class PkhWarehouseOverviewPageScraper(
             null
         }
     }
-
-    private fun String.clean(): String = replace(WHITESPACE, " ").trim()
 
     private companion object {
         /** `Fr 22:00 — 04:00` or `Sa ab 22:00`. */
