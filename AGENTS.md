@@ -213,12 +213,13 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 
 - `/add-venue <name> [<url>]…` — a venue we do not import, to a row with a programme link: scope check, facts the operator confirms, a seed block, an `## After deploy` seed step
 - `/artist-cleanup [<env>] [--kind promoters]` — the stored artists (or promoters) whose name is not an act's, judged into DROP, RENAME, SPLIT, MERGE or KEEP; fixed as a parser change plus a migration, never an admin delete
+- `/admin-review [<env>] [--only <page>]` — the admin app's five review pages (worklist, suggested fixes, Instagram drafts, artists, venues): a numbered verdict per item, applied only on the operator's word; `/daily-check` runs it
 - `/afk [<issue>…]` — while the user is away: the named issues, or every `afk-ok` one, to draft PRs, with decisions in each PR and a handover in `temp/`; `/afk merge` then guides the merges one PR at a time
 - `/code-review` — review the current diff
 - `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
 - `/commit-message` — a commit message from the staged changes
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
-- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, the worklist; merges the ready bot PRs, drafts the rest
+- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, `/admin-review`; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/git-cleanup` — worktrees and local branches sorted into safe, ask first and keep by PR state and `git cherry`; removes only what the operator confirms

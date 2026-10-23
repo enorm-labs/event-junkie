@@ -56,8 +56,9 @@ curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&s
 7. **Logs.** `/log-check` sorts both clusters' logs and alerts into noise, known, explained and new.
 8. **The data.** Read each flagged row of `new-artists.sh`. Then read the worklist summary, one row per issue and venue. `/worklist` gives each row a
    verdict, writes issue drafts and proposes hand fixes. It changes nothing until you name the fixes to apply.
-   Then open the admin app's "Suggested fixes" page and accept or dismiss each open suggestion. `/daily-check` recommends a verdict for each new one. Three or more for one field at one venue are a parser
-   defect: file it rather than accept each one.
+   Then work the admin app's review pages: "Suggested fixes", "Instagram drafts", "Artists to review" and "Venues to review". `/admin-review` gives
+   each item a verdict and applies the ones you name. Three or more suggestions for one field at one venue are a parser defect.
+   File it, and do not accept each one.
 9. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
 10. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
 
