@@ -276,7 +276,40 @@ class UrbanSpreeWebsiteImporterTest {
             event.startTime shouldBe LocalTime.of(20, 0)
         }
 
+    @Test
+    fun `importEvents keeps an untimed exhibition run untimed through the detail merge`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns
+                Jsoup.parse(
+                    """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+                    <a class="stealth swiper-slide card" href="program/exhibitions/wholetrain-20.html"
+                       data-datestart="2026-11-06" data-dateend="2026-11-28" data-getdate="2026-10-23">
+                    <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">Wholetrain 20</p></a>
+                    </div></body></html>""",
+                    entryUrl
+                )
+            coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
+            coEvery { htmlFetcher.fetchDocument(WHOLETRAIN_URL) } returns fixture("urbanspree-detail-exhibition.html", WHOLETRAIN_URL)
+
+            val event =
+                importer
+                    .importEvents(entryUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            event.title shouldBe "WON ABC, NEON: Wholetrain 20"
+            // The page's category slot names the artists, so the card's Exhibitions label types the run.
+            event.eventType shouldBe EventType.EXHIBITION.name
+            event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+            event.startTime.shouldBeNull()
+            event.endDate shouldBe LocalDate.of(2026, 11, 28)
+            event.free shouldBe true
+            event.detailUnavailable shouldBe false
+        }
+
     private companion object {
+        private const val WHOLETRAIN_URL = "https://www.urbanspree.com/program/exhibitions/wholetrain-20.html"
         private const val OTHA_URL = "https://www.urbanspree.com/program/concerts/otha-berlin-urban-spree.html"
         private const val KLUBNACHT_URL = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
         private const val TWIN_NOIR_URL = "https://www.urbanspree.com/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html"

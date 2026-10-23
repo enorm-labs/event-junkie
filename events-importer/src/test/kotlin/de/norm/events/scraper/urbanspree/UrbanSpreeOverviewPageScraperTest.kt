@@ -171,6 +171,69 @@ class UrbanSpreeOverviewPageScraperTest {
         events.single().title shouldBe "Dated"
     }
 
+    /** One listing page holding a card per [cards] entry, each `(href slug, raw data-dateStart, raw data-dateEnd)`. */
+    private fun listingOf(vararg cards: Triple<String, String, String?>): Document =
+        Jsoup.parse(
+            cards.joinToString(
+                separator = "\n",
+                prefix = """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">""",
+                postfix = "</div></body></html>"
+            ) { (slug, start, end) ->
+                val endAttr = end?.let { """ data-dateend="$it"""" }.orEmpty()
+                """<a class="stealth swiper-slide card" href="program/exhibitions/$slug.html" data-datestart="$start"$endAttr>
+                  <p class="card-text mb-0 cat">Exhibitions</p><p class="card-text mb-0 title">$slug</p></a>"""
+            },
+            listingUrl
+        )
+
+    @Test
+    fun `scrape reads a card dated without a time as an untimed run to its end date`() {
+        val event =
+            scraper.scrape(listingOf(Triple("wholetrain-20", "2026-11-06", "2026-11-28")), listingUrl).single()
+
+        event.eventDate shouldBe LocalDate.of(2026, 11, 6)
+        event.startTime.shouldBeNull()
+        event.endDate shouldBe LocalDate.of(2026, 11, 28)
+        event.eventType shouldBe EventType.EXHIBITION.name
+    }
+
+    @Test
+    fun `scrape keeps a one-day untimed card without an end date`() {
+        val events =
+            scraper.scrape(
+                listingOf(
+                    Triple("no-end", "2026-11-06", null),
+                    Triple("same-day-end", "2026-11-06", "2026-11-06"),
+                    Triple("end-before-start", "2026-11-06", "2026-11-01"),
+                    Triple("garbled-end", "2026-11-06", "Nov 28")
+                ),
+                listingUrl
+            )
+
+        events shouldHaveSize 4
+        events.forEach {
+            it.startTime.shouldBeNull()
+            it.endDate.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `scrape still refuses a stamp that is neither a date nor a date and time`() {
+        val events =
+            scraper.scrape(
+                listingOf(
+                    Triple("german-date", "06.11.2026", null),
+                    Triple("hour-only", "2026-11-06 20", null),
+                    Triple("impossible-day", "2026-02-30", null),
+                    Triple("timed", "2026-11-06 20:00:00", "2026-11-06")
+                ),
+                listingUrl
+            )
+
+        events.map { it.title } shouldContainExactly listOf("timed")
+        events.single().startTime shouldBe LocalTime.of(20, 0)
+    }
+
     @Test
     fun `scrape returns an empty list for a listing with no cards`() {
         val html = """<html><body><div id="pdopage"><p>No events</p></div></body></html>"""
