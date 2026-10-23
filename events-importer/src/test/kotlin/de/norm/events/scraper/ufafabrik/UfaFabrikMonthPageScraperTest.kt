@@ -160,6 +160,14 @@ class UfaFabrikMonthPageScraperTest {
         genreType("Filmpremiere & Crossover-Performance") shouldBe EventType.SCREENING.name
         genreType("Singer Songwriter") shouldBe EventType.CONCERT.name
         genreType("Konzert & Tanz") shouldBe EventType.CONCERT.name
+        genreType("A Capella") shouldBe EventType.CONCERT.name
+        genreType("A Cappella") shouldBe EventType.CONCERT.name
+        genreType("Clownerie") shouldBe EventType.SHOW.name
+        genreType("Clowneskes Theater") shouldBe EventType.SHOW.name
+        genreType("Tanz Akrobatik, Neuer Zirkus") shouldBe EventType.SHOW.name
+        genreType("Party") shouldBe EventType.PARTY.name
+        genreType("Comedy-Party") shouldBe EventType.COMEDY.name
+        genreType("Wintermarkt") shouldBe EventType.OTHER.name
         genreType("Infoabend") shouldBe EventType.OTHER.name
         genreType(null) shouldBe EventType.OTHER.name
     }
