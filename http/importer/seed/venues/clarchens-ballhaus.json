@@ -14,8 +14,16 @@
         "descriptionAlt": "Seit 1913 wird in diesem Ballhaus in der Auguststraße getanzt, heute im denkmalgeschützten Spiegelsaal im Obergeschoss mit Tango-Milongas, Swing, Tanzkursen, Konzerten und Partys.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["club", "live-venue"],
-        "programmeUrl": "https://claerchensball.haus/programm/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Clärchens Ballhaus",
+            "url": "https://claerchensball.haus/programm/",
+            "sourceType": "CLAERCHENS_BALLHAUS",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

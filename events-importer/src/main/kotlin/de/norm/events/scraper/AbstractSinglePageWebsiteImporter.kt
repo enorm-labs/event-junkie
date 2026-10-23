@@ -36,6 +36,9 @@ abstract class AbstractSinglePageWebsiteImporter(
     /** Cookies sent with the listing fetch, for a venue that serves its programme only to a request carrying one. */
     protected open val cookies: Map<String, String> = emptyMap()
 
+    /** The `User-Agent` of the listing fetch, for a venue whose WAF refuses the shared one; null keeps it. */
+    protected open val userAgent: String? = null
+
     /**
      * The listing in the venue's other language, for a venue that translates the event text there.
      * The run reads it too and stores its text as the second language (ADR-026 rule 2).
@@ -66,7 +69,7 @@ abstract class AbstractSinglePageWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified, cookies)) {
+        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified, cookies, userAgent)) {
             is FetchResult.NotModified -> {
                 ImportResult.NotModified
             }

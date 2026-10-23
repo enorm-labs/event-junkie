@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   184 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     7 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   185 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     6 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
@@ -65,6 +65,7 @@ schema change.
 | BKA Theater                      | https://www.bka-theater.de/spielplan/                                    | Theater      | PHP list a year out; JSON-LD prices for next 30           |
 | Brotfabrik                       | https://brotfabrik-berlin.de/veranstaltungen/                            | Other        | The Events Calendar API; `Bühne`, `Literatur` only        |
 | Cassiopeia                       | https://cassiopeia-berlin.de/                                            | Club         | Webflow; genre tags, badges; walks all pages              |
+| Clärchens Ballhaus               | https://claerchensball.haus/programm/                                    | Club         | Pie Calendar JSON in a script; own UA past the WAF        |
 | Clash Club                       | https://clash-berlin.de/                                                 | Club         | WordPress; prices, doors and blurb only as prose          |
 | Club der Visionäre               | https://clubdervisionaere.com/programm                                   | Techno Club  | WordPress; one listing, 3 rooms by CSS class              |
 | Club OST                         | https://clubost.de/                                                      | Techno Club  | Django; homepage is the programme; RA tickets             |
@@ -483,7 +484,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Villa Kuriosum     | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
 | Backsteinboot      | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 | Kulturhaus Spandau | https://kulturhaus-spandau.de/programm/            | Other | Medium   | Theme REST API; 41 of 110 upcoming are concerts        |
-| Clärchens Ballhaus | https://claerchensball.haus/programm/              | Club  | High     | FullCalendar JSON in `/programm/`; 120 upcoming        |
 | Wiener Blut        | https://www.wienerblut.org/event-list              | Bar   | Low      | Wix Events warmup JSON; 1 upcoming so far              |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
@@ -493,12 +493,8 @@ festivals, agencies and associations, or are recorded already.
 **The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
 table.
 
-**Clärchens Ballhaus and Wiener Blut moved here from Blocked on 2026-10-23.** Clärchens' WAF answers 403 to any
-User-Agent that contains `(compatible; …)`. The shared scraper User-Agent contains it.
-`EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)` gets 200, so this importer sends its own User-Agent.
-The page holds a FullCalendar array with `title`, `start` and `permalink`. Most rows are recurring dance nights.
-Wiener Blut now uses Wix Events, and the warmup JSON holds the dates. It has one upcoming event, and it is imported
-for the events that follow.
+**Wiener Blut moved here from Blocked on 2026-10-23.** It now uses Wix Events, and the warmup JSON holds the dates.
+It has one upcoming event, and it is imported for the events that follow.
 
 **Kulturhaus Spandau moved here from Blocked on 2026-10-22 (#3721).** Its `/programm/` HTML holds only teasers. The
 theme's script reads the list from `/wp-json/eventmanager/v1/events`, which answers without a key. That endpoint returns

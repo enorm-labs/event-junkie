@@ -81,6 +81,17 @@ fun jsonArrayAt(
     key: String
 ): String? {
     val start = payload.indexOf("\"$key\":[").takeIf { it >= 0 }?.plus(key.length + 3) ?: return null
+    return balancedJsonAt(payload, start)
+}
+
+/**
+ * Cuts the JSON array or object that opens at [start] out of [payload], brackets balanced, or `null` when it never
+ * closes. For JSON written into a script as a JavaScript literal, where no quoted key leads to it.
+ */
+fun balancedJsonAt(
+    payload: String,
+    start: Int
+): String? {
     var depth = 0
     var inString = false
     var escaped = false

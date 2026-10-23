@@ -82,6 +82,9 @@ enum class EventSource {
     /** Cassiopeia Berlin – a multi-room club and cultural venue on the RAW-Gelände, from reggae and drum & bass to indie and electronic nights. */
     CASSIOPEIA,
 
+    /** Clärchens Ballhaus Berlin – the 1913 ballroom in the Auguststraße, with dance nights and Sunday concerts in its mirrored hall. */
+    CLAERCHENS_BALLHAUS,
+
     /** Clash Berlin – a punk, ska and rock'n'roll bar and concert spot near Mehringdamm. */
     CLASH,
 
