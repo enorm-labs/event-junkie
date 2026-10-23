@@ -456,7 +456,18 @@ class ArtistNameMappingTest {
         isNonArtistName("--") shouldBe true
         isNonArtistName("...") shouldBe true
         isNonArtistName("?!") shouldBe true
+        isNonArtistName("/") shouldBe true
+        isNonArtistName("+") shouldBe true
+        isNonArtistName("–") shouldBe true
         isNonArtistName("Mittelalter-Irish Folk") shouldBe false
+    }
+
+    // The duo `@` is spoken "At", and slugs to `at` (#3793).
+    @Test
+    fun `isNonArtistName keeps an act whose name is an at sign`() {
+        isSlugless("@") shouldBe false
+        isNonArtistName("@") shouldBe false
+        stripArtistSuffix("@ (US, 4AD)") shouldBe "@"
     }
 
     // --- isNonArtistName bare number (#1556) ---
