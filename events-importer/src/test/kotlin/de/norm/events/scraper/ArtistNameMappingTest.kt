@@ -2349,6 +2349,25 @@ class ArtistNameMappingTest {
         stripArtistSuffix("NIGHT NAIL (Dark Wave US/DE)") shouldBe "NIGHT NAIL"
         stripArtistSuffix("Apichat Pakwan (Thailand-Live)") shouldBe "Apichat Pakwan"
         stripArtistSuffix("Sickboyrari (Black Kray)") shouldBe "Sickboyrari (Black Kray)"
+        stripArtistSuffix("Brazen Barbie (Hip Hop aus Australien)") shouldBe "Brazen Barbie"
+        stripArtistSuffix("Kofi (from Ghana)") shouldBe "Kofi"
+        // `aus` outside a bracket is part of the name.
+        stripArtistSuffix("Cindy aus Marzahn") shouldBe "Cindy aus Marzahn"
+    }
+
+    // #3827 — a tour tail with no dash: any `Tournee`, and a `Tour` after a region word.
+    @Test
+    fun `stripArtistSuffix drops a Tournee tail and a region tour tail written without a dash`() {
+        stripArtistSuffix("Brazen Barbie (Hip Hop aus Australien) Europa Tournee") shouldBe "Brazen Barbie"
+        stripArtistSuffix("Clueso Abschiedstournee") shouldBe "Clueso"
+        stripArtistSuffix("Clueso Tournee") shouldBe "Clueso"
+        stripArtistSuffix("Max Raabe Deutschland-Tournee") shouldBe "Max Raabe"
+        stripArtistSuffix("Wanda – Europa Tournee") shouldBe "Wanda"
+        stripArtistSuffix("Kraftklub Europe Tour") shouldBe "Kraftklub"
+        // A city is no region, and a bare `Tour` can close a band's name.
+        stripArtistSuffix("Isolation Berlin Tour") shouldBe "Isolation Berlin Tour"
+        stripArtistSuffix("Grand Tour") shouldBe "Grand Tour"
+        stripArtistSuffix("Tournee") shouldBe "Tournee"
     }
 
     // #1561 — a band affiliation is a comma list or an `ex-` opener; a single bare name may be an alias.

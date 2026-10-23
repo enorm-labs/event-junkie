@@ -230,6 +230,25 @@ class Bogen47ApiScraperTest {
     }
 
     @Test
+    fun `scrapePage bills the act, not its origin note or Tournee tail`() {
+        // Post 7676 as the API served it on 2026-10-24, with an empty event type (#3827).
+        val event =
+            scraper
+                .scrapePage(
+                    """
+                    [{"id":7676,"link":"https://larkberlin.com/event/brazen-barbie/","date":"2026-11-03T19:00:00",
+                      "title":{"rendered":"Brazen Barbie (Hip Hop aus Australien) Europa Tournee"},
+                      "acf":{"event_type":"","event_organizer":""},"featured_media":0}]
+                    """.trimIndent()
+                ).entries
+                .single()
+                .event
+
+        event.eventType shouldBe EventType.CONCERT.name
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Brazen Barbie" to ArtistRole.HEADLINER.name)
+    }
+
+    @Test
     fun `scrapePage classifies the act, not the tour name it carries`() {
         // The shared keyword classifier matches a bare "club", so this gig came back PARTY — and a
         // PARTY title is an event name, so it also lost its headliner.
