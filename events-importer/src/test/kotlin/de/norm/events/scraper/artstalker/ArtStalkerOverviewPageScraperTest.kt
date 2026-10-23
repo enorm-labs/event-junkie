@@ -80,7 +80,31 @@ class ArtStalkerOverviewPageScraperTest {
             listOf("Glam Jam" to "HEADLINER", "Mission BlueZ" to "HEADLINER")
     }
 
-    private fun cardArtists(title: String) =
+    @Test
+    fun `bills the band after mit der Band as a concert, past a denied karaoke cue`() {
+        val event = card("Mitsing Konzert mit der Band The Rollin’ Horses - Keine Karaoke Maschine. Eine echte Live-Band")
+        event.eventType shouldBe EventType.CONCERT.name
+        event.subtitle shouldBe "Keine Karaoke Maschine. Eine echte Live-Band"
+        event.artists.map { it.name to it.role } shouldBe listOf("The Rollin’ Horses" to "HEADLINER")
+        card("Karaoke Abend - Mit Live-Band").eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `cuts a trailing backing band from the act`() {
+        cardArtists("Alessandro Tarshahani and the Band - Ein Mix aus Jazz, Blues, Soul") shouldBe
+            listOf("Alessandro Tarshahani" to "HEADLINER")
+        cardArtists("Lena Meyer & Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
+        cardArtists("Lena Meyer und Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
+        cardArtists("Lena Meyer mit der Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
+        cardArtists("Doppelkonzert: Glam Jam + Lena Meyer & Band") shouldBe
+            listOf("Glam Jam" to "HEADLINER", "Lena Meyer" to "HEADLINER")
+        cardArtists("Beatles-Songs präsentiert von The Fab Four and the Band") shouldBe
+            listOf("The Fab Four" to "HEADLINER")
+    }
+
+    private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }
+
+    private fun card(title: String) =
         ArtStalkerOverviewPageScraper()
             .scrape(
                 Jsoup.parse(
@@ -91,8 +115,6 @@ class ArtStalkerOverviewPageScraperTest {
                     baseUrl
                 )
             ).single()
-            .artists
-            .map { it.name to it.role }
 
     @Test
     fun `types the house formats and bills no act for them`() {

@@ -46,7 +46,7 @@ class ArtStalkerOverviewPageScraper {
             return null
         }
         val (title, subtitle) = splitTagline(rawTitle)
-        val eventType = inferConcertVenueType(title, subtitle, VENUE_FORMATS)
+        val eventType = inferConcertVenueType(title, subtitle?.replace(NEGATED_CUE, ""), VENUE_FORMATS)
         val openStage = OPEN_STAGE.containsMatchIn(title)
         return ScrapedEvent(
             title = title,
@@ -73,6 +73,9 @@ class ArtStalkerOverviewPageScraper {
          * whose title names nobody (#2992).
          */
         val OPEN_STAGE = Regex("""\bsession\b|\bopen\s+mic\b""", RegexOption.IGNORE_CASE)
+
+        /** A cue the tagline denies, which types nothing: `Keine Karaoke Maschine. Eine echte Live-Band` (#3792). */
+        val NEGATED_CUE = Regex("""\bkein(?:e|en|er)?\s+[\p{L}-]+""", RegexOption.IGNORE_CASE)
     }
 }
 
@@ -92,18 +95,21 @@ internal fun splitTagline(raw: String): Pair<String, String?> {
 /**
  * The part of a title that names the acts. A one-word format label before them is no act
  * (`Doppelkonzert: Glam Jam + Mission BlueZ`), and a tribute night names the band after
- * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`). A trailing
- * `live` or `live und in Farbe` is billing, not a second act after `und` (#3749).
+ * "präsentiert von" (`BAD COMPANY- und FREE-Songs präsentiert von FREE COMPANY`), a sing-along
+ * after "mit der Band" (`Mitsing Konzert mit der Band The Rollin’ Horses`). A trailing `live`,
+ * `live und in Farbe` or `and the Band` is billing, not a second act after `und` (#3749, #3792).
  */
 internal fun billedActs(title: String): String {
     val acts =
-        PRESENTED_BY
-            .find(title)
+        (PRESENTED_BY.find(title) ?: WITH_THE_BAND.find(title))
             ?.groupValues
             ?.get(1)
             ?.trim()
             ?: title.replaceFirst(FORMAT_LABEL, "").ifBlank { title }
-    return acts.replaceFirst(LIVE_TAIL, "").ifBlank { acts }
+    return acts
+        .replaceFirst(LIVE_TAIL, "")
+        .replaceFirst(BAND_TAIL, "")
+        .ifBlank { acts }
 }
 
 /** The shop's event number, the last path segment: `…-am-3-10-2026/e2535642`. */
@@ -113,3 +119,5 @@ private val TAGLINE_SEPARATOR = Regex("""\s-\s""")
 private val FORMAT_LABEL = Regex("""^\p{L}+:\s+""")
 private val LIVE_TAIL = Regex("""\s+live(?:\s+und\s+in\s+farbe)?$""", RegexOption.IGNORE_CASE)
 private val PRESENTED_BY = Regex("""\spräsentiert\s+von\s+(.+)$""", RegexOption.IGNORE_CASE)
+private val WITH_THE_BAND = Regex("""\smit\s+der\s+band\s+(.+)$""", RegexOption.IGNORE_CASE)
+private val BAND_TAIL = Regex("""\s+(?:and\s+the|&(?:\s+the)?|und(?:\s+die)?|mit\s+der)\s+band$""", RegexOption.IGNORE_CASE)
