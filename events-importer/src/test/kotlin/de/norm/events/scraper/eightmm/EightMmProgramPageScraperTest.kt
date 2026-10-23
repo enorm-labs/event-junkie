@@ -110,6 +110,33 @@ class EightMmProgramPageScraperTest {
         billed("SOUL NIGHT WITH DJ ANNA LOU (THE CRAMPS)").shouldBeEmpty()
     }
 
+    @Test
+    fun `a night's own title bills nobody`() {
+        fun billed(title: String) =
+            EightMmProgramPageScraper(Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+                .scrape(Jsoup.parse(listing(title), sourceUrl), sourceUrl)
+                .single()
+                .artists
+
+        billed("KOROWA — A Night of Live and Dark Sounds").shouldBeEmpty()
+        billed("8MM X UNKNOWN CALLERS HALLOWEEN").shouldBeEmpty()
+        billed("Halloween Weekend - Prayforevilspirit DJ SET").shouldBeEmpty()
+        billed("A Very Long Night of ${"Endless ".repeat(40)}Feedback and Drone and Noise x Friends").shouldBeEmpty()
+    }
+
+    @Test
+    fun `the house is never billed as an act`() {
+        fun billed(title: String) =
+            EightMmProgramPageScraper(Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin")))
+                .scrape(Jsoup.parse(listing(title), sourceUrl), sourceUrl)
+                .single()
+                .artists
+                .map { it.name }
+
+        billed("8MM Live: LUFT x 8MM") shouldContainExactly listOf("LUFT")
+        billed("8MM + Shameless Limitless pres: DEVON REXI") shouldContainExactly listOf("DEVON REXI")
+    }
+
     private fun listing(title: String) =
         """
         <noscript><ul><li>

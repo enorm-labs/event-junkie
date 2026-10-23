@@ -30,6 +30,10 @@ import java.util.Locale
  * - **The end time is a placeholder**: every event ends one hour after it starts, so it is not read.
  * - **The residency repeats one slug on each date**, so the `sourceId` keeps the `/program/<y>/<m>/<d>/` path.
  * - **A `LIVE` title is a concert, a `DJ` title a party**; the bands come from a concert's title only.
+ * - **Only a title in the house frame bills its acts**: `8MM Live: <acts>`, `8MM + <promoter> pres: <acts>` or
+ *   `<acts> LIVE in 8MM`. Any other title names the night, as `KOROWA — A Night of Live and Dark Sounds` or
+ *   `8MM X UNKNOWN CALLERS HALLOWEEN`, and bills nobody. The acts of such a night are only in the blurb's prose.
+ *   The house's own `8MM` is never an act.
  * - **A `<name> (<act>) … DJ RESIDENCY` title bills its DJ**; the bracketed band names where the DJ comes from and does not play.
  *   Every other DJ title is free-form and bills nobody.
  */
@@ -75,7 +79,7 @@ class EightMmProgramPageScraper(
             imageUrl = item.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
             sourceUrl = url,
             sourceId = "${EventSource.EIGHT_MM.sourceIdPrefix}${extractEventSlug(url, "/program/").replace('/', '-')}",
-            artists = residencyDj(title, eventType)?.let { listOf(it) } ?: buildArtistsForEventType(billing(title), null, eventType)
+            artists = residencyDj(title, eventType)?.let { listOf(it) } ?: concertBill(title, eventType)
         )
     }
 
@@ -93,8 +97,15 @@ class EightMmProgramPageScraper(
             else -> inferConcertVenueType(title)
         }
 
-    /** The acts of `8MM Live: SOFT PALMS (US)` or `RMFC LIVE in 8MM`, without the house's frame. */
-    private fun billing(title: String): String = title.replace(HOUSE_PREFIX, "").replace(HOUSE_SUFFIX, "").trim()
+    /** The acts of `8MM Live: SOFT PALMS (US)` or `RMFC LIVE in 8MM`, without the house's frame; none outside the frame. */
+    private fun concertBill(
+        title: String,
+        eventType: String
+    ): List<ScrapedArtist> {
+        if (!HOUSE_PREFIX.containsMatchIn(title) && !HOUSE_SUFFIX.containsMatchIn(title)) return emptyList()
+        val acts = title.replace(HOUSE_PREFIX, "").replace(HOUSE_SUFFIX, "").trim()
+        return buildArtistsForEventType(acts, null, eventType).filterNot { it.name.equals(HOUSE, ignoreCase = true) }
+    }
 
     /** `JEFF CLARK (BLACK LIPS) SUNDAY'S IN OCTOBER DJ RESIDENCY` bills `Jeff Clark`. */
     private fun residencyDj(
@@ -119,6 +130,8 @@ class EightMmProgramPageScraper(
         val DJ = Regex("""\bDJ\b""", RegexOption.IGNORE_CASE)
 
         val RESIDENCY = Regex("""^(?<name>[^()]+?)\s*\([^)]+\)\s+.*\bDJ\s+RESIDENCY\b""", RegexOption.IGNORE_CASE)
+
+        const val HOUSE = "8MM"
 
         /** `8MM Live:` or `8MM + Shameless Limitless pres:` in front of the acts. */
         val HOUSE_PREFIX = Regex("""^8MM\b[^:]*:\s*""", RegexOption.IGNORE_CASE)

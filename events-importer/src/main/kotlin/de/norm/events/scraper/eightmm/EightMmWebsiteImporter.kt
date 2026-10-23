@@ -41,7 +41,7 @@ val EIGHT_MM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "only a concert blurb states a doors time; a DJ night has none"),
         AcceptedLimitation(LimitedAspect.SUBTITLE, "an event carries a title and a blurb, no second title line"),
         AcceptedLimitation(LimitedAspect.GENRE, "nothing on the calendar or the event pages names a style"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "a DJ night bills nobody from its free-form title, except a Name (Band) … DJ Residency title"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a DJ night bills nobody but a Name (Band) … DJ Residency; a concert bills only from the house frame"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; bands keep the door money"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "a blurb points to the venue's Instagram for tickets, never to a shop"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags an event sold out"),

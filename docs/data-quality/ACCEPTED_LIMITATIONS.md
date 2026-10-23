@@ -243,7 +243,7 @@ says so.
 | `EIGHT_MM`             | `DOORS_TIME`       | only a concert blurb states a doors time; a DJ night has none                                                                                    | —     |
 | `EIGHT_MM`             | `SUBTITLE`         | an event carries a title and a blurb, no second title line                                                                                       | —     |
 | `EIGHT_MM`             | `GENRE`            | nothing on the calendar or the event pages names a style                                                                                         | —     |
-| `EIGHT_MM`             | `ARTISTS`          | a DJ night bills nobody from its free-form title, except a Name (Band) … DJ Residency title                                                      | —     |
+| `EIGHT_MM`             | `ARTISTS`          | a DJ night bills nobody but a Name (Band) … DJ Residency; a concert bills only from the house frame                                              | —     |
 | `EIGHT_MM`             | `PRICE`            | the site states no price; bands keep the door money                                                                                              | —     |
 | `EIGHT_MM`             | `TICKET_URL`       | a blurb points to the venue's Instagram for tickets, never to a shop                                                                             | —     |
 | `EIGHT_MM`             | `SOLD_OUT`         | nothing flags an event sold out                                                                                                                  | —     |
