@@ -7,5 +7,6 @@
     "week": "Woche",
     "list": "Liste"
   },
+  "viewHint": "Ansicht {view}",
   "more": "weitere"
 }

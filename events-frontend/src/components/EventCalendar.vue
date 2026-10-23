@@ -50,6 +50,10 @@ function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+function viewButton(text: string) {
+  return { text, hint: t('calendar.viewHint', { view: text }) }
+}
+
 function handleDatesSet(arg: DatesSetInfo) {
   // FullCalendar's `end` is exclusive; the BFF's `to` is inclusive, so step back a day.
   const inclusiveEnd = new Date(arg.end)
@@ -121,13 +125,14 @@ const options = computed<CalendarOptions>(() => ({
   },
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
+  // A hint must hold the visible word as a word: the locale's own read "This month" for Today and
+  // "Monatsansicht" for Monat (WCAG 2.5.3, #3823). English keeps "Month view", which the e2e tabs select by.
   buttons: {
-    // The locale's own hint labels it "This month", which drops the visible "Today" (WCAG 2.5.3, #3823).
     today: { text: t('calendar.today'), hint: t('calendar.today') },
-    dayGridMonth: { text: t('calendar.view.month') },
-    [GRID_WEEK]: { text: t('calendar.view.week') },
-    [LIST_WEEK_NARROW]: { text: t('calendar.view.week') },
-    listWeek: { text: t('calendar.view.list') },
+    dayGridMonth: viewButton(t('calendar.view.month')),
+    [GRID_WEEK]: viewButton(t('calendar.view.week')),
+    [LIST_WEEK_NARROW]: viewButton(t('calendar.view.week')),
+    listWeek: viewButton(t('calendar.view.list')),
   },
   height: 'auto',
   firstDay: 1, // Monday (Berlin / EU convention)
