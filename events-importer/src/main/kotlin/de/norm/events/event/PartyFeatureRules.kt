@@ -133,6 +133,8 @@ object PartyFeatureRules {
                 clear =
                     listOf(
                         "${B}queer(?:e|en|er|es)?[\\s-]+$QUEER_NIGHT$E",
+                        // "Queer event, safe space" (#3757). A series is a run of talks or screenings, not one night.
+                        "${B}queer(?:e|en|er|es)?[\\h-]+(?:event|veranstaltung)$E(?![\\h-]+series$E)",
                         "$B(?:gay|lesbian|lesbische?n?|schwule?n?|lgbt[qia+*]*)[\\s-]+$QUEER_NIGHT$E",
                         "$B$QUEER_NIGHT\\s+(?:$FUER|for)\\s+" +
                             "(?:queers|queer\\s+(?:people|folks?|community)|(?:die\\s+)?queere\\s+(?:menschen|community|szene))$E",
