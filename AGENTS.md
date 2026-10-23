@@ -242,7 +242,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/release-highlights` — the visitor-facing summary that opens a release's notes; `cut-release.yml` runs it before every cut
 - `/start-issue <n>` — claim an issue, move the board, cut the branch, read its dependencies, plan
 - `/scaffold-importer` — a new venue importer end to end
-- `/security-report` — read-only: Dependency-Check findings and Dependabot alerts, reconciled and triaged
+- `/security-report` — read-only: Dependency-Check findings, Dependabot alerts and `npm audit`, reconciled and triaged
 - `/security-triage` — work the Security tab to zero: fix, file or dismiss; the mutating counterpart to `/security-report`
 - `/setup-machine` — a new Mac to a working checkout: `scripts/setup-mac.sh` and the `Brewfile`, contributor or operator tier; hands over every step that installs, prompts or needs `sudo`
 - `/squash-commit-message` — a squash commit message for the current branch
