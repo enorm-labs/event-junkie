@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
@@ -49,13 +50,15 @@ class HtmlFetcher(
      * @param cookies sent verbatim, for a source that serves its programme only to a request that
      * carries one: without `rosa_age_ok` ROSA renders its age gate and no events. A cookie belongs
      * to one venue, so the value stays in that importer.
+     * @param userAgent replaces the shared `User-Agent` for this request, for a venue whose WAF refuses it.
      * @return a [FetchResult].
      */
     suspend fun fetch(
         url: String,
         etag: String? = null,
         lastModified: String? = null,
-        cookies: Map<String, String> = emptyMap()
+        cookies: Map<String, String> = emptyMap(),
+        userAgent: String? = null
     ): FetchResult {
         // `url` as a payload field (#945): the value the "did this source 304 or change" question
         // filters on. The validators stay in the text, opaque hashes nothing aggregates on.
@@ -72,6 +75,7 @@ class HtmlFetcher(
                 etag?.let { header("If-None-Match", it) }
                 lastModified?.let { header("If-Modified-Since", it) }
                 cookies.forEach { (name, value) -> cookie(name, value) }
+                userAgent?.let { header(HttpHeaders.USER_AGENT, it) }
             }.awaitExchange { response ->
                 handleResponse(response, url)
             }

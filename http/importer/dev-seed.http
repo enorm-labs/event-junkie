@@ -2173,7 +2173,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Clärchens Ballhaus — not imported
+# Clärchens Ballhaus
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Clärchens Ballhaus venue ---
@@ -2195,13 +2195,43 @@ Content-Type: application/json
     "descriptionAlt": "Seit 1913 wird in diesem Ballhaus in der Auguststraße getanzt, heute im denkmalgeschützten Spiegelsaal im Obergeschoss mit Tango-Milongas, Swing, Tanzkursen, Konzerten und Partys.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "live-venue"],
-    "programmeUrl": "https://claerchensball.haus/programm/",
     "reviewedAt": "2026-10-07T08:19:25Z"
 }
 
 > {%
+    client.global.set("venue_id_clarchens_ballhaus", response.body.id);
     client.test("Clärchens Ballhaus venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Clärchens Ballhaus event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_clarchens_ballhaus}},
+    "name": "Clärchens Ballhaus",
+    "url": "https://claerchensball.haus/programm/",
+    "sourceType": "CLAERCHENS_BALLHAUS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Clärchens Ballhaus event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Clärchens Ballhaus import ---
+POST {{importer-host}}/api/admin/event-sources/clarchens-ballhaus/import
+Accept: application/json
+
+> {%
+    client.test("Clärchens Ballhaus import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

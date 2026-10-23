@@ -39,6 +39,13 @@ const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
  */
 private const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
 
+/**
+ * The same product token and contact URL without the `Mozilla/5.0 (compatible; …)` frame, for a venue whose
+ * WAF refuses that frame and serves this (Clärchens Ballhaus). An importer opts in through
+ * [AbstractSinglePageWebsiteImporter.userAgent]; every other request keeps [SCRAPER_USER_AGENT].
+ */
+const val PLAIN_SCRAPER_USER_AGENT = "EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)"
+
 /** The size of Reactor Netty's global pool, so moving off it changes eviction and nothing else. */
 private const val SCRAPER_POOL_MAX_CONNECTIONS = 500
 

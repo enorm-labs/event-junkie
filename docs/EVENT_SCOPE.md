@@ -143,6 +143,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title or format line that names a `Workshop`                                                 |
 | Volksbühne          | `VolksbuehneSpielplanScraper.isOutOfScope`               | A `Workshop` format label, or a title that opens with `Theaterführung`                         |
 | Renaissance-Theater | `RenaissanceTheaterSpielplanPageScraper.isOutOfScope`    | A title that names a `Führung`: the tour of the house                                          |
+| Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` tour of the house, a `Workshop`, the `Weinmahl` dinner, or a sing-along choir    |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -199,6 +200,7 @@ Hall. Nothing on those pages marks a show for small children, and adults go to t
 | Showfenster Theater                              | `ShowfensterOverviewPageScraper.isOutOfScope`                               | The Eventfrog category `kinderveranstaltungen`, or `billsChildrensShow` on title + description   |
 | Brotfabrik                                       | `BrotfabrikApiScraper.isChildrensShow`                                      | `billsChildrensShow` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`   |
 | Volksbühne                                       | `billsChildrensShow`, on the title and the `.activity__title_addition` line | The same words as above                                                                          |
+| Clärchens Ballhaus                               | `billsChildrensShow`, on the title and the calendar text                    | The same words as above                                                                          |
 | Peter Edel, Wühlmäuse, SO36, Renaissance-Theater | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle              | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
 
 `billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A

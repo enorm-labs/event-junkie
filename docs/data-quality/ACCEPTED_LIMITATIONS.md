@@ -137,6 +137,13 @@ says so.
 | `CAFE_KOEPENICK`       | `ARTISTS`          | a band night bills its acts only in the title, and some titles say only bands                                                                    | —     |
 | `CAFE_KOEPENICK`       | `PER_EVENT_PAGE`   | the calendar has no page per event, so every event links the calendar                                                                            | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
+| `CLAERCHENS_BALLHAUS`  | `EVENT_TYPE`       | the calendar names no category, so the type comes from the words under the title                                                                 | —     |
+| `CLAERCHENS_BALLHAUS`  | `ARTISTS`          | the dance nights and the house's concert series name nobody; only a guest concert's title bills its act                                          | —     |
+| `CLAERCHENS_BALLHAUS`  | `PRICE`            | the calendar prints a price for the dance classes only, and the concerts sell through outside shops                                              | —     |
+| `CLAERCHENS_BALLHAUS`  | `GENRE`            | the calendar names a dance, not a music style                                                                                                    | —     |
+| `CLAERCHENS_BALLHAUS`  | `DOORS_TIME`       | only the Sunday concerts print an `Einlass`, as free text                                                                                        | —     |
+| `CLAERCHENS_BALLHAUS`  | `END_TIME`         | the calendar's end is midnight of the first occurrence, not the night's end                                                                      | —     |
+| `CLAERCHENS_BALLHAUS`  | `PROMOTERS`        | the calendar names no promoter                                                                                                                   | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |
 | `CLASH`                | `PROMOTERS`        | the homepage listing is the whole source and names no promoter                                                                                   | —     |

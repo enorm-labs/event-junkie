@@ -121,6 +121,29 @@ class HtmlFetcherTest {
     }
 
     @Nested
+    inner class UserAgents {
+        @Test
+        fun `fetch replaces the shared User-Agent only when an importer names one`() =
+            runTest {
+                repeat(2) {
+                    server.enqueue(
+                        MockResponse
+                            .Builder()
+                            .code(200)
+                            .body("<html><body>ok</body></html>")
+                            .build()
+                    )
+                }
+
+                fetcher.fetch(baseUrl() + "/programm/", userAgent = PLAIN_SCRAPER_USER_AGENT)
+                server.takeRequest().headers.values("User-Agent") shouldBe listOf(PLAIN_SCRAPER_USER_AGENT)
+
+                fetcher.fetch(baseUrl() + "/programm/")
+                server.takeRequest().headers["User-Agent"]!! shouldContain "(compatible; EventJunkie/1.0;"
+            }
+    }
+
+    @Nested
     inner class RawBodyFetching {
         @Test
         fun `fetchHtml returns the response body verbatim`() =

@@ -46,4 +46,11 @@ class NextFlightPayloadTest {
         jsonArrayAt("""{"events":[{"id":"a"}]}""", "dates").shouldBeNull()
         jsonArrayAt("""{"events":[{"id":"a"}""", "events").shouldBeNull()
     }
+
+    @Test
+    fun `balancedJsonAt cuts a JavaScript literal that no quoted key leads to`() {
+        val script = """calendar({ eventSources: [[{"title":"Swing ]"}]], editable: false })"""
+
+        balancedJsonAt(script, script.indexOf("[[")) shouldBe """[[{"title":"Swing ]"}]]"""
+    }
 }
