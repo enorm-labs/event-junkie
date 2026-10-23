@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   186 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   187 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
@@ -124,6 +124,7 @@ schema change.
 | Kühlspot Social Club             | https://kuehlspot.com/                                                   | Other        | Elementor one-pager; line-up as Name – instrument         |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                              | Concert Hall | Gatsby static-query JSON; times in the blurb              |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                                         | Concert Hall | Umbraco grid; month heading carries the year              |
+| Kulturhaus Spandau               | https://kulturhaus-spandau.de/programm/                                  | Other        | Theme REST API; house rooms only, not the Zitadelle       |
 | LabSaal                          | https://labsaal.de/events/                                               | Other        | MEC iCal feed; groups, courses, workshops dropped         |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
 | Lido                             | https://www.lido-berlin.de/                                              | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge           |
@@ -478,13 +479,12 @@ Colosseum and Gärten der Welt. They reached this document only through Loft, Pu
 the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name               | URL                                                | Type  | Priority | Comment                                                |
-| ------------------ | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
-| Little Stage Bar   | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
-| KuBiZ              | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
-| Villa Kuriosum     | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
-| Backsteinboot      | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
-| Kulturhaus Spandau | https://kulturhaus-spandau.de/programm/            | Other | Medium   | Theme REST API; 41 of 110 upcoming are concerts        |
+| Name             | URL                                                | Type  | Priority | Comment                                                |
+| ---------------- | -------------------------------------------------- | ----- | -------- | ------------------------------------------------------ |
+| Little Stage Bar | https://littlestageclubneukoelln.wordpress.com/    | Bar   | Low      | WordPress.com posts; date and time only in the prose   |
+| KuBiZ            | https://www.kubiz-wallenberg.de/                   | Other | Low      | WordPress posts; date in the title; jazz about monthly |
+| Villa Kuriosum   | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
+| Backsteinboot    | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -492,12 +492,6 @@ festivals, agencies and associations, or are recorded already.
 
 **The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
 table.
-
-**Kulturhaus Spandau moved here from Blocked on 2026-10-22 (#3721).** Its `/programm/` HTML holds only teasers. The
-theme's script reads the list from `/wp-json/eventmanager/v1/events`, which answers without a key. That endpoint returns
-250 events with date, time, place, prices, artists and categories, and 110 of them are upcoming. Import the `Konzert`,
-`Show` and `Comedy und Kabarett` rows. Drop the children's shows, talks, tours, workshops and exhibitions
-([EVENT_SCOPE.md](EVENT_SCOPE.md)). A title can carry a hidden `<p hidden …>` tag, which the parser must strip.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga

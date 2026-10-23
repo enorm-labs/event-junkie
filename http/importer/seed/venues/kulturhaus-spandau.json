@@ -13,8 +13,16 @@
         "descriptionAlt": "Das bezirkseigene Kulturhaus in der Spandauer Altstadt vereint Theatersaal, Galerie und Kino und zeigt Klassikkonzerte, Operetten am Nachmittag sowie das Alte-Musik-Festival SPAM, auch auf der Zitadelle.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["cultural-centre", "theatre", "cinema", "gallery"],
-        "programmeUrl": "https://kulturhaus-spandau.de/programm/",
         "reviewedAt": "2026-10-07T09:58:32Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Kulturhaus Spandau",
+            "url": "https://kulturhaus-spandau.de/wp-json/eventmanager/v1/events",
+            "sourceType": "KULTURHAUS_SPANDAU",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

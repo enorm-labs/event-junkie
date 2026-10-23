@@ -477,6 +477,11 @@ says so.
 | `KUEHLSPOT`            | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `KUEHLSPOT`            | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `KUEHLSPOT`            | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the home page                                                                     | —     |
+| `KULTURHAUS_SPANDAU`   | `DESCRIPTION`      | the API carries no event text, and the event page is a teaser                                                                                    | —     |
+| `KULTURHAUS_SPANDAU`   | `GENRE`            | the categories name a format, not a music style                                                                                                  | —     |
+| `KULTURHAUS_SPANDAU`   | `DOORS_TIME`       | the API gives one start time per event                                                                                                           | —     |
+| `KULTURHAUS_SPANDAU`   | `PRICE_BOX_OFFICE` | the API gives one admission price and the concessions, no box-office price                                                                       | —     |
+| `KULTURHAUS_SPANDAU`   | `PROMOTERS`        | the `organizer_id` is empty on every event                                                                                                       | —     |
 | `LABSAAL`              | `EVENT_TYPE`       | the venue names no format, so the type comes from words in the title and description, and a night without one is typed other                     | —     |
 | `LABSAAL`              | `ARTISTS`          | the feed has no line-up field, and a title mixes an act's name with the programme's                                                              | —     |
 | `LABSAAL`              | `GENRE`            | the feed names no style                                                                                                                          | —     |

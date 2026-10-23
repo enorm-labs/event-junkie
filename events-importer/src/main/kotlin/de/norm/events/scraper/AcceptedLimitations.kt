@@ -84,6 +84,7 @@ import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
 import de.norm.events.scraper.konradtoenz.KONRAD_TOENZ_LIMITATIONS
 import de.norm.events.scraper.kreuzwerk.KREUZWERK_LIMITATIONS
 import de.norm.events.scraper.kuehlspot.KUEHLSPOT_LIMITATIONS
+import de.norm.events.scraper.kulturhausspandau.KULTURHAUS_SPANDAU_LIMITATIONS
 import de.norm.events.scraper.labsaal.LABSAAL_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
@@ -269,6 +270,7 @@ object AcceptedLimitations {
             KREUZWERK_LIMITATIONS,
             KONRAD_TOENZ_LIMITATIONS,
             KUEHLSPOT_LIMITATIONS,
+            KULTURHAUS_SPANDAU_LIMITATIONS,
             LARK_LIMITATIONS,
             LABSAAL_LIMITATIONS,
             LIDO_LIMITATIONS,
