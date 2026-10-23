@@ -1,0 +1,760 @@
+[
+  {
+    "id": 2674,
+    "date": "2026-10-10T16:48:25",
+    "date_gmt": "2026-10-10T14:48:25",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2674"
+    },
+    "modified": "2026-10-10T16:48:36",
+    "modified_gmt": "2026-10-10T14:48:36",
+    "slug": "nerds-of-beats-games-open-boards-1",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/nerds-of-beats-games-open-boards-1/",
+    "title": {
+      "rendered": "Nerds of Beats &#038; Games: Open Boards #1"
+    },
+    "content": {
+      "rendered": "<p>Ein offener Abend, drei Tische, ein Raum.</p>\n<p>Am ersten Tisch steht die MPC. Hier entstehen Beats live, direkt vor euren Augen, und wer Lust hat, greift zum Mic und freestylet drüber.</p>\n<p>Am zweiten Tisch wird gespielt: Schach, Backgammon, Brettspiele und alles, was ihr mitbringt. Bringt euer Lieblingsbrett mit, gern auch das Spiel, das sonst keiner kennt.</p>\n<p>Der dritte Tisch ist die Leinwand. Um 20:30 suchen wir live auf chess.com einen Gegner irgendwo auf der Welt und spielen 30 Minuten live, groß und für alle sichtbar. Der ganze Raum fiebert mit.</p>\n<p>Ihr müsst nichts können und euch nirgends anmelden. Zuschauen, mitspielen, zuhören, mitbauen: alles geht. Kommt allein oder bringt Leute mit.</p>\n<p>Dienstag, 27.10.2026, ab 19:30 Uhr, offenes Ende<br />\nEintritt frei</p>\n<p>Hosted by @svonsenl84 &amp; @knecko.wav<br />\nMehr auf Instagram: @nerdsbeatsgames_nbg</p>\n",
+      "protected": false
+    },
+    "featured_media": 2676,
+    "template": "",
+    "ik_event_types": [
+      115
+    ],
+    "ik_event_type": "Spieleabend",
+    "ik_location": "interkosmos",
+    "ik_street": "Fanningerstr. ",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "",
+    "ik_date": "2026-10-27",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/10/NBG_OpenBoards1_Banner_1920x300.jpg",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2674"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2674/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2677,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2674/revisions/2677"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2676"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2674"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2674"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2646,
+    "date": "2026-08-13T17:05:00",
+    "date_gmt": "2026-08-13T15:05:00",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2646"
+    },
+    "modified": "2026-08-13T17:05:32",
+    "modified_gmt": "2026-08-13T15:05:32",
+    "slug": "buchbar-mit-jana-glaese",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/buchbar-mit-jana-glaese/",
+    "title": {
+      "rendered": "BuchBar mit Jana Glaese"
+    },
+    "content": {
+      "rendered": "<p data-pm-slice=\"1 1 []\">Jana Glaese geht der Frage nach, wie wir in Zeiten politischer Polarisierung den Dialog aufrecht erhalten können, um der Spaltung der Gesellschaft entgegenzuwirken.</p>\n<p>Seit Jahren verschiebt sich in Deutschland das politische Klima. Ein spürbarer Rechtsruck prägt Debatten, Wahlkämpfe – und den Alltag.<br />\nWas einst am Rand stand, rückt zunehmend in die Mitte: offene Remigrations-Sympathien im Kollegenkreis, AfD-Parolen am Gartenzaun, Verschwörungserzählungen beim Elternabend. Die Soziologin und Journalistin Jana Glaese fragt, was es mit uns macht, wenn politische Spannungen unser Zusammenleben durchziehen – und wie wir im Privaten, im Beruf oder im Verein darauf reagieren können.</p>\n<p>Anhand zahlreicher Gespräche und Beobachtungen zeigt das Buch, welche Umgangsformen Menschen wählen, um in einer polarisierten Gesellschaft kritisch und verbunden zu bleiben: wie Dialog möglich ist, wann Widerstand nötig und wo dieser gerade aus der Nähe erwachsen kann. Ein klarsichtiger, tief recherchierter Beitrag zur Frage, wie wir im täglichen Miteinander der sozialen Entfremdung entgegenwirken und demokratische Prinzipien bewahren.</p>\n<p><strong>Das Buch für das Wahljahr 2026.</strong></p>\n<p>Durch den Abend führt Gastgeberin Stefanie Hirsbrunner.</p>\n<p>Tickets im VVK über Eventim einzeln und als Saisonticket für alle 8 Termine der Reihe.</p>\n<p>&nbsp;</p>\n",
+      "protected": false
+    },
+    "featured_media": 1824,
+    "template": "",
+    "ik_event_types": [
+      42
+    ],
+    "ik_event_type": "Lesung",
+    "ik_location": "interkosmos",
+    "ik_street": "",
+    "ik_streetnumber": "",
+    "ik_zip": "",
+    "ik_city": "Berlin ",
+    "ik_time_start": "19:30",
+    "ik_time_end": "",
+    "ik_date": "2026-11-04",
+    "ik_price": "",
+    "ik_url": "https://www.eventim-light.com/de/a/null/e/6a69e98258146fadd1df9e78",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/01/Lin-Facebook-e1683365056548.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2646"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 1,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2646/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2647,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2646/revisions/2647"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1824"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2646"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2646"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2556,
+    "date": "2026-02-03T20:00:24",
+    "date_gmt": "2026-02-03T19:00:24",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2556"
+    },
+    "modified": "2026-09-18T16:43:20",
+    "modified_gmt": "2026-09-18T14:43:20",
+    "slug": "flintakosmos",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/flintakosmos/",
+    "title": {
+      "rendered": "flinta*kosmos"
+    },
+    "content": {
+      "rendered": "<div class=\"StructuredModuleRenderer_structuredContent__k7mNB StructuredModuleRenderer_text__GaXOv\" data-testid=\"text-content\">\n<div>\n<p>Der Poetry Abend im interkosmos</p>\n</div>\n</div>\n<div class=\"StructuredModuleRenderer_structuredContent__k7mNB StructuredModuleRenderer_text__GaXOv\" data-testid=\"text-content\">\n<div>\n<p><strong>Herzlich willkommen zur Premiere des flinta*kosmos!</strong></p>\n<p>Der brandneue Poetry Slam im interkosmos Lichtenberg, bei dem ausschließlich FLINTA* (female, lesbian, inter, non binary, trans und agender) die Bühne gestalten!</p>\n<p>Sechs Poet*innen performen ihre selbstgeschriebenen Texte – und ihr, das Publikum, entscheidet mit Applaus, wer ins Finale einzieht. Drei treten dort am selben Abend erneut gegeneinander an und am Ende kürt ihr eine siegende Person, die den liebevoll handbestickten „flinta*kosmos“-Beutel mit nach Hause nehmen darf.</p>\n<p>Der Beutel wandert vorher durchs Publikum – wer mag, darf gern etwas hineingeben: Bonbons, unbenutzte Taschentücher oder vielleicht das Weihnachtsgeschenk von Onkel Thomas. (Es darf also ruhig ein bisschen lustig sein, aber bitte nicht eklig. Und Sanifair Bons haben wir auch schon genug.)</p>\n<p>Außerdem gibt’s jedes Mal einen Featured Artist: mal aus der Comedy, mal aus der Musik – aber garantiert immer fantastisch!</p>\n<p>Doors: 19:00 Uhr<br />\nShowstart: 19:30 Uhr (seid pünktlich – wir wollen rechtzeitig abheben 🚀)<br />\nEnde: ca. 22:00 Uhr</p>\n<p>Kommt vorbei, wir freuen uns auf euch! 💫</p>\n</div>\n<p>VORVERKAUF 8€ (zzgl. Vorverkaufsgebühren)<br />\nABENDKASSE Empfehlung 10€</p>\n<p>Instagram @kunst_und_krawall_</p>\n<blockquote class=\"wp-embedded-content\" data-secret=\"QQOFTBQJP4\"><p><a href=\"https://kunstundkrawall.com/\">Kunst &amp; Krawall</a></p></blockquote>\n<p><iframe class=\"wp-embedded-content\" sandbox=\"allow-scripts\" security=\"restricted\" style=\"position: absolute; clip: rect(1px, 1px, 1px, 1px);\" title=\"&#8222;Kunst &amp; Krawall&#8220; &#8211; Kunst &amp; Krawall\" src=\"https://kunstundkrawall.com/embed#?secret=p7dLwv2bSy#?secret=QQOFTBQJP4\" data-secret=\"QQOFTBQJP4\" width=\"500\" height=\"282\" frameborder=\"0\" marginwidth=\"0\" marginheight=\"0\" scrolling=\"no\"></iframe></p>\n<p>Kultur für alle!</p>\n<p>An unseren Abendkassen gilt das Prinzip: Jede*r gibt, was er*sie kann, und wer kann, gibt gerne mehr! Denn unsere Veranstaltungen sollen trotz steigender Preise für alle Menschen zugänglich bleiben.</p>\n<p>Das bedeutet:</p>\n<p>1. Unsere Abendkassenpreise sind Richtwerte.</p>\n<p>2. Jede*r gibt, was er*sie kann. Keine*r muss sich rechtfertigen. Unser Einlasspersonal fragt nicht nach, wenn ihr weniger gebt.</p>\n<p>3. Am Einlass gibt es eine Soli-Kasse. Wer mehr geben kann, kann uns gerne ein kleine Spende da lassen für Leute, die es sich weniger leisten können, und für die Kultur.</p>\n</div>\n",
+      "protected": false
+    },
+    "featured_media": 2558,
+    "template": "",
+    "ik_event_types": [
+      111
+    ],
+    "ik_event_type": "Poetry Slam",
+    "ik_location": "interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:00",
+    "ik_time_end": "22:00",
+    "ik_date": "2026-11-17",
+    "ik_price": "10",
+    "ik_url": "https://www.eventbrite.de/e/flintakosmos-tickets-1979048091115",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/02/flintakosmos.webp",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2556"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2556/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2611,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2556/revisions/2611"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2558"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2556"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2556"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2484,
+    "date": "2025-06-04T15:33:44",
+    "date_gmt": "2025-06-04T13:33:44",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2484"
+    },
+    "modified": "2026-09-18T16:45:19",
+    "modified_gmt": "2026-09-18T14:45:19",
+    "slug": "queerkosmos-karma-vs-katastrophe-die-jubilaeumsausgabe",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/queerkosmos-karma-vs-katastrophe-die-jubilaeumsausgabe/",
+    "title": {
+      "rendered": "QUEER*Kosmos &#8211; Karma vs Katastrophe"
+    },
+    "content": {
+      "rendered": "<p>— KARMA vs KATASTROPHE —</p>\n<p>Ein epischer Kampf, bei dem es um nicht weniger als den Titel »Königin von Lichtenberg« geht!<br />\nUnsere eigene Show 🥰 @karma.attitude , @kiki_sparklez und ich freuen uns schon mächtig darauf gemeinsam mit euch einen wundervollen Abend im @interkosmos.berlin zu verbringen! Es wird gequizt, getanzt und gelacht.</p>\n<p>Im Anschluss heizt @kiki_sparklez den Dancefloor ein und auch Karmas süße Tränchen können nach ein paar Getränken trocknen 🤗</p>\n<p>Wir freuen uns sehr auf euch!</p>\n<p>LOVE ❤️</p>\n",
+      "protected": false
+    },
+    "featured_media": 2103,
+    "template": "",
+    "ik_event_types": [
+      43
+    ],
+    "ik_event_type": "Party",
+    "ik_location": "interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "20:00",
+    "ik_time_end": "",
+    "ik_date": "2026-11-20",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/06/QueerKosmos_Insta_Beitrag-e1687877659508.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2484"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 3,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2484/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2663,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2484/revisions/2663"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2103"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2484"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2484"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2648,
+    "date": "2026-08-13T17:06:35",
+    "date_gmt": "2026-08-13T15:06:35",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2648"
+    },
+    "modified": "2026-08-13T17:06:35",
+    "modified_gmt": "2026-08-13T15:06:35",
+    "slug": "buchbar-mit-ulrike-almut-sandig",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/buchbar-mit-ulrike-almut-sandig/",
+    "title": {
+      "rendered": "BuchBar mit Ulrike Almut Sandig"
+    },
+    "content": {
+      "rendered": "<p data-pm-slice=\"1 1 []\">Über Nacht verändern sich die Straßen von Wolnopol: Dünen wehen über die Promenade, künstlich anmutende Wirbelstürme reißen Schneisen durch die ukrainische Küstenstadt. Was wie ein Naturphänomen wirkt, entpuppt sich schnell als existenzielle Bedrohung. Kommen die Stürme aus Russland? Können Menschen und Stadt ihnen standhalten?</p>\n<p>Inmitten dieses Chaos macht Maksym Karriere – als Dealer von synthetischen Drogen. Sein Großvater Bohdan, der den Gulag überstanden hat, bringt ihm Schach bei und zitiert Puschkin. Seine Mutter Nadia, Herzchirurgin des Städtischen Klinikums, traut weder Staat noch Menschen. Wie Bohdan ist sie bemüht, Maksym die Spuren der sowjetischen Diktatur nicht einzuprägen.</p>\n<p>Doch während die Stadt im Sand zu verschwinden droht, gerät auch die Familie ins Wanken. Obwohl Maksym sein Drogenbusiness noch als Spiel versteht, steckt er schon in einer gefährlichen Spirale zwischen Macht, Abhängigkeit und Gewalt.</p>\n<p>Ulrike Almut Sandig spannt in ihrem neuen Roman einen konsequenten sinnbildlichen Bogen über die drängenden Fragen unserer Zeit: Wie sehr brauchen wir einander im Sturm? Und wie hoch ist der Preis unserer Freiheit?</p>\n<p>Durch den Abend führt Gastgeberin Stefanie Hirsbrunner.</p>\n<p>Tickets im VVK über Eventim einzeln und als Saisonticket für alle 8 Termine der Reihe.</p>\n",
+      "protected": false
+    },
+    "featured_media": 1824,
+    "template": "",
+    "ik_event_types": [],
+    "ik_event_type": "",
+    "ik_location": "interkosmos",
+    "ik_street": "",
+    "ik_streetnumber": "",
+    "ik_zip": "",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "",
+    "ik_date": "2026-11-25",
+    "ik_price": "",
+    "ik_url": "https://www.eventim-light.com/de/a/6851c19913cd7714d7c3aa05/e/6a69f00558146fadd1df9ee6",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/01/Lin-Facebook-e1683365056548.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2648"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 1,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2648/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2649,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2648/revisions/2649"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1824"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2648"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2648"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2582,
+    "date": "2026-03-03T18:20:51",
+    "date_gmt": "2026-03-03T17:20:51",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2582"
+    },
+    "modified": "2026-10-10T16:51:34",
+    "modified_gmt": "2026-10-10T14:51:34",
+    "slug": "practease-burlesque-open-stage",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/practease-burlesque-open-stage/",
+    "title": {
+      "rendered": "PracTease Burlesque Open Stage"
+    },
+    "content": {
+      "rendered": "<h2>Berlins erste Burlesque Open Stage!</h2>\n<p>Wir schaffen eine Bühne für kreative, sinnliche und humorvolle Performances. Künstler:innen nutzen das Format, um neue Ideen auszuprobieren, zu improvisieren und sich kreativ zu auszudrücken. <span style=\"font-family: Segoe UI Emoji, serif;\">✨</span></p>\n<p>Ob erfahrene Performer:innen oder mutige Newcomer:innen, alle finden hier einen Raum zur Entfaltung. Das Publikum ist dabei mittendrin! Erleben Sie ihre Acts hautnah und geben Sie nach den Auftritten direkt per Smartphone Feedback. So entsteht ein lebendiger Austausch, der Kunst wachsen lässt. <span style=\"font-family: Segoe UI Emoji, serif;\">🎨</span></p>\n<p>Verpassen Sie nicht diese Gelegenheit, Kunst in Bewegung zu erleben und die Burlesque Community zu unterstützen! <span style=\"font-family: Segoe UI Emoji, serif;\">🩷</span></p>\n<p>Weitere Infos gibt es hier: <a href=\"https://www.instagram.com/practease.berlin/\">https://www.instagram.com/practease.berlin/</a></p>\n<p>Sichert euch einen Platz mit einer Reservierung. <span style=\"font-family: Segoe UI Emoji, serif;\">💸</span></p>\n<p>19:00 Uhr Einlass, 20 Uhr Beginn</p>\n<p>5,00 € / 10,00 € / 15,00 €</p>\n",
+      "protected": false
+    },
+    "featured_media": 2583,
+    "template": "",
+    "ik_event_types": [
+      114
+    ],
+    "ik_event_type": "Burlesque Show",
+    "ik_location": "interkosmos",
+    "ik_street": "Fanningerstr. ",
+    "ik_streetnumber": "36",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:00",
+    "ik_time_end": "",
+    "ik_date": "2026-11-27",
+    "ik_price": "",
+    "ik_url": "https://www.eventbrite.de/e/practease-burlesque-open-stage-tickets-1991303192453?aff=erelpanelorg",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/03/PracTease-quer.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2582"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2582/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2678,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2582/revisions/2678"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2583"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2582"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2582"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2653,
+    "date": "2026-08-13T17:09:52",
+    "date_gmt": "2026-08-13T15:09:52",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2653"
+    },
+    "modified": "2026-08-13T17:09:52",
+    "modified_gmt": "2026-08-13T15:09:52",
+    "slug": "buchbar-mit-elisabeth-pape",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/buchbar-mit-elisabeth-pape/",
+    "title": {
+      "rendered": "BuchBar mit Elisabeth Pape"
+    },
+    "content": {
+      "rendered": "<p data-pm-slice=\"1 1 []\"><strong>In </strong><em><strong>Halbe Portion</strong></em><strong> erzählt Elisabeth Pape eine ganz persönliche Geschichte über Essstörungen, das Aufwachsen in Armut und die damit einhergehenden Zwänge. Ein berührendes Debüt über eine unbarmherzige Krankheit und ihre tragikomischen Momente.</strong></p>\n<p>Sie isst wieder. Das war mal anders. Aufgewachsen in Armut, alleine mit ihrer zwanghaft dünnen Mutter, die aus der Ukraine nach Berlin migrierte, schien ihre Zukunft vorprogrammiert. Jetzt, mit Ende zwanzig, hat sie es halbwegs im Griff. Sie joggt viel, ja, zählt jede Kalorie, okay, aber sie führt ihrem Körper morgens, mittags und abends – fast – immer Nahrung zu. Auch wenn sie jeden Cent abwägt, den die Lebensmittel und ihre Zubereitung sie kosten. Nur noch ganz selten erliegt sie ihren alten Gewohnheiten, zu viel zu essen und sich anschließend zu übergeben. Es bleibt dennoch ein Fortschritt. Und dann ist da ein Date, das Hoffnung auf ein besseres Leben gibt, darauf, endgültig aus dem Teufelskreis auszubrechen. Oder doch nicht?</p>\n<p>Durch den Abend führt Gastgeberin Stefanie Hirsbrunner.</p>\n",
+      "protected": false
+    },
+    "featured_media": 1824,
+    "template": "",
+    "ik_event_types": [
+      42
+    ],
+    "ik_event_type": "Lesung",
+    "ik_location": "interkosmos",
+    "ik_street": "",
+    "ik_streetnumber": "",
+    "ik_zip": "",
+    "ik_city": "Berlin ",
+    "ik_time_start": "19:30",
+    "ik_time_end": "",
+    "ik_date": "2026-12-02",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/01/Lin-Facebook-e1683365056548.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2653"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2653/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2660,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2653/revisions/2660"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1824"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2653"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2653"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2650,
+    "date": "2026-08-13T17:07:44",
+    "date_gmt": "2026-08-13T15:07:44",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2650"
+    },
+    "modified": "2026-08-13T17:07:44",
+    "modified_gmt": "2026-08-13T15:07:44",
+    "slug": "buchbar-mit-rina-schmeller",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/buchbar-mit-rina-schmeller/",
+    "title": {
+      "rendered": "BuchBar mit Rina Schmeller"
+    },
+    "content": {
+      "rendered": "<p data-pm-slice=\"1 1 []\">Eine Begegnung auf einer Brücke. Ein Erkennen, eine Liebe. Die Entscheidung für ein gemeinsames Leben – ungeachtet der Droge, die ihn begleitet und somit nun auch ihren Alltag bestimmt. Sie verstrickt sich in seine Abhängigkeit, beginnt, um ihn zu kreisen wie er um die Droge: stilles Zentrum, dritte Instanz. Sie flieht immer wieder vor der Gewalt, doch kehrt stets nach Hause zurück – bis sie es eines Tages nicht mehr tut.</p>\n<p>»Co« erzählt von Mitgefühl und von schleichender Selbstsabotage. Von der Dynamik der Sucht, einer Krankheit, vor der niemand sicher ist. Davon, was es heißt, co-abhängig zu leben. Und von Selbstermächtigung. Inbegriff einer Befreiung, erzählt »Co« vom Weg einer Frau, die die Kraft aufbringt, sich nach Jahren als Co zu lösen: ihre Chance zu überleben. Wie sie mit Mühe, aber entschieden nach einem eigenen Leben zu suchen beginnt – und mit jeder Phase unabhängiger wird.</p>\n<p>Schritt für Schritt, Schleife für Schleife spürt Rina Schmeller dem Wiederfinden eines Ich nach und erzählt mit Kraft vom Zurückerlangen der eigenen inneren Freiheit. Mit einer Sprache voller Klarheit, Rhythmus und Stille schreibt sie gegen das Tabu an.</p>\n<p>Durch den Abend führt Gastgeberin Stefanie Hirsbrunner.</p>\n",
+      "protected": false
+    },
+    "featured_media": 1824,
+    "template": "",
+    "ik_event_types": [
+      42
+    ],
+    "ik_event_type": "Lesung",
+    "ik_location": "interkosmos",
+    "ik_street": "",
+    "ik_streetnumber": "",
+    "ik_zip": "",
+    "ik_city": "Berlin ",
+    "ik_time_start": "19:30",
+    "ik_time_end": "",
+    "ik_date": "2026-12-16",
+    "ik_price": "",
+    "ik_url": "https://www.eventim-light.com/de/a/6851c19913cd7714d7c3aa05/e/6a70e86cacd1414618bdf96a",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/01/Lin-Facebook-e1683365056548.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2650"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2650/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2652,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2650/revisions/2652"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1824"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2650"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2650"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

@@ -5207,7 +5207,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# interkosmos — not imported
+# interkosmos
 # ————————————————————————————————————————————————————————————
 
 ### --- Create interkosmos venue ---
@@ -5229,13 +5229,43 @@ Content-Type: application/json
     "descriptionAlt": "Café und Bar nahe dem Bahnhof Lichtenberg, von drei Gesellschaftern unter dem Motto „café . bar . utopie“ betrieben, mit Lesungen in der Reihe BuchBar, Comedyabenden und Poesieabenden.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "cultural-centre"],
-    "programmeUrl": "https://www.interkosmos.cc/",
     "reviewedAt": "2026-10-07T09:58:32Z"
 }
 
 > {%
+    client.global.set("venue_id_interkosmos", response.body.id);
     client.test("interkosmos venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Interkosmos event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_interkosmos}},
+    "name": "Interkosmos",
+    "url": "https://www.interkosmos.cc/wp-json/wp/v2/events",
+    "sourceType": "INTERKOSMOS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Interkosmos event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Interkosmos import ---
+POST {{importer-host}}/api/admin/event-sources/interkosmos/import
+Accept: application/json
+
+> {%
+    client.test("Interkosmos import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

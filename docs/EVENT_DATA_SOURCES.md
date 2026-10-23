@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   188 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   189 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   134 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -107,6 +107,7 @@ schema change.
 | House of Music Berlin            | https://www.houseofmusic.berlin/                                         | Concert Hall | Wix Events warmup JSON; acts from title shapes            |
 | Humboldthain Club                | https://www.humboldthain.com/                                            | Techno Club  | Elfsight widget API; weekly night expanded                |
 | Huxleys Neue Welt                | https://huxleysneuewelt.de/events                                        | Concert Hall | Events-Manager; ISO slug date; genre/promoter tags        |
+| Interkosmos                      | https://www.interkosmos.cc/                                              | Bar          | WP REST `events`: dated range + monthly comedy rules      |
 | Jonny Knüppel                    | https://jonnyknueppel.de/                                                | Club         | Astro one-pager; year from end stamp; closes 2026-10-31   |
 | Jugendclub Café Köpenick         | https://hdjk.de/veranstaltungen-events/                                  | Club         | kalender.digital iCal feed; programme by title            |
 | Junction Bar                     | https://www.junction-bar.de/                                             | Bar          | Static monthly pages; show times vary by weekday          |
@@ -688,7 +689,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Böse Buben                        | https://www.boese-buben-berlin.de/events.html       | Club         | Fetish sex parties only; no music programme                     | Not importable             |
 | Golgatha                          | https://golgatha-berlin.de/                         | Open Air     | Beer garden; no programme page; winter break                    | Not importable             |
 | Guesstimate                       | https://guesstimate.de/                             | Other        | Music agency and studio, not a venue                            | Not importable             |
-| Interkosmos                       | https://www.interkosmos.cc/                         | Bar          | WP REST `events` with `dateRangeStart/End`: 8, few music        | More events                |
 | Kumpelnest 3000                   | http://www.kumpelnest3000.com/                      | Bar          | Static site; last event 2017; news on Facebook                  | Site change                |
 | Nuke Club                         | http://nukeclub.berlin/                             | Club         | Lost its venue in 2021; no Berlin site since                    | Not importable (closed)    |
 | Per Aspera                        | https://per-aspera.net/                             | Theater      | Production company, not a venue; last event 2013                | Not importable             |
