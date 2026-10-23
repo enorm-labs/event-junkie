@@ -23,8 +23,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   184 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   137 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     7 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
 
@@ -483,6 +483,8 @@ least as heavily as an RA count when the next batch is prioritised.
 | Villa Kuriosum     | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
 | Backsteinboot      | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 | Kulturhaus Spandau | https://kulturhaus-spandau.de/programm/            | Other | Medium   | Theme REST API; 41 of 110 upcoming are concerts        |
+| Clärchens Ballhaus | https://claerchensball.haus/programm/              | Club  | High     | FullCalendar JSON in `/programm/`; 120 upcoming        |
+| Wiener Blut        | https://www.wienerblut.org/event-list              | Bar   | Low      | Wix Events warmup JSON; 1 upcoming so far              |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -490,6 +492,13 @@ festivals, agencies and associations, or are recorded already.
 
 **The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
 table.
+
+**Clärchens Ballhaus and Wiener Blut moved here from Blocked on 2026-10-23.** Clärchens' WAF answers 403 to any
+User-Agent that contains `(compatible; …)`. The shared scraper User-Agent contains it.
+`EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)` gets 200, so this importer sends its own User-Agent.
+The page holds a FullCalendar array with `title`, `start` and `permalink`. Most rows are recurring dance nights.
+Wiener Blut now uses Wix Events, and the warmup JSON holds the dates. It has one upcoming event, and it is imported
+for the events that follow.
 
 **Kulturhaus Spandau moved here from Blocked on 2026-10-22 (#3721).** Its `/programm/` HTML holds only teasers. The
 theme's script reads the list from `/wp-json/eventmanager/v1/events`, which answers without a key. That endpoint returns
@@ -630,145 +639,143 @@ each is cheap to recognise before spending time on a candidate:
 One side finding. **Rough Trade** answers 403 to curl while serving the same page to other clients. Its blocker is
 the empty Next.js payload rather than the WAF, and a 403 is not evidence that a site is unscrapable.
 
-| Name                              | URL                                                 | Type         | Blocker                                                   | Unblocked by               |
-| --------------------------------- | --------------------------------------------------- | ------------ | --------------------------------------------------------- | -------------------------- |
-| DNA. CLUB — urban Space           | https://www.dna-artclub.com/events                  | Club         | Elfsight calendar is cross-location classes and workshops | Site change / manual entry |
-| Birgit (Birgit & Bier)            | https://www.birgit.club/                            | Techno Club  | Wix one-pager; only undated weekly series                 | Havanna-style occurrences  |
-| Prisma                            | —                                                   | Club         | No own site; Instagram and RA only                        | Site change / manual entry |
-| Spielbank Berlin                  | https://www.spielbank-berlin.de                     | Other        | Casino promotions; `/events` 404s                         | Site change                |
-| Haus der Visionäre                | —                                                   | Bar          | No own site; not in the CdV listing either                | Site change / manual entry |
-| Ikii                              | https://ikiiberlin.com/                             | Bar          | GoDaddy splash page; no programme                         | Site change                |
-| Atemporal                         | —                                                   | Club         | No own site; RA and DICE only                             | Site change / manual entry |
-| Süss war gestern                  | —                                                   | Bar          | No own site; events and DJ line-ups on Instagram          | Site change / manual entry |
-| Wendel                            | http://www.nstp.de/nstp/frameset-wendel.htm         | Bar          | Café one-pager, no programme; HTTPS handshake fails       | Site change                |
-| Funkhaus Berlin                   | https://www.funkhaus-berlin.net/                    | Concert Hall | Blogger site; the events archive ends in 2019             | Site change / promoter     |
-| Kraftwerk Berlin                  | https://kraftwerkberlin.de/de/programm              | Concert Hall | Programme page empty between festivals (Atonal, CONTRA)   | Site change / promoter     |
-| Œlgarten                          | https://www.oelgarten.com/en                        | Open Air     | Wix Events; two open-ended weekly series, no occurrences  | Havanna-style occurrences  |
-| Rough Trade Berlin                | https://www.roughtrade.com/en-de/events/berlin      | Other        | Next.js store; the events page carries no event data      | Headless browser           |
-| Rosie's Bar                       | —                                                   | Bar          | Bar of The Circus Hostel; no listing of its own           | Site change / manual entry |
-| Kulturbrauerei Open Air           | https://www.kulturbrauerei.de/                      | Open Air     | Grounds site links out to each house; no own programme    | Covered by the houses      |
-| Emma Pea                          | https://emmapea.com/                                | Bar          | Restaurant site; no programme                             | Site change                |
-| HÖR Berlin                        | https://hoer.berlin/                                | Other        | Shopify merch shop; its "events" are broadcasts           | Scope decision             |
-| Bredouille                        | https://bredouille-bar.de/upcomingevents-bredouille | Bar          | Free-text Squarespace page; nothing after 14 Sep          | Site change                |
-| Mena Berlin                       | —                                                   | Club         | No own site; Facebook and RA only                         | Site change / manual entry |
-| Atelier Rooftop                   | https://atelierrooftop.de/                          | Club         | Rental one-pager; no programme                            | Site change / promoter     |
-| Coco Boule                        | https://cocoboule.com/                              | Bar          | One-pager; no dated content                               | Site change                |
-| YSY                               | https://www.ysyberlin.de/calendar                   | Club         | `/calendar` says to follow Instagram instead              | Site change                |
-| Phantom Bar Berlin                | —                                                   | Bar          | No own site; RA only                                      | Site change / manual entry |
-| KINDL                             | https://www.kindl-berlin.com/news                   | Concert Hall | Art centre calendar is tours and openings, not concerts   | Promoter feed              |
-| Containerhafen                    | —                                                   | Open Air     | No own site; RA only                                      | Site change / manual entry |
-| Golden Flamingo                   | http://goldenflamingo.de/                           | Open Air     | Restaurant page; "Website befindet sich im Aufbau"        | Site change                |
-| FOUND                             | https://foundberlin.com/                            | Club         | Splash page; address and e-mail only                      | Site change                |
-| Beach Neukölln                    | https://www.beach-neukoelln.de/                     | Open Air     | Rental and public-viewing marketing, not a programme      | Promoter feed              |
-| RAW-Gelände                       | —                                                   | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone          | Covered by the houses      |
-| Genezarethkirche                  | https://www.mlg-neukoelln.de/events                 | Concert Hall | Parish calendar: services, rehearsals, courses            | Promoter feed              |
-| Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; RA only           | Site change / manual entry |
-| Insomnia                          | http://www.insomnia-berlin.de                       | Club         | WAF returns 403 with an empty body to scripts             | Request headers            |
-| Bulbul Berlin                     | https://www.bulbulberlin.de                         | Club         | Own site links out to RA for the programme                | Site change / manual entry |
-| Bar Neun                          | http://barneun.de                                   | Bar          | Squarespace; 1.1 MB of HTML, no event text                | Headless browser           |
-| Unkompress                        | https://www.unkompress.berlin/                      | Club         | Squarespace; no event content, only an Instagram feed     | Site change                |
-| Neue Nationalgalerie              | https://www.smb.museum/                             | Concert Hall | SMB calendar is tours and workshops, not concerts         | Promoter feed              |
-| Gestrandet a. d. Jannowitzbrücke  | https://strandhaus-berlin.de/gestrandet/events      | Open Air     | Season over; last event 5 Sep 2026                        | 2027 season / re-check     |
-| Fluxbau                           | https://www.fluxfm.de/fluxbau                       | Club         | Server-rendered now, but 2 dated events + series          | More events / occurrences  |
-| Sage Club                         | https://www.sage-club.de/                           | Club         | Closed; the last party was on 28 Dec 2023                 | Not importable (closed)    |
-| The Pearl                         | https://thepearl-berlin.de/                         | Club         | `/programm/` renders now, but holds one event             | More events                |
-| Prince Charles                    | https://princecharlesberlin.com/                    | Club         | No own listings; links out to Resident Advisor            | Site change / manual entry |
-| Artliners Berlin                  | —                                                   | Club         | Domain no longer resolves; site gone                      | New site                   |
-| Prachtwerk                        | https://www.prachtwerkberlin.com/                   | Bar          | Programm page embeds Facebook events by script; no dates  | Site change                |
-| Wiener Blut                       | https://www.wienerblut.org/                         | Bar          | Impressum-only page                                       | Site change                |
-| Arena Berlin                      | https://www.arena.berlin/veranstaltungen/           | Concert Hall | Tribe calendar now, but trade fairs only                  | Site change / promoter     |
-| Frannz Salon                      | https://frannz.eu/                                  | Club         | Not a separate listing; a floor of Frannz nights          | Covered by FRANNZ          |
-| Theater des Westens               | https://www.stage-entertainment.de/                 | Theater      | Stage portal; one musical, dates in ticket shop           | Site change                |
-| RBB Sendesaal                     | https://www.roc-berlin.de/kalender/                 | Concert Hall | Scrapable; deferred pending the classical scope decision  | Scope decision             |
-| Zentraler Festplatz               | https://berliner-festplatz.de/                      | Open Air     | Rental ground; "Events" page is social embeds             | Site change                |
-| Fahrradkeller                     | http://www.im-fahrradkeller.de/                     | Other        | Private house concerts, by invitation only                | Not importable             |
-| Anita Berber                      | —                                                   | Bar          | Private hire only since December 2021                     | Not importable (closed)    |
-| Clubliebe                         | —                                                   | Club         | An association, not a venue                               | Not importable (no venue)  |
-| Fraktion Nimmersatt               | —                                                   | Bar          | A collective, not a venue                                 | Not importable (no venue)  |
-| Funkloch                          | —                                                   | Bar          | `funkloch.berlin` does not resolve; Facebook only         | Site change / manual entry |
-| Villa Neukölln                    | http://www.villaneukoelln.de/                       | Bar          | Contact one-pager; no programme                           | Site change                |
-| Ficken 3000                       | https://www.ficken3000.com/                         | Bar          | Domain serves a 428-byte stub page                        | Site change                |
-| All Club                          | https://allberlin.de/all-club                       | Club         | Youth club (14–27); Contao event list is empty            | More events / re-check     |
-| Böse Buben                        | https://www.boese-buben-berlin.de/events.html       | Club         | Fetish sex parties only; no music programme               | Not importable             |
-| Golgatha                          | https://golgatha-berlin.de/                         | Open Air     | Beer garden; no programme page; winter break              | Not importable             |
-| Guesstimate                       | https://guesstimate.de/                             | Other        | Music agency and studio, not a venue                      | Not importable             |
-| Interkosmos                       | https://www.interkosmos.cc/                         | Bar          | WP REST `events`; 2 stale entries without dates           | More events / re-check     |
-| Kumpelnest 3000                   | http://www.kumpelnest3000.com/                      | Bar          | Static site; last event 2017; news on Facebook            | Site change                |
-| Nuke Club                         | http://nukeclub.berlin/                             | Club         | Lost its venue in 2021; no Berlin site since              | Not importable (closed)    |
-| Per Aspera                        | https://per-aspera.net/                             | Theater      | Production company, not a venue; last event 2013          | Not importable             |
-| PlaceOne                          | https://www.placeone.eu/                            | Other        | Rooftop rental; public dates are dance-school parties     | Not importable             |
-| Plötze                            | https://ploetze.berlin/                             | Open Air     | WordPress frozen since 2021; programme is stale           | More events / re-check     |
-| Roberta Bar                       | http://www.roberta-bar.de/                          | Bar          | Site offline: hosting provider error page                 | Site change / manual entry |
-| Silverwings                       | https://silverwings.de/program.html                 | Club         | Contao list empty; programme only on Facebook             | Site change                |
-| solar                             | https://solar-berlin.de/                            | Bar          | Sky bar; the only event is a Christmas brunch             | More events / re-check     |
-| Taff Club                         | https://www.taff-club.de/                           | Club         | Holding page still up on 2026-10-08; no programme         | Re-check after relaunch    |
-| Trompete                          | https://www.trompete-berlin.de/                     | Club         | Squarespace; weekly Thu/Sat hours, no dates               | Site change / manual entry |
-| Village Berlin                    | https://wearevillage.org/kalender                   | Other        | Queer community centre; workshops, no music               | Not importable             |
-| Zu Mir Oder Zu Dir                | https://www.zumiroderzudir.com/                     | Bar          | Archived one-pager; opening hours only                    | Site change / manual entry |
-| ://about blank                    | https://aboutblank.li/                              | Techno Club  | `/next` carries no events in the HTML                     | Site change                |
-| Bohnengold                        | https://bohnengold.de/                              | Bar          | Domain redirects to Facebook                              | Site change                |
-| C115                              | https://www.c115.club/                              | Techno Club  | Mailing-list splash page; no programme                    | Site change                |
-| ELSE                              | https://www.else.tv/events-tickets                  | Techno Club  | Own Wix site, but no dated events in the HTML             | Site change                |
-| Hamburger Bahnhof                 | https://www.smb.museum/                             | Open Air     | Museum programme is guided tours, not concerts            | Promoter feed              |
-| Lokschuppen                       | https://lokschuppen-berlin.com/                     | Techno Club  | Readymag, JS-only, and `robots.txt` says `Disallow: /`    | Site change                |
-| OXI & OXI Garten                  | https://oxi-club.de/                                | Techno Club  | Domain redirects to Instagram                             | Site change                |
-| RSO                               | https://rso.berlin/                                 | Techno Club  | Domain returns 404; no own site found                     | Site change                |
-| SchwuZ                            | https://www.schwuz.de/                              | Techno Club  | Insolvent; parties as guest at other venues               | New venue                  |
-| Sisyfass                          | —                                                   | Bar          | No website; Instagram and RA only                         | Site change                |
-| Strandbad Grünau                  | https://strandbadgruenau.de/                        | Open Air     | `/events/` is rental marketing, not a programme           | Promoter feed              |
-| Zuckerzauber                      | https://zuckerzauber.info/                          | Bar          | Domain redirects to Facebook                              | Site change                |
-| Sameheads                         | http://www.sameheads.com                            | Bar          | Headless WordPress; label and art pages, no programme     | Site change / manual entry |
-| 90mil                             | —                                                   | Open Air     | Farewell festival in May 2026; site demolished            | Not importable (closed)    |
-| Taborkirche                       | https://www.taborkirche.de                          | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change                |
-| West Germany                      | —                                                   | Club         | No own site; RA only                                      | Site change / manual entry |
-| Torte Bar                         | https://www.torte-bar.de/                           | Bar          | One-page Wix site, no programme; Instagram and RA only    | Site change / manual entry |
-| Ipse                              | —                                                   | Open Air     | Back as IPSE.UFER; no own site, RA only                   | Site change / manual entry |
-| Musikbrauerei                     | https://musikbrauerei.com/events/                   | Concert Hall | Hand-edited Kadence page; 2025 entries kept, 2 upcoming   | More events / re-check     |
-| P61 Gallery                       | https://www.p61gallery.com/programm                 | Other        | Digital-art museum; programme is exhibitions              | Scope decision             |
-| Chausseestrasse 131               | https://www.chausseestrasse131.com/                 | Club         | Wix; "WEBSITE UNDER CONSTRUCTION"                         | Site change                |
-| SaltyAcid Space                   | http://saltyacid.space/                             | Open Air     | One-pager with a video; PROGRAM link goes nowhere         | Site change                |
-| Lauschangriff                     | —                                                   | Bar          | No own site; Facebook and RA only                         | Site change / manual entry |
-| Studiodb                          | —                                                   | Other        | No own site; Instagram and RA only                        | Site change / manual entry |
-| Badenscher Hof Jazzclub           | https://www.badenscher-hof.de/                      | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
-| Mokum                             | —                                                   | Bar          | No own site; Facebook only                                | Site change                |
-| Komplex Berlin                    | https://komplex.berlin/                             | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
-| Zielona Góra                      | —                                                   | Bar          | radar only; anniversary nights, no running programme      | More events                |
-| ciao ciao Bar                     | —                                                   | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
-| JIWAR                             | —                                                   | Other        | No own site; Instagram only                               | Site change / manual entry |
-| Ashawo Cafe                       | —                                                   | Other        | No own site; events on Eventbrite                         | Site change / manual entry |
-| GöRE Comedy                       | https://www.eventbrite.com/cc/gore-shows-4785723/   | Comedy Club  | Eventbrite only; its terms likely forbid scraping         | Eventbrite API token       |
-| SaliGari Bar                      | —                                                   | Bar          | No own site; Facebook only; mostly comedy nights          | Site change / manual entry |
-| 800A Bar & Cabaret                | https://www.800aberlin.com/                         | Bar          | Two dated shows on the home page; the rest on Instagram   | More events                |
-| Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | One highlight; the list is a SociableKit Eventbrite embed | Eventbrite API token       |
-| SOLID                             | https://solid.stadtlandladen.org/events             | Bar          | Wix Events; talks, films and food nights, no music        | Scope decision             |
-| Zemin                             | https://www.zeminberlin.de/                         | Other        | Art space; JSON-LD has five events, last on 2026-09-11    | More events                |
-| Baketown                          | https://baketown.berlin/                            | Other        | No programme page; concerts announced on Instagram        | Site change / manual entry |
-| Berndhain                         | https://berndhain.com/                              | Bar          | No programme page; concerts announced on Instagram        | Site change / manual entry |
-| Slap'd                            | https://slapd.de/                                   | Club         | Event-agency site, rendered in the browser; no programme  | Site change                |
-| Alte Feuerwache THF               | https://alte-feuerwache-thf.de/calendar             | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
-| Ballhaus Berlin                   | https://ballhaus-berlin.de/de/termine/              | Club         | `robots.txt` answers 500; Termine lists ~27 dated events  | Site change                |
-| Kunstfabrik Schlot                | https://kunstfabrik-schlot.de/programm/             | Club         | `robots.txt` disallows every path (`Disallow: *`)         | Site change                |
-| Kunstquartier Bethanien           | https://kunstquartier-bethanien.de/vorschau         | Other        | Art centre; the preview page holds one performance        | Scope decision             |
-| Begine                            | https://www.begine.de/programm/aktueller-monat.html | Other        | Women's centre; groups and courses, a few parties         | Scope decision             |
-| Blackmore's – Berlins Musikzimmer | https://www.blackmores-musikzimmer.de/de/programm   | Concert Hall | Scrapable Contao list, but classical recitals             | Scope decision             |
-| Sama32                            | https://radar.squat.net/en/node/1614                | Bar          | radar group; nights for association members only          | Scope decision             |
-| Revier Südost                     | https://www.reviersuedost.de/programm               | Open Air     | Wix Events; the open-air season ends on 2026-10-09        | Next season                |
-| Mein Freund Harvey                | https://www.meinfreundharvey.com/                   | Bar          | Jimdo behind Cloudflare; 403 to every script              | Request headers            |
-| Block1                            | https://block1berlin.com/                           | Other        | SPA; events hard-coded in the bundle, one upcoming        | More events / re-check     |
-| Salon Wellenmaschine              | https://www.diewellenmaschine.com/                  | Other        | Event-agency site; a music series, no dated programme     | Site change                |
-| diskoBabel                        | https://diskobabel.de/                              | Club         | Association site; lists its collectives, no programme     | Site change / manual entry |
-| Mom's Limousine Service           | —                                                   | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
-| M01                               | —                                                   | Techno Club  | No own site; RA only                                      | Site change / manual entry |
-| Loft 6                            | —                                                   | Other        | No own site; RA only                                      | Site change / manual entry |
-| 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve               | Site change / manual entry |
-| Clärchens Ballhaus                | https://claerchensball.haus/programm/               | Club         | WAF 403s the importer's User-Agent; curl's UA gets 200    | Request headers            |
-| Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music | A regular programme        |
-| Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it         | Site change / manual entry |
-| Moda                              | https://moda.gmbh/                                  | Bar          | No programme page; events announced on Instagram          | Site change / manual entry |
-| Valentin Stüberl                  | https://lagari-berlin.de/                           | Bar          | Events page lists one undated weekly show; Instagram only | Site change / manual entry |
-| Mysliwska                         | —                                                   | Bar          | Venue row only: few Instagram posts, comedy on Eventbrite | Site change / manual entry |
-| Göttin der Weisheit               | https://goettinderweisheit.com/                     | Bar          | Shopify site with reservations only; events on Instagram  | Site change / manual entry |
-| Kollektiv Bar Kleinod             | —                                                   | Bar          | No own site; monthly programme on Instagram               | Site change / manual entry |
+| Name                              | URL                                                 | Type         | Blocker                                                         | Unblocked by               |
+| --------------------------------- | --------------------------------------------------- | ------------ | --------------------------------------------------------------- | -------------------------- |
+| DNA. CLUB — urban Space           | https://www.dna-artclub.com/events                  | Club         | Elfsight calendar is cross-location classes and workshops       | Site change / manual entry |
+| Birgit (Birgit & Bier)            | https://www.birgit.club/                            | Techno Club  | Wix one-pager; only undated weekly series                       | Havanna-style occurrences  |
+| Prisma                            | —                                                   | Club         | No own site; Instagram and RA only                              | Site change / manual entry |
+| Spielbank Berlin                  | https://www.spielbank-berlin.de                     | Other        | Casino promotions; `/events` 404s                               | Site change                |
+| Haus der Visionäre                | —                                                   | Bar          | No own site; not in the CdV listing either                      | Site change / manual entry |
+| Ikii                              | https://ikiiberlin.com/                             | Bar          | GoDaddy splash page; no programme                               | Site change                |
+| Atemporal                         | —                                                   | Club         | No own site; RA and DICE only                                   | Site change / manual entry |
+| Süss war gestern                  | —                                                   | Bar          | No own site; events and DJ line-ups on Instagram                | Site change / manual entry |
+| Wendel                            | http://www.nstp.de/nstp/frameset-wendel.htm         | Bar          | Café one-pager, no programme; HTTPS handshake fails             | Site change                |
+| Funkhaus Berlin                   | https://www.funkhaus-berlin.net/                    | Concert Hall | Blogger site; the events archive ends in 2019                   | Site change / promoter     |
+| Kraftwerk Berlin                  | https://kraftwerkberlin.de/de/programm              | Concert Hall | Programme page empty between festivals (Atonal, CONTRA)         | Site change / promoter     |
+| Œlgarten                          | https://www.oelgarten.com/en                        | Open Air     | Wix Events; two open-ended weekly series, no occurrences        | Havanna-style occurrences  |
+| Rough Trade Berlin                | https://www.roughtrade.com/en-de/events/berlin      | Other        | Next.js store; the events page carries no event data            | Headless browser           |
+| Rosie's Bar                       | —                                                   | Bar          | Bar of The Circus Hostel; no listing of its own                 | Site change / manual entry |
+| Kulturbrauerei Open Air           | https://www.kulturbrauerei.de/                      | Open Air     | Grounds site links out to each house; no own programme          | Covered by the houses      |
+| Emma Pea                          | https://emmapea.com/                                | Bar          | Restaurant site; no programme                                   | Site change                |
+| HÖR Berlin                        | https://hoer.berlin/                                | Other        | Shopify merch shop; its "events" are broadcasts                 | Scope decision             |
+| Bredouille                        | https://bredouille-bar.de/upcomingevents-bredouille | Bar          | Free-text Squarespace page; nothing after 14 Sep                | Site change                |
+| Mena Berlin                       | —                                                   | Club         | No own site; Facebook and RA only                               | Site change / manual entry |
+| Atelier Rooftop                   | https://atelierrooftop.de/                          | Club         | Rental one-pager; no programme                                  | Site change / promoter     |
+| Coco Boule                        | https://cocoboule.com/                              | Bar          | One-pager; no dated content                                     | Site change                |
+| YSY                               | https://www.ysyberlin.de/calendar                   | Club         | `/calendar` says to follow Instagram instead                    | Site change                |
+| Phantom Bar Berlin                | —                                                   | Bar          | No own site; RA only                                            | Site change / manual entry |
+| KINDL                             | https://www.kindl-berlin.com/news                   | Concert Hall | Art centre calendar is tours and openings, not concerts         | Promoter feed              |
+| Containerhafen                    | —                                                   | Open Air     | No own site; RA only                                            | Site change / manual entry |
+| Golden Flamingo                   | http://goldenflamingo.de/                           | Open Air     | Restaurant page; "Website befindet sich im Aufbau"              | Site change                |
+| FOUND                             | https://foundberlin.com/                            | Club         | Splash page; address and e-mail only                            | Site change                |
+| Beach Neukölln                    | https://www.beach-neukoelln.de/                     | Open Air     | Rental and public-viewing marketing, not a programme            | Promoter feed              |
+| RAW-Gelände                       | —                                                   | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone                | Covered by the houses      |
+| Genezarethkirche                  | https://www.mlg-neukoelln.de/events                 | Concert Hall | Parish calendar: services, rehearsals, courses                  | Promoter feed              |
+| Sensorium                         | http://www.sensorium-club.com                       | Techno Club  | Opened in March 2026 in the former AVA; RA only                 | Site change / manual entry |
+| Insomnia                          | http://www.insomnia-berlin.de                       | Club         | Browser UA gets 200 now; 6 dated parties, JSON-LD; swinger club | Scope decision             |
+| Bulbul Berlin                     | https://www.bulbulberlin.de                         | Club         | Own site links out to RA for the programme                      | Site change / manual entry |
+| Bar Neun                          | http://barneun.de                                   | Bar          | Squarespace; 1.1 MB of HTML, no event text                      | Headless browser           |
+| Unkompress                        | https://www.unkompress.berlin/                      | Club         | Squarespace; no event content, only an Instagram feed           | Site change                |
+| Neue Nationalgalerie              | https://www.smb.museum/                             | Concert Hall | SMB calendar is tours and workshops, not concerts               | Promoter feed              |
+| Gestrandet a. d. Jannowitzbrücke  | https://strandhaus-berlin.de/gestrandet/events      | Open Air     | Season over; last event 5 Sep 2026                              | 2027 season / re-check     |
+| Fluxbau                           | https://www.fluxfm.de/fluxbau                       | Club         | Server-rendered; 1 dated event, the rest undated series         | More events / occurrences  |
+| Sage Club                         | https://www.sage-club.de/                           | Club         | Closed; the last party was on 28 Dec 2023                       | Not importable (closed)    |
+| The Pearl                         | https://thepearl-berlin.de/                         | Club         | Tribe REST API live, but 0 upcoming events                      | More events                |
+| Prince Charles                    | https://princecharlesberlin.com/                    | Club         | No own listings; links out to Resident Advisor                  | Site change / manual entry |
+| Artliners Berlin                  | —                                                   | Club         | Domain no longer resolves; site gone                            | New site                   |
+| Prachtwerk                        | https://www.prachtwerkberlin.com/                   | Bar          | Programm page embeds Facebook events by script; no dates        | Site change                |
+| Arena Berlin                      | https://www.arena.berlin/veranstaltungen/           | Concert Hall | Tribe calendar now, but trade fairs only                        | Site change / promoter     |
+| Frannz Salon                      | https://frannz.eu/                                  | Club         | Not a separate listing; a floor of Frannz nights                | Covered by FRANNZ          |
+| Theater des Westens               | https://www.stage-entertainment.de/                 | Theater      | Stage portal; one musical, dates in ticket shop                 | Site change                |
+| RBB Sendesaal                     | https://www.roc-berlin.de/kalender/                 | Concert Hall | Scrapable; deferred pending the classical scope decision        | Scope decision             |
+| Zentraler Festplatz               | https://berliner-festplatz.de/                      | Open Air     | Rental ground; "Events" page is social embeds                   | Site change                |
+| Fahrradkeller                     | http://www.im-fahrradkeller.de/                     | Other        | Private house concerts, by invitation only                      | Not importable             |
+| Anita Berber                      | —                                                   | Bar          | Private hire only since December 2021                           | Not importable (closed)    |
+| Clubliebe                         | —                                                   | Club         | An association, not a venue                                     | Not importable (no venue)  |
+| Fraktion Nimmersatt               | —                                                   | Bar          | A collective, not a venue                                       | Not importable (no venue)  |
+| Funkloch                          | —                                                   | Bar          | `funkloch.berlin` does not resolve; Facebook only               | Site change / manual entry |
+| Villa Neukölln                    | http://www.villaneukoelln.de/                       | Bar          | Contact one-pager; no programme                                 | Site change                |
+| Ficken 3000                       | https://www.ficken3000.com/                         | Bar          | Vite app shell; the bundle holds no event data                  | Site change                |
+| All Club                          | https://allberlin.de/all-club                       | Club         | Youth club (14–27); Contao event list is empty                  | More events / re-check     |
+| Böse Buben                        | https://www.boese-buben-berlin.de/events.html       | Club         | Fetish sex parties only; no music programme                     | Not importable             |
+| Golgatha                          | https://golgatha-berlin.de/                         | Open Air     | Beer garden; no programme page; winter break                    | Not importable             |
+| Guesstimate                       | https://guesstimate.de/                             | Other        | Music agency and studio, not a venue                            | Not importable             |
+| Interkosmos                       | https://www.interkosmos.cc/                         | Bar          | WP REST `events` with `dateRangeStart/End`: 8, few music        | More events                |
+| Kumpelnest 3000                   | http://www.kumpelnest3000.com/                      | Bar          | Static site; last event 2017; news on Facebook                  | Site change                |
+| Nuke Club                         | http://nukeclub.berlin/                             | Club         | Lost its venue in 2021; no Berlin site since                    | Not importable (closed)    |
+| Per Aspera                        | https://per-aspera.net/                             | Theater      | Production company, not a venue; last event 2013                | Not importable             |
+| PlaceOne                          | https://www.placeone.eu/                            | Other        | Rooftop rental; public dates are dance-school parties           | Not importable             |
+| Plötze                            | https://ploetze.berlin/                             | Open Air     | WordPress frozen since 2021; programme is stale                 | More events / re-check     |
+| Roberta Bar                       | http://www.roberta-bar.de/                          | Bar          | Site offline: hosting provider error page                       | Site change / manual entry |
+| Silverwings                       | https://silverwings.de/program.html                 | Club         | Contao list empty; programme only on Facebook                   | Site change                |
+| solar                             | https://solar-berlin.de/                            | Bar          | 4 dated on `/events/`, 2 of them DJ nights                      | More events                |
+| Taff Club                         | https://www.taff-club.de/                           | Club         | Relaunched as a bar site; opening hours and rental only         | Site change                |
+| Trompete                          | https://www.trompete-berlin.de/                     | Club         | Squarespace; weekly Thu/Sat hours, no dates                     | Site change / manual entry |
+| Village Berlin                    | https://wearevillage.org/kalender                   | Other        | Queer community centre; workshops, no music                     | Not importable             |
+| Zu Mir Oder Zu Dir                | https://www.zumiroderzudir.com/                     | Bar          | Archived one-pager; opening hours only                          | Site change / manual entry |
+| ://about blank                    | https://aboutblank.li/                              | Techno Club  | `/next` carries no events in the HTML                           | Site change                |
+| Bohnengold                        | https://bohnengold.de/                              | Bar          | Domain redirects to Facebook                                    | Site change                |
+| C115                              | https://www.c115.club/                              | Techno Club  | Mailing-list splash page; no programme                          | Site change                |
+| ELSE                              | https://www.else.tv/events-tickets                  | Techno Club  | Own Wix site, but no dated events in the HTML                   | Site change                |
+| Hamburger Bahnhof                 | https://www.smb.museum/                             | Open Air     | Museum programme is guided tours, not concerts                  | Promoter feed              |
+| Lokschuppen                       | https://lokschuppen-berlin.com/                     | Techno Club  | Readymag, JS-only, and `robots.txt` says `Disallow: /`          | Site change                |
+| OXI & OXI Garten                  | https://oxi-club.de/                                | Techno Club  | Domain redirects to Instagram                                   | Site change                |
+| RSO                               | https://rso.berlin/                                 | Techno Club  | Domain returns 404; no own site found                           | Site change                |
+| SchwuZ                            | https://www.schwuz.de/                              | Techno Club  | Insolvent; parties as guest at other venues                     | New venue                  |
+| Sisyfass                          | —                                                   | Bar          | No website; Instagram and RA only                               | Site change                |
+| Strandbad Grünau                  | https://strandbadgruenau.de/                        | Open Air     | `/events/` is rental marketing, not a programme                 | Promoter feed              |
+| Zuckerzauber                      | https://zuckerzauber.info/                          | Bar          | Domain redirects to Facebook                                    | Site change                |
+| Sameheads                         | http://www.sameheads.com                            | Bar          | Headless WordPress; label and art pages, no programme           | Site change / manual entry |
+| 90mil                             | —                                                   | Open Air     | Farewell festival in May 2026; site demolished                  | Not importable (closed)    |
+| Taborkirche                       | https://www.taborkirche.de                          | Concert Hall | Our URL is a Leipzig parish; no Berlin site found               | New site                   |
+| West Germany                      | —                                                   | Club         | No own site; RA only                                            | Site change / manual entry |
+| Torte Bar                         | https://www.torte-bar.de/                           | Bar          | One-page Wix site, no programme; Instagram and RA only          | Site change / manual entry |
+| Ipse                              | —                                                   | Open Air     | Back as IPSE.UFER; no own site, RA only                         | Site change / manual entry |
+| Musikbrauerei                     | https://musikbrauerei.com/events/                   | Concert Hall | Hand-edited Kadence page; 17 past entries, 1 upcoming           | More events / re-check     |
+| P61 Gallery                       | https://www.p61gallery.com/programm                 | Other        | Digital-art museum; programme is exhibitions                    | Scope decision             |
+| Chausseestrasse 131               | https://www.chausseestrasse131.com/                 | Club         | Wix; "WEBSITE UNDER CONSTRUCTION"                               | Site change                |
+| SaltyAcid Space                   | http://saltyacid.space/                             | Open Air     | `/program` exists now, but is an empty shell                    | Site change                |
+| Lauschangriff                     | —                                                   | Bar          | No own site; Facebook and RA only                               | Site change / manual entry |
+| Studiodb                          | —                                                   | Other        | No own site; Instagram and RA only                              | Site change / manual entry |
+| Badenscher Hof Jazzclub           | https://www.badenscher-hof.de/                      | Club         | Duda one-pager; programme only as monthly PNG images            | Site change                |
+| Mokum                             | —                                                   | Bar          | No own site; Facebook only                                      | Site change                |
+| Komplex Berlin                    | https://komplex.berlin/                             | Other        | Adobe Portfolio rental site; no programme                       | Site change / manual entry |
+| Zielona Góra                      | —                                                   | Bar          | radar only; anniversary nights, no running programme            | More events                |
+| ciao ciao Bar                     | —                                                   | Bar          | No own site; Instagram and RA only                              | Site change / manual entry |
+| JIWAR                             | —                                                   | Other        | No own site; Instagram only                                     | Site change / manual entry |
+| Ashawo Cafe                       | —                                                   | Other        | No own site; events on Eventbrite                               | Site change / manual entry |
+| GöRE Comedy                       | https://www.eventbrite.com/cc/gore-shows-4785723/   | Comedy Club  | Eventbrite only; its terms likely forbid scraping               | Eventbrite API token       |
+| SaliGari Bar                      | —                                                   | Bar          | No own site; Facebook only; mostly comedy nights                | Site change / manual entry |
+| 800A Bar & Cabaret                | https://www.800aberlin.com/                         | Bar          | 33 dated in escaped home-page JSON; comedy and cabaret          | Scope decision             |
+| Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | One highlight; the list is a SociableKit Eventbrite embed       | Eventbrite API token       |
+| SOLID                             | https://solid.stadtlandladen.org/events             | Bar          | Wix Events; talks, films and food nights, no music              | Scope decision             |
+| Zemin                             | https://www.zeminberlin.de/                         | Other        | Art space; JSON-LD has five events, last on 2026-09-11          | More events                |
+| Baketown                          | https://baketown.berlin/                            | Other        | No programme page; concerts announced on Instagram              | Site change / manual entry |
+| Berndhain                         | https://berndhain.com/                              | Bar          | No programme page; concerts announced on Instagram              | Site change / manual entry |
+| Slap'd                            | https://slapd.de/                                   | Club         | Event-agency site, rendered in the browser; no programme        | Site change                |
+| Alte Feuerwache THF               | https://alte-feuerwache-thf.de/calendar             | Other        | Clean Next.js list; the last date is 2026-10-16                 | Next season                |
+| Ballhaus Berlin                   | https://ballhaus-berlin.de/de/termine/              | Club         | `robots.txt` answers 500; Termine lists ~68 dated events        | Site change                |
+| Kunstfabrik Schlot                | https://kunstfabrik-schlot.de/programm/             | Club         | `robots.txt` disallows every path; ~66 dated, mostly jazz       | Site change                |
+| Kunstquartier Bethanien           | https://kunstquartier-bethanien.de/vorschau         | Other        | Art centre; the preview page holds one performance              | Scope decision             |
+| Begine                            | https://www.begine.de/programm/aktueller-monat.html | Other        | Women's centre; groups and courses, a few parties               | Scope decision             |
+| Blackmore's – Berlins Musikzimmer | https://www.blackmores-musikzimmer.de/de/programm   | Concert Hall | Scrapable Contao list, but classical recitals                   | Scope decision             |
+| Sama32                            | https://radar.squat.net/en/node/1614                | Bar          | radar group; nights for association members only                | Scope decision             |
+| Revier Südost                     | https://www.reviersuedost.de/programm               | Open Air     | Wix Events; 2 upcoming, the open-air season is over             | Next season                |
+| Mein Freund Harvey                | https://www.meinfreundharvey.com/                   | Bar          | Jimdo behind Cloudflare; 403 to every script                    | Request headers            |
+| Block1                            | https://block1berlin.com/                           | Other        | SPA; events hard-coded in the bundle, last 2026-10-15           | More events / re-check     |
+| Salon Wellenmaschine              | https://www.diewellenmaschine.com/                  | Other        | Event-agency site; a music series, no dated programme           | Site change                |
+| diskoBabel                        | https://diskobabel.de/                              | Club         | Association site; lists its collectives, no programme           | Site change / manual entry |
+| Mom's Limousine Service           | —                                                   | Bar          | No own site; Instagram and RA only                              | Site change / manual entry |
+| M01                               | —                                                   | Techno Club  | No own site; RA only                                            | Site change / manual entry |
+| Loft 6                            | —                                                   | Other        | No own site; RA only                                            | Site change / manual entry |
+| 60 Hz                             | —                                                   | Bar          | No own site; `60hz.berlin` does not resolve                     | Site change / manual entry |
+| Kiezkapelle                       | https://www.kiezkapelle.de/programm/                | Other        | Venue row only: about 2 Instagram posts a year, few music       | A regular programme        |
+| Promenaden Eck                    | https://promenaden-eck-berlin.de/                   | Bar          | Supabase backend behind a key; ADR-007 refuses it               | Site change / manual entry |
+| Moda                              | https://moda.gmbh/                                  | Bar          | No programme page; events announced on Instagram                | Site change / manual entry |
+| Valentin Stüberl                  | https://lagari-berlin.de/                           | Bar          | Events page lists one undated weekly show; Instagram only       | Site change / manual entry |
+| Mysliwska                         | —                                                   | Bar          | Venue row only: few Instagram posts, comedy on Eventbrite       | Site change / manual entry |
+| Göttin der Weisheit               | https://goettinderweisheit.com/                     | Bar          | Shopify site with reservations only; events on Instagram        | Site change / manual entry |
+| Kollektiv Bar Kleinod             | —                                                   | Bar          | No own site; monthly programme on Instagram                     | Site change / manual entry |
 
 ## 📣 Promoters
 
