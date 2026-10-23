@@ -174,8 +174,8 @@ private val CHILD_PRICE_LABEL = Regex("""^\s*(?:kinder|kita-kind|erzieher)""", R
 
 /**
  * The type for the house's free-text genre label. Comedy and Kabarett are matched first, so
- * "Comedy-Theater" and "Musikkabarett" are comedy (#2314), then stage formats before music; an
- * unknown label is [EventType.OTHER].
+ * "Comedy-Theater" and "Musikkabarett" are comedy (#2314), then stage formats before music, and
+ * `Party` last (#3756); an unknown label, such as `Wintermarkt`, is [EventType.OTHER].
  */
 internal fun genreType(genre: String?): String {
     val label = genre?.lowercase() ?: return EventType.OTHER.name
@@ -194,6 +194,9 @@ private val GENRE_TYPES: Map<String, String> =
         "mitsing" to EventType.SHOW.name,
         "varieté" to EventType.SHOW.name,
         "show" to EventType.SHOW.name,
+        "clown" to EventType.SHOW.name,
+        "zirkus" to EventType.SHOW.name,
+        "akrobatik" to EventType.SHOW.name,
         "lesung" to EventType.READING.name,
         "leseshow" to EventType.READING.name,
         "poetry" to EventType.READING.name,
@@ -202,5 +205,8 @@ private val GENRE_TYPES: Map<String, String> =
         "konzert" to EventType.CONCERT.name,
         "musik" to EventType.CONCERT.name,
         "songwriter" to EventType.CONCERT.name,
-        "jazz" to EventType.CONCERT.name
+        "jazz" to EventType.CONCERT.name,
+        "a capella" to EventType.CONCERT.name,
+        "a cappella" to EventType.CONCERT.name,
+        "party" to EventType.PARTY.name
     )
