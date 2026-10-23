@@ -22,7 +22,7 @@ spec:
       chart: cert-manager
       # Pinned exactly, never a range: a range lets a patch release land with no diff, no review and no
       # commit. Bumping this is a pull request.
-      version: "v1.21.2"
+      version: "v1.21.3"
       sourceRef:
         kind: HelmRepository
         name: jetstack

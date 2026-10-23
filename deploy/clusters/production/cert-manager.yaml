@@ -30,7 +30,7 @@ spec:
       # Pinned exactly, never a range — bumping it is a pull request. Keep in step with
       # deploy/clusters/staging/cert-manager.yaml, and bump staging first: an untested certificate
       # controller on production is how a site stops serving TLS sixty days later.
-      version: "v1.21.2"
+      version: "v1.21.3"
       sourceRef:
         kind: HelmRepository
         name: jetstack
