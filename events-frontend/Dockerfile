@@ -46,6 +46,19 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
 
+# A base-image CVE fix that has not arrived upstream: CVE-2026-111497, an out-of-bounds write in
+# the Brotli decoder, is fixed in Alpine 3.24's `brotli-libs 1.2.1-r0`, and the base still ships
+# 1.2.0-r1. A digest bump cannot carry it, because `1.31-alpine` already resolves to the digest
+# pinned above (#3821). Only `ngx_http_image_filter_module.so` links the library and no
+# `load_module` loads that module, but a fixable finding is fixed rather than waived.
+#
+# Delete this once the base ships 1.2.1-r0 or later: an upgrade kept past its purpose hides that
+# the base has caught up. Check with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep "^brotli"'` on the pinned
+# digest. `USER 0` (root) because apk needs write access; the final `USER` below is unaffected.
+USER 0
+RUN apk upgrade --no-cache brotli-libs
+
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
