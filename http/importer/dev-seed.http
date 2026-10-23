@@ -13266,7 +13266,7 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
-# Wiener Blut — not imported
+# Wiener Blut
 # ————————————————————————————————————————————————————————————
 
 ### --- Create Wiener Blut venue ---
@@ -13286,14 +13286,44 @@ Content-Type: application/json
     "descriptionLanguage": "en",
     "descriptionAlt": "Kneipe in der Wiener Straße, in der fast jeden Abend DJs auflegen, mit Fußballübertragungen, Kickertischen, Sofaecken und im Sommer Bierbänken vor der Tür.",
     "descriptionAltLanguage": "de",
-    "venueTypes": ["bar"],
-    "programmeUrl": "https://www.wienerblut.org/event-list",
+    "venueTypes": ["bar", "live-venue"],
     "reviewedAt": "2026-10-07T14:21:58Z"
 }
 
 > {%
+    client.global.set("venue_id_wiener_blut", response.body.id);
     client.test("Wiener Blut venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Wiener Blut event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_wiener_blut}},
+    "name": "Wiener Blut",
+    "url": "https://www.wienerblut.org/event-list",
+    "sourceType": "WIENER_BLUT",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Wiener Blut event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Wiener Blut import ---
+POST {{importer-host}}/api/admin/event-sources/wiener-blut/import
+Accept: application/json
+
+> {%
+    client.test("Wiener Blut import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

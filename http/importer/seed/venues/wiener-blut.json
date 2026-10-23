@@ -12,9 +12,17 @@
         "descriptionLanguage": "en",
         "descriptionAlt": "Kneipe in der Wiener Straße, in der fast jeden Abend DJs auflegen, mit Fußballübertragungen, Kickertischen, Sofaecken und im Sommer Bierbänken vor der Tür.",
         "descriptionAltLanguage": "de",
-        "venueTypes": ["bar"],
-        "programmeUrl": "https://www.wienerblut.org/event-list",
+        "venueTypes": ["bar", "live-venue"],
         "reviewedAt": "2026-10-07T14:21:58Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "Wiener Blut",
+            "url": "https://www.wienerblut.org/event-list",
+            "sourceType": "WIENER_BLUT",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }

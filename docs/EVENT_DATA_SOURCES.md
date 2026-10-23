@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   185 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     6 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   186 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     5 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   135 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     5 |
@@ -212,6 +212,7 @@ schema change.
 | WABE                             | https://www.wabe-berlin.info/                                            | Concert Hall | Jimdo month pages + event pages; dates in a grid          |
 | Weekend                          | https://www.weekendclub.berlin/upcoming                                  | Club         | Squarespace list; Xceed tickets; DJs from blurb           |
 | Weltwirtschaft                   | https://weltwirtschaft.berlin/                                           | Bar          | TEC REST API; closure notices dropped                     |
+| Wiener Blut                      | https://www.wienerblut.org/event-list                                    | Bar          | Wix Events warmup JSON; gigs only, not the DJ nights      |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                                        | Bar          | Retro frameset; concerts.php; year from weekday           |
 | YAAM                             | https://yaam.de/programm/                                                | Open Air     | TEC REST API; text in `excerpt`, flyer in `description`   |
 | Z Bar                            | https://zbarberlin.com/kulturprogramm/                                   | Bar          | WordPress.com page typed by hand; date line per night     |
@@ -484,7 +485,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Villa Kuriosum     | https://www.villakuriosum.net/veranstaltungen/     | Other | Low      | TEC REST API; 37 events in 2026, mostly workshops      |
 | Backsteinboot      | https://backsteinboot.org/program-(landing-page)-1 | Club  | Low      | Cargo; month in HTML; mostly workshops and talks       |
 | Kulturhaus Spandau | https://kulturhaus-spandau.de/programm/            | Other | Medium   | Theme REST API; 41 of 110 upcoming are concerts        |
-| Wiener Blut        | https://www.wienerblut.org/event-list              | Bar   | Low      | Wix Events warmup JSON; 1 upcoming so far              |
 
 **The [Clubcommission member list](https://www.clubcommission.de/members/) was read on 2026-10-03.** Its 187 members gave
 seven rows here, which are all imported now, and 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
@@ -492,9 +492,6 @@ festivals, agencies and associations, or are recorded already.
 
 **The rows from Little Stage Bar to KuBiZ were opened on 2026-10-04.** They came from the [Unanalyzed](#-not-analyzed-yet)
 table.
-
-**Wiener Blut moved here from Blocked on 2026-10-23.** It now uses Wix Events, and the warmup JSON holds the dates.
-It has one upcoming event, and it is imported for the events that follow.
 
 **Kulturhaus Spandau moved here from Blocked on 2026-10-22 (#3721).** Its `/programm/` HTML holds only teasers. The
 theme's script reads the list from `/wp-json/eventmanager/v1/events`, which answers without a key. That endpoint returns
