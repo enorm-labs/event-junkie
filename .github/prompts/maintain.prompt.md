@@ -31,7 +31,7 @@ run. The steps are the existing commands; this command only joins them.
 ```sh
 scripts/daily-check.sh --hours 24 > temp/maintain-state.json     # read-only; every key below comes from it
 scripts/ej.sh status                                             # tunnels and clusters
-ls -t temp/daily-check-*.md temp/worklist-*.md temp/afk-handover-*.md 2>/dev/null | head -6
+ls -t temp/daily-check-*.md temp/worklist-*.md temp/admin-review-*.md temp/afk-handover-*.md 2>/dev/null | head -6
 gh issue list --label afk-ok --state open --json number,title,assignees --jq 'length'
 ```
 
@@ -41,18 +41,18 @@ A key that answers `{"error": …}` is not checked. Say so, and decide the stage
 
 The first row that holds decides. Each row names its evidence; report it with the stage.
 
-| #   | Holds when                                                                               | Next step                                         | This command |
-| --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------ |
-| 1   | `release_main` is red, or `ej.sh status` shows a cluster or pod not Ready                | The blocker, with the failed step                 | reports      |
-| 2   | No `temp/daily-check-<today>.md`                                                         | `/daily-check`                                    | runs         |
-| 3   | Today's `daily-check` or `worklist` report has a draft heading ending `(unfiled)`        | "File which?", with each draft's `afk-ok` verdict | asks         |
-| 4   | The newest `temp/afk-handover-*.md` has a pull request in **Merge order** still open     | `/afk merge`                                      | runs         |
-| 5   | An open `afk-ok` issue no session holds, and no handover from today                      | `/afk`                                            | runs         |
-| 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                | The cut, as two commands for the operator         | proposes     |
-| 7   | `after_deploy` has a released step whose `due` has come (below)                          | `/post-release`                                   | runs         |
-| 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up | `/musicbrainz-review production`                  | runs         |
-| 9   | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                   | `/refine-issues` on the next milestone            | proposes     |
-| 10  | None of the above                                                                        | "Nothing due", and the next date anything is due  | reports      |
+| #   | Holds when                                                                                        | Next step                                         | This command |
+| --- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------ |
+| 1   | `release_main` is red, or `ej.sh status` shows a cluster or pod not Ready                         | The blocker, with the failed step                 | reports      |
+| 2   | No `temp/daily-check-<today>.md`                                                                  | `/daily-check`                                    | runs         |
+| 3   | Today's `daily-check`, `worklist` or `admin-review` report has a draft heading ending `(unfiled)` | "File which?", with each draft's `afk-ok` verdict | asks         |
+| 4   | The newest `temp/afk-handover-*.md` has a pull request in **Merge order** still open              | `/afk merge`                                      | runs         |
+| 5   | An open `afk-ok` issue no session holds, and no handover from today                               | `/afk`                                            | runs         |
+| 6   | `release.commits` holds a `feat`, `fix` or `perf` subject                                         | The cut, as two commands for the operator         | proposes     |
+| 7   | `after_deploy` has a released step whose `due` has come (below)                                   | `/post-release`                                   | runs         |
+| 8   | No `temp/musicbrainz-review-production-*.tsv` from the last 7 days, and the tunnel is up          | `/musicbrainz-review production`                  | runs         |
+| 9   | No open `afk-ok` issue, and no `temp/refine-*.md` from the last 7 days                            | `/refine-issues` on the next milestone            | proposes     |
+| 10  | None of the above                                                                                 | "Nothing due", and the next date anything is due  | reports      |
 
 - **Stage 3**: list the drafts, one line each with `afk-ok: yes|no — reason`, and stop. When the operator answers, file exactly those, as
   [`/daily-check`](daily-check.prompt.md) Step 7 says: the label from the verdict, the board in one batch, the heading rewritten to `(filed #N)`.

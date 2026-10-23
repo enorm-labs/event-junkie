@@ -1,8 +1,8 @@
 # Worklist
 
 Work through the admin data-quality worklist: give every row one verdict, draft an issue for each parser defect, and list the events that need a hand fix.
-Then stop. Nothing is filed and nothing is written until the operator says which. [`/daily-check`](daily-check.prompt.md) runs this in its Step 5; it
-also runs alone.
+Then stop. Nothing is filed and nothing is written until the operator says which. [`/admin-review`](admin-review.prompt.md) runs this in its Step 2,
+and [`/daily-check`](daily-check.prompt.md) runs `/admin-review`. It also runs alone.
 
 ## Important
 
