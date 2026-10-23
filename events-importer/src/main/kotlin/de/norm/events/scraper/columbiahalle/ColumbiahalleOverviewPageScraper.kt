@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiahalle
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
@@ -14,6 +15,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.performersBilledWith
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -41,6 +43,9 @@ import java.util.Locale
  * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker, and the
  * untruncated blurb in the collapsed `.bandinfo` panel — no detail page is fetched (the
  * "Kalender-Eintrag" links serve an iCal file, not HTML).
+ *
+ * The listing has no category. A blurb that calls the act comedians types the night COMEDY, and
+ * a `Live mit <names>` line then bills those names, not the show's title (`Bratwurst & Baklava`, #3767).
  *
  * @see ColumbiahalleWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.columbiahalle.berlin/veranstaltungen.html">Columbiahalle programme</a>
@@ -118,14 +123,16 @@ class ColumbiahalleOverviewPageScraper {
         val subtitle = subtitleLines.firstOrNull()
         val times = card.textAt(".zeit").orEmpty()
         val sticker = card.textAt(".stoerer").orEmpty()
-        val eventType = inferConcertVenueType(title)
+        val description = card.textAt(".bandinfo")
+        val titleType = inferConcertVenueType(title)
+        val eventType = if (titleType == EventType.CONCERT.name && description.orEmpty().contains(COMEDIAN_CUE)) EventType.COMEDY.name else titleType
         val (presale, boxOffice, priceNote) = parsePrices(card)
         val teaser = card.textAt("p.teaser")
 
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = card.textAt(".bandinfo"),
+            description = description,
             eventType = eventType,
             eventDate = eventDate,
             doorsTime = labelledClock(times, DOORS_LABELS),
@@ -143,7 +150,7 @@ class ColumbiahalleOverviewPageScraper {
             status = parseEventStatus(sticker),
             // A relocation sticker names the new house: "in das huxleys verlegt".
             statusNote = sticker.ifBlank { null },
-            artists = billedArtists(title, subtitleLines, teaser, eventType),
+            artists = billedArtists(title, subtitleLines, teaser, titleType, eventType),
             promoters = listOfNotNull(card.textAt(".veranstalter a"))
         )
     }
@@ -153,23 +160,38 @@ class ColumbiahalleOverviewPageScraper {
      * line in it ("Special Guest: Rogers") is read like the `h3` one, and the shared parser skips
      * the rest. On a card with no `h3`, a teaser that is a bare comma list is the bill itself and
      * the title is the event's name (`Unity` over `VNV Nation, IAMX, Northern Lite, Zeromancer`, #2266).
+     * A comedy or show card's `Live mit <names>` line bills those names. Otherwise the [titleType]
+     * decides, so a comedy card that names its comedians in the title still bills them.
      */
     private fun billedArtists(
         title: String,
         subtitleLines: List<String>,
         teaser: String?,
+        titleType: String,
         eventType: String
     ): List<ScrapedArtist> {
         val bill = teaser?.takeIf { subtitleLines.isEmpty() && BARE_BILL.matches(it) }
+        val billedWith =
+            subtitleLines
+                .takeIf { eventType == EventType.COMEDY.name || eventType == EventType.SHOW.name }
+                ?.firstNotNullOfOrNull { line -> performersBilledWith(line).ifEmpty { null } }
         val artists =
-            if (bill != null) {
-                bill
-                    .split(',')
-                    .map { it.trim() }
-                    .filter { it.isNotBlank() && !isNonArtistName(it) }
-                    .map { ScrapedArtist(name = it) }
-            } else {
-                buildArtistsForEventType(title, (subtitleLines + listOfNotNull(teaser)).joinToString("\n"), eventType)
+            when {
+                billedWith != null -> {
+                    billedWith
+                }
+
+                bill != null -> {
+                    bill
+                        .split(',')
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() && !isNonArtistName(it) }
+                        .map { ScrapedArtist(name = it) }
+                }
+
+                else -> {
+                    buildArtistsForEventType(title, (subtitleLines + listOfNotNull(teaser)).joinToString("\n"), titleType)
+                }
             }
         return artists.distinctBy { it.name.lowercase() }
     }
@@ -218,6 +240,9 @@ class ColumbiahalleOverviewPageScraper {
     }
 
     private companion object {
+        /** The blurb's word for a comedy act: "Die beiden Comedians und Freunde …". */
+        val COMEDIAN_CUE = Regex("""\bcomedian(?:s|in|innen)?\b""", RegexOption.IGNORE_CASE)
+
         /** Two or more names in a comma list, with no label, date or figure among them. */
         val BARE_BILL = Regex("""[^:\d,]+(?:,[^:\d,]+)+""")
 
