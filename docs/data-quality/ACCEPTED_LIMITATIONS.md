@@ -390,6 +390,12 @@ says so.
 | `INSEL`                | `PER_EVENT_PAGE`   | every event points at the programme page and takes its identity from its date plus its title                                                     | —     |
 | `INSEL`                | `EVENT_TYPE`       | the venue publishes no category, so a title that is an event name rather than an act is minted as a concert                                      | —     |
 | `INSEL`                | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
+| `INTERKOSMOS`          | `GENRE`            | the event types name a format, not a music style                                                                                                 | —     |
+| `INTERKOSMOS`          | `DOORS_TIME`       | an event has a start and an end time, no doors                                                                                                   | —     |
+| `INTERKOSMOS`          | `PRICE_BOX_OFFICE` | `ik_price` is one number, and most events leave it empty                                                                                         | —     |
+| `INTERKOSMOS`          | `SOLD_OUT`         | the API carries no sold-out flag                                                                                                                 | —     |
+| `INTERKOSMOS`          | `CANCELLATION`     | a recurring night is a rule with no exceptions, so a cancelled night still shows                                                                 | —     |
+| `INTERKOSMOS`          | `PROMOTERS`        | the house hosts its own nights, and an outside host is named only in the text                                                                    | —     |
 | `JONNY_KNUPPEL`        | `PER_EVENT_PAGE`   | every night is an overlay on the homepage                                                                                                        | —     |
 | `JONNY_KNUPPEL`        | `IMAGE`            | the calendar shows no flyer                                                                                                                      | —     |
 | `JONNY_KNUPPEL`        | `TICKET_URL`       | the site links no ticket shop                                                                                                                    | —     |

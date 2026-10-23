@@ -214,6 +214,9 @@ enum class EventSource {
     /** Kulturhaus Insel Berlin – the concert house on the Insel der Jugend, a Spree island in Treptower Park, with a hall and a summer garden. */
     INSEL,
 
+    /** Interkosmos – a café and bar near Lichtenberg station, with the BuchBar author readings, comedy nights and poetry slams. */
+    INTERKOSMOS,
+
     /** Jonny Knüppel Berlin – a collective-run club on the diskoBabel site, a former freight yard on Greifswalder Straße, for all-night raves and open airs. */
     JONNY_KNUPPEL,
 

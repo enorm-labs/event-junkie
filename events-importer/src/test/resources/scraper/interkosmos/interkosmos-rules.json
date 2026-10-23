@@ -1,0 +1,477 @@
+[
+  {
+    "id": 2552,
+    "date": "2026-01-27T10:49:45",
+    "date_gmt": "2026-01-27T09:49:45",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2552"
+    },
+    "modified": "2026-07-10T14:40:41",
+    "modified_gmt": "2026-07-10T12:40:41",
+    "slug": "comedy-universum-2",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/comedy-universum-2/",
+    "title": {
+      "rendered": "Comedy Universum"
+    },
+    "content": {
+      "rendered": "<p>Willkommen zum COMEDY UNIVERSUM &#8211; einem Mix aus Comedyshow und Improshow!</p>\n<p>Im Comedy Universum erwarten euch Newcomer mit ihren ersten Jokes und erfahrene Profis, die ihre Gags für die große Bühne testen. Einige der Jokes die es ins Fernsehen schaffen könnten bei unserem Open Mic geboren werden!</p>\n<div dir=\"auto\">Euer Host ist Juri Belenki, ein bekanntes Gesicht aus Kunst und Unterhaltung, der auf Social Media eine Fangemeinde von 1,5 Millionen Followern zählt. Er tritt in Städten in ganz Deutschland auf und steht in namhaften Clubs, wie dem Downstairs von Felix Lobrecht, Comedyflash oder Quatsch Comedy Club auf der Bühne.</div>\n<div dir=\"auto\"></div>\n<div dir=\"auto\">Juri führt euch durch den Abend und interagiert direkt mit dem Publikum. Künstler*innen verschiedenster Herkunft, Stile und Humor, sorgen für ein abwechslungsreiches Programm. Ein besonderes Highlight: Vor der Show gebt ihr Zettelchen ab, auf denen ihr eure Fragen und Probleme aufschreibt, die der Moderator spontan auf der Bühne löst!</div>\n<div dir=\"auto\"></div>\n<div dir=\"auto\">Taucht in das Universum ein, nehmt eure Freunde mit und einen Drink in die Hand – und genießt den wohl geilsten Abend der Woche bei uns! Bis bald!</div>\n",
+      "protected": false
+    },
+    "featured_media": 2535,
+    "template": "",
+    "ik_event_types": [
+      91
+    ],
+    "ik_event_type": "Comedy",
+    "ik_location": "Interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "22:00",
+    "ik_date": "",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/01/Banner1.png",
+    "ik_repetition": "monthly",
+    "ik_weekday": "thursday",
+    "ik_monthweek": "3",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2552"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 4,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2552/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2623,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2552/revisions/2623"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2535"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2552"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2552"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2534,
+    "date": "2026-01-08T10:40:27",
+    "date_gmt": "2026-01-08T09:40:27",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2534"
+    },
+    "modified": "2026-07-10T14:40:57",
+    "modified_gmt": "2026-07-10T12:40:57",
+    "slug": "comedy-universum",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/comedy-universum/",
+    "title": {
+      "rendered": "Comedy Universum"
+    },
+    "content": {
+      "rendered": "<p>Willkommen zum COMEDY UNIVERSUM &#8211; einem Mix aus Comedyshow und Improshow!</p>\n<p>Im Comedy Universum erwarten euch Newcomer mit ihren ersten Jokes und erfahrene Profis, die ihre Gags für die große Bühne testen. Einige der Jokes die es ins Fernsehen schaffen könnten bei unserem Open Mic geboren werden!</p>\n<div dir=\"auto\">Euer Host ist Juri Belenki, ein bekanntes Gesicht aus Kunst und Unterhaltung, der auf Social Media eine Fangemeinde von 1,5 Millionen Followern zählt. Er tritt in Städten in ganz Deutschland auf und steht in namhaften Clubs, wie dem Downstairs von Felix Lobrecht, Comedyflash oder Quatsch Comedy Club auf der Bühne.</div>\n<div dir=\"auto\"></div>\n<div dir=\"auto\">Juri führt euch durch den Abend und interagiert direkt mit dem Publikum. Künstler*innen verschiedenster Herkunft, Stile und Humor, sorgen für ein abwechslungsreiches Programm. Ein besonderes Highlight: Vor der Show gebt ihr Zettelchen ab, auf denen ihr eure Fragen und Probleme aufschreibt, die der Moderator spontan auf der Bühne löst!</div>\n<div dir=\"auto\"></div>\n<div dir=\"auto\">Taucht in das Universum ein, nehmt eure Freunde mit und einen Drink in die Hand – und genießt den wohl geilsten Abend der Woche bei uns! Bis bald!</div>\n",
+      "protected": false
+    },
+    "featured_media": 2535,
+    "template": "",
+    "ik_event_types": [
+      91
+    ],
+    "ik_event_type": "Comedy",
+    "ik_location": "Interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "22:00",
+    "ik_date": "",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/01/Banner1.png",
+    "ik_repetition": "monthly",
+    "ik_weekday": "thursday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2534"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 6,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2534/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2624,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2534/revisions/2624"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2535"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2534"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2534"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2529,
+    "date": "2026-01-06T14:51:12",
+    "date_gmt": "2026-01-06T13:51:12",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2529"
+    },
+    "modified": "2026-01-06T14:51:12",
+    "modified_gmt": "2026-01-06T13:51:12",
+    "slug": "kaktus-comedy-6",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/kaktus-comedy-6/",
+    "title": {
+      "rendered": "Kaktus Comedy"
+    },
+    "content": {
+      "rendered": "<p>KAKTUS COMEDY im Interkosmos, Lichtenberg 🌵🎤</p>\n<p>Wir haben jeden Donnerstag fünf sehr lustige Personen für euch, die hier ihre besten Witze bieten oder neues Material testen. Moderiert wird die Show von Marie Harnau (auf Insta zu finden unter @meh_comedy_).</p>\n<p>Die Show ist für alle, die Comedy lieben und sich gleichzeitig einen möglichst safen Space zum Lachen wünschen. 🏳️‍🌈❤️</p>\n<p>Falls du selbst schon immer einmal Stand Up Comedy machen wolltest, dann ist das die richtige Show für deinen ersten Auftritt. Melde dich einfach über Instagram @meh_comedy_ . 🙂</p>\n<p>🌟Die Show ist kostenlos und spendenbasiert.</p>\n<p>🎫 Sichert euch ein Platz mit einer Reservierung.</p>\n<p>⏱️ Einlass: 19:30 Uhr (genug Zeit ein Drink an der gemütlichen Bar zu holen!)</p>\n<p>Beginn: 20:00 Uhr</p>\n<p>Ende: ca. 21:40 Uhr</p>\n",
+      "protected": false
+    },
+    "featured_media": 1791,
+    "template": "",
+    "ik_event_types": [
+      91
+    ],
+    "ik_event_type": "Comedy",
+    "ik_location": "Interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "22:00",
+    "ik_date": "",
+    "ik_price": "",
+    "ik_url": "https://www.eventbrite.de/o/marie-harnau-62879435373",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/02/Kaktus-Comedy-Poster-Marie-e1675869271789.png",
+    "ik_repetition": "monthly",
+    "ik_weekday": "thursday",
+    "ik_monthweek": "4",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2529"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 1,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2529/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2530,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2529/revisions/2530"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1791"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2529"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2529"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2345,
+    "date": "2024-08-29T11:30:57",
+    "date_gmt": "2024-08-29T09:30:57",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2345"
+    },
+    "modified": "2026-01-06T14:48:17",
+    "modified_gmt": "2026-01-06T13:48:17",
+    "slug": "kaktus-comedy-5",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/kaktus-comedy-5/",
+    "title": {
+      "rendered": "Kaktus Comedy"
+    },
+    "content": {
+      "rendered": "<p>KAKTUS COMEDY im Interkosmos, Lichtenberg 🌵🎤</p>\n<p>Wir haben jeden Donnerstag fünf sehr lustige Personen für euch, die hier ihre besten Witze bieten oder neues Material testen. Moderiert wird die Show von Marie Harnau (auf Insta zu finden unter @meh_comedy_).</p>\n<p>Die Show ist für alle, die Comedy lieben und sich gleichzeitig einen möglichst safen Space zum Lachen wünschen. 🏳️‍🌈❤️</p>\n<p>Falls du selbst schon immer einmal Stand Up Comedy machen wolltest, dann ist das die richtige Show für deinen ersten Auftritt. Melde dich einfach über Instagram @meh_comedy_ . 🙂</p>\n<p>🌟Die Show ist kostenlos und spendenbasiert.</p>\n<p>🎫 Sichert euch ein Platz mit einer Reservierung.</p>\n<p>⏱️ Einlass: 19:30 Uhr (genug Zeit ein Drink an der gemütlichen Bar zu holen!)</p>\n<p>Beginn: 20:00 Uhr</p>\n<p>Ende: ca. 21:40 Uhr</p>\n",
+      "protected": false
+    },
+    "featured_media": 1791,
+    "template": "",
+    "ik_event_types": [
+      91
+    ],
+    "ik_event_type": "Comedy",
+    "ik_location": "Interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:30",
+    "ik_time_end": "22:00",
+    "ik_date": "",
+    "ik_price": "",
+    "ik_url": "https://www.eventbrite.de/o/marie-harnau-62879435373",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/02/Kaktus-Comedy-Poster-Marie-e1675869271789.png",
+    "ik_repetition": "monthly",
+    "ik_weekday": "thursday",
+    "ik_monthweek": "2",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2345"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 3,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2345/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2528,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2345/revisions/2528"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/1791"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2345"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2345"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 2119,
+    "date": "2023-07-31T17:37:37",
+    "date_gmt": "2023-07-31T15:37:37",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2119"
+    },
+    "modified": "2026-09-18T16:40:24",
+    "modified_gmt": "2026-09-18T14:40:24",
+    "slug": "hatha-yoga-ruhig-kraftvoll",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/hatha-yoga-ruhig-kraftvoll/",
+    "title": {
+      "rendered": "Hatha Yoga &#8211; Ruhig &#038; Kraftvoll"
+    },
+    "content": {
+      "rendered": "<p>Eine <span class=\"il\">Yoga</span> Stunde für alle. Hier findest du Ausgleich zum herausfordernden Alltag mit ruhigen Bewegungen und kraftvollen Haltungen. Wir richten den Fokus auf die Ausrichtung der Haltungen und verbinden Bewegung und Atmung. Dabei werden alle Level, egal ob <span class=\"il\">Yoga</span> Anfänger oder erfahrene Yogis, integriert.<br />\nIm Anschluss bietet es sich an auf ein Kaffee oder Tee in Austausch zu kommen &lt;3</p>\n<p><em>Bitte bringt eure eigene Yogamatte (evtl. auch ein Block, falls vorhanden) mit und kommt in bequemer Kleidung! Danke 🙂</em></p>\n<p><strong>Wann?<br />\n</strong>Mittwochs 18:00 &#8211; 19:00 Uhr</p>\n<p><strong>Wie viel?</strong><br />\n14 €</p>\n<p><strong>Anmeldung</strong><br />\nhello@romyogamore.de</p>\n",
+      "protected": false
+    },
+    "featured_media": 2120,
+    "template": "",
+    "ik_event_types": [
+      96
+    ],
+    "ik_event_type": "Yoga",
+    "ik_location": "Interkosmos",
+    "ik_street": "Fanningerstr.",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "18:00",
+    "ik_time_end": "19:00",
+    "ik_date": "",
+    "ik_price": "",
+    "ik_url": "https://www.romyogamore.de/",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2023/07/05_2022_Romy-12-2.jpg",
+    "ik_repetition": "weekly",
+    "ik_weekday": "wednesday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2119"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 6,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2119/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2496,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2119/revisions/2496"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2120"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2119"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2119"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]
