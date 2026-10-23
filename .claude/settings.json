@@ -1,4 +1,12 @@
 {
+  "extraKnownMarketplaces": {
+    "fluxcd": {
+      "source": {
+        "source": "github",
+        "repo": "fluxcd/agent-skills"
+      }
+    }
+  },
   "enabledPlugins": {
     "gitops-skills@fluxcd": true,
     "kotlin-lsp@claude-plugins-official": true,

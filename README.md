@@ -133,15 +133,16 @@ what this way of working is good at, and where it still needs a human paying att
 ## Install
 
 Prerequisites: a JDK (see [`.sdkmanrc`](./.sdkmanrc), managed with [SDKMAN](https://sdkman.io/)), Docker, the
-[GitHub CLI](https://cli.github.com/), and Node.js 24.15 or later (see [`.nvmrc`](./events-frontend/.nvmrc)) if you want the frontend.
+[GitHub CLI](https://cli.github.com/), and Node.js 24.15 or later (see [`.nvmrc`](./events-frontend/.nvmrc)) if you want the frontend. On macOS, `scripts/setup-mac.sh` installs all of them from the
+[`Brewfile`](./Brewfile), and `/setup-machine` in Claude Code walks a new Mac through it. Elsewhere: `sdk env`, then `pre-commit install` before your first
+commit.
 
 ```bash
 git clone git@github.com:enorm-labs/event-junkie.git
 cd event-junkie
 
-sdk env                                   # the right Java version
-brew install pre-commit && pre-commit install    # gitleaks hook — before your first commit
-brew install gh && gh auth login          # the agent prompts drive GitHub through it
+scripts/setup-mac.sh contributor          # macOS: the tools, the JDK, Node and the commit hooks
+gh auth login                             # the agent prompts drive GitHub through it
 ./gradlew clean build                     # compile, test, lint, coverage
 ```
 
