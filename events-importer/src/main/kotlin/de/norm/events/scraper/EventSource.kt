@@ -255,6 +255,9 @@ enum class EventSource {
     /** Kühlspot Social Club – a volunteer-run club in a listed Weißensee courtyard for improvised and experimental music and free jazz. */
     KUEHLSPOT,
 
+    /** Kulturhaus Spandau – the district's own arts centre on Mauerstraße, with a theatre hall for comedy, operetta, poetry slams and magic shows. */
+    KULTURHAUS_SPANDAU,
+
     /** LabSaal Lübars – the 1896 ballroom of the village inn on the Lübars green, with concerts, dance nights, theatre and talks. */
     LABSAAL,
 
