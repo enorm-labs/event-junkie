@@ -984,6 +984,11 @@ says so.
 | `WELTWIRTSCHAFT`       | `ARTISTS`          | the resident DJ of the monthly night is named only in the description prose                                                                      | —     |
 | `WELTWIRTSCHAFT`       | `GENRE`            | no event names a style; the DJ nights run across genres                                                                                          | —     |
 | `WELTWIRTSCHAFT`       | `PROMOTERS`        | the house presents its nights itself and names no organizer                                                                                      | —     |
+| `WIENER_BLUT`          | `EVENT_TYPE`       | the list has no category, so a night is a concert unless its title says otherwise                                                                | —     |
+| `WIENER_BLUT`          | `PRICE`            | the Wix registration sells no ticket and the site prints no price                                                                                | —     |
+| `WIENER_BLUT`          | `TICKET_URL`       | the site sells no tickets and links no shop                                                                                                      | —     |
+| `WIENER_BLUT`          | `DOORS_TIME`       | the list gives one start time per night                                                                                                          | —     |
+| `WIENER_BLUT`          | `PROMOTERS`        | the list names no promoter                                                                                                                       | —     |
 | `WILD_AT_HEART`        | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `WILD_AT_HEART`        | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |

@@ -525,6 +525,9 @@ enum class EventSource {
     /** Weltwirtschaft – the restaurant, beer garden and rooftop kiosk of the Haus der Kulturen der Welt, with a monthly DJ night. */
     WELTWIRTSCHAFT,
 
+    /** Wiener Blut – a Kreuzberg pub on Wiener Straße with DJs most nights, football on screen and live bands. */
+    WIENER_BLUT,
+
     /** Wild at Heart Berlin – a rock'n'roll bar and live club near Schlesisches Tor: rockabilly, punk, garage and surf. */
     WILD_AT_HEART,
 
