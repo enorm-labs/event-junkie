@@ -11,7 +11,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /**
@@ -20,7 +22,8 @@ import java.time.format.DateTimeParseException
  *
  * | Field       | Source                                                          |
  * |-------------|-----------------------------------------------------------------|
- * | date + time | `data-dateStart="YYYY-MM-DD HH:mm:ss"`                          |
+ * | date + time | `data-dateStart="YYYY-MM-DD HH:mm:ss"`, a date alone when untimed  |
+ * | end date    | `data-dateEnd="YYYY-MM-DD"`, on an exhibition card only         |
  * | event type  | `.card-text.cat` category label ("Concerts", "Exhibitions", …)   |
  * | title       | `.card-text.title` — **cut with `&#8230;`**, so only a fallback  |
  * | price       | `li.price` ("17.00€", or "Free")                                |
@@ -65,11 +68,11 @@ class UrbanSpreeOverviewPageScraper {
     private fun parseCard(card: Element): ScrapedEvent? {
         val sourceUrl = card.absUrl("href").takeIf { it.isNotBlank() } ?: return null
         val rawDateStart = card.attr(DATE_START_ATTR)
-        val startsAt = parseCardDateTime(rawDateStart)
-        if (startsAt == null) {
-            logger.warn { "Skipping Urban Spree card $sourceUrl: unparseable $DATE_START_ATTR='$rawDateStart'" }
-            return null
-        }
+        val (startDate, startTime) =
+            parseCardStart(rawDateStart) ?: run {
+                logger.warn { "Skipping Urban Spree card $sourceUrl: unparseable $DATE_START_ATTR='$rawDateStart'" }
+                return null
+            }
 
         val rawTitle = card.textAt(".card-text.title")
         if (rawTitle == null) {
@@ -92,8 +95,9 @@ class UrbanSpreeOverviewPageScraper {
             title = cleanUrbanSpreeTitle(headline),
             subtitle = supportNote,
             eventType = mapEventType(category, URBAN_SPREE_CATEGORY_SYNONYMS),
-            eventDate = startsAt.toLocalDate(),
-            startTime = startsAt.toLocalTime(),
+            eventDate = startDate,
+            startTime = startTime,
+            endDate = parseCardEndDate(card.attr(DATE_END_ATTR))?.takeIf { it > startDate },
             imageUrl = normalizeAssetUrl(card.absUrl(IMAGE_ATTR)),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${urbanSpreeEventSlug(sourceUrl)}",
@@ -105,13 +109,28 @@ class UrbanSpreeOverviewPageScraper {
     }
 
     /**
-     * Parses the card's `YYYY-MM-DD HH:mm:ss` stamp, ISO with a space for the `T`. `null` when
+     * Parses the card's `YYYY-MM-DD HH:mm:ss` stamp, ISO with a space for the `T`, or the bare
+     * `YYYY-MM-DD` of an untimed exhibition, whose start time is then `null` (#3826). `null` when
      * blank or malformed.
      */
-    private fun parseCardDateTime(raw: String): LocalDateTime? {
-        if (raw.isBlank()) return null
+    private fun parseCardStart(raw: String): Pair<LocalDate, LocalTime?>? {
+        val stamp = raw.trim()
         return try {
-            LocalDateTime.parse(raw.trim().replace(' ', 'T'))
+            when {
+                DATE_ONLY.matches(stamp) -> LocalDate.parse(stamp) to null
+                else -> LocalDateTime.parse(stamp.replace(' ', 'T')).let { it.toLocalDate() to it.toLocalTime() }
+            }
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
+
+    /** The exhibition card's closing day, or `null` when absent or malformed. */
+    private fun parseCardEndDate(raw: String): LocalDate? {
+        val stamp = raw.trim()
+        if (!DATE_ONLY.matches(stamp)) return null
+        return try {
+            LocalDate.parse(stamp)
         } catch (_: DateTimeParseException) {
             null
         }
@@ -125,6 +144,12 @@ class UrbanSpreeOverviewPageScraper {
 
         /** Machine-readable start stamp on a card, e.g. `2026-12-12 20:00:00`. */
         private const val DATE_START_ATTR = "data-dateStart"
+
+        /** An exhibition card's closing day, e.g. `2026-11-28`. */
+        private const val DATE_END_ATTR = "data-dateEnd"
+
+        /** A bare ISO date, the stamp an untimed card carries. */
+        private val DATE_ONLY = Regex("""\d{4}-\d{2}-\d{2}""")
 
         /** Original (non-thumbnailed) poster path on a card, e.g. `assets/project/urbanspree/mediasource/IMG_1389.JPG`. */
         private const val IMAGE_ATTR = "data-imgfeat"
