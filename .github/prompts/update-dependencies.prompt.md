@@ -83,6 +83,8 @@ was lost, not that a convention changed. This sweep is for taking everything at 
    applied. `oxlint` and `eslint-plugin-oxlint` move together; `vue` and `vue-router` stay compatible.
 3. `npm update --save --save-exact`.
 4. `npm run build`, then `npm run lint` and `npm run test:unit`. Same failure rule as Step 6.
+5. `npm audit`, in `events-frontend/` and in `events-admin/`. Report the count before and after the sweep. A finding the sweep did not remove goes to
+   [`/security-triage`](security-triage.prompt.md); this prompt does not pin a transitive package for a CVE.
 
 ## Step 11: README badges and the Kotlin link
 

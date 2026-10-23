@@ -173,6 +173,9 @@ gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?state=open&per_page=1
         (.most_recent_instance.location.path // "-")] | @tsv'
 ```
 
+Then `npm audit` in `events-frontend/` and `events-admin/`, by [`/security-report` § Step 2b](security-report.prompt.md#step-2b--run-npm-audit-on-both-npm-apps).
+It finds an advisory before Dependabot raises an alert for it, so the alert list alone is behind.
+
 Normalise before deciding: **Dependency-Check duplicates heavily** (one CVE per matching artifact — group by CVE/GHSA) and **its paths are Gradle cache paths,
 not repo paths** (judge by artifact; the fixture rule does not apply); **`manifest_path` is always `settings.gradle.kts`** for a Gradle alert, so find the real
 declaration in `gradle.properties`, `settings.gradle.kts` or the module script; **`first_patched_version` can be a pre-release** (`2.4.20-Beta1` was one), and
@@ -188,8 +191,10 @@ not it affects us; a five-minute bump beats the paragraph explaining a dismissal
 
 ## Step 3 — Fixing
 
-**Check for an open Dependabot PR before touching a manifest**; if one exists, merge or rebase _that_. Then by class: **npm** — `npm install <pkg>@<version>`,
-exact pin, commit the lockfile; **Gradle, project-managed** — the `*.version` property or plugin version; **Gradle, BOM-managed** — the BOM's own property name
+**Check for an open Dependabot PR before touching a manifest**; if one exists, merge or rebase _that_. Then by class: **npm, direct** —
+`npm install <pkg>@<version>`, exact pin, commit the lockfile; **npm, transitive** — `npm update <pkg>` in each app that has it, which moves only the
+lockfile, then `npm audit` again there (never `npm audit fix --force`: it downgrades direct dependencies to older majors and the root advisory stays);
+**Gradle, project-managed** — the `*.version` property or plugin version; **Gradle, BOM-managed** — the BOM's own property name
 in `gradle.properties` under "Spring Boot BOM overrides (CVE remediation)", naming the CVE (temporary; `/update-dependencies` prunes it); **transitive with no
 BOM entry** — bump the direct dependency first, a `constraints` block only if that does not carry the fix; **a webjar** — bump the webjar (`swagger-ui`'s
 bundled JS is the live example); **a GitHub Action** — Dependabot's PR; **a base image** — a path like `usr/lib/libuuid.so.1` is a binary inside the image,

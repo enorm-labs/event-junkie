@@ -1,7 +1,7 @@
 # Security Report
 
 Pull the project's current dependency-vulnerability position into one prioritized report: the latest **OWASP Dependency-Check** findings and **GitHub's
-Dependabot alerts**, reconciled against each other and against what we have already triaged. This is a **read-only investigation** — inspect and report, never
+Dependabot alerts**, plus **`npm audit`** on the two npm apps, reconciled against each other and against what we have already triaged. This is a **read-only investigation** — inspect and report, never
 mutate. Propose fixes; do not apply them unless the user explicitly asks.
 
 **To act on what this finds, use [`/security-triage`](security-triage.prompt.md)** — the mutating counterpart, which fixes what is cheap, files what is not, and
@@ -98,7 +98,29 @@ submission**
 - Alerts can be **stale in both directions**: an alert may name a version already upgraded on `main`, and a fresh local change is invisible until the next
   submission. Always compare an alert's `first_patched_version` against the _currently resolved_ version before reporting it as outstanding.
 
-## Step 3 — Reconcile the two sources
+## Step 2b — Run `npm audit` on both npm apps
+
+`events-frontend/` and `events-admin/` each have a lockfile. `npm audit` reads it against the GitHub Advisory Database directly, so it sees an advisory the
+day it is published. Dependabot can take days to raise the same advisory as an alert.
+
+```bash
+for d in events-frontend events-admin; do
+  (cd "$d" && npm audit --omit=dev; npm audit --json) > "<SCRATCH>/npm-audit-$d.txt" 2>&1
+done
+```
+
+- **`--omit=dev` separates what ships from tooling.** Its count covers the dependencies that can reach a visitor's browser. Every other finding sits in build,
+  lint or test tooling. Report the two counts apart. A tooling finding is real, but it is not a production exposure.
+- **Report root advisories, not the package count.** One advisory in `braces` makes `micromatch`, `fast-glob` and every package above them vulnerable too.
+  The JSON names the root in `via` as an object with a `url`. A `via` that is only a package name is a parent of a root.
+- **A range of `*`, or a fix with `isSemVerMajor: true`, usually means no patched version exists.** Compare the advisory's range with
+  `npm view <pkg> version`. When the newest release is inside the range, the verdict is **real with no stable fix**.
+- **Never trust `npm audit fix --force`.** It proposes the "fix" it can find, which can be a downgrade to an older major of a direct dependency. That
+  downgrade does not remove the root advisory.
+- `fixAvailable: true` on a transitive package means `npm update <pkg>` can take the patch within the current ranges. That is a cheap fix for
+  `/security-triage`.
+
+## Step 3 — Reconcile the sources
 
 They will disagree, and the disagreement is informative rather than a bug:
 
@@ -106,6 +128,8 @@ They will disagree, and the disagreement is informative rather than a bug:
   have a live case where NVD scores a Kotlin CVE 9.8 while JetBrains scores it 6.7.
 - **Different scope.** Dependency-Check scans every resolved artifact including test and dev dependencies; Dependabot follows the submitted dependency graph.
 - **CPE matching is fuzzy.** Dependency-Check produces genuine false positives by matching an artifact name onto an unrelated product's CPE.
+- **`npm audit` is ahead of Dependabot for npm.** Both read the GitHub Advisory Database. An advisory in `npm audit` with no Dependabot alert is usually
+  new, and the alert follows. Name it in the report. Do not take it as a false positive.
 
 Use the overlap as a confidence signal: **in both → highest confidence and real. Dependabot only → real, Dependency-Check's CPE simply missed it.
 Dependency-Check only → verify before believing it.**
@@ -178,6 +202,7 @@ Follow with:
 - **Blocking the gate** — findings at CVSS ≥ 7 that will keep the nightly scan red, and what each needs.
 - **Real but below the gate** — worth fixing, not urgent.
 - **Suggested suppressions** — false positives with the evidence for that verdict. Draft the reasoning; do not write the file.
+- **npm** — per app, the `--omit=dev` count and the root advisories, each with its verdict.
 - **No stable fix** — flag explicitly as an accepted-risk decision for the user.
 - **Already known** — matching an existing suppression, open PR, or open issue.
 - **Obsolete overrides** — BOM overrides and transitive pins the BOM has caught up with, which should now be deleted. Also flag any suppression whose
