@@ -111,7 +111,7 @@ require_brew() {
 check_tools() {
     log "tools"
     local tool
-    for tool in git gh jq yq direnv psql uv docker ijhttp claude pre-commit gitleaks shellcheck shfmt ruff hadolint tofu helm flux lychee squawk; do
+    for tool in git gh jq yq direnv psql uv docker ijhttp claude kotlin-lsp typescript-language-server pre-commit gitleaks shellcheck shfmt ruff hadolint tofu helm flux lychee squawk; do
         if command -v "$tool" >/dev/null; then ok "$tool"; else miss "$tool"; fi
     done
     if [ "${1:-}" = operator ]; then
