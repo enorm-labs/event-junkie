@@ -28,7 +28,7 @@ Data quality is enforced by **deterministic, curated-list normalizers applied at
 | Artist display name | `canonicalArtistName` — de-shout, casing-only; an `EXACT` row takes MusicBrainz's case (#2317) | `artist/ArtistNormalizer.kt`, `enrichment/ArtistEnrichment.kt` |
 | Promoter identity   | `canonicalPromoterName` — strip trailing descriptors, fold typos via `NAME_CORRECTIONS`        | `promoter/PromoterNormalizer.kt`                               |
 | De-shouting         | `deshoutWord` and the `ACRONYMS` it keeps in capitals, shared by both of the above             | `common/NameCasing.kt`                                         |
-| Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                           | `scraper/ArtistNameMapping.kt`                                 |
+| Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                           | `scraper/NonArtistNames.kt`, `scraper/ArtistNameCleanup.kt`    |
 | Act name at sync    | `stripArtistSuffix` + `isNonArtistName` once more on every line-up entry (#301)                | `importing/ArtistAssociationSync`                              |
 | Series tail at sync | `unglueSeriesTails` — the head, when it is already an `EXACT` MusicBrainz row (#302)           | `importing/ArtistAssociationSync`                              |
 | Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                                 | `scraper/ArtistNameMapping.kt`                                 |

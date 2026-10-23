@@ -307,7 +307,7 @@ class ArcanoaOverviewPageScraper(
          * Arcanoa's standing weekly formats, programmes rather than performers: the Monday/Tuesday
          * open stage (`freie Bühne`) and jam, the Wednesday `SpielleuteSession` medieval night, the Liedermacher
          * festival, the songwriting workshop, and the venue's own name leading its house nights.
-         * Venue-local rather than in the shared `ArtistNameMapping` denylist — every entry is specific
+         * Venue-local rather than in the shared `NON_ARTIST_NAMES` denylist — every entry is specific
          * to this programme. Matched as a
          * substring on an already-split act name, so a co-billed real act survives. `jam session`
          * beside `\bjam\b` is not redundant: the venue also writes "JamSession" run-together, where

@@ -72,7 +72,7 @@ The check is not a test, it is a re-seed: `/importer-smoke <slug> --full`, then 
 any source as a finding. [`/start-issue`](start-issue.prompt.md) asks the same question for the same reason, and it is usually the difference between an hour
 and a day.
 
-So: **if the change reaches `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` or anything else every importer calls, the re-seed is
+So: **if the change reaches `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping` (with `NonArtistNames`, `ArtistNameCleanup`, `ActSplitting`, `SupportLines`), `MoneyExtensions` or anything else every importer calls, the re-seed is
 part of the work.** If you cannot run one, the honest move is to stop and say which finding you left, not to ship the edit and hope.
 
 ## Steps

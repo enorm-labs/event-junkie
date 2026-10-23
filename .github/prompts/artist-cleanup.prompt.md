@@ -63,9 +63,9 @@ Read the `.json`. For each row, set `decision` and a `reason` in the TSV:
 
 Group the `DROP`, `RENAME` and `SPLIT` rows by source. For each source:
 
-1. **Find where the name is made**: the scraper under `events-importer/…/scraper/<venue>/`, and the shared helpers in `ArtistNameMapping.kt` it calls.
-2. **Put the rule where the shape lives.** A shape two or more sources produce goes into `ArtistNameMapping.kt` (`isNonArtistName`, `stripArtistSuffix`,
-   `stripArtistPrefix`). A shape one venue's markup produces goes into its scraper, and a structural signal beats a name pattern: Tresor bills a record
+1. **Find where the name is made**: the scraper under `events-importer/…/scraper/<venue>/`, and the shared name rules it calls: `ArtistNameMapping.kt`, `NonArtistNames.kt`, `ArtistNameCleanup.kt`, `ActSplitting.kt`, `SupportLines.kt`.
+2. **Put the rule where the shape lives.** A shape two or more sources produce goes into the shared rules (`isNonArtistName` in `NonArtistNames.kt`, `stripArtistSuffix` in
+   `ArtistNameCleanup.kt`, `stripArtistPrefix` in `ArtistNameMapping.kt`). A shape one venue's markup produces goes into its scraper, and a structural signal beats a name pattern: Tresor bills a record
    playback as its own `Listening Session:` slot, so the scraper drops the slot rather than matching catalogue numbers.
 3. **Test it with the stored name as the input**, and beside it a real act the rule must keep — the act whose name made the flag over-match.
 4. **Prove a shared rule on every stored name and title**, `main` against the branch, as
@@ -83,7 +83,7 @@ Keep a pull request reviewable: one family of fixes, or up to about ten sources.
 ## Promoters
 
 `--kind promoters` runs the same four steps. A promoter goes wrong in its own ways, and its rules live in
-`events-importer/…/promoter/PromoterNormalizer.kt`, not in `ArtistNameMapping.kt`:
+`events-importer/…/promoter/PromoterNormalizer.kt`, not in the artist-name rules:
 
 | Decision | When                                                                                                                              | The parser half                      | The migration half                                      |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------- |

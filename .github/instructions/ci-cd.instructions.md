@@ -172,7 +172,7 @@ never pushing to `main`. Decisions shared by all six:
   agent PR touching `.github/workflows/` is the actual control.
 
 The six: `agent-security.yml` (`/security-triage`; nightly and on a red publish via `workflow_run`, walking the prompt's § A blocked publish with
-`--failed-publish`; code scanning only), `agent-refactor.yml` (`/refactor`; fenced away from `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping`,
+`--failed-publish`; code scanning only), `agent-refactor.yml` (`/refactor`; fenced away from `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping` and its siblings,
 `MoneyExtensions`, where a change passes every test and still changes the rows — reported, never applied), `agent-comments.yml` (`/compact-comments`; DELETE,
 RENAME, EXTRACT only, RELOCATE and KEEP reported, venue KDoc off-limits, `--all` not `--worst N` because density ranking selects the files that are dense on
 purpose, twelve files per PR; default model `claude-opus-4-8`, a measured verbosity preference), `agent-docs.yml` (`/update-docs`; corrects facts, rewrites no
