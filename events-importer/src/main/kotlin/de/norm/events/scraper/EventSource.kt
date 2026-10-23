@@ -46,6 +46,9 @@ enum class EventSource {
     /** Baiz – a smokers' pub on Schönhauser Allee whose name stands for Berlin Informationszentrum, with readings, talks and concerts on its small stage. */
     BAIZ,
 
+    /** Ballhaus Berlin – a ballroom on Chausseestraße from 1905, for swing and Latin dance nights, dance bands, burlesque and themed balls. */
+    BALLHAUS_BERLIN,
+
     /** Ballhaus Wedding Berlin – an 1899 back-courtyard ballroom with concerts, dance socials, slams, improv and variety evenings. */
     BALLHAUS_WEDDING,
 

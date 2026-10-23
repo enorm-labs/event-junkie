@@ -561,8 +561,8 @@ next season is announced.
 
 **Ballhaus Berlin** is easy to parse but cannot be fetched. Its `robots.txt` answers HTTP 500, and so does every missing
 path, because the server's error page is broken too. RFC 9309 reads a 5xx as a complete disallow, and `RobotsTxtFilter`
-enforces that (#887). The `/de/termine/` page lists every event since 2019, with an ISO date attribute, prices and a
-ticket link. Scaffold it once `robots.txt` answers 200 or 404.
+enforces that (#887). The importer is built (`BallhausBerlinWebsiteImporter`), but the seed file has no source for the
+venue. When `robots.txt` answers 200 or 404, add the source to `ballhaus-berlin.json` and a `RESULTS.tsv` licence row.
 
 **Kunstfabrik Schlot** is easy to parse but may not be fetched. Its `robots.txt` reads `User-agent: *` and
 `Disallow: *`, which disallows every path, and `RobotsTxtFilter` refuses every request. The WordPress list at
@@ -741,7 +741,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Berndhain                         | https://berndhain.com/                              | Bar          | No programme page; concerts announced on Instagram              | Site change / manual entry |
 | Slap'd                            | https://slapd.de/                                   | Club         | Event-agency site, rendered in the browser; no programme        | Site change                |
 | Alte Feuerwache THF               | https://alte-feuerwache-thf.de/calendar             | Other        | Clean Next.js list; the last date is 2026-10-16                 | Next season                |
-| Ballhaus Berlin                   | https://ballhaus-berlin.de/de/termine/              | Club         | `robots.txt` answers 500; Termine lists ~68 dated events        | Site change                |
+| Ballhaus Berlin                   | https://ballhaus-berlin.de/de/termine/              | Club         | Importer built, not seeded; `robots.txt` answers 500            | Site change                |
 | Kunstfabrik Schlot                | https://kunstfabrik-schlot.de/programm/             | Club         | `robots.txt` disallows every path; ~66 dated, mostly jazz       | Site change                |
 | Kunstquartier Bethanien           | https://kunstquartier-bethanien.de/vorschau         | Other        | Art centre; the preview page holds one performance              | Scope decision             |
 | Begine                            | https://www.begine.de/programm/aktueller-monat.html | Other        | Women's centre; groups and courses, a few parties               | Scope decision             |
