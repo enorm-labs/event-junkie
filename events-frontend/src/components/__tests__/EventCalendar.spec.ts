@@ -34,14 +34,26 @@ describe('EventCalendar', () => {
     expect(buttons).not.toContain('Today')
   })
 
-  it.each([
-    ['en', 'Today'],
-    ['de', 'Heute'],
-  ] as const)('names the %s today button by its visible text', async (locale, text) => {
-    const wrapper = await render(locale)
+  it.each(['en', 'de'] as const)(
+    'names every %s toolbar button by its visible words',
+    async (locale) => {
+      const wrapper = await render(locale)
 
-    const today = wrapper.findAll('button').find((button) => button.text() === text)
-    expect(today?.attributes('aria-label')).toContain(text)
+      // axe's label-content-name-mismatch matches whole words, so "Monatsansicht" does not name "Monat".
+      const labelled = wrapper.findAll('button').filter((button) => button.text() !== '')
+      expect(labelled.length).toBeGreaterThan(1)
+      for (const button of labelled) {
+        const words = (button.attributes('aria-label') ?? '').split(/\s+/)
+        expect(words).toEqual(expect.arrayContaining(button.text().split(/\s+/)))
+      }
+    },
+  )
+
+  it('keeps the English view names the e2e suite selects by', async () => {
+    const wrapper = await render('en')
+
+    const names = wrapper.findAll('button').map((button) => button.attributes('aria-label'))
+    expect(names).toEqual(expect.arrayContaining(['Today', 'Month view', 'Week view', 'List view']))
   })
 
   it('shows an event time on the 24-hour clock', async () => {
