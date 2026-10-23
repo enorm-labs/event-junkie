@@ -78,6 +78,9 @@ jobs:
       - name: force-import reads every page of the source listing
         run: python3 scripts/test_force_import.py
 
+      - name: manual-collisions folds titles and matches a hand-entered row
+        run: python3 scripts/test_manual_collisions.py
+
       - name: osm-venue-coordinates writes only an OpenStreetMap point it can trust
         run: python3 scripts/test_osm_venue_coordinates.py
 

@@ -62,6 +62,19 @@ The quotes around the name stay even for a one-word name: `run` passes the line 
 The same four `run` lines again with `production:` and port `28081`. `--enable` refuses while any other source is unreviewed, so a refusal that names a
 new venue means the licence review ran from the wrong checkout.
 
+**Then the new venue's hand-entered rows**, after each environment's `--enable`, whether or not the pull request lists the step (#3824). An operator may have
+entered the venue's events by hand (`manual:<venue>:…`) before it had a source. Such a row holds the slug the import wants, or shows the night twice under
+another title. Staging has no manual rows, so production is where this bites.
+
+```sh
+python3 scripts/manual-collisions.py <env> <venue-slug> <venue-slug> …    # the seed files' names; a read, it deletes nothing
+```
+
+It matches each upcoming manual row against the venue's imported rows on staging and on `<env>`. `SLUG` and `TITLE` (the same night, case and `ß` folded)
+are proposed for deletion. `NIGHT` is the same night under another title: show the operator both titles. `KEEP` stays, because the source does not publish
+that night. **Delete nothing until the operator names the rows.** Then run the `curl` lines for those rows, and force-import the venues' sources, so the
+events the import skipped are written.
+
 **When a step is due.** A step with no parenthesis is due once its change runs on the environment. Two forms defer it:
 
 | Form                    | Due                                                             | Write it for                                              |
@@ -115,6 +128,9 @@ environments in the arguments that are due (see [When a step is due](#the-format
     It exits 1 when a source did not refresh and names it. A known failure (a 429 or a DNS error at one venue) is reported, not retried in a loop.
 
 4. **Scripts**, in the order the pull requests merged, from `git checkout --detach <deployed commit>` (see Important). Return to your branch afterwards.
+
+5. **Hand-entered rows** of every venue whose `--enable` ran: `scripts/manual-collisions.py`, then wait for the operator
+   ([A new venue](#the-format-a-pull-request-writes)). The rows it lists and the ones the operator deleted go in the report.
 
 ## Step 4 — Record it on the pull request
 
