@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * HTML fetch whose *payload* is structured data, parsed by [TempodromOverviewPageScraper]. The
  * JSON-LD names no organizer, and every event page credits one under "Veranstalter", so each
  * event's page is read for its promoter ([TempodromDetailPageScraper], #2711), and for the comedy a
- * fallback night's blurb names (#3380). That costs one GET
+ * fallback night's blurb names (#3380), and for the band a tribute night's blurb names (#3828). That costs one GET
  * per event and stops the listing's `Last-Modified` 304 skipping a run: a promoter can change on a
  * page while the listing stays the same. A failed page flags the row, and the upsert keeps the stored promoter.
  *
@@ -43,6 +43,6 @@ val TEMPODROM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field"),
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
-            "the detail page's `Beschreibung` region is read only to classify a comedy night and is never stored"
+            "the detail page's `Beschreibung` region is read only to classify a comedy night and name a tribute band, and is never stored"
         )
     )

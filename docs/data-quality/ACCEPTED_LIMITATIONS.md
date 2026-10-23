@@ -899,7 +899,7 @@ says so.
 | `TEMPODROM`            | `START_TIME`       | a run (Roncalli, Holiday on Ice) prints a date range with no clock, and some concerts print none either                                          | —     |
 | `TEMPODROM`            | `PRICE`            | a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line                                                       | —     |
 | `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
-| `TEMPODROM`            | `DESCRIPTION`      | the detail page's `Beschreibung` region is read only to classify a comedy night and is never stored                                              | —     |
+| `TEMPODROM`            | `DESCRIPTION`      | the detail page's `Beschreibung` region is read only to classify a comedy night and name a tribute band, and is never stored                     | —     |
 | `THEATER_IM_DELPHI`    | `GENRE`            | the labels are formats; only Kammermusik and Elektronische Musik name a style                                                                    | —     |
 | `THEATER_IM_DELPHI`    | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `THE_CLOUD`            | `GENRE`            | every event is filed under one `Night Club` category; the style is only in the prose                                                             | —     |

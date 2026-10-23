@@ -255,6 +255,7 @@ private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
  * lose the show after the last ` - ` first, or the second act keeps it: `"Beisenherz & Polak - Friendly
  * Fire"` billed `Polak - Friendly Fire` (#3415). A tribute show names its band after `performed by`, and the title is
  * the show: "Nights on Broadway" / "A Tribute to the BEE GEES performed by NIGHT FEVER" bills `Night Fever` (#3746).
+ * A tribute line without `performed by` bills the title here, and the event page names the band ([TempodromDetailPageScraper.addTributeBand]).
  */
 private fun tempodromArtists(
     title: String,
@@ -307,7 +308,7 @@ private fun performerFromFormatLine(subtitle: String): List<ScrapedArtist> =
         .orEmpty()
 
 /** The act after `performed by`, to the end of the line. */
-private val PERFORMED_BY = Regex("""\bperformed\s+by\s+(\S.*)$""", RegexOption.IGNORE_CASE)
+internal val PERFORMED_BY = Regex("""\bperformed\s+by\s+(\S.*)$""", RegexOption.IGNORE_CASE)
 
 /** "comedy" as a word in Tempodrom's format line: "Comedy Perle", "MUSIK-COMEDY-STAND-UP-SHOW". */
 private val COMEDY_FORMAT = Regex("""\bcomedy\b""", RegexOption.IGNORE_CASE)
