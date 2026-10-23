@@ -228,6 +228,10 @@ says so.
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
+| `EIGHT_HUNDRED_A`      | `GENRE`            | the categories name a format, such as Music or Burlesque, not a style                                                                            | —     |
+| `EIGHT_HUNDRED_A`      | `PRICE_BOX_OFFICE` | a row has one price, the ticket price                                                                                                            | —     |
+| `EIGHT_HUNDRED_A`      | `SOLD_OUT`         | the rows carry no sold-out flag                                                                                                                  | —     |
+| `EIGHT_HUNDRED_A`      | `ARTISTS`          | most rows name no performers, and the text bills them in free prose                                                                              | —     |
 | `EIGHT_MM`             | `PAGINATION`       | the calendar lists only the month it shows, and robots.txt bars the other months                                                                 | —     |
 | `EIGHT_MM`             | `END_TIME`         | every calendar entry ends one hour after it starts, a placeholder rather than a real end                                                         | —     |
 | `EIGHT_MM`             | `DOORS_TIME`       | only a concert blurb states a doors time; a DJ night has none                                                                                    | —     |

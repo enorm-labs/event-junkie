@@ -13,8 +13,16 @@
         "descriptionAlt": "Eine internationale Bar mit Kabarettbühne im Wedding, seit 2017 in Betrieb und 2024 offizieller Gastgeber beim Tag der Clubkultur, mit Burlesque, Drag, Comedy, Theater, Zauberei, Lyrik und Livemusik.",
         "descriptionAltLanguage": "de",
         "venueTypes": ["bar", "theatre"],
-        "programmeUrl": "https://www.800aberlin.com/",
         "reviewedAt": "2026-10-07T08:19:25Z"
     },
-    "sources": []
+    "sources": [
+        {
+            "name": "800A Bar & Cabaret",
+            "url": "https://www.800aberlin.com/",
+            "sourceType": "EIGHT_HUNDRED_A",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
 }
