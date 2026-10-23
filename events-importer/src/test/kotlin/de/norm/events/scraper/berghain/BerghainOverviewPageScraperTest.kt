@@ -2,6 +2,7 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.stripArtistSuffix
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -167,6 +168,31 @@ class BerghainOverviewPageScraperTest {
         val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
 
         event.artists.map { it.name } shouldContainExactly listOf("Dicken45", "Benito")
+    }
+
+    // The duo `@` with its origin and label: the comma split once stored `4AD)` as an act (#3793).
+    @Test
+    fun `a comma inside brackets stays with the act`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/81917/">
+                <p>Montag <span class="font-bold">23.11.2026</span> tür 19:00 beginn 20:00</p>
+                <h2>@ (US, 4AD)</h2>
+                <h3>Kantine am Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">@ (US, 4AD)</span>
+                    <span class="text-sm md:text-md font-bold uppercase">Live</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
+
+        event.artists.map { it.name } shouldContainExactly listOf("@ (US, 4AD)")
+        event.artists.map { stripArtistSuffix(it.name) } shouldContainExactly listOf("@")
     }
 
     // Production stored `Booty Carrell DJ (Vinyl) Warm-up + Party` as one act (#1843).

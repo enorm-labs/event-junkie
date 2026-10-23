@@ -95,6 +95,22 @@ class AssociationSyncQualityFlagIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // The band `@` slugs to `at` rather than to nothing, so it is billed and not flagged (#3793).
+    @Test
+    fun `an act whose name is an at sign is stored with the slug at`() {
+        runBlocking {
+            val sourceId = "gate:at"
+            val event = persistEvent(sourceId)
+            val eventId = requireNotNull(event.id)
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = listOf("@ (US, 4AD)"), genre = null)))
+
+            val linked = eventArtistRepository.findByEventIdIn(listOf(eventId)).toList().map { it.artistId }
+            artistRepository.findAllById(linked).toList().map { it.name to it.slug } shouldBe listOf("@" to "at")
+            qualityFlagRepository.findByEventIds(listOf(eventId)).shouldBeEmpty()
+        }
+    }
+
     // The flags replay the billing's split, so they name the half the gate refused, not the slot.
     @Test
     fun `a refused half of a b2b slot is flagged on its own`() {

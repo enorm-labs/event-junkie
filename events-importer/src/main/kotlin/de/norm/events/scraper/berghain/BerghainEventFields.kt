@@ -129,6 +129,6 @@ private val SLOT_DESCRIPTION =
 /**
  * What separates the performers written into one slot: a [B2B_SEPARATOR], a padded `+` (Kantine's
  * `Dicken45 + Benito`, #1844), or a comma. The comma needs no padding, because the venue writes the
- * list both ways.
+ * list both ways. A comma inside brackets is the act's origin and label, so `@ (US, 4AD)` is one act (#3793).
  */
-private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s+\+\s+|\s*,\s*""", RegexOption.IGNORE_CASE)
+private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s+\+\s+|\s*,(?![^()]*\))\s*""", RegexOption.IGNORE_CASE)

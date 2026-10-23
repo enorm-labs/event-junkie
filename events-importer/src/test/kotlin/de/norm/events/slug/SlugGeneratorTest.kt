@@ -102,5 +102,20 @@ class SlugGeneratorTest {
     fun `leaves a name without letters empty`() {
         SlugGenerator.slugify("–") shouldBe ""
         SlugGenerator.slugify("★ ★") shouldBe ""
+        SlugGenerator.slugify("/") shouldBe ""
+        SlugGenerator.slugify("+") shouldBe ""
+    }
+
+    @Test
+    fun `spells a name of only at signs as at`() {
+        SlugGenerator.slugify("@") shouldBe "at"
+        SlugGenerator.slugify(" @ ") shouldBe "at"
+        SlugGenerator.slugify("@@") shouldBe "at-at"
+    }
+
+    @Test
+    fun `keeps the plain slug of a name with an at sign inside`() {
+        SlugGenerator.slugify("Funk@delic") shouldBe "funk-delic"
+        SlugGenerator.slugify("Z@p") shouldBe "z-p"
     }
 }

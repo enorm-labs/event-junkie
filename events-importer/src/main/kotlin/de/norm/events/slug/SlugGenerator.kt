@@ -28,8 +28,13 @@ object SlugGenerator {
      *
      * A name in Cyrillic or Greek with no Latin letter is transliterated, so `Кино 2` is `kino-2`, not `2` (#3475). A name
      * with a Latin letter keeps its plain slug, so `Друга Ріка (Druha Rika)` stays `druha-rika`.
+     *
+     * A name that slugs to nothing is slugged again with `@` spelled `at`, so the band `@` is `at` (#3793). Only then:
+     * `Funk@delic` keeps `funk-delic`, and `–` stays empty.
      */
-    fun slugify(input: String): String =
+    fun slugify(input: String): String = slugOnce(input).ifBlank { if ('@' in input) slugOnce(input.replace("@", " at ")) else "" }
+
+    private fun slugOnce(input: String): String =
         if (TRANSLITERATED_SCRIPT.containsMatchIn(input) && !LATIN_LETTER.containsMatchIn(input)) {
             transliterating.slugify(withoutMarks(input))
         } else {

@@ -46,5 +46,7 @@ class BerghainEventFieldsTest {
         splitSlot("Robert Henke presents Dust") shouldBe listOf("Robert Henke")
         splitSlot("Agata B2B Cunt Remember") shouldBe listOf("Agata", "Cunt Remember")
         splitSlot("Blasha & Allatt") shouldBe listOf("Blasha & Allatt")
+        splitSlot("@ (US, 4AD)") shouldBe listOf("@ (US, 4AD)")
+        splitSlot("Foo (DE), Bar (UK)") shouldBe listOf("Foo (DE)", "Bar (UK)")
     }
 }
