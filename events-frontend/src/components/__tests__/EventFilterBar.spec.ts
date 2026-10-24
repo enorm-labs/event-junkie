@@ -414,3 +414,28 @@ describe('EventFilterBar price caps', () => {
     expect(router.currentRoute.value.query.maxPrice).toBeUndefined()
   })
 })
+
+describe('EventFilterBar price hint', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  const hint = 'Events with no price are left out.'
+
+  it('says unpriced events drop out only while a price bound is set', async () => {
+    await mountAt('/events')
+    expect(wrapper!.text()).not.toContain(hint)
+
+    await click('Up to €20')
+    expect(wrapper!.text()).toContain(hint)
+
+    await router.push('/events?minPrice=5')
+    await flushPromises()
+    expect(wrapper!.text()).toContain(hint)
+
+    await router.push('/events?free=true')
+    await flushPromises()
+    expect(wrapper!.text()).not.toContain(hint)
+  })
+})

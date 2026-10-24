@@ -66,6 +66,7 @@
     "hideSoldOut": "Ausverkaufte ausblenden",
     "freeOnly": "Nur kostenlose",
     "upToPrice": "bis {n} €",
+    "priceHint": "Events ohne Preis fallen weg.",
     "more": "Mehr Filter",
     "moreCount": "Mehr Filter ({n})",
     "filters": "Filter",

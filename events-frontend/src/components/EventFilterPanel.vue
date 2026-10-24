@@ -97,6 +97,9 @@ function applyPrice() {
  */
 const PRICE_CAPS = [10, 20, 30] as const
 
+/** Any bound drops the events that print no price, about half the list, so the panel says so. */
+const priceBounded = computed(() => Boolean(queryString('minPrice') || queryString('maxPrice')))
+
 function capActive(cap: number): boolean {
   return queryString('maxPrice') === String(cap) && !queryString('minPrice')
 }
@@ -301,5 +304,8 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         {{ t('events.filters.hideSoldOut') }}
       </Button>
     </div>
+    <p v-if="priceBounded" class="text-meta text-muted-foreground">
+      {{ t('events.filters.priceHint') }}
+    </p>
   </div>
 </template>
