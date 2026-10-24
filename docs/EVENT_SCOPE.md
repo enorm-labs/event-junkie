@@ -199,7 +199,7 @@ a venue, artist, promoter, festival or text filter. The event page and the venue
 
 The feature does not change the type. A children's concert is a `CONCERT`, and a puppet show is a `SHOW`.
 
-A show for teenagers with a minimum age, such as "ab 13 Jahre", is not marked. A children's band on a real stage is
+A show with a minimum age of 10 or more, such as "ab 12 Jahren" or "ab 13 Jahre", is not marked. A children's band on a real stage is
 not marked, such as `Deine Freunde` at Tempodrom or `Lichterkinder` at Uber Eats Music Hall. Nothing on those pages
 marks a show for small children, and adults go to these concerts too.
 
@@ -216,7 +216,7 @@ marks a show for small children, and adults go to these concerts too.
 | Zebrano-Theater                                                           | `ZebranoTheaterKinderprogrammPageScraper`, on `kinderprogramm.html`                   | Every public performance on that page. The age is the phrase                                     |
 | Pfefferberg Theater                                                       | `PfefferbergTheaterCalendarPageScraper`, `CHILDRENS_CATEGORY`                         | The `Kindertheater` category of the calendar, or `childrensShowPhrase` on title + subtitle       |
 
-`childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`)
+`childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for ten and up (`ab 12 Jahren`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
 here. No source is a venue that plays only for children, such as FEZ or Theater an der Parkaue.
 
