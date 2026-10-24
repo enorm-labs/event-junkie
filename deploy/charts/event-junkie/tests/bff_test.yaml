@@ -124,3 +124,50 @@ tests:
       - notMatchRegex:
           path: "$.spec.template.spec.containers[0].env[*].name"
           pattern: "^APP_IMAGES_CACHE_SIZE$"
+
+  # --- Transactional mail (ADR-054) --------------------------------------------------------------
+  - it: passes no mail configuration without a mail Secret
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      mail.existingSecret: ""
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # No host means no sender: the BFF starts and nothing can send (MailerConfigurationTest).
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^SPRING_MAIL_"
+
+  - it: passes the relay and the credentials from the mail Secret
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      mail.existingSecret: "event-junkie-mail"
+      mail.host: "smtp.tem.scaleway.com"
+      mail.port: 587
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_MAIL_HOST
+            value: "smtp.tem.scaleway.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_MAIL_PORT
+            value: "587"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_MAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-mail
+                key: password

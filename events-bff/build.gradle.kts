@@ -87,6 +87,10 @@ dependencies {
     // Logging — idiomatic SLF4J wrapper (see: https://github.com/oshai/kotlin-logging)
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")
 
+    // Transactional mail through Scaleway TEM over SMTP (ADR-054)
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    testImplementation("com.icegreen:greenmail-junit5:${property("greenmail.version")}")
+
     // Kotlin
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")

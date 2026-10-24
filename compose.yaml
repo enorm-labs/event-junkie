@@ -61,6 +61,18 @@ services:
       mc mb --ignore-existing local/event-junkie-images;
       "
 
+  # A local inbox for the BFF's transactional mail (ADR-054): every mail sent while developing lands
+  # here and goes nowhere else. The UI is on 8025. No TLS and no real credentials, so `dev-env.sh`
+  # turns STARTTLS off for the BFF; the cluster requires it.
+  mailpit:
+    image: 'axllent/mailpit:v1.32.0'
+    environment:
+      - 'MP_SMTP_AUTH_ACCEPT_ANY=1'
+      - 'MP_SMTP_AUTH_ALLOW_INSECURE=1'
+    ports:
+      - '${MAILPIT_SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+
 volumes:
   # `scripts/dev-env.sh db-reset` drops this deliberately via `docker compose down --volumes`.
   postgres-data:

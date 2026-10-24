@@ -160,7 +160,7 @@ The hooks live in the shared `.git` directory, so they are already active in eve
 ./gradlew :events-bff:bootRun
 ```
 
-`bootRun` also starts the services in [`compose.yaml`](../compose.yaml) — PostgreSQL and MinIO — via Spring
+`bootRun` also starts the services in [`compose.yaml`](../compose.yaml) — PostgreSQL, MinIO and Mailpit — via Spring
 Boot's [Docker Compose support](https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.docker-compose).
 
 **`bootRun` runs with the module as its working directory, and `compose.yaml` is at the repository root.** Spring therefore cannot find it on its own. The root
@@ -170,7 +170,10 @@ application stops at startup with `No Docker Compose file found in directory '..
 An IntelliJ run configuration that starts the application directly does not go through Gradle, so it does not get that setting. If it stops with the same
 message, set its working directory to the repository root.
 
-Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`.
+Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`, Mailpit `8025`.
+
+**Mail the BFF sends locally lands in Mailpit**, at `http://localhost:8025`, and goes nowhere else. `scripts/dev-env.sh up` points the BFF at it. A
+plain `bootRun` does not, so the BFF then has no sender (ADR-054).
 
 ## The local database
 

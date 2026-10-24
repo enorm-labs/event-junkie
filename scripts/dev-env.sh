@@ -148,6 +148,15 @@ start_service() {
         )
         # Scheduled imports are off by default: a smoke test should scrape only the source
         # under test, not every source whose 24h interval happens to be due (ADR-007 ethics).
+        # The BFF sends into Mailpit from compose.yaml, which speaks no TLS (ADR-054).
+        if [[ "$svc" == "bff" ]]; then
+            props+=(
+                "--spring.mail.host=localhost"
+                "--spring.mail.port=${MAILPIT_SMTP_PORT:-1025}"
+                "--spring.mail.properties.mail.smtp.starttls.enable=false"
+                "--spring.mail.properties.mail.smtp.starttls.required=false"
+            )
+        fi
         if [[ "$svc" == "importer" ]] && ! $scheduling; then
             props+=("--app.scheduling.enabled=false")
             log "Starting importer (scheduling=false) → $log_file"

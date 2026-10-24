@@ -278,6 +278,37 @@ spec:
           port: {{ . }}
         {{- end }}
 {{- end }}
+{{- if and $np.mailEgress.enabled .Values.mail.existingSecret }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-mail" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The BFF reaches the SMTP relay that sends transactional mail (ADR-054). Rendered only while a mail Secret is configured.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $bffSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        {{- /* Scaleway publishes no stable range for TEM, so the internet minus the private ranges, as
+           `-allow-object-storage` is. One port, so the BFF still reaches no web page. */}}
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $np.mailEgress.exceptCidrs | nindent 14 }}
+      ports:
+        {{- range $np.mailEgress.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+{{- end }}
 {{- if .Values.tests.enabled }}
 ---
 apiVersion: networking.k8s.io/v1

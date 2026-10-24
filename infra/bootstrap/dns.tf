@@ -70,6 +70,40 @@ locals {
     }
   }
 
+  # The sending subdomain for product mail through Scaleway TEM (ADR-054), so its MX does not collide
+  # with the Hetzner one above. Unlike konsoleH's key, this DKIM record is ours: Scaleway cannot write
+  # to this zone, so a key rotated there reaches DNS only through a commit here.
+  #
+  # DMARC is `p=reject`, not the `p=none` Scaleway's form suggests: the root already says `sp=reject`,
+  # and a subdomain record that relaxed it would make `notify` the one spoofable name. TEM's bounces
+  # use `notify` as the envelope sender, hence the blackhole MX and an aligned SPF.
+  tem_dkim_selector = "97ebff4b-2038-403d-9b8b-aec488e18e53"
+  tem_dkim_value    = "v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuR3WPgIGNsF6vLD6jlb2tJy+gpDApQPL+9N7ipAM5DMAEUODr2Hb+Se+rvl3bys5oO78mCI+FQ8BKwRyijKV6cQqtRd51d2kFIlxF4LiV2akiioFLGBLrPQ4/bEYBJfjUw7cOqNI2PmoDRL9F4AEwH3Z8xRhWybLlveRlYhSydteL0m2vTEI9f15hIo3OTWMPfhNT3dgh0X6GfUDeUh2NFEx3sZdKW64UXu5KSBCqgq65grV5GaNReyh+sS1dhKgO81mFo90KJU0JocUIwb4UyhCwRGwZwl0eBLgt+AOuHyTbjLrilKzC89Ar5JAfDrPN5WqSXPXNWrD/6LgdzLyuQIDAQAB"
+
+  notify_records = {
+    notify_mx = {
+      name    = "notify"
+      type    = "MX"
+      records = ["10 blackhole.tem.scaleway.com."]
+    }
+    notify_spf_record = {
+      name    = "notify"
+      type    = "TXT"
+      records = ["\"v=spf1 include:_spf.tem.scaleway.com -all\""]
+    }
+    # A TXT string holds at most 255 characters, so the key goes in as several, as konsoleH's does.
+    notify_dkim = {
+      name    = "${local.tem_dkim_selector}._domainkey.notify"
+      type    = "TXT"
+      records = [join(" ", [for chunk in chunklist(split("", local.tem_dkim_value), 250) : "\"${join("", chunk)}\""])]
+    }
+    notify_dmarc = {
+      name    = "_dmarc.notify"
+      type    = "TXT"
+      records = ["\"v=DMARC1; p=reject; adkim=s; aspf=s\""]
+    }
+  }
+
   # One flat map so every (domain, record) pair is its own resource with a stable address. The mail
   # records merge in after, keyed the same way, so `event-junkie.de/spf` replaces the `-all` version
   # by key: one resource, changed rather than duplicated.
@@ -83,6 +117,12 @@ locals {
     },
     {
       for key, record in local.mail_records :
+      "${var.primary_domain}/${key}" => {
+        zone   = var.primary_domain
+        record = record
+      }
+      }, {
+      for key, record in local.notify_records :
       "${var.primary_domain}/${key}" => {
         zone   = var.primary_domain
         record = record

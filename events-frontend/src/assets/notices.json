@@ -1,5 +1,5 @@
 {
-  "componentCount": 362,
+  "componentCount": 368,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -474,6 +474,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.validation:jakarta.validation-api",
           "version": "3.1.1",
           "url": "https://beanvalidation.org",
@@ -678,6 +684,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework:spring-context-support",
+          "version": "7.0.9",
+          "url": "https://github.com/spring-projects/spring-framework",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework:spring-core",
           "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
@@ -828,6 +840,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot-mail",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-micrometer-metrics",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
@@ -913,6 +931,12 @@
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-logging",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.boot:spring-boot-starter-mail",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -1970,6 +1994,84 @@
       ]
     },
     {
+      "license": "BSD-3-Clause",
+      "url": "https://opensource.org/license/bsd-3-clause",
+      "components": [
+        {
+          "name": "@mapbox/vector-tile",
+          "version": "3.0.0",
+          "url": "https://github.com/mapbox/vector-tile-js",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@protomaps/basemaps",
+          "version": "5.7.2",
+          "url": "https://github.com/protomaps/basemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "jakarta.activation:jakarta.activation-api",
+          "version": "2.1.4",
+          "url": "https://github.com/jakartaee/jaf-api",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
+          "version": "4.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "maplibre-gl",
+          "version": "6.15.0",
+          "url": "https://github.com/maplibre/maplibre-gl-js",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "org.antlr:antlr4-runtime",
+          "version": "4.13.1",
+          "url": "https://www.antlr.org/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-activation",
+          "version": "2.0.3",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-mail",
+          "version": "2.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "pbf",
+          "version": "5.1.2",
+          "url": "https://github.com/mapbox/pbf",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "pmtiles",
+          "version": "4.5.0",
+          "url": null,
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "source-map-js",
+          "version": "1.2.2",
+          "url": "https://github.com/7rulnik/source-map-js",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "ISC",
       "url": "https://opensource.org/license/isc-license-txt",
       "components": [
@@ -2096,66 +2198,6 @@
       ]
     },
     {
-      "license": "BSD-3-Clause",
-      "url": "https://opensource.org/license/bsd-3-clause",
-      "components": [
-        {
-          "name": "@mapbox/vector-tile",
-          "version": "3.0.0",
-          "url": "https://github.com/mapbox/vector-tile-js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@protomaps/basemaps",
-          "version": "5.7.2",
-          "url": "https://github.com/protomaps/basemaps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jakarta.activation:jakarta.activation-api",
-          "version": "2.1.4",
-          "url": "https://github.com/jakartaee/jaf-api",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
-          "version": "4.0.5",
-          "url": "https://www.eclipse.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "maplibre-gl",
-          "version": "6.15.0",
-          "url": "https://github.com/maplibre/maplibre-gl-js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "org.antlr:antlr4-runtime",
-          "version": "4.13.1",
-          "url": "https://www.antlr.org/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "pbf",
-          "version": "5.1.2",
-          "url": "https://github.com/mapbox/pbf",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "pmtiles",
-          "version": "4.5.0",
-          "url": null,
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "source-map-js",
-          "version": "1.2.2",
-          "url": "https://github.com/7rulnik/source-map-js",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
       "license": "EPL-2.0",
       "url": "https://www.eclipse.org/legal/epl-2.0/",
       "components": [
@@ -2184,6 +2226,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.validation:jakarta.validation-api",
           "version": "3.1.1",
           "url": "https://beanvalidation.org",
@@ -2192,6 +2240,18 @@
         {
           "name": "jakarta.xml.bind:jakarta.xml.bind-api",
           "version": "4.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-activation",
+          "version": "2.0.3",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-mail",
+          "version": "2.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
         }
@@ -2214,6 +2274,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.validation:jakarta.validation-api",
           "version": "3.1.1",
           "url": "https://beanvalidation.org",
@@ -2222,6 +2288,18 @@
         {
           "name": "jakarta.xml.bind:jakarta.xml.bind-api",
           "version": "4.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-activation",
+          "version": "2.0.3",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-mail",
+          "version": "2.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
         }
@@ -2244,6 +2322,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.validation:jakarta.validation-api",
           "version": "3.1.1",
           "url": "https://beanvalidation.org",
@@ -2253,6 +2337,48 @@
           "name": "jakarta.xml.bind:jakarta.xml.bind-api",
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-activation",
+          "version": "2.0.3",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.eclipse.angus:angus-mail",
+          "version": "2.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        }
+      ]
+    },
+    {
+      "license": "Public Domain",
+      "url": null,
+      "components": [
+        {
+          "name": "io.netty:netty-codec-native-quic",
+          "version": "4.2.18.Final",
+          "url": "https://netty.io/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.activation:jakarta.activation-api",
+          "version": "2.1.4",
+          "url": "https://github.com/jakartaee/jaf-api",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.mail:jakarta.mail-api",
+          "version": "2.1.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.hdrhistogram:HdrHistogram",
+          "version": "2.2.2",
+          "url": "http://hdrhistogram.github.io/HdrHistogram/",
           "ecosystem": "backend"
         }
       ]
@@ -2278,30 +2404,6 @@
           "version": "5.3.0",
           "url": "https://github.com/fontsource/font-files",
           "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "Public Domain",
-      "url": null,
-      "components": [
-        {
-          "name": "io.netty:netty-codec-native-quic",
-          "version": "4.2.18.Final",
-          "url": "https://netty.io/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.activation:jakarta.activation-api",
-          "version": "2.1.4",
-          "url": "https://github.com/jakartaee/jaf-api",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.hdrhistogram:HdrHistogram",
-          "version": "2.2.2",
-          "url": "http://hdrhistogram.github.io/HdrHistogram/",
-          "ecosystem": "backend"
         }
       ]
     },

@@ -16,6 +16,7 @@ flowchart TD
     genretag["genretag"]
     image["image"]
     licence["licence"]
+    mail["mail"]
     meta["meta"]
     promoter["promoter"]
     search["search"]
