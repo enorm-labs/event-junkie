@@ -405,8 +405,9 @@ destination in the UI.
 
 ### `event-junkie-mail` — the login the BFF sends transactional mail with
 
-The SMTP login for Scaleway Transactional Email (ADR-054, #3886). **`username` is the Scaleway project ID. `password` is the secret key of an IAM API key**
-whose application holds the TEM permission set only ([CREDENTIALS.md](../CREDENTIALS.md) row 29). Each cluster gets its own key, so revoking one does not stop
+The SMTP login for Scaleway Transactional Email (ADR-054, #3886). **`username` is the Scaleway project ID. `password` is the secret key of an IAM API key.**
+Its application has one policy ([CREDENTIALS.md](../CREDENTIALS.md) row 29). The policy grants `TransactionalEmailEmailSmtpCreate` on the project
+`event-junkie` only. The key can send over SMTP. It cannot read mail or change the domain. Each cluster gets its own key, so revoking one does not stop
 the other.
 
 **Optional, and nothing fails without it.** The chart sets the mail variables only when `mail.existingSecret` names this Secret. Without them the BFF builds
