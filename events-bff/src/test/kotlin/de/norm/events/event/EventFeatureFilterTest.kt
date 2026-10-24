@@ -9,7 +9,7 @@ import org.springframework.r2dbc.core.await
 import java.time.LocalDate
 
 /**
- * `feature` repeats, and an event needs every given party feature (#2631). The venue's character
+ * `feature` repeats, and an event needs every given event feature (#2631). The venue's character
  * tags never stand in for a night that states nothing.
  */
 class EventFeatureFilterTest : BaseControllerTest() {
@@ -33,7 +33,7 @@ class EventFeatureFilterTest : BaseControllerTest() {
         }
 
     @Test
-    fun `GET events filters by party feature and needs every given one`() {
+    fun `GET events filters by event feature and needs every given one`() {
         mapOf(
             "feature=queer" to listOf("queer-open-end", "queer-only"),
             "feature=QUEER" to listOf("queer-open-end", "queer-only"),
@@ -62,7 +62,7 @@ class EventFeatureFilterTest : BaseControllerTest() {
 
     /** On now is the list with `running=true` over today. */
     @Test
-    fun `GET events running today filters by party feature`() {
+    fun `GET events running today filters by event feature`() {
         webTestClient
             .get()
             .uri("/events?from=$today&to=$today&running=true&feature=open-end")
@@ -75,7 +75,7 @@ class EventFeatureFilterTest : BaseControllerTest() {
     }
 
     @Test
-    fun `GET events calendar filters by party feature`() {
+    fun `GET events calendar filters by event feature`() {
         webTestClient
             .get()
             .uri("/events/calendar?from=$today&to=${today.plusDays(7)}&feature=flinta-only")

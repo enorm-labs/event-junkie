@@ -68,7 +68,7 @@ describe('filterLabels', () => {
     expect(labels()({ eventType: ['COMEDY'], language: ['en'] })).toEqual(['Comedy', 'English'])
   })
 
-  it('names the party features', () => {
+  it('names the event features', () => {
     expect(labels()({ feature: ['flinta-only', 'open-end'] })).toEqual(['FLINTA* only', 'Open end'])
   })
 

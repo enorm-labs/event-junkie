@@ -19,7 +19,7 @@ import { useEvent } from '@/composables/useEvent'
 import { useEventChanges } from '@/composables/useEventChanges'
 import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
-import { inFeatureOrder } from '@/lib/partyFeatures'
+import { inFeatureOrder } from '@/lib/eventFeatures'
 import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
@@ -155,7 +155,7 @@ const {
   formatSpokenLanguage,
   formatRunState,
   formatWeekday,
-  formatPartyFeature,
+  formatEventFeature,
   formatEventType,
 } = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
@@ -167,7 +167,7 @@ const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitl
 const features = computed(() =>
   inFeatureOrder(event.value?.features ?? []).map((slug) => ({
     slug,
-    label: formatPartyFeature(slug),
+    label: formatEventFeature(slug),
     to: { path: localePath('/events'), query: { feature: slug } },
   })),
 )

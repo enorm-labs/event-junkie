@@ -67,7 +67,7 @@ Read the entries in the JSON for each row, then give it one verdict:
 - **An accepted limitation** is declared in the venue's `*_LIMITATIONS` value, in the scraper package, and listed in `AcceptedLimitations.kt`. Read it
   with `git grep -n '<SOURCE>_LIMITATIONS' events-importer/src/main`. A row that the declaration covers is CLEAR. A row it does not cover is a draft that
   adds an `AcceptedLimitation` with its `LimitedAspect` and a one-line reason in the venue's words.
-- **A curated list** is one of three shared files: `NonArtistNames.kt`, `GenreNormalizer.kt` and `PartyFeatureRules.kt`. A change there acts on every
+- **A curated list** is one of three shared files: `NonArtistNames.kt`, `GenreNormalizer.kt` and `EventFeatureRules.kt`. A change there acts on every
   source. So the draft names the values, and its **Done when** asks for production-wide proof in the pull request: across all sources, every event the
   new value would change, and that each change is right.
 

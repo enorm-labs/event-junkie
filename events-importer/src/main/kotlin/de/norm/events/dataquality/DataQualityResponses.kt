@@ -105,7 +105,7 @@ data class SourceQualityMetrics(
     @Schema(
         description =
             "Events the import kept a value out of: an artist name it refused or held back, a genre " +
-                "that repeats the title, a genre word that names no genre, or a party-feature cue no clear phrase settles. " +
+                "that repeats the title, a genre word that names no genre, or an event-feature cue no clear phrase settles. " +
                 "The worklist entry names each value",
         example = "5"
     )

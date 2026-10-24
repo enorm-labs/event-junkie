@@ -31,7 +31,7 @@ export interface EventSearchParams {
   timeOfDay?: string[]
   /** Any of these spoken-language codes; sent as a repeated parameter. An unknown language drops out. */
   language?: string[]
-  /** Every one of these party features (`PARTY_FEATURES`); sent as a repeated parameter. */
+  /** Every one of these event features (`EVENT_FEATURES`); sent as a repeated parameter. */
   feature?: string[]
   /** The slug of a festival an operator linked the events to (#3273). */
   festival?: string

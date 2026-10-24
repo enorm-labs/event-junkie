@@ -2,9 +2,9 @@ package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.event.EventEntity
+import de.norm.events.event.EventFeature
+import de.norm.events.event.EventFeatureMatch
 import de.norm.events.event.EventRepository
-import de.norm.events.event.PartyFeature
-import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDate
 
-/** The party features against PostgreSQL: each import replaces `event_feature`, and an uncertain cue reaches the worklist (#2631). */
+/** The event features against PostgreSQL: each import replaces `event_feature`, and an uncertain cue reaches the worklist (#2631). */
 class EventFeatureSyncIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var associationSyncService: AssociationSyncService
@@ -197,7 +197,7 @@ class EventFeatureSyncIntegrationTest : BaseControllerTest() {
         runBlocking {
             val event = persistEvent("features:both", "Open end.")
             val eventId = requireNotNull(event.id)
-            val scrapedOpenEnd = scraped(event.sourceId).copy(features = listOf(PartyFeatureMatch(PartyFeature.OPEN_END, "bis zum Morgen")))
+            val scrapedOpenEnd = scraped(event.sourceId).copy(features = listOf(EventFeatureMatch(EventFeature.OPEN_END, "bis zum Morgen")))
 
             featureSync.sync(listOf(event), listOf(scrapedOpenEnd))
 

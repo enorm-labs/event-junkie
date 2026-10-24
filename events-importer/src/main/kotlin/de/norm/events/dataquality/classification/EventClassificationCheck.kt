@@ -1,8 +1,8 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.event.EventFeature
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.EventType
-import de.norm.events.event.PartyFeature
 import de.norm.events.importing.EventFeatureRepository
 import de.norm.events.importing.EventQualityFlagRepository
 import de.norm.events.importing.EventSourceNotFoundException
@@ -368,7 +368,7 @@ class EventClassificationCheck(
 
         /** `flinta-only: FLINTA* Party` → the feature and its cue, as `EventFeatureSync` writes the flag. */
         fun parseCue(value: String): UncertainCue? {
-            val feature = PartyFeature.fromSlug(value.substringBefore(':').trim()) ?: return null
+            val feature = EventFeature.fromSlug(value.substringBefore(':').trim()) ?: return null
             return UncertainCue(feature, value.substringAfter(':').trim())
         }
 

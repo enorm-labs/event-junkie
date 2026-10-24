@@ -11,7 +11,7 @@ import type {
   unpinField,
   updateEvent,
 } from '@/api/events'
-import { PARTY_FEATURES } from '@/api/events'
+import { EVENT_FEATURES } from '@/api/events'
 import type { Festival, fetchFestivals } from '@/api/festivals'
 import type { fetchNames, NamedRow, searchByName } from '@/api/names'
 import EventEditor from '@/components/EventEditor.vue'
@@ -391,7 +391,7 @@ describe('EventEditor', () => {
       await mountEditor(stored, party)
 
       expect(body().querySelectorAll('[data-testid="feature-row"]')).toHaveLength(
-        PARTY_FEATURES.length,
+        EVENT_FEATURES.length,
       )
       expect(checkbox('queer').checked).toBe(true)
       expect(checkbox('flinta-only').checked).toBe(false)

@@ -269,7 +269,7 @@ describe('applySuggestion for features', () => {
 
     await expect(
       applySuggestion(features({ proposedValue: 'queer; darkroom' }), fetchFn),
-    ).rejects.toThrow('"darkroom" is no party feature')
+    ).rejects.toThrow('"darkroom" is no event feature')
     expect(calls(fetchFn).some((c) => !c.startsWith('GET'))).toBe(false)
   })
 })

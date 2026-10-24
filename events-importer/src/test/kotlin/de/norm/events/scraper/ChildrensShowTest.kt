@@ -1,7 +1,7 @@
 package de.norm.events.scraper
 
-import de.norm.events.event.PartyFeature
-import de.norm.events.event.PartyFeatureMatch
+import de.norm.events.event.EventFeature
+import de.norm.events.event.EventFeatureMatch
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -37,6 +37,6 @@ class ChildrensShowTest {
 
         val marked = event.forChildren(" Kindertheater ").forChildrenIf("ab 4 Jahre").forChildrenIf(null)
 
-        marked.features shouldBe listOf(PartyFeatureMatch(PartyFeature.FOR_CHILDREN, "Kindertheater"))
+        marked.features shouldBe listOf(EventFeatureMatch(EventFeature.FOR_CHILDREN, "Kindertheater"))
     }
 }

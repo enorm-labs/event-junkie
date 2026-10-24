@@ -3,8 +3,8 @@ package de.norm.events.dataquality.classification
 import de.norm.events.ai.AnthropicClient
 import de.norm.events.ai.AnthropicSettings
 import de.norm.events.common.runCatchingCancellable
+import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
-import de.norm.events.event.PartyFeature
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
@@ -47,7 +47,7 @@ sealed interface ClassifierResult {
 
 /**
  * Asks Claude, through Spring AI, what one event is: its type, the acts in its title, the uncertain
- * party features, and a start time and prices from its text (#3241).
+ * event features, and a start time and prices from its text (#3241).
  *
  * The shared [AnthropicClient] (ADR-041 rule 1, ADR-050), with its own model and key properties.
  * The text goes in as a JSON document and the system prompt calls it data, because it is a venue's
@@ -142,7 +142,7 @@ class AnthropicEventClassifier(
               - A title that is only a name is an act, also when a subtitle gives a genre. A production, a show, a tour name, a party series, a radio station or a musical is not an act.
               - An open stage, a jam session, a sing-along, a listening session or an album playback has no act. The artist of a record that is played is not an act.
               - An empty list says the title names no act. Give it only when the subtitle or description shows that the title names a production, a series, a format or a brand, and quote that passage. A missing description is no evidence.
-            - "features": a list of {"feature", "confirmed", "evidence", "confidence"}, one for each entry of uncertainCues only. confirmed is true only when the text states the feature for the whole night. Features: ${PartyFeature.entries.joinToString {
+            - "features": a list of {"feature", "confirmed", "evidence", "confidence"}, one for each entry of uncertainCues only. confirmed is true only when the text states the feature for the whole night. Features: ${EventFeature.entries.joinToString {
                 it.slug
             }}.
             - "startTime": {"value", "evidence", "confidence"}. value is the time the programme starts, as HH:mm. Doors or admission time is not the start time.

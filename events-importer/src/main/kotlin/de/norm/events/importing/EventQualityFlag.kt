@@ -32,7 +32,7 @@ enum class QualityFlagKind(
     NON_GENRE_TOKEN,
 
     /**
-     * A cue for a party feature that no clear phrase settles, such as a bare `FLINTA*` (#2631). The
+     * A cue for an event feature that no clear phrase settles, such as a bare `FLINTA*` (#2631). The
      * value is the feature's slug, a colon and the cue in its words. Recorded by [EventFeatureSync].
      */
     UNCERTAIN_PARTY_FEATURE(forReview = true);

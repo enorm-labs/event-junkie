@@ -2,8 +2,8 @@ package de.norm.events.dataquality.classification
 
 import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.QuotedText
+import de.norm.events.event.EventFeature
 import de.norm.events.event.EventType
-import de.norm.events.event.PartyFeature
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
@@ -11,9 +11,9 @@ import java.math.BigDecimal
 import java.time.LocalTime
 import java.util.Locale
 
-/** One cue the party-feature rules could not settle, as `event_quality_flag` stores it: `flinta-only: FLINTA* Party`. */
+/** One cue the event-feature rules could not settle, as `event_quality_flag` stores it: `flinta-only: FLINTA* Party`. */
 data class UncertainCue(
-    val feature: PartyFeature,
+    val feature: EventFeature,
     val phrase: String
 )
 
@@ -37,7 +37,7 @@ data class Finding<T>(
 
 /** A ruling on one [UncertainCue]: [confirmed] says the night has the feature. */
 data class FeatureVerdict(
-    val feature: PartyFeature,
+    val feature: EventFeature,
     val confirmed: Boolean,
     val evidence: String,
     val confidence: Double
@@ -120,7 +120,7 @@ object ClassificationValidator {
         if (node == null || !node.isArray) return emptyList()
         val asked = input.uncertainCues.map { it.feature }.toSet()
         return node.toList().mapNotNull { item ->
-            val feature = PartyFeature.fromSlug(item.get("feature")?.asString(""))?.takeIf { it in asked }
+            val feature = EventFeature.fromSlug(item.get("feature")?.asString(""))?.takeIf { it in asked }
             val confirmed = item.get("confirmed")?.takeIf { it.isBoolean }?.asBoolean()
             val evidence = evidenceOf(item)
             val confidence = confidenceOf(item)

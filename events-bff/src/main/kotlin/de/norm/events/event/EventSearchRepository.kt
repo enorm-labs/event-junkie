@@ -71,7 +71,7 @@ data class EventFilter(
      */
     val spokenLanguages: List<String> = emptyList(),
     /**
-     * Every one of these party-feature slugs (#2631), because a feature is a requirement and not an
+     * Every one of these event-feature slugs (#2631), because a feature is a requirement and not an
      * alternative, as the venue list's character tags are (#2670). Empty imposes no constraint.
      * [EventFilterParams] normalizes them.
      */
@@ -370,7 +370,7 @@ class EventSearchRepository(
     /**
      * Applies the many-to-many filters as `EXISTS` subqueries from one template parameterized by
      * [Association]; each correlates on `event_id = e.id`, so it tests membership without
-     * multiplying the outer rows. The party features are an `IN` over their own table, and a
+     * multiplying the outer rows. The event features are an `IN` over their own table, and a
      * children's show is left out where [EventFilter.hidesForChildren].
      */
     private fun appendAssociationFilters(

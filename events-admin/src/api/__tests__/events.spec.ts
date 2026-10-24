@@ -245,7 +245,7 @@ describe('setEventFeatures', () => {
   })
 
   it('names the valid slugs an unknown one is refused with', async () => {
-    const detail = "Unknown party feature 'darkroom'. Valid: flinta-only, queer"
+    const detail = "Unknown event feature 'darkroom'. Valid: flinta-only, queer"
     const fetchFn = vi.fn<typeof fetch>(
       async () => new Response(JSON.stringify({ detail }), { status: 400 }),
     )

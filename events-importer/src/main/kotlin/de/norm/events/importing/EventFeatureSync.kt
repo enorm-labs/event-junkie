@@ -2,9 +2,9 @@ package de.norm.events.importing
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.event.EventEntity
-import de.norm.events.event.PartyFeature
-import de.norm.events.event.PartyFeatureMatch
-import de.norm.events.event.PartyFeatureRules
+import de.norm.events.event.EventFeature
+import de.norm.events.event.EventFeatureMatch
+import de.norm.events.event.EventFeatureRules
 import de.norm.events.event.PinnedField
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -82,8 +82,8 @@ class EventFeatureRepository(
 val AFTERHOUR_OPEN_END_SOURCES: Set<EventSource> = setOf(EventSource.GOLDEN_GATE)
 
 /**
- * Reads the party features of each saved event off its stored title, subtitle and description
- * ([PartyFeatureRules]) and replaces its `event_feature` rows (#2631). A cue the rules cannot settle
+ * Reads the event features of each saved event off its stored title, subtitle and description
+ * ([EventFeatureRules]) and replaces its `event_feature` rows (#2631). A cue the rules cannot settle
  * goes to the data-quality worklist as [QualityFlagKind.UNCERTAIN_PARTY_FEATURE].
  *
  * It reads the entity as saved, so a pinned title or description (ADR-042) is the text it reads, and
@@ -93,9 +93,9 @@ val AFTERHOUR_OPEN_END_SOURCES: Set<EventSource> = setOf(EventSource.GOLDEN_GATE
  * An event that pins [PinnedField.FEATURES] keeps the features set by hand ([EventFeatureService]),
  * and gets no uncertain cue back: the operator has decided.
  *
- * An afterhour cue from one of [AFTERHOUR_OPEN_END_SOURCES] sets [PartyFeature.OPEN_END] instead of a flag.
+ * An afterhour cue from one of [AFTERHOUR_OPEN_END_SOURCES] sets [EventFeature.OPEN_END] instead of a flag.
  *
- * A feature the scraper read off the venue's page ([ScrapedEvent.features], such as [PartyFeature.FOR_CHILDREN]) joins
+ * A feature the scraper read off the venue's page ([ScrapedEvent.features], such as [EventFeature.FOR_CHILDREN]) joins
  * the rows of the event with the same `sourceId`. Where the text sets that feature too, the text's phrase stays.
  */
 @Service
@@ -115,7 +115,7 @@ class EventFeatureSync(
         val flags = mutableListOf<EventQualityFlag>()
         open.forEach { event ->
             val id = event.id ?: return@forEach
-            val detection = PartyFeatureRules.detect(event.title, event.subtitle, event.description)
+            val detection = EventFeatureRules.detect(event.title, event.subtitle, event.description)
             (detection.features + scrapedFeatures[event.sourceId].orEmpty()).mapTo(rows) { EventFeatureRow(id, it.feature.slug, it.phrase) }
             detection.uncertain.forEach { cue ->
                 val afterhour = cue.afterhourOpenEnd(event.sourceId)
@@ -131,17 +131,17 @@ class EventFeatureSync(
         qualityFlagRepository.add(flags)
         if (rows.isNotEmpty() || flags.isNotEmpty() || pinned.isNotEmpty()) {
             logger.info {
-                "Set ${rows.size} party feature(s) ${rows.groupingBy { it.feature }.eachCount()}; " +
+                "Set ${rows.size} event feature(s) ${rows.groupingBy { it.feature }.eachCount()}; " +
                     "flagged ${flags.size} uncertain cue(s) for the data-quality worklist; " +
                     "kept the pinned features of ${pinned.size} event(s)"
             }
         }
     }
 
-    /** The afterhour word of an [PartyFeature.OPEN_END] cue from one of [AFTERHOUR_OPEN_END_SOURCES], or null for any other cue. */
-    private fun PartyFeatureMatch.afterhourOpenEnd(sourceId: String): String? =
-        if (feature == PartyFeature.OPEN_END && AFTERHOUR_OPEN_END_SOURCES.any { sourceId.startsWith(it.sourceIdPrefix) }) {
-            PartyFeatureRules.AFTERHOUR.find(phrase)?.value
+    /** The afterhour word of an [EventFeature.OPEN_END] cue from one of [AFTERHOUR_OPEN_END_SOURCES], or null for any other cue. */
+    private fun EventFeatureMatch.afterhourOpenEnd(sourceId: String): String? =
+        if (feature == EventFeature.OPEN_END && AFTERHOUR_OPEN_END_SOURCES.any { sourceId.startsWith(it.sourceIdPrefix) }) {
+            EventFeatureRules.AFTERHOUR.find(phrase)?.value
         } else {
             null
         }

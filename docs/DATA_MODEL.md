@@ -395,7 +395,7 @@ Core entity representing a single music event at a venue on a specific date.
 
 **A hand edit pins the fields that it changes (ADR-042).** `PUT /api/admin/events/{id}` adds each changed field to
 `pinned_fields`, by its name in the request. `lineup`, `promoters` and `genres` pin the join tables.
-`PUT /api/admin/events/{id}/features` sets the party features and pins `features`. The importer keeps a
+`PUT /api/admin/events/{id}/features` sets the event features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
 the end. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
 the source's value.
@@ -610,19 +610,19 @@ its own. When it has one, its value wins and the field leaves `fields`. A row wi
 
 ### event_feature (Side Table)
 
-What kind of night an event is, as its own text or its venue's page states it (#2631). One row per party feature on an
+What kind of night an event is, as its own text or its venue's page states it (#2631). One row per event feature on an
 event.
 
 | Field            | Type        | Nullable | Description                                                     | Example        |
 | ---------------- | ----------- | -------- | --------------------------------------------------------------- | -------------- |
 | `event_id`       | `BIGINT` FK | No       | References `event.id`. Deleting the event deletes its features  | `101`          |
-| `feature`        | `TEXT`      | No       | `PartyFeature` slug, such as `flinta-only` or `open-end`        | `flinta-only`  |
+| `feature`        | `TEXT`      | No       | `EventFeature` slug, such as `flinta-only` or `open-end`        | `flinta-only`  |
 | `matched_phrase` | `TEXT`      | No       | The words of the event's text that set the feature, on one line | `FLINTA* only` |
 
 The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `queer`, `sex-positive`, `dress-code`,
 `fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party`, `open-stage` and `for-children`. Where `venue_character_tag` has the same fact, the
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
-`PartyFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
+`EventFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
 English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
 sets nothing. `PUT /api/admin/events/{id}/features` sets the rows by hand and pins `features` (ADR-042). The import
 then keeps the rows and adds no cue. A feature that no text set has the phrase `set by hand`. The PUT also deletes the

@@ -155,7 +155,7 @@ class EventFeatureEditIntegrationTest : BaseControllerTest() {
                     .expectBody<ProblemDetail>()
                     .returnResult()
                     .responseBody!!
-            problem.detail!! shouldContain "Unknown party feature 'darkroom'"
+            problem.detail!! shouldContain "Unknown event feature 'darkroom'"
             problem.detail!! shouldContain "flinta-only, queer, sex-positive"
             get(id).pinned shouldBe false
             get(id).slugs() shouldBe listOf("queer", "open-end")

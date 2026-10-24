@@ -231,8 +231,8 @@ export async function unpinField(
   await failOnError(response, `DELETE ${path}`)
 }
 
-/** `PartyFeature` in the importer, in its order, with the label the editor shows. */
-export const PARTY_FEATURES = [
+/** `EventFeature` in the importer, in its order, with the label the editor shows. */
+export const EVENT_FEATURES = [
   { slug: 'flinta-only', label: 'FLINTA* only' },
   { slug: 'queer', label: 'Queer' },
   { slug: 'sex-positive', label: 'Sex-positive' },

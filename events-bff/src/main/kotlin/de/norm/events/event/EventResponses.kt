@@ -307,7 +307,7 @@ data class EventDetailResponse(
     val enrichmentSources: List<EnrichmentSourceResponse> = emptyList(),
     @Schema(
         description =
-            "What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, " +
+            "What kind of night it is, as event feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, " +
                 "fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children. Set only where the event's own title " +
                 "or description, or for for-children its venue's page, states it; the venue's character tags never fill it.",
         example = "[\"open-end\", \"queer\"]"
