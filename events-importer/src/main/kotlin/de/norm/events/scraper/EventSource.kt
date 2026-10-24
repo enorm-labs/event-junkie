@@ -381,6 +381,9 @@ enum class EventSource {
     /** Pfefferberg Haus 13 Berlin – a hall on the old brewery site, run with Pfefferwerk trainees, for rock and metal concerts and book premieres. */
     PFEFFERBERG_HAUS_13,
 
+    /** Pfefferberg Theater – a stage in the old brewery's restored Schankhalle since 2013: new circus, readings, comedy, dance and children's theatre. */
+    PFEFFERBERG_THEATER,
+
     /** PKH Warehouse – a club near Friedrichstraße station on two levels with five areas, for techno, trance and pop nights. */
     PKH_WAREHOUSE,
 

@@ -722,6 +722,10 @@ says so.
 | `PFEFFERBERG_HAUS_13`  | `END_TIME`         | the pages name doors and a start, no end                                                                                                         | —     |
 | `PFEFFERBERG_HAUS_13`  | `GENRE`            | no event names a style                                                                                                                           | —     |
 | `PFEFFERBERG_HAUS_13`  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `PFEFFERBERG_THEATER`  | `PRICE`            | the site states no price; the ticket shop holds it                                                                                               | —     |
+| `PFEFFERBERG_THEATER`  | `DOORS_TIME`       | the site publishes only the start time                                                                                                           | —     |
+| `PFEFFERBERG_THEATER`  | `ARTISTS`          | a production names its cast only in prose; the ensemble line is a company or a series                                                            | —     |
+| `PFEFFERBERG_THEATER`  | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
 | `PKH_WAREHOUSE`        | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
 | `PKH_WAREHOUSE`        | `DOORS_TIME`       | the site prints one opening time per night                                                                                                       | —     |
 | `PKH_WAREHOUSE`        | `IMAGE`            | the site shows no picture per night                                                                                                              | —     |

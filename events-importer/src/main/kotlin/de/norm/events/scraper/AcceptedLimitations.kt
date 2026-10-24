@@ -122,6 +122,7 @@ import de.norm.events.scraper.passionskirche.PASSIONSKIRCHE_LIMITATIONS
 import de.norm.events.scraper.pastiche.PASTICHE_LIMITATIONS
 import de.norm.events.scraper.peteredel.PETER_EDEL_LIMITATIONS
 import de.norm.events.scraper.pfefferberghaus13.PFEFFERBERG_HAUS_13_LIMITATIONS
+import de.norm.events.scraper.pfefferbergtheater.PFEFFERBERG_THEATER_LIMITATIONS
 import de.norm.events.scraper.pkhwarehouse.PKH_WAREHOUSE_LIMITATIONS
 import de.norm.events.scraper.privatclub.PRIVATCLUB_LIMITATIONS
 import de.norm.events.scraper.punchline.PUNCHLINE_LIMITATIONS
@@ -312,6 +313,7 @@ object AcceptedLimitations {
             PASTICHE_LIMITATIONS,
             PETER_EDEL_LIMITATIONS,
             PFEFFERBERG_HAUS_13_LIMITATIONS,
+            PFEFFERBERG_THEATER_LIMITATIONS,
             PKH_WAREHOUSE_LIMITATIONS,
             PRIVATCLUB_LIMITATIONS,
             PUNCHLINE_LIMITATIONS,
