@@ -235,6 +235,43 @@ tests:
             - protocol: TCP
               port: 443
 
+  # --- The BFF's route to the SMTP relay (ADR-054) ------------------------------------------------
+  - it: the BFF has no route to a mail relay without a mail Secret
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      mail.existingSecret: ""
+    templates:
+      - networkpolicy.yaml
+    asserts:
+      - notMatchRegex:
+          path: "$..metadata.name"
+          pattern: "allow-mail$"
+
+  - it: the BFF reaches the mail relay on 587 and not the private ranges behind it
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      mail.existingSecret: "event-junkie-mail"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-mail
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: bff
+      - contains:
+          path: spec.egress[0].to[0].ipBlock.except
+          content: "169.254.0.0/16"
+      # 587 alone, as the whole list: the BFF must not reach a web page through this policy.
+      - equal:
+          path: spec.egress[0].ports
+          value:
+            - protocol: TCP
+              port: 587
+
   - it: nothing anywhere grants ingress to the importer
     set:
       database.host: "10.0.1.2"

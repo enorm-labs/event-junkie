@@ -8,6 +8,7 @@ it costs, which DNS records carry them, and what breaks if those drift apart.
 - **Hetzner Webhosting S, €1.90/month**, plus €0.76/month for the domain slot. Chosen for the **processor count**, not the price — §2.
 - **konsoleH calls a domain an _Account_.** Select the domain, never the hosting name, or the mail menus do not appear. §4 is where this stalls.
 - **DKIM lives in konsoleH, not in OpenTofu.** Whoever holds the private key owns the public record, so `dns.tf` deliberately does not carry it. §5.
+- **Product mail does not leave from here.** Sign-in links and notifications go through Scaleway TEM from `notify.event-junkie.de` (ADR-054). §9.
 - **Test with mail-tester, not by mailing yourself.** Under `p=reject` a failing message is refused mid-conversation, so there are no headers to read. §7.
 
 **This is [#274](https://github.com/enorm-labs/event-junkie/issues/274).** The imprint, the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md` each name one
@@ -352,6 +353,36 @@ Ordering the mailbox was the small half. These are the edits that close #274 rat
 | `.github/ISSUE_TEMPLATE/config.yml`  | The advisory link is labelled for security but really carries privacy requests. #274 asks for a revisit  | **Open**                 |
 | `docs/LEGAL.md` §7.3a and the notice | Email as a processed category, with its retention. `hello@` and `security@` carry no forward             | **Done** 2026-09-24      |
 | `docs/ops/COSTS.md`                  | A new line — **after the first invoice**, with a real number rather than the order form's                | **Open**, deliberately   |
+
+## 9. Product mail — `notify.event-junkie.de` through Scaleway
+
+The mailboxes above are for people. **Mail the product sends to visitors leaves through Scaleway Transactional Email**, from
+`noreply@notify.event-junkie.de` ([ADR-054](../adr/ADR-054_TRANSACTIONAL_MAIL_THROUGH_SCALEWAY_TEM.md)). Hetzner's webhosting terms forbid newsletters and
+cap sending at 500 mails per hour. A breach can suspend the account that holds `hello@`, `security@` and `alerts@`.
+
+**A subdomain, so nothing above changes.** Scaleway needs its own MX for a domain it does not host. On `event-junkie.de` that would collide with the
+Hetzner MX. The root DMARC record (`sp=reject; adkim=s`) covers the subdomain, so the DKIM signature for `notify.event-junkie.de` must pass.
+
+| What            | Where                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| The sender      | `events-bff`, module `mail`. Off until `mail.existingSecret` is set in the cluster's values |
+| The relay       | `smtp.tem.scaleway.com:587`, STARTTLS required                                              |
+| The login       | Secret `event-junkie-mail` ([SECRETS.md](SECRETS.md) §event-junkie-mail)                    |
+| The DNS records | `infra/bootstrap/dns.tf`, with the values the Scaleway console shows for the domain         |
+| The meter       | `bff.mail.sent{kind,outcome}`                                                               |
+| The quota       | 10,000 mails per month by default. Ask Scaleway to raise it before about 2,500 accounts     |
+
+**Prove it the same way as §7.** Send to mail-tester through the relay and look for `dkim=pass` and `dmarc=pass`:
+
+```sh
+printf 'Scaleway project ID: '; read -r U; printf 'TEM secret key: '; read -rs P; echo
+swaks --server smtp.tem.scaleway.com:587 --tls --auth-user "$U" --auth-password "$P" \
+  --from noreply@notify.event-junkie.de --to <address from mail-tester.com>
+unset U P
+```
+
+**Locally, mail goes to Mailpit.** `scripts/dev-env.sh up` points the BFF at the `mailpit` service in `compose.yaml`. Read the mail at
+`http://localhost:8025`.
 
 ## Sources
 

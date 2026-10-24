@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Twelve objects.** One, `events-db`, is encrypted into git and restored by Flux. The other eleven are typed by a human and exist nowhere else.
+- **Thirteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other twelve are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The twelve objects, and where each comes from
+## The thirteen objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -34,11 +34,12 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
 | `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
 | `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
+| `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
 
-**All twelve belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All thirteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists twelve objects, not twelve values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists thirteen objects, not thirteen values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -99,7 +100,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the twelve on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the thirteen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -401,6 +402,26 @@ unset P
 **A rotation is three steps.** Change the password in konsoleH, patch both Secrets, and restart OpenObserve on both clusters. The process reads the value at
 start. `deploy/alerts/apply.sh --check` cannot see a wrong password, because a rule evaluates without sending. Trip a rule, or send a test from the
 destination in the UI.
+
+### `event-junkie-mail` — the login the BFF sends transactional mail with
+
+The SMTP login for Scaleway Transactional Email (ADR-054, #3886). **`username` is the Scaleway project ID. `password` is the secret key of an IAM API key**
+whose application holds the TEM permission set only ([CREDENTIALS.md](../CREDENTIALS.md) row 29). Each cluster gets its own key, so revoking one does not stop
+the other.
+
+**Optional, and nothing fails without it.** The chart sets the mail variables only when `mail.existingSecret` names this Secret. Without them the BFF builds
+no sender and starts. Sign-in then cannot send its link, which is the only symptom.
+
+```sh
+printf 'Scaleway project ID: '; read -r U; printf 'TEM secret key (staging): '; read -rs P; echo
+kubectl --context event-junkie-staging -n event-junkie create secret generic event-junkie-mail --from-literal=username="$U" --from-literal=password="$P"
+printf 'TEM secret key (production): '; read -rs P; echo
+kubectl --context event-junkie-production -n event-junkie create secret generic event-junkie-mail --from-literal=username="$U" --from-literal=password="$P"
+unset U P
+```
+
+Then set `mail.existingSecret: event-junkie-mail` in each cluster's `helm-release.yaml`. **A rotation** is a new key in the console, a patched Secret and a
+BFF restart, because the process reads the value at start. Delete the old key after the restart.
 
 ### Registering Signal — deferred, and not a Secret
 

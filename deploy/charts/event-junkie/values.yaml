@@ -435,6 +435,18 @@ images:
       seccompProfile:
         type: RuntimeDefault
 
+# Transactional mail through Scaleway TEM (ADR-054). mail.existingSecret names a Secret with the SMTP
+# credentials: the Scaleway project ID as the username, an IAM secret key as the password. Empty
+# means no mail. The BFF then starts without a sender, and no egress to port 587 is rendered.
+mail:
+  existingSecret: ""
+  secretKeys:
+    username: "username"
+    password: "password"
+  host: "smtp.tem.scaleway.com"
+  # 587 with STARTTLS, which the BFF requires. Hetzner Cloud blocks outbound 25 and 465.
+  port: 587
+
 networkPolicy:
   enabled: true
   # networkPolicy.databaseCidr is the /32 of `postgres_ip`. Required when enabled, and SEPARATELY FROM
@@ -482,6 +494,18 @@ networkPolicy:
       - 443
     # networkPolicy.scrapeEgress.exceptCidrs carve the private ranges back out. 169.254.0.0/16 is the
     # sharpest: a cloud metadata service lives there, and the importer fetches attacker-influenced URLs.
+    exceptCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+      - "169.254.0.0/16"
+  mailEgress:
+    # networkPolicy.mailEgress lets the BFF reach the SMTP relay, rendered only while
+    # `mail.existingSecret` is set. Scaleway publishes no stable range, so the internet minus the
+    # private ranges, on the mail port alone.
+    enabled: true
+    ports:
+      - 587
     exceptCidrs:
       - "10.0.0.0/8"
       - "172.16.0.0/12"

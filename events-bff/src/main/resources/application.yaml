@@ -21,6 +21,18 @@ spring:
       validation-query: SELECT 1
       validation-depth: remote
       acquire-retry: 10
+  # Transactional mail through Scaleway TEM (ADR-054). No host here: without SPRING_MAIL_HOST Boot
+  # builds no sender and `Mailer` does not exist, so a cluster without the mail Secret still starts.
+  # The chart sets host, port, username and password from `mail.existingSecret`. TLS is required, so
+  # a misconfigured port fails the send instead of sending the password in clear text.
+  mail:
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
 
 # gzip for every caller that asks (#1206): JSON shrinks about tenfold, and the 30-day calendar is
 # 2.2 MB without it. 1 KB matches the frontend's nginx `gzip_min_length`. Boot's default MIME types
@@ -57,6 +69,9 @@ app:
       # Empty by default: without credentials no client is built and the route answers 503.
       access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
       secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
+  mail:
+    # The sending subdomain keeps its MX apart from the Hetzner mailboxes (ADR-054).
+    from: ${APP_MAIL_FROM:Event Junkie <noreply@notify.event-junkie.de>}
 
 # `info` joins the default `health`. It must NOT be routed through the public ingress: the
 # browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets
@@ -77,6 +92,11 @@ management:
   # reachable, `eventsSchema` is migrated and readable (EventsSchemaHealthIndicator has why the
   # first alone would not have closed the window #263 measured), and `schemaVersion` has reached
   # the highest migration this build knows (#3384).
+  # Boot adds a mail contributor to `/actuator/health` once a host is set. A Scaleway outage must not
+  # mark the BFF unhealthy: it stops sign-ins, not the event pages (ADR-018).
+  health:
+    mail:
+      enabled: false
   endpoint:
     health:
       # `always` rather than `never`, so an operator can tell "the database is gone" from "the schema
