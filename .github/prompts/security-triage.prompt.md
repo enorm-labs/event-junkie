@@ -37,9 +37,8 @@ tier above has nobody to ask. **Unattended, that tier does not collapse into the
 - **`--dry-run` on top of it opens no pull request at all** and writes the whole report to the job summary. That is the mode to use the first time, and after
   any change to this section.
 - **`--failed-publish <run-url>` names a red `release.yml` run on `main`**, which is the second trigger `agent-security.yml` has. Start from
-  [§ A blocked publish](#a-blocked-publish), with the run's image and package, and do the rest of the inventory after. The run can arrive minutes
-  before the nightly schedule or minutes after it, so **Step 2's "already handled" check includes a pull request this prompt opened earlier tonight** —
-  `gh pr list --search 'author:app/claude'` — and a second run for the same finding reports it rather than opening a twin.
+  [§ A blocked publish](#a-blocked-publish), with the run's image and package, and do the rest of the inventory after. Every merge on a red evening
+  starts one more of these runs, so **its first check comes first**: a fix already open or already on `main` ends the run with no pull request.
 - **A waiver is the one thing here that is a judgement, and unattended it has the higher bar:** the three conditions in § A blocked publish, or no pull
   request. The upgrade line and the deletion are mechanical and in scope.
 - **Report the reachability of each surface, not just its findings.** Dependabot alerts are expected to return `403` from Actions: neither `GITHUB_TOKEN` nor
@@ -86,6 +85,27 @@ The case where "prefer Dependabot's PR" is the wrong lever, and it has happened 
 [RELEASING.md § Publishing is blocked](../../docs/ops/RELEASING.md#publishing-is-blocked) is the procedure for a person; this is the same procedure
 with its commands. **`agent-security.yml` runs it on a failed publish**, passing `--failed-publish <run-url>`, and the last step runs on every invocation
 whether or not a run was named.
+
+**First, is the fix already on its way?** Run both checks before you build or change anything. Each merge on a red evening starts another run, and
+most of those runs start from a commit before the fix. On 2026-10-23 #3831 fixed CVE-2026-111497 and merged; nine minutes later the red publish of an older
+commit opened #3839 for the same CVE. Match by the CVE id, not the package: one package can carry two CVEs with different fixes.
+
+```sh
+run=<run id from --failed-publish>
+sha=$(gh api "repos/enorm-labs/event-junkie/actions/runs/$run" --jq .head_sha)
+# 1. An open pull request already fixes it, or changes the same Dockerfile line or package
+gh pr list --state open --search '<CVE id> in:title,body' --json number,title,url
+gh pr list --state open --search '<package> in:title,body' --json number,title,url,files
+# 2. main has moved past the red run with the fix in it. The checkout is shallow, so the run's commit is not in it yet.
+[ "$(git rev-parse --is-shallow-repository)" = true ] && git fetch --quiet --unshallow origin main || git fetch --quiet origin main
+git --no-pager log --format='%H %s' "$sha..origin/main" --grep '<CVE id>' -i
+```
+
+Either hit ends the run. Open no pull request and build nothing. The report opens with one line that names what you found, **`fix in flight: #N`** or
+**`fixed on main: <sha>`**, and below it come the two checks with their output. Keep the evidence: the workflow fails a report under five lines as a stub.
+The second hit also covers a newer publish that is still running, because that publish builds the commit you found. An open pull request that changes
+the same Dockerfile line for another CVE is a hit too: name it and stop, because a second branch on that line conflicts with it. Both checks empty:
+continue with step 1.
 
 **Every check is on amd64, and that is the whole lesson of #1118.** The gate scans the `linux/amd64` image, and Alpine builds each architecture
 separately, so a package can exist for aarch64 and not for x86_64. #1118 was verified on an arm64 machine, merged, and upgraded nothing in CI.
