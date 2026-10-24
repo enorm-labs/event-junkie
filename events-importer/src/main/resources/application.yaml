@@ -70,6 +70,9 @@ app:
     # A cold radar group search can answer after more than 30 s (#2840). Brackets keep the dots in the key.
     host-response-timeouts:
       "[radar.squat.net]": 60s
+    # Their WAF refuses the `(compatible; …)` User-Agent, for pages, posters and robots.txt alike (#3825).
+    plain-user-agent-hosts:
+      - claerchensball.haus
     polite-delay-millis: 200
     # A full import found nothing disallowed, so this costs nothing and fails loudly the day a venue
     # adds a rule (#795).

@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component
  * Website importer for Clärchens Ballhaus' WordPress programme, one request per run: `/programm/` carries the whole
  * calendar, past and future, in its script.
  *
- * The site's WAF answers 403 to a `User-Agent` with the `(compatible; …)` frame, so the listing goes out under
- * [PLAIN_SCRAPER_USER_AGENT]. `robots.txt` answers the shared `User-Agent` 403 too, which reads as no rules; the
- * file blocks only WordPress internals.
+ * The site's WAF answers 403 to a `User-Agent` with the `(compatible; …)` frame, so `app.scraper.plain-user-agent-hosts`
+ * names the host: the listing, the posters and `robots.txt` go out under [PLAIN_SCRAPER_USER_AGENT]. The file blocks only
+ * WordPress internals; the posters sit under `/wp-content/uploads/`, which it allows.
  */
 @Component
 class ClaerchensBallhausWebsiteImporter(
@@ -23,7 +23,6 @@ class ClaerchensBallhausWebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Clärchens Ballhaus", ClaerchensBallhausCalendarScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CLAERCHENS_BALLHAUS
     override val listsWholeProgramme: Boolean = true
-    override val userAgent: String = PLAIN_SCRAPER_USER_AGENT
 }
 
 val CLAERCHENS_BALLHAUS_LIMITATIONS =

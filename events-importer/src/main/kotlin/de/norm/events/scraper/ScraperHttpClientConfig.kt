@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
@@ -41,8 +42,8 @@ private const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0
 
 /**
  * The same product token and contact URL without the `Mozilla/5.0 (compatible; …)` frame, for a venue whose
- * WAF refuses that frame and serves this (Clärchens Ballhaus). An importer opts in through
- * [AbstractSinglePageWebsiteImporter.userAgent]; every other request keeps [SCRAPER_USER_AGENT].
+ * WAF refuses that frame and serves this (Clärchens Ballhaus). A host opts in through
+ * [ScraperProperties.plainUserAgentHosts]; every other request keeps [SCRAPER_USER_AGENT].
  */
 const val PLAIN_SCRAPER_USER_AGENT = "EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)"
 
@@ -133,6 +134,24 @@ class ScraperHttpClientConfig {
                 )
             ).defaultHeader("User-Agent", SCRAPER_USER_AGENT)
             .filter(hostResponseTimeoutFilter(scraperProperties.hostResponseTimeouts))
+            .filter(hostUserAgentFilter(scraperProperties.plainUserAgentHosts))
+}
+
+/** Sends [PLAIN_SCRAPER_USER_AGENT] to a host in [hosts]; every other host keeps the default header. */
+private fun hostUserAgentFilter(hosts: Set<String>): ExchangeFilterFunction {
+    val plainHosts = hosts.map { it.lowercase() }.toSet()
+    return ExchangeFilterFunction { request, next ->
+        if (request.url().host?.lowercase() in plainHosts) {
+            next.exchange(
+                ClientRequest
+                    .from(request)
+                    .headers { it.set(HttpHeaders.USER_AGENT, PLAIN_SCRAPER_USER_AGENT) }
+                    .build()
+            )
+        } else {
+            next.exchange(request)
+        }
+    }
 }
 
 /**
