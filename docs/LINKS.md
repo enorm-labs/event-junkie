@@ -175,7 +175,18 @@ spend cap that makes that safe is set and read.
 
 ---
 
-## 8. Security and dependency scanning
+## 8. Scaleway — the mail relay
+
+Product mail leaves through Scaleway Transactional Email, from `notify.event-junkie.de` (ADR-054). The role mailboxes stay
+at Hetzner (§2). The project is `event-junkie`. Its keys are SMTP-only and expire on 2027-10-24 (CREDENTIALS.md #29).
+
+| Link                                                 | What it is                                                                       | Status                  |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------- |
+| <https://console.scaleway.com/organization/overview> | **The Console.** The organisation, the `event-junkie` project, billing, IAM, TEM | In use since 2026-10-24 |
+
+---
+
+## 9. Security and dependency scanning
 
 | Link                                                 | What it is                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -187,7 +198,7 @@ spend cap that makes that safe is set and read.
 
 ---
 
-## 9. Local development
+## 10. Local development
 
 Nothing here is a service you have an account with. It is the set of addresses `scripts/dev-env.sh up` and the admin app's dev server produce.
 
@@ -201,7 +212,7 @@ Nothing here is a service you have an account with. It is the set of addresses `
 
 ---
 
-## 10. Stack reference documentation
+## 11. Stack reference documentation
 
 The docs actually consulted while working on this repository, rather than a link farm. Each framework has two rows:
 the documentation, then its release notes. Read the release notes on a version bump and before a feature that the
@@ -236,7 +247,7 @@ version. The links here are for people.
 
 ---
 
-## 11. Where the detail lives, in this repository
+## 12. Where the detail lives, in this repository
 
 | Document                                                    | Answers                                                                                       |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
