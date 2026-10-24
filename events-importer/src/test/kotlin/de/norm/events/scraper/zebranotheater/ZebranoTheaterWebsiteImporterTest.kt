@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -22,6 +23,7 @@ class ZebranoTheaterWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = ZebranoTheaterWebsiteImporter(htmlFetcher)
     private val listingUrl = "https://www.zebrano-theater.de/programm.html"
+    private val childrensUrl = "https://www.zebrano-theater.de/kinderprogramm.html"
 
     private fun fixture(name: String): String =
         javaClass.classLoader
@@ -53,22 +55,25 @@ class ZebranoTheaterWebsiteImporterTest {
         }
 
     @Test
-    fun `reads the page of each evening that links one and propagates conditional headers`() =
+    fun `reads the page of each evening that links one, then the children's programme, and propagates conditional headers`() =
         runTest {
             stubListing()
             coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zebranotheater-20261125.html"), firstArg<String>()) }
+            coEvery { htmlFetcher.fetchDocument(childrensUrl) } returns Jsoup.parse(fixture("zebranotheater-kinderprogramm.html"), childrensUrl)
 
             val result = importer.importEvents(listingUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 36
+            result.events shouldHaveSize 40
+            result.complete shouldBe true
+            result.events.count { it.isForChildren } shouldBe 4
             result.events.first().description shouldStartWith "Beppe Gambetta"
             result.etag shouldBe "\"16b49-65dc9e685cec5\""
             result.lastModified shouldBe "Wed, 14 Oct 2026 09:53:17 GMT"
             val announced = result.events.single { it.sourceUrl == listingUrl && it.title.startsWith("Johannes Kirchberg") }
             announced.description.shouldBeNull()
             announced.detailUnavailable shouldBe false
-            coVerify(exactly = 33) { htmlFetcher.fetchDocument(any()) }
+            coVerify(exactly = 34) { htmlFetcher.fetchDocument(any()) }
             coVerify(exactly = 0) { htmlFetcher.fetchDocument(listingUrl) }
         }
 

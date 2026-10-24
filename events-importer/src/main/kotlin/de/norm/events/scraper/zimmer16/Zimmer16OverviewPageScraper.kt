@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
@@ -17,12 +18,12 @@ import java.time.DateTimeException
 import java.time.LocalDate
 
 /**
- * Pure parser for the ZIMMER 16 homepage, whose YesTicket WordPress plugin renders the next 20 adult events as
- * cards: `a[href*=yesticket.org/event/]` around a `div.ytp-event-card` with the day, the month and the year.
+ * Pure parser for the ZIMMER 16 homepage and its children's programme page, whose YesTicket WordPress plugin renders
+ * the events as cards: `a[href*=yesticket.org/event/]` around a `div.ytp-event-card` with the day, the month and the year.
  *
- * The children's programme is on its own page and is not read. A title ends in the audience, `(Erwachsene)`,
- * which goes. The site names no category, so a night is a concert unless its title names the house's other
- * formats, the reading stage or a revue.
+ * A title ends in the audience, `(Erwachsene)` or `(Kinder)`, which goes. A `(Kinder)` card is marked `for-children`
+ * (EVENT_SCOPE.md §3.5) and is a show unless its title says `Konzert`. The site names no category, so an adult night is
+ * a concert unless its title names the house's other formats, the reading stage or a revue.
  *
  * There is no line-up field either. A title is billed as its act only when it is a bare name, a `+` or `, ` co-bill,
  * or `<programme> mit <act>`. A `<record> Release Tour` part names the record, not the act (#3164). A tagline,
@@ -54,9 +55,15 @@ class Zimmer16OverviewPageScraper {
             return null
         }
         val support = SUPPORT.find(rawTitle)
+        val childrens = CHILDREN.find(rawTitle)?.value?.trim()
         val title = rawTitle.replace(AUDIENCE, "").replace(SUPPORT, "").trim()
         val subtitle = support?.let { "Support: ${it.groupValues[1].trim()}" }
-        val eventType = HOUSE_FORMATS.entries.firstOrNull { (word, _) -> word in title.lowercase() }?.value ?: inferConcertVenueType(title)
+        val eventType =
+            if (childrens != null) {
+                if (CONCERT_WORD.containsMatchIn(title)) EventType.CONCERT.name else EventType.SHOW.name
+            } else {
+                HOUSE_FORMATS.entries.firstOrNull { (word, _) -> word in title.lowercase() }?.value ?: inferConcertVenueType(title)
+            }
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -68,7 +75,7 @@ class Zimmer16OverviewPageScraper {
             ticketUrl = url,
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
             artists = if (TAGLINE.containsMatchIn(title) || OPEN_STAGE in title.lowercase()) emptyList() else artistsOf(title, subtitle, eventType)
-        )
+        ).forChildrenIf(childrens)
     }
 
     private fun artistsOf(
@@ -94,6 +101,8 @@ class Zimmer16OverviewPageScraper {
 
     private companion object {
         val AUDIENCE = Regex("""\s*\((?:Erwachsene|Kinder)\)\s*$""")
+        val CHILDREN = Regex("""\(Kinder\)\s*$""")
+        val CONCERT_WORD = Regex("""konzert""", RegexOption.IGNORE_CASE)
         val SUPPORT = Regex("""\s*\(support:\s*([^)]+)\)""", RegexOption.IGNORE_CASE)
         val TAGLINE = Regex("""[–—:"„“”]| - |&|\+\+""")
         val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
