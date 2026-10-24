@@ -70,6 +70,14 @@ class SessionStore(
             .fetch()
             .awaitRowsUpdated()
 
+    /** Sessions that expired before [now]. A lookup already ignores them; this keeps the table from growing. */
+    suspend fun deleteExpired(now: Instant): Long =
+        db
+            .sql("DELETE FROM accounts.session WHERE expires_at < :now")
+            .bind("now", now)
+            .fetch()
+            .awaitRowsUpdated()
+
     suspend fun sessions(accountId: UUID): List<SessionInfo> =
         db
             .sql("SELECT created_at, last_seen_at, expires_at FROM accounts.session WHERE account_id = :account ORDER BY created_at")
