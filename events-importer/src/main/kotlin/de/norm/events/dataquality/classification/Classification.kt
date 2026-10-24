@@ -1,14 +1,13 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.QuotedText
 import de.norm.events.event.EventType
 import de.norm.events.event.PartyFeature
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalTime
 import java.util.Locale
 
@@ -64,17 +63,9 @@ data class ClassificationAnswer(
 object ClassificationValidator {
     private val logger = KotlinLogging.logger {}
 
-    private val mapper: JsonMapper = JsonMapper.builder().build()
-
     private const val MIN_EVIDENCE_LENGTH = 3
     private const val MAX_EVIDENCE_LENGTH = 500
     private const val HALF_DAY = 12
-
-    /** A price above this is a typo or a festival pass, and either way not a ticket price to propose. */
-    private val MAX_PRICE = BigDecimal("500")
-
-    private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
-    private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
 
     /** The validated answer, or null when the text is no JSON object at all. */
     fun parse(
@@ -106,9 +97,9 @@ object ClassificationValidator {
                 eventType = finding("eventType") { node -> EventType.entries.firstOrNull { it.name == node.asString("") } },
                 titleActs = finding("titleActs") { node -> titleActs(node, input.title) },
                 features = verdicts(root.get("features"), input, source, dropped),
-                startTime = finding("startTime") { node -> time(node.asString("")) }?.takeIf(::namesHour),
-                pricePresale = finding("pricePresale", ::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) },
-                priceBoxOffice = finding("priceBoxOffice", ::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) }
+                startTime = finding("startTime") { node -> ModelAnswer.time(node.asString("")) }?.takeIf(::namesHour),
+                pricePresale = finding("pricePresale", ModelAnswer::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) },
+                priceBoxOffice = finding("priceBoxOffice", ModelAnswer::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) }
             )
         if (dropped.isNotEmpty()) logger.warn { "Dropped ${dropped.size} classification answer(s) that failed a check: ${dropped.joinToString()}" }
         return answer
@@ -146,9 +137,6 @@ object ClassificationValidator {
         }
     }
 
-    private fun time(value: String): LocalTime? =
-        TIME.matchEntire(value.trim())?.let { match -> LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].toInt()) }
-
     /** The quote has to name the hour, on the 24-hour clock or the 12-hour one ("9 pm"). */
     private fun namesHour(finding: Finding<LocalTime>): Boolean {
         val hour = finding.value.hour
@@ -156,24 +144,10 @@ object ClassificationValidator {
         return hour.toString() in finding.evidence || twelve.toString() in finding.evidence
     }
 
-    private fun price(node: JsonNode): BigDecimal? {
-        val value =
-            if (node.isNumber) {
-                node.decimalValue()
-            } else {
-                node
-                    .asString("")
-                    .trim()
-                    .replace(',', '.')
-                    .toBigDecimalOrNull()
-            }
-        return value?.takeIf { it > BigDecimal.ZERO && it <= MAX_PRICE }?.setScale(2, RoundingMode.HALF_UP)
-    }
-
     /** The object the model answered, or null for text that is no JSON object. */
     private fun readObject(raw: String): JsonNode? =
         try {
-            mapper.readTree(raw.trim().replace(CODE_FENCE, "")).takeIf { it.isObject }
+            ModelAnswer.jsonObject(raw)
         } catch (e: JacksonException) {
             logger.warn(e) { "The classification answer is not JSON" }
             null
