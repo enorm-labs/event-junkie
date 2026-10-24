@@ -2,7 +2,9 @@ package de.norm.events.scraper.atrane
 
 import de.norm.events.common.deshout
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -10,6 +12,8 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.schemaImageUrl
@@ -20,6 +24,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
@@ -39,6 +44,11 @@ import java.time.format.DateTimeParseException
  * line names one guest, unsplit, who is billed unless the title already bills them (#3105).
  * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) can head the lines; it is
  * dropped like the credit (#3165).
+ *
+ * Some cards print an admission time in their markup: a winter-Sunday subtitle (`EINLASS 17.00 UHR
+ * KONZERTBEGINN: 18.00 UHR`), a day-of seats notice (`EINLASS: 19.00 UR`) or a one-night special
+ * time (`EINLASS : 21.00 UHR BEGINN : 22.00 UHR`). It is the doors time when it is before the start
+ * and the start printed after it, if any, is the night's: a moved night keeps the winter notice (#3870).
  */
 class ATraneProgrammePageScraper {
     private val logger = KotlinLogging.logger {}
@@ -75,6 +85,7 @@ class ATraneProgrammePageScraper {
             eventType = EventType.CONCERT.name,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
+            doorsTime = doorsTime(card, start.toLocalTime()),
             imageUrl = event.schemaImageUrl(),
             sourceUrl = url,
             sourceId = "${EventSource.A_TRANE.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH)}",
@@ -170,6 +181,17 @@ class ATraneProgrammePageScraper {
             }
         }
 
+    /** The admission time the card prints, unless it is not before [start] or the notice names another start. */
+    private fun doorsTime(
+        card: Element,
+        start: LocalTime
+    ): LocalTime? {
+        val text = card.text()
+        val doors = DOORS.find(text) ?: return null
+        val printedStart = labelledClock(text.substring(doors.range.last + 1), START_LABELS)
+        return labelledClock(doors.value, DOORS_LABELS)?.takeIf { it < start && (printedStart == null || printedStart == start) }
+    }
+
     /** The cheapest ticket that is not a student rate; a night without the shop's price list has none. */
     private fun fullPrice(card: Element) =
         card
@@ -188,6 +210,7 @@ class ATraneProgrammePageScraper {
         val VENUE_TAIL = Regex("""\s+(?:(?:back|live)\s+)?(?:at|im)\s+(?:the\s+)?a-?trane\s*$""", RegexOption.IGNORE_CASE)
         val START = Regex("""^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}""")
         val START_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("y-M-d'T'H:mm")
+        val DOORS = labelledClockPattern(DOORS_LABELS)
 
         val CLOSED = Regex("""geschlossen|closed""", RegexOption.IGNORE_CASE)
         val ELSEWHERE = Regex("""(?:präsentiert|presents)\s+(?:im|in|at)\s+(?!a-trane)""", RegexOption.IGNORE_CASE)
