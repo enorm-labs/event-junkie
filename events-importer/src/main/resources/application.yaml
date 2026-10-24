@@ -206,6 +206,8 @@ app:
     max-pixels: 50000000
     refresh-after: 30d
     retry-failed-after: 7d
+    # A 429 is a host asking us to slow down, not a broken URL (#3858).
+    retry-throttled-after: 1h
     batch-size: 200
     sweep:
       # Off means the pass logs what it would delete and deletes nothing: a deletion rule is watched

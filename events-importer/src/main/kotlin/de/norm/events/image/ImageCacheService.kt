@@ -53,14 +53,27 @@ class ImageCacheService(
                     .findDueForRefresh(
                         refreshBefore = now.minus(properties.refreshAfter),
                         retryBefore = now.minus(properties.retryFailedAfter),
+                        throttledBefore = now.minus(properties.retryThrottledAfter),
                         limit = properties.batchSize - fresh.size
                     ).toList()
             }
 
+        // A host that answered 429 is asked nothing more this pass. A skipped URL gets no row, so the next pass offers it again.
+        val skippedByHost = mutableMapOf<String, Int>()
         var outcome = CacheOutcome()
-        fresh.forEach { outcome = outcome + record(existing = null, url = it, now = now) }
-        stale.forEach { outcome = outcome + record(existing = it, url = it.sourceUrl, now = now) }
+        (fresh.map { null to it } + stale.map { it to it.sourceUrl }).forEach { (existing, url) ->
+            val host = hostOf(url)
+            val skipped = skippedByHost[host]
+            outcome +=
+                if (skipped != null) {
+                    skippedByHost[host] = skipped + 1
+                    CacheOutcome(skipped = 1)
+                } else {
+                    record(existing = existing, url = url, now = now, onThrottled = { skippedByHost[host] = 0 })
+                }
+        }
 
+        skippedByHost.forEach { (host, skipped) -> logger.warn { "Image host $host answered 429; skipped $skipped more of its images this pass" } }
         metrics.recordFetchPass(outcome)
         if (outcome.total > 0) logger.info { "Image cache pass: $outcome" }
         return outcome
@@ -69,7 +82,8 @@ class ImageCacheService(
     private suspend fun record(
         existing: CachedImageEntity?,
         url: String,
-        now: Instant
+        now: Instant,
+        onThrottled: () -> Unit
     ): CacheOutcome {
         val base = existing ?: CachedImageEntity(sourceUrl = url)
 
@@ -85,6 +99,7 @@ class ImageCacheService(
                 // One line per refusal, bounded by the batch. The host says whose image it is; the
                 // path adds nothing an operator acts on, and the row holds the full URL.
                 logger.warn { "Image refused by ${hostOf(url)}: ${result.reason}" }
+                if (result.reason == THROTTLED_REASON) onThrottled()
                 // The reason is stored so an operator can see *why* an image is missing. Without it
                 // a blank card is indistinguishable from a venue that published no image at all.
                 repository.save(base.copy(failedAt = now, failureReason = result.reason, lastSeenAt = now, updatedAt = now))
@@ -133,15 +148,17 @@ class ImageCacheService(
 
 private fun hostOf(url: String): String = runCatching { URI(url.encodeForUri()).host }.getOrNull() ?: "an unparseable URL"
 
-/** What one pass did, split the way `UpsertOutcome` splits an import. */
+/** What one pass did, split the way `UpsertOutcome` splits an import. A skipped URL was not asked, so it is outside [total] and the metric. */
 data class CacheOutcome(
     val fetched: Int = 0,
     val unchanged: Int = 0,
-    val failed: Int = 0
+    val failed: Int = 0,
+    val skipped: Int = 0
 ) {
     val total: Int get() = fetched + unchanged + failed
 
-    operator fun plus(other: CacheOutcome): CacheOutcome = CacheOutcome(fetched + other.fetched, unchanged + other.unchanged, failed + other.failed)
+    operator fun plus(other: CacheOutcome): CacheOutcome =
+        CacheOutcome(fetched + other.fetched, unchanged + other.unchanged, failed + other.failed, skipped + other.skipped)
 
-    override fun toString(): String = "$fetched fetched, $unchanged unchanged, $failed failed"
+    override fun toString(): String = "$fetched fetched, $unchanged unchanged, $failed failed" + if (skipped > 0) ", $skipped skipped" else ""
 }

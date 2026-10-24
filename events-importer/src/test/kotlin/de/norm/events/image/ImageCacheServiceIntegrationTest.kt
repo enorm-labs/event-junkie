@@ -19,8 +19,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -403,6 +405,68 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             }
         }
 
+    @Test
+    fun `a 429 skips the rest of that host's images in the pass, and no other host's`(): Unit =
+        runBlocking {
+            val server = MockWebServer()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        if (request.target.startsWith("/throttled")) {
+                            MockResponse.Builder().code(429).build()
+                        } else {
+                            MockResponse
+                                .Builder()
+                                .code(200)
+                                .setHeader("Content-Type", "image/png")
+                                .body(Buffer().write(pngBytes()))
+                                .build()
+                        }
+                }
+            server.start()
+            servers += server
+            // One server, two hosts: `localhost` refuses, `127.0.0.1` answers.
+            val throttledUrls = listOf("/throttled-1.png", "/throttled-2.png").map { server.url(it).toString() }
+            val otherUrl = server.url("/poster.png").toString().replace("localhost", "127.0.0.1")
+            throttledUrls.forEachIndexed { i, url -> insertEvent("t$i", url) }
+            insertEvent("o", otherUrl)
+
+            val outcome = withWarnings { storingService().refreshBatch() }
+
+            // `failed` also counts the setup's unroutable `venue.test` images, so it is not asserted.
+            outcome.first.fetched shouldBe 1
+            outcome.first.skipped shouldBe 1
+            server.requestCount shouldBe 2
+            val rows = repository.findAll().toList().filter { it.sourceUrl in throttledUrls + otherUrl }
+            // The skipped URL has no row, so the next pass offers it again.
+            rows.map { it.sourceUrl } shouldContainExactlyInAnyOrder listOf(rows.single { it.failureReason == THROTTLED_REASON }.sourceUrl, otherUrl)
+            outcome.second shouldContain "Image host localhost answered 429; skipped 1 more of its images this pass"
+        }
+
+    @Test
+    fun `a 429 is due again after an hour, while another refusal waits the full cooldown`(): Unit =
+        runBlocking {
+            val twoHoursAgo = Instant.now().minus(Duration.ofHours(2))
+            val throttled = saveFetched("https://host.test/busy.jpg", lastSeenAt = twoHoursAgo, failedAt = twoHoursAgo, failureReason = THROTTLED_REASON)
+            saveFetched("https://host.test/gone.jpg", lastSeenAt = twoHoursAgo, failedAt = twoHoursAgo)
+
+            dueNow().map { it.sourceUrl } shouldBe listOf(throttled.sourceUrl)
+        }
+
+    /** What [block] returned, and every WARN line [ImageCacheService] wrote while it ran. */
+    private suspend fun <T> withWarnings(block: suspend () -> T): Pair<T, List<String>> {
+        val logger = LoggerFactory.getLogger(ImageCacheService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        val result =
+            try {
+                block()
+            } finally {
+                logger.detachAppender(appender)
+            }
+        return result to appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
+    }
+
     private suspend fun dueNow(): List<CachedImageEntity> {
         val properties = ImageProperties()
         val now = Instant.now()
@@ -410,6 +474,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             .findDueForRefresh(
                 refreshBefore = now.minus(properties.refreshAfter),
                 retryBefore = now.minus(properties.retryFailedAfter),
+                throttledBefore = now.minus(properties.retryThrottledAfter),
                 limit = 100
             ).toList()
     }
@@ -417,7 +482,8 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
     private suspend fun saveFetched(
         url: String,
         lastSeenAt: Instant,
-        failedAt: Instant? = null
+        failedAt: Instant? = null,
+        failureReason: String = "HTTP 404"
     ) = repository.save(
         CachedImageEntity(
             sourceUrl = url,
@@ -425,7 +491,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             fetchedAt = lastSeenAt.minus(Duration.ofDays(400)),
             lastSeenAt = lastSeenAt,
             failedAt = failedAt,
-            failureReason = failedAt?.let { "HTTP 404" }
+            failureReason = failedAt?.let { failureReason }
         )
     )
 
