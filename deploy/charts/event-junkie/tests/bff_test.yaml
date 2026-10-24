@@ -171,3 +171,50 @@ tests:
               secretKeyRef:
                 name: event-junkie-mail
                 key: password
+
+  # --- The BFF's own database role (ADR-053) ------------------------------------------------------
+  - it: shares the importer's database login while it has no Secret of its own
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      bff.database.existingSecret: ""
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_R2DBC_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: events-db
+                key: username
+
+  - it: logs in as the bff role once its Secret is named
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      bff.database.existingSecret: "events-bff-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_R2DBC_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: events-bff-db
+                key: username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SPRING_R2DBC_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: events-bff-db
+                key: password

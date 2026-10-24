@@ -106,23 +106,27 @@ capabilities:
     - ALL
 {{- end }}
 
-{{/* The R2DBC connection, for both JVM services, from one place. `database.existingSecret` is
-   required; no inline-credential path exists in this chart. */}}
+{{/* The R2DBC connection, for both JVM services, from one place. Called with a dict: `ctx` is the root
+   context, `existingSecret` an optional Secret that replaces `database.existingSecret` for this
+   workload — the BFF's own role (ADR-053). `database.existingSecret` is required either way, since the
+   importer always uses it; no inline-credential path exists in this chart. */}}
 {{- define "event-junkie.databaseEnv" -}}
-{{- $secret := required "database.existingSecret is required — create the Secret out of band (see values.yaml) and name it here. This chart never templates a password." .Values.database.existingSecret -}}
-{{- $host := required "database.host is required — it is `postgres_ip` from the matching infra/environments/<env> stack." .Values.database.host -}}
+{{- $ctx := .ctx -}}
+{{- $shared := required "database.existingSecret is required — create the Secret out of band (see values.yaml) and name it here. This chart never templates a password." $ctx.Values.database.existingSecret -}}
+{{- $secret := .existingSecret | default $shared -}}
+{{- $host := required "database.host is required — it is `postgres_ip` from the matching infra/environments/<env> stack." $ctx.Values.database.host -}}
 - name: SPRING_R2DBC_URL
-  value: {{ printf "r2dbc:postgresql://%s:%v/%s" $host .Values.database.port .Values.database.name | quote }}
+  value: {{ printf "r2dbc:postgresql://%s:%v/%s" $host $ctx.Values.database.port $ctx.Values.database.name | quote }}
 - name: SPRING_R2DBC_USERNAME
   valueFrom:
     secretKeyRef:
       name: {{ $secret | quote }}
-      key: {{ .Values.database.secretKeys.username | quote }}
+      key: {{ $ctx.Values.database.secretKeys.username | quote }}
 - name: SPRING_R2DBC_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ $secret | quote }}
-      key: {{ .Values.database.secretKeys.password | quote }}
+      key: {{ $ctx.Values.database.secretKeys.password | quote }}
 {{- end }}
 
 {{/* The Flyway connection — importer only (ADR-005), JDBC because Flyway has no reactive driver. Two

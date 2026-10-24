@@ -45,9 +45,14 @@ security:
   runAsGroup: 10001
 
 bff:
-  # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only. Ignored while
-  # bff.autoscaling is on.
+  # bff.replicaCount is free to exceed 1: sessions live in the database, not in a pod (ADR-053).
+  # Ignored while bff.autoscaling is on.
   replicaCount: 2
+  # bff.database.existingSecret names a Secret with the `bff` role's login, the same key names as
+  # `database.secretKeys`. That role reads `events` and writes only `accounts` (ADR-053). Empty means
+  # the BFF shares `database.existingSecret` with the importer, as before.
+  database:
+    existingSecret: ""
   # bff.autoscaling renders an HPA on CPU (#1774). Off by default, so k3d keeps a fixed count. A new
   # replica compiles at full CPU for about a minute. Without the 120 s scale-up window, every deploy
   # added a replica on staging. Scale-down waits five minutes, so a burst is not followed by a cold start.

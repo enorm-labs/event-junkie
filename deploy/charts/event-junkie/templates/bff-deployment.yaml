@@ -64,7 +64,7 @@ spec:
                of what it was given. */}}
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage={{ .Values.bff.maxRamPercentage }} -XX:MaxDirectMemorySize={{ .Values.bff.maxDirectMemorySize }}"
-            {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
+            {{- include "event-junkie.databaseEnv" (dict "ctx" $ "existingSecret" .Values.bff.database.existingSecret) | nindent 12 }}
             {{- with .Values.mail }}
             {{- if .existingSecret }}
             {{- /* Without these the BFF builds no mail sender and starts anyway (ADR-054). */}}
