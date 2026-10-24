@@ -124,7 +124,7 @@ plus the privacy page in the same PR.**
 **Infrastructure and operations**
 
 - A new or changed hosting, CDN, WAF, DNS, mail, backup or object-storage provider — each is a processor that must be _named_, needs an Art. 28 DPA, and a
-  transfer mechanism outside the EU/EEA. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) leaves **one processor, Hetzner**. `INFRASTRUCTURE_IS_PROPOSED` stays
+  transfer mechanism outside the EU/EEA. [docs/LEGAL.md §7.3a](docs/LEGAL.md) lists the **three processors: Hetzner, Anthropic and Scaleway**. `INFRASTRUCTURE_IS_PROPOSED` stays
   `true` until §5 of both notices has been checked against what runs (docs/LEGAL.md §14).
 - Log content, log retention or IP handling — the notice states a retention period; it must be the real one.
 - Monitoring, error tracking, uptime checks, APM or a metrics backend that receives request or user data.

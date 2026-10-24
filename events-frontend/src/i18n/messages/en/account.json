@@ -1,0 +1,46 @@
+{
+  "signIn": {
+    "intro": "Enter your e-mail address. We send you a link that signs you in. There is no password.",
+    "emailLabel": "E-mail address",
+    "submit": "Send link",
+    "sending": "Sending …",
+    "privacy": "The address is stored only once you use the link.",
+    "invalid": "This is not an e-mail address. Check it and try again.",
+    "tooMany": "Too many links were requested from here. Try again in an hour.",
+    "mailDown": "The mail could not be sent. Try again later.",
+    "privacyLink": "More in the privacy notice"
+  },
+  "checkMail": {
+    "body": "If the address is right, a link is on its way. It works once, for 15 minutes.",
+    "nothing": "Nothing arrived? Look in your spam folder, or ask for a new link.",
+    "again": "Ask for a new link"
+  },
+  "confirm": {
+    "body": "Sign in to Event Junkie with this link. The link then stops working.",
+    "submit": "Sign in",
+    "signingIn": "Signing in …",
+    "missing": "This link is incomplete. Open it again from the mail, or ask for a new one.",
+    "invalid": "This link was already used or has expired. Ask for a new one.",
+    "again": "Ask for a new link"
+  },
+  "page": {
+    "signedInAs": "Signed in as {email}",
+    "since": "Account since {date}",
+    "loading": "Loading your account …",
+    "yourData": "Your data",
+    "exportHint": "Everything stored about your account, as a JSON file.",
+    "export": "Download my data",
+    "signOut": "Sign out",
+    "signOutEverywhere": "Sign out on all devices",
+    "delete": "Delete account",
+    "deleteHint": "Deletes your account and signs you out everywhere. This cannot be undone.",
+    "deleteConfirmTitle": "Delete your account?",
+    "deleteConfirmBody": "Your address and everything stored with it are deleted now. You can create a new account later with the same address.",
+    "deleteConfirm": "Delete for good",
+    "cancel": "Cancel",
+    "signedOut": "You are signed out.",
+    "deleted": "Your account is deleted.",
+    "home": "Back to the events",
+    "failed": "That did not work. Check your connection and try again."
+  }
+}

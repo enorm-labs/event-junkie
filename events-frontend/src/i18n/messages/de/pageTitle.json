@@ -10,5 +10,9 @@
   "notices": "Open-Source-Lizenzen",
   "forVenues": "Für Locations",
   "search": "Suche",
-  "week": "Woche {week} in Berlin"
+  "week": "Woche {week} in Berlin",
+  "signIn": "Anmelden",
+  "checkMail": "Sieh in dein Postfach",
+  "confirmSignIn": "Anmelden",
+  "account": "Dein Konto"
 }

@@ -5,7 +5,7 @@
  * Follows the same twelve mandatory items as `PrivacyView.en.vue` (docs/LEGAL.md §7.2) and cites
  * them in German form — *Art. 6 Abs. 1 lit. f DSGVO*, not *Art. 6 (1) (f) GDPR*. The unit test runs
  * the checklist per language: a dropped element in one version is invisible from the other. It
- * describes no processing that does not happen — no cookie table, no consent, no analytics.
+ * describes no processing that does not happen — no consent, no analytics.
  *
  * **Two claims here are coupled to deployed configuration** (§7.5.1, §7.3a). §2's **14 Tage** is
  * `ZO_COMPACT_DATA_RETENTION_DAYS`, and §5's "no image request reaches a third party" is
@@ -34,13 +34,15 @@ const { t } = useI18n()
     <section>
       <h2>Kurz gesagt</h2>
       <p>
-        Event Junkie setzt keine Cookies, betreibt keine Analyse-Tools, bindet keine Schriften,
-        Karten, Social-Media-Widgets oder Werbung von Dritten ein und kennt keine Benutzerkonten.
-        Nichts von dem, was du hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig
-        bleibt das unvermeidbare Minimum: Ein Webserver protokolliert Anfragen, damit die Seite
-        ausgeliefert und geschützt werden kann, und dein Browser merkt sich, welche Sprache, welches
-        Farbschema und welche Ansicht du gewählt hast. Fragst du eine Karte, was in deiner Nähe
-        läuft, bleibt dein Standort in deinem Browser.
+        Event Junkie betreibt keine Analyse-Tools und bindet keine Schriften, Karten,
+        Social-Media-Widgets oder Werbung von Dritten ein. Cookies setzt es nur, wenn du dich
+        anmeldest, und ein Konto brauchst du für nichts auf dieser Seite. Nichts von dem, was du
+        hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig bleibt das unvermeidbare
+        Minimum: Ein Webserver protokolliert Anfragen, damit die Seite ausgeliefert und geschützt
+        werden kann, und dein Browser merkt sich, welche Sprache, welches Farbschema und welche
+        Ansicht du gewählt hast. Fragst du eine Karte, was in deiner Nähe läuft, bleibt dein
+        Standort in deinem Browser. Legst du ein Konto an, speichere ich deine E-Mail-Adresse, bis
+        du es löschst (Abschnitt 6).
       </p>
       <p>
         <strong>Auch die Bilder kommen von Event Junkie.</strong> Event Junkie lädt sie einmal
@@ -116,8 +118,9 @@ const { t } = useI18n()
     <section>
       <h2>3. Lokale Speicherung auf deinem Gerät</h2>
       <p>
-        Diese Seite setzt <strong>keine Cookies</strong>. Sie speichert genau drei Werte im lokalen
-        Speicher deines Browsers, und alle drei halten nur fest, was du selbst eingestellt hast:
+        Ohne Anmeldung setzt diese Seite <strong>keine Cookies</strong>. Sie speichert genau drei
+        Werte im lokalen Speicher deines Browsers, und alle drei halten nur fest, was du selbst
+        eingestellt hast:
       </p>
       <ul>
         <li>
@@ -141,9 +144,27 @@ const { t } = useI18n()
         25 Abs. 2 Nr. 2 TDDDG keiner Einwilligung. Deshalb musst du hier auch kein Banner
         wegklicken. Du kannst sie jederzeit über die Einstellungen deines Browsers löschen.
       </p>
+      <!-- LEGAL.md §7.4: the two cookies exist only on the sign-in and account pages. -->
+      <h3>Cookies, wenn du dich anmeldest</h3>
       <p>
-        Sollten jemals Cookies eingesetzt werden, dann ausschließlich unbedingt erforderliche: kein
-        Tracking, keine Analyse-Tools, keine Social-Media-Plugins, keine Werbe-Tracker.
+        Öffnest du die Anmelde- oder die Kontoseite, setzt Event Junkie zwei Cookies, und nur diese:
+      </p>
+      <ul>
+        <li>
+          <code>XSRF-TOKEN</code>, sobald du eine dieser Seiten öffnest. Es enthält einen
+          Zufallswert und verhindert, dass eine fremde Seite in deinem Namen einen Anmeldelink
+          anfordert oder dein Konto ändert. Es läuft nach 30 Tagen ab.
+        </li>
+        <li>
+          <code>__Host-ej_session</code>, sobald du dich mit dem Link anmeldest. Es enthält eine
+          zufällige Kennung deiner Sitzung und hält dich angemeldet. Es läuft 30 Tage nach der
+          letzten Nutzung ab, und beim Abmelden wird es gelöscht.
+        </li>
+      </ul>
+      <p>
+        Beide sind unbedingt erforderlich für die Anmeldung, die du selbst anforderst, und bedürfen
+        deshalb nach § 25 Abs. 2 Nr. 2 TDDDG keiner Einwilligung. Sie dienen nicht dem Tracking und
+        gehen an niemanden außer Event Junkie.
       </p>
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Dein Standort für „In der Nähe“</h3>
@@ -269,13 +290,20 @@ const { t } = useI18n()
     <section>
       <h2>5. Wer sonst beteiligt ist</h2>
       <p>
-        Ich verkaufe nichts und gebe nichts zu Werbezwecken weiter. Daten werden an zwei
-        Dienstleister übermittelt, beide Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO:
+        Ich verkaufe nichts und gebe nichts zu Werbezwecken weiter. Daten werden an drei
+        Dienstleister übermittelt, alle drei Auftragsverarbeiter mit einem Vertrag nach Art. 28
+        DSGVO:
       </p>
       <ul>
         <li>
           <strong>Hosting:</strong> Hetzner Online GmbH, Gunzenhausen, Deutschland. Die Server
           stehen in Deutschland; eine Übermittlung außerhalb der EU findet dabei nicht statt.
+        </li>
+        <li>
+          <strong>Versand von E-Mails:</strong> Scaleway SAS, Paris, Frankreich. Forderst du einen
+          Anmeldelink an, verschickt Scaleway die Mail an deine Adresse. Dafür erhält Scaleway deine
+          E-Mail-Adresse und den Text der Mail. Die Server stehen in der EU; eine Übermittlung
+          außerhalb der EU findet dabei nicht statt.
         </li>
         <li>
           <strong>Maschinelle Übersetzung und Prüfung der Veranstaltungsdaten:</strong> Anthropic
@@ -324,8 +352,51 @@ const { t } = useI18n()
       </p>
     </section>
 
+    <!-- LEGAL.md §7.1: an account is optional, and the account page is its deletion route. -->
+    <section id="account">
+      <h2>6. Dein Konto</h2>
+      <p>
+        Ein Konto ist freiwillig. Du meldest dich ohne Passwort an: Du gibst deine E-Mail-Adresse
+        ein, und Event Junkie schickt dir von <code>noreply@notify.event-junkie.de</code> einen
+        Link. Er gilt einmal und 15 Minuten lang. Benutzt du ihn zum ersten Mal, entsteht dein
+        Konto.
+      </p>
+      <p>
+        <strong>Was gespeichert wird:</strong> deine E-Mail-Adresse, die Sprache, in der du dich
+        angemeldet hast, wann du das Konto angelegt und wann du dich zuletzt angemeldet hast. Zu
+        jeder Anmeldung kommt eine Sitzung mit Beginn, letzter Nutzung und Ablauf. Vom Link und von
+        der Sitzung speichere ich nur einen Hashwert, nicht den Wert selbst. Forderst du einen Link
+        an, speichere ich ihn mit der Adresse, der Sprache und dem Zeitpunkt, auch wenn du ihn nie
+        benutzt.
+      </p>
+      <p>
+        <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
+        anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+      </p>
+      <p>
+        <strong>Schutz vor Missbrauch:</strong> An eine Adresse gehen höchstens drei Links pro
+        Stunde. Damit niemand von einem Anschluss aus beliebig viele Mails auslöst, zählt der Server
+        außerdem die Anfragen pro IP-Adresse, höchstens 20 pro Stunde. Diese Zählung hält er nur im
+        Arbeitsspeicher. Sie wird nirgends gespeichert und ist nach spätestens einer Stunde
+        verschwunden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse,
+        den Mailversand vor Missbrauch zu schützen.
+      </p>
+      <p>
+        <strong>Speicherdauer:</strong> Dein Konto bleibt, bis du es löschst. Meldest du dich
+        <strong>24 Monate</strong> lang nicht an, lösche ich es; einen Monat vorher bekommst du eine
+        Mail. Eine Sitzung endet 30 Tage nach ihrer letzten Nutzung oder wenn du dich abmeldest. Ein
+        Link verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich.
+      </p>
+      <p>
+        <strong>Selbst erledigen:</strong> Auf deiner Kontoseite kannst du alle gespeicherten Daten
+        als Datei herunterladen (Art. 15 und 20 DSGVO), dich auf allen Geräten abmelden und das
+        Konto löschen. Das Löschen wirkt sofort und nimmt alle Sitzungen mit. Für Sicherungskopien
+        gilt Abschnitt 7.
+      </p>
+    </section>
+
     <section>
-      <h2>6. Deine Rechte</h2>
+      <h2>7. Deine Rechte</h2>
       <p>Nach der DSGVO hast du das Recht,</p>
       <ul>
         <li>Auskunft über die zu deiner Person gespeicherten Daten zu erhalten (Art. 15 DSGVO)</li>
@@ -362,17 +433,18 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>7. Bist du verpflichtet, Daten bereitzustellen?</h2>
+      <h2>8. Bist du verpflichtet, Daten bereitzustellen?</h2>
       <p>
         Du bist weder gesetzlich noch vertraglich verpflichtet, personenbezogene Daten
         bereitzustellen. Technisch lässt sich eine Webseite allerdings nicht ohne die IP-Adresse
         deines Geräts ausliefern. Diese Seite zu nutzen, ohne dass sie verarbeitet wird, ist deshalb
-        nicht möglich. Alles Weitere ist freiwillig.
+        nicht möglich. Alles Weitere ist freiwillig. Für ein Konto brauchst du eine E-Mail-Adresse;
+        ohne sie kann ich dir keinen Anmeldelink schicken.
       </p>
     </section>
 
     <section>
-      <h2>8. Automatisierte Entscheidungsfindung</h2>
+      <h2>9. Automatisierte Entscheidungsfindung</h2>
       <p>
         Findet nicht statt. Ich setze keine automatisierte Entscheidungsfindung und kein Profiling
         im Sinne von Art. 22 DSGVO ein.
@@ -380,7 +452,7 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>9. Änderungen dieser Erklärung</h2>
+      <h2>10. Änderungen dieser Erklärung</h2>
       <p>
         Diese Erklärung beschreibt, was das System tatsächlich tut. Sie ändert sich also, wenn das
         System sich ändert. Das Prüfdatum oben auf dieser Seite sagt dir, wann sie zuletzt

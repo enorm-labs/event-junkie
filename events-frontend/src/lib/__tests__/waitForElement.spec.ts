@@ -22,4 +22,8 @@ describe('waitForElement', () => {
   it('resolves with null when the element never appears', async () => {
     expect(await waitForElement('#beta', 50)).toBeNull()
   })
+
+  it('resolves with null for a hash that is no selector, such as a sign-in token', async () => {
+    expect(await waitForElement('#token=abc-_123', 50)).toBeNull()
+  })
 })

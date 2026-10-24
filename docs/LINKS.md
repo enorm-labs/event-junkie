@@ -51,7 +51,7 @@ oci://ghcr.io/enorm-labs/charts/event-junkie:<version>
 
 ## 2. Hetzner — the one infrastructure provider
 
-ADR-012, as amended on 2026-08-10, leaves exactly one processor. Everything below is the same account.
+ADR-012, as amended on 2026-08-10, leaves exactly one infrastructure provider. Everything below is the same account.
 
 | Link                                                                                               | What it is                                                                       | Status                           |
 | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |

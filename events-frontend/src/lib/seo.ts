@@ -42,8 +42,16 @@ export const INDEXABLE_PATHS = [
  * Static routes intentionally out of the sitemap; the drift guard records a deliberate exclusion
  * here instead of being weakened. `/search` is one page per query, and its route meta says noindex.
  * `/week` redirects to this week's page, which the weeks sitemap lists ({@link WEEKS_SITEMAP}).
+ * The sign-in and account pages are personal, and noindex too.
  */
-export const NON_INDEXABLE_PATHS: readonly string[] = ['/search', '/week']
+export const NON_INDEXABLE_PATHS: readonly string[] = [
+  '/search',
+  '/week',
+  '/sign-in',
+  '/sign-in/check-mail',
+  '/sign-in/confirm',
+  '/account',
+]
 
 /**
  * Open Graph wants `language_TERRITORY` with an underscore, neither the UI locale (`en`) nor the

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, describeError, fetchWithTimeout } from '@/api/client'
+import { ApiError, describeError, fetchWithTimeout, withCsrfHeader } from '@/api/client'
 
 describe('describeError', () => {
   it('flags server errors and rate limiting as transient', () => {
@@ -95,5 +95,32 @@ describe('fetchWithTimeout', () => {
 
     const response = await fetchWithTimeout(new Request('https://example.test/'), 10_000)
     expect(response.status).toBe(200)
+  })
+})
+
+describe('withCsrfHeader', () => {
+  afterEach(() => {
+    document.cookie = 'XSRF-TOKEN=; max-age=0'
+  })
+
+  const header = (method: string, path: string) =>
+    withCsrfHeader(new Request(`http://localhost${path}`, { method })).headers.get('X-XSRF-TOKEN')
+
+  it('copies the cookie into a write to an account path', () => {
+    document.cookie = 'XSRF-TOKEN=a%2Bb'
+    expect(header('POST', '/api/auth/link')).toBe('a+b')
+    expect(header('DELETE', '/api/me')).toBe('a+b')
+    expect(header('POST', '/api/me/sign-out')).toBe('a+b')
+  })
+
+  it('leaves reads and every other path alone', () => {
+    document.cookie = 'XSRF-TOKEN=abc'
+    expect(header('GET', '/api/me')).toBeNull()
+    expect(header('POST', '/api/events')).toBeNull()
+    expect(header('POST', '/api/meta')).toBeNull()
+  })
+
+  it('sends no header before the page asked for the cookie', () => {
+    expect(header('POST', '/api/auth/link')).toBeNull()
   })
 })
