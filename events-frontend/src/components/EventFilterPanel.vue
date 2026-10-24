@@ -90,8 +90,27 @@ function applyPrice() {
   }
 }
 
+/**
+ * One-tap caps on the presale price. Of the priced events, about 7% cost €10 or less, 40% €20 and
+ * 75% €30, so each step halves what is left. A cap and Free only exclude each other: free events
+ * carry no price, so together they leave almost nothing.
+ */
+const PRICE_CAPS = [10, 20, 30] as const
+
+function capActive(cap: number): boolean {
+  return queryString('maxPrice') === String(cap) && !queryString('minPrice')
+}
+
+function toggleCap(cap: number) {
+  applyFilters({ minPrice: '', maxPrice: capActive(cap) ? '' : String(cap), free: '' })
+}
+
 function toggleFlag(key: 'free' | 'excludeSoldOut') {
-  applyFilters({ [key]: queryString(key) === 'true' ? '' : 'true' })
+  const on = queryString(key) !== 'true'
+  applyFilters({
+    [key]: on ? 'true' : '',
+    ...(key === 'free' && on ? { minPrice: '', maxPrice: '' } : {}),
+  })
 }
 </script>
 
@@ -219,9 +238,10 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
     </div>
 
     <!--
-      The price range applies when a bound is left or on Enter, so it needs no button. "Free
-      only" is the price axis at zero, so it stays beside the range; both flags are toggles in
-      the presets' style rather than checkboxes, as On now is.
+      The price range applies when a bound is left or on Enter, so it needs no button. The caps
+      and "Free only" are points on the price axis, so they stay beside the range; they and the
+      sold-out flag are toggles in the presets' style rather than checkboxes, as On now is. The caps
+      wrap as one group, so a phone never strands the last one on a line of its own.
     -->
     <div class="flex flex-wrap items-center gap-2">
       <BaseInput
@@ -249,6 +269,19 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         @change="applyPrice"
         @keydown.enter="applyPrice"
       />
+      <div class="flex gap-2">
+        <Button
+          v-for="cap in PRICE_CAPS"
+          :key="cap"
+          :aria-pressed="capActive(cap)"
+          :variant="capActive(cap) ? 'default' : 'outline'"
+          size="sm"
+          type="button"
+          @click="toggleCap(cap)"
+        >
+          {{ t('events.filters.upToPrice', { n: cap }) }}
+        </Button>
+      </div>
       <Button
         :aria-pressed="queryString('free') === 'true'"
         :variant="queryString('free') === 'true' ? 'default' : 'outline'"

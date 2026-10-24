@@ -65,6 +65,7 @@
     "maxPricePlaceholder": "Max €",
     "hideSoldOut": "Hide sold out",
     "freeOnly": "Free only",
+    "upToPrice": "Up to €{n}",
     "more": "More filters",
     "moreCount": "More filters ({n})",
     "filters": "Filters",
