@@ -111,6 +111,24 @@ class ClassificationValidatorTest {
     }
 
     @Test
+    fun `a time or price whose digits sit inside another number of the evidence is dropped`() {
+        val answer =
+            ClassificationValidator
+                .parse(
+                    """
+                    {"startTime": {"value": "21:00", "evidence": "Einlass 19 Uhr", "confidence": 0.9},
+                     "pricePresale": {"value": 50, "evidence": "VVK 18,50 €", "confidence": 0.9},
+                     "priceBoxOffice": {"value": 2, "evidence": "Abendkasse 22 €", "confidence": 0.9}}
+                    """.trimIndent(),
+                    input
+                ).shouldNotBeNull()
+
+        answer.startTime.shouldBeNull()
+        answer.pricePresale.shouldBeNull()
+        answer.priceBoxOffice.shouldBeNull()
+    }
+
+    @Test
     fun `a 12-hour quote names the hour`() {
         val evening = input.copy(description = "Show starts at 9 pm.")
 

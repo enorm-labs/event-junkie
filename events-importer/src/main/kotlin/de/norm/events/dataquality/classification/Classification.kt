@@ -63,10 +63,6 @@ data class ClassificationAnswer(
 object ClassificationValidator {
     private val logger = KotlinLogging.logger {}
 
-    private const val MIN_EVIDENCE_LENGTH = 3
-    private const val MAX_EVIDENCE_LENGTH = 500
-    private const val HALF_DAY = 12
-
     /** The validated answer, or null when the text is no JSON object at all. */
     fun parse(
         raw: String,
@@ -97,9 +93,9 @@ object ClassificationValidator {
                 eventType = finding("eventType") { node -> EventType.entries.firstOrNull { it.name == node.asString("") } },
                 titleActs = finding("titleActs") { node -> titleActs(node, input.title) },
                 features = verdicts(root.get("features"), input, source, dropped),
-                startTime = finding("startTime") { node -> ModelAnswer.time(node.asString("")) }?.takeIf(::namesHour),
-                pricePresale = finding("pricePresale", ModelAnswer::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) },
-                priceBoxOffice = finding("priceBoxOffice", ModelAnswer::price)?.takeIf { it.evidence.contains(it.value.toBigInteger().toString()) }
+                startTime = finding("startTime") { node -> ModelAnswer.time(node.asString("")) }?.takeIf { ModelAnswer.namesHour(it.value, it.evidence) },
+                pricePresale = finding("pricePresale", ModelAnswer::price)?.takeIf { ModelAnswer.namesPrice(it.value, it.evidence) },
+                priceBoxOffice = finding("priceBoxOffice", ModelAnswer::price)?.takeIf { ModelAnswer.namesPrice(it.value, it.evidence) }
             )
         if (dropped.isNotEmpty()) logger.warn { "Dropped ${dropped.size} classification answer(s) that failed a check: ${dropped.joinToString()}" }
         return answer
@@ -137,13 +133,6 @@ object ClassificationValidator {
         }
     }
 
-    /** The quote has to name the hour, on the 24-hour clock or the 12-hour one ("9 pm"). */
-    private fun namesHour(finding: Finding<LocalTime>): Boolean {
-        val hour = finding.value.hour
-        val twelve = (hour % HALF_DAY).takeIf { it != 0 } ?: HALF_DAY
-        return hour.toString() in finding.evidence || twelve.toString() in finding.evidence
-    }
-
     /** The object the model answered, or null for text that is no JSON object. */
     private fun readObject(raw: String): JsonNode? =
         try {
@@ -169,7 +158,7 @@ object ClassificationValidator {
         source: String
     ): Boolean =
         confidence in 0.0..1.0 &&
-            evidence.length in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH &&
+            evidence.length in ModelAnswer.EVIDENCE_LENGTH &&
             normalise(evidence) in source
 
     fun normalise(text: String): String = QuotedText.normalise(text)
