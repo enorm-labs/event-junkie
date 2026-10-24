@@ -249,6 +249,32 @@ is the one Python reader. `seed-sources.py`, `geocode-venues.py` and `osm-venue-
 edit it: change or add a venue file, then run `scripts/dev-seed-parity.sh`. CI runs it with `check` and fails when
 the two disagree. A branch that still edits the old file rebases as `docs/WORKTREES.md` § 5 describes.
 
+### Imports behind a TLS-intercepting proxy
+
+Some company networks intercept TLS with a proxy. The proxy signs each certificate with the company's own root CA. macOS trusts that
+root through the keychain, so `curl` works. The JVM uses its own trust store, so every import fails with
+`PKIX path building failed`. When two venue hosts fail with this error in the same second, find the issuer first:
+
+```bash
+echo | openssl s_client -connect <host>:443 -servername <host> 2>/dev/null | grep issuer=
+```
+
+If the issuer is not a public CA, make a trust store from the JDK `cacerts` and the proxy's root. Then start the
+importer with it. Replace `<root CA name>` with the root's name in Keychain Access:
+
+```bash
+S=~/.config/event-junkie; mkdir -p $S
+security find-certificate -c '<root CA name>' -p /Library/Keychains/System.keychain > $S/proxy-root.pem
+cp "$(/usr/libexec/java_home)/lib/security/cacerts" $S/truststore.p12 && chmod u+w $S/truststore.p12
+keytool -importcert -noprompt -alias proxy-root -file $S/proxy-root.pem -keystore $S/truststore.p12 -storepass changeit
+scripts/dev-env.sh down importer
+JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStore=$S/truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit" \
+  scripts/dev-env.sh up importer
+```
+
+The trust store stays outside the repository and changes nothing on the system. Do not use
+`-Djavax.net.ssl.trustStoreType=KeychainStore-ROOT`: on one such network, the error did not go away.
+
 ## Calling the APIs
 
 ### Swagger UI
