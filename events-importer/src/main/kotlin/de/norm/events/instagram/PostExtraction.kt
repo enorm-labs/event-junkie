@@ -1,13 +1,12 @@
 package de.norm.events.instagram
 
+import de.norm.events.ai.ModelAnswer
 import de.norm.events.common.BERLIN
 import de.norm.events.common.QuotedText
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -103,8 +102,6 @@ sealed interface ExtractionResult {
 object PostExtractionValidator {
     private val logger = KotlinLogging.logger {}
 
-    private val mapper: JsonMapper = JsonMapper.builder().build()
-
     private const val MIN_EVIDENCE_LENGTH = 3
     private const val MAX_EVIDENCE_LENGTH = 500
     private const val MAX_TITLE_LENGTH = 200
@@ -117,9 +114,6 @@ object PostExtractionValidator {
     /** A post announces a night months ahead at most. A date further out is a wrong year. */
     const val HORIZON_DAYS = 300L
 
-    private val MAX_PRICE = BigDecimal("500")
-    private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
-    private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
     private val HANDLE = Regex("[\\p{L}\\p{N}._]+")
     private val NOT_LETTER_OR_DIGIT = Regex("[^\\p{L}\\p{N}]")
     private const val MIN_NAME_LETTERS = 3
@@ -230,8 +224,8 @@ object PostExtractionValidator {
         return DraftedEvent(
             date = date,
             title = node.path("title").asString("").trim(),
-            startTime = time(node.path("startTime").asString(""))?.takeIf { namesHour(it, caption) },
-            doorsTime = time(node.path("doorsTime").asString(""))?.takeIf { namesHour(it, caption) },
+            startTime = ModelAnswer.time(node.path("startTime").asString(""))?.takeIf { namesHour(it, caption) },
+            doorsTime = ModelAnswer.time(node.path("doorsTime").asString(""))?.takeIf { namesHour(it, caption) },
             acts =
                 node
                     .path("acts")
@@ -239,8 +233,8 @@ object PostExtractionValidator {
                     .map { it.asString("").trim() }
                     .filter { it.isNotEmpty() && namedIn(it, caption) }
                     .distinct(),
-            pricePresale = price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
-            priceBoxOffice = price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
+            pricePresale = ModelAnswer.price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
+            priceBoxOffice = ModelAnswer.price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
             evidence = node.path("evidence").asString("").trim(),
             confidence = node.path("confidence").asDouble(),
             flyerText = flyerText
@@ -268,9 +262,6 @@ object PostExtractionValidator {
             null
         }
 
-    private fun time(value: String): LocalTime? =
-        TIME.matchEntire(value.trim())?.let { match -> LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].toInt()) }
-
     /** The caption has to name the hour, on the 24-hour clock or the 12-hour one ("9pm"). */
     private fun namesHour(
         time: LocalTime,
@@ -280,24 +271,9 @@ object PostExtractionValidator {
         return listOf(time.hour, twelve).any { Regex("(?<!\\d)$it(?!\\d)").containsMatchIn(caption) }
     }
 
-    private fun price(node: JsonNode?): BigDecimal? {
-        if (node == null || node.isNull) return null
-        val value =
-            if (node.isNumber) {
-                node.decimalValue()
-            } else {
-                node
-                    .asString("")
-                    .trim()
-                    .replace(',', '.')
-                    .toBigDecimalOrNull()
-            }
-        return value?.takeIf { it > BigDecimal.ZERO && it <= MAX_PRICE }?.setScale(2, RoundingMode.HALF_UP)
-    }
-
     private fun readObject(raw: String): JsonNode? =
         try {
-            mapper.readTree(raw.trim().replace(CODE_FENCE, "")).takeIf { it.isObject }
+            ModelAnswer.jsonObject(raw)
         } catch (e: JacksonException) {
             logger.warn(e) { "The extraction answer is not JSON" }
             null
