@@ -112,7 +112,7 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
   what it cannot know about this repository is in [Automating GitHub with `gh`](#automating-github-with-gh).
 - **Library docs: ask `context7` first, and read the release notes on a bump.** The pinned versions (Tailwind 4, Vue Router 5, TypeScript 6, Spring Boot 4)
   postdate most of what a model remembers — a v2-era Tailwind answer writes `tailwind.config.js` into a project that has none.
-  [`docs/LINKS.md` § 10](docs/LINKS.md#10-stack-reference-documentation) pairs every framework with its release notes.
+  [`docs/LINKS.md` § 11](docs/LINKS.md#11-stack-reference-documentation) pairs every framework with its release notes.
 
 ## Privacy & GDPR — re-check when infrastructure or features change
 

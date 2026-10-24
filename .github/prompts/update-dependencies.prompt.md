@@ -52,7 +52,7 @@ Reject any version containing `alpha`, `beta`, `rc`, `cr`, `m1`–`m3`, `dev`, `
 - Spring Boot ↔ Spring Modulith: the [compatibility matrix](https://github.com/spring-projects/spring-modulith#compatibility-matrix). Kotlin ↔ Spring Boot: the
   Boot release notes. **A major bump is flagged for the user with its migration guide, never applied silently.**
 - **Read the release notes for every minor and major bump**, and write what applies to this repository under _What the release gives us_: a new API that
-  replaces a workaround here, a deprecation that names code we have, a default that changed. [docs/LINKS.md § 10](../../docs/LINKS.md#10-stack-reference-documentation)
+  replaces a workaround here, a deprecation that names code we have, a default that changed. [docs/LINKS.md § 11](../../docs/LINKS.md#11-stack-reference-documentation)
   pairs every framework with its release notes; `context7` answers how the version we have works.
 
 ## Step 5: Apply, and prune

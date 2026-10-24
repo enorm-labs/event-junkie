@@ -585,6 +585,25 @@ window.EJ_LINKS = {
     },
     {
       "number": 8,
+      "title": "Scaleway — the mail relay",
+      "columns": [
+        "Link",
+        "What it is",
+        "Status"
+      ],
+      "rows": [
+        {
+          "url": "https://console.scaleway.com/organization/overview",
+          "label": "console.scaleway.com/organization/overview",
+          "what": "<strong>The Console.</strong> The organisation, the <code>event-junkie</code> project, billing, IAM, TEM",
+          "whatText": "The Console. The organisation, the event-junkie project, billing, IAM, TEM",
+          "status": "In use since 2026-10-24",
+          "statusText": "In use since 2026-10-24"
+        }
+      ]
+    },
+    {
+      "number": 9,
       "title": "Security and dependency scanning",
       "columns": [
         "Link",
@@ -634,7 +653,7 @@ window.EJ_LINKS = {
       ]
     },
     {
-      "number": 9,
+      "number": 10,
       "title": "Local development",
       "columns": [
         "Address",
@@ -684,7 +703,7 @@ window.EJ_LINKS = {
       ]
     },
     {
-      "number": 10,
+      "number": 11,
       "title": "Stack reference documentation",
       "columns": [
         "Link",
@@ -878,7 +897,7 @@ window.EJ_LINKS = {
       ]
     },
     {
-      "number": 11,
+      "number": 12,
       "title": "Where the detail lives, in this repository",
       "columns": [
         "Document",
