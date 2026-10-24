@@ -129,7 +129,7 @@ spec:
               value: {{ .Values.importer.service.managementPort | quote }}
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage={{ .Values.importer.maxRamPercentage }}"
-            {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
+            {{- include "event-junkie.databaseEnv" (dict "ctx" $) | nindent 12 }}
             {{- /* The importer owns the schema (ADR-005), and Flyway has no reactive driver, so this one workload
                holds two connection configurations. Locally Docker Compose support supplies both; in a cluster
                the JDBC half is the one forgotten, and its failure is a migration that never runs. */}}

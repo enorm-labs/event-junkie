@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Thirteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other twelve are typed by a human and exist nowhere else.
+- **Fourteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other thirteen are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The thirteen objects, and where each comes from
+## The fourteen objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -35,11 +35,12 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
 | `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 | `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
+| `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | §events-bff-db, below                                          |
 
-**All thirteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All fourteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists thirteen objects, not thirteen values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists fourteen objects, not fourteen values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -100,7 +101,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the thirteen on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the fourteen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -402,6 +403,40 @@ unset P
 **A rotation is three steps.** Change the password in konsoleH, patch both Secrets, and restart OpenObserve on both clusters. The process reads the value at
 start. `deploy/alerts/apply.sh --check` cannot see a wrong password, because a rule evaluates without sending. Trip a rule, or send a test from the
 destination in the UI.
+
+### `events-bff-db` — the BFF's own database login
+
+The BFF faces the internet, so it does not use the `events` role (ADR-053). Its role `bff` reads the `events` schema and writes only `accounts`, where
+visitor accounts and sessions live. Migration V193 grants exactly that. **It fails if `bff` is missing**, because `events` cannot create roles, and then the
+importer does not start. So the role comes first, on both clusters, **before the release that carries V193**.
+
+On each database node, as in §postgres-exporter:
+
+```sh
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1     # staging
+ssh -J ops@10.10.0.1 ops@10.0.1.20                 # production
+sudo -u postgres psql -d events
+```
+
+Create the role, then set its password interactively, which keeps it out of the shell history:
+
+```sql
+CREATE ROLE bff WITH LOGIN;
+\password bff
+```
+
+Then the Secret, with the same key names as `events-db`:
+
+```sh
+printf 'bff password (staging): '; read -rs P; echo
+kubectl --context event-junkie-staging -n event-junkie create secret generic events-bff-db --from-literal=username=bff --from-literal=password="$P"
+printf 'bff password (production): '; read -rs P; echo
+kubectl --context event-junkie-production -n event-junkie create secret generic events-bff-db --from-literal=username=bff --from-literal=password="$P"
+unset P
+```
+
+Last, set `bff.database.existingSecret: events-bff-db` in each cluster's `helm-release.yaml`. Until then the BFF keeps the shared login, which still
+works. Each cluster gets its own password, so a leak on one does not reach the other.
 
 ### `event-junkie-mail` — the login the BFF sends transactional mail with
 
