@@ -15,8 +15,8 @@ imported rows of the same venue on staging and on <env>:
     NIGHT  an imported row on the same night has another title -> the operator compares the two
     KEEP   no imported row that night: the source does not publish it, and deleting it removes the night
 
-Staging is the reference because it imports a release first and has no manual rows. After the
-deletions, force-import the source, so the events it skipped are written.
+Staging is the reference because it imports a release first and has no manual rows. Run it on
+production before the source's `seed-sources.py --enable`, so its first import finds the slugs free (#3848).
 
 It reads the importer through the forwards `scripts/ej.sh up <env>` starts (18081 staging, 28081
 production) and refuses a port no `event-junkie-<env>` port-forward holds.
