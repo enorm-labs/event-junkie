@@ -218,3 +218,20 @@ tests:
               secretKeyRef:
                 name: events-bff-db
                 key: password
+
+  # --- Where a sign-in link points (ADR-053) ------------------------------------------------------
+  - it: points sign-in links at this cluster's own host
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.host: "staging.event-junkie.de"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_SITE_ORIGIN
+            value: "https://staging.event-junkie.de"

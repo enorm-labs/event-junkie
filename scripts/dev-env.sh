@@ -148,13 +148,18 @@ start_service() {
         )
         # Scheduled imports are off by default: a smoke test should scrape only the source
         # under test, not every source whose 24h interval happens to be due (ADR-007 ethics).
-        # The BFF sends into Mailpit from compose.yaml, which speaks no TLS (ADR-054).
+        # The BFF sends into Mailpit from compose.yaml, which speaks no TLS and takes no login (ADR-054).
+        # Started here because Spring's Compose support starts nothing while Postgres already runs.
         if [[ "$svc" == "bff" ]]; then
+            (cd "$REPO_ROOT" && docker compose up -d --wait mailpit) >/dev/null 2>&1 ||
+                warn "Mailpit did not start — sign-in mails will fail"
             props+=(
                 "--spring.mail.host=localhost"
                 "--spring.mail.port=${MAILPIT_SMTP_PORT:-1025}"
                 "--spring.mail.properties.mail.smtp.starttls.enable=false"
                 "--spring.mail.properties.mail.smtp.starttls.required=false"
+                "--spring.mail.properties.mail.smtp.auth=false"
+                "--app.site.origin=http://localhost:$(svc_port frontend)"
             )
         fi
         if [[ "$svc" == "importer" ]] && ! $scheduling; then

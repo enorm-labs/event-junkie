@@ -58,6 +58,9 @@ spec:
               value: {{ .Values.bff.service.port | quote }}
             - name: MANAGEMENT_SERVER_PORT
               value: {{ .Values.bff.service.managementPort | quote }}
+            {{- /* Where a sign-in link points (ADR-053): this cluster's own host, so staging never sends production links. */}}
+            - name: APP_SITE_ORIGIN
+              value: {{ printf "https://%s" .Values.ingress.host | quote }}
             {{- /* /api is served by Spring itself, so the Ingress routes it with no rewrite and no Middleware
                (§3.1). The management port runs its own context at `/` regardless of webflux's base path. */}}
             {{- /* A JVM that sizes its heap at 25% of the container limit does not OOM; it runs in a quarter
