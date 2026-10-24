@@ -27,7 +27,8 @@ class ChildrensShowTest {
             "KINDER DER NACHT & DEXIT MANNHEIM – HALLOWEEN RAVE" to null,
             "Lichterkinder" to null,
             "Deine Freunde" to null,
-            "Coming-of-Age-Theater" to "ab 13 Jahre"
+            "Coming-of-Age-Theater" to "ab 13 Jahre",
+            "Bridge Markland: Krug in the Box" to "Geeignet für alle Zuschauer*innen ab 12 Jahren"
         ).map { (title, subtitle) -> childrensShowPhrase(title, subtitle) }.distinct() shouldBe listOf(null)
     }
 
