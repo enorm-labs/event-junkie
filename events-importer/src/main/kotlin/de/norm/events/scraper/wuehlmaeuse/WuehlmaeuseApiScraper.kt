@@ -60,7 +60,9 @@ data class WuehlmaeuseTicket(
  * category, cut at the last dash. [toEvents] folds the categories of one performance into one event.
  *
  * A cancelled show says so in the act or the programme line (`KANN LEIDER NICHT STATTFINDEN`,
- * `abgesagt`); the marker leaves the title and sets the status.
+ * `abgesagt`); the marker leaves the title and sets the status. A family show for small children
+ * (`Familien-Zaubershow für Kinder ab 4 Jahre`) is a show, marked `for-children` (EVENT_SCOPE.md §3.5);
+ * every other performance is comedy.
  */
 class WuehlmaeuseApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -89,10 +91,11 @@ class WuehlmaeuseApiScraper {
                 val cheapest = categories.minWithOrNull(compareBy(nullsLast()) { it.price }) ?: categories.first()
                 val ticket = categories.first()
                 val bill = listOfNotNull(ticket.act, ticket.programme).joinToString(" – ")
+                val childrens = childrensShowPhrase(ticket.act, ticket.programme)
                 ScrapedEvent(
                     title = ticket.act,
                     subtitle = ticket.programme,
-                    eventType = EventType.COMEDY.name,
+                    eventType = if (childrens != null) EventType.SHOW.name else EventType.COMEDY.name,
                     eventDate = ticket.date,
                     doorsTime = ticket.doors,
                     startTime = ticket.start,
@@ -104,8 +107,7 @@ class WuehlmaeuseApiScraper {
                     status = if (categories.any { it.cancelled }) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
                     // A performer's "<Name> – <Programme>" bill names the act; a series or a play does not.
                     artists = buildArtistsForEventType(bill, null, EventType.COMEDY.name)
-                    // A family show for small children: `Familien-Zaubershow für Kinder ab 4 Jahre` (#3796).
-                ).forChildrenIf(childrensShowPhrase(ticket.act, ticket.programme))
+                ).forChildrenIf(childrens)
             }.sortedWith(compareBy({ it.eventDate }, { it.startTime }))
 
     /** The show's slug, date and clock: one show plays many nights, and one night can hold two shows. */
