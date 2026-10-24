@@ -279,8 +279,7 @@ Norman Lange ([@enorm](https://github.com/enorm)), publishing as [enorm-labs](ht
 ## License
 
 [Business Source License 1.1](./LICENSE) © Norman Lange. The source is public: read it, fork it, change it and run it locally. Running an instance
-that others can reach, or any other production use, needs a licence from the maintainer. Each version becomes available under the Apache License 2.0 four years
-after it is published. Commits published before the switch to BUSL-1.1 remain available under the Apache License 2.0.
+that others can reach, or any other production use, needs a licence from the maintainer.
 
 Contributions are welcome under the [Contributor Licence Agreement](./CLA.md); you keep the copyright in your work. Third-party dependency licences are published at
 `/legal/notices` and enforced by a policy in [`config/`](./config); see
