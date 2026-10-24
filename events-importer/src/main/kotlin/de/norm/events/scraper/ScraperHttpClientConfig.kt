@@ -10,6 +10,7 @@ import reactor.netty.http.client.HttpClient
 import reactor.netty.http.client.HttpClientRequest
 import reactor.netty.resources.ConnectionProvider
 import java.time.Duration
+import kotlin.time.toKotlinDuration
 
 /** Bean name of the shared scraper [WebClient]; inject with `@Qualifier(SCRAPER_WEB_CLIENT)`. */
 const val SCRAPER_WEB_CLIENT = "scraperWebClient"
@@ -74,7 +75,11 @@ class ScraperHttpClientConfig {
      * triggered it are throttled against the *same* per-host timer rather than each keeping its own.
      */
     @Bean
-    fun perHostThrottlingFilter(scraperProperties: ScraperProperties): PerHostThrottlingFilter = PerHostThrottlingFilter(scraperProperties.politeDelayMillis)
+    fun perHostThrottlingFilter(scraperProperties: ScraperProperties): PerHostThrottlingFilter =
+        PerHostThrottlingFilter(
+            politeDelayMillis = scraperProperties.politeDelayMillis,
+            hostDelays = scraperProperties.hostPoliteDelays.mapValues { it.value.toKotlinDuration() }
+        )
 
     /**
      * A pool of its own, because the global one has no idle limit. A connection idle past the

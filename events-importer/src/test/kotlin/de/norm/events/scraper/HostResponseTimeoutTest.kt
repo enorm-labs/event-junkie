@@ -72,7 +72,7 @@ class HostResponseTimeoutTest {
     }
 
     @Test
-    fun `application yaml binds radar squat net as one key`() {
+    fun `application yaml binds each dotted host as one key`() {
         val environment = StandardEnvironment()
         // By path, because the test classpath has an application.yaml of its own. The first document only: the second is the `local` profile.
         val yaml = FileSystemResource("src/main/resources/application.yaml")
@@ -82,6 +82,8 @@ class HostResponseTimeoutTest {
 
         properties.hostResponseTimeouts shouldBe mapOf("radar.squat.net" to Duration.ofSeconds(60))
         properties.responseTimeout shouldBe Duration.ofSeconds(30)
+        properties.hostPoliteDelays shouldBe
+            mapOf("upload.wikimedia.org" to Duration.ofSeconds(3), "thumb.wikimedia.org" to Duration.ofSeconds(3))
     }
 
     private fun client(hostTimeouts: Map<String, Duration>): WebClient {

@@ -27,6 +27,13 @@ data class ScraperProperties(
     /** Politeness delay between consecutive detail page fetches to avoid overwhelming target servers. */
     val politeDelayMillis: Long = DEFAULT_POLITE_DELAY_MILLIS,
     /**
+     * Overrides [politeDelayMillis] for the hosts it names, where the gap is longer.
+     *
+     * Per host, because a host's own policy can ask for more than `robots.txt` says. Wikimedia's media
+     * hosts cap a client at 25 Mbps, and an 8 MB original 200 ms after the last one is far above it (#3755).
+     */
+    val hostPoliteDelays: Map<String, Duration> = emptyMap(),
+    /**
      * Whether a `robots.txt` disallow **blocks** the request, or only records it.
      *
      * `true`, so that honouring a venue's rules is the fail-safe: a deployment that configures

@@ -59,15 +59,21 @@ internal interface ThrottleClock {
  * @param politeDelayMillis minimum time (in milliseconds) between consecutive
  *   requests to the same host. Requests arriving sooner will suspend until the
  *   delay has elapsed.
+ * @param hostDelays a longer gap for the hosts it names, where a host's own policy asks for one that
+ *   `robots.txt` does not state. Wikimedia's media hosts cap a client's bandwidth (#3755).
  * @param clock where time comes from. Defaults to real monotonic time; tests substitute a virtual
  *   one so they assert what this filter *decided* rather than how long they happened to take.
  */
 class PerHostThrottlingFilter internal constructor(
     private val politeDelayMillis: Long,
-    private val clock: ThrottleClock
+    private val clock: ThrottleClock,
+    private val hostDelays: Map<String, Duration> = emptyMap()
 ) : ExchangeFilterFunction {
     /** The production constructor. `ThrottleClock` is internal, so this is what callers outside the module see. */
-    constructor(politeDelayMillis: Long) : this(politeDelayMillis, ThrottleClock.SYSTEM)
+    constructor(
+        politeDelayMillis: Long,
+        hostDelays: Map<String, Duration> = emptyMap()
+    ) : this(politeDelayMillis, ThrottleClock.SYSTEM, hostDelays)
 
     private val logger = KotlinLogging.logger {}
 
@@ -93,7 +99,7 @@ class PerHostThrottlingFilter internal constructor(
 
     /**
      * Acquires the per-host mutex and suspends if the elapsed time since the last request to [host]
-     * is shorter than [politeDelayMillis], or than the host's [crawlDelay] where that is longer.
+     * is shorter than [politeDelayMillis], or than the host's [crawlDelay] or [hostDelays] entry where either is longer.
      * Records the current timestamp before releasing the mutex so the next caller sees the correct
      * baseline.
      */
@@ -102,7 +108,7 @@ class PerHostThrottlingFilter internal constructor(
         crawlDelay: Duration?
     ) {
         val throttle = hostThrottles.computeIfAbsent(host) { HostThrottle() }
-        val gap = maxOf(politeDelayMillis.milliseconds, crawlDelay ?: Duration.ZERO)
+        val gap = maxOf(politeDelayMillis.milliseconds, crawlDelay ?: Duration.ZERO, hostDelays[host] ?: Duration.ZERO)
 
         throttle.mutex.withLock {
             throttle.lastRequestMark?.let { mark ->
