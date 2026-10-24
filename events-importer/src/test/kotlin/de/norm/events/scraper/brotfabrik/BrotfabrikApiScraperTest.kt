@@ -1,5 +1,6 @@
 package de.norm.events.scraper.brotfabrik
 
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
@@ -26,6 +27,22 @@ class BrotfabrikApiScraperTest {
     private val page by lazy { scraper.scrapePage(fixture) }
 
     private fun event(path: String) = page.events.single { it.sourceId == "brotfabrik:$path" }
+
+    /** The fixture's `glanz` event alone, priced at [cost] with [amounts] as its `cost_details`. */
+    private fun pricedAs(
+        cost: String,
+        vararg amounts: String
+    ): ScrapedEvent =
+        JsonMapper().let { mapper ->
+            val root = mapper.readTree(fixture) as ObjectNode
+            val events = root.withArray("events")
+            val night = events.first { it.path("slug").asString() == "glanz" } as ObjectNode
+            night.put("cost", cost)
+            night.withObject("cost_details").putArray("values").apply { amounts.forEach(::add) }
+            events.removeAll()
+            events.add(night)
+            scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+        }
 
     /** The fixture's `glanz` night alone, with [category] as its only category and [title] in place of its own. */
     private fun glanzAs(
@@ -69,7 +86,7 @@ class BrotfabrikApiScraperTest {
         glanz.sourceUrl shouldBe "https://brotfabrik-berlin.de/veranstaltung/glanz/"
         glanz.imageUrl shouldBe "https://brotfabrik-berlin.de/wp-content/uploads/2026/09/Glanz–Copyright.Johanna_Maria_Dietz_011.jpg"
         glanz.ticketUrl shouldBe "https://www.eventbrite.de/e/glanz-tickets-2000411933944?aff=oddtdtcreator"
-        glanz.pricePresale.shouldBeNull()
+        glanz.pricePresale shouldBe BigDecimal("12")
         glanz.priceNote shouldBe "€12 – €18"
         glanz.free shouldBe false
         glanz.artists.shouldBeEmpty()
@@ -119,22 +136,30 @@ class BrotfabrikApiScraperTest {
     }
 
     @Test
-    fun `reads a single price as the presale price`() {
-        val single =
-            JsonMapper().let { mapper ->
-                val root = mapper.readTree(fixture) as ObjectNode
-                val events = root.withArray("events")
-                val night = events.first { it.path("slug").asString() == "glanz" } as ObjectNode
-                night.withObject("cost_details").withArray("values").apply {
-                    removeAll()
-                    add("15")
-                }
-                events.removeAll()
-                events.add(night)
-                scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
-            }
-
-        single.pricePresale shouldBe BigDecimal("15")
-        single.priceNote.shouldBeNull()
+    fun `stores the lowest tier as a from price and keeps the tiers as the note`() {
+        pricedAs("€15", "15").run {
+            pricePresale shouldBe BigDecimal("15")
+            priceNote.shouldBeNull()
+            free shouldBe false
+        }
+        pricedAs("€10 – €15", "10", "15").run {
+            pricePresale shouldBe BigDecimal("10")
+            priceNote shouldBe "€10 – €15"
+            free shouldBe false
+        }
+        pricedAs("Free", "0").run {
+            pricePresale.shouldBeNull()
+            priceNote.shouldBeNull()
+            free shouldBe true
+        }
+        pricedAs("€8 – €20", "12", "8", "20").run {
+            pricePresale shouldBe BigDecimal("8")
+            priceNote shouldBe "€8 – €20"
+        }
+        pricedAs("€0 – €10", "0", "10").run {
+            pricePresale.shouldBeNull()
+            priceNote shouldBe "€0 – €10"
+            free shouldBe false
+        }
     }
 }

@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ObjectNode
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -28,6 +29,22 @@ class PasApiScraperTest {
     private val page by lazy { scraper.scrapePage(fixture) }
 
     private fun event(slug: String) = page.events.single { it.sourceId == "pas:$slug" }
+
+    /** The fixture's `slightly-imperfect-songs-of-ivor-cutler` event alone, priced at [cost] with [amounts] as its `cost_details`. */
+    private fun pricedAs(
+        cost: String,
+        vararg amounts: String
+    ): ScrapedEvent =
+        JsonMapper().let { mapper ->
+            val root = mapper.readTree(fixture) as ObjectNode
+            val events = root.withArray("events")
+            val night = events.first { it.path("slug").asString() == "slightly-imperfect-songs-of-ivor-cutler" } as ObjectNode
+            night.put("cost", cost)
+            night.withObject("cost_details").putArray("values").apply { amounts.forEach(::add) }
+            events.removeAll()
+            events.add(night)
+            scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+        }
 
     private fun names(slug: String) = event(slug).artists.map { it.name }
 
@@ -142,11 +159,11 @@ class PasApiScraperTest {
     }
 
     @Test
-    fun `keeps a price range as a note and infers the type of an uncategorised event`() {
+    fun `keeps a price range as a note from its lower bound and infers the type of an uncategorised event`() {
         val songs = event("slightly-imperfect-songs-of-ivor-cutler")
 
         songs.priceNote shouldBe "10€ – 15€"
-        songs.pricePresale.shouldBeNull()
+        songs.pricePresale shouldBe BigDecimal("10")
         songs.typeIsFallback shouldBe true
         songs.endTime.shouldBeNull()
     }
@@ -184,5 +201,29 @@ class PasApiScraperTest {
         variant("Klub Demboh", listOf("Theatre", "Performance")).shouldNotBeNull().eventType shouldBe "SHOW"
         variant("Stills", listOf("Exhibition")).shouldNotBeNull().eventType shouldBe "EXHIBITION"
         variant("Film night", listOf("Film screening")).shouldNotBeNull().eventType shouldBe "SCREENING"
+    }
+
+    @Test
+    fun `stores the lowest tier as a from price and keeps the tiers as the note`() {
+        pricedAs("€15", "15").run {
+            pricePresale shouldBe BigDecimal("15")
+            priceNote.shouldBeNull()
+        }
+        pricedAs("€10 – €15", "10", "15").run {
+            pricePresale shouldBe BigDecimal("10")
+            priceNote shouldBe "€10 – €15"
+        }
+        pricedAs("Free", "0").run {
+            pricePresale.shouldBeNull()
+            priceNote.shouldBeNull()
+        }
+        pricedAs("€8 – €20", "12", "8", "20").run {
+            pricePresale shouldBe BigDecimal("8")
+            priceNote shouldBe "€8 – €20"
+        }
+        pricedAs("€0 – €10", "0", "10").run {
+            pricePresale.shouldBeNull()
+            priceNote shouldBe "€0 – €10"
+        }
     }
 }

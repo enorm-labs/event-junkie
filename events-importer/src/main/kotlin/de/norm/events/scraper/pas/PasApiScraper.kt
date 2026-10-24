@@ -14,8 +14,10 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecCostAmounts
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecFromPrice
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
 import de.norm.events.scraper.tecSourceId
@@ -65,7 +67,7 @@ class PasApiScraper {
         val description = event.tecDescription()
         val doors = labelledClock(description, DOORS_LABELS)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
-        val prices = event.path("cost_details").path("values").mapNotNull { it.asString("").toBigDecimalOrNull() }
+        val prices = event.tecCostAmounts()
 
         return ScrapedEvent(
             title = title,
@@ -88,7 +90,7 @@ class PasApiScraper {
                     .distinct()
                     .joinToString(", ")
                     .ifEmpty { null },
-            pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
+            pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             artists = if (eventType == EventType.CONCERT.name) billedActs(title, event.path("description").asString("")) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.

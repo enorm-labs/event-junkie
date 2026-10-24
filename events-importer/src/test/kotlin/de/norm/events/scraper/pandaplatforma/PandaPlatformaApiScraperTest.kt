@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pandaplatforma
 
+import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -28,6 +29,22 @@ class PandaPlatformaApiScraperTest {
     private val page by lazy { scraper.scrapePage(fixture) }
 
     private fun event(slug: String) = page.events.single { it.sourceId == "panda_platforma:$slug" }
+
+    /** The fixture's `igr-titov` event alone, priced at [cost] with [amounts] as its `cost_details`. */
+    private fun pricedAs(
+        cost: String,
+        vararg amounts: String
+    ): ScrapedEvent =
+        JsonMapper().let { mapper ->
+            val root = mapper.readTree(fixture) as ObjectNode
+            val events = root.withArray("events")
+            val night = events.first { it.path("slug").asString() == "igr-titov" } as ObjectNode
+            night.put("cost", cost)
+            night.withObject("cost_details").putArray("values").apply { amounts.forEach(::add) }
+            events.removeAll()
+            events.add(night)
+            scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+        }
 
     private fun names(slug: String) = event(slug).artists.map { it.name }
 
@@ -99,7 +116,7 @@ class PandaPlatformaApiScraperTest {
         lecture.pricePresale.shouldBeNull()
 
         val range = event("foaie-verde-virtuosic-world-music-from-budapest-across-the-balkans-to-the-black-sea")
-        range.pricePresale.shouldBeNull()
+        range.pricePresale shouldBe BigDecimal("20")
         range.priceNote shouldBe "€20.00 – €25.00"
     }
 
@@ -174,5 +191,33 @@ class PandaPlatformaApiScraperTest {
 
         sine.descriptionAlt.shouldBeNull()
         sine.description.shouldNotBeNull() shouldContain "[EN]"
+    }
+
+    @Test
+    fun `stores the lowest tier as a from price and keeps the tiers as the note`() {
+        pricedAs("€15", "15").run {
+            pricePresale shouldBe BigDecimal("15")
+            priceNote.shouldBeNull()
+            free shouldBe false
+        }
+        pricedAs("€10 – €15", "10", "15").run {
+            pricePresale shouldBe BigDecimal("10")
+            priceNote shouldBe "€10 – €15"
+            free shouldBe false
+        }
+        pricedAs("Free", "0").run {
+            pricePresale.shouldBeNull()
+            priceNote.shouldBeNull()
+            free shouldBe true
+        }
+        pricedAs("€8 – €20", "12", "8", "20").run {
+            pricePresale shouldBe BigDecimal("8")
+            priceNote shouldBe "€8 – €20"
+        }
+        pricedAs("€0 – €10", "0", "10").run {
+            pricePresale.shouldBeNull()
+            priceNote shouldBe "€0 – €10"
+            free shouldBe false
+        }
     }
 }

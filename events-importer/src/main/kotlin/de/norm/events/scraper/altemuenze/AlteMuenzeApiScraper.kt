@@ -10,8 +10,10 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecCostAmounts
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecFromPrice
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
 import de.norm.events.scraper.tecTermNames
@@ -56,7 +58,7 @@ class AlteMuenzeApiScraper {
         val title = cleanEventTitle(rawTitle.replace(STATUS_PREFIX, ""))
         val allDay = event.path("all_day").asBoolean(false)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
-        val prices = event.path("cost_details").path("values").mapNotNull { it.asString("").toBigDecimalOrNull() }
+        val prices = event.tecCostAmounts()
 
         return ScrapedEvent(
             title = title,
@@ -70,7 +72,7 @@ class AlteMuenzeApiScraper {
             sourceUrl = event.path("url").asString(""),
             sourceId = "${EventSource.ALTE_MUENZE.sourceIdPrefix}$slug",
             ticketUrl = event.stringOrNull("website")?.takeIf { it.startsWith("http") && !NOT_A_TICKET_LINK.containsMatchIn(it) },
-            pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
+            pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = statusMarker != null && !cancelled,
