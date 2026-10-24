@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDate
 
 /**
- * Two acts whose names fold to one slug, through the real resolution against PostgreSQL (#2942).
+ * Two acts whose names fold to one slug, through the real resolution against PostgreSQL (#2942, #2954).
  *
  * A unit test of `artistSlugFor` proves the map. Only the merge path proves that the lookup, the insert and the
  * association all use it: one of them slugging the plain name would put the second act back on the first act's row.
@@ -60,6 +60,22 @@ class AssociationSyncArtistSlugOverrideIntegrationTest : BaseControllerTest() {
             billedSlugs(monarch) shouldContainExactly listOf("goere")
             artistRepository.findBySlug("goere")?.name shouldBe "Göre"
             artistRepository.findBySlug("gore")?.name shouldBe "Gore"
+        }
+    }
+
+    @Test
+    fun `two acts with exactly one name end on two rows, by the source that bills each (#2954)`() {
+        runBlocking {
+            val weisseHase = persistEvent("derweissehase:2026-10-10-maschine")
+            associationSyncService.resolveAndSyncAssociations(listOf(weisseHase), listOf(scraped(weisseHase, "Maschine")))
+            val admiralspalast = persistEvent("admiralspalast:2026-10-24-maschine")
+            associationSyncService.resolveAndSyncAssociations(listOf(admiralspalast), listOf(scraped(admiralspalast, "MASCHINE")))
+            // A second import changes nothing: the scoped slug is looked up, not created again.
+            associationSyncService.resolveAndSyncAssociations(listOf(admiralspalast), listOf(scraped(admiralspalast, "Maschine")))
+
+            billedSlugs(weisseHase) shouldContainExactly listOf("maschine")
+            billedSlugs(admiralspalast) shouldContainExactly listOf("maschine-2")
+            artistRepository.findBySlug("maschine-2")?.name shouldBe "Maschine"
         }
     }
 

@@ -114,7 +114,9 @@ class ArtistService(
             artistRepository.findById(id)
                 ?: throw ArtistNotFoundException(id)
 
-        val slug = artistSlugFor(request.name)
+        // The same name, recased, keeps the stored slug: a source-scoped homonym's `-2` slug is not the one its name gives (#2954).
+        val sameName = canonicalArtistName(request.name).equals(canonicalArtistName(existing.name), ignoreCase = true)
+        val slug = if (sameName) existing.slug else artistSlugFor(request.name)
         // Only check for conflicts if the slug actually changed — renaming to the same
         // effective slug (e.g. fixing capitalization) should not trigger a false positive.
         if (slug != existing.slug) {

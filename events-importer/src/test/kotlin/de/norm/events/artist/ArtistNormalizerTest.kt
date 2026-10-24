@@ -1,6 +1,8 @@
 package de.norm.events.artist
 
+import de.norm.events.scraper.EventSource
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -31,6 +33,24 @@ class ArtistNormalizerTest {
             // A name without an entry slugs its canonical form, as before.
             artistSlugFor("OXO86") shouldBe "oxo-86"
         }
+    }
+
+    @Test
+    fun `a source-scoped entry sends one source's billing of a shared name to its own slug`() {
+        assertSoftly {
+            artistSlugFor("MASCHINE", "admiralspalast:2026-10-24-maschine") shouldBe "maschine-2"
+            // Another source, and the admin API with no source, keep the plain slug.
+            artistSlugFor("Maschine", "derweissehase:2026-10-10-maschine") shouldBe "maschine"
+            artistSlugFor("Maschine") shouldBe "maschine"
+            // The scope is the prefix, not a substring of the event id.
+            artistSlugFor("Maschine", "derweissehase:admiralspalast:1") shouldBe "maschine"
+        }
+    }
+
+    @Test
+    fun `every source scope is the sourceId prefix of a real source`() {
+        val prefixes = EventSource.entries.map { it.sourceIdPrefix }.toSet()
+        sourceScopedArtistSlugPrefixes.filterNot { it in prefixes }.shouldBeEmpty()
     }
 
     @Test

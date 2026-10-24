@@ -45,11 +45,11 @@ no candidates to judge, and `apply` never writes it. Run `collect` again later f
 
 Read the `.json`. For each artist, set `decision` and, for `PROPOSE`, `mbid`:
 
-| Decision  | When                                                                                                                             |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `PROPOSE` | One candidate fits the billing: its genre tags, type (person or group), area and active years match the events and their co-acts |
-| `KEEP`    | No candidate fits clearly, or two fit                                                                                            |
-| `SPLIT`   | The billing shows two different acts on one artist row (the Gore and Göre case). The fix is #2942, not an MBID                   |
+| Decision  | When                                                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `PROPOSE` | One candidate fits the billing: its genre tags, type (person or group), area and active years match the events and their co-acts      |
+| `KEEP`    | No candidate fits clearly, or two fit                                                                                                 |
+| `SPLIT`   | The billing shows two different acts on one artist row (Gore and Göre, or the two Maschines). The fix is a slug override, not an MBID |
 
 - A touring headliner at an arena or a big club, billed with acts of its own genre, is usually the well-known candidate. A local DJ name with three
   candidates and no Berlin one is `KEEP`.

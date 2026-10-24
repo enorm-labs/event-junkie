@@ -155,39 +155,41 @@ class ArtistAssociationSync(
     // -- Resolution --
 
     /**
-     * Batch-fetches known artists by slug and auto-creates the rest.
+     * Batch-fetches known artists by slug and auto-creates the rest. Each name is slugged with its
+     * event's `sourceId`, so a source-scoped override sends a homonym to its own row (#2954).
      *
      * @return artist slug to persisted [ArtistEntity] for every artist the scraped events reference.
      */
-    suspend fun resolveAllArtists(scrapedArtists: List<ScrapedArtist>): Map<String, ArtistEntity> {
+    suspend fun resolveAllArtists(artistsBySourceId: Map<String, List<ScrapedArtist>>): Map<String, ArtistEntity> {
         // Canonicalize before slugging, as the promoter path does: a curated NAME_CORRECTIONS entry can
         // change the slug ("OXO86" resolves to "Oxo 86", `oxo-86`), and slugging the raw name would look
-        // up a different row than [resolveOrCreate] creates.
-        val allArtistSlugs = scrapedArtists.map { artistSlugFor(it.name) }.toSet()
+        // up a different row than [resolveOrCreate] creates. The display name is canonicalized too, so
+        // an act is not frozen SHOUTING by whichever venue imported it first.
+        val nameBySlug =
+            artistsBySourceId
+                .flatMap { (sourceId, artists) -> artists.map { artistSlugFor(it.name, sourceId) to canonicalArtistName(it.name) } }
+                .distinctBy { it.first }
+                .toMap()
         val artistCache =
             artistRepository
-                .findBySlugIn(allArtistSlugs)
+                .findBySlugIn(nameBySlug.keys)
                 .toList()
                 .associateBy { it.slug }
                 .toMutableMap()
 
-        warnAboutAccentOnlyMatches(scrapedArtists, artistCache)
-        artistCache.putAll(artistsByFormerSlug(allArtistSlugs - artistCache.keys))
+        warnAboutAccentOnlyMatches(nameBySlug, artistCache)
+        artistCache.putAll(artistsByFormerSlug(nameBySlug.keys - artistCache.keys))
 
-        // Auto-create only the artists not in the database, with the display name canonicalized first so
-        // an act is not frozen SHOUTING by whichever venue imported it first.
-        scrapedArtists
-            .distinctBy { artistSlugFor(it.name) }
-            .map { canonicalArtistName(it.name) }
-            .forEach { name ->
-                resolveOrCreate(
-                    name = name,
-                    cache = artistCache,
-                    insertIfAbsent = { slug -> artistRepository.insertIfAbsent(name, slug) },
-                    findBySlug = { slug -> artistRepository.findBySlug(slug) },
-                    slug = artistSlugFor(name)
-                )
-            }
+        // Auto-create only the artists not in the database.
+        nameBySlug.forEach { (slug, name) ->
+            resolveOrCreate(
+                name = name,
+                cache = artistCache,
+                insertIfAbsent = { artistRepository.insertIfAbsent(name, it) },
+                findBySlug = { artistRepository.findBySlug(it) },
+                slug = slug
+            )
+        }
 
         return artistCache
     }
@@ -260,7 +262,7 @@ class ArtistAssociationSync(
             val desiredArtistIds = mutableSetOf<Long>()
 
             for ((index, scrapedArtist) in desiredArtists.withIndex()) {
-                val slug = artistSlugFor(scrapedArtist.name)
+                val slug = artistSlugFor(scrapedArtist.name, saved.sourceId)
                 val artistId = requireNotNull(artistCache[slug]?.id) { "Artist '$slug' must be resolved before syncing associations" }
 
                 // `add` returns false when this artist is already desired for this event, as when a lineup
@@ -318,21 +320,18 @@ internal fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> =
  * reached the US band `Gore`. It may also be one act spelled two ways, so this warns and never splits (#2942).
  */
 private fun warnAboutAccentOnlyMatches(
-    scrapedArtists: List<ScrapedArtist>,
+    nameBySlug: Map<String, String>,
     artistCache: Map<String, ArtistEntity>
 ) {
-    scrapedArtists
-        .map { canonicalArtistName(it.name) }
-        .distinct()
-        .forEach { billed ->
-            val stored = artistCache[artistSlugFor(billed)] ?: return@forEach
-            if (differsOnlyByAccents(billed, stored.name)) {
-                logger.warn {
-                    "Billed '$billed' resolved to artist '${stored.name}' (${stored.slug}): the names differ only by accents. " +
-                        "A different act needs an ARTIST_SLUG_OVERRIDES entry"
-                }
+    nameBySlug.forEach { (slug, billed) ->
+        val stored = artistCache[slug] ?: return@forEach
+        if (differsOnlyByAccents(billed, stored.name)) {
+            logger.warn {
+                "Billed '$billed' resolved to artist '${stored.name}' (${stored.slug}): the names differ only by accents. " +
+                    "A different act needs an ARTIST_SLUG_OVERRIDES entry"
             }
         }
+    }
 }
 
 /** A detail-less event whose listing names no act: its stored lineup stands (#2421). */

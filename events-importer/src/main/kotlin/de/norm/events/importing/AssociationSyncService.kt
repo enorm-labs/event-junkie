@@ -56,7 +56,6 @@ class AssociationSyncService(
     ): AssociationOutcome {
         val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
         val (allBilled, heldBack) = artistSync.billedArtists(events)
-        val unverified = heldBack.values.flatten().distinctBy { artistSlugFor(it.name) }
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         val pins = AssociationPins(savedEvents, detailless)
         val pinsKept = keptPins(pins, allBilled, events)
@@ -68,7 +67,7 @@ class AssociationSyncService(
         val promotersPinned = kept(PinnedField.PROMOTERS)
         val genresPinned = kept(PinnedField.GENRES)
         val billed = allBilled.filterKeys { it !in lineupPinned }
-        val artistCache = artistSync.resolveAllArtists(billed.values.flatten() + unverified)
+        val artistCache = artistSync.resolveAllArtists(billedAndHeldBack(billed, heldBack))
         artistSync.syncArtistAssociations(synced(PinnedField.LINEUP), billed, artistCache, detailless)
 
         val promoterEvents = events.map { if (it.sourceId in promotersPinned) it.copy(promoters = emptyList()) else it }
@@ -113,7 +112,7 @@ class AssociationSyncService(
 
         val lineupEvents = open(PinnedField.LINEUP, withLineup)
         val (billed, heldBack) = artistSync.billedArtists(lineupEvents.map { it.second })
-        val artistCache = artistSync.resolveAllArtists(billed.values.flatten() + heldBack.values.flatten().distinctBy { artistSlugFor(it.name) })
+        val artistCache = artistSync.resolveAllArtists(billedAndHeldBack(billed, heldBack))
         val lineupFilled = lineupEvents.filter { (stored, _) -> billed[stored.sourceId].orEmpty().isNotEmpty() }.map { it.first }
         artistSync.syncArtistAssociations(lineupFilled, billed, artistCache, emptySet())
 
@@ -158,7 +157,7 @@ class AssociationSyncService(
             PinnedField.LINEUP,
             desired =
                 artistSync.renamedArtistSlugs(
-                    lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> artistSlugFor(a.name) }.toSet() }
+                    lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> artistSlugFor(a.name, it.sourceId) }.toSet() }
                 ),
             stored = artistSync.storedSlugs(lineup)
         ) +
@@ -294,3 +293,9 @@ data class AssociationFill(
     /** The artist rows the fill billed or held back, for the MusicBrainz sweep after the commit (#1567). */
     val touchedArtistIds: Set<Long>
 )
+
+/** The billed and the held-back artists of each `sourceId` in one map: a held-back name is resolved too, as an unbilled row. */
+private fun billedAndHeldBack(
+    billed: Map<String, List<ScrapedArtist>>,
+    heldBack: Map<String, List<ScrapedArtist>>
+): Map<String, List<ScrapedArtist>> = (billed.keys + heldBack.keys).associateWith { billed[it].orEmpty() + heldBack[it].orEmpty() }
