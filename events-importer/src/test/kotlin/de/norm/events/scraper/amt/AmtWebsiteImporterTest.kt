@@ -86,6 +86,19 @@ class AmtWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents takes each night's poster from its event page, and none from the placeholder`() =
+        runTest {
+            val withPoster = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
+            withPoster.map { it.imageUrl }.distinct() shouldBe
+                listOf("https://cdn.prod.website-files.com/692dbb0dfdd864c5db8ed6f0/6abfe41caea6cbfa177ddb42_f622930102e3188e3699b808740d6e2320dd1fb7.webp")
+
+            coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixture("amt-event-dollhaus-x-slime.html", firstArg()) }
+            val withPlaceholder = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
+            withPlaceholder.all { it.imageUrl == null } shouldBe true
+            withPlaceholder.all { "Slime and DOLLHAUS come together" in it.description.orEmpty() } shouldBe true
+        }
+
+    @Test
     fun `importEvents keeps the month page row, flagged, when its event page fails`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } throws HttpFetchException(503, "event page")

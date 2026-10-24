@@ -41,7 +41,6 @@ says so.
 | `AMT`                  | `START_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
 | `AMT`                  | `DOORS_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
 | `AMT`                  | `PRICE`            | the month pages leave the price cell out, and the event pages print no figure                                                                    | —     |
-| `AMT`                  | `IMAGE`            | the event page carries icons and one picture shared by every night, no poster of its own                                                         | —     |
 | `AMT`                  | `GENRE`            | the event pages name no style                                                                                                                    | —     |
 | `AMT`                  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ALTE_KANTINE`         | `TICKET_URL`       | the night states a door price, and the venue sells no tickets online                                                                             | —     |
