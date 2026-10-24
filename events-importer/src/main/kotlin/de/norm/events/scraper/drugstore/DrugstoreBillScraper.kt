@@ -48,8 +48,8 @@ private fun parseAct(part: String): Pair<String, String?>? {
 /** The bill line, from its opening word to the end of the line. */
 private val BILL_LINE = Regex("""(?im)^\s*(?:featuring:|w/)\s*(.+)$""")
 
-/** The ` + ` between two acts. */
-private val ACT_SEPARATOR = Regex("""\s+\+\s+""")
+/** The ` + ` between two acts. radar writes a non-breaking space after the `+`, which `\s` does not match. */
+private val ACT_SEPARATOR = Regex("""[\s\u00A0]+\+[\s\u00A0]+""")
 
 /** A name and its bracket: `Sternenwarte (Dungeon Synth / Noise // Berlin)`. */
 private val BRACKETED_ACT = Regex("""(.+?)\s*\(([^()]*)\)\s*""")

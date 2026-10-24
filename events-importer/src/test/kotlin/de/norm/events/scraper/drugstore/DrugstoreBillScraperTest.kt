@@ -47,6 +47,39 @@ class DrugstoreBillScraperTest {
     }
 
     @Test
+    fun `splits at a plus followed by a non-breaking space, as radar writes it`() {
+        val bill =
+            parseDrugstoreBill(
+                "w/\u00A0Ploutonion (DeathMetal // Berlin) +\u00A0Krachmaninov (Blackened Crust // Berlin) +\u00A0" +
+                    "Teufelnacht (Teufelrock // Münster) +\u00A0Frost, Pisse, Elend (Antifascist BlackMetal // Kiel)"
+            )
+        bill.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "Ploutonion" to "HEADLINER",
+                "Krachmaninov" to "SUPPORT",
+                "Teufelnacht" to "SUPPORT",
+                "Frost, Pisse, Elend" to "SUPPORT"
+            )
+        bill.genre shouldBe "DeathMetal, Blackened Crust, Teufelrock, Antifascist BlackMetal"
+    }
+
+    @Test
+    fun `keeps every act after a non-breaking space, the unbracketed last one included`() {
+        val bill =
+            parseDrugstoreBill(
+                "w/\u00A0Stoned Medusa (Psych Doom // Berlin) +\u00A0Acid Throne (Blackened Doom // UK) +\u00A0" +
+                    "Witchrot // Fuzzed out PsychDoom // Kanada"
+            )
+        bill.artists.map { it.name } shouldBe listOf("Stoned Medusa", "Acid Throne", "Witchrot")
+    }
+
+    @Test
+    fun `splits at a non-breaking space before the plus as well`() {
+        val bill = parseDrugstoreBill("Featuring: Finalizer (Hardcore)\u00A0+ Pyre (Hardcore)")
+        bill.artists.map { it.name } shouldBe listOf("Finalizer", "Pyre")
+    }
+
+    @Test
     fun `bills no one for prose without a bill line`() {
         val bill = parseDrugstoreBill("CAYENNE + SEITENSPRUNG AM DIENSTAG\nBeginn: 19 Uhr\nEintritt frei!")
         bill.artists.shouldBeEmpty()
