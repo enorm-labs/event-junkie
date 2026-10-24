@@ -1,5 +1,6 @@
 package de.norm.events.image
 
+import de.norm.events.scraper.PLAIN_SCRAPER_USER_AGENT
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.shouldBe
@@ -33,13 +34,15 @@ import javax.imageio.ImageIO
 class ImageFetcherTest {
     private lateinit var server: MockWebServer
 
-    private fun fetcher(properties: ImageProperties = ImageProperties(fetchEnabled = true)) =
-        ImageFetcher(
-            webClient = testWebClient(),
-            ioDispatcher = Dispatchers.IO,
-            validator = permissiveValidator(),
-            properties = properties
-        )
+    private fun fetcher(
+        properties: ImageProperties = ImageProperties(fetchEnabled = true),
+        plainUserAgentHosts: Set<String> = emptySet()
+    ) = ImageFetcher(
+        webClient = testWebClient(plainUserAgentHosts),
+        ioDispatcher = Dispatchers.IO,
+        validator = permissiveValidator(),
+        properties = properties
+    )
 
     /** Permits loopback, which the real guard refuses by design. See this class's KDoc. */
     private fun permissiveValidator() =
@@ -73,6 +76,17 @@ class ImageFetcherTest {
             // The hash is the storage key from PR 4 onward, so it has to be of the bytes and
             // nothing else. Two events sharing a poster converge on one object because of this.
             result.contentHash shouldBe sha256Hex(png)
+        }
+
+    // Clärchens Ballhaus' WAF refused every poster under the shared User-Agent (#3825).
+    @Test
+    fun `sends the plain User-Agent to a host that needs it`() =
+        runTest {
+            server.enqueue(imageResponse(pngBytes(width = 4, height = 4)))
+
+            fetcher(plainUserAgentHosts = setOf(server.hostName)).fetch(url())
+
+            server.takeRequest().headers["User-Agent"] shouldBe PLAIN_SCRAPER_USER_AGENT
         }
 
     @Test
@@ -344,8 +358,8 @@ class ImageFetcherTest {
 
 private val PNG_MAGIC_BYTES = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
 
-private fun testWebClient(): WebClient {
-    val properties = ScraperProperties(politeDelayMillis = 0)
+private fun testWebClient(plainUserAgentHosts: Set<String>): WebClient {
+    val properties = ScraperProperties(politeDelayMillis = 0, plainUserAgentHosts = plainUserAgentHosts)
     val config = ScraperHttpClientConfig()
     return config.scraperBaseWebClient(
         webClientBuilder = WebClient.builder(),

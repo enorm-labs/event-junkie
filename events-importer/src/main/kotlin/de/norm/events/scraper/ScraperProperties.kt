@@ -24,6 +24,11 @@ data class ScraperProperties(
      * a cold group search can take over 30 s (see #2840).
      */
     val hostResponseTimeouts: Map<String, Duration> = emptyMap(),
+    /**
+     * The hosts sent [PLAIN_SCRAPER_USER_AGENT] in place of the shared `User-Agent`: their WAF refuses the
+     * `(compatible; …)` frame. Per host, not per importer, so the page, its images and its `robots.txt` all pass (#3825).
+     */
+    val plainUserAgentHosts: Set<String> = emptySet(),
     /** Politeness delay between consecutive detail page fetches to avoid overwhelming target servers. */
     val politeDelayMillis: Long = DEFAULT_POLITE_DELAY_MILLIS,
     /**
