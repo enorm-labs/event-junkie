@@ -107,4 +107,16 @@ describe('MultiSelectFilter', () => {
 
     expect(wrapper.emitted('change')).toEqual([[[]]])
   })
+
+  it('closes the list on Done without changing the selection', async () => {
+    await open(['PARTY'])
+    const done = [...document.body.querySelectorAll('button')].find(
+      (it) => it.textContent?.trim() === 'Done',
+    )
+    done?.click()
+    await flushPromises()
+
+    expect(document.body.querySelector('fieldset')).toBeNull()
+    expect(wrapper.emitted('change')).toBeUndefined()
+  })
 })

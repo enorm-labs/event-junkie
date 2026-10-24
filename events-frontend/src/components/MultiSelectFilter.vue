@@ -4,10 +4,13 @@
  * of checkboxes and a clear action. It holds no URL logic. It emits the whole new selection in
  * option order, so the URL, and the BFF's cache key, do not depend on the order of the ticks.
  * With `counts`, each option shows how many results ticking it leaves, and one that leaves none is
- * disabled rather than hidden, so the list does not jump (#2671).
+ * disabled rather than hidden, so the list does not jump (#2671). Every tick applies at once, so
+ * "Done" only closes the list: without it, visitors looked for a way to confirm.
  */
 import { computed, useId } from 'vue'
 import { ChevronDown } from '@lucide/vue'
+import { PopoverClose } from 'reka-ui'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn, FIELD_CLASS } from '@/lib/utils'
@@ -34,6 +37,7 @@ const props = defineProps<{
   class?: string
 }>()
 
+const { t } = useI18n()
 const hintId = useId()
 
 const emit = defineEmits<{ change: [values: string[]] }>()
@@ -100,15 +104,20 @@ function toggle(value: string, checked: boolean) {
           >
         </label>
       </fieldset>
-      <Button
-        :disabled="!selected.length"
-        size="sm"
-        type="button"
-        variant="ghost"
-        @click="emit('change', [])"
-      >
-        {{ clearLabel }}
-      </Button>
+      <div class="mt-2 flex justify-between gap-2">
+        <Button
+          :disabled="!selected.length"
+          size="sm"
+          type="button"
+          variant="ghost"
+          @click="emit('change', [])"
+        >
+          {{ clearLabel }}
+        </Button>
+        <PopoverClose as-child>
+          <Button size="sm" type="button">{{ t('common.actions.done') }}</Button>
+        </PopoverClose>
+      </div>
     </PopoverContent>
   </Popover>
 </template>

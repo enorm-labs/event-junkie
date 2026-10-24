@@ -35,7 +35,8 @@
     "browseEvents": "Events durchstöbern",
     "browseCalendar": "Zum Kalender",
     "backToHome": "Zurück zur Startseite",
-    "showMore": "Mehr anzeigen"
+    "showMore": "Mehr anzeigen",
+    "done": "Fertig"
   },
   "states": {
     "loading": "Wird aufgelegt …",
