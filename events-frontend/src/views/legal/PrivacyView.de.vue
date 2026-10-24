@@ -382,10 +382,11 @@ const { t } = useI18n()
         den Mailversand vor Missbrauch zu schützen.
       </p>
       <p>
-        <strong>Speicherdauer:</strong> Dein Konto bleibt, bis du es löschst. Meldest du dich
-        <strong>24 Monate</strong> lang nicht an, lösche ich es; einen Monat vorher bekommst du eine
-        Mail. Eine Sitzung endet 30 Tage nach ihrer letzten Nutzung oder wenn du dich abmeldest. Ein
-        Link verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich.
+        <strong>Speicherdauer:</strong> Dein Konto bleibt, bis du es löschst. Nutzt du es
+        <strong>24 Monate</strong> lang nicht, lösche ich es; einen Monat vorher bekommst du eine
+        Mail. Als Nutzung zählt jede Anmeldung und jeder Besuch, bei dem du angemeldet bist. Eine
+        Sitzung endet 30 Tage nach ihrer letzten Nutzung oder wenn du dich abmeldest. Ein Link
+        verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich.
       </p>
       <p>
         <strong>Selbst erledigen:</strong> Auf deiner Kontoseite kannst du alle gespeicherten Daten

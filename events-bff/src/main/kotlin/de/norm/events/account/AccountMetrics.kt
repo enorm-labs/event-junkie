@@ -13,10 +13,16 @@ class AccountMetrics(
 ) {
     private val links = LinkOutcome.entries.associateWith { registry.counter(LINK, TAG_OUTCOME, it.tag) }
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
+    private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
 
     fun record(outcome: LinkOutcome) = links.getValue(outcome).increment()
 
     fun record(outcome: SignInOutcome) = signIns.getValue(outcome).increment()
+
+    fun record(
+        outcome: CleanupOutcome,
+        count: Long = 1
+    ) = cleanup.getValue(outcome).increment(count.toDouble())
 
     companion object {
         /** `bff.auth.link{outcome}`: requests for a sign-in link. */
@@ -24,6 +30,9 @@ class AccountMetrics(
 
         /** `bff.auth.sign_in{outcome}`: links used. */
         const val SIGN_IN = "bff.auth.sign_in"
+
+        /** `bff.accounts.cleanup{outcome}`: what the daily cleanup of inactive accounts, links and sessions did (#3905). */
+        const val CLEANUP = "bff.accounts.cleanup"
 
         const val TAG_OUTCOME = "outcome"
     }
@@ -57,4 +66,20 @@ enum class SignInOutcome(
 
     /** Unknown, used or expired. One outcome, because the answer to the caller is one answer. */
     INVALID("invalid")
+}
+
+/** What the daily cleanup did, counted per row. [FAILED] counts the steps that threw. */
+enum class CleanupOutcome(
+    val tag: String
+) {
+    LINKS_PURGED("links_purged"),
+    SESSIONS_PURGED("sessions_purged"),
+
+    /** A warning mail went out. */
+    WARNED("warned"),
+
+    /** The relay refused a warning. The claim is released, so the next run tries again. */
+    WARN_FAILED("warn_failed"),
+    DELETED("deleted"),
+    FAILED("failed")
 }

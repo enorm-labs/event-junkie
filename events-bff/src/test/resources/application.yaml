@@ -67,6 +67,9 @@ management:
 # Repeated because this file shadows the main one, and `WebFluxConfiguration` reads the property
 # with no fallback. `MaxPageSizeConfigTest` asserts the two numbers agree.
 app:
+  # No scheduled jobs in tests: InactiveAccountCleanupTest calls the cleanup directly.
+  scheduling:
+    enabled: false
   site:
     origin: https://event-junkie.de
   mail:

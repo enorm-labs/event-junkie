@@ -46,14 +46,20 @@ class SessionStore(
             .map { row -> toAccount(row) to row.required("last_seen_at", Instant::class.java) }
             .awaitOneOrNull()
 
+    /**
+     * Renews the session and counts it as use of the account: `last_sign_in_at` moves and a pending deletion warning is cleared (#3905).
+     * Without that, a visitor who stays signed in would never sign in again and be deleted while using the account.
+     */
     suspend fun extendSession(
         tokenHash: String,
         now: Instant,
         expiresAt: Instant
     ) {
         db
-            .sql("UPDATE accounts.session SET last_seen_at = :now, expires_at = :expires WHERE token_hash = :hash")
-            .bind("hash", tokenHash)
+            .sql(
+                "WITH s AS (UPDATE accounts.session SET last_seen_at = :now, expires_at = :expires WHERE token_hash = :hash RETURNING account_id) " +
+                    "UPDATE accounts.account a SET last_sign_in_at = :now, deletion_warned_at = NULL FROM s WHERE a.id = s.account_id"
+            ).bind("hash", tokenHash)
             .bind("now", now)
             .bind("expires", expiresAt)
             .await()
@@ -67,6 +73,14 @@ class SessionStore(
         db
             .sql("DELETE FROM accounts.session WHERE account_id = :account")
             .bind("account", accountId)
+            .fetch()
+            .awaitRowsUpdated()
+
+    /** Sessions that expired before [now]. A lookup already ignores them; this keeps the table from growing. */
+    suspend fun deleteExpired(now: Instant): Long =
+        db
+            .sql("DELETE FROM accounts.session WHERE expires_at < :now")
+            .bind("now", now)
             .fetch()
             .awaitRowsUpdated()
 
