@@ -94,6 +94,6 @@ const dimensions = computed(() =>
     :class="imgClass"
     class="flex aspect-poster items-center justify-center bg-muted text-muted-foreground"
   >
-    <ImageOff aria-hidden="true" class="size-1/4 max-h-12 min-h-4 min-w-4 max-w-12" />
+    <ImageOff aria-hidden="true" class="size-1/4 max-h-12 min-h-4 max-w-12 min-w-4" />
   </div>
 </template>
