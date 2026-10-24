@@ -43,6 +43,8 @@ data class ImageProperties(
      * requested every night forever — load on a venue that returns nothing.
      */
     val retryFailedAfter: Duration = Duration.ofDays(DEFAULT_RETRY_FAILED_DAYS),
+    /** How long a 429 is remembered before it is retried. The host asked us to slow down; the URL is not broken (#3858). */
+    val retryThrottledAfter: Duration = Duration.ofHours(DEFAULT_RETRY_THROTTLED_HOURS),
     /** How many URLs one scheduled pass takes on, so a first run does not fetch the whole corpus at once. */
     val batchSize: Int = DEFAULT_BATCH_SIZE
 ) {
@@ -51,6 +53,7 @@ data class ImageProperties(
         private const val DEFAULT_MAX_PIXELS = 50L * 1000 * 1000
         private const val DEFAULT_REFRESH_DAYS = 30L
         private const val DEFAULT_RETRY_FAILED_DAYS = 7L
+        private const val DEFAULT_RETRY_THROTTLED_HOURS = 1L
         private const val DEFAULT_BATCH_SIZE = 200
     }
 }

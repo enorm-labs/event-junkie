@@ -841,6 +841,8 @@ reaches a browser.
 
 **`failed_at` and `failure_reason` are a negative cache, not an error log.** The import runs daily,
 so without them a dead URL is requested every night forever — load on a venue that returns nothing.
+A failed URL is retried after `app.images.retry-failed-after` (7 days). A `HTTP 429` is retried after
+`app.images.retry-throttled-after` (1 hour), because the host asked us to slow down and the URL is not broken.
 `deleted_at` is set by the takedown route rather than by a `DELETE`. A removed image is therefore
 not fetched again by the next pass, which still sees the URL on the page.
 

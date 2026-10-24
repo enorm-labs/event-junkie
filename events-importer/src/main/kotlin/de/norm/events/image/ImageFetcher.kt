@@ -219,6 +219,9 @@ class ImageFetcher(
     }
 }
 
+/** The [ImageFetchResult.Rejected] reason for a 429. The refresh query matches it, so it is the stored text. */
+const val THROTTLED_REASON = "HTTP 429"
+
 /** What one fetch attempt produced. */
 sealed interface ImageFetchResult {
     /** The venue answered 304, so what we recorded before still stands. */

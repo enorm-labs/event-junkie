@@ -78,6 +78,7 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
 
     /**
      * Rows worth asking about again: a success old enough to re-check, or a failure past its cooldown.
+     * A 429 cools down for `throttledBefore`, any other failure for `retryBefore`.
      *
      * A deleted row is never a candidate. That is what stops a takedown being undone by the next pass.
      *
@@ -92,7 +93,8 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         SELECT * FROM $EVENTS_SCHEMA.cached_image
         WHERE deleted_at IS NULL
           AND ((fetched_at IS NOT NULL AND failed_at IS NULL AND last_seen_at < :refreshBefore)
-            OR (failed_at IS NOT NULL AND failed_at < :retryBefore))
+            OR (failed_at IS NOT NULL
+                AND failed_at < CASE WHEN failure_reason = '$THROTTLED_REASON' THEN :throttledBefore ELSE :retryBefore END))
         ORDER BY last_seen_at
         LIMIT :limit
         """
@@ -100,6 +102,7 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
     fun findDueForRefresh(
         refreshBefore: Instant,
         retryBefore: Instant,
+        throttledBefore: Instant,
         limit: Int
     ): Flow<CachedImageEntity>
 
