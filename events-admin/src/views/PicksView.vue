@@ -106,7 +106,7 @@ async function clear(event: AdminEvent) {
         </TableHeader>
         <TableBody>
           <TableRow v-for="event in picks" :key="event.id" data-testid="pick-row">
-            <TableCell class="whitespace-normal break-words">
+            <TableCell class="break-words whitespace-normal">
               <button
                 class="text-left underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 data-testid="pick-title"

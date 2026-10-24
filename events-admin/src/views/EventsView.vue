@@ -237,7 +237,7 @@ function statusVariant(status: string) {
             <TableCell class="whitespace-normal">
               {{ venueNames.get(event.venueId) ?? `Venue #${event.venueId}` }}
             </TableCell>
-            <TableCell class="whitespace-normal break-words">
+            <TableCell class="break-words whitespace-normal">
               <button
                 class="text-left underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 type="button"

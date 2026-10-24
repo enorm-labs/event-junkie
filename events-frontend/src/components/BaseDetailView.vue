@@ -134,7 +134,7 @@ const { compact } = useCompactView()
         <div v-if="description?.text" class="space-y-2">
           <p
             :lang="description.lang ?? undefined"
-            class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
+            class="text-prose wrap-anywhere whitespace-pre-line text-foreground/90"
           >
             {{ description.text }}
           </p>
