@@ -11,8 +11,10 @@ import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecCostAmounts
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecFromPrice
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
@@ -50,7 +52,7 @@ class BrotfabrikApiScraper {
             logger.debug { "Skipping Brotfabrik event '$title': not the evening stage programme" }
             return null
         }
-        val prices = event.path("cost_details").path("values").mapNotNull { it.asString("").toBigDecimalOrNull() }
+        val prices = event.tecCostAmounts()
 
         return ScrapedEvent(
             title = title,
@@ -62,7 +64,7 @@ class BrotfabrikApiScraper {
             sourceUrl = url,
             sourceId = "${EventSource.BROTFABRIK.sourceIdPrefix}${URI(url).path.removePrefix(EVENT_PATH).trim('/')}",
             ticketUrl = event.stringOrNull("website"),
-            pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
+            pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size != 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = hasSoldOutMarker(title)

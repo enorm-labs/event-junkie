@@ -14,8 +14,10 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecCostAmounts
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecFromPrice
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
 import de.norm.events.scraper.tecSourceId
@@ -41,7 +43,7 @@ import java.math.BigDecimal
  * - **A concert without a credit line bills its title** (`Igr Titov (acoustic)`), unless the title
  * holds a colon: `Peyvand #3: Iran Ava – …` names a series night, and its players are only in the prose.
  * In `LLULL MACHINES PRESENT DEAR BOY` the act presents a work, so the work comes off.
- * - **`cost_details` holds one value, two for a range, `0` for free.**
+ * - **`cost_details` holds one value, two for a range, `0` for free.** A range stores its lower bound as the price and keeps the cost text as the note.
  */
 class PandaPlatformaApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -63,7 +65,7 @@ class PandaPlatformaApiScraper {
         val categories = event.tecTermNames("categories").map { it.lowercase() }
         val eventType = typeOf(categories)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
-        val prices = event.path("cost_details").path("values").mapNotNull { it.asString("").toBigDecimalOrNull() }
+        val prices = event.tecCostAmounts()
 
         return ScrapedEvent(
             title = title,
@@ -79,7 +81,7 @@ class PandaPlatformaApiScraper {
             sourceId = event.tecSourceId(EventSource.PANDA_PLATFORMA, slug),
             ticketUrl = event.stringOrNull("website")?.takeIf { it.isNotBlank() },
             genre = categories.mapNotNull { STYLE_BY_CATEGORY[it] }.joinToString(", ").ifEmpty { null },
-            pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
+            pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = hasSoldOutMarker(title),

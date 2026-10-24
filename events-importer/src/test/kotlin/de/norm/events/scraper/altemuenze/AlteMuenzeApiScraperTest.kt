@@ -1,5 +1,6 @@
 package de.norm.events.scraper.altemuenze
 
+import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContainAnyOf
@@ -7,6 +8,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ObjectNode
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -14,16 +17,32 @@ import java.time.LocalTime
 class AlteMuenzeApiScraperTest {
     private val scraper = AlteMuenzeApiScraper()
 
-    private val page by lazy {
-        scraper.scrapePage(
-            javaClass.classLoader
-                .getResourceAsStream("scraper/altemuenze/altemuenze-events.json")!!
-                .bufferedReader()
-                .readText()
-        )
+    private val fixture by lazy {
+        javaClass.classLoader
+            .getResourceAsStream("scraper/altemuenze/altemuenze-events.json")!!
+            .bufferedReader()
+            .readText()
     }
 
+    private val page by lazy { scraper.scrapePage(fixture) }
+
     private fun event(slug: String) = page.events.single { it.sourceId == "alte_muenze:$slug" }
+
+    /** The fixture's `opera-days-at-alte-muenze` event alone, priced at [cost] with [amounts] as its `cost_details`. */
+    private fun pricedAs(
+        cost: String,
+        vararg amounts: String
+    ): ScrapedEvent =
+        JsonMapper().let { mapper ->
+            val root = mapper.readTree(fixture) as ObjectNode
+            val events = root.withArray("events")
+            val night = events.first { it.path("slug").asString() == "opera-days-at-alte-muenze" } as ObjectNode
+            night.put("cost", cost)
+            night.withObject("cost_details").putArray("values").apply { amounts.forEach(::add) }
+            events.removeAll()
+            events.add(night)
+            scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+        }
 
     @Test
     fun `keeps the programme and drops tours, workshops, runs, brunches, the conference and uncategorised rows`() {
@@ -125,5 +144,33 @@ class AlteMuenzeApiScraperTest {
         night.title shouldBe "Night"
         night.status shouldBe "CANCELLED"
         night.soldOut shouldBe false
+    }
+
+    @Test
+    fun `stores the lowest tier as a from price and keeps the tiers as the note`() {
+        pricedAs("€15", "15").run {
+            pricePresale shouldBe BigDecimal("15")
+            priceNote.shouldBeNull()
+            free shouldBe false
+        }
+        pricedAs("€10 – €15", "10", "15").run {
+            pricePresale shouldBe BigDecimal("10")
+            priceNote shouldBe "€10 – €15"
+            free shouldBe false
+        }
+        pricedAs("Free", "0").run {
+            pricePresale.shouldBeNull()
+            priceNote.shouldBeNull()
+            free shouldBe true
+        }
+        pricedAs("€8 – €20", "12", "8", "20").run {
+            pricePresale shouldBe BigDecimal("8")
+            priceNote shouldBe "€8 – €20"
+        }
+        pricedAs("€0 – €10", "0", "10").run {
+            pricePresale.shouldBeNull()
+            priceNote shouldBe "€0 – €10"
+            free shouldBe false
+        }
     }
 }

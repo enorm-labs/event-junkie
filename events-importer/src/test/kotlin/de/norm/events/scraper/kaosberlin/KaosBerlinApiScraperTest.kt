@@ -29,6 +29,22 @@ class KaosBerlinApiScraperTest {
 
     private fun event(slug: String) = page.events.single { it.sourceId == "kaos_berlin:$slug" }
 
+    /** The fixture's `crashpad-psychrusader-slothtronaut-live-kaos-berlin` event alone, priced at [cost] with [amounts] as its `cost_details`. */
+    private fun pricedAs(
+        cost: String,
+        vararg amounts: String
+    ): ScrapedEvent =
+        JsonMapper().let { mapper ->
+            val root = mapper.readTree(fixture) as ObjectNode
+            val events = root.withArray("events")
+            val night = events.first { it.path("slug").asString() == "crashpad-psychrusader-slothtronaut-live-kaos-berlin" } as ObjectNode
+            night.put("cost", cost)
+            night.withObject("cost_details").putArray("values").apply { amounts.forEach(::add) }
+            events.removeAll()
+            events.add(night)
+            scraper.scrapePage(mapper.writeValueAsString(root)).events.single()
+        }
+
     private fun names(slug: String) = event(slug).artists.map { it.name }
 
     /** The fixture's first event alone, with [title], [categories] and [website] in place of its own; null when skipped. */
@@ -181,5 +197,33 @@ class KaosBerlinApiScraperTest {
 
         broken.events.shouldBeEmpty()
         broken.nextPageUrl.shouldBeNull()
+    }
+
+    @Test
+    fun `stores the lowest tier as a from price and keeps the tiers as the note`() {
+        pricedAs("€15", "15").run {
+            pricePresale shouldBe BigDecimal("15")
+            priceNote.shouldBeNull()
+            free shouldBe false
+        }
+        pricedAs("€10 – €15", "10", "15").run {
+            pricePresale shouldBe BigDecimal("10")
+            priceNote shouldBe "€10 – €15"
+            free shouldBe false
+        }
+        pricedAs("Free", "0").run {
+            pricePresale.shouldBeNull()
+            priceNote.shouldBeNull()
+            free shouldBe true
+        }
+        pricedAs("€8 – €20", "12", "8", "20").run {
+            pricePresale shouldBe BigDecimal("8")
+            priceNote shouldBe "€8 – €20"
+        }
+        pricedAs("€0 – €10", "0", "10").run {
+            pricePresale.shouldBeNull()
+            priceNote shouldBe "€0 – €10"
+            free shouldBe false
+        }
     }
 }

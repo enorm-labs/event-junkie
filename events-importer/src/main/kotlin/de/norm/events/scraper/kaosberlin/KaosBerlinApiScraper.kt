@@ -13,8 +13,10 @@ import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecCostAmounts
 import de.norm.events.scraper.tecDateTime
 import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecFromPrice
 import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
 import de.norm.events.scraper.tecSourceId
@@ -57,7 +59,7 @@ class KaosBerlinApiScraper {
         val categoryType = categories.firstNotNullOfOrNull { mapEventType(it, CATEGORY_TYPES) }
         val eventType = if (concertMarked) EventType.CONCERT.name else categoryType ?: inferVenueFormatType(title, null, TITLE_FORMATS)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
-        val prices = event.path("cost_details").path("values").mapNotNull { it.asString("").toBigDecimalOrNull() }
+        val prices = event.tecCostAmounts()
         val cost = event.tecText("cost")
 
         return ScrapedEvent(
@@ -73,7 +75,7 @@ class KaosBerlinApiScraper {
             sourceUrl = event.stringOrNull("url") ?: return null,
             sourceId = event.tecSourceId(EventSource.KAOS_BERLIN, slug),
             ticketUrl = ticketUrl(event),
-            pricePresale = prices.singleOrNull()?.takeIf { it.signum() > 0 },
+            pricePresale = tecFromPrice(prices),
             priceNote = cost?.takeIf { prices.size > 1 || (prices.isEmpty() && !UNKNOWN_COST.matches(it)) },
             free = detectFree(pricePresale = prices.singleOrNull(), priceNote = cost),
             artists = if (eventType == EventType.CONCERT.name) billedActs(title, concertMarked) else emptyList(),
