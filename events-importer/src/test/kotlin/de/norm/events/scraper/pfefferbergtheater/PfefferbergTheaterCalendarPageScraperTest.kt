@@ -30,6 +30,21 @@ class PfefferbergTheaterCalendarPageScraperTest {
         )
     }
 
+    private val maerchenUrl = "https://pfefferberg-theater.de/spielplan/maerchenimglaspalast26_27/"
+
+    private val maerchen by lazy {
+        scraper.scrape(
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/pfefferbergtheater/pfefferbergtheater-maerchen.html")!!
+                    .bufferedReader()
+                    .readText(),
+                maerchenUrl
+            ),
+            maerchenUrl
+        )
+    }
+
     private fun event(sourceId: String) = events.single { it.sourceId == "pfefferberg_theater:$sourceId" }
 
     @Test
@@ -60,6 +75,20 @@ class PfefferbergTheaterCalendarPageScraperTest {
     @Test
     fun `marks a children's show by the house's category`() {
         events.first { it.title == "Der himmlische Zirkus" }.forChildrenPhrase shouldBe "Kindertheater"
+    }
+
+    @Test
+    fun `reads the Märchen im Glaspalast page into the Glaspalast`() {
+        maerchen shouldHaveSize 92
+        maerchen.all { it.room == "Glaspalast" && it.eventType == "SHOW" } shouldBe true
+        maerchen.single { it.sourceId == "pfefferberg_theater:33698" }.run {
+            title shouldBe "Spielzeiteröffnung mit Premieren: Der Tannenbaum | Das Mädchen mit den Schwefelhölzern"
+            subtitle shouldBe "Hexenberg Ensemble"
+            eventDate shouldBe LocalDate.of(2026, 11, 13)
+            startTime shouldBe LocalTime.of(19, 30)
+            artists.shouldBeEmpty()
+        }
+        events.none { it.room != null } shouldBe true
     }
 
     @Test
