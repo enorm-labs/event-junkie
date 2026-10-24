@@ -378,3 +378,39 @@ describe('EventFilterBar festival chips (#3273)', () => {
     expect(pressed('Fête de la Musique 2027')).toBe('true')
   })
 })
+
+describe('EventFilterBar price caps', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  it('sets a cap in one tap and clears it on the second', async () => {
+    await mountAt('/events?minPrice=5')
+    expect(pressed('Up to €20')).toBe('false')
+
+    await click('Up to €20')
+    expect(router.currentRoute.value.query).toMatchObject({ maxPrice: '20' })
+    expect(router.currentRoute.value.query.minPrice).toBeUndefined()
+    expect(pressed('Up to €20')).toBe('true')
+    expect(pressed('Up to €10')).toBe('false')
+
+    await click('Up to €20')
+    expect(router.currentRoute.value.query.maxPrice).toBeUndefined()
+  })
+
+  it('does not mark a cap that a typed lower bound narrows', async () => {
+    await mountAt('/events?minPrice=5&maxPrice=20')
+    expect(pressed('Up to €20')).toBe('false')
+  })
+
+  it('makes a cap and Free only exclude each other', async () => {
+    await mountAt('/events?free=true')
+    await click('Up to €10')
+    expect(router.currentRoute.value.query.free).toBeUndefined()
+
+    await click('Free only')
+    expect(router.currentRoute.value.query).toMatchObject({ free: 'true' })
+    expect(router.currentRoute.value.query.maxPrice).toBeUndefined()
+  })
+})
