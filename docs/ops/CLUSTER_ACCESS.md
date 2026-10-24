@@ -219,7 +219,18 @@ rules, the `/api` split and the middlewares, so it tests a different topology th
 ### Expect a certificate warning, and do not fix it the easy way
 
 The certificate is real and correctly issued: for `staging.event-junkie.de`, via DNS-01, valid 90 days. But it comes from Let's Encrypt's **staging** CA, whose
-root no browser trusts. Click through it.
+root no browser trusts. Firefox and a fresh browser profile show the warning with a link to continue. Use that link.
+
+**Chrome shows no link to continue after a visit to production.** Production sends `Strict-Transport-Security` with `includeSubDomains`. After one visit
+to `event-junkie.de`, Chrome requires a trusted certificate on every subdomain, staging included. Typing `thisisunsafe` on the error page can bypass
+it, but a managed Chrome can switch that off. Open staging in a throwaway profile instead, which has no HSTS entry:
+
+```sh
+open -na "Google Chrome" --args --user-data-dir="$TMPDIR/ej-staging" https://staging.event-junkie.de/
+```
+
+A link from a sign-in mail opens in your normal profile. Copy it into the throwaway window instead. Delete the profile afterwards with
+`rm -rf "$TMPDIR/ej-staging"`.
 
 **Do not install the Let's Encrypt staging root to silence the warning.** It issues to anyone who asks, so trusting it means trusting a CA that will happily
 vouch for any domain, for every site you visit. That is a permanent change to your machine, to remove one warning on one host you reach through a tunnel.
@@ -488,5 +499,6 @@ was selected before. That mattered less when the only clusters were local. It ma
 | **Everything hangs**                           | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel                                                                                                                               |
 | **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts`                                                                                                                                          |
 | **Certificate warning in the browser**         | Also correct. Staging issues from Let's Encrypt's _staging_ CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11                                                                             |
+| **Chrome offers no way past the warning**      | Production's HSTS header covers subdomains. Open staging in a throwaway Chrome profile (§6)                                                                                                                       |
 | **`no pg_hba.conf entry for host`**            | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §7, do not widen `pg_hba`                                               |
 | **k3d: connection refused after a recreate**   | A saved kubeconfig. k3d assigns a new API port, CA and client cert every time — re-merge rather than keeping a copy                                                                                               |
