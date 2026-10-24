@@ -155,8 +155,13 @@ chose, and publicly announced event data (§7.3). A visitor who signs in adds an
 cookies (§7.4). The account is optional, and nothing on the site needs one.
 
 **The account's deletion route is the account page** (#3887). The visitor deletes the account there, and the deletion
-takes the sessions with it. An account without a sign-in for 24 months is deleted, with a warning mail a month before
-(#3905). Expired links and sessions are deleted daily by the same job. §6 of both notices states all three.
+takes the sessions with it. `InactiveAccountCleanup` in the BFF runs daily at 04:30 and does the rest (#3905):
+
+- It deletes expired sign-in links and sessions.
+- It sends a warning mail to an account without a sign-in for 23 months. A sign-in after the mail cancels the deletion.
+- It deletes an account without a sign-in for 24 months, but only when the warning is at least 30 days old.
+
+§6 of both notices states all three.
 
 ### 7.2 The Art. 13 checklist
 

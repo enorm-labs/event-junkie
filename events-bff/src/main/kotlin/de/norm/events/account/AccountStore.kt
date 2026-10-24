@@ -1,10 +1,13 @@
 package de.norm.events.account
 
 import io.r2dbc.spi.Readable
+import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOneOrNull
+import org.springframework.r2dbc.core.awaitRowsUpdated
 import org.springframework.r2dbc.core.awaitSingle
+import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
@@ -62,7 +65,7 @@ class AccountStore(
             .map { row -> row.required("email", String::class.java) to row.required("locale", String::class.java) }
             .awaitOneOrNull()
 
-    /** Creates the account at its first sign-in, or records the sign-in and the latest locale. */
+    /** Creates the account at its first sign-in, or records the sign-in and the latest locale. A sign-in cancels a pending deletion. */
     suspend fun signIn(
         email: String,
         locale: String,
@@ -71,7 +74,8 @@ class AccountStore(
         db
             .sql(
                 "INSERT INTO accounts.account (email, locale, created_at, last_sign_in_at) VALUES (:email, :locale, :now, :now) " +
-                    "ON CONFLICT ((lower(email))) DO UPDATE SET locale = EXCLUDED.locale, last_sign_in_at = EXCLUDED.last_sign_in_at " +
+                    "ON CONFLICT ((lower(email))) DO UPDATE SET locale = EXCLUDED.locale, last_sign_in_at = EXCLUDED.last_sign_in_at, " +
+                    "deletion_warned_at = NULL " +
                     "RETURNING $ACCOUNT_COLUMNS"
             ).bind("email", email)
             .bind("locale", locale)
@@ -84,6 +88,61 @@ class AccountStore(
         db.sql("DELETE FROM accounts.account WHERE id = :id").bind("id", account.id).await()
         db.sql("DELETE FROM accounts.one_time_token WHERE lower(email) = lower(:email)").bind("email", account.email).await()
     }
+
+    /**
+     * Marks up to [limit] accounts without a sign-in since [inactiveSince] as warned, and answers them. Each row goes to one caller only, so
+     * the BFF's replicas, which all run the cleanup, never warn one account twice.
+     */
+    suspend fun claimWarnings(
+        inactiveSince: Instant,
+        now: Instant,
+        limit: Int
+    ): List<Account> =
+        db
+            .sql(
+                "UPDATE accounts.account SET deletion_warned_at = :now WHERE id IN (" +
+                    "SELECT id FROM accounts.account WHERE last_sign_in_at < :since AND deletion_warned_at IS NULL " +
+                    "ORDER BY last_sign_in_at LIMIT :limit FOR UPDATE SKIP LOCKED) RETURNING $ACCOUNT_COLUMNS"
+            ).bind("now", now)
+            .bind("since", inactiveSince)
+            .bind("limit", limit)
+            .map(::toAccount)
+            .flow()
+            .toList()
+
+    /** Undoes a claim whose mail did not go out, so the next run warns again. A sign-in since then has already cleared it. */
+    suspend fun releaseWarning(id: UUID) {
+        db
+            .sql("UPDATE accounts.account SET deletion_warned_at = NULL WHERE id = :id")
+            .bind("id", id)
+            .await()
+    }
+
+    /**
+     * Deletes the accounts without a sign-in since [inactiveSince] that were warned before [warnedBefore], with their sign-in links. Both
+     * conditions, so no account goes without a warning a month earlier, however late the job runs.
+     */
+    suspend fun deleteInactive(
+        inactiveSince: Instant,
+        warnedBefore: Instant
+    ): Long =
+        db
+            .sql(
+                "WITH gone AS (DELETE FROM accounts.account WHERE last_sign_in_at < :since AND deletion_warned_at < :warned RETURNING email), " +
+                    "links AS (DELETE FROM accounts.one_time_token t USING gone WHERE lower(t.email) = lower(gone.email)) " +
+                    "SELECT count(*) AS n FROM gone"
+            ).bind("since", inactiveSince)
+            .bind("warned", warnedBefore)
+            .map { row -> row.required("n", Long::class.javaObjectType) }
+            .awaitSingle()
+
+    /** Sign-in links that expired before [before], used or not. */
+    suspend fun deleteLinks(before: Instant): Long =
+        db
+            .sql("DELETE FROM accounts.one_time_token WHERE expires_at < :before")
+            .bind("before", before)
+            .fetch()
+            .awaitRowsUpdated()
 }
 
 internal const val ACCOUNT_COLUMNS = "id, email, locale, created_at, last_sign_in_at"

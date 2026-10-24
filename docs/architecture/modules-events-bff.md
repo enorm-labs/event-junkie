@@ -25,6 +25,7 @@ flowchart TD
     sourcelicence["sourcelicence"]
     venue["venue"]
 
+    account --> common
     account --> mail
     artist --> common
     artist --> image
