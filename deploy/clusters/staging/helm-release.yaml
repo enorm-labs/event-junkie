@@ -94,11 +94,17 @@ spec:
       # a `secretKeyRef` with no `optional` leaves the pod in CreateContainerConfigError.
       imgproxy:
         enabled: true
+    # The sign-in mail through Scaleway TEM (ADR-054). Out of band in this namespace (docs/ops/SECRETS.md).
+    mail:
+      existingSecret: "event-junkie-mail"
     # Both stateless services drop to one replica — the one place staging is not production-shaped, and
     # a capacity fact: the node also carries PostgreSQL, which production keeps on a cx23 of its own.
     # Measured at 51% of memory, ~300 MB of it Flux.
     bff:
       replicaCount: 1
+      # Its own `bff` role: DML on `accounts`, SELECT on `events` (ADR-053). Out of band, like `events-db`.
+      database:
+        existingSecret: "events-bff-db"
       # One replica at rest, a second under load (#1774). Production's values follow its release.
       autoscaling:
         enabled: true

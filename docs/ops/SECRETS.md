@@ -435,8 +435,8 @@ kubectl --context event-junkie-production -n event-junkie create secret generic 
 unset P
 ```
 
-Last, set `bff.database.existingSecret: events-bff-db` in each cluster's `helm-release.yaml`. Until then the BFF keeps the shared login, which still
-works. Each cluster gets its own password, so a leak on one does not reach the other.
+Last, set `bff.database.existingSecret: events-bff-db` in each cluster's `helm-release.yaml`. Both clusters set it. Without it the BFF uses the shared
+login, which still works. Each cluster gets its own password, so a leak on one does not reach the other.
 
 ### `event-junkie-mail` — the login the BFF sends transactional mail with
 
