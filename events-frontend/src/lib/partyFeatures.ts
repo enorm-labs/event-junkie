@@ -1,4 +1,4 @@
-// The party features of a night (#2631), in display order — the same order and slugs as `PartyFeature`
+// The party features of a night (#2631) and `for-children` (#3796), in display order — the same order and slugs as `PartyFeature`
 // in the importer. Labels live in i18n under `partyFeature.<slug>`; an unknown slug renders as itself.
 
 export const PARTY_FEATURES: readonly string[] = [
@@ -11,6 +11,7 @@ export const PARTY_FEATURES: readonly string[] = [
   'open-end',
   'day-party',
   'open-stage',
+  'for-children',
 ]
 
 /** The BFF orders features by slug; this puts them in display order, an unknown slug last. */

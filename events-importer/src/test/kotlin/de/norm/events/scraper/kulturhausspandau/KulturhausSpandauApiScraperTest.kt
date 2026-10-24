@@ -1,7 +1,9 @@
 package de.norm.events.scraper.kulturhausspandau
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
@@ -27,7 +29,8 @@ class KulturhausSpandauApiScraperTest {
 
     @Test
     fun `keeps the house's own rooms and its stage programme`() {
-        upcoming shouldHaveSize 38
+        upcoming shouldHaveSize 63
+        upcoming.filterNot { it.isForChildren } shouldHaveSize 38
         events.map { it.sourceId }.toSet().size shouldBe events.size
     }
 
@@ -68,13 +71,12 @@ class KulturhausSpandauApiScraperTest {
     }
 
     @Test
-    fun `drops the Zitadelle and Altstadt events, tours, exhibitions, children's shows and the sing-along`() {
+    fun `drops the Zitadelle and Altstadt events, tours, exhibitions and the sing-along, and marks the children's shows`() {
         val titles = upcoming.map { it.title }
 
         titles shouldNotContain "Gambenconsort Phantasm"
         titles shouldNotContain "Blindmalen mit Künstler Aydin Öztek."
-        titles shouldNotContain "Wind im Gummistiefel"
-        titles shouldNotContain "Hops, der Oberkellner"
+        upcoming.filter { it.isForChildren }.map { it.title }.shouldContainAll("Wind im Gummistiefel", "Hops, der Oberkellner")
         titles shouldNotContain "Das Mitsingding"
     }
 

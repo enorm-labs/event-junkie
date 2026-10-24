@@ -79,7 +79,19 @@ data class EventFilter(
     /** The festival an operator linked the event to (#3273); null imposes no constraint. */
     val festivalSlug: String? = null
 ) {
+    /**
+     * The search leaves out a [FOR_CHILDREN] event unless the filter asks for that feature or names a
+     * venue, an artist, a promoter, a festival or a text, each a sign the visitor is looking for it (#3796).
+     */
+    val hidesForChildren: Boolean
+        get() =
+            FOR_CHILDREN !in features &&
+                listOf(venueSlug, artistSlug, promoterSlug, festivalSlug, query).all { it.isNullOrBlank() }
+
     companion object {
+        /** The feature slug of a show for small children (EVENT_SCOPE.md §3.5). */
+        const val FOR_CHILDREN = "for-children"
+
         /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
         val RUNNING_CUTOFF: LocalTime = LocalTime.of(12, 0)
     }
@@ -358,7 +370,8 @@ class EventSearchRepository(
     /**
      * Applies the many-to-many filters as `EXISTS` subqueries from one template parameterized by
      * [Association]; each correlates on `event_id = e.id`, so it tests membership without
-     * multiplying the outer rows. The party features are an `IN` over their own table.
+     * multiplying the outer rows. The party features are an `IN` over their own table, and a
+     * children's show is left out where [EventFilter.hidesForChildren].
      */
     private fun appendAssociationFilters(
         filter: EventFilter,
@@ -390,6 +403,11 @@ class EventSearchRepository(
                 "GROUP BY ef.event_id HAVING count(*) = :featureCount)"
             params["features"] = filter.features
             params["featureCount"] = filter.features.size.toLong()
+        }
+        if (filter.hidesForChildren) {
+            conditions +=
+                "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature = :forChildren)"
+            params["forChildren"] = EventFilter.FOR_CHILDREN
         }
     }
 

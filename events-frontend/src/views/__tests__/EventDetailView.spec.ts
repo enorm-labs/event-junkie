@@ -304,7 +304,7 @@ describe('EventDetailView', () => {
     const section = view.get('[data-testid="event-features"]')
     expect(section.findAll('a').map((link) => link.text())).toEqual(['FLINTA* only', 'Open end'])
     expect(hrefOf(view, 'FLINTA* only')).toBe('/en/events?feature=flinta-only')
-    expect(section.text()).toContain("As the event's own text states it.")
+    expect(section.text()).toContain("As the event's own text or the venue's page states it.")
   })
 
   it('shows the type and the genre tags under the date and venue line', async () => {

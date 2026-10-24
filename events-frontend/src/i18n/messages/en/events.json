@@ -162,7 +162,7 @@
       "endEstimated": "The venue states no end time, so the calendar entry ends at our estimate."
     },
     "features": "Good to know",
-    "featuresNote": "As the event's own text states it."
+    "featuresNote": "As the event's own text or the venue's page states it."
   },
   "role": {
     "HEADLINER": "Headliner",

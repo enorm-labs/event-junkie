@@ -6,10 +6,11 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
@@ -79,18 +80,11 @@ class WuehlmaeuseApiScraper {
         return WuehlmaeuseShopPage(products.mapNotNull(::toTicket), postCount = products.size)
     }
 
-    /** A family show for small children (`Familien-Zaubershow für Kinder ab 4 Jahre`), out of scope (#2832). */
-    private fun isChildrensShow(ticket: WuehlmaeuseTicket): Boolean =
-        billsChildrensShow(ticket.act, ticket.programme).also { childrens ->
-            if (childrens) logger.info { "Skipping Wühlmäuse children's show '${ticket.act}' on ${ticket.date}: out of scope" }
-        }
-
     /** One event per performance: the act, programme and time shared by its categories, the lowest price. */
     fun toEvents(tickets: List<WuehlmaeuseTicket>): List<ScrapedEvent> =
         tickets
             .groupBy { Triple(it.eventUrl, it.date, it.start) }
             .values
-            .filterNot { isChildrensShow(it.first()) }
             .map { categories ->
                 val cheapest = categories.minWithOrNull(compareBy(nullsLast()) { it.price }) ?: categories.first()
                 val ticket = categories.first()
@@ -110,7 +104,8 @@ class WuehlmaeuseApiScraper {
                     status = if (categories.any { it.cancelled }) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
                     // A performer's "<Name> – <Programme>" bill names the act; a series or a play does not.
                     artists = buildArtistsForEventType(bill, null, EventType.COMEDY.name)
-                )
+                    // A family show for small children: `Familien-Zaubershow für Kinder ab 4 Jahre` (#3796).
+                ).forChildrenIf(childrensShowPhrase(ticket.act, ticket.programme))
             }.sortedWith(compareBy({ it.eventDate }, { it.startTime }))
 
     /** The show's slug, date and clock: one show plays many nights, and one night can hold two shows. */

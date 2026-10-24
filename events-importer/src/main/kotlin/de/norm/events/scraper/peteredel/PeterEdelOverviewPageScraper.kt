@@ -9,12 +9,13 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistList
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dashedQuotedShowActs
 import de.norm.events.scraper.extractSupportFromSubtitle
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.knownSoloPerformer
@@ -220,10 +221,6 @@ class PeterEdelOverviewPageScraper {
         val extraShowNote = subtitleLine?.takeIf { EXTRA_SHOW_NOTE.containsMatchIn(it) }
         val subtitle = subtitleLine.takeIf { extraShowNote == null }
         val support = extractSupportFromSubtitle(subtitle)
-        if (billsChildrensShow(title, subtitle)) {
-            logger.info { "Skipping Peter Edel children's show '$title': out of scope" }
-            return null
-        }
         val info = infoParagraph(main)?.text().orEmpty()
         val (doors, start) = parseTimes(info)
         val note = priceNote(ticketColumn)
@@ -260,7 +257,7 @@ class PeterEdelOverviewPageScraper {
                         ?.blankToNull()
                 ),
             artists = actsOf(title, support, eventType)
-        )
+        ).forChildrenIf(childrensShowPhrase(title, subtitle))
     }
 
     /**

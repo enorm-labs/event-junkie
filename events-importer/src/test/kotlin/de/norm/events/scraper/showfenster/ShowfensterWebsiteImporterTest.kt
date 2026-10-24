@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -36,7 +37,8 @@ class ShowfensterWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 46
+            result.events shouldHaveSize 53
+            result.events.filterNot { it.isForChildren } shouldHaveSize 46
             result.etag shouldBe "\"e1\""
         }
 

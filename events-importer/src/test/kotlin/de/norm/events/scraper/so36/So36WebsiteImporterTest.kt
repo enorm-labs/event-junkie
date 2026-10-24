@@ -6,6 +6,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -78,8 +79,9 @@ class So36WebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            // 108 on the overview, less the four `ROLLER KIDZ` children's discos (#2832).
-            result.events shouldHaveSize 104
+            // 108 on the overview, the four `ROLLER KIDZ` children's discos among them (#3796).
+            result.events shouldHaveSize 108
+            result.events.count { it.isForChildren } shouldBe 4
             result.etag shouldBe "\"so36-etag\""
             result.lastModified shouldBe "Fri, 03 Jul 2026 21:00:00 GMT"
         }

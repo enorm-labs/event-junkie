@@ -1601,7 +1601,7 @@ export interface components {
             /** @description The other sources that filled empty fields of this event, such as a promoter's page (ADR-043). The page must link each one (ADR-036). Empty for almost every event. */
             enrichmentSources?: components["schemas"]["EnrichmentSourceResponse"][];
             /**
-             * @description What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, fetish-dress-code, no-photo-policy, open-end, day-party, open-stage. Set only where the event's own title or description states it; the venue's character tags never fill it.
+             * @description What kind of night it is, as party feature slugs ordered by slug: flinta-only, queer, sex-positive, dress-code, fetish-dress-code, no-photo-policy, open-end, day-party, open-stage, for-children. Set only where the event's own title or description, or for for-children its venue's page, states it; the venue's character tags never fill it.
              * @example [
              *       "open-end",
              *       "queer"
@@ -2248,7 +2248,7 @@ export interface operations {
                 timeOfDay?: string[];
                 /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
                 language?: string[];
-                /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
+                /** @description Party feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter. */
                 feature?: string[];
                 /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
                 festival?: string;
@@ -2386,7 +2386,7 @@ export interface operations {
                 timeOfDay?: string[];
                 /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
                 language?: string[];
-                /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
+                /** @description Party feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter. */
                 feature?: string[];
                 /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
                 festival?: string;
@@ -2445,7 +2445,7 @@ export interface operations {
                 timeOfDay?: string[];
                 /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
                 language?: string[];
-                /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
+                /** @description Party feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter. */
                 feature?: string[];
                 /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
                 festival?: string;
@@ -2510,7 +2510,7 @@ export interface operations {
                 timeOfDay?: string[];
                 /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
                 language?: string[];
-                /** @description Party feature slug (e.g. flinta-only), as the event's own text states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. */
+                /** @description Party feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter. */
                 feature?: string[];
                 /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
                 festival?: string;

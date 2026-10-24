@@ -1,8 +1,10 @@
 package de.norm.events.scraper.showfenster
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.isForChildren
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -24,8 +26,9 @@ class ShowfensterOverviewPageScraperTest {
 
     @Test
     fun `reads every event in scope, with past nights the upsert drops`() {
-        // 56 in the payload: 7 children's shows and 3 swing course nights are out of scope.
-        events shouldHaveSize 46
+        // 56 in the payload: 3 swing course nights are out of scope, and 7 children's shows are marked.
+        events shouldHaveSize 53
+        events.count { it.isForChildren } shouldBe 7
     }
 
     @Test
@@ -63,11 +66,10 @@ class ShowfensterOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops children's shows and the swing course`() {
+    fun `marks children's shows and drops the swing course`() {
         val titles = events.map { it.title }
         assertSoftly {
-            titles shouldNotContain "Der Grüne Georg"
-            titles shouldNotContain "Ute Kahrmann - Rapunzel"
+            events.filter { it.isForChildren }.map { it.title }.shouldContainAll("Der Grüne Georg", "Ute Kahrmann - Rapunzel")
             titles shouldNotContain "Lette ´t Swing"
             events.none { it.title.startsWith("Lette") } shouldBe true
         }

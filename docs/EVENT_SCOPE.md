@@ -93,7 +93,8 @@ language gets the house language, if the event has a language type. An explicit 
 
 ## 3. What is deliberately excluded
 
-Five exclusions. Each section names the predicates that implement it, so a rule can be revisited without archaeology.
+Four exclusions, and one format that is imported but kept out of the default lists (§3.5). Each section names the
+predicates that implement it, so a rule can be revisited without archaeology.
 
 ### 3.1 Sport
 
@@ -190,26 +191,30 @@ scraping**. Answer §5's first question and the importer is a short job.
 
 ### 3.5 Children's shows
 
-**Not imported.** A puppet show for a Kita group at 10:00 is not an evening on a stage for an adult audience. The same
-holds for a family sing-along on a Saturday afternoon. A show for teenagers with a minimum age, such as "ab 13 Jahre",
-stays in scope.
+**Imported, marked `for-children`, and kept out of the default lists.** A puppet show for a Kita group at 10:00 is not
+an evening on a stage for an adult audience. The same is true for a family sing-along on a Saturday afternoon. But a
+parent looks for these shows, so the importers keep them and set the `for-children` event feature (#3796). The public
+API lists such an event only when the request asks for it. A request asks for it with `feature=for-children`, or with
+a venue, artist, promoter, festival or text filter. The event page and the venue page always show it.
 
-A children's band on a real stage stays, such as `Deine Freunde` at Tempodrom or `Lichterkinder` at Uber Eats Music
-Hall. Nothing on those pages marks a show for small children, and adults go to these concerts too.
+The feature does not change the type. A children's concert is a `CONCERT`, and a puppet show is a `SHOW`.
 
-| Venue                                            | Predicate                                                                   | Signal                                                                                           |
-| ------------------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| ufaFabrik                                        | `UfaFabrikMonthPageScraper.isChildrensShow`                                 | A price per child, per Kita child or per Erzieher\*in                                            |
-| Peter Edel, Wühlmäuse, SO36                      | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle              | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
-| Showfenster Theater                              | `ShowfensterOverviewPageScraper.isOutOfScope`                               | The Eventfrog category `kinderveranstaltungen`, or `billsChildrensShow` on title + description   |
-| Brotfabrik                                       | `BrotfabrikApiScraper.isChildrensShow`                                      | `billsChildrensShow` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`   |
-| Volksbühne                                       | `billsChildrensShow`, on the title and the `.activity__title_addition` line | The same words as above                                                                          |
-| Clärchens Ballhaus                               | `billsChildrensShow`, on the title and the calendar text                    | The same words as above                                                                          |
-| Kulturhaus Spandau                               | `KulturhausSpandauApiScraper.isOutOfScope`                                  | The `Kinder und Familie` category, a `maximum_age` of 12 or less, or `billsChildrensShow`        |
-| Peter Edel, Wühlmäuse, SO36, Renaissance-Theater | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle              | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
+A show for teenagers with a minimum age, such as "ab 13 Jahre", is not marked. A children's band on a real stage is
+not marked, such as `Deine Freunde` at Tempodrom or `Lichterkinder` at Uber Eats Music Hall. Nothing on those pages
+marks a show for small children, and adults go to these concerts too.
 
-`billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A
-new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it here.
+| Venue                                                                     | Predicate                                                       | Signal                                                                                           |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Peter Edel, Wühlmäuse, SO36, Renaissance-Theater, BKA Theater, Volksbühne | `childrensShowPhrase` (`ChildrensShow.kt`), on title + subtitle | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
+| ufaFabrik                                                                 | `childrensPriceLabel` (`UfaFabrikMonthPageScraper.kt`)          | A price per child, per Kita child or per Erzieher\*in                                            |
+| Showfenster Theater                                                       | `ShowfensterOverviewPageScraper.childrensPhrase`                | The Eventfrog category `kinderveranstaltungen`, or `childrensShowPhrase` on title + description  |
+| Brotfabrik                                                                | `BrotfabrikApiScraper.childrensPhrase`                          | `childrensShowPhrase` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`  |
+| Clärchens Ballhaus                                                        | `childrensShowPhrase`, on the title and the calendar text       | The same words as above                                                                          |
+| Kulturhaus Spandau                                                        | `KulturhausSpandauApiScraper.childrensPhrase`                   | The `Kinder und Familie` category, a `maximum_age` of 12 or less, or `childrensShowPhrase`       |
+
+`childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`)
+unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it
+here. No source is a venue that plays only for children, such as FEZ or Theater an der Parkaue.
 
 ## 4. What is in scope, and sometimes surprises people
 
@@ -226,7 +231,7 @@ new venue with children's shows calls it when its page uses these words, or gets
 ## 5. Coverage decisions
 
 Each of these changes what the app _is_, so **none may be settled by an importer PR.** The first five were decided on
-2026-08-08, the recurring nights on 2026-09-30, the children's shows on 2026-10-01, and online-only livestreams on 2026-10-04.
+2026-08-08, the recurring nights on 2026-09-30, online-only livestreams on 2026-10-04, and the children's shows on 2026-10-24.
 The one that is still open is open on _sequencing_, not on principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
@@ -237,7 +242,7 @@ The one that is still open is open on _sequencing_, not on principle.
 | **Exhibitions as first-class runs?**                                                         | ✅ **Yes** — done (#337)      | nothing          | Done. ADR-029 gave the row an end; an exhibition is one row from opening to closing day — see §2                         |
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
 | **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
-| **Children's shows?** (Kita mornings, family afternoons)                                     | ❌ **No**                     | —                | Settled. Not an evening programme for an adult audience; §3.5 holds the rule                                             |
+| **Children's shows?** (Kita mornings, family afternoons)                                     | ✅ **Marked**                 | nothing          | Imported as `for-children` and kept out of the default lists (#3796). §3.5 holds the rule                                |
 | **Online-only livestream?**                                                                  | ❌ **No**                     | —                | Settled. There is no venue to go to. A public viewing at a venue is a `SCREENING` and stays in                           |
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and

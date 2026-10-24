@@ -8,7 +8,8 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.WixEventsWarmupData
-import de.norm.events.scraper.billsChildrensShow
+import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
@@ -28,8 +29,8 @@ import tools.jackson.databind.JsonNode
  *
  * The payload names no category, but every event sold elsewhere links its Eventfrog page, whose path is the venue's own
  * filing (`/p/konzerte/jazz-blues/…`, `/p/theater-buehne/comedy-kabarett/…`). That path gives the type and a concert's
- * genre. Children's shows (`kinderveranstaltungen`, EVENT_SCOPE.md §3.5) and the swing course (`kurse-seminare`, §3.2)
- * are dropped. A cancellation or a sold-out night is a note in the title, read and then cut from it.
+ * genre. Children's shows (`kinderveranstaltungen`, EVENT_SCOPE.md §3.5) are marked `for-children`, and the swing course
+ * (`kurse-seminare`, §3.2) is dropped. A cancellation or a sold-out night is a note in the title, read and then cut from it.
  */
 class ShowfensterOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -82,14 +83,17 @@ class ShowfensterOverviewPageScraper {
             status = statusOf(node, cancellation),
             statusNote = cancellation?.value?.trim(' ', '-', '–', '(', ')'),
             artists = actsOf(title, eventType)
-        )
+        ).forChildrenIf(childrensPhrase(category, rawTitle, description))
     }
 
-    private fun isOutOfScope(node: JsonNode): Boolean {
-        val main = eventfrogCategory(ticketUrlOf(node))?.main
-        return main in OUT_OF_SCOPE_CATEGORIES ||
-            billsChildrensShow(node.stringOrNull("title").orEmpty(), node.stringOrNull("description"))
-    }
+    /** The Eventfrog category `kinderveranstaltungen`, or [childrensShowPhrase] on the title and the description. */
+    private fun childrensPhrase(
+        category: EventfrogCategory?,
+        title: String,
+        description: String?
+    ): String? = CHILDRENS_CATEGORY.takeIf { category?.main == it } ?: childrensShowPhrase(title, description)
+
+    private fun isOutOfScope(node: JsonNode): Boolean = eventfrogCategory(ticketUrlOf(node))?.main in OUT_OF_SCOPE_CATEGORIES
 
     private fun ticketUrlOf(node: JsonNode): String? = node.path("registration").path("external").stringOrNull("registration")
 
@@ -130,6 +134,7 @@ private fun eventTypeOf(
         "theater-buehne" -> THEATRE_TYPES[category.sub] ?: EventType.SHOW
         "musicals-shows" -> EventType.SHOW
         "kunst-ausstellungen" -> EventType.EXHIBITION
+        CHILDRENS_CATEGORY -> titleType(title).takeUnless { it == EventType.OTHER } ?: EventType.SHOW
         else -> titleType(title)
     }
 
@@ -144,8 +149,11 @@ private fun titleType(title: String): EventType =
 
 private val EVENTFROG_PATH = Regex("""eventfrog\.[a-z]+/[a-z]{2}/p/([^/]+)/([^/]+)/""")
 
-/** Children's shows (EVENT_SCOPE.md §3.5) and the swing course, a participation format (§3.2). */
-private val OUT_OF_SCOPE_CATEGORIES = setOf("kinderveranstaltungen", "kurse-seminare")
+/** The swing course, a participation format (EVENT_SCOPE.md §3.2). */
+private val OUT_OF_SCOPE_CATEGORIES = setOf("kurse-seminare")
+
+/** Children's shows (EVENT_SCOPE.md §3.5): imported, marked `for-children`. */
+private const val CHILDRENS_CATEGORY = "kinderveranstaltungen"
 
 private val THEATRE_TYPES = mapOf("comedy-kabarett" to EventType.COMEDY, "lesung" to EventType.READING)
 

@@ -162,7 +162,7 @@
       "endEstimated": "Die Location nennt kein Ende, daher endet der Kalendereintrag zu unserer Schätzung."
     },
     "features": "Gut zu wissen",
-    "featuresNote": "So steht es im Text des Events."
+    "featuresNote": "So steht es im Text des Events oder auf der Seite der Location."
   },
   "role": {
     "HEADLINER": "Headliner",

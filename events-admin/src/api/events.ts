@@ -242,6 +242,7 @@ export const PARTY_FEATURES = [
   { slug: 'open-end', label: 'Open end' },
   { slug: 'day-party', label: 'Day party' },
   { slug: 'open-stage', label: 'Open stage' },
+  { slug: 'for-children', label: 'For children' },
 ] as const
 
 /** A feature slug and the words of the event's text behind it. */

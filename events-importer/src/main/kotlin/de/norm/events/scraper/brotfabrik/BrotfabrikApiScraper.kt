@@ -4,8 +4,9 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
-import de.norm.events.scraper.billsChildrensShow
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseTecPage
@@ -26,7 +27,7 @@ import java.net.URI
  * - **Only the stage and the readings are the programme** ([isStageProgramme]): `Bühne` and `Literatur`. The cinema, the
  * courses, the sound project and the gallery's open days are dropped (EVENT_SCOPE.md §3.2).
  * - **The stage plays children's theatre in the morning**, billed by an age range (`4 – 8 Jahren`) or as `KINDERSHOWS`.
- * Those go (EVENT_SCOPE.md §3.5); `ab 13 Jahren` stays.
+ * Those are marked `for-children` (EVENT_SCOPE.md §3.5); `ab 13 Jahren` stays unmarked.
  * - **A run's dates share one `slug`**, so the key is the URL path, which carries the date of each (`trotzdem/2026-10-19`).
  * - **Every event ends two hours after it starts**, the plugin's default, so the end is not read.
  */
@@ -45,7 +46,7 @@ class BrotfabrikApiScraper {
         }
         val categories = event.tecTermNames("categories")
         val description = event.tecDescription()
-        if (!isStageProgramme(categories) || isChildrensShow(title, description)) {
+        if (!isStageProgramme(categories)) {
             logger.debug { "Skipping Brotfabrik event '$title': not the evening stage programme" }
             return null
         }
@@ -65,7 +66,7 @@ class BrotfabrikApiScraper {
             priceNote = event.tecText("cost")?.takeIf { prices.size != 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
             soldOut = hasSoldOutMarker(title)
-        )
+        ).forChildrenIf(childrensPhrase(title, description))
     }
 
     /** A reading is a reading wherever it sits; a stage night is theatre unless its title names another format. */
@@ -90,9 +91,12 @@ class BrotfabrikApiScraper {
         /** The house's stage and literature programme, by the category it files the night under. */
         fun isStageProgramme(categories: List<String>): Boolean = categories.any { it == STAGE || it == LITERATURE }
 
-        fun isChildrensShow(
+        /** The words that bill a show for small children, or null: [childrensShowPhrase] or this house's own [CHILDRENS_SHOW_CUE]. */
+        fun childrensPhrase(
             title: String,
             description: String?
-        ): Boolean = billsChildrensShow(title, description) || CHILDRENS_SHOW_CUE.containsMatchIn("$title ${description.orEmpty()}")
+        ): String? =
+            childrensShowPhrase(title, description)
+                ?: CHILDRENS_SHOW_CUE.find("$title ${description.orEmpty()}")?.value
     }
 }

@@ -610,7 +610,8 @@ its own. When it has one, its value wins and the field leaves `fields`. A row wi
 
 ### event_feature (Side Table)
 
-What kind of night an event is, as its own text states it (#2631). One row per party feature on an event.
+What kind of night an event is, as its own text or its venue's page states it (#2631). One row per party feature on an
+event.
 
 | Field            | Type        | Nullable | Description                                                     | Example        |
 | ---------------- | ----------- | -------- | --------------------------------------------------------------- | -------------- |
@@ -619,7 +620,7 @@ What kind of night an event is, as its own text states it (#2631). One row per p
 | `matched_phrase` | `TEXT`      | No       | The words of the event's text that set the feature, on one line | `FLINTA* only` |
 
 The primary key is `(event_id, feature)`. The vocabulary is `flinta-only`, `queer`, `sex-positive`, `dress-code`,
-`fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party` and `open-stage`. Where `venue_character_tag` has the same fact, the
+`fetish-dress-code`, `no-photo-policy`, `open-end`, `day-party`, `open-stage` and `for-children`. Where `venue_character_tag` has the same fact, the
 two share the slug. **Each night stands alone: no venue tag fills a night that says nothing.** The importer's
 `PartyFeatureRules` reads the features off the stored title, subtitle and description, with keyword rules in German and
 English. Every import replaces the rows of the events it saved. A description the licence withholds is not stored, so it
@@ -628,8 +629,11 @@ then keeps the rows and adds no cue. A feature that no text set has the phrase `
 `UNCERTAIN_PARTY_FEATURE` flags of the event. A cue the rules cannot settle sets no feature. Examples are a bare `FLINTA*` and a FLINTA* phrase
 about who plays ("open decks for FLINTA*", "Auflegen für FLINTA*"). Such a cue goes to `event_quality_flag`
 as `UNCERTAIN_PARTY_FEATURE`, which the data-quality worklist lists. `flinta-only` is a door rule: "FLINTA* only", "nur für
-FLINTA*", "Einlass nur für FLINTA*". The public API filters by
-`feature=` (every given feature must hold) and returns the slugs on the event detail.
+FLINTA*", "Einlass nur für FLINTA*". `for-children` comes from the scraper, not from these rules. Its signal is often not
+in the stored text, such as a price per child or a venue category (`ScrapedEvent.features`, EVENT_SCOPE.md §3.5). The
+scraper's phrase goes to `matched_phrase`. Where the text sets the same feature, the text's phrase stays. The public API
+filters by `feature=` (every given feature must hold) and returns the slugs on the event detail. A list leaves out a
+`for-children` event unless the request asks for it (EVENT_SCOPE.md §3.5).
 
 ### event_classification_check (Side Table)
 

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -58,8 +59,9 @@ class PeterEdelWebsiteImporterTest {
             stubListing()
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            // 39 boxes, less the three children's shows (#2832).
-            result.events shouldHaveSize 36
+            // 39 boxes, three of them children's shows (#3796).
+            result.events shouldHaveSize 39
+            result.events.count { it.isForChildren } shouldBe 3
             result.events.first().eventDate shouldBe LocalDate.of(2026, 8, 20)
             result.events.last().eventDate shouldBe LocalDate.of(2027, 5, 22)
             result.etag shouldBe "\"peteredel-etag\""

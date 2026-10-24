@@ -2,6 +2,7 @@ package de.norm.events.scraper.volksbuehne
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -107,7 +108,7 @@ class VolksbuehneSpielplanScraperTest {
     }
 
     @Test
-    fun `drops a children's show`() {
+    fun `marks a children's show`() {
         val html =
             """
             <section id="performances"><ul><li class="activity">
@@ -118,6 +119,7 @@ class VolksbuehneSpielplanScraperTest {
             </li></ul></section>
             """.trimIndent()
 
-        VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(Jsoup.parse(html, url), url).shouldBeEmpty()
+        VolksbuehneSpielplanScraper(VolksbuehneHouse.ROSA_LUXEMBURG_PLATZ).scrape(Jsoup.parse(html, url), url).single().forChildrenPhrase shouldBe
+            "für Kinder"
     }
 }

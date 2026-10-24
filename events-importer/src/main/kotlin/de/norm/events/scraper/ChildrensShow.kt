@@ -1,16 +1,32 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.PartyFeature
+import de.norm.events.event.PartyFeatureMatch
+
 /**
- * Whether a venue bills a night as a show for small children: `für Kinder`, a `Familien-` show, a `Kinder…` format, or
- * an age range for them (`0-18 Monate`, `ab 4 Jahre`). EVENT_SCOPE.md §3.5 keeps these out (#2832).
+ * The words with which a venue bills a night as a show for small children: `für Kinder`, a `Familien-` show, a `Kinder…`
+ * format, or an age range for them (`0-18 Monate`, `ab 4 Jahre`). Null when the night says none of these. EVENT_SCOPE.md
+ * §3.5 marks such a night [PartyFeature.FOR_CHILDREN] (#3796).
  *
- * A band named after children is no format and stays (`Muttis Kinder`, `Kinderzimmer Productions`, `Lichterkinder`), and
- * so does a show for teenagers (`ab 13 Jahre`). A venue calls this only where its own page uses these words.
+ * A band named after children is no format and stays unmarked (`Muttis Kinder`, `Kinderzimmer Productions`,
+ * `Lichterkinder`), and so does a show for teenagers (`ab 13 Jahre`). A venue calls this only where its own page uses
+ * these words.
  */
-fun billsChildrensShow(
+fun childrensShowPhrase(
     title: String,
     subtitle: String?
-): Boolean = CHILDRENS_SHOW.containsMatchIn("$title ${subtitle.orEmpty()}")
+): String? = CHILDRENS_SHOW.find("$title ${subtitle.orEmpty()}")?.value
+
+/** This event marked [PartyFeature.FOR_CHILDREN], with the venue's [phrase] for `event_feature.matched_phrase`. */
+fun ScrapedEvent.forChildren(phrase: String): ScrapedEvent =
+    if (features.any { it.feature == PartyFeature.FOR_CHILDREN }) {
+        this
+    } else {
+        copy(features = features + PartyFeatureMatch(PartyFeature.FOR_CHILDREN, phrase.trim()))
+    }
+
+/** [forChildren] when [phrase] is not null. */
+fun ScrapedEvent.forChildrenIf(phrase: String?): ScrapedEvent = phrase?.let(::forChildren) ?: this
 
 private val CHILDRENS_SHOW =
     Regex(

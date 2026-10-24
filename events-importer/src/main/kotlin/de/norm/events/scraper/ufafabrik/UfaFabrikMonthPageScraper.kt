@@ -9,6 +9,7 @@ import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseIsoDate
@@ -42,7 +43,7 @@ class UfaFabrikMonthPageScraper {
                     ?.take(ISO_DATE_LENGTH)
                     ?.let(::parseIsoDate)
             if (date == null) return@flatMap emptyList()
-            day.select("li.calendar-view-day__row").filterNot { isChildrensShow(it.prices().keys) }.mapNotNull { row ->
+            day.select("li.calendar-view-day__row").mapNotNull { row ->
                 @Suppress("TooGenericExceptionCaught") // One malformed row must not abort the month
                 try {
                     parseRow(row, date)
@@ -90,7 +91,7 @@ class UfaFabrikMonthPageScraper {
             soldOut = row.selectFirst(".sold-out.event-banner") != null,
             status = if (row.selectFirst(".canceled.event-banner") != null) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
             artists = ufaFabrikArtists(title, subtitle, eventType, label)
-        )
+        ).forChildrenIf(childrensPriceLabel(prices.keys))
     }
 
     /** The labelled prices of a row, `Eintritt` to 20.00, `Ermäßigt` to 15.00. */
@@ -165,10 +166,11 @@ private val MIT = Regex("""\s+mit\s+(\S+)""", RegexOption.IGNORE_CASE)
 private val MIT_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_MARKERS + setOf("seiner", "seinem", "ihrer", "ihrem", "seinen", "ihren")
 
 /**
- * Whether a show is for children, which is out of scope (EVENT_SCOPE.md §3.5): the house prices
- * those per child, Kita child or accompanying Erzieher*in, and no evening show carries such a label.
+ * The price label that marks a show for children (EVENT_SCOPE.md §3.5), or null: the house prices those per child, Kita
+ * child or accompanying Erzieher*in, and no evening show carries such a label.
  */
-internal fun isChildrensShow(priceLabels: Collection<String>): Boolean = priceLabels.any { CHILD_PRICE_LABEL.containsMatchIn(it) }
+internal fun childrensPriceLabel(priceLabels: Collection<String>): String? =
+    priceLabels.firstOrNull { CHILD_PRICE_LABEL.containsMatchIn(it) }?.trim()?.trimEnd(':')
 
 private val CHILD_PRICE_LABEL = Regex("""^\s*(?:kinder|kita-kind|erzieher)""", RegexOption.IGNORE_CASE)
 
