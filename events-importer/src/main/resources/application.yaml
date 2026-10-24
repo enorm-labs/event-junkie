@@ -74,6 +74,11 @@ app:
     plain-user-agent-hosts:
       - claerchensball.haus
     polite-delay-millis: 200
+    # Wikimedia's media hosts cap a client at 25 Mbps over 10 s. An 8 MB image (`images.max-bytes`)
+    # at that rate takes about 2.7 s, so the image cache fetches from them 3 s apart (#3755).
+    host-polite-delays:
+      "[upload.wikimedia.org]": 3s
+      "[thumb.wikimedia.org]": 3s
     # A full import found nothing disallowed, so this costs nothing and fails loudly the day a venue
     # adds a rule (#795).
     robots-enforced: true

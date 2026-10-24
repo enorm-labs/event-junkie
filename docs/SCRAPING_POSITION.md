@@ -33,14 +33,14 @@ no longer exists.
 
 ## 2. What the system actually does
 
-| Behaviour            | Where it lives                                                         | What it does                                       |
-| -------------------- | ---------------------------------------------------------------------- | -------------------------------------------------- |
-| Politeness delay     | `PerHostThrottlingFilter.kt`, `ScraperProperties.politeDelayMillis`    | 200 ms minimum between requests to the same host   |
-| Identifying agent    | `ScraperHttpClientConfig.kt`                                           | Names the product and links the repository         |
-| Conditional requests | `HtmlFetcher`, ETag and Last-Modified on the `event_source` row        | A `304` response costs the venue almost nothing    |
-| Import frequency     | `ScheduledImportService.kt`, `EventSourceEntity.importIntervalMinutes` | Once per day for each source, by default           |
-| Page depth           | ADR-007 § Pagination — First Page Only                                 | The overview pages to the list's end, plus details |
-| No arbitrary crawl   | Each `EventImporter` parses one known structure                        | The scraper follows no link it discovers at random |
+| Behaviour            | Where it lives                                                                             | What it does                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Politeness delay     | `PerHostThrottlingFilter.kt`, `ScraperProperties.politeDelayMillis` and `hostPoliteDelays` | 200 ms minimum between requests to the same host. 3 s for the Wikimedia media hosts |
+| Identifying agent    | `ScraperHttpClientConfig.kt`                                                               | Names the product and links the repository                                          |
+| Conditional requests | `HtmlFetcher`, ETag and Last-Modified on the `event_source` row                            | A `304` response costs the venue almost nothing                                     |
+| Import frequency     | `ScheduledImportService.kt`, `EventSourceEntity.importIntervalMinutes`                     | Once per day for each source, by default                                            |
+| Page depth           | ADR-007 § Pagination — First Page Only                                                     | The overview pages to the list's end, plus details                                  |
+| No arbitrary crawl   | Each `EventImporter` parses one known structure                                            | The scraper follows no link it discovers at random                                  |
 
 **A list that ends is read to its end.** Most listings are one page. Nine importers walk a paginated list: LARK, Urban
 Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas, Cassiopeia, Schokoladen and Monster Ronson's. Each one stops at the last page, and at a

@@ -280,6 +280,33 @@ class PerHostThrottlingFilterTest {
     }
 
     @Nested
+    inner class HostDelay {
+        private val slowHostFilter = PerHostThrottlingFilter(politeDelay, clock, mapOf("upload.wikimedia.org" to 3.seconds))
+
+        private fun fetchSlow(url: String) {
+            slowHostFilter.filter(request(url), mockExchange).block()
+        }
+
+        @Test
+        fun `a named host waits its own gap`() =
+            runTest {
+                fetchSlow("https://upload.wikimedia.org/a.jpg")
+                fetchSlow("https://upload.wikimedia.org/b.jpg")
+
+                clock.waits.shouldContainExactly(3.seconds)
+            }
+
+        @Test
+        fun `a host not named keeps the politeness delay`() =
+            runTest {
+                fetchSlow("https://example.com/1")
+                fetchSlow("https://example.com/2")
+
+                clock.waits.shouldContainExactly(politeDelay.milliseconds)
+            }
+    }
+
+    @Nested
     inner class ZeroDelay {
         @Test
         fun `zero delay allows consecutive requests without throttling`() =
