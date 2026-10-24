@@ -137,6 +137,14 @@ the first column. It fails in two cases:
 | `/api/images/{contentHash}/{file}` | Cached venue images                                                         |
 | `/api/meta`                        | Version and commit of the running backend, for the footer                   |
 | `/api/festivals/current`           | Up to 3 festivals the home page announces, running first; `[]` for none     |
+| `/api/auth/csrf`                   | Sets the CSRF cookie the sign-in page needs. No page calls it yet           |
+| `/api/auth/session`                | Who the browser is signed in as, or nobody                                  |
+| `/api/auth/link`                   | Sends a sign-in link by e-mail                                              |
+| `/api/auth/sign-in`                | Uses a sign-in link and starts a session                                    |
+| `/api/me`                          | The signed-in account                                                       |
+| `/api/me/export`                   | Everything stored about the account, as a download                          |
+| `/api/me/sign-out`                 | Ends this browser's session                                                 |
+| `/api/me/sign-out-everywhere`      | Ends every session of the account                                           |
 | `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                     |
 | `events-filters.spec.ts`           | e2e: the filter bar                                                         |
 | `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                      |
@@ -192,4 +200,5 @@ the first column. It fails in two cases:
 ## Not there yet
 
 Accounts, follows, saved searches with notifications and calendar subscriptions that stay in sync. These are the
-roadmap — see [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md).
+roadmap — see [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md). Sign-in has its API (`/api/auth`, `/api/me`, ADR-053) but no page yet, so no
+visitor can reach it (#3887).

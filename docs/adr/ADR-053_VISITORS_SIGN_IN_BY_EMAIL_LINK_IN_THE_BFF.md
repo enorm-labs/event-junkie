@@ -5,7 +5,11 @@
 **Accepted (2026-10-24). A visitor signs in with a one-time link sent by e-mail. Spring Security 7 in `events-bff` does it, with no password and no
 identity provider. Passkeys come later as a second method. Sessions, tokens and account data live in a new `accounts` schema in the existing PostgreSQL.**
 
-Decided in [#3884](https://github.com/enorm-labs/event-junkie/issues/3884). **Not implemented yet.** [#3887](https://github.com/enorm-labs/event-junkie/issues/3887)
+Decided in [#3884](https://github.com/enorm-labs/event-junkie/issues/3884).
+
+**Rule 1 amended (2026-10-24, #3887): the BFF issues and uses the link in its own two endpoints, over the same token table, not through
+`oneTimeTokenLogin()`.** The reactive DSL passes its token service only an address and an expiry, so the locale cannot travel with the token. A rejected
+request also falls through to a 404. Everything else in rule 1 stands: 15 minutes, single use, the hash only, the same answer for every address. **Not implemented yet.** [#3887](https://github.com/enorm-labs/event-junkie/issues/3887)
 builds the sign-in, and [#3888](https://github.com/enorm-labs/event-junkie/issues/3888) adds passkeys.
 
 **Does not supersede anything.** [ADR-023](ADR-023_OPERATOR_AUTHENTICATION.md) decides operator access and stays as it is. It names end-user identity as a

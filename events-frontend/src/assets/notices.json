@@ -1,5 +1,5 @@
 {
-  "componentCount": 368,
+  "componentCount": 374,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -888,6 +888,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot-security",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-sql",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
@@ -949,6 +955,12 @@
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-reactor-netty",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.boot:spring-boot-starter-security",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -1047,6 +1059,30 @@
           "name": "org.springframework.modulith:spring-modulith-starter-core",
           "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-starters/spring-modulith-starter-core",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.security:spring-security-config",
+          "version": "7.1.1",
+          "url": "https://spring.io/projects/spring-security",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.security:spring-security-core",
+          "version": "7.1.1",
+          "url": "https://spring.io/projects/spring-security",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.security:spring-security-crypto",
+          "version": "7.1.1",
+          "url": "https://spring.io/projects/spring-security",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.springframework.security:spring-security-web",
+          "version": "7.1.1",
+          "url": "https://spring.io/projects/spring-security",
           "ecosystem": "backend"
         },
         {

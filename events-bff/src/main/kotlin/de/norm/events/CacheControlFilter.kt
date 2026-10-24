@@ -39,9 +39,17 @@ class CacheControlFilter(
         chain: WebFilterChain
     ): Mono<Void> {
         val request = exchange.request
+        val response = exchange.response
+        // A signed-in visitor's answer, or one that sets a cookie: no cache may keep it, whatever the method or status (ADR-053).
+        if (isAccountPath(request.path.value())) {
+            response.beforeCommit {
+                response.headers.set(HttpHeaders.CACHE_CONTROL, PRIVATE_NO_STORE)
+                Mono.empty()
+            }
+            return chain.filter(exchange)
+        }
         if (request.method != HttpMethod.GET || isActuatorPath(request.path.value(), actuatorBasePath)) return chain.filter(exchange)
 
-        val response = exchange.response
         response.beforeCommit {
             if (!response.headers.containsHeader(HttpHeaders.CACHE_CONTROL)) {
                 val status = response.statusCode
@@ -58,5 +66,8 @@ class CacheControlFilter(
 
     private companion object {
         val NO_STORE: String? = CacheControl.noStore().headerValue
+        const val PRIVATE_NO_STORE = "private, no-store"
+
+        fun isAccountPath(path: String) = path.startsWith("/api/auth/") || path == "/api/me" || path.startsWith("/api/me/")
     }
 }

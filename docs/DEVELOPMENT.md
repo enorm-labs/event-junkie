@@ -172,8 +172,8 @@ message, set its working directory to the repository root.
 
 Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`, Mailpit `8025`.
 
-**Mail the BFF sends locally lands in Mailpit**, at `http://localhost:8025`, and goes nowhere else. `scripts/dev-env.sh up` points the BFF at it. A
-plain `bootRun` does not, so the BFF then has no sender (ADR-054).
+**Mail the BFF sends locally lands in Mailpit**, at `http://localhost:8025`, and goes nowhere else. `scripts/dev-env.sh up` starts Mailpit and points the BFF at it,
+without a login and without TLS. A plain `bootRun` does not, so the BFF then has no sender (ADR-054).
 
 ## The local database
 

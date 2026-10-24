@@ -5,6 +5,9 @@
 spring:
   application:
     name: events-bff
+  # Repeated from the main file: no in-memory user with a logged password (AccountSecurityConfiguration).
+  autoconfigure:
+    exclude: org.springframework.boot.security.autoconfigure.ReactiveUserDetailsServiceAutoConfiguration
   # Repeated because this file shadows the main one. `StaticResourceHandlerTest` asserts the two agree.
   web:
     resources:
@@ -64,6 +67,10 @@ management:
 # Repeated because this file shadows the main one, and `WebFluxConfiguration` reads the property
 # with no fallback. `MaxPageSizeConfigTest` asserts the two numbers agree.
 app:
+  site:
+    origin: https://event-junkie.de
+  mail:
+    from: Event Junkie <noreply@notify.event-junkie.de>
   api:
     max-page-size: 100
     cache:

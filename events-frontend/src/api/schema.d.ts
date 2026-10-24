@@ -4,6 +4,77 @@
  */
 
 export interface paths {
+    "/api/me/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ends this browser's session */
+        post: operations["signOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/sign-out-everywhere": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ends every session of the account, on every device */
+        post: operations["signOutEverywhere"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Uses a sign-in link's token, creates the account at its first use, and starts a session */
+        post: operations["signIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sends a sign-in link
+         * @description 202 whether or not the address has an account, and also when the address asked too often. 429 when this client asked too often, 503 when no mail can be sent.
+         */
+        post: operations["link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/venues": {
         parameters: {
             query?: never;
@@ -132,6 +203,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        /** Deletes the account, its sessions and its sign-in links, at once and for good */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meta": {
         parameters: {
             query?: never;
@@ -141,6 +230,23 @@ export interface paths {
         };
         /** Report the version and commit of the running backend */
         get: operations["meta"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everything stored about the account, as a JSON download (GDPR Art. 15 and 20) */
+        get: operations["export"];
         put?: never;
         post?: never;
         delete?: never;
@@ -328,6 +434,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account, or null */
+        get: operations["session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sets the XSRF-TOKEN cookie the sign-in page echoes in X-XSRF-TOKEN. Call it before the first POST */
+        get: operations["csrf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/artists": {
         parameters: {
             query?: never;
@@ -369,6 +509,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        SignInRequest: {
+            token?: string;
+        };
+        AccountResponse: {
+            email?: string;
+            locale?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        LinkRequest: {
+            email?: string;
+            locale?: string;
+        };
         /** @description One format of a cached image, for a <source> element inside <picture> */
         ImageSourceResponse: {
             /**
@@ -1262,6 +1415,25 @@ export interface components {
              */
             buildTime?: string | null;
         };
+        AccountExport: {
+            /** Format: date-time */
+            exportedAt?: string;
+            email?: string;
+            locale?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastSignInAt?: string;
+            sessions?: components["schemas"]["SessionInfo"][];
+        };
+        SessionInfo: {
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastSeenAt?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
         /** @description A normalized genre tag */
         GenreTagResponse: {
             /**
@@ -1720,6 +1892,9 @@ export interface components {
              */
             intrinsicHeight?: number | null;
         };
+        SessionResponse: {
+            account?: components["schemas"]["AccountResponse"] | null;
+        };
         /** @description A page of results with pagination metadata */
         PageResponseArtistSummaryResponse: {
             /** @description The items on this page */
@@ -1906,6 +2081,88 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    signOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    signOutEverywhere: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    signIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignInRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountResponse"];
+                };
+            };
+        };
+    };
+    link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -2121,6 +2378,44 @@ export interface operations {
             };
         };
     };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     meta: {
         parameters: {
             query?: never;
@@ -2137,6 +2432,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    export: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountExport"];
                 };
             };
         };
@@ -2529,6 +2844,44 @@ export interface operations {
                 content: {
                     "text/calendar": string;
                 };
+            };
+        };
+    };
+    session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+        };
+    };
+    csrf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
