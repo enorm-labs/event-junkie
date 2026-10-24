@@ -97,10 +97,16 @@ spec:
         existingSecret: "event-junkie-images"
       imgproxy:
         enabled: true
+    # The sign-in mail through Scaleway TEM (ADR-054). Out of band in this namespace (docs/ops/SECRETS.md).
+    mail:
+      existingSecret: "event-junkie-mail"
     # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
     # repeating them here would be a second place to look with nothing to say. The HPA's bounds are
     # defaults too, and only its switch is here (#1774).
     bff:
+      # Its own `bff` role: DML on `accounts`, SELECT on `events` (ADR-053). Out of band, like `events-db`.
+      database:
+        existingSecret: "events-bff-db"
       autoscaling:
         enabled: true
     ingress:

@@ -45,6 +45,8 @@ NetworkPolicy/event-junkie-allow-frontend-to-bff
   types Ingress,Egress  selector app.kubernetes.io/component In [bff,frontend]
 NetworkPolicy/event-junkie-allow-ingress-controller
   types Ingress  selector app.kubernetes.io/component In [bff,frontend]
+NetworkPolicy/event-junkie-allow-mail
+  types Egress  selector app.kubernetes.io/component=bff
 NetworkPolicy/event-junkie-allow-metrics-scrape
   types Ingress  selector app.kubernetes.io/component In [bff,importer]
 NetworkPolicy/event-junkie-allow-object-storage

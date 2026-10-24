@@ -363,14 +363,14 @@ cap sending at 500 mails per hour. A breach can suspend the account that holds `
 **A subdomain, so nothing above changes.** Scaleway needs its own MX for a domain it does not host. On `event-junkie.de` that would collide with the
 Hetzner MX. The root DMARC record (`sp=reject; adkim=s`) covers the subdomain, so the DKIM signature for `notify.event-junkie.de` must pass.
 
-| What            | Where                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| The sender      | `events-bff`, module `mail`. Off until `mail.existingSecret` is set in the cluster's values |
-| The relay       | `smtp.tem.scaleway.com:587`, STARTTLS required                                              |
-| The login       | Secret `event-junkie-mail` ([SECRETS.md](SECRETS.md) §event-junkie-mail)                    |
-| The DNS records | `infra/bootstrap/dns.tf`, with the values the Scaleway console shows for the domain         |
-| The meter       | `bff.mail.sent{kind,outcome}`                                                               |
-| The quota       | 10,000 mails per month by default. Ask Scaleway to raise it before about 2,500 accounts     |
+| What            | Where                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| The sender      | `events-bff`, module `mail`. On where the cluster's values set `mail.existingSecret`, as both clusters do |
+| The relay       | `smtp.tem.scaleway.com:587`, STARTTLS required                                                            |
+| The login       | Secret `event-junkie-mail` ([SECRETS.md](SECRETS.md) §event-junkie-mail)                                  |
+| The DNS records | `infra/bootstrap/dns.tf`, with the values the Scaleway console shows for the domain                       |
+| The meter       | `bff.mail.sent{kind,outcome}`                                                                             |
+| The quota       | 10,000 mails per month by default. Ask Scaleway to raise it before about 2,500 accounts                   |
 
 **Prove it the same way as §7.** Send to mail-tester through the relay and look for `dkim=pass` and `dmarc=pass`:
 
