@@ -7,6 +7,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.event.PUBLISHER_ORIGIN
+import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.event.SpokenLanguage
 import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences
@@ -129,7 +130,12 @@ data class ScrapedEvent(
      * The venue's language for all its shows ([VenueLimitations.houseLanguage]), set by the import,
      * not the scraper. Stored only where the event's own text names no language (#2584).
      */
-    val houseLanguage: SpokenLanguage? = null
+    val houseLanguage: SpokenLanguage? = null,
+    /**
+     * The features the venue's page states beyond the stored text, such as a children's category or a
+     * price per child. `EventFeatureSync` stores them beside what `PartyFeatureRules` reads (#3796).
+     */
+    val features: List<PartyFeatureMatch> = emptyList()
 ) {
     /**
      * This event with every gap filled from [fallback]: a null field takes the fallback's value, the
@@ -179,7 +185,8 @@ data class ScrapedEvent(
             statusNote = statusNote ?: fallback.statusNote,
             artists = artists.ifEmpty { fallback.artists },
             promoters = promoters.ifEmpty { fallback.promoters },
-            promoterWebsites = promoterWebsites.ifEmpty { fallback.promoterWebsites }
+            promoterWebsites = promoterWebsites.ifEmpty { fallback.promoterWebsites },
+            features = features.ifEmpty { fallback.features }
         )
 
     /**

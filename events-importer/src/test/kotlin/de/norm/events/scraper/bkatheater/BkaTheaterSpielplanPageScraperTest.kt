@@ -1,6 +1,7 @@
 package de.norm.events.scraper.bkatheater
 
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -30,10 +31,11 @@ class BkaTheaterSpielplanPageScraperTest {
     }
 
     @Test
-    fun `reads every performance but the dark evenings and the children's shows`() {
-        events shouldHaveSize 244
+    fun `reads every performance but the dark evenings, and marks the children's shows`() {
+        events shouldHaveSize 295
+        events.filterNot { it.isForChildren } shouldHaveSize 244
         events.map { it.title } shouldNotContain "Keine Abendvorstellung"
-        events.none { it.title == "Platypus" } shouldBe true
+        events.filter { it.title == "Platypus" }.all { it.isForChildren } shouldBe true
         events.map { it.sourceId }.distinct() shouldHaveSize events.size
         events.last().eventDate shouldBe LocalDate.of(2027, 11, 17)
     }
@@ -66,7 +68,7 @@ class BkaTheaterSpielplanPageScraperTest {
 
     @Test
     fun `reads a red status dot as sold out`() {
-        // The captured page's red dots all sit on children's shows, which are skipped.
+        // The captured page's red dots all sit on children's shows.
         val row =
             """
             <div class="row bka-spielplan-row event-wrapper" data-pid="16" data-tid="4374">
@@ -80,7 +82,7 @@ class BkaTheaterSpielplanPageScraperTest {
         val show = scraper.scrape(Jsoup.parse(row, url), url).single()
 
         show.soldOut shouldBe true
-        events.none { it.soldOut } shouldBe true
+        events.filter { it.soldOut }.all { it.isForChildren } shouldBe true
     }
 
     @Test

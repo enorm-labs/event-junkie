@@ -1,9 +1,9 @@
 package de.norm.events.scraper.brotfabrik
 
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -46,14 +46,14 @@ class BrotfabrikApiScraperTest {
     }
 
     @Test
-    fun `reads the stage and the readings without the children's shows`() {
-        page.events shouldHaveSize 18
+    fun `reads the stage and the readings, and marks the children's shows`() {
+        page.events shouldHaveSize 26
         page.nextPageUrl.shouldBeNull()
-        page.events.map { it.title }.shouldNotContainAnyOf(
-            "Die Wimpernzwerge",
-            "Weihnachten im Hexenwald",
-            "Es wird Ernst! Puppe besetzt Brotfabrik//KINDERSHOWS!"
-        )
+        page.events.filterNot { it.isForChildren } shouldHaveSize 18
+        page.events
+            .filter { it.isForChildren }
+            .map { it.title }
+            .shouldContainAll("Die Wimpernzwerge", "Weihnachten im Hexenwald", "Es wird Ernst! Puppe besetzt Brotfabrik//KINDERSHOWS!")
     }
 
     @Test

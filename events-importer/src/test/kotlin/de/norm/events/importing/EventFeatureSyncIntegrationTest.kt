@@ -3,9 +3,12 @@ package de.norm.events.importing
 import de.norm.events.BaseControllerTest
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.PartyFeature
+import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.forChildren
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -165,6 +168,40 @@ class EventFeatureSyncIntegrationTest : BaseControllerTest() {
             featureRepository.findByEventIds(listOf(eventId)).shouldBeEmpty()
             uncertainCues(eventId) shouldContainExactlyInAnyOrder
                 listOf("flinta-only: Klubnacht Bis Sonnenaufgang mit FLINTA* DJs.", "open-end: Klubnacht Bis Sonnenaufgang mit FLINTA* DJs.")
+        }
+    }
+
+    @Test
+    fun `a feature the scraper read joins the text's features, and stays with the next import that still reads it`() {
+        runBlocking {
+            val event = persistEvent("features:children", "Ein Puppenspiel. Open end.")
+            val eventId = requireNotNull(event.id)
+            val marked = scraped(event.sourceId).forChildren("Kindertheater")
+
+            featureSync.sync(listOf(event), listOf(marked))
+
+            featureRepository.findByEventIds(listOf(eventId)) shouldContainExactlyInAnyOrder
+                listOf(
+                    EventFeatureRow(eventId, "open-end", "Open end"),
+                    EventFeatureRow(eventId, "for-children", "Kindertheater")
+                )
+
+            featureSync.sync(listOf(event), listOf(scraped(event.sourceId)))
+
+            featureRepository.findByEventIds(listOf(eventId)).map { it.feature } shouldBe listOf("open-end")
+        }
+    }
+
+    @Test
+    fun `the text's phrase wins over the scraper's for the same feature`() {
+        runBlocking {
+            val event = persistEvent("features:both", "Open end.")
+            val eventId = requireNotNull(event.id)
+            val scrapedOpenEnd = scraped(event.sourceId).copy(features = listOf(PartyFeatureMatch(PartyFeature.OPEN_END, "bis zum Morgen")))
+
+            featureSync.sync(listOf(event), listOf(scrapedOpenEnd))
+
+            featureRepository.findByEventIds(listOf(eventId)) shouldBe listOf(EventFeatureRow(eventId, "open-end", "Open end"))
         }
     }
 }

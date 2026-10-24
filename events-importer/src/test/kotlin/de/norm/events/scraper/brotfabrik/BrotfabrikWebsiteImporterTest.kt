@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -37,7 +38,8 @@ class BrotfabrikWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 18
+            result.events shouldHaveSize 26
+            result.events.filterNot { it.isForChildren } shouldHaveSize 18
             result.complete shouldBe true
             result.etag.shouldBeNull()
             result.lastModified.shouldBeNull()

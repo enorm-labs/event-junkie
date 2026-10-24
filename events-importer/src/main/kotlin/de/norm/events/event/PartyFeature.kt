@@ -3,12 +3,13 @@ package de.norm.events.event
 import com.fasterxml.jackson.annotation.JsonValue
 
 /**
- * What kind of night an event is, as its own text states it (#2631). The night's counterpart of the
- * venue's [de.norm.events.venue.VenueCharacterTag], and it shares that vocabulary's slug where both
+ * What kind of night an event is, as its own text or its venue's page states it (#2631). The night's counterpart of
+ * the venue's [de.norm.events.venue.VenueCharacterTag], and it shares that vocabulary's slug where both
  * have the fact. Each night stands alone: a venue tag never fills a night that says nothing.
  *
  * The [slug] is what `event_feature.feature`, the BFF's `feature=` parameter and the frontend's
- * translation keys carry; [ordinal] is the display order. [PartyFeatureRules] sets them.
+ * translation keys carry; [ordinal] is the display order. [PartyFeatureRules] sets them from the stored text,
+ * and a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`).
  *
  * Not here: audience labels that are our opinion about visitors (#327, #2379), and an age limit,
  * which is a number and needs its own field.
@@ -45,7 +46,13 @@ enum class PartyFeature(
      * Anyone may get up and play: an open stage, open mic, open decks or jam session, whatever the event type.
      * A slam with a signed-up line-up, karaoke, a school's showcase and a workshop are not this.
      */
-    OPEN_STAGE("open-stage");
+    OPEN_STAGE("open-stage"),
+
+    /**
+     * A show for small children, as the venue bills it (EVENT_SCOPE.md §3.5, #3796). The BFF leaves it out of a list that
+     * does not ask for it. A show for teenagers and a children's band on a real stage are not this.
+     */
+    FOR_CHILDREN("for-children");
 
     companion object {
         /** The feature whose [slug] matches, or `null` for a slug the vocabulary does not know. */

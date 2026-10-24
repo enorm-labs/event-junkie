@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -80,7 +81,7 @@ class WuehlmaeuseApiScraperTest {
     }
 
     @Test
-    fun `drops a family show for small children`() {
+    fun `marks a family show for small children`() {
         fun ticket(
             act: String,
             programme: String
@@ -103,6 +104,6 @@ class WuehlmaeuseApiScraperTest {
                     ticket("Linus Faber", "Die große Familien-Zaubershow für Kinder ab 4 Jahre"),
                     ticket("Florian Schroeder", "Endlich glücklich")
                 )
-            ).map { it.title } shouldContainExactly listOf("Florian Schroeder")
+            ).map { it.title to it.forChildrenPhrase } shouldContainExactly listOf("Linus Faber" to "Familien-Zaubershow", "Florian Schroeder" to null)
     }
 }

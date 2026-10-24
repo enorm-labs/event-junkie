@@ -4,10 +4,11 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.mapSkippingFailures
@@ -27,7 +28,7 @@ import java.time.format.DateTimeFormatter
  * - **Only the house's own rooms are read.** The list also carries the district's events at the Zitadelle, which has its own
  *   importer, and in the Altstadt churches. A place counts when its street is the house's, `Mauerstr. 6`.
  * - **The categories type the event and set the scope.** Tours, workshops and exhibitions are out (EVENT_SCOPE.md §3.2), and so
- *   is `Kinder und Familie` or a show for an age range under thirteen (§3.5, until #3796), and the `Mitsingding` sing-along.
+ *   is the `Mitsingding` sing-along. `Kinder und Familie` or a show for an age range under thirteen is marked `for-children` (§3.5).
  * - **A title can carry an editor's tag**, `<p hidden KreativWerk_2.12.26>`, and a `<br>-AUSVERKAUFT` tail.
  * - The `Eintritt` tier is the price. `ermäßigt` and `Kinder` are concessions, and a tier with `active: false` is unused.
  */
@@ -57,7 +58,7 @@ class KulturhausSpandauApiScraper {
                 .toList()
                 .mapNotNull { it.stringOrNull("name") }
                 .toSet()
-        if (isOutOfScope(categories, rawTitle, subtitle, node.path("maximum_age").asInt(0))) return null
+        if (isOutOfScope(categories, rawTitle)) return null
         val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')), subtitle?.trim())
         val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, API_TIME) } ?: return null
         val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, API_TIME) }?.takeIf { it.isAfter(start) }
@@ -88,7 +89,7 @@ class KulturhausSpandauApiScraper {
                     .toList()
                     .mapNotNull { it.stringOrNull("title")?.let(::decodeHtmlEntities)?.blankToNull() }
                     .map { ScrapedArtist(it) }
-        )
+        ).forChildrenIf(childrensPhrase(categories, rawTitle, subtitle, node.path("maximum_age").asInt(0)))
     }
 
     /**
@@ -108,14 +109,19 @@ class KulturhausSpandauApiScraper {
 
     private fun isOutOfScope(
         categories: Set<String>,
+        title: String
+    ): Boolean = categories.any { it in PARTICIPATION } || SING_ALONG.containsMatchIn(title)
+
+    /** The category `Kinder und Familie`, a `maximum_age` of [CHILDRENS_MAXIMUM_AGE] or less, or [childrensShowPhrase]. */
+    private fun childrensPhrase(
+        categories: Set<String>,
         title: String,
         subtitle: String?,
         maximumAge: Int
-    ): Boolean =
-        categories.any { it in PARTICIPATION || it == CHILDREN_AND_FAMILY } ||
-            (maximumAge in 1..CHILDRENS_MAXIMUM_AGE) ||
-            SING_ALONG.containsMatchIn(title) ||
-            billsChildrensShow(title, subtitle)
+    ): String? =
+        CHILDREN_AND_FAMILY.takeIf { it in categories }
+            ?: "bis $maximumAge Jahre".takeIf { maximumAge in 1..CHILDRENS_MAXIMUM_AGE }
+            ?: childrensShowPhrase(title, subtitle)
 
     /** A reading first, since every slam is also filed under comedy; a concert with `Show` is a staged revue. */
     private fun typeOf(categories: Set<String>): String =
@@ -123,7 +129,7 @@ class KulturhausSpandauApiScraper {
             "Lesung" in categories -> EventType.READING.name
             "Comedy und Kabarett" in categories -> EventType.COMEDY.name
             "Konzert" in categories && "Show" !in categories -> EventType.CONCERT.name
-            categories.any { it in STAGE } -> EventType.SHOW.name
+            categories.any { it in STAGE || it == CHILDREN_AND_FAMILY } -> EventType.SHOW.name
             "Vortrag" in categories -> EventType.READING.name
             else -> EventType.OTHER.name
         }

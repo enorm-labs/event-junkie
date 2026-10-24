@@ -3,6 +3,7 @@ package de.norm.events.scraper.renaissancetheater
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.forChildrenPhrase
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -121,8 +122,9 @@ class RenaissanceTheaterSpielplanPageScraperTest {
 
         val parsed = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        parsed.map { it.title } shouldContainExactly listOf("Marlene")
-        parsed.single().status shouldBe "CANCELLED"
-        parsed.single().eventDate shouldBe LocalDate.of(2026, 11, 20)
+        parsed.map { it.title } shouldContainExactly listOf("Marlene", "Pippi Langstrumpf")
+        parsed.first().status shouldBe "CANCELLED"
+        parsed.first().eventDate shouldBe LocalDate.of(2026, 11, 20)
+        parsed.map { it.forChildrenPhrase } shouldContainExactly listOf(null, "für Kinder")
     }
 }

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -31,7 +32,8 @@ class ClaerchensBallhausWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events shouldHaveSize 97
+            result.events shouldHaveSize 99
+            result.events.filterNot { it.isForChildren } shouldHaveSize 97
             result.etag shouldBe "\"v1\""
             result.lastModified shouldBe "Fri, 23 Oct 2026 08:00:00 GMT"
             coVerify { htmlFetcher.fetch(sourceUrl, null, null, emptyMap()) }

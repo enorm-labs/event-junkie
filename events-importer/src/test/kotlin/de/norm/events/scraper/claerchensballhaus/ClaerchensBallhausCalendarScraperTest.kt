@@ -1,8 +1,10 @@
 package de.norm.events.scraper.claerchensballhaus
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
@@ -33,8 +35,9 @@ class ClaerchensBallhausCalendarScraperTest {
 
     @Test
     fun `keeps every in-scope occurrence, each under its own key`() {
-        events shouldHaveSize 97
-        events.map { it.sourceId }.toSet() shouldHaveSize 97
+        events shouldHaveSize 99
+        events.map { it.sourceId }.toSet() shouldHaveSize 99
+        events.filterNot { it.isForChildren } shouldHaveSize 97
     }
 
     @Test
@@ -84,15 +87,14 @@ class ClaerchensBallhausCalendarScraperTest {
     }
 
     @Test
-    fun `drops the history talk, workshops, the wine dinner, the sing-along and the children's concerts`() {
+    fun `drops the history talk, workshops, the wine dinner and the sing-along, and marks the children's concerts`() {
         val titles = events.map { it.title }
 
         titles shouldNotContain "Vortrag über Clärchens Geschichte im Spiegelsaal"
         titles shouldNotContain "Swing Workshop im Spiegelsaal"
         titles shouldNotContain "Weinmahleins"
         titles shouldNotContain "YesChoir!"
-        titles shouldNotContain "Kinderkonzert im Spiegelsaal"
-        titles shouldNotContain "Familienkonzert im Spiegelsaal"
+        events.filter { it.isForChildren }.map { it.title }.shouldContainExactlyInAnyOrder("Kinderkonzert im Spiegelsaal", "Familienkonzert im Spiegelsaal")
     }
 
     @Test

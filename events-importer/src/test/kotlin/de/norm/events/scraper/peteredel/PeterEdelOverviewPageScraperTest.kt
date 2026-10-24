@@ -2,6 +2,8 @@ package de.norm.events.scraper.peteredel
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.forChildrenPhrase
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -96,8 +98,8 @@ class PeterEdelOverviewPageScraperTest {
 
     @Test
     fun `extracts every event in listing order`() {
-        // 39 boxes, less the three children's shows (#2832).
-        events shouldHaveSize 36
+        // 39 boxes, three of them children's shows (#3796).
+        events shouldHaveSize 39
         events.first().eventDate shouldBe LocalDate.of(2026, 8, 20)
         events.last().eventDate shouldBe LocalDate.of(2027, 5, 22)
     }
@@ -184,9 +186,8 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops the children's shows, which are out of scope`() {
-        // `Kindertheater: Däumelinchen`, `Kindertheater: Die Schneekönigin` and `Kinder-Halloween` (#2832).
-        events.none { it.title.startsWith("Kinder") } shouldBe true
+    fun `marks the children's shows`() {
+        events.filter { it.isForChildren }.map { it.forChildrenPhrase } shouldBe listOf("Kindertheater", "Kinder-Halloween", "Kindertheater")
     }
 
     @Test

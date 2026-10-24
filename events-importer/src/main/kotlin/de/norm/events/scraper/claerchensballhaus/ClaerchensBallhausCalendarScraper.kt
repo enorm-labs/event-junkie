@@ -4,10 +4,11 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.balancedJsonAt
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.stringOrNull
@@ -27,8 +28,8 @@ import java.time.format.DateTimeFormatter
  * The `end` is not a real end: it is midnight, often of the first occurrence's day.
  *
  * There is no category. The text under the title names the format: a beginners' class followed by a `Tanzabend` or a
- * `Milonga` is a dance night, so a party. History talks, workshops, the wine dinner, the YesChoir! sing-along and children's
- * concerts are out of scope.
+ * `Milonga` is a dance night, so a party. History talks, workshops, the wine dinner and the YesChoir! sing-along are out of
+ * scope. A children's concert is marked `for-children`.
  */
 class ClaerchensBallhausCalendarScraper {
     private val logger = KotlinLogging.logger {}
@@ -80,7 +81,7 @@ class ClaerchensBallhausCalendarScraper {
             sourceId = "${EventSource.CLAERCHENS_BALLHAUS.sourceIdPrefix}${start.format(KEY_TIME)}-${slugOf(permalink)}",
             ticketUrl = entry.stringOrNull("customLink")?.takeIf { TICKET_SHOP.containsMatchIn(it) },
             artists = if (type == EventType.CONCERT.name && !HOUSE_SERIES.containsMatchIn(name)) actsOf(name, type) else emptyList()
-        )
+        ).forChildrenIf(childrensShowPhrase(title, text))
     }
 
     /** `Susanna Hurrell Soprano – Songs By Candlelight` bills the singer, not her voice type. */
@@ -93,7 +94,7 @@ class ClaerchensBallhausCalendarScraper {
         title: String,
         permalink: String,
         text: String?
-    ): Boolean = OUT_OF_SCOPE.containsMatchIn(title) || "/tour-" in permalink || SING_ALONG.containsMatchIn(text.orEmpty()) || billsChildrensShow(title, text)
+    ): Boolean = OUT_OF_SCOPE.containsMatchIn(title) || "/tour-" in permalink || SING_ALONG.containsMatchIn(text.orEmpty())
 
     private fun typeOf(
         title: String,

@@ -7,6 +7,7 @@ import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.event.PartyFeatureRules
 import de.norm.events.event.PinnedField
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -93,6 +94,9 @@ val AFTERHOUR_OPEN_END_SOURCES: Set<EventSource> = setOf(EventSource.GOLDEN_GATE
  * and gets no uncertain cue back: the operator has decided.
  *
  * An afterhour cue from one of [AFTERHOUR_OPEN_END_SOURCES] sets [PartyFeature.OPEN_END] instead of a flag.
+ *
+ * A feature the scraper read off the venue's page ([ScrapedEvent.features], such as [PartyFeature.FOR_CHILDREN]) joins
+ * the rows of the event with the same `sourceId`. Where the text sets that feature too, the text's phrase stays.
  */
 @Service
 class EventFeatureSync(
@@ -101,14 +105,18 @@ class EventFeatureSync(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    suspend fun sync(savedEvents: List<EventEntity>) {
+    suspend fun sync(
+        savedEvents: List<EventEntity>,
+        scrapedEvents: List<ScrapedEvent> = emptyList()
+    ) {
+        val scrapedFeatures = scrapedEvents.associate { it.sourceId to it.features }
         val (pinned, open) = savedEvents.partition { PinnedField.FEATURES.key in it.pinnedFields }
         val rows = mutableListOf<EventFeatureRow>()
         val flags = mutableListOf<EventQualityFlag>()
         open.forEach { event ->
             val id = event.id ?: return@forEach
             val detection = PartyFeatureRules.detect(event.title, event.subtitle, event.description)
-            detection.features.mapTo(rows) { EventFeatureRow(id, it.feature.slug, it.phrase) }
+            (detection.features + scrapedFeatures[event.sourceId].orEmpty()).mapTo(rows) { EventFeatureRow(id, it.feature.slug, it.phrase) }
             detection.uncertain.forEach { cue ->
                 val afterhour = cue.afterhourOpenEnd(event.sourceId)
                 if (afterhour != null) {
@@ -118,7 +126,8 @@ class EventFeatureSync(
                 }
             }
         }
-        featureRepository.replaceFor(open.mapNotNull { it.id }, rows)
+        // The first row of a feature wins, so the text's phrase stays over the scraper's and the afterhour's.
+        featureRepository.replaceFor(open.mapNotNull { it.id }, rows.distinctBy { it.eventId to it.feature })
         qualityFlagRepository.add(flags)
         if (rows.isNotEmpty() || flags.isNotEmpty() || pinned.isNotEmpty()) {
             logger.info {

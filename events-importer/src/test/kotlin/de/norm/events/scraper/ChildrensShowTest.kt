@@ -1,7 +1,10 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.PartyFeature
+import de.norm.events.event.PartyFeatureMatch
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class ChildrensShowTest {
     @Test
@@ -12,11 +15,12 @@ class ChildrensShowTest {
             "Klavierfest Berlin-Weißensee 2027 - Familienkonzert" to null,
             "Linus Faber – Eine magische Elfenmission" to "Die große Familien-Zaubershow für Kinder ab 4 Jahre",
             "ROLLER KIDZ" to "Rollschuhdisko für Kinder"
-        ).map { (title, subtitle) -> billsChildrensShow(title, subtitle) }.distinct() shouldBe listOf(true)
+        ).map { (title, subtitle) -> childrensShowPhrase(title, subtitle) } shouldBe
+            listOf("KINDERPHILHARMONIE", "Kinder-Halloween", "Familienkonzert", "Familien-Zaubershow", "KIDZ")
     }
 
     @Test
-    fun `keeps a band named after children and a show for teenagers`() {
+    fun `leaves a band named after children and a show for teenagers unmarked`() {
         listOf(
             "Muttis Kinder" to null,
             "Kinderzimmer Productions" to null,
@@ -24,6 +28,15 @@ class ChildrensShowTest {
             "Lichterkinder" to null,
             "Deine Freunde" to null,
             "Coming-of-Age-Theater" to "ab 13 Jahre"
-        ).map { (title, subtitle) -> billsChildrensShow(title, subtitle) }.distinct() shouldBe listOf(false)
+        ).map { (title, subtitle) -> childrensShowPhrase(title, subtitle) }.distinct() shouldBe listOf(null)
+    }
+
+    @Test
+    fun `marks an event once, with the venue's phrase`() {
+        val event = ScrapedEvent(title = "Kasper", eventDate = LocalDate.of(2026, 11, 1), sourceUrl = "https://example.com", sourceId = "x:1")
+
+        val marked = event.forChildren(" Kindertheater ").forChildrenIf("ab 4 Jahre").forChildrenIf(null)
+
+        marked.features shouldBe listOf(PartyFeatureMatch(PartyFeature.FOR_CHILDREN, "Kindertheater"))
     }
 }

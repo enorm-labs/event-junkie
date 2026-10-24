@@ -180,7 +180,7 @@ class EventUpsertService(
             associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents, keptEnrichedTables(existingBySourceId, enriched, ownFields))
         releaseEnriched(existingBySourceId, enriched, ownFields)
         // After the associations, whose flag replace would drop the uncertain cues this adds (#2631).
-        featureSync.sync(savedEvents)
+        featureSync.sync(savedEvents, scrapedEvents)
         // After the join tables, so the lineup is hashed as stored (#2768).
         val contentChanged = contentStamp.restamp(savedEvents)
         if (contentChanged > 0) logger.info { "Moved the content stamp of $contentChanged event(s) on event source $eventSourceId" }

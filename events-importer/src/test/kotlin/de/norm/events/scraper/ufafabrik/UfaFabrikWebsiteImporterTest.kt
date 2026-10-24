@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -57,7 +58,8 @@ class UfaFabrikWebsiteImporterTest {
             stubPages()
             val result = importer.importEvents(sourceUrl, null, null)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 93
+            result.events shouldHaveSize 123
+            result.events.filterNot { it.isForChildren } shouldHaveSize 93
             result.etag shouldBe "\"ufa-etag\""
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(novemberUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(decemberUrl) }

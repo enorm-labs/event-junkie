@@ -3,6 +3,7 @@ package de.norm.events.scraper.kulturhausspandau
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -23,7 +24,8 @@ class KulturhausSpandauWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events.size shouldBe 75
+            result.events.size shouldBe 136
+            result.events.count { !it.isForChildren } shouldBe 75
             result.etag shouldBe null
         }
 

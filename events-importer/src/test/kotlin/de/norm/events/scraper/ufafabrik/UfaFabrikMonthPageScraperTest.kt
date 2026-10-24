@@ -2,9 +2,10 @@ package de.norm.events.scraper.ufafabrik
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -30,13 +31,11 @@ class UfaFabrikMonthPageScraperTest {
     private val october = month("ufafabrik-spielplan.html")
 
     @Test
-    fun `reads every show of the month but the children's shows`() {
-        october shouldHaveSize 30
-        month("ufafabrik-program-202611.html") shouldHaveSize 29
-        october.map { it.title } shouldNotContain "TurTurTheater"
-        october.map { it.title } shouldNotContain "Figurentheater Ute Kahmann"
-        october.map { it.title } shouldNotContain "Verheldet"
-        october.map { it.title } shouldNotContain "Volle Lotte"
+    fun `reads every show of the month and marks the children's shows`() {
+        october shouldHaveSize 35
+        october.filterNot { it.isForChildren } shouldHaveSize 30
+        month("ufafabrik-program-202611.html").filterNot { it.isForChildren } shouldHaveSize 29
+        october.filter { it.isForChildren }.map { it.title }.shouldContainAll("TurTurTheater", "Figurentheater Ute Kahmann", "Verheldet", "Volle Lotte")
     }
 
     @Test
@@ -174,9 +173,9 @@ class UfaFabrikMonthPageScraperTest {
 
     @Test
     fun `a children's show is priced per child, Kita child or teacher`() {
-        isChildrensShow(listOf("Kinder", "Erwachsene")) shouldBe true
-        isChildrensShow(listOf("Eintritt", "Erzieher*innen:")) shouldBe true
-        isChildrensShow(listOf("Eintritt", "Ermäßigt", "Studenten (nur im VVK)")) shouldBe false
+        childrensPriceLabel(listOf("Kinder", "Erwachsene")) shouldBe "Kinder"
+        childrensPriceLabel(listOf("Eintritt", "Erzieher*innen:")) shouldBe "Erzieher*innen"
+        childrensPriceLabel(listOf("Eintritt", "Ermäßigt", "Studenten (nur im VVK)")) shouldBe null
     }
 
     @Test

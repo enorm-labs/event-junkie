@@ -7,8 +7,9 @@ import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -53,15 +54,13 @@ class BkaTheaterSpielplanPageScraper {
     ): List<ScrapedEvent> {
         val rows = document.select("div.bka-spielplan-row.event-wrapper:not(.bka-spielfrei)")
         logger.info { "Found ${rows.size} BKA Theater performance(s) on $baseUrl" }
-        val (childrens, shows) = rows.partition(::billsChildrensRow)
-        if (childrens.isNotEmpty()) logger.info { "Skipping ${childrens.size} BKA Theater children's show(s): out of scope" }
         val prices = shopPrices(document)
-        return shows.mapSkippingFailures(logger, "BKA Theater performance") { row -> parseRow(row, prices) }
+        return rows.mapSkippingFailures(logger, "BKA Theater performance") { row -> parseRow(row, prices) }
     }
 
-    /** A Kindertheater row, by its title, its badges and its note (EVENT_SCOPE.md §3.5). */
-    private fun billsChildrensRow(row: Element): Boolean =
-        billsChildrensShow(row.textAt("a.event-title").orEmpty(), (badgesOf(row) + listOfNotNull(row.textAt(".description"))).joinToString(" "))
+    /** The words that bill a Kindertheater row, in its title, its badges or its note (EVENT_SCOPE.md §3.5). */
+    private fun childrensPhrase(row: Element): String? =
+        childrensShowPhrase(row.textAt("a.event-title").orEmpty(), (badgesOf(row) + listOfNotNull(row.textAt(".description"))).joinToString(" "))
 
     private fun badgesOf(row: Element): List<String> = row.select(".bka-badge[data-badge]").mapNotNull { it.attr("data-badge").blankToNull() }
 
@@ -94,7 +93,7 @@ class BkaTheaterSpielplanPageScraper {
             pricePresale = prices[priceKey(eventDate, startTime, title)],
             soldOut = row.selectFirst(".bka-color-rot") != null,
             artists = bkaActs(act, programme, title, eventType)
-        )
+        ).forChildrenIf(childrensPhrase(row))
     }
 
     /** The JSON-LD offer price of each performance it lists, keyed like [priceKey]. */

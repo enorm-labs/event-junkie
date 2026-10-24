@@ -4,8 +4,9 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -22,7 +23,7 @@ import java.net.URI
  * rows on [house]'s stages. Each `li.activity` carries a `time[datetime]` with its offset, the
  * stage, the title and its link, and optional lines: a format label (`Konzert`, `Lesung und
  * Gespräch`), the writer or director, a `mit …` line and a surtitle note (`mit engl. ÜT`).
- * Workshops and theatre tours drop (EVENT_SCOPE.md §3.2), and so do children's shows (§3.5).
+ * Workshops and theatre tours drop (EVENT_SCOPE.md §3.2). Children's shows are marked `for-children` (§3.5).
  */
 class VolksbuehneSpielplanScraper(
     private val house: VolksbuehneHouse
@@ -48,7 +49,7 @@ class VolksbuehneSpielplanScraper(
         val title = row.textAt("h3.activity__title")
         val label = row.textAt(".activity__production-type-label")
         val addition = row.textAt(".activity__title_addition")
-        if (title == null || isOutOfScope(title, label) || billsChildrensShow(title, addition)) return null
+        if (title == null || isOutOfScope(title, label)) return null
         val dateTime = row.attrAt(".activity__time time[datetime]", "datetime")
         val date = dateTime?.let { parseIsoDate(it.take(ISO_DATE_LENGTH)) }
         val page = row.selectFirst("h3.activity__title a[href]")?.absUrl("href").blankToNull()
@@ -71,7 +72,7 @@ class VolksbuehneSpielplanScraper(
             soldOut = row.selectFirst(".ticket-status--sold-out") != null,
             free = hasFreeEntryPhrase(row.textAt(".ticket-note")),
             artists = artists(type, addition)
-        )
+        ).forChildrenIf(childrensShowPhrase(title, addition))
     }
 
     /** The performers of a concert or a party, from its `mit A, B und C` line; a staged work's line names a cast or a host alike. */

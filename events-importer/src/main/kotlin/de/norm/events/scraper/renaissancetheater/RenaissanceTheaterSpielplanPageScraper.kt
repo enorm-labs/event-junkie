@@ -8,8 +8,9 @@ import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
-import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.childrensShowPhrase
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapSkippingFailures
@@ -54,7 +55,7 @@ class RenaissanceTheaterSpielplanPageScraper(
         val rows = document.select("main div.grid div.rt-spielplan-day div.rt-sp-date")
         logger.info { "Found ${rows.size} Renaissance-Theater performance(s) on $baseUrl" }
         val (outOfScope, shows) = rows.partition(::isOutOfScope)
-        if (outOfScope.isNotEmpty()) logger.info { "Skipping ${outOfScope.size} Renaissance-Theater tour(s) or children's show(s): out of scope" }
+        if (outOfScope.isNotEmpty()) logger.info { "Skipping ${outOfScope.size} Renaissance-Theater tour(s): out of scope" }
         val formats = shows.groupBy(::productionUrl).mapValues { (_, performances) -> performances.flatMap(::formatBadges).distinct() }
         return shows.mapSkippingFailures(logger, "Renaissance-Theater performance") { row -> parseRow(row, formats[productionUrl(row)].orEmpty()) }
     }
@@ -94,7 +95,7 @@ class RenaissanceTheaterSpielplanPageScraper(
             ticketUrl = row.selectFirst(".specials a.special-tickets[href]")?.absUrl("href")?.blankToNull(),
             status = note?.let(::parseTitleStatus) ?: EventStatus.SCHEDULED.name,
             artists = renaissanceActs(title, teaser)
-        )
+        ).forChildrenIf(childrensShowPhrase(heading.text(), teaser))
     }
 
     /** The day block's date: its month heading's month and year, or the year the weekday names. */
@@ -111,11 +112,8 @@ class RenaissanceTheaterSpielplanPageScraper(
     private fun parseClock(text: String): LocalTime? =
         CLOCK.matchEntire(text)?.destructured?.let { (hour, minute) -> runCatching { LocalTime.of(hour.toInt(), minute.toInt()) }.getOrNull() }
 
-    /** A guided tour of the house (EVENT_SCOPE.md §3.2) or a show for small children (§3.5). */
-    private fun isOutOfScope(row: Element): Boolean {
-        val title = row.textAt(".rt-sp-teaser h4").orEmpty()
-        return TOUR.containsMatchIn(title) || billsChildrensShow(title, row.textAt(".rt-sp-teaser > p"))
-    }
+    /** A guided tour of the house (EVENT_SCOPE.md §3.2). */
+    private fun isOutOfScope(row: Element): Boolean = TOUR.containsMatchIn(row.textAt(".rt-sp-teaser h4").orEmpty())
 
     private companion object {
         val CLOCK = Regex("""(\d{1,2})[.:](\d{2})""")
