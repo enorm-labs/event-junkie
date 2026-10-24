@@ -19,6 +19,14 @@ object ModelAnswer {
     private val CODE_FENCE = Regex("^```(?:json)?\\s*|\\s*```$")
     private val TIME = Regex("^([01]?\\d|2[0-3])[:.]([0-5]\\d)$")
 
+    /** A number with its decimals or minutes: "18,50", "20.00", "19:30". Its digits up to the first separator are the number it names. */
+    private val NUMBER = Regex("\\d+(?:[.,:]\\d+)*")
+
+    private const val HALF_DAY = 12
+
+    /** A quote shorter than this proves nothing, and a longer one is no quote but a copy. */
+    val EVIDENCE_LENGTH = 3..500
+
     private val mapper: JsonMapper = JsonMapper.builder().build()
 
     /**
@@ -50,4 +58,24 @@ object ModelAnswer {
     /** A time of day on the 24-hour clock, written with either separator: `20:00` or `20.00`. */
     fun time(value: String): LocalTime? =
         TIME.matchEntire(value.trim())?.let { match -> LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].toInt()) }
+
+    /**
+     * [text] names the hour of [time], on the 24-hour clock or the 12-hour one ("9 pm"), as a number of its own.
+     * The 9 in "19 Uhr" names no 9 pm.
+     */
+    fun namesHour(
+        time: LocalTime,
+        text: String
+    ): Boolean {
+        val twelve = (time.hour % HALF_DAY).takeIf { it != 0 } ?: HALF_DAY
+        return numbersIn(text).any { it == time.hour || it == twelve }
+    }
+
+    /** [text] names the whole euros of [price] as a number of its own. The 5 in "15 €" and the 50 in "18,50 €" name no 5 € or 50 €. */
+    fun namesPrice(
+        price: BigDecimal,
+        text: String
+    ): Boolean = price.toInt() in numbersIn(text)
+
+    private fun numbersIn(text: String): Sequence<Int> = NUMBER.findAll(text).mapNotNull { it.value.takeWhile(Char::isDigit).toIntOrNull() }
 }

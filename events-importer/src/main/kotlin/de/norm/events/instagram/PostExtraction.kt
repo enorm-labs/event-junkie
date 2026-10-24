@@ -102,14 +102,11 @@ sealed interface ExtractionResult {
 object PostExtractionValidator {
     private val logger = KotlinLogging.logger {}
 
-    private const val MIN_EVIDENCE_LENGTH = 3
-    private const val MAX_EVIDENCE_LENGTH = 500
     private const val MAX_TITLE_LENGTH = 200
     private const val MAX_LOGGED_DATE_LENGTH = 20
 
     /** A flyer with a long lineup is a few hundred characters. More is not a copy of a flyer. */
     private const val MAX_FLYER_TEXT_LENGTH = 3000
-    private const val HALF_DAY = 12
 
     /** A post announces a night months ahead at most. A date further out is a wrong year. */
     const val HORIZON_DAYS = 300L
@@ -201,7 +198,7 @@ object PostExtractionValidator {
 
             node.path("confidence").asDouble(-1.0) !in minConfidence..1.0 -> DraftCheck.CONFIDENCE
 
-            evidence.length !in MIN_EVIDENCE_LENGTH..MAX_EVIDENCE_LENGTH -> DraftCheck.EVIDENCE_LENGTH
+            evidence.length !in ModelAnswer.EVIDENCE_LENGTH -> DraftCheck.EVIDENCE_LENGTH
 
             !QuotedText.eachLineOccursIn(evidence, read) -> DraftCheck.EVIDENCE_NOT_QUOTED
 
@@ -224,8 +221,8 @@ object PostExtractionValidator {
         return DraftedEvent(
             date = date,
             title = node.path("title").asString("").trim(),
-            startTime = ModelAnswer.time(node.path("startTime").asString(""))?.takeIf { namesHour(it, caption) },
-            doorsTime = ModelAnswer.time(node.path("doorsTime").asString(""))?.takeIf { namesHour(it, caption) },
+            startTime = ModelAnswer.time(node.path("startTime").asString(""))?.takeIf { ModelAnswer.namesHour(it, caption) },
+            doorsTime = ModelAnswer.time(node.path("doorsTime").asString(""))?.takeIf { ModelAnswer.namesHour(it, caption) },
             acts =
                 node
                     .path("acts")
@@ -233,8 +230,8 @@ object PostExtractionValidator {
                     .map { it.asString("").trim() }
                     .filter { it.isNotEmpty() && namedIn(it, caption) }
                     .distinct(),
-            pricePresale = ModelAnswer.price(node.get("pricePresale"))?.takeIf { it.toBigInteger().toString() in caption },
-            priceBoxOffice = ModelAnswer.price(node.get("priceBoxOffice"))?.takeIf { it.toBigInteger().toString() in caption },
+            pricePresale = ModelAnswer.price(node.get("pricePresale"))?.takeIf { ModelAnswer.namesPrice(it, caption) },
+            priceBoxOffice = ModelAnswer.price(node.get("priceBoxOffice"))?.takeIf { ModelAnswer.namesPrice(it, caption) },
             evidence = node.path("evidence").asString("").trim(),
             confidence = node.path("confidence").asDouble(),
             flyerText = flyerText
@@ -261,15 +258,6 @@ object PostExtractionValidator {
         } catch (_: DateTimeParseException) {
             null
         }
-
-    /** The caption has to name the hour, on the 24-hour clock or the 12-hour one ("9pm"). */
-    private fun namesHour(
-        time: LocalTime,
-        caption: String
-    ): Boolean {
-        val twelve = (time.hour % HALF_DAY).takeIf { it != 0 } ?: HALF_DAY
-        return listOf(time.hour, twelve).any { Regex("(?<!\\d)$it(?!\\d)").containsMatchIn(caption) }
-    }
 
     private fun readObject(raw: String): JsonNode? =
         try {
