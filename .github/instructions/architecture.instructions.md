@@ -95,8 +95,10 @@ which helper lives where — is not repeated; `grep` answers that.
   resolve artists and promoters by slug, so an old spelling is missed and re-inserted as a duplicate.
   **A Cyrillic or Greek name with no Latin letter** is transliterated: Cyrillic BGN/PCGN-style without diacritics, Greek by ELOT 743 (`ВУИНДЛИЯ` →
   `vuindliya`, `Кино 2` → `kino-2`, #3475). A name with a Latin letter keeps its plain slug: `Друга Ріка (Druha Rika)` stays `druha-rika`.
-  **A second act whose name folds to a stored slug** (`Göre` beside `Gore`) gets a slug of its own from `ARTIST_SLUG_OVERRIDES`. Every artist
-  slug goes through `artistSlugFor`, in the import and in the admin API alike, and each entry ships with a migration for the stored links (#2942).
+  **A second act whose name folds to a stored slug** (`Göre` beside `Gore`) gets a slug of its own from `ARTIST_SLUG_OVERRIDES`. **A second act with
+  exactly the same name** gets one from `SOURCE_ARTIST_SLUG_OVERRIDES`, keyed by the billing source's `sourceId` prefix (`admiralspalast:` → `maschine-2`).
+  Every artist slug goes through `artistSlugFor`, in the import and in the admin API alike, and each entry ships with a migration for the stored links
+  (#2942, #2954).
 - **Money is scale 2** (`normalizeMoneyScale()` in `events-core`, applied where prices enter `EventEntity`), because `BigDecimal.equals()` is scale-sensitive
   and `10.0 != 10.00` would defeat the scraper's change detection.
 - **Genre tags**: `genre` on an event is the raw text for display; `genre_tag` + `event_genre_tag` hold the normalised many-to-many. `GenreNormalizer` splits

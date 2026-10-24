@@ -246,6 +246,27 @@ class ArtistControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `a source-scoped homonym keeps its suffixed slug when its name is recased`() {
+        val dj = createArtist(ArtistRequestFixtures.create(name = "Maschine"))
+        val singer = runBlocking { artistRepository.save(ArtistEntity(name = "Maschine", slug = "maschine-2")) }
+
+        // Recomputed from the name, the slug would be the DJ's `maschine` and answer 409 (#2954).
+        webTestClient
+            .put()
+            .uri("/api/admin/artists/${singer.id}")
+            .bodyValue(ArtistRequestFixtures.create(name = "MASCHINE"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.slug")
+            .isEqualTo("maschine-2")
+
+        deleteArtist(dj.id)
+        deleteArtist(requireNotNull(singer.id))
+    }
+
+    @Test
     fun `PUT artist with blank name returns 400`() {
         val created = createArtist()
 

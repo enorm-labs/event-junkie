@@ -56,7 +56,7 @@ class PerformerTyping(
     private fun headlinerSlugs(event: ScrapedEvent): List<String> =
         event.artists
             .filter { it.role == ArtistRole.HEADLINER.name }
-            .map { artistSlugFor(it.name) }
+            .map { artistSlugFor(it.name, event.sourceId) }
             .filter { it.isNotEmpty() }
 
     companion object {

@@ -58,19 +58,28 @@ private fun List<String>.deshoutBilling(): List<String> {
 }
 
 /**
- * The slug an artist [name] resolves to: an [ARTIST_SLUG_OVERRIDES] entry, or the slug of its canonical name.
- * Every place that turns an artist name into a slug goes through here, or the import and the admin API disagree.
+ * The slug an artist [name] resolves to: a [SOURCE_ARTIST_SLUG_OVERRIDES] entry for the event's [sourceId], an
+ * [ARTIST_SLUG_OVERRIDES] entry, or the slug of its canonical name. Every place that turns an artist name into a
+ * slug goes through here, or the import and the admin API disagree. The admin API passes no [sourceId].
  */
-fun artistSlugFor(name: String): String {
+fun artistSlugFor(
+    name: String,
+    sourceId: String? = null
+): String {
     val canonical = canonicalArtistName(name)
-    return ARTIST_SLUG_OVERRIDES[canonical.lowercase()] ?: SlugGenerator.slugify(canonical)
+    val key = canonical.lowercase()
+    val scoped = sourceId?.let { SOURCE_ARTIST_SLUG_OVERRIDES[it.substringBefore(':') + ':']?.get(key) }
+    return scoped ?: ARTIST_SLUG_OVERRIDES[key] ?: SlugGenerator.slugify(canonical)
 }
+
+/** The `sourceId` prefixes that [SOURCE_ARTIST_SLUG_OVERRIDES] scopes an entry to, for the test that pins each to a source. */
+internal val sourceScopedArtistSlugPrefixes: Set<String> get() = SOURCE_ARTIST_SLUG_OVERRIDES.keys
 
 /**
  * A second act whose name folds to a slug another act holds, mapped to a slug of its own (#2942).
  *
  * The key is the canonical name in lower case, accents kept. That is what separates `Göre` from `Gore`, which
- * [SlugGenerator] folds to one slug. Names that are exactly identical cannot be keyed here (#2954).
+ * [SlugGenerator] folds to one slug. Names that are exactly identical go to [SOURCE_ARTIST_SLUG_OVERRIDES].
  *
  * The act already stored keeps the plain slug, so no published URL moves. An entry names both acts' sources in its
  * comment, and ships with a data migration that moves the stored links. Artists only: no promoter clash is known.
@@ -80,6 +89,21 @@ private val ARTIST_SLUG_OVERRIDES: Map<String, String> =
         // The German band Göre, billed by Monarch (kottimonarch.de). The US band Gore, billed by UFO im Velodrom
         // beside I Prevail, keeps `gore`.
         "göre" to "goere"
+    )
+
+/**
+ * A second act with exactly the same name as another, sent to a row of its own by the source that bills it (#2954).
+ *
+ * The outer key is the `sourceId` prefix of the billing source (`admiralspalast:`), the inner one the canonical name in
+ * lower case. A scoped entry wins over an [ARTIST_SLUG_OVERRIDES] entry. The same rules apply as there: the act stored
+ * first keeps the plain slug, the other takes a `-2` suffix, the comment names both acts' sources, and the entry ships
+ * with a data migration that moves the stored links. A source that bills both acts cannot be told apart here.
+ */
+private val SOURCE_ARTIST_SLUG_OVERRIDES: Map<String, Map<String, String>> =
+    mapOf(
+        // Dieter "Maschine" Birr, the former Puhdys singer, at Admiralspalast. The resident DJ Maschine at Der Weiße
+        // Hase keeps `maschine` (#3856).
+        "admiralspalast:" to mapOf("maschine" to "maschine-2")
     )
 
 /**
