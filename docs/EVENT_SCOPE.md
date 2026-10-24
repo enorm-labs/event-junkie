@@ -211,6 +211,7 @@ marks a show for small children, and adults go to these concerts too.
 | Brotfabrik                                                                | `BrotfabrikApiScraper.childrensPhrase`                          | `childrensShowPhrase` on title + description, an age range such as `4 – 8 Jahren`, `Kindershow`  |
 | Clärchens Ballhaus                                                        | `childrensShowPhrase`, on the title and the calendar text       | The same words as above                                                                          |
 | Kulturhaus Spandau                                                        | `KulturhausSpandauApiScraper.childrensPhrase`                   | The `Kinder und Familie` category, a `maximum_age` of 12 or less, or `childrensShowPhrase`       |
+| Pfefferberg Theater                                                       | `PfefferbergTheaterCalendarPageScraper`, `CHILDRENS_CATEGORY`   | The `Kindertheater` category of the calendar, or `childrensShowPhrase` on title + subtitle       |
 
 `childrensShowPhrase` leaves a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`)
 unmarked. A new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it

@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   189 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   190 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -164,6 +164,7 @@ schema change.
 | Passionskirche                   | https://www.halle-luja.berlin/kommende-events                            | Concert Hall | IONOS gallery captions; event page owns the date          |
 | Pastiche                         | https://pasticheinternational.com/programme-1                            | Bar          | Cargo; one month, no year; drops workshops, fairs         |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
+| Pfefferberg Theater              | https://pfefferberg-theater.de/spielplan/kalender/                       | Theater      | ProcessWire calendar + production pages; not Haus 13      |
 | PKH Warehouse                    | https://www.pkh.events/                                                  | Club         | Hand-written HTML; month headings; year by weekday        |
 | Privatclub                       | https://privatclub-berlin.de/                                            | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |
@@ -230,7 +231,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-180 importer classes cover 181 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+181 importer classes cover 182 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Eight other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
@@ -252,8 +253,8 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-62 sources have a second language, 115 have none, and 4 are unknown. Fourteen translate the event text on a second page.
-Eleven put both languages in one field.
+63 sources have a second language, 115 have none, and 4 are unknown. Fourteen translate the event text on a second page.
+Twelve put both languages in one field.
 
 The importer cuts the description of every source at its marker (`withBilingualDescriptionSplit`). It does this before
 it stores the row, and only when the scraper gave no second language. The second half becomes the publisher's second
@@ -398,6 +399,7 @@ the upsert stores none.
 | Passionskirche                   | No              | IONOS website translator, machine translation only           | —                  |                                                                                                                                    |
 | Pastiche                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Pfefferberg Haus 13              | No              | —                                                            | —                  |                                                                                                                                    |
+| Pfefferberg Theater              | Yes             | One field: `ENGLISH VERSION`                                 | One field          | https://pfefferberg-theater.de/spielplan/kalender/barbaren-barbies/                                                                |
 | PKH Warehouse                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Privatclub                       | Yes             | One field: `— english version —`                             | One field          | https://privatclub-berlin.de/                                                                                                      |
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |
