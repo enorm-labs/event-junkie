@@ -94,19 +94,58 @@ class ATraneProgrammePageScraperTest {
     /** One weekly-session card whose JSON-LD name is the credit and [lines], `<br>`-separated. */
     private fun session(vararg lines: String): ScrapedEvent = card(listOf("A-TRANE PRÄSENTIERT:") + lines)
 
-    /** One card whose JSON-LD name is [lines], `<br>`-separated. */
-    private fun card(lines: List<String>): ScrapedEvent {
+    /** One card whose JSON-LD name is [lines], `<br>`-separated, starting at [start] with [subtitle] in its markup. */
+    private fun card(
+        lines: List<String>,
+        start: String = "21:00",
+        subtitle: String = ""
+    ): ScrapedEvent {
         val name = lines.joinToString("&lt;br&gt;") { it.replace("&", "&amp;") }
         val html =
             """
             <div class="eventon_list_event" data-event_id="1">
               <script type="application/ld+json">
                 {"@context": "http://schema.org", "@type": "Event", "name": "$name",
-                 "url": "https://a-trane.de/Events-Directory/andreas-schmidt/", "startDate": "2026-10-5T21:00+2:00"}
+                 "url": "https://a-trane.de/Events-Directory/andreas-schmidt/", "startDate": "2026-10-5T$start+2:00"}
               </script>
+              <span class="evcal_event_subtitle">$subtitle</span>
             </div>
             """.trimIndent()
         return ATraneProgrammePageScraper().scrape(Jsoup.parse(html, sourceUrl)).single()
+    }
+
+    @Test
+    fun `reads the admission time a winter-Sunday subtitle or a day-of seats notice prints`() {
+        // #3870: "EINLASS 17.00 UHR KONZERTBEGINN: 18.00 UHR" and "EINLASS: 19.00 UR KONZERTBEGINN 20.00 UHR".
+        on(LocalDate.of(2026, 10, 25)).doorsTime shouldBe LocalTime.of(17, 0)
+        on(LocalDate.of(2026, 10, 11)).doorsTime shouldBe LocalTime.of(17, 0)
+        on(LocalDate.of(2026, 10, 29)).doorsTime shouldBe LocalTime.of(19, 0)
+        on(LocalDate.of(2026, 10, 13)).doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `reads a one-night special admission time with spaces before its colons`() {
+        val night =
+            card(
+                listOf("A-TRANE PRÄSENTIERT DAY1:", "ERNST BIER NEW QUARTET"),
+                start = "22:00",
+                subtitle = "WICHTIG! NUR AM 25.12. 1. WEIHNACHTSTAG SONDERZEIT: EINLASS : 21.00 UHR BEGINN : 22.00 UHR / IMPORTANT!"
+            )
+        night.doorsTime shouldBe LocalTime.of(21, 0)
+        night.startTime shouldBe LocalTime.of(22, 0)
+    }
+
+    @Test
+    fun `keeps no admission time a moved night's notice still prints`() {
+        // The 2026-11-08 night starts at 20:30 under the winter notice for an 18:00 start.
+        on(LocalDate.of(2026, 11, 8)).doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps no admission time that is not before the start`() {
+        card(listOf("A-TRANE PRÄSENTIERT:", "TRIO"), start = "20:00", subtitle = "EINLASS 20.00 UHR").doorsTime.shouldBeNull()
+        card(listOf("A-TRANE PRÄSENTIERT:", "TRIO"), start = "20:00", subtitle = "EINLASS 21.00 UHR").doorsTime.shouldBeNull()
+        card(listOf("A-TRANE PRÄSENTIERT:", "TRIO"), start = "20:00", subtitle = "EINLASS 19.30 UHR").doorsTime shouldBe LocalTime.of(19, 30)
     }
 
     @Test

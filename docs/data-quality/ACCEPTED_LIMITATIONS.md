@@ -10,7 +10,6 @@ says so.
 
 | Source                 | Aspect             | Why the source is silent                                                                                                                         | Issue |
 | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| `A_TRANE`              | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
 | `A_TRANE`              | `END_TIME`         | the end time is a calendar default, 23:50 on most nights                                                                                         | —     |
 | `A_TRANE`              | `PRICE`            | some nights print the price only in a day-of seats notice, in free prose and tiered by concession                                                | —     |
 | `A_TRANE`              | `PRICE_BOX_OFFICE` | the site sells one price online and holds reserved seats at that price                                                                           | —     |
