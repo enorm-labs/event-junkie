@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -22,21 +23,25 @@ class Zimmer16WebsiteImporterTest {
     private val importer = Zimmer16WebsiteImporter(htmlFetcher)
     private val url = "https://zimmer16.com/"
     private val bourbonUrl = "https://www.yesticket.org/event/de/claude-bourbon-erwachsene-10-10-26"
+    private val childrensUrl = "https://zimmer16.com/programm-fuer-kinder-mikado-e-v/"
 
     @Test
-    fun `reads each card's event page and flags the ones that fail`() =
+    fun `reads the homepage and the children's page, then each card's event page, and flags the ones that fail`() =
         runTest {
             coEvery { htmlFetcher.fetch(url, any(), any(), any()) } returns
                 FetchResult.Success(document = Jsoup.parse(fixture("zimmer16-home.html"), url), etag = null, lastModified = null)
             coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://www.yesticket.org/")
             coEvery { htmlFetcher.fetchDocument(bourbonUrl) } returns Jsoup.parse(fixture("yesticket-claude-bourbon.html"), bourbonUrl)
+            coEvery { htmlFetcher.fetchDocument(childrensUrl) } returns Jsoup.parse(fixture("zimmer16-kinder.html"), childrensUrl)
 
             val result = importer.importEvents(url)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 20
+            result.events shouldHaveSize 44
+            result.complete shouldBe true
+            result.events.count { it.isForChildren } shouldBe 24
             result.events.first { it.sourceUrl == bourbonUrl }.startTime shouldBe LocalTime.of(20, 0)
-            result.events.count { it.detailUnavailable } shouldBe 19
+            result.events.count { it.detailUnavailable } shouldBe 43
             result.events.forEach { it.imageUrl.shouldNotBeNull() shouldStartWith "https://zimmer16.com/wp-json/yesticket/v1/picture/" }
         }
 

@@ -1,6 +1,8 @@
 package de.norm.events.scraper.zimmer16
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.forChildrenPhrase
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -19,6 +21,8 @@ class Zimmer16ScrapersTest {
     private val baseUrl = "https://zimmer16.com/"
     private val events = Zimmer16OverviewPageScraper().scrape(Jsoup.parse(fixture("zimmer16-home.html"), baseUrl), baseUrl)
     private val eventPage = Zimmer16EventPageScraper()
+    private val childrensUrl = "https://zimmer16.com/programm-fuer-kinder-mikado-e-v/"
+    private val childrens = Zimmer16OverviewPageScraper().scrape(Jsoup.parse(fixture("zimmer16-kinder.html"), childrensUrl), childrensUrl)
 
     @Test
     fun `reads the homepage's 20 cards with their year and drops the audience from the title`() {
@@ -148,6 +152,16 @@ class Zimmer16ScrapersTest {
             </a>
             """.trimIndent()
         }
+
+    @Test
+    fun `marks the children's page cards for children, as shows, and leaves the homepage unmarked`() {
+        childrens shouldHaveSize 24
+        childrens.all { it.isForChildren && it.forChildrenPhrase == "(Kinder)" } shouldBe true
+        childrens.none { it.title.endsWith("(Kinder)") } shouldBe true
+        childrens.map { it.eventType }.distinct() shouldBe listOf(EventType.SHOW.name)
+        childrens.first().title shouldBe "Wusel und der goldene Ring – Theater Katinchen"
+        events.none { it.isForChildren } shouldBe true
+    }
 
     private fun fixture(name: String): String =
         javaClass.classLoader

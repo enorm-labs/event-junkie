@@ -2,6 +2,7 @@ package de.norm.events.scraper.kesselhaus
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -272,4 +273,20 @@ class KesselhausCalendarScraperTest {
             .getResourceAsStream("scraper/kesselhaus/$name")!!
             .bufferedReader()
             .readText()
+
+    @Test
+    fun `marks the Kinder category for children and keeps it a show`() {
+        val events = kesselhaus.scrape(calendar, url) + maschinenhaus.scrape(calendar, url)
+        val marked = events.filter { it.isForChildren }
+
+        marked.map { it.title } shouldBe
+            listOf(
+                "Eule findet den Beat",
+                "Nobel-Popel: \"Zebrastreifen\"",
+                "Nobel-Popel: \"Nopo’s Schatzkiste\"",
+                "Nobel-Popel: \"Trixis Weihnachtstraum – eine Zauberwaldgeschichte\""
+            )
+        marked.map { it.eventType }.distinct() shouldBe listOf(EventType.SHOW.name)
+        events.filter { it.eventType != EventType.SHOW.name }.none { it.isForChildren } shouldBe true
+    }
 }

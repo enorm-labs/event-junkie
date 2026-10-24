@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
@@ -124,7 +125,8 @@ class KesselhausCalendarScraper(
         val notes = base.path("notes").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
         val subtitle = text.stringOrNull("subtitle")
         val topics = base.path("topics").mapNotNull { it.asString("").substringAfterLast("//") }.toSet()
-        val eventType = eventTypeOf(card.textAt(".category"), topics)
+        val category = card.textAt(".category")
+        val eventType = eventTypeOf(category, topics)
         val tickets = base.path("tickets").toList()
         return ScrapedEvent(
             title = title,
@@ -148,7 +150,7 @@ class KesselhausCalendarScraper(
             status = statusOf(notes),
             statusNote = subtitle?.takeIf { RELOCATED in notes },
             artists = buildArtistsForEventType(title, subtitle, eventType).ifEmpty { subtitleBill(title, subtitle, eventType) }
-        )
+        ).forChildrenIf(category?.takeIf { it.equals(CHILDRENS_CATEGORY, ignoreCase = true) })
     }
 
     /**
@@ -306,6 +308,9 @@ class KesselhausCalendarScraper(
 
         /** One act and its unnamed guests, `Jonathan Blues Band & Gäste`; unsplit, because the act's own name can hold an `&`. */
         private val SUBTITLE_ACT_AND_GUESTS = Regex("""^(.+?)\s+(?:&|und)\s+(?:Gäste|Gaeste|Friends)$""", RegexOption.IGNORE_CASE)
+
+        /** The calendar's category for children's shows, which are marked `for-children` (EVENT_SCOPE.md §3.5). */
+        private const val CHILDRENS_CATEGORY = "Kinder"
 
         /** The calendar's category labels beyond the shared ones. */
         private val CATEGORY_SYNONYMS =

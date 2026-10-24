@@ -12,10 +12,11 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for ZIMMER 16: the homepage's YesTicket cards, then each card's YesTicket event page.
+ * Website importer for ZIMMER 16: the homepage's YesTicket cards and those of the children's programme page,
+ * then each card's YesTicket event page.
  *
- * The homepage holds the date and the title; the event page adds the time, the price and the text. The
- * YesTicket organiser list has more nights, but it also lists the children's theatre, which is out of scope.
+ * The homepage holds the date and the title; the event page adds the time, the price and the text. The children's
+ * programme (Mikado e.V.) has its own page with the same cards, marked `for-children` (EVENT_SCOPE.md §3.5).
  * The picture comes from the card, which serves it from the venue's own host; YesTicket's copy is robots-disallowed.
  *
  * @see Zimmer16OverviewPageScraper for the cards.
@@ -28,6 +29,18 @@ class Zimmer16WebsiteImporter(
     override val eventSource: EventSource = EventSource.ZIMMER_16
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = Zimmer16EventPageScraper()::enrich
     override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.DESCRIPTION, ScrapedField.START_TIME, ScrapedField.PRICES)
+
+    override val maxListingPages: Int = 2
+
+    /** The children's programme page after the homepage, and nothing after that. */
+    override fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? = CHILDRENS_PROGRAMME_URL.takeUnless { url.trimEnd('/') == it.trimEnd('/') }
+
+    private companion object {
+        const val CHILDRENS_PROGRAMME_URL = "https://zimmer16.com/programm-fuer-kinder-mikado-e-v/"
+    }
 }
 
 val ZIMMER_16_LIMITATIONS =
