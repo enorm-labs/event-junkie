@@ -849,7 +849,6 @@ says so.
 | `SOULCAT`              | `ARTISTS`          | the house nights (`Bartenders Choice`) name no DJ                                                                                                | —     |
 | `SOULCAT`              | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SPEAKEAZY`            | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
-| `SPEAKEAZY`            | `TICKET_URL`       | the venue sells at the door and links no ticket shop                                                                                             | —     |
 | `SPEAKEAZY`            | `PRICE_PRESALE`    | the venue prints only the box-office price                                                                                                       | —     |
 | `SPEAKEAZY`            | `GENRE`            | the listing names no style, only the blurb describes one                                                                                         | —     |
 | `SPEAKEAZY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
