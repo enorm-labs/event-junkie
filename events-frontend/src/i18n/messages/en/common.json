@@ -35,7 +35,8 @@
     "browseEvents": "Browse events",
     "browseCalendar": "Browse calendar",
     "backToHome": "Back to home",
-    "showMore": "Show more"
+    "showMore": "Show more",
+    "done": "Done"
   },
   "states": {
     "loading": "Cueing it up…",
