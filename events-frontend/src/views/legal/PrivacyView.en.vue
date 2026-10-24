@@ -353,10 +353,11 @@ const { t } = useI18n()
         legitimate interest in protecting the mail service from abuse.
       </p>
       <p>
-        <strong>Retention:</strong> your account stays until you delete it. If you do not sign in
-        for <strong>24 months</strong>, I delete it, and you get a mail one month before. A session
-        ends 30 days after its last use, or when you sign out. A link expires after 15 minutes.
-        Expired links and sessions are deleted daily.
+        <strong>Retention:</strong> your account stays until you delete it. If you do not use it for
+        <strong>24 months</strong>, I delete it, and you get a mail one month before. Every sign-in
+        counts as use, and so does every visit while you are signed in. A session ends 30 days after
+        its last use, or when you sign out. A link expires after 15 minutes. Expired links and
+        sessions are deleted daily.
       </p>
       <p>
         <strong>Do it yourself:</strong> on your account page you can download everything stored as

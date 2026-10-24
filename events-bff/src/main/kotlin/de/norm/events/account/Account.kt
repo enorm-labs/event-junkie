@@ -3,7 +3,10 @@ package de.norm.events.account
 import java.time.Instant
 import java.util.UUID
 
-/** A row of `accounts.account`. [locale] is the language of every mail to it, `de` or `en`. */
+/**
+ * A row of `accounts.account`. [locale] is the language of every mail to it, `de` or `en`. [lastSignInAt] is the last use: a sign-in,
+ * or a session renewed at most daily (#3905).
+ */
 data class Account(
     val id: UUID,
     val email: String,
