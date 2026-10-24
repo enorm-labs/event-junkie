@@ -164,7 +164,7 @@ schema change.
 | Passionskirche                   | https://www.halle-luja.berlin/kommende-events                            | Concert Hall | IONOS gallery captions; event page owns the date          |
 | Pastiche                         | https://pasticheinternational.com/programme-1                            | Bar          | Cargo; one month, no year; drops workshops, fairs         |
 | Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                                           | Concert Hall | Event Organiser; 2 listing pages + event pages            |
-| Pfefferberg Theater              | https://pfefferberg-theater.de/spielplan/kalender/                       | Theater      | ProcessWire calendar + production pages; not Haus 13      |
+| Pfefferberg Theater              | https://pfefferberg-theater.de/spielplan/kalender/                       | Theater      | ProcessWire calendar + Märchen page via menu; not Haus 13 |
 | PKH Warehouse                    | https://www.pkh.events/                                                  | Club         | Hand-written HTML; month headings; year by weekday        |
 | Privatclub                       | https://privatclub-berlin.de/                                            | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                                   | Comedy Club  | Next.js flight payload; all dates on one page             |

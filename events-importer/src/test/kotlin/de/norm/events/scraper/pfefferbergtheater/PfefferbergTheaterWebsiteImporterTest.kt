@@ -5,6 +5,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.forChildrenPhrase
+import de.norm.events.scraper.isForChildren
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -23,6 +25,7 @@ class PfefferbergTheaterWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val importer = PfefferbergTheaterWebsiteImporter(htmlFetcher)
     private val sourceUrl = "https://pfefferberg-theater.de/spielplan/kalender/"
+    private val maerchenUrl = "https://pfefferberg-theater.de/spielplan/maerchenimglaspalast26_27/"
 
     private fun loadDocument(
         name: String,
@@ -41,7 +44,44 @@ class PfefferbergTheaterWebsiteImporterTest {
             FetchResult.Success(document = loadDocument("pfefferbergtheater-calendar.html", sourceUrl), etag = "\"pt\"", lastModified = null)
         coEvery { htmlFetcher.fetchDocument(match { it.startsWith(sourceUrl) }) } answers
             { loadDocument("pfefferbergtheater-production.html", firstArg()) }
+        coEvery { htmlFetcher.fetchDocument(match { it.startsWith(maerchenUrl) }) } answers
+            { loadDocument(maerchenPage(firstArg()), firstArg()) }
     }
+
+    private fun maerchenPage(url: String) =
+        when {
+            url == maerchenUrl -> "pfefferbergtheater-maerchen.html"
+            url.endsWith("-schule/") -> "pfefferbergtheater-maerchen-school.html"
+            url.endsWith("/schwefelhoelzer-tannenbaum/") -> "pfefferbergtheater-maerchen-family.html"
+            else -> "pfefferbergtheater-maerchen-adult.html"
+        }
+
+    @Test
+    fun `follows the menu to the Märchen im Glaspalast page and marks its children's shows`() =
+        runTest {
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.complete shouldBe true
+            result.events.count { it.room == "Glaspalast" } shouldBe 92
+            result.events.single { it.sourceId == "pfefferberg_theater:33727" }.forChildrenPhrase shouldBe "Märchen für ALLE – Zutritt ab 4 Jahren"
+            result.events.single { it.sourceId == "pfefferberg_theater:34599" }.isForChildren shouldBe true
+            result.events.single { it.sourceId == "pfefferberg_theater:33698" }.isForChildren shouldBe false
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(maerchenUrl) }
+        }
+
+    @Test
+    fun `keeps the calendar and skips the stale cleanup when the Märchen page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(maerchenUrl) } throws HttpFetchException(500, maerchenUrl)
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.complete shouldBe false
+            result.events.none { it.room == "Glaspalast" } shouldBe true
+            result.events.single { it.sourceId == "pfefferberg_theater:29935" }.title shouldBe "Fil mit neuer Show – Winter 26/27"
+        }
 
     @Test
     fun `reads each production page once and applies it to its dates`() =

@@ -31,6 +31,29 @@ class PfefferbergTheaterProductionPageScraperTest {
         description shouldNotContain "Rollstuhlfahrer"
     }
 
+    private fun audienceOf(fixture: String) =
+        audienceOfPage(
+            javaClass.classLoader
+                .getResourceAsStream("scraper/pfefferbergtheater/$fixture")!!
+                .bufferedReader()
+                .readText()
+        )
+
+    private fun audienceOfPage(html: String) = PfefferbergTheaterProductionPageScraper().scrape(Jsoup.parse(html, url)).childrensAudience
+
+    @Test
+    fun `reads a family or school show's audience line and no other`() {
+        audienceOf("pfefferbergtheater-maerchen-family.html") shouldBe "Märchen für ALLE – Zutritt ab 4 Jahren"
+        audienceOf("pfefferbergtheater-maerchen-school.html") shouldBe "Schulvorstellung ab 4 Jahren"
+        audienceOf("pfefferbergtheater-maerchen-adult.html") shouldBe null
+        production.childrensAudience shouldBe null
+    }
+
+    @Test
+    fun `leaves an adults-only show for twelve-year-olds unmarked`() {
+        audienceOfPage("""<main><div class="richtext"><p><em>Nur für Erwachsene – Zutritt ab 12 Jahren</em></p></div></main>""") shouldBe null
+    }
+
     @Test
     fun `reads the image and the ticket link`() {
         production.imageUrl shouldBe "https://pfefferberg-theater.de/site/assets/files/29934/fil.800x600n.webp"

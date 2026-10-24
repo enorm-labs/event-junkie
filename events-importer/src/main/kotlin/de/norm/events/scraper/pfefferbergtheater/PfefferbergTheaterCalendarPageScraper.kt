@@ -31,7 +31,8 @@ import java.time.LocalDate
  * ```
  *
  * The year sits only in the classes. The `kategorie-*` and `genre-zusatz-*` classes are named by the page's own
- * filter menu, read from the same document. The house writes status into the title between `+++` marks.
+ * filter menu, read from the same document. The house writes status into the title between `+++` marks. The
+ * `Märchen im Glaspalast` page has the same rows without category classes; its rows are the Glaspalast's.
  */
 class PfefferbergTheaterCalendarPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -43,7 +44,8 @@ class PfefferbergTheaterCalendarPageScraper {
         val rows = document.select("div.event[data-searchid]")
         logger.info { "Found ${rows.size} Pfefferberg Theater performance(s) on $baseUrl" }
         val labels = filterLabels(document)
-        return rows.mapSkippingFailures(logger, "Pfefferberg Theater performance") { row -> parseRow(row, labels) }
+        val room = GLASPALAST.takeIf { GLASPALAST_PATH in baseUrl }
+        return rows.mapSkippingFailures(logger, "Pfefferberg Theater performance") { row -> parseRow(row, labels, room) }
     }
 
     private fun filterLabels(document: Document): Map<String, String> =
@@ -54,7 +56,8 @@ class PfefferbergTheaterCalendarPageScraper {
 
     private fun parseRow(
         row: Element,
-        labels: Map<String, String>
+        labels: Map<String, String>,
+        room: String?
     ): ScrapedEvent? {
         val link = row.selectFirst("a[href*=eventdate_id=]") ?: return null
         val dateId = EVENTDATE_ID.find(link.attr("href"))?.groupValues?.get(1) ?: return null
@@ -74,6 +77,7 @@ class PfefferbergTheaterCalendarPageScraper {
             typeIsFallback = eventType == null && fallbackType == null,
             eventDate = eventDate,
             startTime = parseTime(row.textAt("p.time")),
+            room = room,
             sourceUrl = link.absUrl("href").substringBefore('?'),
             sourceId = "${EventSource.PFEFFERBERG_THEATER.sourceIdPrefix}$dateId",
             genre = genres(tags, labels).joinToString(", ").ifEmpty { null },
@@ -152,6 +156,12 @@ internal fun pfefferbergActs(
         .filterNot(::isNonArtistName)
         .map { ScrapedArtist(name = it, titleDerived = true) }
 }
+
+/** The path of the `Märchen im Glaspalast` season page, whose rows play in the [GLASPALAST]. */
+internal const val GLASPALAST_PATH = "/spielplan/maerchenimglaspalast"
+
+/** The house's second room, a glass pavilion, where the Hexenberg Ensemble plays its fairy tales. */
+private const val GLASPALAST = "Glaspalast"
 
 /** The house's own reading series, whose titles open with the author. */
 private const val READING_SERIES = "ensemble-literatur-live"
