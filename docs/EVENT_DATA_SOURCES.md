@@ -79,7 +79,7 @@ schema change.
 | Der Weiße Hase                   | https://derweissehase.club/events                                        | Club         | Contao; invalid `<p>` nesting; RA ticket links            |
 | Die Wühlmäuse                    | https://wuehlmaeuse.de/                                                  | Theater      | WooCommerce Store API; one product per seat tier          |
 | Downstairs Comedy Club           | https://www.downstairscomedy.shop/tickets                                | Comedy Club  | tickettoaster Turbo frame; JSON-LD per performance        |
-| Drugstore                        | https://drugstore-berlin.de/                                             | Other        | radar group API; bands only in prose                      |
+| Drugstore                        | https://drugstore-berlin.de/                                             | Other        | radar group API; bill read from the description           |
 | DSTRKT                           | https://www.dstrkt.de/                                                   | Club         | Wix Data collection in warmup JSON; no lineup             |
 | Duncker Club                     | https://www.dunckerclub.de/                                              | Club         |                                                           |
 | Erreichbar                       | https://radar.squat.net/en/node/6653                                     | Bar          | radar group API; Punkrocktresen only                      |

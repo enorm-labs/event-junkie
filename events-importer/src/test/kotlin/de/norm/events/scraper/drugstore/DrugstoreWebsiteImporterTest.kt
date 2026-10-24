@@ -16,7 +16,7 @@ class DrugstoreWebsiteImporterTest {
     private val importer = DrugstoreWebsiteImporter(apiClient)
 
     @Test
-    fun `imports the nights and reads free entry from the description`() =
+    fun `imports the nights and reads free entry and the bill from the description`() =
         runTest {
             coEvery { apiClient.fetchJson(any()) } returns
                 javaClass.classLoader
@@ -30,6 +30,9 @@ class DrugstoreWebsiteImporterTest {
             result.events.map { it.title } shouldBe listOf("Konzert", "Eddy Playground", "Hardcore for Solidarity")
             // "Eintritt frei!" and "FREE ENTRY".
             result.events.filter { it.free }.map { it.title } shouldBe listOf("Konzert", "Hardcore for Solidarity")
+            // Only the night with a "Featuring:" line bills anyone.
+            result.events.map { it.artists.size } shouldBe listOf(0, 0, 6)
+            result.events.last().genre shouldBe "Hardcore, Beatdown"
             // A path alias, not /node/<id>: the id comes from the row's key.
             result.events.first().sourceId shouldBe "drugstore:598022"
             result.events.first().sourceUrl shouldBe "https://radar.squat.net/en/event/berlin/drugstore/2026-10-03/konzert"
