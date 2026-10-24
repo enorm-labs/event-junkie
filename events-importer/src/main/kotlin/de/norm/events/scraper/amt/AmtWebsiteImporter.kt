@@ -5,14 +5,17 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
  * Website importer for AMT Club Berlin — a Webflow techno club whose `/events` entry page
  * carries no events server-side (a Finsweet CMS-nest list injects them client-side). The entry
  * page links to per-month `/month/<name>` pages, each fully server-rendered; this importer
- * discovers those links, fetches each, and parses its events via [AmtOverviewPageScraper].
+ * discovers those links, fetches each, and parses its events via [AmtOverviewPageScraper]. Each
+ * night's own page adds its prose to the description ([addAmtEventPageDescription]).
  *
  * Conditional requests are intentionally **not** used: the entry-page ETag changes only when a
  * month is added, not when a night is edited within one, so relying on it would miss mid-month
@@ -32,6 +35,10 @@ class AmtWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractMonthPagesWebsiteImporter(htmlFetcher, "AMT", MONTH_LINK_SELECTOR, AmtOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.AMT
+    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addAmtEventPageDescription
+
+    // A night without its own page is listed on the month page only.
+    override fun hasEventPage(event: ScrapedEvent): Boolean = "/event/" in event.sourceUrl
 
     private companion object {
         /** The entry page's `/month/<name>` links, one per published month. */

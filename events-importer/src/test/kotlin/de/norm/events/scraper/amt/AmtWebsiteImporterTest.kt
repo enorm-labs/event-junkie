@@ -8,6 +8,8 @@ import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -49,6 +51,7 @@ class AmtWebsiteImporterTest {
         coEvery { htmlFetcher.fetchDocument(entryUrl) } returns fixture("amt-overview.html", entryUrl)
         coEvery { htmlFetcher.fetchDocument(juneUrl) } returns fixture("amt-month-june.html", juneUrl)
         coEvery { htmlFetcher.fetchDocument(julyUrl) } returns fixture("amt-month-july.html", julyUrl)
+        coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } answers { fixture("amt-event-brace-brace.html", firstArg()) }
     }
 
     @Test
@@ -68,6 +71,29 @@ class AmtWebsiteImporterTest {
             // Multi-page importer intentionally disables conditional caching.
             result.etag.shouldBeNull()
             result.lastModified.shouldBeNull()
+        }
+
+    @Test
+    fun `importEvents adds each night's event page prose after its DJ line`() =
+        runTest {
+            val events = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
+            val prose = "Brace Brace Berlin organizes genuine techno parties for a friendly crowd in diverse locations."
+
+            events.all { prose in it.description.orEmpty() } shouldBe true
+            val substation = events.single { it.sourceId == "amt:substation-3" }
+            substation.description.orEmpty().substringBefore("\n\n") shouldContain "Berenice Britney Speed"
+            substation.description.orEmpty().substringAfter("\n\n") shouldStartWith prose
+        }
+
+    @Test
+    fun `importEvents keeps the month page row, flagged, when its event page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(match { "/event/" in it }) } throws HttpFetchException(503, "event page")
+
+            val events = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>().events
+
+            events shouldHaveSize 11
+            events.all { it.detailUnavailable } shouldBe true
         }
 
     @Test
