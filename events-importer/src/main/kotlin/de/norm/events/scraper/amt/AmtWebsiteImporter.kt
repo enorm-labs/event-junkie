@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
  * carries no events server-side (a Finsweet CMS-nest list injects them client-side). The entry
  * page links to per-month `/month/<name>` pages, each fully server-rendered; this importer
  * discovers those links, fetches each, and parses its events via [AmtOverviewPageScraper]. Each
- * night's own page adds its prose to the description ([addAmtEventPageDescription]).
+ * night's own page adds its prose and its poster ([addAmtEventPageFields]).
  *
  * Conditional requests are intentionally **not** used: the entry-page ETag changes only when a
  * month is added, not when a night is edited within one, so relying on it would miss mid-month
@@ -35,7 +35,7 @@ class AmtWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractMonthPagesWebsiteImporter(htmlFetcher, "AMT", MONTH_LINK_SELECTOR, AmtOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.AMT
-    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addAmtEventPageDescription
+    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addAmtEventPageFields
 
     // A night without its own page is listed on the month page only.
     override fun hasEventPage(event: ScrapedEvent): Boolean = "/event/" in event.sourceUrl
@@ -53,7 +53,6 @@ val AMT_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.START_TIME, "the month and event pages print a date but no clock time"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the month and event pages print a date but no clock time"),
         AcceptedLimitation(LimitedAspect.PRICE, "the month pages leave the price cell out, and the event pages print no figure"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the event page carries icons and one picture shared by every night, no poster of its own"),
         AcceptedLimitation(LimitedAspect.GENRE, "the event pages name no style"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )
