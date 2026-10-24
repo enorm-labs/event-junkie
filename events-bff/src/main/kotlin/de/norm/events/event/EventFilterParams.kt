@@ -70,7 +70,7 @@ data class EventFilterParams(
     val language: List<String>? = null,
     @field:Parameter(
         description =
-            "Party feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an " +
+            "Event feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an " +
                 "event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. " +
                 "A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter."
     )

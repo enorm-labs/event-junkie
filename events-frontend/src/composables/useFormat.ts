@@ -148,9 +148,9 @@ export function useFormat() {
     formatVenueCharacter: (slug: string) =>
       te(`venueCharacter.${slug}`) ? t(`venueCharacter.${slug}`) : slug,
 
-    /** The label for a party-feature slug (#2631), with the same fallback as `formatVenueCharacter`. */
-    formatPartyFeature: (slug: string) =>
-      te(`partyFeature.${slug}`) ? t(`partyFeature.${slug}`) : slug,
+    /** The label for an event-feature slug (#2631), with the same fallback as `formatVenueCharacter`. */
+    formatEventFeature: (slug: string) =>
+      te(`eventFeature.${slug}`) ? t(`eventFeature.${slug}`) : slug,
 
     /** The label for a time-of-night slot, with the same fallback as `formatVenueType`. */
     formatTimeOfDay: (slug: string) =>

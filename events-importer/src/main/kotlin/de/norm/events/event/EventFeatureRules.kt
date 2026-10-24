@@ -1,22 +1,22 @@
 package de.norm.events.event
 
 /** One [feature] found in an event's text, and the [phrase] that states it as the text has it. */
-data class PartyFeatureMatch(
-    val feature: PartyFeature,
+data class EventFeatureMatch(
+    val feature: EventFeature,
     val phrase: String
 )
 
 /**
- * What [PartyFeatureRules.detect] read in one event: the [features] a clear phrase states, and the
+ * What [EventFeatureRules.detect] read in one event: the [features] a clear phrase states, and the
  * [uncertain] cues no clear phrase settles, each with its surrounding words for the worklist.
  */
-data class PartyFeatureDetection(
-    val features: List<PartyFeatureMatch>,
-    val uncertain: List<PartyFeatureMatch>
+data class EventFeatureDetection(
+    val features: List<EventFeatureMatch>,
+    val uncertain: List<EventFeatureMatch>
 )
 
 /**
- * Keyword rules per language, German and English, that read the [PartyFeature]s off an event's own
+ * Keyword rules per language, German and English, that read the [EventFeature]s off an event's own
  * text (#2631). Cheap and explainable: each feature keeps the phrase that set it.
  *
  * Each feature has three lists. A **clear** phrase sets the feature ("FLINTA* only", "Dresscode:
@@ -27,7 +27,7 @@ data class PartyFeatureDetection(
  * The caller passes only stored text: the title, the subtitle and the description as the licence
  * gate kept them. A withheld description is not stored, so nothing here can read it.
  */
-object PartyFeatureRules {
+object EventFeatureRules {
     /** Words around a cue for the worklist entry, on each side. */
     private const val CUE_CONTEXT = 40
 
@@ -60,7 +60,7 @@ object PartyFeatureRules {
 
     private const val AFTERHOUR_SOURCE = "${B}after[\\s-]?hours?$E"
 
-    /** The afterhour cue of [PartyFeature.OPEN_END], for the sources whose afterhour is known to be an open end (`EventFeatureSync`, #3386). */
+    /** The afterhour cue of [EventFeature.OPEN_END], for the sources whose afterhour is known to be an open end (`EventFeatureSync`, #3386). */
     val AFTERHOUR = pattern(AFTERHOUR_SOURCE)
 
     /**
@@ -95,7 +95,7 @@ object PartyFeatureRules {
         listOf("$B(?:einlass|eintritt|entry|entrance|admission|doors?|tür)$E", "$B$NIGHT$E", "${B}events?$E", "${B}veranstaltung(?:en)?$E")
 
     private class Rule(
-        val feature: PartyFeature,
+        val feature: EventFeature,
         clear: List<String>,
         cues: List<String> = emptyList(),
         negations: List<String> = emptyList(),
@@ -117,7 +117,7 @@ object PartyFeatureRules {
     private val RULES =
         listOf(
             Rule(
-                PartyFeature.FLINTA_ONLY,
+                EventFeature.FLINTA_ONLY,
                 clear =
                     listOf(
                         "$B$FLINTA[\\s-]*(?:only|exclusive|exklusiv)$E",
@@ -129,7 +129,7 @@ object PartyFeatureRules {
                 door = DOOR_CLAUSE
             ),
             Rule(
-                PartyFeature.QUEER,
+                EventFeature.QUEER,
                 clear =
                     listOf(
                         "${B}queer(?:e|en|er|es)?[\\s-]+$QUEER_NIGHT$E",
@@ -147,12 +147,12 @@ object PartyFeatureRules {
                 cues = listOf("${B}queer", "${B}lgbt")
             ),
             Rule(
-                PartyFeature.SEX_POSITIVE,
+                EventFeature.SEX_POSITIVE,
                 clear = listOf("${B}sex[\\s-]*positiv(?:e|er|es|en|ity|ität)?$E"),
                 cues = listOf("${B}dark[\\s-]?room", "${B}play[\\s-]?(?:room|area)$E", "${B}spielwiese$E")
             ),
             Rule(
-                PartyFeature.FETISH_DRESS_CODE,
+                EventFeature.FETISH_DRESS_CODE,
                 clear =
                     listOf(
                         "$B(?:fetish|fetisch)[\\s-]*(?:$DRESS_CODE|pflicht|only|required|mandatory|gear\\s+(?:only|required|mandatory))",
@@ -162,7 +162,7 @@ object PartyFeatureRules {
                 negations = NO_DRESS_CODE
             ),
             Rule(
-                PartyFeature.DRESS_CODE,
+                EventFeature.DRESS_CODE,
                 clear = listOf("$B$DRESS_CODE"),
                 cues =
                     listOf(
@@ -173,7 +173,7 @@ object PartyFeatureRules {
                 negations = NO_DRESS_CODE
             ),
             Rule(
-                PartyFeature.NO_PHOTO_POLICY,
+                EventFeature.NO_PHOTO_POLICY,
                 clear =
                     listOf(
                         "$B(?:no|keine?)\\s+(?:photos?|pictures|pics|photography|fotos?|bilder)$E",
@@ -195,7 +195,7 @@ object PartyFeatureRules {
                 cues = listOf("$B(?:no|keine?)\\s+(?:phones?|handys?|cameras?|kameras?)$E", "$B(?:phone|handy)[\\s-]?(?:free|frei)$E")
             ),
             Rule(
-                PartyFeature.OPEN_END,
+                EventFeature.OPEN_END,
                 clear = listOf("${B}open[\\s-]?end$E", "${B}ende\\s*[:=]?\\s*offen$E"),
                 cues =
                     listOf(
@@ -208,7 +208,7 @@ object PartyFeatureRules {
                 negations = listOf("$B(?:from\\s+)?dusk\\s+(?:till|until|to)\\s+dawn$E")
             ),
             Rule(
-                PartyFeature.DAY_PARTY,
+                EventFeature.DAY_PARTY,
                 clear =
                     listOf(
                         "${B}day(?:time)?[\\s-]?(?:party|parties|rave|raves|dance)$E",
@@ -226,7 +226,7 @@ object PartyFeatureRules {
                 negations = listOf("$B(?:kein(?:e[mnrs]?)?|ohne|no|without)\\s+(?:daylight|tageslicht)$E")
             ),
             Rule(
-                PartyFeature.OPEN_STAGE,
+                EventFeature.OPEN_STAGE,
                 clear =
                     listOf(
                         "${B}open[\\s-]?(?:stage|mic|deck|jam)s?$E",
@@ -244,11 +244,11 @@ object PartyFeatureRules {
         )
 
     /** The features [texts] state, and the cues they leave open. A blank or null text is skipped. */
-    fun detect(vararg texts: String?): PartyFeatureDetection {
+    fun detect(vararg texts: String?): EventFeatureDetection {
         val text = texts.filterNot { it.isNullOrBlank() }.joinToString("\n")
-        if (text.isEmpty()) return PartyFeatureDetection(emptyList(), emptyList())
-        val features = mutableListOf<PartyFeatureMatch>()
-        val uncertain = mutableListOf<PartyFeatureMatch>()
+        if (text.isEmpty()) return EventFeatureDetection(emptyList(), emptyList())
+        val features = mutableListOf<EventFeatureMatch>()
+        val uncertain = mutableListOf<EventFeatureMatch>()
         RULES.forEach { rule ->
             val negated = rule.negations.flatMap { it.findAll(text).map { match -> match.range }.toList() }
             val free = { match: MatchResult -> negated.none { it.overlaps(match.range) } }
@@ -256,18 +256,18 @@ object PartyFeatureRules {
             val (performers, door) = clearMatches.partition { rule.aboutPerformers(clause(text, it.range)) }
             val clear = door.firstOrNull()
             if (clear != null) {
-                features += PartyFeatureMatch(rule.feature, clear.value.squeezed().take(MAX_PHRASE))
+                features += EventFeatureMatch(rule.feature, clear.value.squeezed().take(MAX_PHRASE))
             } else {
                 (performers.firstOrNull() ?: rule.cues.firstNotNullOfOrNull { regex -> regex.findAll(text).firstOrNull(free) })
-                    ?.let { uncertain += PartyFeatureMatch(rule.feature, context(text, it.range)) }
+                    ?.let { uncertain += EventFeatureMatch(rule.feature, context(text, it.range)) }
             }
         }
         // A fetish code is the more specific fact, so it settles the plain dress code either way.
-        if (features.any { it.feature == PartyFeature.FETISH_DRESS_CODE }) {
-            features.removeAll { it.feature == PartyFeature.DRESS_CODE }
-            uncertain.removeAll { it.feature == PartyFeature.DRESS_CODE }
+        if (features.any { it.feature == EventFeature.FETISH_DRESS_CODE }) {
+            features.removeAll { it.feature == EventFeature.DRESS_CODE }
+            uncertain.removeAll { it.feature == EventFeature.DRESS_CODE }
         }
-        return PartyFeatureDetection(features.sortedBy { it.feature.ordinal }, uncertain.sortedBy { it.feature.ordinal })
+        return EventFeatureDetection(features.sortedBy { it.feature.ordinal }, uncertain.sortedBy { it.feature.ordinal })
     }
 
     /** The sentence around [range], up to [CLAUSE_REACH] characters on each side: a stop, "!", "?" or a line break ends it. */

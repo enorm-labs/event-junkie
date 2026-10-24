@@ -4,10 +4,10 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.DescriptionLanguage
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventEntity
+import de.norm.events.event.EventFeatureMatch
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.event.PUBLISHER_ORIGIN
-import de.norm.events.event.PartyFeatureMatch
 import de.norm.events.event.SpokenLanguage
 import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences
@@ -133,9 +133,9 @@ data class ScrapedEvent(
     val houseLanguage: SpokenLanguage? = null,
     /**
      * The features the venue's page states beyond the stored text, such as a children's category or a
-     * price per child. `EventFeatureSync` stores them beside what `PartyFeatureRules` reads (#3796).
+     * price per child. `EventFeatureSync` stores them beside what `EventFeatureRules` reads (#3796).
      */
-    val features: List<PartyFeatureMatch> = emptyList()
+    val features: List<EventFeatureMatch> = emptyList()
 ) {
     /**
      * This event with every gap filled from [fallback]: a null field takes the fallback's value, the

@@ -8,13 +8,13 @@ import com.fasterxml.jackson.annotation.JsonValue
  * have the fact. Each night stands alone: a venue tag never fills a night that says nothing.
  *
  * The [slug] is what `event_feature.feature`, the BFF's `feature=` parameter and the frontend's
- * translation keys carry; [ordinal] is the display order. [PartyFeatureRules] sets them from the stored text,
+ * translation keys carry; [ordinal] is the display order. [EventFeatureRules] sets them from the stored text,
  * and a scraper sets [FOR_CHILDREN] from what its page says (`ScrapedEvent.features`).
  *
  * Not here: audience labels that are our opinion about visitors (#327, #2379), and an age limit,
  * which is a number and needs its own field.
  */
-enum class PartyFeature(
+enum class EventFeature(
     @get:JsonValue val slug: String
 ) {
     /** Only FLINTA* people get in. A FLINTA* lineup at an open door is not this. */
@@ -56,6 +56,6 @@ enum class PartyFeature(
 
     companion object {
         /** The feature whose [slug] matches, or `null` for a slug the vocabulary does not know. */
-        fun fromSlug(slug: String?): PartyFeature? = entries.firstOrNull { it.slug == slug }
+        fun fromSlug(slug: String?): EventFeature? = entries.firstOrNull { it.slug == slug }
     }
 }

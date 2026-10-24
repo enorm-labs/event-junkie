@@ -49,7 +49,7 @@ class EventClassificationController(
         summary = "Start a background classification of the upcoming candidates of one source",
         description =
             "Candidates are events typed OTHER, with an unmatched or singleton title-derived artist, missing a start time or a " +
-                "price beside a description, or with an uncertain party-feature cue. Soonest first, capped at " +
+                "price beside a description, or with an uncertain event-feature cue. Soonest first, capped at " +
                 "app.data-quality.classification.max-per-run model calls and by the monthly token budget. Answers 202 at once, " +
                 "and the importer log carries the result. 409 while another run, the nightly pass included, is going."
     )

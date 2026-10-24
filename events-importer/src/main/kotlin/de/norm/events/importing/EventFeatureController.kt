@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * The party features of an event, read and set by hand (#3066). Here rather than in `EventController`,
+ * The event features of an event, read and set by hand (#3066). Here rather than in `EventController`,
  * because the `event_feature` and flag repositories belong to this module, and `event` may not depend on it.
  */
 @RestController
@@ -21,7 +21,7 @@ class EventFeatureController(
     private val eventFeatureService: EventFeatureService
 ) {
     @GetMapping
-    @Operation(summary = "The party features of an event, the uncertain cues beside them, and whether they are pinned")
+    @Operation(summary = "The event features of an event, the uncertain cues beside them, and whether they are pinned")
     suspend fun find(
         @Parameter(description = "Database ID of the event.", example = "1")
         @PathVariable id: Long
@@ -29,7 +29,7 @@ class EventFeatureController(
 
     @PutMapping
     @Operation(
-        summary = "Replace the party features of an event, and pin them",
+        summary = "Replace the event features of an event, and pin them",
         description =
             "Takes the full list: a feature left out is removed, and an empty list clears them all. The importer keeps " +
                 "pinned features; `DELETE /api/admin/events/{id}/pins/features` hands them back to the keyword rules at the " +

@@ -49,7 +49,7 @@ describe('useEventFilters', () => {
     expect(filters.value.language).toEqual(['en', 'de'])
   })
 
-  it('reads one party feature or a repeated one as a list, whatever the type filter says', () => {
+  it('reads one event feature or a repeated one as a list, whatever the type filter says', () => {
     const { filters } = useEventFilters()
     expect(filters.value.feature).toBeUndefined()
 

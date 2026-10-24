@@ -18,7 +18,7 @@ import de.norm.events.genretag.GenreTagNotFoundException
 import de.norm.events.importing.EventSourceNotFoundException
 import de.norm.events.importing.InvalidSourceTypeException
 import de.norm.events.importing.ReservedSlugException
-import de.norm.events.importing.UnknownPartyFeatureException
+import de.norm.events.importing.UnknownEventFeatureException
 import de.norm.events.instagram.InstagramDraftAlreadyJudgedException
 import de.norm.events.instagram.InstagramDraftNotFoundException
 import de.norm.events.instagram.InstagramDraftsDisabledException
@@ -153,9 +153,9 @@ class GlobalExceptionHandler {
     /**
      * Handles a name the client sent that no known value has: a `sourceType` that is no
      * [de.norm.events.scraper.EventSource] constant, a pin that is no [de.norm.events.event.PinnedField],
-     * or a feature that is no [de.norm.events.event.PartyFeature].
+     * or a feature that is no [de.norm.events.event.EventFeature].
      */
-    @ExceptionHandler(InvalidSourceTypeException::class, UnknownPinnedFieldException::class, UnknownPartyFeatureException::class)
+    @ExceptionHandler(InvalidSourceTypeException::class, UnknownPinnedFieldException::class, UnknownEventFeatureException::class)
     fun handleUnknownName(ex: RuntimeException): ProblemDetail {
         logger.debug { "Unknown name: ${ex.message}" }
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Unknown name")

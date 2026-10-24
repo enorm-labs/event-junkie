@@ -18,7 +18,7 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
     formatFamily,
     formatVenueType,
     formatSpokenLanguage,
-    formatPartyFeature,
+    formatEventFeature,
   } = useFormat()
 
   /** [festivals] name the `festival` filter's slug when one of them has it; else the slug stands in. */
@@ -40,7 +40,7 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
       ...(filters.eventType ?? []).map((type) => formatEventType(type)),
       ...(filters.language ?? []).map((code) => formatSpokenLanguage([code])),
       ...(filters.timeOfDay ?? []).map((slot) => formatTimeOfDay(slot).replace(/\s*\(.*\)$/, '')),
-      ...(filters.feature ?? []).map((slug) => formatPartyFeature(slug)),
+      ...(filters.feature ?? []).map((slug) => formatEventFeature(slug)),
       ...activeFamilies(filters.family ?? [], filters.genre, tags).map((family) =>
         formatFamily(family),
       ),

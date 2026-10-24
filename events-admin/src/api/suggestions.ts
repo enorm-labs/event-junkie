@@ -16,7 +16,7 @@ import {
   failOnError,
   fetchEvent,
   fetchEventFeatures,
-  PARTY_FEATURES,
+  EVENT_FEATURES,
   parsePrice,
   setEventFeatures,
   toEventRequest,
@@ -192,7 +192,7 @@ async function withProposal(
   }
 }
 
-const FEATURE_SLUGS: readonly string[] = PARTY_FEATURES.map((feature) => feature.slug)
+const FEATURE_SLUGS: readonly string[] = EVENT_FEATURES.map((feature) => feature.slug)
 
 function sameSet(a: string[], b: string[]) {
   const left = new Set(a)
@@ -210,7 +210,7 @@ async function applyFeatures(
 ): Promise<EventFeatures> {
   const proposed = listItems(suggestion.proposedValue)
   const unknown = proposed.filter((slug) => !FEATURE_SLUGS.includes(slug))
-  if (unknown.length > 0) throw new Error(`"${unknown.join('", "')}" is no party feature.`)
+  if (unknown.length > 0) throw new Error(`"${unknown.join('", "')}" is no event feature.`)
   const current = await fetchEventFeatures(suggestion.eventId, fetchFn)
   const stored = current.features.map((entry) => entry.feature)
   if (!sameSet(stored, listItems(suggestion.storedValue ?? ''))) {

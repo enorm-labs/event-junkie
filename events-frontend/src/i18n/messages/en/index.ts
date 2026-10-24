@@ -11,7 +11,7 @@ import map from './map.json'
 import legal from './legal.json'
 import pageDescription from './pageDescription.json'
 import pageTitle from './pageTitle.json'
-import partyFeature from './partyFeature.json'
+import eventFeature from './eventFeature.json'
 import promoters from './promoters.json'
 import search from './search.json'
 import venueCharacter from './venueCharacter.json'
@@ -45,7 +45,7 @@ export default {
   legal,
   pageDescription,
   pageTitle,
-  partyFeature,
+  eventFeature,
   promoters,
   search,
   venueCharacter,

@@ -15,7 +15,7 @@ import {
   type EventType,
   fetchEvent,
   fetchEventFeatures,
-  PARTY_FEATURES,
+  EVENT_FEATURES,
   setEventFeatures,
   toEventRequest,
   unpinField,
@@ -262,7 +262,7 @@ function save() {
   return run(async () => {
     // Before the event PUT, so the pin on `features` is in the answer the editor shows.
     if (featuresChanged.value) {
-      const order = PARTY_FEATURES.map((feature) => feature.slug as string)
+      const order = EVENT_FEATURES.map((feature) => feature.slug as string)
       const slugs = [...features.value].sort((a, b) => order.indexOf(a) - order.indexOf(b))
       showFeatures(await setEventFeatures(current.id, slugs))
     }
@@ -419,7 +419,7 @@ function unpin(field: string) {
             </p>
             <ul v-else-if="storedFeatures" class="flex flex-col gap-1.5">
               <li
-                v-for="feature in PARTY_FEATURES"
+                v-for="feature in EVENT_FEATURES"
                 :key="feature.slug"
                 class="flex flex-col gap-0.5"
                 data-testid="feature-row"
