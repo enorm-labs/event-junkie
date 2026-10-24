@@ -5,8 +5,8 @@
 **Accepted (2026-10-24). The site sends transactional mail through Scaleway Transactional Email (TEM), over SMTP, from
 `noreply@notify.event-junkie.de`. The role mailboxes stay on Hetzner Webhosting S and send nothing for the product.**
 
-Decided in [#3886](https://github.com/enorm-labs/event-junkie/issues/3886), by the operator. **Not implemented yet.** #3886 builds the sender, and
-[#3887](https://github.com/enorm-labs/event-junkie/issues/3887) sends the first mail.
+Decided in [#3886](https://github.com/enorm-labs/event-junkie/issues/3886), by the operator. #3886 built the sender, and
+[#3887](https://github.com/enorm-labs/event-junkie/issues/3887) sends the first mail, the sign-in link.
 
 **Does not supersede anything.** [ADR-012](ADR-012_CLOUD_PLATFORM.md) chose Hetzner for hosting and keeps that decision. This ADR adds a processor for
 one purpose, outbound mail. [ADR-053](ADR-053_VISITORS_SIGN_IN_BY_EMAIL_LINK_IN_THE_BFF.md) decided that visitors sign in by e-mail link. This ADR decides

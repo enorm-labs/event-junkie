@@ -28,6 +28,10 @@ const PATHS = [
   '/legal/privacy',
   '/legal/notices',
   '/legal/for-venues',
+  '/sign-in',
+  '/sign-in/check-mail',
+  '/sign-in/confirm',
+  '/account',
 ]
 const staticRoutes = ['en', 'de'].flatMap((locale) => PATHS.map((path) => `/${locale}${path}`))
 

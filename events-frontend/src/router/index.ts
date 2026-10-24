@@ -137,6 +137,32 @@ const router = createRouter({
           meta: { titleKey: 'pageTitle.search', noindex: true },
           component: () => import('../views/SearchView.vue'),
         },
+        // Sign-in by e-mail link and the account (#3887, ADR-053). Nothing links here yet: the header
+        // entry comes with following (#3889). Personal pages, so never indexed.
+        {
+          path: 'sign-in',
+          name: 'sign-in',
+          meta: { titleKey: 'pageTitle.signIn', noindex: true },
+          component: () => import('../views/account/SignInView.vue'),
+        },
+        {
+          path: 'sign-in/check-mail',
+          name: 'sign-in-check-mail',
+          meta: { titleKey: 'pageTitle.checkMail', noindex: true },
+          component: () => import('../views/account/SignInCheckMailView.vue'),
+        },
+        {
+          path: 'sign-in/confirm',
+          name: 'sign-in-confirm',
+          meta: { titleKey: 'pageTitle.confirmSignIn', noindex: true },
+          component: () => import('../views/account/SignInConfirmView.vue'),
+        },
+        {
+          path: 'account',
+          name: 'account',
+          meta: { titleKey: 'pageTitle.account', noindex: true },
+          component: () => import('../views/account/AccountView.vue'),
+        },
         // The five long-form pages have one component per language (views/localisedView.ts), the
         // exception to user-facing text living in the message catalogue.
         {

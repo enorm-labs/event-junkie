@@ -228,7 +228,30 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /exactly three values/,
     de: /genau drei Werte/,
   },
-  { what: 'that no cookies are set', en: /no cookies/i, de: /keine Cookies/i },
+  {
+    what: 'absence of cookies without a sign-in',
+    en: /Without a sign-in, this site sets no cookies/,
+    de: /Ohne Anmeldung setzt diese Seite keine Cookies/,
+  },
+  // The two cookies Spring Security sets on the account paths (#3887). Their names are in
+  // `SessionSecurityContextRepository.kt`; a renamed cookie makes the notice name the wrong one.
+  { what: 'CSRF cookie', en: /XSRF-TOKEN/, de: /XSRF-TOKEN/ },
+  { what: 'session cookie', en: /__Host-ej_session/, de: /__Host-ej_session/ },
+  {
+    what: 'mail processor',
+    en: /Scaleway SAS, Paris, France/,
+    de: /Scaleway SAS, Paris, Frankreich/,
+  },
+  {
+    what: 'account legal basis',
+    en: /Art\. 6 \(1\) \(b\) GDPR/,
+    de: /Art\. 6 Abs\. 1 lit\. b DSGVO/,
+  },
+  {
+    what: 'account retention',
+    en: /for 24 months/,
+    de: /24 Monate lang/,
+  },
   {
     what: 'artist data as personal data',
     en: /artist is a natural person/i,

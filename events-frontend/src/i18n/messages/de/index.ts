@@ -1,3 +1,4 @@
+import account from './account.json'
 import calendar from './calendar.json'
 import common from './common.json'
 import dateRange from './dateRange.json'
@@ -25,6 +26,7 @@ import week from './week.json'
  *
  */
 export default {
+  account,
   calendar,
   common,
   dateRange,

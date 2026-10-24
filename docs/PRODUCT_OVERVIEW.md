@@ -93,81 +93,86 @@ the first column. It fails in two cases:
 1. A route, a public API path, a public file or an e2e spec exists and has no row.
 2. A row names a surface that does not exist.
 
-| Surface                            | What it is                                                                  |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| `/`                                | Home page: Today and Upcoming                                               |
-| `/events`                          | The events list and its filter bar                                          |
-| `/events/:slug`                    | Event page: When block, line-up, set times, share, calendar, related events |
-| `/calendar`                        | Month calendar with the same filters                                        |
-| `/week`                            | Redirects to this week's page; linked from the home page and the footer     |
-| `/week/:isoWeek`                   | One week day by day, up to 12 events a day, to share or bookmark            |
-| `/map`                             | Events map, near me and On now                                              |
-| `/venues`                          | Venues list and venues map, with character-tag filters                      |
-| `/venues/:slug`                    | Venue page                                                                  |
-| `/artists/:slug`                   | Artist page                                                                 |
-| `/promoters`                       | Promoters list                                                              |
-| `/promoters/:slug`                 | Promoter page                                                               |
-| `/search`                          | All results for a header search, not indexed                                |
-| `/about`                           | About page                                                                  |
-| `/legal/imprint`                   | Imprint                                                                     |
-| `/legal/privacy`                   | Privacy notice                                                              |
-| `/legal/notices`                   | Open-source notices                                                         |
-| `/legal/for-venues`                | The opt-out route for venues                                                |
-| `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter            |
-| `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter   |
-| `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers             |
-| `/manifest.webmanifest`            | Makes the site installable as an app; no service worker, nothing stored     |
-| `/api/events`                      | Event search with the full filter set, paged and sorted                     |
-| `/api/events/{slug}`               | One event                                                                   |
-| `/api/events/{slug}/related`       | Upcoming events like this one                                               |
-| `/api/events/today`                | Today's events                                                              |
-| `/api/events/calendar`             | Events in a date range, for the calendar and the map                        |
-| `/api/events/feed`                 | The RSS feed behind `/feed.xml`                                             |
-| `/api/events/calendar.ics`         | The calendar subscription behind `/calendar.ics`                            |
-| `/api/venues`                      | Venue list with its filters                                                 |
-| `/api/venues/{slug}`               | One venue                                                                   |
-| `/api/venues/feature-counts`       | How many venues each character tag leaves                                   |
-| `/api/artists`                     | Artist list                                                                 |
-| `/api/artists/{slug}`              | One artist                                                                  |
-| `/api/promoters`                   | Promoter list                                                               |
-| `/api/promoters/{slug}`            | One promoter                                                                |
-| `/api/genres`                      | Genre tags and their families                                               |
-| `/api/search`                      | The header search across all four kinds                                     |
-| `/api/sitemaps/{kind}.xml`         | The detail sitemaps                                                         |
-| `/api/images/{contentHash}/{file}` | Cached venue images                                                         |
-| `/api/meta`                        | Version and commit of the running backend, for the footer                   |
-| `/api/festivals/current`           | Up to 3 festivals the home page announces, running first; `[]` for none     |
-| `/api/auth/csrf`                   | Sets the CSRF cookie the sign-in page needs. No page calls it yet           |
-| `/api/auth/session`                | Who the browser is signed in as, or nobody                                  |
-| `/api/auth/link`                   | Sends a sign-in link by e-mail                                              |
-| `/api/auth/sign-in`                | Uses a sign-in link and starts a session                                    |
-| `/api/me`                          | The signed-in account                                                       |
-| `/api/me/export`                   | Everything stored about the account, as a download                          |
-| `/api/me/sign-out`                 | Ends this browser's session                                                 |
-| `/api/me/sign-out-everywhere`      | Ends every session of the account                                           |
-| `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                     |
-| `events-filters.spec.ts`           | e2e: the filter bar                                                         |
-| `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                      |
-| `calendar.spec.ts`                 | e2e: the calendar                                                           |
-| `map-near.spec.ts`                 | e2e: near me on the map                                                     |
-| `venues.spec.ts`                   | e2e: venues list, filters and map                                           |
-| `promoters.spec.ts`                | e2e: promoters list                                                         |
-| `detail-routes.spec.ts`            | e2e: the four detail pages                                                  |
-| `search.spec.ts`                   | e2e: header search                                                          |
-| `share-calendar.spec.ts`           | e2e: share and add to calendar                                              |
-| `card-poster.spec.ts`              | e2e: drawn posters                                                          |
-| `compact-view.spec.ts`             | e2e: compact list                                                           |
-| `dark-mode.spec.ts`                | e2e: theme                                                                  |
-| `i18n.spec.ts`                     | e2e: German and English                                                     |
-| `footer.spec.ts`                   | e2e: footer, feed and feedback links                                        |
-| `legal.spec.ts`                    | e2e: legal pages                                                            |
-| `seo.spec.ts`                      | e2e: head tags, sitemaps, structured data                                   |
-| `a11y.spec.ts`                     | e2e quality check: accessibility, not a feature                             |
-| `keyboard-flows.spec.ts`           | e2e quality check: main flows by keyboard alone, not a feature              |
-| `layout-shift.spec.ts`             | e2e quality check: layout shift, not a feature                              |
-| `page-title.spec.ts`               | e2e quality check: page titles, not a feature                               |
-| `scroll-restoration.spec.ts`       | e2e quality check: scroll position, not a feature                           |
-| `smoke.spec.ts`                    | e2e quality check: every page renders, not a feature                        |
+| Surface                            | What it is                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| `/`                                | Home page: Today and Upcoming                                                    |
+| `/events`                          | The events list and its filter bar                                               |
+| `/events/:slug`                    | Event page: When block, line-up, set times, share, calendar, related events      |
+| `/calendar`                        | Month calendar with the same filters                                             |
+| `/week`                            | Redirects to this week's page; linked from the home page and the footer          |
+| `/week/:isoWeek`                   | One week day by day, up to 12 events a day, to share or bookmark                 |
+| `/map`                             | Events map, near me and On now                                                   |
+| `/venues`                          | Venues list and venues map, with character-tag filters                           |
+| `/venues/:slug`                    | Venue page                                                                       |
+| `/artists/:slug`                   | Artist page                                                                      |
+| `/promoters`                       | Promoters list                                                                   |
+| `/promoters/:slug`                 | Promoter page                                                                    |
+| `/search`                          | All results for a header search, not indexed                                     |
+| `/about`                           | About page                                                                       |
+| `/legal/imprint`                   | Imprint                                                                          |
+| `/legal/privacy`                   | Privacy notice                                                                   |
+| `/legal/notices`                   | Open-source notices                                                              |
+| `/legal/for-venues`                | The opt-out route for venues                                                     |
+| `/sign-in`                         | Asks for an e-mail address and sends a sign-in link; not linked yet, not indexed |
+| `/sign-in/check-mail`              | Says the link is on its way                                                      |
+| `/sign-in/confirm`                 | The page the mail links to; signs in on a click                                  |
+| `/account`                         | The address, data export, sign-out and account deletion                          |
+| `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter                 |
+| `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter        |
+| `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers                  |
+| `/manifest.webmanifest`            | Makes the site installable as an app; no service worker, nothing stored          |
+| `/api/events`                      | Event search with the full filter set, paged and sorted                          |
+| `/api/events/{slug}`               | One event                                                                        |
+| `/api/events/{slug}/related`       | Upcoming events like this one                                                    |
+| `/api/events/today`                | Today's events                                                                   |
+| `/api/events/calendar`             | Events in a date range, for the calendar and the map                             |
+| `/api/events/feed`                 | The RSS feed behind `/feed.xml`                                                  |
+| `/api/events/calendar.ics`         | The calendar subscription behind `/calendar.ics`                                 |
+| `/api/venues`                      | Venue list with its filters                                                      |
+| `/api/venues/{slug}`               | One venue                                                                        |
+| `/api/venues/feature-counts`       | How many venues each character tag leaves                                        |
+| `/api/artists`                     | Artist list                                                                      |
+| `/api/artists/{slug}`              | One artist                                                                       |
+| `/api/promoters`                   | Promoter list                                                                    |
+| `/api/promoters/{slug}`            | One promoter                                                                     |
+| `/api/genres`                      | Genre tags and their families                                                    |
+| `/api/search`                      | The header search across all four kinds                                          |
+| `/api/sitemaps/{kind}.xml`         | The detail sitemaps                                                              |
+| `/api/images/{contentHash}/{file}` | Cached venue images                                                              |
+| `/api/meta`                        | Version and commit of the running backend, for the footer                        |
+| `/api/festivals/current`           | Up to 3 festivals the home page announces, running first; `[]` for none          |
+| `/api/auth/csrf`                   | Sets the CSRF cookie the sign-in and account pages need                          |
+| `/api/auth/session`                | Who the browser is signed in as, or nobody                                       |
+| `/api/auth/link`                   | Sends a sign-in link by e-mail                                                   |
+| `/api/auth/sign-in`                | Uses a sign-in link and starts a session                                         |
+| `/api/me`                          | The signed-in account                                                            |
+| `/api/me/export`                   | Everything stored about the account, as a download                               |
+| `/api/me/sign-out`                 | Ends this browser's session                                                      |
+| `/api/me/sign-out-everywhere`      | Ends every session of the account                                                |
+| `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                          |
+| `events-filters.spec.ts`           | e2e: the filter bar                                                              |
+| `filter-sheet.spec.ts`             | e2e: the filter bar's sheet on a phone                                           |
+| `calendar.spec.ts`                 | e2e: the calendar                                                                |
+| `map-near.spec.ts`                 | e2e: near me on the map                                                          |
+| `venues.spec.ts`                   | e2e: venues list, filters and map                                                |
+| `promoters.spec.ts`                | e2e: promoters list                                                              |
+| `detail-routes.spec.ts`            | e2e: the four detail pages                                                       |
+| `search.spec.ts`                   | e2e: header search                                                               |
+| `sign-in.spec.ts`                  | e2e: sign-in by link, the account page, deletion, CSRF header                    |
+| `share-calendar.spec.ts`           | e2e: share and add to calendar                                                   |
+| `card-poster.spec.ts`              | e2e: drawn posters                                                               |
+| `compact-view.spec.ts`             | e2e: compact list                                                                |
+| `dark-mode.spec.ts`                | e2e: theme                                                                       |
+| `i18n.spec.ts`                     | e2e: German and English                                                          |
+| `footer.spec.ts`                   | e2e: footer, feed and feedback links                                             |
+| `legal.spec.ts`                    | e2e: legal pages                                                                 |
+| `seo.spec.ts`                      | e2e: head tags, sitemaps, structured data                                        |
+| `a11y.spec.ts`                     | e2e quality check: accessibility, not a feature                                  |
+| `keyboard-flows.spec.ts`           | e2e quality check: main flows by keyboard alone, not a feature                   |
+| `layout-shift.spec.ts`             | e2e quality check: layout shift, not a feature                                   |
+| `page-title.spec.ts`               | e2e quality check: page titles, not a feature                                    |
+| `scroll-restoration.spec.ts`       | e2e quality check: scroll position, not a feature                                |
+| `smoke.spec.ts`                    | e2e quality check: every page renders, not a feature                             |
 
 ## Behind the site
 
@@ -199,6 +204,6 @@ the first column. It fails in two cases:
 
 ## Not there yet
 
-Accounts, follows, saved searches with notifications and calendar subscriptions that stay in sync. These are the
-roadmap — see [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md). Sign-in has its API (`/api/auth`, `/api/me`, ADR-053) but no page yet, so no
-visitor can reach it (#3887).
+Follows, saved searches with notifications and calendar subscriptions that stay in sync. These are the roadmap — see
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md). Sign-in and the account page exist (#3887, ADR-053), but nothing links to them yet. The header
+entry ships with follows (#3889), so no visitor creates an account that does nothing.

@@ -1,3 +1,4 @@
+import account from './account.json'
 import calendar from './calendar.json'
 import common from './common.json'
 import dateRange from './dateRange.json'
@@ -32,6 +33,7 @@ import week from './week.json'
  * components instead — see `views/localisedView.ts` for the reasoning.
  */
 export default {
+  account,
   calendar,
   common,
   dateRange,

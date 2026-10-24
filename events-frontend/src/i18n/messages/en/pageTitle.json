@@ -10,5 +10,9 @@
   "notices": "Open-source notices",
   "forVenues": "For venues",
   "search": "Search",
-  "week": "Week {week} in Berlin"
+  "week": "Week {week} in Berlin",
+  "signIn": "Sign in",
+  "checkMail": "Check your inbox",
+  "confirmSignIn": "Sign in",
+  "account": "Your account"
 }

@@ -34,6 +34,25 @@ export async function fetchWithTimeout(
 // backend on :8080 (see vite.config.ts); the generated `paths` come from its OpenAPI spec.
 export const api = createClient<paths>({ baseUrl: '', fetch: fetchWithTimeout })
 
+/** The account paths sit behind Spring Security, which refuses a write without the CSRF header. */
+const ACCOUNT_PATH = /^\/api\/(auth|me)(\/|$)/
+
+/**
+ * Copies the `XSRF-TOKEN` cookie into the `X-XSRF-TOKEN` header of a write to an account path
+ * (#3887). The cookie exists only once a sign-in or account page has asked `/api/auth/csrf` for it.
+ */
+export function withCsrfHeader(request: Request): Request {
+  if (request.method === 'GET' || !ACCOUNT_PATH.test(new URL(request.url).pathname)) return request
+  const token = document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+    ?.slice('XSRF-TOKEN='.length)
+  if (token) request.headers.set('X-XSRF-TOKEN', decodeURIComponent(token))
+  return request
+}
+
+api.use({ onRequest: ({ request }) => withCsrfHeader(request) })
+
 /** Error carrying the HTTP status so callers can distinguish e.g. 404 from other failures. */
 export class ApiError extends Error {
   constructor(

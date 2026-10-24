@@ -530,7 +530,7 @@ keeps reporting success and silently writes zero events, and nobody notices for 
 person who reads the alerts. [deploy/alerts/README.md](../../deploy/alerts/README.md) has the configuration and [SECRETS.md](SECRETS.md) has the credential.
 
 **The mail carries only the alert name, the stream, the value and the environment.** It carries no venue names, error strings or IP addresses. Hetzner is
-already the one processor. So e-mail adds no new party that can read personal data.
+already a processor. So e-mail adds no new party that can read personal data.
 
 **Signal is the deferred end state** ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)). It is end-to-end encrypted, so no mail provider can
 read an alert. A prepaid-SIM registration failed. The route now waits for `signal-cli` to link to a Signal account registered without a phone number. The

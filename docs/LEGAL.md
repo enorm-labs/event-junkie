@@ -149,9 +149,14 @@ both header and footer, `hreflang`, `og:locale` and structured data.
 
 ### 7.1 What actually applies
 
-A German controller running a public site with no accounts, no analytics, no advertising and no third-party embeds.
-The processing that exists is server logs (Art. 6 (1) (f)), three `localStorage` keys for settings the visitor chose,
-and publicly announced event data (§7.3).
+A German controller running a public site with optional accounts, and no analytics, no advertising and no third-party
+embeds. The processing that exists is server logs (Art. 6 (1) (f)), three `localStorage` keys for settings the visitor
+chose, and publicly announced event data (§7.3). A visitor who signs in adds an account (Art. 6 (1) (b)) and two
+cookies (§7.4). The account is optional, and nothing on the site needs one.
+
+**The account's deletion route is the account page** (#3887). The visitor deletes the account there, and the deletion
+takes the sessions with it. An account without a sign-in for 24 months is deleted, with a warning mail a month before
+(#3905). Expired links and sessions are deleted daily by the same job. §6 of both notices states all three.
 
 ### 7.2 The Art. 13 checklist
 
@@ -186,9 +191,9 @@ tick-boxes, an Art. 30 record needs it as prose, and §5 of the notice is the sa
 documents, one set of facts.** The only way to notice when they stop agreeing is to keep the facts in one place and
 derive the rest.
 
-**This is also the scope actually declared in the Hetzner AVV concluded on 2026-08-19**, not merely an analysis of
-what could have been declared. That makes it the record of what the contract covers, which has a consequence worth
-stating in advance. **Processing a category not listed below means the AVV needs revisiting, not just the notice.** A
+**This is also the scope actually declared in the Hetzner AVV.** The AVV was concluded on 2026-08-19 and amended on
+2026-10-24 for account data (#3887). This section is therefore the record of what the contract covers, not merely an
+analysis of what could have been declared. That has a consequence worth stating in advance. **Processing a category not listed below means the AVV needs revisiting, not just the notice.** A
 contact form, a newsletter, or any stored email address or phone number would each do it. Updating the notice is the
 change everyone remembers, and the contract behind it is the one nobody does.
 
@@ -212,6 +217,16 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
   and complete event information. The categories in the table below do not change.
 - **Nothing else goes.** No log data, and nothing about a visitor. §4 and §5 of the notice say that too, because a
   reader cannot check it.
+
+**Scaleway is the third processor since #3887, and it is in the EU** (ADR-054). The BFF sends the sign-in mail
+through Scaleway Transactional Email, so Scaleway receives the recipient's address and the text of the mail.
+
+- **The Art. 28 contract is Scaleway's DPA**, which its terms of service include. Scaleway SAS is in Paris, and the
+  mail service runs in its EU region. There is no third-country transfer, so the notice needs no transfer mechanism.
+- **The address is a new category for Hetzner too.** The account row in `accounts.account` stores it in the
+  database at Hetzner. The table below lists it under contractual master data. The Hetzner AVV declares it since its amendment of 2026-10-24.
+- **The client's IP address counts sign-in requests in memory only.** The BFF holds it per pod, for an hour at most,
+  to limit links to 20 an hour from one client. It is written nowhere. The connection data row below covers it.
 
 **MusicBrainz is a source, not a processor, and this is where that is decided so it is not asked again** (ADR-031,
 [#1567](https://github.com/enorm-labs/event-junkie/issues/1567)). On a scheduled tick the importer sends every billed
@@ -300,9 +315,9 @@ row in §5 of the notice first ([`ops/EMAIL.md`](ops/EMAIL.md) §4 step 7).
 | **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId`, `discogsId`, both verdicts and the comedian flag (ADR-031, ADR-035, ADR-039). The largest category by far; see §7.3 for why it counts |
 | **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right                          |
 | **Communication data**          | **yes — mailboxes and URLs** | Mail to the role mailboxes: the sender's address and the message (see below). No phone numbers. Artist profile and social URLs, and a venue's Instagram and Facebook URLs (#2839). Declared before the mailboxes existed, so no AVV change                                                         |
-| Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                                                                                                         |
+| **Contractual master data**     | **yes — since #3887**        | An account: the e-mail address, the language, the creation date, the last sign-in, and per session its start, last use and expiry. The link and the session token are stored as hashes. The account terms are the contract (Art. 6 (1) (b))                                                        |
 | **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                                                                                                  |
-| **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). Declared for the same reason log data was — see below and §7.5.1                                                                                                 |
+| **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). The BFF holds it in memory for an hour at most to limit sign-in links (#3887). Declared for the same reason log data was — see below and §7.5.1                  |
 | Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                                                                                                        |
 
 **Log data was declared even though §7.5 is open**, and the reasoning generalises. A processor agreement should cover
@@ -311,11 +326,11 @@ outside its scope is not.
 
 **Categories of data subject**, which is where this project is unusual:
 
-| Who                                                        | Applies                                |                                                                                                                                                                         |
-| ---------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Customers and interested parties                           | **yes**                                | Site visitors, and anyone who writes to a role mailbox. Nothing is sold, so they are _Interessenten_ rather than customers, but that is the box these forms offer       |
-| Employees                                                  | no                                     | There are none                                                                                                                                                          |
-| **Artists and promoters named in the imported event data** | **yes — and it must be added by hand** | Neither customers nor employees, and **the largest group of data subjects in the system**. A form filled in with only the two standard boxes would omit almost everyone |
+| Who                                                        | Applies                                |                                                                                                                                                                                    |
+| ---------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customers and interested parties                           | **yes**                                | Site visitors, account holders, and anyone who writes to a role mailbox. Nothing is sold, so they are _Interessenten_ rather than customers, but that is the box these forms offer |
+| Employees                                                  | no                                     | There are none                                                                                                                                                                     |
+| **Artists and promoters named in the imported event data** | **yes — and it must be added by hand** | Neither customers nor employees, and **the largest group of data subjects in the system**. A form filled in with only the two standard boxes would omit almost everyone            |
 
 That last row is the one to get right. The personal data here is overwhelmingly about **third parties whose names
 were published by venues**, not about anyone who ever visited the site. That is also why §7.3's removal route matters
@@ -379,10 +394,21 @@ state them and both must move with it.**
 
 ### 7.4 Device storage — `localStorage`, not just cookies
 
-The site sets **no cookies**. It stores exactly three keys: **`theme`** (`App.vue`), **`locale`**
+Without a sign-in, the site sets **no cookies**. It stores exactly three keys: **`theme`** (`App.vue`), **`locale`**
 (`i18n/locales.ts`) and **`view`** (`composables/useCompactView.ts`). § 25 TDDDG covers _storage on terminal
 equipment_, not cookies specifically. Each item is strictly necessary for a setting the visitor chose, so § 25 (2) 2
 applies and **no consent banner is required**.
+
+**The sign-in and account pages add two cookies** (#3887). Both are strictly necessary for a service the visitor asked
+for, so § 25 (2) 2 applies to them too.
+
+- **`XSRF-TOKEN`** holds the CSRF token. Only `GET /api/auth/csrf` sets it, and only the sign-in and account pages call
+  that endpoint. It expires after 30 days.
+- **`__Host-ej_session`** identifies the session. The sign-in sets it, and it expires 30 days after its last use.
+  Signing out deletes it.
+
+The BFF sets both, so `storedKeys.spec.ts` cannot see them. `legalViews.spec.ts` pins both names in both notices. The
+names are in `SessionSecurityContextRepository.kt` and `AccountSecurityConfiguration.kt`.
 
 **The notice fell behind the code twice.** It said "exactly one" while the site wrote `locale`, and "exactly two" for
 eleven days after the compact view added `view`. A test that pins names in the notice cannot see a new key in the
@@ -731,24 +757,24 @@ editing a `.vue` file loads.
 
 Settled questions, so they are not re-litigated. The reasoning is in the section named.
 
-| #   | Question               | Decision                                                                                                                                                             | Where                |
-| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                                                                                  | §8.3                 |
-| 2   | Legal-page language    | English and German, German authoritative                                                                                                                             | §6.1                 |
-| 3   | Version scheme         | Computed from the release tags and commits, and no file carries it. Only a released `X.Y.Z` links                                                                    | §4.7                 |
-| 4   | `package.json` version | A `0.0.0` placeholder. The site reads `GET /meta`                                                                                                                    | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                                            | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                                    | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                               | §8.4                 |
-| 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                                            | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting, an axe sweep, keyboard flows and a Lighthouse gate enforcing it                                                                | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                              | §9.1                 |
-| 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                                                                                | §4.1                 |
-| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                    | `ops/EMAIL.md`       |
-| 13  | Art. 28 contracts      | Two: Hetzner's AVV and Anthropic's DPA. Anthropic, for translation, the data check and the Instagram drafts, is the one third-country transfer — #1233, #3242, #3366 | §7.3a                |
-| 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                                             | §7.3a                |
-| 15  | Terms of Use           | None. No accounts and no contract with the visitor, so the §7.6 disclaimer is the whole answer — #478                                                                | §7.6                 |
-| 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                                                         | `legal-review/`      |
+| #   | Question               | Decision                                                                                                                                                                                                            | Where                |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                                                                                                                                 | §8.3                 |
+| 2   | Legal-page language    | English and German, German authoritative                                                                                                                                                                            | §6.1                 |
+| 3   | Version scheme         | Computed from the release tags and commits, and no file carries it. Only a released `X.Y.Z` links                                                                                                                   | §4.7                 |
+| 4   | `package.json` version | A `0.0.0` placeholder. The site reads `GET /meta`                                                                                                                                                                   | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                                                                                           | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                                                                                   | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                                                                              | §8.4                 |
+| 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                                                                                           | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting, an axe sweep, keyboard flows and a Lighthouse gate enforcing it                                                                                                               | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                                                                             | §9.1                 |
+| 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                                                                                                                               | §4.1                 |
+| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                                                                   | `ops/EMAIL.md`       |
+| 13  | Art. 28 contracts      | Three: Hetzner's AVV, Anthropic's DPA and Scaleway's DPA for the sign-in mail (#3887). Anthropic, for translation, the data check and the Instagram drafts, is the one third-country transfer — #1233, #3242, #3366 | §7.3a                |
+| 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                                                                                            | §7.3a                |
+| 15  | Terms of Use           | None. An account (#3887) is free and does nothing a visitor cannot do without it, so the §7.6 disclaimer is still the whole answer — #478. Revisit when accounts gain features of their own (#3889)                 | §7.6                 |
+| 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                                                                                                        | `legal-review/`      |
 
 ## 14. Open items
 

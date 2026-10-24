@@ -5,8 +5,7 @@
  * rather than typing them twice.
  *
  * Structured against the twelve mandatory items in docs/LEGAL.md §7.2 — missing one is the usual
- * defect. It describes no processing that does not happen: no cookie table, no consent withdrawal,
- * no analytics. Imaginary processing is as inaccurate as omitting real processing.
+ * defect. It describes no processing that does not happen: no consent withdrawal, no analytics. Imaginary processing is as inaccurate as omitting real processing.
  *
  * **Two claims here are coupled to deployed configuration** (§7.5.1, §7.3a). §2's **14 days** is
  * `ZO_COMPACT_DATA_RETENTION_DAYS`, and §5's "no image request reaches a third party" is
@@ -33,11 +32,13 @@ const { t } = useI18n()
     <section>
       <h2>The short version</h2>
       <p>
-        Event Junkie sets no cookies, runs no analytics, embeds no third-party fonts, maps, social
-        widgets or advertising, and has no user accounts. Nothing you do here is tracked or
-        profiled. What remains is the unavoidable minimum: a web server records requests so the site
-        can be delivered and defended, and your browser remembers which language, colour scheme and
-        list view you chose. If you ask a map what is near you, your position stays in your browser.
+        Event Junkie runs no analytics and embeds no third-party fonts, maps, social widgets or
+        advertising. It sets cookies only when you sign in, and nothing on this site needs an
+        account. Nothing you do here is tracked or profiled. What remains is the unavoidable
+        minimum: a web server records requests so the site can be delivered and defended, and your
+        browser remembers which language, colour scheme and list view you chose. If you ask a map
+        what is near you, your position stays in your browser. If you create an account, I keep your
+        e-mail address until you delete it (section 6).
       </p>
       <p>
         <strong>Images come from Event Junkie too.</strong> Event Junkie downloads them once and
@@ -106,8 +107,8 @@ const { t } = useI18n()
     <section>
       <h2>3. Local storage on your device</h2>
       <p>
-        This site sets <strong>no cookies</strong>. It stores exactly three values in your browser's
-        local storage, and each only records a setting you made yourself:
+        Without a sign-in, this site sets <strong>no cookies</strong>. It stores exactly three
+        values in your browser's local storage, and each only records a setting you made yourself:
       </p>
       <ul>
         <li>
@@ -130,9 +131,27 @@ const { t } = useI18n()
         you are not being asked to dismiss a banner. You can clear them at any time through your
         browser settings.
       </p>
+      <!-- LEGAL.md §7.4: the two cookies exist only on the sign-in and account pages. -->
+      <h3>Cookies when you sign in</h3>
       <p>
-        Should cookies ever be introduced, they will be strictly necessary (essential) ones only: no
-        tracking, no analytics tools, no social-media plugins, no advertising trackers.
+        When you open the sign-in page or the account page, Event Junkie sets two cookies, and only
+        these:
+      </p>
+      <ul>
+        <li>
+          <code>XSRF-TOKEN</code>, as soon as you open one of these pages. It holds a random value
+          and stops another site from requesting a sign-in link or changing your account in your
+          name. It expires after 30 days.
+        </li>
+        <li>
+          <code>__Host-ej_session</code>, as soon as you sign in with the link. It holds a random
+          identifier of your session and keeps you signed in. It expires 30 days after its last use,
+          and signing out deletes it.
+        </li>
+      </ul>
+      <p>
+        Both are strictly necessary for the sign-in you ask for, so under § 25 (2) 2 TDDDG they
+        require no consent. They are not used for tracking and go to nobody but Event Junkie.
       </p>
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Your location, for “near me”</h3>
@@ -249,13 +268,19 @@ const { t } = useI18n()
     <section>
       <h2>5. Who else is involved</h2>
       <p>
-        I sell nothing, and I share nothing for advertising. Data is disclosed to two service
+        I sell nothing, and I share nothing for advertising. Data is disclosed to three service
         providers, each a processor bound by a contract under Art. 28 GDPR:
       </p>
       <ul>
         <li>
           <strong>Hosting:</strong> Hetzner Online GmbH, Gunzenhausen, Germany. Servers are located
           in Germany; no transfer outside the EU is involved.
+        </li>
+        <li>
+          <strong>Sending e-mail:</strong> Scaleway SAS, Paris, France. When you ask for a sign-in
+          link, Scaleway delivers the mail to your address. For that, Scaleway receives your e-mail
+          address and the text of the mail. Servers are located in the EU; no transfer outside the
+          EU is involved.
         </li>
         <li>
           <strong>Machine translation and checking event data:</strong> Anthropic PBC, San
@@ -301,8 +326,47 @@ const { t } = useI18n()
       </p>
     </section>
 
+    <!-- LEGAL.md §7.1: an account is optional, and the account page is its deletion route. -->
+    <section id="account">
+      <h2>6. Your account</h2>
+      <p>
+        An account is optional. You sign in without a password: you enter your e-mail address, and
+        Event Junkie sends you a link from <code>noreply@notify.event-junkie.de</code>. It works
+        once, for 15 minutes. The first time you use one, your account is created.
+      </p>
+      <p>
+        <strong>What is stored:</strong> your e-mail address, the language you signed in with, when
+        you created the account and when you last signed in. Each sign-in adds a session with its
+        start, its last use and its expiry. Of the link and the session, I store only a hash, not
+        the value itself. When you ask for a link, I store it with the address, the language and the
+        time, even if you never use it.
+      </p>
+      <p>
+        <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
+        legal basis is Art. 6 (1) (b) GDPR.
+      </p>
+      <p>
+        <strong>Protection against abuse:</strong> one address gets at most three links an hour. So
+        that nobody can trigger any number of mails from one connection, the server also counts the
+        requests per IP address, at most 20 an hour. It keeps that count in memory only. It is
+        stored nowhere and is gone after an hour at most. The legal basis is Art. 6 (1) (f) GDPR, my
+        legitimate interest in protecting the mail service from abuse.
+      </p>
+      <p>
+        <strong>Retention:</strong> your account stays until you delete it. If you do not sign in
+        for <strong>24 months</strong>, I delete it, and you get a mail one month before. A session
+        ends 30 days after its last use, or when you sign out. A link expires after 15 minutes.
+        Expired links and sessions are deleted daily.
+      </p>
+      <p>
+        <strong>Do it yourself:</strong> on your account page you can download everything stored as
+        a file (Art. 15 and 20 GDPR), sign out on all devices and delete the account. Deletion takes
+        effect at once and takes every session with it. Section 7 covers backups.
+      </p>
+    </section>
+
     <section>
-      <h2>6. Your rights</h2>
+      <h2>7. Your rights</h2>
       <p>Under the GDPR you have the right to:</p>
       <ul>
         <li>access the personal data I hold about you (Art. 15)</li>
@@ -336,16 +400,17 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>7. Is providing data required?</h2>
+      <h2>8. Is providing data required?</h2>
       <p>
         You are neither legally nor contractually obliged to provide personal data. Technically,
         however, a web page cannot be delivered without your device's IP address, so browsing this
-        site without that being processed is not possible. Everything else is voluntary.
+        site without that being processed is not possible. Everything else is voluntary. An account
+        needs an e-mail address; without one, I cannot send you a sign-in link.
       </p>
     </section>
 
     <section>
-      <h2>8. Automated decision-making</h2>
+      <h2>9. Automated decision-making</h2>
       <p>
         There is none. I do not use automated decision-making or profiling within the meaning of
         Art. 22 GDPR.
@@ -353,7 +418,7 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>9. Changes to this notice</h2>
+      <h2>10. Changes to this notice</h2>
       <p>
         This notice describes what the system actually does, so it changes when the system does. The
         review date at the top of this page tells you when it was last checked.

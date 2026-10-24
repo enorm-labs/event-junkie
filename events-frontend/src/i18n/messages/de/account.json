@@ -1,0 +1,46 @@
+{
+  "signIn": {
+    "intro": "Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du dich anmeldest. Ein Passwort gibt es nicht.",
+    "emailLabel": "E-Mail-Adresse",
+    "submit": "Link senden",
+    "sending": "Wird gesendet …",
+    "privacy": "Die Adresse wird erst gespeichert, wenn du den Link benutzt.",
+    "invalid": "Das ist keine E-Mail-Adresse. Prüfe sie und versuche es noch einmal.",
+    "tooMany": "Von hier wurden zu viele Links angefordert. Versuche es in einer Stunde noch einmal.",
+    "mailDown": "Die Mail konnte nicht gesendet werden. Versuche es später noch einmal.",
+    "privacyLink": "Mehr dazu in der Datenschutzerklärung"
+  },
+  "checkMail": {
+    "body": "Wenn die Adresse stimmt, ist ein Link unterwegs. Er gilt einmal und 15 Minuten lang.",
+    "nothing": "Nichts angekommen? Sieh im Spam-Ordner nach oder fordere einen neuen Link an.",
+    "again": "Neuen Link anfordern"
+  },
+  "confirm": {
+    "body": "Melde dich mit diesem Link bei Event Junkie an. Er funktioniert nur einmal.",
+    "submit": "Anmelden",
+    "signingIn": "Wird angemeldet …",
+    "missing": "Dieser Link ist unvollständig. Öffne ihn noch einmal aus der Mail oder fordere einen neuen an.",
+    "invalid": "Dieser Link wurde schon benutzt oder ist abgelaufen. Fordere einen neuen an.",
+    "again": "Neuen Link anfordern"
+  },
+  "page": {
+    "signedInAs": "Angemeldet als {email}",
+    "since": "Konto seit {date}",
+    "loading": "Dein Konto wird geladen …",
+    "yourData": "Deine Daten",
+    "exportHint": "Alles, was zu deinem Konto gespeichert ist, als JSON-Datei.",
+    "export": "Meine Daten herunterladen",
+    "signOut": "Abmelden",
+    "signOutEverywhere": "Auf allen Geräten abmelden",
+    "delete": "Konto löschen",
+    "deleteHint": "Löscht dein Konto und meldet dich überall ab. Das lässt sich nicht rückgängig machen.",
+    "deleteConfirmTitle": "Konto löschen?",
+    "deleteConfirmBody": "Deine Adresse und alles, was dazu gespeichert ist, werden sofort gelöscht. Mit derselben Adresse kannst du später ein neues Konto anlegen.",
+    "deleteConfirm": "Endgültig löschen",
+    "cancel": "Abbrechen",
+    "signedOut": "Du bist abgemeldet.",
+    "deleted": "Dein Konto ist gelöscht.",
+    "home": "Zurück zu den Events",
+    "failed": "Das hat nicht geklappt. Prüfe deine Verbindung und versuche es noch einmal."
+  }
+}
