@@ -19,6 +19,11 @@ class HouseOfMusicOverviewPageScraperTest {
 
     private fun titledLater(title: String) = later.first { it.title == title }
 
+    private fun retitled(title: String) =
+        HouseOfMusicOverviewPageScraper()
+            .scrape(Jsoup.parse(fixture("houseofmusic-overview-2026-10-20.html").replace("House of Music Quiz", title), baseUrl), baseUrl)
+            .first { it.title.equals(title, ignoreCase = true) }
+
     @Test
     fun `reads every event from the Wix warmup payload in Berlin time`() {
         events.size shouldBe 10
@@ -90,6 +95,35 @@ class HouseOfMusicOverviewPageScraperTest {
         night.eventType shouldBe EventType.CONCERT.name
         night.artists.map { it.name } shouldBe listOf("Luise Volkmann’s Punk-Jazz-Projekt", "Vehicle/Passenger")
         night.artists.map { it.titleDerived } shouldBe listOf(false, false)
+    }
+
+    @Test
+    fun `bills no act for a showcase, which is a format`() {
+        val showcase = retitled("LISTEN TO BERLIN: YOUTH SHOWCASE (MW:M)")
+
+        showcase.eventType shouldBe EventType.CONCERT.name
+        showcase.artists.shouldBeEmpty()
+        retitled("Jonny Mahoro | Showcase").artists.map { it.name } shouldBe listOf("Jonny Mahoro")
+    }
+
+    @Test
+    fun `reads the acts after a known series and feat as a lineup`() {
+        val night = retitled("K:noise RAW signal feat. In Your Pocket + White Forest")
+
+        night.eventType shouldBe EventType.CONCERT.name
+        night.artists.map { it.name } shouldBe listOf("In Your Pocket", "White Forest")
+        night.artists.map { it.titleDerived } shouldBe listOf(false, false)
+        retitled("K:noise RAW signal w/ In Your Pocket").artists.map { it.name } shouldBe listOf("In Your Pocket")
+    }
+
+    @Test
+    fun `keeps an act and its guest when the title is no known series`() {
+        val night = retitled("Jonny Mahoro feat. In Your Pocket")
+        val long = retitled("The Big Berlin Brass Collective and Friends feat. The Smoky Mountain Youth Choir")
+
+        night.artists.map { it.name to it.role } shouldBe listOf("Jonny Mahoro" to "HEADLINER", "In Your Pocket" to "SUPPORT")
+        long.artists.map { it.name to it.role } shouldBe
+            listOf("The Big Berlin Brass Collective and Friends" to "HEADLINER", "The Smoky Mountain Youth Choir" to "SUPPORT")
     }
 
     @Test
