@@ -198,7 +198,7 @@ The next `bootRun` recreates it and re-runs the Flyway migrations. Note that an 
 
 **A database with known rows in one command, no network:** `scripts/dev-env.sh seed-fixture` loads
 [`fixtures/events.sql`](../fixtures/events.sql) (#272), the same file the BFF's `FixtureTest` and the DAST
-scan use. Three venues and 42 events. One event per shape the site renders differently, with
+scan use. Three venues and 44 events. One event per shape the site renders differently, with
 `source_id = 'fixture-<shape>'`. The file's header lists the shapes. It needs the schema,
 so run `up importer` once first. For this week's real programme, `seed-all` and `import` are still the way.
 
