@@ -77,7 +77,13 @@ data class EventFilter(
      */
     val features: List<String> = emptyList(),
     /** The festival an operator linked the event to (#3273); null imposes no constraint. */
-    val festivalSlug: String? = null
+    val festivalSlug: String? = null,
+    /**
+     * Events of anything an account follows (#3889): an event at one of the venues, or with one of the
+     * artists or promoters. Internal, set by `/api/me/following`. Null imposes no constraint; empty
+     * lists match nothing.
+     */
+    val followed: FollowedIds? = null
 ) {
     /**
      * The search leaves out a [FOR_CHILDREN] event unless the filter asks for that feature or names a
@@ -96,6 +102,13 @@ data class EventFilter(
         val RUNNING_CUTOFF: LocalTime = LocalTime.of(12, 0)
     }
 }
+
+/** The ids an account follows, per kind (#3889). The account module reads them; this module only filters on them. */
+data class FollowedIds(
+    val artistIds: List<Long>,
+    val venueIds: List<Long>,
+    val promoterIds: List<Long>
+)
 
 /** An ordered page of event IDs plus the total count of matches across all pages. */
 data class EventIdPage(
@@ -390,6 +403,7 @@ class EventSearchRepository(
                 params[association.param] = it.trim()
             }
         }
+        filter.followed?.let { appendFollowed(it, conditions, params) }
         // The family lives on the tag, so this is the genre EXISTS testing `family` in place of `slug`.
         // Beside `genre=` it narrows, never widens.
         if (filter.familySlugs.isNotEmpty()) {
@@ -409,6 +423,28 @@ class EventSearchRepository(
                 "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_feature ef WHERE ef.event_id = e.id AND ef.feature = :forChildren)"
             params["forChildren"] = EventFilter.FOR_CHILDREN
         }
+    }
+
+    /** One OR over the followed venues, artists and promoters; an account that follows nothing matches nothing. */
+    private fun appendFollowed(
+        followed: FollowedIds,
+        conditions: MutableList<String>,
+        params: MutableMap<String, Any>
+    ) {
+        val any = mutableListOf<String>()
+        if (followed.venueIds.isNotEmpty()) {
+            any += "e.venue_id IN (:followedVenues)"
+            params["followedVenues"] = followed.venueIds
+        }
+        if (followed.artistIds.isNotEmpty()) {
+            any += "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id AND ea.artist_id IN (:followedArtists))"
+            params["followedArtists"] = followed.artistIds
+        }
+        if (followed.promoterIds.isNotEmpty()) {
+            any += "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id AND ep.promoter_id IN (:followedPromoters))"
+            params["followedPromoters"] = followed.promoterIds
+        }
+        conditions += if (any.isEmpty()) "FALSE" else any.joinToString(" OR ", "(", ")")
     }
 
     /**

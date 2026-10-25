@@ -39,6 +39,9 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
     private lateinit var sessions: SessionStore
 
     @Autowired
+    private lateinit var follows: FollowStore
+
+    @Autowired
     private lateinit var metrics: AccountMetrics
 
     @Autowired
@@ -71,6 +74,7 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
     ) = InactiveAccountCleanup(
         accounts,
         sessions,
+        follows,
         StaticListableBeanFactory(if (mailer == null) emptyMap() else mapOf("mailer" to mailer)).getBeanProvider(Mailer::class.java),
         metrics,
         Clock.fixed(at, BERLIN),

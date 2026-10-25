@@ -18,16 +18,19 @@ private val logger = KotlinLogging.logger {}
 
 /**
  * The deletion route for inactive accounts the privacy notice promises (#3905, LEGAL.md §7.1). Daily:
- * expired links and sessions go, an account unused for 23 months gets a warning mail, and one unused
- * for 24 months, warned at least 30 days earlier, is deleted. Use is a sign-in or a renewed session.
+ * expired links and sessions go, and so do follows of an artist, venue or promoter that no longer
+ * exists (#3889). An account unused for 23 months gets a warning mail, and one unused for 24 months,
+ * warned at least 30 days earlier, is deleted. Use is a sign-in or a renewed session.
  *
  * Every replica runs it. The purges and the deletion are idempotent, and [AccountStore.claimWarnings]
  * hands each account to one replica, so a warning goes out once.
  */
 @Component
+@Suppress("LongParameterList") // One job over three stores, the mailer, its metrics, the clock and the origin its mail links to.
 class InactiveAccountCleanup(
     private val accounts: AccountStore,
     private val sessions: SessionStore,
+    private val follows: FollowStore,
     private val mailer: ObjectProvider<Mailer>,
     private val metrics: AccountMetrics,
     private val clock: Clock,
@@ -41,6 +44,7 @@ class InactiveAccountCleanup(
         // The per-address rate limit counts the links of the last hour, so a link stays an hour past its expiry.
         step(CleanupOutcome.LINKS_PURGED) { accounts.deleteLinks(now.minus(LINK_KEPT_AFTER_EXPIRY)) }
         step(CleanupOutcome.SESSIONS_PURGED) { sessions.deleteExpired(now) }
+        step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
         val sender = mailer.ifAvailable
         if (sender == null) {
             logger.warn { "Account cleanup: no mail sender on this cluster, so no deletion warnings" }

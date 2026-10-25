@@ -9,14 +9,21 @@ import org.springframework.web.util.HtmlUtils
  * the link therefore cannot use it up (#3887).
  */
 internal object SignInMail {
+    /** The confirm page's address. `next` is a checked path of letters, digits, hyphens and slashes (AuthController), so it needs no encoding. */
+    fun link(
+        origin: String,
+        locale: String,
+        token: String,
+        next: String? = null
+    ) = "$origin/$locale/sign-in/confirm${next?.let { "?next=$it" }.orEmpty()}#token=$token"
+
     fun message(
         to: String,
         locale: String,
         origin: String,
-        token: String,
+        link: String,
         validMinutes: Long
     ): MailMessage {
-        val link = "$origin/$locale/sign-in/confirm#token=$token"
         val text = if (locale == "de") german(link, validMinutes) else english(link, validMinutes)
         return MailMessage(
             kind = KIND,

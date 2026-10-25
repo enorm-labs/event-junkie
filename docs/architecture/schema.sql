@@ -2,6 +2,12 @@
 -- Rewrite with ./gradlew :events-importer:updateSchemaDump.
 
 --
+-- Name: accounts; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA accounts;
+
+--
 -- Name: events; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -248,6 +254,61 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+--
+-- Name: account; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.account (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email text NOT NULL,
+    locale text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_sign_in_at timestamp with time zone DEFAULT now() NOT NULL,
+    deletion_warned_at timestamp with time zone
+);
+
+--
+-- Name: follow; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.follow (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    account_id uuid NOT NULL,
+    kind text NOT NULL,
+    entity_id bigint,
+    query text,
+    notify text DEFAULT 'off'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT follow_kind_check CHECK ((kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'festival'::text, 'search'::text]))),
+    CONSTRAINT follow_notify_check CHECK ((notify = ANY (ARRAY['off'::text, 'digest'::text, 'instant'::text]))),
+    CONSTRAINT follow_target CHECK ((((kind = 'search'::text) AND (query IS NOT NULL) AND (entity_id IS NULL)) OR ((kind <> 'search'::text) AND (entity_id IS NOT NULL) AND (query IS NULL))))
+);
+
+--
+-- Name: one_time_token; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.one_time_token (
+    token_hash text NOT NULL,
+    email text NOT NULL,
+    locale text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    consumed_at timestamp with time zone
+);
+
+--
+-- Name: session; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.session (
+    token_hash text NOT NULL,
+    account_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL
+);
 
 --
 -- Name: artist_id_seq; Type: SEQUENCE; Schema: events; Owner: -
@@ -908,6 +969,34 @@ ALTER TABLE events.worklist_dismissal ALTER COLUMN id ADD GENERATED ALWAYS AS ID
 );
 
 --
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+
+--
+-- Name: follow follow_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.follow
+    ADD CONSTRAINT follow_pkey PRIMARY KEY (id);
+
+--
+-- Name: one_time_token one_time_token_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.one_time_token
+    ADD CONSTRAINT one_time_token_pkey PRIMARY KEY (token_hash);
+
+--
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (token_hash);
+
+--
 -- Name: artist artist_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -1216,6 +1305,54 @@ ALTER TABLE ONLY events.worklist_dismissal
     ADD CONSTRAINT worklist_dismissal_pkey PRIMARY KEY (id);
 
 --
+-- Name: account_email_key; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE UNIQUE INDEX account_email_key ON accounts.account USING btree (lower(email));
+
+--
+-- Name: account_last_sign_in_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX account_last_sign_in_idx ON accounts.account USING btree (last_sign_in_at);
+
+--
+-- Name: follow_entity_key; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE UNIQUE INDEX follow_entity_key ON accounts.follow USING btree (account_id, kind, entity_id) WHERE (kind <> 'search'::text);
+
+--
+-- Name: follow_kind_entity_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX follow_kind_entity_idx ON accounts.follow USING btree (kind, entity_id) WHERE (kind <> 'search'::text);
+
+--
+-- Name: one_time_token_email_created_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX one_time_token_email_created_idx ON accounts.one_time_token USING btree (lower(email), created_at);
+
+--
+-- Name: one_time_token_expires_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX one_time_token_expires_idx ON accounts.one_time_token USING btree (expires_at);
+
+--
+-- Name: session_account_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX session_account_idx ON accounts.session USING btree (account_id);
+
+--
+-- Name: session_expires_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX session_expires_idx ON accounts.session USING btree (expires_at);
+
+--
 -- Name: artist_comedian_unread_idx; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1502,6 +1639,20 @@ CREATE TRIGGER trg_promoter_updated_at BEFORE UPDATE ON events.promoter FOR EACH
 --
 
 CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW EXECUTE FUNCTION events.set_updated_at();
+
+--
+-- Name: follow follow_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.follow
+    ADD CONSTRAINT follow_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: session session_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.session
+    ADD CONSTRAINT session_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: artist_slug_alias artist_slug_alias_artist_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

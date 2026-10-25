@@ -147,6 +147,9 @@ the first column. It fails in two cases:
 | `/api/auth/sign-in`                | Uses a sign-in link and starts a session                                         |
 | `/api/me`                          | The signed-in account                                                            |
 | `/api/me/export`                   | Everything stored about the account, as a download                               |
+| `/api/me/follows`                  | What the account follows: artists, venues, promoters                             |
+| `/api/me/follows/{kind}/{slug}`    | Whether it follows one, and follow or unfollow it                                |
+| `/api/me/following`                | Upcoming events of everything the account follows                                |
 | `/api/me/sign-out`                 | Ends this browser's session                                                      |
 | `/api/me/sign-out-everywhere`      | Ends every session of the account                                                |
 | `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                          |

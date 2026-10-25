@@ -128,6 +128,17 @@ class SignInFlowTest : BaseControllerTest() {
     }
 
     @Test
+    fun `the link returns to the page that asked, and only to a page of this site`() {
+        val csrf = csrf()
+        post("/auth/link", LinkRequest("back@example.org", "en", next = "/en/venues/sisyphos"), csrf).expectStatus().isAccepted
+        post("/auth/link", LinkRequest("away@example.org", "en", next = "//evil.example/en"), csrf).expectStatus().isAccepted
+
+        val (back, away) = greenMail.receivedMessages.map { GreenMailUtil.getBody(it) }
+        back shouldContain "/en/sign-in/confirm?next=/en/venues/sisyphos#token="
+        away shouldContain "/en/sign-in/confirm#token="
+    }
+
+    @Test
     fun `a link works once`() {
         val csrf = csrf()
         requestLink("once@example.org", csrf).expectStatus().isAccepted

@@ -4,6 +4,25 @@
  */
 
 export interface paths {
+    "/api/me/follows/{kind}/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether the account follows this artist, venue or promoter. A 200 either way, so the page's check is not a console error */
+        get: operations["check"];
+        /** Follows an artist, a venue or a promoter. Following twice changes nothing */
+        put: operations["follow"];
+        post?: never;
+        /** Stops following. Unfollowing what the account does not follow changes nothing */
+        delete: operations["unfollow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/sign-out": {
         parameters: {
             query?: never;
@@ -238,6 +257,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/follows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everything the account follows, by name */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/following": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Upcoming events of everything the account follows, by date */
+        get: operations["following"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/export": {
         parameters: {
             query?: never;
@@ -280,7 +333,7 @@ export interface paths {
             cookie?: never;
         };
         /** List all genre tags alphabetically */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -320,7 +373,7 @@ export interface paths {
          * Search events with optional filters and pagination
          * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -479,7 +532,7 @@ export interface paths {
          * List artists with pagination and optional name search, sorted by name
          * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -521,6 +574,7 @@ export interface components {
         LinkRequest: {
             email?: string;
             locale?: string;
+            next?: string | null;
         };
         /** @description One format of a cached image, for a <source> element inside <picture> */
         ImageSourceResponse: {
@@ -1415,6 +1469,46 @@ export interface components {
              */
             buildTime?: string | null;
         };
+        FollowResponse: {
+            kind?: string;
+            slug?: string;
+            name?: string;
+            notify?: string;
+            /** Format: date-time */
+            followedAt?: string;
+        };
+        FollowState: {
+            following?: boolean;
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponseEventSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["EventSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
         AccountExport: {
             /** Format: date-time */
             exportedAt?: string;
@@ -1425,6 +1519,7 @@ export interface components {
             /** Format: date-time */
             lastSignInAt?: string;
             sessions?: components["schemas"]["SessionInfo"][];
+            follows?: components["schemas"]["FollowResponse"][];
         };
         SessionInfo: {
             /** Format: date-time */
@@ -2081,6 +2176,71 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FollowState"];
+                };
+            };
+        };
+    };
+    follow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unfollow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     signOut: {
         parameters: {
             query?: never;
@@ -2436,6 +2596,53 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FollowResponse"][];
+                };
+            };
+        };
+    };
+    following: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                };
+            };
+        };
+    };
     export: {
         parameters: {
             query?: never;
@@ -2484,7 +2691,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2524,7 +2731,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
@@ -2885,7 +3092,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */

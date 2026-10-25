@@ -26,6 +26,7 @@ flowchart TD
     venue["venue"]
 
     account --> common
+    account --> event
     account --> mail
     artist --> common
     artist --> image
