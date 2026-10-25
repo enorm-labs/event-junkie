@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
-  berlinToday,
   fetchCandidates,
   fetchReviewPage,
   fetchUpcomingEvents,
@@ -117,13 +116,6 @@ describe('fetchUpcomingEvents', () => {
     expect(String(fetchFn.mock.calls[0]?.[0])).toBe(
       '/api/admin/events?artistId=9&page=0&size=100&sort=eventDate%2Cdesc',
     )
-  })
-})
-
-describe('berlinToday', () => {
-  it('is the Berlin calendar day, not the UTC one', () => {
-    expect(berlinToday(new Date('2026-10-14T22:30:00Z'))).toBe('2026-10-15')
-    expect(berlinToday(new Date('2026-10-14T21:30:00Z'))).toBe('2026-10-14')
   })
 })
 

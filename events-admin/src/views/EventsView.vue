@@ -3,7 +3,6 @@ import { Search } from '@lucide/vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { berlinToday } from '@/api/artists'
 import { type AdminEvent, type EventSearchPage, searchEvents } from '@/api/events'
 import { type AdminVenue, fetchAllVenues } from '@/api/venues'
 import { type Festival, fetchFestivals } from '@/api/festivals'
@@ -20,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { berlinToday } from '@/lib/berlinTime'
 
 const route = useRoute()
 const router = useRouter()

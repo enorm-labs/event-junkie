@@ -3,7 +3,6 @@ import { Check, ChevronDown, ChevronUp, ExternalLink, X } from '@lucide/vue'
 import { ref, shallowRef } from 'vue'
 
 import {
-  berlinToday,
   fetchCandidates,
   fetchUpcomingEvents,
   lifeSpan,
@@ -15,6 +14,7 @@ import type { AdminEvent } from '@/api/events'
 import { fetchNames } from '@/api/names'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { berlinToday } from '@/lib/berlinTime'
 
 const props = defineProps<{
   artist: ReviewArtist
