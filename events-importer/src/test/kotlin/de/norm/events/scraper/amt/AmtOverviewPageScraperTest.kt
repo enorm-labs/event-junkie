@@ -16,7 +16,7 @@ import java.time.LocalDate
 /**
  * Unit tests for [AmtOverviewPageScraper].
  *
- * Parses the saved June and July 2026 month snapshots. Dates come from each block's `data-date`
+ * Parses the saved June, July and October 2026 month snapshots. Dates come from each block's `data-date`
  * attribute (a full `MMMM d, yyyy`), so no clock is needed — every date is deterministic.
  */
 class AmtOverviewPageScraperTest {
@@ -24,6 +24,7 @@ class AmtOverviewPageScraperTest {
 
     private val juneUrl = "https://www.club-amt.berlin/month/june"
     private val julyUrl = "https://www.club-amt.berlin/month/july"
+    private val octoberUrl = "https://www.club-amt.berlin/month/october"
 
     private fun monthPage(
         name: String,
@@ -38,11 +39,40 @@ class AmtOverviewPageScraperTest {
 
     private val juneEvents by lazy { scraper.scrape(monthPage("amt-month-june.html", juneUrl), juneUrl) }
     private val julyEvents by lazy { scraper.scrape(monthPage("amt-month-july.html", julyUrl), julyUrl) }
+    private val octoberEvents by lazy { scraper.scrape(monthPage("amt-month-october.html", octoberUrl), octoberUrl) }
+
+    private fun octoberNight(day: Int) = octoberEvents.first { it.eventDate == LocalDate.of(2026, 10, day) }
 
     @Test
     fun `parses every dated night on a month page`() {
         juneEvents shouldHaveSize 6
         julyEvents shouldHaveSize 5
+        octoberEvents shouldHaveSize 9
+    }
+
+    @Test
+    fun `maps a door-only figure to box office and no presale`() {
+        val event = octoberNight(25)
+
+        event.sourceId shouldBe "amt:sektfruhstuck"
+        event.pricePresale.shouldBeNull()
+        event.priceBoxOffice shouldBe BigDecimal("10")
+        octoberNight(30).pricePresale.shouldBeNull()
+        octoberNight(30).priceBoxOffice shouldBe BigDecimal("25")
+        // `>15` is a floor; its figure is still the door price.
+        octoberNight(9).pricePresale.shouldBeNull()
+        octoberNight(9).priceBoxOffice shouldBe BigDecimal("15")
+    }
+
+    @Test
+    fun `keeps a bare figure beside a ticket link as presale and a euro-marked range as both tiers`() {
+        val bare = octoberNight(31)
+        bare.ticketUrl shouldBe "https://ra.co/events/2535397"
+        bare.pricePresale shouldBe BigDecimal("25")
+        bare.priceBoxOffice.shouldBeNull()
+
+        octoberNight(16).pricePresale shouldBe BigDecimal("18")
+        octoberNight(16).priceBoxOffice shouldBe BigDecimal("27")
     }
 
     @Test

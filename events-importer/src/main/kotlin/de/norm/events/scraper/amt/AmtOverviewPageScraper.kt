@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
 import de.norm.events.scraper.mapSkippingFailures
@@ -33,7 +34,8 @@ import java.time.format.DateTimeParseException
  * delimited with `//` (a space-separated line cannot be split reliably), and dropped entirely
  * when it is a `tba` placeholder;
  * - `a.div-strela` — the external ticket link (Resident Advisor / EventJet);
- * - `.text-block-4` — a tiered `min – max` price (mapped to presale / box-office); and
+ * - `.text-block-4` — the price: a tiered `min – max` (presale / box-office), a single figure
+ * (presale), or `Door sale only. 10` (box-office only); and
  * - `a[href^="/event/"]` — the detail-page link, the stable per-event identity for `sourceId`.
  *
  * Every event is [EventType.PARTY]: a techno club whose nights are DJ dance parties, so the
@@ -131,12 +133,14 @@ class AmtOverviewPageScraper {
     /**
      * Splits a tiered price cell into (presale, box-office). A range (`"10 – 20"`) maps lower to
      * presale and upper to box-office; a single value (`"25"`) is the presale price with no
-     * box-office tier. `(null, null)` when blank or without digits.
+     * box-office tier, unless the cell names the door (`"Door sale only. 10"`). `(null, null)` when
+     * blank or without digits.
      */
     private fun parsePrices(text: String?): Pair<BigDecimal?, BigDecimal?> {
         if (text.isNullOrBlank()) return null to null
         val values = PRICE_NUMBER.findAll(text).map { BigDecimal(it.value.replace(",", ".")) }.toList()
-        return values.getOrNull(0) to values.getOrNull(1)
+        val doorOnly = values.size == 1 && (DOOR.containsMatchIn(text) || isBoxOfficeLabel(text))
+        return if (doorOnly) null to values.single() else values.getOrNull(0) to values.getOrNull(1)
     }
 
     companion object {
@@ -145,5 +149,8 @@ class AmtOverviewPageScraper {
 
         /** A single monetary value in a tiered price cell, German (`, `) or dot decimal separator. */
         private val PRICE_NUMBER = Regex("""\d+(?:[.,]\d{1,2})?""")
+
+        // The shared label set leaves a bare `door` out because `Doors 19:00` is a time; this cell holds no time.
+        private val DOOR = Regex("""(?<!\p{L})door(?!\p{L})""", RegexOption.IGNORE_CASE)
     }
 }

@@ -39,7 +39,6 @@ says so.
 | `AMT`                  | `ARTISTS`          | the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably                                                   | —     |
 | `AMT`                  | `START_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
 | `AMT`                  | `DOORS_TIME`       | the month and event pages print a date but no clock time                                                                                         | —     |
-| `AMT`                  | `PRICE`            | the month pages leave the price cell out, and the event pages print no figure                                                                    | —     |
 | `AMT`                  | `GENRE`            | the event pages name no style                                                                                                                    | —     |
 | `AMT`                  | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ALTE_KANTINE`         | `TICKET_URL`       | the night states a door price, and the venue sells no tickets online                                                                             | —     |
