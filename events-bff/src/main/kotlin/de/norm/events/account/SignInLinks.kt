@@ -41,9 +41,10 @@ class SignInLinks(
     suspend fun request(
         email: String,
         locale: String,
-        client: String
+        client: String,
+        next: String? = null
     ): LinkOutcome =
-        decide(email, locale, client).also { outcome ->
+        decide(email, locale, client, next).also { outcome ->
             metrics.record(outcome)
             logger.info { "Sign-in link request: ${outcome.tag}" }
         }
@@ -51,7 +52,8 @@ class SignInLinks(
     private suspend fun decide(
         email: String,
         locale: String,
-        client: String
+        client: String,
+        next: String?
     ): LinkOutcome {
         if (requestsPerClient.get(client) { AtomicInteger() }.incrementAndGet() > LINKS_PER_CLIENT_PER_HOUR) return LinkOutcome.IP_THROTTLED
         val sender = mailer.ifAvailable ?: return LinkOutcome.MAIL_UNAVAILABLE
@@ -62,7 +64,7 @@ class SignInLinks(
         store.issueToken(SecretTokens.hash(token), email, locale, now, now.plus(LINK_VALIDITY))
         // MailException only: a cancelled request must stay cancelled, not become a "mail failed".
         return try {
-            sender.send(SignInMail.message(email, locale, origin, token, LINK_VALIDITY.toMinutes())).awaitSingleOrNull()
+            sender.send(SignInMail.message(email, locale, origin, SignInMail.link(origin, locale, token, next), LINK_VALIDITY.toMinutes())).awaitSingleOrNull()
             LinkOutcome.SENT
         } catch (_: MailException) {
             LinkOutcome.MAIL_FAILED

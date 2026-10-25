@@ -9,7 +9,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.io.File
 
 /**
- * `docs/architecture/schema.sql` is the schema a fresh database has after every migration (#2477).
+ * `docs/architecture/schema.sql` is the schema a fresh database has after every migration (#2477): `events` and `accounts`.
  *
  * It gives the one-file view a Flyway baseline would give, without changing how a cluster migrates (ADR-005 § Baseline).
  * A plain container and Flyway, not a Spring context, so the test adds no cached context.
@@ -52,6 +52,8 @@ class SchemaDumpTest {
                     "--dbname=${postgres.databaseName}",
                     "--schema-only",
                     "--schema=$EVENTS_SCHEMA",
+                    // The visitor accounts live in a schema of their own (V193, ADR-053).
+                    "--schema=accounts",
                     "--extension=*",
                     "--exclude-table=$EVENTS_SCHEMA.flyway_schema_history",
                     "--no-owner",

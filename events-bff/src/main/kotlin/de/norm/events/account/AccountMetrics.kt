@@ -14,10 +14,19 @@ class AccountMetrics(
     private val links = LinkOutcome.entries.associateWith { registry.counter(LINK, TAG_OUTCOME, it.tag) }
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
+    private val follows =
+        FollowAction.entries.associateWith { action ->
+            FollowKind.entries.associateWith { kind -> registry.counter(FOLLOW, TAG_ACTION, action.tag, TAG_KIND, kind.tag) }
+        }
 
     fun record(outcome: LinkOutcome) = links.getValue(outcome).increment()
 
     fun record(outcome: SignInOutcome) = signIns.getValue(outcome).increment()
+
+    fun record(
+        action: FollowAction,
+        kind: FollowKind
+    ) = follows.getValue(action).getValue(kind).increment()
 
     fun record(
         outcome: CleanupOutcome,
@@ -34,7 +43,12 @@ class AccountMetrics(
         /** `bff.accounts.cleanup{outcome}`: what the daily cleanup of inactive accounts, links and sessions did (#3905). */
         const val CLEANUP = "bff.accounts.cleanup"
 
+        /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
+        const val FOLLOW = "bff.account.follow"
+
         const val TAG_OUTCOME = "outcome"
+        const val TAG_ACTION = "action"
+        const val TAG_KIND = "kind"
     }
 }
 
@@ -75,6 +89,9 @@ enum class CleanupOutcome(
     LINKS_PURGED("links_purged"),
     SESSIONS_PURGED("sessions_purged"),
 
+    /** Follows of an artist, venue or promoter that was deleted or merged away (#3889). */
+    FOLLOWS_PURGED("follows_purged"),
+
     /** A warning mail went out. */
     WARNED("warned"),
 
@@ -82,4 +99,11 @@ enum class CleanupOutcome(
     WARN_FAILED("warn_failed"),
     DELETED("deleted"),
     FAILED("failed")
+}
+
+enum class FollowAction(
+    val tag: String
+) {
+    FOLLOW("follow"),
+    UNFOLLOW("unfollow")
 }

@@ -52,7 +52,8 @@ class AuthController(
         val email = request.email.trim()
         if (!isAddress(email)) refuse(HttpStatus.BAD_REQUEST, "Not an e-mail address")
         if (request.locale !in LOCALES) refuse(HttpStatus.BAD_REQUEST, "Unknown locale")
-        return when (links.request(email, request.locale, clientAddress(exchange))) {
+        val next = request.next?.takeIf { NEXT.matches(it) }
+        return when (links.request(email, request.locale, clientAddress(exchange), next)) {
             LinkOutcome.SENT, LinkOutcome.ADDRESS_THROTTLED -> {
                 ResponseEntity.accepted().build()
             }
@@ -85,6 +86,9 @@ class AuthController(
         val LOCALES = setOf("de", "en")
         const val MAX_ADDRESS_LENGTH = 254
         val ADDRESS = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+
+        /** A page of this site, so a link in the mail can never send anyone elsewhere (#3889). */
+        val NEXT = Regex("^/(de|en)/[a-z0-9/-]{0,200}$")
 
         fun isAddress(email: String) = email.length <= MAX_ADDRESS_LENGTH && ADDRESS.matches(email)
 

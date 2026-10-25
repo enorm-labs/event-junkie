@@ -857,7 +857,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.mail.sent{kind,outcome}`                    | Timer                                 | sent / failed per mail kind, such as `sign-in` (ADR-054). The address is never a tag |
 | `bff.auth.link{outcome}`                         | Counter                               | sent / address_throttled / ip_throttled / mail_unavailable / mail_failed (ADR-053)   |
 | `bff.auth.sign_in{outcome}`                      | Counter                               | ok / invalid — an unknown, used and expired link are one outcome, as to the caller   |
-| `bff.accounts.cleanup{outcome}`                  | Counter                               | links_purged / sessions_purged / warned / warn_failed / deleted / failed (#3905)     |
+| `bff.accounts.cleanup{outcome}`                  | Counter                               | links/sessions/follows_purged, warned, warn_failed, deleted, failed (#3905, #3889)   |
+| `bff.account.follow{action,kind}`                | Counter                               | follow / unfollow, per artist / venue / promoter (#3889)                             |
 
 **Nine things to know before writing a rule against these:**
 

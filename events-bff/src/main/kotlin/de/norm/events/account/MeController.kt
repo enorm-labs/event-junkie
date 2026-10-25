@@ -23,6 +23,7 @@ class MeController(
     private val store: AccountStore,
     private val sessionRows: SessionStore,
     private val sessions: SessionSecurityContextRepository,
+    private val follows: FollowStore,
     private val clock: Clock
 ) {
     @GetMapping
@@ -69,7 +70,8 @@ class MeController(
                     locale = account.locale,
                     createdAt = account.createdAt,
                     lastSignInAt = account.lastSignInAt,
-                    sessions = sessionRows.sessions(account.id)
+                    sessions = sessionRows.sessions(account.id),
+                    follows = follows.list(account.id).map(FollowResponse::of)
                 )
             )
 
