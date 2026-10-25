@@ -342,6 +342,11 @@ const { t } = useI18n()
         time, even if you never use it.
       </p>
       <p>
+        <strong>What you follow:</strong> when you follow an artist, a venue or a promoter, I store
+        that and when. Your Following page is made from it. You see the list there and can unfollow
+        each entry. Only you can see it. If an entry leaves the calendar, I delete the follow too.
+      </p>
+      <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
         legal basis is Art. 6 (1) (b) GDPR.
       </p>

@@ -101,6 +101,8 @@ export function useDetailPage<T extends DetailEntity>(
     eventsError: eventsError.value,
     emptyText: t(`detail.${kind}.empty`),
     past,
+    followKind: kind,
+    followSlug: slug.value,
     reportText: t(`detail.${kind}.report`),
     reportPath: `/${kind}s/${slug.value}`,
   }))

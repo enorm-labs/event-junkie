@@ -25,3 +25,6 @@ export type AppMeta = Schemas['MetaResponse']
 export type Festival = Schemas['FestivalResponse']
 export type SearchResults = Schemas['SearchResponse']
 export type Account = Schemas['AccountResponse']
+export type Follow = Schemas['FollowResponse']
+/** A page of events without the list's lead, as `/api/me/following` answers. */
+export type EventSummaryPage = Schemas['PageResponseEventSummaryResponse']

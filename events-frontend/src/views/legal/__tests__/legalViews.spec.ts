@@ -248,6 +248,11 @@ const PRIVACY_ELEMENTS: Element[] = [
     de: /Art\. 6 Abs\. 1 lit\. b DSGVO/,
   },
   {
+    what: 'follows as stored data',
+    en: /What you follow: when you follow an artist, a venue or a promoter, I store/,
+    de: /Wem du folgst: Folgst du einem Act, einer Location oder einem Veranstalter/,
+  },
+  {
     what: 'account retention',
     en: /for 24 months/,
     de: /24 Monate lang/,

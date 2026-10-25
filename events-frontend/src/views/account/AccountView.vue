@@ -31,6 +31,7 @@ import {
 import { ApiError, describeError } from '@/api/client'
 import type { Account } from '@/api/types'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { setSession } from '@/composables/useSession'
 import { berlinDateOf, formatLongDate } from '@/lib/format'
 
 const { t, locale } = useI18n()
@@ -60,6 +61,7 @@ async function end(action: () => Promise<void>, outcome: 'signedOut' | 'deleted'
   try {
     await action()
     account.value = null
+    setSession(null)
     ended.value = outcome
   } catch {
     problem.value = t('account.page.failed')
@@ -98,6 +100,10 @@ function since(createdAt?: string): string {
             {{ t('account.page.since', { date: since(account.createdAt) }) }}
           </p>
         </div>
+
+        <Button as-child variant="outline">
+          <RouterLink :to="localePath('/following')">{{ t('account.page.following') }}</RouterLink>
+        </Button>
 
         <section class="space-y-3">
           <SectionLabel as="h2">{{ t('account.page.yourData') }}</SectionLabel>

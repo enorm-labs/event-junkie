@@ -163,6 +163,12 @@ const router = createRouter({
           meta: { titleKey: 'pageTitle.account', noindex: true },
           component: () => import('../views/account/AccountView.vue'),
         },
+        {
+          path: 'following',
+          name: 'following',
+          meta: { titleKey: 'pageTitle.following', noindex: true },
+          component: () => import('../views/account/FollowingView.vue'),
+        },
         // The five long-form pages have one component per language (views/localisedView.ts), the
         // exception to user-facing text living in the message catalogue.
         {
