@@ -123,6 +123,33 @@ class SisyfanTimetableScraperTest {
     }
 
     @Test
+    fun `a hybrid or liveact marker is not part of the name, in any case and with an asterisk missing`() {
+        val billed =
+            listOf(
+                "Christopher Coe *Hybrid",
+                "Chow Chow Disco *Liveact",
+                "Yetti Meissner *HYBRID*",
+                "Jonas Xenon liveact*",
+                "Oort *Hybrid* *Konzert*",
+                "Hybrid Minds",
+                "Liveact Larry"
+            )
+        actsOf(billed) shouldContainExactly
+            listOf("Christopher Coe", "Chow Chow Disco", "Yetti Meissner", "Jonas Xenon", "Oort", "Hybrid Minds", "Liveact Larry")
+    }
+
+    @Test
+    fun `a slot named only by a marker bills no act`() {
+        actsOf(listOf("Madame Charlie", "*Secret", "*SECRET*", "Secret*", "*Konzert*", "*Hybrid", "Oort")) shouldContainExactly
+            listOf("Madame Charlie", "Oort")
+    }
+
+    @Test
+    fun `a name that only contains Secret stays`() {
+        actsOf(listOf("Secret Society", "Secret")) shouldContainExactly listOf("Secret Society", "Secret")
+    }
+
+    @Test
     fun `a weekend with no sets yet is no event`() {
         val html =
             """
