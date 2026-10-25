@@ -44,7 +44,6 @@ class AssociationSyncService(
      * pins keeps its stored rows (ADR-042).
      *
      * @param savedEvents the persisted event entities (non-null IDs).
-     * @param scrapedEvents the raw scraped events.
      * @param keepStored the join tables of each `sourceId` that an enrichment source filled and this
      *   source leaves empty. They keep their stored rows as a pinned one does, and count as no pin (ADR-043).
      * @return the artist rows for the MusicBrainz sweep, and how many pinned join tables the source would have changed.

@@ -11,8 +11,6 @@ private val logger = KotlinLogging.logger {}
 /**
  * Pre-computed per-event context for diff syncing, shared by the artist, promoter and genre-tag syncs;
  * supports destructuring.
- *
- * @param T the association entity type.
  */
 internal data class EventAssociationContext<T>(
     val eventId: Long,
@@ -74,7 +72,6 @@ internal suspend fun <T> storedSlugs(
  * aborted". `ON CONFLICT DO NOTHING` never raises; a lost race is a `0`-row no-op and
  * [findBySlug] returns the winner's row.
  *
- * @param T the entity type.
  * @param name the human-readable name to slugify and resolve.
  * @param cache mutable slug to entity map shared across the batch.
  * @param insertIfAbsent conflict-tolerant insert; returns rows inserted.
