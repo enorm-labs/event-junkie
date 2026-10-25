@@ -5,9 +5,11 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -19,21 +21,28 @@ import org.springframework.stereotype.Component
  *
  * The shop is the programme: every performance up to two years ahead is on sale, as one product per
  * price category, about 1,700 products for 400 performances. The Store API pages them a hundred at
- * a time with no cursor, so the walk asks for the next page until one comes back short. The theatre
- * has no events plugin, and its `/veranstaltung/<slug>` pages repeat what the products say.
+ * a time with no cursor, so the walk asks for the next page until one comes back short.
+ *
+ * The products carry no show text. Each production's `/veranstaltung/<slug>/` page does, so each one
+ * is read once and its text applied to every performance. A failed page flags its performances, so the
+ * upsert keeps the stored text.
  *
  * @see WuehlmaeuseApiScraper for the product shape and the fold into one event per performance.
+ * @see WuehlmaeuseProductionPageScraper for the show text.
  * @see <a href="https://wuehlmaeuse.de/">Die Wühlmäuse</a>
  */
 @Component
 class WuehlmaeuseWebsiteImporter(
-    private val apiClient: ApiClient
+    private val apiClient: ApiClient,
+    private val htmlFetcher: HtmlFetcher
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.WUEHLMAEUSE
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val apiScraper = WuehlmaeuseApiScraper()
+    private val productionScraper = WuehlmaeuseProductionPageScraper()
 
     override suspend fun importEvents(
         url: String,
@@ -42,7 +51,10 @@ class WuehlmaeuseWebsiteImporter(
     ): ImportResult {
         val pageUrl = { page: Int -> "$url${url.querySeparator()}per_page=$WUEHLMAEUSE_PER_PAGE&page=$page" }
         val walked = apiClient.walkWpRestPages(eventSource, pageUrl, WUEHLMAEUSE_PER_PAGE, MAX_PAGES, apiScraper::scrapePage)
-        val events = apiScraper.toEvents(walked.items)
+        val events =
+            htmlFetcher.enrichFromSharedPages(apiScraper.toEvents(walked.items), productionScraper::scrape, { production, event ->
+                event.copy(description = production.description)
+            })
         logger.info { "Scraped ${events.size} performance(s) from ${walked.items.size} Wühlmäuse ticket(s) across ${walked.pages} page(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = walked.complete)
     }
@@ -55,13 +67,11 @@ class WuehlmaeuseWebsiteImporter(
 
 /**
  * German is the house language because the programme is German in practice (#2584). On `2026-10-04` the
- * production API listed 402 upcoming shows under 177 titles, and no title named another language. The
- * shop carries no show text, so the titles and the cabaret programme are the evidence.
+ * production API listed 402 upcoming shows under 177 titles, and no title named another language.
  */
 val WUEHLMAEUSE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUEHLMAEUSE,
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the ticket products carry no show text"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the shop files every show under its act and names no format; Kabarett, comedy and music share one stage"),
         AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells one price per seat category and states no box-office price"),
