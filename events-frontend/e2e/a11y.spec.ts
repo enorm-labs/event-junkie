@@ -315,6 +315,27 @@ test('the header search, open with results, has no detectable accessibility viol
   ).toEqual([])
 })
 
+/** The header's account menu, open and signed in (#3924): the static pass is signed out and never opens it. */
+test('the header account menu, open, has no detectable accessibility violations', async ({ page }) => {
+  await page.route(/\/api\/auth\/session/, (route) =>
+    json(route, { account: { email: 'ada@example.com', locale: 'de', createdAt: '2026-10-24T10:00:00Z' } }),
+  )
+  await page.goto('/de/about')
+  await page.getByRole('button', { name: 'Dein Konto' }).click()
+  await expect(page.getByText('Angemeldet als ada@example.com')).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
 /** The header's language popover, open in German: the static pass never opens it. */
 test('the header language menu, open, has no detectable accessibility violations', async ({ page }) => {
   await page.goto('/de/about')
