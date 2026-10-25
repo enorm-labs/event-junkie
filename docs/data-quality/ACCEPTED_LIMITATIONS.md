@@ -725,6 +725,7 @@ says so.
 | `PFEFFERBERG_THEATER`  | `DOORS_TIME`       | the site publishes only the start time                                                                                                           | —     |
 | `PFEFFERBERG_THEATER`  | `ARTISTS`          | a production names its cast only in prose; the ensemble line is a company or a series                                                            | —     |
 | `PFEFFERBERG_THEATER`  | `PROMOTERS`        | the site names no presenter per performance                                                                                                      | —     |
+| `PFEFFERBERG_THEATER`  | `GENRE`            | the fairy-tale season page has no categories, and the calendar's comedy and dance categories name a format, not a music genre                    | —     |
 | `PKH_WAREHOUSE`        | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
 | `PKH_WAREHOUSE`        | `DOORS_TIME`       | the site prints one opening time per night                                                                                                       | —     |
 | `PKH_WAREHOUSE`        | `IMAGE`            | the site shows no picture per night                                                                                                              | —     |

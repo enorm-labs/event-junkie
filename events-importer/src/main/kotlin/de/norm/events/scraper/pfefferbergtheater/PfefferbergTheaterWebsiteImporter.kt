@@ -71,5 +71,9 @@ val PFEFFERBERG_THEATER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the site states no price; the ticket shop holds it"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only the start time"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "a production names its cast only in prose; the ensemble line is a company or a series"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the site names no presenter per performance"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the fairy-tale season page has no categories, and the calendar's comedy and dance categories name a format, not a music genre"
+        )
     )
