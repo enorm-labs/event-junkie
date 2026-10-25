@@ -20,10 +20,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
- * Pure parser for the Zosch start page, where each `div.event` is one night.
+ * Pure parser for the Zosch start page, a Bootstrap accordion where each `div.event` is one night.
  *
- * The header prints the date without a year (`21.10.`), so the date comes from the collapse target
- * `#e20261021`. The `.theme` span is the genre, the `.subtitle` the band's own style line.
+ * The date comes from the id of the night's collapse body, `.accordion-collapse#e20261028`, or from
+ * the header's `data-bs-target` that points at it (#3929). The clock prints seconds (`20:00:00 Uhr`).
+ * The `.theme` beside the title is the genre, the `.subtitle` the band's own style line.
  * The `.links` anchor is the band's website, not a ticket shop, so it is not read.
  */
 class ZoschOverviewPageScraper {
@@ -48,23 +49,24 @@ class ZoschOverviewPageScraper {
             logger.warn { "Zosch night has no title, skipping" }
             return null
         }
-        val date = night.attrAt(".eventBody[id]", "id")?.let(::parseBodyId)
+        val bodyId = night.attrAt(".accordion-collapse[id]", "id") ?: night.attrAt("[data-bs-target]", "data-bs-target")?.removePrefix("#")
+        val date = bodyId?.let(::parseBodyId)
         if (date == null) {
             logger.warn { "Zosch night '$title' has no dated body id, skipping" }
             return null
         }
-        val subtitle = night.textAt(".eventBody .subtitle")
+        val subtitle = night.textAt(".subtitle")
         val eventType = mapEventType(night.textAt(".subHeader .category"), CATEGORY_TYPES)
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
             eventType = eventType,
             eventDate = date,
-            startTime = night.select(".subHeader span").firstNotNullOfOrNull { parseTime(it.text().removeSuffix(" Uhr")) },
+            startTime = night.select(".subHeader span").firstNotNullOfOrNull { parseTime(CLOCK.find(it.text())?.value) },
             imageUrl = night.imgSrcAt(".imageWrapper img"),
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ZOSCH.sourceIdPrefix}$date-${SlugGenerator.slugify(title)}",
-            genre = night.textAt(".title .theme"),
+            genre = night.textAt(".theme"),
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
     }
@@ -78,6 +80,7 @@ class ZoschOverviewPageScraper {
 
     private companion object {
         val BODY_ID_DATE: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
+        val CLOCK = Regex("""^\d{2}:\d{2}""")
 
         /** The site's three categories, `Musik`, `Lesung` and `Party`; the last two are in the shared table. */
         val CATEGORY_TYPES = mapOf("musik" to EventType.CONCERT.name)

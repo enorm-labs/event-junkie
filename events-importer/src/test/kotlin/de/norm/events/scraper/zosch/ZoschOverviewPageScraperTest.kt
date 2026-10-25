@@ -26,18 +26,25 @@ class ZoschOverviewPageScraperTest {
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
+    /** One night in the accordion markup; [bodyId] null leaves the collapse body without an id. */
     private fun night(
         id: String = "e20261105",
+        bodyId: String? = id,
         category: String = "Musik",
-        time: String = "20:00 Uhr",
+        time: String = "20:00:00 Uhr",
         title: String = "Insaiter Jazz Trio"
     ) = Jsoup.parse(
         """
-        <div class="eventContainer"><div class="event col-12 lazy">
-          <div class="subHeader"><span class="ml-2">Donnerstag</span><span class="ml-1">05.11.</span><span class="ml-1">$time</span>
-            <span class="category mr-1">$category</span></div>
-          <div class="title"><div class="p-0"><div class="theme d-inline mr-2"><span>Jazz</span></div> $title </div></div>
-          <div id="$id" class="eventBody collapse"><div class="subtitle"><span>swing</span></div></div>
+        <div class="eventContainer"><div class="event accordion-item">
+          <div class="eventHeader accordion-header">
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#$id">
+              <span class="ms-2">Do.</span><span class="ms-2">05.11.2026</span><span class="ms-2">$time</span>
+              <div class="category">$category</div></div>
+            <div class="theme"><h7>Jazz</h7></div>
+            <div class="title"><div class="ms-2 p-0"> $title </div></div>
+          </div>
+          <div ${bodyId?.let { "id=\"$it\" " }.orEmpty()}class="eventContent accordion-collapse collapse">
+            <div class="accordion-body"><div class="subtitle"><h6>swing</h6></div></div></div>
         </div></div>
         """.trimIndent(),
         baseUrl
@@ -45,9 +52,10 @@ class ZoschOverviewPageScraperTest {
 
     @Test
     fun `scrape reads every night on the page`() {
-        events shouldHaveSize 16
-        events.first().eventDate shouldBe LocalDate.of(2026, 10, 21)
-        events.last().eventDate shouldBe LocalDate.of(2026, 12, 23)
+        // #3929: the accordion markup of 2026-10-24 skipped all 15.
+        events shouldHaveSize 15
+        events.first().eventDate shouldBe LocalDate.of(2026, 10, 28)
+        events.last().eventDate shouldBe LocalDate.of(2026, 12, 30)
     }
 
     @Test
@@ -59,7 +67,7 @@ class ZoschOverviewPageScraperTest {
         event.genre shouldBe "Jazz"
         event.eventType shouldBe "CONCERT"
         event.startTime shouldBe LocalTime.of(20, 0)
-        event.imageUrl shouldBe "https://www.zosch-berlin.de/storage/media/images/158/F53KX1nzsG9g4xVCs62MDq7oTvbXIhsCm1fBoQsU.jpg"
+        event.imageUrl shouldBe "https://www.zosch-berlin.de/storage/images/F53KX1nzsG9g4xVCs62MDq7oTvbXIhsCm1fBoQsU.jpg"
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "zosch:2026-10-29-jazzformation-just-friends"
         event.ticketUrl.shouldBeNull()
@@ -71,6 +79,17 @@ class ZoschOverviewPageScraperTest {
         val event = scraper.scrape(night(id = "e20270107"), baseUrl).single()
 
         event.eventDate shouldBe LocalDate.of(2027, 1, 7)
+    }
+
+    @Test
+    fun `the date falls back to the header's collapse target`() {
+        scraper.scrape(night(bodyId = null), baseUrl).single().eventDate shouldBe LocalDate.of(2026, 11, 5)
+    }
+
+    @Test
+    fun `a clock with or without seconds is read`() {
+        scraper.scrape(night(time = "19:30:00 Uhr"), baseUrl).single().startTime shouldBe LocalTime.of(19, 30)
+        scraper.scrape(night(time = "19:30 Uhr"), baseUrl).single().startTime shouldBe LocalTime.of(19, 30)
     }
 
     @Test
@@ -90,7 +109,7 @@ class ZoschOverviewPageScraperTest {
 
     @Test
     fun `a night without a dated body id or a title is skipped`() {
-        scraper.scrape(night(id = "eventBody"), baseUrl).shouldBeEmpty()
+        scraper.scrape(night(id = "eventContent"), baseUrl).shouldBeEmpty()
         scraper.scrape(night(title = ""), baseUrl).shouldBeEmpty()
     }
 

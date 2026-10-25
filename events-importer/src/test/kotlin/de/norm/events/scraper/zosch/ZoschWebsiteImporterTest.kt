@@ -44,7 +44,7 @@ class ZoschWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 16
+            result.events shouldHaveSize 15
             result.complete shouldBe true
         }
 
