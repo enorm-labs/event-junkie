@@ -47,3 +47,15 @@ export function fromBerlinLocal(local: string): string {
 export function formatBerlin(instant: string): string {
   return toBerlinLocal(instant).replace('T', ' ')
 }
+
+const berlinDate = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: 'Europe/Berlin',
+})
+
+/** The Berlin calendar day of [instant], as `YYYY-MM-DD`. */
+export function berlinDay(instant: string): string {
+  return berlinDate.format(new Date(instant))
+}
