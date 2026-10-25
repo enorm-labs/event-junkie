@@ -57,6 +57,7 @@ class ColumbiaTheaterOverviewPageScraperTest {
         // The permalink's YYYYMMDD prefix, not the year-less "03 Aug" date block on the card.
         soulfly.eventDate shouldBe LocalDate.of(2026, 8, 3)
         soulfly.status shouldBe "SCHEDULED"
+        soulfly.soldOut shouldBe false
         soulfly.sourceUrl shouldBe "https://columbia-theater.de/event/20260803-soulfly/"
         soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
         soulfly.artists shouldContainExactly
@@ -134,6 +135,25 @@ class ColumbiaTheaterOverviewPageScraperTest {
         val kmfdm = event("20270325-kmfdm")
         kmfdm.eventDate shouldBe LocalDate.of(2027, 3, 25)
         kmfdm.status shouldBe "POSTPONED"
+    }
+
+    @Test
+    fun `reads a sold-out show from the card's sticker`() {
+        // Trimmed from the live homepage of 2026-10-25.
+        val html =
+            """
+            <a class="item " data-id="28185" href="https://columbia-theater.de/event/20270305-south-arcade/" data-p="0" data-m="0" data-c="0">
+              <div class="item-content"><div class="item-meta">
+                <h2 class="item-title">South Arcade</h2>
+                <div class="item-meta-bottom">
+                  <div class="item-sold-out-wrapper"><div class="item-sold-out">Sold Out</div></div>
+                </div>
+              </div></div>
+            </a>
+            """.trimIndent()
+        val southArcade = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        southArcade.soldOut shouldBe true
+        southArcade.status shouldBe "SCHEDULED"
     }
 
     @Test

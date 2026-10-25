@@ -32,7 +32,8 @@ import org.jsoup.nodes.Element
  * Every upcoming night is one `a.item[data-id]` card linking to its `/event/YYYYMMDD-<slug>/`
  * detail page: poster (`.item-image-wrapper img`), `.item-title` act, optional `.item-tour-text`
  * tour name, one `.item-support-row` per billing line, `.item-date-day`/`.item-date-month`, and
- * the venue's `data-c` / `data-m` / `data-p` status flags. The date block has a German month
+ * the venue's `data-c` / `data-m` / `data-p` status flags, and a `.item-sold-out` sticker on a
+ * sold-out show. The date block has a German month
  * abbreviation and usually no year, so the date is read from the `YYYYMMDD` permalink prefix
  * instead — canonical and unambiguous (see [parseBasicIsoDatePrefix]).
  * A slug without one leaves the date unresolved, and the importer drops the event rather than
@@ -93,6 +94,7 @@ class ColumbiaTheaterOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             status = parseColumbiaTheaterStatus(card, card.textAt(".item-status")),
+            soldOut = card.selectFirst(".item-sold-out") != null,
             artists = columbiaTheaterArtists(title, supportRows, eventType)
         )
     }

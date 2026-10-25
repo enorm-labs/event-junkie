@@ -18,8 +18,8 @@ import java.time.LocalTime
  *
  * Uses real `/event/<slug>/` snapshots covering the page variants that matter: a plain concert
  * (with a doubled ticket `href`), a show with media presenters, a cancelled show, a relocated show
- * with no times and no ticket block, and a rescheduled show whose header carries both its old and
- * its new date.
+ * with no times and no ticket block, a rescheduled show whose header carries both its old and
+ * its new date, and a sold-out show whose ticket block is a status notice.
  */
 class ColumbiaTheaterDetailPageScraperTest {
     private val scraper = ColumbiaTheaterDetailPageScraper()
@@ -57,6 +57,28 @@ class ColumbiaTheaterDetailPageScraperTest {
                 ScrapedArtist("Botulism", "SUPPORT")
             )
         soulfly.promoters.shouldBeEmpty()
+        soulfly.soldOut shouldBe false
+    }
+
+    @Test
+    fun `reads a sold-out show from the notice that replaces its ticket links`() {
+        val diceActors = scrape("columbiatheater-detail-sold-out.html", "20270116-dice-actors-live-on-stage")
+        diceActors.shouldNotBeNull()
+        diceActors.soldOut shouldBe true
+        diceActors.status shouldBe "SCHEDULED"
+        diceActors.ticketUrl.shouldBeNull()
+        diceActors.eventDate shouldBe LocalDate.of(2027, 1, 16)
+    }
+
+    @Test
+    fun `does not read a ticket notice without a sold-out marker as sold out`() {
+        val url = "https://columbia-theater.de/event/20270116-dice-actors-live-on-stage/"
+        val html =
+            """
+            <div class="event-content"><h1 class="header-title">Dice Actors</h1>
+            <div class="event-tickets"><div class="ticket-status"><p>Tickets nur an der Abendkasse</p></div></div></div>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull().soldOut shouldBe false
     }
 
     @Test

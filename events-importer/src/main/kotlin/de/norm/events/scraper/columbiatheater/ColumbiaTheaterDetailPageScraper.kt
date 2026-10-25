@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -22,7 +23,8 @@ import org.jsoup.nodes.Document
  * `.header-support` billing rows, `.header-date` (`Wd. DD.MM.[YY] um HH:mm / Einlass HH:mm`),
  * poster (`img.event-image-img`), `.header-promoters` "präsentiert von …", the ticket-shop
  * button, the `.event-text` blurb, and for a cancelled/relocated/rescheduled show an
- * `.event-status` notice plus the overview's `data-c` / `data-m` / `data-p` flags. No JSON-LD;
+ * `.event-status` notice plus the overview's `data-c` / `data-m` / `data-p` flags. A sold-out
+ * show replaces the ticket button with a `.ticket-status` notice ("Das Event ist ausverkauft!"). No JSON-LD;
  * the WordPress REST API is disabled site-wide.
  *
  * Source for what the overview lacks — doors/start, blurb, ticket URL, presenters — and repeats
@@ -77,6 +79,8 @@ class ColumbiaTheaterDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt(".event-tickets .ticket-links a")?.let(::firstTicketUrl),
+            // Only a notice that says sold out counts; another ticket status is not one.
+            soldOut = hasSoldOutMarker(content.textAt(".event-tickets .ticket-status")),
             status = parseColumbiaTheaterStatus(content, statusNotice),
             // A relocation notice names the new house: "Das Konzert wurde ins METROPOL verlegt."
             statusNote = statusNotice,
