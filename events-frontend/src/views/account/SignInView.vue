@@ -5,7 +5,7 @@
  */
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
 import ListPage from '@/components/ListPage.vue'
 import { Button } from '@/components/ui/button'
@@ -13,9 +13,13 @@ import { fetchSession, prepareCsrf, requestLink } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { isLocale } from '@/i18n/locales'
+import { signInNext } from '@/lib/signInNext'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
+// The page that sent the visitor here, such as a Follow button's (#3889). The mail link returns there.
+const next = signInNext(route.query.next)
 const localePath = useLocalePath()
 
 const email = ref('')
@@ -25,7 +29,8 @@ const problem = ref('')
 onMounted(async () => {
   // A visitor who is already signed in has nothing to do here.
   const [, account] = await Promise.allSettled([prepareCsrf(), fetchSession()])
-  if (account.status === 'fulfilled' && account.value) await router.replace(localePath('/account'))
+  if (account.status === 'fulfilled' && account.value)
+    await router.replace(next ?? localePath('/following'))
 })
 
 async function submit() {
@@ -38,7 +43,11 @@ async function submit() {
   sending.value = true
   problem.value = ''
   try {
-    await requestLink(email.value.trim(), isLocale(locale.value) ? locale.value : 'de')
+    await requestLink(
+      email.value.trim(),
+      isLocale(locale.value) ? locale.value : 'de',
+      next ?? undefined,
+    )
     await router.push(localePath('/sign-in/check-mail'))
   } catch (e) {
     problem.value = messageFor(e)

@@ -9,7 +9,7 @@ import { setI18nLocale } from '@/i18n'
 const account = vi.hoisted(() => ({
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
-  requestLink: vi.fn<(email: string, locale: string) => Promise<void>>(),
+  requestLink: vi.fn<(email: string, locale: string, next?: string) => Promise<void>>(),
   signIn: vi.fn<(token: string) => Promise<unknown>>(),
   fetchAccount: vi.fn<() => Promise<unknown>>(),
   signOut: vi.fn<() => Promise<void>>(),
@@ -64,7 +64,7 @@ describe('SignInView', () => {
     await view.find('form').trigger('submit')
     await flushPromises()
 
-    expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'de')
+    expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'de', undefined)
     expect(router.currentRoute.value.fullPath).toBe('/de/sign-in/check-mail')
   })
 
@@ -93,10 +93,21 @@ describe('SignInView', () => {
     expect(view.find('[role="alert"]').text()).toContain('This is not an e-mail address')
   })
 
-  it('sends a signed-in visitor to the account page', async () => {
+  it('sends a signed-in visitor to the Following page', async () => {
     account.fetchSession.mockResolvedValue(me)
     await mountAt(SignInView, '/en/sign-in')
-    expect(router.currentRoute.value.fullPath).toBe('/en/account')
+    expect(router.currentRoute.value.fullPath).toBe('/en/following')
+  })
+})
+
+describe('SignInView with a page to return to', () => {
+  it('passes `next` on to the link request', async () => {
+    account.requestLink.mockResolvedValue()
+    const view = await mountAt(SignInView, '/en/sign-in?next=/en/artists/ada')
+    await view.find('input').setValue('ada@example.com')
+    await view.find('form').trigger('submit')
+    await flushPromises()
+    expect(account.requestLink).toHaveBeenCalledWith('ada@example.com', 'en', '/en/artists/ada')
   })
 })
 
@@ -112,7 +123,27 @@ describe('SignInConfirmView', () => {
     await view.find('button').trigger('click')
     await flushPromises()
     expect(account.signIn).toHaveBeenCalledWith('abc_-123')
-    expect(router.currentRoute.value.fullPath).toBe('/en/account')
+    expect(router.currentRoute.value.fullPath).toBe('/en/following')
+  })
+
+  it('returns to the page in `next` after the sign-in, and ignores one that is not a page of this site', async () => {
+    account.signIn.mockResolvedValue(me)
+    const view = await mountAt(
+      SignInConfirmView,
+      '/en/sign-in/confirm?next=/en/venues/sisyphos#token=abc',
+    )
+    await view.find('button').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/en/venues/sisyphos')
+
+    wrapper?.unmount()
+    const other = await mountAt(
+      SignInConfirmView,
+      '/en/sign-in/confirm?next=//evil.example#token=abc',
+    )
+    await other.find('button').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/en/following')
   })
 
   it('offers a new link when the token was used or expired', async () => {

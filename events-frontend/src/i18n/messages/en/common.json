@@ -12,7 +12,9 @@
     "about": "About",
     "beta": "beta",
     "betaLabel": "Event Junkie is in beta. Data may be incomplete or out of date. See what that means.",
-    "sourceOnGitHub": "Source code on GitHub"
+    "sourceOnGitHub": "Source code on GitHub",
+    "signIn": "Sign in",
+    "following": "Following"
   },
   "display": {
     "label": "Display settings",

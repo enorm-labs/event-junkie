@@ -41,6 +41,23 @@
     "signedOut": "Du bist abgemeldet.",
     "deleted": "Dein Konto ist gelöscht.",
     "home": "Zurück zu den Events",
-    "failed": "Das hat nicht geklappt. Prüfe deine Verbindung und versuche es noch einmal."
+    "failed": "Das hat nicht geklappt. Prüfe deine Verbindung und versuche es noch einmal.",
+    "following": "Wem du folgst"
+  },
+  "follow": {
+    "follow": "Folgen",
+    "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+    "tooMany": "Du folgst schon 500 Einträgen. Entfolge zuerst einem.",
+    "page": {
+      "intro": "Kommende Events der Acts, Locations und Veranstalter, denen du folgst, nach Datum.",
+      "account": "Dein Konto",
+      "empty": "Du folgst noch nichts. Folge einem Act, einer Location oder einem Veranstalter auf der jeweiligen Seite, oder fang mit einer dieser Locations an.",
+      "suggestions": "Locations mit den meisten Events",
+      "none": "Gerade stehen keine Events an.",
+      "list": "Du folgst ({count})"
+    },
+    "shown": "Erscheint auf deiner Seite „Gefolgt“",
+    "following": "Gefolgt",
+    "unfollowHint": "(zum Entfolgen drücken)"
   }
 }

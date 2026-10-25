@@ -1,6 +1,6 @@
 import type { Locale } from '@/i18n/locales'
 import { api, unwrap } from './client'
-import type { Account } from './types'
+import type { Account, EventSummaryPage, Follow } from './types'
 
 /**
  * The sign-in and account calls (#3887, ADR-053). Each write needs the CSRF cookie first, so every
@@ -18,9 +18,12 @@ export async function fetchSession(): Promise<Account | null> {
   return session?.account ?? null
 }
 
-/** Sends a sign-in link. The answer is the same whether or not the address has an account. */
-export async function requestLink(email: string, locale: Locale): Promise<void> {
-  await unwrap(api.POST('/api/auth/link', { body: { email, locale } }))
+/**
+ * Sends a sign-in link. The answer is the same whether or not the address has an account. [next] is
+ * the page the link returns to; the BFF keeps it only when it is a page of this site (#3889).
+ */
+export async function requestLink(email: string, locale: Locale, next?: string): Promise<void> {
+  await unwrap(api.POST('/api/auth/link', { body: { email, locale, next } }))
 }
 
 /** Uses the link's token. A 401 means it was used, expired or never issued. */
@@ -47,3 +50,31 @@ export async function deleteAccount(): Promise<void> {
 
 /** A plain link, so the browser downloads the JSON with its own cookie and file name. */
 export const EXPORT_URL = '/api/me/export'
+
+/** What an account can follow (#3889). */
+export type FollowKind = 'artist' | 'venue' | 'promoter'
+
+/** Everything the account follows, by name. */
+export async function fetchFollows(): Promise<Follow[]> {
+  return unwrap(api.GET('/api/me/follows'))
+}
+
+export async function isFollowing(kind: FollowKind, slug: string): Promise<boolean> {
+  const state = await unwrap(
+    api.GET('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }),
+  )
+  return state.following === true
+}
+
+export async function follow(kind: FollowKind, slug: string): Promise<void> {
+  await unwrap(api.PUT('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }))
+}
+
+export async function unfollow(kind: FollowKind, slug: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }))
+}
+
+/** Upcoming events of everything the account follows, by date. */
+export async function fetchFollowing(page = 0): Promise<EventSummaryPage> {
+  return unwrap(api.GET('/api/me/following', { params: { query: { page, size: 20 } } }))
+}

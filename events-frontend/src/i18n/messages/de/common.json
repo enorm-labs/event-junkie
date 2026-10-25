@@ -12,7 +12,9 @@
     "about": "Über das Projekt",
     "beta": "beta",
     "betaLabel": "Event Junkie ist in der Beta. Daten können unvollständig oder veraltet sein. Hier steht, was das heißt.",
-    "sourceOnGitHub": "Quellcode auf GitHub"
+    "sourceOnGitHub": "Quellcode auf GitHub",
+    "signIn": "Anmelden",
+    "following": "Gefolgt"
   },
   "display": {
     "label": "Anzeige",

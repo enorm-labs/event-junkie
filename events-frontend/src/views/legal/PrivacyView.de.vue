@@ -370,6 +370,12 @@ const { t } = useI18n()
         benutzt.
       </p>
       <p>
+        <strong>Wem du folgst:</strong> Folgst du einem Act, einer Location oder einem Veranstalter,
+        speichere ich das mit dem Zeitpunkt. Daraus entsteht deine Seite „Gefolgt“. Dort siehst du
+        die Liste und kannst jedem Eintrag wieder entfolgen. Nur du siehst sie. Verschwindet ein
+        Eintrag aus dem Kalender, lösche ich auch das Folgen.
+      </p>
+      <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
         anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
       </p>

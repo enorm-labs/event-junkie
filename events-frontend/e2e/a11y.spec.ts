@@ -32,6 +32,7 @@ const PATHS = [
   '/sign-in/check-mail',
   '/sign-in/confirm',
   '/account',
+  '/following',
 ]
 const staticRoutes = ['en', 'de'].flatMap((locale) => PATHS.map((path) => `/${locale}${path}`))
 

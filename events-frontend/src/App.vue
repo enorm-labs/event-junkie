@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
+import AccountEntry from '@/components/AccountEntry.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
@@ -128,6 +129,7 @@ const sectionLinks = computed(() =>
             <GitHubMark />
           </Button>
           <DisplaySettings />
+          <AccountEntry />
           <HeaderMenu :links="sectionLinks" class="md:hidden" />
         </div>
       </nav>

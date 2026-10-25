@@ -41,6 +41,23 @@
     "signedOut": "You are signed out.",
     "deleted": "Your account is deleted.",
     "home": "Back to the events",
-    "failed": "That did not work. Check your connection and try again."
+    "failed": "That did not work. Check your connection and try again.",
+    "following": "What you follow"
+  },
+  "follow": {
+    "follow": "Follow",
+    "failed": "That did not work. Please try again.",
+    "tooMany": "You follow 500 things already. Unfollow one first.",
+    "page": {
+      "intro": "Upcoming events of the artists, venues and promoters you follow, by date.",
+      "account": "Your account",
+      "empty": "You do not follow anything yet. Follow an artist, a venue or a promoter on their page, or start with one of these venues.",
+      "suggestions": "Venues with the most events",
+      "none": "No upcoming events right now.",
+      "list": "You follow ({count})"
+    },
+    "shown": "Shown on your Following page",
+    "following": "Following",
+    "unfollowHint": "(press to unfollow)"
   }
 }

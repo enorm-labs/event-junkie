@@ -22,6 +22,7 @@
     "promoters": "der Veranstalter",
     "search": "der Suchergebnisse",
     "pastEvents": "der vergangenen Events",
-    "account": "deines Kontos"
+    "account": "deines Kontos",
+    "following": "deine Follows"
   }
 }

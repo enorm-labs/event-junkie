@@ -30,6 +30,8 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     if (path === '/api/auth/link') return route.fulfill({ status: 202 })
     if (path === '/api/auth/sign-in') return json(route, me)
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
+    if (path === '/api/me/following') return json(route, { content: [], totalPages: 0 })
+    if (path === '/api/me/follows') return json(route, [])
     return route.fulfill({ status: 204 })
   })
   return writes
@@ -58,8 +60,8 @@ test('the link from the mail signs in on the click, not on the load', async ({ p
   expect(writes).toEqual([])
 
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/en\/account$/)
-  await expect(page.getByText('Signed in as ada@example.com')).toBeVisible()
+  await expect(page).toHaveURL(/\/en\/following$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Following')
   expect(writes).toEqual([{ path: '/api/auth/sign-in', csrf: 'csrf-1', body: JSON.stringify({ token: 'abc_-123' }) }])
 })
 

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { prepareCsrf, signIn } from '@/api/account'
 import { ApiError, describeError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { setSession } from '@/composables/useSession'
+import { signInNext } from '@/lib/signInNext'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -19,6 +21,8 @@ const router = useRouter()
 const localePath = useLocalePath()
 
 const token = new URLSearchParams(route.hash.slice(1)).get('token') ?? ''
+// Read before the address bar is cleaned below, which drops the query with the fragment.
+const next = signInNext(route.query.next)
 const signingIn = ref(false)
 // Used, expired or missing: only a new link helps. Any other failure keeps the button for a retry.
 const spent = ref(!token)
@@ -34,8 +38,8 @@ async function confirm() {
   signingIn.value = true
   problem.value = ''
   try {
-    await signIn(token)
-    await router.replace(localePath('/account'))
+    setSession(await signIn(token))
+    await router.replace(next ?? localePath('/following'))
   } catch (e) {
     spent.value = e instanceof ApiError && e.status === 401
     problem.value = spent.value ? t('account.confirm.invalid') : describeError(e)

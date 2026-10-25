@@ -74,6 +74,12 @@ lists what that includes and what it excludes.
 - Sort venues and promoters by name or by **events in the next 30 days**.
 - An artist page links to MusicBrainz or Discogs where a match exists.
 
+**With an account**
+
+- **Sign in** with a link by e-mail, without a password. The account is optional, and the header leads to it.
+- **Follow** artists, venues and promoters on their pages. The **Following** page lists what is coming up from all of them, by date.
+- Download everything stored about the account, or delete it.
+
 **Everywhere**
 
 - Read the site in **German or English**, in a light or dark theme, with posters or a compact list.
@@ -113,10 +119,11 @@ the first column. It fails in two cases:
 | `/legal/privacy`                   | Privacy notice                                                                   |
 | `/legal/notices`                   | Open-source notices                                                              |
 | `/legal/for-venues`                | The opt-out route for venues                                                     |
-| `/sign-in`                         | Asks for an e-mail address and sends a sign-in link; not linked yet, not indexed |
+| `/sign-in`                         | Asks for an e-mail address and sends a sign-in link; not indexed                 |
 | `/sign-in/check-mail`              | Says the link is on its way                                                      |
 | `/sign-in/confirm`                 | The page the mail links to; signs in on a click                                  |
 | `/account`                         | The address, data export, sign-out and account deletion                          |
+| `/following`                       | Upcoming events of everything the visitor follows, and the list to unfollow from |
 | `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter                 |
 | `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter        |
 | `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers                  |
@@ -162,6 +169,7 @@ the first column. It fails in two cases:
 | `detail-routes.spec.ts`            | e2e: the four detail pages                                                       |
 | `search.spec.ts`                   | e2e: header search                                                               |
 | `sign-in.spec.ts`                  | e2e: sign-in by link, the account page, deletion, CSRF header                    |
+| `following.spec.ts`                | e2e: the Follow button signed out and in, the header entry, the Following page   |
 | `share-calendar.spec.ts`           | e2e: share and add to calendar                                                   |
 | `card-poster.spec.ts`              | e2e: drawn posters                                                               |
 | `compact-view.spec.ts`             | e2e: compact list                                                                |
@@ -207,6 +215,5 @@ the first column. It fails in two cases:
 
 ## Not there yet
 
-Follows, saved searches with notifications and calendar subscriptions that stay in sync. These are the roadmap — see
-[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md). Sign-in and the account page exist (#3887, ADR-053), but nothing links to them yet. The header
-entry ships with follows (#3889), so no visitor creates an account that does nothing.
+Saved searches, notifications by mail or push, and calendar subscriptions that stay in sync. These are the roadmap — see
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md).

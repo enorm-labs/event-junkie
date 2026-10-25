@@ -9,6 +9,8 @@ import CachedImage from '@/components/CachedImage.vue'
 import CreditLine from '@/components/CreditLine.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
+import FollowButton from '@/components/FollowButton.vue'
+import type { FollowKind } from '@/api/account'
 import ReportLine from '@/components/ReportLine.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -59,6 +61,9 @@ const props = defineProps<{
    * first page needs no loading or error state.
    */
   past?: PastEvents | null
+  /** What the Follow button follows (#3889); no button without both. */
+  followKind?: FollowKind
+  followSlug?: string
   /** The report line's question and the page's path without the locale; no line without both. */
   reportText?: string
   reportPath?: string
@@ -128,6 +133,7 @@ const { compact } = useCompactView()
            would push it off the screen (#811 draws one on a card). -->
         <header class="space-y-2">
           <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
+          <FollowButton v-if="followKind && followSlug" :kind="followKind" :slug="followSlug" />
           <slot name="meta" />
         </header>
 
