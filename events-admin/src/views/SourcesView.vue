@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { INITIAL_VISIBILITY, columns, features } from '@/lib/sourceTable'
+import { STICKY_CELL, STICKY_HEAD } from '@/lib/utils'
 
 const sources = shallowRef<EventSource[]>([])
 const loading = ref(true)
@@ -70,14 +71,11 @@ function statusVariant(status: unknown) {
 const DATE_COLUMNS = new Set(['lastImportAt', 'lastSuccessAt', 'flaggedAt'])
 const NUMBER_COLUMNS = new Set(['importIntervalMinutes', 'lastEventCount'])
 
-// The actions stick to the table's right edge, so a wide table scrolls under them. A sticky cell
-// needs a solid background; on hover and with its menu open it mixes the row's tint, muted at 50 %.
-// Whole class names, so Tailwind finds them in this file.
-const STICKY_HEAD = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--color-border)] bg-muted'
-const STICKY_CELL =
-  'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--color-border)] bg-background ' +
-  '[tr:hover>&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))] ' +
-  '[tr:has([aria-expanded=true])>&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]'
+// Only this table's actions open a menu, and a row holding the open one keeps the hover tint.
+// A whole class name, so Tailwind finds it here.
+const STICKY_CELL_WITH_MENU =
+  STICKY_CELL +
+  ' [tr:has([aria-expanded=true])>&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]'
 
 /** An action read its source again: swap that row and keep the rest. */
 function replaceSource(updated: EventSource) {
@@ -183,7 +181,7 @@ onMounted(async () => {
                 'font-mono': cell.column.id === 'slug' || cell.column.id === 'sourceType',
                 'text-right tabular-nums': NUMBER_COLUMNS.has(cell.column.id),
                 'max-w-xs whitespace-normal': cell.column.id === 'lastFailureReason',
-                [STICKY_CELL]: cell.column.id === 'actions',
+                [STICKY_CELL_WITH_MENU]: cell.column.id === 'actions',
               }"
               :title="
                 cell.column.id === 'lastFailureReason'

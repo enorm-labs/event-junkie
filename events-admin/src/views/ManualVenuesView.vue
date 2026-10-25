@@ -21,7 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { berlinDay } from '@/lib/berlinTime'
 import { publicOrigin } from '@/lib/environments'
+import { STICKY_CELL, STICKY_HEAD } from '@/lib/utils'
 
 const venues = shallowRef<ManualVenue[]>([])
 const loading = ref(true)
@@ -30,25 +32,6 @@ const busy = ref<number | null>(null)
 const notice = ref<string | null>(null)
 
 const origin = publicOrigin(import.meta.env.MODE)
-
-// As on the other venue pages: the actions stick to the table's right edge, so on a phone the other
-// columns scroll under them. A sticky cell needs a solid background. Whole class names, for Tailwind.
-const STICKY_HEAD = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--color-border)] bg-muted'
-const STICKY_CELL =
-  'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--color-border)] bg-background ' +
-  '[tr:hover>&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]'
-
-const day = new Intl.DateTimeFormat('en-CA', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  timeZone: 'Europe/Berlin',
-})
-
-/** The Berlin calendar day of an instant, as `YYYY-MM-DD`. */
-function berlinDay(instant: string): string {
-  return day.format(new Date(instant))
-}
 
 const rows = computed(() => sortManualVenues(venues.value))
 const overdue = computed(() => rows.value.filter((v) => isDue(v)).length)
