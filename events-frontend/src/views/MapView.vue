@@ -20,6 +20,7 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
+import LocateStatus from '@/components/LocateStatus.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
@@ -373,20 +374,7 @@ function distance(km: number): string {
           {{ t('map.near.useCentre') }}
         </Button>
       </p>
-      <p
-        v-if="locateState === 'locating'"
-        aria-live="polite"
-        class="text-body text-muted-foreground"
-      >
-        {{ t('map.near.locating') }}
-      </p>
-      <p
-        v-else-if="locateState === 'denied' || locateState === 'unavailable'"
-        aria-live="polite"
-        class="text-body text-muted-foreground"
-      >
-        {{ t(`map.near.${locateState}`) }}
-      </p>
+      <LocateStatus :state="locateState" messages="map.near" />
 
       <div v-if="origin" class="flex flex-wrap items-center gap-2 text-body">
         <NearOriginControls

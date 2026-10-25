@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
+import LocateStatus from '@/components/LocateStatus.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
@@ -406,20 +407,7 @@ const localePath = useLocalePath()
             @select="selectRadius"
           />
         </div>
-        <p
-          v-if="locateState === 'locating'"
-          aria-live="polite"
-          class="text-body text-muted-foreground"
-        >
-          {{ t('map.near.locating') }}
-        </p>
-        <p
-          v-else-if="locateState === 'denied' || locateState === 'unavailable'"
-          aria-live="polite"
-          class="text-body text-muted-foreground"
-        >
-          {{ t(`venues.near.${locateState}`) }}
-        </p>
+        <LocateStatus :state="locateState" messages="venues.near" />
         <p v-if="coarse" class="text-body text-muted-foreground">
           {{ t('map.near.coarse', { accuracy: coarse }) }}
         </p>
