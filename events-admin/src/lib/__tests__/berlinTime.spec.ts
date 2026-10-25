@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatBerlin, fromBerlinLocal, toBerlinLocal } from '../berlinTime'
+import { berlinDay, berlinToday, formatBerlin, fromBerlinLocal, toBerlinLocal } from '../berlinTime'
 
 describe('Berlin time for the pick field', () => {
   it('shows an instant as Berlin wall-clock time, summer and winter', () => {
@@ -43,5 +43,11 @@ describe('Berlin time for the pick field', () => {
 
   it('formats an instant for a table cell', () => {
     expect(formatBerlin('2026-10-20T16:00:00Z')).toBe('2026-10-20 18:00')
+  })
+
+  it('is the Berlin calendar day, not the UTC one', () => {
+    expect(berlinToday(new Date('2026-10-14T22:30:00Z'))).toBe('2026-10-15')
+    expect(berlinToday(new Date('2026-10-14T21:30:00Z'))).toBe('2026-10-14')
+    expect(berlinDay('2026-12-31T23:30:00Z')).toBe('2027-01-01')
   })
 })

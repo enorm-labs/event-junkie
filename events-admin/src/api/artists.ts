@@ -94,18 +94,6 @@ export async function setMusicBrainzId(
   return (await response.json()) as ReviewArtist
 }
 
-const berlinDay = new Intl.DateTimeFormat('en-CA', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  timeZone: 'Europe/Berlin',
-})
-
-/** Today in Berlin, as `YYYY-MM-DD`: the day an event's `eventDate` is compared with. */
-export function berlinToday(now: Date = new Date()): string {
-  return berlinDay.format(now)
-}
-
 /**
  * The events that bill artist [id] from [today] on, soonest first. The list reads one page of
  * 100, newest first, so a long past does not push the coming events off it. An event over
