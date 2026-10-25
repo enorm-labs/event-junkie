@@ -242,10 +242,15 @@ data class ScrapedEvent(
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
     ): EventEntity =
         // Every source's description is cut before its language is detected, so the venue's own second
-        // language wins over a machine translation (#2986). A rule left at either edge goes (#3062).
+        // language wins over a machine translation (#2986). A rule left at either edge goes (#3062), and so
+        // does an e-mail address (LEGAL.md §7.3a).
         withBilingualDescriptionSplit()
-            .let { it.copy(description = it.description?.let(::trimEdgeRules), descriptionAlt = it.descriptionAlt?.let(::trimEdgeRules)) }
-            .buildEventEntity(venueId, venueSlug, eventSourceId, existing, slugDiscriminator, licences)
+            .let {
+                it.copy(
+                    description = it.description?.let(::stripEmailAddresses)?.let(::trimEdgeRules),
+                    descriptionAlt = it.descriptionAlt?.let(::stripEmailAddresses)?.let(::trimEdgeRules)
+                )
+            }.buildEventEntity(venueId, venueSlug, eventSourceId, existing, slugDiscriminator, licences)
 
     @Suppress("LongParameterList") // The parameters of toEventEntity, passed through.
     private fun buildEventEntity(
