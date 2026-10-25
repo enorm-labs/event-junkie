@@ -52,8 +52,6 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      * A spent retry budget is not an exclusion (#659): a source that stops being attempted looks
      * identical to one with nothing to do, and `ej-importer-stale` and #700's gauge read the row.
      * Exhausting the budget only ends the shortened cadence.
-     *
-     * @param now the current timestamp.
      */
     @Query(
         """
@@ -143,8 +141,6 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      * Bulk-resets all enabled, failed or misconfigured sources to IDLE in one UPDATE, preserving
      * `last_import_at`. Bypasses `@Version` but increments `version`, so a concurrent `findBySlug` +
      * `save` that loaded the entity before this cannot overwrite the reset.
-     *
-     * @return the number of rows updated.
      */
     @Modifying
     @Query(
