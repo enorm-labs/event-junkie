@@ -84,6 +84,45 @@ class SisyfanTimetableScraperTest {
     }
 
     @Test
+    fun `a concert marker is not part of the name`() {
+        val names = weekend.artists.map { it.name }
+        names.filter { it.contains("konzert", ignoreCase = true) }.shouldBeEmpty()
+        names.contains("Tegel Boys") shouldBe true
+        names.contains("The Magic Touch") shouldBe true
+    }
+
+    @Test
+    fun `either spelling of the concert marker goes, with an asterisk missing or beside a live suffix`() {
+        val billed =
+            listOf(
+                "Matze Sampler *KONZERT*",
+                "Tasheeno *Konzert*",
+                "Die Ganz Lange Kapelle Vom Kleinen Fluss Am Großen See *konzert",
+                "Ohne Anfang Konzert*",
+                "An On Bast - Live *KONZERT*",
+                "TAMADA *Konzert* (live)",
+                "Micha Stahl",
+                "Hauskonzert"
+            )
+        actsOf(billed) shouldContainExactly
+            listOf(
+                "Matze Sampler",
+                "Tasheeno",
+                "Die Ganz Lange Kapelle Vom Kleinen Fluss Am Großen See",
+                "Ohne Anfang",
+                "An On Bast",
+                "TAMADA",
+                "Micha Stahl",
+                "Hauskonzert"
+            )
+    }
+
+    @Test
+    fun `a bare trailing Konzert without an asterisk stays in the name`() {
+        actsOf(listOf("Tanz Konzert")) shouldContainExactly listOf("Tanz Konzert")
+    }
+
+    @Test
     fun `a weekend with no sets yet is no event`() {
         val html =
             """
@@ -97,5 +136,25 @@ class SisyfanTimetableScraperTest {
     @Test
     fun `a page without a weekend heading is no event`() {
         scraper.scrape(Jsoup.parse("<h2>Events</h2>")).shouldBeEmpty()
+    }
+
+    /** The act names of a one-floor weekend that bills each of [names] in a slot of its own. */
+    private fun actsOf(names: List<String>): List<String> {
+        val rows =
+            names.joinToString("") { name ->
+                "<tr x-data=\"{ currentStart: '2026-10-23T22:00:00+02:00', currentEnd: '2026-10-24T01:00:00+02:00' }\">" +
+                    "<td><a href=\"https://sisy.fan/artists/x\">$name</a></td></tr>"
+            }
+        val html =
+            """
+            <div class="mb-8"><div class="sticky-header"><h2>RAVE.IOLI (23.10.2026 - 26.10.2026)</h2>
+            <button @click="setActiveTab(1); ${'$'}dispatch('change-tab', 1)">Hammahalle</button></div>
+            <div id="dancefloor-1"><table><tbody>$rows</tbody></table></div></div>
+            """.trimIndent()
+        return scraper
+            .scrape(Jsoup.parse(html))
+            .single()
+            .artists
+            .map { it.name }
     }
 }
