@@ -76,7 +76,8 @@ lists what that includes and what it excludes.
 
 **With an account**
 
-- **Sign in** with a link by e-mail, without a password. The account is optional, and the header leads to it.
+- **Sign in** with a link by e-mail, without a password. The account is optional. Signed in, the header icon opens a menu with Following,
+  the account page and sign-out.
 - **Follow** artists, venues and promoters on their pages. The **Following** page lists what is coming up from all of them, by date.
 - Download everything stored about the account, or delete it.
 

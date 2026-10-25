@@ -53,6 +53,7 @@ async function mockBff(page: Page, signedIn: boolean) {
       )
     }
     if (path === '/api/me/following') return json(route, emptyPage)
+    if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     return route.fulfill({ status: 204 })
   })
   await page.route(/\/api\/venues(\?|$)/, (route) =>
@@ -71,7 +72,9 @@ test('signed out, Follow leads to sign-in, which keeps the page to return to', a
   await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/venues\/mock-venue$/)
 })
 
-test('signed in, Follow follows with the CSRF header and then reads Following', async ({ page }) => {
+test('signed in, Follow follows with the CSRF header and then reads Following', async ({
+  page,
+}) => {
   const writes = await mockBff(page, true)
   await page.goto('/en/venues/mock-venue')
 
@@ -82,7 +85,7 @@ test('signed in, Follow follows with the CSRF header and then reads Following', 
   await expect
     .poll(() => writes)
     .toEqual([{ method: 'PUT', path: '/api/me/follows/venue/mock-venue', csrf: 'csrf-1' }])
-  await expect(page.getByRole('link', { name: 'Following', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Your account' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Shown on your Following page' })).toHaveAttribute(
     'href',
     '/en/following',
@@ -104,6 +107,27 @@ test('the Following page suggests venues, and a follow from there joins the list
     'href',
     '/en/venues/mock-venue',
   )
+})
+
+test('signed in, the header icon opens the account menu, and sign-out leaves the account page', async ({
+  page,
+}) => {
+  const writes = await mockBff(page, true)
+  await page.goto('/en/following')
+
+  await page.getByRole('button', { name: 'Your account' }).click()
+  await expect(page.getByText('Signed in as ada@example.com')).toBeVisible()
+  await page.getByRole('dialog').getByRole('link', { name: 'Your account' }).click()
+  await expect(page).toHaveURL(/\/en\/account$/)
+
+  await page.getByRole('button', { name: 'Your account' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Sign out' }).click()
+
+  await expect(page).toHaveURL(/\/en$/)
+  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
+  await expect
+    .poll(() => writes)
+    .toContainEqual({ method: 'POST', path: '/api/me/sign-out', csrf: 'csrf-1' })
 })
 
 test('the Following page passes axe', async ({ page }) => {

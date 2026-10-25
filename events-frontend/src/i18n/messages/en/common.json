@@ -14,7 +14,8 @@
     "betaLabel": "Event Junkie is in beta. Data may be incomplete or out of date. See what that means.",
     "sourceOnGitHub": "Source code on GitHub",
     "signIn": "Sign in",
-    "following": "Following"
+    "following": "Following",
+    "accountMenu": "Your account"
   },
   "display": {
     "label": "Display settings",

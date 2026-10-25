@@ -1,30 +1,103 @@
 <script lang="ts" setup>
 /**
- * The header's way into an account (#3889): "Sign in" for a visitor who is not signed in, and
- * "Following" for one who is. The Following page links on to the account. One icon button, as the
- * other header controls are, so it fits the header at every width.
+ * The header's way into an account (#3889, #3924). Signed out, a link to sign-in. Signed in, a menu
+ * with the address, Following, the account page and sign-out. Built as `LocaleMenu` is: an icon
+ * button and a popover of plain links, so each entry stays an address. One icon at every width, so
+ * the phone has the same menu and the header keeps its width.
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { UserRound, UserRoundCheck } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { prepareCsrf, signOut } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
-import { useSession } from '@/composables/useSession'
+import { setSession, useSession } from '@/composables/useSession'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const localePath = useLocalePath()
 const { account } = useSession()
 
-const label = computed(() => t(account.value ? 'common.nav.following' : 'common.nav.signIn'))
+const open = ref(false)
+const busy = ref(false)
+const problem = ref('')
+
+const menuLabel = computed(() => t('common.nav.accountMenu'))
+const signInLabel = computed(() => t('common.nav.signIn'))
+
+/** One row of the menu, as `LocaleMenu` draws its links. */
+const ROW =
+  'block rounded-md px-2 py-1.5 text-body hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden disabled:opacity-50'
+
+/** The pages that show the account itself; signed out, they have nothing left to show. */
+const ACCOUNT_PAGE = /^\/(de|en)\/(following|account)\/?$/
+
+async function leave() {
+  if (busy.value) return
+  busy.value = true
+  problem.value = ''
+  try {
+    await prepareCsrf()
+    await signOut()
+    setSession(null)
+    open.value = false
+    if (ACCOUNT_PAGE.test(route.path)) await router.push(localePath('/'))
+  } catch {
+    problem.value = t('account.page.failed')
+  } finally {
+    busy.value = false
+  }
+}
 </script>
 
 <template>
   <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. -->
-  <Button :aria-label="label" :title="label" as-child size="icon" variant="outline">
-    <RouterLink :to="localePath(account ? '/following' : '/sign-in')">
-      <UserRoundCheck v-if="account" />
-      <UserRound v-else />
+  <Button
+    v-if="!account"
+    :aria-label="signInLabel"
+    :title="signInLabel"
+    as-child
+    size="icon"
+    variant="outline"
+  >
+    <RouterLink :to="localePath('/sign-in')">
+      <UserRound />
     </RouterLink>
   </Button>
+  <Popover v-else v-model:open="open">
+    <PopoverTrigger as-child>
+      <Button :aria-label="menuLabel" :title="menuLabel" size="icon" variant="outline">
+        <UserRoundCheck />
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent align="end" class="w-auto max-w-xs min-w-48">
+      <div class="space-y-2">
+        <p class="truncate px-2 text-meta text-muted-foreground">
+          {{ t('account.page.signedInAs', { email: account.email }) }}
+        </p>
+        <ul :aria-label="menuLabel">
+          <li v-for="link in ['/following', '/account']" :key="link">
+            <RouterLink :to="localePath(link)" :class="ROW" @click="open = false">
+              {{ link === '/following' ? t('common.nav.following') : t('pageTitle.account') }}
+            </RouterLink>
+          </li>
+          <!-- A row like the links, so the three line up; a button, because it does not go anywhere. -->
+          <li>
+            <button
+              :class="[ROW, 'w-full text-left']"
+              :disabled="busy"
+              type="button"
+              @click="leave"
+            >
+              {{ t('account.page.signOut') }}
+            </button>
+          </li>
+        </ul>
+        <p v-if="problem" class="px-2 text-meta text-destructive" role="alert">{{ problem }}</p>
+      </div>
+    </PopoverContent>
+  </Popover>
 </template>
