@@ -231,11 +231,25 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-181 importer classes cover 182 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Eight other groups share a _listing and parser_, or a parser, while keeping one thin `@Component` per venue, so
-they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
-The other four are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall. Bar jeder Vernunft shares with TIPI am Kanzleramt, and Ritter Butzke with Kreuzwerk.
-The three HAU Hebbel am Ufer houses are one more. The last group is Volksbühne Berlin with Volksbühne Prater.
+190 importer classes cover 190 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+`EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
+only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
+`kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
+`robots.txt` answers HTTP 500 ([Blocked](#-blocked--deferred)).
+
+Ten groups share a _listing and parser_, or a parser, but keep one thin `@Component` per venue. So they do not reduce the
+count:
+
+- Club der Visionäre, Sonnenraum and MS Hoppetosse
+- the three Velomax halls
+- the three HAU Hebbel am Ufer houses
+- Kesselhaus and Maschinenhaus
+- Uber Arena and the Uber Eats Music Hall
+- Bar jeder Vernunft and TIPI am Kanzleramt
+- Ritter Butzke and Kreuzwerk
+- Volksbühne Berlin and Volksbühne Prater
+- Lark and Fitzroy
+- Zig Zag Jazz Club and Zig Zag Hall
 
 ## 🌐 Second language
 

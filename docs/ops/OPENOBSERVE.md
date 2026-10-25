@@ -46,7 +46,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 |                       | Staging                                                      | Production                                                                                                      |
 | --------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)                           | `production/` (`ZO_S3_BUCKET_PREFIX`)                                                                           |
-| S3 credential         | the project keypair, all three buckets                       | its own keypair, rotatable without touching staging                                                             |
+| S3 credential         | the OpenObserve keypair, shared with production              | the same; it still reaches all three buckets                                                                    |
 | Alert destinations    | `record-only` into `alert_history`, and `email` to `alerts@` | the same                                                                                                        |
 | Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route: deferred ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)) |
 | `ZO_SKIP_SSRF_CHECKS` | set, for the bridge                                          | **not set** — nothing in-cluster to allow                                                                       |

@@ -185,10 +185,10 @@ backups and the OpenTofu state. Encrypting that into a public repository is the 
 > breaking the state backend. Scope it to `-o2` with a bucket policy. The Secret below takes whatever keys it is given. This is a decision about
 > what you type into it, not a change to any manifest.
 
-**Production took that advice and staging has not yet** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Production's instance holds a
-keypair created for it alone. Staging still holds the project-wide one. Hetzner issues credentials per project rather than per bucket, so this does
-**not** narrow what the production key reaches. It buys independent rotation, and stops one cluster's compromise from being both. Narrowing the reach
-needs a bucket policy denying that key on `-backups` and `-tfstate`, which is a separate question.
+**Both clusters took that advice, and they share one keypair** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). It was created for
+OpenObserve alone, and both instances hold it. So it rotates without breaking the state backend. It does not rotate per cluster: a new key goes into
+both Secrets. Hetzner issues credentials per project rather than per bucket, so the key does **not** narrow what OpenObserve reaches. Narrowing the
+reach needs a bucket policy denying that key on `-backups` and `-tfstate`, which is a separate question.
 
 **What hand-made means here**, same as `github-dispatch` above: nothing in this repository creates it and no deploy will bring it. Four keys in one Secret,
 because the chart reads two directly (`auth.existingRootUserSecret`) and Flux merges the other two in through `valuesFrom`:
