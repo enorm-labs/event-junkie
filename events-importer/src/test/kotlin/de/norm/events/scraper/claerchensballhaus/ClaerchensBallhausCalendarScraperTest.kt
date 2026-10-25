@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -59,6 +60,14 @@ class ClaerchensBallhausCalendarScraperTest {
         event("2026-11-12-1900-donata-konzert").artists.map { it.name } shouldContainExactly listOf("Donata")
         event("2027-02-10-1939-susanna-hurrell-soprano-songs-by-candlelight").artists.map { it.name } shouldContainExactly listOf("Susanna Hurrell")
         event("2026-11-08-1700-sonntagskonzert-im-spiegelsaal-10").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills no act for the children's and family concerts, and still bills a guest whose title says Konzert`() {
+        event("2026-11-08-1200-sonntagskonzert-im-spiegelsaal-9").artists.shouldBeEmpty()
+        event("2026-12-06-1400-familienkonzert-im-spiegelsaal").artists.shouldBeEmpty()
+        event("2026-05-07-2000-berlin-session-strings-konzert-2").artists.map { it.name } shouldContainExactly listOf("Berlin Session Strings")
+        event("2026-06-25-1900-reflections-viva-la-musica-konzert").artists.shouldNotBeEmpty()
     }
 
     @Test
