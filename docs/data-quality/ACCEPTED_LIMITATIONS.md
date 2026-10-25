@@ -1019,7 +1019,6 @@ says so.
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |
 | `WILD_AT_HEART`        | `PRICE`            | the venue prints no ticket price; it marks only free-entry nights and links a few shows to a shop                                                | —     |
 | `WILD_AT_HEART`        | `PROMOTERS`        | a presenter is named only on a rare night                                                                                                        | —     |
-| `WUEHLMAEUSE`          | `DESCRIPTION`      | the ticket products carry no show text                                                                                                           | —     |
 | `WUEHLMAEUSE`          | `EVENT_TYPE`       | the shop files every show under its act and names no format; Kabarett, comedy and music share one stage                                          | —     |
 | `WUEHLMAEUSE`          | `GENRE`            | the shop names no genre                                                                                                                          | —     |
 | `WUEHLMAEUSE`          | `PRICE_BOX_OFFICE` | the shop sells one price per seat category and states no box-office price                                                                        | —     |
