@@ -106,7 +106,7 @@ repos:
         name: event source count parity
         entry: scripts/sources-parity.sh
         language: system
-        files: ^(docs/EVENT_DATA_SOURCES\.md|scripts/sources-parity\.sh)$
+        files: ^(docs/EVENT_DATA_SOURCES\.md|scripts/sources-parity\.sh|events-importer/src/main/kotlin/de/norm/events/scraper/EventSource\.kt)$
         pass_filenames: false
 
       # dev-seed.http is generated from the venue files (#2824); `check`, so the hook never writes.

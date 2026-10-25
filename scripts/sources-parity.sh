@@ -13,6 +13,9 @@
 # importer PRs write identical edits to the count column, git merges identical hunks silently, and
 # the counts went stale by up to eleven rows (#2510). The sections are not listed here: a new `##`
 # table is checked as soon as the status table has a row that links to it.
+#
+# The "N importer classes cover M sources" sentence is checked too: N against the EventSource
+# entries, M against the Imported rows (#3953).
 
 set -euo pipefail
 
@@ -25,15 +28,21 @@ esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DOC="${SOURCES_DOC:-$REPO_ROOT/docs/EVENT_DATA_SOURCES.md}"
+ENUM="$REPO_ROOT/events-importer/src/main/kotlin/de/norm/events/scraper/EventSource.kt"
 
-[ -f "$DOC" ] || {
-    echo "sources-parity: $DOC is missing; the check cannot run" >&2
-    exit 1
-}
+for f in "$DOC" "$ENUM"; do
+    [ -f "$f" ] || {
+        echo "sources-parity: $f is missing; the check cannot run" >&2
+        exit 1
+    }
+done
+
+# One entry per line, four spaces in, as ktlint lays the enum out.
+ENTRIES=$(grep -cE '^    [A-Z][A-Z0-9_]*[,;]?$' "$ENUM")
 
 # An anchor is reduced to ASCII letters, digits, `_` and `-` on both sides, so an emoji in a heading
 # and the leading `-` GitHub leaves in its place compare equal without a Unicode table.
-LC_ALL=C awk '
+LC_ALL=C awk -v entries="$ENTRIES" '
     function anchor(s) {
         s = tolower(s)
         gsub(/ /, "-", s)
@@ -81,9 +90,28 @@ LC_ALL=C awk '
         }
     }
 
+    match($0, /^[0-9]+ importer classes cover [0-9]+ sources/) {
+        split(substr($0, 1, RLENGTH), words, " ")
+        classes = words[1]
+        sources = words[5]
+    }
+
     { prev = $0 }
 
     END {
+        if (classes == "") {
+            print "  no \"N importer classes cover M sources\" sentence opens a line" > "/dev/stderr"
+            bad = 1
+        } else {
+            if (classes != entries) {
+                printf "  the sentence says %s importer classes, and EventSource has %d entries\n", classes, entries > "/dev/stderr"
+                bad = 1
+            }
+            if (sources != rows["-imported"] "") {
+                printf "  the sentence says %s sources, and \"## %s\" holds %d rows\n", sources, heading["-imported"], rows["-imported"] > "/dev/stderr"
+                bad = 1
+            }
+        }
         if (statuses == 0 || countcol == "") {
             print "  no status table with a Count column: the check cannot read the document" > "/dev/stderr"
             exit 1
@@ -101,10 +129,10 @@ LC_ALL=C awk '
             }
         }
         if (bad) exit 1
-        printf "Source counts agree: %s.\n", summary
+        printf "Source counts agree: %s; %s importer classes.\n", summary, classes
     }
 ' "$DOC" || {
     echo >&2
-    echo "The status table in ${DOC#"$REPO_ROOT"/} is out of step. Write the row counts into its Count column." >&2
+    echo "${DOC#"$REPO_ROOT"/} is out of step. Write the row counts into the status table's Count column and the sentence under ✅ Imported." >&2
     exit 1
 }

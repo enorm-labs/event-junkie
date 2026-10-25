@@ -88,7 +88,7 @@ In `docs/EVENT_DATA_SOURCES.md`:
 - Move the venue's row (both rows, for a shared importer) from **🔨 Ready to implement** to **✅ Imported**, keeping alphabetical order, and rewrite the last
   column as the _Comment_ the Imported table uses: platform + parsing quirks, ≤ 50 chars, not the "why/what it needs" phrasing.
 - Update the counts in the status table at the top (Imported +1, Ready −1) **and** the "N importer classes cover M sources" line under the Imported table.
-  `scripts/sources-parity.sh` checks the status counts against the rows, again after a rebase; the prose line is yours to recount.
+  `scripts/sources-parity.sh` checks both against the rows and the `EventSource` entries; run it again after a rebase.
 - Check the venue file under `http/importer/seed/venues/` holds the source and `scripts/dev-seed-parity.sh check` passes (`/scaffold-importer` § 6).
 
 ### 7. Ship, or stop
