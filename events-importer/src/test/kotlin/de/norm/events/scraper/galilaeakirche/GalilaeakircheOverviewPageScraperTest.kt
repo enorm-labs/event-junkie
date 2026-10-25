@@ -62,6 +62,26 @@ class GalilaeakircheOverviewPageScraperTest {
     }
 
     @Test
+    fun `an event filed under two types takes the one its title names`() {
+        // The D.I.Y. market nights of Nov–Dec 2026 were stored as concerts billing `D.I.Y. Kunst` and `Wintermarkt`.
+        val both = """<div class="vsel-meta-cats"><span><a href="/event_cat/konzert/">Konzert</a>, <a href="/event_cat/sonstiges/">Sonstiges</a></span></div>"""
+
+        fun item(
+            slug: String,
+            title: String
+        ) = """<div class="vsel-content vsel-upcoming vsel-future"><h3 class="vsel-meta-title"><a href="/event/$slug/">$title</a></h3>""" +
+            """<div class="vsel-meta-date vsel-meta-single-date"><span>Sa. 19.12.26</span></div><div class="vsel-meta-time"><span>15:00 Uhr</span></div>$both</div>"""
+
+        val market = scrape("<html><body>${item("d-i-y-kunst-und-wintermarkt-6", "D.I.Y. Kunst und Wintermarkt")}</body></html>").single()
+        market.eventType shouldBe EventType.OTHER.name
+        market.artists.shouldBeEmpty()
+
+        val concert = scrape("<html><body>${item("zea-live", "Zea – Live")}</body></html>").single()
+        concert.eventType shouldBe EventType.CONCERT.name
+        concert.artists.map { it.name } shouldBe listOf("Zea")
+    }
+
+    @Test
     fun `leaves the start empty when the event states no time`() {
         bySlug("david-moore-bing-ruth-graze-the-bell-solo-piano").startTime.shouldBeNull()
     }

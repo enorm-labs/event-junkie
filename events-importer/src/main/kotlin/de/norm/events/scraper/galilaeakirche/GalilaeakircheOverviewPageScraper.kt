@@ -58,8 +58,11 @@ class GalilaeakircheOverviewPageScraper {
             return null
         }
         val timeLine = item.textAt(".vsel-meta-time")
-        val category = item.select(".vsel-meta-cats a").firstNotNullOfOrNull { mapEventType(it.text(), CATEGORIES) }
-        val eventType = category ?: inferConcertVenueType(title)
+        val categories = item.select(".vsel-meta-cats a").mapNotNull { mapEventType(it.text(), CATEGORIES) }.distinct()
+        val category = categories.firstOrNull()
+        // An event filed under two types (`Konzert` and `Sonstiges` for a market with an open stage) is the one its title names.
+        val titleType = inferConcertVenueType(title)
+        val eventType = if (category == null || titleType in categories) titleType else category
         return ScrapedEvent(
             title = title,
             eventType = eventType,
