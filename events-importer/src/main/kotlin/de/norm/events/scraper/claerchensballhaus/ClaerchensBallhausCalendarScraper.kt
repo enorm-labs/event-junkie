@@ -125,8 +125,8 @@ private val READING = Regex("""\bSlam\b|\bSalon\b|\bLesung\b""", RegexOption.IGN
 private val CONCERT = Regex("""Konzert|Kammermusik|Soprano|Tenors|Choir""", RegexOption.IGNORE_CASE)
 private val DANCE_NIGHT = Regex("""Tanzabend|Milonga|Übungsstunde|\bParty\b""", RegexOption.IGNORE_CASE)
 
-/** The house's own concert series, which name no act in the title. */
-private val HOUSE_SERIES = Regex("""Sonntagskonzert|^DSO\b""", RegexOption.IGNORE_CASE)
+/** The house's own concert series, the children's and family ones included, which name no act in the title. */
+private val HOUSE_SERIES = Regex("""Sonntagskonzert|Kinderkonzert|Familienkonzert|^DSO\b""", RegexOption.IGNORE_CASE)
 
 /** `customLink` is a ticket shop, or the organiser's or a course's own site, which is no ticket link. */
 private val TICKET_SHOP = Regex("""tickettailor\.|yesticket\.|eventbrite\.|rausgegangen\.|sevn\.ly|eventim\.|reservix\.|pretix\.""")
