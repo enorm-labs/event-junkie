@@ -3,35 +3,23 @@
 <head>
     <title>Zosch Events</title>
     <meta charset="utf-8">
-    <link rel="alternate" type="application/rss+xml" href="https://www.zosch-berlin.de/feed" title="Zosch Feed">
-    <meta name="csrf-token" content="fixture">
+    <meta name="csrf-token" content="YNOhTKgxA0kv6jt6UDLQ7R8Kp9EVHs8xVn8HNv8h">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="robots" content="index, follow" />
     <meta http-equiv="pragma" content="no-cache" />
     <meta http-equiv="expires" content="0" />
-    <meta name="format-detection" content="telephone=yes" />
-    <!-- Für Apple-Geräte -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon-180x180.png">
-    <!-- Für Browser -->
-    <link rel="shortcut icon" type="image/x-icon" href="/favicon/favicon-32x32.ico">
-    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
-    <!-- Für Windows Metro -->
-    <meta name="msapplication-square310x310logo" content="/favicon/mstile-310x310.png">
-    <meta name="msapplication-TileColor" content="#23594F">
-    <meta name="description" content="Zosch Berlin" />
-    <meta name="keywords" content="Zosch,Berlin,Musik,Musik Cafe,Kneipe,Kultur,Szene,Subkultur,Konzerte,Livemusik,live music,Veranstaltungs-Kneipe,Veranstaltungen" />
+    <meta name="description" content="Zosch-Berlin" />
+    <meta name="keywords" content="Zosch,Berlin,Musik,Musik Cafe,Kneipe,Kultur,Szene,Subkultur,Konzerte,Livemusik,live music,Veranstaltungs-Kneipe,Veranstaltungen,Lesung,alternativ" />
     <meta http-equiv="Content-Security-Policy"
           content="default-src * data: blob: 'self' 'unsafe-inline';script-src * data: blob: 'self' 'inline' 'unsafe-inline' 'unsafe-eval';img-src * 'self' data:"/>
-    <meta http-equiv="imagetoolbar" content="no" />
+    <!--meta http-equiv="imagetoolbar" content="no" /-->
         <link rel="stylesheet" href="https://www.zosch-berlin.de/vendor/calendar/css/zabuto_calendar.min.css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet" type="text/css">
     <link href="https://unpkg.com/ionicons@4.2.2/dist/css/ionicons.min.css" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="https://www.zosch-berlin.de/css/app.css" />
+    <!--script src="https://code.jquery.com/jquery-1.12.4.js"></script-->
     <script src="https://www.zosch-berlin.de/js/app.js" type="text/javascript" charset="utf-8"></script>
-    <script src="https://unpkg.com/ionicons@4.2.2/dist/ionicons.js"></script>
-
         <script src="https://www.zosch-berlin.de/vendor/calendar/js/zabuto_calendar.min.js"></script>
-
 </head>
 <body>
 
@@ -42,931 +30,779 @@ $(document).ready(function (){
 });
 </script>
 
-<div class="container col-12">
+<div class="container-fluid">
     <div class="header">
-                    <div id="top-navigation">
-    <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-black">
-        <a class="navbar-brand" href="/events">
-            <strong>Zosch Berlin</strong>
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topNavbar" aria-controls="topNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <nav class="navbar fixed-top navbar-dark navbar-expand bg-black" id="topNav">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/events">Zosch-Berlin</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTop" aria-controls="navbarTop" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="topNavbar">
-            <!-- left side -->
-            <ul class="navbar-nav mr-auto">
-                                    <li class="nav-item dropdown">
-                                                    <a class="nav-link dropdown-toggle" href="" id="dropdownEvents" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Events<span class="ml-2 sr-only">(current)</span></a>
-                            <div class="dropdown-menu" aria-labelledby="dropdownEvents">
-                                                                    <a class="dropdown-item " href="/category/musik">
-                                                                                Musik
-                                    </a>
-                                                                    <a class="dropdown-item " href="/category/lesung">
-                                                                                Lesung
-                                    </a>
-                                                                    <a class="dropdown-item " href="/category/party">
-                                                                                Party
-                                    </a>
-                                                            </div>
-                                            </li>
-                                    <li class="nav-item dropdown">
-                                                    <a class="nav-link dropdown-toggle" href="" id="dropdownKontakt" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Kontakt<span class="ml-2 sr-only">(current)</span></a>
-                            <div class="dropdown-menu" aria-labelledby="dropdownKontakt">
-                                                                    <a class="dropdown-item " href="/contact/bands">
-                                                                                Band Anfrage
-                                    </a>
-                                                                    <a class="dropdown-item " href="/static/map">
-                                                                                Lageplan
-                                    </a>
-                                                            </div>
-                                            </li>
-                                    <li class="nav-item dropdown">
-                                                    <a class="nav-link dropdown-toggle" href="" id="dropdownUnsere Angebote" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Unsere Angebote<span class="ml-2 sr-only">(current)</span></a>
-                            <div class="dropdown-menu" aria-labelledby="dropdownUnsere Angebote">
-                                                                    <a class="dropdown-item " href="/page/getraenkekarte">
-                                                                                Speisen
-                                    </a>
-                                                                    <a class="dropdown-item " href="/page/getraenkekarte">
-                                                                                Getränke
-                                    </a>
-                                                            </div>
-                                            </li>
-                            </ul>
-        </div>
-    </nav>
-</div>
-                    </div>
-
-    <div class="main row">
-        <div id="content" class="content col-12 mb-5">
-                            <div class="eventContainer col-sm-11 col-md-6 mt-1 ml-lg-4">
-                                    <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">21.10.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+                    <div class="collapse navbar-collapse ms-5" id="navbarTop">
+                                                            <ul class="navbar-nav ms-3">
+                            <li class="nav-item dropdown">
+                                <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Kontakt
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                                                            <li><a class="dropdown-item" href="/static/map">Lageplan</a></li>
+                                                                    </ul>
+                            </li>
+                        </ul>
+                                                                                <ul class="navbar-nav ms-3">
+                            <li class="nav-item dropdown">
+                                <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Unsere Angebote
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                                                            <li><a class="dropdown-item" href="/page/speisekarte">Speisen</a></li>
+                                                                            <li><a class="dropdown-item" href="/page/getraenkekarte">Getränke</a></li>
+                                                                    </ul>
+                            </li>
+                        </ul>
+                                                </div>
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261021" role="button" aria-expanded="false" aria-controls="e20261021">open</button>
-       </div>
-</div>
+</nav>
+                    </div>
 
-<div id="e20261021" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
+    <div class="main">
+        <div id="content" class="content mb-5">
+                            <div class="row">
+        <div class="eventContainer accordion col-lg-6 col-sm-12" id="eventAccordion">
+                                                <div class="event accordion-item mt-2">
     
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
-    </div>
-                    </div>
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261028" aria-expanded="true" aria-controls="e20261028">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">28.10.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">22.10.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Insaiter Jazz Trio
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261028" role="button" aria-expanded="false" aria-controls="e20261028">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261022" role="button" aria-expanded="false" aria-controls="e20261022">open</button>
-       </div>
-</div>
-
-<div id="e20261022" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/157/CDMIifcfKAt2AWDrwcpTrSgVq10BbFymahiBi85V.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>swing</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261028" class="eventContent accordion-collapse collapse  show " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">28.10.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261028" role="button" aria-expanded="false" aria-controls="e20261028">open</button>
-       </div>
-</div>
 
-<div id="e20261028" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261029" aria-expanded="true" aria-controls="e20261029">
+                <span class="ms-2">Do.</span>
+                <span class="ms-2">29.10.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">29.10.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Jazzformation Just Friends
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    Jazzformation Just Friends
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261029" role="button" aria-expanded="false" aria-controls="e20261029">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261029" role="button" aria-expanded="false" aria-controls="e20261029">open</button>
-       </div>
-</div>
-
-<div id="e20261029" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/158/F53KX1nzsG9g4xVCs62MDq7oTvbXIhsCm1fBoQsU.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>Jazzstandards</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261029" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/F53KX1nzsG9g4xVCs62MDq7oTvbXIhsCm1fBoQsU.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">04.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>Jazzstandards</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261104" role="button" aria-expanded="false" aria-controls="e20261104">open</button>
-       </div>
-</div>
 
-<div id="e20261104" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
+                            <div class="links col-12 m-0 p-2">
+                                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
+                                    </div>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261104" aria-expanded="true" aria-controls="e20261104">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">04.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">05.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Insaiter Jazz Trio
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261104" role="button" aria-expanded="false" aria-controls="e20261104">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261105" role="button" aria-expanded="false" aria-controls="e20261105">open</button>
-       </div>
-</div>
-
-<div id="e20261105" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/159/xwPDv7sSQWv2ZDiaHjJW3YQxwM4jVhBoMq76JD1Q.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>swing</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261104" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">11.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261111" role="button" aria-expanded="false" aria-controls="e20261111">open</button>
-       </div>
-</div>
 
-<div id="e20261111" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261105" aria-expanded="true" aria-controls="e20261105">
+                <span class="ms-2">Do.</span>
+                <span class="ms-2">05.11.2026</span>
+                <span class="ms-2">20:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">12.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Jazzformation Just Friends
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    Insaiter Jazz Trio
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261105" role="button" aria-expanded="false" aria-controls="e20261105">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261112" role="button" aria-expanded="false" aria-controls="e20261112">open</button>
-       </div>
-</div>
-
-<div id="e20261112" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/160/1RaaJ1fLmlOU7wUq059u25bbXYyUKQZWxTNdi7ta.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>Jazzstandards</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261105" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/xwPDv7sSQWv2ZDiaHjJW3YQxwM4jVhBoMq76JD1Q.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">18.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>swing</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261118" role="button" aria-expanded="false" aria-controls="e20261118">open</button>
-       </div>
-</div>
 
-<div id="e20261118" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261111" aria-expanded="true" aria-controls="e20261111">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">11.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">19.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Insaiter Jazz Trio
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261111" role="button" aria-expanded="false" aria-controls="e20261111">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261119" role="button" aria-expanded="false" aria-controls="e20261119">open</button>
-       </div>
-</div>
-
-<div id="e20261119" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/161/e23GNoYUmweirjhYxsAig76WCYyL7sBgyAnullUc.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>swing</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261111" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">25.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261125" role="button" aria-expanded="false" aria-controls="e20261125">open</button>
-       </div>
-</div>
 
-<div id="e20261125" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261112" aria-expanded="true" aria-controls="e20261112">
+                <span class="ms-2">Do.</span>
+                <span class="ms-2">12.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Donnerstag</span>
-            <span class="ml-1">26.11.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                Jazzformation Just Friends
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    Jazzformation Just Friends
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261112" role="button" aria-expanded="false" aria-controls="e20261112">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261126" role="button" aria-expanded="false" aria-controls="e20261126">open</button>
-       </div>
-</div>
-
-<div id="e20261126" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/162/dh2qnrGsVDcEKlRngrFQOODjxJViSe2NtkGaofiw.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>Jazzstandards</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261112" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/1RaaJ1fLmlOU7wUq059u25bbXYyUKQZWxTNdi7ta.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">02.12.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>Jazzstandards</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261202" role="button" aria-expanded="false" aria-controls="e20261202">open</button>
-       </div>
-</div>
 
-<div id="e20261202" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
+                            <div class="links col-12 m-0 p-2">
+                                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
+                                    </div>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261118" aria-expanded="true" aria-controls="e20261118">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">18.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">09.12.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261118" role="button" aria-expanded="false" aria-controls="e20261118">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261209" role="button" aria-expanded="false" aria-controls="e20261209">open</button>
-       </div>
-</div>
-
-<div id="e20261209" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261118" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">16.12.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
             </div>
-        </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261216" role="button" aria-expanded="false" aria-controls="e20261216">open</button>
-       </div>
-</div>
 
-<div id="e20261216" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
                     </div>
     </div>
-                    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261119" aria-expanded="true" aria-controls="e20261119">
+                <span class="ms-2">Do.</span>
+                <span class="ms-2">19.11.2026</span>
+                <span class="ms-2">20:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
                 </div>
-                            <div class="event col-12 lazy">
-                    <div id="eventContent" class="eventContent container col-12 mb-2">
-                    <div class="collapseToggle mbs">
-    <div class="eventHeader col-12 p-2">
-
-        <div class="subHeader m-0 p-0">
-            <span class="ml-2">Mittwoch</span>
-            <span class="ml-1">23.12.</span>
-            <span class="ml-1">20:00 Uhr</span>
-
-                            <!--i class="ion-md-musical-notes category d-inline-block d-md-none" title="Musik"></i-->
-                <span class="category mr-1">Musik</span>
-                    </div>
-
-        <div class="title m-0 p-0">
-            <div class="p-0">
-                                    <div class="theme d-inline mr-2">
-                        <span>Jazz</span>
-                    </div>
-                                la foot creole
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    Insaiter Jazz Trio
+                </div>
             </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261119" role="button" aria-expanded="false" aria-controls="e20261119">open</button-->
         </div>
-           <button class="btn btn-info btn-sm" data-toggle="collapse" data-target="#e20261223" role="button" aria-expanded="false" aria-controls="e20261223">open</button>
-       </div>
-</div>
-
-<div id="e20261223" class="eventBody collapse col-12 mt-0 pt-0">
-                    <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
-            <img src="https://www.zosch-berlin.de/storage/media/images/17/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
-                 class="w-auto m-auto"
-                 title=""
-                 alt=""
-            >
-        </div>
-    
-            <div class="subtitle col-12 m-0 p-2">
-            <span>new orleans jazz</span>
-        </div>
-    
-                <div class="links col-12 m-0 p-2">
-                            <a href="" target="_blank"></a><br>
-                    </div>
     </div>
-                    </div>
+
+    <div id="e20261119" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/e23GNoYUmweirjhYxsAig76WCYyL7sBgyAnullUc.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
                 </div>
-                        </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>swing</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
 
-                <div class="sidebar-right d-none d-md-block col-md-4 ml-0 ml-lg-2">
-        <div class="header">
-            <ion-icon name="calendar"></ion-icon>
-            <span>Event Kalender</span>
-        </div>
-        <div id="calendar" class="m-0 p-0"></div>
+                    </div>
     </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261125" aria-expanded="true" aria-controls="e20261125">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">25.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261125" role="button" aria-expanded="false" aria-controls="e20261125">open</button-->
         </div>
     </div>
 
-    <div class="footer row">
-                    <!--div id="bottom-navigation"-->
-    <nav class="navbar fixed-bottom navbar-expand-sm navbar-dark bg-black p-0 m-0">
-        <a class="navbar-brand" href="#"></a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bottomNavbar" aria-controls="bottomNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <div id="e20261125" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
 
-        <div class="collapse navbar-collapse m-0 p-0" id="bottomNavbar">
-            <ul class="navbar-nav mr-auto p-0">
-                                <li class="nav-item p-0 m-0 ">
-                                            <a class="nav-link p-0 mt-2 mr-3" href="/page/impressum" aria-haspopup="false">
-                                                            Impressum<span class="ml-2 sr-only">(current)</span>
-                                                    </a>
-                                    </li>
-                                <li class="nav-item p-0 m-0 ">
-                                            <a class="nav-link p-0 mt-2 mr-3" href="/page/datenschutz" aria-haspopup="false">
-                                                            Datenschutz<span class="ml-2 sr-only">(current)</span>
-                                                    </a>
-                                    </li>
-                                <li class="nav-item p-0 m-0 ">
-                                            <a class="nav-link p-0 mt-2 mr-3" href="/page/nutzungsbedingungen" aria-haspopup="false">
-                                                            Nutzungsbedingungen<span class="ml-2 sr-only">(current)</span>
-                                                    </a>
-                                    </li>
-                            </ul>
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261126" aria-expanded="true" aria-controls="e20261126">
+                <span class="ms-2">Do.</span>
+                <span class="ms-2">26.11.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    Jazzformation Just Friends
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261126" role="button" aria-expanded="false" aria-controls="e20261126">open</button-->
         </div>
-    </nav>
-<!--/div-->                    </div>
+    </div>
+
+    <div id="e20261126" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/dh2qnrGsVDcEKlRngrFQOODjxJViSe2NtkGaofiw.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>Jazzstandards</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                            <div class="links col-12 m-0 p-2">
+                                            <a href="https://www.jazzformation-just-friends.de" target="_blank">https://www.jazzformation-just-friends.de</a><br>
+                                    </div>
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261202" aria-expanded="true" aria-controls="e20261202">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">02.12.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261202" role="button" aria-expanded="false" aria-controls="e20261202">open</button-->
+        </div>
+    </div>
+
+    <div id="e20261202" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261209" aria-expanded="true" aria-controls="e20261209">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">09.12.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261209" role="button" aria-expanded="false" aria-controls="e20261209">open</button-->
+        </div>
+    </div>
+
+    <div id="e20261209" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261216" aria-expanded="true" aria-controls="e20261216">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">16.12.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261216" role="button" aria-expanded="false" aria-controls="e20261216">open</button-->
+        </div>
+    </div>
+
+    <div id="e20261216" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261223" aria-expanded="true" aria-controls="e20261223">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">23.12.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261223" role="button" aria-expanded="false" aria-controls="e20261223">open</button-->
+        </div>
+    </div>
+
+    <div id="e20261223" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                    </div>
+    </div>
+</div>                                    <div class="event accordion-item mt-2">
+    
+    <div class="mbs">
+        <div class="eventHeader accordion-header m-0 p-0">
+
+            <div class="subHeader accordion-button" data-bs-toggle="collapse" data-bs-target="#e20261230" aria-expanded="true" aria-controls="e20261230">
+                <span class="ms-2">Mi.</span>
+                <span class="ms-2">30.12.2026</span>
+                <span class="ms-2">20:00:00 Uhr</span>
+
+                                    <div class="category">Musik</div>
+                            </div>
+
+                            <div class="theme p-0 ps-2 m-0">
+                    <h7>Jazz</h7>
+                </div>
+            
+            <div class="title m-0 p-0">
+                <div class="ms-2 p-0">
+                    la foot creole
+                </div>
+            </div>
+            <!--button class="btn btn-info btn-sm" data-bs-toggle="collapse" data-bs-target="#e20261230" role="button" aria-expanded="false" aria-controls="e20261230">open</button-->
+        </div>
+    </div>
+
+    <div id="e20261230" class="eventContent accordion-collapse collapse " data-bs-parent="#eventAccordion">
+        <div class="accordion-body">
+                                            <div class="col-12 text-center w-100 m-0 p-0 imageWrapper">
+                    <img src="https://www.zosch-berlin.de/storage/images/AH9KPHG4xuUijzFqAXjAPQkClqdnZLs8uuqw2tzW.jpg"
+                         height="400"
+                         title=""
+                         alt=""
+                    >
+                </div>
+            
+                            <div class="subtitle col-12 m-0 p-2">
+                    <h6>new orleans jazz</h6>
+                </div>
+            
+            <div class="text col-12 m-0 p-2">
+                
+            </div>
+
+                    </div>
+    </div>
+</div>                                    </div>
+    </div>
+                    </div>
+    </div>
+
+    <div class="footer">
+                    <nav id="bottom-navigation" class="navbar fixed-bottom navbar-expand-md navbar-dark bg-black pb-3">
+    <a class="navbar-brand" href="#"></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bottomNavbar" aria-controls="bottomNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse m-0 p-0" id="bottomNavbar">
+        <ul class="navbar-nav me-auto p-0">
+                        <li class="nav-item p-0 m-0 ">
+                                    <a class="nav-link p-0 mt-2 me-3" href="/page/impressum" aria-haspopup="false">
+                                                    Impressum<span class="ms-2 sr-only">(current)</span>
+                                            </a>
+                            </li>
+                        <li class="nav-item p-0 m-0 ">
+                                    <a class="nav-link p-0 mt-2 me-3" href="/page/datenschutz" aria-haspopup="false">
+                                                    Datenschutz<span class="ms-2 sr-only">(current)</span>
+                                            </a>
+                            </li>
+                        <li class="nav-item p-0 m-0 ">
+                                    <a class="nav-link p-0 mt-2 me-3" href="/page/nutzungsbedingungen" aria-haspopup="false">
+                                                    Nutzungsbedingungen<span class="ms-2 sr-only">(current)</span>
+                                            </a>
+                            </li>
+                    </ul>
+    </div>
+</nav>
+                    </div>
 </div>
-    <script>
-        $(function($) {
-            var scrollDelay = 0,
-                collapseItems = [],
-                firstLoad = true;
-
-            $(".lazy").lazy({
-                scrollDirection: 'vertical',
-                effect: 'fadeIn',
-                visibleOnly: true,
-                treshold: 100,
-            });
-            $([document.documentElement, document.body]).animate({
-                scrollTop: 0
-            }, 0);
-            $(document)
-                .ajaxStart(function( event ) {
-                    $(".collapse").unbind('show.bs.collapse');
-                })
-                .ajaxStop(function( event ) {
-                    if(firstLoad) {
-                        var $first = $('.collapse:first', '.eventContainer'),
-                            $header = $first.prev('.collapseToggle');
-
-                        $first.on('shown.bs.collapse', function() {
-                            var $carousel = $('.carousel', this);
-                            if($carousel.length) {
-                                $carousel.carousel("cycle");
-                            }
-                        });
-                        $header.find('button').html('close');
-                        $first.collapse('show');
-                        firstLoad = false;
-                    }
-
-                    $('button[data-toggle="collapse"]', '.eventContainer').click(function(){
-                        var $this = $(this),txt = ('open' === $this.html()) ? 'close' : 'open';
-                        $this.html(txt);
-                    });
-
-                    $('.collapse', '.eventContainer')
-                        .on('shown.bs.collapse', function() {
-                            var my = this, id = my.id,
-                                $header = $(my).prev('.collapseToggle'),
-                                top = parseInt($header.offset().top - 70, 10),
-                                $carousel = $('.carousel', my)
-                            ;
-
-                            $([document.documentElement, document.body]).animate({
-                                scrollTop: top
-                            }, scrollDelay);
-
-                            if($carousel.length) {
-                                $carousel.carousel("cycle");
-                            }
-                        })
-                        .on('show.bs.collapse', function() {
-                            var id = this.id, my = this,
-                                $other = $(my).closest('.event').siblings().find('.show');
-
-                            console.info('show.bs.collapse: '+ id + " siblings: " + $other.length);
-                            $other.collapse('hide');
-                        })
-                        .on('hide.bs.collapse', function() {
-                            var id = this.id,
-                                my = this,
-                                $carousel = $('.carousel', my),
-                                $header = $(my).prev('.collapseToggle')
-                            ;
-                            if($carousel.length) {
-                                $carousel.carousel("dispose");
-                            }
-//                            console.info('hide.bs.collapse: '+ id + " collapsed: " + collapseItems.length);
-                        })
-                    ;
-            });
-
-            var now = new Date();
-            var year = now.getFullYear();
-            var month = now.getMonth() + 1;
-
-            $("#calendar").zabuto_calendar({
-                language: 'de',
-                year: year,
-                month: month,
-                show_previous: false,
-                show_next: 6,
-                cell_border: false,
-                today: true,
-                show_days: true,
-                weekstartson: 1,
-                nav_icon: {
-                    prev: '<ion-icon name="arrow-dropleft-circle"></ion-icon>',
-                    next: '<ion-icon name="arrow-dropright-circle"></ion-icon>'
-                },
-                ajax: {
-	                url: "/calendar/" + year + "/" + month,
-                    modal: true,
-                },
-                legend: false, // object array, [{type: string, label: string, classname: string}]
-            });
-        });
-    </script>
-
 
 </body>
 </html>
