@@ -61,7 +61,15 @@ sick = healthy + [
     pod("event-junkie", "evicted-1", "Failed", [], reason="Evicted"),
     pod("event-junkie", "pending-1", "Pending", [], init=[{"ready": False, "restartCount": 2, "state": {"waiting": {"reason": "CrashLoopBackOff"}}}]),
 ]
-for name, items in (("healthy", healthy), ("sick", sick)):
+# A node reboot 30 minutes ago: every container exited within two minutes. One pod crashed again
+# since, one is still crash-looping from the reboot, and one is not ready yet.
+rebooted = [pod("kube-system", f"quiet-{i}", "Running", [running(restarts=2, exited_minutes=30 + i % 3, exit_reason="Unknown")]) for i in range(8)]
+rebooted += [
+    pod("event-junkie", "event-junkie-bff-again", "Running", [running(restarts=3, exited_minutes=5, exit_reason="OOMKilled")]),
+    pod("observability", "collector-looping", "Running", [dict(crashing, lastState={"terminated": {"reason": "Error", "finishedAt": ago(31)}})]),
+    pod("event-junkie", "event-junkie-importer-starting", "Running", [dict(running(restarts=1, exited_minutes=30), ready=False)]),
+]
+for name, items in (("healthy", healthy), ("sick", sick), ("rebooted", rebooted)):
     with open(f"{sys.argv[1]}/{name}.json", "w") as f:
         json.dump({"items": items}, f)
 PY
@@ -134,6 +142,16 @@ expect "a Failed pod is listed with the pod's reason" "  staging: pod event-junk
 expect "an init container's waiting reason is the pod's" "  staging: pod event-junkie/pending-1 (CrashLoopBackOff, 2 restarts)"
 refuse "the healthy cluster adds nothing" "production: pod"
 refuse "a listing with findings does not also say nothing" "(nothing)"
+
+run rebooted healthy
+expect "a reboot's exits are one line" "  staging: 10 pods restarted together at "
+refuse "a pod whose only fault is the reboot's exit is not listed" "quiet-"
+expect "an exit after the reboot is still listed" "  staging: pod event-junkie/event-junkie-bff-again (exited OOMKilled, 3 restarts)"
+expect "a pod crash-looping since the reboot is still listed" "  staging: pod observability/collector-looping (CrashLoopBackOff, 47 restarts)"
+expect "a pod not ready since the reboot is still listed" "  staging: pod event-junkie/event-junkie-importer-starting (not ready, 1 restarts)"
+
+run sick healthy
+refuse "a single crash among healthy pods is no reboot" "restarted together"
 
 run sick unreachable
 expect "an unreachable cluster does not stop the listing" "  staging: pod observability/openobserve-collector-gateway-0"
