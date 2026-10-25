@@ -1,5 +1,6 @@
 package de.norm.events.dataquality.classification
 
+import de.norm.events.common.QuotedText
 import de.norm.events.event.EventFeature
 import de.norm.events.event.EventNotFoundException
 import de.norm.events.event.EventType
@@ -290,7 +291,7 @@ class EventClassificationCheck(
             return if (proposed == current || unbacked) null else artistsSuggestion(target, lineup, proposed, acts.evidence, acts.confidence, model)
         }
 
-        private fun quotesOnlyTheTitle(evidence: String) = ClassificationValidator.normalise(evidence) in ClassificationValidator.normalise(target.title)
+        private fun quotesOnlyTheTitle(evidence: String) = QuotedText.normalise(evidence) in QuotedText.normalise(target.title)
 
         private fun features(): NewSuggestion? {
             val confirmed = answer.features.filter { it.confirmed && it.confidence >= floor.features }

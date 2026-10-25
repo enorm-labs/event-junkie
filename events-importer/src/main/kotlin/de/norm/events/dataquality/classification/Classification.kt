@@ -69,7 +69,7 @@ object ClassificationValidator {
         input: ClassificationInput
     ): ClassificationAnswer? {
         val root = readObject(raw) ?: return null
-        val source = normalise(input.text)
+        val source = QuotedText.normalise(input.text)
         val dropped = mutableListOf<String>()
 
         fun <T> finding(
@@ -159,9 +159,7 @@ object ClassificationValidator {
     ): Boolean =
         confidence in 0.0..1.0 &&
             evidence.length in ModelAnswer.EVIDENCE_LENGTH &&
-            normalise(evidence) in source
-
-    fun normalise(text: String): String = QuotedText.normalise(text)
+            QuotedText.normalise(evidence) in source
 }
 
 /** Whether a proposed act is a whole name in the title, and not cut short: "Katja" from "Katja Berlin Tour 2026" (#2997). */
@@ -176,9 +174,9 @@ private object TitleActNames {
         act: String,
         title: String
     ): Boolean {
-        val normalisedAct = ClassificationValidator.normalise(act)
+        val normalisedAct = QuotedText.normalise(act)
         val wholeWords = Regex("$NO_WORD_BEFORE${Regex.escape(normalisedAct)}$NO_WORD_AFTER")
-        return wholeWords.containsMatchIn(ClassificationValidator.normalise(title)) && !cutShort(act, title)
+        return wholeWords.containsMatchIn(QuotedText.normalise(title)) && !cutShort(act, title)
     }
 
     /**
