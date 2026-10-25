@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -62,6 +63,35 @@ class ScheinbarWebsiteImporterTest {
                 .map { it.sourceUrl }
                 .distinct()
                 .forEach { url -> coVerify(exactly = 1) { htmlFetcher.fetchDocument(url) } }
+        }
+
+    @Test
+    fun `bills a guest show's title act first, then the acts its page lists`() =
+        runTest {
+            val page = "https://www.scheinbar.de/programm/stage-diven/"
+            coEvery { htmlFetcher.fetchDocument(page) } returns loadDocument("scheinbar-programm-stage-diven.html", page)
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events
+                .first { it.eventDate == LocalDate.of(2026, 10, 25) }
+                .artists
+                .map { it.name } shouldContainExactly
+                listOf(
+                    "StageDiven",
+                    "Allison Wonder",
+                    "Katrina Martinez",
+                    "Hoop Boom Boom",
+                    "Madlen & Rang De",
+                    "Katharina Greve",
+                    "Bartuschka"
+                )
+            result.events
+                .first { it.eventDate == LocalDate.of(2026, 10, 4) }
+                .artists
+                .map { it.name } shouldContainExactly
+                listOf("Gisa Bergmann", "Horst Blue")
         }
 
     @Test
