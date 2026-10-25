@@ -27,9 +27,11 @@ import java.net.URI
  * which sell nothing. The type and the acts come from the title, since the payload carries no category or lineup.
  * The house writes `<act> | Album Pre Event`, `<act> - … Concert …`, `<label>: <act>; <act>`,
  * `<festival> | <act> + <act>` and `<series> w/ <act> + <act>`; any other title goes to the shared title reader. A
- * title that only ends in "Concert" names no act it can be cut from (`Ragde Lobo Medicine Music Concert`), so it bills
- * none. The three list shapes are a lineup, not a title read as an act, so they are not title-derived: a festival
- * title keeps them.
+ * known series also takes `feat.` (`K:noise RAW signal feat. In Your Pocket + White Forest`). Only a series in
+ * `SERIES` does, since `<act> feat. <guest>` bills the act and its guest. A title that only ends in "Concert" names
+ * no act it can be cut from (`Ragde Lobo Medicine Music Concert`), so it bills none, and nor does a showcase
+ * (`Listen To Berlin: Youth Showcase (Mw:m)`), which is a format. The three list shapes are a lineup, not a title
+ * read as an act, so they are not title-derived: a festival title keeps them.
  *
  * The house also lets its room to a meetup (`Ableton User Group Berlin: Track Feedback Session`) and a film night
  * (`Free DrinkWatchTalk short movie evening`). Its own words type these, and they bill no act. A title that names a
@@ -114,8 +116,13 @@ class HouseOfMusicOverviewPageScraper {
     private companion object {
         val SEPARATOR = Regex("""\s+[|\-–]\s+""")
         val LABEL_LIST = Regex("""^[^:;]+:\s*[^;]+(?:;[^;]+)+$""")
-        val OCCASION = Regex("""\b(?:album|release|pre event|concert|konzert)\b""", RegexOption.IGNORE_CASE)
-        val SERIES_LINEUP = Regex("""^[^\s/]+\s+w/\s+(.+)$""", RegexOption.IGNORE_CASE)
+        val OCCASION = Regex("""\b(?:album|release|pre event|concert|konzert|showcase)\b""", RegexOption.IGNORE_CASE)
+        val SERIES = listOf("K:noise RAW signal")
+        val SERIES_LINEUP =
+            Regex(
+                """^(?:[^\s/]+\s+w/|(?:${SERIES.joinToString("|") { Regex.escape(it) }})\s+(?:w/|feat\.?))\s+(.+)$""",
+                RegexOption.IGNORE_CASE
+            )
         val VENUE_KEYWORDS =
             mapOf(
                 "user group" to EventType.OTHER.name,
