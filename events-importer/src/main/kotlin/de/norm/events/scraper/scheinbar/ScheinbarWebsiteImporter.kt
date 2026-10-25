@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 /**
  * Website importer for the Scheinbar Varieté in Schöneberg. `/programm/` lists about three months
- * on one page; each programme page is then read once, for its text and photo, and applied to every
+ * on one page; each programme page is then read once, for its text, photo and listed acts, and applied to every
  * evening that links it. A host's four Open Stage nights share one page, which is why this sets
  * [sharedPages] and not [enrichFromEventPage], which reads a page per evening. An evening whose page fails is flagged, so the upsert keeps what it stored.
  *
@@ -29,7 +29,12 @@ class ScheinbarWebsiteImporter(
 
     override val sharedPages: SharedPages<ScheinbarProgramme> =
         SharedPages(ScheinbarDetailPageScraper()::scrape, { programme, event ->
-            event.copy(description = programme.description, imageUrl = programme.imageUrl)
+            event.copy(
+                description = programme.description,
+                imageUrl = programme.imageUrl,
+                // The listing's billing first, then the page's `Mit dabei:` acts in page order.
+                artists = (event.artists + programme.artists).distinctBy { it.name.lowercase() }
+            )
         })
 }
 
