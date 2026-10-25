@@ -86,8 +86,8 @@ class UfaFabrikMonthPageScraper {
             sourceId = "${EventSource.UFA_FABRIK.sourceIdPrefix}$node-$date-${time?.toString()?.replace(":", "") ?: "0000"}",
             ticketUrl = row.selectFirst(".buy-tickets a[href]")?.absUrl("href"),
             genre = genre,
-            pricePresale = prices.labelled(PRESALE_LABEL) ?: prices[ADMISSION_LABEL],
-            priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: prices[ADMISSION_LABEL],
+            pricePresale = prices.labelled(PRESALE_LABEL) ?: prices[ADMISSION_LABEL] ?: childrensAdmission(prices),
+            priceBoxOffice = prices.labelled(BOX_OFFICE_LABEL) ?: prices[ADMISSION_LABEL] ?: childrensAdmission(prices),
             soldOut = row.selectFirst(".sold-out.event-banner") != null,
             status = if (row.selectFirst(".canceled.event-banner") != null) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
             artists = ufaFabrikArtists(title, subtitle, eventType, label)
@@ -175,6 +175,17 @@ internal fun childrensPriceLabel(priceLabels: Collection<String>): String? =
 private val CHILD_PRICE_LABEL = Regex("""^\s*(?:kinder|kita-kind|erzieher)""", RegexOption.IGNORE_CASE)
 
 /**
+ * The price of a children's show, which carries no `Eintritt` (#3914): the `Erwachsene` ticket, the full price as `Eintritt`
+ * is beside `Ermäßigt`, else the `Kinder…` one. The Kita and school-class rates are group rates and never the price.
+ */
+internal fun childrensAdmission(prices: Map<String, BigDecimal?>): BigDecimal? =
+    prices.entries.firstOrNull { it.key.trim().equals(ADULT_PRICE_LABEL, ignoreCase = true) }?.value
+        ?: prices.entries.firstOrNull { it.key.trim().startsWith(CHILD_TICKET_LABEL, ignoreCase = true) }?.value
+
+private const val ADULT_PRICE_LABEL = "Erwachsene"
+private const val CHILD_TICKET_LABEL = "Kinder"
+
+/**
  * The type for the house's free-text genre label. Comedy and Kabarett are matched first, so
  * "Comedy-Theater" and "Musikkabarett" are comedy (#2314), then stage formats before music, and
  * `Party` last (#3756); an unknown label, such as `Wintermarkt`, is [EventType.OTHER].
@@ -199,6 +210,9 @@ private val GENRE_TYPES: Map<String, String> =
         "clown" to EventType.SHOW.name,
         "zirkus" to EventType.SHOW.name,
         "akrobatik" to EventType.SHOW.name,
+        "märchen" to EventType.SHOW.name,
+        // Not bare `oper`, which a substring match finds in `Kooperation`
+        "kinderoper" to EventType.SHOW.name,
         "lesung" to EventType.READING.name,
         "leseshow" to EventType.READING.name,
         "poetry" to EventType.READING.name,
@@ -210,5 +224,7 @@ private val GENRE_TYPES: Map<String, String> =
         "jazz" to EventType.CONCERT.name,
         "a capella" to EventType.CONCERT.name,
         "a cappella" to EventType.CONCERT.name,
-        "party" to EventType.PARTY.name
+        "party" to EventType.PARTY.name,
+        // Last, so `Kindertheater`, `Kinderkonzert` and `Kinderparty` keep their own type; the bare `Kinder` label is a show (#3914)
+        "kinder" to EventType.SHOW.name
     )

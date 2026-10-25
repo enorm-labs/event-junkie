@@ -179,6 +179,54 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
+    fun `types the children's labels as shows, and keeps a children's concert or party its own type`() {
+        genreType("Kinder") shouldBe EventType.SHOW.name
+        genreType("Kinderoper") shouldBe EventType.SHOW.name
+        genreType("Weihnachtsmärchen") shouldBe EventType.SHOW.name
+        genreType("Kindertheater") shouldBe EventType.SHOW.name
+        genreType("Kinderkonzert") shouldBe EventType.CONCERT.name
+        genreType("Kinderparty") shouldBe EventType.PARTY.name
+        genreType("Kooperationsabend") shouldBe EventType.OTHER.name
+    }
+
+    @Test
+    fun `prices a children's show by the adult ticket, else the child's, never a group rate`() {
+        childrensAdmission(mapOf("Kinder" to BigDecimal("8.00"), "Erwachsene" to BigDecimal("12.00"))) shouldBe BigDecimal("12.00")
+        childrensAdmission(mapOf("Kinder (bis 15 J.)" to BigDecimal("10.00"))) shouldBe BigDecimal("10.00")
+        childrensAdmission(mapOf("Kita-Kind" to BigDecimal("5.00"), "Erzieher*innen" to BigDecimal("0.00"))).shouldBeNull()
+    }
+
+    @Test
+    fun `leaves no children's show of the fixtures untyped or unpriced`() {
+        val children = (october + month("ufafabrik-program-202611.html") + month("ufafabrik-program-202612.html")).filter { it.isForChildren }
+        // An `Infotainment` talk for Kitas is no show, and stays OTHER
+        children.filter { it.eventType == EventType.OTHER.name }.map { it.title } shouldBe listOf("Verheldet")
+        children.filter { it.pricePresale == null || it.priceBoxOffice == null }.map { it.title }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads the price of each children's price shape, and keeps Eintritt where the house prints one`() {
+        val november = month("ufafabrik-program-202611.html")
+        val december = month("ufafabrik-program-202612.html")
+        val razzzelbande = november.first { it.title == "Die Razzzelbande" }
+        razzzelbande.eventType shouldBe EventType.SHOW.name
+        razzzelbande.pricePresale shouldBe BigDecimal("16.00")
+        razzzelbande.priceBoxOffice shouldBe BigDecimal("16.00")
+        november.first { it.title.startsWith("Hänsel und Gretel") }.pricePresale shouldBe BigDecimal("15.00")
+        november.first { it.title.startsWith("Jochen Falck") }.let {
+            it.eventType shouldBe EventType.COMEDY.name
+            it.pricePresale shouldBe BigDecimal("13.00")
+        }
+        december.first { it.title.endsWith("- Für Kitas") }.let {
+            it.eventType shouldBe EventType.SHOW.name
+            it.pricePresale shouldBe BigDecimal("7.00")
+        }
+        october.first { it.title == "TurTurTheater" }.pricePresale shouldBe BigDecimal("13.00")
+        october.single { it.title == "Verheldet" }.pricePresale shouldBe BigDecimal("9.00")
+        december.first { it.title.startsWith("The Funky Monkeys") }.pricePresale shouldBe BigDecimal("28.00")
+    }
+
+    @Test
     fun `an empty month yields nothing`() {
         UfaFabrikMonthPageScraper().scrape(Jsoup.parse("<table></table>", baseUrl)).shouldBeEmpty()
     }
