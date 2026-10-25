@@ -479,7 +479,9 @@ cmd_urls() {
 # `status` lists pods as well as Flux objects: Flux calls a HelmRelease Ready once the chart renders,
 # so a crash-looping pod an operator made from it showed nowhere here for five hours (#3762). A pod is
 # listed when its phase is not Running or Succeeded, a container of a running pod is not ready, or a
-# container exited in the last hour.
+# container exited in the last hour. A node or k3s restart stops every container at once (#3920): when
+# one 5-minute window holds the exits of more than half the pods, and at least five, it is one line,
+# and only a pod from it that is still down, not ready or waiting is listed on its own.
 not_ready_pods() {
     kubectl --context "$(context_of "$1")" --request-timeout=15s get pods -A -o json 2>/dev/null |
         EJ_ENV="$1" python3 -c '
@@ -490,9 +492,14 @@ try:
 except ValueError:
     sys.exit(0)
 hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-def recent(c):
+window = timedelta(minutes=5)
+def finished(c):
     end = c.get("lastState", {}).get("terminated", {}).get("finishedAt")
-    return bool(end) and datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) > hour_ago
+    return datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) if end else None
+def recent(c):
+    end = finished(c)
+    return end is not None and end > hour_ago
+rows = []
 for pod in pods:
     status = pod.get("status", {})
     phase = status.get("phase", "Unknown")
@@ -513,7 +520,23 @@ for pod in pods:
             reason = "exited " + (exited[0]["lastState"]["terminated"].get("reason") or "")
     restarts = sum(c.get("restartCount", 0) for c in every)
     meta = pod["metadata"]
-    print("  %s: pod %s/%s (%s, %d restarts)" % (os.environ["EJ_ENV"], meta["namespace"], meta["name"], reason.strip(), restarts))
+    line = "  %s: pod %s/%s (%s, %d restarts)" % (os.environ["EJ_ENV"], meta["namespace"], meta["name"], reason.strip(), restarts)
+    only_exited = phase == "Running" and not unready and not any(waiting)
+    rows.append((line, max((finished(c) for c in exited), default=None), only_exited))
+counted = sum(1 for p in pods if p.get("status", {}).get("phase") != "Succeeded")
+exits = sorted(end for _, end, _ in rows if end is not None)
+start, together = None, 0
+for i, first in enumerate(exits):
+    n = sum(1 for end in exits[i:] if end - first <= window)
+    if n > together:
+        start, together = first, n
+restart = together >= 5 and together * 2 > counted
+if restart:
+    print("  %s: %d pods restarted together at %s UTC (a node or k3s restart)" % (os.environ["EJ_ENV"], together, start.strftime("%H:%M")))
+for line, end, only_exited in rows:
+    if restart and only_exited and end is not None and start <= end <= start + window:
+        continue
+    print(line)
 ' || true
 }
 
