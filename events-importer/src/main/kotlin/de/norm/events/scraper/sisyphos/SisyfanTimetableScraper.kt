@@ -105,8 +105,8 @@ class SisyfanTimetableScraper {
         }
     }
 
-    /** `An On Bast - Live` and `TAMADA (live)` are the act, billed live. */
-    private fun cleanName(text: String): String = text.replace(LIVE_SUFFIX, "").trim()
+    /** `An On Bast - Live`, `TAMADA (live)` and `Tasheeno *Konzert*` are the act, billed live. */
+    private fun cleanName(text: String): String = text.replace(SET_MARKERS, "").trim()
 
     companion object {
         const val BASE_URL = "https://sisy.fan"
@@ -115,6 +115,9 @@ class SisyfanTimetableScraper {
         private val TAB_PATTERN = Regex("""setActiveTab\((\d+)\)""")
         private val START_PATTERN = Regex("""currentStart:\s*'([^']+)'""")
         private val END_PATTERN = Regex("""currentEnd:\s*'([^']+)'""")
-        private val LIVE_SUFFIX = Regex("""\s*(?:-\s*live|\(\s*live\s*\))\s*$""", RegexOption.IGNORE_CASE)
+
+        /** A bare trailing `Konzert` is kept: without an asterisk it can be part of the name. */
+        private val SET_MARKERS =
+            Regex("""(?:\s*(?:-\s*live|\(\s*live\s*\)|\*\s*konzert\s*\*?|\bkonzert\s*\*))+\s*$""", RegexOption.IGNORE_CASE)
     }
 }
