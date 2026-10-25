@@ -238,6 +238,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/plausibility-check` — the next days' events on the public site against the venues' pages; `agent-plausibility.yml` runs it nightly
 - `/post-release` — after a deployment, the checks, forced imports and scripts merged pull requests left under `## After deploy` (label `after-deploy`)
 - `/refine-issues [<milestone> | <issue>…]` — with the user present, one issue at a time: correct what is stale, ask the one question that keeps it from `afk-ok`, write the answer into the body, add the label
+- `/reboot-nodes [staging|production|all]` — clear `ej-reboot-pending` and `ej-service-restart-pending`: what waits on each node, one command the operator runs to reboot them in order, then proof the alerts stop
 - `/refactor` — change the shape of the code, not what it does; the acting counterpart to `/codebase-audit`
 - `/release-highlights` — the visitor-facing summary that opens a release's notes; `cut-release.yml` runs it before every cut
 - `/start-issue <n>` — claim an issue, move the board, cut the branch, read its dependencies, plan
