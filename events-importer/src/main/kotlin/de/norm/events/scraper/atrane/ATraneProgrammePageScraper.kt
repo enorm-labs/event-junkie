@@ -41,7 +41,10 @@ import java.time.format.DateTimeParseException
  * The sidemen lines (`Feat: A-B-C`, `WITH: A-B`) bill no artists: they split names on hyphens
  * that double-barrelled names also carry. A weekly session's guests (`HEUTE MIT: A- B`) are
  * billed, because they are split on a hyphen followed by a space only (#2706). A `SPECIAL GUEST:`
- * line names one guest, unsplit, who is billed unless the title already bills them (#3105).
+ * line names one guest, unsplit, who is billed unless the title already bills them (#3105); a
+ * `SPECIAL GUESTS:` line is split on `&` and commas. A `MEETS` line bills the act it names, its quoted
+ * name alone when members follow (`MEETS "THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer`). A title that only leads in to the act
+ * (`WEIHNACHTLICH BESINNLICHES MIT:`) stays the title, and the line below it is the act.
  * An availability banner (`LETZTEN PLÄTZE AN DER BAR`, `AUSVERKAUFT`) can head the lines; it is
  * dropped like the credit (#3165).
  *
@@ -71,8 +74,9 @@ class ATraneProgrammePageScraper {
         // A show the club presents in another house is that house's event.
         if (lines.any { ELSEWHERE.containsMatchIn(it) }) return null
 
-        val (title, subtitle, guests) = billing(lines) ?: error("No act found in '${lines.joinToString(" / ")}'")
-        val act = actName(title)
+        val billing = billing(lines) ?: error("No act found in '${lines.joinToString(" / ")}'")
+        val (title, subtitle, guests) = billing
+        val act = actName(billing.act)
         val start =
             parseStart(event.stringOrNull("startDate")) ?: return null.also {
                 logger.warn { "No parseable start for A-Trane event '$title', skipping" }
@@ -109,11 +113,12 @@ class ATraneProgrammePageScraper {
             .map { it.replace(WHITESPACE, " ").trim() }
             .filter { it.isNotEmpty() }
 
-    /** The act, the lines under it, and the guests a weekly session or a special-guest line names. */
+    /** The title, the lines under it, the guests a weekly session or a special-guest line names, and the act. */
     private data class Billing(
         val title: String,
         val subtitle: String?,
-        val guests: List<String> = emptyList()
+        val guests: List<String> = emptyList(),
+        val act: String = title
     )
 
     /**
@@ -130,19 +135,30 @@ class ATraneProgrammePageScraper {
                 withGuests(acts, actIndex)
             } else {
                 val rest = acts.drop(actIndex.coerceAtLeast(0)).filter { it.isNotEmpty() }
-                rest.firstOrNull()?.let { Billing(it, rest.drop(1).joinToString(" · ").ifEmpty { null }) }
+                rest.firstOrNull()?.let { title ->
+                    val act = rest.getOrNull(1)?.takeIf { LEAD_IN.containsMatchIn(title) } ?: title
+                    Billing(title, rest.drop(1).joinToString(" · ").ifEmpty { null }, act = act)
+                }
             }
-        return billing?.let { it.copy(guests = it.guests + body.mapNotNull(::specialGuest)) }
+        return billing?.let { it.copy(guests = it.guests + body.flatMap(::lineGuests)) }
     }
 
-    /** The one guest a `SPECIAL GUEST:` line names; the line stays in the subtitle. */
-    private fun specialGuest(line: String): String? =
-        SPECIAL_GUEST
-            .matchEntire(line)
-            ?.groupValues
-            ?.get(1)
-            ?.trim()
-            ?.takeUnless { it.isEmpty() || isNonArtistName(it) }
+    /**
+     * The guests a line names: one unsplit or several from a `SPECIAL GUEST(S):` label, or the act a `MEETS` line
+     * names, its quoted name if it has one. The line stays in the subtitle.
+     */
+    private fun lineGuests(line: String): List<String> {
+        val special = SPECIAL_GUEST.matchEntire(line)
+        val met = MEETS.matchEntire(line)?.groupValues?.get(1)
+        val names =
+            when {
+                special == null && met != null -> listOf(QUOTED_NAME.find(met)?.groupValues?.get(1) ?: met)
+                special == null -> emptyList()
+                special.groupValues[1].isEmpty() -> listOf(special.groupValues[2])
+                else -> special.groupValues[2].split(GUESTS_SEPARATOR)
+            }
+        return names.map { it.trim() }.filter { it.isNotEmpty() && !isNonArtistName(it) }
+    }
 
     /** A weekly session: the act heads the lines, and the label's line names the guests. */
     private fun withGuests(
@@ -162,12 +178,16 @@ class ATraneProgrammePageScraper {
 
     /**
      * The act without the album or programme title it names in quotes, or the club's own name a homecoming adds
-     * (`JC DOOK BACK AT A-TRANE`). An act that is only a quoted name loses the quotes.
+     * (`JC DOOK BACK AT A-TRANE`), and without a residency label (`ARTIST IN RESIDENCE Jeremy Sassoon`). A slash with
+     * a space on one side only (`Esther Kaiser/ Alexander Wienand`) is spaced, so the co-bill splits. An act that is
+     * only a quoted name loses the quotes.
      */
     private fun actName(title: String): String =
         title
             .replace(WORK_TITLE, "")
             .replace(VENUE_TAIL, "")
+            .replace(RESIDENCY_LABEL, "")
+            .replace(LOPSIDED_SLASH, " / ")
             .trim()
             .ifEmpty { title.trim { it in QUOTES } }
 
@@ -208,6 +228,8 @@ class ATraneProgrammePageScraper {
         const val QUOTES = "«»\" "
         val WORK_TITLE = Regex("""\s*[«"][^»"]*[»"]\s*$""")
         val VENUE_TAIL = Regex("""\s+(?:(?:back|live)\s+)?(?:at|im)\s+(?:the\s+)?a-?trane\s*$""", RegexOption.IGNORE_CASE)
+        val RESIDENCY_LABEL = Regex("""^\s*artist\s+in\s+residence\s*:?\s+""", RegexOption.IGNORE_CASE)
+        val LOPSIDED_SLASH = Regex("""(?<=\S)/\s+|\s+/(?=\S)""")
         val START = Regex("""^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}""")
         val START_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("y-M-d'T'H:mm")
         val DOORS = labelledClockPattern(DOORS_LABELS)
@@ -218,7 +240,11 @@ class ATraneProgrammePageScraper {
         val BANNER = Regex("""^letzten?\s+pl(?:ä|ae)tze\b|last\s+seats\b|ausverkauft|sold\s*out""", RegexOption.IGNORE_CASE)
         val TONIGHT_WITH = Regex("""^(?:tag\s*\d+\s+)?heute\b.*?\bmit:""", RegexOption.IGNORE_CASE)
         val GUESTS_LABEL = Regex("""^heute\s+mit:""", RegexOption.IGNORE_CASE)
-        val SPECIAL_GUEST = Regex("""^(?:featuring\s+)?special\s+guests?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+        val SPECIAL_GUEST = Regex("""^(?:featuring\s+)?special\s+guest(s?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+        val MEETS = Regex("""^meets\s+(.+)$""", RegexOption.IGNORE_CASE)
+        val QUOTED_NAME = Regex("""^[«"„“]([^»"“”]+)[»"“”]""")
+        val GUESTS_SEPARATOR = Regex("""\s*[&,]\s*""")
+        val LEAD_IN = Regex("""\bmit:$""", RegexOption.IGNORE_CASE)
         val GUEST_SEPARATOR = Regex("""\s*[-–]\s+""")
 
         val NOT_A_STYLE = Regex("""live concert|eintritt frei""", RegexOption.IGNORE_CASE)

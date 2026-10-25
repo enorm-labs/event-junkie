@@ -197,6 +197,68 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `bills the act below a title that only leads in to it, and splits plural special guests`() {
+        val night =
+            card(
+                listOf(
+                    "A-TRANE PRÄSENTIERT CHRISTMAS TAG4:",
+                    "WEIHNACHTLICH BESINNLICHES MIT:",
+                    "THOMAS QUASTHOFF",
+                    "FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER",
+                    "SPECIAL GUESTS: JUTTA SPEIDEL & SIMON OSLENDER"
+                )
+            )
+
+        night.title shouldBe "WEIHNACHTLICH BESINNLICHES MIT:"
+        night.subtitle shouldBe
+            "THOMAS QUASTHOFF · FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER · SPECIAL GUESTS: JUTTA SPEIDEL & SIMON OSLENDER"
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("THOMAS QUASTHOFF" to "HEADLINER", "JUTTA SPEIDEL" to "SUPPORT", "SIMON OSLENDER" to "SUPPORT")
+    }
+
+    @Test
+    fun `bills the act a meets line quotes, not its members`() {
+        val night =
+            card(
+                listOf(
+                    "A-TRANE PRÄSENTIERT CHRISTMAS TAG3:",
+                    "WEIHNACHTLICH BESINNLICHES MIT:",
+                    "THOMAS QUASTHOFF",
+                    "FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER",
+                    // Escaped for the JSON-LD the helper writes.
+                    "MEETS \\\"THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer"
+                )
+            )
+
+        night.artists.map { it.name to it.role } shouldBe listOf("THOMAS QUASTHOFF" to "HEADLINER", "THE SHAWN & WOLF" to "SUPPORT")
+        night.subtitle!! shouldEndWith "MEETS \"THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer"
+    }
+
+    @Test
+    fun `bills the resident without the residency label`() {
+        val night =
+            card(
+                listOf(
+                    "A-TRANE PRÄSENTIERT THE NEW YEAR TRADITION CONCERT DAY2:",
+                    "ARTIST IN RESIDENCE Jeremy Sassoon",
+                    "TODAY TRIO FEAT: BJÖRN WERRA-MICHAEL KERSTING",
+                    "SPECIAL GUEST: FLORIAN MENZEL"
+                )
+            )
+
+        night.title shouldBe "ARTIST IN RESIDENCE Jeremy Sassoon"
+        night.artists.map { it.name to it.role } shouldBe listOf("Jeremy Sassoon" to "HEADLINER", "FLORIAN MENZEL" to "SUPPORT")
+    }
+
+    @Test
+    fun `splits a co-bill whose slash is spaced on one side only`() {
+        val night = session("Esther Kaiser/ Alexander Wienand", "«BREATHING» Vinyl Release Concert", "Feat: Tilmann Dehnhard-Athina Kontou")
+
+        night.title shouldBe "Esther Kaiser/ Alexander Wienand"
+        night.artists.map { it.name to it.role } shouldBe listOf("Esther Kaiser" to "HEADLINER", "Alexander Wienand" to "HEADLINER")
+    }
+
+    @Test
     fun `bills a special guest the title already names once`() {
         val nights = events.filter { it.title.startsWith("Tony Hurdle") }
 
