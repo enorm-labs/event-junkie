@@ -455,6 +455,25 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `strips gGmbH, e K and the long Veranstaltungs- descriptors`() {
+        assertSoftly {
+            canonicalPromoterName("Bossa FM Veranstaltungsservice") shouldBe "Bossa FM"
+            canonicalPromoterName("Bossa FM Veranstaltungsservice GmbH") shouldBe "Bossa FM"
+            canonicalPromoterName("NXP Veranstaltungsbetriebs GmbH") shouldBe "NXP Veranstaltungsbetriebs"
+            canonicalPromoterName("Nxp Veranstaltungsbetriebs") shouldBe "NXP Veranstaltungsbetriebs"
+            canonicalPromoterName("Reset Production e.K.") shouldBe "Reset Production"
+            canonicalPromoterName("Reset Production") shouldBe "Reset Production"
+            canonicalPromoterName("Rundfunk-Orchester und -Chöre gGmbH Berlin") shouldBe "Rundfunk-Orchester und -Chöre"
+            canonicalPromoterName("Rundfunk-Orchester und -Chöre gGmbH") shouldBe "Rundfunk-Orchester und -Chöre"
+            canonicalPromoterName("Konzertbüro Schonberg") shouldBe "Konzertbüro Schoneberg"
+            // A word that only ends in the letters of a legal form keeps them.
+            canonicalPromoterName("Tarek") shouldBe "Tarek"
+            canonicalPromoterName("Mystiek") shouldBe "Mystiek"
+            canonicalPromoterName("AEG Presents") shouldBe "AEG Presents"
+        }
+    }
+
+    @Test
     fun `refuses party names, a performer and a comedy night as promoters`() {
         assertSoftly {
             isNonPromoterName("Dirty Dancing Party") shouldBe true

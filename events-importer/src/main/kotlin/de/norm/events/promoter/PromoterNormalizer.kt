@@ -135,6 +135,7 @@ private val NON_WORD_REGEX = Regex("""[^a-z0-9äöüß]""")
 private val LEGAL_FORMS: Set<String> =
     setOf(
         "gmbh",
+        "ggmbh",
         "mbh",
         "ug",
         "gbr",
@@ -147,7 +148,9 @@ private val LEGAL_FORMS: Set<String> =
         "ltd",
         "llc",
         "inc",
-        "co"
+        "co",
+        // "e.K.", the registered sole trader; the lookup drops the dots.
+        "ek"
     )
 
 private val STRIP_WORDS: Set<String> =
@@ -175,6 +178,8 @@ private val STRIP_WORDS: Set<String> =
             // Longer German forms that split one promoter into two rows on staging (#328). "Radio France
             // International" is why "international" is not here.
             "veranstaltungs",
+            "veranstaltungsservice",
+            "veranstaltungsbetriebs",
             "veranstaltungsgmbh",
             "konzertproduktionen",
             "kulturproduktionen",
@@ -242,9 +247,16 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Huxleys' taxonomy slug drops the first word of "Konzertbüro Schoneberg".
         "schoneberg" to "Konzertbüro Schoneberg",
         "konzertbüroschoneberg" to "Konzertbüro Schoneberg",
+        "konzertbüroschonberg" to "Konzertbüro Schoneberg",
         "radioactve" to "Radioactive",
         "allrooms" to "All Rooms",
         "loft" to "Loft Concerts",
+        // The strip leaves the bare "Reset" of "Reset Production e.K." (#3996).
+        "reset" to "Reset Production",
+        // The orchestras' company: the trailing "Berlin" shields its legal form from the strip (#3996).
+        "rundfunkorchesterundchöreggmbhberlin" to "Rundfunk-Orchester und -Chöre",
+        // The initialism guard keeps "NXP Veranstaltungsbetriebs" whole; a mixed-case credit strips to "Nxp" (#3996).
+        "nxp" to "NXP Veranstaltungsbetriebs",
         // "FluxFM" (Columbia Theater, Frannz), "fluxfm" (Heimathafen) and "Flux FM" (Zitadelle, which
         // de-shouts to "Flux Fm") share this key.
         "fluxfm" to "FluxFM",
