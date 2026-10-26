@@ -60,5 +60,24 @@
     "shown": "Shown on your Following page",
     "following": "Following",
     "unfollowHint": "(press to unfollow)"
+  },
+  "search": {
+    "save": "Save search",
+    "follow": "Follow {name}",
+    "nameLabel": "Name",
+    "submit": "Save",
+    "saved": "Saved.",
+    "open": "See it on your Following page",
+    "datesDropped": "The dates you picked are not saved: a saved search keeps only Today, This weekend or Next 7 days.",
+    "failed": "That did not work. Please try again.",
+    "tooMany": "You have 20 saved searches already. Delete one first.",
+    "signIn": "Sign in to save this search",
+    "upcoming": "{count} upcoming",
+    "rename": "Rename",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "kind": "Saved search",
+    "renameLabel": "New name for {name}",
+    "list": "Saved searches ({count})"
   }
 }

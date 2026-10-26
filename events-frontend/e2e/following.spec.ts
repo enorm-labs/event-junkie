@@ -8,6 +8,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
  * · GET /api/me/following/today
+ * · GET|POST /api/me/searches · PATCH|DELETE /api/me/searches/:id
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
@@ -24,8 +25,9 @@ async function mockBff(
   signedIn: boolean,
   feed: { today?: unknown[]; upcoming?: unknown[]; following?: boolean } = {},
 ) {
-  const writes: { method: string; path: string; csrf: string | null }[] = []
+  const writes: { method: string; path: string; csrf: string | null; body?: unknown }[] = []
   let following = feed.following ?? false
+  let searches: { id: string; name: string; query: string }[] = []
   await page
     .context()
     .addCookies([{ name: 'XSRF-TOKEN', value: 'csrf-1', url: 'http://localhost' }])
@@ -39,6 +41,7 @@ async function mockBff(
         method: request.method(),
         path,
         csrf: request.headers()['x-xsrf-token'] ?? null,
+        ...(path.startsWith('/api/me/searches') ? { body: request.postDataJSON() } : {}),
       })
     }
     if (path === '/api/auth/session') return json(route, { account: signedIn ? me : null })
@@ -61,6 +64,18 @@ async function mockBff(
     if (path === '/api/me/following') {
       const content = feed.upcoming ?? []
       return json(route, { ...emptyPage, content, totalElements: content.length, totalPages: 1 })
+    }
+    if (path === '/api/me/searches') {
+      if (request.method() === 'POST') {
+        const { name, query } = request.postDataJSON() as { name: string; query: string }
+        searches = [{ id: 's1', name, query }]
+        return json(route, searches[0])
+      }
+      return json(route, searches)
+    }
+    if (path === '/api/me/searches/s1' && request.method() === 'DELETE') {
+      searches = []
+      return route.fulfill({ status: 204 })
     }
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     return route.fulfill({ status: 204 })
@@ -152,6 +167,58 @@ test('the Following page leaves Today out when nothing is on today', async ({ pa
 
   await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Today' })).toHaveCount(0)
+})
+
+test('one genre alone saves with a single press, and Following lists it with its count', async ({
+  page,
+}) => {
+  const writes = await mockBff(page, true)
+  const tonight = {
+    slug: 'tonight',
+    title: 'Tonight',
+    eventDate: '2026-10-30',
+    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+  }
+  await page.route(/\/api\/events(\?|$)/, (route) =>
+    json(route, { ...emptyPage, content: [tonight], totalElements: 7, totalPages: 1 }),
+  )
+  await page.goto('/en/events?genre=techno')
+
+  await page.getByTestId('save-search').click()
+  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible()
+  expect(writes).toContainEqual({
+    method: 'POST',
+    path: '/api/me/searches',
+    csrf: 'csrf-1',
+    body: { name: 'techno', query: 'genre=techno' },
+  })
+
+  await page.getByRole('link', { name: 'See it on your Following page' }).click()
+  await expect(page.getByRole('heading', { name: 'Saved searches (1)' })).toBeVisible()
+  await expect(page.getByText('7 upcoming')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'techno', exact: true })).toHaveAttribute(
+    'href',
+    '/en/events?genre=techno',
+  )
+
+  await page.getByRole('button', { name: 'Delete' }).click()
+  await expect(page.getByRole('heading', { name: 'Saved searches (1)' })).toHaveCount(0)
+})
+
+test('signed out, Save search leads to sign-in', async ({ page }) => {
+  await mockBff(page, false)
+  await page.route(/\/api\/events(\?|$)/, (route) =>
+    json(route, {
+      ...emptyPage,
+      content: [{ slug: 'x', title: 'X', eventDate: '2026-10-30' }],
+      totalElements: 1,
+      totalPages: 1,
+    }),
+  )
+  await page.goto('/en/events?genre=techno&free=true')
+
+  await page.getByRole('link', { name: 'Save search' }).click()
+  await expect(page).toHaveURL(/\/en\/sign-in\?next=\/en\/events$/)
 })
 
 test('signed in, the header icon opens the account menu, and sign-out leaves the account page', async ({

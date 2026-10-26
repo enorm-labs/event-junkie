@@ -57,6 +57,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/searches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's saved searches, by name */
+        get: operations["list"];
+        put?: never;
+        /**
+         * Saves the events list's filters under a name
+         * @description The query takes the events list's filter keys and `when` (today, weekend, week). Saving the same filters again answers the first search.
+         */
+        post: operations["save"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/sign-in": {
         parameters: {
             query?: never;
@@ -94,6 +115,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/searches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deletes a saved search. Deleting one that is gone changes nothing */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        /** Renames a saved search */
+        patch: operations["rename"];
+        trace?: never;
+    };
     "/api/venues": {
         parameters: {
             query?: never;
@@ -105,7 +144,7 @@ export interface paths {
          * List venues with pagination, name search and filters, sorted by name or by events in the next 30 days
          * @description Sort with `sort=name` (A–Z, case-folded), `sort=name,desc` (Z–A) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list"];
+        get: operations["list_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -196,7 +235,7 @@ export interface paths {
          * List promoters with pagination and optional name search, sorted by name or by events in the next 30 days
          * @description Sort with `sort=name` (A–Z, case-folded), `sort=name,desc` (Z–A) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -234,7 +273,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Deletes the account, its sessions and its sign-in links, at once and for good */
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -265,7 +304,7 @@ export interface paths {
             cookie?: never;
         };
         /** Everything the account follows, by name */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -350,7 +389,7 @@ export interface paths {
             cookie?: never;
         };
         /** List all genre tags alphabetically */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -390,7 +429,7 @@ export interface paths {
          * Search events with optional filters and pagination
          * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -549,7 +588,7 @@ export interface paths {
          * List artists with pagination and optional name search, sorted by name
          * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -579,6 +618,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        SavedSearchRequest: {
+            name?: string;
+            query?: string;
+        };
+        SavedSearchResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            query?: string;
+            /** Format: date-time */
+            savedAt?: string;
+        };
         SignInRequest: {
             token?: string;
         };
@@ -592,6 +643,9 @@ export interface components {
             email?: string;
             locale?: string;
             next?: string | null;
+        };
+        SavedSearchRename: {
+            name?: string;
         };
         /** @description One format of a cached image, for a <source> element inside <picture> */
         ImageSourceResponse: {
@@ -1537,6 +1591,7 @@ export interface components {
             lastSignInAt?: string;
             sessions?: components["schemas"]["SessionInfo"][];
             follows?: components["schemas"]["FollowResponse"][];
+            searches?: components["schemas"]["SavedSearchResponse"][];
         };
         SessionInfo: {
             /** Format: date-time */
@@ -2295,6 +2350,50 @@ export interface operations {
             };
         };
     };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SavedSearchResponse"][];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SavedSearchResponse"];
+                };
+            };
+        };
+    };
     signIn: {
         parameters: {
             query?: never;
@@ -2341,7 +2440,53 @@ export interface operations {
             };
         };
     };
-    list: {
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedSearchRename"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SavedSearchResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
         parameters: {
             query?: {
                 /** @description Search on the venue name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all venues. */
@@ -2501,7 +2646,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 /** @description Search on the promoter name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all promoters. */
@@ -2576,7 +2721,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2614,7 +2759,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2731,7 +2876,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2771,7 +2916,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
@@ -3132,7 +3277,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */

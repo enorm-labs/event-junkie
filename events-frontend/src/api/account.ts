@@ -91,3 +91,35 @@ export async function fetchFollowing(page = 0, from?: string): Promise<EventSumm
 export async function fetchFollowingToday(): Promise<EventSummary[]> {
   return unwrap(api.GET('/api/me/following/today'))
 }
+
+/** A saved search (#3890): the events list's query string under a name. */
+export interface SavedSearch {
+  id: string
+  name: string
+  query: string
+}
+
+function savedSearch(item: { id?: string; name?: string; query?: string }): SavedSearch[] {
+  return item.id && item.name && item.query
+    ? [{ id: item.id, name: item.name, query: item.query }]
+    : []
+}
+
+export async function fetchSearches(): Promise<SavedSearch[]> {
+  return (await unwrap(api.GET('/api/me/searches'))).flatMap(savedSearch)
+}
+
+/** Saves [query]; saving the same filters again answers the first search. */
+export async function saveSearch(name: string, query: string): Promise<SavedSearch> {
+  const [saved] = savedSearch(await unwrap(api.POST('/api/me/searches', { body: { name, query } })))
+  if (!saved) throw new Error('The saved search came back incomplete')
+  return saved
+}
+
+export async function renameSearch(id: string, name: string): Promise<void> {
+  await unwrap(api.PATCH('/api/me/searches/{id}', { params: { path: { id } }, body: { name } }))
+}
+
+export async function deleteSearch(id: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/searches/{id}', { params: { path: { id } } }))
+}

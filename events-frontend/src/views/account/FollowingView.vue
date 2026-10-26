@@ -11,6 +11,7 @@ import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import ListPage from '@/components/ListPage.vue'
+import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
 import { Button } from '@/components/ui/button'
@@ -52,7 +53,11 @@ const ROUTE: Record<FollowKind, string> = {
   promoter: 'promoters',
 }
 
-const empty = computed(() => follows.value !== null && follows.value.length === 0)
+// Saved searches count as following something (#3890), so they end the empty state too.
+const searchCount = ref(0)
+const empty = computed(
+  () => follows.value !== null && follows.value.length === 0 && searchCount.value === 0,
+)
 
 async function load() {
   problem.value = ''
@@ -186,6 +191,8 @@ onMounted(async () => {
           {{ t('common.actions.showMore') }}
         </Button>
       </section>
+
+      <SavedSearchList @loaded="searchCount = $event" />
 
       <section v-if="follows.length" class="space-y-4">
         <SectionLabel as="h2">{{

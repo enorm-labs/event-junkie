@@ -80,6 +80,8 @@ lists what that includes and what it excludes.
   the account page and sign-out.
 - **Follow** artists, venues and promoters on their pages. The **Following** page shows today's events first, as the home page
   does, then what is coming up from all of them, by date.
+- **Save a search** on the events list, under a name the page suggests. One genre or one district saves with a single press. The **Following**
+  page lists each saved search with how many events match.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**
@@ -160,6 +162,8 @@ the first column. It fails in two cases:
 | `/api/me/follows/{kind}/{slug}`    | Whether it follows one, and follow or unfollow it                                    |
 | `/api/me/following`                | Upcoming events of everything the account follows, from a date when given            |
 | `/api/me/following/today`          | Today's events of everything the account follows, a running night included           |
+| `/api/me/searches`                 | The account's saved searches, and saving one                                         |
+| `/api/me/searches/{id}`            | Renaming or deleting a saved search                                                  |
 | `/api/me/sign-out`                 | Ends this browser's session                                                          |
 | `/api/me/sign-out-everywhere`      | Ends every session of the account                                                    |
 | `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                              |

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
 import CalendarSubscribeMenu from '@/components/CalendarSubscribeMenu.vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import SaveSearch from '@/components/SaveSearch.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -234,6 +235,7 @@ const mapLink = computed(() => ({
             :name="calendarTitle"
             :path="calendarHref"
           />
+          <SaveSearch :filters="filters" :labels="calendarLabels" :range="dateRange" />
           <a
             :aria-label="feedLabel"
             :href="feedHref"
