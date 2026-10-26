@@ -11,13 +11,14 @@ import org.jsoup.nodes.Document
 import java.math.BigDecimal
 import java.time.LocalTime
 
-/** What a performance's ticket page adds to its list row. */
+/** What a performance's ticket page adds to its list row. [soldElsewhere] marks another seller's page, which gives only the text. */
 data class DownstairsShow(
     val description: String?,
     val imageUrl: String?,
     val price: BigDecimal?,
     val priceNote: String?,
-    val doorsTime: LocalTime?
+    val doorsTime: LocalTime?,
+    val soldElsewhere: Boolean = false
 )
 
 /**
@@ -28,20 +29,26 @@ data class DownstairsShow(
  * offer. The tier labels (`Normalpreis`, `Social Club`) are only in the variant forms, which a
  * sold-out page does not render, so a sold-out show has no tier note.
  *
- * A show sold elsewhere redirects to that seller (rausgegangen, fienta). Its page is not the shop's,
- * so a page without the shop's info badges is not read: fienta's JSON-LD prices a ticket at 0.00.
+ * A show sold elsewhere redirects to that seller (fienta, standup-republic, the comedian's own shop).
+ * A page without the shop's info badges gives only its JSON-LD description: fienta prices a ticket
+ * at 0.00, and a tour page dates another city's night. Without the text, the row kept the text it
+ * stored before the redirect (#3969).
  */
 class DownstairsTicketPageScraper {
-    fun scrape(document: Document): DownstairsShow? =
-        document.jsonLdEvents().firstOrNull()?.takeIf { document.selectFirst(INFO_BADGE) != null }?.let { event ->
-            DownstairsShow(
-                description = htmlParagraphText(event.stringOrNull("description")),
-                imageUrl = event.schemaImageUrl(),
-                price = event.schemaOffers().mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
-                priceNote = tierNote(document),
-                doorsTime = document.select(INFO_BADGE).firstNotNullOfOrNull { DOORS.find(it.text()) }?.let { parseTime(it.groupValues[1]) }
-            )
+    fun scrape(document: Document): DownstairsShow? {
+        val event = document.jsonLdEvents().firstOrNull() ?: return null
+        if (document.selectFirst(INFO_BADGE) == null) {
+            val description = htmlParagraphText(event.stringOrNull("description")) ?: return null
+            return DownstairsShow(description, imageUrl = null, price = null, priceNote = null, doorsTime = null, soldElsewhere = true)
         }
+        return DownstairsShow(
+            description = htmlParagraphText(event.stringOrNull("description")),
+            imageUrl = event.schemaImageUrl(),
+            price = event.schemaOffers().mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
+            priceNote = tierNote(document),
+            doorsTime = document.select(INFO_BADGE).firstNotNullOfOrNull { DOORS.find(it.text()) }?.let { parseTime(it.groupValues[1]) }
+        )
+    }
 
     /** `Normalpreis: 27,50 € · Social Club: 15,50 €`, when the page sells more than one tier. */
     private fun tierNote(document: Document): String? =

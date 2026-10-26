@@ -56,12 +56,34 @@ class DownstairsTicketPageScraperTest {
     }
 
     @Test
-    fun `reads nothing from another seller's page that the shop redirects to`() {
+    fun `reads only the text of another seller's page that the shop redirects to`() {
+        val html =
+            """
+            <script type="application/ld+json">{"@type":"Event","name":"Unfallkind","description":"Die neue Show.",
+              "image":["https://fienta.com/cf/img/?file=x.jpg"],"offers":[{"@type":"Offer","price":"0.00"}]}</script>
+            """.trimIndent()
+
+        val show = scraper.scrape(Jsoup.parse(html)).shouldNotBeNull()
+
+        show.soldElsewhere shouldBe true
+        show.description shouldBe "Die neue Show."
+        show.imageUrl.shouldBeNull()
+        show.price.shouldBeNull()
+        show.doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `reads nothing from another seller's page without a description`() {
         val html =
             """
             <script type="application/ld+json">{"@type":"Event","name":"Unfallkind","offers":[{"@type":"Offer","price":"0.00"}]}</script>
             """.trimIndent()
 
         scraper.scrape(Jsoup.parse(html)).shouldBeNull()
+    }
+
+    @Test
+    fun `marks the shop's own page as not sold elsewhere`() {
+        scraper.scrape(document("downstairs-ticket.html")).shouldNotBeNull().soldElsewhere shouldBe false
     }
 }

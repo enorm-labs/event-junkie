@@ -204,7 +204,7 @@ says so.
 | `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `DISTEL`               | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
-| `DOWNSTAIRS`           | `PRICE`            | a show the club sells through another ticket shop links there, and only the club's own shop is read, so the night keeps no price                 | —     |
+| `DOWNSTAIRS`           | `PRICE`            | a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price             | —     |
 | `DOWNSTAIRS`           | `END_TIME`         | the shop gives every performance the same 6 a.m. end                                                                                             | —     |
 | `DOWNSTAIRS`           | `ARTISTS`          | the club's own nights bill a format, and the comedians appear only in prose                                                                      | —     |
 | `DOWNSTAIRS`           | `GENRE`            | the shop names no genre                                                                                                                          | —     |
