@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -34,7 +35,8 @@ import java.time.LocalDate
 @Tag(name = "Admin: Events", description = "Admin CRUD endpoints for managing events")
 class EventController(
     private val eventService: EventService,
-    private val eventPinService: EventPinService
+    private val eventPinService: EventPinService,
+    private val eventPatchService: EventPatchService
 ) {
     /**
      * Lists events with pagination, optionally narrowed to a venue, a date, an artist, a title, a first date, a
@@ -115,6 +117,15 @@ class EventController(
     suspend fun create(
         @Valid @RequestBody request: EventRequest
     ): EventResponse = eventService.create(request)
+
+    /** Changes only the fields sent, and pins each one whose value changes, as a PUT does (#3995). */
+    @PatchMapping("/{id}")
+    @Operation(summary = "Change some fields of an event, pinning each one the edit changes")
+    suspend fun patch(
+        @Parameter(description = "Database ID of the event.", example = "1")
+        @PathVariable id: Long,
+        @Valid @RequestBody patch: EventPatchRequest
+    ): EventResponse = eventPatchService.patch(id, patch)
 
     /** Replaces the event. Each field whose value changes is pinned, and the importer keeps it (ADR-042). */
     @PutMapping("/{id}")
