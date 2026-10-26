@@ -11,11 +11,14 @@ import {
   ARTIST_ROLES,
   type EventArtist,
   type EventFeatures,
+  EVENT_STATUSES,
   EVENT_TYPES,
+  type EventStatus,
   type EventType,
   fetchEvent,
   fetchEventFeatures,
   EVENT_FEATURES,
+  MOVED_STATUSES,
   setEventFeatures,
   toEventRequest,
   unpinField,
@@ -42,6 +45,11 @@ const emit = defineEmits<{ close: []; saved: [event: AdminEvent] }>()
 
 const event = ref<AdminEvent | null>(null)
 const eventType = ref<EventType>('OTHER')
+const status = ref<EventStatus>('SCHEDULED')
+/** Where a moved show went, and its new ISO date, as typed; '' is none. */
+const relocatedTo = ref('')
+const relocatedOn = ref('')
+const moved = computed(() => MOVED_STATUSES.includes(status.value))
 const genre = ref('')
 const subtitle = ref('')
 const description = ref('')
@@ -163,6 +171,9 @@ async function loadFeatures(id: number) {
 function show(loaded: AdminEvent) {
   event.value = loaded
   eventType.value = loaded.eventType
+  status.value = loaded.status as EventStatus
+  relocatedTo.value = loaded.relocatedTo ?? ''
+  relocatedOn.value = loaded.relocatedOn ?? ''
   genre.value = loaded.genre ?? ''
   subtitle.value = loaded.subtitle ?? ''
   description.value = loaded.description ?? ''
@@ -270,6 +281,8 @@ function save() {
       current.id,
       toEventRequest(current, {
         eventType: eventType.value,
+        status: status.value,
+        ...relocationEdit(current),
         genre: genre.value,
         subtitle: subtitle.value,
         description: description.value,
@@ -283,6 +296,18 @@ function save() {
     show(saved)
     emit('saved', saved)
   })
+}
+
+/** The destination and new date, sent only when the operator changed them, so an unchanged move pins nothing. */
+function relocationEdit(current: AdminEvent): { relocatedTo?: string; relocatedOn?: string } {
+  return {
+    ...(relocatedTo.value === (current.relocatedTo ?? '')
+      ? {}
+      : { relocatedTo: relocatedTo.value }),
+    ...(relocatedOn.value === (current.relocatedOn ?? '')
+      ? {}
+      : { relocatedOn: relocatedOn.value }),
+  }
 }
 
 function unpin(field: string) {
@@ -351,6 +376,39 @@ function unpin(field: string) {
               <option v-for="type in EVENT_TYPES" :key="type" :value="type">{{ type }}</option>
             </select>
           </label>
+          <label class="flex flex-col gap-1.5" for="edit-status">
+            <span class="text-sm font-medium">Status</span>
+            <select
+              v-model="status"
+              aria-describedby="edit-status-hint"
+              class="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              id="edit-status"
+              name="status"
+            >
+              <option v-for="option in EVENT_STATUSES" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+            <span id="edit-status-hint" class="text-xs text-muted-foreground">
+              A changed status is pinned: no import changes it until you unpin it. Any status but
+              RELOCATED or POSTPONED clears where the show went.
+            </span>
+          </label>
+          <template v-if="moved">
+            <label class="flex flex-col gap-1.5" for="edit-relocated-to">
+              <span class="text-sm font-medium">Moved to</span>
+              <Input
+                id="edit-relocated-to"
+                v-model="relocatedTo"
+                name="relocatedTo"
+                placeholder="The venue the show moved to"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5" for="edit-relocated-on">
+              <span class="text-sm font-medium">New date</span>
+              <Input id="edit-relocated-on" v-model="relocatedOn" name="relocatedOn" type="date" />
+            </label>
+          </template>
           <label class="flex flex-col gap-1.5" for="edit-genre">
             <span class="text-sm font-medium">Genre</span>
             <Input id="edit-genre" v-model="genre" name="genre" placeholder="No genre" />

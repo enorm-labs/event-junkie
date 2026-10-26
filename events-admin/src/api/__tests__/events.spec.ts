@@ -98,6 +98,34 @@ describe('toEventRequest', () => {
   })
 })
 
+describe('toEventRequest with a status edit', () => {
+  it('sends the edited status, and the destination and date only on a moved status (#3994)', () => {
+    const event = adminEvent({ status: 'RELOCATED', relocatedTo: 'Huxleys' })
+
+    expect(
+      toEventRequest(event, {
+        eventType: 'OTHER',
+        genre: '',
+        status: 'RELOCATED',
+        relocatedTo: ' Bi Nuu ',
+        relocatedOn: '',
+      }),
+    ).toMatchObject({ status: 'RELOCATED', relocatedTo: 'Bi Nuu', relocatedOn: null })
+    expect(toEventRequest(event, { eventType: 'OTHER', genre: '' })).not.toHaveProperty(
+      'relocatedTo',
+    )
+
+    const scheduled = toEventRequest(event, {
+      eventType: 'OTHER',
+      genre: '',
+      status: 'SCHEDULED',
+      relocatedTo: 'Bi Nuu',
+    })
+    expect(scheduled.status).toBe('SCHEDULED')
+    expect(scheduled).not.toHaveProperty('relocatedTo')
+  })
+})
+
 describe('toEventRequest with a subtitle and description edit', () => {
   const edit = { eventType: 'OTHER', genre: '' } as const
 

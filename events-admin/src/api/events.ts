@@ -23,6 +23,14 @@ export const EVENT_TYPES = [
 
 export type EventType = (typeof EVENT_TYPES)[number]
 
+/** `EventStatus` in `events-core`, in its order. */
+export const EVENT_STATUSES = ['SCHEDULED', 'RELOCATED', 'CANCELLED', 'POSTPONED'] as const
+
+export type EventStatus = (typeof EVENT_STATUSES)[number]
+
+/** The statuses whose event may name where the show went (ADR-030). */
+export const MOVED_STATUSES: readonly string[] = ['RELOCATED', 'POSTPONED']
+
 /** `ArtistRole` in `events-core`, in its order. */
 export const ARTIST_ROLES = ['HEADLINER', 'SUPPORT', 'DJ', 'LIVE'] as const
 
@@ -68,6 +76,10 @@ export interface AdminEvent {
   festivalId?: number | null
   /** The instant until which the event is "Our pick" on the public list (#1262), or null. */
   featuredUntil?: string | null
+  /** Where a moved show went, or null. */
+  relocatedTo?: string | null
+  /** The ISO date a moved show went to, or null. */
+  relocatedOn?: string | null
 }
 
 /** `EventRequest`: the body of a POST or a PUT. */
@@ -99,11 +111,20 @@ export interface EventRequest {
   festivalId?: number | null
   /** An ISO instant. Left out, the importer keeps the stored pick; null clears it (#1262). */
   featuredUntil?: string | null
+  /** Only on a moved status. Left out, the importer keeps the stored value; null clears it (#3994). */
+  relocatedTo?: string | null
+  relocatedOn?: string | null
 }
 
 /** The fields this app edits. Every other field goes back as it was read. */
 export interface EventEdit {
   eventType: EventType
+  /** Left out, the stored status goes back. */
+  status?: EventStatus
+  /** Where the show went, sent only on a moved status. Blank clears it; left out, the body omits it. */
+  relocatedTo?: string
+  /** The new ISO date, under the same rules as `relocatedTo`. */
+  relocatedOn?: string
   /** Blank clears the genre. */
   genre: string
   /** The subtitle as typed. Blank clears it; left out, or as read, the stored value goes back. */
@@ -133,7 +154,7 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
     subtitle: editedText(edit.subtitle, event.subtitle),
     description: editedText(edit.description, event.description),
     eventType: edit.eventType,
-    status: event.status,
+    status: edit.status ?? event.status,
     eventDate: event.eventDate,
     doorsTime: event.doorsTime,
     startTime: event.startTime,
@@ -158,6 +179,22 @@ export function toEventRequest(event: AdminEvent, edit: EventEdit): EventRequest
     promoterIds: edit.promoterIds ?? event.promoterIds,
     ...(edit.festivalId === undefined ? {} : { festivalId: edit.festivalId }),
     ...(edit.featuredUntil === undefined ? {} : { featuredUntil: edit.featuredUntil }),
+    ...relocationEdit(edit.status ?? event.status, edit),
+  }
+}
+
+/**
+ * The destination and new date to send. Only a moved status carries them: on any other the importer
+ * clears both and refuses a value (#3994).
+ */
+function relocationEdit(
+  status: string,
+  edit: EventEdit,
+): Pick<EventRequest, 'relocatedTo' | 'relocatedOn'> {
+  if (!MOVED_STATUSES.includes(status)) return {}
+  return {
+    ...(edit.relocatedTo === undefined ? {} : { relocatedTo: blankToNull(edit.relocatedTo) }),
+    ...(edit.relocatedOn === undefined ? {} : { relocatedOn: blankToNull(edit.relocatedOn) }),
   }
 }
 

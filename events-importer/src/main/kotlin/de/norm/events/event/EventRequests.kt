@@ -119,7 +119,33 @@ data class EventRequest(
         nullable = true,
         example = "1"
     )
-    val festivalId: Optional<Long>? = null
+    val festivalId: Optional<Long>? = null,
+    /**
+     * Where a `RELOCATED` or `POSTPONED` show went (ADR-030). Left out, an update keeps the stored
+     * destination; an explicit JSON `null` clears it. Changing the status to one that is not a move clears it.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description =
+            "The house a RELOCATED or POSTPONED show moved to. On an update, leaving the field out keeps the current " +
+                "value, and null clears it. A value on any other status is a 400, and changing to such a status clears it",
+        type = "string",
+        nullable = true,
+        example = "Huxleys Neue Welt"
+    )
+    val relocatedTo: Optional<String>? = null,
+    /** The new date of a show that moved, under the same rules as [relocatedTo]. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description =
+            "The date a RELOCATED or POSTPONED show moved to. On an update, leaving the field out keeps the current " +
+                "value, and null clears it. A value on any other status is a 400",
+        type = "string",
+        format = "date",
+        nullable = true,
+        example = "2027-03-12"
+    )
+    val relocatedOn: Optional<LocalDate>? = null
 )
 
 /**
