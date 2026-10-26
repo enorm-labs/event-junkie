@@ -136,6 +136,26 @@ class AccountStore(
             .map { row -> row.required("n", Long::class.javaObjectType) }
             .awaitSingle()
 
+    /** How many accounts exist, how many were used since [activeSince], and how many browsers hold a live session at [now]. */
+    suspend fun counts(
+        activeSince: Instant,
+        now: Instant
+    ): AccountCounts =
+        db
+            .sql(
+                "SELECT (SELECT count(*) FROM accounts.account) AS total, " +
+                    "(SELECT count(*) FROM accounts.account WHERE last_sign_in_at > :since) AS active, " +
+                    "(SELECT count(*) FROM accounts.session WHERE expires_at > :now) AS sessions"
+            ).bind("since", activeSince)
+            .bind("now", now)
+            .map { row ->
+                AccountCounts(
+                    total = row.required("total", Long::class.javaObjectType),
+                    active = row.required("active", Long::class.javaObjectType),
+                    sessions = row.required("sessions", Long::class.javaObjectType)
+                )
+            }.awaitSingle()
+
     /** Sign-in links that expired before [before], used or not. */
     suspend fun deleteLinks(before: Instant): Long =
         db
@@ -144,6 +164,12 @@ class AccountStore(
             .fetch()
             .awaitRowsUpdated()
 }
+
+data class AccountCounts(
+    val total: Long,
+    val active: Long,
+    val sessions: Long
+)
 
 internal const val ACCOUNT_COLUMNS = "id, email, locale, created_at, last_sign_in_at"
 

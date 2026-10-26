@@ -859,6 +859,9 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.auth.sign_in{outcome}`                      | Counter                               | ok / invalid — an unknown, used and expired link are one outcome, as to the caller   |
 | `bff.accounts.cleanup{outcome}`                  | Counter                               | links/sessions/follows_purged, warned, warn_failed, deleted, failed (#3905, #3889)   |
 | `bff.account.follow{action,kind}`                | Counter                               | follow / unfollow, per artist / venue / promoter (#3889)                             |
+| `bff.accounts.count{state}`                      | Gauge                                 | all / active — active is used in the last 30 days. Same on every replica: take `max` |
+| `bff.accounts.sessions`                          | Gauge                                 | Live sessions, one per signed-in browser. Refreshed every 5 minutes                  |
+| `bff.accounts.follows{kind}`                     | Gauge                                 | Follows that exist, per artist / venue / promoter                                    |
 
 **Nine things to know before writing a rule against these:**
 

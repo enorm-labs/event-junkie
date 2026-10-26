@@ -1,13 +1,13 @@
 # Traffic
 
-How many people used the public site over the days OpenObserve keeps, and whether a crawler is posing as them. **Read-only**: the logs are the input,
+How many people used the public site over the days OpenObserve keeps, whether a crawler is posing as them, and how the accounts grow. **Read-only**: the logs are the input,
 a short answer in the terminal is the deliverable, and the only change it may propose is a new entry in `RENDERERS` in `scripts/o2-query.sh`.
 
 ## Important
 
 - **Needs the WireGuard tunnel and the production kubeconfig context.** `scripts/ej.sh status` says whether the tunnel is up. If it is down, say so and
   stop. Bringing it up takes `sudo`, which the operator runs.
-- **Every number is an estimate, never a visitor count.** No log carries an IP or any other visitor key. Say "about 250 sessions", never "250
+- **Every traffic number is an estimate, never a visitor count.** No log carries an IP or any other visitor key. The account counts in Step 3 are exact. Say "about 250 sessions", never "250
   visitors".
 - **Do not propose counting unique visitors, and do not propose storing daily totals.** The first is new processing under
   [Privacy & GDPR](../../AGENTS.md#privacy--gdpr--re-check-when-infrastructure-or-features-change). The operator decided against the second: 14 days
@@ -62,12 +62,32 @@ must fall, and daytime sessions must stay above `page_loads`' level on a normal 
 
 A row whose `agent` is a browser user agent is a crawler that hides its name. It cannot go into `RENDERERS`, because the list matches by name. Report it.
 
-## Step 3 — The answer
+## Step 3 — Accounts
+
+```sh
+scripts/o2-query.sh <env> accounts --hours "$HOURS" > temp/accounts-<env>.json
+jq '.now, .today' temp/accounts-<env>.json
+jq -r '.days[] | [.day, .accounts.all, .accounts.active, .links.sent, .sign_ins.ok, .follows.follow, .follows.unfollow, .cleanup.deleted] | @tsv' temp/accounts-<env>.json
+```
+
+[OPENOBSERVE.md § Accounts](../../docs/ops/OPENOBSERVE.md#accounts) says what each field counts. Unlike Step 1, these counts are exact: say
+"12 accounts", not "about 12".
+
+- **The account total comes from `now.accounts.all`, never from summing `sign_ins.ok`.** A sign-in is every use of a link, not a new account.
+- **A `null` or empty `now.accounts` means the gauges are not there.** The BFF that publishes them is not deployed, or OpenObserve has no scrape yet.
+  Say so and report the daily counters only.
+- **`links.sent` well above `sign_ins.ok`** means people ask for links and do not use them. Report the ratio when `links.sent` is 5 or more.
+- **Any `mail_unavailable`, `mail_failed` or cleanup `failed`** is a defect, not traffic. Name it, and point to `/log-check`.
+- Never print or look up an address. The metrics have none, and this step needs none.
+
+## Step 4 — The answer
 
 In the terminal, in this order. Write no file other than the JSON in `temp/`.
 
 1. The headline: sessions and page loads for the window, and the window's dates.
 2. A table of the days: `page_loads` and `sessions`. Mark today as partial.
 3. The week-on-week change, from whole weeks only.
-4. Anything that distorts the numbers: a burst day (`in_burst`, usually the Sunday DAST run), a renderer found in Step 2, a deployment gap.
-5. One next action, or "nothing to do".
+4. Accounts: the total and active now, live sessions, follows per kind, and the days' links sent, sign-ins and follows. A day table only when a day has
+   a value above zero.
+5. Anything that distorts the numbers: a burst day (`in_burst`, usually the Sunday DAST run), a renderer found in Step 2, a deployment gap.
+6. One next action, or "nothing to do".
