@@ -29,9 +29,9 @@
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
 # still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
 # `libexpat >= 2.9.0-r0` (#1802, #3537), `libuuid >= 2.42.3-r1` (#1117), `pcre2 >= 10.49-r0` (#2298),
-# `tiff >= 4.7.2-r0` (#2883), `libx11 >= 1.8.14-r0` (CVE-2026-88806) and `brotli-libs >= 1.2.1-r0`
-# (CVE-2026-111497), checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs"'`
+# `tiff >= 4.7.2-r0` (#2883), `libx11 >= 1.8.14-r0` (CVE-2026-88806), `brotli-libs >= 1.2.1-r0`
+# (CVE-2026-111497) and `curl`/`libcurl >= 8.23.0-r0` (CVE-2026-92392), checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2|^tiff|^libx11|^brotli-libs|^curl|^libcurl"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
 # verified clean and changed nothing.
@@ -47,18 +47,25 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
 
-# A base-image CVE fix that has not arrived upstream: CVE-2026-111497, an out-of-bounds write in
-# the Brotli decoder, is fixed in Alpine 3.24's `brotli-libs 1.2.1-r0` for both x86_64 and aarch64,
-# but the pinned base still ships 1.2.0-r1. A digest bump was not available — `1.31-alpine` already
-# resolves to the digest above, so there is nothing newer to pin. This is what blocks `release.yml`
-# at *Scan the images*, and a fixable finding is fixed rather than waived.
+# Base-image CVE fixes that have not arrived upstream. Each is fixed in Alpine 3.24 for both
+# x86_64 and aarch64 while the pinned base still ships the vulnerable version, and in each case a
+# digest bump was not available — `1.31-alpine` already resolves to the digest above, so there is
+# nothing newer to pin. This is what blocks `release.yml` at *Scan the images*, and a fixable
+# finding is fixed rather than waived.
 #
-# Delete this once the base ships 1.2.1-r0 or later: an upgrade kept past its purpose hides that
-# the base has caught up and quietly becomes the thing choosing the version. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs"'` on the
-# pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is unaffected.
+#   brotli-libs  CVE-2026-111497, an out-of-bounds write in the Brotli decoder. Fixed in
+#                1.2.1-r0; the base ships 1.2.0-r1.
+#   curl         CVE-2026-92392, a use-after-free in HTTP/2 upload handling, raised against both
+#   libcurl      `curl` and `libcurl`. Fixed in 8.23.0-r0; the base ships 8.22.0-r0.
+#
+# Delete a package from this line once the base ships the fixed version or later: an upgrade kept
+# past its purpose hides that the base has caught up and quietly becomes the thing choosing the
+# version. Check with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^brotli-libs|^curl|^libcurl"'`
+# on the pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is
+# unaffected.
 USER 0
-RUN apk upgrade --no-cache brotli-libs
+RUN apk upgrade --no-cache brotli-libs curl libcurl
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
