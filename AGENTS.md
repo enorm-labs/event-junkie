@@ -8,7 +8,7 @@ The conventions every change in this repository is held to. Written for AI agent
 are here, and the rest are one link away.
 
 ```bash
-./gradlew clean build                    # compile, test, ktlint, detekt, coverage — the backend gate
+./gradlew clean build detektMain detektTest   # compile, test, ktlint, detekt, coverage — the backend gate
 ./gradlew ktlintFormat                   # auto-fix formatting before fixing anything by hand
 scripts/format-markdown.sh               # any .md change; the commit hook runs it anyway
 cd events-frontend && npm run type-check && npm run lint && npm run test:unit
@@ -71,7 +71,8 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
   Jsoup ignores indentation, so a reformatted snapshot is still valid and never on its own a reason to re-capture. The one caveat: whitespace _between inline
   elements_ changes the text Jsoup returns (`<b>a</b><b>b</b>` is `ab`; with a newline, `a b`). If a reformat fails a scraper test, that is a finding —
   **raise it with the user**; do not revert the file or loosen the assertion.
-- **Build verification**: `./gradlew clean build` after a backend change. Skip it when only `.md` or `events-frontend/` files changed; a Markdown change still
+- **Build verification**: `./gradlew clean build detektMain detektTest` after a backend change. `build` runs only the syntax-level `detekt`, and CI fails
+  the type-resolved rules it misses (#4013). Skip it when only `.md` or `events-frontend/` files changed; a Markdown change still
   runs `scripts/format-markdown.sh` ([markdown.instructions.md](.github/instructions/markdown.instructions.md)).
 - **Write a plan to `temp/`** (gitignored), as Markdown, named `temp/<issue>-<slug>.md` or `temp/<topic>.md`. The same for an audit or a draft anyone will read.
   A plan in the tree becomes documentation nobody updates; a plan only in the terminal is gone at the next compaction. Format it by name —
