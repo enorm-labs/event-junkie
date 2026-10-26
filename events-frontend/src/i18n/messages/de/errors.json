@@ -23,6 +23,7 @@
     "search": "der Suchergebnisse",
     "pastEvents": "der vergangenen Events",
     "account": "deines Kontos",
-    "following": "deine Follows"
+    "following": "deine Follows",
+    "myCalendar": "deinen Kalender"
   }
 }

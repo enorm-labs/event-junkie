@@ -33,7 +33,7 @@ const ROW =
   'block rounded-md px-2 py-1.5 text-body hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden disabled:opacity-50'
 
 /** The pages that show the account itself; signed out, they have nothing left to show. */
-const ACCOUNT_PAGE = /^\/(de|en)\/(following|account)\/?$/
+const ACCOUNT_PAGE = /^\/(de|en)\/(following|my-calendar|account)\/?$/
 
 async function leave() {
   if (busy.value) return
@@ -51,6 +51,12 @@ async function leave() {
     busy.value = false
   }
 }
+
+const MENU = [
+  { path: '/following', label: 'common.nav.following' },
+  { path: '/my-calendar', label: 'pageTitle.myCalendar' },
+  { path: '/account', label: 'pageTitle.account' },
+]
 </script>
 
 <template>
@@ -79,9 +85,9 @@ async function leave() {
           {{ t('account.page.signedInAs', { email: account.email }) }}
         </p>
         <ul :aria-label="menuLabel">
-          <li v-for="link in ['/following', '/account']" :key="link">
-            <RouterLink :to="localePath(link)" :class="ROW" @click="open = false">
-              {{ link === '/following' ? t('common.nav.following') : t('pageTitle.account') }}
+          <li v-for="link in MENU" :key="link.path">
+            <RouterLink :to="localePath(link.path)" :class="ROW" @click="open = false">
+              {{ t(link.label) }}
             </RouterLink>
           </li>
           <!-- A row like the links, so the three line up; a button, because it does not go anywhere. -->

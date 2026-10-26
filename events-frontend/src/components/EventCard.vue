@@ -7,6 +7,7 @@ import BaseBadge from '@/components/BaseBadge.vue'
 import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
+import { useRsvps } from '@/composables/useRsvps'
 import { useFormat } from '@/composables/useFormat'
 import { useGenreFamilies } from '@/composables/useGenreFamilies'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -50,6 +51,10 @@ const taxonomy = computed(() =>
 
 const localePath = useLocalePath()
 
+// The visitor's own plan for this event (#3892): a mark, not a control, because the card is a link.
+const { statuses } = useRsvps()
+const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug] : undefined))
+
 const { t } = useI18n()
 </script>
 
@@ -78,10 +83,14 @@ const { t } = useI18n()
            lead's pill says why this tile is larger: a person chose it (#1262). The festival's says
            which city-wide week the night is part of (#3273). -->
       <div
-        v-if="lead || event.festival?.name"
+        v-if="lead || event.festival?.name || rsvp"
         class="absolute top-3 right-3 left-3 z-10 flex flex-col items-start gap-2"
       >
         <PickBadge v-if="lead" />
+        <!-- Right-aligned, so it never covers the drawn poster's date in the top-left corner. -->
+        <BaseBadge v-if="rsvp" class="self-end" data-testid="rsvp-badge" variant="primary">
+          {{ t(rsvp === 'going' ? 'account.rsvp.badgeGoing' : 'account.rsvp.badgeInterested') }}
+        </BaseBadge>
         <BaseBadge
           v-if="event.festival?.name"
           :title="t('events.card.partOf', { name: event.festival.name })"

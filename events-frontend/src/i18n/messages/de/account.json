@@ -50,7 +50,7 @@
     "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
     "tooMany": "Du folgst schon 500 Einträgen. Entfolge zuerst einem.",
     "page": {
-      "intro": "Kommende Events der Acts, Locations und Veranstalter, denen du folgst, nach Datum.",
+      "intro": "Heutige und kommende Events von allem, dem du folgst, und von dem, was du vorhast, nach Datum.",
       "account": "Dein Konto",
       "empty": "Du folgst noch nichts. Folge einem Act, einer Location oder einem Veranstalter auf der jeweiligen Seite, oder fang mit einer dieser Locations an.",
       "suggestions": "Locations mit den meisten Events",
@@ -79,5 +79,22 @@
     "kind": "Gespeicherte Suche",
     "renameLabel": "Neuer Name für {name}",
     "list": "Gespeicherte Suchen ({count})"
+  },
+  "rsvp": {
+    "interested": "Interessiert",
+    "going": "Dabei",
+    "label": "Deine Pläne für dieses Event",
+    "signIn": "Melde dich an, um deine Pläne zu speichern",
+    "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+    "badgeInterested": "Du bist interessiert",
+    "badgeGoing": "Du bist dabei",
+    "page": {
+      "intro": "Die Events, für die du dich interessierst oder bei denen du dabei bist. Nur du siehst sie.",
+      "list": "Liste",
+      "calendar": "Kalender",
+      "upcoming": "Demnächst",
+      "past": "Schon gewesen",
+      "none": "Noch nichts geplant. Drück auf einer Eventseite auf Interessiert oder Dabei."
+    }
   }
 }

@@ -9,6 +9,7 @@ import EventCard from '@/components/EventCard.vue'
 import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
+import RsvpToggle from '@/components/RsvpToggle.vue'
 import EventWhen from '@/components/EventWhen.vue'
 import ListenLinks from '@/components/ListenLinks.vue'
 import PickBadge from '@/components/PickBadge.vue'
@@ -576,6 +577,9 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         show left — the house it moved to sells the tickets (#1551). The source page stays: it says
         where refunds go. Share closes the row.
       -->
+      <!-- Private plans (#3892), above the links that leave the site. -->
+      <RsvpToggle v-if="event.slug" :slug="event.slug" />
+
       <EventShareActions :event="event">
         <Button
           v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"

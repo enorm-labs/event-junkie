@@ -353,6 +353,13 @@ const { t } = useI18n()
         Only you can see them.
       </p>
       <p>
+        <strong>Your plans:</strong> when you mark an event "Interested" or "Going", I store that
+        and when. Your Following page and My calendar are made from it, and the event cards show it
+        to you. Only you can see it. Nobody else sees who plans to go, and no event shows a count.
+        Past events stay as your history until you withdraw them or delete the account. If an event
+        leaves the calendar, I delete your plan for it too.
+      </p>
+      <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
         legal basis is Art. 6 (1) (b) GDPR.
       </p>

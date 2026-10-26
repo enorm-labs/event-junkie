@@ -50,7 +50,7 @@
     "failed": "That did not work. Please try again.",
     "tooMany": "You follow 500 things already. Unfollow one first.",
     "page": {
-      "intro": "Upcoming events of the artists, venues and promoters you follow, by date.",
+      "intro": "Today's and upcoming events of what you follow and what you plan to attend, by date.",
       "account": "Your account",
       "empty": "You do not follow anything yet. Follow an artist, a venue or a promoter on their page, or start with one of these venues.",
       "suggestions": "Venues with the most events",
@@ -79,5 +79,22 @@
     "kind": "Saved search",
     "renameLabel": "New name for {name}",
     "list": "Saved searches ({count})"
+  },
+  "rsvp": {
+    "interested": "Interested",
+    "going": "Going",
+    "label": "Your plans for this event",
+    "signIn": "Sign in to save your plans",
+    "failed": "That did not work. Please try again.",
+    "badgeInterested": "You are interested",
+    "badgeGoing": "You are going",
+    "page": {
+      "intro": "The events you are interested in or going to. Only you see them.",
+      "list": "List",
+      "calendar": "Calendar",
+      "upcoming": "Coming up",
+      "past": "Been there",
+      "none": "Nothing planned yet. Press Interested or Going on an event's page."
+    }
   }
 }

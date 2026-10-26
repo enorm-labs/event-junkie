@@ -31,6 +31,7 @@ class InactiveAccountCleanup(
     private val accounts: AccountStore,
     private val sessions: SessionStore,
     private val follows: FollowStore,
+    private val rsvps: RsvpStore,
     private val mailer: ObjectProvider<Mailer>,
     private val metrics: AccountMetrics,
     private val clock: Clock,
@@ -45,6 +46,7 @@ class InactiveAccountCleanup(
         step(CleanupOutcome.LINKS_PURGED) { accounts.deleteLinks(now.minus(LINK_KEPT_AFTER_EXPIRY)) }
         step(CleanupOutcome.SESSIONS_PURGED) { sessions.deleteExpired(now) }
         step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
+        step(CleanupOutcome.RSVPS_PURGED) { rsvps.deleteOrphans() }
         val sender = mailer.ifAvailable
         if (sender == null) {
             logger.warn { "Account cleanup: no mail sender on this cluster, so no deletion warnings" }
