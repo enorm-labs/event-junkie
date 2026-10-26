@@ -247,8 +247,8 @@ data class ScrapedEvent(
         withBilingualDescriptionSplit()
             .let {
                 it.copy(
-                    description = it.description?.let(::stripEmailAddresses)?.let(::trimEdgeRules),
-                    descriptionAlt = it.descriptionAlt?.let(::stripEmailAddresses)?.let(::trimEdgeRules)
+                    description = it.description?.let(::stripContactDetails)?.let(::trimEdgeRules),
+                    descriptionAlt = it.descriptionAlt?.let(::stripContactDetails)?.let(::trimEdgeRules)
                 )
             }.buildEventEntity(venueId, venueSlug, eventSourceId, existing, slugDiscriminator, licences)
 
