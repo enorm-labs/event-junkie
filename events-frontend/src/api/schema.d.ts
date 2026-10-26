@@ -2742,8 +2742,8 @@ export interface operations {
                 running?: boolean;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
-                /** @description Venue slug filter — only events at the matching venue. */
-                venue?: string;
+                /** @description Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing. */
+                venue?: string[];
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
                 /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
@@ -2880,8 +2880,8 @@ export interface operations {
                 locale?: string;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
-                /** @description Venue slug filter — only events at the matching venue. */
-                venue?: string;
+                /** @description Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing. */
+                venue?: string[];
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
                 /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
@@ -2939,8 +2939,8 @@ export interface operations {
                 to: string;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
-                /** @description Venue slug filter — only events at the matching venue. */
-                venue?: string;
+                /** @description Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing. */
+                venue?: string[];
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
                 /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
@@ -3004,8 +3004,8 @@ export interface operations {
                 name?: string;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
-                /** @description Venue slug filter — only events at the matching venue. */
-                venue?: string;
+                /** @description Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing. */
+                venue?: string[];
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
                 /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */

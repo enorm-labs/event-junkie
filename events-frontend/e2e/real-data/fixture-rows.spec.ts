@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openMoreFilters } from '../filter-bar'
+import { openMoreFilters, venueFilter } from '../filter-bar'
 
 /**
  * The rows `fixtures/events.sql` seeds (#272), read back through the real BFF, nginx and Traefik.
@@ -21,9 +21,10 @@ test('the events list shows the seeded venues', async ({ page }) => {
   await page.goto('/en/events')
   await openMoreFilters(page)
 
-  const venues = page.getByLabel('Filter by venue')
-  await expect(venues.getByRole('option', { name: 'Kesselhaus Nord' })).toBeAttached()
-  await expect(venues.getByRole('option', { name: 'Jazzkeller $& Kreuzberg' })).toBeAttached()
+  await venueFilter(page).click()
+  await expect(page.getByRole('checkbox', { name: 'Kesselhaus Nord' })).toBeAttached()
+  await expect(page.getByRole('checkbox', { name: 'Jazzkeller $& Kreuzberg' })).toBeAttached()
+  await page.keyboard.press('Escape')
   // 43 upcoming rows, so the first page is full at the default size rather than nearly empty.
   await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible()
 })

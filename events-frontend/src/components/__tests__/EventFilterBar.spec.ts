@@ -216,6 +216,38 @@ describe('EventFilterBar spoken language', () => {
   })
 })
 
+describe('EventFilterBar venues (#3979)', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  const venueFilter = () =>
+    wrapper!
+      .findAllComponents(MultiSelectFilter)
+      .find((candidate) => candidate.props('label') === 'Filter by venue')!
+
+  it('reads an old one-venue link as one ticked venue, searchable', async () => {
+    await mountAt('/events?venue=lido')
+    expect(venueFilter().props('selected')).toEqual(['lido'])
+    expect(venueFilter().props('searchable')).toBe(true)
+    expect(button('More filters (1)').attributes('aria-expanded')).toBe('true')
+  })
+
+  it('counts several venues once under More filters', async () => {
+    await mountAt('/events?venue=lido&venue=astra&venue=berghain')
+    expect(venueFilter().props('selected')).toEqual(['lido', 'astra', 'berghain'])
+    expect(button('More filters (1)')).toBeDefined()
+  })
+
+  it('writes the chosen venues to the URL as a repeated parameter', async () => {
+    await mountAt('/events?venue=lido')
+    venueFilter().vm.$emit('change', ['astra', 'lido'])
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ venue: ['astra', 'lido'] })
+  })
+})
+
 describe('EventFilterBar language note', () => {
   afterEach(() => {
     wrapper?.unmount()
@@ -305,7 +337,7 @@ describe('EventFilterBar on a phone', () => {
     const sheet = dialog()!
     expect(sheet.textContent).toContain('Filters')
     expect(sheet.querySelectorAll('input[type="date"]')).toHaveLength(2)
-    expect(sheet.querySelector('[aria-label="Filter by venue"]')).not.toBeNull()
+    expect(sheet.querySelector('[aria-label^="Filter by venue:"]')).not.toBeNull()
 
     const show = [...sheet.querySelectorAll('button')].find(
       (b) => b.textContent?.trim() === 'Show 12 events',

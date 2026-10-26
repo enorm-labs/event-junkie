@@ -36,6 +36,9 @@ describe.each<[string, string, Component]>([
   ['artist', 'artists', ArtistDetailView],
   ['promoter', 'promoters', PromoterDetailView],
 ])('the %s page', (filter, segment, view) => {
+  // The search takes several venues (#3979), so a venue page sends its one as a list.
+  const own = filter === 'venue' ? ['kater'] : 'kater'
+
   async function mountPage() {
     getMock.mockImplementation((path: string) =>
       Promise.resolve(path === '/api/events' ? { content: [] } : { slug: 'kater', name: 'Kater' }),
@@ -58,7 +61,7 @@ describe.each<[string, string, Component]>([
 
     expect(getMock).toHaveBeenCalledWith('/api/events', {
       params: {
-        query: { [filter]: 'kater', to: yesterdayIso(), size: 20, sort: ['eventDate,desc'] },
+        query: { [filter]: own, to: yesterdayIso(), size: 20, sort: ['eventDate,desc'] },
       },
     })
   })
@@ -67,7 +70,7 @@ describe.each<[string, string, Component]>([
     const page = await mountPage()
 
     expect(getMock).toHaveBeenCalledWith('/api/events', {
-      params: { query: { [filter]: 'kater', size: 50 } },
+      params: { query: { [filter]: own, size: 50 } },
     })
     const mail = page.findAll('a').find((a) => a.attributes('href')?.startsWith('mailto:'))
     expect(decodeURIComponent(mail?.attributes('href') ?? '')).toContain(`/en/${segment}/kater`)

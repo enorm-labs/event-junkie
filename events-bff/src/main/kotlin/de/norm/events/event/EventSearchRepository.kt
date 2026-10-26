@@ -48,7 +48,8 @@ data class EventFilter(
     val over: Boolean = false,
     /** Any of these types; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val eventTypes: List<String> = emptyList(),
-    val venueSlug: String? = null,
+    /** Any of these venues (#3979); empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val venueSlugs: List<String> = emptyList(),
     /** Any of these districts; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val districts: List<String> = emptyList(),
     /** Any of these venue types; empty imposes no constraint. [EventFilterParams] normalizes them. */
@@ -92,7 +93,8 @@ data class EventFilter(
     val hidesForChildren: Boolean
         get() =
             FOR_CHILDREN !in features &&
-                listOf(venueSlug, artistSlug, promoterSlug, festivalSlug, query).all { it.isNullOrBlank() }
+                venueSlugs.isEmpty() &&
+                listOf(artistSlug, promoterSlug, festivalSlug, query).all { it.isNullOrBlank() }
 
     companion object {
         /** The feature slug of a show for small children (EVENT_SCOPE.md §3.5). */
@@ -347,9 +349,9 @@ class EventSearchRepository(
             conditions += "e.event_type IN (:eventTypes)"
             params["eventTypes"] = filter.eventTypes
         }
-        filter.venueSlug?.takeIf { it.isNotBlank() }?.let {
-            conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE slug = :venueSlug)"
-            params["venueSlug"] = it.trim()
+        if (filter.venueSlugs.isNotEmpty()) {
+            conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE slug IN (:venueSlugs))"
+            params["venueSlugs"] = filter.venueSlugs
         }
         filter.festivalSlug?.let {
             conditions += "e.festival_id IN (SELECT id FROM $EVENTS_SCHEMA.festival WHERE slug = :festivalSlug)"

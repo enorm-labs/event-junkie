@@ -1,5 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { openMoreFilters } from './filter-bar'
+import { openMoreFilters, venueFilter } from './filter-bar'
 
 /**
  * Events list-page filtering with a mocked BFF. The view keeps every filter in the URL query and
@@ -62,6 +62,7 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('q') === 'jazz') return eventPage(['Jazz Night'])
   if (sp.getAll('eventType').join() === 'FESTIVAL,PARTY') return eventPage(['Festival Or Party'])
   if (sp.get('eventType') === 'FESTIVAL') return eventPage(['Big Festival'])
+  if (sp.getAll('venue').join() === 'lido,berghain') return eventPage(['Lido Or Berghain'])
   if (sp.get('venue') === 'lido') return eventPage(['Lido Show'])
   if (sp.get('genre') === 'techno') return eventPage(['Techno Rave'])
   if (sp.getAll('family').join() === 'electronic,jazz-blues')
@@ -187,15 +188,39 @@ test('links the feed for the filters it shows, without the dates', async ({ page
   ).toHaveAttribute('href', '/feed.xml?locale=en&district=kreuzberg&district=mitte&genre=techno')
 })
 
-test('filters by venue', async ({ page }) => {
+test('filters by several venues, found by search, any of them matching', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
   await openMoreFilters(page)
-  await selectWithOption(page, 'All venues').selectOption('lido')
+  await venueFilter(page).click()
+  const search = page.getByRole('searchbox', { name: 'Search venues' })
+  await search.fill('LIDO')
+  await expect(page.getByRole('checkbox', { name: 'Berghain' })).toHaveCount(0)
+  await page.getByRole('checkbox', { name: 'Lido' }).check()
 
   await expect(page).toHaveURL(/[?&]venue=lido\b/)
   await expect(eventHeading(page, 'Lido Show')).toBeVisible()
+
+  // A new query keeps the ticked venue listed, and the URL keeps the list's order.
+  await search.fill('berg')
+  await expect(page.getByRole('checkbox', { name: 'Lido' })).toBeChecked()
+  await page.getByRole('checkbox', { name: 'Berghain' }).check()
+  await expect(page).toHaveURL(/venue=lido&venue=berghain\b/)
+  await expect(eventHeading(page, 'Lido Or Berghain')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Filter by venue: 2 venues' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'More filters (1)' })).toBeVisible()
+})
+
+test('an old one-venue link shows its venue ticked', async ({ page }) => {
+  await page.goto('/events?venue=lido')
+  await expect(eventHeading(page, 'Lido Show')).toBeVisible()
+
+  await openMoreFilters(page)
+  await page.getByRole('button', { name: 'Filter by venue: Lido' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Lido' })).toBeChecked()
+  await expect(page.getByRole('checkbox', { name: 'Berghain' })).not.toBeChecked()
 })
 
 test('filters by genre family, then by a style inside it', async ({ page }) => {
@@ -505,11 +530,11 @@ test('the second-tier filters start closed, and the toggle opens them', async ({
 
   const toggle = page.getByRole('button', { name: 'More filters' })
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-  await expect(selectWithOption(page, 'All venues')).toBeHidden()
+  await expect(venueFilter(page)).toBeHidden()
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(selectWithOption(page, 'All venues')).toBeVisible()
+  await expect(venueFilter(page)).toBeVisible()
 })
 
 test('shows the empty state when no events match', async ({ page }) => {

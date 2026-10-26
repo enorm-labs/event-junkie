@@ -12,7 +12,8 @@ export interface EventSearchParams {
   running?: boolean
   /** Any of these types; sent as a repeated parameter. */
   eventType?: string[]
-  venue?: string
+  /** Any of these venues; sent as a repeated parameter. */
+  venue?: string[]
   /** Any of these districts; sent as a repeated parameter. */
   district?: string[]
   /** Any of these venue types (`VENUE_TYPES`); sent as a repeated parameter. */

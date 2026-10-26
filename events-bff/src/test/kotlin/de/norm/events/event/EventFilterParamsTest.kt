@@ -38,6 +38,17 @@ class EventFilterParamsTest {
     }
 
     @Test
+    fun `two orders of the same venues are one filter, and one venue stays one`() {
+        val first = EventFilterParams(venue = listOf("lido", " astra", "lido", "")).toFilter()
+        val second = EventFilterParams(venue = listOf("astra", "lido")).toFilter()
+
+        first.venueSlugs shouldBe listOf("astra", "lido")
+        first shouldBe second
+        EventFilterParams(venue = listOf(" lido ")).toFilter().venueSlugs shouldBe listOf("lido")
+        EventFilterParams().toFilter().venueSlugs shouldBe emptyList()
+    }
+
+    @Test
     fun `two orders of the same venue types are one filter`() {
         val first = EventFilterParams(venueType = listOf("club", " bar", "club", "")).toFilter()
         val second = EventFilterParams(venueType = listOf("bar", "club")).toFilter()

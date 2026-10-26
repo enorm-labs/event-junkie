@@ -91,7 +91,7 @@ describe('EventsView with On now', () => {
         query: expect.objectContaining({
           from: TODAY,
           to: TODAY,
-          venue: 'lido',
+          venue: ['lido'],
           district: ['kreuzberg'],
         }),
       },

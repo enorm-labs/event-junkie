@@ -102,7 +102,7 @@ const moreCount = computed(
       queryList('feature').length,
       languageFilterApplies(queryList('eventType')) && queryList('language').length,
       queryList('family').length || queryString('genre'),
-      queryString('venue'),
+      queryList('venue').length,
       queryList('district').length,
       queryList('venueType').length,
       queryString('minPrice') || queryString('maxPrice'),
