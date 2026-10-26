@@ -12,7 +12,8 @@ const account = vi.hoisted(() => ({
   follow: vi.fn<(kind: string, slug: string) => Promise<void>>(),
   unfollow: vi.fn<(kind: string, slug: string) => Promise<void>>(),
   fetchFollows: vi.fn<() => Promise<unknown[]>>(),
-  fetchFollowing: vi.fn<(page?: number) => Promise<unknown>>(),
+  fetchFollowing: vi.fn<(page?: number, from?: string) => Promise<unknown>>(),
+  fetchFollowingToday: vi.fn<() => Promise<unknown[]>>(),
 }))
 const getMock = vi.hoisted(() => vi.fn<(path: string, options?: unknown) => Promise<unknown>>())
 
@@ -45,6 +46,7 @@ beforeEach(() => {
   account.prepareCsrf.mockResolvedValue()
   account.follow.mockResolvedValue()
   account.unfollow.mockResolvedValue()
+  account.fetchFollowingToday.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -157,6 +159,40 @@ describe('FollowingView', () => {
     expect(view.text()).toContain('Ada live')
     expect(view.find('a[href="/en/artists/ada"]').text()).toBe('Ada')
     expect(getMock).not.toHaveBeenCalled()
+    // Nothing today: no Today heading, and Upcoming starts tomorrow.
+    expect(view.findAll('h2').map((h) => h.text())).not.toContain('Today')
+    expect(account.fetchFollowing).toHaveBeenCalledWith(
+      0,
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    )
+  })
+
+  it("shows today's events above Upcoming, capped as on the home page", async () => {
+    setSession(me as never)
+    const today = new Date().toISOString().slice(0, 10)
+    account.fetchFollowingToday.mockResolvedValue(
+      Array.from({ length: 8 }, (_, i) => ({
+        slug: `tonight-${i}`,
+        title: `Tonight ${i}`,
+        eventDate: today,
+        venue: { name: 'Club', slug: 'club' },
+      })),
+    )
+    account.fetchFollowing.mockResolvedValue({ content: [], totalPages: 0 })
+    account.fetchFollows.mockResolvedValue([
+      { kind: 'venue', slug: 'club', name: 'Club', notify: 'off' },
+    ])
+    const view = await mountAt(FollowingView, '/en/following')
+
+    const headings = view.findAll('h2').map((h) => h.text())
+    expect(headings.indexOf('Today')).toBeLessThan(headings.indexOf('Upcoming events'))
+    expect(view.text()).toContain('Tonight 5')
+    expect(view.text()).not.toContain('Tonight 6')
+    await view
+      .findAll('button')
+      .find((b) => b.text().includes('Show all'))!
+      .trigger('click')
+    expect(view.text()).toContain('Tonight 7')
   })
 
   it('suggests the busiest venues when nothing is followed yet', async () => {

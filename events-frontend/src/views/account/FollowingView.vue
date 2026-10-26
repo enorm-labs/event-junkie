@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
- * "Following" (#3889): the upcoming events of everything the visitor follows, by date, and the list
- * of what they follow. No ranking, so not "For you". Signed out, it sends the visitor to sign-in and
+ * "Following" (#3889): today's events of everything the visitor follows, as on the home page (#3922),
+ * then the upcoming ones by date, and the list of what they follow. No ranking, so not "For you". Signed out, it sends the visitor to sign-in and
  * back. Empty, it suggests the venues with the most events in the next 30 days.
  */
 import { computed, onMounted, ref } from 'vue'
@@ -12,13 +12,15 @@ import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import ListPage from '@/components/ListPage.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
+import TodayEvents from '@/components/TodayEvents.vue'
 import { Button } from '@/components/ui/button'
-import { fetchFollowing, fetchFollows, type FollowKind } from '@/api/account'
+import { fetchFollowing, fetchFollowingToday, fetchFollows, type FollowKind } from '@/api/account'
 import { api, ApiError, describeError, unwrap } from '@/api/client'
 import type { EventSummary } from '@/api/types'
 import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSession } from '@/composables/useSession'
+import { tomorrowIso } from '@/lib/format'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 
 const { t } = useI18n()
@@ -27,6 +29,8 @@ const localePath = useLocalePath()
 const { account, ready } = useSession()
 const { compact } = useCompactView()
 
+const today = ref<EventSummary[]>([])
+const todayExpanded = ref(false)
 const events = ref<EventSummary[]>([])
 const page = ref(0)
 const hasMore = ref(false)
@@ -53,7 +57,13 @@ const empty = computed(() => follows.value !== null && follows.value.length === 
 async function load() {
   problem.value = ''
   try {
-    const [first, list] = await Promise.all([fetchFollowing(0), fetchFollows()])
+    // Upcoming starts tomorrow: today's events have their own section above it.
+    const [day, first, list] = await Promise.all([
+      fetchFollowingToday(),
+      fetchFollowing(0, tomorrowIso()),
+      fetchFollows(),
+    ])
+    today.value = day
     events.value = first.content ?? []
     page.value = 0
     hasMore.value = (first.totalPages ?? 0) > 1
@@ -87,7 +97,7 @@ async function loadMore() {
   if (loadingMore.value) return
   loadingMore.value = true
   try {
-    const next = await fetchFollowing(page.value + 1)
+    const next = await fetchFollowing(page.value + 1, tomorrowIso())
     events.value = [...events.value, ...(next.content ?? [])]
     page.value += 1
     hasMore.value = page.value + 1 < (next.totalPages ?? 0)
@@ -155,7 +165,13 @@ onMounted(async () => {
         </ul>
       </section>
 
-      <section v-else class="space-y-4">
+      <!-- Left out when empty: a heading over nothing says less than no heading. -->
+      <section v-if="!empty && today.length" class="space-y-4">
+        <SectionLabel as="h2">{{ t('home.today') }}</SectionLabel>
+        <TodayEvents v-model:expanded="todayExpanded" :events="today" />
+      </section>
+
+      <section v-if="!empty" class="space-y-4">
         <SectionLabel as="h2">{{ t('common.upcomingEvents') }}</SectionLabel>
         <p v-if="!events.length" class="text-body text-muted-foreground">
           {{ t('account.follow.page.none') }}

@@ -1,6 +1,6 @@
 import type { Locale } from '@/i18n/locales'
 import { api, unwrap } from './client'
-import type { Account, EventSummaryPage, Follow } from './types'
+import type { Account, EventSummary, EventSummaryPage, Follow } from './types'
 
 /**
  * The sign-in and account calls (#3887, ADR-053). Each write needs the CSRF cookie first, so every
@@ -82,7 +82,12 @@ export async function unfollow(kind: FollowKind, slug: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }))
 }
 
-/** Upcoming events of everything the account follows, by date. */
-export async function fetchFollowing(page = 0): Promise<EventSummaryPage> {
-  return unwrap(api.GET('/api/me/following', { params: { query: { page, size: 20 } } }))
+/** Upcoming events of everything the account follows, by date, from [from] when given. */
+export async function fetchFollowing(page = 0, from?: string): Promise<EventSummaryPage> {
+  return unwrap(api.GET('/api/me/following', { params: { query: { page, size: 20, from } } }))
+}
+
+/** Today's events of everything the account follows, a running night included (#3922). */
+export async function fetchFollowingToday(): Promise<EventSummary[]> {
+  return unwrap(api.GET('/api/me/following/today'))
 }

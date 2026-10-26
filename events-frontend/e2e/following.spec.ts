@@ -7,6 +7,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
+ * · GET /api/me/following/today
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
@@ -18,9 +19,13 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 }
 
 /** Answers the BFF for one visitor, signed in or not, and records each write with its CSRF header. */
-async function mockBff(page: Page, signedIn: boolean) {
+async function mockBff(
+  page: Page,
+  signedIn: boolean,
+  feed: { today?: unknown[]; upcoming?: unknown[]; following?: boolean } = {},
+) {
   const writes: { method: string; path: string; csrf: string | null }[] = []
-  let following = false
+  let following = feed.following ?? false
   await page
     .context()
     .addCookies([{ name: 'XSRF-TOKEN', value: 'csrf-1', url: 'http://localhost' }])
@@ -52,7 +57,11 @@ async function mockBff(page: Page, signedIn: boolean) {
         following ? [{ kind: 'venue', slug: 'mock-venue', name: 'Mock Venue', notify: 'off' }] : [],
       )
     }
-    if (path === '/api/me/following') return json(route, emptyPage)
+    if (path === '/api/me/following/today') return json(route, feed.today ?? [])
+    if (path === '/api/me/following') {
+      const content = feed.upcoming ?? []
+      return json(route, { ...emptyPage, content, totalElements: content.length, totalPages: 1 })
+    }
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     return route.fulfill({ status: 204 })
   })
@@ -107,6 +116,42 @@ test('the Following page suggests venues, and a follow from there joins the list
     'href',
     '/en/venues/mock-venue',
   )
+})
+
+test("the Following page shows today's events under Today, above Upcoming", async ({ page }) => {
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86_400_000).toLocaleDateString('sv-SE', {
+      timeZone: 'Europe/Berlin',
+    })
+  const event = (slug: string, title: string, eventDate: string) => ({
+    slug,
+    title,
+    eventDate,
+    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+  })
+  await mockBff(page, true, {
+    following: true,
+    today: [event('tonight', 'Tonight at the venue', day(0))],
+    upcoming: [event('later', 'Later at the venue', day(2))],
+  })
+  await page.goto('/en/following')
+
+  const today = page.getByRole('heading', { name: 'Today' })
+  const upcoming = page.getByRole('heading', { name: 'Upcoming events' })
+  await expect(today).toBeVisible()
+  await expect(upcoming).toBeVisible()
+  await expect(page.getByText('Tonight at the venue').first()).toBeVisible()
+  await expect(page.getByText('Later at the venue').first()).toBeVisible()
+  const [todayBox, upcomingBox] = [await today.boundingBox(), await upcoming.boundingBox()]
+  expect(todayBox!.y).toBeLessThan(upcomingBox!.y)
+})
+
+test('the Following page leaves Today out when nothing is on today', async ({ page }) => {
+  await mockBff(page, true, { following: true })
+  await page.goto('/en/following')
+
+  await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Today' })).toHaveCount(0)
 })
 
 test('signed in, the header icon opens the account menu, and sign-out leaves the account page', async ({
