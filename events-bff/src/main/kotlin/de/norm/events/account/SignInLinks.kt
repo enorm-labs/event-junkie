@@ -29,6 +29,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class SignInLinks(
     private val store: AccountStore,
+    private val signUp: SignUpSwitch,
     private val mailer: ObjectProvider<Mailer>,
     private val metrics: AccountMetrics,
     private val clock: Clock,
@@ -62,7 +63,7 @@ class SignInLinks(
         val sender = mailer.ifAvailable ?: return LinkOutcome.MAIL_UNAVAILABLE
         val now = clock.instant()
         if (store.linksSince(email, now.minus(Duration.ofHours(1))) >= LINKS_PER_ADDRESS_PER_HOUR) return LinkOutcome.ADDRESS_THROTTLED
-        if (!store.signUpOpen() && !store.exists(email)) return LinkOutcome.SIGN_UP_PAUSED
+        if (!signUp.isOpen() && !store.exists(email)) return LinkOutcome.SIGN_UP_PAUSED
 
         val token = SecretTokens.next()
         store.issueToken(SecretTokens.hash(token), email, locale, now, now.plus(LINK_VALIDITY))
@@ -81,7 +82,7 @@ class SignInLinks(
         val account =
             store
                 .consumeToken(SecretTokens.hash(token), now)
-                ?.takeIf { (email, _) -> store.signUpOpen() || store.exists(email) }
+                ?.takeIf { (email, _) -> signUp.isOpen() || store.exists(email) }
                 ?.let { (email, locale) -> store.signIn(email, locale, now) }
         val outcome = if (account == null) SignInOutcome.INVALID else SignInOutcome.OK
         metrics.record(outcome)

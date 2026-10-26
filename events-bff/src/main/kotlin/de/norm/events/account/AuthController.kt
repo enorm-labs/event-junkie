@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono
 @Tag(name = "Sign-in", description = "Sign in with a link sent by e-mail")
 class AuthController(
     private val links: SignInLinks,
-    private val store: AccountStore,
+    private val signUp: SignUpSwitch,
     private val sessions: SessionSecurityContextRepository
 ) {
     @GetMapping("/csrf")
@@ -37,7 +37,7 @@ class AuthController(
     @Operation(summary = "The signed-in account, or null, and whether new accounts can be created")
     suspend fun session(
         @AuthenticationPrincipal account: Account?
-    ) = SessionResponse(account?.let(AccountResponse::of), store.signUpOpen())
+    ) = SessionResponse(account?.let(AccountResponse::of), signUp.isOpen())
 
     @PostMapping("/link")
     @Operation(
