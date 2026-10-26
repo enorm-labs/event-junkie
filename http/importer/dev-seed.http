@@ -6883,6 +6883,67 @@ Accept: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Liquidrom
+# ————————————————————————————————————————————————————————————
+
+### --- Create Liquidrom venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Liquidrom",
+    "address": "Möckernstraße 10",
+    "city": "Berlin",
+    "postalCode": "10963",
+    "district": "kreuzberg",
+    "latitude": 52.501603,
+    "longitude": 13.381192,
+    "websiteUrl": "https://www.liquidrom-berlin.de/",
+    "description": "A saltwater bath in the Tempodrom whose 36 °C pool under the concrete dome carries music underwater, with DJ Sound Sessions on Tuesday, Thursday and Saturday and light and dance performances staged around the water.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Solebad im Tempodrom, dessen 36 °C warmes Becken unter der Betonkuppel Musik unter Wasser überträgt, mit DJ-Sound-Sessions am Dienstag, Donnerstag und Samstag sowie Licht- und Tanzperformances rund um das Wasser.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
+}
+
+> {%
+    client.global.set("venue_id_liquidrom", response.body.id);
+    client.test("Liquidrom venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Liquidrom event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_liquidrom}},
+    "name": "Liquidrom",
+    "url": "https://www.liquidrom-berlin.de/de/events.php",
+    "sourceType": "LIQUIDROM",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Liquidrom event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Liquidrom import ---
+POST {{importer-host}}/api/admin/event-sources/liquidrom/import
+Accept: application/json
+
+> {%
+    client.test("Liquidrom import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Little Stage Bar — not imported
 # ————————————————————————————————————————————————————————————
 

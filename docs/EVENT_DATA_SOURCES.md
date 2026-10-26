@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   190 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   191 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -130,6 +130,7 @@ schema change.
 | LabSaal                          | https://labsaal.de/events/                                               | Other        | MEC iCal feed; groups, courses, workshops dropped         |
 | LARK                             | https://larkberlin.com/events/                                           | Club         | WP REST + ACF; post date is the event date                |
 | Lido                             | https://www.lido-berlin.de/                                              | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge           |
+| Liquidrom                        | https://www.liquidrom-berlin.de/de/events.php                            | Other        | DJ Sound Sessions + DOME 36 specials; one per show        |
 | Loge                             | https://www.loge-berlin.org/                                             | Club         | Wix; tickets on-site; support via "+" in title            |
 | L.U.X                            | https://www.lux-berlin.net/                                              | Bar          | Static home page; year from weekday; date is the ID       |
 | MAAYA                            | https://maaya.de/                                                        | Club         | Elementor home page; year-less dates; `pm` half real      |
@@ -231,7 +232,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-190 importer classes cover 190 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+191 importer classes cover 191 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -379,6 +380,7 @@ the upsert stores none.
 | LabSaal                          | No              | —                                                            | —                  |                                                                                                                                    |
 | LARK                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Lido                             | No              | —                                                            | —                  |                                                                                                                                    |
+| Liquidrom                        | Yes             | `/en/` path                                                  | Translated         | https://www.liquidrom-berlin.de/en/events.php                                                                                      |
 | Loge                             | Yes             | `/en` path, `hreflang`                                       | Unknown            | https://www.loge-berlin.org/en                                                                                                     |
 | L.U.X                            | No              | —                                                            | —                  |                                                                                                                                    |
 | MAAYA                            | Unknown         | The page sent a bot challenge (403)                          | —                  |                                                                                                                                    |

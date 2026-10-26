@@ -511,6 +511,15 @@ says so.
 | `LARK`                 | `PRICE`            | the venue prints no figure; tickets link to hum-berlin.com                                                                                       | —     |
 | `LARK`                 | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |
 | `LIDO`                 | `GENRE`            | the venue labels each event only Concert or Party; style is described only in the prose                                                          | —     |
+| `LIQUIDROM`            | `PER_EVENT_PAGE`   | the programme is one page, and a special is an anchor on it                                                                                      | —     |
+| `LIQUIDROM`            | `PRICE`            | entry is a bath time slot, and the page prints no price                                                                                          | —     |
+| `LIQUIDROM`            | `TICKET_URL`       | every night links the bath's general time-slot booking                                                                                           | —     |
+| `LIQUIDROM`            | `DOORS_TIME`       | the nights run inside the bath's opening hours                                                                                                   | —     |
+| `LIQUIDROM`            | `DESCRIPTION`      | a Sound Session row has only its DJ and a genre line                                                                                             | —     |
+| `LIQUIDROM`            | `IMAGE`            | a Sound Session row has no image                                                                                                                 | —     |
+| `LIQUIDROM`            | `ARTISTS`          | a special names its show, not its performers                                                                                                     | —     |
+| `LIQUIDROM`            | `SOLD_OUT`         | the page marks no night sold out                                                                                                                 | —     |
+| `LIQUIDROM`            | `CANCELLATION`     | a cancelled night leaves the page instead of being marked                                                                                        | —     |
 | `LOGE`                 | `EVENT_TYPE`       | the venue has no category field; a live-music venue, so an unmarked title defaults to a concert                                                  | —     |
 | `LOGE`                 | `ARTISTS`          | a title without a + separator can be a band or an event name, so no act is derived from one                                                      | —     |
 | `LOGE`                 | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |

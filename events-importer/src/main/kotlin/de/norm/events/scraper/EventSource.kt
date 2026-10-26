@@ -276,6 +276,9 @@ enum class EventSource {
     /** Lido Berlin – a former 1950s cinema on the Spree staging touring indie, rock and electronic acts as well as club nights. */
     LIDO,
 
+    /** Liquidrom – a saltwater bath under the dome of the Tempodrom, with DJ nights and light and dance performances above and under the water. */
+    LIQUIDROM,
+
     /** Loge Berlin – an intimate, collectively run bar and events space in Friedrichshain. */
     LOGE,
 
