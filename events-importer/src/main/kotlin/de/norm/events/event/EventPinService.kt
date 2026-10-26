@@ -1,7 +1,5 @@
 package de.norm.events.event
 
-import de.norm.events.genretag.EventGenreTagRepository
-import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -14,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 class EventPinService(
     private val eventRepository: EventRepository,
     private val eventArtistRepository: EventArtistRepository,
-    private val eventPromoterRepository: EventPromoterRepository,
-    private val eventGenreTagRepository: EventGenreTagRepository,
-    private val genreTagRepository: GenreTagRepository
+    private val eventPromoterRepository: EventPromoterRepository
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -62,19 +58,22 @@ class EventPinService(
                 .toList()
                 .map { it.promoterId }
                 .toSet()
-        val storedGenreTagIds = eventGenreTagRepository.findByEventId(id).toList().map { it.genreTagId }
-        val storedGenres =
-            genreTagRepository
-                .findAllById(storedGenreTagIds)
-                .toList()
-                .map { it.slug }
-                .toSet()
-        val editedGenres = normalizeGenre(request.genre).map { SlugGenerator.slugify(it) }.toSet()
         return PinnedField.entries.filter { it.differs(updated, existing) } +
             listOfNotNull(
                 PinnedField.LINEUP.takeIf { storedLineup != editedLineup },
                 PinnedField.PROMOTERS.takeIf { storedPromoters != request.promoterIds.toSet() },
-                PinnedField.GENRES.takeIf { storedGenres != editedGenres }
+                PinnedField.GENRES.takeIf { genreChanged(existing, request) }
             )
     }
+
+    /**
+     * Whether [request] names other genres than the stored `genre` text of [existing]. Only then does an
+     * edit rewrite the tags: a derived tag (ADR-047) has no text behind it, so the stored tags are no measure.
+     */
+    fun genreChanged(
+        existing: EventEntity,
+        request: EventRequest
+    ): Boolean = genreSlugs(existing.genre) != genreSlugs(request.genre)
+
+    private fun genreSlugs(genre: String?) = normalizeGenre(genre).map { SlugGenerator.slugify(it) }.toSet()
 }
