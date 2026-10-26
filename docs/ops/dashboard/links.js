@@ -1085,6 +1085,10 @@ window.EJ_LINKS = {
           "note": "artists created in the last day; a flag marks a name that looks like no act"
         },
         {
+          "command": "scripts/new-artists.sh production --kind promoters # promoters created in the last day; `near` names an older one it may duplicate",
+          "note": ""
+        },
+        {
           "command": "scripts/worklist.sh production --summary",
           "note": "the data-quality worklist, one line per issue and venue"
         },

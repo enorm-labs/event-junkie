@@ -37,6 +37,7 @@ for env in staging production; do scripts/o2-query.sh "$env" sql "SELECT _timest
 scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'
 gh pr list --state open                            # bot pull requests to read and merge, and your own
 scripts/new-artists.sh production                  # artists created in the last day; a flag marks a name that looks like no act
+scripts/new-artists.sh production --kind promoters # promoters created in the last day; `near` names an older one it may duplicate
 scripts/worklist.sh production --summary           # the data-quality worklist, one line per issue and venue
 curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&size=100' | jq '.totalElements'  # open suggested fixes
 ```
@@ -55,7 +56,7 @@ curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&s
 5. **Security.** Look at new code-scanning alerts, Dependabot alerts and Code Quality findings. `/security-report` gives the detail.
 6. **Bot pull requests.** Read each diff. Merge the green ones with `gh pr merge <n> --rebase`. A `claude[bot]` pull request needs your approval first.
 7. **Logs.** `/log-check` sorts both clusters' logs and alerts into noise, known, explained and new.
-8. **The data.** Read each flagged row of `new-artists.sh`. Then read the worklist summary, one row per issue and venue. `/worklist` gives each row a
+8. **The data.** Read each flagged row of `new-artists.sh`, for artists and for promoters. Then read the worklist summary, one row per issue and venue. `/worklist` gives each row a
    verdict, writes issue drafts and proposes hand fixes. It changes nothing until you name the fixes to apply.
    Then work the admin app's review pages: "Suggested fixes", "Instagram drafts", "Artists to review" and "Venues to review". `/admin-review` gives
    each item a verdict and applies the ones you name. Three or more suggestions for one field at one venue are a parser defect.
