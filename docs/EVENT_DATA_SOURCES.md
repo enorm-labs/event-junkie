@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   190 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   191 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     4 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   133 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
@@ -78,6 +78,7 @@ schema change.
 | Crack Bellmer                    | https://www.crackbellmer.de/program/this-month                           | Bar          | Webflow; month tabs filter one list; no prices            |
 | Der Weiße Hase                   | https://derweissehase.club/events                                        | Club         | Contao; invalid `<p>` nesting; RA ticket links            |
 | Die Wühlmäuse                    | https://wuehlmaeuse.de/                                                  | Theater      | WooCommerce Store API; one product per seat tier          |
+| Donau115                         | https://www.donau115.de/                                                 | Bar          | Firebase RTDB `events.json`; a date's acts are one night  |
 | Downstairs Comedy Club           | https://www.downstairscomedy.shop/tickets                                | Comedy Club  | tickettoaster Turbo frame; JSON-LD per performance        |
 | Drugstore                        | https://drugstore-berlin.de/                                             | Other        | radar group API; bill read from the description           |
 | DSTRKT                           | https://www.dstrkt.de/                                                   | Club         | Wix Data collection in warmup JSON; no lineup             |
@@ -231,7 +232,7 @@ schema change.
 | Zosch                            | https://www.zosch-berlin.de/                                             | Bar          | Laravel start page; year from the body id                 |
 | Zur Klappe                       | https://zurklappe.org/events                                             | Techno Club  | Next.js flight payload; no genre or prices                |
 
-190 importer classes cover 190 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
+191 importer classes cover 191 sources. `scripts/sources-parity.sh` checks both numbers: the classes against the
 `EventSource` entries, the sources against the rows above. The two numbers are equal by chance. Kantine am Berghain is the
 only source without a class of its own. It shares the Berghain importer, and its rows have their own `sourceId` prefix,
 `kantine_am_berghain:`. Ballhaus Berlin is the opposite case. Its class exists, but it has no source, because its
@@ -329,6 +330,7 @@ the upsert stores none.
 | Crack Bellmer                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Der Weiße Hase                   | Yes             | Separate page `/events-2`, `hreflang`                        | Not on the listing | https://derweissehase.club/events-2                                                                                                |
 | Die Wühlmäuse                    | No              | —                                                            | —                  |                                                                                                                                    |
+| Donau115                         | No              | —                                                            | —                  |                                                                                                                                    |
 | Downstairs Comedy Club           | No              | —                                                            | —                  |                                                                                                                                    |
 | Drugstore                        | No              | —                                                            | —                  |                                                                                                                                    |
 | DSTRKT                           | No              | —                                                            | —                  |                                                                                                                                    |
