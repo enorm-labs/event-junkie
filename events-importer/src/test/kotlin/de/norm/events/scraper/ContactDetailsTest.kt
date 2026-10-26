@@ -33,6 +33,14 @@ class ContactDetailsTest {
     }
 
     @Test
+    fun `an address ends at the top-level label, so a word run into it stays`() {
+        // Downstairs runs its lines together, so an address meets the next word (2026-10-26).
+        stripEmailAddresses("Bei Fragen: info@example.deWhatsApp: siehe unten") shouldBe "Bei Fragen: WhatsApp: siehe unten"
+        stripEmailAddresses("Stand? Meldet euch unter MARKT@EXAMPLE.BERLIN") shouldBe "Stand? Meldet euch unter"
+        stripEmailAddresses("Mail: MAILTO:kontakt@example.De") shouldBe null
+    }
+
+    @Test
     fun `a text without an address comes back byte for byte, a handle included`() {
         val text = "Line-up: @sisyphos.berlin and DJ Foo\n\n  indented  "
         stripEmailAddresses(text) shouldBe text

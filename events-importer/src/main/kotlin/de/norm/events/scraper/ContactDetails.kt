@@ -2,9 +2,11 @@ package de.norm.events.scraper
 
 /**
  * An e-mail address, with a `mailto:` in front of it if the scraper kept the link. The domain needs a dot and a
- * top-level label, so an `@venue` handle is no address.
+ * top-level label, so an `@venue` handle is no address. The label is one case run (`de`, `De`, `BERLIN`), so a word
+ * the page ran into it stays: `….deWhatsApp:` ends at `de`.
  */
-private val EMAIL_ADDRESS = Regex("""(?:mailto:)?[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}""", RegexOption.IGNORE_CASE)
+private val EMAIL_ADDRESS =
+    Regex("""(?i:mailto:)?[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.(?:\p{Lu}{2,}|\p{Lu}?\p{Ll}{2,}|\p{Lu}\p{Ll})""")
 
 /** What is left of a line that only introduced the address: `E-Mail:`, `Kontakt –`, `Buchungen per Mail an`. */
 private val ADDRESS_LABEL =
