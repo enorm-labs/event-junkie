@@ -147,6 +147,10 @@ plus the privacy page in the same PR.**
 
 **Commercial changes** — ads, affiliate links, sponsorships, donations, paid features — also change the § 5 DDG imprint analysis.
 
+**What this repository publishes is public too.** A venue's text can carry a person's e-mail address, phone number or full name with a contact. Never copy
+one into an issue, a pull request, a commit message, a fixture or a test: name the event by its id, and mask the contact (`w***@…`, digits as `#`). A test
+uses `example.de` and `030 12345678`. A local sweep that reads stored text prints its matches masked too, because its output ends up in a report.
+
 When in doubt, flag it in the PR. Raising it costs a sentence; missing it is a legal defect on a public site.
 
 ## Project Overview

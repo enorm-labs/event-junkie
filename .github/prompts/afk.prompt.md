@@ -70,7 +70,9 @@ newest handover, without working any issue.
     > 4. Do not watch the checks. After the PR opens, run `git checkout --detach origin/main` and report the checks as pending.
     >
     > Stop after 90 minutes of work: push what holds, open the PR if it builds, and report what is missing. If `git push` over SSH hangs, push over
-    > HTTPS with `git -c credential.helper='!gh auth git-credential' push … https://github.com/<owner>/<repo>.git <branch>`.
+    > HTTPS with `git -c credential.helper='!gh auth git-credential' push … https://github.com/<owner>/<repo>.git <branch>`. A push to a URL has no
+    > tracking ref, so a bare `--force-with-lease` refuses an amend: name the old head as `--force-with-lease=<branch>:<sha from git ls-remote>`. Confirm
+    > every push with `git ls-remote --heads origin <branch>`.
     >
     > Decide reversible choices yourself: take the option that changes less, and write it under `## Decisions I made`. If the issue needs something
     > irreversible, a product or legal call, a cluster, or a Privacy & GDPR category from AGENTS.md, park it: open no PR. Leave the branch pushed if it holds
