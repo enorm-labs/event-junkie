@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zebranotheater
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -47,7 +48,7 @@ class ZebranoTheaterEventPageScraper {
                     .map { it.trim() }
                     .filterNot { MORE_ABOUT.containsMatchIn(it) }
                     .joinToString(" ")
-                    .replace(SPACES, " ")
+                    .replace(WHITESPACE, " ")
                     .trim()
             }.filter { it.isNotEmpty() }
     }
@@ -56,7 +57,6 @@ class ZebranoTheaterEventPageScraper {
         const val BACK_LINK = "back"
         val SKIPPED_TAGS = setOf("h2", "h3", "script", "style")
         val PARAGRAPH_BREAK = Regex("""\n\s*\n""")
-        val SPACES = Regex("""\s+""")
         val MORE_ABOUT = Regex("""^Mehr über .+ erfahren Sie""")
     }
 }

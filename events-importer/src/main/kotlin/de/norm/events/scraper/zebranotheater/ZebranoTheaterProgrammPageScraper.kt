@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.classifyByGenreKeyword
 import de.norm.events.scraper.mapEventType
@@ -178,7 +179,6 @@ class ZebranoTheaterProgrammPageScraper {
 
         val YEARS = 2000..2100
         val GERMAN_MONTHS = GERMAN_MONTH_NAMES.map { it.lowercase() }
-        val WHITESPACE = Regex("""\s+""")
         val SPACED_COLON = Regex("""\s+:\s*""")
         val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
         val AMOUNT = Regex("""(\d+(?:,\d{1,2})?)\s*(\*?)""")
