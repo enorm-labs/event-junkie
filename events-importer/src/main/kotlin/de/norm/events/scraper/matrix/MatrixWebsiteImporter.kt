@@ -28,6 +28,9 @@ import org.springframework.stereotype.Component
  * costs that night only, and the run reports itself incomplete, so the stale cleanup keeps the
  * stored row.
  *
+ * Those nights are the venue's whole standing programme, so a complete run's stale cleanup has no
+ * end. A windowed one stopped a week ahead and kept the old site's rows past it (#3977).
+ *
  * The only ticket link is the club's Eventbrite organiser page, so no night stores one.
  *
  * The importer reads no second language: the English pages' text matches the German closely
@@ -48,6 +51,8 @@ class MatrixWebsiteImporter(
     override val eventSource: EventSource = EventSource.MATRIX
 
     override val fetchesBeyondEntryPage: Boolean get() = true
+
+    override val listsWholeProgramme: Boolean = true
 
     private val nightPageScraper = MatrixNightPageScraper()
 
