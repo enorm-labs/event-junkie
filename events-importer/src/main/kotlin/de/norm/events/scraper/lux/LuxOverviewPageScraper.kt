@@ -27,7 +27,8 @@ import java.time.MonthDay
  * Pure parser for the L.U.X home page. Each night is a `main.dates > section`: a `.when` cell
  * (`Do<br>15.10.`, no year, so the weekday picks it), the party name in `h2`, a tagline in `h3`
  * and free text whose bold runs are the DJs. A line that is only a clock is the start, or the
- * doors when it reads `Tür`. A private party ("Geschlossene Gesellschaft") is skipped.
+ * doors when it reads `Tür`. A private party ("Geschlossene Gesellschaft") is skipped, and so is a
+ * night the house is closed (`Heute mal geschlossen !`, #3964).
  */
 class LuxOverviewPageScraper(
     private val clock: Clock = Clock.system(BERLIN)
@@ -66,6 +67,10 @@ class LuxOverviewPageScraper(
         val subtitle = night.flatTextAt(".details h3")
         if (PRIVATE_PARTY.containsMatchIn("$title $subtitle")) {
             logger.debug { "L.U.X night on $date is a private party ('$title'), skipping" }
+            return null
+        }
+        if (CLOSED.containsMatchIn("$title $subtitle")) {
+            logger.debug { "L.U.X night on $date is a closure ('$title'), skipping" }
             return null
         }
         val paragraphs = night.select(".details > p")
@@ -137,5 +142,8 @@ class LuxOverviewPageScraper(
 
         val PRICE_LINE = Regex("""eintritt|spende|€|euro""", RegexOption.IGNORE_CASE)
         val PRIVATE_PARTY = Regex("""geschlossene\s+gesellschaft|privat[-\s]*party""", RegexOption.IGNORE_CASE)
+
+        /** The whole word only, so `Geschlossene Gesellschaft` stays with [PRIVATE_PARTY]. */
+        val CLOSED = Regex("""\b(?:geschlossen|closed)\b""", RegexOption.IGNORE_CASE)
     }
 }
