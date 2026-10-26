@@ -134,6 +134,7 @@ class ScraperHttpClientConfig {
                         // neither by default, and Uber Arena answers `Content-Encoding: gzip` even
                         // to a request that asked for `identity` — Jsoup then parsed 18 KB of gzip
                         // bytes as HTML and found 0 rows on every run, reported as SUCCESS (#1542).
+                        // A body that is not gzip under a gzip header fails to decode; HtmlFetcher retries it with `identity` (#3962).
                         .compress(true)
                         .responseTimeout(scraperProperties.responseTimeout)
                 )

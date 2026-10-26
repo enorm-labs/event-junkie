@@ -1,11 +1,16 @@
 package de.norm.events.scraper
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.netty.handler.codec.compression.DecompressionException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
@@ -17,7 +22,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClient
+import ch.qos.logback.classic.Level as LogbackLevel
 
 /**
  * Tests for [HtmlFetcher] that exercise the real Spring [WebClient] request
@@ -184,6 +191,108 @@ class HtmlFetcherTest {
                 fetcher.fetch(baseUrl() + "/events/all")
 
                 server.takeRequest().headers["Accept-Encoding"]!! shouldContain "gzip"
+            }
+    }
+
+    /**
+     * Zimmer 16's page cache sometimes answers a plain body under `Content-Encoding: gzip`, and the decoder
+     * throws (#3962). The fetcher asks once more for `identity`, and says so at WARN.
+     */
+    @Nested
+    inner class UndecodableBody {
+        private val page = "<html><body><div class=\"card\">Kasper</div></body></html>"
+        private lateinit var appender: ListAppender<ILoggingEvent>
+        private val fetcherLogger = LoggerFactory.getLogger(HtmlFetcher::class.java) as Logger
+
+        @BeforeEach
+        fun attachAppender() {
+            appender = ListAppender<ILoggingEvent>().apply { start() }
+            fetcherLogger.addAppender(appender)
+        }
+
+        @AfterEach
+        fun detachAppender() {
+            fetcherLogger.detachAppender(appender)
+            appender.stop()
+        }
+
+        private fun plainUnderGzipHeader(): MockResponse =
+            MockResponse
+                .Builder()
+                .code(200)
+                .addHeader("Content-Type", "text/html; charset=UTF-8")
+                .addHeader("Content-Encoding", "gzip")
+                .body(page)
+                .build()
+
+        private fun plain(): MockResponse =
+            MockResponse
+                .Builder()
+                .code(200)
+                .addHeader("Content-Type", "text/html; charset=UTF-8")
+                .body(page)
+                .build()
+
+        @Test
+        fun `fetch retries a plain body under a gzip header with Accept-Encoding identity`() =
+            runTest {
+                server.enqueue(plainUnderGzipHeader())
+                server.enqueue(plain())
+
+                val result = fetcher.fetch(baseUrl() + "/programm/", etag = "\"v1\"")
+
+                result.shouldBeInstanceOf<FetchResult.Success>().document.text() shouldContain "Kasper"
+                server.takeRequest().headers["Accept-Encoding"]!! shouldContain "gzip"
+                val retry = server.takeRequest()
+                retry.headers["Accept-Encoding"] shouldBe "identity"
+                // The retry is the same request: a conditional fetch stays conditional.
+                retry.headers["If-None-Match"] shouldBe "\"v1\""
+                val warning = appender.list.single { it.level == LogbackLevel.WARN }
+                warning.formattedMessage shouldContain "localhost"
+                warning.throwableProxy.shouldNotBeNull()
+            }
+
+        @Test
+        fun `fetchDocument and postForm retry the same way`() =
+            runTest {
+                repeat(2) {
+                    server.enqueue(plainUnderGzipHeader())
+                    server.enqueue(plain())
+                }
+
+                fetcher.fetchDocument(baseUrl() + "/programm/").text() shouldContain "Kasper"
+                server.takeRequest()
+                server.takeRequest().headers["Accept-Encoding"] shouldBe "identity"
+
+                fetcher.postForm(baseUrl() + "/wp-admin/admin-ajax.php", mapOf("paged" to "2")) shouldContain "Kasper"
+                server.takeRequest()
+                val retry = server.takeRequest()
+                retry.headers["Accept-Encoding"] shouldBe "identity"
+                // The form is sent again with the retry, not only the first time.
+                retry.body!!.utf8() shouldBe "paged=2"
+            }
+
+        @Test
+        fun `a second undecodable body fails the fetch, after one retry`() =
+            runTest {
+                server.enqueue(plainUnderGzipHeader())
+                server.enqueue(plainUnderGzipHeader())
+                server.enqueue(plain())
+
+                val failure = shouldThrow<Exception> { fetcher.fetchDocument(baseUrl() + "/programm/") }
+                generateSequence<Throwable>(failure) { it.cause }.any { it is DecompressionException } shouldBe true
+                server.requestCount shouldBe 2
+            }
+
+        @Test
+        fun `an HTTP error is not retried`() =
+            runTest {
+                server.enqueue(MockResponse.Builder().code(500).build())
+                server.enqueue(plain())
+
+                shouldThrow<HttpFetchException> { fetcher.fetchDocument(baseUrl() + "/programm/") }
+                server.requestCount shouldBe 1
+                appender.list.none { it.level == LogbackLevel.WARN } shouldBe true
             }
     }
 
