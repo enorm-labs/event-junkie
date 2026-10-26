@@ -18,6 +18,7 @@ flux --context event-junkie-staging get helmrelease openobserve -n flux-system
 scripts/o2-query.sh staging sweep                                  # the last day's errors, warnings, events and alerts; /log-check
 scripts/o2-query.sh production traffic --hours 336                 # page loads and sessions per day, for all 14 days kept; /traffic
 scripts/o2-query.sh production renderers --hours 24                # which crawlers run the SPA, and so must leave the sessions
+scripts/o2-query.sh production accounts --hours 336                # accounts, sessions, follows; sign-ins per day; /traffic
 ```
 
 The production forms are the same commands with `--context event-junkie-production`, over that cluster's tunnel (`10.10.0.1`, CLUSTER_ACCESS.md §Two
@@ -200,6 +201,29 @@ same slug within 60 seconds comes from the SPA. `renderers` counts these per age
 time. The scaling keeps the estimate unbiased, but its noise grows with the share covered. Read `frontend.page_loads` beside it.
 
 **Retention sets the limit.** OpenObserve keeps 14 days, so `--hours 336` is the longest useful window. Older traffic is gone.
+
+### Accounts
+
+`scripts/o2-query.sh <env> accounts` reads the BFF's account metrics. Unlike the traffic counts, these numbers are exact. They are counts only. No
+metric carries an address.
+
+| Field                 | What it counts                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `now.accounts.all`    | Accounts that exist now. `bff.accounts.count{state="all"}`                                 |
+| `now.accounts.active` | Accounts with a sign-in or a renewed session in the last 30 days                           |
+| `now.sessions`        | Live sessions. One signed-in browser is one session                                        |
+| `now.follows`         | Follows that exist now, per kind                                                           |
+| `days[].accounts`     | The highest value of each account gauge on that day                                        |
+| `days[].links`        | Sign-in links asked for, per outcome. `sent` is a mail that went out                       |
+| `days[].sign_ins`     | Sign-in links used. `ok` is a sign-in. The first sign-in of an address creates its account |
+| `days[].follows`      | Follows and unfollows                                                                      |
+| `days[].cleanup`      | What the daily cleanup did. `deleted` is accounts removed after 24 months without use      |
+| `today`               | The counters from 00:00 UTC to `until_utc`                                                 |
+
+**Every BFF replica publishes the same gauges.** Each replica refreshes them from the database every five minutes. The script takes the `max` over the
+pods. A `sum` counts each account once per replica.
+
+**A counter restarts with its pod.** `increase` absorbs the restart, but it also extrapolates. The script rounds the counts, so a day can be off by one.
 
 ## Dashboards are in git, and pushed by hand
 

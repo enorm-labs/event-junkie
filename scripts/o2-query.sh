@@ -6,6 +6,7 @@
 #   scripts/o2-query.sh <staging|production> sweep [--hours N]           # the /log-check sweep, one JSON object
 #   scripts/o2-query.sh <staging|production> traffic [--hours N]         # requests and visitor estimates per day
 #   scripts/o2-query.sh <staging|production> renderers [--hours N]       # which crawlers run the SPA; use --hours 2
+#   scripts/o2-query.sh <staging|production> accounts [--hours N]        # accounts, sessions, follows; sign-ins per day
 #   scripts/o2-query.sh <staging|production> sql '<SQL>' [--hours N]     # one search; prints the hits
 #   scripts/o2-query.sh <staging|production> promql '<expr>' [--hours N] [--step S]
 #
@@ -19,7 +20,8 @@
 # every alert that fired. Each group carries a count, the first and last time and the newest version.
 # `traffic` counts nginx page loads and BFF calls per day. Neither log names a visitor, so both counts
 # are upper bounds, not visitors; OPENOBSERVE.md § Traffic says what each column counts. `renderers`
-# says which crawlers run the SPA, which is what `traffic` must subtract from its sessions.
+# says which crawlers run the SPA, which is what `traffic` must subtract from its sessions. `accounts`
+# reads the BFF's account metrics: counts, never an address.
 #
 # The field names are not the ones the code writes: the message is `body`, fields are lower-case,
 # and a line that is not JSON (nginx, Flux, a helm test pod) has `severity = '0'`. OPENOBSERVE.md has
@@ -50,7 +52,7 @@ esac
 
 QUERY=
 case "$VERB" in
-    sweep | traffic | renderers) ;;
+    sweep | traffic | renderers | accounts) ;;
     sql | promql)
         [ $# -ge 1 ] || die "$VERB needs a query"
         QUERY="$1"
@@ -234,6 +236,52 @@ case "$VERB" in
                totals: {page_loads: total(.frontend.page_loads), sessions: total(.bff.sessions),
                         lists: total(.bff.lists), details_by_people: total(.bff.details_by_people), images: total(.bff.images)},
                days: .}'
+        ;;
+    accounts)
+        # One answer per UTC day, as `traffic` has, and today up to now. Every replica publishes the same
+        # gauges, so `max` over the pods is the count. A counter restarts with its pod, which `increase`
+        # absorbs; it also extrapolates, so the counts are rounded.
+        range_query() {
+            curl -s -u "$AUTH" "$BASE/api/default/prometheus/api/v1/query_range" --data-urlencode "query=$1" \
+                --data-urlencode "start=$2" --data-urlencode "end=$3" --data-urlencode "step=$4"
+        }
+        TODAY_S=$((END_S - END_S % 86400))
+        FIRST_S=$((START_S - START_S % 86400 + 86400))
+        TODAY_H=$(((END_S - TODAY_S + 3599) / 3600))
+        days() { [ "$FIRST_S" -le "$TODAY_S" ] && range_query "$1" "$FIRST_S" "$TODAY_S" 86400 || echo '{}'; }
+        # OpenObserve needs a literal metric name, so each gauge is its own query.
+        now() { range_query "$1" "$END_S" "$END_S" 60; }
+        jq -n \
+            --arg environment "$ENVIRONMENT" --argjson hours "$HOURS" --arg today_until "$(date -u -r "$END_S" +%H:%M 2>/dev/null || date -u -d "@$END_S" +%H:%M)" \
+            --argjson accounts_now "$(now 'max by (state) (bff_accounts_count)')" \
+            --argjson sessions_now "$(now 'max(bff_accounts_sessions)')" \
+            --argjson follows_now "$(now 'max by (kind) (bff_accounts_follows)')" \
+            --argjson accounts "$(days 'max by (state) (max_over_time(bff_accounts_count[1d]))')" \
+            --argjson links "$(days 'sum by (outcome) (increase(bff_auth_link_total[1d]))')" \
+            --argjson sign_ins "$(days 'sum by (outcome) (increase(bff_auth_sign_in_total[1d]))')" \
+            --argjson follows "$(days 'sum by (action) (increase(bff_account_follow_total[1d]))')" \
+            --argjson cleanup "$(days 'sum by (outcome) (increase(bff_accounts_cleanup_total[1d]))')" \
+            --argjson links_today "$(now "sum by (outcome) (increase(bff_auth_link_total[${TODAY_H}h]))")" \
+            --argjson sign_ins_today "$(now "sum by (outcome) (increase(bff_auth_sign_in_total[${TODAY_H}h]))")" \
+            --argjson follows_today "$(now "sum by (action) (increase(bff_account_follow_total[${TODAY_H}h]))")" '
+            # A point at midnight covers the day before it. A query whose start is its end answers `value`, not `values`.
+            def day($t): ($t - 86400) | todate | .[0:10];
+            def n: tonumber | round;
+            def series(f): [.data.result[]? | (.metric | f) as $k | .values[]? | {day: day(.[0]), key: $k, n: (.[1] | n)}];
+            def latest(f): [.data.result[]? | {key: (.metric | f // "all"), value: ((.value // .values[-1])[1] | n)}] | from_entries;
+            def by_day(rows): rows | group_by(.day) | map({key: .[0].day, value: (map({key, value: .n}) | from_entries)}) | from_entries;
+            (by_day($accounts | series(.state))) as $a
+            | (by_day($links | series(.outcome))) as $l
+            | (by_day($sign_ins | series(.outcome))) as $s
+            | (by_day($follows | series(.action))) as $f
+            | (by_day($cleanup | series(.outcome))) as $c
+            | ([$a, $l, $s, $f, $c] | map(keys[]) | unique) as $days
+            | {environment: $environment, hours: $hours,
+               now: {accounts: ($accounts_now | latest(.state)), sessions: ($sessions_now | latest(.x) | .all), follows: ($follows_now | latest(.kind))},
+               today: {until_utc: $today_until, links: ($links_today | latest(.outcome)), sign_ins: ($sign_ins_today | latest(.outcome)),
+                       follows: ($follows_today | latest(.action))},
+               days: [$days[] as $d | {day: $d, accounts: ($a[$d] // {}), links: ($l[$d] // {}), sign_ins: ($s[$d] // {}),
+                                       follows: ($f[$d] // {}), cleanup: ($c[$d] // {})}]}'
         ;;
     renderers)
         # The injector calls the detail endpoint once for every detail page nginx serves. A second call

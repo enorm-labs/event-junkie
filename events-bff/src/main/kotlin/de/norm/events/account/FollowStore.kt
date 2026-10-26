@@ -120,6 +120,17 @@ class FollowStore(
         )
     }
 
+    /** The follows of each kind, a kind nobody follows included. Kinds this code does not know yet are left out. */
+    suspend fun countsByKind(): Map<FollowKind, Long> {
+        val counted =
+            db
+                .sql("SELECT kind, count(*) AS n FROM accounts.follow GROUP BY kind")
+                .map { row -> FollowKind.ofOrNull(row.required("kind", String::class.java)) to row.required("n", Long::class.javaObjectType) }
+                .flow()
+                .toList()
+        return FollowKind.entries.associateWith { kind -> counted.filter { it.first == kind }.sumOf { it.second } }
+    }
+
     /** Follows whose artist, venue or promoter no longer exists: deleted, or merged into another. */
     suspend fun deleteOrphans(): Long =
         FollowKind.entries.sumOf { kind ->

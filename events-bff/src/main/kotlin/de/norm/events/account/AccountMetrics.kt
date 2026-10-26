@@ -1,15 +1,18 @@
 package de.norm.events.account
 
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tags
 import org.springframework.stereotype.Component
+import java.util.concurrent.atomic.AtomicLong
 
 /**
- * What the sign-in endpoints did. Every outcome is registered at construction, so a rule can read a
- * series that has never moved (`deploy/alerts/README.md`).
+ * What the sign-in endpoints did, and how many accounts, sessions and follows exist. Every series is registered at
+ * construction, so a rule can read a series that has never moved (`deploy/alerts/README.md`). The gauges read
+ * holders that [AccountGaugeRefresh] sets, because a gauge supplier runs on the scrape thread and must not query.
  */
 @Component
 class AccountMetrics(
-    registry: MeterRegistry
+    private val registry: MeterRegistry
 ) {
     private val links = LinkOutcome.entries.associateWith { registry.counter(LINK, TAG_OUTCOME, it.tag) }
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
@@ -18,6 +21,25 @@ class AccountMetrics(
         FollowAction.entries.associateWith { action ->
             FollowKind.entries.associateWith { kind -> registry.counter(FOLLOW, TAG_ACTION, action.tag, TAG_KIND, kind.tag) }
         }
+
+    private val accounts = AccountState.entries.associateWith { gauge(ACCOUNTS, Tags.of(TAG_STATE, it.tag)) }
+    private val sessions = gauge(SESSIONS, Tags.empty())
+    private val followed = FollowKind.entries.associateWith { gauge(FOLLOWS, Tags.of(TAG_KIND, it.tag)) }
+
+    private fun gauge(
+        name: String,
+        tags: Tags
+    ): AtomicLong = registry.gauge(name, tags, AtomicLong(0))
+
+    fun publish(
+        counts: AccountCounts,
+        follows: Map<FollowKind, Long>
+    ) {
+        accounts.getValue(AccountState.ALL).set(counts.total)
+        accounts.getValue(AccountState.ACTIVE).set(counts.active)
+        sessions.set(counts.sessions)
+        followed.forEach { (kind, holder) -> holder.set(follows[kind] ?: 0) }
+    }
 
     fun record(outcome: LinkOutcome) = links.getValue(outcome).increment()
 
@@ -46,10 +68,28 @@ class AccountMetrics(
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
 
+        /** `bff_accounts_count{state}`: all accounts, and those used in the last 30 days. The same on every replica. */
+        const val ACCOUNTS = "bff.accounts.count"
+
+        /** `bff_accounts_sessions`: live sessions, one per signed-in browser. */
+        const val SESSIONS = "bff.accounts.sessions"
+
+        /** `bff_accounts_follows{kind}`: follows that exist, per artist / venue / promoter. */
+        const val FOLLOWS = "bff.accounts.follows"
+
         const val TAG_OUTCOME = "outcome"
         const val TAG_ACTION = "action"
         const val TAG_KIND = "kind"
+        const val TAG_STATE = "state"
     }
+}
+
+/** The two account counts `bff.accounts.count` publishes. Active is a sign-in or a renewed session in the last 30 days. */
+enum class AccountState(
+    val tag: String
+) {
+    ALL("all"),
+    ACTIVE("active")
 }
 
 /** How a request for a sign-in link ended. Only [IP_THROTTLED] and the two mail failures are visible to the caller. */
