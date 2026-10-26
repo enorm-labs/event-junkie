@@ -395,6 +395,7 @@ Core entity representing a single music event at a venue on a specific date.
 
 **A hand edit pins the fields that it changes (ADR-042).** `PUT /api/admin/events/{id}` adds each changed field to
 `pinned_fields`, by its name in the request. `lineup`, `promoters` and `genres` pin the join tables.
+The edit rewrites the genre tags and pins `genres` only when the `genre` text changes. Otherwise the stored tags stay, derived tags too.
 `PUT /api/admin/events/{id}/features` sets the event features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
 the end. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes

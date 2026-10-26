@@ -12,6 +12,11 @@ import de.norm.events.event.EventRequest
 import de.norm.events.event.EventResponse
 import de.norm.events.festival.FestivalRequest
 import de.norm.events.festival.FestivalResponse
+import de.norm.events.genretag.EventGenreTagEntity
+import de.norm.events.genretag.EventGenreTagRepository
+import de.norm.events.genretag.GenreTagEntity
+import de.norm.events.genretag.GenreTagOrigin
+import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -49,6 +54,12 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var venueRepository: VenueRepository
 
+    @Autowired
+    private lateinit var genreTagRepository: GenreTagRepository
+
+    @Autowired
+    private lateinit var eventGenreTagRepository: EventGenreTagRepository
+
     private var venueId: Long = 0
     private var eventSourceId: Long = 0
     private val venueSlug = "astra-kulturhaus"
@@ -76,19 +87,21 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
     }
 
     /** The show as the venue publishes it. */
-    private fun published(priceNote: String = "Presale only") =
-        ScrapedEvent(
-            title = "The Adicts",
-            eventType = "CONCERT",
-            eventDate = date,
-            startTime = LocalTime.of(20, 0),
-            sourceId = "astra:the-adicts",
-            sourceUrl = "https://www.astra-berlin.de/events/the-adicts",
-            genre = "Punk",
-            priceNote = priceNote,
-            artists = listOf(ScrapedArtist("The Adicts", "HEADLINER"), ScrapedArtist("Maid of Ace", "SUPPORT")),
-            promoters = listOf("Loft Concerts")
-        )
+    private fun published(
+        priceNote: String = "Presale only",
+        genre: String? = "Punk"
+    ) = ScrapedEvent(
+        title = "The Adicts",
+        eventType = "CONCERT",
+        eventDate = date,
+        startTime = LocalTime.of(20, 0),
+        sourceId = "astra:the-adicts",
+        sourceUrl = "https://www.astra-berlin.de/events/the-adicts",
+        genre = genre,
+        priceNote = priceNote,
+        artists = listOf(ScrapedArtist("The Adicts", "HEADLINER"), ScrapedArtist("Maid of Ace", "SUPPORT")),
+        promoters = listOf("Loft Concerts")
+    )
 
     private suspend fun import(event: ScrapedEvent) = eventUpsertService.upsertAndCleanup(listOf(event), venueId, venueSlug, eventSourceId)
 
@@ -164,6 +177,23 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
                 .expectStatus()
                 .isBadRequest
             unpin(id, "title")
+        }
+
+    @Test
+    fun `an edit of the lineup keeps a derived genre tag and pins no genres`(): Unit =
+        runBlocking {
+            import(published(genre = null))
+            val id = storedId()
+            val tag = genreTagRepository.save(GenreTagEntity(name = "Punk", slug = "punk"))
+            eventGenreTagRepository.save(EventGenreTagEntity(eventId = id, genreTagId = requireNotNull(tag.id), origin = GenreTagOrigin.ARTIST.name))
+            val before = get(id)
+            val headliner = before.artists.single { it.billingOrder == 0 }
+
+            val edited = put(id, before.toRequest().copy(artists = listOf(EventArtistRequest(headliner.artistId, headliner.role, 0, headliner.stage))))
+
+            edited.pinnedFields shouldBe listOf("lineup")
+            edited.genreTags shouldBe listOf("Punk")
+            get(id).genreTags shouldBe listOf("Punk")
         }
 
     @Test

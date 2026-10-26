@@ -232,9 +232,15 @@ class EventService(
         eventPromoterRepository.deleteByEventId(id)
         val promoterIdResponses = savePromoterAssociations(id, request.promoterIds)
 
-        // Replace genre tag associations: delete existing, insert new
-        eventGenreTagRepository.deleteByEventId(id)
-        val genreTagNames = saveGenreTagAssociations(id, request.genre)
+        // Rewrite the genre tags only when the genre text changes; otherwise the stored ones, derived tags among them, stay (#3957).
+        // A null leaves toResponse to read them.
+        val genreTagNames =
+            if (eventPinService.genreChanged(existing, request)) {
+                eventGenreTagRepository.deleteByEventId(id)
+                saveGenreTagAssociations(id, request.genre)
+            } else {
+                null
+            }
         contentStamp.restamp(listOf(saved))
 
         logger.info { "Updated event '${saved.title}' (id=$id)" }
