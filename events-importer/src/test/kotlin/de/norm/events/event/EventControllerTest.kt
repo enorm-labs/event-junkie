@@ -332,6 +332,61 @@ class EventControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `PUT event of a same-day second sitting keeps its time-suffixed slug`() {
+        val (_, late) = storeTwoSittings("Sittings Venue", "test:put-sitting")
+
+        webTestClient
+            .put()
+            .uri("/api/admin/events/${late.id}")
+            .bodyValue(late.request.copy(description = "Edited blurb"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<EventResponse>()
+            .consumeWith { it.responseBody!!.slug shouldBe "${late.slug}-1045" }
+    }
+
+    @Test
+    fun `PUT event that renames a second sitting rebuilds its slug`() {
+        val (_, late) = storeTwoSittings("Rename Venue", "test:put-sitting-rename")
+
+        webTestClient
+            .put()
+            .uri("/api/admin/events/${late.id}")
+            .bodyValue(late.request.copy(title = "Matinee Encore"))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<EventResponse>()
+            .consumeWith { it.responseBody!!.slug shouldBe "2026-01-01-rename-venue-matinee-encore" }
+    }
+
+    private data class Sitting(
+        val id: Long,
+        val slug: String,
+        val request: EventRequest
+    )
+
+    /**
+     * Two sittings of "Matinee" on one date, as production holds #3124 and #3125 (#3966): the first on the bare slug, the
+     * second suffixed. A POST rebuilds the slug, so the second is stored under another title and then renamed in SQL.
+     */
+    private fun storeTwoSittings(
+        venueName: String,
+        sourceIdPrefix: String
+    ): Pair<Sitting, Sitting> {
+        val venue = createVenue(VenueRequestFixtures.create(name = venueName))
+        val early = EventRequestFixtures.create(venueId = venue.id, title = "Matinee", sourceId = "$sourceIdPrefix-0900")
+        val late = early.copy(sourceId = "$sourceIdPrefix-1045")
+        val earlyCreated = createEvent(early)
+        val lateId = createEvent(late.copy(title = "Matinee late")).id
+        runBlocking {
+            databaseClient.sql("UPDATE events.event SET title = 'Matinee', slug = '${earlyCreated.slug}-1045' WHERE id = $lateId").await()
+        }
+        return Sitting(earlyCreated.id, earlyCreated.slug, early) to Sitting(lateId, earlyCreated.slug, late)
+    }
+
+    @Test
     fun `PUT event with the lineup unchanged keeps each row's title_derived and set times`() {
         val (created, request, artists) = createEventWithImportedLineup("unchanged")
 

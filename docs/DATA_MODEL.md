@@ -398,7 +398,8 @@ Core entity representing a single music event at a venue on a specific date.
 The edit rewrites the genre tags and pins `genres` only when the `genre` text changes. Otherwise the stored tags stay, derived tags too.
 `PUT /api/admin/events/{id}/features` sets the event features and pins `features`. The importer keeps a
 pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
-the end. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
+the end. A hand edit keeps the slug when it changes none of the title, the date and the venue. So a second sitting keeps its
+`-HHmm` suffix. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
 the source's value.
 
 ### Artist
