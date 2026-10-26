@@ -78,7 +78,7 @@ class InterkosmosApiScraperTest {
 
     @Test
     fun `types the games night, the party and the burlesque open stage`() {
-        events.single { it.title.startsWith("Nerds of Beats") }.eventType shouldBe EventType.QUIZ.name
+        events.single { it.title.startsWith("Nerds of Beats") }.eventType shouldBe EventType.OTHER.name
         events.single { it.title.startsWith("QUEER*Kosmos") }.eventType shouldBe EventType.PARTY.name
         events.single { it.title == "PracTease Burlesque Open Stage" }.eventType shouldBe EventType.SHOW.name
         events.single { it.title.startsWith("Nerds of Beats") }.endTime.shouldBeNull()

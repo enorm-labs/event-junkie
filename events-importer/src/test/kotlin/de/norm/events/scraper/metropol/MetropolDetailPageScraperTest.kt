@@ -112,10 +112,28 @@ class MetropolDetailPageScraperTest {
     }
 
     @Test
+    fun `marks a show moved out of the house by its alert-blue note alone`() {
+        // No badge and no title prefix: only "vom Metropol ins Huxleys verlegt" says the show left.
+        val event = scrape("slayyyter", "2026-10-27-slayyyter")
+        event.title shouldBe "SLAYYYTER"
+        val entity = event.toEventEntity(venueId = 1L, venueSlug = "metropol", eventSourceId = 1L)
+        entity.status shouldBe EventStatus.RELOCATED.name
+        entity.relocatedTo shouldBe "Huxleys"
+    }
+
+    @Test
     fun `keeps a show that moved into the house scheduled`() {
-        // The .alert-blue prose says "vom Gretchen ins Metropol verlegt" — the show happens
-        // here, so only the badge and the title prefix may set the status.
-        scrape("mucco", "2026-09-05-mucco").status shouldBe EventStatus.SCHEDULED.name
+        // The .alert-blue note says "vom Gretchen ins Metropol verlegt": the show happens here.
+        val entity = scrape("mucco", "2026-09-05-mucco").toEventEntity(venueId = 1L, venueSlug = "metropol", eventSourceId = 1L)
+        entity.status shouldBe EventStatus.SCHEDULED.name
+        entity.relocatedTo.shouldBeNull()
+    }
+
+    @Test
+    fun `leaves a cancelled show cancelled when its note gives ticket advice`() {
+        val event = scrape("loi", "2026-10-13-loi")
+        event.statusNote shouldBe "Loi"
+        event.toEventEntity(venueId = 1L, venueSlug = "metropol", eventSourceId = 1L).status shouldBe EventStatus.CANCELLED.name
     }
 
     @Test

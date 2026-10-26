@@ -101,8 +101,7 @@ class MetropolOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
             // Cancellation is the `.attention` badge; a relocation *away* from the house is the title
-            // prefix. The neighbouring `.changes` prose is deliberately not read — see
-            // MetropolDetailPageScraper.parseStatus.
+            // prefix. The `.changes` prose is not read: the detail page's note wins over the overview.
             status = parseEventStatus("${row.textAt(".info .attention").orEmpty()} $rawTitle"),
             statusNote = rawTitle,
             artists = buildMetropolArtists(title, support, eventType)

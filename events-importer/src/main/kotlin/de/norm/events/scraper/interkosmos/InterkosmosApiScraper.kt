@@ -140,7 +140,8 @@ class InterkosmosApiScraper {
                 "Comedy" to EventType.COMEDY.name,
                 "Lesung" to EventType.READING.name,
                 "Poetry Slam" to EventType.READING.name,
-                "Spieleabend" to EventType.QUIZ.name,
+                // Board games and open decks, not questions to answer.
+                "Spieleabend" to EventType.OTHER.name,
                 "Party" to EventType.PARTY.name,
                 "Burlesque Show" to EventType.SHOW.name,
                 "Konzert" to EventType.CONCERT.name
