@@ -56,6 +56,7 @@ class MatrixWebsiteImporterTest {
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.MATRIX
+        importer.listsWholeProgramme shouldBe true
     }
 
     @Test
