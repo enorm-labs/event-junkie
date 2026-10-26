@@ -125,21 +125,25 @@ object FeedFilterText {
         type: String
     ): String? = EventType.entries.find { it.name == type }?.let { EVENT_TYPE_PLURALS.getValue(locale).getValue(it) }
 
-    /** The type and venue of [filter] when they are all it holds, else null: two types, or any other filter. */
+    /** The type and venue of [filter] when they are all it holds, else null: two types, two venues, or any other filter. */
     fun nameable(filter: EventFilter): Nameable? {
         val others =
-            filter.copy(from = null, to = null, runningFrom = null, on = null, eventTypes = emptyList(), venueSlug = null)
-        return if (filter.eventTypes.size <= 1 && others == EventFilter()) Nameable(filter.eventTypes.singleOrNull(), filter.venueSlug) else null
+            filter.copy(from = null, to = null, runningFrom = null, on = null, eventTypes = emptyList(), venueSlugs = emptyList())
+        return if (filter.eventTypes.size <= 1 && filter.venueSlugs.size <= 1 && others == EventFilter()) {
+            Nameable(filter.eventTypes.singleOrNull(), filter.venueSlugs.singleOrNull())
+        } else {
+            null
+        }
     }
 
     /**
-     * Every filter of [filter] in [locale], one entry each: `event type: concerts, parties`. [venueName]
-     * replaces the venue slug when the venue exists.
+     * Every filter of [filter] in [locale], one entry each: `event type: concerts, parties`. [venueNames]
+     * replaces each venue slug whose venue exists.
      */
     fun describe(
         locale: String,
         filter: EventFilter,
-        venueName: String?
+        venueNames: Map<String, String>
     ): List<String> {
         val words = WORDS.getValue(locale)::getValue
 
@@ -149,7 +153,7 @@ object FeedFilterText {
         ) = values.takeIf { it.isNotEmpty() }?.let { "$label: ${it.joinToString(", ")}" }
         return listOfNotNull(
             named(words(Word.EVENT_TYPE), filter.eventTypes.map { eventTypePlural(locale, it) ?: it }),
-            named(words(Word.VENUE), listOfNotNull(filter.venueSlug?.let { venueName ?: it })),
+            named(words(Word.VENUE), filter.venueSlugs.map { venueNames[it] ?: it }),
             named(words(Word.DISTRICT), filter.districts),
             named(words(Word.VENUE_TYPE), filter.venueTypes),
             named(words(Word.ARTIST), listOfNotNull(filter.artistSlug)),

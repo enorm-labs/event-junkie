@@ -6,11 +6,15 @@
  * With `counts`, each option shows how many results ticking it leaves, and one that leaves none is
  * disabled rather than hidden, so the list does not jump (#2671). Every tick applies at once, so
  * "Done" only closes the list: without it, visitors looked for a way to confirm.
+ * With `searchable`, a field above the options narrows them by name, ignoring case and accents, for
+ * a list too long to scroll on a phone (#3979). A ticked option stays listed whatever the query,
+ * and the options ticked when the list opens lead it, frozen until it closes so a tick moves nothing.
  */
-import { computed, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { ChevronDown } from '@lucide/vue'
 import { PopoverClose } from 'reka-ui'
 import { useI18n } from 'vue-i18n'
+import BaseInput from '@/components/BaseInput.vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn, FIELD_CLASS } from '@/lib/utils'
@@ -34,6 +38,12 @@ const props = defineProps<{
   hint?: string
   /** Results per option if it is ticked; an option absent from it leaves none. Omitted: no counts. */
   counts?: Readonly<Record<string, number>>
+  /** Adds a search field above the options; it clears when the list closes. */
+  searchable?: boolean
+  /** The accessible name and placeholder of the search field. */
+  searchLabel?: string
+  /** The line shown when the query matches no option. */
+  noMatchLabel?: string
   class?: string
 }>()
 
@@ -42,11 +52,41 @@ const hintId = useId()
 
 const emit = defineEmits<{ change: [values: string[]] }>()
 
+/** A value without an option, such as a venue before its list loads, shows as itself. */
 const summary = computed(() => {
-  const chosen = props.options.filter((option) => props.selected.includes(option.value))
-  const [first, ...rest] = chosen
-  if (!first) return props.allLabel
-  return rest.length ? props.countLabel(chosen.length) : first.label
+  const [first, ...rest] = props.selected
+  if (first === undefined) return props.allLabel
+  if (rest.length) return props.countLabel(props.selected.length)
+  return props.options.find((option) => option.value === first)?.label ?? first
+})
+
+const query = ref('')
+
+/** Lower case without accents, so `saal` finds Säälchen. */
+function folded(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+/** The values ticked when the list last opened. */
+const pinned = ref<ReadonlySet<string>>(new Set())
+
+function onOpen(open: boolean) {
+  if (open) pinned.value = new Set(props.selected)
+  else query.value = ''
+}
+
+const ordered = computed(() => {
+  if (!props.searchable) return props.options
+  const isPinned = (option: FilterOption) => pinned.value.has(option.value)
+  return [...props.options.filter(isPinned), ...props.options.filter((option) => !isPinned(option))]
+})
+
+const shown = computed(() => {
+  const needle = folded(query.value.trim())
+  if (!needle) return ordered.value
+  return ordered.value.filter(
+    (option) => props.selected.includes(option.value) || folded(option.label).includes(needle),
+  )
 })
 
 function count(value: string): number | undefined {
@@ -70,7 +110,7 @@ function toggle(value: string, checked: boolean) {
 </script>
 
 <template>
-  <Popover>
+  <Popover @update:open="onOpen">
     <!-- eslint-disable shadcn/require-static-classes -- FIELD_CLASS lives in lib/utils, shared with BaseInput and BaseSelect -->
     <PopoverTrigger
       :aria-label="`${label}: ${summary}`"
@@ -82,17 +122,29 @@ function toggle(value: string, checked: boolean) {
     </PopoverTrigger>
     <PopoverContent :collision-padding="8" align="start" class="w-56">
       <p v-if="hint" :id="hintId" class="mb-2 text-meta text-muted-foreground">{{ hint }}</p>
-      <fieldset :aria-describedby="hint ? hintId : undefined" class="flex flex-col gap-1">
+      <BaseInput
+        v-if="searchable"
+        v-model="query"
+        :aria-label="searchLabel"
+        :placeholder="searchLabel"
+        class="mb-2 w-full"
+        type="search"
+      />
+      <fieldset
+        :aria-describedby="hint ? hintId : undefined"
+        :class="{ 'max-h-72 overflow-y-auto': searchable }"
+        class="flex flex-col gap-1"
+      >
         <legend class="sr-only">{{ label }}</legend>
         <label
-          v-for="option in options"
+          v-for="option in shown"
           :key="option.value"
-          class="flex h-8 items-center gap-2 has-disabled:text-muted-foreground"
+          class="flex min-h-8 items-center gap-2 has-disabled:text-muted-foreground"
         >
           <input
             :checked="selected.includes(option.value)"
             :disabled="unavailable(option.value)"
-            class="size-4 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            class="size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             type="checkbox"
             @change="toggle(option.value, ($event.target as HTMLInputElement).checked)"
           />
@@ -103,6 +155,9 @@ function toggle(value: string, checked: boolean) {
             >{{ count(option.value) }}</span
           >
         </label>
+        <p v-if="!shown.length && query" class="text-meta text-muted-foreground">
+          {{ noMatchLabel }}
+        </p>
       </fieldset>
       <div class="mt-2 flex justify-between gap-2">
         <Button

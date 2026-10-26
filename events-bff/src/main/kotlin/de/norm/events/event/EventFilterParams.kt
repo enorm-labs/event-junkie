@@ -20,8 +20,10 @@ data class EventFilterParams(
         description = "Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing."
     )
     val eventType: List<String>? = null,
-    @field:Parameter(description = "Venue slug filter — only events at the matching venue.")
-    val venue: String? = null,
+    @field:Parameter(
+        description = "Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing."
+    )
+    val venue: List<String>? = null,
     @field:Parameter(
         description = "Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches."
     )
@@ -94,7 +96,7 @@ data class EventFilterParams(
             runningFrom = from.takeIf { running },
             runningCutoff = EventFilter.RUNNING_CUTOFF.takeIf { running && from != null },
             eventTypes = eventType.orEmpty().normalizedEventTypes(),
-            venueSlug = venue,
+            venueSlugs = venue.orEmpty().normalizedSlugs(),
             districts = district.orEmpty().normalizedSlugs(),
             venueTypes = venueType.orEmpty().normalizedSlugs(),
             artistSlug = artist,

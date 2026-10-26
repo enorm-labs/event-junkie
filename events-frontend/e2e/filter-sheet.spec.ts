@@ -1,4 +1,5 @@
 import { expect, type Route, test } from '@playwright/test'
+import { venueFilter } from './filter-bar'
 
 /**
  * The filter bar below `sm` (#2890): "More filters" is a bottom sheet holding the second tier and
@@ -75,7 +76,9 @@ test('sets a filter in the sheet, counts the results live, and shows them on clo
   await expect(sheet.getByLabel('Earliest event date')).toBeVisible()
   await expect(sheet.getByRole('button', { name: 'Show 2 events' })).toBeVisible()
 
-  await sheet.getByLabel('Filter by venue', { exact: true }).selectOption('lido')
+  await venueFilter(sheet).click()
+  await page.getByRole('checkbox', { name: 'Lido' }).check()
+  await page.getByRole('button', { name: 'Done' }).click()
   await expect(page).toHaveURL(/[?&]venue=lido\b/)
   await sheet.getByRole('button', { name: 'Show 1 event' }).click()
 

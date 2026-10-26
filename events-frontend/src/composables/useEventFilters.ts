@@ -16,6 +16,7 @@ export function useEventFilters() {
     const eventTypes = queryList('eventType')
     const families = queryList('family')
     const districts = queryList('district')
+    const venues = queryList('venue')
     const venueTypes = queryList('venueType')
     const timesOfDay = queryList('timeOfDay')
     const features = queryList('feature')
@@ -24,7 +25,7 @@ export function useEventFilters() {
     return {
       q: queryString('q') || undefined,
       eventType: eventTypes.length ? eventTypes : undefined,
-      venue: queryString('venue') || undefined,
+      venue: venues.length ? venues : undefined,
       district: districts.length ? districts : undefined,
       venueType: venueTypes.length ? venueTypes : undefined,
       genre: queryString('genre') || undefined,

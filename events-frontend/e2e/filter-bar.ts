@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 /**
  * Opens the filter bar's "More filters" section when it is closed. From `sm` up it starts closed
@@ -9,6 +9,11 @@ export async function openMoreFilters(page: Page): Promise<void> {
   // "Filters" below `sm`, where the first row has no room for "More".
   const toggle = page.getByRole('button', { name: /^(More filters|Filters)\b/ })
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click()
+}
+
+/** The venue filter's trigger, whatever it names (#3979). */
+export function venueFilter(page: Page | Locator): Locator {
+  return page.getByRole('button', { name: /^Filter by venue: / })
 }
 
 /**

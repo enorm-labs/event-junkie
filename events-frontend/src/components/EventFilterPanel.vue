@@ -52,6 +52,12 @@ function applyEventTypes(types: string[]) {
   })
 }
 
+const venueOptions = computed(() =>
+  (venues.data.value ?? []).flatMap((v) =>
+    v.slug ? [{ value: v.slug, label: v.name ?? v.slug }] : [],
+  ),
+)
+
 const activeFamilies = computed(() =>
   familiesShown(queryList('family'), queryString('genre'), genres.data.value ?? []),
 )
@@ -205,17 +211,20 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
     </div>
 
     <div :class="SELECT_ROW_CLASS">
-      <BaseSelect
-        :aria-label="t('events.filters.byVenue')"
+      <!-- Well over a hundred venues (#2246), so this one list has a search field (#3979). -->
+      <MultiSelectFilter
+        :all-label="t('events.filters.allVenues')"
         :class="SELECT_CLASS"
-        :model-value="queryString('venue')"
-        @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allVenues') }}</option>
-        <option v-for="v in venues.data.value ?? []" :key="v.slug" :value="v.slug ?? ''">
-          {{ v.name }}
-        </option>
-      </BaseSelect>
+        :clear-label="t('events.filters.clearVenues')"
+        :count-label="(n) => t('events.filters.venuesSelected', { n })"
+        :label="t('events.filters.byVenue')"
+        :no-match-label="t('events.filters.noVenueMatch')"
+        :options="venueOptions"
+        :search-label="t('events.filters.searchVenues')"
+        :selected="queryList('venue')"
+        searchable
+        @change="applyFilters({ venue: $event })"
+      />
 
       <MultiSelectFilter
         :all-label="t('events.filters.allDistricts')"

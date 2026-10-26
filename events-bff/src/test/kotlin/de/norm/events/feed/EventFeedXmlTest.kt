@@ -18,12 +18,12 @@ class EventFeedXmlTest {
     private fun feed(
         locale: String,
         filter: EventFilter,
-        venueName: String? = null
+        venueNames: Map<String, String> = emptyMap()
     ): Document =
         DocumentBuilderFactory
             .newInstance()
             .newDocumentBuilder()
-            .parse(ByteArrayInputStream(EventFeedXml.render(locale, "https://event-junkie.de/feed.xml", emptyList(), filter, venueName).toByteArray()))
+            .parse(ByteArrayInputStream(EventFeedXml.render(locale, "https://event-junkie.de/feed.xml", emptyList(), filter, venueNames).toByteArray()))
 
     private fun Document.channelText(name: String): String =
         getElementsByTagName("channel")
@@ -34,14 +34,14 @@ class EventFeedXmlTest {
     private fun title(
         locale: String,
         filter: EventFilter,
-        venueName: String? = null
-    ) = feed(locale, filter, venueName).channelText("title")
+        venueNames: Map<String, String> = emptyMap()
+    ) = feed(locale, filter, venueNames).channelText("title")
 
     private fun description(
         locale: String,
         filter: EventFilter,
-        venueName: String? = null
-    ) = feed(locale, filter, venueName).channelText("description")
+        venueNames: Map<String, String> = emptyMap()
+    ) = feed(locale, filter, venueNames).channelText("description")
 
     @ParameterizedTest(name = "{0} in {1}")
     @MethodSource("titleRows")
@@ -51,23 +51,24 @@ class EventFeedXmlTest {
         params: EventFilterParams,
         expected: String
     ) {
-        title(locale, params.toFilter(), venueName = params.venue?.let { "Lido" }) shouldBe expected
+        title(locale, params.toFilter(), venueNames = mapOf("lido" to "Lido", "astra" to "Astra")) shouldBe expected
     }
 
     @Test
     fun `falls back to the filtered title for a type or a venue that does not exist`() {
         title("en", EventFilterParams(eventType = listOf("opera")).toFilter()) shouldBe "Event Junkie — new events (filtered)"
-        title("de", EventFilterParams(venue = "gone").toFilter(), venueName = null) shouldBe "Event Junkie — neue Veranstaltungen (gefiltert)"
+        title("de", EventFilterParams(venue = listOf("gone")).toFilter()) shouldBe "Event Junkie — neue Veranstaltungen (gefiltert)"
     }
 
     @Test
     fun `keeps a long venue name whole, escaped, in title and description`() {
         val name = "Kulturbrauerei — Maschinenhaus & Kesselhaus <Open-Air> im Hof der alten Schultheiss-Brauerei"
-        val filter = EventFilterParams(eventType = listOf("concert"), venue = "kulturbrauerei").toFilter()
+        val filter = EventFilterParams(eventType = listOf("concert"), venue = listOf("kulturbrauerei")).toFilter()
+        val names = mapOf("kulturbrauerei" to name)
 
-        title("en", filter, name) shouldBe "Event Junkie — new concerts at $name"
-        title("de", filter, name) shouldBe "Event Junkie — neue Konzerte: $name"
-        description("en", filter, name) shouldBe
+        title("en", filter, names) shouldBe "Event Junkie — new concerts at $name"
+        title("de", filter, names) shouldBe "Event Junkie — neue Konzerte: $name"
+        description("en", filter, names) shouldBe
             "The events in Berlin that Event Junkie found most recently. Filters: event type: concerts · venue: $name."
     }
 
@@ -82,7 +83,7 @@ class EventFeedXmlTest {
         val filter =
             EventFilterParams(
                 eventType = listOf("party", "concert", "opera"),
-                venue = "lido",
+                venue = listOf("lido"),
                 district = listOf("kreuzberg", "mitte"),
                 venueType = listOf("club"),
                 artist = "sam-prekop",
@@ -97,12 +98,12 @@ class EventFeedXmlTest {
                 timeOfDay = listOf("late", "evening", "dawn")
             ).toFilter()
 
-        description("en", filter, "Lido") shouldBe
+        description("en", filter, mapOf("lido" to "Lido")) shouldBe
             "The events in Berlin that Event Junkie found most recently. Filters: " +
             "event type: concerts, OPERA, parties · venue: Lido · district: kreuzberg, mitte · venue type: club · artist: sam-prekop · " +
             "promoter: 36-concerts · genre: techno · genre family: electronic · presale price: 10.5–20 € · search: “late night” · " +
             "time of night: dawn, evening, late · no sold-out events · free only."
-        description("de", filter, "Lido") shouldBe
+        description("de", filter, mapOf("lido" to "Lido")) shouldBe
             "Die Veranstaltungen in Berlin, die Event Junkie zuletzt gefunden hat. Filter: " +
             "Veranstaltungsart: Konzerte, OPERA, Partys · Location: Lido · Bezirk: kreuzberg, mitte · Location-Art: club · " +
             "Künstler: sam-prekop · Veranstalter: 36-concerts · Genre: techno · Genrefamilie: electronic · Vorverkaufspreis: 10,5–20 € · " +
@@ -113,8 +114,18 @@ class EventFeedXmlTest {
     fun `names a one-sided price range and an unknown venue by its slug`() {
         description("en", EventFilterParams(minPrice = BigDecimal("15")).toFilter()) shouldBe
             "The events in Berlin that Event Junkie found most recently. Filters: presale price: from 15 €."
-        description("de", EventFilterParams(maxPrice = BigDecimal("7.5"), venue = "gone").toFilter()) shouldBe
+        description("de", EventFilterParams(maxPrice = BigDecimal("7.5"), venue = listOf("gone")).toFilter()) shouldBe
             "Die Veranstaltungen in Berlin, die Event Junkie zuletzt gefunden hat. Filter: Location: gone · Vorverkaufspreis: bis 7,5 €."
+    }
+
+    @Test
+    fun `lists several venues by name in the description and an unknown one by its slug`() {
+        val filter = EventFilterParams(venue = listOf("lido", "gone", "astra")).toFilter()
+        val names = mapOf("lido" to "Lido", "astra" to "Astra Kulturhaus")
+
+        description("en", filter, names) shouldBe
+            "The events in Berlin that Event Junkie found most recently. Filters: venue: Astra Kulturhaus, gone, Lido."
+        title("en", filter, names) shouldBe "Event Junkie — new events (filtered)"
     }
 
     @Test
@@ -126,7 +137,7 @@ class EventFeedXmlTest {
 
     companion object {
         private val CONCERT = listOf("concert")
-        private const val LIDO = "lido"
+        private val LIDO = listOf("lido")
 
         @JvmStatic
         fun titleRows(): List<Arguments> =
@@ -155,6 +166,9 @@ class EventFeedXmlTest {
                 row("several types", "de", EventFilterParams(eventType = listOf("concert", "party")), "Event Junkie — neue Veranstaltungen (gefiltert)"),
                 row("one other facet", "en", EventFilterParams(free = true), "Event Junkie — new events (filtered)"),
                 row("one other facet", "de", EventFilterParams(district = listOf("mitte")), "Event Junkie — neue Veranstaltungen (gefiltert)"),
+                row("two venues", "en", EventFilterParams(venue = listOf("lido", "astra")), "Event Junkie — new events (filtered)"),
+                row("two venues", "de", EventFilterParams(venue = listOf("lido", "astra")), "Event Junkie — neue Veranstaltungen (gefiltert)"),
+                row("one venue twice", "en", EventFilterParams(venue = listOf("lido", " lido")), "Event Junkie — new at Lido"),
                 row("one type twice", "en", EventFilterParams(eventType = listOf("concert", "CONCERT")), "Event Junkie — new concerts")
             )
 

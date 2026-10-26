@@ -59,8 +59,11 @@ class EventFeedController(
         val filter = filters.toFilter()
         val events = cache.get(FeedKey(filter)) { eventService.newest(filter, MAX_ITEMS) }
         metrics.recordServed(BffMetrics.ENDPOINT_FEED, events.size)
-        val venueName = filter.venueSlug?.let { slug -> cache.get(FeedVenueKey(slug)) { FeedVenueName(venueService.nameOf(slug)) }.name }
-        val body = EventFeedXml.render(locale, selfUrl(exchange), events, filter, venueName)
+        val venueNames =
+            filter.venueSlugs
+                .mapNotNull { slug -> cache.get(FeedVenueKey(slug)) { FeedVenueName(venueService.nameOf(slug)) }.name?.let { slug to it } }
+                .toMap()
+        val body = EventFeedXml.render(locale, selfUrl(exchange), events, filter, venueNames)
         return PolledFeed.response(body, EventFeedXml.CONTENT_TYPE, cacheControl)
     }
 
@@ -83,7 +86,7 @@ private data class FeedKey(
     val filter: EventFilter
 )
 
-/** The cache key of a filtered venue's name, which the feed's title shows. */
+/** The cache key of a filtered venue's name, which the feed's title and description show. */
 private data class FeedVenueKey(
     val slug: String
 )

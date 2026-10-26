@@ -5,7 +5,7 @@ import { shallowRef } from 'vue'
 import type { EventPage, EventSummary } from '@/api/types'
 import { todayIso, yesterdayIso } from '@/lib/format'
 
-type Query = { page?: number; size?: number; venue?: string }
+type Query = { page?: number; size?: number; venue?: string[] }
 
 const { getMock } = vi.hoisted(() => ({
   getMock: vi.fn<(path: string, init: { params: { query: Query } }) => Promise<unknown>>(),
@@ -45,7 +45,7 @@ function serve(total: number, { first = [] as EventSummary[], fail = [] as numbe
 // Each test uses its own slug: the first page goes through useAsync's module-wide cache.
 let n = 0
 async function pager(upcoming: EventPage | null = { content: [] }) {
-  const { past, run } = usePastEvents(() => ({ venue: `venue-${++n}` }), shallowRef(upcoming))
+  const { past, run } = usePastEvents(() => ({ venue: [`venue-${++n}`] }), shallowRef(upcoming))
   await run()
   await flushPromises()
   return past
@@ -70,7 +70,7 @@ describe('usePastEvents', () => {
 
     expect(getMock).toHaveBeenCalledWith('/api/events', {
       params: {
-        query: { venue: `venue-${n}`, to: yesterdayIso(), size: 20, sort: ['eventDate,desc'] },
+        query: { venue: [`venue-${n}`], to: yesterdayIso(), size: 20, sort: ['eventDate,desc'] },
       },
     })
   })

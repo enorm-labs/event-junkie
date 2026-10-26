@@ -29,9 +29,10 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
     const tags = lists.genres.data.value ?? []
     const style =
       filters.genre && (tags.find((tag) => tag.slug === filters.genre)?.name ?? filters.genre)
-    const venue =
-      filters.venue &&
-      ((lists.venues.data.value ?? []).find((v) => v.slug === filters.venue)?.name ?? filters.venue)
+    const venueList = lists.venues.data.value ?? []
+    const venues = (filters.venue ?? []).map(
+      (slug) => venueList.find((v) => v.slug === slug)?.name ?? slug,
+    )
     const festivalName =
       filters.festival &&
       (festivals.find((f) => f.slug === filters.festival)?.name || filters.festival)
@@ -45,7 +46,7 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
         formatFamily(family),
       ),
       style,
-      venue,
+      ...venues,
       ...(filters.venueType ?? []).map((type) => formatVenueType(type)),
       ...(filters.district ?? []).map((district) => districtLabel(district)),
       filters.free ? t('events.card.free') : undefined,

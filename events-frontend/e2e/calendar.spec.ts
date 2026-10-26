@@ -1,5 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { closeFilterSheet, openMoreFilters } from './filter-bar'
+import { closeFilterSheet, openMoreFilters, venueFilter } from './filter-bar'
 import { outlastRetries } from './retry'
 
 /**
@@ -37,11 +37,6 @@ function collectCalendarFroms(page: Page): string[] {
     }
   })
   return froms
-}
-
-/** The native <select> that contains the given placeholder option. */
-function selectWithOption(page: Page, optionName: string) {
-  return page.locator('select', { has: page.getByRole('option', { name: optionName }) })
 }
 
 test.beforeEach(async ({ page }) => {
@@ -186,7 +181,7 @@ test('omits the date-range filter, whose job the visible window already does', a
 
   await openMoreFilters(page)
   // The rest of the shared bar is there; only the date range is suppressed here.
-  await expect(selectWithOption(page, 'All venues')).toBeVisible()
+  await expect(venueFilter(page)).toBeVisible()
   await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
   await expect(page.getByLabel('Latest event date')).toHaveCount(0)
   // The presets are shortcuts for that same range, so they go with it. Not Today: the calendar has its own.
@@ -199,7 +194,9 @@ test('refetches the visible range with a filter from the shared filter bar', asy
   await expect(page.getByRole('link', { name: /Calendar Gig/ })).toBeVisible()
 
   await openMoreFilters(page)
-  await selectWithOption(page, 'All venues').selectOption('lido')
+  await venueFilter(page).click()
+  await page.getByRole('checkbox', { name: 'Lido' }).check()
+  await page.getByRole('button', { name: 'Done' }).click()
   await closeFilterSheet(page)
 
   await expect(page).toHaveURL(/[?&]venue=lido\b/)
@@ -214,7 +211,7 @@ test('keeps the active filter when navigating to another month', async ({ page }
   await page.goto('/calendar?venue=lido')
   await expect(page.getByRole('link', { name: /Lido Gig/ })).toBeVisible()
   await openMoreFilters(page)
-  await expect(selectWithOption(page, 'All venues')).toHaveValue('lido')
+  await expect(page.getByRole('button', { name: 'Filter by venue: Lido' })).toBeVisible()
   await closeFilterSheet(page)
 
   const initialCount = froms.length

@@ -43,7 +43,7 @@ describe('filterLabels', () => {
         free: true,
         district: ['neukoelln', 'kreuzberg'],
         venueType: ['club'],
-        venue: 'lido',
+        venue: ['lido'],
         genre: 'free-jazz',
         family: ['jazz-blues'],
         timeOfDay: ['evening'],
@@ -81,7 +81,11 @@ describe('filterLabels', () => {
   })
 
   it('shows the slug of a venue or a style until the lists load', () => {
-    expect(labels(false)({ venue: 'lido', genre: 'free-jazz' })).toEqual(['free-jazz', 'lido'])
+    expect(labels(false)({ venue: ['lido'], genre: 'free-jazz' })).toEqual(['free-jazz', 'lido'])
+  })
+
+  it('names every chosen venue, and an unknown one by its slug', () => {
+    expect(labels()({ venue: ['lido', 'gone'] })).toEqual(['Lido', 'gone'])
   })
 
   it('says it in German', () => {

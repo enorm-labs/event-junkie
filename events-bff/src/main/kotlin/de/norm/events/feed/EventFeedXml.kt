@@ -58,20 +58,20 @@ object EventFeedXml {
 
     /**
      * The feed in [locale], one of [Site.LOCALES]. [selfUrl] is absolute, the address a reader subscribed to.
-     * [venueName] is the display name of [filter]'s venue, null when there is none or it does not exist.
+     * [venueNames] holds the display name of each of [filter]'s venues that exists, by slug.
      */
     fun render(
         locale: String,
         selfUrl: String,
         events: List<NewEvent>,
         filter: EventFilter,
-        venueName: String?
+        venueNames: Map<String, String>
     ): String =
         XmlWriter.document("rss", namespaces = mapOf("atom" to ATOM_NAMESPACE), attributes = mapOf("version" to "2.0")) {
             element("channel") {
-                element("title", title(locale, filter, venueName))
+                element("title", title(locale, filter, venueNames))
                 element("link", "${Site.URL}/$locale/events")
-                element("description", channelDescription(locale, filter, venueName))
+                element("description", channelDescription(locale, filter, venueNames))
                 element("language", locale)
                 // The newest item is when the feed last gained one; an empty feed has no such moment.
                 events.maxOfOrNull { it.firstSeenAt }?.let { element("lastBuildDate", rfc822(it)) }
@@ -88,11 +88,11 @@ object EventFeedXml {
     private fun title(
         locale: String,
         filter: EventFilter,
-        venueName: String?
+        venueNames: Map<String, String>
     ): String {
         val named = FeedFilterText.nameable(filter)
         val type = named?.eventType?.let { FeedFilterText.eventTypePlural(locale, it) }
-        val venue = named?.venueSlug?.let { venueName }
+        val venue = named?.venueSlug?.let { venueNames[it] }
         val words = TITLE_WORDS.getValue(locale)
         return when {
             named == null || (named.eventType != null && type == null) || (named.venueSlug != null && venue == null) -> {
@@ -113,9 +113,9 @@ object EventFeedXml {
     private fun channelDescription(
         locale: String,
         filter: EventFilter,
-        venueName: String?
+        venueNames: Map<String, String>
     ): String {
-        val filters = FeedFilterText.describe(locale, filter, venueName)
+        val filters = FeedFilterText.describe(locale, filter, venueNames)
         val base = CHANNEL_DESCRIPTIONS.getValue(locale)
         return if (filters.isEmpty()) base else "$base ${FILTERS_LEAD.getValue(locale)}: ${filters.joinToString(" · ")}."
     }

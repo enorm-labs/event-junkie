@@ -9,7 +9,7 @@ import { notFoundPageMeta, type PageMeta, placeholderPageMeta } from '@/lib/page
 import type { useAsync } from './useAsync'
 import { useEventSearch } from './useEvents'
 import { usePageMeta } from './usePageMeta'
-import { usePastEvents } from './usePastEvents'
+import { type PastEventsFilter, usePastEvents } from './usePastEvents'
 
 /** The entities with a detail page on `BaseDetailView`; each names its route, filter and messages. */
 export type DetailKind = 'venue' | 'artist' | 'promoter'
@@ -44,14 +44,17 @@ export function useDetailPage<T extends DetailEntity>(
     retrying,
     run: loadEntity,
   } = load(() => slug.value)
+  // The search takes several venues (#3979); a detail page names its one.
+  const detailFilter = (): PastEventsFilter =>
+    kind === 'venue' ? { venue: [slug.value] } : { [kind]: slug.value }
   const {
     data: events,
     error: eventsError,
     loading: eventsLoading,
     retrying: eventsRetrying,
     run: loadEvents,
-  } = useEventSearch(() => ({ [kind]: slug.value, size: 50 }), `errors.subject.${kind}Events`)
-  const { past, run: loadPastEvents } = usePastEvents(() => ({ [kind]: slug.value }), events)
+  } = useEventSearch(() => ({ ...detailFilter(), size: 50 }), `errors.subject.${kind}Events`)
+  const { past, run: loadPastEvents } = usePastEvents(detailFilter, events)
 
   function reload() {
     loadEntity()

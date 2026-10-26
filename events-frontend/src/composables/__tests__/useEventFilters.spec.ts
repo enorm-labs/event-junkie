@@ -71,6 +71,17 @@ describe('useEventFilters', () => {
     expect(filters.value.venueType).toEqual(['club', 'bar'])
   })
 
+  it('reads an old one-venue link or a repeated venue as a list', () => {
+    const { filters } = useEventFilters()
+    expect(filters.value.venue).toBeUndefined()
+
+    route.query = { venue: 'lido' }
+    expect(filters.value.venue).toEqual(['lido'])
+
+    route.query = { venue: ['lido', '', 'astra'] }
+    expect(filters.value.venue).toEqual(['lido', 'astra'])
+  })
+
   it('drops an empty list from the URL and resets the page', () => {
     route.query = { eventType: ['CONCERT', 'PARTY'], page: '3', venue: 'lido' }
     useEventFilters().applyFilters({ eventType: [] })

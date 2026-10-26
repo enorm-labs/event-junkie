@@ -40,8 +40,8 @@ Accept: application/json
 GET {{bff-host}}/api/events?from=2026-10-10&to=2026-10-10&running=true
 Accept: application/json
 
-### Filter by venue slug
-GET {{bff-host}}/api/events?venue=lido
+### Filter by venue slug; repeat it for any of several
+GET {{bff-host}}/api/events?venue=lido&venue=berghain
 Accept: application/json
 
 ### Filter by district (the 23 pre-2001 Berlin districts); repeat it for any of several
