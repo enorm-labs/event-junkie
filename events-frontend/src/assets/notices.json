@@ -649,19 +649,19 @@
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-common",
-          "version": "3.1.1",
+          "version": "3.2.0",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-webflux-api",
-          "version": "3.1.1",
+          "version": "3.2.0",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-webflux-ui",
-          "version": "3.1.1",
+          "version": "3.2.0",
           "url": null,
           "ecosystem": "backend"
         },
@@ -1087,7 +1087,7 @@
         },
         {
           "name": "org.webjars:swagger-ui",
-          "version": "5.32.14",
+          "version": "5.34.0",
           "url": "https://www.webjars.org",
           "ecosystem": "backend"
         },
