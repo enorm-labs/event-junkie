@@ -84,8 +84,10 @@ describe('EventsView with On now', () => {
   it("reads today's calendar with the filters, and lists only what isOnNow accepts", async () => {
     await mountAt('/en/events?now=1&venue=lido&district=kreuzberg&page=2')
 
-    // The festival chip asks for the current festival on its own (#3273).
-    expect(getMock.mock.calls.filter(([path]) => path !== '/api/festivals/current')).toHaveLength(1)
+    // The festival chip asks for the current festival on its own (#3273), and "Save search" for the
+    // session, which the header shares in the app (#3890).
+    const own = new Set(['/api/festivals/current', '/api/auth/session'])
+    expect(getMock.mock.calls.filter(([path]) => !own.has(path))).toHaveLength(1)
     expect(getMock).toHaveBeenCalledWith('/api/events/calendar', {
       params: {
         query: expect.objectContaining({

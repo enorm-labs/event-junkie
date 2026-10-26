@@ -376,6 +376,12 @@ const { t } = useI18n()
         Eintrag aus dem Kalender, lösche ich auch das Folgen.
       </p>
       <p>
+        <strong>Gespeicherte Suchen:</strong> Speicherst du eine Suche, speichere ich ihre Filter,
+        den Namen, den du ihr gibst, und den Zeitpunkt. Die Seite schlägt einen Namen aus den
+        Filtern vor, und du kannst ihn ändern. Deine Seite „Gefolgt“ zeigt deine gespeicherten
+        Suchen. Dort kannst du jede umbenennen oder löschen. Nur du siehst sie.
+      </p>
+      <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
         anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
       </p>

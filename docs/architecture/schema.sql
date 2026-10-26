@@ -280,8 +280,10 @@ CREATE TABLE accounts.follow (
     query text,
     notify text DEFAULT 'off'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    name text,
     CONSTRAINT follow_kind_check CHECK ((kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'festival'::text, 'search'::text]))),
     CONSTRAINT follow_notify_check CHECK ((notify = ANY (ARRAY['off'::text, 'digest'::text, 'instant'::text]))),
+    CONSTRAINT follow_search_name CHECK (((kind <> 'search'::text) OR ((name IS NOT NULL) AND ((length(name) >= 1) AND (length(name) <= 80))))),
     CONSTRAINT follow_target CHECK ((((kind = 'search'::text) AND (query IS NOT NULL) AND (entity_id IS NULL)) OR ((kind <> 'search'::text) AND (entity_id IS NOT NULL) AND (query IS NULL))))
 );
 
@@ -1345,6 +1347,12 @@ CREATE UNIQUE INDEX follow_entity_key ON accounts.follow USING btree (account_id
 --
 
 CREATE INDEX follow_kind_entity_idx ON accounts.follow USING btree (kind, entity_id) WHERE (kind <> 'search'::text);
+
+--
+-- Name: follow_search_key; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE UNIQUE INDEX follow_search_key ON accounts.follow USING btree (account_id, query) WHERE (kind = 'search'::text);
 
 --
 -- Name: one_time_token_email_created_idx; Type: INDEX; Schema: accounts; Owner: -

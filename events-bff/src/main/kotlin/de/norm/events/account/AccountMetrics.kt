@@ -16,6 +16,7 @@ class AccountMetrics(
 ) {
     private val links = LinkOutcome.entries.associateWith { registry.counter(LINK, TAG_OUTCOME, it.tag) }
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
+    private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
     private val follows =
         FollowAction.entries.associateWith { action ->
@@ -45,6 +46,8 @@ class AccountMetrics(
 
     fun record(outcome: SignInOutcome) = signIns.getValue(outcome).increment()
 
+    fun record(action: SavedSearchAction) = searches.getValue(action).increment()
+
     fun record(
         action: FollowAction,
         kind: FollowKind
@@ -64,6 +67,9 @@ class AccountMetrics(
 
         /** `bff.accounts.cleanup{outcome}`: what the daily cleanup of inactive accounts, links and sessions did (#3905). */
         const val CLEANUP = "bff.accounts.cleanup"
+
+        /** `bff.account.saved_search{action}`: saved searches saved, renamed and deleted (#3890). */
+        const val SAVED_SEARCH = "bff.account.saved_search"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -149,4 +155,12 @@ enum class FollowAction(
 ) {
     FOLLOW("follow"),
     UNFOLLOW("unfollow")
+}
+
+enum class SavedSearchAction(
+    val tag: String
+) {
+    SAVE("save"),
+    RENAME("rename"),
+    DELETE("delete")
 }

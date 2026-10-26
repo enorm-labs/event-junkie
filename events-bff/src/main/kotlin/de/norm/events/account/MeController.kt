@@ -24,6 +24,7 @@ class MeController(
     private val sessionRows: SessionStore,
     private val sessions: SessionSecurityContextRepository,
     private val follows: FollowStore,
+    private val searches: SavedSearchStore,
     private val clock: Clock
 ) {
     @GetMapping
@@ -71,7 +72,8 @@ class MeController(
                     createdAt = account.createdAt,
                     lastSignInAt = account.lastSignInAt,
                     sessions = sessionRows.sessions(account.id),
-                    follows = follows.list(account.id).map(FollowResponse::of)
+                    follows = follows.list(account.id).map(FollowResponse::of),
+                    searches = searches.list(account.id).map(SavedSearchResponse::of)
                 )
             )
 

@@ -347,6 +347,12 @@ const { t } = useI18n()
         each entry. Only you can see it. If an entry leaves the calendar, I delete the follow too.
       </p>
       <p>
+        <strong>Saved searches:</strong> when you save a search, I store its filters, the name you
+        give it and when you saved it. The page suggests a name from the filters, and you can change
+        it. Your Following page lists your saved searches. You can rename or delete each one there.
+        Only you can see them.
+      </p>
+      <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
         legal basis is Art. 6 (1) (b) GDPR.
       </p>

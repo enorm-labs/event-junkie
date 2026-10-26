@@ -60,5 +60,24 @@
     "shown": "Erscheint auf deiner Seite „Gefolgt“",
     "following": "Gefolgt",
     "unfollowHint": "(zum Entfolgen drücken)"
+  },
+  "search": {
+    "save": "Suche speichern",
+    "follow": "{name} folgen",
+    "nameLabel": "Name",
+    "submit": "Speichern",
+    "saved": "Gespeichert.",
+    "open": "Auf deiner Seite „Gefolgt“ ansehen",
+    "datesDropped": "Die gewählten Daten werden nicht gespeichert: Eine gespeicherte Suche behält nur Heute, Dieses Wochenende oder Nächste 7 Tage.",
+    "failed": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+    "tooMany": "Du hast schon 20 gespeicherte Suchen. Lösche zuerst eine.",
+    "signIn": "Melde dich an, um diese Suche zu speichern",
+    "upcoming": "{count} kommende",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "kind": "Gespeicherte Suche",
+    "renameLabel": "Neuer Name für {name}",
+    "list": "Gespeicherte Suchen ({count})"
   }
 }

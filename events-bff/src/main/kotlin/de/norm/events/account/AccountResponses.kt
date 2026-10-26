@@ -1,6 +1,7 @@
 package de.norm.events.account
 
 import java.time.Instant
+import java.util.UUID
 
 data class LinkRequest(
     val email: String,
@@ -38,7 +39,8 @@ data class AccountExport(
     val createdAt: Instant,
     val lastSignInAt: Instant,
     val sessions: List<SessionInfo>,
-    val follows: List<FollowResponse>
+    val follows: List<FollowResponse>,
+    val searches: List<SavedSearchResponse>
 )
 
 data class FollowState(
@@ -55,5 +57,27 @@ data class FollowResponse(
 ) {
     companion object {
         fun of(follow: FollowedEntity) = FollowResponse(follow.kind.tag, follow.slug, follow.name, follow.notify, follow.followedAt)
+    }
+}
+
+data class SavedSearchRequest(
+    val name: String,
+    /** The events list's query string, such as `genre=techno&district=neukoelln&when=weekend`. */
+    val query: String
+)
+
+data class SavedSearchRename(
+    val name: String
+)
+
+/** A saved search (#3890). [query] is normalised: keys and values sorted. */
+data class SavedSearchResponse(
+    val id: UUID,
+    val name: String,
+    val query: String,
+    val savedAt: Instant
+) {
+    companion object {
+        fun of(search: SavedSearch) = SavedSearchResponse(search.id, search.name, search.query, search.savedAt)
     }
 }
