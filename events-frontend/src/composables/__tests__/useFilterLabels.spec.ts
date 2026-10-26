@@ -7,7 +7,10 @@ import { useFilterLabels } from '@/composables/useFilterLabels'
 import type { FilterLists } from '@/composables/useFilterLists'
 import { i18n } from '@/i18n'
 
-const TAGS = [{ slug: 'free-jazz', name: 'Free Jazz', family: 'jazz-blues' }] as GenreTag[]
+const TAGS = [
+  { slug: 'free-jazz', name: 'Free Jazz', family: 'jazz-blues' },
+  { slug: 'bebop', name: 'Bebop', family: 'jazz-blues' },
+] as GenreTag[]
 const VENUES = [{ slug: 'lido', name: 'Lido' }] as VenueListItem[]
 
 function labels(loaded = true): ReturnType<typeof useFilterLabels>['filterLabels'] {
@@ -44,7 +47,7 @@ describe('filterLabels', () => {
         district: ['neukoelln', 'kreuzberg'],
         venueType: ['club'],
         venue: ['lido'],
-        genre: 'free-jazz',
+        genre: ['free-jazz'],
         family: ['jazz-blues'],
         timeOfDay: ['evening'],
         eventType: ['CONCERT', 'PARTY'],
@@ -77,11 +80,19 @@ describe('filterLabels', () => {
   })
 
   it('names the family of a style when the link carries only the style, as the bar shows it', () => {
-    expect(labels()({ genre: 'free-jazz' })).toEqual(['Jazz & Blues', 'Free Jazz'])
+    expect(labels()({ genre: ['free-jazz'] })).toEqual(['Jazz & Blues', 'Free Jazz'])
+  })
+
+  it('names every chosen style after their one family', () => {
+    expect(labels()({ genre: ['free-jazz', 'bebop'] })).toEqual([
+      'Jazz & Blues',
+      'Free Jazz',
+      'Bebop',
+    ])
   })
 
   it('shows the slug of a venue or a style until the lists load', () => {
-    expect(labels(false)({ venue: ['lido'], genre: 'free-jazz' })).toEqual(['free-jazz', 'lido'])
+    expect(labels(false)({ venue: ['lido'], genre: ['free-jazz'] })).toEqual(['free-jazz', 'lido'])
   })
 
   it('names every chosen venue, and an unknown one by its slug', () => {

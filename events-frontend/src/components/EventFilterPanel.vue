@@ -8,7 +8,6 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
-import BaseSelect from '@/components/BaseSelect.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { activeFamilies as familiesShown, useFilterLists } from '@/composables/useFilterLists'
@@ -59,7 +58,7 @@ const venueOptions = computed(() =>
 )
 
 const activeFamilies = computed(() =>
-  familiesShown(queryList('family'), queryString('genre'), genres.data.value ?? []),
+  familiesShown(queryList('family'), queryList('genre'), genres.data.value ?? []),
 )
 
 /**
@@ -70,13 +69,17 @@ const activeFamilies = computed(() =>
 const soleFamily = computed(() =>
   activeFamilies.value.length === 1 ? activeFamilies.value[0] : undefined,
 )
-const stylesInFamily = computed(() =>
-  (genres.data.value ?? []).filter((tag) => tag.family === soleFamily.value),
+const styleOptions = computed(() =>
+  (genres.data.value ?? []).flatMap((tag) =>
+    tag.family === soleFamily.value && tag.slug
+      ? [{ value: tag.slug, label: tag.name ?? tag.slug }]
+      : [],
+  ),
 )
 
-/** Any family change invalidates the style, which is the one filter that depends on another. */
+/** Any family change invalidates every style, the one filter that depends on another. */
 function applyFamilies(families: string[]) {
-  applyFilters({ family: families, genre: '' })
+  applyFilters({ family: families, genre: [] })
 }
 
 // The price drafts are seeded from the URL and re-synced whenever it changes elsewhere.
@@ -195,19 +198,21 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
         @change="applyFamilies"
       />
 
-      <!-- Shown once the URL names one family, not once its styles load, so it cannot appear late. -->
-      <BaseSelect
+      <!--
+        Shown once the URL names one family, not once its styles load, so it cannot appear late.
+        Several styles combine with "or" inside that family (#3980).
+      -->
+      <MultiSelectFilter
         v-if="soleFamily"
-        :aria-label="t('events.filters.bySubgenre')"
-        :class="[SELECT_CLASS, 'col-span-2']"
-        :model-value="queryString('genre')"
-        @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allSubgenres') }}</option>
-        <option v-for="tag in stylesInFamily" :key="tag.slug" :value="tag.slug ?? ''">
-          {{ tag.name }}
-        </option>
-      </BaseSelect>
+        :all-label="t('events.filters.allSubgenres')"
+        :class="`${SELECT_CLASS} col-span-2`"
+        :clear-label="t('events.filters.clearSubgenres')"
+        :count-label="(n) => t('events.filters.subgenresSelected', { n })"
+        :label="t('events.filters.bySubgenre')"
+        :options="styleOptions"
+        :selected="queryList('genre')"
+        @change="applyFilters({ genre: $event })"
+      />
     </div>
 
     <div :class="SELECT_ROW_CLASS">

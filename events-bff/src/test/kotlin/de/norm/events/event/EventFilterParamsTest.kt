@@ -29,6 +29,17 @@ class EventFilterParamsTest {
     }
 
     @Test
+    fun `two orders of the same styles are one filter, and one style stays one`() {
+        val first = EventFilterParams(genre = listOf("techno", " house", "techno", "")).toFilter()
+        val second = EventFilterParams(genre = listOf("house", "techno")).toFilter()
+
+        first.genreSlugs shouldBe listOf("house", "techno")
+        first shouldBe second
+        EventFilterParams(genre = listOf(" techno ")).toFilter().genreSlugs shouldBe listOf("techno")
+        EventFilterParams().toFilter().genreSlugs shouldBe emptyList()
+    }
+
+    @Test
     fun `two orders of the same districts are one filter`() {
         val first = EventFilterParams(district = listOf("neukoelln", " kreuzberg", "neukoelln", "")).toFilter()
         val second = EventFilterParams(district = listOf("kreuzberg", "neukoelln")).toFilter()

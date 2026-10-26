@@ -15,6 +15,7 @@ export function useEventFilters() {
   const filters = computed<EventFilterValues>(() => {
     const eventTypes = queryList('eventType')
     const families = queryList('family')
+    const genres = queryList('genre')
     const districts = queryList('district')
     const venues = queryList('venue')
     const venueTypes = queryList('venueType')
@@ -28,7 +29,7 @@ export function useEventFilters() {
       venue: venues.length ? venues : undefined,
       district: districts.length ? districts : undefined,
       venueType: venueTypes.length ? venueTypes : undefined,
-      genre: queryString('genre') || undefined,
+      genre: genres.length ? genres : undefined,
       family: families.length ? families : undefined,
       minPrice: queryString('minPrice') ? Number(queryString('minPrice')) : undefined,
       maxPrice: queryString('maxPrice') ? Number(queryString('maxPrice')) : undefined,

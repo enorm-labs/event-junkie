@@ -2752,8 +2752,8 @@ export interface operations {
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
                 promoter?: string;
-                /** @description Genre tag slug filter — only events tagged with the matching genre. */
-                genre?: string;
+                /** @description Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. An unknown slug matches nothing. */
+                genre?: string[];
                 /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
                 family?: string[];
                 /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
@@ -2890,8 +2890,8 @@ export interface operations {
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
                 promoter?: string;
-                /** @description Genre tag slug filter — only events tagged with the matching genre. */
-                genre?: string;
+                /** @description Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. An unknown slug matches nothing. */
+                genre?: string[];
                 /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
                 family?: string[];
                 /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
@@ -2949,8 +2949,8 @@ export interface operations {
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
                 promoter?: string;
-                /** @description Genre tag slug filter — only events tagged with the matching genre. */
-                genre?: string;
+                /** @description Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. An unknown slug matches nothing. */
+                genre?: string[];
                 /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
                 family?: string[];
                 /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
@@ -3014,8 +3014,8 @@ export interface operations {
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
                 promoter?: string;
-                /** @description Genre tag slug filter — only events tagged with the matching genre. */
-                genre?: string;
+                /** @description Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. An unknown slug matches nothing. */
+                genre?: string[];
                 /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
                 family?: string[];
                 /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */

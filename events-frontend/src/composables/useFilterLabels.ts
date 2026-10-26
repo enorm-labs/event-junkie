@@ -27,8 +27,9 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
     festivals: { slug?: string; name?: string }[] = [],
   ): string[] {
     const tags = lists.genres.data.value ?? []
-    const style =
-      filters.genre && (tags.find((tag) => tag.slug === filters.genre)?.name ?? filters.genre)
+    const styles = (filters.genre ?? []).map(
+      (slug) => tags.find((tag) => tag.slug === slug)?.name ?? slug,
+    )
     const venueList = lists.venues.data.value ?? []
     const venues = (filters.venue ?? []).map(
       (slug) => venueList.find((v) => v.slug === slug)?.name ?? slug,
@@ -42,10 +43,10 @@ export function useFilterLabels(lists: FilterLists = useFilterLists()) {
       ...(filters.language ?? []).map((code) => formatSpokenLanguage([code])),
       ...(filters.timeOfDay ?? []).map((slot) => formatTimeOfDay(slot).replace(/\s*\(.*\)$/, '')),
       ...(filters.feature ?? []).map((slug) => formatEventFeature(slug)),
-      ...activeFamilies(filters.family ?? [], filters.genre, tags).map((family) =>
+      ...activeFamilies(filters.family ?? [], filters.genre ?? [], tags).map((family) =>
         formatFamily(family),
       ),
-      style,
+      ...styles,
       ...venues,
       ...(filters.venueType ?? []).map((type) => formatVenueType(type)),
       ...(filters.district ?? []).map((district) => districtLabel(district)),

@@ -36,8 +36,12 @@ data class EventFilterParams(
     val artist: String? = null,
     @field:Parameter(description = "Promoter slug filter — only events from the matching promoter.")
     val promoter: String? = null,
-    @field:Parameter(description = "Genre tag slug filter — only events tagged with the matching genre.")
-    val genre: String? = null,
+    @field:Parameter(
+        description =
+            "Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. " +
+                "An unknown slug matches nothing."
+    )
+    val genre: List<String>? = null,
     @field:Parameter(
         description = "Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches."
     )
@@ -101,7 +105,7 @@ data class EventFilterParams(
             venueTypes = venueType.orEmpty().normalizedSlugs(),
             artistSlug = artist,
             promoterSlug = promoter,
-            genreSlug = genre,
+            genreSlugs = genre.orEmpty().normalizedSlugs(),
             familySlugs = family.orEmpty().normalizedSlugs(),
             minPrice = minPrice,
             maxPrice = maxPrice,
