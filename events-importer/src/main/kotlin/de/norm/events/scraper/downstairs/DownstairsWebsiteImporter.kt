@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component
  * Each performance's ticket page is then read for the text, image, doors and price tiers. Not once
  * per show: the nights of one title differ in time and tiers (Allstars at 18:00 and 20:00, and on
  * New Year's Eve). A failed page leaves the list's fields, flagged so the upsert keeps what it stored.
+ * A show sold elsewhere takes the other seller's text and stays flagged, so it keeps its stored image,
+ * doors and price.
  *
  * @see DownstairsTicketListScraper for the list.
  * @see <a href="https://www.downstairscomedy.shop/tickets">Downstairs tickets</a>
@@ -61,15 +63,24 @@ class DownstairsWebsiteImporter(
     }
 
     private suspend fun enrichFromTicketPages(events: List<ScrapedEvent>): List<ScrapedEvent> =
-        htmlFetcher.enrichFromSharedPages(events, ticketScraper::scrape, { show, event ->
-            event.copy(
-                description = show.description,
-                imageUrl = show.imageUrl,
-                pricePresale = show.price,
-                priceNote = show.priceNote,
-                doorsTime = show.doorsTime
-            )
-        })
+        htmlFetcher
+            .enrichFromSharedPages(events, ticketScraper::scrape, { show, event ->
+                if (show.soldElsewhere) {
+                    event.copy(description = show.description, detailUnavailable = true)
+                } else {
+                    event.copy(
+                        description = show.description,
+                        imageUrl = show.imageUrl,
+                        pricePresale = show.price,
+                        priceNote = show.priceNote,
+                        doorsTime = show.doorsTime
+                    )
+                }
+            })
+            .also { enriched ->
+                val elsewhere = enriched.count { it.detailUnavailable && it.description != null }
+                if (elsewhere > 0) logger.info { "Read only the text of $elsewhere Downstairs performance(s) sold by another seller" }
+            }
 
     private companion object {
         const val FRAME = "tickets"
@@ -84,7 +95,7 @@ val DOWNSTAIRS_LIMITATIONS =
         EventSource.DOWNSTAIRS,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "a show the club sells through another ticket shop links there, and only the club's own shop is read, so the night keeps no price"
+            "a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price"
         ),
         AcceptedLimitation(LimitedAspect.END_TIME, "the shop gives every performance the same 6 a.m. end"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the club's own nights bill a format, and the comedians appear only in prose"),

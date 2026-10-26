@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -90,6 +91,31 @@ class DownstairsWebsiteImporterTest {
                 .first()
                 .description
                 .shouldBeNull()
+        }
+
+    @Test
+    fun `takes only the text of a show sold elsewhere, flagged so the upsert keeps the rest`() =
+        runTest {
+            val first =
+                importer
+                    .importEvents(sourceUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .first()
+            coEvery { htmlFetcher.fetchDocument(first.sourceUrl) } returns
+                Jsoup.parse(
+                    """<script type="application/ld+json">{"@type":"Event","name":"x","description":"Elsewhere.","offers":[{"price":"0.00"}]}</script>""",
+                    "https://fienta.com/de/x"
+                )
+
+            val events = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events
+
+            val elsewhere = events.first { it.sourceId == first.sourceId }
+            elsewhere.description shouldBe "Elsewhere."
+            elsewhere.detailUnavailable shouldBe true
+            elsewhere.pricePresale.shouldBeNull()
+            elsewhere.doorsTime.shouldBeNull()
+            events.filter { it.detailUnavailable } shouldHaveSize 1
         }
 
     @Test
