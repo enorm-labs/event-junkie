@@ -105,7 +105,7 @@ Production only, because staging holds a copy of the same imports. Unless the tu
 scripts/new-artists.sh production --hours "$HOURS" > temp/new-artists-$(date +%F).tsv
 ```
 
-Every row with a flag gets a verdict. `--help` lists the flags. Open the event on the public site and the venue's page, and decide:
+Every row with a flag gets a verdict. The header of `scripts/new-artists.sh` lists the flags. Its `--help` prints only the usage. Open the event on the public site and the venue's page, and decide:
 
 - **A real act** — a band named `… 2026`, a long name, an artist an operator added by hand (`unbilled`): CLEAR, one line.
 - **Not an act, from the parser** — a festival name, a night's name, a `presents` line, two acts fused, a cut-off name: DRAFTED, one 🔍 Importer / data
