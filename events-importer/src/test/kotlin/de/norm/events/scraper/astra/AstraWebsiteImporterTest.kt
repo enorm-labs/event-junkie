@@ -142,6 +142,13 @@ class AstraWebsiteImporterTest {
         }
 
     @Test
+    fun `types a Sonstiges night a party when its prose calls it one`() {
+        astraEventType("OTHER", "Looking for the best bingo party near you?") shouldBe "PARTY"
+        astraEventType("OTHER", "Bingo night.") shouldBe "OTHER"
+        astraEventType("CONCERT", "Release party.") shouldBe "CONCERT"
+    }
+
+    @Test
     fun `merges detail promoter and price with overview artists`() =
         runTest {
             val greenLung = events(importer.importEvents(sourceUrl)).first { it.title == "GREEN LUNG" }

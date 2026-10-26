@@ -1,5 +1,6 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -40,18 +41,27 @@ class AstraWebsiteImporter(
      *
      * The detail page *can* carry a `kind` label, but it is the raw per-day value without
      * [AstraOverviewPageScraper]'s festival-day normalization, so the overview type wins and the
-     * detail value is only a fallback when the overview had no label.
+     * detail value is only a fallback when the overview had no label. A `Sonstiges` night whose prose
+     * calls it a party is one: `BINGO LOCO`, "the best bingo party" (#4009).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.withGapsFrom(fallback).copy(
+        primary.withGapsFrom(fallback).let { merged ->
             // Overview is authoritative for the type (it normalizes mislabeled festival days); the detail
             // kind only when the overview had no label.
-            eventType = fallback.eventType ?: primary.eventType
-        )
+            merged.copy(eventType = astraEventType(fallback.eventType ?: primary.eventType, merged.description))
+        }
 }
+
+private val PARTY_PROSE = Regex("""\bparty\b""", RegexOption.IGNORE_CASE)
+
+/** [type], or `PARTY` for an `OTHER` night whose [description] calls it a party. */
+internal fun astraEventType(
+    type: String?,
+    description: String?
+): String? = if (type == EventType.OTHER.name && PARTY_PROSE.containsMatchIn(description.orEmpty())) EventType.PARTY.name else type
 
 val ASTRA_LIMITATIONS =
     VenueLimitations(
