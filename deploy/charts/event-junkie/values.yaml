@@ -415,7 +415,10 @@ images:
       # Pinned by digest, like the JRE base (ADR-017): a third-party image we cannot rebuild. **Read the
       # whole tag list before bumping**: GHCR paginates, and the first page ends two majors behind at a tag
       # carrying 94 fixable findings (#1273).
-      digest: "sha256:03aec6708216c3e017d7ad3fb08eba11d6b83be65556262f8d6cd72803fefeb6"
+      # **Scan the candidate too, not just the newest tag.** v4.0.19 moved the base to ubuntu:26.04 and
+      # brought in a second Go binary, `usr/bin/pebble`, with three HIGH findings; v4.0.20 dropped it again.
+      # v4.0.20, Go 1.27.3.
+      digest: "sha256:f5db62d528ab08e7b12f14e759fd7d62c09aeabf2e629d0e2a3963da692d0130"
       pullPolicy: IfNotPresent
     # A Secret holding IMGPROXY_KEY and IMGPROXY_SALT, both hex.
     existingSecret: "event-junkie-imgproxy"

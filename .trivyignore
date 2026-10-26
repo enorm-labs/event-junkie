@@ -1,8 +1,8 @@
 # Vulnerabilities waived for the container image scan in .github/workflows/release.yml.
 #
 # **Empty is the goal.** It went back to empty on 2026-08-17 (#492), on 2026-09-05 (#770), on
-# 2026-09-15 (#1273) and on 2026-10-17 (#3071), each time by fixing the image rather than by
-# amending the waiver.
+# 2026-09-15 (#1273), on 2026-10-17 (#3071) and on 2026-10-26 (#3703), each time by fixing the
+# image rather than by amending the waiver.
 #
 # The gate blocks a release on CRITICAL and HIGH findings **that have a fix available**; unfixed ones
 # are already excluded by `--ignore-unfixed` and do not belong here. So an entry in this file means
@@ -43,13 +43,20 @@
 # ---------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------
 #
-# 2026-10-17 — back to empty for the fourth time, and by the mechanism every entry is required to
-# carry. The three Go standard library waivers (CVE-2026-78667, CVE-2026-78669, CVE-2026-97031 in
-# the imgproxy sidecar, added 2026-10-09, #2972 and #3071) named their own deletion condition —
-# "sooner if imgproxy ships a release built with Go 1.27.2 or later" — and v4.0.18 did, three weeks
-# before the calendar date they also carried. A digest bump deleted all three, exactly as #1273's
-# single entry went away in September. **A waiver written to expire is a waiver that expires**;
-# that is why the reason has to say what would end it.
+# 2026-10-26 — back to empty for the fifth time, and by the mechanism every entry is required to
+# carry. The CVE-2026-111943 waiver (Go `crypto/x509` in the imgproxy sidecar, added 2026-10-21,
+# #3703) named its own deletion condition — "an imgproxy release built with Go 1.27.3 or later" —
+# and v4.0.20 is one, five days later and three weeks before the calendar date it also carried. A
+# digest bump deleted it, as #1273's entry went in September and #3071's three went in October.
+# **A waiver written to expire is a waiver that expires**; that is why the reason has to say what
+# would end it.
+#
+# **The bump is verified by scanning the candidate, never by reading its release notes.** v4.0.19
+# builds imgproxy itself with Go 1.27.3 and would have satisfied the condition as written, but it
+# moved the base to ubuntu:26.04 and brought in `usr/bin/pebble` at Go 1.27.1 — carrying
+# CVE-2026-78667, CVE-2026-78669 and CVE-2026-97031, the three findings #3071 had just removed, in
+# the very binary whose eight waivers taught the lesson above. v4.0.20 ships without it. A release
+# that fixes the finding you are chasing can arrive with a second copy of one you already closed.
 #
 # **imgproxy has now been the cause three times** — #1273 (grpc-go), #3071 and #3703 (the Go
 # stdlib). The third episode asked the question the note above names, and on 2026-10-21 the answer
@@ -57,13 +64,3 @@
 # alternatives (our own build of imgproxy, or ADR-020's option B) cost more than a dated waiver. A
 # fourth episode is where our own build on a current Go toolchain becomes the default.
 # ---------------------------------------------------------------------------------------------
-
-# 2026-10-21 — CVE-2026-111943, Go `crypto/x509`, in the imgproxy sidecar (#3703). Fixed in Go
-# 1.26.10 and 1.27.3. The fix cannot be taken: v4.0.18 is the newest imgproxy release and is built
-# with Go 1.27.2, and the `latest` tag carries the same Go. We cannot rebuild their image (ADR-020).
-# Reachability: imgproxy binds to localhost in the importer pod and only the importer calls it
-# (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage at the fixed endpoint in the
-# chart, for the originals it reads from our bucket. It fetches nothing from a venue.
-# Delete when an imgproxy release is built with Go 1.27.3 or later, by bumping the chart digest.
-# Revisit on 2026-11-18 if no such release exists by then.
-CVE-2026-111943
