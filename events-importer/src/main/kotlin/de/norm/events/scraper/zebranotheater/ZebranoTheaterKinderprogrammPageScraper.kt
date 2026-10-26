@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.forChildren
 import de.norm.events.scraper.inferYearForWeekday
@@ -101,7 +102,6 @@ class ZebranoTheaterKinderprogrammPageScraper(
 
         val PUBLIC_PERFORMANCES = Regex("""öffentliche\s+vorstellungen""", RegexOption.IGNORE_CASE)
         val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
-        val WHITESPACE = Regex("""\s+""")
         val LINE_BREAK = Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE)
     }
 }
