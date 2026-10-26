@@ -110,7 +110,9 @@ data class EventFilter(
 data class FollowedIds(
     val artistIds: List<Long>,
     val venueIds: List<Long>,
-    val promoterIds: List<Long>
+    val promoterIds: List<Long>,
+    /** Events the account said it is interested in or going to (#3892), each in whatever else it follows. */
+    val eventIds: List<Long> = emptyList()
 )
 
 /** An ordered page of event IDs plus the total count of matches across all pages. */
@@ -449,6 +451,10 @@ class EventSearchRepository(
         if (followed.promoterIds.isNotEmpty()) {
             any += "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id AND ep.promoter_id IN (:followedPromoters))"
             params["followedPromoters"] = followed.promoterIds
+        }
+        if (followed.eventIds.isNotEmpty()) {
+            any += "e.id IN (:followedEvents)"
+            params["followedEvents"] = followed.eventIds
         }
         conditions += if (any.isEmpty()) "FALSE" else any.joinToString(" OR ", "(", ")")
     }

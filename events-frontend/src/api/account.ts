@@ -123,3 +123,34 @@ export async function renameSearch(id: string, name: string): Promise<void> {
 export async function deleteSearch(id: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/searches/{id}', { params: { path: { id } } }))
 }
+
+/** Interested or going (#3892): private to the account. */
+export type RsvpStatus = 'interested' | 'going'
+
+/** The account's RSVPs as event slug to status. */
+export async function fetchRsvps(): Promise<Record<string, RsvpStatus>> {
+  return (await unwrap(api.GET('/api/me/rsvps'))) as Record<string, RsvpStatus>
+}
+
+export async function setRsvp(slug: string, status: RsvpStatus): Promise<void> {
+  await unwrap(api.PUT('/api/me/rsvps/{slug}', { params: { path: { slug } }, body: { status } }))
+}
+
+export async function withdrawRsvp(slug: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/rsvps/{slug}', { params: { path: { slug } } }))
+}
+
+/** RSVPed events not over yet, by date. */
+export async function fetchRsvpUpcoming(page = 0): Promise<EventSummaryPage> {
+  return unwrap(api.GET('/api/me/rsvps/upcoming', { params: { query: { page, size: 20 } } }))
+}
+
+/** RSVPed events that are over, latest first. */
+export async function fetchRsvpPast(page = 0): Promise<EventSummaryPage> {
+  return unwrap(api.GET('/api/me/rsvps/past', { params: { query: { page } } }))
+}
+
+/** RSVPed events in an inclusive date range, for the calendar view. */
+export async function fetchRsvpCalendar(from: string, to: string): Promise<EventSummary[]> {
+  return unwrap(api.GET('/api/me/rsvps/calendar', { params: { query: { from, to } } }))
+}

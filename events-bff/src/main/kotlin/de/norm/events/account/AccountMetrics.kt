@@ -17,6 +17,7 @@ class AccountMetrics(
     private val links = LinkOutcome.entries.associateWith { registry.counter(LINK, TAG_OUTCOME, it.tag) }
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
+    private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
     private val follows =
         FollowAction.entries.associateWith { action ->
@@ -48,6 +49,8 @@ class AccountMetrics(
 
     fun record(action: SavedSearchAction) = searches.getValue(action).increment()
 
+    fun record(action: RsvpAction) = rsvps.getValue(action).increment()
+
     fun record(
         action: FollowAction,
         kind: FollowKind
@@ -70,6 +73,9 @@ class AccountMetrics(
 
         /** `bff.account.saved_search{action}`: saved searches saved, renamed and deleted (#3890). */
         const val SAVED_SEARCH = "bff.account.saved_search"
+
+        /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
+        const val RSVP = "bff.account.rsvp"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -141,6 +147,9 @@ enum class CleanupOutcome(
     /** Follows of an artist, venue or promoter that was deleted or merged away (#3889). */
     FOLLOWS_PURGED("follows_purged"),
 
+    /** RSVPs whose event the importer removed (#3892). */
+    RSVPS_PURGED("rsvps_purged"),
+
     /** A warning mail went out. */
     WARNED("warned"),
 
@@ -163,4 +172,11 @@ enum class SavedSearchAction(
     SAVE("save"),
     RENAME("rename"),
     DELETE("delete")
+}
+
+enum class RsvpAction(
+    val tag: String
+) {
+    SET("set"),
+    WITHDRAW("withdraw")
 }

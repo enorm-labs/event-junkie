@@ -6,6 +6,7 @@ import BaseBadge from '@/components/BaseBadge.vue'
 import PickBadge from '@/components/PickBadge.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
+import { useRsvps } from '@/composables/useRsvps'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -50,6 +51,10 @@ const meta = computed(() =>
 const price = computed(() => formatPrice(props.event.pricePresale, props.event.priceCurrency))
 
 const showsPick = computed(() => props.marksPick && props.event.featured === true)
+
+// The visitor's own plan for this event (#3892): a mark, not a control, because the row is a link.
+const { statuses } = useRsvps()
+const rsvp = computed(() => (props.event.slug ? statuses.value[props.event.slug] : undefined))
 </script>
 
 <template>
@@ -84,7 +89,10 @@ const showsPick = computed(() => props.marksPick && props.event.featured === tru
       </component>
       <span v-if="price" class="shrink-0 text-meta font-medium text-foreground">{{ price }}</span>
     </div>
-    <p v-if="state || meta.length" class="truncate text-meta text-muted-foreground">
+    <p v-if="state || meta.length || rsvp" class="truncate text-meta text-muted-foreground">
+      <BaseBadge v-if="rsvp" class="mr-2 py-0" data-testid="rsvp-badge" variant="primary">
+        {{ t(rsvp === 'going' ? 'account.rsvp.badgeGoing' : 'account.rsvp.badgeInterested') }}
+      </BaseBadge>
       <!-- The row has no poster to carry it, so the festival's pill opens the second line and the
            title keeps its width on a phone (#3273). -->
       <BaseBadge

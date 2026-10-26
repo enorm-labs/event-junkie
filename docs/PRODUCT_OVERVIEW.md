@@ -82,6 +82,8 @@ lists what that includes and what it excludes.
   does, then what is coming up from all of them, by date.
 - **Save a search** on the events list, under a name the page suggests. One genre or one district saves with a single press. The **Following**
   page lists each saved search with how many events match.
+- Mark an event **Interested** or **Going** on its page. Only the visitor sees it, on the cards and in the **Following** feed.
+  **My calendar** shows these plans as a list or a calendar, and keeps the past ones as history.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**
@@ -128,6 +130,7 @@ the first column. It fails in two cases:
 | `/sign-in/confirm`                 | The page the mail links to; signs in on a click                                      |
 | `/account`                         | The address, data export, sign-out and account deletion                              |
 | `/following`                       | Today and upcoming events of what the visitor follows, and the list to unfollow from |
+| `/my-calendar`                     | The events the visitor is interested in or going to, as a list or a calendar         |
 | `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter                     |
 | `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter            |
 | `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers                      |
@@ -164,6 +167,11 @@ the first column. It fails in two cases:
 | `/api/me/following/today`          | Today's events of everything the account follows, a running night included           |
 | `/api/me/searches`                 | The account's saved searches, and saving one                                         |
 | `/api/me/searches/{id}`            | Renaming or deleting a saved search                                                  |
+| `/api/me/rsvps`                    | The account's RSVPs, event slug to status                                            |
+| `/api/me/rsvps/{slug}`             | Set, change or withdraw "interested" or "going" for an event                         |
+| `/api/me/rsvps/upcoming`           | RSVPed events not over yet, by date                                                  |
+| `/api/me/rsvps/past`               | RSVPed events that are over, latest first                                            |
+| `/api/me/rsvps/calendar`           | RSVPed events within a date range, for the calendar view                             |
 | `/api/me/sign-out`                 | Ends this browser's session                                                          |
 | `/api/me/sign-out-everywhere`      | Ends every session of the account                                                    |
 | `home-feeds.spec.ts`               | e2e: Today and Upcoming                                                              |
@@ -177,6 +185,7 @@ the first column. It fails in two cases:
 | `search.spec.ts`                   | e2e: header search                                                                   |
 | `sign-in.spec.ts`                  | e2e: sign-in by link, the account page, deletion, CSRF header                        |
 | `following.spec.ts`                | e2e: the Follow button signed out and in, the header entry, the Following page       |
+| `rsvp.spec.ts`                     | e2e: Interested and Going on an event page, the card mark, My calendar               |
 | `share-calendar.spec.ts`           | e2e: share and add to calendar                                                       |
 | `card-poster.spec.ts`              | e2e: drawn posters                                                                   |
 | `compact-view.spec.ts`             | e2e: compact list                                                                    |

@@ -40,7 +40,8 @@ data class AccountExport(
     val lastSignInAt: Instant,
     val sessions: List<SessionInfo>,
     val follows: List<FollowResponse>,
-    val searches: List<SavedSearchResponse>
+    val searches: List<SavedSearchResponse>,
+    val rsvps: List<RsvpResponse>
 )
 
 data class FollowState(

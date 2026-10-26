@@ -382,6 +382,14 @@ const { t } = useI18n()
         Suchen. Dort kannst du jede umbenennen oder löschen. Nur du siehst sie.
       </p>
       <p>
+        <strong>Deine Pläne:</strong> Markierst du ein Event mit „Interessiert“ oder „Dabei“,
+        speichere ich das mit dem Zeitpunkt. Daraus entstehen deine Seite „Gefolgt“ und dein
+        Kalender, und die Eventkarten zeigen es dir. Nur du siehst es. Niemand sonst sieht, wer
+        hingehen will, und kein Event zeigt eine Zahl. Vergangene Events bleiben als dein Verlauf,
+        bis du sie zurücknimmst oder das Konto löschst. Verschwindet ein Event aus dem Kalender,
+        lösche ich auch deinen Plan dafür.
+      </p>
+      <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
         anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
       </p>

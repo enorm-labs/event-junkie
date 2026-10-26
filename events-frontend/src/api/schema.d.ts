@@ -4,6 +4,24 @@
  */
 
 export interface paths {
+    "/api/me/rsvps/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Sets or changes the RSVP for an event: interested or going */
+        put: operations["set"];
+        post?: never;
+        /** Withdraws the RSVP. Withdrawing one that does not exist changes nothing */
+        delete: operations["withdraw"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/follows/{kind}/{slug}": {
         parameters: {
             query?: never;
@@ -296,6 +314,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/rsvps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's RSVPs as event slug to status, for the cards and the event page */
+        get: operations["statuses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/rsvps/upcoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** RSVPed events that are not over, by date */
+        get: operations["upcoming"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/rsvps/past": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** RSVPed events that are over, latest first: the history */
+        get: operations["past"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/rsvps/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** RSVPed events within an inclusive date range, for the calendar view. At most 92 days */
+        get: operations["calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/follows": {
         parameters: {
             query?: never;
@@ -517,7 +603,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get events within an inclusive date range for the calendar view, with the same optional filters as the search endpoint */
-        get: operations["calendar"];
+        get: operations["calendar_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -534,7 +620,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get the events from today for 90 days as an iCalendar (RFC 5545) subscription, at most 500, in the list's order */
-        get: operations["calendar_1"];
+        get: operations["calendar_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -618,6 +704,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RsvpRequest: {
+            status?: string;
+        };
         SavedSearchRequest: {
             name?: string;
             query?: string;
@@ -1540,17 +1629,6 @@ export interface components {
              */
             buildTime?: string | null;
         };
-        FollowResponse: {
-            kind?: string;
-            slug?: string;
-            name?: string;
-            notify?: string;
-            /** Format: date-time */
-            followedAt?: string;
-        };
-        FollowState: {
-            following?: boolean;
-        };
         /** @description A page of results with pagination metadata */
         PageResponseEventSummaryResponse: {
             /** @description The items on this page */
@@ -1580,6 +1658,17 @@ export interface components {
              */
             totalPages?: number;
         };
+        FollowResponse: {
+            kind?: string;
+            slug?: string;
+            name?: string;
+            notify?: string;
+            /** Format: date-time */
+            followedAt?: string;
+        };
+        FollowState: {
+            following?: boolean;
+        };
         AccountExport: {
             /** Format: date-time */
             exportedAt?: string;
@@ -1592,6 +1681,14 @@ export interface components {
             sessions?: components["schemas"]["SessionInfo"][];
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
+            rsvps?: components["schemas"]["RsvpResponse"][];
+        };
+        RsvpResponse: {
+            event?: string;
+            title?: string;
+            status?: string;
+            /** Format: date-time */
+            updatedAt?: string;
         };
         SessionInfo: {
             /** Format: date-time */
@@ -2249,6 +2346,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RsvpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     check: {
         parameters: {
             query?: never;
@@ -2759,6 +2900,102 @@ export interface operations {
             };
         };
     };
+    statuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    upcoming: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                };
+            };
+        };
+    };
+    past: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                };
+            };
+        };
+    };
+    calendar: {
+        parameters: {
+            query: {
+                /** @description Range start date (inclusive), ISO-8601. */
+                from: string;
+                /** @description Range end date (inclusive), ISO-8601. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventSummaryResponse"][];
+                };
+            };
+        };
+    };
     list_3: {
         parameters: {
             query?: never;
@@ -3115,7 +3352,7 @@ export interface operations {
             };
         };
     };
-    calendar: {
+    calendar_1: {
         parameters: {
             query: {
                 /** @description Range start date (inclusive), ISO-8601. */
@@ -3174,7 +3411,7 @@ export interface operations {
             };
         };
     };
-    calendar_1: {
+    calendar_2: {
         parameters: {
             query?: {
                 /**

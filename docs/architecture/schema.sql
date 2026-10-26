@@ -301,6 +301,19 @@ CREATE TABLE accounts.one_time_token (
 );
 
 --
+-- Name: rsvp; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.rsvp (
+    account_id uuid NOT NULL,
+    event_id bigint NOT NULL,
+    status text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT rsvp_status_check CHECK ((status = ANY (ARRAY['interested'::text, 'going'::text])))
+);
+
+--
 -- Name: session; Type: TABLE; Schema: accounts; Owner: -
 --
 
@@ -1003,6 +1016,13 @@ ALTER TABLE ONLY accounts.one_time_token
     ADD CONSTRAINT one_time_token_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: rsvp rsvp_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.rsvp
+    ADD CONSTRAINT rsvp_pkey PRIMARY KEY (account_id, event_id);
+
+--
 -- Name: session session_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1367,6 +1387,12 @@ CREATE INDEX one_time_token_email_created_idx ON accounts.one_time_token USING b
 CREATE INDEX one_time_token_expires_idx ON accounts.one_time_token USING btree (expires_at);
 
 --
+-- Name: rsvp_event_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX rsvp_event_idx ON accounts.rsvp USING btree (event_id);
+
+--
 -- Name: session_account_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -1672,6 +1698,13 @@ CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW E
 
 ALTER TABLE ONLY accounts.follow
     ADD CONSTRAINT follow_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: rsvp rsvp_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.rsvp
+    ADD CONSTRAINT rsvp_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: session session_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -

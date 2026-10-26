@@ -52,6 +52,7 @@ export const NON_INDEXABLE_PATHS: readonly string[] = [
   '/sign-in/confirm',
   '/account',
   '/following',
+  '/my-calendar',
 ]
 
 /**

@@ -34,6 +34,7 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Account", description = "The signed-in visitor's account")
 class FollowController(
     private val follows: FollowStore,
+    private val rsvps: RsvpStore,
     private val events: EventService,
     private val metrics: AccountMetrics,
     private val clock: Clock
@@ -95,13 +96,16 @@ class FollowController(
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"])
         pageable: Pageable
-    ): PageResponse<EventSummaryResponse> = events.search(EventFilter(from = from, followed = follows.followedIds(account.id)), pageable)
+    ): PageResponse<EventSummaryResponse> = events.search(EventFilter(from = from, followed = followed(account)), pageable)
 
     @GetMapping("/following/today")
     @Operation(summary = "Today's events of everything the account follows, a running night included, as on the home page (#3922)")
     suspend fun followingToday(
         @AuthenticationPrincipal account: Account
-    ): List<EventSummaryResponse> = events.today(EventFilter(followed = follows.followedIds(account.id)))
+    ): List<EventSummaryResponse> = events.today(EventFilter(followed = followed(account)))
+
+    /** What the account follows, and the events it RSVPed to (#3892), which join the feed too. */
+    private suspend fun followed(account: Account) = follows.followedIds(account.id).copy(eventIds = rsvps.eventIds(account.id))
 
     private suspend fun resolve(
         kind: String,
