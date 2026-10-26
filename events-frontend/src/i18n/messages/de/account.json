@@ -8,7 +8,8 @@
     "invalid": "Das ist keine E-Mail-Adresse. Prüfe sie und versuche es noch einmal.",
     "tooMany": "Von hier wurden zu viele Links angefordert. Versuche es in einer Stunde noch einmal.",
     "mailDown": "Die Mail konnte nicht gesendet werden. Versuche es später noch einmal.",
-    "privacyLink": "Mehr dazu in der Datenschutzerklärung"
+    "privacyLink": "Mehr dazu in der Datenschutzerklärung",
+    "paused": "Neue Konten sind gerade pausiert. Wenn du schon eins hast, schicken wir dir trotzdem einen Link."
   },
   "checkMail": {
     "body": "Wenn die Adresse stimmt, ist ein Link unterwegs. Er gilt einmal und 15 Minuten lang.",

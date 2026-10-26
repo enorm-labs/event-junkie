@@ -9,7 +9,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
 import ListPage from '@/components/ListPage.vue'
 import { Button } from '@/components/ui/button'
-import { fetchSession, prepareCsrf, requestLink } from '@/api/account'
+import { fetchSessionState, prepareCsrf, requestLink } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { isLocale } from '@/i18n/locales'
@@ -25,12 +25,15 @@ const localePath = useLocalePath()
 const email = ref('')
 const sending = ref(false)
 const problem = ref('')
+// False while an operator has paused sign-up (#3906). Every address is still answered alike.
+const signUpOpen = ref(true)
 
 onMounted(async () => {
   // A visitor who is already signed in has nothing to do here.
-  const [, account] = await Promise.allSettled([prepareCsrf(), fetchSession()])
-  if (account.status === 'fulfilled' && account.value)
-    await router.replace(next ?? localePath('/following'))
+  const [, session] = await Promise.allSettled([prepareCsrf(), fetchSessionState()])
+  if (session.status !== 'fulfilled') return
+  signUpOpen.value = session.value.signUpOpen
+  if (session.value.account) await router.replace(next ?? localePath('/following'))
 })
 
 async function submit() {
@@ -67,6 +70,7 @@ function messageFor(e: unknown): string {
   <ListPage :title="t('pageTitle.signIn')">
     <form class="max-w-md space-y-4" novalidate @submit.prevent="submit">
       <p class="text-body text-muted-foreground">{{ t('account.signIn.intro') }}</p>
+      <p v-if="!signUpOpen" class="text-body" role="status">{{ t('account.signIn.paused') }}</p>
       <div class="space-y-2">
         <label class="block text-body font-medium" for="sign-in-email">
           {{ t('account.signIn.emailLabel') }}

@@ -9,6 +9,8 @@ it costs, which DNS records carry them, and what breaks if those drift apart.
 - **konsoleH calls a domain an _Account_.** Select the domain, never the hosting name, or the mail menus do not appear. §4 is where this stalls.
 - **DKIM lives in konsoleH, not in OpenTofu.** Whoever holds the private key owns the public record, so `dns.tf` deliberately does not carry it. §5.
 - **Product mail does not leave from here.** Sign-in links and notifications go through Scaleway TEM from `notify.event-junkie.de` (ADR-054). §9.
+- **Sign-up pauses without a deploy.** One admin request stops new accounts when a script floods the sign-in form. Existing accounts still
+  sign in. §9.
 - **Test with mail-tester, not by mailing yourself.** Under `p=reject` a failing message is refused mid-conversation, so there are no headers to read. §7.
 
 **This is [#274](https://github.com/enorm-labs/event-junkie/issues/274).** The imprint, the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md` each name one
@@ -383,6 +385,31 @@ unset U P
 
 **Locally, mail goes to Mailpit.** `scripts/dev-env.sh up` points the BFF at the `mailpit` service in `compose.yaml`. Read the mail at
 `http://localhost:8025`.
+
+### Pausing sign-up
+
+A script that asks for sign-in links for many new addresses uses up the quota and can damage the domain's reputation. The rate limits stop one address and
+one IP, not a spread-out attack. Pause sign-up when `bff.auth.link{outcome="sent"}` climbs and the addresses are not real visitors.
+
+While sign-up is paused:
+
+- An address without an account gets no link. The BFF answers 202, the same as for every other address, so the answer does not show who has an account.
+- A link sent before the pause does not create an account.
+- An existing account gets its link and signs in as usual.
+- The sign-in page tells visitors that new accounts are paused.
+
+The switch is the one row of `accounts.sign_up` (V200). The BFF reads it on every request, so a change takes effect at once, without a restart. Flux does not
+reset it.
+
+```sh
+scripts/ej.sh up production
+curl -s -X PUT localhost:28081/api/admin/sign-up -H 'Content-Type: application/json' -d '{"open": false}'   # pause
+curl -s localhost:28081/api/admin/sign-up                                                                  # check
+curl -s -X PUT localhost:28081/api/admin/sign-up -H 'Content-Type: application/json' -d '{"open": true}'    # open again
+```
+
+Staging uses port `18081`. `http/importer/sign-up.http` has the same three requests. The importer logs a pause at `WARN`. While paused, a request that
+gets no link counts as `bff.auth.link{outcome="sign_up_paused"}`.
 
 ## Sources
 

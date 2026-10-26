@@ -19,6 +19,9 @@ private val logger = KotlinLogging.logger {}
  * `oneTimeTokenLogin()`: that DSL hands its token service only an address and an expiry, and a
  * rejected request falls through to a 404. This class keeps the locale with the token and answers.
  *
+ * While sign-up is paused (#3906), an address without an account gets no link and a link issued before the pause creates
+ * no account. Both are answered as for anyone else, for the same reason as the per-address limit.
+ *
  * Two rate limits. Per address, counted in `one_time_token`, answered as if the link went out, so the
  * answer never says whether an address has an account. Per client address, in this pod's memory for
  * an hour, answered with a 429.
@@ -59,6 +62,7 @@ class SignInLinks(
         val sender = mailer.ifAvailable ?: return LinkOutcome.MAIL_UNAVAILABLE
         val now = clock.instant()
         if (store.linksSince(email, now.minus(Duration.ofHours(1))) >= LINKS_PER_ADDRESS_PER_HOUR) return LinkOutcome.ADDRESS_THROTTLED
+        if (!store.signUpOpen() && !store.exists(email)) return LinkOutcome.SIGN_UP_PAUSED
 
         val token = SecretTokens.next()
         store.issueToken(SecretTokens.hash(token), email, locale, now, now.plus(LINK_VALIDITY))
@@ -74,7 +78,11 @@ class SignInLinks(
     /** The account the token signs in, created at its first use, or null for an unknown, used or expired token. */
     suspend fun use(token: String): Account? {
         val now = clock.instant()
-        val account = store.consumeToken(SecretTokens.hash(token), now)?.let { (email, locale) -> store.signIn(email, locale, now) }
+        val account =
+            store
+                .consumeToken(SecretTokens.hash(token), now)
+                ?.takeIf { (email, _) -> store.signUpOpen() || store.exists(email) }
+                ?.let { (email, locale) -> store.signIn(email, locale, now) }
         val outcome = if (account == null) SignInOutcome.INVALID else SignInOutcome.OK
         metrics.record(outcome)
         logger.info { "Sign-in link used: ${outcome.tag}" }

@@ -51,6 +51,21 @@ class AccountStore(
             .map { row -> row.required("n", Long::class.javaObjectType) }
             .awaitSingle()
 
+    /** Whether [email] has an account. Only asked while sign-up is paused (#3906). */
+    suspend fun exists(email: String): Boolean =
+        db
+            .sql("SELECT EXISTS (SELECT 1 FROM accounts.account WHERE lower(email) = lower(:email)) AS found")
+            .bind("email", email)
+            .map { row -> row.required("found", Boolean::class.javaObjectType) }
+            .awaitSingle()
+
+    /** Whether new accounts can be created: false while an operator has paused sign-up (V200, #3906). Read on every call, so a flip lands at once. */
+    suspend fun signUpOpen(): Boolean =
+        db
+            .sql("SELECT open FROM accounts.sign_up")
+            .map { row -> row.required("open", Boolean::class.javaObjectType) }
+            .awaitOneOrNull() ?: true
+
     /** Marks the token used and answers its address and locale, or null if it is unknown, used or expired. One statement, so two tabs cannot both use it. */
     suspend fun consumeToken(
         tokenHash: String,

@@ -25,7 +25,9 @@ data class AccountResponse(
 
 /** Who the browser is signed in as, or null. Always a 200, so the SPA's check is not a console error. */
 data class SessionResponse(
-    val account: AccountResponse?
+    val account: AccountResponse?,
+    /** False while sign-up is paused (#3906): the sign-in page then says that only existing accounts get a link. */
+    val signUpOpen: Boolean
 )
 
 /** Everything stored about the account (GDPR Art. 15 and 20). Grows with RSVPs (#3892). */
