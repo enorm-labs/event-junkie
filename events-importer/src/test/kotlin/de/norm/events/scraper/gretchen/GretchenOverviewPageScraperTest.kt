@@ -117,6 +117,12 @@ class GretchenOverviewPageScraperTest {
         }
 
         @Test
+        fun `splits a credit that names two promoters`() {
+            html = html.replace("<u>saHHara</u>", "<u>Afro Haus &amp; Purple Events</u>")
+            eventWithId("3536").promoters shouldContainExactly listOf("Afro Haus", "Purple Events")
+        }
+
+        @Test
         fun `keeps an external promoter and omits a missing show time`() {
             val event = eventWithId("3536")
 

@@ -31,6 +31,15 @@ fun promoterFromCredit(credit: String?): String? {
     return name.takeIf { it.isNotBlank() }
 }
 
+/**
+ * The co-promoters one credit names: `LOFT, Musikexpress, Rausgegangen und Bedroomdisco` to four names. It splits at a comma,
+ * a spaced `&`, and a lower-case `und` or `and`. A capitalised `And` is part of a name (`Now And Ever Music`), and so are an
+ * unspaced `&` (`B&C Productions`) and a `+` (`aufnahme + wiedergabe`).
+ */
+fun splitPromoterCredit(credit: String): List<String> = credit.split(CO_PROMOTER_SEPARATOR).mapNotNull { it.trim().ifBlank { null } }
+
+private val CO_PROMOTER_SEPARATOR = Regex("""\s*,\s*|\s+&\s+|\s+(?:und|and)\s+""")
+
 /** Companies whose own name ends in `Presents`, matched at the start of a credit. */
 private val PRESENTS_COMPANIES = Regex("""^(?:AEG|Pansy)\s+Presents(?!\p{L})""", RegexOption.IGNORE_CASE)
 

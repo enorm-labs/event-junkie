@@ -474,6 +474,36 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `restores the promoter behind what the strip leaves of a company credit`() {
+        assertSoftly {
+            canonicalPromoterName("MB – Konzerte GmbH") shouldBe "MB Konzerte"
+            canonicalPromoterName("MB Konzerte") shouldBe "MB Konzerte"
+            canonicalPromoterName("Berlin Konzerte") shouldBe "New Berlin Konzerte"
+            canonicalPromoterName("Capital Music") shouldBe "Capital Music"
+            canonicalPromoterName("Capitale") shouldBe "Capitale"
+            canonicalPromoterName("Bossa FM") shouldBe "Bossa FM"
+            canonicalPromoterName("Bossa") shouldBe "Bossa FM"
+            canonicalPromoterName("COMO ESTA WALLY PRODUCCIONES Y MANAGEMENT SL") shouldBe "Como Esta Wally"
+            canonicalPromoterName("so36") shouldBe "SO36"
+            canonicalPromoterName("Berlin Pop Nights") shouldBe "Berlin Pop Nights"
+        }
+    }
+
+    @Test
+    fun `refuses the parties, hosts and people the second cleanup found`() {
+        assertSoftly {
+            isNonPromoterName("ATR Party Berlin") shouldBe true
+            isNonPromoterName("GIRLS TOWN") shouldBe true
+            isNonPromoterName("Girls Town Party") shouldBe true
+            isNonPromoterName("THD Impro - Twinkies, Ho Hos & Ding Dongs") shouldBe true
+            isNonPromoterName("Inge Borg & Gisela Sommer") shouldBe true
+            isNonPromoterName("Maria Botelho, Hugo Sousa") shouldBe true
+            isNonPromoterName("Berlin Pop Nights") shouldBe false
+            isNonPromoterName("Afro Haus") shouldBe false
+        }
+    }
+
+    @Test
     fun `refuses party names, a performer and a comedy night as promoters`() {
         assertSoftly {
             isNonPromoterName("Dirty Dancing Party") shouldBe true

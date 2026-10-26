@@ -29,6 +29,7 @@ import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitCrossBilled
+import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -397,18 +398,16 @@ class GretchenOverviewPageScraper {
     private fun isNoticeSentence(line: String): Boolean = NOTICE_SENTENCE.matches(line)
 
     /**
-     * Promoters from the `.promoter` line, "Veranstalter*in: <name>". "Gretchen" is the venue
-     * itself, dropped.
+     * Promoters from the `.promoter` line, "Veranstalter*in: <name>", split by [splitPromoterCredit]
+     * ("Afro Haus & Purple Events"). "Gretchen" is the venue itself, dropped.
      */
-    private fun parsePromoters(gig: Element): List<String> {
-        val name =
-            gig
-                .textAt(".promoter")
-                ?.substringAfter(":")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() && !it.equals("Gretchen", ignoreCase = true) }
-        return name?.let { listOf(it) }.orEmpty()
-    }
+    private fun parsePromoters(gig: Element): List<String> =
+        gig
+            .textAt(".promoter")
+            ?.substringAfter(":")
+            ?.let(::splitPromoterCredit)
+            .orEmpty()
+            .filterNot { it.equals("Gretchen", ignoreCase = true) }
 
     companion object {
         /** The earliest doors of a club night; the latest concert doors are 20:00. */
