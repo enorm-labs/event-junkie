@@ -18,6 +18,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Instant
@@ -79,7 +81,7 @@ class InstagramDraftRunnerTest {
 
             val result = runner().runDaily()
 
-            result shouldBe InstagramPassResult(venues = 2, drafts = 3, calls = 35, removed = 2, stoppedBy = null)
+            result shouldBe InstagramPassResult(venues = 2, notRead = 0, drafts = 3, calls = 35, removed = 2, stoppedBy = null)
             coVerify { repository.deletePendingCreatedBefore(OffsetDateTime.parse("2026-10-01T04:30:00Z")) }
             registry.counter("instagram.drafts").count() shouldBe 3.0
             registry.counter("instagram.posts.read").count() shouldBe 50.0
@@ -105,7 +107,10 @@ class InstagramDraftRunnerTest {
             coEvery { service.draftFrom(venue("prisma"), any()) } returns VenueDraftResult.NotRead(DiscoveryResult.Unavailable("HTTP 502"))
             coEvery { service.draftFrom(venue("rso.berlin"), any()) } returns read(drafts = 1, calls = 2)
 
-            val logs = logsOf { runner().runDaily() shouldBe InstagramPassResult(venues = 3, drafts = 1, calls = 2, removed = 2, stoppedBy = null) }
+            val logs =
+                logsOf {
+                    runner().runDaily() shouldBe InstagramPassResult(venues = 1, notRead = 2, drafts = 1, calls = 2, removed = 2, stoppedBy = null)
+                }
 
             registry.counter("instagram.graph.errors", "kind", "unavailable").count() shouldBe 1.0
             val warnings = logs.filter { it.level == Level.WARN }.map { it.formattedMessage }
@@ -161,7 +166,7 @@ class InstagramDraftRunnerTest {
             val logs = logsOf { runner.daily() }
 
             logs.single { it.level == Level.ERROR }.formattedMessage shouldBe "The Instagram pass failed"
-            runner.runDaily() shouldBe InstagramPassResult(venues = 0, drafts = 0, calls = 0, removed = 0, stoppedBy = null)
+            runner.runDaily() shouldBe InstagramPassResult(venues = 0, notRead = 0, drafts = 0, calls = 0, removed = 0, stoppedBy = null)
         }
 
     @Test
@@ -236,5 +241,30 @@ class InstagramDraftRunnerTest {
             val errors = logs.filter { it.level == Level.ERROR }.map { it.formattedMessage }
             errors.first() shouldContain "Graph error 190"
             logs.single { it.level == Level.WARN }.formattedMessage shouldContain "'gone' was not read: Graph error 110"
+        }
+
+    @ParameterizedTest
+    @ValueSource(ints = [4, 17, 32, 613])
+    fun `a rate limit stops the pass with one warning, and the summary counts the venues not read`(code: Int) =
+        runTest {
+            coEvery { venues.findVenues() } returns listOf(venue("prisma"), venue("ysy"), venue("villa"), venue("zemin"))
+            coEvery { service.draftFrom(venue("prisma"), any()) } returns read(drafts = 1, calls = 2)
+            coEvery { service.draftFrom(venue("ysy"), any()) } returns VenueDraftResult.NotRead(DiscoveryResult.RateLimited(code))
+
+            val logs =
+                logsOf {
+                    runner().runDaily() shouldBe
+                        InstagramPassResult(venues = 1, notRead = 3, drafts = 1, calls = 2, removed = 2, stoppedBy = InstagramPassStop.RATE_LIMIT)
+                }
+
+            coVerify(exactly = 0) { service.draftFrom(venue("villa"), any()) }
+            coVerify(exactly = 0) { service.draftFrom(venue("zemin"), any()) }
+            registry.counter("instagram.graph.errors", "kind", "rate_limited").count() shouldBe 1.0
+            logs.single { it.level == Level.WARN }.formattedMessage shouldBe
+                "Instagram venue 'ysy' was not read: Graph error $code, a rate limit. " +
+                "The pass stops, and 3 venue(s) wait for the next pass, this one included"
+            logs.last().formattedMessage shouldBe
+                "The Instagram pass stopped at a rate limit: 1 of 4 venue(s) read, 3 not read, 1 draft(s), 2 model call(s); " +
+                "the rest wait for the next pass"
         }
 }

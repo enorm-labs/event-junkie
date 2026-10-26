@@ -125,8 +125,10 @@ spec:
       discogs:
         enabled: true
       # Drafts events from venue posts (ADR-048); the token is the hand-made Secret event-junkie-instagram.
+      # Production's token too, so this pass runs an hour after production's 04:30 to stay under Meta's limit (#3937).
       instagram:
         enabled: true
+        cron: "0 30 5 * * *"
       resources:
         requests:
           cpu: "50m"

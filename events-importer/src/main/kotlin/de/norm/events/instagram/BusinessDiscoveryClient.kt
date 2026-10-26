@@ -42,7 +42,12 @@ sealed interface DiscoveryResult {
         val message: String
     ) : DiscoveryResult
 
-    /** A rate limit, a server error or no answer. The next pass tries again. */
+    /** A Graph rate limit (4, 17, 32, 613). Every venue shares the token, so the rest of the pass would hit it too. */
+    data class RateLimited(
+        val code: Int
+    ) : DiscoveryResult
+
+    /** A server error, another Graph error or no answer. The next pass tries again. */
     data class Unavailable(
         val reason: String
     ) : DiscoveryResult
@@ -123,6 +128,7 @@ class BusinessDiscoveryClient(
         return when (code) {
             ACCOUNT_NOT_FOUND -> DiscoveryResult.AccountUnreadable(code)
             in ACCESS_CODES -> DiscoveryResult.AccessRefused(code, message)
+            in RATE_LIMIT_CODES -> DiscoveryResult.RateLimited(code)
             else -> DiscoveryResult.Unavailable("Graph error $code")
         }
     }
@@ -183,6 +189,9 @@ class BusinessDiscoveryClient(
 
         /** 10 and 200: a permission the token lacks. 190: the token expired or was revoked. */
         private val ACCESS_CODES = setOf(10, 190, 200)
+
+        /** 4: the app's limit. 17: the user's. 32: the page's. 613: a custom limit. */
+        private val RATE_LIMIT_CODES = setOf(4, 17, 32, 613)
 
         /** Graph writes the offset without a colon: `2026-10-13T16:00:12+0000`. */
         private val TIMESTAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")

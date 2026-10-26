@@ -527,6 +527,7 @@ tests:
       importer.eventClassification.enabled: false
       importer.instagram.enabled: true
       importer.instagram.maxPerRun: 30
+      importer.instagram.cron: "0 15 3 * * *"
     documentSelector:
       path: kind
       value: Deployment
@@ -545,7 +546,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: APP_INSTAGRAM_CRON
-            value: "0 30 4 * * *"
+            value: "0 15 3 * * *"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
