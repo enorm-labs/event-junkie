@@ -158,7 +158,7 @@ object FeedFilterText {
             named(words(Word.VENUE_TYPE), filter.venueTypes),
             named(words(Word.ARTIST), listOfNotNull(filter.artistSlug)),
             named(words(Word.PROMOTER), listOfNotNull(filter.promoterSlug)),
-            named(words(Word.GENRE), listOfNotNull(filter.genreSlug)),
+            named(words(Word.GENRE), filter.genreSlugs),
             named(words(Word.FAMILY), filter.familySlugs),
             named(words(Word.PRICE), listOfNotNull(price(words, filter.minPrice, filter.maxPrice))),
             named(words(Word.SEARCH), listOfNotNull(filter.query?.let { words(Word.QUOTED).replace("%s", it) })),

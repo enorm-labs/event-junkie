@@ -88,7 +88,7 @@ class EventFeedXmlTest {
                 venueType = listOf("club"),
                 artist = "sam-prekop",
                 promoter = "36-concerts",
-                genre = "techno",
+                genre = listOf("techno", " house", "techno"),
                 family = listOf("electronic"),
                 minPrice = BigDecimal("10.50"),
                 maxPrice = BigDecimal("20.00"),
@@ -101,12 +101,12 @@ class EventFeedXmlTest {
         description("en", filter, mapOf("lido" to "Lido")) shouldBe
             "The events in Berlin that Event Junkie found most recently. Filters: " +
             "event type: concerts, OPERA, parties · venue: Lido · district: kreuzberg, mitte · venue type: club · artist: sam-prekop · " +
-            "promoter: 36-concerts · genre: techno · genre family: electronic · presale price: 10.5–20 € · search: “late night” · " +
+            "promoter: 36-concerts · genre: house, techno · genre family: electronic · presale price: 10.5–20 € · search: “late night” · " +
             "time of night: dawn, evening, late · no sold-out events · free only."
         description("de", filter, mapOf("lido" to "Lido")) shouldBe
             "Die Veranstaltungen in Berlin, die Event Junkie zuletzt gefunden hat. Filter: " +
             "Veranstaltungsart: Konzerte, OPERA, Partys · Location: Lido · Bezirk: kreuzberg, mitte · Location-Art: club · " +
-            "Künstler: sam-prekop · Veranstalter: 36-concerts · Genre: techno · Genrefamilie: electronic · Vorverkaufspreis: 10,5–20 € · " +
+            "Künstler: sam-prekop · Veranstalter: 36-concerts · Genre: house, techno · Genrefamilie: electronic · Vorverkaufspreis: 10,5–20 € · " +
             "Suche: „late night“ · Tageszeit: dawn, abends, nachts · ohne ausverkaufte · nur kostenlose."
     }
 
@@ -153,13 +153,13 @@ class EventFeedXmlTest {
                 row(
                     "three facets",
                     "en",
-                    EventFilterParams(eventType = CONCERT, venue = LIDO, genre = "techno"),
+                    EventFilterParams(eventType = CONCERT, venue = LIDO, genre = listOf("techno")),
                     "Event Junkie — new events (filtered)"
                 ),
                 row(
                     "three facets",
                     "de",
-                    EventFilterParams(eventType = CONCERT, venue = LIDO, genre = "techno"),
+                    EventFilterParams(eventType = CONCERT, venue = LIDO, genre = listOf("techno")),
                     "Event Junkie — neue Veranstaltungen (gefiltert)"
                 ),
                 row("several types", "en", EventFilterParams(eventType = listOf("concert", "party")), "Event Junkie — new events (filtered)"),

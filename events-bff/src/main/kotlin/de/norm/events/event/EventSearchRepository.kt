@@ -56,7 +56,8 @@ data class EventFilter(
     val venueTypes: List<String> = emptyList(),
     val artistSlug: String? = null,
     val promoterSlug: String? = null,
-    val genreSlug: String? = null,
+    /** Any of these styles (#3980); empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val genreSlugs: List<String> = emptyList(),
     /** Any of these families; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val familySlugs: List<String> = emptyList(),
     val minPrice: BigDecimal? = null,
@@ -395,7 +396,6 @@ class EventSearchRepository(
     ) {
         val slugByAssociation =
             mapOf(
-                Association.GENRE to filter.genreSlug,
                 Association.ARTIST to filter.artistSlug,
                 Association.PROMOTER to filter.promoterSlug
             )
@@ -406,6 +406,10 @@ class EventSearchRepository(
             }
         }
         filter.followed?.let { appendFollowed(it, conditions, params) }
+        if (filter.genreSlugs.isNotEmpty()) {
+            conditions += Association.GENRE.existsClause()
+            params[Association.GENRE.param] = filter.genreSlugs
+        }
         // The family lives on the tag, so this is the genre EXISTS testing `family` in place of `slug`.
         // Beside `genre=` it narrows, never widens.
         if (filter.familySlugs.isNotEmpty()) {
@@ -517,7 +521,7 @@ class EventSearchRepository(
         private val refAlias: String,
         val param: String
     ) {
-        GENRE("event_genre_tag", "egt", "genre_tag_id", "genre_tag", "gt", "genreSlug"),
+        GENRE("event_genre_tag", "egt", "genre_tag_id", "genre_tag", "gt", "genreSlugs"),
         ARTIST("event_artist", "ea", "artist_id", "artist", "a", "artistSlug"),
         PROMOTER("event_promoter", "ep", "promoter_id", "promoter", "p", "promoterSlug")
         ;

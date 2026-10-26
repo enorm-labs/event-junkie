@@ -37,6 +37,17 @@ describe('useEventFilters', () => {
     expect(filters.value.family).toEqual(['electronic', 'hip-hop'])
   })
 
+  it('reads one style or a repeated one as a list (#3980)', () => {
+    const { filters } = useEventFilters()
+    expect(filters.value.genre).toBeUndefined()
+
+    route.query = { genre: 'techno' }
+    expect(filters.value.genre).toEqual(['techno'])
+
+    route.query = { genre: ['techno', '', 'house'] }
+    expect(filters.value.genre).toEqual(['techno', 'house'])
+  })
+
   it('sends the language only while the type filter selects only types that carry one', () => {
     const { filters } = useEventFilters()
     route.query = { language: 'en' }

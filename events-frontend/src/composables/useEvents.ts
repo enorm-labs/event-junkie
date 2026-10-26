@@ -20,7 +20,8 @@ export interface EventSearchParams {
   venueType?: string[]
   artist?: string
   promoter?: string
-  genre?: string
+  /** Any of these styles (genre tags); sent as a repeated parameter. */
+  genre?: string[]
   /** Any of these genre families; sent as a repeated parameter. */
   family?: string[]
   minPrice?: number

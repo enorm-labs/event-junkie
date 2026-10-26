@@ -48,6 +48,8 @@
     "byGenre": "Filter by genre",
     "allSubgenres": "All styles",
     "bySubgenre": "Filter by style",
+    "subgenresSelected": "{n} styles",
+    "clearSubgenres": "Clear styles",
     "families": {
       "electronic": "Electronic",
       "hip-hop": "Hip Hop & R&B",

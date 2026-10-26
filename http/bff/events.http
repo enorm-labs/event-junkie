@@ -64,8 +64,8 @@ Accept: application/json
 GET {{bff-host}}/api/events?artist=actors
 Accept: application/json
 
-### Filter by genre slug
-GET {{bff-host}}/api/events?genre=punk
+### Filter by style (genre tag) slug; repeat it for any of several in one family
+GET {{bff-host}}/api/events?family=electronic&genre=techno&genre=house
 Accept: application/json
 
 ### Filter by price range

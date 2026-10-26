@@ -35,15 +35,15 @@ export function shareFilterLists(): FilterLists {
 }
 
 /**
- * The families the bar shows as chosen: the URL's, or, for a link from before families existed
- * carrying only `genre=`, the family of that style.
+ * The families the bar shows as chosen: the URL's, or, for a link carrying only `genre=`, the
+ * families of its styles. A hand-built link with styles of two families shows both (#3980).
  */
 export function activeFamilies(
   families: readonly string[],
-  genre: string | undefined,
+  genres: readonly string[],
   tags: readonly GenreTag[],
 ): string[] {
   if (families.length) return [...families]
-  const family = tags.find((tag) => tag.slug === genre)?.family
-  return family ? [family] : []
+  const derived = genres.map((genre) => tags.find((tag) => tag.slug === genre)?.family)
+  return [...new Set(derived.filter((family): family is string => !!family))]
 }

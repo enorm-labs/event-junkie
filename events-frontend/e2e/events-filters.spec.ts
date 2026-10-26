@@ -64,6 +64,7 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('eventType') === 'FESTIVAL') return eventPage(['Big Festival'])
   if (sp.getAll('venue').join() === 'lido,berghain') return eventPage(['Lido Or Berghain'])
   if (sp.get('venue') === 'lido') return eventPage(['Lido Show'])
+  if (sp.getAll('genre').join() === 'techno,house') return eventPage(['Techno Or House'])
   if (sp.get('genre') === 'techno') return eventPage(['Techno Rave'])
   if (sp.getAll('family').join() === 'electronic,jazz-blues')
     return eventPage(['Electronic Or Jazz'])
@@ -99,6 +100,7 @@ test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/genres/, (route) =>
     json(route, [
       { slug: 'techno', name: 'Techno', family: 'electronic' },
+      { slug: 'house', name: 'House', family: 'electronic' },
       { slug: 'jazz', name: 'Jazz', family: 'jazz-blues' },
     ]),
   )
@@ -120,11 +122,6 @@ test.beforeEach(async ({ page }) => {
     json(route, eventsResponseFor(new URL(route.request().url()).searchParams)),
   )
 })
-
-/** The native <select> that contains the given placeholder option. */
-function selectWithOption(page: Page, optionName: string) {
-  return page.locator('select', { has: page.getByRole('option', { name: optionName }) })
-}
 
 const eventHeading = (page: Page, name: string) => page.getByRole('heading', { level: 2, name })
 
@@ -175,6 +172,16 @@ test('filters by event type', async ({ page }) => {
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 })
 
+/** The style control's trigger, whatever it names; it exists only for exactly one family. */
+function styleFilter(page: Page) {
+  return page.getByRole('button', { name: /^Filter by style: / })
+}
+
+/** The open style list's options, by their text. */
+function styleOptions(page: Page) {
+  return page.getByRole('group', { name: 'Filter by style' }).locator('label')
+}
+
 test('links the feed for the filters it shows, without the dates', async ({ page }) => {
   await page.goto('/events')
   const feed = page.getByRole('link', { name: 'Subscribe to new events as an RSS feed' })
@@ -223,12 +230,12 @@ test('an old one-venue link shows its venue ticked', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: 'Berghain' })).not.toBeChecked()
 })
 
-test('filters by genre family, then by a style inside it', async ({ page }) => {
+test('filters by genre family, then by several styles inside it', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
   await openMoreFilters(page)
-  // No family chosen: the style select does not exist yet.
-  await expect(selectWithOption(page, 'All styles')).toHaveCount(0)
+  // No family chosen: the style control does not exist yet.
+  await expect(styleFilter(page)).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Filter by genre: All genres' }).click()
   await page.getByRole('checkbox', { name: 'Electronic' }).check()
@@ -238,31 +245,35 @@ test('filters by genre family, then by a style inside it', async ({ page }) => {
   await expect(eventHeading(page, 'Electronic Night')).toBeVisible()
 
   // Only the family's own styles are offered — Jazz belongs to another family.
-  const styles = selectWithOption(page, 'All styles')
-  await expect(styles.getByRole('option')).toHaveText(['All styles', 'Techno'])
-  await styles.selectOption('techno')
-
+  await page.getByRole('button', { name: 'Filter by style: All styles' }).click()
+  await expect(styleOptions(page)).toHaveText(['Techno', 'House'])
+  await page.getByRole('checkbox', { name: 'Techno' }).check()
   await expect(page).toHaveURL(/[?&]genre=techno\b/)
   await expect(eventHeading(page, 'Techno Rave')).toBeVisible()
 
-  // A second family drops the style, and styles are offered for one family only.
+  // A second style widens: an event with either matches (#3980).
+  await page.getByRole('checkbox', { name: 'House' }).check()
+  await expect(page).toHaveURL(/genre=techno&genre=house\b/)
+  await expect(eventHeading(page, 'Techno Or House')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Filter by style: 2 styles' })).toBeVisible()
+
+  // A second family drops every style, and styles are offered for one family only.
   await page.getByRole('button', { name: 'Filter by genre: Electronic' }).click()
   await page.getByRole('checkbox', { name: 'Jazz & Blues' }).check()
   await expect(page).toHaveURL(/family=electronic&family=jazz-blues\b/)
   await expect(page).not.toHaveURL(/[?&]genre=/)
   await expect(eventHeading(page, 'Electronic Or Jazz')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Filter by genre: 2 genres' })).toBeVisible()
-  await expect(selectWithOption(page, 'All styles')).toHaveCount(0)
+  await expect(styleFilter(page)).toHaveCount(0)
 
   // Back to one family: its styles return.
   await page.getByRole('checkbox', { name: 'Electronic' }).uncheck()
   await expect(page).toHaveURL(/[?&]family=jazz-blues\b/)
   await expect(page).not.toHaveURL(/family=electronic/)
   await page.keyboard.press('Escape')
-  await expect(selectWithOption(page, 'All styles').getByRole('option')).toHaveText([
-    'All styles',
-    'Jazz',
-  ])
+  await page.getByRole('button', { name: 'Filter by style: All styles' }).click()
+  await expect(styleOptions(page)).toHaveText(['Jazz'])
 })
 
 test('a link from before families carries only genre, and both controls still show it', async ({
@@ -277,7 +288,19 @@ test('a link from before families carries only genre, and both controls still sh
     'true',
   )
   await expect(page.getByRole('button', { name: 'Filter by genre: Electronic' })).toBeVisible()
-  await expect(selectWithOption(page, 'All styles')).toHaveValue('techno')
+  await expect(page.getByRole('button', { name: 'Filter by style: Techno' })).toBeVisible()
+})
+
+test('a style-only link with two styles of one family shows that family and both ticked', async ({
+  page,
+}) => {
+  await page.goto('/events?genre=techno&genre=house')
+  await expect(eventHeading(page, 'Techno Or House')).toBeVisible()
+
+  await expect(page.getByRole('button', { name: 'Filter by genre: Electronic' })).toBeVisible()
+  await page.getByRole('button', { name: 'Filter by style: 2 styles' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Techno' })).toBeChecked()
+  await expect(page.getByRole('checkbox', { name: 'House' })).toBeChecked()
 })
 
 test('filters by several districts, any of them matching', async ({ page }) => {
