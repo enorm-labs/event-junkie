@@ -68,7 +68,7 @@ env:
   ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:030d3df57735dacbb83464854758e674dd9ad01d79d12a129a8e58b1fd384238
   # `k3d-rehearsal.sh` needs k3d and flux. Renovate moves every occurrence of FLUX_VERSION in one pull request.
   K3D_VERSION: v5.9.0
-  FLUX_VERSION: 2.9.6
+  FLUX_VERSION: 2.10.0
   # Binary and templates are two releases with two cadences, pinned apart; `-update-templates` at run
   # time would be the unpinned dependency ADR-024 refuses. No `v`: the download URLs add it.
   NUCLEI_VERSION: 3.11.1
