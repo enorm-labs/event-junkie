@@ -4,6 +4,7 @@ import de.norm.events.common.BERLIN
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -25,8 +26,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.TextNode
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -99,12 +98,6 @@ internal class Bogen47ApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .build()
-
     /**
      * Parses one page of the `event` listing, keeping only events on or after today.
      *
@@ -117,7 +110,7 @@ internal class Bogen47ApiScraper(
     fun scrapePage(json: String): Bogen47Page {
         val posts =
             try {
-                jsonMapper.readTree(json).takeIf { it.isArray }?.toList()
+                SCRAPER_JSON.readTree(json).takeIf { it.isArray }?.toList()
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse the $eventSource event listing page" }
                 null
@@ -142,7 +135,7 @@ internal class Bogen47ApiScraper(
     @Suppress("TooGenericExceptionCaught") // A malformed media response must not cost the events.
     fun parseMedia(json: String): Map<Long, String> =
         try {
-            jsonMapper
+            SCRAPER_JSON
                 .readTree(json)
                 .takeIf { it.isArray }
                 ?.mapNotNull { node ->

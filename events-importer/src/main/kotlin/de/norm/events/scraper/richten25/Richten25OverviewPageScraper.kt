@@ -3,6 +3,7 @@ package de.norm.events.scraper.richten25
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.isNonArtistName
@@ -11,7 +12,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
@@ -51,7 +51,7 @@ class Richten25OverviewPageScraper {
     private fun upcomingEmbed(props: String): String? {
         val root =
             try {
-                MAPPER.readTree(props)
+                SCRAPER_JSON.readTree(props)
             } catch (e: JacksonException) {
                 logger.warn(e) { "Unreadable Astro island props on the Richten25 page" }
                 return null
@@ -105,7 +105,6 @@ class Richten25OverviewPageScraper {
             .map { ScrapedArtist(name = it) }
 
     private companion object {
-        val MAPPER: JsonMapper = JsonMapper.builder().build()
         const val UPCOMING = "Upcoming Events"
         val NIGHT = Regex("""^([A-Z][a-z]+ \d{1,2}, \d{4}):\s*(.+)$""")
         val SET_SEPARATOR = Regex("""\s*//\s*""")

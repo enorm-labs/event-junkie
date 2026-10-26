@@ -4,7 +4,6 @@ import de.norm.events.scraper.blankToNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -18,17 +17,6 @@ import java.time.temporal.TemporalAdjusters
 // artist rules.
 
 private val logger = KotlinLogging.logger {}
-
-/**
- * The mapper every Elfsight payload is read with. Elfsight uses camelCase JSON keys
- * (`coverImage`, `isAllDay`), so the default naming applies, and unknown fields are ignored
- * (Jackson 3 default).
- */
-internal fun elfsightJsonMapper(): JsonMapper =
-    JsonMapper
-        .builder()
-        .addModule(kotlinModule())
-        .build()
 
 /**
  * Walks the boot payload and returns the `events` nodes of every embedded widget exposing an

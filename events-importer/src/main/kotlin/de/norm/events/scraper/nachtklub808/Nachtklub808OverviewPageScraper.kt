@@ -3,6 +3,7 @@ package de.norm.events.scraper.nachtklub808
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -13,7 +14,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalTime
@@ -90,7 +90,7 @@ class Nachtklub808OverviewPageScraper {
 
     private fun readJson(text: String): JsonNode? =
         try {
-            MAPPER.readTree(text)
+            SCRAPER_JSON.readTree(text)
         } catch (e: JacksonException) {
             logger.warn(e) { "Unreadable JSON on the 808 Nachtklub page" }
             null
@@ -107,7 +107,6 @@ class Nachtklub808OverviewPageScraper {
     private fun JsonNode.value(field: String): String = path(field).path(1).asString("")
 
     private companion object {
-        val MAPPER: JsonMapper = JsonMapper.builder().build()
         val HOST = Regex("""\(\s*host\s*\)""", RegexOption.IGNORE_CASE)
     }
 }

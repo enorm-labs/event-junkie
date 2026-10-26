@@ -1,14 +1,13 @@
 package de.norm.events.scraper.radar
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseOffsetToBerlin
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.ZonedDateTime
 
 // Shared reader for radar.squat.net's search API, `api/1.2/search/events.json?facets[group][]=<nid>`
@@ -26,8 +25,6 @@ internal fun isRadarProgramme(event: RadarEvent): Boolean = event.categories.any
 
 /** An open-decks night ("Open Breakbeat Decks"), which radar can file under concert: a DJ party, not a band. */
 private val OPEN_DECKS = Regex("""\b(?:open|offene)[\s-]+(?:\p{L}+\s+)?decks?\b""", RegexOption.IGNORE_CASE)
-
-private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
 
 /** One programme row of a radar group, in the venue's local time. */
 data class RadarEvent(
@@ -79,7 +76,7 @@ internal fun parseRadarEvents(
 ): RadarListing {
     val root =
         try {
-            jsonMapper.readTree(json)
+            SCRAPER_JSON.readTree(json)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to parse the $venue radar response" }
             return RadarListing(emptyList(), 0, 0)

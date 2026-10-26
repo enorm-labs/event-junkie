@@ -2,6 +2,7 @@ package de.norm.events.scraper.orangerie
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.commaListActs
@@ -22,7 +23,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 
 /**
  * Pure parser for the Orangerie Neukölln one-pager, whose `#programm` section lists every announced night.
@@ -54,7 +54,7 @@ class OrangerieOverviewPageScraper {
 
     private fun parse(json: String): JsonNode? =
         try {
-            mapper.readTree(json)
+            SCRAPER_JSON.readTree(json)
         } catch (_: JacksonException) {
             null
         }
@@ -130,7 +130,6 @@ class OrangerieOverviewPageScraper {
     private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)
 
     private companion object {
-        val mapper: JsonMapper = JsonMapper.builder().build()
         const val ITEM_LIST = "ItemList"
         const val CONCERT_TAG = "Concert"
         const val FOOD_TAG = "tag-food"

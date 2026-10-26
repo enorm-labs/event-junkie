@@ -7,6 +7,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
 import de.norm.events.scraper.PRESENTS_WORDS
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -26,8 +27,6 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 import java.time.LocalTime
 
@@ -82,13 +81,6 @@ class InselApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    // Unknown fields are ignored, so srcSets, aspect ratios and galleries deserialize away.
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .build()
-
     /**
      * Parses every upcoming event from a static-query artefact.
      *
@@ -107,7 +99,7 @@ class InselApiScraper(
 
         val events =
             nodes.mapSkippingFailures(logger, "Insel event") { edge ->
-                parseEvent(jsonMapper.treeToValue(edge.path("node"), InselEventNode::class.java), sourceUrl)
+                parseEvent(SCRAPER_JSON.treeToValue(edge.path("node"), InselEventNode::class.java), sourceUrl)
             }
 
         return events.dropPastEvents(clock) { dropped ->
@@ -124,7 +116,7 @@ class InselApiScraper(
     private fun eventNodes(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse an Insel static-query artefact" }
                 return null

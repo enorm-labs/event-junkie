@@ -7,7 +7,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -44,8 +43,6 @@ internal object WixEventsWarmupData {
 
     /** Id of the `<script>` element Wix injects its server-side warmup state into. */
     private const val WARMUP_SCRIPT_ID = "wix-warmup-data"
-
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
      * Returns the `events.events` array node from the page's warmup data, or
@@ -131,7 +128,7 @@ internal object WixEventsWarmupData {
         source: EventSource
     ): JsonNode? =
         try {
-            jsonMapper.readTree(script.data())
+            SCRAPER_JSON.readTree(script.data())
         } catch (e: Exception) {
             logger.warn(e) { "Failed to parse $source wix-warmup-data JSON" }
             null

@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.net.URI
 import java.net.URISyntaxException
 import java.time.LocalDateTime
@@ -16,8 +15,6 @@ import java.time.format.DateTimeParseException
 // event; the page shape, the cursor walk and the field readers live here.
 
 private val logger = KotlinLogging.logger {}
-
-private val tecMapper: JsonMapper = JsonMapper.builder().build()
 
 /** The plugin's local date-time format, in the venue's own timezone. */
 private val TEC_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -46,7 +43,7 @@ fun parseTecPage(
 ): TecPage {
     val root =
         try {
-            tecMapper.readTree(json)
+            SCRAPER_JSON.readTree(json)
         } catch (e: JacksonException) {
             logger.warn(e) { "${source.name} events page is not parseable JSON" }
             return TecPage(events = emptyList(), nextPageUrl = null)

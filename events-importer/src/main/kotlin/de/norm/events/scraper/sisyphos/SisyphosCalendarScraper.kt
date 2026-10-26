@@ -3,6 +3,7 @@ package de.norm.events.scraper.sisyphos
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
@@ -10,7 +11,6 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.net.URI
 import java.time.Instant
 import java.time.LocalDate
@@ -29,8 +29,6 @@ import java.time.LocalDate
  */
 class SisyphosCalendarScraper {
     private val logger = KotlinLogging.logger {}
-
-    private val jsonMapper = JsonMapper.builder().build()
 
     /** Parses every entry in the calendar feed [json]. */
     fun scrape(json: String): List<ScrapedEvent> {
@@ -57,7 +55,7 @@ class SisyphosCalendarScraper {
     private fun parseEntries(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Sisyphos calendar feed" }
                 return null

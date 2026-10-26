@@ -2,6 +2,7 @@ package de.norm.events.scraper.quatsch
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -18,7 +19,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -120,15 +120,13 @@ class QuatschCalendarScraper {
 
     private fun readTree(json: String): JsonNode? =
         try {
-            mapper.readTree(json)
+            SCRAPER_JSON.readTree(json)
         } catch (e: JacksonException) {
             logger.warn(e) { "Quatsch Comedy Club calendar answer is not parseable JSON" }
             null
         }
 
     private companion object {
-        val mapper: JsonMapper = JsonMapper.builder().build()
-
         val SETTINGS = Regex("""var\s+eventim_ajax_object\s*=\s*(\{.*?\});""", RegexOption.DOT_MATCHES_ALL)
 
         /** The club's own name opens every house show's title; the venue is shown beside it anyway. */

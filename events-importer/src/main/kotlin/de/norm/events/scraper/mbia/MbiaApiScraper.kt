@@ -3,6 +3,7 @@ package de.norm.events.scraper.mbia
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
@@ -17,8 +18,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -48,14 +47,12 @@ class MbiaApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
-
     /** One page of the listing; an unparseable or non-array body yields an empty page, which ends the walk. */
     @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
     fun scrape(json: String): MbiaPage {
         val posts =
             try {
-                jsonMapper.readTree(json).takeIf { it.isArray }?.toList()
+                SCRAPER_JSON.readTree(json).takeIf { it.isArray }?.toList()
             } catch (e: Exception) {
                 logger.warn(e) { "M-BIA posts response is not parseable JSON" }
                 null

@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Element
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -12,8 +11,6 @@ import java.time.LocalTime
 // so a venue that rewraps its block keeps working.
 
 private val logger = KotlinLogging.logger {}
-
-private val jsonLdMapper: JsonMapper = JsonMapper.builder().build()
 
 private const val JSON_LD_SCRIPT = "script[type=application/ld+json]"
 
@@ -33,7 +30,7 @@ fun Element.jsonLdEvents(): List<JsonNode> = select(JSON_LD_SCRIPT).flatMap { js
 fun jsonLdEvents(json: String): List<JsonNode> {
     val root =
         try {
-            jsonLdMapper.readTree(json)
+            SCRAPER_JSON.readTree(json)
         } catch (e: JacksonException) {
             logger.warn(e) { "JSON-LD block is not parseable, skipping it" }
             return emptyList()

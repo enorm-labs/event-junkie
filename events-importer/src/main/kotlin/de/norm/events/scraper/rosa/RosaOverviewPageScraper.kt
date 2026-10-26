@@ -2,6 +2,7 @@ package de.norm.events.scraper.rosa
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.jsonArrayAt
 import de.norm.events.scraper.nextFlightPayload
@@ -11,7 +12,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 
 /** Where the flyer assets are served from; the reference names the file within it. */
 private const val SANITY_IMAGE_BASE = "https://cdn.sanity.io/images/m0p64e3g/production"
@@ -32,8 +32,6 @@ private const val EVENTS_KEY = "events"
 class RosaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         document: Document,
         baseUrl: String
@@ -43,7 +41,7 @@ class RosaOverviewPageScraper {
             logger.warn { "No events array in ROSA's flight payload" }
             return emptyList()
         }
-        return jsonMapper.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
+        return SCRAPER_JSON.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
     }
 
     private fun toScrapedEvent(

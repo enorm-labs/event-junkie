@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
@@ -17,7 +18,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -67,13 +67,11 @@ data class WuehlmaeuseTicket(
 class WuehlmaeuseApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val mapper: JsonMapper = JsonMapper.builder().build()
-
     /** Parses one page; a body that does not parse is an empty last page. */
     fun scrapePage(json: String): WuehlmaeuseShopPage {
         val root =
             try {
-                mapper.readTree(json)
+                SCRAPER_JSON.readTree(json)
             } catch (e: JacksonException) {
                 logger.warn(e) { "Wühlmäuse shop page is not parseable JSON" }
                 return WuehlmaeuseShopPage(emptyList(), postCount = 0)
