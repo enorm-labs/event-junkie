@@ -41,7 +41,7 @@ class VolksbuehneEventPageScraper {
         return VolksbuehneEventPage(
             description = description,
             imageUrl = event?.schemaImageUrl() ?: document.attrAt("meta[property=og:image]", "content"),
-            eventType = event?.stringOrNull("@type")?.let { SCHEMA_TYPES[it] }
+            eventType = event?.stringOrNull("@type")?.let { SCHEMA_TYPES[it] }?.let { if (it == EventType.OTHER) socialEventType(description) else it }
         )
     }
 
@@ -49,7 +49,23 @@ class VolksbuehneEventPageScraper {
     fun description(document: Document): String? = htmlParagraphText(document.selectFirst("section.texts section.text-block .text")?.html())
 
     private companion object {
-        /** A `SocialEvent` is a ball or a festival bar, neither a staged work nor a concert. */
+        /**
+         * A `SocialEvent` is a ball, a dance night or a festival bar. The text tells them apart: a ballroom ball is a
+         * staged competition people watch, a night on a dancefloor is a party, and the bar stays OTHER (#4009). The text
+         * is read here and never stored: the source's licence withholds it.
+         */
+        fun socialEventType(description: String?): EventType =
+            when {
+                description == null -> EventType.OTHER
+                BALLROOM.containsMatchIn(description) -> EventType.SHOW
+                DANCE_NIGHT.containsMatchIn(description) -> EventType.PARTY
+                else -> EventType.OTHER
+            }
+
+        val BALLROOM = Regex("""\bballroom|\bkiki\b""", RegexOption.IGNORE_CASE)
+        val DANCE_NIGHT = Regex("""tanzfläche|dancefloor|\bparty\b""", RegexOption.IGNORE_CASE)
+
+        /** A `SocialEvent` is resolved by [socialEventType]. */
         val SCHEMA_TYPES =
             mapOf(
                 "SocialEvent" to EventType.OTHER,

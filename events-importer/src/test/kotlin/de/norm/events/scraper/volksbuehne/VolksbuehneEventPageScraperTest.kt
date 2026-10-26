@@ -9,6 +9,8 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.LocalDate
 
 class VolksbuehneEventPageScraperTest {
@@ -42,10 +44,30 @@ class VolksbuehneEventPageScraperTest {
     }
 
     @Test
-    fun `types a ball or a festival bar as other`() {
+    fun `types a festival bar as other`() {
         val html = """<script type="application/ld+json">{"@type": "SocialEvent", "name": "Community Bar"}</script>"""
 
         scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe EventType.OTHER
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Ballroom entstand als Antwort auf Ausschluss. | SHOW",
+            "Between Worlds Kiki, präsentiert von Mother Mandhla. | SHOW",
+            "Dieses Projekt möchte queere Liebesgeschichten auf der Tanzfläche sichtbar machen. | PARTY"
+        ]
+    )
+    fun `types a social event from its text, a ball a show and a dance night a party`(
+        text: String,
+        type: EventType
+    ) {
+        val html =
+            """<script type="application/ld+json">{"@type": "SocialEvent", "name": "X"}</script>""" +
+                """<section class="texts"><section class="block text-block"><div class="text"><p>$text</p></div></section></section>"""
+
+        scraper.scrape(Jsoup.parse(html)).shouldNotBeNull().eventType shouldBe type
     }
 
     @Test
