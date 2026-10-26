@@ -205,9 +205,10 @@ class EschschloraqueOverviewPageScraperTest {
             types["Hot Tunes for Cool Cats"] shouldBe EventType.PARTY.name
             // A `Live:` line bills a live act.
             types["20 Jahre MissVergnügen!"] shouldBe EventType.CONCERT.name
-            // An unlabelled billing line is no cue, and nor is a bingo night's prose.
+            // An unlabelled billing line is no cue.
             types["BadassBassBombardement"] shouldBe EventType.OTHER.name
-            types["BULETTEN BINGO – OPENAIR EDITION"] shouldBe EventType.OTHER.name
+            // A bingo is a game night, whatever its prose says.
+            types["BULETTEN BINGO – OPENAIR EDITION"] shouldBe EventType.QUIZ.name
         }
     }
 

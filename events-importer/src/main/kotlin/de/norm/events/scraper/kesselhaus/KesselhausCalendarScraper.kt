@@ -83,7 +83,10 @@ class KesselhausCalendarScraper(
         return "${url.substringBefore('?')}?part=${last.plusMonths(WINDOW_STEP_MONTHS)}"
     }
 
-    /** The event's own text and the doors time it states, with the image from the page's JSON-LD; null when it has neither. */
+    /**
+     * The event's own text and the doors time it states, with the image from the page's JSON-LD; null when it has neither.
+     * An untyped night whose text names a party is one: FITRIX's "Daytime Workout Party" (#4007).
+     */
     fun enrich(
         event: ScrapedEvent,
         document: Document
@@ -101,6 +104,7 @@ class KesselhausCalendarScraper(
         val doors = labelledClock(text, DOORS_LABELS)?.takeIf { start -> event.startTime?.let { start < it } == true }
         return event.copy(
             description = text ?: event.description,
+            eventType = if (event.eventType == EventType.OTHER.name && PARTY_PROSE.containsMatchIn(text.orEmpty())) EventType.PARTY.name else event.eventType,
             imageUrl = image ?: event.imageUrl,
             doorsTime = doors ?: event.doorsTime
         )
@@ -291,6 +295,7 @@ class KesselhausCalendarScraper(
         /** An event card; a month's first card also has a `separator` twin with the same id and no content. */
         private const val CARD = "div.item[data-id][data-use=default]"
         private const val PARTY_TOPIC = "party"
+        private val PARTY_PROSE = Regex("""\bparty\b""", RegexOption.IGNORE_CASE)
         private const val CONCERT_TOPIC = "concerts"
         private const val PRESALE = "ticket"
         private const val BOX_OFFICE = "box-office"

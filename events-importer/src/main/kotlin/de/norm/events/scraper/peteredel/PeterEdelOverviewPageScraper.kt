@@ -231,6 +231,8 @@ class PeterEdelOverviewPageScraper {
             subtitle = subtitle,
             description = description,
             eventType = eventType,
+            // A comedian headliner can still type an untyped night: FIL (#4007).
+            typeIsFallback = eventType == EventType.OTHER.name,
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,

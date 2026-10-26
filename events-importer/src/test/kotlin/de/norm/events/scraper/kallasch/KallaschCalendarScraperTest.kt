@@ -61,7 +61,7 @@ class KallaschCalendarScraperTest {
     fun `scrape expands a monthly rule from its next date and skips its excluded dates`() {
         val openMic = series("OPEN MIC // Freiraum&")
 
-        openMic.first().eventType shouldBe "OTHER"
+        openMic.first().eventType shouldBe "CONCERT"
         openMic.map { it.eventDate } shouldContainExactly
             listOf(
                 LocalDate.of(2026, 10, 29),

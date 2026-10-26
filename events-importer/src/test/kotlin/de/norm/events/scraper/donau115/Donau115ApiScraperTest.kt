@@ -68,11 +68,11 @@ class Donau115ApiScraperTest {
     }
 
     @Test
-    fun `scrape reads the open stage's time from its title and bills no act`() {
+    fun `scrape reads the open stage's time from its title and types it a concert with no act`() {
         val night = on("2026-10-27")
 
         night.title shouldBe "Two-Song Tuesday"
-        night.eventType shouldBe EventType.OTHER.name
+        night.eventType shouldBe EventType.CONCERT.name
         night.startTime shouldBe LocalTime.of(20, 0)
         night.artists.shouldBeEmpty()
     }

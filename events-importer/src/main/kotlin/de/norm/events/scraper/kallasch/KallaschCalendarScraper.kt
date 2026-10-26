@@ -54,14 +54,15 @@ class KallaschCalendarScraper(
             logger.warn { "Kallasch& calendar entry '$summary' lacks a title, URL or start, skipping" }
             return emptyList()
         }
-        val eventType = eventType(entry)
-        val title = if (eventType == EventType.OTHER.name) summary else summary.replace(CATEGORY_PREFIX, "").blankToNull() ?: summary
+        val category = category(entry)
+        val eventType = category?.let(CATEGORY_TYPES::get) ?: EventType.OTHER.name
+        val title = titleOf(summary, category, eventType)
         val duration = duration(entry, start)
         val description = entry["DESCRIPTION"]?.text?.let(::htmlParagraphText)
         val dates = occurrenceDates(entry, start.toLocalDate(), title)
         val recurring = entry.containsKey("RRULE") || entry.containsKey("RDATE")
         val slug = extractEventSlug(url, PATH_PREFIX)
-        val artists = if (eventType == EventType.CONCERT.name && !recurring) headlinersFromTitle(title) else emptyList<ScrapedArtist>()
+        val artists = if (eventType == EventType.CONCERT.name && category != OPEN_MIC && !recurring) headlinersFromTitle(title) else emptyList<ScrapedArtist>()
         return dates.map { date ->
             val end = duration?.let { date.atTime(start.toLocalTime()).plus(it) }
             ScrapedEvent(
@@ -81,14 +82,21 @@ class KallaschCalendarScraper(
         }
     }
 
-    /** The type the entry's first category names, `OTHER` for a format such as the open mic. */
-    private fun eventType(entry: Map<String, CalendarProperty>): String =
+    /** The summary without its `KONZERT // ` head where the category types the night; the open mic keeps the head that names it. */
+    private fun titleOf(
+        summary: String,
+        category: String?,
+        eventType: String
+    ): String = if (eventType == EventType.OTHER.name || category == OPEN_MIC) summary else summary.replace(CATEGORY_PREFIX, "").blankToNull() ?: summary
+
+    /** The entry's first category, lowercased: `konzert`, `open mic`. */
+    private fun category(entry: Map<String, CalendarProperty>): String? =
         entry["CATEGORIES"]
             ?.text
             ?.let(::decodeHtmlEntities)
             ?.substringBefore(',')
             ?.blankToNull()
-            ?.let { CATEGORY_TYPES[it.lowercase()] } ?: EventType.OTHER.name
+            ?.lowercase()
 
     /** How long a night lasts, from `DTSTART` to `DTEND`, else its `DURATION` (the jazz series'); `null` without a later end. */
     private fun duration(
@@ -147,9 +155,13 @@ class KallaschCalendarScraper(
         /** The `<CATEGORY> // ` head every title carries. */
         val CATEGORY_PREFIX = Regex("""^[^/]+?\s*//\s*""")
 
+        /** The open stage: a concert with no act (EVENT_SCOPE.md §2), whose title keeps the `OPEN MIC //` head that names it. */
+        const val OPEN_MIC = "open mic"
+
         val CATEGORY_TYPES =
             mapOf(
                 "konzert" to EventType.CONCERT.name,
+                OPEN_MIC to EventType.CONCERT.name,
                 "quiz" to EventType.QUIZ.name,
                 "poetry slam" to EventType.READING.name,
                 "lesung" to EventType.READING.name

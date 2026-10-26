@@ -86,6 +86,15 @@ class WeltwirtschaftApiScraperTest {
     }
 
     @Test
+    fun `drops a brunch, which is out of scope`() {
+        val json =
+            """{"events":[{"id":1,"slug":"christmas-brunch","start_date":"2026-11-29 11:00:00","end_date":"2026-11-29 15:00:00",""" +
+                """"all_day":false,"title":"Christmas Brunch Around the World","description":"","url":"https://weltwirtschaft.berlin/event/christmas-brunch/"}]}"""
+
+        scraper.scrapePage(json).events.shouldBeEmpty()
+    }
+
+    @Test
     fun `types a talk by its title and leaves an unmarked dinner as a fallback`() {
         event("talk-show-multiple-crises").subtitle shouldBe "Restaurant"
         val dinner = event("noche-mexicana")

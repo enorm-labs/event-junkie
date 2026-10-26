@@ -38,8 +38,8 @@ class AuslandWebsiteImporterTest {
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.etag shouldBe "\"a1\""
-            result.events shouldHaveSize 11
-            result.events.count { it.detailUnavailable } shouldBe 10
+            result.events shouldHaveSize 9
+            result.events.count { it.detailUnavailable } shouldBe 8
             val frictive = result.events.single { it.sourceUrl == frictiveUrl }
             frictive.eventDate shouldBe LocalDate.of(2026, 11, 7)
             frictive.doorsTime shouldBe LocalTime.of(19, 0)

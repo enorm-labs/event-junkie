@@ -113,6 +113,17 @@ class LabsaalCalendarScraperTest {
     }
 
     @Test
+    fun `scrape types a Lesebühne's year review a reading from its description`() {
+        val calendar =
+            "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20270109T200000\r\n" +
+                "SUMMARY:BRAUSEBOYS: AUF NIMMERWIEDERSEHEN 2026\r\nURL:https://labsaal.de/events/brauseboys/\r\n" +
+                "DESCRIPTION:Seit zwei Jahrzehnten blicken die Brauseboys auf das Jahr zurück\\, das sie in ihren " +
+                "wöchentlichen Leseshows kommentiert haben.\r\nCATEGORIES:Alle Veranstaltungen\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+
+        scraper.scrape(calendar).single().eventType shouldBe "READING"
+    }
+
+    @Test
     fun `scrape skips an entry without a URL and returns nothing for an empty calendar`() {
         val calendar =
             "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20261101T190000\r\nSUMMARY:Ohne Link\r\n" +

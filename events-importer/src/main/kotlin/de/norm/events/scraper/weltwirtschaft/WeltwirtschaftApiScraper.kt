@@ -34,6 +34,7 @@ import java.time.temporal.ChronoUnit
  * - **Most entries are notices, not events**, and are skipped: anything under `Mitteilungen`; a title or slug that closes the house
  *   (`geschlossen`, `Exklusiv`, `Winterpause`, `früher Schluss`); a description that does; a run over several days (a seasonal menu,
  *   a screening season); and an all-day entry that names no clock, which is a catering day, not a night.
+ * - **A brunch is out of scope** (EVENT_SCOPE.md §3.2), as at Alte Münze: `Christmas Brunch Around the World`.
  * - **A `<br>` splits the title** into title and subtitle. An all-day DJ night prints its start there (`ab 22:00`).
  * - **The DJs stand in the title** (`DJs Snow & Soundstream`, `DJ Set | Mo Lateef`). The resident is named only in the prose.
  * - **The image and the ticket link sit in the description**: the featured image is empty on every event.
@@ -86,7 +87,7 @@ class WeltwirtschaftApiScraper {
         )
     }
 
-    /** Why the entry announces a closure or a private booking, or null for an event. */
+    /** Why the entry announces a closure or a private booking, or is a brunch (out of scope), or null for an event. */
     private fun closure(
         event: JsonNode,
         slug: String,
@@ -97,6 +98,7 @@ class WeltwirtschaftApiScraper {
             event.tecTermNames("categories").any { it.equals(NOTICE_CATEGORY, ignoreCase = true) } -> "filed under $NOTICE_CATEGORY"
             NOTICE_WORDS.containsMatchIn(title) || NOTICE_WORDS.containsMatchIn(slug) -> "the title announces a closure"
             CLOSED_HOUSE.containsMatchIn(description.orEmpty()) -> "the description announces a closure"
+            BRUNCH.containsMatchIn(title) -> "a brunch is out of scope"
             else -> null
         }
 
@@ -165,6 +167,8 @@ class WeltwirtschaftApiScraper {
                 """geschlossen|exklusiv|pause|staatsbesuch|(?:ö|oe)ffnungszeiten|fr(?:ü|ue)her.schluss|offene stellen|l(?:ä|ae)nger.auf""",
                 RegexOption.IGNORE_CASE
             )
+
+        val BRUNCH = Regex("""brunch""", RegexOption.IGNORE_CASE)
 
         /** A description that closes the restaurant or books it out: `bleibt … geschlossen`, `eine Exklusiv-Veranstaltung`. */
         val CLOSED_HOUSE = Regex("""geschlossen|exklusiv""", RegexOption.IGNORE_CASE)

@@ -325,6 +325,13 @@ class PeterEdelOverviewPageScraperTest {
         parsed[0].promoters.shouldBeEmpty()
         parsed[0].artists.shouldBeEmpty()
         parsed[0].eventType shouldBe "OTHER"
+        parsed[0].typeIsFallback shouldBe true
+    }
+
+    @Test
+    fun `a typed night is no fallback`() {
+        val main = "<h3>FIL'S TESTSHOWS</h3><p>Rohe neue Scherze und unfertige Songs</p>"
+        scraper.scrape(grid("OKTOBER 2026", "FR | 16.10.", main), baseUrl).single().typeIsFallback shouldBe false
     }
 
     @ParameterizedTest
