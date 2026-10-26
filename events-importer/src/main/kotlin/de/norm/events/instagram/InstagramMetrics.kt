@@ -43,7 +43,7 @@ class InstagramMetrics(
         count: Int
     ) = registry.counter(EXTRACTIONS, TAG_OUTCOME, outcome).increment(count.toDouble())
 
-    /** A venue Business Discovery could not read, by kind: `unreadable`, `refused` or `unavailable`. */
+    /** A venue Business Discovery could not read, by kind: `unreadable`, `refused`, `rate_limited` or `unavailable`. */
     fun graphError(kind: String) = registry.counter(GRAPH_ERRORS, TAG_KIND, kind).increment()
 
     companion object {

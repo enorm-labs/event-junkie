@@ -19,24 +19,33 @@ import java.time.OffsetDateTime
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Why a pass ended before its last venue. */
-enum class InstagramPassStop { CALL_CAP, ACCESS_REFUSED }
+enum class InstagramPassStop { CALL_CAP, ACCESS_REFUSED, RATE_LIMIT }
 
-/** What one pass did: the venues it read, the drafts it stored, its model calls, and why it stopped early, if it did. */
+/** What one pass did: the venues it read and those it did not, the drafts it stored, its model calls, and why it stopped early, if it did. */
 data class InstagramPassResult(
     val venues: Int,
+    val notRead: Int,
     val drafts: Int,
     val calls: Int,
     val removed: Long,
     val stoppedBy: InstagramPassStop?
 )
 
+/** A refused access and a rate limit end the pass: every venue shares the token. */
+private fun VenueDraftResult.passStop(): InstagramPassStop? =
+    when ((this as? VenueDraftResult.NotRead)?.result) {
+        is DiscoveryResult.AccessRefused -> InstagramPassStop.ACCESS_REFUSED
+        is DiscoveryResult.RateLimited -> InstagramPassStop.RATE_LIMIT
+        else -> null
+    }
+
 /**
  * Runs [InstagramDraftService] outside a request: the daily pass, and a venue or a pass the admin route
  * starts. One run at a time, so the cap per run holds.
  *
  * A pass first deletes the drafts nobody judged in [InstagramProperties.pendingDays] (ADR-048 rule 6).
- * It stops at the first refused access, because a missing permission or an expired token fails every
- * venue alike. The `@Scheduled` method is untagged, so `app.scheduling.enabled=false` stops it.
+ * It stops at the first refused access or rate limit, because a missing permission, an expired token
+ * or the token's call limit fails every venue alike. The `@Scheduled` method is untagged, so `app.scheduling.enabled=false` stops it.
  */
 @Component
 @ConditionalOnProperty(name = ["app.instagram.enabled"], havingValue = "true")
@@ -130,28 +139,31 @@ class InstagramDraftRunner(
             if (left <= 0) {
                 stop = InstagramPassStop.CALL_CAP
             } else {
-                val result = read(pending.removeFirst(), left)
-                read++
+                val result = read(pending.removeFirst(), left, pending.size)
                 if (result is VenueDraftResult.Read) {
+                    read++
                     drafts += result.drafts
                     calls += result.calls
                 }
-                if (result is VenueDraftResult.NotRead && result.result is DiscoveryResult.AccessRefused) stop = InstagramPassStop.ACCESS_REFUSED
+                stop = result.passStop()
             }
         }
         // A refused access is not stamped, though `ej-instagram-access-refused` fires first: the pass did not read the venues.
         if (stop != InstagramPassStop.ACCESS_REFUSED) metrics.passSucceeded(clock.instant())
-        return InstagramPassResult(read, drafts, calls, removed, stop).also { report(it, switchedOn.size) }
+        return InstagramPassResult(read, switchedOn.size - read, drafts, calls, removed, stop).also { report(it, switchedOn.size) }
     }
 
+    /** Reads [venue]; [after] is the count of venues the pass has still to read, for the log line of a rate limit. */
     private suspend fun read(
         venue: InstagramVenue,
-        maxCalls: Int
-    ): VenueDraftResult = service.draftFrom(venue, maxCalls).also { record(venue, it) }
+        maxCalls: Int,
+        after: Int = 0
+    ): VenueDraftResult = service.draftFrom(venue, maxCalls).also { record(venue, it, after) }
 
     private fun record(
         venue: InstagramVenue,
-        result: VenueDraftResult
+        result: VenueDraftResult,
+        after: Int
     ) {
         when (result) {
             is VenueDraftResult.Read -> {
@@ -172,14 +184,15 @@ class InstagramDraftRunner(
             }
 
             is VenueDraftResult.NotRead -> {
-                notRead(venue, result.result)
+                notRead(venue, result.result, after)
             }
         }
     }
 
     private fun notRead(
         venue: InstagramVenue,
-        result: DiscoveryResult
+        result: DiscoveryResult,
+        after: Int
     ) {
         when (result) {
             is DiscoveryResult.AccountUnreadable -> {
@@ -192,6 +205,14 @@ class InstagramDraftRunner(
                 logger.error {
                     "Instagram access refused at venue '${venue.slug}' (Graph error ${result.code}: ${result.message}). " +
                         "No venue can be read until the token or the app's permission is fixed"
+                }
+            }
+
+            is DiscoveryResult.RateLimited -> {
+                metrics.graphError("rate_limited")
+                logger.warn {
+                    "Instagram venue '${venue.slug}' was not read: Graph error ${result.code}, a rate limit. " +
+                        "The pass stops, and ${after + 1} venue(s) wait for the next pass, this one included"
                 }
             }
 
@@ -209,11 +230,12 @@ class InstagramDraftRunner(
         result: InstagramPassResult,
         total: Int
     ) {
-        val summary = "${result.venues} of $total venue(s), ${result.drafts} draft(s), ${result.calls} model call(s)"
+        val summary = "${result.venues} of $total venue(s) read, ${result.notRead} not read, ${result.drafts} draft(s), ${result.calls} model call(s)"
         when (result.stoppedBy) {
             null -> logger.info { "The Instagram pass finished: $summary" }
             InstagramPassStop.CALL_CAP -> logger.info { "The Instagram pass reached max-per-run: $summary; the rest wait for the next pass" }
             InstagramPassStop.ACCESS_REFUSED -> logger.error { "The Instagram pass stopped at a refused access: $summary" }
+            InstagramPassStop.RATE_LIMIT -> logger.info { "The Instagram pass stopped at a rate limit: $summary; the rest wait for the next pass" }
         }
     }
 

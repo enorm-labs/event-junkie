@@ -158,12 +158,22 @@ class BusinessDiscoveryClientTest {
         }
 
     @Test
-    fun `a rate limit and a server error without JSON are unavailable`() =
+    fun `the app, user, page and custom rate limits are a rate limit`() =
         runTest {
-            server.enqueue(answer(400, """{"error": {"message": "Application request limit reached", "code": 4}}"""))
+            listOf(4, 17, 32, 613).forEach { code ->
+                server.enqueue(answer(400, """{"error": {"message": "Application request limit reached", "code": $code}}"""))
+
+                client().recentPosts("rso.berlin") shouldBe DiscoveryResult.RateLimited(code)
+            }
+        }
+
+    @Test
+    fun `another Graph error and a server error without JSON are unavailable`() =
+        runTest {
+            server.enqueue(answer(500, """{"error": {"message": "An unknown error occurred", "code": 1}}"""))
             server.enqueue(answer(502, "Bad Gateway"))
 
-            client().recentPosts("rso.berlin") shouldBe DiscoveryResult.Unavailable("Graph error 4")
+            client().recentPosts("rso.berlin") shouldBe DiscoveryResult.Unavailable("Graph error 1")
             client().recentPosts("rso.berlin") shouldBe DiscoveryResult.Unavailable("HTTP 502")
         }
 
