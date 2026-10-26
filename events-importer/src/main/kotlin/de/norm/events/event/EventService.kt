@@ -24,6 +24,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ServerWebInputException
 import java.time.Instant
 import java.time.LocalDate
 
@@ -142,6 +143,7 @@ class EventService(
         // Validate that referenced venue exists and retrieve its slug for event slug generation
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
+        request.requireRelocationFitsStatus()
 
         // The venue slug in the event slug, for "Open Decks" at two venues on one date.
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
@@ -206,6 +208,7 @@ class EventService(
         val existing = eventRepository.findById(id) ?: throw EventNotFoundException(id)
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
+        request.requireRelocationFitsStatus()
 
         // An edit that keeps date, venue and title keeps the slug, so a sitting keeps the importer's `-HHmm` suffix (#3966).
         val slug =
@@ -224,6 +227,7 @@ class EventService(
                 .let { if (request.featuredUntil == null) it.copy(featuredUntil = existing.featuredUntil) else it }
                 // The festival link follows the same rule (#3273).
                 .let { if (request.festivalId == null) it.copy(festivalId = existing.festivalId) else it }
+                .withRelocationFrom(request, storedStatus = existing.status)
         val pinned = eventPinService.editedFields(id, existing, updated, request)
         val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
         // A hand edit moves the page as an import does, so the page says so either way (#2725).
@@ -485,8 +489,52 @@ private fun EventRequest.toEventEntity(slug: String): EventEntity {
         free = free,
         featuredUntil = featuredUntil?.orElse(null),
         festivalId = festivalId?.orElse(null)
-    )
+    ).withRelocationFrom(this)
 }
+
+/** The statuses whose row may name where the show went (ADR-030). */
+private val MOVED_STATUSES = setOf(EventStatus.RELOCATED, EventStatus.POSTPONED)
+
+/** A destination or a new date on a show that did not move is a 400, not a silent drop. */
+private fun EventRequest.requireRelocationFitsStatus() {
+    if (status !in MOVED_STATUSES && (relocatedTo?.isPresent == true || relocatedOn?.isPresent == true)) {
+        throw ServerWebInputException("relocatedTo and relocatedOn need status RELOCATED or POSTPONED, not $status")
+    }
+}
+
+/**
+ * This row with the destination and new date [request] sets: a field left out keeps the row's value,
+ * an explicit null clears it. An edit that changes [storedStatus] to one that is not a move clears both,
+ * so no stale destination stays. An edit that leaves the status alone keeps what the import stored.
+ */
+internal fun EventEntity.withRelocationFrom(
+    request: EventRequest,
+    storedStatus: String? = null
+): EventEntity =
+    when {
+        EventStatus.valueOf(status) in MOVED_STATUSES -> {
+            copy(
+                relocatedTo =
+                    if (request.relocatedTo == null) {
+                        relocatedTo
+                    } else {
+                        request.relocatedTo
+                            .orElse(null)
+                            ?.trim()
+                            ?.ifBlank { null }
+                    },
+                relocatedOn = if (request.relocatedOn == null) relocatedOn else request.relocatedOn.orElse(null)
+            )
+        }
+
+        status != storedStatus -> {
+            copy(relocatedTo = null, relocatedOn = null)
+        }
+
+        else -> {
+            this
+        }
+    }
 
 /**
  * The filters of [EventService.findAll], combined with AND. A null one, or a blank [title], does

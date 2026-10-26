@@ -196,6 +196,28 @@ describe('EventEditor', () => {
     expect(wrapper.emitted('saved')).toHaveLength(1)
   })
 
+  it('shows where a moved show went only on a moved status, and saves a changed destination', async () => {
+    api.updateEvent.mockResolvedValue({ ...stored, status: 'RELOCATED', relocatedTo: 'Huxleys' })
+    await mountEditor()
+    expect(body().querySelector('input[name="relocatedTo"]')).toBeNull()
+
+    const status = body().querySelector<HTMLSelectElement>('select[name="status"]')!
+    status.value = 'RELOCATED'
+    status.dispatchEvent(new Event('change'))
+    await flushPromises()
+    const destination = body().querySelector<HTMLInputElement>('input[name="relocatedTo"]')!
+    destination.value = 'Huxleys'
+    destination.dispatchEvent(new Event('input'))
+    await flushPromises()
+    body().querySelector('form')!.dispatchEvent(new Event('submit'))
+    await flushPromises()
+
+    const [, request] = api.updateEvent.mock.calls[0]!
+    expect(request).toMatchObject({ status: 'RELOCATED', relocatedTo: 'Huxleys' })
+    // The date was not touched, so the body leaves it out and the stored one stays.
+    expect(request).not.toHaveProperty('relocatedOn')
+  })
+
   it('unpins a field and reads the pins back', async () => {
     api.unpinField.mockResolvedValue(undefined)
     await mountEditor()

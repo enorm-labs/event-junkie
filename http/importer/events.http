@@ -163,7 +163,8 @@ Content-Type: application/json
 ### Update event
 # `featuredUntil` makes the event the curated pick on /events until then (#1262).
 # `festivalId` links the event to a festival (#3273), and an unknown id is a 404.
-# Leave either field out to keep the stored value; send null to clear it.
+# `relocatedTo` and `relocatedOn` name where a RELOCATED or POSTPONED show went (#3994); on another status they are a 400.
+# Leave any of these fields out to keep the stored value; send null to clear it.
 # `GET /api/admin/events?festivalId=` lists the events of one festival.
 PUT {{importer-host}}/api/admin/events/{{event_id}}
 Content-Type: application/json

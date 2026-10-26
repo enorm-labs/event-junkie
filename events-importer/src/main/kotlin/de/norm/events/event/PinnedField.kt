@@ -15,7 +15,14 @@ enum class PinnedField(
     SUBTITLE("subtitle", { it.subtitle }, { e, s -> e.copy(subtitle = s.subtitle) }),
     DESCRIPTION("description", { it.description }, { e, s -> e.withDescriptionOf(s) }),
     EVENT_TYPE("eventType", { it.eventType }, { e, s -> e.copy(eventType = s.eventType, typeIsFallback = s.typeIsFallback) }),
-    STATUS("status", { it.status }, { e, s -> e.copy(status = s.status, relocatedTo = s.relocatedTo, relocatedOn = s.relocatedOn) }),
+
+    // The destination and new date belong to the status, so a hand change to either pins it.
+    STATUS("status", { listOf(it.status, it.relocatedTo, it.relocatedOn) }, {
+        e,
+        s
+        ->
+        e.copy(status = s.status, relocatedTo = s.relocatedTo, relocatedOn = s.relocatedOn)
+    }),
     EVENT_DATE("eventDate", { it.eventDate }, { e, s -> e.copy(eventDate = s.eventDate, endDate = s.endDate, endTime = s.endTime) }),
     DOORS_TIME("doorsTime", { it.doorsTime }, { e, s -> e.copy(doorsTime = s.doorsTime) }),
     START_TIME("startTime", { it.startTime }, { e, s -> e.copy(startTime = s.startTime) }),

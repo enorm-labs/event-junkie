@@ -75,7 +75,11 @@ data class EventResponse(
     @Schema(description = "Until when the event is featured on the events list, or null", example = "2026-10-12T22:00:00Z")
     val featuredUntil: Instant? = null,
     @Schema(description = "Database ID of the festival the event belongs to, or null", example = "1")
-    val festivalId: Long? = null
+    val festivalId: Long? = null,
+    @Schema(description = "The house a RELOCATED or POSTPONED show moved to, or null", example = "Huxleys Neue Welt")
+    val relocatedTo: String? = null,
+    @Schema(description = "The date a RELOCATED or POSTPONED show moved to, or null", example = "2027-03-12")
+    val relocatedOn: LocalDate? = null
 ) {
     companion object {
         /**
@@ -123,7 +127,9 @@ data class EventResponse(
                 promoterIds = promoterIds,
                 pinnedFields = entity.pinnedFields,
                 featuredUntil = entity.featuredUntil,
-                festivalId = entity.festivalId
+                festivalId = entity.festivalId,
+                relocatedTo = entity.relocatedTo,
+                relocatedOn = entity.relocatedOn
             )
     }
 }
