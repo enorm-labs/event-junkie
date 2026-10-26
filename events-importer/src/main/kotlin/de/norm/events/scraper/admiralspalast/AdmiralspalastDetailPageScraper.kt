@@ -222,9 +222,6 @@ class AdmiralspalastDetailPageScraper {
         }
 
     private companion object {
-        /** Path prefix of a production page, stripped to obtain its slug. */
-        const val PRODUCTION_PATH_PREFIX = "/veranstaltung/"
-
         /** Contao renders every page with a `.html` suffix, which is not part of the identity. */
         const val PAGE_SUFFIX = ".html"
 

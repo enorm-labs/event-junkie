@@ -134,9 +134,6 @@ class VelomaxOverviewPageScraper {
     }
 
     private companion object {
-        /** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
-        const val EVENT_PATH_PREFIX = "/events/event/"
-
         /**
          * The venue's `data-type` values mapped to the model's. `sport` is deliberately **absent**:
          * no `SPORT` type, and `OTHER` would bury the concerts among the arena's handball, volleyball
@@ -159,3 +156,6 @@ class VelomaxOverviewPageScraper {
         const val TWENTY_FIRST_CENTURY = 2000
     }
 }
+
+/** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
+internal const val EVENT_PATH_PREFIX = "/events/event/"

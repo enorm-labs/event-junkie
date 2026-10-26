@@ -116,9 +116,6 @@ class VelomaxDetailPageScraper {
             ?.takeIf { it.startsWith("http") }
 
     private companion object {
-        /** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
-        const val EVENT_PATH_PREFIX = "/events/event/"
-
         /** Ticket-shop hosts the halls link to. */
         val TICKET_HOST = Regex("""eventim\.|ticketmaster\.|reservix\.|tickets\.""", RegexOption.IGNORE_CASE)
     }

@@ -63,10 +63,10 @@ class AdmiralspalastListingPageScraper {
             }.toMap()
 
     private companion object {
-        /** Path prefix of a production page — the page that lists its performances. */
-        const val PRODUCTION_PATH_PREFIX = "/veranstaltung/"
-
         /** Path prefix of a category-filtered copy of the listing. */
         const val GENRE_PATH_PREFIX = "/veranstaltungsuebersicht/eventkategorie/"
     }
 }
+
+/** Path prefix of a production page: the listing links to it, and the detail page strips it for the slug. */
+internal const val PRODUCTION_PATH_PREFIX = "/veranstaltung/"
