@@ -86,8 +86,8 @@ class EventService(
      * list (#1380); a derived `OrderByStartTime` left tied rows in heap order.
      */
     @Transactional(readOnly = true)
-    suspend fun today(): List<EventSummaryResponse> {
-        val ids = eventSearchRepository.searchAll(EventFilter(on = LocalDate.now(clock)))
+    suspend fun today(filter: EventFilter = EventFilter()): List<EventSummaryResponse> {
+        val ids = eventSearchRepository.searchAll(filter.copy(on = LocalDate.now(clock)))
         return summariesFor(hydrateOrdered(ids))
     }
 

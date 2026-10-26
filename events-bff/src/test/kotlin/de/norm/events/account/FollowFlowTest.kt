@@ -167,6 +167,44 @@ class FollowFlowTest : BaseControllerTest() {
     }
 
     @Test
+    fun `today's followed events come on their own, and from tomorrow leaves them out of the rest`() {
+        runBlocking {
+            val club = insertVenue("Club", "club")
+            insertEvent(club, "Tonight", "tonight", today)
+            insertEvent(club, "Tomorrow", "tomorrow", today.plusDays(1))
+            insertEvent(insertVenue("Bar", "bar"), "Elsewhere tonight", "elsewhere-tonight", today)
+        }
+        put("/me/follows/venue/club").expectStatus().isNoContent
+
+        get("/me/following/today")
+            .expectStatus()
+            .isOk
+            .expectHeader()
+            .valueEquals(HttpHeaders.CACHE_CONTROL, "private, no-store")
+            .expectBody()
+            .jsonPath("$[*].slug")
+            .isEqualTo(listOf("tonight"))
+        get("/me/following?from=${today.plusDays(1)}")
+            .expectBody()
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(listOf("tomorrow"))
+        get("/me/following")
+            .expectBody()
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(listOf("tonight", "tomorrow"))
+    }
+
+    @Test
+    fun `today without a session is a 401`() {
+        webTestClient
+            .get()
+            .uri("/me/following/today")
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+    }
+
+    @Test
     fun `following nothing lists nothing`() {
         runBlocking { insertEvent(insertVenue("Club", "club"), "Party", "party", today.plusDays(1)) }
 

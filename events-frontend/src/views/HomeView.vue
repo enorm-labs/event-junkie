@@ -9,15 +9,15 @@ let lastSurprise: string | undefined
 </script>
 
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { ArrowRight, CalendarDays, ChevronDown, Compass, Dices } from '@lucide/vue'
+import { ArrowRight, CalendarDays, Compass, Dices } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import AlsoRunning from '@/components/AlsoRunning.vue'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import EventRow from '@/components/EventRow.vue'
+import TodayEvents from '@/components/TodayEvents.vue'
 import FestivalNotice from '@/components/FestivalNotice.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
@@ -50,25 +50,16 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
 
-// A teaser, not the day's whole list: on a busy day a phone scrolled for minutes (#2321). Even, so
-// the two-column grid ends on a full row. A compact row is about a sixth of a card's height.
-const TODAY_CAP = { poster: 6, compact: 12 }
-const todayCap = computed(() => (compact.value ? TODAY_CAP.compact : TODAY_CAP.poster))
 const todayTotal = computed(() => today.data.value?.length ?? 0)
-// A run of weeks is a card only on its opening and its last days; between them it folds (#2594).
-const todaySplit = computed(() => splitDayList(today.data.value ?? [], todayIso()))
-const todayCards = computed(() => todaySplit.value.cards)
-const todayCapped = computed(() => !todayExpanded.value && todayCards.value.length > todayCap.value)
-const todayVisible = computed(() =>
-  todayCapped.value ? todayCards.value.slice(0, todayCap.value) : todayCards.value,
-)
 
 /** The section heading style, at the size of the map's and the venues' `h2`. */
 const HEADING_CLASS = 'text-section font-bold tracking-tight'
 
 // One random event today in a small room (#2722), from the day's cards: a long run folded into
 // "Also running" has been on for weeks and is not a night out. The pick happens here, on the device.
-const surprises = computed(() => surpriseCandidates(todayCards.value))
+const surprises = computed(() =>
+  surpriseCandidates(splitDayList(today.data.value ?? [], todayIso()).cards),
+)
 const router = useRouter()
 // The header's icon size on a phone, so the button fits beside the heading.
 const narrow = useNarrowViewport()
@@ -78,19 +69,6 @@ function surpriseMe() {
   if (!pick?.slug) return
   lastSurprise = pick.slug
   void router.push(localePath(`/events/${pick.slug}`))
-}
-
-const todayList = useTemplateRef<HTMLElement>('todayList')
-
-// The button disappears with the click, so focus moves to the first event it revealed rather than
-// falling back to the document.
-async function expandToday() {
-  const firstHidden = todayCap.value
-  todayExpanded.value = true
-  await nextTick()
-  // Each card and row is itself the link.
-  const revealed = todayList.value?.children.item(firstHidden)
-  if (revealed instanceof HTMLElement) revealed.focus()
 }
 </script>
 
@@ -167,19 +145,7 @@ async function expandToday() {
       <p v-else-if="!today.data.value?.length" class="text-body text-muted-foreground">
         {{ t('home.todayEmpty') }}
       </p>
-      <template v-else>
-        <div v-if="compact" ref="todayList" :class="CARD_LIST_CLASS">
-          <EventRow v-for="event in todayVisible" :key="event.slug" :event="event" />
-        </div>
-        <div v-else ref="todayList" :class="CARD_GRID_CLASS">
-          <EventCard v-for="event in todayVisible" :key="event.slug" :event="event" />
-        </div>
-        <Button v-if="todayCapped" variant="outline" @click="expandToday">
-          {{ t('home.showAllToday', { count: todayCards.length }) }}
-          <ChevronDown aria-hidden="true" data-icon="inline-end" />
-        </Button>
-        <AlsoRunning :events="todaySplit.alsoRunning" />
-      </template>
+      <TodayEvents v-else v-model:expanded="todayExpanded" :events="today.data.value ?? []" />
     </section>
 
     <section class="space-y-4 border-t border-border pt-8">

@@ -291,6 +291,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/following/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Today's events of everything the account follows, a running night included, as on the home page (#3922) */
+        get: operations["followingToday"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/export": {
         parameters: {
             query?: never;
@@ -2620,6 +2637,8 @@ export interface operations {
     following: {
         parameters: {
             query?: {
+                /** @description First day (inclusive), ISO-8601. Without it, everything not over yet, today included. */
+                from?: string;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -2640,6 +2659,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                };
+            };
+        };
+    };
+    followingToday: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventSummaryResponse"][];
                 };
             };
         };

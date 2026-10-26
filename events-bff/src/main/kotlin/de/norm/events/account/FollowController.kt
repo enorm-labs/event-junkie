@@ -6,10 +6,12 @@ import de.norm.events.event.EventService
 import de.norm.events.event.EventSummaryResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
+import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
 
@@ -84,10 +88,20 @@ class FollowController(
     @Operation(summary = "Upcoming events of everything the account follows, by date")
     suspend fun following(
         @AuthenticationPrincipal account: Account,
+        @Parameter(description = "First day (inclusive), ISO-8601. Without it, everything not over yet, today included.")
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        from: LocalDate?,
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"])
         pageable: Pageable
-    ): PageResponse<EventSummaryResponse> = events.search(EventFilter(followed = follows.followedIds(account.id)), pageable)
+    ): PageResponse<EventSummaryResponse> = events.search(EventFilter(from = from, followed = follows.followedIds(account.id)), pageable)
+
+    @GetMapping("/following/today")
+    @Operation(summary = "Today's events of everything the account follows, a running night included, as on the home page (#3922)")
+    suspend fun followingToday(
+        @AuthenticationPrincipal account: Account
+    ): List<EventSummaryResponse> = events.today(EventFilter(followed = follows.followedIds(account.id)))
 
     private suspend fun resolve(
         kind: String,
