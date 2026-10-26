@@ -85,7 +85,7 @@ export interface paths {
         put?: never;
         /**
          * Sends a sign-in link
-         * @description 202 whether or not the address has an account, and also when the address asked too often. 429 when this client asked too often, 503 when no mail can be sent.
+         * @description 202 whether or not the address has an account, also when the address asked too often, and also when sign-up is paused and the address has no account. 429 when this client asked too often, 503 when no mail can be sent.
          */
         post: operations["link"];
         delete?: never;
@@ -494,7 +494,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account, or null */
+        /** The signed-in account, or null, and whether new accounts can be created */
         get: operations["session"];
         put?: never;
         post?: never;
@@ -1989,6 +1989,7 @@ export interface components {
         };
         SessionResponse: {
             account?: components["schemas"]["AccountResponse"] | null;
+            signUpOpen?: boolean;
         };
         /** @description A page of results with pagination metadata */
         PageResponseArtistSummaryResponse: {

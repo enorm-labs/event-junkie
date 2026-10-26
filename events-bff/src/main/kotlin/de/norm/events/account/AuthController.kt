@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono
 @Tag(name = "Sign-in", description = "Sign in with a link sent by e-mail")
 class AuthController(
     private val links: SignInLinks,
+    private val store: AccountStore,
     private val sessions: SessionSecurityContextRepository
 ) {
     @GetMapping("/csrf")
@@ -33,16 +34,17 @@ class AuthController(
     }
 
     @GetMapping("/session")
-    @Operation(summary = "The signed-in account, or null")
-    fun session(
+    @Operation(summary = "The signed-in account, or null, and whether new accounts can be created")
+    suspend fun session(
         @AuthenticationPrincipal account: Account?
-    ) = SessionResponse(account?.let(AccountResponse::of))
+    ) = SessionResponse(account?.let(AccountResponse::of), store.signUpOpen())
 
     @PostMapping("/link")
     @Operation(
         summary = "Sends a sign-in link",
         description =
-            "202 whether or not the address has an account, and also when the address asked too often. " +
+            "202 whether or not the address has an account, also when the address asked too often, " +
+                "and also when sign-up is paused and the address has no account. " +
                 "429 when this client asked too often, 503 when no mail can be sent."
     )
     suspend fun link(
@@ -54,7 +56,7 @@ class AuthController(
         if (request.locale !in LOCALES) refuse(HttpStatus.BAD_REQUEST, "Unknown locale")
         val next = request.next?.takeIf { NEXT.matches(it) }
         return when (links.request(email, request.locale, clientAddress(exchange), next)) {
-            LinkOutcome.SENT, LinkOutcome.ADDRESS_THROTTLED -> {
+            LinkOutcome.SENT, LinkOutcome.ADDRESS_THROTTLED, LinkOutcome.SIGN_UP_PAUSED -> {
                 ResponseEntity.accepted().build()
             }
 

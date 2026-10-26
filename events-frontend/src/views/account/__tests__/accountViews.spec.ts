@@ -9,6 +9,7 @@ import { setI18nLocale } from '@/i18n'
 const account = vi.hoisted(() => ({
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
+  fetchSessionState: vi.fn<() => Promise<{ account: unknown; signUpOpen: boolean }>>(),
   requestLink: vi.fn<(email: string, locale: string, next?: string) => Promise<void>>(),
   signIn: vi.fn<(token: string) => Promise<unknown>>(),
   fetchAccount: vi.fn<() => Promise<unknown>>(),
@@ -33,6 +34,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   account.prepareCsrf.mockResolvedValue()
   account.fetchSession.mockResolvedValue(null)
+  account.fetchSessionState.mockResolvedValue({ account: null, signUpOpen: true })
 })
 
 afterEach(() => {
@@ -94,9 +96,20 @@ describe('SignInView', () => {
   })
 
   it('sends a signed-in visitor to the Following page', async () => {
-    account.fetchSession.mockResolvedValue(me)
+    account.fetchSessionState.mockResolvedValue({ account: me, signUpOpen: true })
     await mountAt(SignInView, '/en/sign-in')
     expect(router.currentRoute.value.fullPath).toBe('/en/following')
+  })
+
+  it('says sign-up is paused, and still offers the form to existing accounts', async () => {
+    const open = await mountAt(SignInView, '/en/sign-in')
+    expect(open.find('[role="status"]').exists()).toBe(false)
+    open.unmount()
+
+    account.fetchSessionState.mockResolvedValue({ account: null, signUpOpen: false })
+    const paused = await mountAt(SignInView, '/en/sign-in')
+    expect(paused.find('[role="status"]').text()).toContain('New accounts are paused')
+    expect(paused.find('form button[type="submit"]').attributes('disabled')).toBeUndefined()
   })
 })
 

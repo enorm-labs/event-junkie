@@ -1,0 +1,40 @@
+### ============================================================
+### Admin: Sign-up — pause or open new visitor accounts (#3906)
+###
+### Paused, the BFF sends sign-in links only to addresses that
+### already have an account. docs/ops/EMAIL.md §9 has the runbook.
+### ============================================================
+
+### Is sign-up open?
+GET {{importer-host}}/api/admin/sign-up
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Pause sign-up
+PUT {{importer-host}}/api/admin/sign-up
+Content-Type: application/json
+
+{ "open": false }
+
+> {%
+    client.test("paused", function () {
+        client.assert(response.body.open === false, "Expected open false");
+    });
+%}
+
+### Open sign-up again
+PUT {{importer-host}}/api/admin/sign-up
+Content-Type: application/json
+
+{ "open": true }
+
+> {%
+    client.test("open", function () {
+        client.assert(response.body.open === true, "Expected open true");
+    });
+%}

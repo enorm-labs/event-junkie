@@ -311,6 +311,17 @@ CREATE TABLE accounts.session (
 );
 
 --
+-- Name: sign_up; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.sign_up (
+    id boolean DEFAULT true NOT NULL,
+    open boolean DEFAULT true NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT sign_up_id_check CHECK (id)
+);
+
+--
 -- Name: artist_id_seq; Type: SEQUENCE; Schema: events; Owner: -
 --
 
@@ -995,6 +1006,13 @@ ALTER TABLE ONLY accounts.one_time_token
 
 ALTER TABLE ONLY accounts.session
     ADD CONSTRAINT session_pkey PRIMARY KEY (token_hash);
+
+--
+-- Name: sign_up sign_up_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.sign_up
+    ADD CONSTRAINT sign_up_pkey PRIMARY KEY (id);
 
 --
 -- Name: artist artist_pkey; Type: CONSTRAINT; Schema: events; Owner: -

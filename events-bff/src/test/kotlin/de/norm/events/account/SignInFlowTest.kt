@@ -29,7 +29,10 @@ class SignInFlowTest : BaseControllerTest() {
         runBlocking {
             greenMail.purgeEmailFromAllMailboxes()
             databaseClient.sql("TRUNCATE TABLE accounts.session, accounts.one_time_token, accounts.account CASCADE").await()
+            setSignUp(open = true)
         }
+
+    private fun setSignUp(open: Boolean) = runBlocking { databaseClient.sql("UPDATE accounts.sign_up SET open = $open").await() }
 
     /** A client address of its own per test: the per-client limit lives in the bean, across tests. */
     private val client = "203.0.113.${(1..254).random()}, 10.42.0.${(1..254).random()}-${UUID.randomUUID()}"
@@ -181,6 +184,38 @@ class SignInFlowTest : BaseControllerTest() {
         repeat(20) { i -> requestLink("many-$i@example.org", csrf).expectStatus().isAccepted }
 
         requestLink("one-more@example.org", csrf).expectStatus().isEqualTo(429)
+    }
+
+    @Test
+    fun `while sign-up is paused a new address is answered alike but gets no link, and a known one still does`() {
+        val csrf = csrf()
+        signIn("known@example.org", csrf)
+        greenMail.purgeEmailFromAllMailboxes()
+        setSignUp(open = false)
+
+        requestLink("stranger@example.org", csrf).expectStatus().isAccepted
+        greenMail.receivedMessages shouldHaveSize 0
+        count("SELECT count(*) AS n FROM accounts.one_time_token WHERE email = 'stranger@example.org'") shouldBe 0L
+
+        requestLink("Known@Example.org", csrf).expectStatus().isAccepted
+        greenMail.receivedMessages shouldHaveSize 1
+    }
+
+    @Test
+    fun `a link asked for before the pause creates no account after it`() {
+        val csrf = csrf()
+        requestLink("early@example.org", csrf).expectStatus().isAccepted
+        setSignUp(open = false)
+
+        post("/auth/sign-in", SignInRequest(tokenFromLastMail()), csrf).expectStatus().isUnauthorized
+        count("SELECT count(*) AS n FROM accounts.account") shouldBe 0L
+    }
+
+    @Test
+    fun `the session check says whether sign-up is open`() {
+        get("/auth/session", null).expectBody().jsonPath("$.signUpOpen").isEqualTo(true)
+        setSignUp(open = false)
+        get("/auth/session", null).expectBody().jsonPath("$.signUpOpen").isEqualTo(false)
     }
 
     @Test

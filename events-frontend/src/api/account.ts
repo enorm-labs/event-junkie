@@ -12,10 +12,18 @@ export async function prepareCsrf(): Promise<void> {
   await unwrap(api.GET('/api/auth/csrf'))
 }
 
+/** Who this browser is signed in as, or null, and whether new accounts can be created (#3906). */
+export async function fetchSessionState(): Promise<{
+  account: Account | null
+  signUpOpen: boolean
+}> {
+  const session = await unwrap(api.GET('/api/auth/session'))
+  return { account: session?.account ?? null, signUpOpen: session?.signUpOpen ?? true }
+}
+
 /** Who this browser is signed in as, or null. */
 export async function fetchSession(): Promise<Account | null> {
-  const session = await unwrap(api.GET('/api/auth/session'))
-  return session?.account ?? null
+  return (await fetchSessionState()).account
 }
 
 /**

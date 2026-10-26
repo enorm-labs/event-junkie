@@ -8,6 +8,7 @@ The application modules and the dependencies between them, as Spring Modulith re
 
 ```mermaid
 flowchart TD
+    account["account"]
     ai["ai"]
     artist["artist"]
     common["common «open»"]

@@ -62,6 +62,9 @@ enum class LinkOutcome(
     /** The address asked for too many links this hour. Answered as if sent, so the answer says nothing about the address. */
     ADDRESS_THROTTLED("address_throttled"),
 
+    /** Sign-up is paused and the address has no account (#3906). Answered as if sent, so the answer says nothing about the address. */
+    SIGN_UP_PAUSED("sign_up_paused"),
+
     /** The caller's address asked for too many links this hour. A 429. */
     IP_THROTTLED("ip_throttled"),
 
