@@ -90,6 +90,7 @@ import de.norm.events.scraper.kuehlspot.KUEHLSPOT_LIMITATIONS
 import de.norm.events.scraper.kulturhausspandau.KULTURHAUS_SPANDAU_LIMITATIONS
 import de.norm.events.scraper.labsaal.LABSAAL_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
+import de.norm.events.scraper.liquidrom.LIQUIDROM_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
 import de.norm.events.scraper.lux.LUX_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
@@ -281,6 +282,7 @@ object AcceptedLimitations {
             LARK_LIMITATIONS,
             LABSAAL_LIMITATIONS,
             LIDO_LIMITATIONS,
+            LIQUIDROM_LIMITATIONS,
             LOGE_LIMITATIONS,
             LUX_LIMITATIONS,
             MAAYA_LIMITATIONS,
