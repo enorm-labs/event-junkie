@@ -2,11 +2,13 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import io.netty.handler.codec.compression.DecompressionException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
@@ -28,6 +30,9 @@ import java.nio.charset.Charset
  * `Content-Type: text/html` with no `charset` while the page is Latin-1, and Spring's
  * `StringDecoder` falls back to UTF-8, turning every umlaut into a replacement character. Raw
  * bytes let Jsoup apply its detection chain (BOM, HTTP `charset`, `<meta charset>`, UTF-8).
+ *
+ * A body that is not gzip under `Content-Encoding: gzip` is fetched once more with `Accept-Encoding: identity`
+ * ([withIdentityRetry], #3962).
  *
  * JSON/API sources use [ApiClient], which shares the same [WebClient] bean and so the same
  * per-host throttle ([PerHostThrottlingFilter], [ScraperHttpClientConfig]) and User-Agent.
@@ -63,18 +68,21 @@ class HtmlFetcher(
             message = "Fetching source page (etag=$etag, lastModified=$lastModified)"
             payload = mapOf(LogFields.URL to url)
         }
-        return webClient
-            .get()
-            // A pre-built URI so WebClient uses the percent-encoded URL verbatim; a String is a URI template
-            // and re-encodes '%', double-encoding non-ASCII slugs into a 404.
-            .uri(URI.create(url))
-            .apply {
-                etag?.let { header("If-None-Match", it) }
-                lastModified?.let { header("If-Modified-Since", it) }
-                cookies.forEach { (name, value) -> cookie(name, value) }
-            }.awaitExchange { response ->
-                handleResponse(response, url)
-            }
+        return withIdentityRetry(url) { acceptEncoding ->
+            webClient
+                .get()
+                // A pre-built URI so WebClient uses the percent-encoded URL verbatim; a String is a URI template
+                // and re-encodes '%', double-encoding non-ASCII slugs into a 404.
+                .uri(URI.create(url))
+                .apply {
+                    etag?.let { header("If-None-Match", it) }
+                    lastModified?.let { header("If-Modified-Since", it) }
+                    acceptEncoding?.let { header(HttpHeaders.ACCEPT_ENCODING, it) }
+                    cookies.forEach { (name, value) -> cookie(name, value) }
+                }.awaitExchange { response ->
+                    handleResponse(response, url)
+                }
+        }
     }
 
     /**
@@ -109,7 +117,7 @@ class HtmlFetcher(
         url: String,
         frameId: String
     ): Document {
-        val body = fetchRawBody(url, webClient.get().uri(URI.create(url)).header("Turbo-Frame", frameId))
+        val body = fetchRawBody(url) { webClient.get().uri(URI.create(url)).header("Turbo-Frame", frameId) }
         return parseHtml(body, url)
     }
 
@@ -123,29 +131,54 @@ class HtmlFetcher(
         form: Map<String, String>
     ): String {
         val fields = LinkedMultiValueMap<String, String>().apply { form.forEach { (name, value) -> add(name, value) } }
-        val body = fetchRawBody(url, webClient.post().uri(URI.create(url)).body(BodyInserters.fromFormData(fields)))
+        val body = fetchRawBody(url) { webClient.post().uri(URI.create(url)).body(BodyInserters.fromFormData(fields)) }
         return String(body.bytes, body.charset())
     }
 
     /**
-     * Sends [request] (a GET of [url] unless given) and reads the body as raw bytes, failing fast with
-     * [HttpFetchException] on any 4xx/5xx; undecoded so the caller can apply the page's own encoding.
+     * Sends the request [request] builds (a GET of [url] unless given) and reads the body as raw bytes, failing
+     * fast with [HttpFetchException] on any 4xx/5xx; undecoded so the caller can apply the page's own encoding.
+     * A builder rather than a request, because [withIdentityRetry] may send it twice.
      */
     private suspend fun fetchRawBody(
         url: String,
         // A pre-built URI, so '%' is not re-encoded into a 404.
-        request: WebClient.RequestHeadersSpec<*> = webClient.get().uri(URI.create(url))
+        request: () -> WebClient.RequestHeadersSpec<*> = { webClient.get().uri(URI.create(url)) }
     ): RawBody {
         logger.debug { "Fetching HTML body: $url" }
-        return request
-            .awaitExchange { response ->
-                // Fail fast on HTTP errors to avoid returning error pages as valid data
-                if (response.statusCode().isError) {
-                    throw HttpFetchException(response.statusCode().value(), url)
+        return withIdentityRetry(url) { acceptEncoding ->
+            request()
+                .apply { acceptEncoding?.let { header(HttpHeaders.ACCEPT_ENCODING, it) } }
+                .awaitExchange { response ->
+                    // Fail fast on HTTP errors to avoid returning error pages as valid data
+                    if (response.statusCode().isError) {
+                        throw HttpFetchException(response.statusCode().value(), url)
+                    }
+                    RawBody(response.awaitBody<ByteArray>(), response.declaredCharsetName())
                 }
-                RawBody(response.awaitBody<ByteArray>(), response.declaredCharsetName())
-            }
+        }
     }
+
+    /**
+     * Runs [exchange] once with the client's `Accept-Encoding`, and once more with `identity` when the body
+     * under `Content-Encoding: gzip` would not decode. Zimmer 16's page cache sometimes serves a plain body
+     * under that header (#3962). Asking every host for `identity` instead would bring back #1542, where Uber
+     * Arena gzips whatever the request asks for. A second failure propagates.
+     */
+    private suspend fun <T> withIdentityRetry(
+        url: String,
+        exchange: suspend (acceptEncoding: String?) -> T
+    ): T =
+        try {
+            exchange(null)
+        } catch (e: DecompressionException) {
+            logger.at(Level.WARN) {
+                message = "Body from ${URI.create(url).host} did not decode as its Content-Encoding, retrying with Accept-Encoding: identity"
+                cause = e
+                payload = mapOf(LogFields.URL to url)
+            }
+            exchange(IDENTITY_ENCODING)
+        }
 
     /**
      * [FetchResult.NotModified] on 304, else the body parsed into a [FetchResult.Success].
@@ -214,6 +247,10 @@ class HtmlFetcher(
     ) {
         /** The declared charset, falling back to UTF-8 for an absent or unknown name. */
         fun charset(): Charset = charsetName?.let { runCatching { Charset.forName(it) }.getOrNull() } ?: Charsets.UTF_8
+    }
+
+    private companion object {
+        const val IDENTITY_ENCODING = "identity"
     }
 }
 
