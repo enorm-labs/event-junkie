@@ -95,9 +95,9 @@ Unless `--no-logs`, or the tunnel is down: run [`/log-check`](log-check.prompt.m
 report is its own file. Carry its verdict lines and its NEW items into this report, and link the file. It reads the same `alert_history` against the logs:
 where its alert rows give a cause Step 3 did not, its answer replaces Step 3's line.
 
-## Step 5 — The data: new artists, the admin review pages and the manual venues
+## Step 5 — The data: new artists and promoters, the admin review pages and the manual venues
 
-Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all three, even with `--no-logs`.
+Production only, because staging holds a copy of the same imports. Unless the tunnel is down, run all four, even with `--no-logs`.
 
 **New artists.**
 
@@ -111,6 +111,16 @@ Every row with a flag gets a verdict. `--help` lists the flags. Open the event o
 - **Not an act, from the parser** — a festival name, a night's name, a `presents` line, two acts fused, a cut-off name: DRAFTED, one 🔍 Importer / data
   defect per venue. Give the event, the stored name, the right line-up and the parser's code path. Upcoming rows go away when the fix ships, because the
   next import bills them again and `OrphanArtistSweep` removes the orphan. A past row needs a `drop_artist_billed_only_by` migration (V092).
+
+**New promoters.**
+
+```sh
+scripts/new-artists.sh production --kind promoters --hours "$HOURS" > temp/new-promoters-$(date +%F).tsv
+```
+
+Every row with a flag gets a verdict from [`/artist-cleanup` § Promoters](artist-cleanup.prompt.md#promoters): DROP, RENAME, SPLIT, MERGE or KEEP.
+`near` names the older promoter a MERGE would fold it onto. A MERGE is the operator's call, so it is a draft with both rows, never a verdict to apply.
+KEEP is CLEAR, one line. Every other verdict is DRAFTED, one 🔍 Importer / data defect per venue, with the fix in `PromoterNormalizer.kt` or the scraper.
 
 **The admin review pages.** Run [`/admin-review production`](admin-review.prompt.md) as that prompt says, up to its report: the worklist, the
 suggested fixes, the Instagram drafts, the artists to review and the venues to review, each item with a numbered verdict. Its report is its own file,
@@ -146,7 +156,7 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 1. **Action list**, most urgent first: every BLOCKER and ACT, one line each, with the link and the one thing to do.
 2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, and the alerts that fired, one line per rule and cluster.
 3. **Merged**: each pull request merged in Step 6, with its subject.
-4. **Data**: the flagged new artists with their verdicts, the `/admin-review` lines with the link to its report, and the manual venues: the overdue
+4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, and the manual venues: the overdue
    line.
 5. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
    by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
