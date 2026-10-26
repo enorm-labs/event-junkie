@@ -207,7 +207,13 @@ class EventService(
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
 
-        val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
+        // An edit that keeps date, venue and title keeps the slug, so a sitting keeps the importer's `-HHmm` suffix (#3966).
+        val slug =
+            if (request.eventDate == existing.eventDate && request.venueId == existing.venueId && request.title == existing.title) {
+                existing.slug
+            } else {
+                SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
+            }
         // Remap via the shared factory, then keep what the request never owns: identity, audit, and
         // the columns the importer derives (#2249).
         val updated =
