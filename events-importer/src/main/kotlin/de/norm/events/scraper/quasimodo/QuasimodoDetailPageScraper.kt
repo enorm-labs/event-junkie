@@ -15,6 +15,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -80,7 +81,7 @@ class QuasimodoDetailPageScraper {
             // the booking-fee caveat, so the venue's own wording is kept alongside it.
             priceNote = presale,
             genre = document.select(".tags a").joinToString(", ") { it.text().trim() }.takeIf { it.isNotBlank() },
-            promoters = listOfNotNull(parsePromoter(document)),
+            promoters = parsePromoters(document),
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }
@@ -101,13 +102,16 @@ class QuasimodoDetailPageScraper {
     }
 
     /**
-     * The promoter from the `.promoter` line minus the `"… präsentiert:"` suffix (`"FKP Scorpio
-     * präsentiert:"` → `"FKP Scorpio"`); `null` when absent — in-house nights name no promoter.
+     * The promoters from the `.promoter` line minus the `"… präsentiert:"` suffix (`"FKP Scorpio
+     * präsentiert:"` → `"FKP Scorpio"`), split by [splitPromoterCredit]; none when absent — in-house
+     * nights name no promoter.
      */
-    private fun parsePromoter(document: Document): String? =
+    private fun parsePromoters(document: Document): List<String> =
         document
             .textAt(".promoter")
             .let(::promoterFromCredit)
+            ?.let(::splitPromoterCredit)
+            .orEmpty()
 }
 
 /** Label of the detail table's doors row. */

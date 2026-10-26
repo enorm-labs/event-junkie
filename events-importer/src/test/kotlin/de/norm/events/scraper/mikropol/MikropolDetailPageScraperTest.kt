@@ -122,6 +122,13 @@ class MikropolDetailPageScraperTest {
 
         event.title shouldBe "Dice"
         event.promoters shouldBe listOf("Trinity Music")
+        val coPromoted =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/mikropol/mikropol-detail-promoter.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("Trinity Music presents:", "DRIFT &amp; Puschen presents:")
+        scraper.scrape(Jsoup.parse(coPromoted, url), url)!!.promoters shouldBe listOf("DRIFT", "Puschen")
         parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-14-house-of-protection/")
             .shouldNotBeNull()
             .promoters shouldBe emptyList()

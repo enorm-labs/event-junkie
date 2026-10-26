@@ -52,6 +52,8 @@ class BerghainDetailPageScraperTest {
 
         promotersOf("Eine Veranstaltung von Sumpfjungs") shouldBe listOf("Sumpfjungs")
         promotersOf("An event by Loft &amp; Trinity Music und Greyzone") shouldBe listOf("Loft", "Trinity Music", "Greyzone")
+        // A capitalised "And" belongs to the name.
+        promotersOf("Eine Veranstaltung von Now And Ever Music") shouldBe listOf("Now And Ever Music")
         val url = "https://www.berghain.berlin/de/event/80835/"
         scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!.promoters.shouldBeEmpty()
     }

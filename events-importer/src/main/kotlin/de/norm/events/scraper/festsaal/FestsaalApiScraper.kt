@@ -17,6 +17,7 @@ import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
@@ -417,16 +418,10 @@ private const val TEXT_ITEM = "item_text"
  */
 private val PRESENTER_BLOCK = Regex("""(?:wird\s+)?(?:$PRESENTED_BY_WORDS)\s*:?(?:\s+(.+))?""", RegexOption.IGNORE_CASE)
 
-/** What a credit joins several companies with: a comma, or a space-padded `&`, so `Kunst&Krawall` stays whole. */
-private val CO_PROMOTER_SEPARATOR = Regex("""\s*,\s*|\s+&\s+""")
-
 /** The companies a [PRESENTER_BLOCK] credit line names; none for a bare heading or any other block. */
 private fun creditedPromoters(block: String): List<String> {
     val credit = PRESENTER_BLOCK.matchEntire(block)?.groupValues?.get(1)
-    return promoterFromCredit(credit)
-        ?.split(CO_PROMOTER_SEPARATOR)
-        .orEmpty()
-        .mapNotNull { it.trim().blankToNull() }
+    return promoterFromCredit(credit)?.let(::splitPromoterCredit).orEmpty()
 }
 
 /** The page's `item_text` blocks (`layouts[].value.items[]`) as text, one entry per paragraph, heading or list item. */

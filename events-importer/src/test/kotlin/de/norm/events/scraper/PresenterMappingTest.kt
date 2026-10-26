@@ -6,6 +6,19 @@ import org.junit.jupiter.api.Test
 
 class PresenterMappingTest {
     @Test
+    fun `splitPromoterCredit splits co-promoters and keeps a name that only contains a joiner`() {
+        splitPromoterCredit("LOFT, Musikexpress, Rausgegangen und Bedroomdisco") shouldBe
+            listOf("LOFT", "Musikexpress", "Rausgegangen", "Bedroomdisco")
+        splitPromoterCredit("DRIFT & Puschen") shouldBe listOf("DRIFT", "Puschen")
+        splitPromoterCredit("Selecta G & Seven Inch Soldiers") shouldBe listOf("Selecta G", "Seven Inch Soldiers")
+        splitPromoterCredit("Loft & Trinity Music and Greyzone") shouldBe listOf("Loft", "Trinity Music", "Greyzone")
+        splitPromoterCredit("aufnahme + wiedergabe") shouldBe listOf("aufnahme + wiedergabe")
+        splitPromoterCredit("Now And Ever Music") shouldBe listOf("Now And Ever Music")
+        splitPromoterCredit("B&C Productions") shouldBe listOf("B&C Productions")
+        splitPromoterCredit(" , ") shouldBe emptyList()
+    }
+
+    @Test
     fun `promoterFromCredit strips the presenter verb after the name`() {
         promoterFromCredit("Konzertbüro Schoneberg presents") shouldBe "Konzertbüro Schoneberg"
         promoterFromCredit("FKP Scorpio präsentiert:") shouldBe "FKP Scorpio"

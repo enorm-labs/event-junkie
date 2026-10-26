@@ -20,6 +20,7 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -108,15 +109,15 @@ class MikropolDetailPageScraper {
 
     /**
      * The promoter credit above the title — `<div class="promoter">Trinity Music presents:</div>` —
-     * with its `presents:` / `präsentiert:` frame stripped (#1532). One name per credit; the venue
-     * writes one promoter per show.
+     * with its `presents:` / `präsentiert:` frame stripped (#1532), and split by [splitPromoterCredit]
+     * (`DRIFT & Puschen presents:`).
      */
     private fun parsePromoters(content: Element): List<String> =
-        listOfNotNull(
-            content
-                .textAt("div.single-event div.promoter")
-                .let(::promoterFromCredit)
-        )
+        content
+            .textAt("div.single-event div.promoter")
+            .let(::promoterFromCredit)
+            ?.let(::splitPromoterCredit)
+            .orEmpty()
 
     private companion object {
         /** The Events-Manager sold-out badge text (`Ausverkauft`). */

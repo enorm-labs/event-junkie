@@ -12,6 +12,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.splitPromoterCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -99,16 +100,14 @@ class BerghainDetailPageScraper {
 
     /**
      * The organiser line a hired night ends with, `Eine Veranstaltung von Dynamite Konzerte` (or the
-     * English `An event by …`), split into co-promoters at `, `, `&`, `und` and `and`. The club's own
+     * English `An event by …`), split into co-promoters by [splitPromoterCredit]. The club's own
      * nights carry no such line.
      */
     private fun parsePromoters(content: Element): List<String> =
         content
             .select("p")
             .firstNotNullOfOrNull { ORGANISER_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
-            ?.split(CO_PROMOTER_SEPARATOR)
-            ?.map { it.trim() }
-            ?.filter { it.isNotBlank() }
+            ?.let(::splitPromoterCredit)
             .orEmpty()
 
     /**
@@ -210,6 +209,3 @@ class BerghainDetailPageScraper {
 
 /** The organiser line: `Eine Veranstaltung von Sumpfjungs`, `An event by …`. */
 private val ORGANISER_LINE = Regex("""(?:eine\s+veranstaltung\s+von|an\s+event\s+by)\s+(.+?)\.?""", RegexOption.IGNORE_CASE)
-
-/** What joins co-promoters in the organiser line. */
-private val CO_PROMOTER_SEPARATOR = Regex("""\s*(?:,|&|\bund\b|\band\b)\s*""", RegexOption.IGNORE_CASE)

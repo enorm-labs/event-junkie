@@ -119,6 +119,18 @@ class QuasimodoDetailPageScraperTest {
     }
 
     @Test
+    fun `splits a credit that names two promoters`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/quasimodo/quasimodo-detail-otis-kane.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("FKP Scorpio präsentiert:", "Selecta G &amp; Seven Inch Soldiers präsentiert:")
+        val sourceUrl = "https://quasimodo.club/events/otis-kane-7410"
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.promoters shouldBe listOf("Selecta G", "Seven Inch Soldiers")
+    }
+
+    @Test
     fun `leaves the promoter empty for an in-house night`() {
         val berlinBeat = scrape("berlin-beat-invasion", "berlin-beat-invasion-no-8-7316")
         berlinBeat.promoters.shouldBeEmpty()

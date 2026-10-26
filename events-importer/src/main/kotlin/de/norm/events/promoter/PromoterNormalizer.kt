@@ -228,7 +228,15 @@ private val NON_PROMOTER_NAMES: Set<String> =
         "fandomnight",
         "pianomanthomasbötig",
         "adultsonlycomedybyannaberos",
-        "processpartyeffettonotte"
+        "processpartyeffettonotte",
+        // The second batch: two parties crediting themselves, an improv troupe that hosts its own night, the two hosts of
+        // a bingo night and two people on a short-film night (/artist-cleanup).
+        "atrpartyberlin",
+        "girlstown",
+        "girlstownparty",
+        "thdimprotwinkieshohosdingdongs",
+        "ingeborggiselasommer",
+        "mariabotelhohugosousa"
     )
 
 /**
@@ -257,6 +265,16 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "rundfunkorchesterundchöreggmbhberlin" to "Rundfunk-Orchester und -Chöre",
         // The initialism guard keeps "NXP Veranstaltungsbetriebs" whole; a mixed-case credit strips to "Nxp" (#3996).
         "nxp" to "NXP Veranstaltungsbetriebs",
+        // What the strip leaves of a company credit, restored to the promoter's name (/artist-cleanup): "MB – Konzerte
+        // GmbH", "Berlin Konzerte presents:", "Capital Music". "Capital" is not "Capitale".
+        "mb" to "MB Konzerte",
+        "berlin" to "New Berlin Konzerte",
+        "capital" to "Capital Music",
+        "bossa" to "Bossa FM",
+        "comoestawallyproduccionesymanagementsl" to "Como Esta Wally",
+        "so36" to "SO36",
+        // Gretchen credits "Afro Haus & Purple Events"; the split leaves "Purple Events", and the strip "Purple".
+        "purple" to "Purple Events",
         // "FluxFM" (Columbia Theater, Frannz), "fluxfm" (Heimathafen) and "Flux FM" (Zitadelle, which
         // de-shouts to "Flux Fm") share this key.
         "fluxfm" to "FluxFM",
