@@ -204,6 +204,14 @@ says so.
 | `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `DISTEL`               | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
+| `DONAU115`             | `PER_EVENT_PAGE`   | the programme is one page that expands each night in place                                                                                       | —     |
+| `DONAU115`             | `START_TIME`       | most nights carry only the bar's opening time, and a set time appears only in the prose                                                          | —     |
+| `DONAU115`             | `PRICE`            | the site prints no price                                                                                                                         | —     |
+| `DONAU115`             | `TICKET_URL`       | the bar sells no tickets, and a night's links go to the acts                                                                                     | —     |
+| `DONAU115`             | `ARTISTS`          | the weekly open stage and jam name no act                                                                                                        | —     |
+| `DONAU115`             | `PROMOTERS`        | the bar books its own nights and names no promoter                                                                                               | —     |
+| `DONAU115`             | `SOLD_OUT`         | the site marks no night sold out                                                                                                                 | —     |
+| `DONAU115`             | `CANCELLATION`     | a cancelled night is unpublished instead of being marked                                                                                         | —     |
 | `DOWNSTAIRS`           | `PRICE`            | a show the club sells through another ticket shop links there, and that shop's page gives only the text, so the night keeps no price             | —     |
 | `DOWNSTAIRS`           | `END_TIME`         | the shop gives every performance the same 6 a.m. end                                                                                             | —     |
 | `DOWNSTAIRS`           | `ARTISTS`          | the club's own nights bill a format, and the comedians appear only in prose                                                                      | —     |

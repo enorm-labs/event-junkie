@@ -3038,6 +3038,67 @@ Content-Type: application/json
 %}
 
 # ————————————————————————————————————————————————————————————
+# Donau115
+# ————————————————————————————————————————————————————————————
+
+### --- Create Donau115 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Donau115",
+    "address": "Donaustraße 115",
+    "city": "Berlin",
+    "postalCode": "12043",
+    "district": "neukoelln",
+    "latitude": 52.483544,
+    "longitude": 13.433602,
+    "websiteUrl": "https://www.donau115.de/",
+    "description": "A small shopfront bar in Neukölln, opened in 2012 as a place for its founders' friends and neighbours, with live jazz, improvised and experimental music five nights a week, the Two-Song Tuesday open stage and a Thursday jazz jam.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine kleine Bar hinter einem Ladenfenster in Neukölln, 2012 als Ort für Freunde und Nachbarschaft der Gründer eröffnet, mit Live-Jazz, improvisierter und experimenteller Musik an fünf Abenden pro Woche, der offenen Bühne Two-Song Tuesday und einer Jazz-Jam am Donnerstag.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"]
+}
+
+> {%
+    client.global.set("venue_id_donau115", response.body.id);
+    client.test("Donau115 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Donau115 event source ---
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{venue_id_donau115}},
+    "name": "Donau115",
+    "url": "https://www.donau115.de/",
+    "sourceType": "DONAU115",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Donau115 event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Donau115 import ---
+POST {{importer-host}}/api/admin/event-sources/donau115/import
+Accept: application/json
+
+> {%
+    client.test("Donau115 import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+# ————————————————————————————————————————————————————————————
 # Downstairs Comedy Club
 # ————————————————————————————————————————————————————————————
 

@@ -1,0 +1,27 @@
+{
+    "venue": {
+        "name": "Donau115",
+        "address": "Donaustraße 115",
+        "city": "Berlin",
+        "postalCode": "12043",
+        "district": "neukoelln",
+        "latitude": 52.483544,
+        "longitude": 13.433602,
+        "websiteUrl": "https://www.donau115.de/",
+        "description": "A small shopfront bar in Neukölln, opened in 2012 as a place for its founders' friends and neighbours, with live jazz, improvised and experimental music five nights a week, the Two-Song Tuesday open stage and a Thursday jazz jam.",
+        "descriptionLanguage": "en",
+        "descriptionAlt": "Eine kleine Bar hinter einem Ladenfenster in Neukölln, 2012 als Ort für Freunde und Nachbarschaft der Gründer eröffnet, mit Live-Jazz, improvisierter und experimenteller Musik an fünf Abenden pro Woche, der offenen Bühne Two-Song Tuesday und einer Jazz-Jam am Donnerstag.",
+        "descriptionAltLanguage": "de",
+        "venueTypes": ["bar", "live-venue"]
+    },
+    "sources": [
+        {
+            "name": "Donau115",
+            "url": "https://www.donau115.de/",
+            "sourceType": "DONAU115",
+            "enabled": true,
+            "importIntervalMinutes": 1440,
+            "maxRetries": 3
+        }
+    ]
+}

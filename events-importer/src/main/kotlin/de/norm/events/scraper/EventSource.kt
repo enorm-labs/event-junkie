@@ -121,6 +121,9 @@ enum class EventSource {
     /** Kabarett-Theater DISTEL – Germany's largest ensemble Kabarett, in the front building of the Admiralspalast at Friedrichstraße station. */
     DISTEL,
 
+    /** Donau115 – a shopfront bar in Neukölln founded in 2012, with jazz, improvised and experimental music five nights a week. */
+    DONAU115,
+
     /** Downstairs Comedy Club – Felix Lobrecht's stand-up club on Oranienburger Straße, with house showcases most nights and guest solo shows. */
     DOWNSTAIRS,
 
