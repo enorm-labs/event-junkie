@@ -101,6 +101,18 @@ class LuxOverviewPageScraperTest {
     }
 
     @Test
+    fun `a night the house is closed is skipped`() {
+        parse(
+            """
+            <section><div class="when">Do<br>29.10.</div>
+            <div class="details"><h2>DER ZU´E DONNERSTAG</h2><h3>Heute mal geschlossen !</h3></div></section>
+            <section><div class="when">Fr<br>30.10.</div>
+            <div class="details"><h2>CLUB OPTIMAL</h2><p><strong>TOBI3000</strong></p></div></section>
+            """.trimIndent()
+        ).map { it.title } shouldContainExactly listOf("CLUB OPTIMAL")
+    }
+
+    @Test
     fun `a night without a readable date or title is skipped`() {
         parse(
             """
