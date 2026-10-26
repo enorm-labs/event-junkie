@@ -219,6 +219,16 @@ Content-Type: application/json
     "features": ["queer", "open-end"]
 }
 
+### Patch one field
+# Only the fields sent change (#3995); each one whose value changes is pinned, as with the PUT.
+# A field an event can lack (`ticketUrl`, prices, `relocatedTo`, …) clears with null. `sourceId` cannot be patched.
+PATCH {{importer-host}}/api/admin/events/{{event_id}}
+Content-Type: application/json
+
+{
+    "eventType": "CONCERT"
+}
+
 ### Delete event
 DELETE {{importer-host}}/api/admin/events/{{event_id}}
 
