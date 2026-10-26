@@ -5,6 +5,7 @@ import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -22,7 +23,6 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -56,8 +56,6 @@ private val FLIGHT_REFERENCE = Regex("""^\$[0-9a-f]+$""")
 class MinimalBarOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         document: Document,
         baseUrl: String
@@ -67,7 +65,7 @@ class MinimalBarOverviewPageScraper {
             logger.warn { "No events array in Minimal Bar's flight payload" }
             return emptyList()
         }
-        val nodes = jsonMapper.readTree(events).toList()
+        val nodes = SCRAPER_JSON.readTree(events).toList()
         val houseText = houseText(nodes)
         return nodes.mapSkippingFailures(logger, "Minimal Bar event") { toScrapedEvent(it, baseUrl, houseText) }
     }

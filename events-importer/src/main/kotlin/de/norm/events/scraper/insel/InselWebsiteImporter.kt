@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GATSBY_STATIC_QUERY_HASHES
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.blankToNull
@@ -14,7 +15,6 @@ import de.norm.events.scraper.gatsbyPageDataUrl
 import de.norm.events.scraper.gatsbyStaticQueryUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
-import tools.jackson.databind.json.JsonMapper
 
 /**
  * Website importer for Kulturhaus Insel Berlin, a Gatsby front end over DatoCMS whose homepage
@@ -41,8 +41,6 @@ class InselWebsiteImporter(
     override val listsWholeProgramme: Boolean = true
 
     private val apiScraper = InselApiScraper()
-
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     override suspend fun importEvents(
         url: String,
@@ -81,7 +79,7 @@ class InselWebsiteImporter(
     @Suppress("TooGenericExceptionCaught") // A malformed page-data body must degrade to no candidates, never abort the import.
     private fun staticQueryHashes(json: String): List<String> =
         try {
-            jsonMapper
+            SCRAPER_JSON
                 .readTree(json)
                 .path(GATSBY_STATIC_QUERY_HASHES)
                 .mapNotNull { node -> node.asString().blankToNull() }

@@ -3,6 +3,7 @@ package de.norm.events.scraper.punchline
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.headlinersFromTitle
@@ -13,7 +14,6 @@ import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.net.URI
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -31,13 +31,11 @@ import java.time.format.DateTimeParseException
 class PunchlineTicketsPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val dates = jsonArrayAt(nextFlightPayload(document), DATES_KEY)?.let { jsonMapper.readTree(it).toList() }.orEmpty()
+        val dates = jsonArrayAt(nextFlightPayload(document), DATES_KEY)?.let { SCRAPER_JSON.readTree(it).toList() }.orEmpty()
         logger.info { "Found ${dates.size} PUNCH L!NE show date(s) on $baseUrl" }
 
         return dates.mapSkippingFailures(logger, "PUNCH L!NE show date") { date ->

@@ -3,6 +3,7 @@ package de.norm.events.scraper.karakas
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PADDED_GERMAN_DATE
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOfStringLiteral
@@ -13,7 +14,6 @@ import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDate
 
 /**
@@ -45,8 +45,8 @@ class KarakasCalendarScraper {
         val marker = script.indexOf(CALENDAR_WIDGET).takeIf { it >= 0 } ?: return null
         val opening = script.indexOf(PROPS_CALL, marker).takeIf { it >= 0 }?.plus(PROPS_CALL.length) ?: return null
         val closing = endOfStringLiteral(script, opening).takeIf { it >= 0 } ?: return null
-        val json = jsonMapper.readValue(script.substring(opening, closing + 1), String::class.java)
-        return jsonMapper.readTree(json)
+        val json = SCRAPER_JSON.readValue(script.substring(opening, closing + 1), String::class.java)
+        return SCRAPER_JSON.readTree(json)
     }
 
     private fun toEvent(
@@ -88,14 +88,13 @@ class KarakasCalendarScraper {
     /** The non-blank lines of a Draft.js document, one per block. */
     private fun draftLines(desc: String?): List<String> =
         desc
-            ?.let { jsonMapper.readTree(it).path("blocks") }
+            ?.let { SCRAPER_JSON.readTree(it).path("blocks") }
             ?.takeIf { it.isArray }
             ?.toList()
             .orEmpty()
             .mapNotNull { it.stringOrNull("text")?.trim() }
 
     private companion object {
-        val jsonMapper: JsonMapper = JsonMapper.builder().build()
         const val CALENDAR_WIDGET = "componentName:'@widget/CALENDAR/bs-calendar'"
         const val PROPS_CALL = "props:JSON.parse("
         const val HOUSE_STREET = "Kurfürsten"

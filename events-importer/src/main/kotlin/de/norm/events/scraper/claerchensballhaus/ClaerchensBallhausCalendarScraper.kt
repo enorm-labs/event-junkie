@@ -2,6 +2,7 @@ package de.norm.events.scraper.claerchensballhaus
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.balancedJsonAt
 import de.norm.events.scraper.blankToNull
@@ -16,7 +17,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -34,8 +34,6 @@ import java.time.format.DateTimeFormatter
 class ClaerchensBallhausCalendarScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         document: Document,
         baseUrl: String
@@ -46,7 +44,7 @@ class ClaerchensBallhausCalendarScraper {
             logger.warn { "No eventSources in the Clärchens Ballhaus calendar at $baseUrl" }
             return emptyList()
         }
-        val entries = jsonMapper.readTree(sources).flatMap { it.toList() }
+        val entries = SCRAPER_JSON.readTree(sources).flatMap { it.toList() }
         val events = entries.mapSkippingFailures(logger, "Clärchens Ballhaus calendar entry") { toEvent(it) }
         logger.info { "Found ${entries.size} Clärchens Ballhaus calendar entr(ies), ${events.size} in scope" }
         return events

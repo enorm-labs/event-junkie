@@ -2,6 +2,7 @@ package de.norm.events.scraper.sisyphos
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
@@ -13,7 +14,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.DateTimeException
 import java.time.LocalDate
@@ -31,8 +31,6 @@ import java.time.LocalDate
  */
 class SisyphosApiScraper {
     private val logger = KotlinLogging.logger {}
-
-    private val jsonMapper = JsonMapper.builder().build()
 
     /** Parses every dated ticket in the collection feed [json]; [baseUrl] resolves the product paths. */
     fun scrape(
@@ -53,7 +51,7 @@ class SisyphosApiScraper {
     private fun parseProducts(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Sisyphos ticket feed" }
                 return null

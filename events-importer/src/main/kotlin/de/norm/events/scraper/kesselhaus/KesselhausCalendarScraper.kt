@@ -5,6 +5,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.LabelledPrices
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -28,7 +29,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -263,18 +263,21 @@ class KesselhausCalendarScraper(
                 .mapNotNull { it.path("data").stringOrNull("desc") }
 
         companion object {
-            private val mapper: JsonMapper = JsonMapper.builder().build()
             private val ESCAPE = Regex("&[aqslg];")
             private val UNESCAPED = mapOf("&a;" to "&", "&q;" to "\"", "&s;" to "'", "&l;" to "<", "&g;" to ">")
 
             fun of(document: Document): TransferState? {
                 val root = document.selectFirst("script#serverApp-state")?.data()?.let(::parse) ?: return null
-                return TransferState(root.properties().associate { (key, value) -> key to if (value.isString) mapper.readTree(value.asString()) else value })
+                return TransferState(
+                    root.properties().associate { (key, value) ->
+                        key to if (value.isString) SCRAPER_JSON.readTree(value.asString()) else value
+                    }
+                )
             }
 
             private fun parse(raw: String): JsonNode? =
                 try {
-                    mapper.readTree(ESCAPE.replace(raw) { UNESCAPED.getValue(it.value) })
+                    SCRAPER_JSON.readTree(ESCAPE.replace(raw) { UNESCAPED.getValue(it.value) })
                 } catch (_: JacksonException) {
                     null
                 }

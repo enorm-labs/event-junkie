@@ -3,6 +3,7 @@ package de.norm.events.scraper.donau115
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -16,7 +17,6 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -32,13 +32,12 @@ class Donau115ApiScraper(
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
-    private val jsonMapper = JsonMapper.builder().build()
 
     fun scrape(
         json: String,
         sourceUrl: String
     ): List<ScrapedEvent> {
-        val root = jsonMapper.readTree(json)
+        val root = SCRAPER_JSON.readTree(json)
         if (!root.isObject) {
             logger.warn { "Donau115 events payload is not an object" }
             return emptyList()

@@ -7,6 +7,7 @@ import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
@@ -21,8 +22,6 @@ import de.norm.events.scraper.parsePriceValue
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
@@ -70,8 +69,6 @@ class HeimathafenApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
-
     /**
      * Parses one page of the WP REST listing response [json].
      *
@@ -94,7 +91,7 @@ class HeimathafenApiScraper(
     @Suppress("TooGenericExceptionCaught") // Intentional: any malformed body degrades to "no events", never a failed import
     private fun parseRoot(json: String): JsonNode? =
         try {
-            jsonMapper.readTree(json).takeIf { it.isArray }
+            SCRAPER_JSON.readTree(json).takeIf { it.isArray }
         } catch (e: Exception) {
             logger.warn(e) { "Heimathafen API response is not parseable JSON" }
             null

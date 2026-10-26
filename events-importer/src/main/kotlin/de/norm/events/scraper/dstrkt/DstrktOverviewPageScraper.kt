@@ -3,6 +3,7 @@ package de.norm.events.scraper.dstrkt
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.htmlParagraphText
@@ -12,7 +13,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 import java.time.format.DateTimeParseException
 
@@ -25,7 +25,6 @@ import java.time.format.DateTimeParseException
  */
 class DstrktOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     fun scrape(
         document: Document,
@@ -43,7 +42,7 @@ class DstrktOverviewPageScraper {
             return null
         }
         val records =
-            runCatching { jsonMapper.readTree(script.data()) }
+            runCatching { SCRAPER_JSON.readTree(script.data()) }
                 .onFailure { logger.warn(it) { "Failed to parse the DSTRKT wix-warmup-data JSON" } }
                 .getOrNull()
                 ?.path("appsWarmupData")

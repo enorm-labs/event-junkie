@@ -3,12 +3,12 @@ package de.norm.events.scraper.neuezukunft
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.elfsight.ElfsightEventNode
 import de.norm.events.scraper.elfsight.OCCURRENCE_HORIZON_WEEKS
 import de.norm.events.scraper.elfsight.elfsightActionUrl
-import de.norm.events.scraper.elfsight.elfsightJsonMapper
 import de.norm.events.scraper.elfsight.elfsightOccurrenceDates
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
@@ -19,7 +19,6 @@ import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
-import tools.jackson.databind.json.JsonMapper
 import java.time.Clock
 import java.time.LocalDate
 
@@ -64,8 +63,6 @@ class NeueZukunftApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = elfsightJsonMapper()
-
     /**
      * Parses every event from the Elfsight widget boot response [json].
      *
@@ -74,12 +71,12 @@ class NeueZukunftApiScraper(
      *   absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
-        val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
+        val eventNodes = parseElfsightEventNodes(SCRAPER_JSON, json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} event(s) in Neue Zukunft widget response" }
 
         val parsed =
             eventNodes.flatMapSkippingFailures(logger, "Neue Zukunft event") { node ->
-                parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
+                parseEvent(SCRAPER_JSON.treeToValue(node, ElfsightEventNode::class.java))
             }
 
         return parsed

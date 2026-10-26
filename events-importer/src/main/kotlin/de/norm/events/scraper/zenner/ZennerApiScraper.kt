@@ -6,6 +6,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTS_WORDS
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -25,8 +26,6 @@ import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 
 /**
@@ -58,14 +57,6 @@ class ZennerApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    // Unknown fields are ignored, so the base64 blur placeholders, srcSets and SEO block
-    // deserialize away.
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .build()
-
     /**
      * Parses every published, upcoming event from the page-data [json].
      *
@@ -91,7 +82,7 @@ class ZennerApiScraper(
 
         val events =
             nodes.mapSkippingFailures(logger, "Zenner event") { node ->
-                parseEvent(jsonMapper.treeToValue(node, ZennerEventNode::class.java), sourceUrl, visibility)
+                parseEvent(SCRAPER_JSON.treeToValue(node, ZennerEventNode::class.java), sourceUrl, visibility)
             }
 
         return events.dropPastEvents(clock) { dropped ->
@@ -104,7 +95,7 @@ class ZennerApiScraper(
     private fun parseData(json: String): JsonNode? {
         val root =
             try {
-                jsonMapper.readTree(json)
+                SCRAPER_JSON.readTree(json)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Zenner page-data response" }
                 return null
@@ -128,7 +119,7 @@ class ZennerApiScraper(
             logger.info { "Zenner page-data carries no '$PLACES_QUERY' flags; treating every place as published" }
             return ZennerPlaceVisibility.ALL_VISIBLE
         }
-        return jsonMapper.treeToValue(node, ZennerPlaceVisibility::class.java)
+        return SCRAPER_JSON.treeToValue(node, ZennerPlaceVisibility::class.java)
     }
 
     private fun parseEvent(

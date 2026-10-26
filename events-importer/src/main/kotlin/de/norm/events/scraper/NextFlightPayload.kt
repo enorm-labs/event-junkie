@@ -2,7 +2,6 @@ package de.norm.events.scraper
 
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 
 // Shared reader for the Next.js App Router sites this project scrapes (ROSA). Next ships a page's
 // server data as a flight payload — `self.__next_f.push([1, "<escaped JSON fragment>"])` chunks
@@ -11,8 +10,6 @@ import tools.jackson.databind.json.JsonMapper
 // own field mapping.
 
 private const val FLIGHT_MARKER = "self.__next_f.push"
-
-private val jsonMapper = JsonMapper.builder().build()
 
 /**
  * Concatenates the flight payload of a Next.js App Router page, with the chunks' JSON escaping
@@ -28,7 +25,7 @@ fun nextFlightPayload(document: Document): String =
         .map { it.data() }
         .filter { it.contains(FLIGHT_MARKER) }
         .flatMap { flightChunks(it) }
-        .map { jsonMapper.readValue(it, String::class.java) }
+        .map { SCRAPER_JSON.readValue(it, String::class.java) }
         .joinToString("")
 
 /**

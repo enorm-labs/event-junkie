@@ -2,6 +2,7 @@ package de.norm.events.scraper.kulturhausspandau
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -17,7 +18,6 @@ import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripSoldOutMarker
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -35,13 +35,11 @@ import java.time.format.DateTimeFormatter
 class KulturhausSpandauApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         json: String,
         sourceUrl: String
     ): List<ScrapedEvent> {
-        val nodes = jsonMapper.readTree(json).toList()
+        val nodes = SCRAPER_JSON.readTree(json).toList()
         val events = nodes.mapSkippingFailures(logger, "Kulturhaus Spandau event") { toEvent(it) }
         logger.info { "Found ${nodes.size} Kulturhaus Spandau entr(ies), ${events.size} in the house and in scope from $sourceUrl" }
         return events

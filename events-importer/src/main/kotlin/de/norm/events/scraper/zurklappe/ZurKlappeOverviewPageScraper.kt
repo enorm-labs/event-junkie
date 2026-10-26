@@ -2,6 +2,7 @@ package de.norm.events.scraper.zurklappe
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.endOn
@@ -15,7 +16,6 @@ import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 
 private const val EVENTS_KEY = "events"
 
@@ -31,8 +31,6 @@ private const val EMPTY_STATE_TEXT = "No upcoming events."
 class ZurKlappeOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper = JsonMapper.builder().build()
-
     fun scrape(
         document: Document,
         baseUrl: String
@@ -46,7 +44,7 @@ class ZurKlappeOverviewPageScraper {
             }
             return emptyList()
         }
-        return jsonMapper.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
+        return SCRAPER_JSON.readTree(events).mapNotNull { toScrapedEvent(it, baseUrl) }
     }
 
     private fun toScrapedEvent(

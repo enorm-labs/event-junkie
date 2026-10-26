@@ -2,6 +2,7 @@ package de.norm.events.scraper.eighthundreda
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -13,7 +14,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.Duration
 
@@ -49,13 +49,13 @@ class EightHundredAHomePageScraper {
     /** Astro serialises each prop as `[type, value]`, and this one's value is itself a JSON string. */
     private fun calendarRows(props: String): List<JsonNode>? =
         try {
-            MAPPER
+            SCRAPER_JSON
                 .readTree(props)
                 .path("calendarEvents")
                 .path(1)
                 .asString("")
                 .blankToNull()
-                ?.let { MAPPER.readTree(it).toList() }
+                ?.let { SCRAPER_JSON.readTree(it).toList() }
         } catch (e: JacksonException) {
             logger.warn(e) { "Unreadable EventsSection props on the 800A page" }
             null
@@ -123,7 +123,6 @@ class EightHundredAHomePageScraper {
             .map { ScrapedArtist(name = it) }
 
     private companion object {
-        val MAPPER: JsonMapper = JsonMapper.builder().build()
         const val PUBLISHED = "published"
         const val WORKSHOP = "workshop"
         const val EVENT_PAGE_BASE = "https://www.800aberlin.com/events/"
