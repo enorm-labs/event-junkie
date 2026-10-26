@@ -62,7 +62,6 @@ class Donau115ApiScraper(
             return null
         }
         val texts = acts.flatMap { listOfNotNull(it.rawName, it.description) }
-        val openStage = acts.all { OPEN_STAGE.containsMatchIn(it.name) }
         val description =
             if (acts.size == 1) {
                 acts.single().description
@@ -72,7 +71,8 @@ class Donau115ApiScraper(
         return ScrapedEvent(
             title = acts.joinToString(" + ") { it.name },
             description = description,
-            eventType = if (openStage) EventType.OTHER.name else EventType.CONCERT.name,
+            // An open stage is a concert with no act (EVENT_SCOPE.md §2).
+            eventType = EventType.CONCERT.name,
             eventDate = date,
             doorsTime = firstTime(DOORS, texts) ?: HOUSE_OPENING,
             startTime = firstTime(START, texts),
@@ -128,7 +128,6 @@ class Donau115ApiScraper(
         /** `Two-Song Tuesday (MUSIC STARTS 20:00)`: the time is read, then cut from the title. */
         val TIMED_PARENTHESIS = Regex("""\s*\([^)]*\d{1,2}[:.]\d{2}[^)]*\)""")
 
-        val OPEN_STAGE = Regex("""\b(?:two-song tuesday|open stage|open mic)\b""", RegexOption.IGNORE_CASE)
         val SERIES = Regex("""\b(?:two-song tuesday|open stage|open mic|jam)\b""", RegexOption.IGNORE_CASE)
 
         val MEMBER_SEPARATOR = Regex("""\s+\|\s+|\s*/\s+|\s+/\s*""")

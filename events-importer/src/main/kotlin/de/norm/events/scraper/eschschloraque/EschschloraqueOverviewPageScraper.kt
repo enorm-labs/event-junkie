@@ -309,6 +309,9 @@ class EschschloraqueOverviewPageScraper {
         /** A labelled DJ billing line: `Dj:`, `Djs:`, `on the couch:`, `auf der Couch:`. */
         val DJ_BILLING = Regex("""\bdjs?\s*:|couch\s*:""", RegexOption.IGNORE_CASE)
 
+        /** The house's bingo night, a game night (EVENT_SCOPE.md §2). */
+        val BINGO = Regex("""\bbingo\b""", RegexOption.IGNORE_CASE)
+
         /** Prose that names a club night: a party, dancing, a dancefloor, or a resident DJ's set. */
         val CLUB_NIGHT_PROSE = Regex("""party|dancing|dancefloor|tanzfläche|resident\s+dj|\bdjing\b""", RegexOption.IGNORE_CASE)
 
@@ -327,7 +330,7 @@ class EschschloraqueOverviewPageScraper {
         val ALIAS_SEPARATOR = Regex("""\s+a\.k\.a\.?\s*|\s+aka\s+""", RegexOption.IGNORE_CASE)
 
         /**
-         * The type from the title, else from the billing, else from the prose; `OTHER` without any. An
+         * The type from the title, a bingo included, else from the billing, else from the prose; `OTHER` without any. An
          * unlabelled billing line is no DJ cue: a performance collective is billed that way too.
          */
         fun typeOf(
@@ -339,6 +342,7 @@ class EschschloraqueOverviewPageScraper {
             val fromTitle = inferUnmarkedTitleType(title)
             return when {
                 fromTitle != EventType.OTHER.name -> fromTitle
+                BINGO.containsMatchIn(title) -> EventType.QUIZ.name
                 lineup.any { it.role == LIVE_ROLE } -> EventType.CONCERT.name
                 billsDjs || CLUB_NIGHT_PROSE.containsMatchIn(description.orEmpty()) -> EventType.PARTY.name
                 else -> fromTitle

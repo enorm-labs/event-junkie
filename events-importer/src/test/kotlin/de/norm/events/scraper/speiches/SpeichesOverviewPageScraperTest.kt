@@ -114,6 +114,20 @@ class SpeichesOverviewPageScraperTest {
     }
 
     @Test
+    fun `a rockradio broadcast that names an interview is a reading`() {
+        val link = "javascript:va_info1(\"veranstaltungen_info.php?auswahl_lfdnr=48311\")"
+        val html =
+            "<table><tr><td><a href='$link'>Di&nbsp;27.10.</a></td><td><a href='$link'>19.00</a></td>" +
+                "<td><a href='$link'>rockradio.de-live</a><br>Ort: Speiche</td><td></td>" +
+                "<td><a href='$link'>im Gespräch mit Lutz Schramm, RadioMacher</a></td></tr></table>"
+
+        val talk = SpeichesOverviewPageScraper(clock).scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        talk.eventType shouldBe EventType.READING.name
+        talk.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `reads a year-end row into the next year by its weekday`() {
         on("2027-01-26", "19:00").title shouldBe "Speiches Open Stage"
     }

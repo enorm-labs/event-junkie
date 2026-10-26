@@ -27,8 +27,9 @@ import java.util.Locale
  * (`Thursday, 15 October, 2026 - 10:00`), the title, the venue's own line-up field (`p.artistinfo`, one act
  * per line) and the series it belongs to.
  *
- * The site names no category. A title with one of the house's other formats (a workshop, a residency, an
- * installation) types it; any other night is a concert, which is what the house mostly programmes.
+ * The site names no category. A title with one of the house's other formats (a residency, an installation)
+ * types it; any other night is a concert, which is what the house mostly programmes. A workshop is out of
+ * scope (EVENT_SCOPE.md §3.2) and is dropped.
  */
 class AuslandOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -49,6 +50,10 @@ class AuslandOverviewPageScraper {
         val title = item.textAt("h2") ?: return null
         val href = item.selectFirst("a[itemprop=url][href*=/event/]")?.attr("href") ?: return null
         val url = resolveUrl(baseUrl, href)
+        if (WORKSHOP in title.lowercase()) {
+            logger.info { "Skipping ausland workshop $url: out of scope" }
+            return null
+        }
         val dateLine = item.textAt("p.date")
         val date = parseListingDate(dateLine)
         if (date == null) {
@@ -78,12 +83,13 @@ class AuslandOverviewPageScraper {
             .map { ScrapedArtist(name = it) }
 
     private companion object {
+        const val WORKSHOP = "workshop"
+
         val LISTING_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM, yyyy", Locale.ENGLISH)
 
         /** The house's words for its formats beside concerts, checked before the shared title cues. */
         val VENUE_FORMATS =
             linkedMapOf(
-                "workshop" to EventType.OTHER.name,
                 "residency" to EventType.OTHER.name,
                 "meetup" to EventType.OTHER.name,
                 "record club" to EventType.OTHER.name,

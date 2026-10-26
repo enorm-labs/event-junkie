@@ -224,11 +224,11 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
-    fun `types a dance congress OTHER and bills no act`() {
-        event("berlin_salsacongress_2026_2026-08-27_2026-08-30_00").eventType shouldBe "OTHER"
+    fun `types a dance congress a FESTIVAL and bills no act`() {
+        event("berlin_salsacongress_2026_2026-08-27_2026-08-30_00").eventType shouldBe "FESTIVAL"
 
         val congress = scrapeOne("Berlin Salsacongress 2027", "Jungle Reloaded Edition")
-        congress.eventType shouldBe "OTHER"
+        congress.eventType shouldBe "FESTIVAL"
         congress.artists.shouldBeEmpty()
     }
 

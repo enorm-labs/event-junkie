@@ -109,10 +109,10 @@ class LabsaalCalendarScraper {
                 Regex("""silvester|\btanz(?:t|abend|nacht)\b""", RegexOption.IGNORE_CASE) to EventType.PARTY.name
             )
 
-        /** A format only the description names: a travel slide show is a talk. */
+        /** A format only the description names: a travel slide show is a talk, the Brauseboys' Leseshow a reading. */
         private val DESCRIPTION_FORMATS =
             linkedMapOf(
-                Regex("""multi-?visions?-?show|reisevortrag|diavortrag""", RegexOption.IGNORE_CASE) to EventType.READING.name,
+                Regex("""multi-?visions?-?show|reisevortrag|diavortrag|leseshow|lesebühne""", RegexOption.IGNORE_CASE) to EventType.READING.name,
                 Regex("""theaterstück|pantomim""", RegexOption.IGNORE_CASE) to EventType.SHOW.name
             )
 

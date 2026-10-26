@@ -223,6 +223,17 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `types an untyped night a party when its own text names one`() {
+        val event = kesselhaus.scrape(calendar, url).first()
+        val html = fixture("kesselhaus-event-dota.html").replace("Dota ist wieder da, mit neuen Songs", "Die erste Daytime Workout Party in Berlin")
+        val page = Jsoup.parse(html, event.sourceUrl)
+        val night = event.copy(sourceUrl = "https://www.kesselhaus.net/de/calendar/-Ors0wnvA9pHewc90PM4")
+
+        kesselhaus.enrich(night.copy(eventType = EventType.OTHER.name), page).shouldNotBeNull().eventType shouldBe EventType.PARTY.name
+        kesselhaus.enrich(night.copy(eventType = EventType.CONCERT.name), page).shouldNotBeNull().eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `strips the CMS markup and the sponsor heading, and reads the doors time the text states`() {
         val event = kesselhaus.scrape(calendar, url).first { it.title == "Seksendört - Live 2026" }
         val page = Jsoup.parse(fixture("kesselhaus-event-seksendort.html"), event.sourceUrl)

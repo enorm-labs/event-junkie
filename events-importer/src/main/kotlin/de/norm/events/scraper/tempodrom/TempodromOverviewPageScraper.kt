@@ -229,8 +229,8 @@ private fun tempodromProduction(
         // Loriot died in 2011: a night under his name stages his sketches, and the cast is not billed.
         LORIOT.matches(title) -> TempodromProduction(EventType.SHOW)
 
-        // A dance congress is days of workshops and parties, not a concert: "Berlin Salsacongress 2027".
-        DANCE_CONGRESS.containsMatchIn(title) -> TempodromProduction(EventType.OTHER)
+        // A dance congress is days of workshops and parties, a festival rather than a concert: "Berlin Salsacongress 2027".
+        DANCE_CONGRESS.containsMatchIn(title) -> TempodromProduction(EventType.FESTIVAL)
 
         else -> null
     }

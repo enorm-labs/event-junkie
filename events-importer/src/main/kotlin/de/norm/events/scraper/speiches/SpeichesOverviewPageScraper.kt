@@ -34,7 +34,8 @@ import kotlin.math.abs
  * - **The text** is `<act> - <style> - Eintritt immer frei`: the first part is the title, the rest the
  * subtitle, and the entry note sets [ScrapedEvent.free]. The house series (`Jazz am Sonntag`,
  * `Speiches Open Stage`) name no act in the title; `Jazz am Sonntag` names its band before `spielt`.
- * - **`rockradio.de-live`** is the radio's own broadcast from the pub, a talk as often as a band, so it is [EventType.OTHER].
+ * - **`rockradio.de-live`** is the radio's own broadcast from the pub, a talk as often as a band. It is a
+ * [EventType.READING] when the text names an interview or `im Gespräch`, else [EventType.OTHER].
  *
  * @see SpeichesWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -61,7 +62,12 @@ class SpeichesOverviewPageScraper(
         val (id, segments, date) = listingAtPub(row, cells) ?: return null
         val title = segments.first()
         val subtitle = segments.drop(1).joinToString(" – ").ifBlank { null }
-        val eventType = if (cells[KIND_CELL].selectFirst("a")?.text() == CONCERT_KIND) EventType.CONCERT else EventType.OTHER
+        val eventType =
+            when {
+                cells[KIND_CELL].selectFirst("a")?.text() == CONCERT_KIND -> EventType.CONCERT
+                TALK.containsMatchIn(segments.joinToString(" ")) -> EventType.READING
+                else -> EventType.OTHER
+            }
 
         return ScrapedEvent(
             title = title,
@@ -173,6 +179,7 @@ class SpeichesOverviewPageScraper(
         const val TEXT_CELL = 4
         const val HOUSE_PLACE = "Speiche"
         const val CONCERT_KIND = "Konzert"
+        val TALK = Regex("""\bim\s+gespräch\b|\binterview\b""", RegexOption.IGNORE_CASE)
 
         /** The table prints `20.00`. */
         val DOTTED_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH.mm")

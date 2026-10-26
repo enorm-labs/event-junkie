@@ -20,7 +20,7 @@ class AuslandOverviewPageScraperTest {
 
     @Test
     fun `reads every event on the listing`() {
-        events shouldHaveSize 11
+        events shouldHaveSize 9
     }
 
     @Test
@@ -50,7 +50,6 @@ class AuslandOverviewPageScraperTest {
 
     @Test
     fun `types the house's other formats from the title`() {
-        bySlug("all-the-river-return-workshop-in-bewegung").eventType shouldBe EventType.OTHER.name
         bySlug("all-the-rivers-residency-bound-with-the-living").eventType shouldBe EventType.OTHER.name
         bySlug("eclat-crew-music-making-meetup-1").eventType shouldBe EventType.OTHER.name
         bySlug("vinyl-hours-record-club").eventType shouldBe EventType.OTHER.name
@@ -60,8 +59,21 @@ class AuslandOverviewPageScraperTest {
 
     @Test
     fun `keeps an event with no picture or no line-up`() {
-        bySlug("all-the-river-return-workshop-in-bewegung").imageUrl.shouldBeNull()
+        val html =
+            """<section class="event listitem"><a itemprop="url" href="/event/x"><p class="date">Thursday, 15 October, 2026 - 20:00</p>""" +
+                """<h2>X</h2></a></section>"""
+
+        AuslandOverviewPageScraper()
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .imageUrl
+            .shouldBeNull()
         bySlug("eclat-crew-music-making-meetup-1").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `drops a workshop, which is out of scope`() {
+        events.map { it.title.lowercase() }.none { "workshop" in it } shouldBe true
     }
 
     @Test
