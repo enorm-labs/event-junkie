@@ -15,6 +15,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
@@ -58,6 +59,7 @@ class MetropolDetailPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
         val timeLine = document.textAt(".event-details .time")
         val description = document.textAt(".event-text")
+        val relocationNote = parseRelocationNote(document)
 
         return ScrapedEvent(
             title = cleanEventTitle(stripRelocationPrefix(rawTitle)),
@@ -73,8 +75,8 @@ class MetropolDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt("a.button.ticket"),
-            status = parseStatus(document, rawTitle),
-            statusNote = rawTitle,
+            status = parseEventStatus("${document.textAt(".alert-red").orEmpty()} $rawTitle ${relocationNote.orEmpty()}"),
+            statusNote = relocationNote ?: rawTitle,
             promoters = listOfNotNull(parsePromoter(document))
         )
     }
@@ -89,18 +91,15 @@ class MetropolDetailPageScraper {
     ): String? = if (description != null && PARTY_FORMAT.containsMatchIn(description)) EventType.PARTY.name else mapEventType(category)
 
     /**
-     * The status from the `.alert-red` badge (`Achtung: Abgesagt!`) and the title's
-     * `"Verlegt ins <venue> –"` prefix.
+     * The `.alert-blue` note when it names a house a show moved from or to, or `null`.
      *
-     * The `.alert-blue` prose is deliberately **not** fed to [parseEventStatus]: it explains a
-     * change in either direction, and both contain "verlegt" — a show moved *out* ("vom Metropol
-     * ins Bi Nuu verlegt") is `RELOCATED`, one moved *in* ("vom Gretchen ins Metropol verlegt")
-     * takes place here and must stay `SCHEDULED`. Only the badge and the prefix distinguish them.
+     * The note sits on both ends of a move — "vom Metropol ins Huxleys verlegt" and "vom Gretchen ins
+     * Metropol verlegt" alike — so it only marks the row `RELOCATED`, and `resolveRelocation` decides
+     * the direction against the row's own venue (#1551). A note without a house, such as a
+     * cancellation's ticket advice, is left to the `.alert-red` badge.
      */
-    private fun parseStatus(
-        document: Document,
-        rawTitle: String
-    ): String = parseEventStatus("${document.textAt(".alert-red").orEmpty()} $rawTitle")
+    private fun parseRelocationNote(document: Document): String? =
+        document.textAt(".alert-blue")?.takeIf { note -> parseRelocation(note)?.let { it.from != null || it.to != null } == true }
 
     /**
      * The promoter from the `.promoter` line minus the `"… presents:"` suffix (`"Trinity Music
