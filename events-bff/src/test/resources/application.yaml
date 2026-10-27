@@ -82,6 +82,8 @@ app:
       https://fcm.googleapis.com,https://updates.push.services.mozilla.com,https://web.push.apple.com,https://*.notify.windows.com
     new-dates-delay: PT10M
     new-dates-lag: PT15M
+    # Long, so the scheduler never runs the job during a test that calls `run()` itself.
+    new-dates-initial-delay: PT10M
   api:
     max-page-size: 100
     cache:

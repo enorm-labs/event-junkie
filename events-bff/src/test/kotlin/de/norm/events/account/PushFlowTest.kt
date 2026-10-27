@@ -5,6 +5,8 @@ import de.norm.events.common.BERLIN
 import de.norm.events.push.WebPushCrypto
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
@@ -12,7 +14,10 @@ import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -259,6 +264,19 @@ class PushFlowTest : BaseControllerTest() {
             job.run()
 
             server.takeRequest(1, TimeUnit.SECONDS) shouldBe null
+        }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension::class)
+    fun `an empty window logs one line, and a window claimed already logs none at info`(output: CapturedOutput) =
+        runBlocking<Unit> {
+            job.run()
+            output.out shouldContain "New-dates push: no new dates from"
+
+            databaseClient.sql("UPDATE accounts.push_cursor SET sent_until = now() + interval '1 hour'").await()
+            val before = output.out.length
+            job.run()
+            output.out.substring(before) shouldNotContain "no new dates"
         }
 
     @Test
