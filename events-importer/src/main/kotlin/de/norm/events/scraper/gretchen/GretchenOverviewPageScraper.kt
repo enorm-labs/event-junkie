@@ -1,9 +1,11 @@
 package de.norm.events.scraper.gretchen
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -34,6 +36,7 @@ import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
@@ -56,6 +59,11 @@ import java.time.LocalTime
  * decision with the suffix stripped. A sold-out night says so three times: the badge, a `// SOLD
  * OUT` tail and an `Ausverkauft - keine Abendkasse` lineup line ([isSoldOut]). The identity is the
  * `detail.php?id=<n>` query id.
+ *
+ * A show the club books at another house (`ACID ARAB live @ HUXLEYS`, promoter `Gretchen @ Huxleys`,
+ * `Das Konzert findet im Huxleys am Hermannplatz statt.`) is that house's event and is skipped
+ * ([heldElsewhere]), because a source imports for one venue only (#4042). A show moved away is
+ * different: it carries the "neuer Ort" badge and is kept as `RELOCATED`.
  *
  * @see GretchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.gretchen-club.de/">Gretchen Berlin</a>
@@ -114,6 +122,14 @@ class GretchenOverviewPageScraper {
         val title = titleWithoutStatus.replaceFirst(SERIES_PREFIX, "").trim().ifBlank { titleWithoutStatus }
         val statusTail = rawTitle.substringAfter("//", "")
         val status = parseStatus(gig, statusTail)
+        val otherVenue = if (status == EventStatus.RELOCATED.name) null else heldElsewhere(gig, title)
+        if (otherVenue != null) {
+            logger.at(Level.INFO) {
+                message = "Skipping Gretchen event '$title': it is held at $otherVenue"
+                payload = mapOf(LogFields.EVENT_SOURCE_ID to "${EventSource.GRETCHEN.sourceIdPrefix}$eventId")
+            }
+            return null
+        }
         val statusNote = "${gig.textAt(".rotated").orEmpty()} $statusTail".trim()
 
         val (doorsTime, startTime) = parseTimes(gig)
@@ -168,6 +184,22 @@ class GretchenOverviewPageScraper {
             else -> type
         }
     }
+
+    /**
+     * The other venue the page says the night is held at, or `null` for a night at Gretchen. Any one
+     * signal is enough: a headline `… @ HUXLEYS`, a promoter `Gretchen @ Huxleys`, or a lineup line
+     * `findet im Huxleys am Hermannplatz statt`. A named venue that is Gretchen itself does not count.
+     */
+    private fun heldElsewhere(
+        gig: Element,
+        title: String
+    ): String? =
+        sequenceOf(
+            AT_VENUE.find(title),
+            AT_VENUE.find(gig.textAt(".promoter").orEmpty()),
+            HELD_AT.find(gig.select(".lineup").text())
+        ).mapNotNull { match -> match?.groupValues?.get(1)?.trim() }
+            .firstOrNull { it.isNotBlank() && !it.contains("gretchen", ignoreCase = true) }
 
     /**
      * Parses the date from the `.date` cell's `<strong>`, a full `DD.MM.YYYY` ("10.07.2026"),
@@ -246,7 +278,7 @@ class GretchenOverviewPageScraper {
      * `(label/country)` annotation and `*live*` markers. Dropped before splitting: the pricing
      * `<em>`, and `<b>` floor headers (`AFRO FLOOR`, `RECYCLE NEOSIGNAL`), which the source renders
      * flush against the first act with no `<br>`. Each line is then dropped if a credit or note
-     * ([isCreditOrNoteLine]: "Hosted by …", "Live Visuals by …", "Ersatztermin vom …", an
+     * ([isCreditOrNoteLine]: "Hosted by …", "Live Visuals by …", "Ersatztermin vom …", "VVK ab 30.10.", an
      * instrument-credited member list, a bare "+ guests" or "+ more"); stripped of a role prefix
      * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"; a support or opening-set remainder
      * `A & B` is two acts, [splitCreditList]); split on `feat.`/`ft.`
@@ -356,8 +388,9 @@ class GretchenOverviewPageScraper {
 
     /**
      * True when a line is a credit or note rather than an act: "Hosted by …" / "Live Visuals by …",
-     * "Ersatztermin vom …", "verlegt vom <venue>", "Ausverkauft - keine Abendkasse", an instrument-credited member list ("… (Bass), …
-     * (Drums)"), a bare "+ (special) guests", a "+ more" continuation ([isPlaceholderName]) —
+     * "Ersatztermin vom …", "verlegt vom <venue>", "Ausverkauft - keine Abendkasse", a presale note
+     * ("VVK ab 30.10."), an instrument-credited member list ("… (Bass), … (Drums)"), a bare
+     * "+ (special) guests", a "+ more" continuation ([isPlaceholderName]) —
      * read before [cleanArtistName] strips the `+` and leaves "more", which is also a band's name.
      */
     private fun isCreditOrNoteLine(line: String): Boolean =
@@ -365,7 +398,8 @@ class GretchenOverviewPageScraper {
             DROP_LINE_PATTERN.containsMatchIn(line) ||
             INSTRUMENT_CREDIT_PATTERN.containsMatchIn(line) ||
             SCHEDULE_NOTE_PATTERN.containsMatchIn(line) ||
-            SOLD_OUT_NOTE.containsMatchIn(line)
+            SOLD_OUT_NOTE.containsMatchIn(line) ||
+            PRESALE_NOTE.containsMatchIn(line)
 
     /**
      * Strips a leading role prefix: "Support: Steinza" to "Steinza", "+ SHOW: Yenny Stark" to "Yenny
@@ -410,6 +444,19 @@ class GretchenOverviewPageScraper {
             .filterNot { it.equals("Gretchen", ignoreCase = true) }
 
     companion object {
+        /** A ` @ <venue>` tail on a headline or a promoter credit: `ACID ARAB live @ HUXLEYS`, `Gretchen @ Huxleys`. */
+        private val AT_VENUE = Regex("""\s@\s+(\p{L}[^@]*)$""")
+
+        /** A lineup line that names where the night is held: `Das Konzert findet im Huxleys am Hermannplatz statt.` */
+        private val HELD_AT =
+            Regex(
+                """\bfindet\s+(?:im|in\s+(?:der|dem))\s+(\p{L}[^,.!?;:()\n]*?)\s+statt\b""",
+                RegexOption.IGNORE_CASE
+            )
+
+        /** A presale note, not an act: `VVK ab 30.10.`, `Der VVK startet Ende Oktober.`, `Vorverkaufsstart …`. */
+        private val PRESALE_NOTE = Regex("""\b(?:vvk|vorverkauf)""", RegexOption.IGNORE_CASE)
+
         /** The earliest doors of a club night; the latest concert doors are 20:00. */
         private val CLUB_NIGHT_DOORS = LocalTime.of(22, 0)
 

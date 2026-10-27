@@ -691,6 +691,91 @@ class GretchenOverviewPageScraperTest {
         }
     }
 
+    @Nested
+    inner class HeldElsewhere {
+        // Events 3627 and 3625 from the listing on 2026-10-27 (#4042).
+        private fun gig(
+            headline: String = "ACID ARAB live @ HUXLEYS",
+            notice: String = "<strong>Das Konzert findet im Huxleys am Hermannplatz statt.</strong>",
+            promoter: String = "Gretchen @ Huxleys",
+            badge: String = ""
+        ) = """
+            <div class="gig">
+                <span class="date">Fr. <strong>02.04.2027</strong><br> Doors: 19.00 <br/>Show: 20.00</span>
+                <span class="img">$badge<a href="detail.php?id=3627"><img class="img" src="./bilder_upload/acid-arab.jpg" alt=""></a></span>
+                <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                    <span class="title">Electronica<h2><a href="detail.php?id=3627">$headline</a></h2></span>
+                    <span class="box"></span>
+                    <span class="lineup"><p>Acid Arab  (All Night Long, Crammed Discs/FR) *live*<br /></p></span><span class="box">
+                    </span><span class="lineup">$notice<em><br /><br />*Vorverkauf 30 € zzgl. Gebühren * Abendkasse tba.*</em></span>
+                </div></div></div>
+                <p class="footer"><span class="promoter" >Veranstalter*in: $promoter</span></p>
+            </div>
+            """.trimIndent()
+
+        private fun scrapeGig(html: String) = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        @Test
+        fun `skips a night the page holds at another venue`() {
+            scrapeGig(gig()).shouldBeEmpty()
+        }
+
+        @Test
+        fun `any one signal is enough to skip the night`() {
+            assertSoftly {
+                scrapeGig(gig(notice = "", promoter = "Gretchen")).shouldBeEmpty()
+                scrapeGig(gig(headline = "ACID ARAB live", notice = "")).shouldBeEmpty()
+                scrapeGig(gig(headline = "ACID ARAB live", promoter = "Gretchen")).shouldBeEmpty()
+            }
+        }
+
+        @Test
+        fun `keeps a night whose signals name Gretchen itself`() {
+            val events =
+                scrapeGig(
+                    gig(
+                        headline = "ACID ARAB live @ GRETCHEN",
+                        notice = "Das Konzert findet im Gretchen statt.",
+                        promoter = "Afro Haus @ Gretchen"
+                    )
+                )
+
+            events.single().title shouldBe "ACID ARAB live @ GRETCHEN"
+        }
+
+        @Test
+        fun `keeps a night moved away as RELOCATED`() {
+            val event = scrapeGig(gig(badge = "<span class=\"rotated\">neuer Ort</span>")).single()
+
+            event.status shouldBe "RELOCATED"
+        }
+
+        @Test
+        fun `keeps a night with no sign of another venue`() {
+            scrapeGig(gig(headline = "ACID ARAB live", notice = "", promoter = "Gretchen")).single().artists shouldContainExactly
+                listOf(ScrapedArtist("Acid Arab", "HEADLINER"))
+        }
+    }
+
+    @Test
+    fun `does not bill a presale-date line as an act`() {
+        val html =
+            """
+            <div class="gig">
+                <span class="date">Fr. <strong>12.03.2027</strong><br> Doors: 19.00 <br/>Show: 20.00</span>
+                <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                    <span class="title">MPB, Pop<h2><a href="detail.php?id=3625">Trinity presents:  JORGE VERCILLO</a></h2></span>
+                    <span class="box"></span>
+                    <span class="lineup"><p>Jorge Vercillo   (EMI, Sony, ELO Produções, Torilo/BR) *live*<br /></p></span><span class="box">
+                    </span><span class="lineup">VVK ab 30.10.<br />Vorverkaufsstart Freitag</span>
+                </div></div></div>
+            </div>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists shouldContainExactly
+            listOf(ScrapedArtist("Jorge Vercillo", "HEADLINER"))
+    }
+
     @Test
     fun `every scraped event has the required identity fields`() {
         scrape().forEach { event ->
