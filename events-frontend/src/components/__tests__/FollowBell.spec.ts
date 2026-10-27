@@ -44,6 +44,7 @@ describe('FollowBell', () => {
     await flushPromises()
     expect(account.setNotify).toHaveBeenLastCalledWith('artist', 'moderat', 'off')
     expect(button.attributes('aria-pressed')).toBe('false')
+    expect(view.emitted('change')).toEqual([['instant'], ['off']])
   })
 
   it('goes back with a message when the BFF refuses', async () => {

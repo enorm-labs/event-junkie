@@ -47,7 +47,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Whether the account follows this artist, venue or promoter. A 200 either way, so the page's check is not a console error */
+        /** Whether the account follows this artist, venue or promoter, and its bell. A 200 either way, so the page's check is not a console error */
         get: operations["check"];
         /** Follows an artist, a venue or a promoter. Following twice changes nothing */
         put: operations["follow"];
@@ -1912,6 +1912,7 @@ export interface components {
         };
         FollowState: {
             following?: boolean;
+            notify?: string | null;
         };
         AccountExport: {
             /** Format: date-time */

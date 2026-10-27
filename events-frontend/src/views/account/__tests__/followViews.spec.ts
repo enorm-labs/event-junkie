@@ -8,7 +8,7 @@ import { ApiError } from '@/api/client'
 const account = vi.hoisted(() => ({
   prepareCsrf: vi.fn<() => Promise<void>>(),
   fetchSession: vi.fn<() => Promise<unknown>>(),
-  isFollowing: vi.fn<(kind: string, slug: string) => Promise<boolean>>(),
+  fetchFollowNotify: vi.fn<(kind: string, slug: string) => Promise<string | null>>(),
   follow: vi.fn<(kind: string, slug: string) => Promise<void>>(),
   unfollow: vi.fn<(kind: string, slug: string) => Promise<void>>(),
   fetchFollows: vi.fn<() => Promise<unknown[]>>(),
@@ -80,12 +80,12 @@ describe('FollowButton', () => {
     })
 
     expect(view.find('a').attributes('href')).toBe('/en/sign-in?next=/en/venues/sisyphos')
-    expect(account.isFollowing).not.toHaveBeenCalled()
+    expect(account.fetchFollowNotify).not.toHaveBeenCalled()
   })
 
   it('signed in, follows on a press and then says Following, with the unfollow for screen readers', async () => {
     setSession(me as never)
-    account.isFollowing.mockResolvedValue(false)
+    account.fetchFollowNotify.mockResolvedValue(null)
     const view = await mountAt(FollowButton, '/en/venues/sisyphos', {
       kind: 'venue',
       slug: 'sisyphos',
@@ -104,10 +104,10 @@ describe('FollowButton', () => {
 
   it('asks whether the account follows already, and links to Following after a follow', async () => {
     setSession(me as never)
-    account.isFollowing.mockResolvedValue(true)
+    account.fetchFollowNotify.mockResolvedValue('off')
     const view = await mountAt(FollowButton, '/en/artists/ada', { kind: 'artist', slug: 'ada' })
 
-    expect(account.isFollowing).toHaveBeenCalledWith('artist', 'ada')
+    expect(account.fetchFollowNotify).toHaveBeenCalledWith('artist', 'ada')
     expect(view.find('button').text()).toBe('Following (press to unfollow)')
 
     await view.find('button').trigger('click')
@@ -120,7 +120,7 @@ describe('FollowButton', () => {
 
   it('goes back and says why when the BFF refuses', async () => {
     setSession(me as never)
-    account.isFollowing.mockResolvedValue(false)
+    account.fetchFollowNotify.mockResolvedValue(null)
     account.follow.mockRejectedValue(new ApiError(409, 'too many'))
     const view = await mountAt(FollowButton, '/en/artists/ada', { kind: 'artist', slug: 'ada' })
 

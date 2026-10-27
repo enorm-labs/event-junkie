@@ -133,7 +133,12 @@ const { compact } = useCompactView()
            would push it off the screen (#811 draws one on a card). -->
         <header class="space-y-2">
           <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
-          <FollowButton v-if="followKind && followSlug" :kind="followKind" :slug="followSlug" />
+          <FollowButton
+            v-if="followKind && followSlug"
+            :kind="followKind"
+            :name="name ?? undefined"
+            :slug="followSlug"
+          />
           <slot name="meta" />
         </header>
 

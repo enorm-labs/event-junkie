@@ -74,11 +74,13 @@ export async function fetchFollows(): Promise<Follow[]> {
   return unwrap(api.GET('/api/me/follows'))
 }
 
-export async function isFollowing(kind: FollowKind, slug: string): Promise<boolean> {
+/** The bell of the follow (#4077), or null when the account does not follow it. */
+export async function fetchFollowNotify(kind: FollowKind, slug: string): Promise<Notify | null> {
   const state = await unwrap(
     api.GET('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }),
   )
-  return state.following === true
+  if (state.following !== true) return null
+  return state.notify === 'instant' ? 'instant' : 'off'
 }
 
 export async function follow(kind: FollowKind, slug: string): Promise<void> {

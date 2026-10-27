@@ -46,14 +46,17 @@ class FollowController(
     ): List<FollowResponse> = follows.list(account.id).map(FollowResponse::of)
 
     @GetMapping("/follows/{kind}/{slug}")
-    @Operation(summary = "Whether the account follows this artist, venue or promoter. A 200 either way, so the page's check is not a console error")
+    @Operation(
+        summary = "Whether the account follows this artist, venue or promoter, and its bell. A 200 either way, so the page's check is not a console error"
+    )
     suspend fun check(
         @AuthenticationPrincipal account: Account,
         @PathVariable kind: String,
         @PathVariable slug: String
     ): FollowState {
         val (followKind, id) = follows.resolve(kind, slug)
-        return FollowState(follows.follows(account.id, followKind, id))
+        val notify = follows.notify(account.id, followKind, id)
+        return FollowState(following = notify != null, notify = notify)
     }
 
     @PutMapping("/follows/{kind}/{slug}")
@@ -64,7 +67,7 @@ class FollowController(
         @PathVariable slug: String
     ): ResponseEntity<Unit> {
         val (followKind, id) = follows.resolve(kind, slug)
-        if (!follows.follows(account.id, followKind, id) && follows.count(account.id) >= MAX_FOLLOWS) {
+        if (follows.notify(account.id, followKind, id) == null && follows.count(account.id) >= MAX_FOLLOWS) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "You follow $MAX_FOLLOWS things already. Unfollow one first")
         }
         follows.follow(account.id, followKind, id, clock.instant())

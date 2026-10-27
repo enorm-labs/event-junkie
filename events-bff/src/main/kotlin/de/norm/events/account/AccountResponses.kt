@@ -57,8 +57,10 @@ data class NotifyCount(
     val changed: Long
 )
 
+/** [notify] is the bell, `off` or `instant` (#4077), and null when not [following]. */
 data class FollowState(
-    val following: Boolean
+    val following: Boolean,
+    val notify: String?
 )
 
 /** One thing the account follows. [kind] is `artist`, `venue` or `promoter`; [notify] is `off` or `instant`, the bell (#3894). */

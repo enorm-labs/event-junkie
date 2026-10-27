@@ -16,6 +16,8 @@ const props = defineProps<{
   initially: Notify
 }>()
 
+const emit = defineEmits<{ change: [notify: Notify] }>()
+
 const { t } = useI18n()
 const on = ref(props.initially === 'instant')
 const busy = ref(false)
@@ -30,6 +32,7 @@ async function toggle() {
   try {
     await prepareCsrf()
     await setNotify(props.kind, props.slug, was ? 'off' : 'instant')
+    emit('change', was ? 'off' : 'instant')
   } catch {
     on.value = was
     problem.value = t('account.push.failed')
