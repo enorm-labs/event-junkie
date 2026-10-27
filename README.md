@@ -145,7 +145,7 @@ git clone git@github.com:enorm-labs/event-junkie.git
 cd event-junkie
 
 scripts/setup-mac.sh contributor          # macOS: the tools, the JDK, Node and the commit hooks
-gh auth login                             # the agent prompts drive GitHub through it
+gh auth login -s project                  # the agent prompts drive GitHub and the project board through it
 ./gradlew clean build                     # compile, test, lint, coverage
 ```
 

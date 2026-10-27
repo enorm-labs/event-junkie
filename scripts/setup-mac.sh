@@ -14,7 +14,7 @@
 # so run it in a terminal of your own, not through an agent. Secret values come from KeePass;
 # docs/CREDENTIALS.md numbers each one.
 #
-# Reaches Homebrew, get.sdkman.io, nvm and npm. `kubeconfig` reaches the node over SSH.
+# Reaches Homebrew, get.sdkman.io, nvm and npm. `check` reads the gh token's scopes from api.github.com. `kubeconfig` reaches the node over SSH.
 
 set -euo pipefail
 
@@ -34,6 +34,8 @@ miss() {
     printf '  \033[1;33m--\033[0m  %s\n' "$*"
     missing=$((missing + 1))
 }
+# A state that is normal between sessions, not a setup gap: shown, not counted.
+warn() { printf '  \033[1;33m!!\033[0m  %s\n' "$*"; }
 die() {
     printf '\033[1;31mxx\033[0m %s\n' "$*" >&2
     exit 1
@@ -113,6 +115,10 @@ check_tools() {
     for tool in git gh jq yq direnv psql uv docker ijhttp claude kotlin-lsp typescript-language-server pre-commit gitleaks shellcheck shfmt ruff hadolint tofu helm flux lychee squawk; do
         if command -v "$tool" >/dev/null; then ok "$tool"; else miss "$tool"; fi
     done
+    # `docker version` exits zero on the client half alone; `docker info` fails when the daemon does not answer.
+    if command -v docker >/dev/null; then
+        if docker info >/dev/null 2>&1; then ok "docker daemon"; else warn "docker daemon not running — start Docker Desktop (/setup-machine Step 2.2)"; fi
+    fi
     if [ "${1:-}" = operator ]; then
         for tool in wg-quick kubectl kubectx k9s sops age; do
             if command -v "$tool" >/dev/null; then ok "$tool"; else miss "$tool"; fi
@@ -142,7 +148,29 @@ check_repo() {
     if [ "$(git config blame.ignoreRevsFile || true)" = .git-blame-ignore-revs ]; then ok "blame.ignoreRevsFile"; else miss "blame.ignoreRevsFile"; fi
     if [ -f http/http-client.private.env.json ]; then ok "http/http-client.private.env.json"; else miss "http/http-client.private.env.json"; fi
     # `gh auth status` can hang; reading the token cannot.
-    if gh auth token >/dev/null 2>&1; then ok "gh logged in"; else miss "gh — gh auth login"; fi
+    if gh auth token >/dev/null 2>&1; then
+        ok "gh logged in"
+        check_gh_scope
+    else
+        miss "gh — gh auth login -s project"
+    fi
+}
+
+# scripts/issue-board.sh needs the `project` scope. A fine-grained token sends no X-OAuth-Scopes header.
+check_gh_scope() {
+    local headers line
+    if ! headers="$(gh api -i /user 2>/dev/null)"; then
+        warn "gh project scope — GitHub did not answer, not checked"
+        return
+    fi
+    line="$(printf '%s\n' "$headers" | tr -d '\r' | grep -i '^x-oauth-scopes:' || true)"
+    if [ -z "$line" ]; then
+        ok "gh project scope — scopes not listed"
+    elif printf '%s\n' "${line#*:}" | tr ',' '\n' | tr -d ' ' | grep -qx project; then
+        ok "gh project scope"
+    else
+        miss "gh project scope — gh auth refresh -s project"
+    fi
 }
 
 check_profile() {
