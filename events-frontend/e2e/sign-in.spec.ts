@@ -1,12 +1,13 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { failUnmockedGets } from './unmocked'
 
 /**
  * Sign-in by e-mail link and the account page (#3887) with a mocked BFF: the address goes only into
  * a POST body, the token leaves the address bar, and every write carries the CSRF header.
  *
  * Endpoints: GET /api/auth/csrf · GET /api/auth/session · POST /api/auth/link · POST /api/auth/sign-in
- * · GET /api/me · DELETE /api/me
+ * · GET /api/me · DELETE /api/me, and the GETs of the account and Following pages
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
@@ -14,6 +15,8 @@ const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:0
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
+
+const fallthrough = failUnmockedGets()
 
 /** Answers the account endpoints, and records each write with the CSRF header it carried. */
 async function mockAccount(page: Page): Promise<{ path: string; csrf: string | null; body: string | null }[]> {
@@ -31,8 +34,12 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     if (path === '/api/auth/sign-in') return json(route, me)
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     if (path === '/api/me/following') return json(route, { content: [], totalPages: 0 })
+    if (path === '/api/me/following/today') return json(route, [])
     if (path === '/api/me/follows') return json(route, [])
-    return route.fulfill({ status: 204 })
+    if (path === '/api/me/passkeys') return json(route, [])
+    if (path === '/api/me/push') return json(route, { publicKey: null })
+    if (path === '/api/me/searches') return json(route, [])
+    return fallthrough(route)
   })
   return writes
 }

@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { failUnmockedGets } from './unmocked'
 
 /**
  * Passkeys (#3888) in a real browser, with a mocked BFF and Chromium's virtual authenticator: the account page
@@ -6,7 +7,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  * The BFF's verification is `PasskeyFlowTest`'s job; this spec covers the browser half.
  *
  * Endpoints: POST /api/me/passkeys/options · POST /api/me/passkeys · GET /api/me/passkeys
- * · POST /api/auth/passkey/options · POST /api/auth/passkey/sign-in
+ * · POST /api/auth/passkey/options · POST /api/auth/passkey/sign-in, and the GETs of the account and Following pages
  */
 
 // eslint-disable-next-line playwright/no-skipped-test
@@ -17,6 +18,8 @@ const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:0
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
+
+const fallthrough = failUnmockedGets()
 
 const b64 = (text: string) => Buffer.from(text).toString('base64url')
 
@@ -70,9 +73,11 @@ async function mockBff(page: Page, signedIn: boolean): Promise<{ path: string; b
     }
     if (path === '/api/auth/passkey/sign-in') return json(route, me)
     if (path === '/api/me/following') return json(route, { content: [], totalPages: 0 })
+    if (path === '/api/me/following/today') return json(route, [])
     if (path === '/api/me/follows') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
-    return route.fulfill({ status: 204 })
+    if (path === '/api/me/searches') return json(route, [])
+    return fallthrough(route)
   })
   return writes
 }

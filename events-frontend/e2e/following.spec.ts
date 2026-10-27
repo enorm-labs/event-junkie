@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { failUnmockedGets } from './unmocked'
 
 /**
  * Following (#3889) with a mocked BFF: the Follow button on a venue page, signed out and signed in,
@@ -7,7 +8,8 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
- * · GET /api/me/following/today
+ * · GET /api/me/following/today · GET /api/me/rsvps · GET /api/me · GET /api/me/passkeys
+ * · GET /api/me/push
  * · GET|POST /api/me/searches · PATCH|DELETE /api/me/searches/:id
  */
 
@@ -18,6 +20,8 @@ const emptyPage = { content: [], page: 0, size: 50, totalElements: 0, totalPages
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
+
+const fallthrough = failUnmockedGets()
 
 /** Answers the BFF for one visitor, signed in or not, and records each write with its CSRF header. */
 async function mockBff(
@@ -66,7 +70,6 @@ async function mockBff(
       )
     }
     if (path === '/api/me/following/today') return json(route, feed.today ?? [])
-    // A 204 here left the cards' RSVP map undefined, and every card threw on its next render.
     if (path === '/api/me/rsvps') return json(route, {})
     if (path === '/api/me/following') {
       const upcoming = feed.upcoming ?? []
@@ -87,7 +90,9 @@ async function mockBff(
       return route.fulfill({ status: 204 })
     }
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
-    return route.fulfill({ status: 204 })
+    if (path === '/api/me/passkeys') return json(route, [])
+    if (path === '/api/me/push') return json(route, { publicKey: null })
+    return fallthrough(route)
   })
   await page.route(/\/api\/genres/, (route) => json(route, []))
   await page.route(/\/api\/venues(\?|$)/, (route) =>
