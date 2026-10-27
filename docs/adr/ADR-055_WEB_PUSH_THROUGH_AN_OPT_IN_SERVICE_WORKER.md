@@ -59,8 +59,8 @@ The rules:
 
 - **New recipients.** The four push services receive endpoints and message times. The privacy notices and `docs/LEGAL.md` §7 must name them. #3894 does
   that in the PR that sends the first message. The notice describes what runs, so not earlier.
-- **Terms of Use.** Row 15 of `docs/LEGAL.md` §13 says to revisit the Terms of Use when the site first sends something on its own. Push is that point, so
-  #3894 revisits it.
+- **Terms of Use.** Push was the point to revisit them (`docs/LEGAL.md` §13 row 15). The answer stayed none: `docs/LEGAL.md` §7.6 says why, and what
+  would change it.
 - **A new egress path.** The BFF connects out on TCP 443 to the push services. The chart denies all egress by default, so it needs a named
   NetworkPolicy.
 - **The CSP needs no change.** `worker-src` falls back to `script-src 'self'`, and the worker is a same-origin file.

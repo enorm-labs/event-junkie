@@ -636,8 +636,20 @@ Treat these as a translation unit, not a legal constant: translate from intent, 
 **These two registers are the whole answer. There is no Terms of Use page** (#478). A visitor who never registers agrees
 to nothing, so terms would bind nobody. A third copy of the disclaimer would be drift risk, not protection. The
 database-maker's right (§§ 87a ff. UrhG) applies whether or not a page claims it. What limits bulk access is rate
-limiting (#268) and `robots.txt`, not a document. **This reverses when submissions or accounts land** (#399, #398).
-Then there is a contract, and user content the site hosts rather than links to.
+limiting (#268) and `robots.txt`, not a document.
+
+**Accounts did not change that** (#398). An account is free, and it holds nothing a visitor publishes. Its follows,
+saved searches and RSVPs only arrange public event data for its holder. A push goes out only after two opt-ins: the
+browser's permission and the bell. The holder turns it off in the browser or on the account page. It names a new date
+and links to it. It carries no advertising, and §7.4b and the privacy notice say what it holds. The contract
+behind Art. 6 (1) (b) exists without written terms, and the statutory rules govern it. Terms would add a consent step
+at sign-up, and every later change would need fresh consent.
+
+**Terms of Use become necessary with any of these:**
+
+- content that a visitor publishes on the site (#399)
+- a paid feature
+- mail that the site sends on its own schedule, such as the digest (#3891)
 
 ### 7.7 Keeping the notice true
 
@@ -811,7 +823,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                                                                   | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | Three: Hetzner's AVV, Anthropic's DPA and Scaleway's DPA for the sign-in mail (#3887). Anthropic, for translation, the data check and the Instagram drafts, is the one third-country transfer — #1233, #3242, #3366 | §7.3a                |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                                                                                            | §7.3a                |
-| 15  | Terms of Use           | None. An account is free, and its follows (#3889) only arrange public event data for its holder, so the §7.6 disclaimer is still the whole answer — #478. Revisit with push (#3894, §14) and with mail (#3891)      | §7.6                 |
+| 15  | Terms of Use           | None, confirmed with push (2026-10-27). Free, no user content, push only after two opt-ins and without advertising, so the §7.6 disclaimer is still the whole answer — #478. The triggers are in §7.6               | §7.6                 |
 | 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                                                                                                        | `legal-review/`      |
 
 ## 14. Open items
@@ -827,8 +839,6 @@ is also an issue, and this section says what it _means_.
 4. **The push services' role and transfer basis** (§7.3a, #3894) — processor or recipient, and the Art. 44 ff.
    mechanism for each of Google, Mozilla, Apple and Microsoft. The notice states the third-country transfer and names
    no mechanism until this is settled.
-5. **Terms of Use with push** (§13 row 15, #3894). A push is the first message the site sends on its own. The holder
-   chooses it with the bell.
 
 ### Two rules this section exists to enforce
 
