@@ -60,7 +60,10 @@ onMounted(() => run(load))
     <SectionLabel as="h2">{{ t('account.push.title') }}</SectionLabel>
     <p class="text-body text-muted-foreground">
       {{ t('account.push.intro') }}
-      <RouterLink class="underline underline-offset-2" :to="localePath('/following')">
+      <RouterLink
+        class="underline underline-offset-2"
+        :to="{ path: localePath('/following'), query: { tab: 'follows' } }"
+      >
         {{ t('account.push.following') }}
       </RouterLink>
     </p>

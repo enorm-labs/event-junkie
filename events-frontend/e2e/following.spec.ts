@@ -3,7 +3,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
  * Following (#3889) with a mocked BFF: the Follow button on a venue page, signed out and signed in,
- * the header entry, and the Following page with its list.
+ * the header entry, and the Following page with its two tabs (#4080).
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
@@ -126,7 +126,8 @@ test('the Following page suggests venues, and a follow from there joins the list
   await expect(page.getByText('You do not follow anything yet.')).toBeVisible()
   await page.getByRole('button', { name: 'Follow', exact: true }).click()
 
-  await expect(page.getByRole('heading', { name: 'You follow (1)' })).toBeVisible()
+  await page.getByRole('tab', { name: 'You follow (1)' }).click()
+  await expect(page.getByRole('heading', { name: 'Venues (1)' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mock Venue' })).toHaveAttribute(
     'href',
     '/en/venues/mock-venue',
@@ -246,6 +247,69 @@ test('the Following page passes axe', async ({ page }) => {
   await mockBff(page, true)
   await page.goto('/en/following')
   await expect(page.getByRole('heading', { name: 'Venues with the most events' })).toBeVisible()
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .exclude('#__vue-devtools-container__')
+    .analyze()
+  expect(results.violations).toEqual([])
+})
+
+test('the Following page switches between its tabs, with the tab in the URL, and keeps an unfollowed row', async ({
+  page,
+}) => {
+  const writes = await mockBff(page, true, { following: true })
+  await page.goto('/en/following')
+
+  const events = page.getByRole('tab', { name: 'Events' })
+  const follows = page.getByRole('tab', { name: 'You follow (1)' })
+  await expect(events).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeVisible()
+
+  await follows.click()
+  await expect(page).toHaveURL(/\/en\/following\?tab=follows$/)
+  await expect(page.getByRole('tab', { name: 'You follow (1)' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeHidden()
+  // By id: the panel's name is its tab's, and the count in it drops with the unfollow.
+  const panel = page.locator('#following-panel-follows')
+  await panel.getByRole('button', { name: 'Following (press to unfollow)' }).click()
+  await expect(panel.getByRole('button', { name: 'Follow', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mock Venue' })).toBeVisible()
+  await expect
+    .poll(() => writes)
+    .toContainEqual({ method: 'DELETE', path: '/api/me/follows/venue/mock-venue', csrf: 'csrf-1' })
+
+  await page.getByRole('tab', { name: 'Events' }).press('Enter')
+  await expect(page).toHaveURL(/\/en\/following$/)
+  await page.getByRole('tab', { name: 'Events' }).press('ArrowRight')
+  await expect(page).toHaveURL(/\/en\/following\?tab=follows$/)
+  await expect(page.getByRole('tab', { name: 'You follow (0)' })).toBeFocused()
+  await expect(
+    page.getByText('You do not follow an artist, a venue or a promoter yet.'),
+  ).toBeVisible()
+})
+
+test('the account page opens the Following page on the tab of what you follow', async ({
+  page,
+}) => {
+  await mockBff(page, true, { following: true })
+  await page.goto('/en/account')
+
+  await page.getByRole('link', { name: 'What you follow' }).click()
+  await expect(page).toHaveURL(/\/en\/following\?tab=follows$/)
+  await expect(page.getByRole('tab', { name: 'You follow (1)' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+})
+
+test('the Following page passes axe on the tab of what you follow', async ({ page }) => {
+  await mockBff(page, true, { following: true })
+  await page.goto('/en/following?tab=follows')
+  await expect(page.getByRole('heading', { name: 'Venues (1)' })).toBeVisible()
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

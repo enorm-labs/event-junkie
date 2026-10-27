@@ -261,6 +261,8 @@ describe('AccountView', () => {
     expect(view.text()).toContain('Signed in as ada@example.com')
     expect(view.text()).toMatch(/Account since \S.*2026/)
     expect(view.find('a[href="/api/me/export"]').attributes('download')).toBeDefined()
+    // What you follow is a tab of the Following page (#4080).
+    expect(view.find('a[href="/en/following?tab=follows"]').text()).toBe('What you follow')
   })
 
   it('sends a browser that is not signed in to the sign-in page', async () => {

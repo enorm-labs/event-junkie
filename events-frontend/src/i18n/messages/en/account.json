@@ -62,7 +62,15 @@
     },
     "shown": "Shown on your Following page",
     "following": "Following",
-    "unfollowHint": "(press to unfollow)"
+    "unfollowHint": "(press to unfollow)",
+    "followed": {
+      "artists": "Artists ({count})",
+      "venues": "Venues ({count})",
+      "promoters": "Promoters ({count})",
+      "search": "Search what you follow",
+      "noMatch": "Nothing you follow matches “{query}”.",
+      "empty": "You do not follow an artist, a venue or a promoter yet. Press Follow on their page."
+    }
   },
   "search": {
     "save": "Save search",

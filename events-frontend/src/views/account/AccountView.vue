@@ -104,7 +104,9 @@ function since(createdAt?: string): string {
         </div>
 
         <Button as-child variant="outline">
-          <RouterLink :to="localePath('/following')">{{ t('account.page.following') }}</RouterLink>
+          <RouterLink :to="{ path: localePath('/following'), query: { tab: 'follows' } }">{{
+            t('account.page.following')
+          }}</RouterLink>
         </Button>
 
         <NotificationSettings />

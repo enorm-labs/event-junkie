@@ -140,7 +140,7 @@ describe('FollowingView', () => {
     expect(router.currentRoute.value.fullPath).toBe('/en/sign-in?next=/en/following')
   })
 
-  it('lists the upcoming events and what the account follows', async () => {
+  it('lists the upcoming events, with what the account follows on its own tab', async () => {
     setSession(me as never)
     account.fetchFollowing.mockResolvedValue({
       content: [
@@ -159,7 +159,7 @@ describe('FollowingView', () => {
     const view = await mountAt(FollowingView, '/en/following')
 
     expect(view.text()).toContain('Ada live')
-    expect(view.find('a[href="/en/artists/ada"]').text()).toBe('Ada')
+    expect(view.find('a[href="/en/artists/ada"]').exists()).toBe(false)
     expect(getMock).not.toHaveBeenCalled()
     // Nothing today: no Today heading, and Upcoming starts tomorrow.
     expect(view.findAll('h2').map((h) => h.text())).not.toContain('Today')
