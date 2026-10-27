@@ -46,7 +46,8 @@ test('a link request sends the address in the body only, then says to check the 
 
   await expect(page).toHaveURL(/\/en\/sign-in\/check-mail$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Check your inbox')
-  expect(writes).toEqual([
+  // Chromium offers passkeys in the autofill, so the page also asks for a challenge (#3888).
+  expect(writes.filter((w) => w.path !== '/api/auth/passkey/options')).toEqual([
     { path: '/api/auth/link', csrf: 'csrf-1', body: JSON.stringify({ email: 'ada@example.com', locale: 'en' }) },
   ])
   expect(page.url()).not.toContain('ada')

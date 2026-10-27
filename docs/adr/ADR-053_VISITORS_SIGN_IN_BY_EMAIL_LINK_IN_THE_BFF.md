@@ -3,14 +3,16 @@
 ## Status
 
 **Accepted (2026-10-24). A visitor signs in with a one-time link sent by e-mail. Spring Security 7 in `events-bff` does it, with no password and no
-identity provider. Passkeys come later as a second method. Sessions, tokens and account data live in a new `accounts` schema in the existing PostgreSQL.**
+identity provider. A passkey is the second method. Sessions, tokens and account data live in a new `accounts` schema in the existing PostgreSQL.**
 
 Decided in [#3884](https://github.com/enorm-labs/event-junkie/issues/3884).
 
 **Rule 1 amended (2026-10-24, #3887): the BFF issues and uses the link in its own two endpoints, over the same token table, not through
 `oneTimeTokenLogin()`.** The reactive DSL passes its token service only an address and an expiry, so the locale cannot travel with the token. A rejected
-request also falls through to a 404. Everything else in rule 1 stands: 15 minutes, single use, the hash only, the same answer for every address. The sign-in shipped in [#3887](https://github.com/enorm-labs/event-junkie/issues/3887),
-and passkeys come with [#3888](https://github.com/enorm-labs/event-junkie/issues/3888).
+request also falls through to a 404. Everything else in rule 1 stands: 15 minutes, single use, the hash only, the same answer for every address. The sign-in shipped in [#3887](https://github.com/enorm-labs/event-junkie/issues/3887).
+
+**Rule 7 settled (2026-10-27, #3888): passkeys run on `webauthn4j-core` behind our own endpoints.** spring-security#18393 was still open, with no
+milestone. User verification is required at each sign-in, because a passkey replaces the mail.
 
 **Does not supersede anything.** [ADR-023](ADR-023_OPERATOR_AUTHENTICATION.md) decides operator access and stays as it is. It names end-user identity as a
 separate question. This ADR answers that question. [ADR-005](ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md) stays: the importer also owns the `accounts`
@@ -97,8 +99,10 @@ The rules:
    pod that faces the internet then cannot change event data.
 6. **Module.** The code is an `account` module in `events-bff`. `ModularityTests` checks its boundaries (ADR-006). It can move to its own service later if
    the triggers under _When to revisit_ occur.
-7. **Passkeys come second**, in #3888. Spring Security has no reactive support yet. #3888 chooses between waiting for spring-security#18393 and using
-   `webauthn4j-core` behind our own endpoints. The e-mail link stays the recovery route either way.
+7. **Passkeys are the second method**, in [#3888](https://github.com/enorm-labs/event-junkie/issues/3888). Spring Security has no reactive support
+   (spring-security#18393), so `Passkeys.kt` uses `webauthn4j-core` behind endpoints of our own. The relying party is the cluster's origin. User
+   verification is required, attestation is `none`, and the stored row drops the AAGUID. The e-mail link stays the recovery route, and no account has
+   a passkey only.
 8. **Abuse.** A rate limit per address and per IP on the request for a link. No CAPTCHA from a third party. A self-hosted proof of work (ALTCHA) is the
    fallback if the rate limit is not enough.
 

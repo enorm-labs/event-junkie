@@ -1,6 +1,13 @@
 import type { Locale } from '@/i18n/locales'
 import { api, unwrap } from './client'
 import type { Account, EventSummary, EventSummaryPage, Follow } from './types'
+import {
+  creationOptions,
+  credentialJson,
+  requestOptions,
+  type CreationOptionsJson,
+  type RequestOptionsJson,
+} from '@/lib/webauthn'
 
 /**
  * The sign-in and account calls (#3887, ADR-053). Each write needs the CSRF cookie first, so every
@@ -193,4 +200,56 @@ export async function fetchRsvpPast(page = 0): Promise<EventSummaryPage> {
 /** RSVPed events in an inclusive date range, for the calendar view. */
 export async function fetchRsvpCalendar(from: string, to: string): Promise<EventSummary[]> {
   return unwrap(api.GET('/api/me/rsvps/calendar', { params: { query: { from, to } } }))
+}
+
+/** A passkey of the account (#3888), as the account page lists it: never the key. */
+export type Passkey = { id: string; name: string; createdAt: string; lastUsedAt?: string }
+
+export async function fetchPasskeys(): Promise<Passkey[]> {
+  return (await unwrap(api.GET('/api/me/passkeys'))).flatMap((p) =>
+    p.id && p.name && p.createdAt
+      ? [{ id: p.id, name: p.name, createdAt: p.createdAt, lastUsedAt: p.lastUsedAt ?? undefined }]
+      : [],
+  )
+}
+
+/**
+ * Makes a passkey on this device and stores it. Throws a `NotAllowedError` when the visitor closes the browser's
+ * dialog, and an `ApiError` 409 at the account's limit.
+ */
+export async function addPasskey(name: string): Promise<void> {
+  const options = (await unwrap(api.POST('/api/me/passkeys/options'))) as CreationOptionsJson
+  const credential = (await navigator.credentials.create({
+    publicKey: creationOptions(options),
+  })) as PublicKeyCredential
+  await unwrap(
+    api.POST('/api/me/passkeys', { body: { name, credential: credentialJson(credential) } }),
+  )
+}
+
+export async function renamePasskey(id: string, name: string): Promise<void> {
+  await unwrap(api.PATCH('/api/me/passkeys/{id}', { params: { path: { id } }, body: { name } }))
+}
+
+export async function deletePasskey(id: string): Promise<void> {
+  await unwrap(api.DELETE('/api/me/passkeys/{id}', { params: { path: { id } } }))
+}
+
+/**
+ * Signs in with a passkey. [mediation] `conditional` waits for the visitor to pick one in the address field's
+ * autofill; [signal] ends that wait. A 401 means the passkey did not verify, or was deleted.
+ */
+export async function signInWithPasskey(
+  mediation?: CredentialMediationRequirement,
+  signal?: AbortSignal,
+): Promise<Account> {
+  const options = (await unwrap(api.POST('/api/auth/passkey/options'))) as RequestOptionsJson
+  const credential = (await navigator.credentials.get({
+    publicKey: requestOptions(options),
+    mediation,
+    signal,
+  })) as PublicKeyCredential
+  return unwrap(
+    api.POST('/api/auth/passkey/sign-in', { body: { credential: credentialJson(credential) } }),
+  )
 }

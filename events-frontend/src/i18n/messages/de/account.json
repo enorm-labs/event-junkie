@@ -9,7 +9,10 @@
     "tooMany": "Von hier wurden zu viele Links angefordert. Versuche es in einer Stunde noch einmal.",
     "mailDown": "Die Mail konnte nicht gesendet werden. Versuche es später noch einmal.",
     "privacyLink": "Mehr dazu in der Datenschutzerklärung",
-    "paused": "Neue Konten sind gerade pausiert. Wenn du schon eins hast, schicken wir dir trotzdem einen Link."
+    "paused": "Neue Konten sind gerade pausiert. Wenn du schon eins hast, schicken wir dir trotzdem einen Link.",
+    "passkey": "Mit Passkey anmelden",
+    "passkeyFailed": "Der Passkey hat dich nicht angemeldet. Nutze stattdessen den Link per E-Mail.",
+    "passkeyTooMany": "Von hier kamen zu viele Anmeldungen mit einem Passkey. Versuch es in einer Stunde noch einmal."
   },
   "checkMail": {
     "body": "Wenn die Adresse stimmt, ist ein Link unterwegs. Er gilt einmal und 15 Minuten lang.",
@@ -120,5 +123,21 @@
     "ringAllYes": "Alle einschalten",
     "ringAllNo": "Jetzt nicht",
     "ringAllDone": "Keine Glocke geändert. | Die Glocke ist an für den einen, dem du folgst. Ändern kannst du das auf deiner Seite „Gefolgt“. | Die Glocke ist an für alle {count}. Einzelne änderst du auf deiner Seite „Gefolgt“."
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "intro": "Mit einem Passkey meldest du dich auf diesem Gerät an, ohne auf eine Mail zu warten. Dein Gerät entsperrt ihn mit Fingerabdruck, Gesicht oder PIN. Der Link per E-Mail funktioniert weiterhin.",
+    "add": "Passkey hinzufügen",
+    "adding": "Wird hinzugefügt …",
+    "defaultName": "Passkey",
+    "added": "Hinzugefügt am {date}",
+    "used": "zuletzt genutzt am {date}",
+    "rename": "Umbenennen",
+    "renameLabel": "Neuer Name für {name}",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "limit": "Dieses Konto hat schon zehn Passkeys. Lösche zuerst einen.",
+    "failed": "Das hat nicht geklappt. Versuch es noch einmal."
   }
 }

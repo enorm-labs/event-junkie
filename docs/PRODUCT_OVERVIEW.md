@@ -76,7 +76,7 @@ lists what that includes and what it excludes.
 
 **With an account**
 
-- **Sign in** with a link by e-mail, without a password. The account is optional. Signed in, the header icon opens a menu with Following,
+- **Sign in** with a link by e-mail or with a passkey, without a password. The account is optional. Signed in, the header icon opens a menu with Following,
   the account page and sign-out.
 - **Follow** artists, venues and promoters on their pages. The **Following** page shows today's events first, as the home page
   does, then what is coming up from all of them, by date.
@@ -128,10 +128,10 @@ the first column. It fails in two cases:
 | `/legal/privacy`                       | Privacy notice                                                                       |
 | `/legal/notices`                       | Open-source notices                                                                  |
 | `/legal/for-venues`                    | The opt-out route for venues                                                         |
-| `/sign-in`                             | Asks for an e-mail address and sends a sign-in link; not indexed                     |
+| `/sign-in`                             | Sends a sign-in link by e-mail, or signs in with a passkey; not indexed              |
 | `/sign-in/check-mail`                  | Says the link is on its way                                                          |
 | `/sign-in/confirm`                     | The page the mail links to; signs in on a click                                      |
-| `/account`                             | The address, notifications, data export, sign-out and account deletion               |
+| `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion     |
 | `/following`                           | Today and upcoming events of what the visitor follows, and the list to unfollow from |
 | `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar         |
 | `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                     |
@@ -163,6 +163,8 @@ the first column. It fails in two cases:
 | `/api/auth/session`                    | Who the browser is signed in as, or nobody                                           |
 | `/api/auth/link`                       | Sends a sign-in link by e-mail                                                       |
 | `/api/auth/sign-in`                    | Uses a sign-in link and starts a session                                             |
+| `/api/auth/passkey/options`            | A challenge for signing in with a passkey                                            |
+| `/api/auth/passkey/sign-in`            | Signs in with a passkey and starts a session                                         |
 | `/api/me`                              | The signed-in account                                                                |
 | `/api/me/export`                       | Everything stored about the account, as a download                                   |
 | `/api/me/follows`                      | What the account follows: artists, venues, promoters                                 |
@@ -171,6 +173,9 @@ the first column. It fails in two cases:
 | `/api/me/follows/{kind}/{slug}/notify` | The bell of one follow: push its new dates, or not                                   |
 | `/api/me/push`                         | The key a browser subscribes with, and storing this browser's push subscription      |
 | `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                          |
+| `/api/me/passkeys`                     | The account's passkeys, and storing a new one                                        |
+| `/api/me/passkeys/options`             | A challenge for adding a passkey                                                     |
+| `/api/me/passkeys/{id}`                | Renaming or deleting a passkey                                                       |
 | `/api/me/following`                    | Upcoming events of everything the account follows, from a date when given            |
 | `/api/me/following/today`              | Today's events of everything the account follows, a running night included           |
 | `/api/me/searches`                     | The account's saved searches, and saving one                                         |
@@ -191,6 +196,7 @@ the first column. It fails in two cases:
 | `promoters.spec.ts`                    | e2e: promoters list                                                                  |
 | `detail-routes.spec.ts`                | e2e: the four detail pages                                                           |
 | `search.spec.ts`                       | e2e: header search                                                                   |
+| `passkeys.spec.ts`                     | e2e: add a passkey and sign in with it, on Chromium's virtual authenticator          |
 | `sign-in.spec.ts`                      | e2e: sign-in by link, the account page, deletion, CSRF header                        |
 | `following.spec.ts`                    | e2e: the Follow button signed out and in, the header entry, the Following page       |
 | `rsvp.spec.ts`                         | e2e: Interested and Going on an event page, the card mark, My calendar               |

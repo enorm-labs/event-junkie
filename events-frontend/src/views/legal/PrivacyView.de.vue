@@ -157,9 +157,9 @@ const { t } = useI18n()
           anfordert oder dein Konto ändert. Es läuft nach 30 Tagen ab.
         </li>
         <li>
-          <code>__Host-ej_session</code>, sobald du dich mit dem Link anmeldest. Es enthält eine
-          zufällige Kennung deiner Sitzung und hält dich angemeldet. Es läuft 30 Tage nach der
-          letzten Nutzung ab, und beim Abmelden wird es gelöscht.
+          <code>__Host-ej_session</code>, sobald du dich mit dem Link oder einem Passkey anmeldest.
+          Es enthält eine zufällige Kennung deiner Sitzung und hält dich angemeldet. Es läuft 30
+          Tage nach der letzten Nutzung ab, und beim Abmelden wird es gelöscht.
         </li>
       </ul>
       <p>
@@ -422,16 +422,31 @@ const { t } = useI18n()
         nicht lesen. Alle vier sind US-Unternehmen, diese Daten erreichen also ein Drittland.
       </p>
       <p>
+        <strong>Passkeys:</strong> Fügst du auf deiner Kontoseite einen Passkey hinzu, erzeugt dein
+        Gerät ein Schlüsselpaar. Der private Schlüssel bleibt auf deinem Gerät oder in deinem
+        Passwortmanager, der ihn mit deinen anderen Geräten abgleichen kann. Dein Gerät entsperrt
+        ihn mit Fingerabdruck, Gesicht oder PIN, und nichts davon erreicht Event Junkie. Ich
+        speichere den öffentlichen Schlüssel, eine Kennung des Passkeys, einen Zähler, den Namen,
+        den du ihm gibst, und wann du ihn hinzugefügt und zuletzt genutzt hast. Von welchem
+        Hersteller dein Gerät oder Passwortmanager ist, speichere ich nicht. Dein Gerät bewahrt den
+        Passkey mit einer zufälligen Kennung deines Kontos auf, und mit deiner E-Mail-Adresse, damit
+        es dir zeigen kann, zu welchem Konto er gehört. Auf deiner Kontoseite kannst du jeden
+        Passkey umbenennen oder löschen. Wenn du dein Konto löschst, werden auch alle Passkeys
+        gelöscht. Ein hier gelöschter Passkey bleibt auf deinem Gerät, bis du ihn dort entfernst,
+        aber du kannst dich mit ihm nicht mehr anmelden.
+      </p>
+      <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst
         anforderst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
       </p>
       <p>
         <strong>Schutz vor Missbrauch:</strong> An eine Adresse gehen höchstens drei Links pro
         Stunde. Damit niemand von einem Anschluss aus beliebig viele Mails auslöst, zählt der Server
-        außerdem die Anfragen pro IP-Adresse, höchstens 20 pro Stunde. Diese Zählung hält er nur im
-        Arbeitsspeicher. Sie wird nirgends gespeichert und ist nach spätestens einer Stunde
+        außerdem die Anfragen pro IP-Adresse, höchstens 20 pro Stunde, und die Anmeldungen mit
+        Passkey pro IP-Adresse, höchstens 30 pro Stunde. Diese Zählungen hält er nur im
+        Arbeitsspeicher. Sie werden nirgends gespeichert und sind nach spätestens einer Stunde
         verschwunden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, mein berechtigtes Interesse,
-        den Mailversand vor Missbrauch zu schützen.
+        den Mailversand und die Anmeldung vor Missbrauch zu schützen.
       </p>
       <p>
         <strong>Speicherdauer:</strong> Dein Konto bleibt, bis du es löschst. Nutzt du es

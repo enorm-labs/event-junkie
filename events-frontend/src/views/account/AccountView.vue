@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 /**
- * The signed-in visitor's account (#3887): the address, push notifications for this browser (#3894),
+ * The signed-in visitor's account (#3887): the address, push notifications for this browser (#3894), passkeys (#3888),
  * an export of everything stored (Art. 15 and 20 GDPR), sign-out, and deletion. A browser that is not signed in goes to the sign-in page.
  */
 import { onMounted, ref } from 'vue'
@@ -19,6 +19,7 @@ import {
 } from 'reka-ui'
 import ListPage from '@/components/ListPage.vue'
 import NotificationSettings from '@/components/NotificationSettings.vue'
+import PasskeySettings from '@/components/PasskeySettings.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -107,6 +108,8 @@ function since(createdAt?: string): string {
         </Button>
 
         <NotificationSettings />
+
+        <PasskeySettings />
 
         <section class="space-y-3">
           <SectionLabel as="h2">{{ t('account.page.yourData') }}</SectionLabel>
