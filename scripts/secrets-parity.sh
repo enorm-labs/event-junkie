@@ -41,7 +41,7 @@ note() {
     problems=1
 }
 
-WORDS=(zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen)
+WORDS=(zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty)
 N="($(
     IFS='|'
     printf '%s' "${WORDS[*]}"

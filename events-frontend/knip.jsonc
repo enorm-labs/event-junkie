@@ -1,8 +1,8 @@
 {
   "$schema": "./node_modules/knip/schema-jsonc.json",
   // The injector is a second Vite build (vite.injector.config.ts). The CSS script runs by hand and
-  // from dashboard-parity.sh.
-  "entry": ["injector/server.ts", "scripts/ops-page-css.mjs"],
+  // from dashboard-parity.sh. The push worker is registered by its URL, which knip cannot follow (#3894).
+  "entry": ["injector/server.ts", "scripts/ops-page-css.mjs", "public/push-sw.js"],
   // ops-page-css.mjs uses the two packages @tailwindcss/vite ships beside it at the same version, so
   // listing them would be a second pin to keep in step.
   "ignoreDependencies": ["@tailwindcss/node", "@tailwindcss/oxide"],

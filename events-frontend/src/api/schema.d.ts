@@ -22,6 +22,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether this cluster sends push notifications, and the public key a browser subscribes with */
+        get: operations["settings"];
+        /** Stores this browser's push subscription. Subscribing again changes nothing */
+        put: operations["subscribe"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/follows/{kind}/{slug}": {
         parameters: {
             query?: never;
@@ -36,6 +54,40 @@ export interface paths {
         post?: never;
         /** Stops following. Unfollowing what the account does not follow changes nothing */
         delete: operations["unfollow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/follows/{kind}/{slug}/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Turns the bell of one follow on (`instant`) or off (`off`) */
+        put: operations["notify"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/follows/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Turns the bell of every follow on or off at once, as the account page offers when notifications first go on */
+        put: operations["notifyAll"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -90,6 +142,23 @@ export interface paths {
          * @description The query takes the events list's filter keys and `when` (today, weekend, week). Saving the same filters again answers the first search.
          */
         post: operations["save"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/push/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Forgets this browser's push subscription. A POST, so the endpoint stays out of the URL and the request log */
+        post: operations["unsubscribe"];
         delete?: never;
         options?: never;
         head?: never;
@@ -707,6 +776,21 @@ export interface components {
         RsvpRequest: {
             status?: string;
         };
+        PushKeys: {
+            p256dh?: string;
+            auth?: string;
+        };
+        PushSubscriptionRequest: {
+            endpoint?: string;
+            keys?: components["schemas"]["PushKeys"];
+        };
+        NotifyRequest: {
+            notify?: string;
+        };
+        NotifyCount: {
+            /** Format: int64 */
+            changed?: number;
+        };
         SavedSearchRequest: {
             name?: string;
             query?: string;
@@ -718,6 +802,9 @@ export interface components {
             query?: string;
             /** Format: date-time */
             savedAt?: string;
+        };
+        PushUnsubscribeRequest: {
+            endpoint?: string;
         };
         SignInRequest: {
             token?: string;
@@ -1658,6 +1745,9 @@ export interface components {
              */
             totalPages?: number;
         };
+        PushSettings: {
+            publicKey?: string | null;
+        };
         FollowResponse: {
             kind?: string;
             slug?: string;
@@ -1682,6 +1772,14 @@ export interface components {
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
             rsvps?: components["schemas"]["RsvpResponse"][];
+            pushSubscriptions?: components["schemas"]["PushSubscriptionInfo"][];
+        };
+        PushSubscriptionInfo: {
+            pushService?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastSentAt?: string | null;
         };
         RsvpResponse: {
             event?: string;
@@ -2390,6 +2488,48 @@ export interface operations {
             };
         };
     };
+    settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PushSettings"];
+                };
+            };
+        };
+    };
+    subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     check: {
         parameters: {
             query?: never;
@@ -2452,6 +2592,55 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    notify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    notifyAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotifyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotifyCount"];
+                };
             };
         };
     };
@@ -2532,6 +2721,28 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["SavedSearchResponse"];
                 };
+            };
+        };
+    };
+    unsubscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushUnsubscribeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

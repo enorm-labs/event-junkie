@@ -172,6 +172,49 @@ tests:
                 name: event-junkie-mail
                 key: password
 
+  # --- Web Push (ADR-055) ------------------------------------------------------------------------
+  - it: passes no VAPID keys without a push Secret
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      push.existingSecret: ""
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # No private key means no sender: the BFF starts and the account page says push is not available.
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^APP_PUSH_"
+
+  - it: passes both VAPID keys from the push Secret
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      push.existingSecret: "event-junkie-push"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_PUSH_VAPID_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-push
+                key: APP_PUSH_VAPID_PRIVATE_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_PUSH_VAPID_PUBLIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-push
+                key: APP_PUSH_VAPID_PUBLIC_KEY
+
   # --- The BFF's own database role (ADR-053) ------------------------------------------------------
   - it: shares the importer's database login while it has no Secret of its own
     set:

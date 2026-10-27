@@ -38,7 +38,8 @@ const { t } = useI18n()
         minimum: a web server records requests so the site can be delivered and defended, and your
         browser remembers which language, colour scheme and list view you chose. If you ask a map
         what is near you, your position stays in your browser. If you create an account, I keep your
-        e-mail address until you delete it (section 6).
+        e-mail address until you delete it (section 6). If you turn on notifications, they pass
+        through your browser maker's push service, encrypted (section 6).
       </p>
       <p>
         <strong>Images come from Event Junkie too.</strong> Event Junkie downloads them once and
@@ -152,6 +153,17 @@ const { t } = useI18n()
       <p>
         Both are strictly necessary for the sign-in you ask for, so under § 25 (2) 2 TDDDG they
         require no consent. They are not used for tracking and go to nobody but Event Junkie.
+      </p>
+      <!-- LEGAL.md §7.4b: the push worker exists only in a browser that turned notifications on (ADR-055). -->
+      <h3>Notifications, when you turn them on</h3>
+      <p>
+        Only when you press <strong>Turn on notifications</strong> on your account page does your
+        browser ask whether this site may send you notifications, and you decide. If you allow it,
+        Event Junkie installs a small script in your browser, a service worker, and your browser
+        stores a subscription for this site. The script shows a notification that arrives and opens
+        its link when you click it. It does nothing else: it stores nothing and does not change how
+        a page loads. Both are strictly necessary for the notifications you ask for, so under § 25
+        (2) 2 TDDDG they require no consent. Turning notifications off removes both.
       </p>
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Your location, for “near me”</h3>
@@ -305,7 +317,8 @@ const { t } = useI18n()
         site. Your request reaches Event Junkie's servers in Germany directly, so no third country
         is involved in delivering this site to you. Translation, checking and drafting above are the
         only path on which data leaves the EU, and they carry event texts and flyers rather than
-        anything about your visit.
+        anything about your visit. The one exception is notifications, if you turn them on: section
+        6 says what reaches your browser's push service.
       </p>
       <p>
         <strong>That holds for images as well.</strong> They come from Event Junkie's servers,
@@ -358,6 +371,22 @@ const { t } = useI18n()
         to you. Only you can see it. Nobody else sees who plans to go, and no event shows a count.
         Past events stay as your history until you withdraw them or delete the account. If an event
         leaves the calendar, I delete your plan for it too.
+      </p>
+      <p>
+        <strong>Notifications:</strong> if you turn notifications on in a browser, I store that
+        browser's subscription: an address at its push service and two keys, with the time you
+        turned it on and when the last notification went out. The bell on an artist, a venue or a
+        promoter you follow decides what a notification is about: a new date of it. A notification
+        carries a title, one line and a link, nothing else, and it is encrypted so that only your
+        browser can read it. The subscription is deleted when you turn notifications off, when the
+        push service reports it gone, and with your account.
+      </p>
+      <p>
+        <strong>The push service:</strong> a notification goes through the push service of your
+        browser's maker: Google for Chrome and Android, Mozilla for Firefox, Apple for Safari and
+        Microsoft for Edge. Your browser chooses the service, not Event Junkie. It receives the
+        subscription address and the time of each notification, but cannot read the content. All
+        four are US companies, so this data reaches a third country.
       </p>
       <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The

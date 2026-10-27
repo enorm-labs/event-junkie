@@ -31,7 +31,7 @@ data class SessionResponse(
     val signUpOpen: Boolean
 )
 
-/** Everything stored about the account (GDPR Art. 15 and 20). Grows with RSVPs (#3892). */
+/** Everything stored about the account (GDPR Art. 15 and 20). */
 data class AccountExport(
     val exportedAt: Instant,
     val email: String,
@@ -41,14 +41,25 @@ data class AccountExport(
     val sessions: List<SessionInfo>,
     val follows: List<FollowResponse>,
     val searches: List<SavedSearchResponse>,
-    val rsvps: List<RsvpResponse>
+    val rsvps: List<RsvpResponse>,
+    /** One per browser with push notifications on (#3894): the push service's host, never the endpoint. */
+    val pushSubscriptions: List<PushSubscriptionInfo>
+)
+
+data class NotifyRequest(
+    val notify: String
+)
+
+/** How many follows the bulk bell changed. */
+data class NotifyCount(
+    val changed: Long
 )
 
 data class FollowState(
     val following: Boolean
 )
 
-/** One thing the account follows. [kind] is `artist`, `venue` or `promoter`; [notify] is `off` until mail exists (#3891). */
+/** One thing the account follows. [kind] is `artist`, `venue` or `promoter`; [notify] is `off` or `instant`, the bell (#3894). */
 data class FollowResponse(
     val kind: String,
     val slug: String,

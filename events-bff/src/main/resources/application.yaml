@@ -80,6 +80,20 @@ app:
   mail:
     # The sending subdomain keeps its MX apart from the Hetzner mailboxes (ADR-054).
     from: ${APP_MAIL_FROM:Event Junkie <noreply@notify.event-junkie.de>}
+  push:
+    # Web Push (ADR-055). The VAPID keys, `app.push.vapid.private-key` and `.public-key`, are not set here: without
+    # them the BFF builds no sender, and the account page says notifications are not available. The chart sets them
+    # from the push Secret as APP_PUSH_VAPID_PRIVATE_KEY and APP_PUSH_VAPID_PUBLIC_KEY.
+    # The contact a push service's operator reaches us at (RFC 8292).
+    subject: ${APP_PUSH_SUBJECT:mailto:hello@event-junkie.de}
+    # The push services a subscription may point at: Google, Mozilla, Apple, Microsoft. Anything else is refused.
+    # One comma-separated string, because `@Value` does not read a YAML list.
+    allowed-origins: >-
+      https://fcm.googleapis.com,https://updates.push.services.mozilla.com,https://web.push.apple.com,https://*.notify.windows.com
+    # How often new events are announced. The job reads up to `lag` before now, so an import still in its
+    # transaction is read on the next run rather than skipped.
+    new-dates-delay: PT10M
+    new-dates-lag: PT15M
 
 # `info` joins the default `health`. It must NOT be routed through the public ingress: the
 # browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets

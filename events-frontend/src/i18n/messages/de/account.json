@@ -96,5 +96,29 @@
       "past": "Schon gewesen",
       "none": "Noch nichts geplant. Drück auf einer Eventseite auf Interessiert oder Dabei."
     }
+  },
+  "push": {
+    "title": "Benachrichtigungen",
+    "intro": "Eine Push-Nachricht an diesen Browser, wenn ein Act, eine Location oder ein Veranstalter, dem du folgst, einen neuen Termin hat. Welche, wählst du mit der Glocke auf",
+    "following": "deiner Seite „Gefolgt“.",
+    "on": "Benachrichtigungen sind in diesem Browser an.",
+    "off": "Benachrichtigungen sind in diesem Browser aus.",
+    "turnOn": "Benachrichtigungen einschalten",
+    "turnOff": "Benachrichtigungen ausschalten",
+    "homeScreen": "Auf iPhone und iPad funktionieren Benachrichtigungen nur vom Home-Bildschirm. Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“, und öffne Event Junkie von dort.",
+    "unsupported": "Dieser Browser kann keine Push-Nachrichten empfangen.",
+    "unavailable": "Benachrichtigungen sind gerade nicht verfügbar.",
+    "denied": "Benachrichtigungen sind für diese Seite in deinen Browser-Einstellungen blockiert. Erlaube sie dort, um sie einzuschalten.",
+    "failed": "Das hat nicht geklappt. Prüfe deine Verbindung und versuche es noch einmal.",
+    "tooMany": "Benachrichtigungen sind schon in 10 Browsern an. Schalte sie zuerst in einem aus.",
+    "bell": "Push bei neuen Terminen von {name}",
+    "bellOn": "Push bei neuen Terminen: an",
+    "bellOff": "Push bei neuen Terminen: aus",
+    "bellHint": "Die Glocke schickt bei neuen Terminen eine Push-Nachricht an jeden Browser, in dem Benachrichtigungen an sind. Für diesen Browser schaltest du sie ein",
+    "bellHintLink": "auf deiner Kontoseite.",
+    "ringAll": "Die Glocke ist aus bei den {count}, denen du folgst. Einschalten, damit jeder neue Termin als Push kommt? | Die Glocke ist aus bei einem, dem du folgst. Einschalten, damit jeder neue Termin als Push kommt? | Die Glocke ist aus bei {count}, denen du folgst. Alle einschalten, damit jeder neue Termin als Push kommt?",
+    "ringAllYes": "Alle einschalten",
+    "ringAllNo": "Jetzt nicht",
+    "ringAllDone": "Keine Glocke geändert. | Die Glocke ist an für den einen, dem du folgst. Ändern kannst du das auf deiner Seite „Gefolgt“. | Die Glocke ist an für alle {count}. Einzelne änderst du auf deiner Seite „Gefolgt“."
   }
 }

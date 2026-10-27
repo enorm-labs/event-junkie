@@ -92,7 +92,7 @@ flowchart LR
 | The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                                               | `ghcr.io/enorm-labs/`                                                                          |
 | The map data                   | Every tile, glyph and icon of the map. The tiles come from a Protomaps daily build, which publishes no digest to check                                            | `ghcr.io/enorm-labs/event-junkie-map-assets`, pinned by digest in `events-frontend/Dockerfile` |
 | The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it                        | PostgreSQL on the private network, backups in Object Storage                                   |
-| The fourteen cluster secrets   | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                                         | Per cluster. `events-db` in git under SOPS, the rest hand-made                                 |
+| The fifteen cluster secrets    | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                                         | Per cluster. `events-db` in git under SOPS, the rest hand-made                                 |
 | The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                                                | Staging's `cert-manager` namespace, the operator's Keychain                                    |
 | `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                                                   | `flux-system` on each cluster                                                                  |
 | The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                                         | Hetzner DNS, cert-manager                                                                      |
@@ -126,6 +126,7 @@ Every namespace under the chart starts from default deny. Each arrow below is a 
 | importer     | Enrichment sources, such as promoter and fan sites ([ADR-043](../adr/ADR-043_ONE_MAIN_SOURCE_PER_VENUE_AND_ENRICHMENT_SOURCES.md)) | `allow-scraping`. The scraper client applies `RobotsTxtFilter.kt` and `PerHostThrottlingFilter.kt`, as for a venue. B4 lists what a source can write |
 | importer     | The sites of venues with no importer, once a month (`venuecheck/`)                                                                 | `allow-scraping`. `VenueSiteProber.kt` uses the scraper client, so the robots and throttling filters apply. `ForbiddenHosts.kt` skips some hosts, B4 |
 | BFF          | PostgreSQL, Object Storage on 443                                                                                                  | `allow-database` and `allow-object-storage`. The BFF never reaches a venue                                                                           |
+| BFF          | The browsers' push services on 443: Google, Mozilla, Apple, Microsoft                                                              | `allow-push`, rendered only with the push Secret. The internet minus the private ranges. `PushEndpoints.kt` refuses any other host, B12              |
 | frontend     | The BFF service port                                                                                                               | `allow-frontend-to-bff`, for the injector sidecar                                                                                                    |
 | cert-manager | Let's Encrypt, the Hetzner API on staging                                                                                          | `cert-manager-netpol.yaml` per cluster                                                                                                               |
 | flux-system  | GHCR, `github.com`                                                                                                                 | Flux's own namespace, outside the chart                                                                                                              |
@@ -274,7 +275,7 @@ Once a day the importer asks Business Discovery for the recent posts of each ven
 ([ADR-048](../adr/ADR-048_INSTAGRAM_POSTS_THROUGH_BUSINESS_DISCOVERY.md)). It sends a venue's handle and our Page token to `graph.facebook.com`. It
 fetches each post's images from Instagram's CDN, and the model reads the caption and the images
 ([ADR-049](../adr/ADR-049_INSTAGRAM_DRAFTS_READ_THE_POST_IMAGES.md)). The result is a draft for a person to review. The chart ships the pass off
-(`importer.instagram.enabled`), and both clusters turn it on.
+(`importer.instagram.enabled`), and production turns it on.
 
 | Threat                                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------------------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -285,6 +286,19 @@ fetches each post's images from Instagram's CDN, and the model reads the caption
 
 `allow-scraping` is per workload, not per host. So the new upstream widened no NetworkPolicy, and no test failed when it arrived. §4's trigger for a
 new outbound connection is the check for this.
+
+### B12 · BFF → the browsers' push services
+
+When a followed artist, venue or promoter has a new date, the BFF posts an encrypted message to each subscribed browser's push service
+([ADR-055](../adr/ADR-055_WEB_PUSH_THROUGH_AN_OPT_IN_SERVICE_WORKER.md)). The browser hands the BFF the endpoint, so the BFF posts to a URL a visitor
+supplied. The chart ships push off (`push.existingSecret`).
+
+| Threat                                                           | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                       |
+| ---------------------------------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A forged subscription makes the BFF post to an address we choose | S, I   | medium     | medium | Mitigated. `PushEndpoints.kt` accepts only `https` on the four push services' hosts, default port, no user info. `allow-push` excepts the private ranges. Only a signed-in account can subscribe, 10 at most |
+| The VAPID private key leaks, and someone pushes as the site      | S      | low        | low    | Mitigated. Hand-made, never in git. It reaches only the browsers subscribed on that cluster and reads nothing. A new pair revokes it. SECRETS.md § `event-junkie-push`                                       |
+| A push service reads or logs what a visitor follows              | I      | low        | low    | Mitigated. The payload is encrypted for the browser (RFC 8291). The service sees the endpoint and the time. The privacy notice names the four services                                                       |
+| A link in a push opens a hostile site                            | T      | low        | low    | Mitigated. The BFF sends only a path on the site, and `push-sw.js` opens a path on its own origin and nothing else                                                                                           |
 
 ### Cluster-wide
 

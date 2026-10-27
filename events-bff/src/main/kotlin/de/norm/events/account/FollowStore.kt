@@ -83,6 +83,34 @@ class FollowStore(
             .map { _ -> true }
             .awaitOneOrNull() ?: false
 
+    /** Sets the bell of one follow (#3894). Answers false when the account does not follow it. */
+    suspend fun setNotify(
+        accountId: UUID,
+        kind: FollowKind,
+        entityId: Long,
+        notify: String
+    ): Boolean =
+        db
+            .sql("UPDATE accounts.follow SET notify = :notify WHERE account_id = :account AND kind = :kind AND entity_id = :entity")
+            .bind("notify", notify)
+            .bind("account", accountId)
+            .bind("kind", kind.tag)
+            .bind("entity", entityId)
+            .fetch()
+            .awaitRowsUpdated() > 0
+
+    /** Sets the bell of every follow of the account at once (#3894), as offered when notifications first go on. Answers how many. */
+    suspend fun setAllNotify(
+        accountId: UUID,
+        notify: String
+    ): Long =
+        db
+            .sql("UPDATE accounts.follow SET notify = :notify WHERE account_id = :account AND kind <> 'search'")
+            .bind("notify", notify)
+            .bind("account", accountId)
+            .fetch()
+            .awaitRowsUpdated()
+
     /** Everything the account follows whose entity still exists, by name. */
     suspend fun list(accountId: UUID): List<FollowedEntity> =
         db

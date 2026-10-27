@@ -6,7 +6,7 @@
 only when the visitor turns on notifications. The worker handles push messages and notification clicks, and nothing else. It caches nothing.**
 
 Decided in [#3885](https://github.com/enorm-labs/event-junkie/issues/3885), option 2, by the operator.
-[#3894](https://github.com/enorm-labs/event-junkie/issues/3894) builds it. **Not implemented yet.**
+[#3894](https://github.com/enorm-labs/event-junkie/issues/3894) builds it. **Implemented.** A cluster sends pushes once its push Secret exists ([`docs/ops/SECRETS.md`](../ops/SECRETS.md)).
 
 **Amends [#2727](https://github.com/enorm-labs/event-junkie/issues/2727).** #2727 decided "a web app manifest only, no service worker". That rule stays
 for every visitor who does not turn on notifications. Offline caching (#2727 options 3 and 4) is still out of scope and needs its own decision.

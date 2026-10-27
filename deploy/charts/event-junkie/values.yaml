@@ -455,6 +455,15 @@ mail:
   # 587 with STARTTLS, which the BFF requires. Hetzner Cloud blocks outbound 25 and 465.
   port: 587
 
+# push.existingSecret names the hand-made Secret with the VAPID key pair for Web Push (ADR-055), as
+# `scripts/vapid-keys.sh` prints it. Empty means no push: the BFF starts without a sender, the account page says
+# notifications are not available, and no egress to the push services is rendered.
+push:
+  existingSecret: ""
+  secretKeys:
+    privateKey: "APP_PUSH_VAPID_PRIVATE_KEY"
+    publicKey: "APP_PUSH_VAPID_PUBLIC_KEY"
+
 networkPolicy:
   enabled: true
   # networkPolicy.databaseCidr is the /32 of `postgres_ip`. Required when enabled, and SEPARATELY FROM
@@ -514,6 +523,18 @@ networkPolicy:
     enabled: true
     ports:
       - 587
+    exceptCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+      - "169.254.0.0/16"
+  pushEgress:
+    # networkPolicy.pushEgress lets the BFF reach the browsers' push services (ADR-055), rendered only while
+    # `push.existingSecret` is set. Google, Mozilla, Apple and Microsoft publish no stable range, so the internet
+    # minus the private ranges, on 443 alone. The BFF itself refuses any host but those four (PushEndpoints).
+    enabled: true
+    ports:
+      - 443
     exceptCidrs:
       - "10.0.0.0/8"
       - "172.16.0.0/12"

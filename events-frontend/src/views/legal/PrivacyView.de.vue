@@ -42,7 +42,8 @@ const { t } = useI18n()
         werden kann, und dein Browser merkt sich, welche Sprache, welches Farbschema und welche
         Ansicht du gewählt hast. Fragst du eine Karte, was in deiner Nähe läuft, bleibt dein
         Standort in deinem Browser. Legst du ein Konto an, speichere ich deine E-Mail-Adresse, bis
-        du es löschst (Abschnitt 6).
+        du es löschst (Abschnitt 6). Schaltest du Benachrichtigungen ein, laufen sie verschlüsselt
+        über den Push-Dienst deines Browser-Herstellers (Abschnitt 6).
       </p>
       <p>
         <strong>Auch die Bilder kommen von Event Junkie.</strong> Event Junkie lädt sie einmal
@@ -165,6 +166,18 @@ const { t } = useI18n()
         Beide sind unbedingt erforderlich für die Anmeldung, die du selbst anforderst, und bedürfen
         deshalb nach § 25 Abs. 2 Nr. 2 TDDDG keiner Einwilligung. Sie dienen nicht dem Tracking und
         gehen an niemanden außer Event Junkie.
+      </p>
+      <!-- LEGAL.md §7.4b: the push worker exists only in a browser that turned notifications on (ADR-055). -->
+      <h3>Benachrichtigungen, wenn du sie einschaltest</h3>
+      <p>
+        Erst wenn du auf deiner Kontoseite <strong>Benachrichtigungen einschalten</strong> drückst,
+        fragt dein Browser, ob diese Seite dir Benachrichtigungen schicken darf, und du
+        entscheidest. Erlaubst du es, installiert Event Junkie ein kleines Skript in deinem Browser,
+        einen Service Worker, und dein Browser speichert ein Abonnement für diese Seite. Das Skript
+        zeigt eine eintreffende Benachrichtigung und öffnet ihren Link, wenn du darauf klickst.
+        Sonst tut es nichts: Es speichert nichts und ändert nicht, wie eine Seite lädt. Beides ist
+        für die Benachrichtigungen, die du anforderst, unbedingt erforderlich, nach § 25 Abs. 2 Nr.
+        2 TDDDG also ohne Einwilligung. Schaltest du Benachrichtigungen aus, ist beides wieder weg.
       </p>
       <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
       <h3>Dein Standort für „In der Nähe“</h3>
@@ -330,7 +343,9 @@ const { t } = useI18n()
         Deine Anfrage erreicht die Server von Event Junkie in Deutschland direkt. An der
         Auslieferung dieser Seite ist damit kein Drittland beteiligt. Übersetzung, Prüfung und
         Entwürfe oben sind der einzige Weg, auf dem Daten die EU verlassen, und sie betreffen
-        Veranstaltungstexte und Flyer, nicht deinen Besuch.
+        Veranstaltungstexte und Flyer, nicht deinen Besuch. Die einzige Ausnahme sind
+        Benachrichtigungen, wenn du sie einschaltest: Abschnitt 6 sagt, was beim Push-Dienst deines
+        Browsers ankommt.
       </p>
       <p>
         <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von den Servern von Event Junkie,
@@ -388,6 +403,23 @@ const { t } = useI18n()
         hingehen will, und kein Event zeigt eine Zahl. Vergangene Events bleiben als dein Verlauf,
         bis du sie zurücknimmst oder das Konto löschst. Verschwindet ein Event aus dem Kalender,
         lösche ich auch deinen Plan dafür.
+      </p>
+      <p>
+        <strong>Benachrichtigungen:</strong> Schaltest du Benachrichtigungen in einem Browser ein,
+        speichere ich dessen Abonnement: eine Adresse beim Push-Dienst des Browsers und zwei
+        Schlüssel, dazu den Zeitpunkt des Einschaltens und der letzten Benachrichtigung. Die Glocke
+        an einem Act, einer Location oder einem Veranstalter, dem du folgst, legt fest, worum es
+        geht: einen neuen Termin. Eine Benachrichtigung enthält einen Titel, eine Zeile und einen
+        Link, sonst nichts, und sie ist verschlüsselt, sodass nur dein Browser sie lesen kann. Das
+        Abonnement wird gelöscht, wenn du Benachrichtigungen ausschaltest, wenn der Push-Dienst es
+        als erloschen meldet, und mit deinem Konto.
+      </p>
+      <p>
+        <strong>Der Push-Dienst:</strong> Eine Benachrichtigung läuft über den Push-Dienst des
+        Herstellers deines Browsers: Google bei Chrome und Android, Mozilla bei Firefox, Apple bei
+        Safari und Microsoft bei Edge. Den Dienst wählt dein Browser, nicht Event Junkie. Er erhält
+        die Adresse des Abonnements und den Zeitpunkt jeder Benachrichtigung, kann ihren Inhalt aber
+        nicht lesen. Alle vier sind US-Unternehmen, diese Daten erreichen also ein Drittland.
       </p>
       <p>
         <strong>Zweck und Rechtsgrundlage:</strong> Das Konto ist ein Dienst, den du selbst

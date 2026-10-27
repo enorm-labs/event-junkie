@@ -18,6 +18,7 @@ class AccountMetrics(
     private val signIns = SignInOutcome.entries.associateWith { registry.counter(SIGN_IN, TAG_OUTCOME, it.tag) }
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
+    private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
     private val follows =
         FollowAction.entries.associateWith { action ->
@@ -51,6 +52,8 @@ class AccountMetrics(
 
     fun record(action: RsvpAction) = rsvps.getValue(action).increment()
 
+    fun record(action: PushAction) = pushes.getValue(action).increment()
+
     fun record(
         action: FollowAction,
         kind: FollowKind
@@ -76,6 +79,9 @@ class AccountMetrics(
 
         /** `bff.account.rsvp{action}`: RSVPs set or changed, and withdrawn (#3892). */
         const val RSVP = "bff.account.rsvp"
+
+        /** `bff.account.push{action}`: browsers subscribed and unsubscribed, and bells turned on and off (#3894). What was sent is `bff.push.sent`. */
+        const val PUSH = "bff.account.push"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -179,4 +185,13 @@ enum class RsvpAction(
 ) {
     SET("set"),
     WITHDRAW("withdraw")
+}
+
+enum class PushAction(
+    val tag: String
+) {
+    SUBSCRIBE("subscribe"),
+    UNSUBSCRIBE("unsubscribe"),
+    BELL_ON("bell_on"),
+    BELL_OFF("bell_off")
 }

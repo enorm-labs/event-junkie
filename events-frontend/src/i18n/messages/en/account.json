@@ -96,5 +96,29 @@
       "past": "Been there",
       "none": "Nothing planned yet. Press Interested or Going on an event's page."
     }
+  },
+  "push": {
+    "title": "Notifications",
+    "intro": "A push to this browser when an artist, venue or promoter you follow has a new date. Choose which ones with the bell on",
+    "following": "your Following page.",
+    "on": "Notifications are on in this browser.",
+    "off": "Notifications are off in this browser.",
+    "turnOn": "Turn on notifications",
+    "turnOff": "Turn off notifications",
+    "homeScreen": "On iPhone and iPad, notifications work only from the Home Screen. In Safari, tap Share, then \"Add to Home Screen\", and open Event Junkie from there.",
+    "unsupported": "This browser cannot receive push notifications.",
+    "unavailable": "Notifications are not available right now.",
+    "denied": "Notifications are blocked for this site in your browser settings. Allow them there to turn them on.",
+    "failed": "That did not work. Check your connection and try again.",
+    "tooMany": "Notifications are on in 10 browsers already. Turn them off in one first.",
+    "bell": "Push for new dates of {name}",
+    "bellOn": "Push for new dates: on",
+    "bellOff": "Push for new dates: off",
+    "bellHint": "The bell sends a push for new dates to every browser where notifications are on. Turn them on for this browser",
+    "bellHintLink": "on your account page.",
+    "ringAll": "The bell is off on the {count} you follow. Ring them, so each new date comes as a push? | The bell is off on one you follow. Ring it, so each new date comes as a push? | The bell is off on {count} you follow. Ring them all, so each new date comes as a push?",
+    "ringAllYes": "Ring them all",
+    "ringAllNo": "Not now",
+    "ringAllDone": "No bell changed. | The bell is on for the one you follow. Change it on your Following page. | The bell is on for all {count}. Change single ones on your Following page."
   }
 }

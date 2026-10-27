@@ -235,6 +235,18 @@ through Scaleway Transactional Email, so Scaleway receives the recipient's addre
 - **The client's IP address counts sign-in requests in memory only.** The BFF holds it per pod, for an hour at most,
   to limit links to 20 an hour from one client. It is written nowhere. The connection data row below covers it.
 
+**The browsers' push services receive data when a visitor turns notifications on** (ADR-055, #3894). The BFF sends
+each notification to the push service the visitor's browser chose: Google, Mozilla, Apple or Microsoft. All four are US
+companies.
+
+- **What they receive:** the subscription endpoint, which identifies one browser, the time of each notification, and
+  the BFF's address. The payload is encrypted for the browser (RFC 8291), so they cannot read the title or the link.
+- **What Hetzner stores:** the endpoint and the browser's two keys in `accounts.push_subscription`. They are account
+  data, in the contractual master data row below. The Hetzner AVV declares that category (checked 2026-10-27).
+- **Their role and the transfer mechanism are open** (§14). The browser maker runs the service for its own browser, and
+  the visitor's browser picks it. Whether each one is a processor or a separate recipient decides what the notice must
+  name as the transfer basis.
+
 **MusicBrainz is a source, not a processor, and this is where that is decided so it is not asked again** (ADR-031,
 [#1567](https://github.com/enorm-labs/event-junkie/issues/1567)). On a scheduled tick the importer sends every billed
 artist's stage name as a search term to the MetaBrainz Foundation (California). It stores what came back: the verdict
@@ -317,15 +329,15 @@ row in §5 of the notice first ([`ops/EMAIL.md`](ops/EMAIL.md) §4 step 7).
 
 **Categories of personal data**, mapped to the vocabulary these forms use:
 
-| Category                        | Applies                      | What it actually is here                                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId`, `discogsId`, both verdicts and the comedian flag (ADR-031, ADR-035, ADR-039). The largest category by far; see §7.3 for why it counts                                                                                |
-| **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right                                                                                                         |
-| **Communication data**          | **yes — mailboxes and URLs** | Mail to the role mailboxes: the sender's address and the message (see below). No phone numbers. Artist profile and social URLs, and a venue's Instagram and Facebook URLs (#2839). Declared before the mailboxes existed, so no AVV change                                                                                                                                        |
-| **Contractual master data**     | **yes — since #3887**        | An account: the e-mail address, the language, the creation date, the last use, what it follows (#3889), its saved searches with the name the holder gives each (#3890), the events it marks interested or going (#3892), and per session its start, last use and expiry. The link and the session token are stored as hashes. The account terms are the contract (Art. 6 (1) (b)) |
-| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                                                                                                                                                                                 |
-| **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). The BFF holds it in memory for an hour at most to limit sign-in links (#3887). Declared for the same reason log data was — see below and §7.5.1                                                                                                 |
-| Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                                                                                                                                                                                       |
+| Category                        | Applies                      | What it actually is here                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId`, `discogsId`, both verdicts and the comedian flag (ADR-031, ADR-035, ADR-039). The largest category by far; see §7.3 for why it counts                                                                                                                                                 |
+| **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right                                                                                                                                                                          |
+| **Communication data**          | **yes — mailboxes and URLs** | Mail to the role mailboxes: the sender's address and the message (see below). No phone numbers. Artist profile and social URLs, and a venue's Instagram and Facebook URLs (#2839). Declared before the mailboxes existed, so no AVV change                                                                                                                                                                                                         |
+| **Contractual master data**     | **yes — since #3887**        | An account: the e-mail address, the language, the creation date, the last use, what it follows (#3889), its saved searches with the name the holder gives each (#3890), the events it marks interested or going (#3892), per browser with notifications on its push subscription (#3894), and per session its start, last use and expiry. The link and the session token are stored as hashes. The account terms are the contract (Art. 6 (1) (b)) |
+| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                                                                                                                                                                                                                                                  |
+| **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). The BFF holds it in memory for an hour at most to limit sign-in links (#3887). Declared for the same reason log data was — see below and §7.5.1                                                                                                                                                                  |
+| Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 **Log data was declared even though §7.5 is open**, and the reasoning generalises. A processor agreement should cover
 the maximum that might be processed. Narrowing it later is trivial, and discovering that something was processed
@@ -444,6 +456,21 @@ access logs and response-cache keys. A list of the venue slugs within the radius
 
 **If distance moves to the server, this section and §3 of both notices become false.** `legalViews.spec.ts` pins the
 notice's claim, but no test can see where the code sends the position. Read this section in the review of such a change.
+
+### 7.4b Push notifications — a service worker on request only
+
+Web Push (ADR-055, #3894) needs a service worker, which is storage on terminal equipment under § 25 TDDDG. It exists
+only in a browser where the visitor pressed "Turn on notifications".
+
+- **Registered on a click only.** `usePush.ts` registers `/push-sw.js` after the browser's own permission prompt. No
+  page registers it on load.
+- **It controls no page.** Its scope is `/push/`, where no page lives. It has no `fetch` handler and stores nothing.
+- **It goes with the switch.** "Turn off notifications" unsubscribes and unregisters it.
+- **§ 25 (2) 2 TDDDG, strictly necessary.** The worker and the browser's subscription serve only the notifications the
+  visitor asked for. Both notices say so in §3.
+
+**If the worker ever caches or registers on load, this section and §3 of both notices become false**, and #2727's
+offline question opens again.
 
 ### 7.5 Logging
 
@@ -780,7 +807,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor                                                                                                   | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | Three: Hetzner's AVV, Anthropic's DPA and Scaleway's DPA for the sign-in mail (#3887). Anthropic, for translation, the data check and the Instagram drafts, is the one third-country transfer — #1233, #3242, #3366 | §7.3a                |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                                                                                                                            | §7.3a                |
-| 15  | Terms of Use           | None. An account is free, and its follows (#3889) only arrange public event data for its holder, so the §7.6 disclaimer is still the whole answer — #478. Revisit with mail (#3891)                                 | §7.6                 |
+| 15  | Terms of Use           | None. An account is free, and its follows (#3889) only arrange public event data for its holder, so the §7.6 disclaimer is still the whole answer — #478. Revisit with push (#3894, §14) and with mail (#3891)      | §7.6                 |
 | 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                                                                                                                        | `legal-review/`      |
 
 ## 14. Open items
@@ -793,6 +820,11 @@ is also an issue, and this section says what it _means_.
 1. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
 2. **An accessibility statement** — only publishable once conformance is actually measured (§12).
 3. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
+4. **The push services' role and transfer basis** (§7.3a, #3894) — processor or recipient, and the Art. 44 ff.
+   mechanism for each of Google, Mozilla, Apple and Microsoft. The notice states the third-country transfer and names
+   no mechanism until this is settled.
+5. **Terms of Use with push** (§13 row 15, #3894). A push is the first message the site sends on its own. The holder
+   chooses it with the bell.
 
 ### Two rules this section exists to enforce
 
