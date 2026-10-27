@@ -19,10 +19,32 @@ class SlaughterhouseOverviewPageScraperTest {
 
     private fun on(day: Int) = events.first { it.eventDate == LocalDate.of(2026, 10, day) }
 
+    private fun on(
+        month: Int,
+        day: Int
+    ) = events.single { it.eventDate == LocalDate.of(2026, month, day) }
+
+    private fun billing(
+        month: Int,
+        day: Int
+    ) = on(month, day).artists.map { it.name to it.role }
+
     @Test
     fun `reads one event per entry between the separators`() {
         events.map { it.eventDate.toString() } shouldBe
-            listOf("2026-10-10", "2026-10-16", "2026-10-17", "2026-10-30", "2026-10-31", "2026-11-06", "2026-12-19")
+            listOf(
+                "2026-10-10",
+                "2026-10-16",
+                "2026-10-17",
+                "2026-10-30",
+                "2026-10-31",
+                "2026-11-06",
+                "2026-11-07",
+                "2026-11-14",
+                "2026-12-05",
+                "2026-12-12",
+                "2026-12-19"
+            )
         val concert = on(16)
         concert.title shouldBe "Tyske Ludder + To Avoid"
         concert.eventType shouldBe EventType.CONCERT.name
@@ -109,6 +131,54 @@ class SlaughterhouseOverviewPageScraperTest {
         night.title shouldBe "Stoner’s Fall – Sheev + Ghostones + Caosonora"
         night.artists.map { it.name to it.role } shouldBe
             listOf("Sheev" to ArtistRole.HEADLINER, "Ghostones" to ArtistRole.HEADLINER, "Caosonora" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `bills the live acts an entry names over the series before its title's colon`() {
+        on(11, 14).title shouldBe "Aufnahme+Wiedergabe: Sutcliffe No More / Control / Kommando"
+        billing(11, 14) shouldBe
+            listOf("Sutcliffe No More" to ArtistRole.HEADLINER, "Control" to ArtistRole.HEADLINER, "Kommando" to ArtistRole.HEADLINER)
+        on(11, 14).artists.none { it.titleDerived } shouldBe true
+    }
+
+    @Test
+    fun `bills a house programme's concert and party lines, not the night's name`() {
+        billing(12, 5) shouldBe
+            listOf(
+                "Without Shrimps" to ArtistRole.HEADLINER,
+                "WR51" to ArtistRole.HEADLINER,
+                "Wildberries" to ArtistRole.HEADLINER,
+                "Mark Reeder" to ArtistRole.DJ
+            )
+    }
+
+    @Test
+    fun `bills a paragraph of bare names over a title of series names`() {
+        billing(12, 12) shouldBe
+            listOf("Bad Sector" to ArtistRole.HEADLINER, "Inade" to ArtistRole.HEADLINER, "Phelios" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `reads the DJs under an on decks line and a bare djs line`() {
+        billing(11, 6) shouldBe
+            listOf("Uwe Marx", "Marko König", "Ben Bloodygrave", "Oberst Panizza", "Ecate Styx").map { it to ArtistRole.DJ }
+        billing(11, 7) shouldBe listOf("terrorwave", "karocky", "paura diamante").map { it to ArtistRole.DJ }
+    }
+
+    @Test
+    fun `keeps the title's act when a paragraph of names is a sentence, a field or a DJ list`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">13.11.2026<br><strong>Konzert+Party: Tyske Ludder</strong></p>
+            <p class="wp-block-paragraph">Beginn 22 Uhr<br>Abendkasse</p>
+            <p class="wp-block-paragraph">Nur begrenzte Tickets!<br>Sichert euch eure Tickets!</p>
+            <p class="wp-block-paragraph">djs<br>terrorwave<br>karocky</p>
+            </div>
+            """.trimIndent()
+        val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("Tyske Ludder" to ArtistRole.HEADLINER, "terrorwave" to ArtistRole.DJ, "karocky" to ArtistRole.DJ)
     }
 
     @Test

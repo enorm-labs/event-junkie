@@ -7,7 +7,6 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -23,7 +22,7 @@ import java.nio.charset.StandardCharsets
  * Pure parser for the Slaughterhouse `/konzerte/` page, one block-editor post whose entries are runs of blocks between
  * `hr.wp-block-separator` rules. An entry opens with `16.10.2026<br><strong>Konzert: Tyske Ludder + To Avoid</strong>`,
  * whose kind is `Konzert`, `Party` or `Konzert+Party`. A `Beginn:` or `Doors:` line, a `Tickets:` link and an
- * `Eintritt:` price follow, and a party adds a `: minimal : synth : wave :` style line and a `djs:` line.
+ * `Eintritt:` price follow, and a party adds a `: minimal : synth : wave :` style line and its DJs ([SlaughterhouseLineup]).
  *
  * The time line's colon is optional (`Beginn 22 Uhr`, `doors open 21:00 Uhr`). The Factory nights name only doors, with
  * `um 22 Uhr Beginn` in the caption, so a `<time> Uhr Beginn` phrase sets the start when no `Beginn` line does.
@@ -71,7 +70,8 @@ class SlaughterhouseOverviewPageScraper {
         val cleanedTitle = cleanEventTitle(rawTitle)
         val title = cleanedTitle.text
         val type = if (kind.contains("konzert", ignoreCase = true)) EventType.CONCERT.name else EventType.PARTY.name
-        val lines = blocks.filter { it.tagName() == "p" && it !== header }.flatMap { it.textLines() }
+        val paragraphs = blocks.filter { it.tagName() == "p" && it !== header }.map { it.textLines() }
+        val lines = paragraphs.flatten()
         val ticketLink =
             blocks.flatMap { it.select("a[href]") }.firstOrNull { link ->
                 link
@@ -81,7 +81,6 @@ class SlaughterhouseOverviewPageScraper {
                     ?.let { TICKETS.containsMatchIn(it) } == true
             }
         val entry = lines.firstOrNull { it.startsWith("Eintritt:") }
-        val djs = lines.firstOrNull { it.startsWith("djs:", ignoreCase = true) }?.substringAfter(':')
         return ScrapedEvent(
             title = title,
             description = lines.filterNot(::isFieldLine).joinToString("\n").ifBlank { null },
@@ -110,7 +109,7 @@ class SlaughterhouseOverviewPageScraper {
                     ?.joinToString(", "),
             priceBoxOffice = entry?.let(::parsePriceValue),
             soldOut = cleanedTitle.soldOut,
-            artists = actsOf(title, type, djs)
+            artists = actsOf(title, type, SlaughterhouseLineup.of(paragraphs))
         )
     }
 
@@ -119,22 +118,24 @@ class SlaughterhouseOverviewPageScraper {
         pattern: Regex
     ): java.time.LocalTime? = lines.firstNotNullOfOrNull { pattern.find(it) }?.let { parseTime("${it.groupValues[1]}:${it.groupValues[2].ifEmpty { "00" }}") }
 
+    /**
+     * The acts the entry's lines name ([SlaughterhouseLineup]), and the title's acts only for a concert whose lines name none.
+     * A party bills only its DJs.
+     */
     private fun actsOf(
         title: String,
         type: String,
-        djs: String?
-    ): List<ScrapedArtist> =
-        if (type == EventType.PARTY.name) {
-            djs
-                ?.split(',')
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() && !isNonArtistName(it) }
-                ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
-                .orEmpty()
-        } else {
-            ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER, titleDerived = true)) }
-                ?: buildArtistsForEventType(billedSideOfDash(title), subtitle = null, eventType = type)
-        }
+        lineup: SlaughterhouseLineup
+    ): List<ScrapedArtist> {
+        val djs = lineup.djs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        if (type == EventType.PARTY.name) return djs
+        val headliners =
+            lineup.headliners.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }.ifEmpty {
+                ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER, titleDerived = true)) }
+                    ?: buildArtistsForEventType(billedSideOfDash(title), subtitle = null, eventType = type)
+            }
+        return headliners + djs
+    }
 
     private fun billedSideOfDash(title: String): String =
         SERIES_DASH
