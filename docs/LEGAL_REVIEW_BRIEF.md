@@ -99,7 +99,8 @@ A reviewer flags each of these by default. Each is a decision with reasoning beh
   § 25 (2) 2 TDDDG.
 - **No analytics section.** There is no analytics.
 - **No consent withdrawal beyond Art. 7 (3).** Nothing rests on consent.
-- **No Terms of Use page.** A visitor never registers, so terms would bind nobody. See [LEGAL.md](LEGAL.md) §7.6.
+- **No Terms of Use page.** An account is free and holds no user content, and a push goes out only on the holder's opt-in. See [LEGAL.md](LEGAL.md) §7.6,
+  which also names what would change that.
 - **Artists are described as `PerformingGroup` in structured data, never as `Person`.** Only one of those asserts that
   a named individual is a natural person.
 
