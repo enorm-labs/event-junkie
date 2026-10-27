@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
@@ -116,10 +117,10 @@ class ModusDetailPageScraperTest {
         comedy.eventType shouldBe EventType.COMEDY.name
         comedy.artists shouldBe
             listOf(
-                ScrapedArtist("Till Reiners", "HEADLINER"),
-                ScrapedArtist("Rebecca Pap", "SUPPORT"),
-                ScrapedArtist("Ludwig Benecke", "SUPPORT"),
-                ScrapedArtist("Anna Bomhard", "SUPPORT")
+                ScrapedArtist("Till Reiners", ArtistRole.HEADLINER),
+                ScrapedArtist("Rebecca Pap", ArtistRole.SUPPORT),
+                ScrapedArtist("Ludwig Benecke", ArtistRole.SUPPORT),
+                ScrapedArtist("Anna Bomhard", ArtistRole.SUPPORT)
             )
     }
 
@@ -129,7 +130,7 @@ class ModusDetailPageScraperTest {
 
         justSigned.eventType shouldBe EventType.CONCERT.name
         justSigned.artists.map { it.name to it.role } shouldBe
-            listOf("Yasola" to "HEADLINER", "Victoria West" to "HEADLINER", "PARA" to "HEADLINER")
+            listOf("Yasola" to ArtistRole.HEADLINER, "Victoria West" to ArtistRole.HEADLINER, "PARA" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -139,7 +140,7 @@ class ModusDetailPageScraperTest {
         twist.title shouldBe "With a Twist - Goldie333, JnnrHndrxx & ORANYA"
         twist.eventType shouldBe EventType.CONCERT.name
         twist.artists.map { it.name to it.role } shouldBe
-            listOf("Goldie333" to "HEADLINER", "JnnrHndrxx" to "HEADLINER", "ORANYA" to "HEADLINER")
+            listOf("Goldie333" to ArtistRole.HEADLINER, "JnnrHndrxx" to ArtistRole.HEADLINER, "ORANYA" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -167,10 +168,10 @@ class ModusDetailPageScraperTest {
 
         comedy.artists shouldBe
             listOf(
-                ScrapedArtist("Till Reiners", "HEADLINER"),
-                ScrapedArtist("Rebecca Pap", "SUPPORT"),
-                ScrapedArtist("Ludwig Benecke", "SUPPORT"),
-                ScrapedArtist("Anna Bomhard", "SUPPORT")
+                ScrapedArtist("Till Reiners", ArtistRole.HEADLINER),
+                ScrapedArtist("Rebecca Pap", ArtistRole.SUPPORT),
+                ScrapedArtist("Ludwig Benecke", ArtistRole.SUPPORT),
+                ScrapedArtist("Anna Bomhard", ArtistRole.SUPPORT)
             )
     }
 }

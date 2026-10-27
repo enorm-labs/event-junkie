@@ -1,6 +1,7 @@
 package de.norm.events.scraper.bogen47
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -235,7 +236,7 @@ internal class Bogen47ApiScraper(
         val supportActs =
             SUPPORT_TAIL
                 .findAll(title)
-                .map { ScrapedArtist(name = stripArtistSuffix(it.groupValues[1].trim()), role = "SUPPORT") }
+                .map { ScrapedArtist(name = stripArtistSuffix(it.groupValues[1].trim()), role = ArtistRole.SUPPORT) }
                 .toList()
         val billing =
             title
@@ -246,7 +247,7 @@ internal class Bogen47ApiScraper(
                 .trim()
         val lineup = bulletedLineup(description)
         val headliners =
-            lineup?.map { ScrapedArtist(name = it, role = "HEADLINER") } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
+            lineup?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) } ?: headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
                 act.name
                     .split(NAME_JOINER)
                     .map { it.trim() }

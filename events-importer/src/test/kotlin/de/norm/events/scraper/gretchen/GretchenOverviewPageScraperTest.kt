@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gretchen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
@@ -68,7 +69,7 @@ class GretchenOverviewPageScraperTest {
 
         @Test
         fun `extracts the lineup performer as headliner`() {
-            eventWithId("3492").artists shouldContainExactly listOf(ScrapedArtist("Tulipa Ruiz", "HEADLINER"))
+            eventWithId("3492").artists shouldContainExactly listOf(ScrapedArtist("Tulipa Ruiz", ArtistRole.HEADLINER))
         }
 
         @Test
@@ -106,13 +107,13 @@ class GretchenOverviewPageScraperTest {
             event.title shouldBe "saHHara x UNDERGA33 present: DAZE"
             event.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Gnawa Vibes", "HEADLINER"),
-                    ScrapedArtist("HearThug", "SUPPORT"),
-                    ScrapedArtist("saHHar", "SUPPORT"),
-                    ScrapedArtist("Rabibti áTable", "SUPPORT"),
-                    ScrapedArtist("Aalia", "SUPPORT"),
-                    ScrapedArtist("DINA", "SUPPORT"),
-                    ScrapedArtist("Mefteh", "SUPPORT")
+                    ScrapedArtist("Gnawa Vibes", ArtistRole.HEADLINER),
+                    ScrapedArtist("HearThug", ArtistRole.SUPPORT),
+                    ScrapedArtist("saHHar", ArtistRole.SUPPORT),
+                    ScrapedArtist("Rabibti áTable", ArtistRole.SUPPORT),
+                    ScrapedArtist("Aalia", ArtistRole.SUPPORT),
+                    ScrapedArtist("DINA", ArtistRole.SUPPORT),
+                    ScrapedArtist("Mefteh", ArtistRole.SUPPORT)
                 )
         }
 
@@ -155,11 +156,11 @@ class GretchenOverviewPageScraperTest {
             // BOX1 "<b>AFRO FLOOR</b>MaVert", BOX2 "<b>LATIN FLOOR</b>DJ Ebbsolute"; "+ special guests" dropped.
             eventWithId("3537").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("MaVert", "HEADLINER"),
-                    ScrapedArtist("Tommy Tea", "SUPPORT"),
-                    ScrapedArtist("DJ Ebbsolute", "SUPPORT"),
-                    ScrapedArtist("Juliany LSP", "SUPPORT"),
-                    ScrapedArtist("Juan Virviescas", "SUPPORT")
+                    ScrapedArtist("MaVert", ArtistRole.HEADLINER),
+                    ScrapedArtist("Tommy Tea", ArtistRole.SUPPORT),
+                    ScrapedArtist("DJ Ebbsolute", ArtistRole.SUPPORT),
+                    ScrapedArtist("Juliany LSP", ArtistRole.SUPPORT),
+                    ScrapedArtist("Juan Virviescas", ArtistRole.SUPPORT)
                 )
         }
 
@@ -168,11 +169,11 @@ class GretchenOverviewPageScraperTest {
             // Trailing lineup mixes "Hosted by …", a "(Bass)/(Keys)/(Drums)" member list, and "Opening DJ-Set by …".
             eventWithId("3531").artists.flatMap { splitBackToBack(it) } shouldContainExactly
                 listOf(
-                    ScrapedArtist("Peter Somuah", "HEADLINER"),
-                    ScrapedArtist("Skyline Sun", "SUPPORT"),
-                    ScrapedArtist("Outta Line", "SUPPORT"),
-                    ScrapedArtist("Allynx", "SUPPORT"),
-                    ScrapedArtist("Sean Steinfeger", "SUPPORT")
+                    ScrapedArtist("Peter Somuah", ArtistRole.HEADLINER),
+                    ScrapedArtist("Skyline Sun", ArtistRole.SUPPORT),
+                    ScrapedArtist("Outta Line", ArtistRole.SUPPORT),
+                    ScrapedArtist("Allynx", ArtistRole.SUPPORT),
+                    ScrapedArtist("Sean Steinfeger", ArtistRole.SUPPORT)
                 )
         }
 
@@ -181,8 +182,8 @@ class GretchenOverviewPageScraperTest {
             // Trailing lineup: "Support: Steinza" + "Ersatztermin vom 11.02.2026".
             eventWithId("3450").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Matt Maeson", "HEADLINER"),
-                    ScrapedArtist("Steinza", "SUPPORT")
+                    ScrapedArtist("Matt Maeson", ArtistRole.HEADLINER),
+                    ScrapedArtist("Steinza", ArtistRole.SUPPORT)
                 )
         }
 
@@ -221,17 +222,17 @@ class GretchenOverviewPageScraperTest {
 
             val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
-            event.artists shouldContainExactly listOf(ScrapedArtist("Mad Tsai", "HEADLINER"))
+            event.artists shouldContainExactly listOf(ScrapedArtist("Mad Tsai", ArtistRole.HEADLINER))
         }
 
         @Test
         fun `strips a bare trailing DJ-Set suffix off a performer name`() {
             // "Acid Arab DJ-Set" / "Paty Vapor DJ-Set" are the acts "Acid Arab" / "Paty Vapor".
-            eventWithId("3550").artists.first() shouldBe ScrapedArtist("Acid Arab", "HEADLINER")
+            eventWithId("3550").artists.first() shouldBe ScrapedArtist("Acid Arab", ArtistRole.HEADLINER)
             eventWithId("3560").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("System Olympia", "HEADLINER"),
-                    ScrapedArtist("Paty Vapor", "SUPPORT")
+                    ScrapedArtist("System Olympia", ArtistRole.HEADLINER),
+                    ScrapedArtist("Paty Vapor", ArtistRole.SUPPORT)
                 )
         }
 
@@ -240,9 +241,9 @@ class GretchenOverviewPageScraperTest {
             // "Mop Mop ft. Anthony Joseph" → the main act plus its featured guest.
             eventWithId("3518").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Mop Mop", "HEADLINER"),
-                    ScrapedArtist("Anthony Joseph", "SUPPORT"),
-                    ScrapedArtist("Phat Fred", "SUPPORT")
+                    ScrapedArtist("Mop Mop", ArtistRole.HEADLINER),
+                    ScrapedArtist("Anthony Joseph", ArtistRole.SUPPORT),
+                    ScrapedArtist("Phat Fred", ArtistRole.SUPPORT)
                 )
             // A feat credit on a mid-lineup line splits too ("The Bug ft. Dis Fig"), and the
             // "w/" collaboration shorthand splits as well ("Tikiman w/Scion" → "Tikiman" + "Scion").
@@ -255,7 +256,7 @@ class GretchenOverviewPageScraperTest {
             // "Landstreicher presents: XAVI - Sorgenfrei Tour 2027" has a price-only lineup, so
             // the act is taken from the title: the "<promoter> presents:" prefix and the tour
             // tail are stripped down to "XAVI".
-            eventWithId("3496").artists shouldContainExactly listOf(ScrapedArtist("XAVI", "HEADLINER"))
+            eventWithId("3496").artists shouldContainExactly listOf(ScrapedArtist("XAVI", ArtistRole.HEADLINER))
         }
 
         @Test
@@ -271,8 +272,8 @@ class GretchenOverviewPageScraperTest {
             // "Okvsho +experience" is the act "Okvsho"; "+experience" is a stylisation, not a second act.
             eventWithId("3453").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Okvsho", "HEADLINER"),
-                    ScrapedArtist("Sean Steinfeger", "SUPPORT")
+                    ScrapedArtist("Okvsho", ArtistRole.HEADLINER),
+                    ScrapedArtist("Sean Steinfeger", ArtistRole.SUPPORT)
                 )
         }
 
@@ -322,9 +323,9 @@ class GretchenOverviewPageScraperTest {
 
             artistsOf("Opening DJ-Set by Sean Steinfeger &amp; Phonomat") shouldContainExactly
                 listOf(
-                    ScrapedArtist("Headliner", "HEADLINER"),
-                    ScrapedArtist("Sean Steinfeger", "SUPPORT"),
-                    ScrapedArtist("Phonomat", "SUPPORT")
+                    ScrapedArtist("Headliner", ArtistRole.HEADLINER),
+                    ScrapedArtist("Sean Steinfeger", ArtistRole.SUPPORT),
+                    ScrapedArtist("Phonomat", ArtistRole.SUPPORT)
                 )
             artistsOf("Opening DJ-Set by Feo &amp; Friends").map { it.name } shouldContainExactly listOf("Headliner", "Feo & Friends")
             artistsOf("Opening DJ-Set by Allynx b2b Sean Steinfeger").map { it.name } shouldContainExactly
@@ -357,9 +358,9 @@ class GretchenOverviewPageScraperTest {
 
             scraper.scrape(Jsoup.parse(supportLine("Support: LXST CXNTURY &amp; ÆSTRAL"), baseUrl), baseUrl).single().artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("SKELER", "HEADLINER"),
-                    ScrapedArtist("LXST CXNTURY", "SUPPORT"),
-                    ScrapedArtist("ÆSTRAL", "SUPPORT")
+                    ScrapedArtist("SKELER", ArtistRole.HEADLINER),
+                    ScrapedArtist("LXST CXNTURY", ArtistRole.SUPPORT),
+                    ScrapedArtist("ÆSTRAL", ArtistRole.SUPPORT)
                 )
             namesOf("Support: Carly Cosgrove (US) *live* &amp; GiGi Girls (Papercup Rec./D/IT)") shouldContainExactly
                 listOf("SKELER", "Carly Cosgrove", "GiGi Girls")
@@ -527,7 +528,7 @@ class GretchenOverviewPageScraperTest {
             // "15 Years GRETCHEN: RYMDEN" → the act "RYMDEN"; artists are unaffected.
             val event = eventWithId("3468")
             event.title shouldBe "RYMDEN"
-            event.artists.first() shouldBe ScrapedArtist("Rymden", "HEADLINER")
+            event.artists.first() shouldBe ScrapedArtist("Rymden", ArtistRole.HEADLINER)
         }
 
         @Test
@@ -609,7 +610,7 @@ class GretchenOverviewPageScraperTest {
             event.title shouldBe "Trinity presents: MUCCO"
             event.status shouldBe "RELOCATED"
             // The .lineup carries a 10-word "verlegt" sentence that must not be minted as an artist.
-            event.artists shouldContainExactly listOf(ScrapedArtist("Mucco", "HEADLINER"))
+            event.artists shouldContainExactly listOf(ScrapedArtist("Mucco", ArtistRole.HEADLINER))
             // The badge and the headline tail travel with the row; the boundary names the destination (#1551).
             event.statusNote shouldBe "neuer Ort  verlegt ins Metropol"
             event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).relocatedTo shouldBe "Metropol"
@@ -649,7 +650,7 @@ class GretchenOverviewPageScraperTest {
 
             assertSoftly {
                 event.title shouldBe "daoud"
-                event.artists shouldContainExactly listOf(ScrapedArtist("daoud", "HEADLINER"))
+                event.artists shouldContainExactly listOf(ScrapedArtist("daoud", ArtistRole.HEADLINER))
                 event.soldOut shouldBe true
                 event.status shouldBe "SCHEDULED"
                 event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).soldOut shouldBe true
@@ -753,7 +754,7 @@ class GretchenOverviewPageScraperTest {
         @Test
         fun `keeps a night with no sign of another venue`() {
             scrapeGig(gig(headline = "ACID ARAB live", notice = "", promoter = "Gretchen")).single().artists shouldContainExactly
-                listOf(ScrapedArtist("Acid Arab", "HEADLINER"))
+                listOf(ScrapedArtist("Acid Arab", ArtistRole.HEADLINER))
         }
     }
 
@@ -773,7 +774,7 @@ class GretchenOverviewPageScraperTest {
             """.trimIndent()
 
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists shouldContainExactly
-            listOf(ScrapedArtist("Jorge Vercillo", "HEADLINER"))
+            listOf(ScrapedArtist("Jorge Vercillo", ArtistRole.HEADLINER))
     }
 
     @Test

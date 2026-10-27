@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hau
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
@@ -136,7 +137,7 @@ class HauScheduleScraper(
                             ?.blankToNull()
                     }?.let(::splitSegmentOnConjunctions)
                     .orEmpty()
-                    .map { ScrapedArtist(name = it, role = "DJ") }
+                    .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
             }
 
             EventType.CONCERT -> {

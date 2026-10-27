@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quatsch
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -64,7 +65,7 @@ class QuatschCalendarScraperTest {
                 ScrapedArtist("Juri von Stavenhagen"),
                 ScrapedArtist("Sebastian Humi"),
                 ScrapedArtist("C. Heiland"),
-                ScrapedArtist("Christin Jugsch", role = "SUPPORT")
+                ScrapedArtist("Christin Jugsch", role = ArtistRole.SUPPORT)
             )
     }
 

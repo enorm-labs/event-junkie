@@ -1,5 +1,6 @@
 package de.norm.events.scraper.supamolly
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -73,9 +74,9 @@ class SupamollyOverviewPageScraperTest {
         fun `bills the first act as headliner and the rest as support`() {
             eventWithStamp("202609192130").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Headbutt", "HEADLINER"),
-                    ScrapedArtist("Banana Of Death", "SUPPORT"),
-                    ScrapedArtist("Moloch", "SUPPORT")
+                    ScrapedArtist("Headbutt", ArtistRole.HEADLINER),
+                    ScrapedArtist("Banana Of Death", ArtistRole.SUPPORT),
+                    ScrapedArtist("Moloch", ArtistRole.SUPPORT)
                 )
         }
 
@@ -93,8 +94,8 @@ class SupamollyOverviewPageScraperTest {
         fun `keeps a band name whose conjunction is a backing-act tail intact`() {
             eventWithStamp("202609262130").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Feo & Friends", "HEADLINER"),
-                    ScrapedArtist("La Mula Santa", "SUPPORT")
+                    ScrapedArtist("Feo & Friends", ArtistRole.HEADLINER),
+                    ScrapedArtist("La Mula Santa", ArtistRole.SUPPORT)
                 )
         }
 
@@ -105,7 +106,7 @@ class SupamollyOverviewPageScraperTest {
 
             event.title shouldBe "Skarface est.1991 La France"
             // The founding tagline is not part of the band's name.
-            event.artists shouldContainExactly listOf(ScrapedArtist("Skarface", "HEADLINER"))
+            event.artists shouldContainExactly listOf(ScrapedArtist("Skarface", ArtistRole.HEADLINER))
         }
 
         @Test
@@ -113,7 +114,7 @@ class SupamollyOverviewPageScraperTest {
             val event = eventWithStamp("202609182130")
 
             event.title shouldBe "Monde de Merde, & Support"
-            event.artists shouldContainExactly listOf(ScrapedArtist("Monde de Merde", "HEADLINER"))
+            event.artists shouldContainExactly listOf(ScrapedArtist("Monde de Merde", ArtistRole.HEADLINER))
         }
 
         @Test
@@ -263,7 +264,7 @@ class SupamollyOverviewPageScraperTest {
                 )
 
             scraper.scrape(document, baseUrl).single().artists shouldContainExactly
-                listOf(ScrapedArtist("Kaffee & Kuchen Kollektiv", "HEADLINER"))
+                listOf(ScrapedArtist("Kaffee & Kuchen Kollektiv", ArtistRole.HEADLINER))
         }
 
         @Test
@@ -310,11 +311,11 @@ class SupamollyOverviewPageScraperTest {
             event.title shouldBe "Bassfieber: Drum & Bass Party, Lieve: Subact, Djs Bain, Berry T, Kite & Domske"
             event.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Subact", "LIVE"),
-                    ScrapedArtist("Bain", "DJ"),
-                    ScrapedArtist("Berry T", "DJ"),
-                    ScrapedArtist("Kite", "DJ"),
-                    ScrapedArtist("Domske", "DJ")
+                    ScrapedArtist("Subact", ArtistRole.LIVE),
+                    ScrapedArtist("Bain", ArtistRole.DJ),
+                    ScrapedArtist("Berry T", ArtistRole.DJ),
+                    ScrapedArtist("Kite", ArtistRole.DJ),
+                    ScrapedArtist("Domske", ArtistRole.DJ)
                 )
         }
 
@@ -325,8 +326,8 @@ class SupamollyOverviewPageScraperTest {
             event.title shouldBe "Soliparty Linienhof, Neofarius Orchestra #249, Option Weg"
             event.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Neofarius Orchestra #249", "HEADLINER"),
-                    ScrapedArtist("Option Weg", "SUPPORT")
+                    ScrapedArtist("Neofarius Orchestra #249", ArtistRole.HEADLINER),
+                    ScrapedArtist("Option Weg", ArtistRole.SUPPORT)
                 )
         }
 
@@ -343,10 +344,10 @@ class SupamollyOverviewPageScraperTest {
                 "Sea Punks Soliparty, Brezel Göring & Psychoanalyse, Ben Bloodygrave, Schnauze, Danach Party mit DJ Spikey Mikey"
             event.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Brezel Göring & Psychoanalyse", "HEADLINER"),
-                    ScrapedArtist("Ben Bloodygrave", "SUPPORT"),
-                    ScrapedArtist("Schnauze", "SUPPORT"),
-                    ScrapedArtist("DJ Spikey Mikey", "DJ")
+                    ScrapedArtist("Brezel Göring & Psychoanalyse", ArtistRole.HEADLINER),
+                    ScrapedArtist("Ben Bloodygrave", ArtistRole.SUPPORT),
+                    ScrapedArtist("Schnauze", ArtistRole.SUPPORT),
+                    ScrapedArtist("DJ Spikey Mikey", ArtistRole.DJ)
                 )
         }
 
@@ -354,8 +355,8 @@ class SupamollyOverviewPageScraperTest {
         fun `bills a non-DJ act behind any after-party lead-in as support`() {
             billing("Anschließend Party mit Kapelle Petra", "Aftershow-Party MIT dj Ruth").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Kapelle Petra", "SUPPORT"),
-                    ScrapedArtist("dj Ruth", "DJ")
+                    ScrapedArtist("Kapelle Petra", ArtistRole.SUPPORT),
+                    ScrapedArtist("dj Ruth", ArtistRole.DJ)
                 )
         }
 
@@ -367,8 +368,8 @@ class SupamollyOverviewPageScraperTest {
                 event.title shouldBe "Flowers of Romance, Live: MNGLXMPLR"
                 event.artists shouldContainExactly
                     listOf(
-                        ScrapedArtist("MNGLXMPLR", "LIVE"),
-                        ScrapedArtist("DJ Terror Wave", "DJ")
+                        ScrapedArtist("MNGLXMPLR", ArtistRole.LIVE),
+                        ScrapedArtist("DJ Terror Wave", ArtistRole.DJ)
                     )
             }
         }
@@ -382,22 +383,22 @@ class SupamollyOverviewPageScraperTest {
                     baseUrl
                 )
 
-            scraper.scrape(document, baseUrl).single().artists shouldContainExactly listOf(ScrapedArtist("Some Band", "HEADLINER"))
+            scraper.scrape(document, baseUrl).single().artists shouldContainExactly listOf(ScrapedArtist("Some Band", ArtistRole.HEADLINER))
         }
 
         @Test
         fun `keeps a band whose name only ends in Party`() {
             billing("The Birthday Party", "Bloc Party").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("The Birthday Party", "HEADLINER"),
-                    ScrapedArtist("Bloc Party", "SUPPORT")
+                    ScrapedArtist("The Birthday Party", ArtistRole.HEADLINER),
+                    ScrapedArtist("Bloc Party", ArtistRole.SUPPORT)
                 )
         }
 
         @Test
         fun `recognises a hyphenated soli party and a DJ list without a comma`() {
             billing("Soli-Party für den Kiezladen", "DJ's Anna & Bo").artists shouldContainExactly
-                listOf(ScrapedArtist("Anna", "DJ"), ScrapedArtist("Bo", "DJ"))
+                listOf(ScrapedArtist("Anna", ArtistRole.DJ), ScrapedArtist("Bo", ArtistRole.DJ))
         }
 
         private fun billing(vararg acts: String): ScrapedEvent {

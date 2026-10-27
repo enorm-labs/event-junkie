@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ufafabrik
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
@@ -137,7 +138,7 @@ internal fun ufaFabrikArtists(
         cut
             ?.let { headlinersFromTitle(title.substring(it.range.last + 1)) }
             .orEmpty()
-            .map { it.copy(role = "SUPPORT") }
+            .map { it.copy(role = ArtistRole.SUPPORT) }
     val (fromTitle, fromSubtitle) = buildArtistsForEventType(billing, subtitle, eventType).partition { it.titleDerived }
     return fromTitle.flatMap(::splitAtMit) + guests.flatMap(::splitAtMit) + fromSubtitle
 }
@@ -150,7 +151,7 @@ private fun splitAtMit(artist: ScrapedArtist): List<ScrapedArtist> {
         .chunked(2)
         .map { (from, to) -> stripArtistSuffix(artist.name.substring(from, to)) }
         .filterNot { it.isBlank() || isNonArtistName(it) }
-        .mapIndexed { index, name -> artist.copy(name = name, role = if (index == 0) artist.role else "SUPPORT") }
+        .mapIndexed { index, name -> artist.copy(name = name, role = if (index == 0) artist.role else ArtistRole.SUPPORT) }
 }
 
 /** A mid-title guest credit, after a dash, `&`, `+`, a comma or `mit`; the guests follow. */

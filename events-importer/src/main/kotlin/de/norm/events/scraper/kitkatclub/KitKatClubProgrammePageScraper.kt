@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kitkatclub
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -156,7 +157,7 @@ class KitKatClubProgrammePageScraper(
                 labelled.mapNotNull { (label, acts) -> roomOf(label)?.let { room -> room.ifEmpty { null } to acts } }
             }
         return segments
-            .flatMap { (room, acts) -> splitActs(acts).map { ScrapedArtist(name = it, role = "DJ", stage = room) } }
+            .flatMap { (room, acts) -> splitActs(acts).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = room) } }
             // One act on two floors would be two rows for one (event, artist) pair; the first billing wins.
             .distinctBy { it.name.lowercase() }
     }

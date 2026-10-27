@@ -1,5 +1,6 @@
 package de.norm.events.scraper.berghain
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -250,7 +251,7 @@ class BerghainWebsiteImporterTest {
 
             // The lineup is the programme's: its five acts, its roles, none of the running order's other names.
             artists.keys shouldBe setOf("Joline Scheffler", "Colin Benders", "nd_baumecker", "Jorkes", "Not On The Running Order")
-            artists.getValue("Colin Benders").role shouldBe "LIVE"
+            artists.getValue("Colin Benders").role shouldBe ArtistRole.LIVE
             artists.getValue("Joline Scheffler").setStart shouldBe Instant.parse("2026-09-26T21:59:00Z")
             artists.getValue("Colin Benders").setEnd shouldBe Instant.parse("2026-09-27T06:30:00Z")
             artists.getValue("Jorkes").setStart shouldBe Instant.parse("2026-09-27T23:00:00Z")
@@ -277,7 +278,7 @@ class BerghainWebsiteImporterTest {
             event.imageUrl!!.shouldStartWith("https://cdn.berghain.berlin/")
             event.eventType shouldBe EventType.CONCERT.name
             event.genre.shouldBeNull()
-            event.artists.map { it.name to it.role } shouldBe listOf("Krallice" to "HEADLINER", "Rashad Becker" to "HEADLINER")
+            event.artists.map { it.name to it.role } shouldBe listOf("Krallice" to ArtistRole.HEADLINER, "Rashad Becker" to ArtistRole.HEADLINER)
         }
 
     @Test

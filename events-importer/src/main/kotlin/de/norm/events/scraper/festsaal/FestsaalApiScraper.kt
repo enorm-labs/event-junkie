@@ -1,5 +1,6 @@
 package de.norm.events.scraper.festsaal
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.EventSource
@@ -268,7 +269,7 @@ class FestsaalApiScraper {
                 ?.let(::splitSupportActs)
                 .orEmpty()
                 .filterNot(::isNonArtistName)
-                .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         return headlinersFromTitle(title) + supportActs
     }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.torhausberlin
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -86,7 +87,7 @@ class TorhausBerlinOverviewPageScraper {
             endTime = endTime,
             sourceUrl = baseUrl,
             sourceId = "${EventSource.TORHAUS_BERLIN.sourceIdPrefix}$teamupId-$date",
-            artists = names.map { ScrapedArtist(name = it, role = if (radio) "DJ" else "HEADLINER") }
+            artists = names.map { ScrapedArtist(name = it, role = if (radio) ArtistRole.DJ else ArtistRole.HEADLINER) }
         )
     }
 

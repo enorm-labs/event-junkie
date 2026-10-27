@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiahalle
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -71,7 +72,7 @@ class ColumbiahalleOverviewPageScraperTest {
         juju.ticketUrl shouldBe "https://store.juju44.net/products/album-2026-releaseshow-berlin-stehplatz-bundle"
         juju.promoters shouldContainExactly listOf("Boldt Berlin Konzertagentur GmbH")
         juju.description.shouldNotBeNull() shouldStartWith "Juju ist eine der prägendsten Stimmen im Deutschrap"
-        juju.artists shouldContainExactly listOf(ScrapedArtist("Juju", "HEADLINER", titleDerived = true))
+        juju.artists shouldContainExactly listOf(ScrapedArtist("Juju", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -101,8 +102,8 @@ class ColumbiahalleOverviewPageScraperTest {
     fun `extracts the support act from a Support subtitle`() {
         event("9728").artists shouldContainExactly
             listOf(
-                ScrapedArtist("Death Cab For Cutie", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Pool Kids", "SUPPORT")
+                ScrapedArtist("Death Cab For Cutie", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Pool Kids", ArtistRole.SUPPORT)
             )
     }
 
@@ -111,8 +112,8 @@ class ColumbiahalleOverviewPageScraperTest {
         // Kitschkrieg: "KITSCHKRIEG LIVE" then "Support: 255 & BLUMENGARTEN" (#1953).
         val kitschkrieg = event("9759")
         kitschkrieg.subtitle shouldBe "KITSCHKRIEG LIVE"
-        kitschkrieg.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldContainExactly listOf("255", "BLUMENGARTEN")
-        event("9715").artists.filter { it.role == "SUPPORT" }.map { it.name } shouldContainExactly listOf("Those Damn Crows")
+        kitschkrieg.artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldContainExactly listOf("255", "BLUMENGARTEN")
+        event("9715").artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldContainExactly listOf("Those Damn Crows")
     }
 
     private val teaserEvents by lazy {
@@ -138,7 +139,7 @@ class ColumbiahalleOverviewPageScraperTest {
     @Test
     fun `bills a support line in the teaser, and ignores a notice or a credit there`() {
         teaserEvents.first { it.title == "Betontod" }.artists.map { it.name to it.role } shouldBe
-            listOf("Betontod" to "HEADLINER", "Rogers" to "SUPPORT")
+            listOf("Betontod" to ArtistRole.HEADLINER, "Rogers" to ArtistRole.SUPPORT)
         // The h3 and the teaser both name Rose Gray; she is billed once.
         teaserEvents.first { it.title == "Tove Lo" }.artists.map { it.name.lowercase() } shouldBe listOf("tove lo", "rose gray")
         teaserEvents.first { it.title == "OG Keemo" }.artists.map { it.name } shouldBe listOf("OG Keemo")
@@ -150,9 +151,9 @@ class ColumbiahalleOverviewPageScraperTest {
         metric.title shouldBe "METRIC / BROKEN SOCIAL SCENE / STARS"
         metric.artists shouldContainExactly
             listOf(
-                ScrapedArtist("METRIC", "HEADLINER", titleDerived = true),
-                ScrapedArtist("BROKEN SOCIAL SCENE", "HEADLINER", titleDerived = true),
-                ScrapedArtist("STARS", "HEADLINER", titleDerived = true)
+                ScrapedArtist("METRIC", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("BROKEN SOCIAL SCENE", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("STARS", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
@@ -220,8 +221,8 @@ class ColumbiahalleOverviewPageScraperTest {
         show.eventDate shouldBe LocalDate.of(2026, 11, 4)
         show.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Bastian Bielendorfer", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Özcan Cosar", "HEADLINER", titleDerived = true)
+                ScrapedArtist("Bastian Bielendorfer", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Özcan Cosar", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 

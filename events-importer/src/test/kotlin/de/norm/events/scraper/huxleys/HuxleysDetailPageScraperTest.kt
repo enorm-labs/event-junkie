@@ -1,5 +1,6 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -199,6 +200,6 @@ class HuxleysDetailPageScraperTest {
         kard.shouldNotBeNull()
         // A CONCERT title is still the headliner; the tour name is not an act.
         kard.artists.map { it.name } shouldContainExactly listOf("KARD")
-        kard.artists.filter { it.role == "SUPPORT" }.shouldBeEmpty()
+        kard.artists.filter { it.role == ArtistRole.SUPPORT }.shouldBeEmpty()
     }
 }

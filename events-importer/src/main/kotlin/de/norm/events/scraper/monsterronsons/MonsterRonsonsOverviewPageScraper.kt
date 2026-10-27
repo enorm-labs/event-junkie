@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monsterronsons
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -149,7 +150,7 @@ class MonsterRonsonsOverviewPageScraper(
             .split(HOST_SEPARATOR_PATTERN)
             .map { it.trim() }
             .filter { it.isNotBlank() }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /** A card announcing a dark day rather than a night's programme. */

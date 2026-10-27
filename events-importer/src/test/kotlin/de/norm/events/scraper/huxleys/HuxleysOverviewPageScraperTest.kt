@@ -1,5 +1,6 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -59,8 +60,8 @@ class HuxleysOverviewPageScraperTest {
         thievery.sourceUrl shouldBe "https://huxleysneuewelt.de/event/2026-08-02-thievery-corporation"
         thievery.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Thievery Corporation", "HEADLINER", titleDerived = true),
-                ScrapedArtist("PECES RAROS", "SUPPORT")
+                ScrapedArtist("Thievery Corporation", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("PECES RAROS", ArtistRole.SUPPORT)
             )
     }
 

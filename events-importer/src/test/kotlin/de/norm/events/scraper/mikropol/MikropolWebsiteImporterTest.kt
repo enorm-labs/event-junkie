@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mikropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -115,8 +116,8 @@ class MikropolWebsiteImporterTest {
             house.doorsTime shouldBe LocalTime.of(19, 0)
             house.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("noise of the voiceless", "SUPPORT")
+                    ScrapedArtist("HOUSE OF PROTECTION", ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist("noise of the voiceless", ArtistRole.SUPPORT)
                 )
         }
 

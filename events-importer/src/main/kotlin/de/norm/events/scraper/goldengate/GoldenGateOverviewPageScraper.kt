@@ -1,5 +1,6 @@
 package de.norm.events.scraper.goldengate
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_LONG_DATE
@@ -152,7 +153,7 @@ class GoldenGateOverviewPageScraper {
             .flatMap(::splitSegmentOnConjunctions)
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** A date heading: its position in the heading stream, its text, and the parts read from it. */
     private data class DateLine(

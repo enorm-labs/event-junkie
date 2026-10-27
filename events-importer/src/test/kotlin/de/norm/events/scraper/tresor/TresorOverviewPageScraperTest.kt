@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -63,12 +64,12 @@ class TresorOverviewPageScraperTest {
     fun `groups the DJs by the floor the markup already assigns them`() {
         event("20260801-tresor-klubnacht").artists shouldContainExactly
             listOf(
-                ScrapedArtist("Hypnotic Black Magic", "DJ", "Tresor"),
-                ScrapedArtist("Developer", "DJ", "Tresor"),
-                ScrapedArtist("Maedon", "DJ", "Tresor"),
-                ScrapedArtist("Janina", "DJ", "Globus"),
-                ScrapedArtist("Malika", "DJ", "Globus"),
-                ScrapedArtist("Francesco Farfa", "DJ", "Globus")
+                ScrapedArtist("Hypnotic Black Magic", ArtistRole.DJ, "Tresor"),
+                ScrapedArtist("Developer", ArtistRole.DJ, "Tresor"),
+                ScrapedArtist("Maedon", ArtistRole.DJ, "Tresor"),
+                ScrapedArtist("Janina", ArtistRole.DJ, "Globus"),
+                ScrapedArtist("Malika", ArtistRole.DJ, "Globus"),
+                ScrapedArtist("Francesco Farfa", ArtistRole.DJ, "Globus")
             )
     }
 
@@ -89,7 +90,7 @@ class TresorOverviewPageScraperTest {
 
     @Test
     fun `bills every act as a DJ`() {
-        events.flatMap { it.artists }.all { it.role == "DJ" } shouldBe true
+        events.flatMap { it.artists }.all { it.role == ArtistRole.DJ } shouldBe true
         // 152 billed on the floors, plus the host of the one New Faces night with no line-up (#339).
         events.sumOf { it.artists.size } shouldBe 153
         events.single { it.title == "Tresor New Faces hosted by Secret Keywords" }.artists.map { it.name } shouldBe listOf("Secret Keywords")

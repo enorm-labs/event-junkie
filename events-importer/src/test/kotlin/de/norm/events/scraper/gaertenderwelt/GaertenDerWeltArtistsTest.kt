@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gaertenderwelt
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -16,7 +17,7 @@ class GaertenDerWeltArtistsTest {
             )
 
         artists.map { it.name } shouldBe listOf("Haddaway", "Loona", "East 17", "Mütze Katze")
-        artists.map { it.role }.distinct() shouldBe listOf("HEADLINER")
+        artists.map { it.role }.distinct() shouldBe listOf(ArtistRole.HEADLINER)
     }
 
     @Test
@@ -47,7 +48,7 @@ class GaertenDerWeltArtistsTest {
             EventType.CONCERT.name
         ).map { it.name } shouldBe listOf("KARAT", "Dirk Michaelis")
         gaertenDerWeltArtists("Agnes Obel", "Support: Peter Gregson", EventType.CONCERT.name)
-            .map { it.name to it.role } shouldBe listOf("Agnes Obel" to "HEADLINER", "Peter Gregson" to "SUPPORT")
+            .map { it.name to it.role } shouldBe listOf("Agnes Obel" to ArtistRole.HEADLINER, "Peter Gregson" to ArtistRole.SUPPORT)
         gaertenDerWeltArtists("Stereoact: Ich liebe das Leben Party 2027 feat. Lena Marie Engel", null, EventType.CONCERT.name)
             .map { it.name } shouldBe listOf("Stereoact", "Lena Marie Engel")
     }
@@ -55,7 +56,8 @@ class GaertenDerWeltArtistsTest {
     @Test
     fun `keeps the support act beside a teaser line-up and reads no line-up outside a concert`() {
         gaertenDerWeltArtists("Das Mega 90er Live Open Air", "Mit Haddaway & Loona! — Support: Mütze Katze", EventType.CONCERT.name)
-            .map { it.name to it.role } shouldBe listOf("Haddaway" to "HEADLINER", "Loona" to "HEADLINER", "Mütze Katze" to "SUPPORT")
+            .map { it.name to it.role } shouldBe
+            listOf("Haddaway" to ArtistRole.HEADLINER, "Loona" to ArtistRole.HEADLINER, "Mütze Katze" to ArtistRole.SUPPORT)
         gaertenDerWeltArtists("Spieleabend", "Spiele mit Freunden, Nachbarn & Familie.", EventType.QUIZ.name) shouldBe emptyList()
     }
 }

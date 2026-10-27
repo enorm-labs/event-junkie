@@ -1,5 +1,6 @@
 package de.norm.events.scraper.altekantine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -128,7 +129,7 @@ class AlteKantineWebsiteImporterTest {
             party.priceBoxOffice shouldBe BigDecimal("4")
             party.imageUrl.shouldNotBeNull()
             party.description.shouldNotBeNull()
-            party.artists shouldContainExactly listOf(ScrapedArtist(name = "Funky Henning", role = "DJ"))
+            party.artists shouldContainExactly listOf(ScrapedArtist(name = "Funky Henning", role = ArtistRole.DJ))
             // The subtitle comes only from the overview and survives the merge:
             party.subtitle shouldBe "Funky Henning"
             // Shared fields resolve consistently across both pages:

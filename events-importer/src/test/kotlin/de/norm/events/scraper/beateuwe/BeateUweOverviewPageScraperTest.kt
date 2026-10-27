@@ -1,5 +1,6 @@
 package de.norm.events.scraper.beateuwe
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -50,18 +51,18 @@ class BeateUweOverviewPageScraperTest {
         event.sourceId shouldBe "beate_uwe:2026-10-09"
         event.ticketUrl shouldBe "https://ra.co/events/2534687"
         acts("2026-10-09") shouldContainExactly
-            listOf("CHOMBA" to "DJ", "ZickZacken" to "DJ", "Adrija" to "DJ", "NEMOA" to "DJ")
+            listOf("CHOMBA" to ArtistRole.DJ, "ZickZacken" to ArtistRole.DJ, "Adrija" to ArtistRole.DJ, "NEMOA" to ArtistRole.DJ)
     }
 
     @Test
     fun `a live act is billed LIVE without its marker`() {
         acts("2026-10-11") shouldContainExactly
             listOf(
-                "Felío" to "DJ",
-                "Kollektiv Sheesh" to "DJ",
-                "Sebastian Wasner" to "LIVE",
-                "Motip White" to "LIVE",
-                "Just Emma" to "DJ"
+                "Felío" to ArtistRole.DJ,
+                "Kollektiv Sheesh" to ArtistRole.DJ,
+                "Sebastian Wasner" to ArtistRole.LIVE,
+                "Motip White" to ArtistRole.LIVE,
+                "Just Emma" to ArtistRole.DJ
             )
     }
 
@@ -69,12 +70,12 @@ class BeateUweOverviewPageScraperTest {
     fun `a b2b pair bills both acts and a stray comma space is tolerated`() {
         acts("2026-10-18") shouldContainExactly
             listOf(
-                "tatzentanz" to "DJ",
-                "olibrii" to "DJ",
-                "mimikri" to "LIVE",
-                "coco loris" to "DJ",
-                "ele" to "DJ",
-                "pi:mentea" to "DJ"
+                "tatzentanz" to ArtistRole.DJ,
+                "olibrii" to ArtistRole.DJ,
+                "mimikri" to ArtistRole.LIVE,
+                "coco loris" to ArtistRole.DJ,
+                "ele" to ArtistRole.DJ,
+                "pi:mentea" to ArtistRole.DJ
             )
     }
 

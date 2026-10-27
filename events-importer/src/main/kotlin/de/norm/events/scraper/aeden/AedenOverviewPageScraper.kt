@@ -1,5 +1,6 @@
 package de.norm.events.scraper.aeden
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -117,7 +118,7 @@ class AedenOverviewPageScraper {
                     .replace(UNSURE_MARK, "")
                     .trim()
             }.filter { it.isNotBlank() && !isAnnouncementPlaceholder(it) && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /**

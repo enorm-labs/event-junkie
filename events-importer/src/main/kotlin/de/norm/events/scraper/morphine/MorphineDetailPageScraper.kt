@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
@@ -180,7 +181,7 @@ class MorphineDetailPageScraper {
                     ?.trim()
             }.filterNot { isNonArtistName(it) }
             .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     /**
      * The `ul.lineup` set entries, each an `<li>` of two spans: start time and billed name. An

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clash
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
@@ -181,7 +182,7 @@ class ClashOverviewPageScraper {
             .map { stripArtistSuffix(it) }
             .filterNot { isNonArtistName(it) }
             .mapIndexed { index, name ->
-                ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
+                ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT)
             }
     }
 
@@ -199,7 +200,7 @@ class ClashOverviewPageScraper {
             .takeWhile(::isDjNameLine)
             .map { stripArtistSuffix(it.replace(MEMBERS_NOTE, "")) }
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     private fun isDjNameLine(line: String): Boolean =

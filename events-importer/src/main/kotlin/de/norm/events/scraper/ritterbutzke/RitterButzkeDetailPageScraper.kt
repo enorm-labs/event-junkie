@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ritterbutzke
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -120,7 +121,7 @@ class RitterButzkeDetailPageScraper(
             .mapNotNull { it.text().trim().takeIf { name -> name.isNotBlank() } }
             .distinct()
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /** The acts in the page's schema.org `performer` list, each a `DJ` like the rendered rows. */
@@ -134,7 +135,7 @@ class RitterButzkeDetailPageScraper(
             .mapNotNull { it.schemaName() }
             .distinct()
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** Whether [candidate] follows the `Line Up:` [label] in document order. */
     private fun isAfter(

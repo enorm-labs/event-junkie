@@ -1,6 +1,7 @@
 package de.norm.events.scraper.studioiiii
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -141,7 +142,7 @@ class StudioIiiiOverviewPageScraper(
                         ?.get(1)
                         ?.lowercase()
                         ?.replaceFirstChar { it.titlecase() }
-                name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = "DJ", stage = stage) }
+                name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
             }.distinctBy { it.name }
 
     /** The type a cue names: credits alone for an installation, a title keyword, or a DJ line-up; `null` leaves the club's default. */

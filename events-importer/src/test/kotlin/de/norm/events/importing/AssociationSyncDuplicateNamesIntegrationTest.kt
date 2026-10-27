@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
@@ -225,10 +226,10 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                         sourceId,
                         artists =
                             listOf(
-                                ScrapedArtist(name = "C3D-E (live)", role = "DJ"),
-                                ScrapedArtist(name = "Avangelic (DJ-Set)", role = "DJ"),
-                                ScrapedArtist(name = "Avangelic", role = "DJ"),
-                                ScrapedArtist(name = "Regis Live & DJ set", role = "DJ")
+                                ScrapedArtist(name = "C3D-E (live)", role = ArtistRole.DJ),
+                                ScrapedArtist(name = "Avangelic (DJ-Set)", role = ArtistRole.DJ),
+                                ScrapedArtist(name = "Avangelic", role = ArtistRole.DJ),
+                                ScrapedArtist(name = "Regis Live & DJ set", role = ArtistRole.DJ)
                             )
                     )
                 )
@@ -256,8 +257,8 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                         sourceId,
                         artists =
                             listOf(
-                                ScrapedArtist(name = "MC UNCUT GEM!", role = "HEADLINER", titleDerived = true),
-                                ScrapedArtist(name = "DALOY!", role = "SUPPORT")
+                                ScrapedArtist(name = "MC UNCUT GEM!", role = ArtistRole.HEADLINER, titleDerived = true),
+                                ScrapedArtist(name = "DALOY!", role = ArtistRole.SUPPORT)
                             )
                     )
                 )
@@ -277,7 +278,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
 
             associationSyncService.resolveAndSyncAssociations(
                 listOf(event),
-                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "Dosenstolz (feat. Tancred)", role = "HEADLINER"))))
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "Dosenstolz (feat. Tancred)", role = ArtistRole.HEADLINER))))
             )
 
             artistRepository.findBySlug("dosenstolz")?.name shouldBe "Dosenstolz"
@@ -376,8 +377,8 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                         sourceId,
                         artists =
                             listOf(
-                                ScrapedArtist(name = "Anna Mateur", role = "HEADLINER"),
-                                ScrapedArtist(name = "anna mateur", role = "SUPPORT")
+                                ScrapedArtist(name = "Anna Mateur", role = ArtistRole.HEADLINER),
+                                ScrapedArtist(name = "anna mateur", role = ArtistRole.SUPPORT)
                             )
                     )
                 )
@@ -426,7 +427,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                     .resolveAndSyncAssociations(
                         listOf(event),
                         listOf(
-                            scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
+                            scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = ArtistRole.HEADLINER, titleDerived = true)))
                                 .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
                         )
                     ).touchedArtistIds
@@ -450,7 +451,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             associationSyncService.resolveAndSyncAssociations(
                 listOf(event),
                 listOf(
-                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "WISBORG", role = "HEADLINER", titleDerived = true)))
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "WISBORG", role = ArtistRole.HEADLINER, titleDerived = true)))
                         .copy(title = "WISBORG Phantomschmerz Tour", promoters = listOf("WISBORG"))
                 )
             )
@@ -474,7 +475,7 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             associationSyncService.resolveAndSyncAssociations(
                 listOf(event),
                 listOf(
-                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER")))
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = ArtistRole.HEADLINER)))
                         .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
                 )
             )
@@ -515,8 +516,8 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             val eventId = requireNotNull(event.id)
             val lineup =
                 listOf(
-                    ScrapedArtist(name = "🔥 Kopf & Hörer 🔥 🎤 Dr. Sheppat ⚡ EVOX ⚡", role = "DJ", stage = "Floor"),
-                    ScrapedArtist(name = "Bluesky", role = "LIVE")
+                    ScrapedArtist(name = "🔥 Kopf & Hörer 🔥 🎤 Dr. Sheppat ⚡ EVOX ⚡", role = ArtistRole.DJ, stage = "Floor"),
+                    ScrapedArtist(name = "Bluesky", role = ArtistRole.LIVE)
                 )
 
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = lineup)))
@@ -543,9 +544,9 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             val eventId = requireNotNull(event.id)
             val lineup =
                 listOf(
-                    ScrapedArtist(name = "Funk@delic", role = "DJ"),
-                    ScrapedArtist(name = "Jens Schwan b2b Simon Berlin", role = "LIVE", stage = "Garten"),
-                    ScrapedArtist(name = "Bluesky", role = "DJ")
+                    ScrapedArtist(name = "Funk@delic", role = ArtistRole.DJ),
+                    ScrapedArtist(name = "Jens Schwan b2b Simon Berlin", role = ArtistRole.LIVE, stage = "Garten"),
+                    ScrapedArtist(name = "Bluesky", role = ArtistRole.DJ)
                 )
 
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, artists = lineup)))

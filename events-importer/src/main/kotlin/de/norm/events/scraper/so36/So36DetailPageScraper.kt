@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
@@ -96,7 +97,7 @@ class So36DetailPageScraper {
             if (eventType == EventType.FESTIVAL.name) {
                 dayLineup(subtitle)
                     .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
-                    .map { ScrapedArtist(name = it, role = "HEADLINER") }
+                    .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             } else {
                 parseArtists(document, title, subtitle, eventType)
             }
@@ -245,7 +246,7 @@ class So36DetailPageScraper {
         val supportActs =
             parseSupportActs(subtitle)
                 .ifEmpty { descriptionSupport(document) }
-                .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         return headlinersFromTitle(title.substringBefore(" | "), unpackWithFrame = true) + supportActs
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.privatclub
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -81,8 +82,8 @@ class PrivatclubOverviewPageScraperTest {
             concert.ticketUrl shouldBe "https://www.eventim.de/sandra-hesch-berlin"
             concert.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "Sandra Hesch", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "Luana", role = "SUPPORT")
+                    ScrapedArtist(name = "Sandra Hesch", role = ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist(name = "Luana", role = ArtistRole.SUPPORT)
                 )
         }
 
@@ -93,7 +94,7 @@ class PrivatclubOverviewPageScraperTest {
             val concert = events.first { it.title == "Sean Rowe" }
 
             // CONCERT type confirms the title is the headliner, even with no "Support:" line
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Sean Rowe", role = "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Sean Rowe", role = ArtistRole.HEADLINER, titleDerived = true))
         }
     }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.madameclaude
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -354,7 +355,7 @@ internal fun concertArtists(title: String): List<ScrapedArtist> {
             .toSet()
     return headlinersFromTitle(title, splitOnSlash = false)
         .map { artist ->
-            val billed = if (artist.name.lowercase() in djSegments) artist.copy(role = "DJ") else artist
+            val billed = if (artist.name.lowercase() in djSegments) artist.copy(role = ArtistRole.DJ) else artist
             billed.copy(name = billed.name.replace(SHOWCASE_FORMAT_TAIL, "").trim())
         }.filterNot { it.name.isBlank() }
 }
@@ -379,7 +380,7 @@ internal fun djSetArtistsFromTitle(title: String): List<ScrapedArtist> =
         .map { stripArtistSuffix(it.trim()) }
         .filterNot { it.isBlank() || isNonArtistName(it) }
         .distinct()
-        .map { ScrapedArtist(name = it, role = "DJ") }
+        .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
 /** One page of the `event` listing: its events, and how many posts the response held. */
 data class MadameClaudePage(

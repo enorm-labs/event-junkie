@@ -1,5 +1,6 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -159,8 +160,21 @@ internal fun artistsOf(
     if (lineup.isEmpty()) return artists
     val (fromTitle, support) = artists.partition { it.titleDerived }
     // A tour or fest title bills no act, so the line-up's first act heads the bill (#3154).
-    val leadsBill = fromTitle.none { it.role == "HEADLINER" }
-    val lineupArtists = lineup.mapIndexed { i, name -> ScrapedArtist(name = name, role = if (i == 0 && leadsBill) "HEADLINER" else "SUPPORT") }
+    val leadsBill = fromTitle.none { it.role == ArtistRole.HEADLINER }
+    val lineupArtists =
+        lineup.mapIndexed { i, name ->
+            ScrapedArtist(
+                name = name,
+                role =
+                    if (i == 0 &&
+                        leadsBill
+                    ) {
+                        ArtistRole.HEADLINER
+                    } else {
+                        ArtistRole.SUPPORT
+                    }
+            )
+        }
     return fromTitle + lineupArtists + support
 }
 
@@ -175,7 +189,7 @@ internal fun subtitleLineup(subtitleLines: List<String>): List<String> =
         .flatMap(::splitSupportActs)
         .filterNot(::isNonArtistName)
 
-private fun ScrapedArtist.isTitleHeadliner(): Boolean = titleDerived && role == "HEADLINER"
+private fun ScrapedArtist.isTitleHeadliner(): Boolean = titleDerived && role == ArtistRole.HEADLINER
 
 /** One `feat.` act is a guest of the title's act, not the bill. */
 private const val MIN_WHOLE_BILL_LINEUP = 2

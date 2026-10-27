@@ -1,6 +1,7 @@
 package de.norm.events.scraper.pkhwarehouse
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -69,7 +70,7 @@ class PkhWarehouseOverviewPageScraperTest {
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "pkh_warehouse:2026-10-10"
         event.ticketUrl.shouldBeNull()
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         djs("2026-10-10") shouldContainExactly listOf("Adam Vandal", "Josephine Wedekind", "TMH Tranzit", "EMIRI TSUKUI", "HypoGeo")
     }
 

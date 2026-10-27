@@ -1,5 +1,6 @@
 package de.norm.events.scraper.kesselhaus
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.isForChildren
@@ -121,7 +122,7 @@ class KesselhausCalendarScraperTest {
         val withSupport = events.filter { it.subtitle?.startsWith("Support:") == true }
 
         withSupport.shouldNotBeEmpty()
-        withSupport.forEach { event -> event.artists.any { it.role == "SUPPORT" } shouldBe true }
+        withSupport.forEach { event -> event.artists.any { it.role == ArtistRole.SUPPORT } shouldBe true }
     }
 
     @Test
@@ -131,7 +132,7 @@ class KesselhausCalendarScraperTest {
         events.first { it.title == "41. Berliner Jazztreff" }.artists.shouldBeEmpty()
         events.first { it.title == "Weihnachtssingen im Kiez" }.artists.shouldBeEmpty()
         val tribute = events.first { it.title.startsWith("Tribute concert: In memory of Lemmy") }
-        tribute.artists.map { it.name to it.role } shouldBe listOf("Motörblast" to "HEADLINER", "Nitrogods" to "HEADLINER")
+        tribute.artists.map { it.name to it.role } shouldBe listOf("Motörblast" to ArtistRole.HEADLINER, "Nitrogods" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -164,7 +165,7 @@ class KesselhausCalendarScraperTest {
     ) {
         val event = scrapeOne(title = "30. Traditioneller Neujahrs-Blues", subtitle = subtitle)
 
-        event.artists.map { it.name to it.role } shouldBe listOf(act to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldBe listOf(act to ArtistRole.HEADLINER)
     }
 
     @ParameterizedTest

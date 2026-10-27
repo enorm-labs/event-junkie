@@ -1,5 +1,6 @@
 package de.norm.events.scraper.neuezukunft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.headlinersFromTitle
@@ -87,8 +88,8 @@ class NeueZukunftApiScraperTest {
         backengrillen.sourceUrl shouldBe "https://neue-zukunft.org/konzerte.html"
         backengrillen.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Backengrillen", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Stinking Lizaveta", "HEADLINER", titleDerived = true)
+                ScrapedArtist("Backengrillen", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Stinking Lizaveta", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
@@ -126,8 +127,8 @@ class NeueZukunftApiScraperTest {
         tvod.imageUrl.shouldStartWith("https://dice-media.imgix.net/attachments/2026-03-16/")
         tvod.artists shouldContainExactly
             listOf(
-                ScrapedArtist("TVOD", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Twiggy", "HEADLINER", titleDerived = true)
+                ScrapedArtist("TVOD", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Twiggy", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
@@ -151,8 +152,8 @@ class NeueZukunftApiScraperTest {
         minimal.soldOut shouldBe false
         minimal.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Daniela Ljungsberg", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Shaul Dahan", "HEADLINER", titleDerived = true)
+                ScrapedArtist("Daniela Ljungsberg", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Shaul Dahan", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 

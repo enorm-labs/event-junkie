@@ -1,5 +1,6 @@
 package de.norm.events.scraper.orania
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -59,7 +60,7 @@ class OraniaOverviewPageScraperTest {
     fun `bills the act, not the programme its title names`() {
         val firstPage = scrape("orania-overview.html")
         firstPage.first { it.title.startsWith("Rossano Snel Duo") }.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Rossano Snel Duo", role = "HEADLINER", titleDerived = true))
+            listOf(ScrapedArtist(name = "Rossano Snel Duo", role = ArtistRole.HEADLINER, titleDerived = true))
 
         val secondPage = scrape("orania-overview-page-2.html", "https://orania.berlin/concerts/page/2")
         secondPage.first { it.title.startsWith("Rolf Zielke & Hogir") }.artists.map { it.name } shouldContainExactly

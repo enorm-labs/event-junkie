@@ -1,5 +1,6 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -54,7 +55,7 @@ class AstraOverviewPageScraperTest {
 
     @Test
     fun `adds the headliner for a confirmed concert even without support acts`() {
-        event("Angus").artists shouldContainExactly listOf(ScrapedArtist("ANGUS & JULIA STONE", "HEADLINER", titleDerived = true))
+        event("Angus").artists shouldContainExactly listOf(ScrapedArtist("ANGUS & JULIA STONE", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -65,9 +66,9 @@ class AstraOverviewPageScraperTest {
         // must not be absorbed into the last support act ("GNOME").
         event("Green Lung").artists shouldContainExactly
             listOf(
-                ScrapedArtist("GREEN LUNG", "HEADLINER", titleDerived = true),
-                ScrapedArtist("HIGH ON FIRE", "SUPPORT"),
-                ScrapedArtist("GNOME", "SUPPORT")
+                ScrapedArtist("GREEN LUNG", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("HIGH ON FIRE", ArtistRole.SUPPORT),
+                ScrapedArtist("GNOME", ArtistRole.SUPPORT)
             )
     }
 
@@ -116,10 +117,10 @@ class AstraOverviewPageScraperTest {
     fun `bills a tour's feat line-up when the title names no act`() {
         event("Revival Tour").artists shouldContainExactly
             listOf(
-                ScrapedArtist("FRANK TURNER", "HEADLINER"),
-                ScrapedArtist("CHUCK RAGAN", "SUPPORT"),
-                ScrapedArtist("TIM BARRY", "SUPPORT"),
-                ScrapedArtist("BEN NICHOLS", "SUPPORT")
+                ScrapedArtist("FRANK TURNER", ArtistRole.HEADLINER),
+                ScrapedArtist("CHUCK RAGAN", ArtistRole.SUPPORT),
+                ScrapedArtist("TIM BARRY", ArtistRole.SUPPORT),
+                ScrapedArtist("BEN NICHOLS", ArtistRole.SUPPORT)
             )
     }
 
@@ -127,10 +128,10 @@ class AstraOverviewPageScraperTest {
     fun `bills a fest's Live line-up when the title names no act`() {
         event("Grobes Fest").artists shouldContainExactly
             listOf(
-                ScrapedArtist("SLIME", "HEADLINER"),
-                ScrapedArtist("FOCUS.", "SUPPORT"),
-                ScrapedArtist("RANTANPLAN", "SUPPORT"),
-                ScrapedArtist("KNOCHENFABRIK", "SUPPORT")
+                ScrapedArtist("SLIME", ArtistRole.HEADLINER),
+                ScrapedArtist("FOCUS.", ArtistRole.SUPPORT),
+                ScrapedArtist("RANTANPLAN", ArtistRole.SUPPORT),
+                ScrapedArtist("KNOCHENFABRIK", ArtistRole.SUPPORT)
             )
     }
 
@@ -138,14 +139,14 @@ class AstraOverviewPageScraperTest {
     fun `bills no package title as an act when its Live line names the bill`() {
         event("Monsters Of Punk").artists.map { it.name to it.role } shouldContainExactly
             listOf(
-                "THE EXPLOITED" to "HEADLINER",
-                "DISCHARGE" to "SUPPORT",
-                "CONFLICT" to "SUPPORT",
-                "VARUKERS" to "SUPPORT",
-                "HASS" to "SUPPORT",
-                "DEZERTER" to "SUPPORT",
-                "SHELL SHOCKED" to "SUPPORT",
-                "MANEGE FREI" to "SUPPORT"
+                "THE EXPLOITED" to ArtistRole.HEADLINER,
+                "DISCHARGE" to ArtistRole.SUPPORT,
+                "CONFLICT" to ArtistRole.SUPPORT,
+                "VARUKERS" to ArtistRole.SUPPORT,
+                "HASS" to ArtistRole.SUPPORT,
+                "DEZERTER" to ArtistRole.SUPPORT,
+                "SHELL SHOCKED" to ArtistRole.SUPPORT,
+                "MANEGE FREI" to ArtistRole.SUPPORT
             )
     }
 
@@ -153,9 +154,9 @@ class AstraOverviewPageScraperTest {
     fun `keeps the title's act as headliner over a one-act feat line`() {
         artistsOf("FRANK TURNER", listOf("feat. Chuck Ragan", "+ Support: Tim Barry"), "CONCERT") shouldContainExactly
             listOf(
-                ScrapedArtist("FRANK TURNER", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Chuck Ragan", "SUPPORT"),
-                ScrapedArtist("Tim Barry", "SUPPORT")
+                ScrapedArtist("FRANK TURNER", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Chuck Ragan", ArtistRole.SUPPORT),
+                ScrapedArtist("Tim Barry", ArtistRole.SUPPORT)
             )
     }
 
@@ -163,8 +164,8 @@ class AstraOverviewPageScraperTest {
     fun `keeps a co-billed title act the Live line names and drops the one it does not`() {
         artistsOf("PUNK NIGHT + SLIME", listOf("Live: Slime, Rantanplan"), "CONCERT") shouldContainExactly
             listOf(
-                ScrapedArtist("SLIME", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Rantanplan", "SUPPORT")
+                ScrapedArtist("SLIME", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Rantanplan", ArtistRole.SUPPORT)
             )
     }
 
@@ -172,9 +173,9 @@ class AstraOverviewPageScraperTest {
     fun `does not bill a title's act twice when the Live line repeats it`() {
         artistsOf("SLIME", listOf("Live: Slime + Rantanplan", "+ Support: Focus."), "CONCERT") shouldContainExactly
             listOf(
-                ScrapedArtist("SLIME", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Rantanplan", "SUPPORT"),
-                ScrapedArtist("Focus.", "SUPPORT")
+                ScrapedArtist("SLIME", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Rantanplan", ArtistRole.SUPPORT),
+                ScrapedArtist("Focus.", ArtistRole.SUPPORT)
             )
     }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kater
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -110,7 +111,7 @@ class KaterOverviewPageScraper(
             ticketUrl = article.hrefAt("a.rsvp"),
             free = hasFreeEntryPhrase(description),
             // A night named for its curator and billed without a line-up (#339).
-            artists = lineup.ifEmpty { hostedActsFromTitle(title, role = "DJ") }
+            artists = lineup.ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
         )
     }
 
@@ -155,7 +156,7 @@ class KaterOverviewPageScraper(
                 // The Noise`, a second floor's own heading printed without the floor rule above it,
                 // so the acts under it continue under the stage in hand (#1679).
                 stage != null && !NOTE_LINE.containsMatchIn(line) && !WEEKDAY_HEADING.containsMatchIn(line) -> {
-                    artists += splitActs(line).map { ScrapedArtist(name = it, role = "DJ", stage = stage) }
+                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
                 }
             }
         }

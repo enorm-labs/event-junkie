@@ -1,5 +1,6 @@
 package de.norm.events.scraper.delphi
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -169,7 +170,7 @@ class DelphiProgrammePageScraperTest {
         val nosferatu = credits.single { it.title == "Nosferatu. Eine Symphonie des Grauens" }
         nosferatu.eventType shouldBe EventType.CONCERT.name
         nosferatu.artists.map { it.name } shouldBe listOf("Golden Star String Quartet", "Katarzyna Marek")
-        nosferatu.artists.map { it.role }.distinct() shouldBe listOf("HEADLINER")
+        nosferatu.artists.map { it.role }.distinct() shouldBe listOf(ArtistRole.HEADLINER)
     }
 
     @Test

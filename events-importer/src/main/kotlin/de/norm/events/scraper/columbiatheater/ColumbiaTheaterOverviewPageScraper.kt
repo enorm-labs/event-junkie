@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiatheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -210,7 +211,7 @@ internal fun columbiaTheaterArtists(
  */
 private fun parseSupportRow(row: String): List<ScrapedArtist> {
     val label = SUPPORT_ROW_LABEL.find(row)
-    val role = if (label?.groupValues?.get(1)?.startsWith(DJ_LABEL, ignoreCase = true) == true) "DJ" else "SUPPORT"
+    val role = if (label?.groupValues?.get(1)?.startsWith(DJ_LABEL, ignoreCase = true) == true) ArtistRole.DJ else ArtistRole.SUPPORT
     val acts = label?.let { row.substring(it.range.last + 1) } ?: row
     return acts
         .trim()

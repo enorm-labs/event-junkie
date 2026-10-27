@@ -1,6 +1,7 @@
 package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.NIGHT_ENDS
@@ -239,7 +240,7 @@ class ClubDerVisionaereProgrammePageScraper(
                 .replace(SET_TIME_TAIL_PATTERN, "")
                 .replaceFirst(LINEUP_LABEL_PREFIX, "")
                 .trim()
-        val role = if (sectionIsLive || LIVE_MARKER_PATTERN.containsMatchIn(cleaned)) "LIVE" else "DJ"
+        val role = if (sectionIsLive || LIVE_MARKER_PATTERN.containsMatchIn(cleaned)) ArtistRole.LIVE else ArtistRole.DJ
         return splitActs(cleaned)
             .map(::stripArtistSuffix)
             .filterNot(::isUnannouncedAct)

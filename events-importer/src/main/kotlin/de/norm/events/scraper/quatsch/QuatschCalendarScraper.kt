@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quatsch
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
@@ -108,7 +109,7 @@ class QuatschCalendarScraper {
         val host = subtitles.firstNotNullOfOrNull { HOST.find(it)?.groupValues?.get(1) }?.let(::names).orEmpty()
         val comedians = subtitles.firstNotNullOfOrNull { COMEDIANS.find(it)?.groupValues?.get(1) }?.let(::names).orEmpty()
         return when {
-            comedians.isNotEmpty() -> comedians.map { ScrapedArtist(it) } + host.map { ScrapedArtist(it, role = "SUPPORT") }
+            comedians.isNotEmpty() -> comedians.map { ScrapedArtist(it) } + host.map { ScrapedArtist(it, role = ArtistRole.SUPPORT) }
             host.isNotEmpty() -> host.map { ScrapedArtist(it) }
             else -> buildArtistsForEventType(title, null, EventType.COMEDY.name)
         }

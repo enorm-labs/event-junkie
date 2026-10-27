@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.shouldBe
@@ -196,7 +197,7 @@ class TempodromDetailPageScraperTest {
             eventDate = LocalDate.of(2027, 10, day),
             sourceUrl = "https://www.tempodrom.de/event/nights_on_broadway-anniversary_tour-27_2027-10-0${day}_20/",
             sourceId = "tempodrom:nights_on_broadway-anniversary_tour-27_2027-10-0${day}_20",
-            artists = listOf(ScrapedArtist("Nights On Broadway: Anniversary Tour '27", "HEADLINER"))
+            artists = listOf(ScrapedArtist("Nights On Broadway: Anniversary Tour '27", ArtistRole.HEADLINER))
         )
 
     @Test
@@ -205,7 +206,7 @@ class TempodromDetailPageScraperTest {
         listOf(6, 7).forEach { day ->
             val event = scraper.enrich(tributeRow(day), page("tempodrom-detail-tribute-band-in-blurb.html"))
 
-            event.artists shouldBe listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+            event.artists shouldBe listOf(ScrapedArtist("Night Fever", ArtistRole.HEADLINER))
             event.title shouldBe "NIGHTS ON BROADWAY: Anniversary Tour '27"
             event.promoters shouldBe listOf("Concertbüro Zahlmann GmbH")
         }
@@ -216,7 +217,7 @@ class TempodromDetailPageScraperTest {
         val row =
             tributeRow(6).copy(
                 subtitle = "A Tribute to the BEE GEES performed by NIGHT FEVER",
-                artists = listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+                artists = listOf(ScrapedArtist("Night Fever", ArtistRole.HEADLINER))
             )
 
         scraper.addTributeBand(row, descriptionPage("THE BROTHERS gilt als die beste Tribute-Band")) shouldBeSameInstanceAs row
@@ -236,7 +237,7 @@ class TempodromDetailPageScraperTest {
 
     @Test
     fun `reads no tribute band for a night whose format line bills no tribute`() {
-        val row = listingRow.copy(subtitle = "Live 2027", artists = listOf(ScrapedArtist("Jill Scott", "HEADLINER")))
+        val row = listingRow.copy(subtitle = "Live 2027", artists = listOf(ScrapedArtist("Jill Scott", ArtistRole.HEADLINER)))
 
         scraper.addTributeBand(row, descriptionPage("NIGHT FEVER gilt als die beste Tribute-Band")) shouldBeSameInstanceAs row
     }

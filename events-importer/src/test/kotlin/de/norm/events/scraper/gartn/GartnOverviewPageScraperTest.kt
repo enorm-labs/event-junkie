@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gartn
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -85,7 +86,7 @@ class GartnOverviewPageScraperTest {
         night.free shouldBe false
         night.artists.map { it.name } shouldContainExactly
             listOf("Running Hot", "The Office", "Nalamazon", "Amina", "Luqqi")
-        night.artists.map { it.role }.toSet() shouldContainExactly setOf("DJ")
+        night.artists.map { it.role }.toSet() shouldContainExactly setOf(ArtistRole.DJ)
     }
 
     @Test
@@ -121,7 +122,7 @@ class GartnOverviewPageScraperTest {
     @Test
     fun `trims an inline live marker, keeps the act and bills it live`() {
         event("OEWERSAUSE").artists.map { it.name to it.role } shouldContainExactly
-            listOf("ÉLAA" to "DJ", "Kiki Kokolores" to "DJ", "Martha van Straaten" to "DJ", "Saraabb" to "LIVE")
+            listOf("ÉLAA" to ArtistRole.DJ, "Kiki Kokolores" to ArtistRole.DJ, "Martha van Straaten" to ArtistRole.DJ, "Saraabb" to ArtistRole.LIVE)
     }
 
     @Test

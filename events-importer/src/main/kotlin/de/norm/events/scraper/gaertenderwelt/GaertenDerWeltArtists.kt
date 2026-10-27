@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gaertenderwelt
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.buildArtistsForEventType
@@ -44,8 +45,8 @@ private fun teaserLineup(subtitle: String?): List<ScrapedArtist> =
         ?.map { ScrapedArtist(name = it, role = HEADLINER_ROLE) }
         .orEmpty()
 
-private const val HEADLINER_ROLE = "HEADLINER"
-private const val SUPPORT_ROLE = "SUPPORT"
+private val HEADLINER_ROLE = ArtistRole.HEADLINER
+private val SUPPORT_ROLE = ArtistRole.SUPPORT
 
 /** One act name in a teaser: capitalised or numeric words (`East 17`, `Mütze Katze`), with an optional `Dr.` before them. */
 private const val TEASER_ACT = """(?:Dr\.\s+)?[\p{Lu}\p{N}][\p{L}\p{N}'’-]*(?:\s+[\p{Lu}\p{N}][\p{L}\p{N}'’-]*)*"""

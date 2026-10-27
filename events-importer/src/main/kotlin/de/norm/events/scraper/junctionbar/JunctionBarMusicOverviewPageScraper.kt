@@ -1,5 +1,6 @@
 package de.norm.events.scraper.junctionbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -110,7 +111,7 @@ class JunctionBarMusicOverviewPageScraper {
                 photographedBands(bands, night.content)
                     .map { stripArtistSuffix(it) }
                     .filterNot { isNonArtistName(it) }
-                    .map { ScrapedArtist(name = it, role = "HEADLINER") }
+                    .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         )
     }
 

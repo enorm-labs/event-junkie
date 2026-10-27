@@ -2,6 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
@@ -855,7 +856,7 @@ class EventImportServiceTest {
                         scrapedEvent(
                             title = "Concert Night",
                             sourceId = "cassiopeia:concert-night",
-                            artists = listOf(ScrapedArtist(name = "New Band", role = "HEADLINER"))
+                            artists = listOf(ScrapedArtist(name = "New Band", role = ArtistRole.HEADLINER))
                         )
                     )
 
@@ -882,7 +883,7 @@ class EventImportServiceTest {
                         scrapedEvent(
                             title = "Show",
                             sourceId = "cassiopeia:show",
-                            artists = listOf(ScrapedArtist(name = "Existing Band", role = "HEADLINER"))
+                            artists = listOf(ScrapedArtist(name = "Existing Band", role = ArtistRole.HEADLINER))
                         )
                     )
 
@@ -998,8 +999,8 @@ class EventImportServiceTest {
                             sourceId = "cassiopeia:multi",
                             artists =
                                 listOf(
-                                    ScrapedArtist(name = "Headliner", role = "HEADLINER"),
-                                    ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
+                                    ScrapedArtist(name = "Headliner", role = ArtistRole.HEADLINER),
+                                    ScrapedArtist(name = "Maid of Ace", role = ArtistRole.SUPPORT)
                                 )
                         )
                     )
@@ -1302,35 +1303,6 @@ class EventImportServiceTest {
                 service.importFromSource(src)
 
                 savedEvents.first().status shouldBe "SCHEDULED"
-            }
-
-        @Test
-        fun `unknown artist role falls back to HEADLINER`() =
-            runTest {
-                val src = source()
-                val events =
-                    listOf(
-                        scrapedEvent(
-                            title = "Bad Role",
-                            sourceId = "cassiopeia:role",
-                            artists = listOf(ScrapedArtist(name = "Band", role = "UNKNOWN_ROLE"))
-                        )
-                    )
-
-                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
-                    ImportResult.Success(events = events, etag = null, lastModified = null)
-
-                val savedAssociations = mutableListOf<EventArtistEntity>()
-                coEvery { eventArtistRepository.saveAll(any<Iterable<EventArtistEntity>>()) } answers {
-                    firstArg<Iterable<EventArtistEntity>>()
-                        .mapIndexed { index, entity ->
-                            entity.also { savedAssociations.add(it) }.copy(id = (300L + index))
-                        }.asFlow()
-                }
-
-                service.importFromSource(src)
-
-                savedAssociations.first().role shouldBe "HEADLINER"
             }
     }
 

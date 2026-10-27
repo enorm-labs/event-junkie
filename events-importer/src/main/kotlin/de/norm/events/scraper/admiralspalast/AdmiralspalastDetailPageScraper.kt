@@ -1,5 +1,6 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -186,7 +187,7 @@ class AdmiralspalastDetailPageScraper {
                 .substringAfterLast(" & ", missingDelimiterValue = "")
                 .trim()
                 .takeIf { ENSEMBLE.containsMatchIn(it) }
-                ?.let { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+                ?.let { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
         )
 
     /**

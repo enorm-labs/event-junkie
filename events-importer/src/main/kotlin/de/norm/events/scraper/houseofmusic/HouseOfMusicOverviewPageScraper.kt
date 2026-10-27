@@ -1,5 +1,6 @@
 package de.norm.events.scraper.houseofmusic
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -102,7 +103,7 @@ class HouseOfMusicOverviewPageScraper {
         return names
             .map { it.trim() }
             .filter { it.isNotEmpty() && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = lineup == null) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = lineup == null) }
     }
 
     private fun sellsTickets(

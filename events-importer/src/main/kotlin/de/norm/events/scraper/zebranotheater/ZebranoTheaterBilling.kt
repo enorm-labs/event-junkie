@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zebranotheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.isNonArtistName
 
@@ -19,7 +20,7 @@ internal object ZebranoTheaterBilling {
         val (billed, featured) = headliners(title, isConcert).partition { !it.second }
         val heads = billed.map { it.first } + subtitleLines.flatMap(::castOf)
         val guests = featured.map { it.first } + subtitleLines.flatMap(::guestsOf)
-        return (heads.map { ScrapedArtist(name = it) } + guests.map { ScrapedArtist(name = it, role = "SUPPORT") })
+        return (heads.map { ScrapedArtist(name = it) } + guests.map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) })
             .filterNot { isNonArtistName(it.name) }
             .distinctBy { it.name.lowercase() }
     }

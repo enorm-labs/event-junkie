@@ -1,5 +1,6 @@
 package de.norm.events.scraper.monsterronsons
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -66,7 +67,7 @@ class MonsterRonsonsOverviewPageScraperTest {
         opener.sourceUrl shouldBe "https://www.karaokemonster.de/posts/sing-with-fauxpas-2"
         opener.imageUrl!! shouldStartWith "https://cdn.prod.website-files.com/"
         opener.artists.map { it.name } shouldBe listOf("IVANKA TRAMP")
-        opener.artists.map { it.role } shouldBe listOf("DJ")
+        opener.artists.map { it.role } shouldBe listOf(ArtistRole.DJ)
         // The listing states no price and no doors time; both come from the night page or not at all.
         opener.priceBoxOffice.shouldBeNull()
         opener.doorsTime.shouldBeNull()

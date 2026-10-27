@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wildatheart
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -61,9 +62,9 @@ class WildAtHeartOverviewPageScraperTest {
 
         event.artists shouldHaveSize 2
         event.artists[0].name shouldBe "Foxy"
-        event.artists[0].role shouldBe "HEADLINER"
+        event.artists[0].role shouldBe ArtistRole.HEADLINER
         event.artists[1].name shouldBe "Flatfoot 56"
-        event.artists[1].role shouldBe "SUPPORT"
+        event.artists[1].role shouldBe ArtistRole.SUPPORT
     }
 
     @Test
@@ -79,9 +80,9 @@ class WildAtHeartOverviewPageScraperTest {
         // Lineup: headliner, support act, then the aftershow DJ.
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Zeit Driver" to "HEADLINER",
-                "The Birch" to "SUPPORT",
-                "DJ Lobotomy" to "DJ"
+                "Zeit Driver" to ArtistRole.HEADLINER,
+                "The Birch" to ArtistRole.SUPPORT,
+                "DJ Lobotomy" to ArtistRole.DJ
             )
     }
 
@@ -127,8 +128,8 @@ class WildAtHeartOverviewPageScraperTest {
 
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Bash Tru" to "HEADLINER",
-                "DJ Lobotomy" to "DJ"
+                "Bash Tru" to ArtistRole.HEADLINER,
+                "DJ Lobotomy" to ArtistRole.DJ
             )
     }
 

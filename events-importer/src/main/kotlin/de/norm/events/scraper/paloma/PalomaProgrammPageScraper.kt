@@ -1,6 +1,7 @@
 package de.norm.events.scraper.paloma
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -68,7 +69,7 @@ class PalomaProgrammPageScraper(
             startTime = parseTime(match.groupValues[TIME_GROUP]),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.PALOMA.sourceIdPrefix}$date",
-            artists = djs.map { ScrapedArtist(name = it, role = "DJ") }
+            artists = djs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

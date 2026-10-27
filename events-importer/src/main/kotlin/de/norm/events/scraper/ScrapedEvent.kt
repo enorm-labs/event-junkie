@@ -98,7 +98,7 @@ data class ScrapedEvent(
      */
     val statusNote: String? = null,
     /**
-     * Raw artist names with their role ("HEADLINER", "SUPPORT", "DJ", "LIVE"), resolved by the service layer.
+     * Raw artist names with their [ArtistRole], resolved by the service layer.
      */
     val artists: List<ScrapedArtist> = emptyList(),
     /**
@@ -520,8 +520,8 @@ private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
 data class ScrapedArtist(
     /** Artist or band name as it appears on the website. */
     val name: String,
-    /** Role in the lineup (e.g. "HEADLINER", "SUPPORT", "DJ", "LIVE"). Defaults to headliner. */
-    val role: String = "HEADLINER",
+    /** Role in the lineup. Defaults to headliner. */
+    val role: ArtistRole = ArtistRole.HEADLINER,
     /**
      * The room or floor the act plays (e.g. "Panorama Bar") when the lineup is split across rooms.
      * An event in one room puts it on [ScrapedEvent.room] instead (#316).
@@ -539,8 +539,7 @@ data class ScrapedArtist(
     val setEnd: Instant? = null
 ) {
     /**
-     * Converts this scraped artist into an [EventArtistEntity], parsing [role] with
-     * [ArtistRole.HEADLINER] as the fallback.
+     * Converts this scraped artist into an [EventArtistEntity].
      *
      * @param billingOrder the position in the lineup (0-based).
      */
@@ -552,7 +551,7 @@ data class ScrapedArtist(
         EventArtistEntity(
             eventId = eventId,
             artistId = artistId,
-            role = ArtistRole.parseOrDefault(role).name,
+            role = role.name,
             billingOrder = billingOrder,
             stage = stage,
             titleDerived = titleDerived,

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.houseofmusic
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -121,9 +122,9 @@ class HouseOfMusicOverviewPageScraperTest {
         val night = retitled("Jonny Mahoro feat. In Your Pocket")
         val long = retitled("The Big Berlin Brass Collective and Friends feat. The Smoky Mountain Youth Choir")
 
-        night.artists.map { it.name to it.role } shouldBe listOf("Jonny Mahoro" to "HEADLINER", "In Your Pocket" to "SUPPORT")
+        night.artists.map { it.name to it.role } shouldBe listOf("Jonny Mahoro" to ArtistRole.HEADLINER, "In Your Pocket" to ArtistRole.SUPPORT)
         long.artists.map { it.name to it.role } shouldBe
-            listOf("The Big Berlin Brass Collective and Friends" to "HEADLINER", "The Smoky Mountain Youth Choir" to "SUPPORT")
+            listOf("The Big Berlin Brass Collective and Friends" to ArtistRole.HEADLINER, "The Smoky Mountain Youth Choir" to ArtistRole.SUPPORT)
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -123,8 +124,8 @@ class MorphineWebsiteImporterTest {
             birds.pricePresale shouldBe BigDecimal("15")
             birds.artists shouldBe
                 listOf(
-                    ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
-                    ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
+                    ScrapedArtist("ALL ABOUT BIRDS", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
+                    ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
                 )
         }
 

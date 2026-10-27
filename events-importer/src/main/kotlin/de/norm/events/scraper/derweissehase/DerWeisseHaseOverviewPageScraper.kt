@@ -1,5 +1,6 @@
 package de.norm.events.scraper.derweissehase
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -180,7 +181,7 @@ class DerWeisseHaseOverviewPageScraper {
             .flatMap { it.split(LINEUP_SEPARATOR) }
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) && !isUnannouncedSlot(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** True when [name] is an unbooked billing slot rather than a performer — see [UNANNOUNCED_SLOT_PATTERN]. */
     private fun isUnannouncedSlot(name: String): Boolean = UNANNOUNCED_SLOT_PATTERN.matches(name.trim().replace(WHITESPACE, " "))

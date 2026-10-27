@@ -1,5 +1,6 @@
 package de.norm.events.scraper.aeden
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.splitBackToBack
@@ -73,14 +74,14 @@ class AedenOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Alexa Fluor", role = "DJ"),
-                ScrapedArtist(name = "ALIS.", role = "DJ"),
-                ScrapedArtist(name = "DJ Gianni", role = "DJ"),
-                ScrapedArtist(name = "ELOISA", role = "DJ"),
-                ScrapedArtist(name = "Melanchromie", role = "DJ"),
-                ScrapedArtist(name = "Razzle Dazzler", role = "DJ"),
-                ScrapedArtist(name = "NASTYA NVRSLP", role = "DJ"),
-                ScrapedArtist(name = "YENKOV", role = "DJ")
+                ScrapedArtist(name = "Alexa Fluor", role = ArtistRole.DJ),
+                ScrapedArtist(name = "ALIS.", role = ArtistRole.DJ),
+                ScrapedArtist(name = "DJ Gianni", role = ArtistRole.DJ),
+                ScrapedArtist(name = "ELOISA", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Melanchromie", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Razzle Dazzler", role = ArtistRole.DJ),
+                ScrapedArtist(name = "NASTYA NVRSLP", role = ArtistRole.DJ),
+                ScrapedArtist(name = "YENKOV", role = ArtistRole.DJ)
             )
     }
 
@@ -92,10 +93,10 @@ class AedenOverviewPageScraperTest {
         // and "SECRET ACT" is dropped rather than minted as an artist. A b2b slot is two DJs at the import boundary (#1844).
         event.artists.flatMap { splitBackToBack(it) } shouldContainExactly
             listOf(
-                ScrapedArtist(name = "DANA NADA", role = "DJ"),
-                ScrapedArtist(name = "STEEZY", role = "DJ"),
-                ScrapedArtist(name = "KIV", role = "DJ"),
-                ScrapedArtist(name = "YANES", role = "DJ")
+                ScrapedArtist(name = "DANA NADA", role = ArtistRole.DJ),
+                ScrapedArtist(name = "STEEZY", role = ArtistRole.DJ),
+                ScrapedArtist(name = "KIV", role = ArtistRole.DJ),
+                ScrapedArtist(name = "YANES", role = ArtistRole.DJ)
             )
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gaertenderwelt
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
@@ -130,7 +131,7 @@ class GaertenDerWeltWebsiteImporterTest {
             val concert = result.events.single { it.sourceUrl == CONCERT_URL }
 
             concert.artists.map { it.name } shouldBe listOf("Agnes Obel", "Peter Gregson")
-            concert.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT")
+            concert.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT)
         }
 
     @Test
@@ -157,7 +158,7 @@ class GaertenDerWeltWebsiteImporterTest {
                 .single { it.sourceUrl == CONCERT_URL }
                 .artists
                 .map { it.name to it.role } shouldBe
-                listOf("Haddaway", "Loona", "East 17", "Mütze Katze").map { it to "HEADLINER" }
+                listOf("Haddaway", "Loona", "East 17", "Mütze Katze").map { it to ArtistRole.HEADLINER }
 
             coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns
                 concertPage(

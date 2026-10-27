@@ -1,5 +1,6 @@
 package de.norm.events.scraper.derweissehase
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
@@ -79,9 +80,9 @@ class DerWeisseHaseOverviewPageScraperTest {
         // "+ Surprise DJ" closes the billing and is not a performer.
         straff.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Fran-Cee", "DJ"),
-                ScrapedArtist("Fabian Fischbach", "DJ"),
-                ScrapedArtist("DAV3", "DJ")
+                ScrapedArtist("Fran-Cee", ArtistRole.DJ),
+                ScrapedArtist("Fabian Fischbach", ArtistRole.DJ),
+                ScrapedArtist("DAV3", ArtistRole.DJ)
             )
     }
 
@@ -110,8 +111,8 @@ class DerWeisseHaseOverviewPageScraperTest {
         val tuesdayRave = events.single { it.eventDate == LocalDate.of(2026, 8, 11) }
         tuesdayRave.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Cat Vermillion", "DJ"),
-                ScrapedArtist("TechNovaBader", "DJ")
+                ScrapedArtist("Cat Vermillion", ArtistRole.DJ),
+                ScrapedArtist("TechNovaBader", ArtistRole.DJ)
             )
     }
 
@@ -128,7 +129,7 @@ class DerWeisseHaseOverviewPageScraperTest {
     fun `stores an entry note written as a heading as the price note too`() {
         val femAll = events.single { it.eventDate == LocalDate.of(2026, 8, 21) }
         femAll.priceNote shouldBe "Women & FLINTA free until 1 AM"
-        femAll.artists.first() shouldBe ScrapedArtist("Nat SuPrise", "DJ")
+        femAll.artists.first() shouldBe ScrapedArtist("Nat SuPrise", ArtistRole.DJ)
     }
 
     @Test
@@ -191,9 +192,9 @@ class DerWeisseHaseOverviewPageScraperTest {
         val tuesdayRave = nights.single { it.eventDate == LocalDate.of(2026, 10, 27) }
         tuesdayRave.artists shouldContainExactly
             listOf(
-                ScrapedArtist("MARRE", "DJ"),
-                ScrapedArtist("JUICY (DE)", "DJ"),
-                ScrapedArtist("PASSIX", "DJ")
+                ScrapedArtist("MARRE", ArtistRole.DJ),
+                ScrapedArtist("JUICY (DE)", ArtistRole.DJ),
+                ScrapedArtist("PASSIX", ArtistRole.DJ)
             )
         tuesdayRave.priceNote shouldBe "free entry until midnight*"
         tuesdayRave.description.shouldBeNull()

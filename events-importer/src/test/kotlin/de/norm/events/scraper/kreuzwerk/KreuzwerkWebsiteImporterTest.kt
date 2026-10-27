@@ -1,5 +1,6 @@
 package de.norm.events.scraper.kreuzwerk
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
@@ -112,7 +113,7 @@ class KreuzwerkWebsiteImporterTest {
             night.doorsTime.shouldBeNull()
             night.artists.map { it.name } shouldBe
                 listOf("Banana Moon", "Massimiliano Pagliara", "BYRON YEATES", "Cashu", "Chris Cruse", "Majdolen", "Stathis")
-            night.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+            night.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
             night.description shouldBe
                 "Power Dance Club and BUTT Magazine revive their love affair in Berlin. Aw!\n" +
                 "Join us for a very special 14 hour function, featuring a new BUTT-curated chill out space: the XXX KINO\n" +

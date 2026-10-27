@@ -1,5 +1,6 @@
 package de.norm.events.scraper.altekantine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -64,7 +65,7 @@ class AlteKantineDetailPageScraperTest {
         // The subtitle lives only on the overview; the detail page leaves it for the merge to fill.
         event.subtitle.shouldBeNull()
         // A party's performer is its resident DJ.
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Funky Henning", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Funky Henning", role = ArtistRole.DJ))
     }
 
     @Test

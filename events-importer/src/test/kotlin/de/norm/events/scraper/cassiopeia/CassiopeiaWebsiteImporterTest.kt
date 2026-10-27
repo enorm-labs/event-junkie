@@ -1,5 +1,6 @@
 package de.norm.events.scraper.cassiopeia
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
@@ -135,8 +136,8 @@ class CassiopeiaWebsiteImporterTest {
             concert.genre shouldBe "Noise"
             concert.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "Aska", role = "SUPPORT")
+                    ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT)
                 )
         }
 
@@ -251,7 +252,7 @@ class CassiopeiaWebsiteImporterTest {
             // Without a detail page there are no "Support:" lines, but the overview
             // still yields the concert headliner from its title as a fallback.
             val concert = result.events.first { it.title == "Pharmakon" }
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER, titleDerived = true))
             // That headliner alone stands in for a bill with support, so the upsert keeps the stored lineup (#2542).
             concert.detailPageOwns shouldBe setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
         }

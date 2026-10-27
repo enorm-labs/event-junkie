@@ -1,5 +1,6 @@
 package de.norm.events.scraper.binuu
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -66,7 +67,7 @@ class BinuuDetailPageScraperTest {
 
     @Test
     fun `treats a lone performer as the headliner`() {
-        archEnemy.artists shouldContainExactly listOf(ScrapedArtist("Arch Enemy", "HEADLINER"))
+        archEnemy.artists shouldContainExactly listOf(ScrapedArtist("Arch Enemy", ArtistRole.HEADLINER))
     }
 
     @Test
@@ -75,8 +76,8 @@ class BinuuDetailPageScraperTest {
             parseFixture("binuu-detail-this-will-destroy-you.html", "https://binuu.de/de/events/aufm93tii76xvp5")
         twdy.artists shouldContainExactly
             listOf(
-                ScrapedArtist("This Will Destroy You", "HEADLINER"),
-                ScrapedArtist("MASCARA", "SUPPORT")
+                ScrapedArtist("This Will Destroy You", ArtistRole.HEADLINER),
+                ScrapedArtist("MASCARA", ArtistRole.SUPPORT)
             )
         // subtitle_2 ("Support: MASCARA") feeds the roster, not the event subtitle.
         twdy.subtitle.shouldBeNull()
@@ -88,9 +89,9 @@ class BinuuDetailPageScraperTest {
             parseFixture("binuu-detail-shadowplay.html", "https://binuu.de/de/events/41apztb3yeneeef")
         shadowplay.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Solar Flake", "HEADLINER"),
-                ScrapedArtist("Black Nail Cabaret", "SUPPORT"),
-                ScrapedArtist("Unify Separate", "SUPPORT")
+                ScrapedArtist("Solar Flake", ArtistRole.HEADLINER),
+                ScrapedArtist("Black Nail Cabaret", ArtistRole.SUPPORT),
+                ScrapedArtist("Unify Separate", ArtistRole.SUPPORT)
             )
         // No tickets array on this page → no ticket URL.
         shadowplay.ticketUrl.shouldBeNull()

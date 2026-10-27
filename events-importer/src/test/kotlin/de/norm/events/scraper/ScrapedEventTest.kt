@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.PUBLISHER_ORIGIN
 import de.norm.events.importing.withGapsFromStored
@@ -53,7 +54,7 @@ class ScrapedEventTest {
             free = false,
             status = "CANCELLED",
             statusNote = "Abgesagt",
-            artists = listOf(ScrapedArtist(name = "Listing Act", role = "HEADLINER")),
+            artists = listOf(ScrapedArtist(name = "Listing Act", role = ArtistRole.HEADLINER)),
             promoters = listOf("Listing Promoter"),
             promoterWebsites = mapOf("Listing Promoter" to "https://promoter.example.org")
         )
@@ -86,7 +87,7 @@ class ScrapedEventTest {
                 soldOut = false,
                 free = true,
                 status = "POSTPONED",
-                artists = listOf(ScrapedArtist(name = "Detail Act", role = "HEADLINER"))
+                artists = listOf(ScrapedArtist(name = "Detail Act", role = ArtistRole.HEADLINER))
             )
 
         val merged = detail.withGapsFrom(listingRow.copy(soldOut = false, free = false))

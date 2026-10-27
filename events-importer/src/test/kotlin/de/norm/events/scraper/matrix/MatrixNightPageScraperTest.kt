@@ -1,5 +1,6 @@
 package de.norm.events.scraper.matrix
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -48,7 +49,7 @@ class MatrixNightPageScraperTest {
         event.sourceUrl shouldBe nightUrl("social")
         event.sourceId shouldBe "matrix:2026-10-08-social"
         event.description shouldBe "People. Music. Connection.\n1 Floor geöffnet\nNur 5 € Eintritt für Ladies & Studenten bis 0 Uhr!"
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "DJ SizMo", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "DJ SizMo", role = ArtistRole.DJ))
         // The offer names an amount, so it is the note, but Matrix publishes no door price.
         event.priceNote shouldBe "Nur 5 € Eintritt für Ladies & Studenten bis 0 Uhr!"
         event.priceBoxOffice.shouldBeNull()
@@ -68,10 +69,10 @@ class MatrixNightPageScraperTest {
     fun `splits a back-to-back entry and reads every entry as a DJ`() {
         night("matrix").shouldNotBeNull().artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "DJ JC", role = "DJ"),
-                ScrapedArtist(name = "DJ GUS", role = "DJ"),
-                ScrapedArtist(name = "DJ Le Trace", role = "DJ"),
-                ScrapedArtist(name = "MC Caramel", role = "DJ")
+                ScrapedArtist(name = "DJ JC", role = ArtistRole.DJ),
+                ScrapedArtist(name = "DJ GUS", role = ArtistRole.DJ),
+                ScrapedArtist(name = "DJ Le Trace", role = ArtistRole.DJ),
+                ScrapedArtist(name = "MC Caramel", role = ArtistRole.DJ)
             )
     }
 

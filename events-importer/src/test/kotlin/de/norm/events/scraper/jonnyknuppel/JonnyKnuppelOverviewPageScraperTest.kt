@@ -1,5 +1,6 @@
 package de.norm.events.scraper.jonnyknuppel
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.splitBackToBack
@@ -63,7 +64,7 @@ class JonnyKnuppelOverviewPageScraperTest {
         event.description.shouldBeNull()
         event.artists.map { it.name } shouldContainExactly
             listOf("illousion", "Rave Lauren", "Lilly K.", "Nein Oh Nein", "Meta Chrom", "Friedrichstraße Geist", "DSL", "Klirre", "Mittelscharf")
-        event.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
     }
 
     @Test

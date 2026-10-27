@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hafenbar
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -48,7 +49,7 @@ class HafenbarPartyPageScraperTest {
         event.sourceUrl shouldBe fridayUrl
         event.sourceId shouldBe "hafenbar:schlager-party-berlin-2026-10-16"
         event.artists.map { it.name } shouldContainExactly listOf("DJ Funkmaster Confetti", "DJ Engel Bert")
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         event.description!! shouldStartWith "Ahoi, liebe Disco-Nixen"
         event.description shouldContain "Freitag, den 16.10.2026 ab 21:00 Uhr!"
         event.imageUrl.shouldBeNull()

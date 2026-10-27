@@ -1,5 +1,6 @@
 package de.norm.events.scraper.amt
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ENGLISH_LONG_DATE
 import de.norm.events.scraper.EventSource
@@ -102,7 +103,7 @@ class AmtOverviewPageScraper {
             ticketUrl = item.hrefAt("a.div-strela"),
             pricePresale = presale,
             priceBoxOffice = boxOffice,
-            artists = parseDjs(lineup).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
+            artists = parseDjs(lineup).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
         )
     }
 
@@ -117,7 +118,7 @@ class AmtOverviewPageScraper {
             .split(DJ_SEPARATOR)
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /** Parses the `MMMM d, yyyy` (`"June 19, 2026"`) `data-date`, null when absent or unparseable. */

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -208,7 +209,7 @@ class AdmiralspalastDetailPageScraperTest {
     @Test
     fun `bills a guest the title names after a support label as support`() {
         val event = scrapeTitle("Chelsea Wolfe + Support: A.A. Williams - THE DARK World Tour", "Konzert")
-        event.artists.map { it.name to it.role } shouldBe listOf("Chelsea Wolfe" to "HEADLINER", "A.A. Williams" to "SUPPORT")
+        event.artists.map { it.name to it.role } shouldBe listOf("Chelsea Wolfe" to ArtistRole.HEADLINER, "A.A. Williams" to ArtistRole.SUPPORT)
     }
 
     /** One performance row with [title] as its `<h2>`, in the markup the production page uses. */

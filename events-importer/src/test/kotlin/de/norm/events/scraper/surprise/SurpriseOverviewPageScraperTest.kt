@@ -1,5 +1,6 @@
 package de.norm.events.scraper.surprise
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -47,7 +48,7 @@ class SurpriseOverviewPageScraperTest {
         night.imageUrl shouldBe "https://surprise-berlin.de/images/events/sat1710.jpg"
         night.genre shouldBe "Dancehall, Salsa, Hip Hop, Afrobeat, RnB"
         night.artists.map { it.name } shouldContainExactly listOf("DJ Rolex", "DJ Judex")
-        night.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        night.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
     }
 
     @Test

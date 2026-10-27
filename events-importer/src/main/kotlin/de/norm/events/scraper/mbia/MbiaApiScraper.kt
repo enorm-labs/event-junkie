@@ -1,6 +1,7 @@
 package de.norm.events.scraper.mbia
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
@@ -132,7 +133,7 @@ private fun actsFromTitle(title: String): List<ScrapedArtist> {
         .map { it.trim() }
         .filterNot { it.isBlank() || isNonArtistName(it) }
         .distinct()
-        .map { ScrapedArtist(name = it, role = "DJ", titleDerived = true) }
+        .map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
 }
 
 /** `[pres. <acts>]` in brackets. */

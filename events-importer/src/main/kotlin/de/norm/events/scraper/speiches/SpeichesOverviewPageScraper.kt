@@ -1,6 +1,7 @@
 package de.norm.events.scraper.speiches
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
@@ -150,7 +151,7 @@ class SpeichesOverviewPageScraper(
         subtitle: String?
     ): List<ScrapedArtist> {
         if (HOUSE_SERIES.containsMatchIn(title)) {
-            return subtitle?.let { PLAYS.find(it)?.groupValues?.get(1) }?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER")) }.orEmpty()
+            return subtitle?.let { PLAYS.find(it)?.groupValues?.get(1) }?.let { listOf(ScrapedArtist(name = it, role = ArtistRole.HEADLINER)) }.orEmpty()
         }
         val names =
             title

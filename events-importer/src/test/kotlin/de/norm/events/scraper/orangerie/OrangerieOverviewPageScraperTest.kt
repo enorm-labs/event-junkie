@@ -1,5 +1,6 @@
 package de.norm.events.scraper.orangerie
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -43,7 +44,7 @@ class OrangerieOverviewPageScraperTest {
         night.imageUrl shouldBe "https://www.orangerie-nk.de/images/events/sound-canteen-w-tobi-fries.jpg"
         night.ticketUrl shouldBe "https://rausgegangen.de/events/sound-canteen-w-tobi-fries-0/"
         night.description!! shouldStartWith "From 20:00–21:30, dinner is accompanied"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Tobi Fries", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Tobi Fries", role = ArtistRole.DJ))
     }
 
     @Test
@@ -55,7 +56,7 @@ class OrangerieOverviewPageScraperTest {
         tagged.genre shouldBe "Samba"
         tagged.priceBoxOffice shouldBe BigDecimal("10")
         tagged.free shouldBe false
-        tagged.artists shouldContainExactly listOf(ScrapedArtist(name = "Jacaré", role = "HEADLINER"))
+        tagged.artists shouldContainExactly listOf(ScrapedArtist(name = "Jacaré", role = ArtistRole.HEADLINER))
         untagged.eventType shouldBe EventType.CONCERT.name
         untagged.free shouldBe false
     }
@@ -82,9 +83,9 @@ class OrangerieOverviewPageScraperTest {
             )
 
         nights[0].artists shouldContainExactly
-            listOf("Nadia Wise", "Sarah Ninon", "Jelle from the Block").map { ScrapedArtist(name = it, role = "DJ") }
-        nights[1].artists shouldContainExactly listOf("CRIES", "Kallaloo", "Vio PRG").map { ScrapedArtist(name = it, role = "DJ") }
-        nights[2].artists shouldContainExactly listOf("Aruto", "Os Camarões").map { ScrapedArtist(name = it, role = "HEADLINER") }
+            listOf("Nadia Wise", "Sarah Ninon", "Jelle from the Block").map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        nights[1].artists shouldContainExactly listOf("CRIES", "Kallaloo", "Vio PRG").map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
+        nights[2].artists shouldContainExactly listOf("Aruto", "Os Camarões").map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         nights[3].artists.flatMap { splitBackToBack(it) }.map { it.name } shouldContainExactly listOf("Bomchello", "Terje", "mnm")
     }
 
@@ -93,7 +94,7 @@ class OrangerieOverviewPageScraperTest {
         val nights = scrapeCards("ÍNTIMO w/ Sarah Ninon, The Brahma & Jelle from the Block" to "")
 
         nights.single().artists shouldContainExactly
-            listOf("Sarah Ninon", "The Brahma", "Jelle from the Block").map { ScrapedArtist(name = it, role = "DJ") }
+            listOf("Sarah Ninon", "The Brahma", "Jelle from the Block").map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     @Test

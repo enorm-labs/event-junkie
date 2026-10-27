@@ -145,7 +145,7 @@ class HumboldthainApiScraper(
             ?.map { it.text().trim() }
             ?.filter { it.isNotBlank() && !isNonArtistName(it) }
             ?.distinctBy { it.lowercase() }
-            ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ.name) }
+            ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
             .orEmpty()
 
     /**

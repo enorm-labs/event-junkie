@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urbanspree
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.isNonArtistName
 
@@ -8,7 +9,7 @@ import de.norm.events.scraper.isNonArtistName
 // read: it has no fixed shape.
 
 /** The role a club night's DJ is billed under. */
-internal const val DJ_ROLE = "DJ"
+internal val DJ_ROLE = ArtistRole.DJ
 
 /** The venue's word for its own club night, in any case. */
 private val KLUBNACHT = Regex("""klubnacht""", RegexOption.IGNORE_CASE)
@@ -27,7 +28,7 @@ internal fun urbanSpreeClubNightLineUp(
 ): List<ScrapedArtist> =
     urbanSpreeDjSets(description)
         .map { ScrapedArtist(name = it, role = DJ_ROLE) }
-        .ifEmpty { urbanSpreeFeaturedActs(description).map { ScrapedArtist(name = it, role = "HEADLINER") } }
+        .ifEmpty { urbanSpreeFeaturedActs(description).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) } }
         .ifEmpty { urbanSpreeBracketDjs(title).map { ScrapedArtist(name = it, role = DJ_ROLE) } }
 
 /**

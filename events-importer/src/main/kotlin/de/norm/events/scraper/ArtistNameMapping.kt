@@ -2,6 +2,7 @@
 
 package de.norm.events.scraper
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 
 // Artist-name resolution for scraped events: performer names from titles and support lines.
@@ -115,12 +116,12 @@ fun headlinersFromTitle(
             .map { segment ->
                 // The role is decided from the *raw* segment, before its label is stripped: a title
                 // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
-                val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) "SUPPORT" else "HEADLINER"
+                val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) ArtistRole.SUPPORT else ArtistRole.HEADLINER
                 stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
             }.filterNot { (name, _) -> isNonArtistName(name) }
             .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) }
     // `Jazz Night ft. Flow Rea`: with the night's name dropped, the guests are the whole bill (#3160).
-    return if (heads.isEmpty()) guests.map { it.copy(role = "HEADLINER") } else heads + guests
+    return if (heads.isEmpty()) guests.map { it.copy(role = ArtistRole.HEADLINER) } else heads + guests
 }
 
 /**
@@ -134,7 +135,7 @@ private fun anniversaryQuotedAct(title: String): List<ScrapedArtist>? =
         ?.groupValues
         ?.get(1)
         ?.let { stripArtistSuffix(it) }
-        ?.let { name -> listOf(name).filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) } }
+        ?.let { name -> listOf(name).filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) } }
 
 /** A leading `<n> Jahre "<act>"` or `<n> Years of "<act>"`, in straight, German or guillemet quotes. */
 private val ANNIVERSARY_QUOTED_ACT =
@@ -212,7 +213,7 @@ private val BY_PERSON_MARKER = Regex("""^.+?\s+by\s+(\p{Lu}[\p{L}'.-]*(?:\s+\p{L
  */
 fun hostedActsFromTitle(
     title: String,
-    role: String = "HEADLINER"
+    role: ArtistRole = ArtistRole.HEADLINER
 ): List<ScrapedArtist> {
     val acts = HOSTED_ACTS_MARKER.find(title.trim())?.groupValues?.get(1) ?: BY_PERSON_MARKER.find(title.trim())?.groupValues?.get(1)
     return acts
@@ -233,7 +234,7 @@ private fun splitFeaturedGuests(title: String): Pair<String, List<ScrapedArtist>
         splitSupportActs(title.substring(marker.range.last + 1))
             .map { stripArtistSuffix(it) }
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = "SUPPORT", titleDerived = true) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT, titleDerived = true) }
     return title.substring(0, marker.range.first) to guests
 }
 
@@ -273,7 +274,7 @@ private fun presentsFrameActs(title: String): List<ScrapedArtist>? {
         .flatMap { splitHeadlinerTitle(it.trim()) }
         .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
         .filterNot(::isNonArtistName)
-        .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
         .ifEmpty { null }
 }
 
@@ -294,7 +295,7 @@ private fun coPresentedNightActs(title: String): List<ScrapedArtist>? =
         ?.let(::splitSupportActs)
         ?.map { stripArtistSuffix(it) }
         ?.filterNot(::isNonArtistName)
-        ?.map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        ?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
         ?.ifEmpty { null }
 
 /**
@@ -344,7 +345,7 @@ private fun withFrameActs(title: String): List<ScrapedArtist>? {
         splitSupportActs(tail)
             .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
     return acts.ifEmpty { null }
 }
 
@@ -370,7 +371,7 @@ fun buildArtistList(
     val supportActs =
         supportNames
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "SUPPORT") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
 
     return headlinersFromTitle(title, subtitle = subtitle, description = description) + supportActs
 }
@@ -391,7 +392,7 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
         ?.get(1)
         ?.trim()
         ?.takeIf { performer -> performer.any { it.isLowerCase() } && !isNonArtistName(performer) }
-        ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
+        ?.let { listOf(ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true)) }
         .orEmpty()
         .ifEmpty { knownSoloPerformer(title) }
 
@@ -411,7 +412,7 @@ private val SOLO_PERFORMER_HEAD = Regex("""^([\p{L}]+)(?:['’]s\b|\s*(?:[-–�
 fun knownSoloPerformer(title: String): List<ScrapedArtist> {
     val text = stripTitleStatusMarker(title).trim()
     val name = SOLO_PERFORMER_HEAD.find(text)?.groupValues?.get(1) ?: text
-    return if (name.lowercase() in KNOWN_SOLO_PERFORMERS) listOf(ScrapedArtist(name = name, role = "HEADLINER", titleDerived = true)) else emptyList()
+    return if (name.lowercase() in KNOWN_SOLO_PERFORMERS) listOf(ScrapedArtist(name = name, role = ArtistRole.HEADLINER, titleDerived = true)) else emptyList()
 }
 
 /** Two to four capitalised words with lower case in them: `Till Reiners`, `Hans-Joachim Heist`; not `Lebefrau`, not `LIVE`. */
@@ -439,7 +440,7 @@ fun performersBilledWith(line: String?): List<ScrapedArtist> {
     val tail = line?.let { BILLED_WITH.find(stripTitleStatusMarker(it).trim()) }?.groupValues?.get(1) ?: return emptyList()
     val names = tail.split(BILLED_WITH_SEPARATOR).map { it.trim() }.filterNot { SHOW_FORMAT_PART.containsMatchIn(it) }
     if (names.isEmpty() || !names.all { isPersonShaped(it) && !isNonArtistName(it) }) return emptyList()
-    return names.map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+    return names.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
 }
 
 /** A performer noun before a name, as an arena's copy introduces its act: `kommt der Comedian Till Reiners`. */
@@ -462,7 +463,7 @@ private fun soloActNamedInDescription(
         ?.groupValues
         ?.get(1)
         ?.takeIf { isPersonShaped(it) && !isNonArtistName(it) }
-        ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
+        ?.let { listOf(ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true)) }
         .orEmpty()
 }
 
@@ -499,7 +500,7 @@ fun buildArtistsForEventType(
     val supportActs =
         supportNames
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "SUPPORT") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
     if (isIceShow(title, subtitle)) return supportActs
     if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) {
         return soloBillOf(title)

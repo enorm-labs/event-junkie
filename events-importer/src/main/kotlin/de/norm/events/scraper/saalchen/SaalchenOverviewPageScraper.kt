@@ -1,6 +1,7 @@
 package de.norm.events.scraper.saalchen
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -148,7 +149,7 @@ class SaalchenOverviewPageScraper {
             ?.let(::splitSupportActs)
             .orEmpty()
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     /** The labelled `Datum` when it parses, else the widget's date; a disagreement is logged. */
     private fun resolveDate(

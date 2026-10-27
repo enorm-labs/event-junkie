@@ -2,6 +2,7 @@ package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventStatus
@@ -82,7 +83,7 @@ class ContentStampIntegrationTest : BaseControllerTest() {
             sourceUrl = "https://festsaal-kreuzberg.de/events/nachtschicht",
             description = "Eine Nacht bis zum Morgen.",
             pricePresale = BigDecimal("15"),
-            artists = listOf(ScrapedArtist("DJ Kollektiv Ost", "DJ"), ScrapedArtist("Mara Lind", "DJ")),
+            artists = listOf(ScrapedArtist("DJ Kollektiv Ost", ArtistRole.DJ), ScrapedArtist("Mara Lind", ArtistRole.DJ)),
             promoters = listOf("Nachtschicht Kollektiv")
         )
 
@@ -123,7 +124,7 @@ class ContentStampIntegrationTest : BaseControllerTest() {
             import(published())
             val before = stored()
 
-            import(published().let { it.copy(artists = it.artists + ScrapedArtist("Tomas Weil", "DJ")) })
+            import(published().let { it.copy(artists = it.artists + ScrapedArtist("Tomas Weil", ArtistRole.DJ)) })
             stored().contentChangedAt.shouldNotBeNull() shouldBeGreaterThan before.contentChangedAt.shouldNotBeNull()
         }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soulcat
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -59,7 +60,7 @@ class SoulcatApiScraper {
             sourceId = event.tecSourceId(EventSource.SOULCAT, slug),
             genre = genreOf(title, parts, djs != null),
             free = FREE_ENTRY.containsMatchIn(rawTitle),
-            artists = djs?.split(NAME_SEPARATOR)?.map { ScrapedArtist(name = it.trim(), role = "DJ") }.orEmpty()
+            artists = djs?.split(NAME_SEPARATOR)?.map { ScrapedArtist(name = it.trim(), role = ArtistRole.DJ) }.orEmpty()
         )
     }
 

@@ -128,7 +128,7 @@ class MinimalBarOverviewPageScraper {
             .flatMap { slot ->
                 val billing = text(slot, "name") ?: return@flatMap emptyList()
                 val setStart = parseTime(text(slot, "time"))?.let { clock.slot(it).first }
-                actsOf(billing).map { ScrapedArtist(name = it, role = ArtistRole.DJ.name, setStart = setStart) }
+                actsOf(billing).map { ScrapedArtist(name = it, role = ArtistRole.DJ, setStart = setStart) }
             }.distinctBy { SlugGenerator.slugify(it.name) }
     }
 

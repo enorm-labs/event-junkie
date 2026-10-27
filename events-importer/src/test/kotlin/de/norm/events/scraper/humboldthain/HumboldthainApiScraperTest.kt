@@ -86,7 +86,7 @@ class HumboldthainApiScraperTest {
                 "TINOU",
                 "Moritz Biebl"
             )
-        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ.name)
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
     }
 
     @Test
@@ -103,7 +103,7 @@ class HumboldthainApiScraperTest {
         event.eventType shouldBe EventType.CONCERT.name
         event.eventDate shouldBe LocalDate.of(2026, 3, 20)
         event.artists.map { it.name } shouldContainExactly listOf("Heiße Assis")
-        event.artists.single().role shouldBe ArtistRole.HEADLINER.name
+        event.artists.single().role shouldBe ArtistRole.HEADLINER
     }
 
     @Test

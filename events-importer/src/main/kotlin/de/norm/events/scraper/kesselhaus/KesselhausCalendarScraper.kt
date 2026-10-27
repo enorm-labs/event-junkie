@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kesselhaus
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
@@ -176,7 +177,7 @@ class KesselhausCalendarScraper(
             .orEmpty()
             .map(::stripArtistSuffix)
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
     }
 
     /** A night filed as a concert but tagged as a party and not as a concert is a DJ night. */

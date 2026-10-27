@@ -1,6 +1,7 @@
 package de.norm.events.scraper.insel
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.COUNTRY_NAMES
 import de.norm.events.scraper.DOORS_LABELS
@@ -206,12 +207,12 @@ class InselApiScraper(
             supportNames
                 .map(::stripOriginTag)
                 .filterNot { isNonArtistName(it) }
-                .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         val performers =
             performerNames
                 .filterNot { isNonArtistName(it) }
                 .distinctBy { it.lowercase() }
-                .map { ScrapedArtist(name = it, role = "HEADLINER") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         return performers.ifEmpty { headliners(title) } + supportActs
     }
 

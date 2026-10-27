@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiatheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -53,8 +54,8 @@ class ColumbiaTheaterDetailPageScraperTest {
         soulfly.description.shouldNotBeNull() shouldStartWith "Mit der Tribal Technology Tour 2026"
         soulfly.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Botulism", "SUPPORT")
+                ScrapedArtist("Soulfly", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Botulism", ArtistRole.SUPPORT)
             )
         soulfly.promoters.shouldBeEmpty()
         soulfly.soldOut shouldBe false
@@ -98,8 +99,8 @@ class ColumbiaTheaterDetailPageScraperTest {
             "https://www.eventim.de/event/temples-2026-uk-eu-bliss-tour-columbia-theater-21537121/?affiliate=SZ3"
         temples.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Temples", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Jewls", "SUPPORT")
+                ScrapedArtist("Temples", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Jewls", ArtistRole.SUPPORT)
             )
     }
 
@@ -112,8 +113,8 @@ class ColumbiaTheaterDetailPageScraperTest {
         oreillys.startTime shouldBe LocalTime.of(20, 0)
         oreillys.artists shouldContainExactly
             listOf(
-                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Harpyie", "SUPPORT")
+                ScrapedArtist("The O'Reillys and The Paddyhats", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Harpyie", ArtistRole.SUPPORT)
             )
     }
 

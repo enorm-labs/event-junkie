@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.withWeekdayWarnings
@@ -68,7 +69,7 @@ class MorphineDetailPageScraperTest {
         event.description.shouldNotBeNull() shouldStartWith "After the remarkable success"
         event.status shouldBe "SCHEDULED"
         event.soldOut shouldBe false
-        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")))
+        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")))
     }
 
     @Test
@@ -110,9 +111,9 @@ class MorphineDetailPageScraperTest {
 
         event.artists shouldBe
             listOf(
-                ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
+                ScrapedArtist("ALL ABOUT BIRDS", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
                 // The project after the colon is the work, not the act (#1585).
-                ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
+                ScrapedArtist("JON ROSE", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
             )
         event.doorsTime shouldBe LocalTime.of(19, 30)
         event.startTime shouldBe LocalTime.of(20, 0)
@@ -126,9 +127,9 @@ class MorphineDetailPageScraperTest {
 
         event.artists shouldBe
             listOf(
-                ScrapedArtist("Gareth Psaltis", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
-                ScrapedArtist("Temple Rat", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
-                ScrapedArtist("Jacob Stoy", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z"))
+                ScrapedArtist("Gareth Psaltis", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
+                ScrapedArtist("Temple Rat", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
+                ScrapedArtist("Jacob Stoy", ArtistRole.HEADLINER, titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z"))
             )
     }
 
@@ -147,7 +148,7 @@ class MorphineDetailPageScraperTest {
         val event = parse("morphine-detail-con-il-loro.html", url).shouldNotBeNull()
 
         event.title shouldBe "Mitch & Mitch con il loro Gruppo Etereofonico - Live Recording"
-        event.artists.map { it.name to it.role } shouldBe listOf("Mitch & Mitch" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldBe listOf("Mitch & Mitch" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -191,10 +192,10 @@ class MorphineDetailPageScraperTest {
         event.title shouldBe "VINYL REDUCTION - Day 2"
         event.artists shouldBe
             listOf(
-                ScrapedArtist("Sofia Borges", "HEADLINER"),
-                ScrapedArtist("Stefan Roigk", "HEADLINER"),
-                ScrapedArtist("Ignaz Schick", "HEADLINER"),
-                ScrapedArtist("Eliad Wagner", "HEADLINER")
+                ScrapedArtist("Sofia Borges", ArtistRole.HEADLINER),
+                ScrapedArtist("Stefan Roigk", ArtistRole.HEADLINER),
+                ScrapedArtist("Ignaz Schick", ArtistRole.HEADLINER),
+                ScrapedArtist("Eliad Wagner", ArtistRole.HEADLINER)
             )
         event.doorsTime shouldBe LocalTime.of(20, 0)
         event.startTime shouldBe LocalTime.of(20, 30)

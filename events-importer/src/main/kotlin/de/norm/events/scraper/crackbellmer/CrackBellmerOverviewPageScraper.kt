@@ -1,6 +1,7 @@
 package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -179,11 +180,11 @@ class CrackBellmerOverviewPageScraper(
         )
 
     /** `HEADLINER` for the host, `LIVE` for an act marked live, `DJ` for the rest of the billing. */
-    private fun roleOf(act: String): String =
+    private fun roleOf(act: String): ArtistRole =
         when {
-            HOST_LABEL.containsMatchIn(act) || HOST_ANNOTATION.containsMatchIn(act) -> "HEADLINER"
-            LIVE_MARKER.containsMatchIn(act) -> "LIVE"
-            else -> "DJ"
+            HOST_LABEL.containsMatchIn(act) || HOST_ANNOTATION.containsMatchIn(act) -> ArtistRole.HEADLINER
+            LIVE_MARKER.containsMatchIn(act) -> ArtistRole.LIVE
+            else -> ArtistRole.DJ
         }
 
     /** True when an act name is really one of the venue's lineup fillers — see [PROGRAMME_FILLER]. */

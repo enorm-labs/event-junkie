@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ritterbutzke
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldHaveSize
@@ -64,7 +65,7 @@ class RitterButzkeDetailPageScraperTest {
     @Test
     fun `falls back to the rendered DJ rows without JSON-LD, and never stores the title`() {
         val unison = scrape("unison", "070826-Unisonw-ZappedRecords-NizarSarakbi-JosefinaTapia")
-        unison.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        unison.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
         unison.artists.map { it.name } shouldBe
             listOf("JOSEFINA TAPIA", "NIZAR SARAKBI", "PAUL K", "CYKO", "SCOOPSI", "TRC", "VICTOR VONE", "ZAHARA", "HANAFIA")
     }

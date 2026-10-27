@@ -1,5 +1,6 @@
 package de.norm.events.scraper.surprise
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -65,7 +66,7 @@ class SurpriseOverviewPageScraper {
             genre = row.dotSeparated("p.event-music").joinToString(", ").blankToNull(),
             priceBoxOffice = doorPrices.mapNotNull { euroAmounts(it.second).firstOrNull() }.minOrNull(),
             priceNote = doorPrices.joinToString(" · ") { (gate, price) -> "$gate: $price" }.blankToNull(),
-            artists = row.dotSeparated("h6.event-music").map { ScrapedArtist(name = it.replace(DJ_PREFIX, "DJ "), role = "DJ") }
+            artists = row.dotSeparated("h6.event-music").map { ScrapedArtist(name = it.replace(DJ_PREFIX, "DJ "), role = ArtistRole.DJ) }
         )
     }
 

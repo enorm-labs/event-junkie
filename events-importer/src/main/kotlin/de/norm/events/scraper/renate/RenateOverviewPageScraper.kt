@@ -1,6 +1,7 @@
 package de.norm.events.scraper.renate
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -106,7 +107,7 @@ class RenateOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = row.hrefAt(".ticket-link"),
-            artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
+            artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
         )
     }
 
@@ -152,7 +153,7 @@ class RenateOverviewPageScraper(
                 }
 
                 current != null && isActLine(line) -> {
-                    artists += splitActs(line).map { ScrapedArtist(name = it, role = "DJ", stage = current) }
+                    artists += splitActs(line).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = current) }
                 }
             }
         }

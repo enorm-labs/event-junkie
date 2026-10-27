@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
@@ -100,7 +101,7 @@ class TresorDetailPageScraper {
                 val sets = floorSetTimes(floor.select(".lineup-item").map { it.textAt(".lineup-time").orEmpty() }, eventDate)
                 floor.select(".lineup-item").zip(sets).flatMap { (item, set) ->
                     splitActs(item.textAt(".lineup-name").orEmpty())
-                        .map { ScrapedArtist(name = it, role = "DJ", stage = stage, setStart = set.first, setEnd = set.second) }
+                        .map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage, setStart = set.first, setEnd = set.second) }
                 }
             }.distinctBy { it.name.lowercase() }
 

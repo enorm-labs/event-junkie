@@ -1,5 +1,6 @@
 package de.norm.events.scraper.beateuwe
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -111,7 +112,7 @@ class BeateUweOverviewPageScraper {
             .flatMap { it.split(B2B_SEPARATOR) }
             .mapNotNull { act ->
                 val name = stripArtistSuffix(act.replace(SET_NOTE, "").trim()).blankToNull()?.takeUnless(::isNonArtistName) ?: return@mapNotNull null
-                ScrapedArtist(name = name, role = if (LIVE_MARK.containsMatchIn(act)) "LIVE" else "DJ")
+                ScrapedArtist(name = name, role = if (LIVE_MARK.containsMatchIn(act)) ArtistRole.LIVE else ArtistRole.DJ)
             }.distinctBy { it.name.lowercase() }
 
     private fun Element.iconText(icon: String): String? = selectFirst("li:has(i.$icon) .elementor-icon-list-text")?.clean()

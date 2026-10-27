@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wabe
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -116,7 +117,7 @@ class WabeMonthPageScraperTest {
         val release = scrape("nov").on("2026-11-08")
         release.title shouldBe "Kaey & José"
         release.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Kaey & José"), ScrapedArtist(name = "Erik Leuthäuser", role = "SUPPORT"))
+            listOf(ScrapedArtist(name = "Kaey & José"), ScrapedArtist(name = "Erik Leuthäuser", role = ArtistRole.SUPPORT))
     }
 
     @Test

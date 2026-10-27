@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zku
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
@@ -104,7 +105,7 @@ class ZkuEventPageScraper {
         }
         val clock = RunningOrderClock(event.eventDate)
         return slots.flatMap { slot ->
-            val role = if (slot.isDj || eventType == EventType.PARTY.name) "DJ" else "HEADLINER"
+            val role = if (slot.isDj || eventType == EventType.PARTY.name) ArtistRole.DJ else ArtistRole.HEADLINER
             val times = slot.start?.let { start -> clockAt(start)?.let { clock.slot(it, slot.end?.let(::clockAt)) } }
             splitBackToBack(ScrapedArtist(name = slot.name, role = role, setStart = times?.first, setEnd = times?.second))
         }

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.slaughterhouse
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -106,7 +107,8 @@ class SlaughterhouseOverviewPageScraperTest {
             """.trimIndent()
         val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
         night.title shouldBe "Stoner’s Fall – Sheev + Ghostones + Caosonora"
-        night.artists.map { it.name to it.role } shouldBe listOf("Sheev" to "HEADLINER", "Ghostones" to "HEADLINER", "Caosonora" to "HEADLINER")
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("Sheev" to ArtistRole.HEADLINER, "Ghostones" to ArtistRole.HEADLINER, "Caosonora" to ArtistRole.HEADLINER)
     }
 
     @Test

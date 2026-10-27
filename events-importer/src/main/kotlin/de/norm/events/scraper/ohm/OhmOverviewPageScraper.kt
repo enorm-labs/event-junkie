@@ -1,6 +1,7 @@
 package de.norm.events.scraper.ohm
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -139,9 +140,10 @@ class OhmOverviewPageScraper(
     }
 
     private fun lineupEntries(line: String): List<ScrapedArtist> {
-        val room = ROOM_GROUP.matchEntire(line) ?: return listOf(ScrapedArtist(line, if (LIVE_ANNOTATION.containsMatchIn(line)) "LIVE" else "DJ"))
+        val room =
+            ROOM_GROUP.matchEntire(line) ?: return listOf(ScrapedArtist(line, if (LIVE_ANNOTATION.containsMatchIn(line)) ArtistRole.LIVE else ArtistRole.DJ))
         val (stage, acts) = room.destructured
-        val role = if (LIVE_WORD.containsMatchIn(acts)) "LIVE" else "DJ"
+        val role = if (LIVE_WORD.containsMatchIn(acts)) ArtistRole.LIVE else ArtistRole.DJ
         return splitSegmentOnConjunctions(acts).map { ScrapedArtist(it.replace(LIVE_WORD, "").trim(), role, stage = stage) }
     }
 }

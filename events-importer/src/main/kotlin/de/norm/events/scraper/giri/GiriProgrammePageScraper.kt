@@ -1,5 +1,6 @@
 package de.norm.events.scraper.giri
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -137,11 +138,11 @@ class GiriProgrammePageScraper {
     private fun roleOf(
         act: Act,
         eventType: String
-    ): String =
+    ): ArtistRole =
         when {
-            eventType != EventType.PARTY.name -> "HEADLINER"
-            act.isLive -> "LIVE"
-            else -> "DJ"
+            eventType != EventType.PARTY.name -> ArtistRole.HEADLINER
+            act.isLive -> ArtistRole.LIVE
+            else -> ArtistRole.DJ
         }
 
     private data class Act(

@@ -1,6 +1,7 @@
 package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventStatus
@@ -59,7 +60,7 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
 
     private fun scraped(
         event: EventEntity,
-        artists: List<Pair<String, String>> = emptyList(),
+        artists: List<Pair<String, ArtistRole>> = emptyList(),
         genre: String? = null
     ) = ScrapedEvent(
         title = event.title,
@@ -75,7 +76,7 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
 
     private suspend fun sync(
         event: EventEntity,
-        artists: List<Pair<String, String>> = emptyList(),
+        artists: List<Pair<String, ArtistRole>> = emptyList(),
         genre: String? = null
     ) = associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(event, artists, genre)))
 
@@ -90,9 +91,9 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     fun `an untagged concert takes the source tags its headliner carries elsewhere, and a source tag keeps none`() {
         runBlocking {
             val tagged = persistEvent("lido:1")
-            sync(tagged, listOf("Die Nerven" to "HEADLINER"), genre = "Post-Punk, Noise")
+            sync(tagged, listOf("Die Nerven" to ArtistRole.HEADLINER), genre = "Post-Punk, Noise")
             val untagged = persistEvent("so36:1", description = "Techno all night")
-            sync(untagged, listOf("Die Nerven" to "HEADLINER"))
+            sync(untagged, listOf("Die Nerven" to ArtistRole.HEADLINER))
 
             tagsOf(tagged) shouldBe mapOf("Post-Punk" to "SOURCE", "Noise" to "SOURCE")
             tagsOf(untagged) shouldBe mapOf("Post-Punk" to "ARTIST", "Noise" to "ARTIST")
@@ -102,9 +103,9 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     @Test
     fun `a support act's tags do not tag the night`() {
         runBlocking {
-            sync(persistEvent("lido:2"), listOf("Metal Band" to "HEADLINER"), genre = "Metal")
+            sync(persistEvent("lido:2"), listOf("Metal Band" to ArtistRole.HEADLINER), genre = "Metal")
             val night = persistEvent("so36:2")
-            sync(night, listOf("Folk Act" to "HEADLINER", "Metal Band" to "SUPPORT"))
+            sync(night, listOf("Folk Act" to ArtistRole.HEADLINER, "Metal Band" to ArtistRole.SUPPORT))
 
             tagsOf(night) shouldBe emptyMap()
         }
@@ -113,11 +114,11 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     @Test
     fun `a derived tag never feeds another derivation`() {
         runBlocking {
-            sync(persistEvent("lido:3"), listOf("Act A" to "HEADLINER"), genre = "Jazz")
+            sync(persistEvent("lido:3"), listOf("Act A" to ArtistRole.HEADLINER), genre = "Jazz")
             val middle = persistEvent("so36:3")
-            sync(middle, listOf("Act A" to "HEADLINER", "Act B" to "HEADLINER"))
+            sync(middle, listOf("Act A" to ArtistRole.HEADLINER, "Act B" to ArtistRole.HEADLINER))
             val last = persistEvent("bi-nuu:3")
-            sync(last, listOf("Act B" to "HEADLINER"))
+            sync(last, listOf("Act B" to ArtistRole.HEADLINER))
 
             tagsOf(middle) shouldBe mapOf("Jazz" to "ARTIST")
             tagsOf(last) shouldBe emptyMap()
@@ -128,7 +129,7 @@ class GenreDerivationIntegrationTest : BaseControllerTest() {
     fun `an event with no tagged act takes the genre words of its description, outside a support clause`() {
         runBlocking {
             val night = persistEvent("so36:4", description = "Ein Abend voller Techno. Support: eine Metal-Band.")
-            sync(night, listOf("Unknown Act" to "HEADLINER"))
+            sync(night, listOf("Unknown Act" to ArtistRole.HEADLINER))
 
             tagsOf(night) shouldBe mapOf("Techno" to GenreTagOrigin.DESCRIPTION.name)
         }

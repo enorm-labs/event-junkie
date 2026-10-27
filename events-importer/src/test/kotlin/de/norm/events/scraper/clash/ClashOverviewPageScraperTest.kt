@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clash
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldContainExactly
@@ -63,8 +64,8 @@ class ClashOverviewPageScraperTest {
         // Lineup read from the "Live: …" subtitle: first act headlines, the rest support.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Cheb Balowski", "HEADLINER"),
-                ScrapedArtist("Cuatro Pesos de Propina", "SUPPORT")
+                ScrapedArtist("Cheb Balowski", ArtistRole.HEADLINER),
+                ScrapedArtist("Cuatro Pesos de Propina", ArtistRole.SUPPORT)
             )
     }
 
@@ -75,9 +76,9 @@ class ClashOverviewPageScraperTest {
         // The decorated title is not used as an artist source; the clean subtitle lineup is.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Popperklopper", "HEADLINER"),
-                ScrapedArtist("Hausvabot", "SUPPORT"),
-                ScrapedArtist("Ad Nauseam", "SUPPORT")
+                ScrapedArtist("Popperklopper", ArtistRole.HEADLINER),
+                ScrapedArtist("Hausvabot", ArtistRole.SUPPORT),
+                ScrapedArtist("Ad Nauseam", ArtistRole.SUPPORT)
             )
     }
 
@@ -135,7 +136,7 @@ class ClashOverviewPageScraperTest {
                     baseUrl
                 ).single()
 
-        event.artists shouldContainExactly listOf(ScrapedArtist("Bolide", "DJ"), ScrapedArtist("Michele Barox", "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist("Bolide", ArtistRole.DJ), ScrapedArtist("Michele Barox", ArtistRole.DJ))
         event.genre shouldBe "Punk, Post-Punk, New Wave, Synthpop"
         event.priceNote shouldBe "From 21:00 / 5 €"
         event.eventType shouldBe EventType.CONCERT.name
@@ -156,7 +157,7 @@ class ClashOverviewPageScraperTest {
                     baseUrl
                 ).single()
 
-        event.artists shouldContainExactly listOf(ScrapedArtist("Michele Barox", "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist("Michele Barox", ArtistRole.DJ))
     }
 
     @Test

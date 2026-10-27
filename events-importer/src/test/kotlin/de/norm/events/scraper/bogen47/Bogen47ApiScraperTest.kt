@@ -122,7 +122,7 @@ class Bogen47ApiScraperTest {
         val event = eventTitled("Stu Larsen + Tim Hart (support)")
 
         event.artists.map { it.name } shouldContainExactly listOf("Stu Larsen", "Tim Hart")
-        event.artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER.name, ArtistRole.SUPPORT.name)
+        event.artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT)
     }
 
     @Test
@@ -131,7 +131,7 @@ class Bogen47ApiScraperTest {
         val event = liveEventTitled("Hum w/ Kyle Hall b2b K15, Mamalia&#8217;The first lady of modern funk&#8217;ft.Mauricio Fleury, Bulma Brief")
 
         event.artists.map { it.name } shouldContainExactly listOf("Kyle Hall", "K15", "Mamalia", "Mauricio Fleury", "Bulma Brief")
-        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER.name)
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test
@@ -139,7 +139,7 @@ class Bogen47ApiScraperTest {
         val event = liveEventTitled("Greg Mendez &#8211; BEAUTY LAND TOUR +  Lily Seabird (support)")
 
         event.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Greg Mendez" to ArtistRole.HEADLINER.name, "Lily Seabird" to ArtistRole.SUPPORT.name)
+            listOf("Greg Mendez" to ArtistRole.HEADLINER, "Lily Seabird" to ArtistRole.SUPPORT)
     }
 
     /** One post typed [eventType] with [title] and a description of [descriptionHtml], a JSON string body. */
@@ -172,7 +172,7 @@ class Bogen47ApiScraperTest {
         event.title shouldBe "KULTURSCHOCKTHERAPIE"
         event.eventType shouldBe EventType.CONCERT.name
         event.artists.map { it.name } shouldContainExactly listOf("Sin Davis", "Deadboyboo", "Eaven X Oceans11", "HATE/LOVE", "Lilyth", "t1m")
-        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER.name)
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test
@@ -214,10 +214,10 @@ class Bogen47ApiScraperTest {
 
         event.artists.map { it.name to it.role } shouldContainExactly
             listOf(
-                "Sin Davis" to ArtistRole.HEADLINER.name,
-                "Lilyth" to ArtistRole.HEADLINER.name,
-                "t1m" to ArtistRole.HEADLINER.name,
-                "Lily Seabird" to ArtistRole.SUPPORT.name
+                "Sin Davis" to ArtistRole.HEADLINER,
+                "Lilyth" to ArtistRole.HEADLINER,
+                "t1m" to ArtistRole.HEADLINER,
+                "Lily Seabird" to ArtistRole.SUPPORT
             )
     }
 
@@ -245,7 +245,7 @@ class Bogen47ApiScraperTest {
                 .event
 
         event.eventType shouldBe EventType.CONCERT.name
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Brazen Barbie" to ArtistRole.HEADLINER.name)
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Brazen Barbie" to ArtistRole.HEADLINER)
     }
 
     @Test

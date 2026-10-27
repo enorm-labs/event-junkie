@@ -1,6 +1,7 @@
 package de.norm.events.scraper.pkhwarehouse
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
@@ -111,7 +112,7 @@ class PkhWarehouseOverviewPageScraper(
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.PKH_WAREHOUSE.sourceIdPrefix}$date",
             ticketUrl = lineup?.selectFirst("a[href]")?.absUrl("href").blankToNull(),
-            artists = lineupText?.let(::djs).orEmpty().map { ScrapedArtist(name = it, role = "DJ") }
+            artists = lineupText?.let(::djs).orEmpty().map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

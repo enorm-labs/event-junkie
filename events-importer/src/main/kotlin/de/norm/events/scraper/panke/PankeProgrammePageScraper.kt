@@ -1,5 +1,6 @@
 package de.norm.events.scraper.panke
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.NIGHT_ENDS
@@ -418,7 +419,7 @@ private val FEATURED_FRAME = Regex("""\s(?:feat\.?|ft\.)\s+""", RegexOption.IGNO
 private val TICKETS_LEAD = Regex("""tickets?(?:\s+on\s+ra)?\s*:?""", RegexOption.IGNORE_CASE)
 
 /** An act the title names: the night is billed for them. */
-private const val HEADLINER_ROLE = "HEADLINER"
+private val HEADLINER_ROLE = ArtistRole.HEADLINER
 
 /** Every act the venue links on Resident Advisor is billed there as a DJ. */
-private const val DJ_ROLE = "DJ"
+private val DJ_ROLE = ArtistRole.DJ

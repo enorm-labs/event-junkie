@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urania
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -86,7 +87,7 @@ class UraniaCalendarPageScraperTest {
                 "Johanna Sprondel",
                 "Alexander Thiele"
             )
-        opening.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+        opening.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test

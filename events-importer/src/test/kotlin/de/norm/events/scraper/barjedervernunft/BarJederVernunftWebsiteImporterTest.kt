@@ -1,5 +1,6 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -124,7 +125,7 @@ class BarJederVernunftWebsiteImporterTest {
             concert.eventType shouldBe "CONCERT"
             concert.genre shouldBe "A cappella"
             concert.pricePresale shouldBe BigDecimal("12.90")
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "The Happy Disharmonists", role = "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "The Happy Disharmonists", role = ArtistRole.HEADLINER, titleDerived = true))
         }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -145,7 +146,7 @@ internal fun buildMetropolArtists(
             .orEmpty()
             .let(::splitSupportActs)
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "SUPPORT") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
     return headlinersFromTitle(title) + supportActs
 }
 

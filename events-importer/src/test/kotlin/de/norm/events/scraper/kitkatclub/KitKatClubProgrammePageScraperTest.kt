@@ -1,5 +1,6 @@
 package de.norm.events.scraper.kitkatclub
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -72,7 +73,7 @@ class KitKatClubProgrammePageScraperTest {
         fourPlay.artists.filter { it.stage == "Prisma Bar" }.map { it.name } shouldContainExactly
             listOf("Javier Anxiety", "Mati Amoretti", "Don Andres", "Magdita")
         fourPlay.artists.single { it.stage == "Salon Rouge" }.name shouldBe "Mei"
-        fourPlay.artists.all { it.role == "DJ" } shouldBe true
+        fourPlay.artists.all { it.role == ArtistRole.DJ } shouldBe true
     }
 
     @Test

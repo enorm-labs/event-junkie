@@ -1,6 +1,7 @@
 package de.norm.events.scraper.tempodrom
 
 import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
@@ -62,7 +63,7 @@ class TempodromDetailPageScraper {
                 ?.let(::deshout)
                 ?.takeUnless(::isNonArtistName)
                 ?: return event
-        return event.copy(artists = listOf(ScrapedArtist(band, "HEADLINER")))
+        return event.copy(artists = listOf(ScrapedArtist(band, ArtistRole.HEADLINER)))
     }
 
     /** [event] marked `RELOCATED` when the page shows the "verlegt" badge; unchanged otherwise. */

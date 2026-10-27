@@ -1,6 +1,7 @@
 package de.norm.events.scraper.duncker
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
@@ -218,7 +219,7 @@ class DunckerOverviewPageScraper(
                     ?.trim() ?: it
             }.filterNot { isNonArtistName(it) }
             .distinct()
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /** Presenter collective(s) linked inside the event name (`a.eventLINK`, e.g. "TIQ"). */

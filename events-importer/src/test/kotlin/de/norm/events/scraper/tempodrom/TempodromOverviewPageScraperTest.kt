@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -83,7 +84,7 @@ class TempodromOverviewPageScraperTest {
         babyKeem.soldOut shouldBe false
         babyKeem.sourceUrl shouldStartWith "https://www.tempodrom.de/event/"
         babyKeem.imageUrl.shouldNotBeNull() shouldStartWith "https://www.tempodrom.de/"
-        babyKeem.artists shouldContainExactly listOf(ScrapedArtist("Baby Keem", "HEADLINER", titleDerived = true))
+        babyKeem.artists shouldContainExactly listOf(ScrapedArtist("Baby Keem", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -141,7 +142,7 @@ class TempodromOverviewPageScraperTest {
         // is a gala named for its night (#3160), and `Berlin Salsacongress 2026` a congress named for its year (#3212).
         // Six productions bill no act from the title (#3162).
         events.count { it.artists.isNotEmpty() } shouldBe 125
-        events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
+        events.flatMap { it.artists }.all { it.role == ArtistRole.HEADLINER } shouldBe true
     }
 
     @Test
@@ -213,7 +214,7 @@ class TempodromOverviewPageScraperTest {
         val film = scrapeOne("Drei Haselnüsse für Aschenbrödel", "Der Originalfilm mit dem Deutschen Filmorchester Babelsberg")
 
         film.eventType shouldBe "SHOW"
-        film.artists shouldContainExactly listOf(ScrapedArtist("Deutsches Filmorchester Babelsberg", "HEADLINER"))
+        film.artists shouldContainExactly listOf(ScrapedArtist("Deutsches Filmorchester Babelsberg", ArtistRole.HEADLINER))
     }
 
     @Test
@@ -261,7 +262,7 @@ class TempodromOverviewPageScraperTest {
             it.title shouldBe "Nights on Broadway"
             it.subtitle shouldBe "A Tribute to the BEE GEES performed by NIGHT FEVER"
             it.eventType shouldBe "CONCERT"
-            it.artists shouldContainExactly listOf(ScrapedArtist("Night Fever", "HEADLINER"))
+            it.artists shouldContainExactly listOf(ScrapedArtist("Night Fever", ArtistRole.HEADLINER))
         }
     }
 
@@ -309,7 +310,7 @@ class TempodromOverviewPageScraperTest {
         // Decoding exposes the `&` to the co-bill splitter; this choir is one act, not two.
         val scala = events.first { it.title == "Scala & Kolacny Brothers" }
 
-        scala.artists shouldContainExactly listOf(ScrapedArtist("Scala & Kolacny Brothers", "HEADLINER", titleDerived = true))
+        scala.artists shouldContainExactly listOf(ScrapedArtist("Scala & Kolacny Brothers", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

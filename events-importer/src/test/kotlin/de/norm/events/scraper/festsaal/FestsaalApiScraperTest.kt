@@ -3,6 +3,7 @@ package de.norm.events.scraper.festsaal
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
@@ -120,7 +121,7 @@ class FestsaalApiScraperTest {
         elenaRose.ticketUrl shouldBe "https://ticket.deputamadreclub.eu/elena26bln/"
         elenaRose.status shouldBe "SCHEDULED"
         elenaRose.soldOut shouldBe false
-        elenaRose.artists shouldContainExactly listOf(ScrapedArtist("ELENA ROSE", "HEADLINER", titleDerived = true))
+        elenaRose.artists shouldContainExactly listOf(ScrapedArtist("ELENA ROSE", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -146,8 +147,8 @@ class FestsaalApiScraperTest {
         internationalMusic.genre shouldBe "Krautrock"
         internationalMusic.artists shouldContainExactly
             listOf(
-                ScrapedArtist("INTERNATIONAL MUSIC", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Gregor", "SUPPORT")
+                ScrapedArtist("INTERNATIONAL MUSIC", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Gregor", ArtistRole.SUPPORT)
             )
     }
 
@@ -266,7 +267,7 @@ class FestsaalApiScraperTest {
             val concert = scraper.scrape(apiWithSubtitle("Elena Rose", subtitle)).single()
 
             concert.eventType shouldBe EventType.CONCERT.name
-            concert.artists shouldContainExactly listOf(ScrapedArtist("Elena Rose", "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist("Elena Rose", ArtistRole.HEADLINER, titleDerived = true))
         }
     }
 
@@ -287,7 +288,7 @@ class FestsaalApiScraperTest {
         // signal in the title, so this stays a concert with its headliner intact.
         val wepaBunny = event("festsaal:wepa-bunny")
         wepaBunny.eventType shouldBe "CONCERT"
-        wepaBunny.artists shouldContainExactly listOf(ScrapedArtist("¡Wepa! Bunny", "HEADLINER", titleDerived = true))
+        wepaBunny.artists shouldContainExactly listOf(ScrapedArtist("¡Wepa! Bunny", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -324,7 +325,7 @@ class FestsaalApiScraperTest {
 
             concert.eventType shouldBe EventType.CONCERT.name
             concert.genre shouldBe genre
-            concert.artists shouldContainExactly listOf(ScrapedArtist("Black Market Karma", "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist("Black Market Karma", ArtistRole.HEADLINER, titleDerived = true))
         }
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.duncker
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -67,7 +68,7 @@ class DunckerOverviewPageScraperTest {
         event.ticketUrl shouldBe "https://www.facebook.com/events/2032485484004951"
         // The Facebook event id is the stable canonical identity.
         event.sourceId shouldBe "duncker:2032485484004951"
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "WhamPee", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "WhamPee", role = ArtistRole.DJ))
         event.promoters.shouldBeEmpty()
     }
 
@@ -81,8 +82,8 @@ class DunckerOverviewPageScraperTest {
         // "Djs Neue K & Lichene" → two DJ acts, label stripped.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Neue K", role = "DJ"),
-                ScrapedArtist(name = "Lichene", role = "DJ")
+                ScrapedArtist(name = "Neue K", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Lichene", role = ArtistRole.DJ)
             )
         event.genre shouldBe "Wave, EBM, Post-Punk"
     }
@@ -99,7 +100,7 @@ class DunckerOverviewPageScraperTest {
         event.endDate shouldBe LocalDate.of(2026, 9, 22)
         event.endTime shouldBe LocalTime.of(4, 0)
         // "Efetto Notte" is the set name, not a second DJ.
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = ArtistRole.DJ))
     }
 
     @Test
@@ -108,11 +109,11 @@ class DunckerOverviewPageScraperTest {
         // both must still be parsed (06.07. Dark Mønday, 25.07. Independent Tanzmusik).
         val darkMonday = events.first { it.eventDate == LocalDate.of(2026, 7, 6) }
         darkMonday.title shouldBe "Dark Mønday"
-        darkMonday.artists shouldContainExactly listOf(ScrapedArtist(name = "Boris", role = "DJ"))
+        darkMonday.artists shouldContainExactly listOf(ScrapedArtist(name = "Boris", role = ArtistRole.DJ))
 
         val independent = events.first { it.eventDate == LocalDate.of(2026, 7, 25) }
         independent.title shouldBe "Independent Tanzmusik"
-        independent.artists shouldContainExactly listOf(ScrapedArtist(name = "Spy", role = "DJ"))
+        independent.artists shouldContainExactly listOf(ScrapedArtist(name = "Spy", role = ArtistRole.DJ))
     }
 
     @Test
@@ -123,17 +124,17 @@ class DunckerOverviewPageScraperTest {
         // The band name stays in the subtitle and never becomes a genre tag.
         event.genre shouldBe "80s"
         // The Facebook link is commented out, so the DJ is a bare text node.
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "WhamPee", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "WhamPee", role = ArtistRole.DJ))
     }
 
     @Test
     fun `cuts a bracketed set name and the second DJ label of a two-DJ line`() {
         // The live page's 16.11. and 07.11. rows: the DJs only, without their set name or a second `DJ`.
-        artistsOf("DJ Hanzel (Efetto Notte)") shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = "DJ"))
+        artistsOf("DJ Hanzel (Efetto Notte)") shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = ArtistRole.DJ))
         artistsOf("DJ Smoboda & DJ Gomez") shouldContainExactly
-            listOf(ScrapedArtist(name = "Smoboda", role = "DJ"), ScrapedArtist(name = "Gomez", role = "DJ"))
+            listOf(ScrapedArtist(name = "Smoboda", role = ArtistRole.DJ), ScrapedArtist(name = "Gomez", role = ArtistRole.DJ))
         // A bracket inside a styled name is no set name.
-        artistsOf("DJ ALL(H)OURS") shouldContainExactly listOf(ScrapedArtist(name = "ALL(H)OURS", role = "DJ"))
+        artistsOf("DJ ALL(H)OURS") shouldContainExactly listOf(ScrapedArtist(name = "ALL(H)OURS", role = ArtistRole.DJ))
     }
 
     private fun artistsOf(djLine: String): List<ScrapedArtist> {

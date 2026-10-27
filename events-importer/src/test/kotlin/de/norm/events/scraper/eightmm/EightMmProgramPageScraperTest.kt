@@ -1,5 +1,6 @@
 package de.norm.events.scraper.eightmm
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -83,7 +84,7 @@ class EightMmProgramPageScraperTest {
 
         residency shouldHaveSize 4
         residency.forEach { night ->
-            night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to "DJ")
+            night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to ArtistRole.DJ)
         }
     }
 
@@ -104,7 +105,7 @@ class EightMmProgramPageScraperTest {
                 .artists
                 .map { it.name to it.role }
 
-        billed("ANNA LOU (THE CRAMPS) FRIDAYS IN MAY DJ RESIDENCY") shouldContainExactly listOf("Anna Lou" to "DJ")
+        billed("ANNA LOU (THE CRAMPS) FRIDAYS IN MAY DJ RESIDENCY") shouldContainExactly listOf("Anna Lou" to ArtistRole.DJ)
         billed("ANNA LOU SUNDAY DJ RESIDENCY").shouldBeEmpty()
         billed("ANNA LOU (THE CRAMPS) DJ SET").shouldBeEmpty()
         billed("SOUL NIGHT WITH DJ ANNA LOU (THE CRAMPS)").shouldBeEmpty()

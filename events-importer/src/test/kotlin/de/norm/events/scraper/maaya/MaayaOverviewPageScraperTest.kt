@@ -1,5 +1,6 @@
 package de.norm.events.scraper.maaya
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.assertions.assertSoftly
@@ -267,7 +268,7 @@ class MaayaOverviewPageScraperTest {
             val concert = scraper.scrape(doc, sourceUrl).first { it.title == "CONCERT AGNES NUNES" }
 
             concert.eventType shouldBe EventType.CONCERT.name
-            concert.artists.map { it.name to it.role } shouldContainExactly listOf("AGNES NUNES" to "HEADLINER")
+            concert.artists.map { it.name to it.role } shouldContainExactly listOf("AGNES NUNES" to ArtistRole.HEADLINER)
         }
 
         @Test

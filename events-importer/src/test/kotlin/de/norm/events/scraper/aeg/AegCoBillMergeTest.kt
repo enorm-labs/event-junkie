@@ -1,5 +1,6 @@
 package de.norm.events.scraper.aeg
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
@@ -78,7 +79,7 @@ class AegCoBillMergeTest {
                     detailUrl = "https://www.uber-eats-music-hall.de/events/detail/till-reiners/2027-11-06-2000"
                 )
             event.eventType shouldBe "COMEDY"
-            event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to "HEADLINER")
+            event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to ArtistRole.HEADLINER)
         }
 
     @Test

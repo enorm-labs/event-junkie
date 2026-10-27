@@ -1,5 +1,6 @@
 package de.norm.events.scraper.artstalker
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -45,7 +46,7 @@ class ArtStalkerOverviewPageScraperTest {
         event.sourceUrl shouldBe "https://art-stalker.reservix.de/tickets-dan-patlansky-blues-rock-in-berlin-art-stalker-am-3-10-2026/e2535642"
         event.ticketUrl shouldBe event.sourceUrl
         event.pricePresale shouldBe BigDecimal("21.21")
-        event.artists shouldBe listOf(ScrapedArtist("Dan Patlansky", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("Dan Patlansky", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -60,9 +61,9 @@ class ArtStalkerOverviewPageScraperTest {
     @Test
     fun `bills the support act named in the tagline`() {
         bySourceId("2582036").artists.map { it.name to it.role } shouldBe
-            listOf("Deer Anna" to "HEADLINER", "Lily Rieke Marty" to "SUPPORT")
+            listOf("Deer Anna" to ArtistRole.HEADLINER, "Lily Rieke Marty" to ArtistRole.SUPPORT)
         bySourceId("2532014").artists.map { it.name to it.role } shouldBe
-            listOf("2Mädchen und Uwe" to "HEADLINER", "SMILING SUN SONS" to "SUPPORT")
+            listOf("2Mädchen und Uwe" to ArtistRole.HEADLINER, "SMILING SUN SONS" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -74,10 +75,10 @@ class ArtStalkerOverviewPageScraperTest {
     @Test
     fun `reads a trailing live und in Farbe as billing, not as a second act`() {
         cardArtists("Die Gabys live und in Farbe - Disco-, Rock- und Pop-Hits und legendäre Soulklassiker") shouldBe
-            listOf("Die Gabys" to "HEADLINER")
-        cardArtists("Die Gabys live") shouldBe listOf("Die Gabys" to "HEADLINER")
+            listOf("Die Gabys" to ArtistRole.HEADLINER)
+        cardArtists("Die Gabys live") shouldBe listOf("Die Gabys" to ArtistRole.HEADLINER)
         cardArtists("Glam Jam und Mission BlueZ - Rock") shouldBe
-            listOf("Glam Jam" to "HEADLINER", "Mission BlueZ" to "HEADLINER")
+            listOf("Glam Jam" to ArtistRole.HEADLINER, "Mission BlueZ" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -85,21 +86,21 @@ class ArtStalkerOverviewPageScraperTest {
         val event = card("Mitsing Konzert mit der Band The Rollin’ Horses - Keine Karaoke Maschine. Eine echte Live-Band")
         event.eventType shouldBe EventType.CONCERT.name
         event.subtitle shouldBe "Keine Karaoke Maschine. Eine echte Live-Band"
-        event.artists.map { it.name to it.role } shouldBe listOf("The Rollin’ Horses" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldBe listOf("The Rollin’ Horses" to ArtistRole.HEADLINER)
         card("Karaoke Abend - Mit Live-Band").eventType shouldBe EventType.PARTY.name
     }
 
     @Test
     fun `cuts a trailing backing band from the act`() {
         cardArtists("Alessandro Tarshahani and the Band - Ein Mix aus Jazz, Blues, Soul") shouldBe
-            listOf("Alessandro Tarshahani" to "HEADLINER")
-        cardArtists("Lena Meyer & Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
-        cardArtists("Lena Meyer und Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
-        cardArtists("Lena Meyer mit der Band") shouldBe listOf("Lena Meyer" to "HEADLINER")
+            listOf("Alessandro Tarshahani" to ArtistRole.HEADLINER)
+        cardArtists("Lena Meyer & Band") shouldBe listOf("Lena Meyer" to ArtistRole.HEADLINER)
+        cardArtists("Lena Meyer und Band") shouldBe listOf("Lena Meyer" to ArtistRole.HEADLINER)
+        cardArtists("Lena Meyer mit der Band") shouldBe listOf("Lena Meyer" to ArtistRole.HEADLINER)
         cardArtists("Doppelkonzert: Glam Jam + Lena Meyer & Band") shouldBe
-            listOf("Glam Jam" to "HEADLINER", "Lena Meyer" to "HEADLINER")
+            listOf("Glam Jam" to ArtistRole.HEADLINER, "Lena Meyer" to ArtistRole.HEADLINER)
         cardArtists("Beatles-Songs präsentiert von The Fab Four and the Band") shouldBe
-            listOf("The Fab Four" to "HEADLINER")
+            listOf("The Fab Four" to ArtistRole.HEADLINER)
     }
 
     private fun cardArtists(title: String) = card(title).artists.map { it.name to it.role }

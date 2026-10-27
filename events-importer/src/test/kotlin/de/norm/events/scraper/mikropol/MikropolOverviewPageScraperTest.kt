@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mikropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -52,7 +53,7 @@ class MikropolOverviewPageScraperTest {
         dueja.status shouldBe "SCHEDULED"
         dueja.soldOut shouldBe false
         dueja.sourceUrl shouldBe "https://mikropol-berlin.de/event/2026-07-17-dueja/"
-        dueja.artists shouldContainExactly listOf(ScrapedArtist("DUEJA", "HEADLINER", titleDerived = true))
+        dueja.artists shouldContainExactly listOf(ScrapedArtist("DUEJA", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -61,8 +62,8 @@ class MikropolOverviewPageScraperTest {
         house.subtitle shouldBe "support: noise of the voiceless"
         house.artists shouldContainExactly
             listOf(
-                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
-                ScrapedArtist("noise of the voiceless", "SUPPORT")
+                ScrapedArtist("HOUSE OF PROTECTION", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("noise of the voiceless", ArtistRole.SUPPORT)
             )
     }
 
@@ -87,6 +88,6 @@ class MikropolOverviewPageScraperTest {
         cultureWars.title shouldBe "CULTURE WARS"
         cultureWars.status shouldBe "RELOCATED"
         cultureWars.eventDate shouldBe LocalDate.of(2026, 7, 16)
-        cultureWars.artists shouldContainExactly listOf(ScrapedArtist("CULTURE WARS", "HEADLINER", titleDerived = true))
+        cultureWars.artists shouldContainExactly listOf(ScrapedArtist("CULTURE WARS", ArtistRole.HEADLINER, titleDerived = true))
     }
 }

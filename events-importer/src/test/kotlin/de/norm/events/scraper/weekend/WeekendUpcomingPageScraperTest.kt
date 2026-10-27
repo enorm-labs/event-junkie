@@ -1,5 +1,6 @@
 package de.norm.events.scraper.weekend
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -57,7 +58,7 @@ class WeekendUpcomingPageScraperTest {
         operator.imageUrl!! shouldStartWith "https://images.squarespace-cdn.com/"
         operator.description!! shouldStartWith "🖤 WKND X OPERATOR\n"
         operator.description shouldContain "Hosted by Dennis Beutler"
-        operator.artists.map { it.name to it.role } shouldContainExactly listOf("Dennis Beutler" to "DJ")
+        operator.artists.map { it.name to it.role } shouldContainExactly listOf("Dennis Beutler" to ArtistRole.DJ)
     }
 
     @Test

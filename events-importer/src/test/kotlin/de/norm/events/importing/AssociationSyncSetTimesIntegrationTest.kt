@@ -1,6 +1,7 @@
 package de.norm.events.importing
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
@@ -75,7 +76,7 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
             val sourceId = "set-times:1"
             val event = persistEvent(sourceId)
             val eventIds = listOf(requireNotNull(event.id))
-            val act = ScrapedArtist(name = "Joline Scheffler", role = "DJ", stage = "Berghain")
+            val act = ScrapedArtist(name = "Joline Scheffler", role = ArtistRole.DJ, stage = "Berghain")
 
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act)))
             val before = eventArtistRepository.findByEventIdIn(eventIds).toList().single()
@@ -95,7 +96,7 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
         runBlocking {
             val sourceId = "set-times:2"
             val event = persistEvent(sourceId)
-            val act = ScrapedArtist(name = "Colin Benders", role = "HEADLINER", stage = "Berghain", setStart = start, setEnd = end)
+            val act = ScrapedArtist(name = "Colin Benders", role = ArtistRole.HEADLINER, stage = "Berghain", setStart = start, setEnd = end)
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act)))
 
             val stored = eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().single()
@@ -111,7 +112,7 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
             val sourceId = "set-times:3"
             val event = persistEvent(sourceId)
             val eventIds = listOf(requireNotNull(event.id))
-            val act = ScrapedArtist(name = "Janina", role = "DJ", stage = "Tresor")
+            val act = ScrapedArtist(name = "Janina", role = ArtistRole.DJ, stage = "Tresor")
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act.copy(setStart = start, setEnd = end))))
 
             // The listing names the act but not its slot (#2421).
@@ -128,7 +129,7 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
         runBlocking {
             val sourceId = "set-times:4"
             val event = persistEvent(sourceId)
-            val act = ScrapedArtist(name = "Surgeon", role = "DJ", setStart = start)
+            val act = ScrapedArtist(name = "Surgeon", role = ArtistRole.DJ, setStart = start)
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act)))
 
             val listingOnly = scraped(sourceId, act).copy(artists = emptyList(), detailUnavailable = true)
@@ -147,8 +148,8 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
         runBlocking {
             val sourceId = "set-times:5"
             val event = persistEvent(sourceId)
-            val headliner = ScrapedArtist(name = "Pharmakon", role = "HEADLINER")
-            val support = ScrapedArtist(name = "Aska", role = "SUPPORT")
+            val headliner = ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER)
+            val support = ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT)
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(artists = listOf(headliner, support))))
 
             // The listing builds the headliner from the title alone (#2542).
@@ -164,8 +165,8 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
         runBlocking {
             val sourceId = "set-times:6"
             val event = persistEvent(sourceId)
-            val headliner = ScrapedArtist(name = "Pharmakon", role = "HEADLINER")
-            val support = ScrapedArtist(name = "Aska", role = "SUPPORT")
+            val headliner = ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER)
+            val support = ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT)
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(artists = listOf(headliner, support))))
 
             associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(detailUnavailable = true)))

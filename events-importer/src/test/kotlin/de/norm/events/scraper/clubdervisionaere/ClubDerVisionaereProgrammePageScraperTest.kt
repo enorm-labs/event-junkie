@@ -1,5 +1,6 @@
 package de.norm.events.scraper.clubdervisionaere
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -98,12 +99,12 @@ class ClubDerVisionaereProgrammePageScraperTest {
         // "// More TBA" placeholder is dropped.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Olya Smok", role = "DJ", stage = "Main"),
-                ScrapedArtist(name = "Serenne", role = "DJ", stage = "Main"),
-                ScrapedArtist(name = "Timur Basha", role = "DJ", stage = "Main"),
-                ScrapedArtist(name = "Yone-Ko", role = "DJ", stage = "Main"),
-                ScrapedArtist(name = "Lobanov K.", role = "LIVE", stage = "Chill Floor"),
-                ScrapedArtist(name = "Masayuki Tomita", role = "DJ", stage = "Chill Floor")
+                ScrapedArtist(name = "Olya Smok", role = ArtistRole.DJ, stage = "Main"),
+                ScrapedArtist(name = "Serenne", role = ArtistRole.DJ, stage = "Main"),
+                ScrapedArtist(name = "Timur Basha", role = ArtistRole.DJ, stage = "Main"),
+                ScrapedArtist(name = "Yone-Ko", role = ArtistRole.DJ, stage = "Main"),
+                ScrapedArtist(name = "Lobanov K.", role = ArtistRole.LIVE, stage = "Chill Floor"),
+                ScrapedArtist(name = "Masayuki Tomita", role = ArtistRole.DJ, stage = "Chill Floor")
             )
     }
 
@@ -153,16 +154,16 @@ class ClubDerVisionaereProgrammePageScraperTest {
         // event_artist (event_id, artist_id) unique constraint, so the first billing wins.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Baby Vulture", role = "LIVE"),
-                ScrapedArtist(name = "Deadbeat", role = "LIVE"),
-                ScrapedArtist(name = "Hreno", role = "LIVE"),
-                ScrapedArtist(name = "Mike Shannon", role = "LIVE"),
-                ScrapedArtist(name = "The Mole", role = "LIVE"),
-                ScrapedArtist(name = "Tom Trago", role = "LIVE"),
-                ScrapedArtist(name = "Joli B", role = "LIVE"),
-                ScrapedArtist(name = "Jonas “Stackhouse” Robinson", role = "DJ"),
-                ScrapedArtist(name = "Alex", role = "DJ"),
-                ScrapedArtist(name = "Laetitia Katapult", role = "DJ")
+                ScrapedArtist(name = "Baby Vulture", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Deadbeat", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Hreno", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Mike Shannon", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "The Mole", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Tom Trago", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Joli B", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "Jonas “Stackhouse” Robinson", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Alex", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Laetitia Katapult", role = ArtistRole.DJ)
             )
     }
 
@@ -186,7 +187,7 @@ class ClubDerVisionaereProgrammePageScraperTest {
         // on Monday 3 August (#2002). "// Guest DJs from 23:00" names no act at all. The earlier of
         // the two slot times stands in for the night's start, which the listing states no other way (#1687).
         event.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "LIVE", setStart = Instant.parse("2026-08-03T19:00:00Z")))
+            listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = ArtistRole.LIVE, setStart = Instant.parse("2026-08-03T19:00:00Z")))
         event.startTime shouldBe LocalTime.of(21, 0)
     }
 

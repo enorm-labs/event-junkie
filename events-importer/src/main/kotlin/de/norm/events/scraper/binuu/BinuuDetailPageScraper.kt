@@ -1,5 +1,6 @@
 package de.norm.events.scraper.binuu
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -137,11 +138,11 @@ class BinuuDetailPageScraper {
             val role =
                 when {
                     // Guarantee a headliner: promote the first act when subtitle_2 marked them all as support.
-                    !hasHeadliner && index == 0 -> "HEADLINER"
+                    !hasHeadliner && index == 0 -> ArtistRole.HEADLINER
 
-                    supportFlags[index] -> "SUPPORT"
+                    supportFlags[index] -> ArtistRole.SUPPORT
 
-                    else -> "HEADLINER"
+                    else -> ArtistRole.HEADLINER
                 }
             ScrapedArtist(name = name, role = role)
         }

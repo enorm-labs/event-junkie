@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
@@ -131,7 +132,7 @@ class So36WebsiteImporterTest {
                 Jsoup.parse(fixture("so36-detail-support-label.html"), url)
 
             val event = events(importer.importEvents(sourceUrl)).single()
-            event.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldBe listOf("GRENZER", "BIERTOIFEL")
+            event.artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldBe listOf("GRENZER", "BIERTOIFEL")
         }
 
     @Test

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.studioiiii
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -64,7 +65,7 @@ class StudioIiiiOverviewPageScraperTest {
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "studio_iiii:2026-10-16-erotic-discount-club"
         event.description.shouldBeNull()
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         djs("EROTIC DISCOUNT CLUB – PORSCHELANE") shouldContainExactly
             listOf("MISS BASHFUL", "DBBD", "PLAYBEYBUNNY", "NYENNEA", "PORSCHELANE", "BABYNYMPH", "ARSEN")
     }

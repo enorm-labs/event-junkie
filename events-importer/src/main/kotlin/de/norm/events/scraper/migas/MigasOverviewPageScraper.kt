@@ -1,5 +1,6 @@
 package de.norm.events.scraper.migas
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTED_BY_WORDS
@@ -180,7 +181,7 @@ class MigasOverviewPageScraper {
         const val EVENT_PATH_PREFIX = "/event/"
 
         /** Every act migas books plays records, so the lineup role is always a DJ set. */
-        const val ARTIST_ROLE_DJ = "DJ"
+        val ARTIST_ROLE_DJ = ArtistRole.DJ
 
         /**
          * migas' two programme categories, both describing the *format* of the night, neither an

@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistOccupationRepository
 import de.norm.events.common.BERLIN
 import de.norm.events.enrichment.LookupPass
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventRepository
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -120,7 +121,7 @@ class ComedianTypingIntegrationTest : BaseControllerTest() {
                 eventDate = today.plusDays(5),
                 sourceUrl = "https://arena.example/$id",
                 sourceId = "arena:$id",
-                artists = listOf(ScrapedArtist("Dieter Nuhr", "HEADLINER", titleDerived = true))
+                artists = listOf(ScrapedArtist("Dieter Nuhr", ArtistRole.HEADLINER, titleDerived = true))
             )
 
             val typed = typing().retype(listOf(scraped("a", fallback = true), scraped("b", fallback = false)))

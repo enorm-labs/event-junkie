@@ -1,5 +1,6 @@
 package de.norm.events.scraper.konradtoenz
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -104,7 +105,7 @@ class KonradToenzOverviewPageScraper {
             .split(DJ_SEPARATOR)
             .mapNotNull { it.trim().blankToNull() }
             .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     private fun String.clean(): String = replace(SPACES, " ").trim()
 
