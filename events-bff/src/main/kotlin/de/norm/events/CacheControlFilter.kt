@@ -1,5 +1,6 @@
 package de.norm.events
 
+import de.norm.events.account.isAccountPath
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpHeaders
@@ -67,7 +68,5 @@ class CacheControlFilter(
     private companion object {
         val NO_STORE: String? = CacheControl.noStore().headerValue
         const val PRIVATE_NO_STORE = "private, no-store"
-
-        fun isAccountPath(path: String) = path.startsWith("/api/auth/") || path == "/api/me" || path.startsWith("/api/me/")
     }
 }
