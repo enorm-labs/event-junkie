@@ -63,6 +63,11 @@ if command -v helm >/dev/null 2>&1; then
 fi
 # Helm refuses to install over an existing plugin, so a wrong version is uninstalled first.
 unittest_fix="helm plugin install https://github.com/helm-unittest/helm-unittest --version $UNITTEST_PIN --verify=false"
+# macOS ships a BSD /sbin/sha256sum without `--status`, so the install hook fails and leaves no binary.
+# Without /sbin on PATH, the hook falls back to `shasum -a 256`.
+if [ "$(uname -s)" = Darwin ] && command -v helm >/dev/null 2>&1; then
+    unittest_fix="env PATH=$(dirname "$(command -v helm)"):/usr/bin:/bin $unittest_fix"
+fi
 [ -n "$unittest_have" ] && unittest_fix="helm plugin uninstall unittest && $unittest_fix"
 compare unittest "$unittest_have" "$UNITTEST_PIN" "$unittest_fix"
 
