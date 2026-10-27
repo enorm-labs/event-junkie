@@ -37,5 +37,6 @@ val DUNCKER_LIMITATIONS =
             LimitedAspect.DOORS_TIME,
             "the time cell is the night's opening hours, stored as start and end, and no doors time is printed"
         ),
-        AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure")
+        AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the listing gives a night, a genre string and the DJ, never prose")
     )
