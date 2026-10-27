@@ -29,6 +29,8 @@ class DescriptionGenresTest {
         descriptionGenres("Bands from around the world in the Opera House, the party is in full swing").shouldBeEmpty()
         descriptionGenres("An experimental film about the Berlin techno scene") shouldBe listOf("Techno")
         descriptionGenres("Experimental theatre with live music").shouldBeEmpty()
+        descriptionGenres("A downbeat comedy about a band on tour").shouldBeEmpty()
+        descriptionGenres("Ambient and down tempo sets by the pool") shouldBe listOf("Ambient", "Downtempo")
     }
 
     @Test

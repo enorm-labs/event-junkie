@@ -94,6 +94,11 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "newage" to "New Age",
         "afrohouse" to "House",
         "latinhouse" to "House",
+        // Collapsed from "Down Tempo" by [preNormalize]; Liquidrom's "Downbeat with Progressive Vibes" is the same slow floor (#4044).
+        "downtempo" to "Downtempo",
+        "downbeat" to "Downtempo",
+        // Whole-token, so `progressive` alone stays a vetoed descriptor (#4044).
+        "deepprogressive" to "Progressive House",
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)
         "drumnbass" to "Drum & Bass",
         "dnb" to "Drum & Bass",
@@ -313,9 +318,13 @@ private val DRUM_AND_BASS_REGEX =
  */
 private val SINGER_SONGWRITER_REGEX = Regex("""\bsinger[\s/-]*songwriter(in)?\b""", RegexOption.IGNORE_CASE)
 
-/** Two-word genre names collapsed to one word, so "Instrumental Trip Hop" resolves word by word and "Digi Core" escapes the `core` veto. */
+/**
+ * Two-word genre names collapsed to one word, so "Instrumental Trip Hop" and "Down Tempo Beats"
+ * resolve word by word and "Digi Core" escapes the `core` veto.
+ */
 private val TRIP_HOP_REGEX = Regex("""\btrip[\s-]+hop\b""", RegexOption.IGNORE_CASE)
 private val DIGICORE_REGEX = Regex("""\bdigi[\s-]+core\b""", RegexOption.IGNORE_CASE)
+private val DOWNTEMPO_REGEX = Regex("""\bdown[\s-]+tempo\b""", RegexOption.IGNORE_CASE)
 
 /** Collapses delimiter-embedding genre names to a split-safe spelling before tokenization. */
 internal fun preNormalize(rawGenre: String): String =
@@ -324,6 +333,7 @@ internal fun preNormalize(rawGenre: String): String =
         .replace(SINGER_SONGWRITER_REGEX, "Singer-Songwriter")
         .replace(TRIP_HOP_REGEX, "Triphop")
         .replace(DIGICORE_REGEX, "Digicore")
+        .replace(DOWNTEMPO_REGEX, "Downtempo")
 
 /**
  * Suffixes appended to genre names in listings ("Hip Hop Floor", "Pop Disco Floor"), stripped

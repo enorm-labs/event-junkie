@@ -382,6 +382,25 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `Down Tempo and Downbeat map to Downtempo`() {
+        normalizeGenre("Down Tempo").shouldContainExactly("Downtempo")
+        normalizeGenre("Down Tempo Beats").shouldContainExactly("Downtempo")
+        normalizeGenre("down-tempo").shouldContainExactly("Downtempo")
+        normalizeGenre("Downtempo").shouldContainExactly("Downtempo")
+        normalizeGenre("Downbeat").shouldContainExactly("Downtempo")
+        normalizeGenre("Downbeat with Progressive Vibes").shouldContainExactly("Downtempo")
+        normalizeGenre("Ambient, Down Tempo").shouldContainExactly("Ambient", "Downtempo")
+        nonGenreTokens("Down Tempo Beats").shouldBeEmpty()
+    }
+
+    @Test
+    fun `Deep Progressive maps to Progressive House while Progressive alone stays dropped`() {
+        normalizeGenre("Deep Progressive").shouldContainExactly("Progressive House")
+        nonGenreTokens("Deep Progressive").shouldBeEmpty()
+        normalizeGenre("Progressive").shouldBeEmpty()
+    }
+
+    @Test
     fun `genuinely distinct genres are still kept as their own tag`() {
         // Moderate folding must not swallow standalone genres that have no parent tag.
         normalizeGenre("Amapiano").shouldContainExactly("Amapiano")
