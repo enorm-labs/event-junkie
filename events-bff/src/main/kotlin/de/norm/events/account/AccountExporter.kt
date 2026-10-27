@@ -8,12 +8,14 @@ import java.time.Clock
  * adds it here, so the export cannot miss it.
  */
 @Component
+@Suppress("LongParameterList") // One store per kind of account data, so the export cannot miss one, and the clock.
 class AccountExporter(
     private val sessionRows: SessionStore,
     private val follows: FollowStore,
     private val searches: SavedSearchStore,
     private val rsvps: RsvpStore,
     private val pushes: PushSubscriptionStore,
+    private val passkeys: PasskeyStore,
     private val clock: Clock
 ) {
     suspend fun export(account: Account) =
@@ -27,6 +29,7 @@ class AccountExporter(
             follows = follows.list(account.id).map(FollowResponse::of),
             searches = searches.list(account.id).map(SavedSearchResponse::of),
             rsvps = rsvps.list(account.id).map(RsvpResponse::of),
-            pushSubscriptions = pushes.list(account.id)
+            pushSubscriptions = pushes.list(account.id),
+            passkeys = passkeys.list(account.id)
         )
 }

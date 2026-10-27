@@ -26,12 +26,13 @@ private val logger = KotlinLogging.logger {}
  * hands each account to one replica, so a warning goes out once.
  */
 @Component
-@Suppress("LongParameterList") // One job over three stores, the mailer, its metrics, the clock and the origin its mail links to.
+@Suppress("LongParameterList") // One job over five stores, the mailer, its metrics, the clock and the origin its mail links to.
 class InactiveAccountCleanup(
     private val accounts: AccountStore,
     private val sessions: SessionStore,
     private val follows: FollowStore,
     private val rsvps: RsvpStore,
+    private val passkeys: PasskeyStore,
     private val mailer: ObjectProvider<Mailer>,
     private val metrics: AccountMetrics,
     private val clock: Clock,
@@ -47,6 +48,7 @@ class InactiveAccountCleanup(
         step(CleanupOutcome.SESSIONS_PURGED) { sessions.deleteExpired(now) }
         step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
         step(CleanupOutcome.RSVPS_PURGED) { rsvps.deleteOrphans() }
+        step(CleanupOutcome.CHALLENGES_PURGED) { passkeys.deleteExpiredChallenges(now) }
         val sender = mailer.ifAvailable
         if (sender == null) {
             logger.warn { "Account cleanup: no mail sender on this cluster, so no deletion warnings" }

@@ -165,6 +165,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/passkeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's passkeys: name, created and last used. Never the key */
+        get: operations["list_1"];
+        put?: never;
+        /**
+         * Stores a passkey from the browser's answer to the options
+         * @description 400 for an answer that does not verify, 409 when the account has 10 passkeys already.
+         */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/passkeys/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The options for navigator.credentials.create(). Each one holds a challenge that lives five minutes */
+        post: operations["creationOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/sign-in": {
         parameters: {
             query?: never;
@@ -176,6 +214,40 @@ export interface paths {
         put?: never;
         /** Uses a sign-in link's token, creates the account at its first use, and starts a session */
         post: operations["signIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkey/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signs in with the browser's answer to the options, and starts a session. 401 for every refusal */
+        post: operations["signIn_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkey/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The options for navigator.credentials.get(). 429 when this client asked too often */
+        post: operations["requestOptions"];
         delete?: never;
         options?: never;
         head?: never;
@@ -220,6 +292,24 @@ export interface paths {
         patch: operations["rename"];
         trace?: never;
     };
+    "/api/me/passkeys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deletes a passkey. It can no longer sign in. Deleting one that is gone changes nothing */
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        /** Renames a passkey */
+        patch: operations["rename_1"];
+        trace?: never;
+    };
     "/api/venues": {
         parameters: {
             query?: never;
@@ -231,7 +321,7 @@ export interface paths {
          * List venues with pagination, name search and filters, sorted by name or by events in the next 30 days
          * @description Sort with `sort=name` (A–Z, case-folded), `sort=name,desc` (Z–A) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -322,7 +412,7 @@ export interface paths {
          * List promoters with pagination and optional name search, sorted by name or by events in the next 30 days
          * @description Sort with `sort=name` (A–Z, case-folded), `sort=name,desc` (Z–A) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -360,7 +450,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Deletes the account, its sessions and its sign-in links, at once and for good */
-        delete: operations["delete_1"];
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -459,7 +549,7 @@ export interface paths {
             cookie?: never;
         };
         /** Everything the account follows, by name */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -544,7 +634,7 @@ export interface paths {
             cookie?: never;
         };
         /** List all genre tags alphabetically */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -584,7 +674,7 @@ export interface paths {
          * Search events with optional filters and pagination
          * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -743,7 +833,7 @@ export interface paths {
          * List artists with pagination and optional name search, sorted by name
          * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -806,6 +896,46 @@ export interface components {
         PushUnsubscribeRequest: {
             endpoint?: string;
         };
+        PasskeyRegistration: {
+            name?: string | null;
+            credential?: {
+                [key: string]: unknown;
+            };
+        };
+        AuthenticatorSelection: {
+            residentKey?: string;
+            requireResidentKey?: boolean;
+            userVerification?: string;
+        };
+        CreationOptions: {
+            rp?: components["schemas"]["RelyingParty"];
+            user?: components["schemas"]["PasskeyUser"];
+            challenge?: string;
+            excludeCredentials?: components["schemas"]["CredentialDescriptor"][];
+            pubKeyCredParams?: components["schemas"]["CredentialParameter"][];
+            /** Format: int64 */
+            timeout?: number;
+            authenticatorSelection?: components["schemas"]["AuthenticatorSelection"];
+            attestation?: string;
+        };
+        CredentialDescriptor: {
+            id?: string;
+            type?: string;
+        };
+        CredentialParameter: {
+            /** Format: int32 */
+            alg?: number;
+            type?: string;
+        };
+        PasskeyUser: {
+            id?: string;
+            name?: string;
+            displayName?: string;
+        };
+        RelyingParty: {
+            id?: string;
+            name?: string;
+        };
         SignInRequest: {
             token?: string;
         };
@@ -815,12 +945,27 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        PasskeySignIn: {
+            credential?: {
+                [key: string]: unknown;
+            };
+        };
+        RequestOptions: {
+            challenge?: string;
+            rpId?: string;
+            /** Format: int64 */
+            timeout?: number;
+            userVerification?: string;
+        };
         LinkRequest: {
             email?: string;
             locale?: string;
             next?: string | null;
         };
         SavedSearchRename: {
+            name?: string;
+        };
+        PasskeyRename: {
             name?: string;
         };
         /** @description One format of a cached image, for a <source> element inside <picture> */
@@ -1748,6 +1893,15 @@ export interface components {
         PushSettings: {
             publicKey?: string | null;
         };
+        PasskeyInfo: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            lastUsedAt?: string | null;
+        };
         FollowResponse: {
             kind?: string;
             slug?: string;
@@ -1773,6 +1927,7 @@ export interface components {
             searches?: components["schemas"]["SavedSearchResponse"][];
             rsvps?: components["schemas"]["RsvpResponse"][];
             pushSubscriptions?: components["schemas"]["PushSubscriptionInfo"][];
+            passkeys?: components["schemas"]["PasskeyInfo"][];
         };
         PushSubscriptionInfo: {
             pushService?: string;
@@ -2746,6 +2901,68 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PasskeyInfo"][];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRegistration"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    creationOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreationOptions"];
+                };
+            };
+        };
+    };
     signIn: {
         parameters: {
             query?: never;
@@ -2766,6 +2983,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AccountResponse"];
+                };
+            };
+        };
+    };
+    signIn_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeySignIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountResponse"];
+                };
+            };
+        };
+    };
+    requestOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RequestOptions"];
                 };
             };
         };
@@ -2838,7 +3099,51 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rename_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRename"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_2: {
         parameters: {
             query?: {
                 /** @description Search on the venue name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all venues. */
@@ -2998,7 +3303,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 /** @description Search on the promoter name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all promoters. */
@@ -3073,7 +3378,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3207,7 +3512,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3324,7 +3629,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3364,7 +3669,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
@@ -3725,7 +4030,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */

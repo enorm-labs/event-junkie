@@ -10,7 +10,8 @@ Every _mitigated_ row names the file that does the work. A reader can check each
 
 - **One inbound path.** Ports 80 and 443 on one node, through Traefik, to two routes: `/` and `/api`. Everything else is unroutable by name
   ([ADR-023](../adr/ADR-023_OPERATOR_AUTHENTICATION.md)).
-- **One login, by e-mail link, and one session cookie.** A visitor can sign in with a one-time link ([ADR-053](../adr/ADR-053_VISITORS_SIGN_IN_BY_EMAIL_LINK_IN_THE_BFF.md)).
+- **Two ways to sign in, and one session cookie.** A visitor can sign in with a one-time link ([ADR-053](../adr/ADR-053_VISITORS_SIGN_IN_BY_EMAIL_LINK_IN_THE_BFF.md))
+  or with a passkey (#3888).
   Spring Security in the BFF guards `/api/auth/**` and `/api/me/**` only. The rest of the API reads public data, and the importer writes it. B13 has the rows.
 - **The strongest controls are network controls.** Default-deny NetworkPolicies, a firewall with two public ports, Pod Security `restricted`, and
   staging on the WireGuard tunnel only.
@@ -311,6 +312,9 @@ SHA-256 of a random token and sends the link through Scaleway TEM ([ADR-054](../
 carries the token in the URL fragment. The confirm page sends the token to `POST /api/auth/sign-in` when the visitor clicks. The BFF then sets
 `__Host-ej_session`. Sessions live in `accounts.session` in PostgreSQL, so both replicas read the same sessions.
 
+A signed-in visitor can add a passkey (#3888). `POST /api/auth/passkey/options` gives a challenge, and the browser signs it with the passkey.
+`POST /api/auth/passkey/sign-in` verifies the signature with `webauthn4j-core` and sets the same session cookie. The BFF stores only the public key.
+
 | Threat                                                                    | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------- | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Someone reads the sign-in link on its way to the visitor                  | S, I   | low        | medium | Mitigated. `SignInLinks.kt` makes a link valid for 15 minutes and for one use. `SignInMail.kt` puts the token in the URL fragment, so it is in no access log and no `Referer`. The BFF sends to TEM with STARTTLS only (`application.yaml`). We do not control the path from TEM to the inbox |
@@ -324,6 +328,11 @@ carries the token in the URL fragment. The confirm page sends the token to `POST
 | Another site makes a signed-in browser send a POST (CSRF)                 | T      | low        | medium | Mitigated. `AccountSecurityConfiguration.kt` requires `X-XSRF-TOKEN` to match the `XSRF-TOKEN` cookie on each POST under `/api/auth/**` and `/api/me/**`. The session cookie is `SameSite=Lax`, the CSRF cookie `Strict`. CORS allows `GET` only (`WebFluxConfiguration.kt`)                  |
 | A script or a database read takes a live session                          | S, I   | low        | high   | Mitigated. `SessionSecurityContextRepository.kt` sets the cookie `HttpOnly` and `Secure`, and stores only the SHA-256 of its token. The CSP allows one script hash (B2)                                                                                                                       |
 | A link in the mail sends the visitor to another site                      | S      | low        | medium | Mitigated. `AuthController.kt` accepts `next` only as a path on this site (#3889)                                                                                                                                                                                                             |
+| A passkey answer is replayed                                              | S      | low        | medium | Mitigated. `PasskeyStore.kt` deletes a challenge at its first use, and a challenge lives five minutes. `PasskeyFlowTest.kt` replays an answer and gets a 401                                                                                                                                  |
+| A passkey made for another site signs in here                             | S      | low        | high   | Mitigated. `Passkeys.kt` checks the origin and the RP ID against `app.site.origin`. So a staging passkey cannot sign in to production                                                                                                                                                         |
+| Someone with the visitor's unlocked device signs in                       | S      | low        | high   | Mitigated. `Passkeys.kt` requires user verification at registration and at each sign-in. The visitor deletes a lost device's passkey on the account page, and the e-mail link still works                                                                                                     |
+| A sign-in challenge registers a passkey, or the reverse                   | T      | low        | medium | Mitigated. `PasskeyStore.kt` stores the account a registration challenge is for, and none for a sign-in. A consume requires the same account                                                                                                                                                  |
+| Someone fills the challenge table                                         | D      | medium     | low    | Mitigated. `Passkeys.kt` answers a 429 after 30 sign-in challenges an hour from one client. The daily cleanup in `InactiveAccountCleanup.kt` deletes expired challenges                                                                                                                       |
 
 ### Cluster-wide
 
@@ -357,8 +366,8 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 - The map tiles are not checked against a digest, because Protomaps publishes none. TLS to `build.protomaps.com` and the review of the pull request
   that moves the digest are the checks.
 - One operator, so repudiation is not a threat this system defends against.
-- The per-client limit on sign-in links counts in each BFF pod. With two replicas, one client can get up to 40 links an hour. The per-address
-  limit is in the database, so no address gets more than 3 links an hour (B13).
+- The per-client limits on sign-in links and on passkey challenges count in each BFF pod. With two replicas, one client can get up to 40 links and
+  60 challenges an hour. The per-address limit is in the database, so no address gets more than 3 links an hour (B13).
 - While sign-up is paused, the response time of a sign-in request tells whether an address has an account. Only an address with an account waits
   for the mail to send. The answer is the same 202 for both (B13).
 - The collector agent runs `privileged`. Reading every container log means mounting the node, and Pod Security has no per-workload exemption. So it

@@ -76,6 +76,7 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
         sessions,
         follows,
         RsvpStore(databaseClient),
+        PasskeyStore(databaseClient),
         StaticListableBeanFactory(if (mailer == null) emptyMap() else mapOf("mailer" to mailer)).getBeanProvider(Mailer::class.java),
         metrics,
         Clock.fixed(at, BERLIN),

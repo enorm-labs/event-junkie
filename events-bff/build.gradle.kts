@@ -90,6 +90,9 @@ dependencies {
     // Visitor sign-in: sessions, CSRF and /api/me (ADR-053)
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    // Passkeys (#3888): Spring Security has no reactive WebAuthn yet (ADR-053 rule 7). The test module brings a software authenticator.
+    implementation("com.webauthn4j:webauthn4j-core:${property("webauthn4j.version")}")
+    testImplementation("com.webauthn4j:webauthn4j-test:${property("webauthn4j.version")}")
 
     // Transactional mail through Scaleway TEM over SMTP (ADR-054)
     implementation("org.springframework.boot:spring-boot-starter-mail")

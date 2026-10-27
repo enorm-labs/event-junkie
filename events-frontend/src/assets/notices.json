@@ -1,5 +1,5 @@
 {
-  "componentCount": 374,
+  "componentCount": 376,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -159,6 +159,12 @@
           "name": "com.tngtech.archunit:archunit",
           "version": "1.4.2",
           "url": "https://github.com/TNG/ArchUnit",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "com.webauthn4j:webauthn4j-core",
+          "version": "0.31.11.RELEASE",
+          "url": "https://github.com/webauthn4j/webauthn4j",
           "ecosystem": "backend"
         },
         {
@@ -1305,6 +1311,12 @@
           "name": "tools.jackson.core:jackson-databind",
           "version": "3.1.7",
           "url": "https://github.com/FasterXML/jackson",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "tools.jackson.dataformat:jackson-dataformat-cbor",
+          "version": "3.1.7",
+          "url": "https://github.com/FasterXML/jackson-dataformats-binary",
           "ecosystem": "backend"
         },
         {

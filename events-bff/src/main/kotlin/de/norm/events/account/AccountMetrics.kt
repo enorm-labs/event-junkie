@@ -19,6 +19,7 @@ class AccountMetrics(
     private val searches = SavedSearchAction.entries.associateWith { registry.counter(SAVED_SEARCH, TAG_ACTION, it.tag) }
     private val rsvps = RsvpAction.entries.associateWith { registry.counter(RSVP, TAG_ACTION, it.tag) }
     private val pushes = PushAction.entries.associateWith { registry.counter(PUSH, TAG_ACTION, it.tag) }
+    private val passkeys = PasskeyOutcome.entries.associateWith { registry.counter(PASSKEY, TAG_OUTCOME, it.tag) }
     private val cleanup = CleanupOutcome.entries.associateWith { registry.counter(CLEANUP, TAG_OUTCOME, it.tag) }
     private val follows =
         FollowAction.entries.associateWith { action ->
@@ -54,6 +55,8 @@ class AccountMetrics(
 
     fun record(action: PushAction) = pushes.getValue(action).increment()
 
+    fun record(outcome: PasskeyOutcome) = passkeys.getValue(outcome).increment()
+
     fun record(
         action: FollowAction,
         kind: FollowKind
@@ -82,6 +85,9 @@ class AccountMetrics(
 
         /** `bff.account.push{action}`: browsers subscribed and unsubscribed, and bells turned on and off (#3894). What was sent is `bff.push.sent`. */
         const val PUSH = "bff.account.push"
+
+        /** `bff.account.passkey{outcome}`: passkeys registered, used to sign in, renamed and deleted, and the refusals (#3888). */
+        const val PASSKEY = "bff.account.passkey"
 
         /** `bff.account.follow{action,kind}`: follows and unfollows (#3889). */
         const val FOLLOW = "bff.account.follow"
@@ -156,6 +162,9 @@ enum class CleanupOutcome(
     /** RSVPs whose event the importer removed (#3892). */
     RSVPS_PURGED("rsvps_purged"),
 
+    /** Passkey challenges nobody answered (#3888). */
+    CHALLENGES_PURGED("challenges_purged"),
+
     /** A warning mail went out. */
     WARNED("warned"),
 
@@ -194,4 +203,26 @@ enum class PushAction(
     UNSUBSCRIBE("unsubscribe"),
     BELL_ON("bell_on"),
     BELL_OFF("bell_off")
+}
+
+/** How a passkey request ended (#3888). */
+enum class PasskeyOutcome(
+    val tag: String
+) {
+    REGISTERED("registered"),
+
+    /** A bad answer, a wrong origin, or a used or expired challenge. */
+    REGISTER_REFUSED("register_refused"),
+
+    /** The account has the most passkeys it may have. */
+    LIMIT("limit"),
+    SIGNED_IN("signed_in"),
+
+    /** One outcome for every cause, because the answer to the caller is one answer. */
+    SIGN_IN_REFUSED("sign_in_refused"),
+
+    /** The client asked for too many sign-in challenges this hour. A 429. */
+    THROTTLED("throttled"),
+    RENAMED("renamed"),
+    DELETED("deleted")
 }

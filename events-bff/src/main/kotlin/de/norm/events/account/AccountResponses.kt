@@ -43,7 +43,9 @@ data class AccountExport(
     val searches: List<SavedSearchResponse>,
     val rsvps: List<RsvpResponse>,
     /** One per browser with push notifications on (#3894): the push service's host, never the endpoint. */
-    val pushSubscriptions: List<PushSubscriptionInfo>
+    val pushSubscriptions: List<PushSubscriptionInfo>,
+    /** The passkeys (#3888): name and dates, never the key. */
+    val passkeys: List<PasskeyInfo>
 )
 
 data class NotifyRequest(

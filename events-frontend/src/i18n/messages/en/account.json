@@ -9,7 +9,10 @@
     "tooMany": "Too many links were requested from here. Try again in an hour.",
     "mailDown": "The mail could not be sent. Try again later.",
     "privacyLink": "More in the privacy notice",
-    "paused": "New accounts are paused for now. If you already have one, we still send you a link."
+    "paused": "New accounts are paused for now. If you already have one, we still send you a link.",
+    "passkey": "Sign in with a passkey",
+    "passkeyFailed": "The passkey did not sign you in. Use the e-mail link instead.",
+    "passkeyTooMany": "Too many passkey sign-ins from here. Try again in an hour."
   },
   "checkMail": {
     "body": "If the address is right, a link is on its way. It works once, for 15 minutes.",
@@ -120,5 +123,21 @@
     "ringAllYes": "Ring them all",
     "ringAllNo": "Not now",
     "ringAllDone": "No bell changed. | The bell is on for the one you follow. Change it on your Following page. | The bell is on for all {count}. Change single ones on your Following page."
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "intro": "With a passkey you sign in on this device without waiting for a mail. Your device unlocks it with your fingerprint, face or PIN. The e-mail link still works.",
+    "add": "Add a passkey",
+    "adding": "Adding …",
+    "defaultName": "Passkey",
+    "added": "Added {date}",
+    "used": "last used {date}",
+    "rename": "Rename",
+    "renameLabel": "New name for {name}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "limit": "This account has ten passkeys already. Delete one first.",
+    "failed": "That did not work. Try again."
   }
 }

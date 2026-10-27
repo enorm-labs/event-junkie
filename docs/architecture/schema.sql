@@ -265,7 +265,8 @@ CREATE TABLE accounts.account (
     locale text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     last_sign_in_at timestamp with time zone DEFAULT now() NOT NULL,
-    deletion_warned_at timestamp with time zone
+    deletion_warned_at timestamp with time zone,
+    passkey_user_handle bytea
 );
 
 --
@@ -298,6 +299,35 @@ CREATE TABLE accounts.one_time_token (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone NOT NULL,
     consumed_at timestamp with time zone
+);
+
+--
+-- Name: passkey; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.passkey (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    account_id uuid NOT NULL,
+    credential_id bytea NOT NULL,
+    credential bytea NOT NULL,
+    sign_count bigint NOT NULL,
+    uv_initialized boolean,
+    backup_eligible boolean,
+    backup_state boolean,
+    transports text[] DEFAULT '{}'::text[] NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone
+);
+
+--
+-- Name: passkey_challenge; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.passkey_challenge (
+    challenge bytea NOT NULL,
+    account_id uuid,
+    expires_at timestamp with time zone NOT NULL
 );
 
 --
@@ -1040,6 +1070,27 @@ ALTER TABLE ONLY accounts.one_time_token
     ADD CONSTRAINT one_time_token_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: passkey_challenge passkey_challenge_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.passkey_challenge
+    ADD CONSTRAINT passkey_challenge_pkey PRIMARY KEY (challenge);
+
+--
+-- Name: passkey passkey_credential_id_key; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.passkey
+    ADD CONSTRAINT passkey_credential_id_key UNIQUE (credential_id);
+
+--
+-- Name: passkey passkey_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.passkey
+    ADD CONSTRAINT passkey_pkey PRIMARY KEY (id);
+
+--
 -- Name: push_cursor push_cursor_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1432,6 +1483,12 @@ CREATE INDEX one_time_token_email_created_idx ON accounts.one_time_token USING b
 CREATE INDEX one_time_token_expires_idx ON accounts.one_time_token USING btree (expires_at);
 
 --
+-- Name: passkey_account_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX passkey_account_idx ON accounts.passkey USING btree (account_id);
+
+--
 -- Name: push_subscription_account_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -1749,6 +1806,20 @@ CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW E
 
 ALTER TABLE ONLY accounts.follow
     ADD CONSTRAINT follow_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: passkey passkey_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.passkey
+    ADD CONSTRAINT passkey_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: passkey_challenge passkey_challenge_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.passkey_challenge
+    ADD CONSTRAINT passkey_challenge_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: push_subscription push_subscription_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -

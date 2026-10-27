@@ -16,6 +16,8 @@ const account = vi.hoisted(() => ({
   signOut: vi.fn<() => Promise<void>>(),
   signOutEverywhere: vi.fn<() => Promise<void>>(),
   deleteAccount: vi.fn<() => Promise<void>>(),
+  signInWithPasskey:
+    vi.fn<(mediation?: CredentialMediationRequirement, signal?: AbortSignal) => Promise<unknown>>(),
 }))
 
 vi.mock('@/api/account', () => ({ ...account, EXPORT_URL: '/api/me/export' }))
@@ -110,6 +112,70 @@ describe('SignInView', () => {
     const paused = await mountAt(SignInView, '/en/sign-in')
     expect(paused.find('[role="status"]').text()).toContain('New accounts are paused')
     expect(paused.find('form button[type="submit"]').attributes('disabled')).toBeUndefined()
+  })
+})
+
+describe('SignInView with passkeys', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function passkeyBrowser(autofill: boolean) {
+    vi.stubGlobal(
+      'PublicKeyCredential',
+      Object.assign(function PublicKeyCredential() {}, {
+        isConditionalMediationAvailable: async () => autofill,
+      }),
+    )
+  }
+
+  it('offers no passkey button in a browser without passkeys', async () => {
+    const view = await mountAt(SignInView, '/en/sign-in')
+    expect(view.text()).not.toContain('Sign in with a passkey')
+    expect(account.signInWithPasskey).not.toHaveBeenCalled()
+  })
+
+  it('signs in from the button and goes on to the Following page', async () => {
+    passkeyBrowser(false)
+    account.signInWithPasskey.mockResolvedValue(me)
+    const view = await mountAt(SignInView, '/en/sign-in')
+    expect(account.signInWithPasskey).not.toHaveBeenCalled()
+
+    await view
+      .findAll('button')
+      .find((b) => b.text() === 'Sign in with a passkey')!
+      .trigger('click')
+    await flushPromises()
+    expect(account.signInWithPasskey).toHaveBeenCalledWith(undefined, undefined)
+    expect(router.currentRoute.value.fullPath).toBe('/en/following')
+  })
+
+  it('says nothing when the autofill fails, because the visitor did not ask for it', async () => {
+    passkeyBrowser(true)
+    account.signInWithPasskey.mockRejectedValue(new ApiError(429, 'no'))
+    const view = await mountAt(SignInView, '/en/sign-in')
+    expect(view.find('[role="alert"]').text()).toBe('')
+  })
+
+  it('waits for the autofill where the browser offers it, and the field asks for it', async () => {
+    passkeyBrowser(true)
+    account.signInWithPasskey.mockReturnValue(new Promise(() => {}))
+    const view = await mountAt(SignInView, '/en/sign-in')
+    expect(account.signInWithPasskey).toHaveBeenCalledWith('conditional', expect.any(AbortSignal))
+    expect(view.find('input').attributes('autocomplete')).toBe('username webauthn')
+  })
+
+  it('points to the e-mail link when the passkey does not sign in, and stays quiet when closed', async () => {
+    passkeyBrowser(false)
+    account.signInWithPasskey.mockRejectedValue(new DOMException('closed', 'NotAllowedError'))
+    const view = await mountAt(SignInView, '/en/sign-in')
+    const passkey = view.findAll('button').find((b) => b.text() === 'Sign in with a passkey')!
+    await passkey.trigger('click')
+    await flushPromises()
+    expect(view.find('[role="alert"]').text()).toBe('')
+
+    account.signInWithPasskey.mockRejectedValue(new ApiError(401, 'no'))
+    await passkey.trigger('click')
+    await flushPromises()
+    expect(view.find('[role="alert"]').text()).toContain('Use the e-mail link instead')
   })
 })
 

@@ -145,9 +145,9 @@ const { t } = useI18n()
           name. It expires after 30 days.
         </li>
         <li>
-          <code>__Host-ej_session</code>, as soon as you sign in with the link. It holds a random
-          identifier of your session and keeps you signed in. It expires 30 days after its last use,
-          and signing out deletes it.
+          <code>__Host-ej_session</code>, as soon as you sign in with the link or a passkey. It
+          holds a random identifier of your session and keeps you signed in. It expires 30 days
+          after its last use, and signing out deletes it.
         </li>
       </ul>
       <p>
@@ -389,15 +389,28 @@ const { t } = useI18n()
         four are US companies, so this data reaches a third country.
       </p>
       <p>
+        <strong>Passkeys:</strong> if you add a passkey on your account page, your device makes a
+        key pair. The private key stays on your device or in your password manager, which may sync
+        it to your other devices. Your device unlocks it with your fingerprint, your face or a PIN,
+        and none of these ever reaches Event Junkie. I store the public key, an identifier of the
+        passkey, a counter, the name you give it, when you added it and when you last used it. I do
+        not store which make of device or password manager made it. Your device keeps the passkey
+        with a random identifier of your account, and with your e-mail address so that it can show
+        you which account it is for. You can rename or delete each passkey on your account page.
+        When you delete your account, all its passkeys are deleted too. A passkey you delete here
+        stays on your device until you remove it there, but you can no longer sign in with it.
+      </p>
+      <p>
         <strong>Purpose and legal basis:</strong> the account is a service you ask for yourself. The
         legal basis is Art. 6 (1) (b) GDPR.
       </p>
       <p>
         <strong>Protection against abuse:</strong> one address gets at most three links an hour. So
         that nobody can trigger any number of mails from one connection, the server also counts the
-        requests per IP address, at most 20 an hour. It keeps that count in memory only. It is
-        stored nowhere and is gone after an hour at most. The legal basis is Art. 6 (1) (f) GDPR, my
-        legitimate interest in protecting the mail service from abuse.
+        requests per IP address, at most 20 an hour, and passkey sign-ins per IP address, at most 30
+        an hour. It keeps these counts in memory only. They are stored nowhere and are gone after an
+        hour at most. The legal basis is Art. 6 (1) (f) GDPR, my legitimate interest in protecting
+        the mail service and the sign-in from abuse.
       </p>
       <p>
         <strong>Retention:</strong> your account stays until you delete it. If you do not use it for
