@@ -28,8 +28,9 @@ import java.time.format.DateTimeFormatter
  * - **Only the house's own rooms are read.** The list also carries the district's events at the Zitadelle, which has its own
  *   importer, and in the Altstadt churches. A place counts when its street is the house's, `Mauerstr. 6`.
  * - **The categories type the event and set the scope.** Tours, workshops and exhibitions are out (EVENT_SCOPE.md §3.2), and so
- *   is the `Mitsingding` sing-along. `Kinder und Familie` or a show for an age range under thirteen is marked `for-children` (§3.5).
- * - **A title can carry an editor's tag**, `<p hidden KreativWerk_2.12.26>`, and a `<br>-AUSVERKAUFT` tail.
+ *   are the `Mitsingding` sing-along and an auction. `Kinder und Familie` or a show for an age range under thirteen is marked `for-children` (§3.5).
+ * - **A title can carry an editor's tag**, `<p hidden KreativWerk_2.12.26>` or `<p-hidden_…>`, and a `<br>-AUSVERKAUFT` tail.
+ *   A title that is only the tag leaves the subtitle as the headline.
  * - The `Eintritt` tier is the price. `ermäßigt` and `Kinder` are concessions, and a tier with `active: false` is unused.
  */
 class KulturhausSpandauApiScraper {
@@ -56,7 +57,7 @@ class KulturhausSpandauApiScraper {
                 .toList()
                 .mapNotNull { it.stringOrNull("name") }
                 .toSet()
-        if (isOutOfScope(categories, rawTitle)) return null
+        if (isOutOfScope(categories, rawTitle, subtitle)) return null
         val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')).text, subtitle?.trim())
         val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, API_TIME) } ?: return null
         val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, API_TIME) }?.takeIf { it.isAfter(start) }
@@ -100,6 +101,7 @@ class KulturhausSpandauApiScraper {
     ): Pair<String, String?> =
         when {
             subtitle.isNullOrEmpty() -> title to null
+            title.isEmpty() -> subtitle to null
             title == HOUSE_DISTRICT -> "$subtitle $title" to null
             DISCIPLINE_LIST in title -> subtitle to title
             else -> title to subtitle
@@ -107,8 +109,9 @@ class KulturhausSpandauApiScraper {
 
     private fun isOutOfScope(
         categories: Set<String>,
-        title: String
-    ): Boolean = categories.any { it in PARTICIPATION } || SING_ALONG.containsMatchIn(title)
+        title: String,
+        subtitle: String?
+    ): Boolean = categories.any { it in PARTICIPATION } || NOT_A_SHOW.containsMatchIn(title) || NOT_A_SHOW.containsMatchIn(subtitle.orEmpty())
 
     /** The category `Kinder und Familie`, a `maximum_age` of [CHILDRENS_MAXIMUM_AGE] or less, or [childrensShowPhrase]. */
     private fun childrensPhrase(
@@ -146,8 +149,8 @@ private val PARTICIPATION = setOf("Führung", "Workshop", "Ausstellung")
 private val STAGE = setOf("Show", "Theater", "Zauberei", "Konzert")
 private val API_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-/** The audience is the choir (Passionskirche's precedent, EVENT_SCOPE.md §3.2). */
-private val SING_ALONG = Regex("""mitsing""", RegexOption.IGNORE_CASE)
+/** A sing-along, whose audience is the choir (Passionskirche's precedent), or an auction (EVENT_SCOPE.md §3.2). */
+private val NOT_A_SHOW = Regex("""mitsing|auktion""", RegexOption.IGNORE_CASE)
 
 /** An editor's hidden `<p hidden …>` tag, or a `<br>`, inside a title. */
-private val EDITOR_TAG = Regex("""<p\s+hidden[^>]*>|<br\s*/?>""", RegexOption.IGNORE_CASE)
+private val EDITOR_TAG = Regex("""<p[\s_-]+hidden[^>]*>|<br\s*/?>""", RegexOption.IGNORE_CASE)

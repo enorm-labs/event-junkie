@@ -282,7 +282,17 @@ class AdmiralspalastDetailPageScraperTest {
                 ),
                 Arguments.of("Lacrimosa mit Orchester - Einzige und Exklusive Orchester-Show in Europa!", "Konzert", listOf("Lacrimosa")),
                 Arguments.of("Top Gun: Maverick – in Concert", "Konzert", emptyList<String>()),
-                Arguments.of("Bodo Wartke - Antigone", "Comedy", listOf("Bodo Wartke"))
+                Arguments.of("Bodo Wartke - Antigone", "Comedy", listOf("Bodo Wartke")),
+                // A ballet bills the company after its work, or nobody.
+                Arguments.of(
+                    "Der Nussknacker - Imperial Ballet & Live Orchestra - Musik: Peter I. Tschaikowsky",
+                    "Tanz/Ballett",
+                    listOf("Imperial Ballet")
+                ),
+                Arguments.of("Nussknacker - International Festival Ballet & Orchestra", "Tanz/Ballett", listOf("International Festival Ballet")),
+                Arguments.of("Der Nussknacker - Ballett mit Orchester", "Tanz/Ballett", emptyList<String>()),
+                Arguments.of("Die Vier Jahreszeiten - Ballett", "Tanz/Ballett", emptyList<String>()),
+                Arguments.of("Crown Ballet - Schwanensee mit Orchester", "Tanz/Ballett", listOf("Crown Ballet"))
             )
     }
 }

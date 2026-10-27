@@ -682,7 +682,7 @@ says so.
 | `ORANIA`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ORWOHAUS`             | `PRICE`            | prices appear only in the prose, and a house night often names none                                                                              | —     |
 | `ORWOHAUS`             | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
-| `ORWOHAUS`             | `ARTISTS`          | the line-up appears only in the prose, and a series title names no act                                                                           | —     |
+| `ORWOHAUS`             | `ARTISTS`          | only a `Line-Up:` list in the prose is read; other nights name acts in running text, and a series title names none                               | —     |
 | `ORWOHAUS`             | `GENRE`            | the feed files most nights by room or series and names a style on few                                                                            | —     |
 | `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
 | `ORWOHAUS`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |
