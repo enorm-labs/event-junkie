@@ -171,7 +171,7 @@ unclosed() {
 # A merged pull request labelled `after-deploy` keeps its label until `/post-release` ticks every step.
 # `released`: whether the latest release tag contains its merge commit, so production runs it.
 # `due` per step: the date of a `(from YYYY-MM-DD)`, `deploy+<N>d` for `(N days after deploy)`, `dark-day:<slug>`
-# for a `(dark day <slug>)`, `when:<text>` for any other parenthesis, the date of an `on YYYY-MM-DD` in a step
+# for a `(dark day <slug>)`, `deploy+<N>d` for "a week after deploy" in the text, `when:<text>` for any other parenthesis, the date of an `on YYYY-MM-DD` in a step
 # without one, else `now`. An unknown form is never `now`, or the step shows as due on every run.
 after_deploy() {
     local tag prs number sha
@@ -192,6 +192,10 @@ after_deploy() {
                            due: ((capture("^ *- \\[ \\] [a-z]+ \\(from (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})\\)") | .d)
                                  // (capture("^ *- \\[ \\] [a-z]+ \\((?<n>[0-9]+) days? after deploy\\)") | "deploy+" + .n + "d")
                                  // (capture("^ *- \\[ \\] [a-z]+ \\(dark day (?<s>[a-z0-9-]+)\\)") | "dark-day:" + .s)
+                                 // (capture("(?i)\\b(?<n>[0-9]+|an?|one|two|three|four) (?<u>days?|weeks?) after (the )?deploy")
+                                     | ({"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4}[.n | ascii_downcase] // (.n | tonumber))
+                                       * (if .u | test("^(?i)week") then 7 else 1 end)
+                                     | "deploy+" + tostring + "d")
                                  // (capture("^ *- \\[ \\] [a-z]+ \\((?<w>[^)]*)\\)") | "when:" + .w)
                                  // (capture("^ *- \\[ \\] [a-z]+:.*\\bon (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})\\b") | .d)
                                  // "now")}]}'
