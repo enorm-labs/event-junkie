@@ -134,6 +134,48 @@ class HeimathafenApiScraperTest {
         typeOf("NEUKÖLLNER KIEZVERSAMMLUNG", "\"events_cat-tacheles\",\"events_tag-kiezversammlung\"") shouldBe "OTHER"
     }
 
+    /** The one post of a minimal payload, carrying the [classes] in the order given. */
+    private fun postWithClasses(
+        title: String,
+        classes: List<String>
+    ): ScrapedEvent =
+        scraper
+            .scrape(
+                """
+                [{"id":96,"link":"https://heimathafen-neukoelln.de/events/y/","title":{"rendered":"$title"},
+                  "excerpt":{"rendered":""},"content":{"rendered":""},"class_list":[${classes.joinToString(",") { "\"$it\"" }}],
+                  "featured_images":{},"acf":{"event_performances":[{"performance_date_time":"11/03/2026 8:00 p.m."}]}}]
+                """.trimIndent()
+            ).events
+            .single()
+
+    // The API lists a post's classes in a different order between requests (#4085).
+    @Test
+    fun `types a post with several categories the same whatever their order`() {
+        fun typesInBothOrders(
+            title: String,
+            vararg categories: String
+        ): Set<String?> {
+            val classes = categories.map { "events_cat-$it" }
+            return setOf(postWithClasses(title, classes).eventType, postWithClasses(title, classes.reversed()).eventType)
+        }
+
+        typesInBothOrders("TOXISCHE POMMES", "amusemang", "tacheles") shouldBe setOf("SHOW")
+        typesInBothOrders("DIE MÜSSIGGANGSTER", "kiezklub", "theater", "eigenproduktionen") shouldBe setOf("SHOW")
+        typesInBothOrders("HIP HOP LEBT", "musik", "amusemang") shouldBe setOf("SHOW")
+        typesInBothOrders("LESEBÜHNE", "literatur", "tacheles") shouldBe setOf("READING")
+        typesInBothOrders("FOO FIGHTERS", "musik", "tacheles") shouldBe setOf("CONCERT")
+        typesInBothOrders("FOO FIGHTERS", "musik", "unbekannt") shouldBe setOf("CONCERT")
+    }
+
+    @Test
+    fun `joins the same genre tags into the same string whatever their order`() {
+        val tags = listOf("events_cat-musik", "events_tag-indie-folk", "events_tag-art-pop", "events_tag-konzert")
+
+        postWithClasses("SOMEONE", tags).genre shouldBe "art pop, indie folk"
+        postWithClasses("SOMEONE", tags.reversed()).genre shouldBe "art pop, indie folk"
+    }
+
     // A crowd sing-along whose first category is `musik`; the karaoke tag makes it a party, which bills no act (#2788).
     @Test
     fun `types a karaoke post as a party and bills no act whatever its category`() {
@@ -376,9 +418,9 @@ class HeimathafenApiScraperTest {
     @Test
     fun `reads the genres among the tag slugs and leaves the formats and rooms out`() {
         // `events_tag-rb, -konzert, -soul, -blues`: the lossy `rb` is R&B by hand, `konzert` is a format (#313).
-        page.events.first { it.title.startsWith("EB DAVIS") }.genre shouldBe "R&B, soul, blues"
+        page.events.first { it.title.startsWith("EB DAVIS") }.genre shouldBe "blues, R&B, soul"
         // `-konzert, -pop, -deutschrap, -rap-pop`
-        page.events.first { it.title == "BAC" }.genre shouldBe "pop, deutschrap, rap pop"
+        page.events.first { it.title == "BAC" }.genre shouldBe "deutschrap, pop, rap pop"
         // `-comedy` alone is a format, not a genre.
         page.events.first { it.title == "PATRICK SPICER" }.genre shouldBe null
         // `-mantra, -new-age, -konzert, -kirtan`: kirtan and mantra are devotional practices (#3103).

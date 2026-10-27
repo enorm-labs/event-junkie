@@ -265,6 +265,7 @@ class HeimathafenApiScraper(
      * `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows it — 49 of the
      * venue's 562 terms. The slug is lossy once: `rb` for R&B, mapped by hand. Resolving the
      * taxonomy would give the names but not the decision, at a request per import for the same 48 words.
+     * The labels are sorted, because the API lists the classes in a different order between requests (#4085).
      */
     private fun resolveGenre(classes: List<String>): String? =
         classes
@@ -273,6 +274,7 @@ class HeimathafenApiScraper(
             .map { slug -> LOSSY_TAG_SLUGS[slug] ?: slug.replace('-', ' ') }
             .filter(::isGenreLabel)
             .distinct()
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
             .joinToString(", ")
             .ifBlank { null }
 
@@ -283,14 +285,24 @@ class HeimathafenApiScraper(
      * `musik`, which would make it a concert billing its own title (#2788). A [talk tag][TALK_TAGS]
      * makes a reading of a night the category leaves `OTHER`: a live podcast, a debate or a
      * `Live-Erzählung` in the `tacheles` strand (#2992).
+     *
+     * A post can carry two or three categories, and the API lists them in a different order between
+     * requests. So the categories are ranked by the order of [CATEGORY_TYPES], never by the class
+     * order, and the first that maps wins (#4085).
      */
     private fun resolveEventType(
         classes: List<String>,
         title: String
     ): String {
         if (PARTY_TAGS.any { "$TAG_CLASS_PREFIX$it" in classes }) return EventType.PARTY.name
-        val category = classes.firstOrNull { it.startsWith(CATEGORY_CLASS_PREFIX) }?.removePrefix(CATEGORY_CLASS_PREFIX)
-        val type = mapEventType(category, CATEGORY_TYPES) ?: mapEventType(title) ?: EventType.OTHER.name
+        val type =
+            classes
+                .filter { it.startsWith(CATEGORY_CLASS_PREFIX) }
+                .map { it.removePrefix(CATEGORY_CLASS_PREFIX) }
+                .sortedWith(compareBy<String> { CATEGORY_RANK[it] ?: CATEGORY_RANK.size }.thenBy { it })
+                .firstNotNullOfOrNull { mapEventType(it, CATEGORY_TYPES) }
+                ?: mapEventType(title)
+                ?: EventType.OTHER.name
         val talk = TALK_TAGS.any { "$TAG_CLASS_PREFIX$it" in classes }
         return if (type == EventType.OTHER.name && talk) EventType.READING.name else type
     }
@@ -347,24 +359,29 @@ class HeimathafenApiScraper(
         const val CATEGORY_CLASS_PREFIX = "events_cat-"
 
         /**
-         * The venue's category vocabulary. `musik` is its concert programme; `theater`, `amusemang`
-         * (its comedy/variety strand) and the three production labels are staged shows; `literatur` is
-         * readings. `tacheles` (talks and panels), `jugendclub` and `kiezklub` (community formats) have
-         * no closer type than `OTHER`, unless a [talk tag][TALK_TAGS] names a reading.
+         * The venue's category vocabulary, in the order that decides between two categories. `theater`,
+         * `amusemang` (its comedy/variety strand) and the three production labels are staged shows, and
+         * rank first: a `musik` + `amusemang` night is a show, which bills no act from its title. `musik`
+         * is the concert programme and `literatur` is readings. `tacheles` (talks and panels),
+         * `jugendclub` and `kiezklub` (community formats) have no closer type than `OTHER`, unless a
+         * [talk tag][TALK_TAGS] names a reading, and rank last.
          */
         val CATEGORY_TYPES: Map<String, String> =
             mapOf(
-                "musik" to EventType.CONCERT.name,
                 "theater" to EventType.SHOW.name,
                 "amusemang" to EventType.SHOW.name,
                 "eigenproduktionen" to EventType.SHOW.name,
                 "gastspiel" to EventType.SHOW.name,
                 "ko-produktionen" to EventType.SHOW.name,
+                "musik" to EventType.CONCERT.name,
                 "literatur" to EventType.READING.name,
                 "tacheles" to EventType.OTHER.name,
                 "jugendclub" to EventType.OTHER.name,
                 "kiezklub" to EventType.OTHER.name
             )
+
+        /** Each [CATEGORY_TYPES] slug's rank; a slug the map does not know ranks after all of them. */
+        val CATEGORY_RANK: Map<String, Int> = CATEGORY_TYPES.keys.withIndex().associate { (index, slug) -> slug to index }
 
         /** ACF `performance_status` marking a sold-out performance. */
         const val SOLD_OUT_STATUS = "ausverkauft"
