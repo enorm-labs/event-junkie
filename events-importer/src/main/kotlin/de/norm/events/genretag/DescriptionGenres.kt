@@ -55,7 +55,7 @@ private val QUOTED_TITLE = Regex("""["„“‘«»][^"„“”‘’«»\n]{1,
 private val SUPPORT_CLAUSE =
     Regex("""\b(?:support|supported|vorband|special\s+guests?|guests?|gäste|plus)\b|\+""", RegexOption.IGNORE_CASE)
 
-/** Vocabulary keys that prose uses in another sense ("around the world", "in full swing", "the 90s"). */
+/** Vocabulary keys that prose uses in another sense ("around the world", "in full swing", "the 90s", "a downbeat mood"). */
 private val AMBIGUOUS_IN_PROSE =
     setOf(
         "house",
@@ -81,5 +81,6 @@ private val AMBIGUOUS_IN_PROSE =
         "karaoke",
         "experimental",
         "oldschool",
-        "newschool"
+        "newschool",
+        "downbeat"
     )

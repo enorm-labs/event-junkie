@@ -72,6 +72,8 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "experimental" to ELECTRONIC,
         "guitartronica" to ELECTRONIC,
         "tech-house" to ELECTRONIC,
+        "progressive-house" to ELECTRONIC,
+        "downtempo" to ELECTRONIC,
         "uk-garage" to ELECTRONIC,
         "neurofunk" to ELECTRONIC,
         "trip-hop" to ELECTRONIC,
