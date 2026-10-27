@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { failUnmockedGets } from './unmocked'
 
 /**
  * "Interested" and "Going" (#3892) with a mocked BFF: the toggle on an event page, the mark it puts
@@ -26,6 +27,8 @@ const emptyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages
 function json(route: Route, body: unknown, status = 200): Promise<void> {
   return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
+
+const fallthrough = failUnmockedGets()
 
 /** Answers the BFF for one signed-in visitor, and keeps the RSVP their presses set. */
 async function mockBff(page: Page) {
@@ -55,7 +58,7 @@ async function mockBff(page: Page) {
       return json(route, { ...emptyPage, content, totalElements: content.length, totalPages: 1 })
     }
     if (path === '/api/me/rsvps/past') return json(route, emptyPage)
-    return route.fulfill({ status: 204 })
+    return fallthrough(route)
   })
   return writes
 }
