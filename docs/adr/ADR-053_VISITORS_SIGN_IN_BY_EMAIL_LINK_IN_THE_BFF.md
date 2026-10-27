@@ -112,8 +112,8 @@ The rules:
   stateless must change in #3887.
 - **A second database user and a second Secret.** Today the BFF shares the importer's user. Rule 5 needs a new role, its grants and a hand-made Secret on
   both clusters (docs/ops/SECRETS.md). The chart then needs a separate `existingSecret` for the BFF. This lands in #3887, before the first write.
-- **Sign-in depends on mail delivery.** A mail outage or a spam filter locks visitors out. Mail monitoring ([`docs/ops/EMAIL.md`](../ops/EMAIL.md) §7a) now
-  watches a product path, not only the role mailboxes.
+- **Sign-in depends on mail delivery.** A mail outage or a spam filter locks visitors out. The alert
+  `ej-signin-mail-failing` ([`deploy/alerts/README.md`](../../deploy/alerts/README.md)) reports a failed sign-in mail within 15 minutes.
 - **We own two security components**: the token service and the session repository. Each one needs tests for expiry, single use and deletion.
 - **Personal data begins.** E-mail addresses of visitors are a new category in LEGAL.md §7.3a. #3887 updates LEGAL.md and both privacy notices in the same
   PR. The session cookie is strictly necessary under § 25(2) TDDDG, so no consent banner follows from it.

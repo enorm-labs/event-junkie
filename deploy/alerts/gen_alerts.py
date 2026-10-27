@@ -27,6 +27,8 @@ it produces an alert that never fires rather than an error.
     venue site check stopped       -> ej-venue-site-check-stale   (#3147)
     nightly passes stopped         -> ej-classification-stale, ej-instagram-stale (#3645)
     classification budget running out -> ej-classification-budget (#3645)
+    sign-in mail failing or abused -> ej-signin-mail-failing, ej-signin-abuse (#4034)
+    account cleanup failing or stopped -> ej-account-cleanup-failing, ej-account-cleanup-stale (#4034)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -878,6 +880,91 @@ rule(
     frequency_minutes=15,
     silence_minutes=24 * 60,
     failure_only=True,
+)
+
+# --- Accounts: the sign-in mail and the deletion route (#4034) -------------------
+#
+# Sign-in is the only way into an account, and a relay outage answers every visitor
+# with a 503 and tells nobody. `InactiveAccountCleanup` is the deletion route the
+# privacy notice promises (LEGAL.md §7.1), and it counts a failed step and goes on.
+# `AccountMetrics` registers every outcome at zero, so the counter streams exist on
+# both clusters before the first failure and no rule here needs `failure_only`.
+#
+# The mail rules read `bff_auth_link_total`. `mail_unavailable` is a cluster with no
+# mail sender (ADR-054), which both clusters have, so it is a broken Secret, not a
+# choice. `ip_throttled` is one client over 20 links an hour per pod; 50 in an hour is
+# several clients, or one client spread over both pods for more than an hour.
+rule(
+    "ej-signin-mail-failing",
+    "A sign-in link did not go out in the last 15 minutes: the relay refused or did not answer "
+    "(`mail_failed`), or the BFF has no mail sender (`mail_unavailable`). The visitor got a 503 "
+    "and cannot sign in. The BFF log has `Could not send sign-in mail` with the relay's "
+    "exception; check Scaleway TEM's status and quota (ADR-054). For `mail_unavailable`, check "
+    "the `event-junkie-mail` Secret and `mail.existingSecret`.",
+    'sum(increase(bff_auth_link_total{outcome=~"mail_failed|mail_unavailable"}[15m]))',
+    ">",
+    0,
+    stream_name="bff_auth_link_total",
+    period_minutes=15,
+    frequency_minutes=5,
+    silence_minutes=2 * 60,
+)
+
+rule(
+    "ej-signin-abuse",
+    "More than 50 requests for a sign-in link were refused with a 429 in an hour, because their "
+    "client asked for more than 20 links an hour. Something is requesting links for many "
+    "addresses. No mail went out for them. The BFF log has a `Sign-in link request: "
+    "ip_throttled` line for each, and logs no client address. Read the volume and the hours "
+    "before you change `LINKS_PER_CLIENT_PER_HOUR` in `SignInLinks.kt`.",
+    'sum(increase(bff_auth_link_total{outcome="ip_throttled"}[1h]))',
+    ">",
+    50,
+    stream_name="bff_auth_link_total",
+    period_minutes=60,
+    frequency_minutes=15,
+    silence_minutes=6 * 60,
+)
+
+# `failed` counts a cleanup step that threw, `warn_failed` a deletion warning the relay
+# refused. Either one in a day is worth a person: the step's rows wait for the next
+# pass, and an unsent warning blocks that account's deletion.
+rule(
+    "ej-account-cleanup-failing",
+    "The daily account cleanup had a failed step or a refused deletion warning in the last 24 "
+    "hours. Expired data stays until a pass holds, and an account that was not warned is not "
+    "deleted. Read the BFF log for `Account cleanup`: each failed step is a WARN with its "
+    "exception.",
+    'sum(increase(bff_accounts_cleanup_total{outcome=~"failed|warn_failed"}[24h]))',
+    ">",
+    0,
+    stream_name="bff_accounts_cleanup_total",
+    period_minutes=15,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# The counters above move only when a pass deletes rows, so a quiet day and a dead job
+# read the same on them. The gauge stamps a pass with no failed step, and the job seeds
+# it with its start time, so a release that breaks the job ages from the deploy. The
+# job runs at 04:30 Europe/Berlin on every replica. 26 hours is a day, the 25-hour day
+# of the autumn clock change and the pass itself. `> bool 0` as in
+# `ej-artist-lookup-tick-stale`.
+rule(
+    "ej-account-cleanup-stale",
+    "The daily account cleanup has not ended a pass without a failed step in 26 hours. It runs "
+    "at 04:30 Europe/Berlin, so that pass failed or did not start. Inactive accounts, expired "
+    "links and sessions stay, against what the privacy notice promises. Read the BFF log for "
+    "`Account cleanup`. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "((timestamp(max(bff_accounts_cleanup_last_success)) "
+    "- max(bff_accounts_cleanup_last_success)) / 3600) "
+    "* (max(bff_accounts_cleanup_last_success) > bool 0)",
+    ">",
+    26,
+    stream_name="bff_accounts_cleanup_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
 )
 
 # --- The edge, as Traefik counts it --------------------------------------------

@@ -38,27 +38,39 @@ class InactiveAccountCleanup(
     private val clock: Clock,
     @Value("\${app.site.origin}") private val origin: String
 ) {
+    init {
+        metrics.stampCleanup(clock.instant())
+    }
+
     @Scheduled(cron = "\${app.accounts.cleanup-cron:0 30 4 * * *}", zone = "Europe/Berlin")
     suspend fun run() {
         val now = clock.instant()
         val berlin = now.atZone(BERLIN)
         logger.info { "Account cleanup started" }
+        val held = mutableListOf<Boolean>()
         // The per-address rate limit counts the links of the last hour, so a link stays an hour past its expiry.
-        step(CleanupOutcome.LINKS_PURGED) { accounts.deleteLinks(now.minus(LINK_KEPT_AFTER_EXPIRY)) }
-        step(CleanupOutcome.SESSIONS_PURGED) { sessions.deleteExpired(now) }
-        step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
-        step(CleanupOutcome.RSVPS_PURGED) { rsvps.deleteOrphans() }
-        step(CleanupOutcome.CHALLENGES_PURGED) { passkeys.deleteExpiredChallenges(now) }
+        held += step(CleanupOutcome.LINKS_PURGED) { accounts.deleteLinks(now.minus(LINK_KEPT_AFTER_EXPIRY)) }
+        held += step(CleanupOutcome.SESSIONS_PURGED) { sessions.deleteExpired(now) }
+        held += step(CleanupOutcome.FOLLOWS_PURGED) { follows.deleteOrphans() }
+        held += step(CleanupOutcome.RSVPS_PURGED) { rsvps.deleteOrphans() }
+        held += step(CleanupOutcome.CHALLENGES_PURGED) { passkeys.deleteExpiredChallenges(now) }
         val sender = mailer.ifAvailable
         if (sender == null) {
             logger.warn { "Account cleanup: no mail sender on this cluster, so no deletion warnings" }
         } else {
-            step(CleanupOutcome.WARNED) { warn(sender, berlin.minusMonths(WARN_AFTER_MONTHS).toInstant(), now) }
+            held += step(CleanupOutcome.WARNED) { warn(sender, berlin.minusMonths(WARN_AFTER_MONTHS).toInstant(), now) }
         }
-        step(CleanupOutcome.DELETED) {
-            accounts.deleteInactive(berlin.minusMonths(DELETE_AFTER_MONTHS).toInstant(), now.minus(WARNING_NOTICE))
+        held +=
+            step(CleanupOutcome.DELETED) {
+                accounts.deleteInactive(berlin.minusMonths(DELETE_AFTER_MONTHS).toInstant(), now.minus(WARNING_NOTICE))
+            }
+        val failed = held.count { !it }
+        if (failed == 0) {
+            metrics.stampCleanup(clock.instant())
+            logger.info { "Account cleanup finished" }
+        } else {
+            logger.warn { "Account cleanup finished with $failed of ${held.size} steps failed, so the pass is not stamped as a success" }
         }
-        logger.info { "Account cleanup finished" }
     }
 
     /** Sends the warnings this replica claimed. Answers how many went out. */
@@ -84,23 +96,27 @@ class InactiveAccountCleanup(
         return claimed.size - failed
     }
 
-    /** Runs one step, counts its rows under [outcome] and logs them. A failure is logged and counted, and the next step still runs. */
+    /**
+     * Runs one step, counts its rows under [outcome] and logs them. A failure is logged and counted, and the next step
+     * still runs. Answers whether the step held.
+     */
     @Suppress("TooGenericExceptionCaught")
     private suspend fun step(
         outcome: CleanupOutcome,
         block: suspend () -> Long
-    ) {
+    ): Boolean =
         try {
             val count = block()
             metrics.record(outcome, count)
             logger.info { "Account cleanup: ${outcome.tag} $count" }
+            true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             metrics.record(CleanupOutcome.FAILED)
             logger.warn(e) { "Account cleanup: the ${outcome.tag} step failed" }
+            false
         }
-    }
 
     private companion object {
         const val WARN_AFTER_MONTHS = 23L

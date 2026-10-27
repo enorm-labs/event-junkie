@@ -149,6 +149,10 @@ next evaluation if its condition is true when the apply runs (#3445). `test_appl
 | `ej-classification-stale`      | the nightly event classification has not ended a pass in 28 hours ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                | —                  |
 | `ej-instagram-stale`           | the daily Instagram pass has not ended in 28 hours ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                               | —                  |
 | `ej-classification-budget`     | event classification has used 80 % of the month's token budget ([#3645](https://github.com/enorm-labs/event-junkie/issues/3645))                   | —                  |
+| `ej-signin-mail-failing`       | a sign-in link failed to go out in the last 15 minutes ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))                           | —                  |
+| `ej-signin-abuse`              | more than 50 sign-in link requests were refused with a 429 in an hour ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))            | —                  |
+| `ej-account-cleanup-failing`   | the daily account cleanup had a failed step or a refused warning in 24 hours ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))     | —                  |
+| `ej-account-cleanup-stale`     | the daily account cleanup has not ended a clean pass in 26 hours ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))                 | —                  |
 | `ej-rate-limit-storm`          | Traefik's rate limits rejected more than 100 requests in 15 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455))              | —                  |
 | `ej-4xx-flood`                 | client errors other than 429 and 499 average more than 5 a second for 30 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455)) | —                  |
 
@@ -182,6 +186,29 @@ reason to widen the rule. `ej-source-never-succeeded` covers the other end: a so
 
 **36h, not 24h**, for the reason [#617](https://github.com/enorm-labs/event-junkie/issues/617) gives about the dashboard panel: the interval _is_ 24h, so a 24h
 threshold flags the whole catalogue every day as a matter of routine, and a rule that fires every day is a rule that gets muted.
+
+## The account rules, and what to do when one fires
+
+Sign-in is the only way into an account, and the daily cleanup is the deletion route the privacy notice promises (LEGAL.md §7.1). Both fail without a sound
+otherwise: the visitor gets a 503, and the cleanup counts a failed step and goes on. The mail reaches `alerts@` through Hetzner, so a Scaleway TEM outage is
+still reported.
+
+**`ej-signin-mail-failing`.** `bff_auth_link_total{outcome="mail_failed"}` is a link the relay refused or did not answer. The BFF log has
+`Could not send sign-in mail` with the exception. Check the Scaleway TEM status page and the month's quota (ADR-054). `mail_unavailable` is a BFF with no mail
+sender: the `event-junkie-mail` Secret is gone or `mail.existingSecret` is unset. Both clusters set it, so this outcome is always a defect.
+
+**`ej-signin-abuse`.** One client gets 20 links an hour per BFF pod, then a 429. More than 50 refusals in an hour is several clients, or one client that keeps
+trying. No mail goes out for a refused request, so nobody's inbox fills. The BFF logs no client address, only `Sign-in link request: ip_throttled`. Read the
+volume and the hours before changing `LINKS_PER_CLIENT_PER_HOUR` in `SignInLinks.kt`.
+
+**`ej-account-cleanup-failing`.** `failed` is a step that threw and `warn_failed` a deletion warning the relay refused. The BFF log has
+`Account cleanup: the <step> step failed` as a WARN with the exception. The rows of a failed step wait for the next pass. An unsent warning is released and
+retried, and its account is not deleted until a warning has gone out.
+
+**`ej-account-cleanup-stale`.** The cleanup counters move only when a pass deletes rows, so a quiet day reads like a dead job. So the job stamps
+`bff_accounts_cleanup_last_success` at the end of a pass with no failed step, and seeds it with its start time, so a release that breaks the job ages from
+the deploy. 26 hours covers the 25-hour day of the autumn clock change. When it fires, look for `Account cleanup started` in the BFF log at 04:30
+Europe/Berlin: no line is a scheduler that did not run, and a line without `Account cleanup finished` is a pass that failed a step or died.
 
 ## Where the notifications go
 
