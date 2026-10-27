@@ -56,6 +56,21 @@ die() {
     exit 1
 }
 
+# A worktree has no node_modules of its own, so borrow the main checkout's oxfmt, but only at the
+# version this checkout's lock file pins: the main checkout's install can lag behind a bump.
+if [[ ! -x "$OXFMT" ]]; then
+    common_dir="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+    main_root="$(dirname "${common_dir:-/}")"
+    main_oxfmt="$main_root/events-frontend/node_modules/.bin/oxfmt"
+    if [[ -n $common_dir && $main_root != "$REPO_ROOT" && -x $main_oxfmt ]]; then
+        pinned="$(node -p "require('$REPO_ROOT/events-frontend/package-lock.json').packages['node_modules/oxfmt'].version")"
+        installed="$(node -p "require('$main_root/events-frontend/node_modules/oxfmt/package.json').version")"
+        [[ $installed == "$pinned" ]] ||
+            die "the main checkout's oxfmt is $installed, this checkout pins $pinned — run 'npm ci' in $main_root/events-frontend/"
+        OXFMT="$main_oxfmt"
+    fi
+fi
+
 [[ -x "$OXFMT" ]] || die "no oxfmt at $OXFMT — run 'npm ci' in events-frontend/ first"
 
 mode=format
