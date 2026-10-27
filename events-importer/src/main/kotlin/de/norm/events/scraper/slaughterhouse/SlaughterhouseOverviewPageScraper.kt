@@ -24,6 +24,9 @@ import java.nio.charset.StandardCharsets
  * whose kind is `Konzert`, `Party` or `Konzert+Party`. A `Beginn:` or `Doors:` line, a `Tickets:` link and an
  * `Eintritt:` price follow, and a party adds a `: minimal : synth : wave :` style line and a `djs:` line.
  *
+ * The time line's colon is optional (`Beginn 22 Uhr`, `doors open 21:00 Uhr`). The Factory nights name only doors, with
+ * `um 22 Uhr Beginn` in the caption, so a `<time> Uhr Beginn` phrase sets the start when no `Beginn` line does.
+ *
  * A title's dash reads two ways. `Blutgott – Blutfest 2026` names the band and its festival, so the band is on the
  * left. `Stoner’s Fall – Sheev + Ghostones + Caosonora` names the night and its `+` co-bill, so the acts are on the right.
  *
@@ -82,8 +85,8 @@ class SlaughterhouseOverviewPageScraper {
             description = lines.filterNot(::isFieldLine).joinToString("\n").ifBlank { null },
             eventType = type,
             eventDate = date,
-            doorsTime = timeAfter(lines, "Doors"),
-            startTime = timeAfter(lines, "Beginn"),
+            doorsTime = labelledTime(lines, DOORS_LINE),
+            startTime = labelledTime(lines, START_LINE) ?: labelledTime(lines, START_PHRASE),
             imageUrl =
                 blocks
                     .firstNotNullOfOrNull { it.selectFirst("figure img") }
@@ -108,13 +111,10 @@ class SlaughterhouseOverviewPageScraper {
         )
     }
 
-    private fun timeAfter(
+    private fun labelledTime(
         lines: List<String>,
-        label: String
-    ): java.time.LocalTime? =
-        lines.firstOrNull { it.startsWith("$label:", ignoreCase = true) }?.let { line ->
-            TIME.find(line.substringAfter(':'))?.let { parseTime("${it.groupValues[1]}:${it.groupValues[2].ifEmpty { "00" }}") }
-        }
+        pattern: Regex
+    ): java.time.LocalTime? = lines.firstNotNullOfOrNull { pattern.find(it) }?.let { parseTime("${it.groupValues[1]}:${it.groupValues[2].ifEmpty { "00" }}") }
 
     private fun actsOf(
         title: String,
@@ -156,9 +156,14 @@ class SlaughterhouseOverviewPageScraper {
     private companion object {
         val HEADING = Regex("""^((?:Konzert|Party)(?:\s*\+\s*(?:Konzert|Party))?)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
         val TICKETS = Regex("""^\s*Tickets?\b""", RegexOption.IGNORE_CASE)
-        val FIELD_LINE = Regex("""^(?:Beginn|Doors|Einlass|Eintritt|Tickets?|Ticket Link|djs)\s*:""", RegexOption.IGNORE_CASE)
+        val FIELD_LINE =
+            Regex("""^(?:(?:Beginn|Doors(?:\s+open)?|Einlass)(?:\s*:|\s+\d)|(?:Eintritt|Tickets?|Ticket Link|djs)\s*:)""", RegexOption.IGNORE_CASE)
         val STYLE_LINE = Regex("""^:\s*(.+?)\s*:$""")
-        val TIME = Regex("""(\d{1,2})(?:[:.](\d{2}))?\s*(?:Uhr)?""")
+        val START_LINE = Regex("""^Beginn(?:\s*:\D*|\s+)(\d{1,2})(?:[:.](\d{2}))?""", RegexOption.IGNORE_CASE)
+        val DOORS_LINE = Regex("""^Doors(?:\s+open)?(?:\s*:\D*|\s+)(\d{1,2})(?:[:.](\d{2}))?""", RegexOption.IGNORE_CASE)
+
+        /** The Factory caption's `um 22 Uhr Beginn`: the time before the keyword. */
+        val START_PHRASE = Regex("""\b(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\s+Beginn\b""", RegexOption.IGNORE_CASE)
         val SIZE_SUFFIX = Regex("""-\d+x\d+(?=\.\w+$)""")
 
         /** `Capper: Rockin And Clubbin – …` names its band before the colon, and the rest is the night's name. */

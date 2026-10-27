@@ -28,7 +28,7 @@ class SlaughterhouseWebsiteImporterTest {
             val result = importer.importEvents(url)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 5
+            result.events shouldHaveSize 7
             result.etag shouldBe "\"slaughterhouse\""
             result.lastModified shouldBe "Thu, 08 Oct 2026 06:00:00 GMT"
         }
