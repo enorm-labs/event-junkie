@@ -30,7 +30,7 @@ import java.time.LocalTime
  * the title, a `Fr. 16.10.26` date, a free-text time line (`Beginn: 20:00 Uhr`, `abgesagt`) and the venue's category.
  *
  * The page renders the upcoming list once per category tab, and the archive below it without `vsel-upcoming`, so the rows
- * are read by that class and kept once per event id.
+ * are read by that class and kept once per event id. A market or an auction is skipped ([isOutOfScope]).
  */
 class GalilaeakircheOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -50,6 +50,10 @@ class GalilaeakircheOverviewPageScraper {
     ): ScrapedEvent? {
         val link = item.selectFirst("h3.vsel-meta-title a[href]") ?: return null
         val title = link.text().blankToNull() ?: return null
+        if (isOutOfScope(title)) {
+            logger.info { "Galiläakirche: '$title' is a market or an auction, skipping" }
+            return null
+        }
         val url = resolveUrl(baseUrl, link.attr("href"))
         val dates = item.select(".vsel-meta-date").mapNotNull { parseListingDate(it.text()) }
         val date = dates.firstOrNull()
@@ -60,7 +64,7 @@ class GalilaeakircheOverviewPageScraper {
         val timeLine = item.textAt(".vsel-meta-time")
         val categories = item.select(".vsel-meta-cats a").mapNotNull { mapEventType(it.text(), CATEGORIES) }.distinct()
         val category = categories.firstOrNull()
-        // An event filed under two types (`Konzert` and `Sonstiges` for a market with an open stage) is the one its title names.
+        // An event filed under two types (`Konzert` and `Lesung`) is the one its title names.
         val titleType = inferConcertVenueType(title)
         val eventType = if (category == null || titleType in categories) titleType else category
         return ScrapedEvent(
@@ -114,6 +118,14 @@ class GalilaeakircheOverviewPageScraper {
             labelledClock(line, TIME_LABELS) ?: line?.let { CLOCK.find(it) }?.destructured?.let { (hour, minute) -> parseClock("$hour:$minute") }
     }
 }
+
+/**
+ * A market or an auction, which EVENT_SCOPE.md §3.2 leaves out: the `D.I.Y. Kunst und Wintermarkt` Saturdays and the
+ * `Siebdruck Auktion`. The market files itself under `Konzert` too, so the title decides.
+ */
+internal fun isOutOfScope(title: String): Boolean = OUT_OF_SCOPE.containsMatchIn(title)
+
+private val OUT_OF_SCOPE = Regex("""markt|auktion""", RegexOption.IGNORE_CASE)
 
 /** The event's slug under `/event/`, the same on the listing and on the event page. */
 internal fun galilaeakircheSourceId(url: String): String =

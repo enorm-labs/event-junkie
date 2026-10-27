@@ -151,6 +151,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Ballhaus Berlin     | `BallhausBerlinTerminePageScraper.OUT_OF_SCOPE`          | The `Vintage Market`, a `Geschlossene Gesellschaft` and the `Yes Choir !` sing-along           |
 | ausland             | `AuslandOverviewPageScraper.parseItem`                   | A title that names a `workshop`                                                                |
 | Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                        | A title that names a `Brunch`                                                                  |
+| Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under              |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
