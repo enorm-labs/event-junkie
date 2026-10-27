@@ -9,17 +9,25 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
+import FollowBell from '@/components/FollowBell.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import ListPage from '@/components/ListPage.vue'
 import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
 import { Button } from '@/components/ui/button'
-import { fetchFollowing, fetchFollowingToday, fetchFollows, type FollowKind } from '@/api/account'
+import {
+  fetchFollowing,
+  fetchFollowingToday,
+  fetchFollows,
+  type FollowKind,
+  type Notify,
+} from '@/api/account'
 import { api, ApiError, describeError, unwrap } from '@/api/client'
 import type { EventSummary } from '@/api/types'
 import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
 import { tomorrowIso } from '@/lib/format'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
@@ -29,6 +37,7 @@ const router = useRouter()
 const localePath = useLocalePath()
 const { account, ready } = useSession()
 const { compact } = useCompactView()
+const push = usePush()
 
 const today = ref<EventSummary[]>([])
 const todayExpanded = ref(false)
@@ -40,6 +49,7 @@ interface Followed {
   kind: FollowKind
   slug: string
   name: string
+  notify: Notify
 }
 
 const follows = ref<Followed[] | null>(null)
@@ -52,6 +62,9 @@ const ROUTE: Record<FollowKind, string> = {
   venue: 'venues',
   promoter: 'promoters',
 }
+
+/** The bells show once the site is known to send push (#3894); unknown or off, they would promise nothing. */
+const bells = computed(() => !['loading', 'unavailable'].includes(push.state.value))
 
 // Saved searches count as following something (#3890), so they end the empty state too.
 const searchCount = ref(0)
@@ -74,7 +87,14 @@ async function load() {
     hasMore.value = (first.totalPages ?? 0) > 1
     follows.value = list.flatMap((item) =>
       item.kind && item.kind in ROUTE && item.slug && item.name
-        ? [{ kind: item.kind as FollowKind, slug: item.slug, name: item.name }]
+        ? [
+            {
+              kind: item.kind as FollowKind,
+              slug: item.slug,
+              name: item.name,
+              notify: (item.notify === 'instant' ? 'instant' : 'off') as Notify,
+            },
+          ]
         : [],
     )
     if (follows.value.length === 0 && suggestions.value.length === 0) await loadSuggestions()
@@ -120,7 +140,7 @@ function toSignIn() {
 onMounted(async () => {
   await ready()
   if (!account.value) await toSignIn()
-  else await load()
+  else await Promise.all([load(), push.load().catch(() => undefined)])
 })
 </script>
 
@@ -198,6 +218,13 @@ onMounted(async () => {
         <SectionLabel as="h2">{{
           t('account.follow.page.list', { count: follows.length })
         }}</SectionLabel>
+        <!-- The bells only where the site sends push. Off in this browser, they still reach the others. -->
+        <p v-if="bells && push.state.value !== 'on'" class="text-meta text-muted-foreground">
+          {{ t('account.push.bellHint') }}
+          <RouterLink class="underline underline-offset-2" :to="localePath('/account')">
+            {{ t('account.push.bellHintLink') }}
+          </RouterLink>
+        </p>
         <ul class="divide-y divide-border border-y border-border">
           <li
             v-for="item in follows"
@@ -213,13 +240,22 @@ onMounted(async () => {
               </RouterLink>
               <p class="text-meta text-muted-foreground">{{ t(`detail.${item.kind}.kind`) }}</p>
             </div>
-            <FollowButton
-              no-hint
-              :initially-following="true"
-              :kind="item.kind"
-              :slug="item.slug"
-              @change="load"
-            />
+            <div class="flex items-center gap-1">
+              <FollowBell
+                v-if="bells"
+                :initially="item.notify"
+                :kind="item.kind"
+                :name="item.name"
+                :slug="item.slug"
+              />
+              <FollowButton
+                no-hint
+                :initially-following="true"
+                :kind="item.kind"
+                :slug="item.slug"
+                @change="load"
+              />
+            </div>
           </li>
         </ul>
       </section>

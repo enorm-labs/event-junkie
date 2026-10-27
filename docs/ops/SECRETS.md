@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Fourteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other thirteen are typed by a human and exist nowhere else.
+- **Fifteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other fourteen are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The fourteen objects, and where each comes from
+## The fifteen objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -36,11 +36,12 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `openobserve-smtp`        | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 | `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
 | `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | §events-bff-db, below                                          |
+| `event-junkie-push`       | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with        | §event-junkie-push, below                                      |
 
-**All fourteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All fifteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists fourteen objects, not fourteen values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists fifteen objects, not fifteen values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -101,7 +102,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the fourteen on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the fifteen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -457,6 +458,25 @@ unset U P
 
 Then set `mail.existingSecret: event-junkie-mail` in each cluster's `helm-release.yaml`. **A rotation** is a new key in the console, a patched Secret and a
 BFF restart, because the process reads the value at start. Delete the old key after the restart.
+
+### `event-junkie-push` — the key pair the BFF signs Web Push with
+
+The VAPID key pair of Web Push (ADR-055, #3894). The BFF signs every push with the private key, and a browser subscribes with the public one. The
+Secret holds both, as `APP_PUSH_VAPID_PRIVATE_KEY` and `APP_PUSH_VAPID_PUBLIC_KEY`. The private key is [CREDENTIALS.md](../CREDENTIALS.md) row 30.
+
+**Optional, and nothing fails without it.** The chart sets the two variables and opens egress to the push services only when `push.existingSecret`
+names this Secret. Without it the BFF builds no sender, and the account page says notifications are not available.
+
+**One pair per cluster, made once.** A subscription is bound to the public key, so a new pair ends every subscription on that cluster. The browsers
+then show notifications as off, and each visitor must turn them on again. `scripts/vapid-keys.sh` prints the command with a fresh pair:
+
+```sh
+scripts/vapid-keys.sh staging       # prints a kubectl create secret command; run it
+scripts/vapid-keys.sh production    # a second pair, not the first one again
+```
+
+Then set `push.existingSecret: event-junkie-push` in each cluster's `helm-release.yaml`. The key pair has no expiry. **Replace it only when the private key
+leaks**: a new pair, a patched Secret and a BFF restart.
 
 ### Registering Signal — deferred, and not a Secret
 

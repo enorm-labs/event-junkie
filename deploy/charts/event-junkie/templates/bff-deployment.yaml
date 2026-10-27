@@ -87,6 +87,21 @@ spec:
                   key: {{ .secretKeys.password | quote }}
             {{- end }}
             {{- end }}
+            {{- with .Values.push }}
+            {{- if .existingSecret }}
+            {{- /* Without these the BFF builds no push sender and starts anyway (ADR-055). */}}
+            - name: APP_PUSH_VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | quote }}
+                  key: {{ .secretKeys.privateKey | quote }}
+            - name: APP_PUSH_VAPID_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | quote }}
+                  key: {{ .secretKeys.publicKey | quote }}
+            {{- end }}
+            {{- end }}
             {{- if and .Values.images.enabled .Values.images.serving.enabled }}
             {{- /* The half of ADR-019 a visitor sees: the API hands out a path on our own origin and the
                browser stops contacting the venue (#792). Needs `images.enabled` too, since there is

@@ -74,6 +74,14 @@ app:
     origin: https://event-junkie.de
   mail:
     from: Event Junkie <noreply@notify.event-junkie.de>
+  push:
+    # No VAPID keys, so no sender: PushFlowTest adds them with a local push service.
+    subject: mailto:hello@event-junkie.de
+    # One comma-separated string, because `@Value` does not read a YAML list.
+    allowed-origins: >-
+      https://fcm.googleapis.com,https://updates.push.services.mozilla.com,https://web.push.apple.com,https://*.notify.windows.com
+    new-dates-delay: PT10M
+    new-dates-lag: PT15M
   api:
     max-page-size: 100
     cache:

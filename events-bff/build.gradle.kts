@@ -95,6 +95,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     testImplementation("com.icegreen:greenmail-junit5:${property("greenmail.version")}")
 
+    // Web Push (ADR-055): a local push service for the sender's flow test, as the importer uses it for its WebClient.
+    testImplementation("com.squareup.okhttp3:mockwebserver3:${property("mockwebserver.version")}")
+
     // Kotlin
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")

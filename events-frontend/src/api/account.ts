@@ -82,6 +82,46 @@ export async function unfollow(kind: FollowKind, slug: string): Promise<void> {
   await unwrap(api.DELETE('/api/me/follows/{kind}/{slug}', { params: { path: { kind, slug } } }))
 }
 
+/** The bell of one follow (#3894): `instant` pushes its new dates to every browser with notifications on. */
+export type Notify = 'off' | 'instant'
+
+export async function setNotify(kind: FollowKind, slug: string, notify: Notify): Promise<void> {
+  await unwrap(
+    api.PUT('/api/me/follows/{kind}/{slug}/notify', {
+      params: { path: { kind, slug } },
+      body: { notify },
+    }),
+  )
+}
+
+/** Every bell at once, as the account page offers when notifications first go on. Answers how many changed. */
+export async function setAllNotify(notify: Notify): Promise<number> {
+  const result = await unwrap(api.PUT('/api/me/follows/notify', { body: { notify } }))
+  return result.changed ?? 0
+}
+
+/** The key a browser subscribes with, or null when this cluster sends no push (ADR-055). */
+export async function fetchPushKey(): Promise<string | null> {
+  const settings = await unwrap(api.GET('/api/me/push'))
+  return settings.publicKey ?? null
+}
+
+/** Hands this browser's subscription to the BFF, in the shape `PushSubscription.toJSON()` gives. */
+export async function savePushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+  await unwrap(
+    api.PUT('/api/me/push', {
+      body: {
+        endpoint: subscription.endpoint ?? '',
+        keys: { p256dh: subscription.keys?.p256dh ?? '', auth: subscription.keys?.auth ?? '' },
+      },
+    }),
+  )
+}
+
+export async function forgetPushSubscription(endpoint: string): Promise<void> {
+  await unwrap(api.POST('/api/me/push/unsubscribe', { body: { endpoint } }))
+}
+
 /** Upcoming events of everything the account follows, by date, from [from] when given. */
 export async function fetchFollowing(page = 0, from?: string): Promise<EventSummaryPage> {
   return unwrap(api.GET('/api/me/following', { params: { query: { page, size: 20, from } } }))

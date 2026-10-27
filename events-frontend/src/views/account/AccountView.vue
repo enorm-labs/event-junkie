@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
- * The signed-in visitor's account (#3887): the address, an export of everything stored (Art. 15
- * and 20 GDPR), sign-out, and deletion. A browser that is not signed in goes to the sign-in page.
+ * The signed-in visitor's account (#3887): the address, push notifications for this browser (#3894),
+ * an export of everything stored (Art. 15 and 20 GDPR), sign-out, and deletion. A browser that is not signed in goes to the sign-in page.
  */
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from 'reka-ui'
 import ListPage from '@/components/ListPage.vue'
+import NotificationSettings from '@/components/NotificationSettings.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -104,6 +105,8 @@ function since(createdAt?: string): string {
         <Button as-child variant="outline">
           <RouterLink :to="localePath('/following')">{{ t('account.page.following') }}</RouterLink>
         </Button>
+
+        <NotificationSettings />
 
         <section class="space-y-3">
           <SectionLabel as="h2">{{ t('account.page.yourData') }}</SectionLabel>

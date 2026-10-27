@@ -309,6 +309,37 @@ spec:
           port: {{ . }}
         {{- end }}
 {{- end }}
+{{- if and $np.pushEgress.enabled .Values.push.existingSecret }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-push" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The BFF reaches the browsers' push services to send Web Push (ADR-055). Rendered only while a push Secret is configured.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $bffSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        {{- /* The push services publish no stable range, so the internet minus the private ranges, as
+           `-allow-mail` is. The BFF refuses an endpoint outside the four services itself. */}}
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $np.pushEgress.exceptCidrs | nindent 14 }}
+      ports:
+        {{- range $np.pushEgress.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+{{- end }}
 {{- if .Values.tests.enabled }}
 ---
 apiVersion: networking.k8s.io/v1

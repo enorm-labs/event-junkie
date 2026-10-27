@@ -52,7 +52,7 @@ class FollowController(
         @PathVariable kind: String,
         @PathVariable slug: String
     ): FollowState {
-        val (followKind, id) = resolve(kind, slug)
+        val (followKind, id) = follows.resolve(kind, slug)
         return FollowState(follows.follows(account.id, followKind, id))
     }
 
@@ -63,7 +63,7 @@ class FollowController(
         @PathVariable kind: String,
         @PathVariable slug: String
     ): ResponseEntity<Unit> {
-        val (followKind, id) = resolve(kind, slug)
+        val (followKind, id) = follows.resolve(kind, slug)
         if (!follows.follows(account.id, followKind, id) && follows.count(account.id) >= MAX_FOLLOWS) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "You follow $MAX_FOLLOWS things already. Unfollow one first")
         }
@@ -79,7 +79,7 @@ class FollowController(
         @PathVariable kind: String,
         @PathVariable slug: String
     ): ResponseEntity<Unit> {
-        val (followKind, id) = resolve(kind, slug)
+        val (followKind, id) = follows.resolve(kind, slug)
         follows.unfollow(account.id, followKind, id)
         record(FollowAction.UNFOLLOW, followKind)
         return ResponseEntity.noContent().build()
@@ -107,15 +107,6 @@ class FollowController(
     /** What the account follows, and the events it RSVPed to (#3892), which join the feed too. */
     private suspend fun followed(account: Account) = follows.followedIds(account.id).copy(eventIds = rsvps.eventIds(account.id))
 
-    private suspend fun resolve(
-        kind: String,
-        slug: String
-    ): Pair<FollowKind, Long> {
-        val followKind = FollowKind.ofOrNull(kind) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing to follow here")
-        val id = follows.entityId(followKind, slug) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No such $kind")
-        return followKind to id
-    }
-
     private fun record(
         action: FollowAction,
         kind: FollowKind
@@ -128,4 +119,14 @@ class FollowController(
         /** Keeps the following query an index read, and is far beyond anyone's real list. */
         const val MAX_FOLLOWS = 500L
     }
+}
+
+/** The kind and id behind a path's `{kind}/{slug}`, or a 404. */
+internal suspend fun FollowStore.resolve(
+    kind: String,
+    slug: String
+): Pair<FollowKind, Long> {
+    val followKind = FollowKind.ofOrNull(kind) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Nothing to follow here")
+    val id = entityId(followKind, slug) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No such $kind")
+    return followKind to id
 }

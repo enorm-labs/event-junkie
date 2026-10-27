@@ -113,6 +113,19 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /standard contractual clauses/i,
     de: /Standardvertragsklauseln/,
   },
+  // Web Push (ADR-055, #3894): the four push services receive the subscription and the times, in
+  // the US. Art. 13 (1) (e) and (f) ask for the recipients and the third country.
+  {
+    what: 'the push services that carry a notification',
+    en: /Google for Chrome and Android, Mozilla for Firefox, Apple for Safari and\s+Microsoft for Edge/,
+    de: /Google bei Chrome und Android, Mozilla bei Firefox, Apple bei\s+Safari und Microsoft bei Edge/,
+  },
+  // LEGAL.md §7.4b: the worker exists only after the visitor's click, which is what keeps it strictly necessary.
+  {
+    what: 'that the service worker is installed only when notifications are turned on',
+    en: /Only when you press <strong>Turn on notifications<\/strong>|Only when you press\s+Turn on notifications/,
+    de: /Erst wenn du auf deiner Kontoseite\s+(<strong>)?Benachrichtigungen einschalten/,
+  },
   // Asserted as an absence: a CDN reappearing is a new recipient in a new third country.
   {
     what: 'no edge provider in front of the origin',

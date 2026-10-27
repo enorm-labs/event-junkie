@@ -20,6 +20,7 @@ flowchart TD
     mail["mail"]
     meta["meta"]
     promoter["promoter"]
+    push["push"]
     search["search"]
     sitemap["sitemap"]
     sourcelicence["sourcelicence"]
@@ -28,6 +29,7 @@ flowchart TD
     account --> common
     account --> event
     account --> mail
+    account --> push
     artist --> common
     artist --> image
     event --> artist

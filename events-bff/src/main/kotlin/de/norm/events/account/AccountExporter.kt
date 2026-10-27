@@ -13,6 +13,7 @@ class AccountExporter(
     private val follows: FollowStore,
     private val searches: SavedSearchStore,
     private val rsvps: RsvpStore,
+    private val pushes: PushSubscriptionStore,
     private val clock: Clock
 ) {
     suspend fun export(account: Account) =
@@ -25,6 +26,7 @@ class AccountExporter(
             sessions = sessionRows.sessions(account.id),
             follows = follows.list(account.id).map(FollowResponse::of),
             searches = searches.list(account.id).map(SavedSearchResponse::of),
-            rsvps = rsvps.list(account.id).map(RsvpResponse::of)
+            rsvps = rsvps.list(account.id).map(RsvpResponse::of),
+            pushSubscriptions = pushes.list(account.id)
         )
 }

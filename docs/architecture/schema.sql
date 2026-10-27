@@ -301,6 +301,30 @@ CREATE TABLE accounts.one_time_token (
 );
 
 --
+-- Name: push_cursor; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.push_cursor (
+    id boolean DEFAULT true NOT NULL,
+    sent_until timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT push_cursor_id_check CHECK (id)
+);
+
+--
+-- Name: push_subscription; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.push_subscription (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    account_id uuid NOT NULL,
+    endpoint text NOT NULL,
+    p256dh text NOT NULL,
+    auth text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_sent_at timestamp with time zone
+);
+
+--
 -- Name: rsvp; Type: TABLE; Schema: accounts; Owner: -
 --
 
@@ -1016,6 +1040,27 @@ ALTER TABLE ONLY accounts.one_time_token
     ADD CONSTRAINT one_time_token_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: push_cursor push_cursor_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.push_cursor
+    ADD CONSTRAINT push_cursor_pkey PRIMARY KEY (id);
+
+--
+-- Name: push_subscription push_subscription_endpoint_key; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.push_subscription
+    ADD CONSTRAINT push_subscription_endpoint_key UNIQUE (endpoint);
+
+--
+-- Name: push_subscription push_subscription_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.push_subscription
+    ADD CONSTRAINT push_subscription_pkey PRIMARY KEY (id);
+
+--
 -- Name: rsvp rsvp_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1387,6 +1432,12 @@ CREATE INDEX one_time_token_email_created_idx ON accounts.one_time_token USING b
 CREATE INDEX one_time_token_expires_idx ON accounts.one_time_token USING btree (expires_at);
 
 --
+-- Name: push_subscription_account_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX push_subscription_account_idx ON accounts.push_subscription USING btree (account_id);
+
+--
 -- Name: rsvp_event_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -1698,6 +1749,13 @@ CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW E
 
 ALTER TABLE ONLY accounts.follow
     ADD CONSTRAINT follow_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: push_subscription push_subscription_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.push_subscription
+    ADD CONSTRAINT push_subscription_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: rsvp rsvp_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
