@@ -66,7 +66,7 @@ says so.
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `ASTRA`                | `PRICE`            | some nights print no figure and only link the promoter's outside ticket shop                                                                     | —     |
 | `AUSLAND`              | `EVENT_TYPE`       | the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk                 | —     |
-| `AUSLAND`              | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `AUSLAND`              | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `AUSLAND`              | `DOORS_TIME`       | only concert nights state a doors time; the other formats give one clock                                                                         | —     |
 | `AUSLAND`              | `END_DATE`         | a residency, workshop or installation over several days is listed once, on its first day                                                         | —     |
 | `AUSLAND`              | `END_TIME`         | the listing gives one clock per event, and an end only appears in some texts                                                                     | —     |
@@ -96,7 +96,7 @@ says so.
 | `BALLHAUS_WEDDING`     | `PER_EVENT_PAGE`   | an entry without a Wix Events page exists only on the programme page                                                                             | —     |
 | `BALLHAUS_WEDDING`     | `PRICE`            | a concert prints a price line; a dance social or a hired night prints none                                                                       | —     |
 | `BALLHAUS_WEDDING`     | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
-| `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
+| `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one start time and never an Einlass                                                                        | —     |
 | `BAR_JEDER_VERNUNFT`   | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `BEATE_UWE`            | `DESCRIPTION`      | the list prints a title and a lineup per night, no text about it                                                                                 | —     |
 | `BEATE_UWE`            | `EVENT_TYPE`       | the site names no category; every night is a DJ night                                                                                            | —     |
@@ -186,7 +186,7 @@ says so.
 | `COSMIC_COMEDY`        | `GENRE`            | the club names no genre                                                                                                                          | —     |
 | `CRACK_BELLMER`        | `EVENT_TYPE`       | the venue emits no category at all; the type is read from the title and then the genre line                                                      | —     |
 | `CRACK_BELLMER`        | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
-| `CRACK_BELLMER`        | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
+| `CRACK_BELLMER`        | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `CRACK_BELLMER`        | `TICKET_URL`       | the venue links no ticket shop                                                                                                                   | —     |
 | `CRACK_BELLMER`        | `IMAGE`            | a night without a CMS poster renders the Webflow placeholder, so it has no image                                                                 | —     |
 | `CRACK_BELLMER`        | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
@@ -307,7 +307,7 @@ says so.
 | `GALILAEAKIRCHE`       | `ARTISTS`          | the band fields hold prose or a video, so the act comes from the title                                                                           | —     |
 | `GALILAEAKIRCHE`       | `PROMOTERS`        | the site names an organiser only in the event text                                                                                               | —     |
 | `GALILAEAKIRCHE`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
-| `GARTN`                | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
+| `GARTN`                | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `GARTN`                | `GENRE`            | the venue publishes no genre; every night takes the club's Techno default                                                                        | —     |
 | `GARTN`                | `IMAGE`            | the venue publishes no per-event image                                                                                                           | —     |
 | `GARTN`                | `DESCRIPTION`      | the venue publishes no per-event text                                                                                                            | —     |
@@ -725,7 +725,7 @@ says so.
 | `PASTICHE`             | `PAGINATION`       | the programme page shows the current month only                                                                                                  | —     |
 | `PASTICHE`             | `EVENT_TYPE`       | the venue names a format only on some nights, so a night without one is read as a concert                                                        | —     |
 | `PASTICHE`             | `ARTISTS`          | the site has no line-up field, so only a night billed as live or DJ names its act                                                                | —     |
-| `PASTICHE`             | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `PASTICHE`             | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `PASTICHE`             | `DOORS_TIME`       | each event states its start and end, no doors time                                                                                               | —     |
 | `PASTICHE`             | `PRICE`            | the price sits in a shop widget the page renders with JavaScript                                                                                 | —     |
 | `PASTICHE`             | `SOLD_OUT`         | the ticket status sits in the same shop widget                                                                                                   | —     |
@@ -898,7 +898,7 @@ says so.
 | `STUDIO_IIII`          | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `STUDIO_IIII`          | `CANCELLATION`     | the site has no status field, so a cancelled night can only disappear                                                                            | —     |
 | `STUDIO_IIII`          | `PER_EVENT_PAGE`   | the site publishes no page per night, so every night points at the homepage                                                                      | —     |
-| `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
+| `SUPAMOLLY`            | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `SUPAMOLLY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SURPRISE`             | `SUBTITLE`         | each night has one title line                                                                                                                    | —     |
@@ -948,7 +948,7 @@ says so.
 | `THE_WALL`             | `GENRE`            | the club names no genre                                                                                                                          | —     |
 | `TIFFANY_CLUB`         | `EVENT_TYPE`       | the site names no category; the type is read from the title and defaults to a party                                                              | —     |
 | `TIFFANY_CLUB`         | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
-| `TIFFANY_CLUB`         | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `TIFFANY_CLUB`         | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `TIFFANY_CLUB`         | `PRICE`            | the site prints no ticket price, only a guest-list discount inside a form                                                                        | —     |
 | `TIFFANY_CLUB`         | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
 | `TIFFANY_CLUB`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
@@ -961,7 +961,7 @@ says so.
 | `TORHAUS_BERLIN`       | `IMAGE`            | the event cards show no image                                                                                                                    | —     |
 | `TORHAUS_BERLIN`       | `TICKET_URL`       | the site sells no tickets                                                                                                                        | —     |
 | `TORHAUS_BERLIN`       | `DOORS_TIME`       | the site publishes one opening time per event                                                                                                    | —     |
-| `TORHAUS_BERLIN`       | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `TORHAUS_BERLIN`       | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `TORHAUS_BERLIN`       | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `TORHAUS_BERLIN`       | `PROMOTERS`        | the site credits no promoter beside the show name                                                                                                | —     |
 | `TORHAUS_BERLIN`       | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
@@ -1005,7 +1005,7 @@ says so.
 | `VOLKSBUEHNE_PRATER`   | `PROMOTERS`        | the venue produces or presents every performance itself                                                                                          | —     |
 | `VOID_CLUB`            | `START_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`            | `DOORS_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
-| `VOID_CLUB`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
+| `VOID_CLUB`            | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `VOID_CLUB`            | `DESCRIPTION`      | the venue publishes no per-event text                                                                                                            | —     |
 | `VOID_CLUB`            | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `VOID_CLUB`            | `EVENT_TYPE`       | the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event   | —     |
@@ -1062,7 +1062,7 @@ says so.
 | `ZEBRANO_THEATER`      | `PRICE_PRESALE`    | the house sells one price, by e-mail reservation or through its ticket shop                                                                      | —     |
 | `ZEBRANO_THEATER`      | `GENRE`            | the programme names a category per evening, not a musical style                                                                                  | —     |
 | `ZEBRANO_THEATER`      | `PROMOTERS`        | the house presents every evening itself                                                                                                          | —     |
-| `ZENNER`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
+| `ZENNER`               | `PRICE`            | the site prints no entry price                                                                                                                   | —     |
 | `ZENNER`               | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
 | `ZENNER`               | `SOLD_OUT`         | the venue publishes no sold-out state                                                                                                            | —     |
 | `ZENNER`               | `PER_EVENT_PAGE`   | the venue publishes no per-event pages                                                                                                           | —     |
@@ -1111,7 +1111,7 @@ says so.
 | `ZOSCH`                | `CANCELLATION`     | the page has no status, so a cancelled night can only disappear                                                                                  | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ZUR_KLAPPE`           | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
-| `ZUR_KLAPPE`           | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `ZUR_KLAPPE`           | `GENRE`            | the site names no style per night                                                                                                                | —     |
 | `ZUR_KLAPPE`           | `PRICE`            | the site prints no price for a night                                                                                                             | —     |
 | `ZUR_KLAPPE`           | `PROMOTERS`        | the site credits no promoter beside the party name                                                                                               | —     |
 | `ZUR_KLAPPE`           | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |

@@ -58,7 +58,7 @@ val CRACK_BELLMER_LIMITATIONS =
         EventSource.CRACK_BELLMER,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue emits no category at all; the type is read from the title and then the genre line"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue links no ticket shop"),
         AcceptedLimitation(LimitedAspect.IMAGE, "a night without a CMS poster renders the Webflow placeholder, so it has no image"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")

@@ -30,7 +30,7 @@ val ZUR_KLAPPE_LIMITATIONS =
         EventSource.ZUR_KLAPPE,
         AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening time, not a separate doors time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price for a night"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),

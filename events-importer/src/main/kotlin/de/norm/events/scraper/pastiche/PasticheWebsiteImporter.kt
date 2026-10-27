@@ -45,7 +45,7 @@ val PASTICHE_LIMITATIONS =
             "the venue names a format only on some nights, so a night without one is read as a concert"
         ),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the site has no line-up field, so only a night billed as live or DJ names its act"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "each event states its start and end, no doors time"),
         AcceptedLimitation(LimitedAspect.PRICE, "the price sits in a shop widget the page renders with JavaScript"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the ticket status sits in the same shop widget"),
