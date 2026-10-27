@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -164,7 +165,7 @@ class VoidClubOverviewPageScraperTest {
 
     @Test
     fun `bills every act as a DJ and never twice on one night`() {
-        events.flatMap { it.artists }.all { it.role == "DJ" } shouldBe true
+        events.flatMap { it.artists }.all { it.role == ArtistRole.DJ } shouldBe true
         events.forEach { e -> e.artists.map { it.name.lowercase() }.distinct() shouldHaveSize e.artists.size }
     }
 

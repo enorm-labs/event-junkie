@@ -2,6 +2,7 @@ package de.norm.events.scraper.zenner
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
@@ -225,7 +226,7 @@ class ZennerApiScraper(
         val supportActs =
             supportNames
                 .filterNot { isNonArtistName(it) }
-                .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         return headlinersFromTitle(headlineText) + supportActs
     }
 
@@ -331,7 +332,7 @@ private fun djsFromWithFrame(title: String): List<ScrapedArtist> {
         .map { stripArtistSuffix(it.trim()) }
         .filterNot { it.isBlank() || isNonArtistName(it) }
         .distinct()
-        .map { ScrapedArtist(name = it, role = "DJ") }
+        .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 }
 
 /** The `", support: <acts>"` tail Zenner appends to a concert title — "Erland Cooper, support: Meredi". */

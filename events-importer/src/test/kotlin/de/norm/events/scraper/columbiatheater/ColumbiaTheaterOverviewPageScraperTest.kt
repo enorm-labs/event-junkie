@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiatheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferConcertVenueType
@@ -62,8 +63,8 @@ class ColumbiaTheaterOverviewPageScraperTest {
         soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
         soulfly.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Botulism", "SUPPORT")
+                ScrapedArtist("Soulfly", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Botulism", ArtistRole.SUPPORT)
             )
     }
 
@@ -78,10 +79,10 @@ class ColumbiaTheaterOverviewPageScraperTest {
         despisedIcon.title shouldBe "Despised Icon / Carnifex / Suffocation"
         despisedIcon.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Despised Icon", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Carnifex", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Suffocation", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Gates To Hell", "SUPPORT")
+                ScrapedArtist("Despised Icon", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Carnifex", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Suffocation", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Gates To Hell", ArtistRole.SUPPORT)
             )
     }
 
@@ -89,9 +90,9 @@ class ColumbiaTheaterOverviewPageScraperTest {
     fun `types a DJ billing row as a DJ and a support row as a support act`() {
         event("20261017-sixpence-none-the-richer").artists shouldContainExactly
             listOf(
-                ScrapedArtist("Sixpence None The Richer", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Robert Post", "SUPPORT"),
-                ScrapedArtist("The 33rd Assassin", "DJ")
+                ScrapedArtist("Sixpence None The Richer", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Robert Post", ArtistRole.SUPPORT),
+                ScrapedArtist("The 33rd Assassin", ArtistRole.DJ)
             )
     }
 
@@ -101,14 +102,14 @@ class ColumbiaTheaterOverviewPageScraperTest {
         val johnRobb = event("20260926-john-robb-mark-reeder")
         johnRobb.artists shouldContainExactly
             listOf(
-                ScrapedArtist("John Robb", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Mark Reeder", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Pauline Murray (PENETRATION)", "SUPPORT"),
-                ScrapedArtist("Colin Newman", "SUPPORT"),
-                ScrapedArtist("Budgie", "SUPPORT"),
-                ScrapedArtist("Annette Benjamin", "SUPPORT"),
-                ScrapedArtist("Alexander Hacke", "SUPPORT"),
-                ScrapedArtist("Malka Spigel", "SUPPORT")
+                ScrapedArtist("John Robb", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Mark Reeder", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Pauline Murray (PENETRATION)", ArtistRole.SUPPORT),
+                ScrapedArtist("Colin Newman", ArtistRole.SUPPORT),
+                ScrapedArtist("Budgie", ArtistRole.SUPPORT),
+                ScrapedArtist("Annette Benjamin", ArtistRole.SUPPORT),
+                ScrapedArtist("Alexander Hacke", ArtistRole.SUPPORT),
+                ScrapedArtist("Malka Spigel", ArtistRole.SUPPORT)
             )
     }
 
@@ -119,8 +120,8 @@ class ColumbiaTheaterOverviewPageScraperTest {
         oreillys.status shouldBe "CANCELLED"
         oreillys.artists shouldContainExactly
             listOf(
-                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Harpyie", "SUPPORT")
+                ScrapedArtist("The O'Reillys and The Paddyhats", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Harpyie", ArtistRole.SUPPORT)
             )
     }
 

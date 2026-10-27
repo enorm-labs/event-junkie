@@ -1,5 +1,6 @@
 package de.norm.events.scraper.eightmm
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -75,7 +76,7 @@ class EightMmWebsiteImporterTest {
             val residency = result.events.filter { it.sourceUrl.contains("jeff-clark") }
             residency shouldHaveSize 2
             residency.forEach { night ->
-                night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to "DJ")
+                night.artists.map { it.name to it.role } shouldContainExactly listOf("Jeff Clark" to ArtistRole.DJ)
             }
         }
 

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.roadrunner
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
@@ -407,9 +408,9 @@ class RoadrunnerOverviewPageScraper(
                 RegexOption.IGNORE_CASE
             )
 
-        private const val HEADLINER = "HEADLINER"
-        private const val SUPPORT = "SUPPORT"
-        private const val DJ = "DJ"
+        private val HEADLINER = ArtistRole.HEADLINER
+        private val SUPPORT = ArtistRole.SUPPORT
+        private val DJ = ArtistRole.DJ
 
         /** A line-up label at the start of a paragraph, capturing the label and the acts after its colon. */
         private val LINEUP_LABEL = Regex("""^(live|featuring|support|record\s+hop)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)

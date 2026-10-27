@@ -1,5 +1,6 @@
 package de.norm.events.scraper.junctionbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -56,7 +57,7 @@ class JunctionBarMusicOverviewPageScraperTest {
         // The ticket-shop page slug is the stable canonical identity.
         event.sourceId shouldBe "junction_bar:funkverband"
         event.description!! shouldContain "Funkverband ist richtig gut"
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Funkverband", role = "HEADLINER"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Funkverband", role = ArtistRole.HEADLINER))
     }
 
     @Test
@@ -67,9 +68,9 @@ class JunctionBarMusicOverviewPageScraperTest {
         event.title shouldBe "JUAKALI + fragFrank! + Icarus Burns"
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "JUAKALI", role = "HEADLINER"),
-                ScrapedArtist(name = "fragFrank!", role = "HEADLINER"),
-                ScrapedArtist(name = "Icarus Burns", role = "HEADLINER")
+                ScrapedArtist(name = "JUAKALI", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "fragFrank!", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "Icarus Burns", role = ArtistRole.HEADLINER)
             )
         // The date bar carries an explicit "---- 20:30 ----" override, winning over the weekday default.
         event.startTime shouldBe LocalTime.of(20, 30)
@@ -125,7 +126,7 @@ class JunctionBarMusicOverviewPageScraperTest {
         // The second act's block carries `.Stil12221`, not `.Stil1222` (#2267).
         night.title shouldBe "LA RONY acoustic set + LUX"
         night.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "LA RONY", role = "HEADLINER"), ScrapedArtist(name = "LUX", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "LA RONY", role = ArtistRole.HEADLINER), ScrapedArtist(name = "LUX", role = ArtistRole.HEADLINER))
     }
 
     @Test
@@ -144,7 +145,7 @@ class JunctionBarMusicOverviewPageScraperTest {
         // "Tag der Gelben Einheit" is the night; the photo and the bio name the band, Yellow Snow (#2267).
         friday.title shouldBe "Tag der Gelben Einheit + sunflowerstarfish"
         friday.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Yellow Snow", role = "HEADLINER"), ScrapedArtist(name = "sunflowerstarfish", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Yellow Snow", role = ArtistRole.HEADLINER), ScrapedArtist(name = "sunflowerstarfish", role = ArtistRole.HEADLINER))
     }
 
     @Test
@@ -163,7 +164,7 @@ class JunctionBarMusicOverviewPageScraperTest {
         // The night repeats its billing in Chinese, with headings of its own: `（叫我克里斯）携格律之习`, `驻场助演` (#3301).
         night.title shouldBe "Call me Chris + Groovy Habit"
         night.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Call me Chris", role = "HEADLINER"), ScrapedArtist(name = "Groovy Habit", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Call me Chris", role = ArtistRole.HEADLINER), ScrapedArtist(name = "Groovy Habit", role = ArtistRole.HEADLINER))
     }
 
     @Test
@@ -198,6 +199,6 @@ class JunctionBarMusicOverviewPageScraperTest {
 
         // The alt reads "Bandfoto Ray's Al-Aassad", a line break, then the poster description; the bio spells the heading (#3279).
         night.title shouldBe "Ra'as ul-Assad"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Ra'as ul-Assad", role = "HEADLINER"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Ra'as ul-Assad", role = ArtistRole.HEADLINER))
     }
 }

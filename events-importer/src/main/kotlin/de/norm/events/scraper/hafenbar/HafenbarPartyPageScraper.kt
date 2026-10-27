@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hafenbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -64,7 +65,7 @@ class HafenbarPartyPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HAFENBAR.sourceIdPrefix}${URI(sourceUrl).path.trim('/')}-$date",
             genre = if (title.contains(SCHLAGER, ignoreCase = true)) SCHLAGER else knownGenresInStyleTail(subtitle),
-            artists = djs(announcement).map { ScrapedArtist(name = it, role = "DJ") }
+            artists = djs(announcement).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

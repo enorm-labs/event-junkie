@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -85,7 +86,7 @@ class TresorOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             // `Tresor New Faces hosted by <DJ>` with no line-up bills its host; `hosted by Tresor` is the house itself.
-            artists = parseLineup(item).ifEmpty { hostedActsFromTitle(title, role = "DJ").filterNot { it.name.equals("Tresor", ignoreCase = true) } }
+            artists = parseLineup(item).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ).filterNot { it.name.equals("Tresor", ignoreCase = true) } }
         )
     }
 }
@@ -105,7 +106,7 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
         .flatMap { floor ->
             val stage = floor.textAt(".floor-name")?.let(::normalizeFloor)
             floor.select(".floor-artist, .lineup-name").flatMap { slot ->
-                splitActs(slot.text().trim()).map { ScrapedArtist(name = it, role = "DJ", stage = stage) }
+                splitActs(slot.text().trim()).map { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
             }
         }.distinctBy { it.name.lowercase() }
 

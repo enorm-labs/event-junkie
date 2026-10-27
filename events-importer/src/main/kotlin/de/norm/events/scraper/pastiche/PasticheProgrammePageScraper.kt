@@ -1,6 +1,7 @@
 package de.norm.events.scraper.pastiche
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -172,8 +173,8 @@ class PasticheProgrammePageScraper(
             if (format == null || isNonArtistName(title)) return emptyList()
             val role =
                 when {
-                    DJ.containsMatchIn(format) -> "DJ"
-                    LIVE.containsMatchIn(format) -> "HEADLINER"
+                    DJ.containsMatchIn(format) -> ArtistRole.DJ
+                    LIVE.containsMatchIn(format) -> ArtistRole.HEADLINER
                     else -> return emptyList()
                 }
             return splitBackToBack(title).map { ScrapedArtist(name = it, role = role) }

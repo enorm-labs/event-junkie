@@ -1,5 +1,6 @@
 package de.norm.events.scraper.weekend
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
@@ -90,7 +91,7 @@ class WeekendUpcomingPageScraper {
             .map { it.textLines() }
             .flatMap(::lineupNames)
             .distinct()
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     private fun lineupNames(lines: List<String>): List<String> {
         val first = lines.firstOrNull() ?: return emptyList()

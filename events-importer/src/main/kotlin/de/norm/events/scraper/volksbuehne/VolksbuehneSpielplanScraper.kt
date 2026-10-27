@@ -1,5 +1,6 @@
 package de.norm.events.scraper.volksbuehne
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -82,8 +83,8 @@ class VolksbuehneSpielplanScraper(
     ): List<ScrapedArtist> {
         val role =
             when (type) {
-                EventType.CONCERT -> "HEADLINER"
-                EventType.PARTY -> "DJ"
+                EventType.CONCERT -> ArtistRole.HEADLINER
+                EventType.PARTY -> ArtistRole.DJ
                 else -> return emptyList()
             }
         val names = WITH_LINE.find(addition.orEmpty())?.groupValues?.get(1) ?: return emptyList()

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.distel
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -73,7 +74,7 @@ class DistelCalendarPageScraperTest {
 
         talk.eventType shouldBe "READING"
         talk.artists.map { it.name } shouldBe listOf("Carlo Masala", "Ulrike Herrmann")
-        talk.artists.all { it.role == "HEADLINER" && it.titleDerived } shouldBe true
+        talk.artists.all { it.role == ArtistRole.HEADLINER && it.titleDerived } shouldBe true
     }
 
     @Test

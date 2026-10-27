@@ -1,5 +1,6 @@
 package de.norm.events.scraper.madmonkeyroom
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -59,7 +60,7 @@ class MadMonkeyRoomShopPageScraper {
             sourceId = "${EventSource.MAD_MONKEY_ROOM.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
             ticketUrl = url,
             pricePresale = euroAmounts(item.selectFirst("a.ticket-buy-button")?.text()).minOrNull(),
-            artists = listOfNotNull(act?.let { ScrapedArtist(name = it.groupValues[1].trim(), role = "HEADLINER") })
+            artists = listOfNotNull(act?.let { ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER) })
         )
     }
 

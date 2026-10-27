@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hole44
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -54,8 +55,8 @@ class Hole44DetailPageScraperTest {
         event.promoters shouldContainExactly listOf("Trinity Music")
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Battlecreek", "SUPPORT")
+                ScrapedArtist("Municipal Waste", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Battlecreek", ArtistRole.SUPPORT)
             )
     }
 
@@ -78,8 +79,8 @@ class Hole44DetailPageScraperTest {
         event.promoters shouldContainExactly listOf("Weird World Booking & Promotion GmbH")
         event.doorsTime shouldBe LocalTime.of(18, 0)
         event.startTime shouldBe LocalTime.of(19, 0)
-        event.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER", titleDerived = true))
-        event.artists.filter { it.role == "SUPPORT" }.shouldBeEmpty()
+        event.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", ArtistRole.HEADLINER, titleDerived = true))
+        event.artists.filter { it.role == ArtistRole.SUPPORT }.shouldBeEmpty()
     }
 
     @Test

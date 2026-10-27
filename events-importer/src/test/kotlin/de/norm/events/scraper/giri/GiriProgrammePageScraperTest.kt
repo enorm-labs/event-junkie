@@ -1,5 +1,6 @@
 package de.norm.events.scraper.giri
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -68,7 +69,7 @@ class GiriProgrammePageScraperTest {
         night.ticketUrl shouldBe "https://ra.co/events/2545224"
         night.imageUrl shouldBe "https://giri.berlin/wp-content/themes/giri-2026/assets/images/events/a5706e7a915488c6-960.webp"
         night.eventType shouldBe "CONCERT"
-        night.artists shouldContainExactly listOf("BAERK.", "Leng Seong", "Memeshift").map { ScrapedArtist(it, "HEADLINER") }
+        night.artists shouldContainExactly listOf("BAERK.", "Leng Seong", "Memeshift").map { ScrapedArtist(it, ArtistRole.HEADLINER) }
     }
 
     @Test
@@ -87,7 +88,7 @@ class GiriProgrammePageScraperTest {
 
         night.eventType shouldBe "PARTY"
         night.typeIsFallback shouldBe true
-        night.artists shouldContainExactly listOf("Nases Morur", "Thravsma", "Fuerza Kontraria").map { ScrapedArtist(it, "DJ") }
+        night.artists shouldContainExactly listOf("Nases Morur", "Thravsma", "Fuerza Kontraria").map { ScrapedArtist(it, ArtistRole.DJ) }
     }
 
     @Test
@@ -104,7 +105,7 @@ class GiriProgrammePageScraperTest {
     @Test
     fun `a live act on a DJ night is billed live and a guest placeholder is dropped`() {
         event("GIRI X OCCULTISTS").artists shouldContainExactly
-            listOf(ScrapedArtist("James Demon", "DJ"), ScrapedArtist("Nicky Miller", "LIVE"))
+            listOf(ScrapedArtist("James Demon", ArtistRole.DJ), ScrapedArtist("Nicky Miller", ArtistRole.LIVE))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ufafabrik
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.isForChildren
@@ -79,35 +80,35 @@ class UfaFabrikMonthPageScraperTest {
     @Test
     fun `splits a mit billing into its acts and bills the partner and a special guest as support`() {
         billing("Nils Kercher mit Kira Kaipainen (FIN) & Special Guest Oumar Barou Kouyate (Mali)") shouldBe
-            listOf("Nils Kercher" to "HEADLINER", "Kira Kaipainen" to "SUPPORT", "Oumar Barou Kouyate" to "SUPPORT")
-        billing("Ulla Meinecke mit Reinmar Henschke") shouldBe listOf("Ulla Meinecke" to "HEADLINER", "Reinmar Henschke" to "SUPPORT")
+            listOf("Nils Kercher" to ArtistRole.HEADLINER, "Kira Kaipainen" to ArtistRole.SUPPORT, "Oumar Barou Kouyate" to ArtistRole.SUPPORT)
+        billing("Ulla Meinecke mit Reinmar Henschke") shouldBe listOf("Ulla Meinecke" to ArtistRole.HEADLINER, "Reinmar Henschke" to ArtistRole.SUPPORT)
         billing("David Anthony Rose & Manouche '26 – special guest: Dotschy Reinhardt") shouldBe
-            listOf("David Anthony Rose" to "HEADLINER", "Manouche '26" to "HEADLINER", "Dotschy Reinhardt" to "SUPPORT")
+            listOf("David Anthony Rose" to ArtistRole.HEADLINER, "Manouche '26" to ArtistRole.HEADLINER, "Dotschy Reinhardt" to ArtistRole.SUPPORT)
         billing("Nils Kercher Trio mit Special Guest Oumar Barou Kouyaté (Mali)") shouldBe
-            listOf("Nils Kercher Trio" to "HEADLINER", "Oumar Barou Kouyaté" to "SUPPORT")
+            listOf("Nils Kercher Trio" to ArtistRole.HEADLINER, "Oumar Barou Kouyaté" to ArtistRole.SUPPORT)
     }
 
     @Test
     fun `keeps a backing band whole`() {
-        billing("Ellen Esser & Band") shouldBe listOf("Ellen Esser" to "HEADLINER")
-        billing("Lacrimosa mit Orchester") shouldBe listOf("Lacrimosa" to "HEADLINER")
-        billing("Jakob Heymann mit seiner Band") shouldBe listOf("Jakob Heymann mit seiner Band" to "HEADLINER")
-        billing("Ein Abend mit Ulla Meinecke") shouldBe listOf("Ulla Meinecke" to "HEADLINER")
+        billing("Ellen Esser & Band") shouldBe listOf("Ellen Esser" to ArtistRole.HEADLINER)
+        billing("Lacrimosa mit Orchester") shouldBe listOf("Lacrimosa" to ArtistRole.HEADLINER)
+        billing("Jakob Heymann mit seiner Band") shouldBe listOf("Jakob Heymann mit seiner Band" to ArtistRole.HEADLINER)
+        billing("Ein Abend mit Ulla Meinecke") shouldBe listOf("Ulla Meinecke" to ArtistRole.HEADLINER)
     }
 
     @Test
     fun `reads the billing of the month's concerts`() {
         october.single { it.title.startsWith("Ulla Meinecke") }.artists.map { it.name to it.role } shouldBe
-            listOf("Ulla Meinecke" to "HEADLINER", "Reinmar Henschke" to "SUPPORT")
+            listOf("Ulla Meinecke" to ArtistRole.HEADLINER, "Reinmar Henschke" to ArtistRole.SUPPORT)
         october.single { it.title.startsWith("Nils Kercher") }.artists.map { it.name to it.role } shouldBe
-            listOf("Nils Kercher Trio" to "HEADLINER", "Oumar Barou Kouyaté" to "SUPPORT")
+            listOf("Nils Kercher Trio" to ArtistRole.HEADLINER, "Oumar Barou Kouyaté" to ArtistRole.SUPPORT)
     }
 
     @Test
     fun `reads the acts of a named night off its special guest subtitle, and bills nobody at a karaoke night`() {
         val december = month("ufafabrik-program-202612.html")
         december.single { it.title == "Balkan Christmas Night" }.artists.map { it.name to it.role } shouldBe
-            listOf("Jovanović Trio" to "HEADLINER", "Oana Cǎtǎlina Chiţu" to "SUPPORT")
+            listOf("Jovanović Trio" to ArtistRole.HEADLINER, "Oana Cǎtǎlina Chiţu" to ArtistRole.SUPPORT)
         (october + december).filter { it.title == "Berliner Ukulele Sing & Strum" }.let { nights ->
             nights shouldHaveSize 2
             nights.flatMap { it.artists }.shouldBeEmpty()

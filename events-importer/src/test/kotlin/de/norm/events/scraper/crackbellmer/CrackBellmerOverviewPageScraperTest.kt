@@ -1,6 +1,7 @@
 package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -108,7 +109,7 @@ class CrackBellmerOverviewPageScraperTest {
     fun `splits a comma-separated billing and marks the live act`() {
         val night = everything.on(LocalDate.of(2026, 8, 4), "BELLMER BALBOA")
         // "Practically Married Quartet (live)" — the marker sets the role and leaves the name.
-        night.artists.map { it.name to it.role } shouldContainExactly listOf("Practically Married Quartet" to "LIVE")
+        night.artists.map { it.name to it.role } shouldContainExactly listOf("Practically Married Quartet" to ArtistRole.LIVE)
     }
 
     @Test
@@ -116,14 +117,14 @@ class CrackBellmerOverviewPageScraperTest {
         // "hosted by Nicole M Pikole w/ KumKween & Slaxy Lexy"
         val night = everything.on(LocalDate.of(2026, 7, 3), "CHANDELIER: JUST ONE DRINK")
         night.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Nicole M Pikole" to "HEADLINER", "KumKween" to "DJ", "Slaxy Lexy" to "DJ")
+            listOf("Nicole M Pikole" to ArtistRole.HEADLINER, "KumKween" to ArtistRole.DJ, "Slaxy Lexy" to ArtistRole.DJ)
     }
 
     @Test
     fun `strips the trailing host annotation`() {
         val night = everything.on(LocalDate.of(2026, 8, 28), "CHANDELIER: CULT OF DRAG")
         night.artists.first().name shouldBe "Fagatta"
-        night.artists.first().role shouldBe "HEADLINER"
+        night.artists.first().role shouldBe ArtistRole.HEADLINER
     }
 
     @Test

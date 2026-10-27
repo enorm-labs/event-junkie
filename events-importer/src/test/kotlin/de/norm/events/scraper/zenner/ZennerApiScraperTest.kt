@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zenner
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import io.kotest.inspectors.forAll
@@ -68,7 +69,7 @@ class ZennerApiScraperTest {
         event.imageUrl shouldStartWith "https://cdn.sanity.io/images/2le2eemj/production/"
         event.status shouldBe EventStatus.SCHEDULED.name
         event.description.shouldNotBeNull() shouldStartWith "A key figure in Berlin"
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Barker" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Barker" to ArtistRole.HEADLINER)
         // The venue publishes no prices, doors times, sold-out state or genre.
         event.pricePresale.shouldBeNull()
         event.priceBoxOffice.shouldBeNull()
@@ -187,9 +188,9 @@ class ZennerApiScraperTest {
     @Test
     fun `scrape derives the guest DJ from a party's w-slash billing frame`() {
         scrape().single { it.title == "SIP! w/ Haseeb Iqbal (All Day Long)" }.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Haseeb Iqbal" to "DJ")
+            listOf("Haseeb Iqbal" to ArtistRole.DJ)
         scrape().single { it.title == "SIP! w/ Coco Maria (All Day Long)" }.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Coco Maria" to "DJ")
+            listOf("Coco Maria" to ArtistRole.DJ)
     }
 
     @Test
@@ -213,7 +214,7 @@ class ZennerApiScraperTest {
         val byTitle = scraper.scrape(payload, SOURCE_URL).associateBy { it.title }
 
         byTitle.getValue("SIP! w/ Donna Leake & Coco Maria (All Night Long)").artists.map { it.name to it.role } shouldContainExactly
-            listOf("Donna Leake" to "DJ", "Coco Maria" to "DJ")
+            listOf("Donna Leake" to ArtistRole.DJ, "Coco Maria" to ArtistRole.DJ)
         // A "presents" tail is as often an event name as an act, so parties mine only `w/`.
         byTitle.getValue("Gene On Earth presents Rave 'n' Cruise").artists.shouldHaveSize(0)
     }
@@ -234,7 +235,7 @@ class ZennerApiScraperTest {
             .single()
             .artists
             .map { it.name to it.role } shouldContainExactly
-            listOf("David August w/ MFO" to "HEADLINER")
+            listOf("David August w/ MFO" to ArtistRole.HEADLINER)
     }
 
     @Test

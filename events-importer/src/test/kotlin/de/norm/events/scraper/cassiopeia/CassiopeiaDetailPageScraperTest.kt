@@ -1,5 +1,6 @@
 package de.norm.events.scraper.cassiopeia
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -67,8 +68,8 @@ class CassiopeiaDetailPageScraperTest {
         event shouldNotBe null
         event!!.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
-                ScrapedArtist(name = "Aska", role = "SUPPORT")
+                ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT)
             )
     }
 
@@ -79,7 +80,7 @@ class CassiopeiaDetailPageScraperTest {
         val url = "https://cassiopeia-berlin.de/event/loma-prieta-111623520"
 
         scraper.scrape(Jsoup.parse(html, url), url)!!.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Loma Prieta" to "HEADLINER", "deshielo" to "SUPPORT", "la haine" to "SUPPORT")
+            listOf("Loma Prieta" to ArtistRole.HEADLINER, "deshielo" to ArtistRole.SUPPORT, "la haine" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -93,7 +94,7 @@ class CassiopeiaDetailPageScraperTest {
         scraper
             .scrape(Jsoup.parse(concert, "https://cassiopeia-berlin.de/event/jolle-111687604"), "https://cassiopeia-berlin.de/event/jolle-111687604")!!
             .artists
-            .map { it.name to it.role } shouldContainExactly listOf("jolle" to "HEADLINER", "Dani Lia" to "SUPPORT")
+            .map { it.name to it.role } shouldContainExactly listOf("jolle" to ArtistRole.HEADLINER, "Dani Lia" to ArtistRole.SUPPORT)
 
         val party = buildDetailHtml("Forever Young Party", category = "Party", descriptionParagraphs = listOf("+ free Kicker... garden.... und vieles mehr!"))
         scraper
@@ -110,7 +111,7 @@ class CassiopeiaDetailPageScraperTest {
 
         event shouldNotBe null
         // CONCERT confirms the title is the headliner, even with no "Support:" line
-        event!!.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true))
+        event!!.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -135,7 +136,7 @@ class CassiopeiaDetailPageScraperTest {
         // Placeholder headliner is filtered, only the real support act remains
         event!!.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Real Artist", role = "SUPPORT")
+                ScrapedArtist(name = "Real Artist", role = ArtistRole.SUPPORT)
             )
     }
 
@@ -152,7 +153,7 @@ class CassiopeiaDetailPageScraperTest {
         // but the headliner is still extracted.
         event!!.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Döll", role = "HEADLINER", titleDerived = true)
+                ScrapedArtist(name = "Döll", role = ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
@@ -346,7 +347,7 @@ class CassiopeiaDetailPageScraperTest {
 
         event.eventType shouldBe "CONCERT"
         event.artists shouldContainExactly
-            listOf("Sonic Death", "Shaemless", "Mud Grief", "Dusk Saffron", "Etsamoe").map { ScrapedArtist(name = it, role = "HEADLINER") }
+            listOf("Sonic Death", "Shaemless", "Mud Grief", "Dusk Saffron", "Etsamoe").map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         event.genre.shouldBeNull()
         event.promoters.shouldBeEmpty()
     }
@@ -359,8 +360,8 @@ class CassiopeiaDetailPageScraperTest {
         event.genre shouldBe "Noise"
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
-                ScrapedArtist(name = "Aska", role = "SUPPORT")
+                ScrapedArtist(name = "Pharmakon", role = ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT)
             )
     }
 
@@ -382,7 +383,7 @@ class CassiopeiaDetailPageScraperTest {
         val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
 
         event.artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Sonic Death", role = "HEADLINER"), ScrapedArtist(name = "Aska", role = "SUPPORT"))
+            listOf(ScrapedArtist(name = "Sonic Death", role = ArtistRole.HEADLINER), ScrapedArtist(name = "Aska", role = ArtistRole.SUPPORT))
     }
 
     @Test
@@ -393,8 +394,8 @@ class CassiopeiaDetailPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Sonic Death", role = "HEADLINER", titleDerived = true),
-                ScrapedArtist(name = "Shaemless", role = "HEADLINER")
+                ScrapedArtist(name = "Sonic Death", role = ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist(name = "Shaemless", role = ArtistRole.HEADLINER)
             )
     }
 

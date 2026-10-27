@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldHaveSize
@@ -49,7 +50,7 @@ class MorphineOverviewPageScraperTest {
         event.eventType shouldBe "CONCERT"
         event.eventDate shouldBe LocalDate.of(2026, 8, 7)
         event.sourceUrl shouldBe "http://www.morphinerecords.com/events/sardy-fardy-live-recording"
-        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -76,7 +77,7 @@ class MorphineOverviewPageScraperTest {
 
         event.title shouldBe "Invisible Weather (Kakaliagou/ Thieke/ Yassin) - Live Recording"
         // The slash list names the trio's members, an affiliation and never an alias (#1761).
-        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

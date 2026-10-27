@@ -1,5 +1,6 @@
 package de.norm.events.scraper.delphi
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -173,7 +174,7 @@ class DelphiProgrammePageScraper {
             ?.split('|')
             ?.map { it.replace(WHITESPACE, " ").trim() }
             ?.filter { it.isNotBlank() && !isNonArtistName(it) && !isCreditedAuthor(it, teaser) }
-            ?.map { ScrapedArtist(name = it, role = "HEADLINER") }
+            ?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             .orEmpty()
 
     /**

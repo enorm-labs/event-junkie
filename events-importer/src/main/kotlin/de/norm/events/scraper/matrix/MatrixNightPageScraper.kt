@@ -1,5 +1,6 @@
 package de.norm.events.scraper.matrix
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -137,7 +138,7 @@ class MatrixNightPageScraper {
             .map { it.replace(DEEJAY_PREFIX, "DJ ") }
             .filterNot { isNonArtistName(it) }
             .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
             .toList()
 
     private companion object {

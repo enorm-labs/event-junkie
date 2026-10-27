@@ -1,5 +1,6 @@
 package de.norm.events.scraper.loge
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
@@ -70,7 +71,7 @@ class LogeOverviewPageScraperTest {
     fun `builds headliner and support roles from the plus-joined title`() {
         val estamoe = event("loge:estamoe-daloy-furie")
         estamoe.artists.map { it.name } shouldBe listOf("ESTAMOE", "DALOY!", "FURIE")
-        estamoe.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT", "SUPPORT")
+        estamoe.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT, ArtistRole.SUPPORT)
     }
 
     @Test

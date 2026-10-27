@@ -1,5 +1,6 @@
 package de.norm.events.scraper.peteredel
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.forChildrenPhrase
@@ -128,8 +129,8 @@ class PeterEdelOverviewPageScraperTest {
         polica.eventType shouldBe "CONCERT"
         polica.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Poliça", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Sian Able", "SUPPORT")
+                ScrapedArtist("Poliça", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Sian Able", ArtistRole.SUPPORT)
             )
     }
 
@@ -237,8 +238,8 @@ class PeterEdelOverviewPageScraperTest {
             listOf("Poliça - Dreams Go Tour 2026", "Buffalo Tom", "FIL'S TESTSHOWS", "FIL'S TESTSHOWS", "FIL", "FIL")
         withArtists[1].artists shouldContainExactly
             listOf(
-                ScrapedArtist("Buffalo Tom", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Grateful Cat", "SUPPORT")
+                ScrapedArtist("Buffalo Tom", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Grateful Cat", ArtistRole.SUPPORT)
             )
     }
 
@@ -407,7 +408,7 @@ class PeterEdelOverviewPageScraperTest {
     fun `bills the act before a quoted show and types the comedian's night`() {
         val event = extraShowEvents().single { it.eventDate == LocalDate.of(2027, 2, 20) }
         event.title shouldBe "FIL - \"Lieder of the world\""
-        event.artists shouldContainExactly listOf(ScrapedArtist("FIL", "HEADLINER", titleDerived = true))
+        event.artists shouldContainExactly listOf(ScrapedArtist("FIL", ArtistRole.HEADLINER, titleDerived = true))
         // "Als erster Komiker der Welt": the blurb names no joke, but it names a comedian.
         event.eventType shouldBe "COMEDY"
     }
@@ -418,7 +419,7 @@ class PeterEdelOverviewPageScraperTest {
         scraper
             .scrape(grid("DEZEMBER 2026", "SA | 12.12.", "<h3>$title</h3>"), baseUrl)
             .single()
-            .artists shouldContainExactly listOf(ScrapedArtist("FIL", "HEADLINER", titleDerived = true))
+            .artists shouldContainExactly listOf(ScrapedArtist("FIL", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

@@ -103,7 +103,7 @@ class BerghainOverviewPageScraper(
         val floors = block.select("h3").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
         val floorType = floorsToEventType(floors)
         val lineup = parseLineup(block, floorType)
-        val liveOnly = floorType == EventType.PARTY.name && lineup.isNotEmpty() && lineup.all { it.role == ArtistRole.LIVE.name }
+        val liveOnly = floorType == EventType.PARTY.name && lineup.isNotEmpty() && lineup.all { it.role == ArtistRole.LIVE }
 
         return ScrapedEvent(
             title = title,
@@ -115,7 +115,7 @@ class BerghainOverviewPageScraper(
             sourceId = berghainSourceId(floors, eventId),
             // A concert typed by its acts takes no club floor's default genre (#3151).
             genre = if (liveOnly) null else floorsToGenre(floors),
-            artists = if (liveOnly) lineup.map { it.copy(role = ArtistRole.HEADLINER.name) } else lineup
+            artists = if (liveOnly) lineup.map { it.copy(role = ArtistRole.HEADLINER) } else lineup
         )
     }
 
@@ -133,7 +133,7 @@ class BerghainOverviewPageScraper(
         block: Element,
         eventType: String?
     ): List<ScrapedArtist> {
-        val role = if (eventType == EventType.CONCERT.name) "HEADLINER" else "DJ"
+        val role = if (eventType == EventType.CONCERT.name) ArtistRole.HEADLINER else ArtistRole.DJ
         val lineup = mutableListOf<ScrapedArtist>()
         var currentStage: String? = null
         for (element in block.select("h3, h4")) {
@@ -177,7 +177,7 @@ class BerghainOverviewPageScraper(
      */
     private fun parseFloorLineup(
         element: Element,
-        role: String,
+        role: ArtistRole,
         stage: String?
     ): List<ScrapedArtist> {
         val acts = mutableListOf<ScrapedArtist>()
@@ -188,7 +188,7 @@ class BerghainOverviewPageScraper(
             val text = span.text().trim()
             if (span.hasClass(MARKER_CLASS)) {
                 if (text.equals(LIVE_MARKER, ignoreCase = true)) {
-                    for (i in marked) acts[i] = acts[i].copy(role = if (role == "DJ") "LIVE" else role)
+                    for (i in marked) acts[i] = acts[i].copy(role = if (role == ArtistRole.DJ) ArtistRole.LIVE else role)
                 }
                 continue
             }

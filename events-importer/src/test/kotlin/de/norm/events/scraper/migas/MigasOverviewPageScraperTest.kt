@@ -1,5 +1,6 @@
 package de.norm.events.scraper.migas
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -65,7 +66,7 @@ class MigasOverviewPageScraperTest {
         session.imageUrl shouldBe
             "https://migas.berlin/wp-content/uploads/2026/07/5.08-live-listening-session-SITAAD-collab-@sitaadstudio-550x395.jpeg"
         session.description!! shouldContain "Somali funk, Ethio-jazz, Sudanese pop"
-        session.artists shouldContainExactly listOf(ScrapedArtist(name = "SITAAD", role = "DJ", titleDerived = true))
+        session.artists shouldContainExactly listOf(ScrapedArtist(name = "SITAAD", role = ArtistRole.DJ, titleDerived = true))
     }
 
     @Test
@@ -75,15 +76,15 @@ class MigasOverviewPageScraperTest {
         night.eventType shouldBe EventType.PARTY.name
         night.eventDate shouldBe LocalDate.of(2026, 8, 6)
         night.sourceId shouldBe "migas:vip-client"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "vip client", role = "DJ", titleDerived = true))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "vip client", role = ArtistRole.DJ, titleDerived = true))
     }
 
     @Test
     fun `scrape splits a co-billed selector pair into two DJs`() {
         event("eric.a & llupe").artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "eric.a", role = "DJ", titleDerived = true),
-                ScrapedArtist(name = "llupe", role = "DJ", titleDerived = true)
+                ScrapedArtist(name = "eric.a", role = ArtistRole.DJ, titleDerived = true),
+                ScrapedArtist(name = "llupe", role = ArtistRole.DJ, titleDerived = true)
             )
     }
 
@@ -117,7 +118,7 @@ class MigasOverviewPageScraperTest {
     @Test
     fun `scrape keeps billing a guest session named for its guest`() {
         scrapeOne(title = "modú", category = "listening session").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "modú", role = "DJ", titleDerived = true))
+            listOf(ScrapedArtist(name = "modú", role = ArtistRole.DJ, titleDerived = true))
     }
 
     @Test

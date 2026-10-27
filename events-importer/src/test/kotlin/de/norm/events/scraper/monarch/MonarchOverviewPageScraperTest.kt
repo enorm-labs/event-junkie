@@ -1,5 +1,6 @@
 package de.norm.events.scraper.monarch
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -86,7 +87,7 @@ class MonarchOverviewPageScraperTest {
         // A concert's title names the headliner.
         event.artists shouldHaveSize 1
         event.artists.single().name shouldBe "SAINT PERRY PEAN"
-        event.artists.single().role shouldBe "HEADLINER"
+        event.artists.single().role shouldBe ArtistRole.HEADLINER
     }
 
     @Test

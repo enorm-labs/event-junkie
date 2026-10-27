@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zku
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -45,7 +46,7 @@ class ZkuEventPageScraperTest {
         night.eventType shouldBe EventType.PARTY.name
         night.typeIsFallback shouldBe false
         night.artists.map { it.name } shouldContainExactly listOf("Lezza", "Fanny Champuis", "Talia Door", "SHEZAY")
-        night.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        night.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         night.artists.first().setStart shouldBe Instant.parse("2026-10-24T19:00:00Z")
         night.artists.last().setEnd shouldBe Instant.parse("2026-10-25T02:00:00Z")
         night.promoters shouldContainExactly listOf("UNRUH Kollektiv")

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wabe
 
 import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.euroAmounts
@@ -96,7 +97,7 @@ private fun actsOf(line: String): List<ScrapedArtist> {
     val acts = if (parts.all { ' ' in it }) parts else listOf(names)
     return acts
         .filterNot { it.isEmpty() || isNonArtistName(it) }
-        .map { ScrapedArtist(name = it, role = if (guest) "SUPPORT" else "HEADLINER") }
+        .map { ScrapedArtist(name = it, role = if (guest) ArtistRole.SUPPORT else ArtistRole.HEADLINER) }
 }
 
 /** [line] with its shouted names title-cased, the label before a colon kept as printed. */

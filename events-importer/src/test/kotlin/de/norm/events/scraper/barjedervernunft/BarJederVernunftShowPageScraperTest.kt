@@ -1,5 +1,6 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.alternateLanguageUrl
 import io.kotest.matchers.collections.shouldHaveSize
@@ -94,7 +95,7 @@ class BarJederVernunftShowPageScraperTest {
         enriched.genre shouldBe "A cappella"
         enriched.artists shouldHaveSize 1
         enriched.artists.single().name shouldBe "The Happy Disharmonists"
-        enriched.artists.single().role shouldBe "HEADLINER"
+        enriched.artists.single().role shouldBe ArtistRole.HEADLINER
     }
 
     @Test

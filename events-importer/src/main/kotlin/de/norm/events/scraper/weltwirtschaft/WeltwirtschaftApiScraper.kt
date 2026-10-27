@@ -1,5 +1,6 @@
 package de.norm.events.scraper.weltwirtschaft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -143,7 +144,7 @@ class WeltwirtschaftApiScraper {
             .map { stripArtistSuffix(it.replace(ORIGIN_NOTE, "")) }
             .filterNot(::isNonArtistName)
             .distinct()
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /** The widest candidate of an image's `srcset`, or its `src`: the description embeds a 300-pixel thumbnail. */

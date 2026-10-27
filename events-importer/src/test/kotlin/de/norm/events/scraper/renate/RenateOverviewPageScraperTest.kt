@@ -1,5 +1,6 @@
 package de.norm.events.scraper.renate
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -274,7 +275,7 @@ class RenateOverviewPageScraperTest {
 
     @Test
     fun `bills every act as a DJ`() {
-        events.flatMap { it.artists }.all { it.role == "DJ" } shouldBe true
+        events.flatMap { it.artists }.all { it.role == ArtistRole.DJ } shouldBe true
     }
 
     @Test

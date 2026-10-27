@@ -1,5 +1,6 @@
 package de.norm.events.scraper.junctionbar
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -59,7 +60,7 @@ class JunctionBarDjOverviewPageScraperTest {
         event.startTime shouldBe LocalTime.of(23, 59)
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "junction_bar:dj-2026-06-05-djane-b-b"
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "DJane B.B.", role = "DJ"))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "DJane B.B.", role = ArtistRole.DJ))
     }
 
     @Test

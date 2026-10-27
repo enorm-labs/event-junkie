@@ -1,5 +1,6 @@
 package de.norm.events.scraper.jonnyknuppel
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
@@ -120,7 +121,7 @@ class JonnyKnuppelOverviewPageScraper {
             .map(::stripArtistSuffix)
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .distinct()
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** One amount is the door price; a price by arrival time (`22-23 Uhr: 10€`, `Ab 23 Uhr: 15-20€`) is a note. */
     private fun parsePrice(entry: Element?): Pair<BigDecimal?, String?> {

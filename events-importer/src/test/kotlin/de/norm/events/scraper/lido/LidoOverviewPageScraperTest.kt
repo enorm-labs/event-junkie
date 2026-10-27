@@ -1,5 +1,6 @@
 package de.norm.events.scraper.lido
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -76,8 +77,8 @@ class LidoOverviewPageScraperTest {
     fun `extracts the headliner and support act for a concert`() {
         event("Sorry").artists shouldContainExactly
             listOf(
-                ScrapedArtist("SORRY", "HEADLINER", titleDerived = true),
-                ScrapedArtist("SNAKE ORANGE CAKE", "SUPPORT")
+                ScrapedArtist("SORRY", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("SNAKE ORANGE CAKE", ArtistRole.SUPPORT)
             )
     }
 
@@ -102,8 +103,8 @@ class LidoOverviewPageScraperTest {
         pangea.status shouldBe "CANCELLED"
         pangea.artists shouldContainExactly
             listOf(
-                ScrapedArtist("TOGETHER PANGEA", "HEADLINER", titleDerived = true),
-                ScrapedArtist("JEFF CLARKE", "SUPPORT")
+                ScrapedArtist("TOGETHER PANGEA", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("JEFF CLARKE", ArtistRole.SUPPORT)
             )
     }
 
@@ -121,9 +122,9 @@ class LidoOverviewPageScraperTest {
 
         scraped.artists shouldContainExactly
             listOf(
-                ScrapedArtist("XANDRIA", "HEADLINER", titleDerived = true),
-                ScrapedArtist("SEVEN SPIRES", "SUPPORT"),
-                ScrapedArtist("SECRET RULE", "SUPPORT")
+                ScrapedArtist("XANDRIA", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("SEVEN SPIRES", ArtistRole.SUPPORT),
+                ScrapedArtist("SECRET RULE", ArtistRole.SUPPORT)
             )
     }
 
@@ -172,7 +173,7 @@ class LidoOverviewPageScraperTest {
         teased.eventDate shouldBe LocalDate.of(2026, 9, 16)
         teased.doorsTime shouldBe LocalTime.of(19, 0)
         teased.sourceUrl shouldBe "https://www.lido-berlin.de/events/2026-09-16-vtoroi-ka-"
-        teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", "HEADLINER", titleDerived = true))
+        teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     // The 2026-10-20 home page: the teaser's second line is the tour name, which cost Gus G his billing (#3637).
@@ -193,8 +194,8 @@ class LidoOverviewPageScraperTest {
         romero.title shouldBe "RONNIE ROMERO & GUS G „Convergence Fest 2026\""
         romero.artists shouldContainExactly
             listOf(
-                ScrapedArtist("RONNIE ROMERO", "HEADLINER", titleDerived = true),
-                ScrapedArtist("GUS G", "HEADLINER", titleDerived = true)
+                ScrapedArtist("RONNIE ROMERO", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("GUS G", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 
@@ -252,8 +253,8 @@ class LidoOverviewPageScraperTest {
         kayla.soldOut shouldBe true
         kayla.artists shouldContainExactly
             listOf(
-                ScrapedArtist("KAYLA SHYX", "HEADLINER", titleDerived = true),
-                ScrapedArtist("DANI LIA", "SUPPORT")
+                ScrapedArtist("KAYLA SHYX", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("DANI LIA", ArtistRole.SUPPORT)
             )
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tausend
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -43,7 +44,7 @@ class TausendOverviewPageScraperTest {
         night.imageUrl shouldBe "https://tausendberlin.com/wp-content/uploads/2026/10/BarTausend-Dj-CarlaValentini-sw-02.webp"
         night.description!! shouldStartWith "Die chilenische DJ und Produzentin"
         night.description shouldContain "\nValenti lebt heute in Barcelona"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Carla Valenti", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Carla Valenti", role = ArtistRole.DJ))
         night.status shouldBe "SCHEDULED"
     }
 
@@ -59,7 +60,7 @@ class TausendOverviewPageScraperTest {
         val night = events.first { it.title == "Olla & The Groove Markers" }
 
         night.eventType shouldBe EventType.CONCERT.name
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Olla & The Groove Markers", role = "HEADLINER"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Olla & The Groove Markers", role = ArtistRole.HEADLINER))
     }
 
     @Test

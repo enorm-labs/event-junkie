@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gretchen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
@@ -304,7 +305,7 @@ class GretchenOverviewPageScraper {
                 .distinct()
 
         return names.mapIndexed { index, name ->
-            ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
+            ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT)
         }
     }
 
@@ -356,7 +357,7 @@ class GretchenOverviewPageScraper {
                 !RESIDUAL_DASH.containsMatchIn(act) &&
                 !isNonArtistName(act) &&
                 !isProseNote(act)
-        return if (isCleanAct) listOf(ScrapedArtist(name = act, role = "HEADLINER")) else emptyList()
+        return if (isCleanAct) listOf(ScrapedArtist(name = act, role = ArtistRole.HEADLINER)) else emptyList()
     }
 
     /**

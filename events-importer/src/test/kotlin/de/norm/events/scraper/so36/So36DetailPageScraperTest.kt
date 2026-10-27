@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldHaveSize
@@ -124,9 +125,9 @@ class So36DetailPageScraperTest {
 
         event.artists shouldHaveSize 3
         event.artists[0].name shouldBe "POISON RUIN"
-        event.artists[0].role shouldBe "HEADLINER"
+        event.artists[0].role shouldBe ArtistRole.HEADLINER
         event.artists.drop(1).map { it.name } shouldBe listOf("GUM", "CLAVV")
-        event.artists.drop(1).all { it.role == "SUPPORT" } shouldBe true
+        event.artists.drop(1).all { it.role == ArtistRole.SUPPORT } shouldBe true
     }
 
     @Test
@@ -138,7 +139,7 @@ class So36DetailPageScraperTest {
 
         event.title shouldBe "SADTEMBER mit TAHA, JOHNBOY M.IKARUS"
         event.artists.map { it.name to it.role } shouldBe
-            listOf("TAHA" to "HEADLINER", "JOHNBOY M.IKARUS" to "HEADLINER", "Arbok 48" to "SUPPORT")
+            listOf("TAHA" to ArtistRole.HEADLINER, "JOHNBOY M.IKARUS" to ArtistRole.HEADLINER, "Arbok 48" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -149,7 +150,7 @@ class So36DetailPageScraperTest {
         event.shouldNotBeNull()
 
         event.eventType shouldBe "SHOW"
-        event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to "HEADLINER", "Moritz Neumeier" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldBe listOf("Till Reiners" to ArtistRole.HEADLINER, "Moritz Neumeier" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -160,7 +161,7 @@ class So36DetailPageScraperTest {
         event.shouldNotBeNull()
 
         event.title shouldBe "SADSVIT | HYPHEN DASH"
-        event.artists.map { it.name to it.role } shouldBe listOf("SADSVIT" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldBe listOf("SADSVIT" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -173,9 +174,9 @@ class So36DetailPageScraperTest {
         event.subtitle shouldBe "Support: GRENZER & BIERTOIFEL"
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "PÖBEL & GESOCKS" to "HEADLINER",
-                "GRENZER" to "SUPPORT",
-                "BIERTOIFEL" to "SUPPORT"
+                "PÖBEL & GESOCKS" to ArtistRole.HEADLINER,
+                "GRENZER" to ArtistRole.SUPPORT,
+                "BIERTOIFEL" to ArtistRole.SUPPORT
             )
     }
 
@@ -189,8 +190,8 @@ class So36DetailPageScraperTest {
         event.subtitle shouldBe "feat. Birte Volta mit Special-Guests"
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Kai & Funky von TON STEINE SCHERBEN" to "HEADLINER",
-                "Mekanik Destrüktiw Komandöh" to "SUPPORT"
+                "Kai & Funky von TON STEINE SCHERBEN" to ArtistRole.HEADLINER,
+                "Mekanik Destrüktiw Komandöh" to ArtistRole.SUPPORT
             )
     }
 
@@ -225,7 +226,7 @@ class So36DetailPageScraperTest {
             return scraper
                 .scrape(document, concertUrl)!!
                 .artists
-                .filter { it.role == "HEADLINER" }
+                .filter { it.role == ArtistRole.HEADLINER }
                 .map { it.name }
         }
 
@@ -246,10 +247,10 @@ class So36DetailPageScraperTest {
         event.subtitle shouldBe "& CRAWLSPACE & PINTGLASS & GHETTO JUSTICE"
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "NASTY" to "HEADLINER",
-                "CRAWLSPACE" to "SUPPORT",
-                "PINTGLASS" to "SUPPORT",
-                "GHETTO JUSTICE" to "SUPPORT"
+                "NASTY" to ArtistRole.HEADLINER,
+                "CRAWLSPACE" to ArtistRole.SUPPORT,
+                "PINTGLASS" to ArtistRole.SUPPORT,
+                "GHETTO JUSTICE" to ArtistRole.SUPPORT
             )
     }
 
@@ -279,7 +280,7 @@ class So36DetailPageScraperTest {
 
         event.eventType shouldBe EventType.FESTIVAL.name
         event.artists.map { it.name to it.role } shouldBe
-            listOf("PLANLOS X", "DEATH BY HORSE", "BÍFIDOS", "ENRALE", "DURCHFALL").map { it to "HEADLINER" }
+            listOf("PLANLOS X", "DEATH BY HORSE", "BÍFIDOS", "ENRALE", "DURCHFALL").map { it to ArtistRole.HEADLINER }
     }
 
     @Test
@@ -311,7 +312,7 @@ class So36DetailPageScraperTest {
         event.eventType shouldBe EventType.FESTIVAL.name
         // The venue cut `MIKE AND THE…` short, so that act is dropped.
         event.artists.map { it.name to it.role } shouldBe
-            listOf("ULTIMO ASALTO", "VIOLENT TIMES", "TELEKOMA", "UNDERDOGZ", "GEWOHNHEITSTRINKER").map { it to "HEADLINER" }
+            listOf("ULTIMO ASALTO", "VIOLENT TIMES", "TELEKOMA", "UNDERDOGZ", "GEWOHNHEITSTRINKER").map { it to ArtistRole.HEADLINER }
     }
 
     @Test
@@ -513,7 +514,7 @@ class So36DetailPageScraperTest {
             scraper
                 .scrape(concertWithSubtitle(subtitle), concertUrl)!!
                 .artists
-                .filter { it.role == "SUPPORT" }
+                .filter { it.role == ArtistRole.SUPPORT }
                 .map { it.name }
 
         // Labels are stripped, not captured as part of the name.

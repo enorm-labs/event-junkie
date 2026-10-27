@@ -1,5 +1,6 @@
 package de.norm.events.scraper.frannz
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
@@ -103,7 +104,7 @@ class FrannzOverviewPageScraperTest {
         fun `extracts the title as headliner for concerts`() {
             val concert = scrape().first { it.title == "Freshlyground" }
 
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Freshlyground", role = "HEADLINER", titleDerived = true))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Freshlyground", role = ArtistRole.HEADLINER, titleDerived = true))
         }
     }
 
@@ -182,7 +183,7 @@ class FrannzOverviewPageScraperTest {
 
             event.title shouldBe "Pohlmann"
             event.title shouldNotContain "ausverkauft"
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Pohlmann", role = "HEADLINER", titleDerived = true))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Pohlmann", role = ArtistRole.HEADLINER, titleDerived = true))
             event.soldOut shouldBe true
         }
 
@@ -221,7 +222,7 @@ class FrannzOverviewPageScraperTest {
 
             event.title shouldBe "Haken"
             event.soldOut shouldBe true
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Haken", role = "HEADLINER", titleDerived = true))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Haken", role = ArtistRole.HEADLINER, titleDerived = true))
         }
 
         @Test
@@ -304,7 +305,7 @@ class FrannzOverviewPageScraperTest {
 
             event.status shouldBe "RELOCATED"
             event.storedTitle() shouldBe "MAD TSAI"
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "MAD TSAI", role = "HEADLINER", titleDerived = true))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "MAD TSAI", role = ArtistRole.HEADLINER, titleDerived = true))
             // The raw title is the note; the boundary reads the destination off it (#1551).
             event.statusNote shouldBe "MAD TSAI -verlegt ins Gretchen-"
             event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Gretchen"
@@ -325,7 +326,7 @@ class FrannzOverviewPageScraperTest {
 
             event.status shouldBe "RELOCATED"
             event.storedTitle() shouldBe "Georgia Cavallo"
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Georgia Cavallo", role = "HEADLINER", titleDerived = true))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Georgia Cavallo", role = ArtistRole.HEADLINER, titleDerived = true))
             event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Lido"
         }
 

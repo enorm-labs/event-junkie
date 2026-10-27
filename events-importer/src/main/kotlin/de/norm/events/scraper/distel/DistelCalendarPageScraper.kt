@@ -1,5 +1,6 @@
 package de.norm.events.scraper.distel
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
@@ -148,7 +149,7 @@ internal fun distelActs(title: String): List<ScrapedArtist> {
         .map(::titleAct)
 }
 
-private fun titleAct(name: String) = ScrapedArtist(name = name, role = "HEADLINER", titleDerived = true)
+private fun titleAct(name: String) = ScrapedArtist(name = name, role = ArtistRole.HEADLINER, titleDerived = true)
 
 private fun stripAcademicTitle(name: String): String = name.trim().replace(ACADEMIC_TITLE, "").trim()
 

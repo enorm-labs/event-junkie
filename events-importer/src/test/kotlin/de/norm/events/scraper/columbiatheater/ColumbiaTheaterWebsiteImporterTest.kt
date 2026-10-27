@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiatheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -117,8 +118,8 @@ class ColumbiaTheaterWebsiteImporterTest {
             soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
             soulfly.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("Botulism", "SUPPORT")
+                    ScrapedArtist("Soulfly", ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist("Botulism", ArtistRole.SUPPORT)
                 )
         }
 

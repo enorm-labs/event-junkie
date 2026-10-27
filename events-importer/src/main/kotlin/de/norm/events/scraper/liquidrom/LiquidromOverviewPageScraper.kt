@@ -1,6 +1,7 @@
 package de.norm.events.scraper.liquidrom
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
@@ -104,7 +105,7 @@ class LiquidromOverviewPageScraper(
                     .blankToNull()
                     ?.let(::headlinersFromTitle)
                     .orEmpty()
-                    .map { it.copy(role = "DJ") }
+                    .map { it.copy(role = ArtistRole.DJ) }
         )
     }
 

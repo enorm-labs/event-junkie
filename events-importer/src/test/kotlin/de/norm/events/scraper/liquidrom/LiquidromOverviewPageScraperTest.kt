@@ -1,5 +1,6 @@
 package de.norm.events.scraper.liquidrom
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -50,7 +51,7 @@ class LiquidromOverviewPageScraperTest {
         session.genre shouldBe "Indie Dance, Melodic Techno"
         session.sourceId shouldBe "liquidrom:sound-session-2026-10-27"
         session.sourceUrl shouldBe baseUrl
-        session.artists.map { it.name to it.role } shouldContainExactly listOf("Vlad Yaki" to "DJ")
+        session.artists.map { it.name to it.role } shouldContainExactly listOf("Vlad Yaki" to ArtistRole.DJ)
         session.imageUrl.shouldBeNull()
     }
 

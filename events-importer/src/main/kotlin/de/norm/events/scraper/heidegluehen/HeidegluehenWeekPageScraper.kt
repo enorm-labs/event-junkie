@@ -1,5 +1,6 @@
 package de.norm.events.scraper.heidegluehen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -129,4 +130,4 @@ private val RUNNING_ORDER_LINE = Regex("""(\d{2}[:.]\d{2})\s*[-–]\s*(\d{2}[:.]
 private const val BILLING_SEPARATOR = "//"
 
 /** Every act at this open-air is a DJ; the venue books no live music. */
-private const val DJ_ROLE = "DJ"
+private val DJ_ROLE = ArtistRole.DJ

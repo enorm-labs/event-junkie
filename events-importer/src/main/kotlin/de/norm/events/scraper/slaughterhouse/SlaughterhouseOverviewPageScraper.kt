@@ -1,5 +1,6 @@
 package de.norm.events.scraper.slaughterhouse
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -126,10 +127,10 @@ class SlaughterhouseOverviewPageScraper {
                 ?.split(',')
                 ?.map { it.trim() }
                 ?.filter { it.isNotEmpty() && !isNonArtistName(it) }
-                ?.map { ScrapedArtist(name = it, role = "DJ") }
+                ?.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
                 .orEmpty()
         } else {
-            ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = "HEADLINER", titleDerived = true)) }
+            ACT_PREFIX.find(title)?.let { listOf(ScrapedArtist(name = it.groupValues[1].trim(), role = ArtistRole.HEADLINER, titleDerived = true)) }
                 ?: buildArtistsForEventType(billedSideOfDash(title), subtitle = null, eventType = type)
         }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.schokoladen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.assertions.assertSoftly
@@ -201,9 +202,9 @@ class SchokoladenOverviewPageScraperTest {
             // The subtitle's "& after 22h: No Tears For The Creatures Of The Night DJs (punk, …)" is the aftershow.
             concert.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "MOLOCH", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "PINK WONDER", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "No Tears For The Creatures Of The Night", role = "DJ")
+                    ScrapedArtist(name = "MOLOCH", role = ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist(name = "PINK WONDER", role = ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist(name = "No Tears For The Creatures Of The Night", role = ArtistRole.DJ)
                 )
         }
 
@@ -214,8 +215,8 @@ class SchokoladenOverviewPageScraperTest {
             // The subtitle "+ DJ Calamidades Lola" bills the DJ after the show.
             event.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "Toshìn & The Teleporters", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "Calamidades Lola", role = "DJ")
+                    ScrapedArtist(name = "Toshìn & The Teleporters", role = ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist(name = "Calamidades Lola", role = ArtistRole.DJ)
                 )
         }
 
@@ -235,7 +236,7 @@ class SchokoladenOverviewPageScraperTest {
                         baseUrl
                     ).single()
                     .artists
-                    .filter { it.role == "DJ" }
+                    .filter { it.role == ArtistRole.DJ }
                     .map { it.name }
 
             // Subtitles as the venue printed them between 2026-09-05 and 2026-10-02 (#2327).
@@ -341,7 +342,7 @@ class SchokoladenOverviewPageScraperTest {
             special.eventType.shouldBeNull()
             special.ticketUrl.shouldBeNull()
             // The title is a night, not an act; the subtitle's "& after 22h: DJ Anita Drink" is the one billed name.
-            special.artists shouldContainExactly listOf(ScrapedArtist(name = "Anita Drink", role = "DJ"))
+            special.artists shouldContainExactly listOf(ScrapedArtist(name = "Anita Drink", role = ArtistRole.DJ))
         }
     }
 

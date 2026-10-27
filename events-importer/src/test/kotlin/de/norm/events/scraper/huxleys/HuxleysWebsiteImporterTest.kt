@@ -1,5 +1,6 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -138,8 +139,8 @@ class HuxleysWebsiteImporterTest {
         runTest {
             event(importer.importEvents(overviewUrl), "2026-08-02-thievery-corporation").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Thievery Corporation", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("PECES RAROS", "SUPPORT")
+                    ScrapedArtist("Thievery Corporation", ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist("PECES RAROS", ArtistRole.SUPPORT)
                 )
         }
 

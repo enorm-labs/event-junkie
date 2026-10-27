@@ -1,5 +1,6 @@
 package de.norm.events.scraper.badehaus
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
@@ -83,7 +84,7 @@ class BadehausOverviewPageScraperTest {
         // Badehaus publishes no roster; for an inferred CONCERT the title is the act.
         val ela = events().first { it.sourceId == "badehaus:ela" }
         ela.eventType shouldBe EventType.CONCERT.name
-        ela.artists shouldContainExactly listOf(ScrapedArtist(name = "ela.", role = "HEADLINER", titleDerived = true))
+        ela.artists shouldContainExactly listOf(ScrapedArtist(name = "ela.", role = ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

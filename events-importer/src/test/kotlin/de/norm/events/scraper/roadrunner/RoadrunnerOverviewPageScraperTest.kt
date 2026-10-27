@@ -1,5 +1,6 @@
 package de.norm.events.scraper.roadrunner
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
@@ -125,7 +126,7 @@ class RoadrunnerOverviewPageScraperTest {
 
         night.title shouldBe "40 Jahre Louisiana Rebs Berlin"
         night.billing() shouldBe
-            listOf("THE JETS" to "HEADLINER", "SMOKESTACK LIGHTNIN’" to "HEADLINER", "The Louisiana Wax Team" to "DJ")
+            listOf("THE JETS" to ArtistRole.HEADLINER, "SMOKESTACK LIGHTNIN’" to ArtistRole.HEADLINER, "The Louisiana Wax Team" to ArtistRole.DJ)
         night.description.shouldNotBeNull() shouldStartWith "Qua Alter schon fast"
         night.description shouldNotContain "Live:"
         night.description shouldNotContain "Record Hop:"
@@ -136,7 +137,7 @@ class RoadrunnerOverviewPageScraperTest {
         val samhain = october().single { it.eventDate == LocalDate.of(2026, 10, 31) }
 
         samhain.title shouldBe "AT THE NIGHT OF SAMHAIN"
-        samhain.billing() shouldBe listOf("THE CLOVERHEARTS" to "HEADLINER", "The STINKY PINKY’S" to "SUPPORT")
+        samhain.billing() shouldBe listOf("THE CLOVERHEARTS" to ArtistRole.HEADLINER, "The STINKY PINKY’S" to ArtistRole.SUPPORT)
         samhain.description shouldNotContain "Support:"
     }
 
@@ -147,10 +148,10 @@ class RoadrunnerOverviewPageScraperTest {
         jukeJoint.title shouldBe "THE JUKE JOINT DANCE PARTY"
         jukeJoint.billing() shouldBe
             listOf(
-                "KEITH DUNN" to "HEADLINER",
-                "SAUDIA YOUNG" to "HEADLINER",
-                "LARS VEGAS" to "HEADLINER",
-                "Red Rockin'" to "DJ"
+                "KEITH DUNN" to ArtistRole.HEADLINER,
+                "SAUDIA YOUNG" to ArtistRole.HEADLINER,
+                "LARS VEGAS" to ArtistRole.HEADLINER,
+                "Red Rockin'" to ArtistRole.DJ
             )
     }
 
@@ -170,7 +171,7 @@ class RoadrunnerOverviewPageScraperTest {
 
         bowie.title shouldBe "BOWIE 10"
         bowie.billing() shouldBe
-            listOf("The Sprees", "The Bar Sinister", "Pulsar Mod Club", "Garlands", "Sid Vision", "The Barkind Mad").map { it to "HEADLINER" }
+            listOf("The Sprees", "The Bar Sinister", "Pulsar Mod Club", "Garlands", "Sid Vision", "The Barkind Mad").map { it to ArtistRole.HEADLINER }
         bowie.promoters shouldBe listOf("The David Watts Foundation")
         bowie.description.shouldNotBeNull() shouldNotContain "presents"
         // The paragraph's note on past line-ups stays readable.
@@ -194,7 +195,7 @@ class RoadrunnerOverviewPageScraperTest {
         val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
         event.title shouldBe "GARAGE BATTLE"
-        event.billing() shouldBe listOf("…And You Will Know Us by the Trail of Dead" to "HEADLINER", "The Monsters" to "HEADLINER")
+        event.billing() shouldBe listOf("…And You Will Know Us by the Trail of Dead" to ArtistRole.HEADLINER, "The Monsters" to ArtistRole.HEADLINER)
         event.promoters shouldBe emptyList()
     }
 
@@ -234,10 +235,10 @@ class RoadrunnerOverviewPageScraperTest {
                 baseUrl
             )
 
-        events[0].billing() shouldBe listOf("UNSTRUT" to "HEADLINER", "BOXI BARRÉ" to "HEADLINER", "NERVE CENTER" to "HEADLINER")
-        events[1].billing() shouldBe listOf("HERBST IN PEKING" to "HEADLINER", "TARWATER" to "HEADLINER")
+        events[0].billing() shouldBe listOf("UNSTRUT" to ArtistRole.HEADLINER, "BOXI BARRÉ" to ArtistRole.HEADLINER, "NERVE CENTER" to ArtistRole.HEADLINER)
+        events[1].billing() shouldBe listOf("HERBST IN PEKING" to ArtistRole.HEADLINER, "TARWATER" to ArtistRole.HEADLINER)
         val lazys = events[2]
-        lazys.billing() shouldBe listOf("THE LAZYS" to "HEADLINER", "SWEET ELECTRIC" to "SUPPORT")
+        lazys.billing() shouldBe listOf("THE LAZYS" to ArtistRole.HEADLINER, "SWEET ELECTRIC" to ArtistRole.SUPPORT)
         lazys.artists.first().titleDerived shouldBe true
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zigzag
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -72,7 +73,7 @@ class ZigZagDetailPageScraper {
                     ?.trim()
             }.filter { it.split(' ').size <= MAX_NAME_WORDS }
             .distinct()
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     /** The `<br>`-separated lines, a `<br>` inside `<strong>` included. */
     private fun Element.lines(): List<String> =

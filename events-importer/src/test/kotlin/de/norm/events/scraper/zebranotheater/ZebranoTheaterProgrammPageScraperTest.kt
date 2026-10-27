@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zebranotheater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -61,7 +62,7 @@ class ZebranoTheaterProgrammPageScraperTest {
         concert.ticketUrl shouldBe "https://www.eventim-light.com/de/a/65c568fdcadf314c3518ca9a/e/6aacfcb7333a943929559b06"
         concert.priceBoxOffice shouldBe BigDecimal("20")
         concert.priceNote shouldBe "ermäßigt 15 €"
-        concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Beppe Gambetta"), ScrapedArtist(name = "Felix Meyer", role = "SUPPORT"))
+        concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Beppe Gambetta"), ScrapedArtist(name = "Felix Meyer", role = ArtistRole.SUPPORT))
     }
 
     @Test
@@ -77,9 +78,9 @@ class ZebranoTheaterProgrammPageScraperTest {
     @Test
     fun `bills the host of his own show and the evening's applicant as a guest`() {
         event("2026-10-04").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Sebastian Krämer"), ScrapedArtist(name = "Emil Bach", role = "SUPPORT"))
+            listOf(ScrapedArtist(name = "Sebastian Krämer"), ScrapedArtist(name = "Emil Bach", role = ArtistRole.SUPPORT))
         event("2026-12-06").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Sebastian Krämer"), ScrapedArtist(name = "Ulan & Bator", role = "SUPPORT"))
+            listOf(ScrapedArtist(name = "Sebastian Krämer"), ScrapedArtist(name = "Ulan & Bator", role = ArtistRole.SUPPORT))
     }
 
     @Test
@@ -102,7 +103,7 @@ class ZebranoTheaterProgrammPageScraperTest {
     fun `splits a duo and a featured guest`() {
         event("2026-11-20").artists.map { it.name } shouldContainExactly listOf("Ulrich Zehfuß", "Claudia Fink")
         event("2027-01-29").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "George Leitenberger"), ScrapedArtist(name = "Andreas Albrecht", role = "SUPPORT"))
+            listOf(ScrapedArtist(name = "George Leitenberger"), ScrapedArtist(name = "Andreas Albrecht", role = ArtistRole.SUPPORT))
     }
 
     @Test

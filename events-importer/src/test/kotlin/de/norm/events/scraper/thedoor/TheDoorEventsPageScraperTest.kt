@@ -1,5 +1,6 @@
 package de.norm.events.scraper.thedoor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -63,7 +64,7 @@ class TheDoorEventsPageScraperTest {
         event.imageUrl shouldBe "https://thedoor.club/wp-content/uploads/2026/10/plastik-funk-17-10-2026.jpg"
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "the_door:2026-10-17"
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         djs("2026-10-17") shouldContainExactly listOf("PLASTIK FUNK", "MELENDEZ", "3NERGY", "FRANKIE BALOU")
     }
 

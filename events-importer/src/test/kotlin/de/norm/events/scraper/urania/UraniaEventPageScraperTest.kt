@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urania
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.nulls.shouldBeNull
@@ -99,7 +100,7 @@ class UraniaEventPageScraperTest {
     fun `stores the billed speakers as headliners`() {
         pioneers.artists.map { it.name } shouldBe listOf("Thomas R. Hoffmann")
         opening.artists.map { it.name }.first() shouldBe "Andrea Römmele"
-        opening.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+        opening.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test

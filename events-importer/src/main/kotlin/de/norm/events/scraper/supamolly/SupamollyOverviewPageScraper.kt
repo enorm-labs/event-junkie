@@ -1,5 +1,6 @@
 package de.norm.events.scraper.supamolly
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.COMPACT_DATE
@@ -113,7 +114,7 @@ class SupamollyOverviewPageScraper {
         val nightDjs = blocks.mapNotNull(::nightDj)
         val artists =
             buildArtists(blocks.filter { nightDj(it) == null }.mapNotNull { it.name }) +
-                nightDjs.map { ScrapedArtist(name = it, role = "DJ") }
+                nightDjs.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
         return ScrapedEvent(
             title = title,
@@ -178,7 +179,7 @@ class SupamollyOverviewPageScraper {
                 .distinctBy { it.name }
         val headliner = acts.firstOrNull { it.role == null }
         return acts.map { act ->
-            ScrapedArtist(name = act.name, role = act.role ?: if (act === headliner) "HEADLINER" else "SUPPORT")
+            ScrapedArtist(name = act.name, role = act.role ?: if (act === headliner) ArtistRole.HEADLINER else ArtistRole.SUPPORT)
         }
     }
 
@@ -193,14 +194,14 @@ class SupamollyOverviewPageScraper {
         val name = block.replaceFirst(LEADING_CONJUNCTION, "").replace(FOUNDING_TAGLINE, "").trim()
         AFTER_PARTY_LEAD_IN.find(name)?.let { label ->
             val act = stripArtistSuffix(name.substring(label.range.last + 1))
-            return listOf(BilledAct(act, if (DJ_NAME_PREFIX.containsMatchIn(act)) "DJ" else "SUPPORT"))
+            return listOf(BilledAct(act, if (DJ_NAME_PREFIX.containsMatchIn(act)) ArtistRole.DJ else ArtistRole.SUPPORT))
         }
         DJ_LIST_LABEL.find(name)?.let { label ->
             val list = name.substring(label.range.last + 1)
-            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim()), "DJ") }
+            return (commaListActs(list) ?: list.split(DJ_LIST_SEPARATOR)).map { BilledAct(stripArtistSuffix(it.trim()), ArtistRole.DJ) }
         }
         LIVE_LABEL.find(name)?.let { label ->
-            return listOf(BilledAct(stripArtistSuffix(name.substring(label.range.last + 1)), "LIVE"))
+            return listOf(BilledAct(stripArtistSuffix(name.substring(label.range.last + 1)), ArtistRole.LIVE))
         }
         return listOf(BilledAct(stripArtistSuffix(stripArtistPrefix(name)), role = null))
     }
@@ -251,7 +252,7 @@ class SupamollyOverviewPageScraper {
     /** One act of a block, with the role its label states, or `null` when the billing order decides. */
     private data class BilledAct(
         val name: String,
-        val role: String?
+        val role: ArtistRole?
     )
 
     /** One billed `div.even` block: the act name and its note, either of which may be absent. */

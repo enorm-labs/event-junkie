@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pfefferberghaus13
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -150,7 +151,7 @@ internal fun actsOf(
     lineup: List<String>
 ): List<ScrapedArtist> =
     when {
-        type in LISTED_LINEUP_TYPES && lineup.isNotEmpty() -> lineup.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = "HEADLINER") }
+        type in LISTED_LINEUP_TYPES && lineup.isNotEmpty() -> lineup.filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
         ACT_FRAME.containsMatchIn(title) -> buildArtistsForEventType(title, subtitle = null, eventType = type, unpackWithFrame = true)
         else -> emptyList()
     }

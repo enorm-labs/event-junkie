@@ -1,5 +1,6 @@
 package de.norm.events.scraper.weltwirtschaft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -68,7 +69,7 @@ class WeltwirtschaftApiScraperTest {
 
         night.startTime shouldBe LocalTime.of(22, 0)
         night.endDate.shouldBeNull()
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Annika Line Trost", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Annika Line Trost", role = ArtistRole.DJ))
     }
 
     @Test

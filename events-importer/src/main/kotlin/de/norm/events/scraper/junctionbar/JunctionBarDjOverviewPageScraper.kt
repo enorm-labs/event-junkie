@@ -1,6 +1,7 @@
 package de.norm.events.scraper.junctionbar
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -106,7 +107,7 @@ class JunctionBarDjOverviewPageScraper(
             artists =
                 djNames
                     .filterNot { isNonArtistName(it) }
-                    .map { ScrapedArtist(name = it, role = "DJ") }
+                    .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

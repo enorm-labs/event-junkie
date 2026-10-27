@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hole44
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -113,8 +114,8 @@ class Hole44WebsiteImporterTest {
             municipal.startTime shouldBe LocalTime.of(20, 0)
             municipal.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("Battlecreek", "SUPPORT")
+                    ScrapedArtist("Municipal Waste", ArtistRole.HEADLINER, titleDerived = true),
+                    ScrapedArtist("Battlecreek", ArtistRole.SUPPORT)
                 )
         }
 

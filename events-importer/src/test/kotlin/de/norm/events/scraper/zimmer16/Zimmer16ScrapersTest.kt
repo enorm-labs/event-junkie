@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zimmer16
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.forChildrenPhrase
 import de.norm.events.scraper.isForChildren
@@ -42,7 +43,7 @@ class Zimmer16ScrapersTest {
     fun `moves a support act out of the title and types the house's other formats`() {
         val rotlicht = events.first { it.title == "Rotlicht" }
         rotlicht.subtitle shouldBe "Support: Isolisation"
-        rotlicht.artists.map { it.name to it.role } shouldBe listOf("Rotlicht" to "HEADLINER", "Isolisation" to "SUPPORT")
+        rotlicht.artists.map { it.name to it.role } shouldBe listOf("Rotlicht" to ArtistRole.HEADLINER, "Isolisation" to ArtistRole.SUPPORT)
         events.first { it.title.startsWith("So noch nie") }.eventType shouldBe EventType.READING.name
         events.first { it.title.contains("Kreisler Revue") }.eventType shouldBe EventType.SHOW.name
     }
@@ -62,10 +63,10 @@ class Zimmer16ScrapersTest {
                 .scrape(Jsoup.parse(cards(PRODUCTION_TITLES), baseUrl), baseUrl)
                 .associate { it.title to (it.eventType to it.artists.map { artist -> artist.name to artist.role }) }
 
-        billed["Le Tomboy Release Tour, The Murk Prince"] shouldBe (EventType.CONCERT.name to listOf("The Murk Prince" to "HEADLINER"))
+        billed["Le Tomboy Release Tour, The Murk Prince"] shouldBe (EventType.CONCERT.name to listOf("The Murk Prince" to ArtistRole.HEADLINER))
         billed["Soundtrack to Sunset, Landmusik"] shouldBe
-            (EventType.CONCERT.name to listOf("Soundtrack to Sunset" to "HEADLINER", "Landmusik" to "HEADLINER"))
-        billed["Frühling im Späti mit Jens Ohrenblicker"] shouldBe (EventType.CONCERT.name to listOf("Jens Ohrenblicker" to "HEADLINER"))
+            (EventType.CONCERT.name to listOf("Soundtrack to Sunset" to ArtistRole.HEADLINER, "Landmusik" to ArtistRole.HEADLINER))
+        billed["Frühling im Späti mit Jens Ohrenblicker"] shouldBe (EventType.CONCERT.name to listOf("Jens Ohrenblicker" to ArtistRole.HEADLINER))
         billed["Offene Bühne"] shouldBe (EventType.CONCERT.name to emptyList())
         billed["Die offene Liederbühne – Singer-Songwriter-Forum"] shouldBe (EventType.CONCERT.name to emptyList())
         billed.getValue("Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht").second.shouldBeEmpty()

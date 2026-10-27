@@ -1,5 +1,6 @@
 package de.norm.events.scraper.schokoladen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -398,7 +399,7 @@ private fun aftershowDjs(subtitle: String?): List<ScrapedArtist> {
                 .trim()
         }.filterNot { it.isBlank() || isNonArtistName(it) }
         .distinct()
-        .map { ScrapedArtist(name = it, role = "DJ") }
+        .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 }
 
 /** The aftershow lead-in, capturing the lineup after it: `& after 22h:`, or a `+` straight before a `DJ` label. */

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.passionskirche
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.GERMAN_MONTH_NAMES
@@ -82,7 +83,7 @@ class PassionskircheEventPageScraper {
     ): List<ScrapedArtist> {
         val text = description?.lowercase() ?: return emptyList()
         val heads = headlinersFromTitle(title.split(TITLE_TAIL, limit = 2).first())
-        val support = extractSupportFromSubtitle(title).map { ScrapedArtist(name = it, role = "SUPPORT", titleDerived = true) }
+        val support = extractSupportFromSubtitle(title).map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT, titleDerived = true) }
         return (heads + support).filter { it.name.lowercase() in text }
     }
 

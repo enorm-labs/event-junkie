@@ -1,6 +1,7 @@
 package de.norm.events.scraper.heimathafen
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
@@ -164,7 +165,7 @@ class HeimathafenApiScraper(
         val corroborated = leads.size >= MIN_CAST_ACTS && leads.all { title.contains(it, ignoreCase = true) }
         return leads
             .takeIf { corroborated }
-            ?.map { ScrapedArtist(name = it, role = "HEADLINER") }
+            ?.map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
     }
 
     /** One event from a single `event_performances` entry, or `null` when its date is unparseable. */

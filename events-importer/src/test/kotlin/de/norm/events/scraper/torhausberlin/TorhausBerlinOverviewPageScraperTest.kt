@@ -1,5 +1,6 @@
 package de.norm.events.scraper.torhausberlin
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -72,7 +73,7 @@ class TorhausBerlinOverviewPageScraperTest {
         val events = scrapeFixture()
 
         events[0].artists.map { it.name } shouldContainExactly listOf("jass:minute", "Arekipe", "RAW DJ", "Zoran", "elva", "Ephémera")
-        events[0].artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        events[0].artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         events[1].artists.map { it.name } shouldContainExactly listOf("Johann Florin", "museum of no art", "Isa Schwarzenberg")
     }
 
@@ -93,7 +94,7 @@ class TorhausBerlinOverviewPageScraperTest {
         events shouldHaveSize 1
         events[0].title shouldBe "Ausstellung im Torhaus"
         events[0].eventType shouldBe EventType.EXHIBITION.name
-        events[0].artists.map { it.role } shouldContainExactly listOf("HEADLINER")
+        events[0].artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER)
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.kater
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -79,17 +80,17 @@ class KaterOverviewPageScraperTest {
         night.ticketUrl shouldBe "https://de.ra.co/events/2466351"
         night.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Cabizbajo", "DJ", "HOPPER"),
-                ScrapedArtist("Damon Jee", "DJ", "HOPPER"),
-                ScrapedArtist("KALEA", "DJ", "HOPPER"),
-                ScrapedArtist("Cosmic Cherry", "DJ", "ACID BOGEN"),
-                ScrapedArtist("Daraio", "DJ", "ACID BOGEN"),
-                ScrapedArtist("Andrea Fiorito", "DJ", "ACID BOGEN"),
+                ScrapedArtist("Cabizbajo", ArtistRole.DJ, "HOPPER"),
+                ScrapedArtist("Damon Jee", ArtistRole.DJ, "HOPPER"),
+                ScrapedArtist("KALEA", ArtistRole.DJ, "HOPPER"),
+                ScrapedArtist("Cosmic Cherry", ArtistRole.DJ, "ACID BOGEN"),
+                ScrapedArtist("Daraio", ArtistRole.DJ, "ACID BOGEN"),
+                ScrapedArtist("Andrea Fiorito", ArtistRole.DJ, "ACID BOGEN"),
                 // `Saturday by Muting The Noise` sits between the acts: a floor heading, never a DJ (#1679).
-                ScrapedArtist("Mystigrix", "DJ", "ACID BOGEN"),
-                ScrapedArtist("Josiane", "DJ", "ACID BOGEN"),
-                ScrapedArtist("TDKK", "DJ", "ACID BOGEN"),
-                ScrapedArtist("Vovolectr0", "DJ", "ACID BOGEN")
+                ScrapedArtist("Mystigrix", ArtistRole.DJ, "ACID BOGEN"),
+                ScrapedArtist("Josiane", ArtistRole.DJ, "ACID BOGEN"),
+                ScrapedArtist("TDKK", ArtistRole.DJ, "ACID BOGEN"),
+                ScrapedArtist("Vovolectr0", ArtistRole.DJ, "ACID BOGEN")
             )
     }
 
@@ -150,8 +151,8 @@ class KaterOverviewPageScraperTest {
 
         artists shouldContainExactly
             listOf(
-                ScrapedArtist("Revengedeko", "DJ", "EXTRA"),
-                ScrapedArtist("Chief Torkel", "DJ", "EXTRAEXTRA")
+                ScrapedArtist("Revengedeko", ArtistRole.DJ, "EXTRA"),
+                ScrapedArtist("Chief Torkel", ArtistRole.DJ, "EXTRAEXTRA")
             )
     }
 
@@ -177,7 +178,7 @@ class KaterOverviewPageScraperTest {
 
         val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
 
-        artists shouldContainExactly listOf(ScrapedArtist("Mona Moore", "DJ", "HOPPER"))
+        artists shouldContainExactly listOf(ScrapedArtist("Mona Moore", ArtistRole.DJ, "HOPPER"))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zosch
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -71,7 +72,7 @@ class ZoschOverviewPageScraperTest {
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "zosch:2026-10-29-jazzformation-just-friends"
         event.ticketUrl.shouldBeNull()
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Jazzformation Just Friends", role = "HEADLINER", titleDerived = true))
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Jazzformation Just Friends", role = ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

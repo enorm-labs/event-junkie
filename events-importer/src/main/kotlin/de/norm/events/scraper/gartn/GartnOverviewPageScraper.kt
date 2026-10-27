@@ -1,6 +1,7 @@
 package de.norm.events.scraper.gartn
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -165,7 +166,7 @@ class GartnOverviewPageScraper(
         if (paragraph == null) return emptyList()
         return billingLines(paragraph)
             .flatMap { line -> if (line.isCast) splitSupportActs(line.text) else line.text.split(B2B_SEPARATOR) }
-            .map { ScrapedArtist(name = stripArtistSuffix(it.trim()), role = if (LIVE_TAIL.containsMatchIn(it)) "LIVE" else "DJ") }
+            .map { ScrapedArtist(name = stripArtistSuffix(it.trim()), role = if (LIVE_TAIL.containsMatchIn(it)) ArtistRole.LIVE else ArtistRole.DJ) }
             .filter { it.name.isNotBlank() && !isNonArtistName(it.name) }
             .distinctBy { it.name.lowercase() }
     }

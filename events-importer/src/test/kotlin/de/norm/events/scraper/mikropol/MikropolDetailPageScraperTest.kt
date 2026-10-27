@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mikropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -54,8 +55,8 @@ class MikropolDetailPageScraperTest {
         event.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/"
         event.artists shouldBe
             listOf(
-                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
-                ScrapedArtist("noise of the voiceless", "SUPPORT")
+                ScrapedArtist("HOUSE OF PROTECTION", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("noise of the voiceless", ArtistRole.SUPPORT)
             )
     }
 
@@ -67,8 +68,8 @@ class MikropolDetailPageScraperTest {
         event.title shouldBe "tomas tulpe DJANE SHEENA"
         event.artists shouldBe
             listOf(
-                ScrapedArtist("tomas tulpe", "HEADLINER", titleDerived = true),
-                ScrapedArtist("djane sheena", "SUPPORT")
+                ScrapedArtist("tomas tulpe", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("djane sheena", ArtistRole.SUPPORT)
             )
     }
 
@@ -88,7 +89,7 @@ class MikropolDetailPageScraperTest {
         event.title shouldBe "Vowws"
         event.status shouldBe "CANCELLED"
         event.soldOut shouldBe false
-        event.artists shouldBe listOf(ScrapedArtist("Vowws", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("Vowws", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -98,7 +99,7 @@ class MikropolDetailPageScraperTest {
 
         event.title shouldBe "CULTURE WARS"
         event.status shouldBe "RELOCATED"
-        event.artists shouldBe listOf(ScrapedArtist("CULTURE WARS", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("CULTURE WARS", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -111,7 +112,7 @@ class MikropolDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(20, 0)
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.description.shouldNotBeNull() shouldStartWith "Schwarz und Rosa"
-        event.artists shouldBe listOf(ScrapedArtist("DUEJA", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("DUEJA", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     // The credit sits above the title as "<promoter> presents:"; a page without one stores none (#1532).

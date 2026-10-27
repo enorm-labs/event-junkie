@@ -1,5 +1,6 @@
 package de.norm.events.scraper.thedoor
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -63,7 +64,7 @@ class TheDoorEventsPageScraper {
             imageUrl = card.imgSrcAt("img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.THE_DOOR.sourceIdPrefix}$date",
-            artists = lineup.map { ScrapedArtist(name = it, role = "DJ") }
+            artists = lineup.map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

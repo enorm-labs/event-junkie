@@ -1,5 +1,6 @@
 package de.norm.events.scraper.loge
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -88,7 +89,7 @@ class LogeWebsiteImporterTest {
             val estamoe = events(importer.importEvents(sourceUrl)).first { it.sourceId == "loge:estamoe-daloy-furie" }
             estamoe.pricePresale shouldBe BigDecimal("12.30")
             estamoe.status shouldBe "SCHEDULED"
-            estamoe.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT", "SUPPORT")
+            estamoe.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT, ArtistRole.SUPPORT)
             // The end is in the overview JSON alone and has to survive the merge (#1408).
             estamoe.endDate shouldBe LocalDate.of(2026, 7, 17)
             estamoe.endTime shouldBe LocalTime.of(22, 0)

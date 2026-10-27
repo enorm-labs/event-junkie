@@ -1,5 +1,6 @@
 package de.norm.events.scraper.konradtoenz
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -53,7 +54,7 @@ class KonradToenzOverviewPageScraperTest {
         event.doorsTime.shouldBeNull()
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "konrad_toenz:2026-10-16"
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Turbo Pascal" to "DJ")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("DJ Turbo Pascal" to ArtistRole.DJ)
         event.genre shouldBe "Disco, Krautrock"
     }
 

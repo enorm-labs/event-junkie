@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.buildArtistsForEventType
 import io.kotest.matchers.shouldBe
@@ -44,9 +45,9 @@ class ModusComedySeriesTest {
 
         modusLineup(title, modusEventType(title), description = null) shouldBe
             listOf(
-                ScrapedArtist("Yasola", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Victoria West", "HEADLINER", titleDerived = true),
-                ScrapedArtist("PARA", "HEADLINER", titleDerived = true)
+                ScrapedArtist("Yasola", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Victoria West", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("PARA", ArtistRole.HEADLINER, titleDerived = true)
             )
     }
 

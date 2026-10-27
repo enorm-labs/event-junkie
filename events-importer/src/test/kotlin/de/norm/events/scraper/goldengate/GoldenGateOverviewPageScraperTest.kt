@@ -1,5 +1,6 @@
 package de.norm.events.scraper.goldengate
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -85,9 +86,9 @@ class GoldenGateOverviewPageScraperTest {
         donnerdogge.pricePresale.shouldBeNull()
         donnerdogge.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Neco", "DJ"),
-                ScrapedArtist("Jeremy Reinhard", "DJ"),
-                ScrapedArtist("Yannick Robyns", "DJ")
+                ScrapedArtist("Neco", ArtistRole.DJ),
+                ScrapedArtist("Jeremy Reinhard", ArtistRole.DJ),
+                ScrapedArtist("Yannick Robyns", ArtistRole.DJ)
             )
     }
 
@@ -95,11 +96,11 @@ class GoldenGateOverviewPageScraperTest {
     fun `splits a back-to-back billing into two DJs`() {
         events[1].artists shouldContainExactly
             listOf(
-                ScrapedArtist("Sean Dixon", "DJ"),
-                ScrapedArtist("Koljah", "DJ"),
-                ScrapedArtist("Nyna Curtis", "DJ"),
-                ScrapedArtist("Kisling", "DJ"),
-                ScrapedArtist("Berunth", "DJ")
+                ScrapedArtist("Sean Dixon", ArtistRole.DJ),
+                ScrapedArtist("Koljah", ArtistRole.DJ),
+                ScrapedArtist("Nyna Curtis", ArtistRole.DJ),
+                ScrapedArtist("Kisling", ArtistRole.DJ),
+                ScrapedArtist("Berunth", ArtistRole.DJ)
             )
     }
 

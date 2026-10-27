@@ -1,5 +1,6 @@
 package de.norm.events.scraper.pastiche
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -42,7 +43,7 @@ class PasticheScrapersTest {
         ramzi.ticketUrl shouldBe ramziUrl
         ramzi.sourceId shouldBe "pastiche:ramzi-i-live-i-22-10"
         ramzi.description shouldBe "Hyped to host Montreal based mind-boggling all -genre-of-electronica producer Ramzi for a special live set."
-        ramzi.artists shouldContainExactly listOf(ScrapedArtist("RAMZi", "HEADLINER"))
+        ramzi.artists shouldContainExactly listOf(ScrapedArtist("RAMZi", ArtistRole.HEADLINER))
         ramzi.free shouldBe false
     }
 
@@ -75,7 +76,7 @@ class PasticheScrapersTest {
         untyped.eventType shouldBe "CONCERT"
         untyped.typeIsFallback shouldBe true
         untyped.artists.shouldBeEmpty()
-        scrape(row("Sat, 24th Oct", "Someone", "DJ Set")).single().artists shouldContainExactly listOf(ScrapedArtist("Someone", "DJ"))
+        scrape(row("Sat, 24th Oct", "Someone", "DJ Set")).single().artists shouldContainExactly listOf(ScrapedArtist("Someone", ArtistRole.DJ))
     }
 
     @Test

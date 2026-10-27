@@ -1,5 +1,6 @@
 package de.norm.events.scraper.orangerie
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
@@ -116,7 +117,7 @@ class OrangerieOverviewPageScraper {
         name: String,
         eventType: EventType
     ): List<ScrapedArtist> {
-        val role = if (eventType == EventType.CONCERT) "HEADLINER" else "DJ"
+        val role = if (eventType == EventType.CONCERT) ArtistRole.HEADLINER else ArtistRole.DJ
         val acts = name.substringAfter(WITH, "")
         return (commaListActs(acts) ?: acts.split(','))
             .flatMap { splitCrossBilled(it.trim()) }

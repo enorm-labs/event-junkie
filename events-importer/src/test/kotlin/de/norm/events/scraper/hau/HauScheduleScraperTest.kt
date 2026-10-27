@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hau
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -57,7 +58,7 @@ class HauScheduleScraperTest {
         event.eventType shouldBe EventType.PARTY.name
         event.room shouldBe "WAU"
         event.startTime shouldBe LocalTime.of(22, 0)
-        event.artists.map { it.name to it.role } shouldBe listOf("Kidcat" to "DJ", "Broccoli" to "DJ")
+        event.artists.map { it.name to it.role } shouldBe listOf("Kidcat" to ArtistRole.DJ, "Broccoli" to ArtistRole.DJ)
     }
 
     @Test

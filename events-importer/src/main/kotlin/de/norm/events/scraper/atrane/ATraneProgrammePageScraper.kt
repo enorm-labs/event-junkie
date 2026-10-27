@@ -1,6 +1,7 @@
 package de.norm.events.scraper.atrane
 
 import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -102,7 +103,7 @@ class ATraneProgrammePageScraper {
                     guests
                         .filterNot { names(act, it) }
                         .distinctBy { it.lowercase() }
-                        .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                        .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
         )
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.tausend
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -109,7 +110,7 @@ class TausendOverviewPageScraper {
     ): List<ScrapedArtist> {
         if (act.equals(series, ignoreCase = true)) return emptyList()
         val names = if (eventType == EventType.CONCERT.name) listOf(act) else splitSegmentOnConjunctions(act)
-        val role = if (eventType == EventType.CONCERT.name) "HEADLINER" else "DJ"
+        val role = if (eventType == EventType.CONCERT.name) ArtistRole.HEADLINER else ArtistRole.DJ
         return names.filterNot { isNonArtistName(it) }.map { ScrapedArtist(name = it, role = role) }
     }
 

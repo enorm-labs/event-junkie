@@ -1,6 +1,7 @@
 package de.norm.events.scraper.klunkerkranich
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -163,10 +164,10 @@ class KlunkerkranichOverviewPageScraper(
     private fun parseLineup(title: String): List<ScrapedArtist> {
         val lineup = LINEUP_MARKER.findAll(title).lastOrNull()?.let { title.substring(it.range.last + 1) } ?: return emptyList()
         val sections = lineup.split(SECTION_SEPARATOR)
-        val unlabelledRole = if (sections.any(DJ_SECTION_LABEL::containsMatchIn)) "HEADLINER" else "DJ"
+        val unlabelledRole = if (sections.any(DJ_SECTION_LABEL::containsMatchIn)) ArtistRole.HEADLINER else ArtistRole.DJ
         return sections
             .flatMap { section ->
-                val sectionRole = if (DJ_SECTION_LABEL.containsMatchIn(section)) "DJ" else unlabelledRole
+                val sectionRole = if (DJ_SECTION_LABEL.containsMatchIn(section)) ArtistRole.DJ else unlabelledRole
                 section.split(BILLING_SEPARATOR).flatMap { parseBilling(it, sectionRole) }
             }.distinctBy { it.name.lowercase() }
     }
@@ -195,12 +196,12 @@ class KlunkerkranichOverviewPageScraper(
      */
     private fun parseBilling(
         billing: String,
-        sectionRole: String
+        sectionRole: ArtistRole
     ): List<ScrapedArtist> {
         val role =
             when {
-                DJ_SECTION_LABEL.containsMatchIn(billing) -> "DJ"
-                LIVE_MARKER.containsMatchIn(billing) -> if (sectionRole == "DJ") "LIVE" else sectionRole
+                DJ_SECTION_LABEL.containsMatchIn(billing) -> ArtistRole.DJ
+                LIVE_MARKER.containsMatchIn(billing) -> if (sectionRole == ArtistRole.DJ) ArtistRole.LIVE else sectionRole
                 else -> sectionRole
             }
         val unmarked = billing.replaceFirst(DJ_SECTION_LABEL, "").replace(LIVE_MARKER, "").trim()

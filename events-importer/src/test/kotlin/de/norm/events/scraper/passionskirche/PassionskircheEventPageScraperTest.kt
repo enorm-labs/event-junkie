@@ -1,5 +1,6 @@
 package de.norm.events.scraper.passionskirche
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.isFestivalTitle
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -67,7 +68,7 @@ class PassionskircheEventPageScraperTest {
         event.eventDate shouldBe LocalDate.of(2026, 11, 6)
         event.doorsTime shouldBe LocalTime.of(18, 0)
         event.startTime shouldBe LocalTime.of(19, 0)
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("RITA WILSON" to "HEADLINER", "ANNA LEANNE" to "SUPPORT")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("RITA WILSON" to ArtistRole.HEADLINER, "ANNA LEANNE" to ArtistRole.SUPPORT)
     }
 
     @Test

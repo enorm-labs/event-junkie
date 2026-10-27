@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soulcat
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -42,7 +43,7 @@ class SoulcatApiScraperTest {
         night.endDate shouldBe LocalDate.of(2026, 10, 14)
         night.endTime shouldBe LocalTime.of(1, 0)
         night.genre shouldBe "60s RnB, Soul & Blues"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Krawallisch", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Krawallisch", role = ArtistRole.DJ))
         night.sourceUrl shouldBe "https://soulcat-berlin.com/events/dj-krawallisch-60s-rnb-soul-blues/"
     }
 

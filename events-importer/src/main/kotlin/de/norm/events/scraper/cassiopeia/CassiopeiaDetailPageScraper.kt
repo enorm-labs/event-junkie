@@ -1,5 +1,6 @@
 package de.norm.events.scraper.cassiopeia
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
@@ -220,7 +221,7 @@ class CassiopeiaDetailPageScraper {
                 .mapNotNull { SUPPORT_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
                 .flatMap { splitSupportActs(it) }
                 .filter { !isNonArtistName(it) }
-                .map { ScrapedArtist(name = it, role = "SUPPORT") }
+                .map { ScrapedArtist(name = it, role = ArtistRole.SUPPORT) }
 
         return (headlinersFromTitle(title) + lineupHeadliners(content)).distinctBy { it.name.lowercase() } + supportActs
     }
@@ -239,7 +240,7 @@ class CassiopeiaDetailPageScraper {
             .drop(1)
             .flatMap { paragraph -> LINEUP_HEAD.findAll(paragraph).map { it.groupValues[1].trim() } }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     companion object {
         /** CSS selector for the main event content container on the detail page. */

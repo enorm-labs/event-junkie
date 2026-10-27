@@ -1,5 +1,6 @@
 package de.norm.events.scraper.koepi
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -11,7 +12,7 @@ class KoepiBillScraperTest {
     fun `bills each quoted act with its bracket, the first as headliner`() {
         val bill = parseKoepiBill("\"Death Gasp\"\n(Stench Crust, Pittsburgh, US) -\n\"Krime\"\n(Hardcore Punk, Netherlands) -\n\"Sense\"\n(Punk, Bremen)")
         bill.artists.map { it.name to it.role } shouldBe
-            listOf("Death Gasp" to "HEADLINER", "Krime" to "SUPPORT", "Sense" to "SUPPORT")
+            listOf("Death Gasp" to ArtistRole.HEADLINER, "Krime" to ArtistRole.SUPPORT, "Sense" to ArtistRole.SUPPORT)
         bill.genre shouldBe "Stench Crust, Hardcore Punk, Punk"
     }
 
@@ -23,7 +24,7 @@ class KoepiBillScraperTest {
                     "\"FUNERAL DAMAGE\" (Crust, Berlin) - \"PUNK DJs\" (BALADA GANGSTER) - \"OUR ROOTS ARE STRONGER THAN YOUR CHAINS.\""
             )
         bill.artists.map { it.name to it.role } shouldBe
-            listOf("HOSTIUM" to "HEADLINER", "FUNERAL DAMAGE" to "SUPPORT", "BALADA GANGSTER" to "DJ")
+            listOf("HOSTIUM" to ArtistRole.HEADLINER, "FUNERAL DAMAGE" to ArtistRole.SUPPORT, "BALADA GANGSTER" to ArtistRole.DJ)
         bill.genre shouldBe "Trash Punk / HC, Crust"
     }
 

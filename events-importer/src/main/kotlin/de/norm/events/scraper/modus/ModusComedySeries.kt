@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.WHITESPACE
@@ -66,7 +67,7 @@ internal fun comedySeriesLineup(description: Element?): List<ScrapedArtist> =
         .takeWhile { !isProse(it) }
         .filterNot { isNonArtistName(it) }
         .distinct()
-        .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT") }
+        .mapIndexed { index, name -> ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT) }
 
 private const val SERIES_SEPARATOR = " - "
 

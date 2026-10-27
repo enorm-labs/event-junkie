@@ -1,5 +1,6 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -80,7 +81,7 @@ class MetropolOverviewPageScraperTest {
         val thyArt = event("metropol:2026-08-04-thy-art-is-murder")
         thyArt.artists.map { it.name } shouldBe
             listOf("Thy Art is Murder", "Fit For An Autopsy", "Sun Eater", "Protest The Hero")
-        thyArt.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT", "SUPPORT", "SUPPORT")
+        thyArt.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT, ArtistRole.SUPPORT, ArtistRole.SUPPORT)
     }
 
     @Test
@@ -88,7 +89,7 @@ class MetropolOverviewPageScraperTest {
         // `Support: Crag Finn` on the listing minted an artist under the label on thirteen nights (#1678).
         val mountainGoats = event("metropol:2026-10-11-the-mountain-goats")
         mountainGoats.artists.map { it.name } shouldBe listOf("The Mountain Goats", "Crag Finn")
-        mountainGoats.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT")
+        mountainGoats.artists.map { it.role } shouldBe listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT)
     }
 
     @Test

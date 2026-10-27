@@ -1,5 +1,6 @@
 package de.norm.events.scraper.eschschloraque
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -117,10 +118,10 @@ class EschschloraqueOverviewPageScraperTest {
         val jubilee = events.first { it.title == "20 Jahre MissVergnügen!" }
         jubilee.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Coost Lardy Cake" to "DJ",
-                "MissVergnügen" to "DJ",
-                "Nostalgican" to "LIVE",
-                "ear def" to "LIVE"
+                "Coost Lardy Cake" to ArtistRole.DJ,
+                "MissVergnügen" to ArtistRole.DJ,
+                "Nostalgican" to ArtistRole.LIVE,
+                "ear def" to ArtistRole.LIVE
             )
     }
 
@@ -129,7 +130,7 @@ class EschschloraqueOverviewPageScraperTest {
         // "DJ VELA & DJ Sky Deep" carries no colon, so nothing is a role label to strip.
         val badass = events.first { it.title == "BadassBassBombardement" }
         badass.artists.map { it.name } shouldBe listOf("DJ VELA", "DJ Sky Deep")
-        badass.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        badass.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
     }
 
     @Test
@@ -145,7 +146,7 @@ class EschschloraqueOverviewPageScraperTest {
         // "Krawallwitz & Simon Eickenboom": one `.redsubtitle` in the intro, the other further down
         // the body, and only the first was read (#1136).
         val night = scrape("eschschloraque-overview-two-djs.html").first { it.title == "Krawallwitz & Simon Eickenboom" }
-        night.artists.map { it.name to it.role } shouldBe listOf("Krawallwitz" to "DJ", "Simon Eickenboom" to "DJ")
+        night.artists.map { it.name to it.role } shouldBe listOf("Krawallwitz" to ArtistRole.DJ, "Simon Eickenboom" to ArtistRole.DJ)
         night.subtitle shouldBe "Krawallwitz"
         night.description.shouldNotBeNull()
         night.description shouldContain "Popping bottles"
@@ -156,7 +157,7 @@ class EschschloraqueOverviewPageScraperTest {
         // "erstmals zusammen auf der Couch:" is none of the known labels, and it was minted into
         // the first act's name (#2173). The span around it is what marks it as the label.
         val night = scrape("eschschloraque-overview-two-djs.html").first { it.title == "PingPongPremiere!" }
-        night.artists.map { it.name to it.role } shouldBe listOf("Gina d`Orio" to "DJ", "MissVergnügen" to "DJ")
+        night.artists.map { it.name to it.role } shouldBe listOf("Gina d`Orio" to ArtistRole.DJ, "MissVergnügen" to ArtistRole.DJ)
     }
 
     @Test
@@ -170,13 +171,13 @@ class EschschloraqueOverviewPageScraperTest {
     fun `bills the act a presents-live title names as a headliner beside the presenting DJ`() {
         // The title names the live act the night is billed on; the subtitle bills the host as DJ (#1907).
         val resitant = events.first { it.title == "MissVergnügen presents RESITANT – live" }
-        resitant.artists.map { it.name to it.role } shouldBe listOf("RESITANT" to "HEADLINER", "MissVergnügen" to "DJ")
+        resitant.artists.map { it.name to it.role } shouldBe listOf("RESITANT" to ArtistRole.HEADLINER, "MissVergnügen" to ArtistRole.DJ)
         resitant.artists.first().titleDerived shouldBe true
         resitant.eventType shouldBe EventType.CONCERT.name
 
         val nights = scrape("eschschloraque-overview-two-djs.html").filter { " presents " in it.title }
         val frauke = nights.first { it.title == "MissVergnügen presents FRAUKE 400 - live!" }
-        frauke.artists.map { it.name to it.role } shouldBe listOf("FRAUKE 400" to "HEADLINER", "MissVergnügen" to "DJ")
+        frauke.artists.map { it.name to it.role } shouldBe listOf("FRAUKE 400" to ArtistRole.HEADLINER, "MissVergnügen" to ArtistRole.DJ)
         // `live!!` reads the same way, and the title's typed backtick is folded to an apostrophe (#2174).
         nights.map { it.artists.first().name } shouldBe listOf("AUGELEKTRIK", "FRAUKE 400", "Dingo's Dream")
     }
@@ -294,7 +295,7 @@ class EschschloraqueOverviewPageScraperTest {
         val party = edgeCases.single()
         // "Djs:" is the label; "Akatombo" must survive the aka-alias split, "DJ-Set" is not a performer.
         party.artists.map { it.name } shouldBe listOf("Akatombo")
-        party.artists.single().role shouldBe "DJ"
+        party.artists.single().role shouldBe ArtistRole.DJ
     }
 
     @Test

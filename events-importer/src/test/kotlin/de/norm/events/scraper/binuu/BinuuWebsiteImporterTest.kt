@@ -1,5 +1,6 @@
 package de.norm.events.scraper.binuu
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -96,7 +97,7 @@ class BinuuWebsiteImporterTest {
     fun `assigns support role from the detail page support line`() =
         runTest {
             val twdy = events(importer.importEvents(sourceUrl)).first { it.title == "This Will Destroy You" }
-            twdy.artists.map { it.role } shouldContainExactly listOf("HEADLINER", "SUPPORT")
+            twdy.artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER, ArtistRole.SUPPORT)
         }
 
     @Test

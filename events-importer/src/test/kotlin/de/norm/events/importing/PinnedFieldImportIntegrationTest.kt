@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistRequest
 import de.norm.events.event.EventRepository
 import de.norm.events.event.EventRequest
@@ -99,7 +100,7 @@ class PinnedFieldImportIntegrationTest : BaseControllerTest() {
         sourceUrl = "https://www.astra-berlin.de/events/the-adicts",
         genre = genre,
         priceNote = priceNote,
-        artists = listOf(ScrapedArtist("The Adicts", "HEADLINER"), ScrapedArtist("Maid of Ace", "SUPPORT")),
+        artists = listOf(ScrapedArtist("The Adicts", ArtistRole.HEADLINER), ScrapedArtist("Maid of Ace", ArtistRole.SUPPORT)),
         promoters = listOf("Loft Concerts")
     )
 

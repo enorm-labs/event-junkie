@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ohm
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AcceptedLimitations
@@ -76,7 +77,7 @@ class OhmOverviewPageScraperTest {
     fun `stores the lineup as DJs and never the title`() {
         val ouch = events.first { it.title == "Ouch x FemmeDecks" }
         ouch.artists.map { it.name } shouldBe listOf("Godsfave", "Kontronatura", "missteikk", "Rafush")
-        ouch.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        ouch.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
     }
 
     @Test
@@ -146,12 +147,12 @@ class OhmOverviewPageScraperTest {
 
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Banu" to "DJ",
-                "CH3LO" to "DJ",
-                "DJ TOWER" to "DJ",
-                "Huamaniser" to "DJ",
-                "V. (OPERA live)" to "LIVE",
-                "SPICY LAB (VCO & THIRTEEN DOZE)" to "DJ"
+                "Banu" to ArtistRole.DJ,
+                "CH3LO" to ArtistRole.DJ,
+                "DJ TOWER" to ArtistRole.DJ,
+                "Huamaniser" to ArtistRole.DJ,
+                "V. (OPERA live)" to ArtistRole.LIVE,
+                "SPICY LAB (VCO & THIRTEEN DOZE)" to ArtistRole.DJ
             )
     }
 
@@ -209,15 +210,15 @@ class OhmOverviewPageScraperTest {
 
         val (braindance, nice) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        braindance.artists.flatMap { splitBackToBack(it) }.map { it.name to it.role } shouldBe listOf("Makam" to "DJ", "Tafkamp" to "DJ")
+        braindance.artists.flatMap { splitBackToBack(it) }.map { it.name to it.role } shouldBe listOf("Makam" to ArtistRole.DJ, "Tafkamp" to ArtistRole.DJ)
         nice.artists.flatMap { splitBackToBack(it) }.map { it.name to it.role } shouldBe
             listOf(
-                "Asphalt DJ" to "DJ",
-                "Jesse G" to "DJ",
-                "DJ Heartbreak" to "DJ",
-                "Reduks (LIVE)" to "LIVE",
-                "Shuray & Walle" to "DJ",
-                "Naomi" to "DJ"
+                "Asphalt DJ" to ArtistRole.DJ,
+                "Jesse G" to ArtistRole.DJ,
+                "DJ Heartbreak" to ArtistRole.DJ,
+                "Reduks (LIVE)" to ArtistRole.LIVE,
+                "Shuray & Walle" to ArtistRole.DJ,
+                "Naomi" to ArtistRole.DJ
             )
     }
 
@@ -250,7 +251,7 @@ class OhmOverviewPageScraperTest {
 
         val (awkward, subglow, objekt) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        awkward.artists.map { it.name to it.role } shouldBe listOf("Pariah" to "DJ", "Katiusha" to "DJ", "cheng nwsh" to "DJ")
+        awkward.artists.map { it.name to it.role } shouldBe listOf("Pariah" to ArtistRole.DJ, "Katiusha" to ArtistRole.DJ, "cheng nwsh" to ArtistRole.DJ)
         subglow.artists.map { it.name } shouldBe listOf("CCL")
         objekt.artists.map { it.name } shouldBe listOf("Objekt")
     }
@@ -282,7 +283,7 @@ class OhmOverviewPageScraperTest {
 
         val (subglow, guestNight) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        subglow.artists.map { it.name to it.role } shouldBe listOf("CCL" to "DJ")
+        subglow.artists.map { it.name to it.role } shouldBe listOf("CCL" to ArtistRole.DJ)
         guestNight.artists.map { it.name } shouldBe listOf("Guest Lister")
     }
 
@@ -330,6 +331,7 @@ class OhmOverviewPageScraperTest {
                 .readText()
                 .replace("Rafush", "Vorraum (Harba &amp; Delta Division Live)")
         val ouch = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).first { it.title == "Ouch x FemmeDecks" }
-        ouch.artists.takeLast(2) shouldBe listOf(ScrapedArtist("Harba", "LIVE", stage = "Vorraum"), ScrapedArtist("Delta Division", "LIVE", stage = "Vorraum"))
+        ouch.artists.takeLast(2) shouldBe
+            listOf(ScrapedArtist("Harba", ArtistRole.LIVE, stage = "Vorraum"), ScrapedArtist("Delta Division", ArtistRole.LIVE, stage = "Vorraum"))
     }
 }

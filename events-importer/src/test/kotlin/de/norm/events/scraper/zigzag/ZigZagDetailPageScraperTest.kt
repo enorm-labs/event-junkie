@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zigzag
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -77,7 +78,7 @@ class ZigZagDetailPageScraperTest {
         val detail = page("zigzag-detail-tribute.html")
 
         detail.artists.map { it.name } shouldBe listOf("Mette Nadja Hansen", "Eldar Tsalikov", "Declan Forde", "James Banner", "Ugo Alluni")
-        detail.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+        detail.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test

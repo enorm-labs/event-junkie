@@ -1,5 +1,6 @@
 package de.norm.events.scraper.drugstore
 
+import de.norm.events.event.ArtistRole
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -17,12 +18,12 @@ class DrugstoreBillScraperTest {
             )
         bill.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Finalizer" to "HEADLINER",
-                "Pyre" to "SUPPORT",
-                "Velocyraptor" to "SUPPORT",
-                "No Face 103" to "SUPPORT",
-                "Stray Dogs" to "SUPPORT",
-                "Meant to burn" to "SUPPORT"
+                "Finalizer" to ArtistRole.HEADLINER,
+                "Pyre" to ArtistRole.SUPPORT,
+                "Velocyraptor" to ArtistRole.SUPPORT,
+                "No Face 103" to ArtistRole.SUPPORT,
+                "Stray Dogs" to ArtistRole.SUPPORT,
+                "Meant to burn" to ArtistRole.SUPPORT
             )
         bill.genre shouldBe "Hardcore, Beatdown"
     }
@@ -55,10 +56,10 @@ class DrugstoreBillScraperTest {
             )
         bill.artists.map { it.name to it.role } shouldBe
             listOf(
-                "Ploutonion" to "HEADLINER",
-                "Krachmaninov" to "SUPPORT",
-                "Teufelnacht" to "SUPPORT",
-                "Frost, Pisse, Elend" to "SUPPORT"
+                "Ploutonion" to ArtistRole.HEADLINER,
+                "Krachmaninov" to ArtistRole.SUPPORT,
+                "Teufelnacht" to ArtistRole.SUPPORT,
+                "Frost, Pisse, Elend" to ArtistRole.SUPPORT
             )
         bill.genre shouldBe "DeathMetal, Blackened Crust, Teufelrock, Antifascist BlackMetal"
     }

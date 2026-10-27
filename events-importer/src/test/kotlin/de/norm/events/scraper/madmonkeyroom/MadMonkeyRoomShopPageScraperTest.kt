@@ -1,5 +1,6 @@
 package de.norm.events.scraper.madmonkeyroom
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -64,7 +65,7 @@ class MadMonkeyRoomShopPageScraperTest {
         val solo = events.single { it.sourceId == "mad_monkey_room:philipp-leinenbach-unqualifiziert-aber-sexy" }
 
         solo.title shouldBe "Philipp Leinenbach - \"Unqualifiziert, aber sexy\""
-        solo.artists shouldContainExactly listOf(ScrapedArtist(name = "Philipp Leinenbach", role = "HEADLINER"))
+        solo.artists shouldContainExactly listOf(ScrapedArtist(name = "Philipp Leinenbach", role = ArtistRole.HEADLINER))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.hole44
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
@@ -54,7 +55,7 @@ class Hole44OverviewPageScraperTest {
         kang.genre shouldBe "K-Pop"
         kang.status shouldBe "SCHEDULED"
         kang.sourceUrl shouldBe "https://hole-berlin.de/event/2026-07-27-kang-yuchan/"
-        kang.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER", titleDerived = true))
+        kang.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
@@ -65,8 +66,8 @@ class Hole44OverviewPageScraperTest {
         municipal.startTime shouldBe LocalTime.of(20, 0)
         municipal.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Battlecreek", "SUPPORT")
+                ScrapedArtist("Municipal Waste", ArtistRole.HEADLINER, titleDerived = true),
+                ScrapedArtist("Battlecreek", ArtistRole.SUPPORT)
             )
     }
 

@@ -2,6 +2,7 @@ package de.norm.events.scraper.eightmm
 
 import de.norm.events.common.BERLIN
 import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -117,7 +118,7 @@ class EightMmProgramPageScraper(
             ?.find(title)
             ?.groups
             ?.get("name")
-            ?.let { ScrapedArtist(name = deshout(it.value), role = "DJ") }
+            ?.let { ScrapedArtist(name = deshout(it.value), role = ArtistRole.DJ) }
 
     private companion object {
         /** Squarespace puts U+202F before the meridiem, which `\s` does not match. */

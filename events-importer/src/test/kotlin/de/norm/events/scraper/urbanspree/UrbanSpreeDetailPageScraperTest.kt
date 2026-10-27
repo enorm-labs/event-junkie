@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urbanspree
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -49,7 +50,7 @@ class UrbanSpreeDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(21, 0)
         event.eventType shouldBe EventType.PARTY.name
         event.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Albert Kraft" to "DJ", "Key Clef" to "DJ", "Daraio" to "DJ")
+            listOf("Albert Kraft" to ArtistRole.DJ, "Key Clef" to ArtistRole.DJ, "Daraio" to ArtistRole.DJ)
     }
 
     @Test
@@ -71,7 +72,7 @@ class UrbanSpreeDetailPageScraperTest {
         event.eventType shouldBe EventType.PARTY.name
         event.promoters shouldContainExactly listOf("Human Tree", "Urban Spree")
         event.artists.map { it.name to it.role } shouldContainExactly
-            listOf("Bam Bam’s Boogie" to "HEADLINER", "Delta Division" to "HEADLINER", "N Ska" to "HEADLINER")
+            listOf("Bam Bam’s Boogie" to ArtistRole.HEADLINER, "Delta Division" to ArtistRole.HEADLINER, "N Ska" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -94,7 +95,7 @@ class UrbanSpreeDetailPageScraperTest {
 
         event.title shouldBe "Urban Spree KLUBNACHT (Kim, Kyra)"
         event.eventType shouldBe EventType.PARTY.name
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Kim" to "DJ", "Kyra" to "DJ")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Kim" to ArtistRole.DJ, "Kyra" to ArtistRole.DJ)
     }
 
     @Test
@@ -117,7 +118,7 @@ class UrbanSpreeDetailPageScraperTest {
 
         val event = scraper.scrape(document, concertUrl).shouldNotBeNull()
         event.eventType shouldBe EventType.CONCERT.name
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Coilguns" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Coilguns" to ArtistRole.HEADLINER)
     }
 
     private fun scrapeConcert() = scraper.scrape(fixture("urbanspree-detail-concert.html", concertUrl), concertUrl)
@@ -146,7 +147,7 @@ class UrbanSpreeDetailPageScraperTest {
     fun `scrape splits a co-billed title into headliner artists`() {
         // The hero title is untruncated here, unlike the listing card's ellipsised copy.
         scrapeConcert().shouldNotBeNull().artists.map { it.name to it.role } shouldContainExactly
-            listOf("TWIN NOIR" to "HEADLINER", "HINFORT" to "HEADLINER")
+            listOf("TWIN NOIR" to ArtistRole.HEADLINER, "HINFORT" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -222,7 +223,7 @@ class UrbanSpreeDetailPageScraperTest {
         event.title shouldBe "WISBORG Phantomschmerz Tour"
         event.subtitle shouldBe "| Special Guest: The Fright"
         event.artists.map { it.name to it.role } shouldContainExactly
-            listOf("WISBORG" to "HEADLINER", "The Fright" to "SUPPORT")
+            listOf("WISBORG" to ArtistRole.HEADLINER, "The Fright" to ArtistRole.SUPPORT)
     }
 
     private fun detailPage(
@@ -249,7 +250,7 @@ class UrbanSpreeDetailPageScraperTest {
         val event = scraper.scrape(detailPage("Winona Riders - El Sueño de Dominar el Planeta se Renueva"), concertUrl).shouldNotBeNull()
 
         event.title shouldBe "Winona Riders - El Sueño de Dominar el Planeta se Renueva"
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Winona Riders" to "HEADLINER")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Winona Riders" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -270,7 +271,7 @@ class UrbanSpreeDetailPageScraperTest {
         val event = scraper.scrape(detailPage("Urban Spree KLUBNACHT 23.10.2026", description), concertUrl).shouldNotBeNull()
 
         event.eventType shouldBe EventType.PARTY.name
-        event.artists.map { it.name to it.role } shouldContainExactly listOf("Albert Kraft" to "DJ", "Mario Manara (MNR)" to "DJ")
+        event.artists.map { it.name to it.role } shouldContainExactly listOf("Albert Kraft" to ArtistRole.DJ, "Mario Manara (MNR)" to ArtistRole.DJ)
     }
 
     @Test

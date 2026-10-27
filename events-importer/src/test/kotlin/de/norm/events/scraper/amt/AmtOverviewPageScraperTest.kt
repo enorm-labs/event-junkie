@@ -1,5 +1,6 @@
 package de.norm.events.scraper.amt
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -101,9 +102,9 @@ class AmtOverviewPageScraperTest {
         event.title shouldBe "AMT + Jägermsiter Späti Rave"
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "DJ BTM", role = "DJ"),
-                ScrapedArtist(name = "DJ HIGHCLASS", role = "DJ"),
-                ScrapedArtist(name = "MANI", role = "DJ")
+                ScrapedArtist(name = "DJ BTM", role = ArtistRole.DJ),
+                ScrapedArtist(name = "DJ HIGHCLASS", role = ArtistRole.DJ),
+                ScrapedArtist(name = "MANI", role = ArtistRole.DJ)
             )
         // No ticket link and no price cell on this night.
         event.ticketUrl.shouldBeNull()
@@ -152,7 +153,7 @@ class AmtOverviewPageScraperTest {
         event.title shouldBe "TON:STEIN"
         event.artists.map { it.name } shouldContainExactly
             listOf("Voiski", "Polar Inertia", "Bardo", "Natif Orchestra", "Nocthiel")
-        event.artists.forEach { it.role shouldBe "DJ" }
+        event.artists.forEach { it.role shouldBe ArtistRole.DJ }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.lux
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -97,7 +98,7 @@ class LuxOverviewPageScraper(
             sourceId = "${EventSource.LUX.sourceIdPrefix}$date",
             priceNote = priceNote,
             free = detectFree(priceNote = priceNote),
-            artists = djs(night).map { ScrapedArtist(name = it, role = "DJ") }
+            artists = djs(night).map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
         )
     }
 

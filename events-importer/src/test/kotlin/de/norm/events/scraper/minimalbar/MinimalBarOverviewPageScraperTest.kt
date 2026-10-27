@@ -1,6 +1,7 @@
 package de.norm.events.scraper.minimalbar
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -62,9 +63,9 @@ class MinimalBarOverviewPageScraperTest {
         // The card joins the three acts into one line; the payload bills each with its slot, the last after midnight.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Bruno Bleckmann", "DJ", setStart = berlin("2026-10-25", "20:00")),
-                ScrapedArtist("Clarence", "DJ", setStart = berlin("2026-10-25", "21:00")),
-                ScrapedArtist("maniac&me", "DJ", setStart = berlin("2026-10-26", "00:00"))
+                ScrapedArtist("Bruno Bleckmann", ArtistRole.DJ, setStart = berlin("2026-10-25", "20:00")),
+                ScrapedArtist("Clarence", ArtistRole.DJ, setStart = berlin("2026-10-25", "21:00")),
+                ScrapedArtist("maniac&me", ArtistRole.DJ, setStart = berlin("2026-10-26", "00:00"))
             )
     }
 

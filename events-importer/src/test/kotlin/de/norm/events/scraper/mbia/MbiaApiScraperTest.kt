@@ -1,6 +1,7 @@
 package de.norm.events.scraper.mbia
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -47,7 +48,7 @@ class MbiaApiScraperTest {
         event.startTime.shouldBeNull()
         event.doorsTime.shouldBeNull()
         event.artists.map { it.name } shouldContainExactly listOf("Dr. Sheppat", "NYXEA")
-        event.artists.all { it.role == "DJ" } shouldBe true
+        event.artists.all { it.role == ArtistRole.DJ } shouldBe true
     }
 
     @Test

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.berghain
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.stripArtistSuffix
@@ -57,10 +58,10 @@ class BerghainOverviewPageScraperTest {
         // Each act is tagged with the floor (stage) it plays, and the one billed `Live` performs.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Hurricane Alexander", "LIVE", "Berghain"),
-                ScrapedArtist("Amanda Mussi", "DJ", "Berghain"),
-                ScrapedArtist("Magna Pia", "DJ", "Berghain"),
-                ScrapedArtist("X TiN", "DJ", "Berghain")
+                ScrapedArtist("Hurricane Alexander", ArtistRole.LIVE, "Berghain"),
+                ScrapedArtist("Amanda Mussi", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("Magna Pia", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("X TiN", ArtistRole.DJ, "Berghain")
             )
     }
 
@@ -77,7 +78,7 @@ class BerghainOverviewPageScraperTest {
         event.eventType shouldBe EventType.CONCERT.name
         // The Kantine concert hall hosts varied bills, so its floor yields no genre default.
         event.genre.shouldBeNull()
-        event.artists shouldContainExactly listOf(ScrapedArtist("Lenge", "HEADLINER", "Kantine am Berghain"))
+        event.artists shouldContainExactly listOf(ScrapedArtist("Lenge", ArtistRole.HEADLINER, "Kantine am Berghain"))
     }
 
     @Test
@@ -103,9 +104,9 @@ class BerghainOverviewPageScraperTest {
         // Each act carries its own floor as stage; the Panorama Bar b2b splits into two DJs.
         events.first().artists shouldContainExactly
             listOf(
-                ScrapedArtist("Marcel Dettmann", "DJ", "Berghain"),
-                ScrapedArtist("Ryan Elliott", "DJ", "Panorama Bar"),
-                ScrapedArtist("Tama Sumo", "DJ", "Panorama Bar")
+                ScrapedArtist("Marcel Dettmann", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("Ryan Elliott", ArtistRole.DJ, "Panorama Bar"),
+                ScrapedArtist("Tama Sumo", ArtistRole.DJ, "Panorama Bar")
             )
     }
 
@@ -139,11 +140,11 @@ class BerghainOverviewPageScraperTest {
         // Five performers on one floor, not three. The prose names all five, and KĀ is billed `Live`.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("KĀ", "LIVE", "Säule"),
-                ScrapedArtist("Agata", "DJ", "Säule"),
-                ScrapedArtist("Cunt Remember", "DJ", "Säule"),
-                ScrapedArtist("Egregore", "DJ", "Säule"),
-                ScrapedArtist("Jolly", "DJ", "Säule")
+                ScrapedArtist("KĀ", ArtistRole.LIVE, "Säule"),
+                ScrapedArtist("Agata", ArtistRole.DJ, "Säule"),
+                ScrapedArtist("Cunt Remember", ArtistRole.DJ, "Säule"),
+                ScrapedArtist("Egregore", ArtistRole.DJ, "Säule"),
+                ScrapedArtist("Jolly", ArtistRole.DJ, "Säule")
             )
     }
 
@@ -245,8 +246,8 @@ class BerghainOverviewPageScraperTest {
         // A band and a DJ on one bill, told apart by the only place the venue publishes it.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Krallice", "LIVE", "Berghain"),
-                ScrapedArtist("Marcel Dettmann", "DJ", "Berghain")
+                ScrapedArtist("Krallice", ArtistRole.LIVE, "Berghain"),
+                ScrapedArtist("Marcel Dettmann", ArtistRole.DJ, "Berghain")
             )
         // One DJ keeps it a club night, with the floor's genre.
         event.eventType shouldBe EventType.PARTY.name
@@ -283,8 +284,8 @@ class BerghainOverviewPageScraperTest {
         event.sourceId shouldBe "berghain:82270"
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Krallice", "HEADLINER", "Berghain"),
-                ScrapedArtist("Rashad Becker", "HEADLINER", "Berghain")
+                ScrapedArtist("Krallice", ArtistRole.HEADLINER, "Berghain"),
+                ScrapedArtist("Rashad Becker", ArtistRole.HEADLINER, "Berghain")
             )
     }
 
@@ -329,11 +330,11 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("R\u00f8dh\u00e5d", "DJ", "Berghain"),
-                ScrapedArtist("Dasha Rush", "DJ", "Berghain"),
-                ScrapedArtist("Megan Leber", "DJ", "Berghain"),
-                ScrapedArtist("Speedy J", "DJ", "Berghain"),
-                ScrapedArtist("UFO95", "DJ", "Berghain")
+                ScrapedArtist("R\u00f8dh\u00e5d", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("Dasha Rush", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("Megan Leber", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("Speedy J", ArtistRole.DJ, "Berghain"),
+                ScrapedArtist("UFO95", ArtistRole.DJ, "Berghain")
             )
     }
 
@@ -363,9 +364,9 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Nonn", "LIVE", "Berghain"),
-                ScrapedArtist("Ruhig", "LIVE", "Berghain"),
-                ScrapedArtist("Sedef Adas\u0131", "DJ", "Berghain")
+                ScrapedArtist("Nonn", ArtistRole.LIVE, "Berghain"),
+                ScrapedArtist("Ruhig", ArtistRole.LIVE, "Berghain"),
+                ScrapedArtist("Sedef Adas\u0131", ArtistRole.DJ, "Berghain")
             )
     }
 
@@ -387,8 +388,8 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Ryan Elliott", "DJ", "Panorama Bar"),
-                ScrapedArtist("Tama Sumo", "DJ", "Panorama Bar")
+                ScrapedArtist("Ryan Elliott", ArtistRole.DJ, "Panorama Bar"),
+                ScrapedArtist("Tama Sumo", ArtistRole.DJ, "Panorama Bar")
             )
     }
 
@@ -418,9 +419,9 @@ class BerghainOverviewPageScraperTest {
 
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Agata", "LIVE", "Säule"),
-                ScrapedArtist("Cunt Remember", "LIVE", "Säule"),
-                ScrapedArtist("Tama Sumo", "DJ", "Säule")
+                ScrapedArtist("Agata", ArtistRole.LIVE, "Säule"),
+                ScrapedArtist("Cunt Remember", ArtistRole.LIVE, "Säule"),
+                ScrapedArtist("Tama Sumo", ArtistRole.DJ, "Säule")
             )
     }
 

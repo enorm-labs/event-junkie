@@ -11,6 +11,7 @@ import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.ArtistRequestFixtures
 import de.norm.events.artist.ArtistResponse
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.importing.AssociationSyncService
@@ -218,7 +219,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                         sourceUrl = "https://example.com/t35",
                         eventType = "PARTY",
                         status = "SCHEDULED",
-                        artists = listOf(ScrapedArtist(name = "NVST", role = "DJ"))
+                        artists = listOf(ScrapedArtist(name = "NVST", role = ArtistRole.DJ))
                     )
                 )
             )

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.altekantine
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -185,7 +186,7 @@ internal fun buildAlteKantineArtists(
         EventType.PARTY.name -> {
             act
                 ?.takeUnless { isNonArtistName(it) }
-                ?.let { listOf(ScrapedArtist(name = it, role = "DJ")) }
+                ?.let { listOf(ScrapedArtist(name = it, role = ArtistRole.DJ)) }
                 .orEmpty()
         }
 

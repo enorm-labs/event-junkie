@@ -3,6 +3,7 @@ package de.norm.events.importing
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventRepository
 import de.norm.events.scraper.EventImporter
@@ -125,8 +126,8 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                             genre = "Punk",
                             artists =
                                 listOf(
-                                    ScrapedArtist(name = "The Headliners", role = "HEADLINER"),
-                                    ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
+                                    ScrapedArtist(name = "The Headliners", role = ArtistRole.HEADLINER),
+                                    ScrapedArtist(name = "Maid of Ace", role = ArtistRole.SUPPORT)
                                 )
                         )
                     )
@@ -269,7 +270,7 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                             eventDate = LocalDate.of(2026, 8, 1),
                             sourceId = "cassiopeia:known-artist-show",
                             sourceUrl = "https://example.com/event/known",
-                            artists = listOf(ScrapedArtist(name = "Known Artist", role = "HEADLINER"))
+                            artists = listOf(ScrapedArtist(name = "Known Artist", role = ArtistRole.HEADLINER))
                         )
                     )
                 stubImporterSuccess(scrapedEvents)
@@ -380,7 +381,7 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                             eventDate = LocalDate.of(2026, 8, 15),
                             sourceId = "cassiopeia:cascading",
                             sourceUrl = "https://example.com/event/cascading",
-                            artists = listOf(ScrapedArtist(name = "Cascade Band", role = "HEADLINER"))
+                            artists = listOf(ScrapedArtist(name = "Cascade Band", role = ArtistRole.HEADLINER))
                         )
                     )
                 stubImporterSuccess(events)

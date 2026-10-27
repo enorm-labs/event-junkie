@@ -1,6 +1,7 @@
 package de.norm.events.scraper.tempodrom
 
 import de.norm.events.common.deshout
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -244,7 +245,7 @@ private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
         ?.trim()
         ?.takeUnless { BACKING.matches(it) }
         ?.replace(DATIVE_ADJECTIVE, "$1es")
-        ?.let { listOf(ScrapedArtist(it, "HEADLINER")) }
+        ?.let { listOf(ScrapedArtist(it, ArtistRole.HEADLINER)) }
         .orEmpty()
 
 /**
@@ -290,7 +291,7 @@ private fun castFromFormatLine(subtitle: String): List<ScrapedArtist> =
         ?.replace(AND_MORE, "")
         ?.let(::splitSupportActs)
         ?.filterNot { isNonArtistName(it) || BACKING.matches(it) }
-        ?.map { ScrapedArtist(it, "HEADLINER") }
+        ?.map { ScrapedArtist(it, ArtistRole.HEADLINER) }
         .orEmpty()
 
 /**
@@ -304,7 +305,7 @@ private fun performerFromFormatLine(subtitle: String): List<ScrapedArtist> =
         ?.get(1)
         ?.trim()
         ?.takeUnless { isNonArtistName(it) || BACKING.matches(it) }
-        ?.let { listOf(ScrapedArtist(deshout(it), "HEADLINER")) }
+        ?.let { listOf(ScrapedArtist(deshout(it), ArtistRole.HEADLINER)) }
         .orEmpty()
 
 /** The act after `performed by`, to the end of the line. */

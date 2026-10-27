@@ -1,5 +1,6 @@
 package de.norm.events.scraper.volksbuehne
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.forChildrenPhrase
@@ -61,7 +62,7 @@ class VolksbuehneSpielplanScraperTest {
         event.ticketUrl shouldBe "https://ticket.volksbuehne-berlin.de/eventim.webshop/webticket/shop?event=23750"
         event.artists.map { it.name } shouldContainExactly
             listOf("Tony Njoku", "Any", "Pike", "Gabriel", "Vanessa Bedoret", "Nardus Williams", "Bapari")
-        event.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER)
     }
 
     @Test
@@ -70,7 +71,7 @@ class VolksbuehneSpielplanScraperTest {
         val showcase = main.first { it.title == "Raw Voice Lab Showcase" }
 
         party.eventType shouldBe EventType.PARTY.name
-        party.artists.first() shouldBe ScrapedArtist(name = "Leslie Garcia", role = "DJ")
+        party.artists.first() shouldBe ScrapedArtist(name = "Leslie Garcia", role = ArtistRole.DJ)
         showcase.artists.map { it.name } shouldContainExactly listOf("Sarmen Almond", "Anna Clementi")
     }
 

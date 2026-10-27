@@ -1,5 +1,6 @@
 package de.norm.events.scraper.drugstore
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
@@ -19,7 +20,7 @@ internal fun parseDrugstoreBill(description: String?): Lineup {
     val billed = line.split(ACT_SEPARATOR).mapNotNull(::parseAct).filterNot { (name, _) -> isNonArtistName(name) }
     val artists =
         billed.map { it.first }.distinctBy { it.lowercase() }.mapIndexed { index, name ->
-            ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
+            ScrapedArtist(name = name, role = if (index == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT)
         }
     return Lineup(
         artists = artists,

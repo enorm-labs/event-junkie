@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wildatheart
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -140,8 +141,8 @@ class WildAtHeartOverviewPageScraper(
     ): List<ScrapedArtist> =
         buildList {
             if (bandName != null) addAll(headlinersFromTitle(bandName))
-            supportNames.filterNot { isNonArtistName(it) }.forEach { add(ScrapedArtist(name = it, role = "SUPPORT")) }
-            djNames.filterNot { isNonArtistName(it) }.forEach { add(ScrapedArtist(name = it, role = "DJ")) }
+            supportNames.filterNot { isNonArtistName(it) }.forEach { add(ScrapedArtist(name = it, role = ArtistRole.SUPPORT)) }
+            djNames.filterNot { isNonArtistName(it) }.forEach { add(ScrapedArtist(name = it, role = ArtistRole.DJ)) }
         }
 
     /**

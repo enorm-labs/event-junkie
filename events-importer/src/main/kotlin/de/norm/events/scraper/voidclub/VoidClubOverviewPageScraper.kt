@@ -1,6 +1,7 @@
 package de.norm.events.scraper.voidclub
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
@@ -188,7 +189,7 @@ class VoidClubOverviewPageScraper(
             .split(',')
             .flatMap(::splitActs)
             .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
     }
 
     /**

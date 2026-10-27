@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
@@ -131,7 +132,7 @@ class EnrichmentSourceIntegrationTest : BaseControllerTest() {
         ticketUrl = "https://puschen.example/tickets",
         genre = "Techno",
         pricePresale = BigDecimal("22.00"),
-        artists = listOf(ScrapedArtist("Alpha Band", "HEADLINER"), ScrapedArtist("Beta Support", "SUPPORT")),
+        artists = listOf(ScrapedArtist("Alpha Band", ArtistRole.HEADLINER), ScrapedArtist("Beta Support", ArtistRole.SUPPORT)),
         promoters = listOf("Puschen")
     )
 

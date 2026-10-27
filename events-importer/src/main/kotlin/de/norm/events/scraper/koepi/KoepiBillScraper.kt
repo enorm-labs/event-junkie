@@ -1,5 +1,6 @@
 package de.norm.events.scraper.koepi
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
@@ -22,9 +23,9 @@ internal fun parseKoepiBill(description: String?): Lineup {
     val genres = mutableListOf<String>()
     billed.forEach { (quoted, bracket) ->
         if (DJ_SLOT.matches(quoted)) {
-            bracket.takeIf { it.isNotBlank() && !isNonArtistName(it) }?.let { artists += ScrapedArtist(name = it, role = "DJ") }
+            bracket.takeIf { it.isNotBlank() && !isNonArtistName(it) }?.let { artists += ScrapedArtist(name = it, role = ArtistRole.DJ) }
         } else if (!isNonArtistName(quoted)) {
-            artists += ScrapedArtist(name = quoted, role = if (artists.none { it.role == "HEADLINER" }) "HEADLINER" else "SUPPORT")
+            artists += ScrapedArtist(name = quoted, role = if (artists.none { it.role == ArtistRole.HEADLINER }) ArtistRole.HEADLINER else ArtistRole.SUPPORT)
             bracket
                 .substringBefore(',')
                 .blankToNull()

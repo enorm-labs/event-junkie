@@ -1,6 +1,7 @@
 package de.norm.events.scraper.lux
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -56,7 +57,7 @@ class LuxOverviewPageScraperTest {
         event.priceNote shouldBe "Eintritt Frei"
         event.free shouldBe true
         event.description shouldBe "Wir präsentieren frohgemut:\nCAROLA CAIRO\nDJ MAD MAX\n(Tresor)\nLieblingsmusik"
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         djs("2026-10-15") shouldContainExactly listOf("CAROLA CAIRO", "DJ MAD MAX")
     }
 

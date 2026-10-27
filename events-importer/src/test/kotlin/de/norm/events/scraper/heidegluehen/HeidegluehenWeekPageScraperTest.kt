@@ -1,5 +1,6 @@
 package de.norm.events.scraper.heidegluehen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -47,7 +48,7 @@ class HeidegluehenWeekPageScraperTest {
                 "Violetta & Lucas Depta",
                 "Woody"
             )
-        lineup.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        lineup.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
     }
 
     @Test

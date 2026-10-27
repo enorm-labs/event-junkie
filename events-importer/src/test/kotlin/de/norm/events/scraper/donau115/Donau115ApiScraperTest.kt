@@ -1,5 +1,6 @@
 package de.norm.events.scraper.donau115
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -53,7 +54,7 @@ class Donau115ApiScraperTest {
         night.imageUrl shouldBe "https://res.cloudinary.com/dci7i3mni/image/upload/v1792757833/xkdthfbybwr6tgzrcj0x.jpg"
         night.description!! shouldStartWith "After several critically acclaimed tours"
         night.artists.map { it.name to it.role } shouldContainExactly
-            listOf("THE BEST THING SINCE SLICED BREAD" to "HEADLINER", "Tríne Kalniņa" to "SUPPORT")
+            listOf("THE BEST THING SINCE SLICED BREAD" to ArtistRole.HEADLINER, "Tríne Kalniņa" to ArtistRole.SUPPORT)
     }
 
     @Test

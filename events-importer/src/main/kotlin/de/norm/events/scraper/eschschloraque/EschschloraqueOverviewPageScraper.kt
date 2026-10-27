@@ -1,5 +1,6 @@
 package de.norm.events.scraper.eschschloraque
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTS_VERBS
@@ -236,7 +237,7 @@ class EschschloraqueOverviewPageScraper {
             .flatMap { line ->
                 val text = line.text().trim()
                 val label = billingLabel(line)
-                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) LIVE_ROLE else "DJ"
+                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) LIVE_ROLE else ArtistRole.DJ
                 val names = if (label != null) text.removePrefix(label).trim() else text.replaceFirst(BILLING_LABEL, "")
                 splitActs(names).map { ScrapedArtist(name = it, role = role) }
             }.distinctBy { it.name.lowercase() }
@@ -304,7 +305,7 @@ class EschschloraqueOverviewPageScraper {
         val ESCHSCHLORAQUE_START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The role a `Live:` billing line gives its acts. */
-        const val LIVE_ROLE = "LIVE"
+        val LIVE_ROLE = ArtistRole.LIVE
 
         /** A labelled DJ billing line: `Dj:`, `Djs:`, `on the couch:`, `auf der Couch:`. */
         val DJ_BILLING = Regex("""\bdjs?\s*:|couch\s*:""", RegexOption.IGNORE_CASE)
@@ -361,7 +362,7 @@ private fun presentedLiveActs(title: String): List<ScrapedArtist> {
     return splitSupportActs(act)
         .map { it.trim() }
         .filterNot { it.isBlank() || isNonArtistName(it) }
-        .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
 }
 
 /**

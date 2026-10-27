@@ -6,6 +6,7 @@ import de.norm.events.artist.ArtistSlugAliasStore
 import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.artist.artistSlugFor
 import de.norm.events.artist.canonicalArtistName
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
@@ -311,7 +312,7 @@ internal fun artistRefusal(name: String): QualityFlagKind? =
 /** [splitBracketedGuest] on one billing; a headliner's guest is support, as a `feat.` title bills it (#305). */
 internal fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> =
     splitBracketedGuest(artist.name).mapIndexed { index, name ->
-        val role = if (index > 0 && artist.role == "HEADLINER") "SUPPORT" else artist.role
+        val role = if (index > 0 && artist.role == ArtistRole.HEADLINER) ArtistRole.SUPPORT else artist.role
         artist.copy(name = name, role = role)
     }
 

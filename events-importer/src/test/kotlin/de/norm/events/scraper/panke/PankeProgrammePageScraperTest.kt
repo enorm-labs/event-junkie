@@ -1,5 +1,6 @@
 package de.norm.events.scraper.panke
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -162,7 +163,7 @@ class PankeProgrammePageScraperTest {
     fun `reads the lineup only from Resident Advisor links`() {
         val eee = event("panke:17227")
         eee.artists.map { it.name } shouldBe listOf("Ziúr", "bela", "ALEX WANG", "Kilo Vee")
-        eee.artists.map { it.role }.toSet() shouldBe setOf("DJ")
+        eee.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.DJ)
         // "Dj Chiro" is billed in the same list but not linked, so it is not stored.
         eee.artists.none { it.name.contains("Chiro") } shouldBe true
     }

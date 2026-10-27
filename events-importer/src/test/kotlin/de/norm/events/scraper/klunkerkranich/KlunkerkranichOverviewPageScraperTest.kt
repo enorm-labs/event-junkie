@@ -1,5 +1,6 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -96,7 +97,7 @@ class KlunkerkranichOverviewPageScraperTest {
         night.endTime shouldBe LocalTime.of(0, 0)
         night.imageUrl shouldBe
             "https://klunkerkranich.org/wp-content/uploads/2026/07/Klunkerkranich-deko-aussicht-su-18.Jun26-2-520x320.jpg"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Yvois", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "Yvois", role = ArtistRole.DJ))
     }
 
     @Test
@@ -116,8 +117,8 @@ class KlunkerkranichOverviewPageScraperTest {
 
         night.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Cem Orlow", role = "DJ"),
-                ScrapedArtist(name = "Nils Ohrmann", role = "DJ")
+                ScrapedArtist(name = "Cem Orlow", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Nils Ohrmann", role = ArtistRole.DJ)
             )
 
         val b2bNight = on(LocalDate.of(2026, 8, 14), "FERNAB ÜBER DEN DÄCHERN w. Kīto, Juli Lee, K2WO b2b Her, Woanders, ELENE")
@@ -163,8 +164,8 @@ class KlunkerkranichOverviewPageScraperTest {
         // The *live marker qualifies the whole billing, so both halves of the pairing are live acts.
         night.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "IBAAKU", role = "LIVE"),
-                ScrapedArtist(name = "K’BOKO", role = "LIVE")
+                ScrapedArtist(name = "IBAAKU", role = ArtistRole.LIVE),
+                ScrapedArtist(name = "K’BOKO", role = ArtistRole.LIVE)
             )
     }
 
@@ -197,31 +198,31 @@ class KlunkerkranichOverviewPageScraperTest {
         // #1926: the section the venue contrasts with its DJ section is the concert, not more DJs.
         billing("N.E.S.T.A. presents: BATILA &amp; THE DREAMBUS | DJ Sets by Diablas Finas &amp; Bela Patrutzi,") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "BATILA", role = "HEADLINER"),
-                ScrapedArtist(name = "THE DREAMBUS", role = "HEADLINER"),
-                ScrapedArtist(name = "Diablas Finas", role = "DJ"),
-                ScrapedArtist(name = "Bela Patrutzi", role = "DJ")
+                ScrapedArtist(name = "BATILA", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "THE DREAMBUS", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "Diablas Finas", role = ArtistRole.DJ),
+                ScrapedArtist(name = "Bela Patrutzi", role = ArtistRole.DJ)
             )
 
         // Without a label, a section after a pipe keeps the DJ default.
-        billing("NIGHT w. Big Leg | MCRD").map { it.role } shouldContainExactly listOf("DJ", "DJ")
+        billing("NIGHT w. Big Leg | MCRD").map { it.role } shouldContainExactly listOf(ArtistRole.DJ, ArtistRole.DJ)
     }
 
     @Test
     fun `bills a DJ-labelled section as DJs, not as a collective named after the label`() {
         billing("SUNSET SESSION w. Kora *live | DJ Set: Mona Lisa") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Kora", role = "HEADLINER"),
-                ScrapedArtist(name = "Mona Lisa", role = "DJ")
+                ScrapedArtist(name = "Kora", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "Mona Lisa", role = ArtistRole.DJ)
             )
     }
 
     @Test
     fun `bills a live act as live and a DJ night's acts as DJs`() {
         on(LocalDate.of(2026, 8, 13), "SOULJAM x KLUNKERKRANICH w. Soul Jam Collective *live").artists shouldContainExactly
-            listOf(ScrapedArtist(name = "Soul Jam Collective", role = "LIVE"))
+            listOf(ScrapedArtist(name = "Soul Jam Collective", role = ArtistRole.LIVE))
 
-        on(LocalDate.of(2026, 8, 9), "TENDER MESH MUSIC w. Big Leg, MCRD").artists.map { it.role } shouldContainExactly listOf("DJ", "DJ")
+        on(LocalDate.of(2026, 8, 9), "TENDER MESH MUSIC w. Big Leg, MCRD").artists.map { it.role } shouldContainExactly listOf(ArtistRole.DJ, ArtistRole.DJ)
     }
 
     @Test
@@ -238,8 +239,8 @@ class KlunkerkranichOverviewPageScraperTest {
         val names = clique.artists.map { it.name }
         names shouldContainAll listOf("In Limbo Audio", "Sven Howland", "Niklas Gietmann", "Nicolai Toma", "Miz Kiara", "p.toile")
         names.none { it.contains(':') } shouldBe true
-        clique.artists.first { it.name == "Acua" }.role shouldBe "LIVE"
-        clique.artists.first { it.name == "Sven Howland" }.role shouldBe "DJ"
+        clique.artists.first { it.name == "Acua" }.role shouldBe ArtistRole.LIVE
+        clique.artists.first { it.name == "Sven Howland" }.role shouldBe ArtistRole.DJ
     }
 
     @Test

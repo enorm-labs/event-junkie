@@ -1,6 +1,7 @@
 package de.norm.events.scraper.paloma
 
 import de.norm.events.common.BERLIN
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -50,7 +51,7 @@ class PalomaProgrammPageScraperTest {
         event.doorsTime.shouldBeNull()
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "paloma:2026-10-16"
-        event.artists.map { it.role }.distinct() shouldContainExactly listOf("DJ")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
         djs("2026-10-16") shouldContainExactly listOf("TMSN", "BEN MONO", "MATTIK", "CAMPBELL", "DJ PETE", "RENÉ LÖWE")
     }
 

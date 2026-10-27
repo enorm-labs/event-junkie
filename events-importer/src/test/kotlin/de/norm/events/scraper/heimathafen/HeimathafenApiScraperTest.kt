@@ -1,5 +1,6 @@
 package de.norm.events.scraper.heimathafen
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -352,7 +353,7 @@ class HeimathafenApiScraperTest {
             .scrape(json)
             .events
             .single()
-            .artists shouldContainExactly listOf(ScrapedArtist("DRANGSAL", "HEADLINER", titleDerived = true))
+            .artists shouldContainExactly listOf(ScrapedArtist("DRANGSAL", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test

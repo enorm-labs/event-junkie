@@ -1,5 +1,6 @@
 package de.norm.events.scraper.atrane
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -156,7 +157,7 @@ class ATraneProgrammePageScraperTest {
         night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
         night.subtitle shouldBe "Heute mit: Roland Schneider, Christian Kögel"
         night.artists.map { it.name to it.role } shouldBe
-            listOf("ANDREAS SCHMIDT & FRIENDS" to "HEADLINER", "Roland Schneider" to "SUPPORT", "Christian Kögel" to "SUPPORT")
+            listOf("ANDREAS SCHMIDT & FRIENDS" to ArtistRole.HEADLINER, "Roland Schneider" to ArtistRole.SUPPORT, "Christian Kögel" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -164,7 +165,7 @@ class ATraneProgrammePageScraperTest {
         // A hyphen inside a double-barrelled name is not a separator; an en dash between names is.
         val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: HANS-PETER MEIER- ANNA LENA – N.N.")
 
-        night.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldBe listOf("Hans-Peter Meier", "Anna Lena")
+        night.artists.filter { it.role == ArtistRole.SUPPORT }.map { it.name } shouldBe listOf("Hans-Peter Meier", "Anna Lena")
         night.subtitle shouldBe "Heute mit: Hans-Peter Meier, Anna Lena"
     }
 
@@ -182,7 +183,7 @@ class ATraneProgrammePageScraperTest {
         // #3105: "WITH: Thomas Stieger-Moritz Müller" stays unsplit in the subtitle; "FEATURING SPECIAL GUEST:" names one guest.
         val night = on(LocalDate.of(2026, 10, 11))
 
-        night.artists.map { it.name to it.role } shouldBe listOf("Christian Frentzen" to "HEADLINER", "Nir Felder" to "SUPPORT")
+        night.artists.map { it.name to it.role } shouldBe listOf("Christian Frentzen" to ArtistRole.HEADLINER, "Nir Felder" to ArtistRole.SUPPORT)
         night.subtitle shouldBe
             "Roundrobyn Records Album Release Concert · WITH: Thomas Stieger-Moritz Müller · FEATURING SPECIAL GUEST: Nir Felder"
     }
@@ -192,7 +193,7 @@ class ATraneProgrammePageScraperTest {
         val night = session("BILL PETRY", "«CLOSE YOUR EYES»", "FEAT: Christian von der Goltz-Olaf Casimir-Tobias Backhaus", "SPECIAL GUEST: Irma Neumüller")
 
         night.title shouldBe "BILL PETRY"
-        night.artists.map { it.name to it.role } shouldBe listOf("BILL PETRY" to "HEADLINER", "Irma Neumüller" to "SUPPORT")
+        night.artists.map { it.name to it.role } shouldBe listOf("BILL PETRY" to ArtistRole.HEADLINER, "Irma Neumüller" to ArtistRole.SUPPORT)
         night.subtitle shouldBe "«CLOSE YOUR EYES» · FEAT: Christian von der Goltz-Olaf Casimir-Tobias Backhaus · SPECIAL GUEST: Irma Neumüller"
     }
 
@@ -213,7 +214,7 @@ class ATraneProgrammePageScraperTest {
         night.subtitle shouldBe
             "THOMAS QUASTHOFF · FEAT: ROLF ZIELKE / PETER WENIGER / OLAF CASIMIR / THOMAS ALKIER · SPECIAL GUESTS: JUTTA SPEIDEL & SIMON OSLENDER"
         night.artists.map { it.name to it.role } shouldBe
-            listOf("THOMAS QUASTHOFF" to "HEADLINER", "JUTTA SPEIDEL" to "SUPPORT", "SIMON OSLENDER" to "SUPPORT")
+            listOf("THOMAS QUASTHOFF" to ArtistRole.HEADLINER, "JUTTA SPEIDEL" to ArtistRole.SUPPORT, "SIMON OSLENDER" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -230,7 +231,7 @@ class ATraneProgrammePageScraperTest {
                 )
             )
 
-        night.artists.map { it.name to it.role } shouldBe listOf("THOMAS QUASTHOFF" to "HEADLINER", "THE SHAWN & WOLF" to "SUPPORT")
+        night.artists.map { it.name to it.role } shouldBe listOf("THOMAS QUASTHOFF" to ArtistRole.HEADLINER, "THE SHAWN & WOLF" to ArtistRole.SUPPORT)
         night.subtitle!! shouldEndWith "MEETS \"THE SHAWN & WOLF» Shawn Grocott & Wolfgang Meyer"
     }
 
@@ -247,7 +248,7 @@ class ATraneProgrammePageScraperTest {
             )
 
         night.title shouldBe "ARTIST IN RESIDENCE Jeremy Sassoon"
-        night.artists.map { it.name to it.role } shouldBe listOf("Jeremy Sassoon" to "HEADLINER", "FLORIAN MENZEL" to "SUPPORT")
+        night.artists.map { it.name to it.role } shouldBe listOf("Jeremy Sassoon" to ArtistRole.HEADLINER, "FLORIAN MENZEL" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -255,7 +256,7 @@ class ATraneProgrammePageScraperTest {
         val night = session("Esther Kaiser/ Alexander Wienand", "«BREATHING» Vinyl Release Concert", "Feat: Tilmann Dehnhard-Athina Kontou")
 
         night.title shouldBe "Esther Kaiser/ Alexander Wienand"
-        night.artists.map { it.name to it.role } shouldBe listOf("Esther Kaiser" to "HEADLINER", "Alexander Wienand" to "HEADLINER")
+        night.artists.map { it.name to it.role } shouldBe listOf("Esther Kaiser" to ArtistRole.HEADLINER, "Alexander Wienand" to ArtistRole.HEADLINER)
     }
 
     @Test
@@ -273,7 +274,7 @@ class ATraneProgrammePageScraperTest {
 
         night.title shouldBe "DAVID HAYNES AND FRIENDS"
         night.subtitle!! shouldStartWith "«SOULFUL FALL» · WITH SPECIAL GUESTS"
-        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES AND FRIENDS" to "HEADLINER")
+        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES AND FRIENDS" to ArtistRole.HEADLINER)
     }
 
     @Test
