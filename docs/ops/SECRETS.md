@@ -126,7 +126,7 @@ recovery, which is the property being bought.
 
 For one operator the operational difference is otherwise small, and the deciding argument is rebuild survival rather than ergonomics.
 
-## The decision, taken 2026-08-19: one of three, because this repository is public
+## Which Secrets go into git, because this repository is public
 
 **Encrypting a secret into a public repository publishes its ciphertext, permanently.** Git history is world-readable, forkable and archived, so "we rotated it
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each
@@ -135,27 +135,35 @@ secret.
 | Secret                    | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo? |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `events-db`               | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                              |
-| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **The strongest of the three** — see below                          | **No** — see below                   |
+| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **Stronger than `hetzner` and `events-db`** — see below             | **No** — see below                   |
 | `hetzner`                 | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
 | `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
 | `event-junkie-anthropic`  | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                   |
 | `event-junkie-discogs`    | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the Anthropic key        |
 | `event-junkie-instagram`  | Someone else reads public business accounts as our Meta app, against its rate limit. No data of ours, no write permission | **No** — as the Anthropic key        |
 | `openobserve-smtp`        | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters   |
+| `events-bff-db`           | The `bff` role's Postgres password, for the same server as `events-db`. Useless without network access                    | **Yes** — as `events-db`             |
+| `postgres-exporter`       | A DSN for the `metrics` role, which reads only the statistics views. Same server, useless without network access          | **Yes** — as `events-db`             |
+| `event-junkie-mail`       | Someone else sends mail as `notify.event-junkie.de`, from anywhere, against the TEM quota and the domain's reputation     | **No** — as the Anthropic key        |
+| `event-junkie-images`     | Read and write on the image bucket, from anywhere. Every bucket of the project if no bucket policy narrows the key        | **No** — as the Anthropic key        |
+| `event-junkie-imgproxy`   | Someone can sign imgproxy URLs. Useless without access to the importer pod, because imgproxy binds `127.0.0.1`            | **No** — a new pair costs nothing    |
+| `sops-age`                | Not applicable. It is the key that decrypts the others                                                                    | **Never** — it is the key            |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
 ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from cluster access. That is the
 same argument that kept the Hetzner token hand-made, applied to a different asset.
 
-**On `event-junkie-anthropic`.** The exposure cost is the lowest in the table — a spend cap bounds it and revoking takes one click. It is hand-made anyway, for
+**On `event-junkie-anthropic`.** The exposure cost is one of the lowest in the table — a spend cap bounds it and revoking takes one click. It is hand-made anyway, for
 two other reasons. Anyone who holds it can use it, from anywhere, with **no network precondition**. That is the property that makes `events-db` safe to encrypt
 and this key not. Regenerating it is also a Console click, so the rebuild-survival benefit that justifies encrypting anything is nil. A cluster that
 never creates it is healthy. `importer.translation.engine` defaults to `none`, and `importer.eventClassification.enabled` and
 `importer.instagram.enabled` to `false`. With all three off the deployment names no Secret at all.
 
 **Hand-made, like `hetzner`, not encrypted like `events-db`.** The rebuild-survival benefit is small, because recreating a PAT is a two-minute job, and the
-exposure cost is the highest of the three. So the count is **one of three**: `events-db` encrypted, `hetzner` and `github-dispatch` hand-made,
-and that is the whole list.
+exposure cost is higher than the cost of `hetzner`.
+
+**One Secret is in git today: `events-db`.** Three rows say **Yes**. `events-bff-db` and `postgres-exporter` pass the same test as `events-db`, and both
+are still hand-made. Every other Secret stays hand-made by decision.
 
 **What hand-made means operationally**, because it is easy to assume Flux will handle it. Nothing in this repository creates this Secret, and no deploy brings
 it. It is typed once against the cluster and exists nowhere else:
