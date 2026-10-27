@@ -1,8 +1,11 @@
 package de.norm.events.promoter
 
 import de.norm.events.common.IMAGE_ATTRIBUTION_DESCRIPTION
+import de.norm.events.common.IMAGE_ATTRIBUTION_EXAMPLE
 import de.norm.events.common.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_LICENCE_ID_EXAMPLE
 import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
+import de.norm.events.common.IMAGE_SOURCE_URL_EXAMPLE
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 
@@ -24,11 +27,11 @@ data class PromoterResponse(
     val websiteUrl: String?,
     @Schema(description = "URL of the promoter's logo image", example = "https://example.com/36-concerts-logo.jpg")
     val imageUrl: String?,
-    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
-    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = IMAGE_LICENCE_ID_EXAMPLE)
     val imageLicenceId: String?,
-    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = "https://commons.wikimedia.org/wiki/File:Example.jpg")
+    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = IMAGE_SOURCE_URL_EXAMPLE)
     val imageSourceUrl: String?,
     @Schema(description = "Short prose description of the promoter")
     val description: String?,
