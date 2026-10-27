@@ -62,7 +62,8 @@ Tell the operator about each of these that applies:
   local additions, and `events-frontend/public/map/` (or run `scripts/map-assets.sh dev` again).
 - **Claude Code state is per machine.** Personal plugins, `~/.claude/settings.json` and the auto-memory under `~/.claude/projects/` stay on the old Mac
   until the operator copies them.
-- **A worktree commit needs `node_modules` in the main checkout.** The Markdown hook calls the pinned oxfmt from there.
+- **A worktree commit needs `node_modules` in the main checkout, at the pinned oxfmt version.** A worktree without its own `node_modules` borrows the main
+  checkout's oxfmt for the Markdown hook. After an oxfmt bump, run `npm ci` in the main checkout's `events-frontend/` again.
 
 ## Step 5 — Prove it
 

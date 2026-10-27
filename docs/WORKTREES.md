@@ -78,8 +78,11 @@ A worktree checks out tracked files only, so each one needs its own environment:
 
 ```bash
 sdk env                                  # .sdkmanrc is tracked — this just works
-cd events-frontend && npm ci             # for the frontend and for scripts/format-markdown.sh; both refuse to start without node_modules
+cd events-frontend && npm ci             # for the frontend only; scripts/format-markdown.sh can use the main checkout's oxfmt
 ```
+
+- `scripts/format-markdown.sh` and the Markdown commit hook use the main checkout's oxfmt when the worktree has no `node_modules`. They do this only when
+  that oxfmt has the version that the worktree's `package-lock.json` pins. If the versions differ, the script stops and names the `npm ci` to run.
 
 - Gradle's `build/` directories are per worktree, so the first build there compiles from scratch.
 - The gitleaks pre-commit hook lives in the shared `.git` directory and is therefore **already active** in every worktree — no second `pre-commit install`.
