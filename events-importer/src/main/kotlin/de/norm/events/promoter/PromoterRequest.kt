@@ -3,10 +3,13 @@ package de.norm.events.promoter
 import de.norm.events.common.AttributableImage
 import de.norm.events.common.AttributedImage
 import de.norm.events.common.IMAGE_ATTRIBUTION_DESCRIPTION
+import de.norm.events.common.IMAGE_ATTRIBUTION_EXAMPLE
 import de.norm.events.common.IMAGE_ATTRIBUTION_MAX_LENGTH
 import de.norm.events.common.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_LICENCE_ID_EXAMPLE
 import de.norm.events.common.IMAGE_LICENCE_ID_MAX_LENGTH
 import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
+import de.norm.events.common.IMAGE_SOURCE_URL_EXAMPLE
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -35,15 +38,15 @@ data class PromoterRequest(
     @Schema(description = "URL of the promoter's logo image", example = "https://example.com/36-concerts-logo.jpg")
     override val imageUrl: String? = null,
     @field:Size(max = IMAGE_ATTRIBUTION_MAX_LENGTH, message = "Image attribution must not exceed 500 characters")
-    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     override val imageAttribution: String? = null,
     @field:Size(max = IMAGE_LICENCE_ID_MAX_LENGTH, message = "Image licence identifier must not exceed 40 characters")
-    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = IMAGE_LICENCE_ID_EXAMPLE)
     override val imageLicenceId: String? = null,
     @field:Size(max = 2048, message = "Image source URL must not exceed 2048 characters")
     @Schema(
         description = IMAGE_SOURCE_URL_DESCRIPTION,
-        example = "https://commons.wikimedia.org/wiki/File:Example.jpg"
+        example = IMAGE_SOURCE_URL_EXAMPLE
     )
     override val imageSourceUrl: String? = null,
     @field:Size(max = 4000, message = "Description must not exceed 4000 characters")

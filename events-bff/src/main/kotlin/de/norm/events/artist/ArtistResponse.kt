@@ -1,8 +1,11 @@
 package de.norm.events.artist
 
 import de.norm.events.common.IMAGE_ATTRIBUTION_DESCRIPTION
+import de.norm.events.common.IMAGE_ATTRIBUTION_EXAMPLE
 import de.norm.events.common.IMAGE_LICENCE_ID_DESCRIPTION
+import de.norm.events.common.IMAGE_LICENCE_ID_EXAMPLE
 import de.norm.events.common.IMAGE_SOURCE_URL_DESCRIPTION
+import de.norm.events.common.IMAGE_SOURCE_URL_EXAMPLE
 import de.norm.events.image.IMAGE_SOURCES_DESCRIPTION
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
@@ -24,11 +27,11 @@ data class ArtistSummaryResponse(
     val name: String,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
-    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
-    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = IMAGE_LICENCE_ID_EXAMPLE)
     val imageLicenceId: String?,
-    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = "https://commons.wikimedia.org/wiki/File:Example.jpg")
+    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = IMAGE_SOURCE_URL_EXAMPLE)
     val imageSourceUrl: String?,
     @Schema(description = IMAGE_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
@@ -109,11 +112,11 @@ data class ArtistDetailResponse(
     val descriptionAltSourceUrl: String?,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
-    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
-    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = IMAGE_LICENCE_ID_EXAMPLE)
     val imageLicenceId: String?,
-    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = "https://commons.wikimedia.org/wiki/File:Example.jpg")
+    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = IMAGE_SOURCE_URL_EXAMPLE)
     val imageSourceUrl: String?,
     @Schema(description = IMAGE_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
