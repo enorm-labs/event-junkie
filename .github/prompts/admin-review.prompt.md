@@ -66,8 +66,8 @@ A `failed`, a `skipped`, or no line at all is a finding. An open suggestion olde
 | `DISMISS` | The evidence does not hold, the stored value is already right, or a parser draft covers it |
 | `UNSURE`  | The venue's page does not settle it. Say what would                                        |
 
-A suggestion for an event the worklist also lists gets the worklist's verdict, with the suggestion as evidence. `artists` and `features` are `ACCEPT`
-only on the admin app's "Suggested fixes" page: the app builds the line-up and the feature set, and this prompt does not copy that code.
+A suggestion for an event the worklist also lists gets the worklist's verdict, with the suggestion as evidence. `features` is `ACCEPT` only on the
+admin app's "Suggested fixes" page, because the app builds the feature set. `artists` goes through the API by Step 8's line-up rules.
 
 ## Step 4 — Instagram drafts
 
@@ -132,6 +132,10 @@ One at a time, on the environment's importer. Re-read each item first: an item s
 - **`S…` `ACCEPT`**: GET the event, PUT it back with only the suggested field changed (the body of `/worklist` Step 7, item 2), and check that
   `pinnedFields` holds the field. Then `POST $API/data-quality/suggestions/<id>/accept`. A PUT that pins nothing means the event already holds the value:
   `DISMISS` it instead, and say so.
+- **`S…` `ACCEPT` on `artists`**: the proposed value is a `; `-separated list of names, and the field is `artists`, which pins `lineup`. Build the
+  line-up as `proposedLineup` in `events-admin/src/api/suggestions.ts` does. An act the event already bills keeps its role and stage. Any other name is
+  the exact match of `GET $API/artists?name=<name>&size=100`, else `POST $API/artists` with `{"name": …}`. The first name is `HEADLINER`, the others
+  `SUPPORT`, with `billingOrder` the position and `stage` null. Then PUT and accept as above.
 - **`S…` `DISMISS`**: `POST $API/data-quality/suggestions/<id>/dismiss`.
 - **`I…` `APPROVE #`**: `POST $API/instagram-drafts/<draft id>/approve` with `{"eventId": <id>}`.
 - **`I…` `CREATE`**: for each act, search `GET $API/artists?name=<name>&size=100` and take the exact match, else `POST $API/artists` with `{"name": …}`.
