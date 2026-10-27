@@ -109,8 +109,8 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
 - **ADR numbers are claimed by writing the ADR, never by planning one.** A "needs ADR-0NN" reservation is not honoured: the next ADR written takes that
   number and the reference silently points elsewhere — it happened twice. Refer to a future ADR by title only and take the next free number from `docs/adr/`
   at the moment you create the file.
-- **`gh` is a prerequisite** (`brew install gh`, `gh auth login`). How to drive it is a vendored skill, [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md);
-  what it cannot know about this repository is in [Automating GitHub with `gh`](#automating-github-with-gh).
+- **`gh` is a prerequisite** (`brew install gh`, `gh auth login -s project`; the board needs the `project` scope). How to drive it is a vendored skill,
+  [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md); what it cannot know about this repository is in [Automating GitHub with `gh`](#automating-github-with-gh).
 - **Library docs: ask `context7` first, and read the release notes on a bump.** The pinned versions (Tailwind 4, Vue Router 5, TypeScript 6, Spring Boot 4)
   postdate most of what a model remembers — a v2-era Tailwind answer writes `tailwind.config.js` into a project that has none.
   [`docs/LINKS.md` § 11](docs/LINKS.md#11-stack-reference-documentation) pairs every framework with its release notes.

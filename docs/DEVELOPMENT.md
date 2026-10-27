@@ -51,13 +51,13 @@ scripts/format-markdown.sh                # any .md change
 
 ## Prerequisites
 
-| Tool         | Version                                   | Notes                                                             |
-| ------------ | ----------------------------------------- | ----------------------------------------------------------------- |
-| JDK          | see [`.sdkmanrc`](../.sdkmanrc)           | `sdk env` picks it up; install [SDKMAN](https://sdkman.io/) first |
-| Docker       | any recent                                | Postgres is started for you by `bootRun`                          |
-| Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                          |
-| `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                  |
-| `gh`         | any recent                                | GitHub from the CLI — `brew install gh`, then `gh auth login`     |
+| Tool         | Version                                   | Notes                                                                    |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------------------ |
+| JDK          | see [`.sdkmanrc`](../.sdkmanrc)           | `sdk env` picks it up; install [SDKMAN](https://sdkman.io/) first        |
+| Docker       | any recent                                | Postgres is started for you by `bootRun`                                 |
+| Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                                 |
+| `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                         |
+| `gh`         | any recent                                | GitHub from the CLI — `brew install gh`, then `gh auth login -s project` |
 
 **On macOS, `scripts/setup-mac.sh contributor` installs everything on this page.** The tools are in the root [`Brewfile`](../Brewfile). The script also
 installs the JDK and Node versions, runs `npm ci` in both apps and installs the commit hooks. `operator` adds the cluster tools, the Keychain items, the key
