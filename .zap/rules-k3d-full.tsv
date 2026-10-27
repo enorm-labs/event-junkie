@@ -15,8 +15,9 @@
 0	FAIL	(Directory Browsing - Active/release)
 10003	FAIL	(Vulnerable JS Library (Powered by Retire.js) - Passive/release)
 10009	WARN	(In Page Banner Information Leak - Passive/release)
+# 10010 stays WARN by design: the SPA reads XSRF-TOKEN to echo it in X-XSRF-TOKEN, so `withHttpOnlyFalse()` in AccountSecurityConfiguration.kt is deliberate (#4035).
 10010	WARN	(Cookie No HttpOnly Flag - Passive/release)
-10011	WARN	(Cookie Without Secure Flag - Passive/release)
+10011	FAIL	(Cookie Without Secure Flag - Passive/release)
 10015	WARN	(Re-examine Cache-control Directives - Passive/release)
 10017	FAIL	(Cross-Domain JavaScript Source File Inclusion - Passive/release)
 10019	WARN	(Content-Type Header Missing - Passive/release)
@@ -52,7 +53,7 @@
 10050	WARN	(Retrieved from Cache - Passive/release)
 10051	WARN	(Relative Path Confusion - Active/beta)
 10052	FAIL	(X-ChromeLogger-Data (XCOLD) Header Information Leak - Passive/release)
-10054	WARN	(Cookie without SameSite Attribute - Passive/release)
+10054	FAIL	(Cookie without SameSite Attribute - Passive/release)
 # WARN on k3d only: image serving is off there, so the chart composes `img-src 'self' https:` and the rule reads `https:` as a wildcard. Production serves its own images and passes.
 10055	WARN	(CSP - Passive/release)
 10056	FAIL	(X-Debug-Token Information Leak - Passive/release)
@@ -151,7 +152,7 @@
 90028	WARN	(Insecure HTTP Method - Active/beta)
 90029	WARN	(SOAP XML Injection - Active/beta)
 90030	WARN	(WSDL File Detection - Passive/beta)
-90033	WARN	(Loosely Scoped Cookie - Passive/release)
+90033	FAIL	(Loosely Scoped Cookie - Passive/release)
 90034	FAIL	(Cloud Metadata Potentially Exposed - Active/release)
 90035	FAIL	(Server Side Template Injection - Active/release)
 90036	FAIL	(Server Side Template Injection (Blind) - Active/release)
