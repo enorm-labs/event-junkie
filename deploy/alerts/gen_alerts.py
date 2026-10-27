@@ -690,13 +690,15 @@ rule(
 
 # 14 days is two full renewal attempts' worth of warning: cert-manager renews at
 # 30 days remaining, so anything still inside 14 has already failed twice.
+# `min` comes before the subtraction: OpenObserve 1.1 rejects arithmetic on the raw series in a
+# range query with "vector cannot contain metrics with the same labelset", so the rule never fired.
 rule(
     "ej-certificate-expiry",
     "The soonest-expiring certificate is inside 14 days. cert-manager renews at 30 days "
     "remaining, so reaching 14 means renewal has already failed — silently, because nothing "
     "crashes when a certificate ages.",
-    "sum(min((certmanager_certificate_expiration_timestamp_seconds "
-    "- timestamp(certmanager_certificate_expiration_timestamp_seconds)) / 86400) < bool 14)",
+    "sum((min(certmanager_certificate_expiration_timestamp_seconds) "
+    "- timestamp(min(certmanager_certificate_expiration_timestamp_seconds))) / 86400 < bool 14)",
     ">",
     0,
     stream_name="certmanager_certificate_expiration_timestamp_seconds",

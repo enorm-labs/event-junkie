@@ -609,7 +609,7 @@
     "description": "The soonest-expiring certificate is inside 14 days. cert-manager renews at 30 days remaining, so reaching 14 means renewal has already failed \u2014 silently, because nothing crashes when a certificate ages.",
     "query_condition": {
       "type": "promql",
-      "promql": "sum(min((certmanager_certificate_expiration_timestamp_seconds - timestamp(certmanager_certificate_expiration_timestamp_seconds)) / 86400) < bool 14)",
+      "promql": "sum((min(certmanager_certificate_expiration_timestamp_seconds) - timestamp(min(certmanager_certificate_expiration_timestamp_seconds))) / 86400 < bool 14)",
       "promql_condition": {
         "column": "value",
         "operator": ">",
