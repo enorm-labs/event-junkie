@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.server.firewall.ServerWebExchangeFirewall
 import org.springframework.security.web.server.firewall.StrictServerWebExchangeFirewall
@@ -28,21 +27,11 @@ class AccountSecurityConfiguration {
     fun accountSecurity(
         http: ServerHttpSecurity,
         sessions: SessionSecurityContextRepository
-    ): SecurityWebFilterChain {
-        val csrfTokens =
-            CookieServerCsrfTokenRepository.withHttpOnlyFalse().apply {
-                setCookieCustomizer {
-                    it
-                        .path("/")
-                        .secure(true)
-                        .sameSite("Strict")
-                        .maxAge(SessionSecurityContextRepository.LIFETIME)
-                }
-            }
-        return http
+    ): SecurityWebFilterChain =
+        http
             .securityMatcher(accountPathMatcher())
             .securityContextRepository(sessions)
-            .csrf { it.csrfTokenRepository(csrfTokens).csrfTokenRequestHandler(ServerCsrfTokenRequestAttributeHandler()) }
+            .csrf { it.csrfTokenRepository(csrfTokenRepository()).csrfTokenRequestHandler(ServerCsrfTokenRequestAttributeHandler()) }
             .authorizeExchange {
                 it
                     .pathMatchers("/api/auth/**")
@@ -57,7 +46,6 @@ class AccountSecurityConfiguration {
             // CacheControlFilter answers for caching, and Traefik's middleware sets the security headers.
             .headers { it.disable() }
             .build()
-    }
 
     /**
      * Spring Security's firewall runs in front of every route, not only the chain above. Unscoped, it
