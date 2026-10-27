@@ -464,6 +464,39 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `drops a merchant that is a billed act, and keeps the act`() {
+        fun concert(
+            subtitle: String,
+            merchant: String
+        ) = scraper
+            .scrape(
+                Jsoup.parse(
+                    """
+                    <html><body>
+                      <small class="supertitle">Konzert</small>
+                      <h1><span itemprop="name">The String Archestra</span><small class="subtitle">$subtitle</small></h1>
+                      <div class="product_merchant"><b>$merchant</b></div>
+                    </body></html>
+                    """.trimIndent(),
+                    concertUrl
+                ),
+                concertUrl
+            ).shouldNotBeNull()
+
+        // `Anbieter/Veranstalter: The String Archestra`, the band that plays (#4043).
+        concert("Tour 2026", "The  STRING Archestra").let {
+            it.promoters shouldHaveSize 0
+            it.artists.map { a -> a.name } shouldBe listOf("The String Archestra")
+        }
+        concert("+ Support: Long Opening Band Name With Many Words", "Long Opening Band Name With Many Words").let {
+            it.promoters shouldHaveSize 0
+            it.artists.map { a -> a.name } shouldBe listOf("The String Archestra", "Long Opening Band Name With Many Words")
+        }
+        // A merchant that only shares words with the act stays.
+        concert("Tour 2026", "The String Archestra Booking").promoters shouldBe listOf("The String Archestra Booking")
+    }
+
+    @Test
     fun `strips role labels and splits multi-act support lines, dropping label-only chunks`() {
         fun concertWithSubtitle(subtitle: String) =
             Jsoup.parse(

@@ -11,6 +11,7 @@ import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hasLanguageMarker
 import de.norm.events.scraper.headlinersFromTitle
@@ -47,7 +48,8 @@ import java.util.Locale
  * - ticket price (`[itemprop=price]` content) and the external ticket-shop link
  * - free admission (the ticket tab's `Eintritt frei / Admission free!` notice)
  * - promoter (the `Anbieter/Veranstalter` field, `.product_merchant`; on a night it credits to SO36,
- *   the credit on the page itself, see [houseNightCredits])
+ *   the credit on the page itself, see [houseNightCredits]). A band that sells its own tickets is
+ *   its own merchant, and that credit is dropped: it only repeats the line-up (#4043).
  *
  * Only two fields come from the schema.org `Event` JSON-LD block, having no reliable HTML
  * rendering: the ISO `startDate` (four-digit, time-zoned) and the `eventStatus` (scheduled /
@@ -90,6 +92,16 @@ class So36DetailPageScraper {
         val description = parseDescription(document)
         val bilingual = splitBilingualDescription(description?.takeIf(::hasLanguageMarker)?.let { lineBrokenDescription(document) })
         val eventDate = jsonLd?.schemaDate("startDate")
+        val artists =
+            if (eventType == EventType.FESTIVAL.name) {
+                dayLineup(subtitle)
+                    .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
+                    .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            } else {
+                parseArtists(document, title, subtitle, eventType)
+            }
+        val merchantPromoter = merchant?.takeUnless { billsAct(artists, it) }
+        if (!houseNight && merchantPromoter == null) logger.debug { "Dropping merchant '$merchant' of '$sourceUrl': it is a billed act" }
 
         return ScrapedEvent(
             title = title,
@@ -111,19 +123,12 @@ class So36DetailPageScraper {
             priceNote = priceNote,
             free = document.isFreeAdmission(),
             status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name,
-            artists =
-                if (eventType == EventType.FESTIVAL.name) {
-                    dayLineup(subtitle)
-                        .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
-                        .map { ScrapedArtist(name = it, role = "HEADLINER") }
-                } else {
-                    parseArtists(document, title, subtitle, eventType)
-                },
+            artists = artists,
             promoters =
                 if (houseNight) {
                     subtitleCredit?.let(::listOf) ?: houseNightCredits(document.descriptionLines())
                 } else {
-                    listOf(merchant)
+                    listOfNotNull(merchantPromoter)
                 }
         )
     }
@@ -303,6 +308,12 @@ private const val VENUE_NAME = "SO36"
 private fun subtitleCredit(subtitle: String): String? =
     promoterFromCredit(subtitle.takeIf { SUBTITLE_CREDIT.containsMatchIn(it) })
         ?.takeUnless { it.equals(VENUE_NAME, ignoreCase = true) }
+
+/** Whether [name] is one of [artists], ignoring case and runs of whitespace. */
+private fun billsAct(
+    artists: List<ScrapedArtist>,
+    name: String
+): Boolean = artists.any { it.name.collapseWhitespace().equals(name.collapseWhitespace(), ignoreCase = true) }
 
 /** A subtitle that opens with a [PRESENTED_BY_WORDS] intro. */
 private val SUBTITLE_CREDIT = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\b""", RegexOption.IGNORE_CASE)
