@@ -238,6 +238,7 @@ says so.
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
+| `DUNCKER`              | `DESCRIPTION`      | the listing gives a night, a genre string and the DJ, never prose                                                                                | —     |
 | `EIGHT_HUNDRED_A`      | `GENRE`            | the categories name a format, such as Music or Burlesque, not a style                                                                            | —     |
 | `EIGHT_HUNDRED_A`      | `PRICE_BOX_OFFICE` | a row has one price, the ticket price                                                                                                            | —     |
 | `EIGHT_HUNDRED_A`      | `PROMOTERS`        | 800A presents its own nights, and `host_name` names a promoter only for an external host                                                         | —     |
@@ -632,6 +633,7 @@ says so.
 | `MONARCH`              | `GENRE`            | the page lists only date, title and ticket link; a "(KONZERT)" marker is its only classification                                                 | —     |
 | `MONARCH`              | `IMAGE`            | the venue prints no image per night, only one monthly programme poster                                                                           | —     |
 | `MONARCH`              | `PROMOTERS`        | a presenter is named only on a rare night                                                                                                        | —     |
+| `MONARCH`              | `DESCRIPTION`      | a blurb shares the `td.tom` cell with support acts and door notes, with no separator, so none is read                                            | —     |
 | `MONSTER_RONSONS`      | `DOORS_TIME`       | the venue states one time per night, which is taken as the start                                                                                 | —     |
 | `MONSTER_RONSONS`      | `PRICE`            | the price lives in prose and is often a time-banded tariff, which the model has no field for                                                     | —     |
 | `MONSTER_RONSONS`      | `GENRE`            | the venue publishes no genre; every night takes the house's Karaoke                                                                              | —     |

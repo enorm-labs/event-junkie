@@ -34,5 +34,9 @@ val MONARCH_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the page prints a Ticket Vorverkauf link, never an amount"),
         AcceptedLimitation(LimitedAspect.GENRE, "the page lists only date, title and ticket link; a \"(KONZERT)\" marker is its only classification"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints no image per night, only one monthly programme poster"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "a presenter is named only on a rare night"),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "a blurb shares the `td.tom` cell with support acts and door notes, with no separator, so none is read"
+        )
     )
