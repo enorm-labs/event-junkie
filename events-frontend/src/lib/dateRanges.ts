@@ -60,8 +60,11 @@ export const DATE_PRESETS: readonly { key: string; range: () => DateRange }[] = 
  * range — on a Sunday Today and This weekend are both today alone — so the first in display
  * order wins and at most one button is ever pressed (#2559).
  */
-export function activePresetKey(shown: DateRange): string | undefined {
-  return DATE_PRESETS.find((preset) => {
+export function activePresetKey(
+  shown: DateRange,
+  presets: readonly { key: string; range: () => DateRange }[] = DATE_PRESETS,
+): string | undefined {
+  return presets.find((preset) => {
     const { from, to } = preset.range()
     return from === shown.from && to === shown.to
   })?.key

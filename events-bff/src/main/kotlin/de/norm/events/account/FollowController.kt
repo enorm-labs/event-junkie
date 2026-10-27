@@ -1,17 +1,18 @@
 package de.norm.events.account
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.QueryParameters
+import de.norm.events.event.EventDateRangeParams
 import de.norm.events.event.EventFilter
+import de.norm.events.event.EventFilterParams
 import de.norm.events.event.EventService
 import de.norm.events.event.EventSummaryResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -20,11 +21,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import org.springframework.web.server.ServerWebExchange
 import java.time.Clock
-import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
 
@@ -89,17 +89,26 @@ class FollowController(
     }
 
     @GetMapping("/following")
-    @Operation(summary = "Upcoming events of everything the account follows, by date")
+    @Operation(
+        summary = "Upcoming events of everything the account follows, by date",
+        description =
+            "Takes the filters and the range of `GET /api/events` (#4079), so each one means the same on both lists, and its sorts: " +
+                "`sort=eventDate` (the default) or `sort=createdAt,desc` (newest added first)."
+    )
     suspend fun following(
         @AuthenticationPrincipal account: Account,
-        @Parameter(description = "First day (inclusive), ISO-8601. Without it, everything not over yet, today included.")
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        from: LocalDate?,
+        @ParameterObject
+        range: EventDateRangeParams,
+        @ParameterObject
+        filters: EventFilterParams,
         @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"])
-        pageable: Pageable
-    ): PageResponse<EventSummaryResponse> = events.search(EventFilter(from = from, followed = followed(account)), pageable)
+        pageable: Pageable,
+        exchange: ServerWebExchange
+    ): PageResponse<EventSummaryResponse> {
+        FOLLOWING_PARAMS.rejectUnknownIn(exchange)
+        return events.search(filters.toFilter(range.from, range.to, range.running).copy(followed = followed(account)), pageable)
+    }
 
     @GetMapping("/following/today")
     @Operation(summary = "Today's events of everything the account follows, a running night included, as on the home page (#3922)")
@@ -121,6 +130,10 @@ class FollowController(
     private companion object {
         /** Keeps the following query an index read, and is far beyond anyone's real list. */
         const val MAX_FOLLOWS = 500L
+
+        /** The events list's own parameters, so a filter means the same on both lists (#4079). */
+        val FOLLOWING_PARAMS =
+            QueryParameters.accepting(EventFilterParams::class.java, QueryParameters.PAGEABLE, QueryParameters.named("from", "to", "running"))
     }
 }
 

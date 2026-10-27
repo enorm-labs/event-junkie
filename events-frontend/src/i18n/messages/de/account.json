@@ -58,6 +58,9 @@
       "empty": "Du folgst noch nichts. Folge einem Act, einer Location oder einem Veranstalter auf der jeweiligen Seite, oder fang mit einer dieser Locations an.",
       "suggestions": "Locations mit den meisten Events",
       "none": "Gerade stehen keine Events an.",
+      "noneFiltered": "Nichts, dem du folgst, passt zu diesen Filtern.",
+      "filter": "Filtern",
+      "filterCount": "Filtern ({n})",
       "list": "Du folgst ({count})"
     },
     "shown": "Erscheint auf deiner Seite „Gefolgt“",

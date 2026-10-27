@@ -1,5 +1,6 @@
 import type { Locale } from '@/i18n/locales'
 import { api, unwrap } from './client'
+import type { operations } from './schema'
 import type { Account, EventSummary, EventSummaryPage, Follow } from './types'
 import {
   creationOptions,
@@ -131,9 +132,18 @@ export async function forgetPushSubscription(endpoint: string): Promise<void> {
   await unwrap(api.POST('/api/me/push/unsubscribe', { body: { endpoint } }))
 }
 
-/** Upcoming events of everything the account follows, by date, from [from] when given. */
-export async function fetchFollowing(page = 0, from?: string): Promise<EventSummaryPage> {
-  return unwrap(api.GET('/api/me/following', { params: { query: { page, size: 20, from } } }))
+/** The events list's filters, range and sort, which the Following list takes too (#4079). */
+export type FollowingQuery = Omit<
+  NonNullable<operations['following']['parameters']['query']>,
+  'page' | 'size'
+>
+
+/** Upcoming events of everything the account follows, narrowed by [query]. */
+export async function fetchFollowing(
+  page = 0,
+  query: FollowingQuery = {},
+): Promise<EventSummaryPage> {
+  return unwrap(api.GET('/api/me/following', { params: { query: { ...query, page, size: 20 } } }))
 }
 
 /** Today's events of everything the account follows, a running night included (#3922). */

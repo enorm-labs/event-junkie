@@ -63,6 +63,19 @@ describe('EventFilterBar time options', () => {
     expect(names.indexOf('On now')).toBeLessThan(names.indexOf('Today'))
   })
 
+  it('leaves out Today for a view that asks, and keeps the other presets', async () => {
+    await mountAt('/events', { hideTodayPreset: true })
+    const names = wrapper!.findAll('button').map((candidate) => candidate.text())
+    expect(names).not.toContain('Today')
+    expect(names).toEqual(expect.arrayContaining(['This weekend', 'Next 7 days']))
+  })
+
+  it('without Today, shows This weekend pressed on a Sunday, where both read as today alone', async () => {
+    vi.setSystemTime(new Date('2026-10-11T10:00:00Z'))
+    await mountAt('/events?from=2026-10-11&to=2026-10-11', { hideTodayPreset: true })
+    expect(pressed('This weekend')).toBe('true')
+  })
+
   it('offers On now only to a view that opts in', async () => {
     await mountAt('/events', {})
     expect(wrapper!.findAll('button').some((candidate) => candidate.text() === 'On now')).toBe(

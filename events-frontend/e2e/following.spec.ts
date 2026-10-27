@@ -23,7 +23,12 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 async function mockBff(
   page: Page,
   signedIn: boolean,
-  feed: { today?: unknown[]; upcoming?: unknown[]; following?: boolean } = {},
+  feed: {
+    today?: unknown[]
+    /** The list, or a function of the request's query, for a filter (#4079). */
+    upcoming?: unknown[] | ((query: URLSearchParams) => unknown[])
+    following?: boolean
+  } = {},
 ) {
   const writes: { method: string; path: string; csrf: string | null; body?: unknown }[] = []
   let following = feed.following ?? false
@@ -61,8 +66,12 @@ async function mockBff(
       )
     }
     if (path === '/api/me/following/today') return json(route, feed.today ?? [])
+    // A 204 here left the cards' RSVP map undefined, and every card threw on its next render.
+    if (path === '/api/me/rsvps') return json(route, {})
     if (path === '/api/me/following') {
-      const content = feed.upcoming ?? []
+      const upcoming = feed.upcoming ?? []
+      const content =
+        typeof upcoming === 'function' ? upcoming(new URL(request.url()).searchParams) : upcoming
       return json(route, { ...emptyPage, content, totalElements: content.length, totalPages: 1 })
     }
     if (path === '/api/me/searches') {
@@ -80,6 +89,7 @@ async function mockBff(
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     return route.fulfill({ status: 204 })
   })
+  await page.route(/\/api\/genres/, (route) => json(route, []))
   await page.route(/\/api\/venues(\?|$)/, (route) =>
     json(route, { content: [venue], page: 0, size: 6, totalElements: 1, totalPages: 1 }),
   )
@@ -160,6 +170,104 @@ test("the Following page shows today's events under Today, above Upcoming", asyn
   await expect(page.getByText('Later at the venue').first()).toBeVisible()
   const [todayBox, upcomingBox] = [await today.boundingBox(), await upcoming.boundingBox()]
   expect(todayBox!.y).toBeLessThan(upcomingBox!.y)
+})
+
+const day = (offset: number) =>
+  new Date(Date.now() + offset * 86_400_000).toLocaleDateString('sv-SE', {
+    timeZone: 'Europe/Berlin',
+  })
+
+/** Two followed events, one soon and one in a month; returns the queries the list was asked with. */
+async function openWithTwoUpcoming(page: Page): Promise<URLSearchParams[]> {
+  const event = (slug: string, title: string, eventDate: string) => ({
+    slug,
+    title,
+    eventDate,
+    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+  })
+  const soon = event('soon', 'Soon at the venue', day(2))
+  const later = event('later', 'Much later at the venue', day(30))
+  const asked: URLSearchParams[] = []
+  await mockBff(page, true, {
+    following: true,
+    upcoming: (query) => {
+      asked.push(query)
+      const to = query.get('to')
+      return [soon, later].filter((e) => !to || e.eventDate <= to)
+    },
+  })
+  await page.goto('/en/following')
+  await expect(page.getByText('Much later at the venue').first()).toBeVisible()
+  return asked
+}
+
+async function pickNextSevenDays(page: Page, asked: URLSearchParams[]) {
+  // Upcoming starts tomorrow, so the bar leaves out Today, which would always empty it.
+  await expect(page.getByRole('button', { name: 'Today', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Next 7 days' }).click()
+
+  await expect(page).toHaveURL(new RegExp(`from=${day(0)}&to=${day(6)}`))
+  await expect(page.getByText('Soon at the venue').first()).toBeVisible()
+  await expect(page.getByText('Much later at the venue')).toHaveCount(0)
+  // Under the bar, as on the events page.
+  await expect(page.getByText('1 event found')).toBeVisible()
+  // Upcoming still starts tomorrow: today has its own section.
+  expect(asked.at(-1)?.get('from')).toBe(day(1))
+}
+
+test.describe('on a wide screen', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('the Following page narrows Upcoming by a preset behind the Filter button, with the range in the URL', async ({
+    page,
+  }) => {
+    const asked = await openWithTwoUpcoming(page)
+    const filter = page.getByRole('button', { name: 'Filter', exact: true })
+    await expect(filter).toHaveAttribute('aria-expanded', 'false')
+    await filter.click()
+
+    await pickNextSevenDays(page, asked)
+    await expect(page.getByRole('button', { name: 'Filter (1)' })).toBeVisible()
+  })
+})
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test("the Following page shows the bar at once, with the bar's Filters as its only filter button", async ({
+    page,
+  }) => {
+    const asked = await openWithTwoUpcoming(page)
+    await expect(page.getByRole('button', { name: 'Filter', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible()
+
+    await pickNextSevenDays(page, asked)
+  })
+})
+
+test('a filter that empties Upcoming says so and clears back to the list', async ({ page }) => {
+  await mockBff(page, true, {
+    following: true,
+    upcoming: (query) =>
+      query.getAll('eventType').includes('PARTY')
+        ? []
+        : [
+            {
+              slug: 'band',
+              title: 'Band at the venue',
+              eventDate: '2099-01-01',
+              venue: { slug: 'mock-venue', name: 'Mock Venue' },
+            },
+          ],
+  })
+  await page.goto('/en/following?eventType=PARTY')
+
+  await expect(page.getByText('Nothing you follow matches these filters.')).toBeVisible()
+  await expect(page.getByText('You do not follow anything yet.')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Clear all filters' }).click()
+
+  await expect(page).toHaveURL(/\/en\/following$/)
+  await expect(page.getByText('Band at the venue').first()).toBeVisible()
 })
 
 test('the Following page leaves Today out when nothing is on today', async ({ page }) => {

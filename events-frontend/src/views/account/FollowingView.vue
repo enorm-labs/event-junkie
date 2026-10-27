@@ -2,35 +2,44 @@
 /**
  * "Following" (#3889): today's events of everything the visitor follows, as on the home page (#3922),
  * then the upcoming ones by date; what they follow is a tab of its own, `?tab=follows` (#4080). No ranking, so not "For you". Signed out, it
- * sends the visitor to sign-in and back. Empty, it suggests the venues with the most events in the next 30 days.
+ * sends the visitor to sign-in and back. Empty, it suggests the venues with the most events in the next 30 days. The upcoming list takes the
+ * events page's filters and sort from the URL, behind one Filter button (#4079); Today stays as it is. Below `sm` the bar shows without that
+ * button, since its own Filters button already hides it in a sheet. The count and the sort sit under the open bar, as on the events page.
  */
+import { SlidersHorizontal } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventCard from '@/components/EventCard.vue'
+import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import FollowedList, { type Followed } from '@/components/FollowedList.vue'
 import ListPage from '@/components/ListPage.vue'
 import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
+import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import TodayEvents from '@/components/TodayEvents.vue'
 import { Button } from '@/components/ui/button'
 import {
   fetchFollowing,
   fetchFollowingToday,
   fetchFollows,
+  type FollowingQuery,
   type FollowKind,
   type Notify,
 } from '@/api/account'
 import { api, ApiError, describeError, unwrap } from '@/api/client'
-import type { EventSummary } from '@/api/types'
+import type { EventSummary, EventSummaryPage } from '@/api/types'
 import { useCompactView } from '@/composables/useCompactView'
+import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
 import { tomorrowIso } from '@/lib/format'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -40,11 +49,57 @@ const { account, ready } = useSession()
 const { compact } = useCompactView()
 const push = usePush()
 
+const { filters, dateRange, queryString, applyFilters } = useEventFilters()
+
+const EARLIEST_FIRST = 'eventDate,asc'
+/** When the importer first stored the event, as on the events page (#2721). */
+const NEWEST_ADDED = 'createdAt,desc'
+const sort = computed(() => (queryString('sort') === NEWEST_ADDED ? NEWEST_ADDED : EARLIEST_FIRST))
+// The list starts tomorrow, so it never reaches the past and the date does not flip.
+const sortOptions = computed<SortOption[]>(() => [
+  { label: t('common.sort.date'), value: EARLIEST_FIRST },
+  { label: t('common.sort.newest'), value: NEWEST_ADDED },
+])
+function applySort(value: string) {
+  applyFilters({ sort: value === EARLIEST_FIRST ? '' : value })
+}
+
+/** How many filters narrow the list, the range counting once, so the closed button still says so. */
+const filterCount = computed(
+  () =>
+    Object.values(filters.value).filter((value) => value !== undefined).length +
+    (dateRange.value.from || dateRange.value.to ? 1 : 0),
+)
+// Open by itself only when a link brings filters, so the bar stays out of the way until asked for.
+const filtersOpen = ref(filterCount.value > 0)
+// The bar's own breakpoint: below it the bar is one Filters button, and a second one in front of it says nothing more.
+const narrow = useNarrowViewport()
+// Below `sm` the bar shows by itself; from `sm` up, when the Filter button opens it.
+const barShown = computed(() =>
+  narrow.value ? events.value.length > 0 || filterCount.value > 0 : filtersOpen.value,
+)
+
+/**
+ * Upcoming starts tomorrow: today's events have their own section above it. A range that starts
+ * earlier starts tomorrow here, so Today keeps them and they never show twice.
+ */
+function upcomingQuery(): FollowingQuery {
+  const tomorrow = tomorrowIso()
+  const { from, to } = dateRange.value
+  return {
+    ...filters.value,
+    from: from && from > tomorrow ? from : tomorrow,
+    to,
+    sort: sort.value === EARLIEST_FIRST ? undefined : [sort.value],
+  }
+}
+
 const today = ref<EventSummary[]>([])
 const todayExpanded = ref(false)
 const events = ref<EventSummary[]>([])
 const page = ref(0)
 const hasMore = ref(false)
+const total = ref<number | undefined>(undefined)
 const follows = ref<Followed[] | null>(null)
 const suggestions = ref<{ slug: string; name: string }[]>([])
 const loadingMore = ref(false)
@@ -105,19 +160,20 @@ const empty = computed(
   () => follows.value !== null && follows.value.length === 0 && searchCount.value === 0,
 )
 
+/** Counts the upcoming loads, so a slower answer to an older filter never replaces a newer one. */
+let upcomingTicket = 0
+
 async function load() {
   problem.value = ''
   try {
-    // Upcoming starts tomorrow: today's events have their own section above it.
+    const ticket = ++upcomingTicket
     const [day, first, list] = await Promise.all([
       fetchFollowingToday(),
-      fetchFollowing(0, tomorrowIso()),
+      fetchFollowing(0, upcomingQuery()),
       fetchFollows(),
     ])
     today.value = day
-    events.value = first.content ?? []
-    page.value = 0
-    hasMore.value = (first.totalPages ?? 0) > 1
+    if (ticket === upcomingTicket) showFirst(first)
     follows.value = list.flatMap((item) =>
       item.kind && item.kind in ROUTE && item.slug && item.name
         ? [
@@ -138,6 +194,31 @@ async function load() {
   }
 }
 
+function showFirst(first: EventSummaryPage) {
+  events.value = first.content ?? []
+  total.value = first.totalElements
+  page.value = 0
+  hasMore.value = (first.totalPages ?? 0) > 1
+}
+
+/** A filter or the sort changed in the URL: only the upcoming list reloads. */
+async function loadUpcoming() {
+  const ticket = ++upcomingTicket
+  try {
+    const first = await fetchFollowing(0, upcomingQuery())
+    if (ticket === upcomingTicket) showFirst(first)
+  } catch (e) {
+    if (ticket === upcomingTicket) problem.value = describeError(e, 'errors.subject.following')
+  }
+}
+
+watch(
+  () => JSON.stringify(upcomingQuery()),
+  () => {
+    if (follows.value !== null) void loadUpcoming()
+  },
+)
+
 /** A help, not the page: if the venues do not load, the empty page shows its text without them. */
 async function loadSuggestions() {
   try {
@@ -155,8 +236,10 @@ async function loadSuggestions() {
 async function loadMore() {
   if (loadingMore.value) return
   loadingMore.value = true
+  const ticket = upcomingTicket
   try {
-    const next = await fetchFollowing(page.value + 1, tomorrowIso())
+    const next = await fetchFollowing(page.value + 1, upcomingQuery())
+    if (ticket !== upcomingTicket) return
     events.value = [...events.value, ...(next.content ?? [])]
     page.value += 1
     hasMore.value = page.value + 1 < (next.totalPages ?? 0)
@@ -273,7 +356,63 @@ onMounted(async () => {
 
         <section v-if="!empty" class="space-y-4">
           <SectionLabel as="h2">{{ t('common.upcomingEvents') }}</SectionLabel>
-          <p v-if="!events.length" class="text-body text-muted-foreground">
+          <!-- Wide screens only: a phone shows the bar directly. Nothing to narrow or order until something is upcoming, or a filter emptied it. -->
+          <div
+            v-if="!narrow && (events.length || filterCount)"
+            class="flex flex-wrap items-center gap-3"
+          >
+            <Button
+              :aria-expanded="filtersOpen"
+              aria-controls="following-filters"
+              :variant="filterCount ? 'default' : 'outline'"
+              size="sm"
+              type="button"
+              @click="filtersOpen = !filtersOpen"
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              {{
+                filterCount
+                  ? t('account.follow.page.filterCount', { n: filterCount })
+                  : t('account.follow.page.filter')
+              }}
+            </Button>
+            <!-- The open bar carries its own clear, and the sort moves under it. -->
+            <template v-if="!filtersOpen">
+              <ClearAllFilters />
+              <SortControl
+                v-if="events.length"
+                class="ml-auto"
+                :model-value="sort"
+                :options="sortOptions"
+                @update:model-value="applySort"
+              />
+            </template>
+          </div>
+          <template v-if="barShown">
+            <!-- No Today preset: Upcoming starts tomorrow, so it would always empty the list. -->
+            <div :id="narrow ? undefined : 'following-filters'">
+              <EventFilterBar hide-today-preset :result-count="total" />
+            </div>
+            <!-- Under the bar's rule, as on the events page: the count, then the sort. -->
+            <div v-if="events.length" :class="RESULTS_BAR_CLASS">
+              <p v-if="total !== undefined" class="text-body text-muted-foreground">
+                {{ t('events.resultCount', { count: total }) }}
+              </p>
+              <SortControl
+                class="ml-auto"
+                :model-value="sort"
+                :options="sortOptions"
+                @update:model-value="applySort"
+              />
+            </div>
+          </template>
+          <div v-if="!events.length && filterCount" class="space-y-3">
+            <p class="text-body text-muted-foreground">
+              {{ t('account.follow.page.noneFiltered') }}
+            </p>
+            <ClearAllFilters empty-state />
+          </div>
+          <p v-else-if="!events.length" class="text-body text-muted-foreground">
             {{ t('account.follow.page.none') }}
           </p>
           <div v-else-if="compact" :class="CARD_LIST_CLASS">

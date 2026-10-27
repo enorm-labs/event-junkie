@@ -33,6 +33,8 @@ const props = withDefaults(
     resultCount?: number
     /** The festivals running today, one chip each beside the presets (#3273); a view without them omits it. */
     festivals?: Festival[]
+    /** Drops the Today preset, for a list that starts tomorrow and which Today would always empty (#4079). */
+    hideTodayPreset?: boolean
   }>(),
   {
     showDateRange: true,
@@ -40,7 +42,14 @@ const props = withDefaults(
     showOnNow: false,
     resultCount: undefined,
     festivals: () => [],
+    hideTodayPreset: false,
   },
+)
+
+const presets = computed(() =>
+  props.hideTodayPreset
+    ? DATE_PRESETS.filter((preset) => preset.key !== 'dateRange.today')
+    : DATE_PRESETS,
 )
 
 const { t } = useI18n()
@@ -84,7 +93,7 @@ function isPresetActive(key: string): boolean {
   const from = queryString('from')
   const to = queryString('to')
   const shown = !from && !to && props.defaultRange ? props.defaultRange : { from, to }
-  return activePresetKey(shown) === key
+  return activePresetKey(shown, presets.value) === key
 }
 
 const { genres, venues } = shareFilterLists()
@@ -193,7 +202,7 @@ onMounted(() => {
       </Button>
       <!-- Shortcuts that set the same from/to the inputs do, so a preset is as shareable. -->
       <Button
-        v-for="preset in DATE_PRESETS"
+        v-for="preset in presets"
         :key="preset.key"
         :aria-pressed="isPresetActive(preset.key)"
         :variant="isPresetActive(preset.key) ? 'default' : 'outline'"
