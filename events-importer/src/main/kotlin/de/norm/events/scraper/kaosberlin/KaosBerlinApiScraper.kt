@@ -55,7 +55,9 @@ class KaosBerlinApiScraper {
             return null
         }
         val concertMarked = CONCERT_MARKERS.any { it.containsMatchIn(rawTitle) }
-        val title = cleanEventTitle(CONCERT_MARKERS.fold(rawTitle) { text, marker -> text.replace(marker, "") })
+        val unmarkedTitle = CONCERT_MARKERS.fold(rawTitle) { text, marker -> text.replace(marker, "") }
+        val cleanedTitle = cleanEventTitle(unmarkedTitle)
+        val title = cleanedTitle.text
         val categoryType = categories.firstNotNullOfOrNull { mapEventType(it, CATEGORY_TYPES) }
         val eventType = if (concertMarked) EventType.CONCERT.name else categoryType ?: inferVenueFormatType(title, null, TITLE_FORMATS)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
@@ -78,6 +80,7 @@ class KaosBerlinApiScraper {
             pricePresale = tecFromPrice(prices),
             priceNote = cost?.takeIf { prices.size > 1 || (prices.isEmpty() && !UNKNOWN_COST.matches(it)) },
             free = detectFree(pricePresale = prices.singleOrNull(), priceNote = cost),
+            soldOut = cleanedTitle.soldOut,
             artists = if (eventType == EventType.CONCERT.name) billedActs(title, concertMarked) else emptyList(),
             // The association that runs the house is its own organizer entry, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { HOUSE_NAME.containsMatchIn(it) }

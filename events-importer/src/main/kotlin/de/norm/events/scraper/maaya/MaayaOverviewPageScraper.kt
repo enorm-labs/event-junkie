@@ -111,7 +111,8 @@ class MaayaOverviewPageScraper(
         card: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val title = card.textAt(TITLE)?.let(::cleanEventTitle)
+        val cleanedTitle = card.textAt(TITLE)?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) return null
 
         val schedule = card.textAt(SCHEDULE).orEmpty()
@@ -124,6 +125,7 @@ class MaayaOverviewPageScraper(
         val concertAct = CONCERT_PREFIX.find(title)?.groupValues?.get(1)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             eventType = if (concertAct != null) EventType.CONCERT.name else typeOf(title, eventDate, startTime, endDate),
             eventDate = eventDate,
             endDate = endDate,

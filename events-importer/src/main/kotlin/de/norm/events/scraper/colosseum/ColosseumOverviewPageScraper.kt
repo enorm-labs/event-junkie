@@ -82,7 +82,8 @@ class ColosseumOverviewPageScraper {
             logger.warn { "Colosseum event has no slug, skipping" }
             return null
         }
-        val title = node.stringOrNull("title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = node.stringOrNull("title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Colosseum event '$slug' has no title, skipping" }
             return null
@@ -119,7 +120,7 @@ class ColosseumOverviewPageScraper {
                     ?: eventPage.takeIf { soldByWix && registration.path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS },
             pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
             priceNote = ticketing?.let { wixPriceRangeNote(it) },
-            soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true,
+            soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true || cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status")),
             artists = buildArtistList(title, extractSupportFromSubtitle(subtitle))
         )

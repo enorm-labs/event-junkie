@@ -61,7 +61,8 @@ class ModusOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
 
         val rawTitle = tile.textAt("figcaption h2") ?: return null
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         val eventType = modusEventType(title)
 
         return ScrapedEvent(
@@ -75,6 +76,7 @@ class ModusOverviewPageScraper {
             sourceId = "${EventSource.MODUS.sourceIdPrefix}$slug",
             // The venue marks a move only in the title prose ("(verschoben aus 2026)"), which
             // cleanEventTitle strips — so the status is read from the raw title.
+            soldOut = cleanedTitle.soldOut,
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
             artists = modusLineup(title, eventType, description = null)

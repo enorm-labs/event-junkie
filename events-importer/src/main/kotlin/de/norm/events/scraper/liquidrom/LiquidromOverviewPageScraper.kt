@@ -74,12 +74,12 @@ class LiquidromOverviewPageScraper(
         baseUrl: String
     ): ScrapedEvent? {
         val dateLine = row.selectFirst(".date")?.text().orEmpty()
-        val title =
+        val cleanedTitle =
             row
                 .selectFirst("p")
                 ?.text()
                 ?.let(::cleanEventTitle)
-                .blankToNull()
+        val title = cleanedTitle?.text.blankToNull()
         val match = SESSION_DATE.find(dateLine)
         if (title == null || match == null || year == null) {
             logger.warn { "Liquidrom Sound Session '$title' on '$dateLine' has no title, date or year heading, skipping" }
@@ -91,6 +91,7 @@ class LiquidromOverviewPageScraper(
         val end = clock(part[5], part[6])
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle?.soldOut == true,
             eventType = EventType.PARTY.name,
             eventDate = date,
             startTime = start,
@@ -113,12 +114,12 @@ class LiquidromOverviewPageScraper(
         block: Element,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val title =
+        val cleanedTitle =
             block
                 .selectFirst("h2")
                 ?.text()
                 ?.let(::cleanEventTitle)
-                .blankToNull()
+        val title = cleanedTitle?.text.blankToNull()
         val dateLine = block.selectFirst("h5")?.text().orEmpty()
         val date = SPECIAL_DATE.find(dateLine)?.let { yearless(it.groupValues[1].toInt(), it.groupValues[2]) }
         val times =
@@ -145,6 +146,7 @@ class LiquidromOverviewPageScraper(
         return times.map { time ->
             ScrapedEvent(
                 title = title,
+                soldOut = cleanedTitle?.soldOut == true,
                 description =
                     paragraphs
                         .firstOrNull()

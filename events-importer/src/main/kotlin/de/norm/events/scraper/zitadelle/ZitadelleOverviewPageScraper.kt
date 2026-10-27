@@ -68,7 +68,8 @@ class ZitadelleOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
-        val title = card.textAt("h3.cmf-title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = card.textAt("h3.cmf-title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Zitadelle card '$slug' has no title, skipping" }
             return null
@@ -85,7 +86,7 @@ class ZitadelleOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.ZITADELLE.sourceIdPrefix}$slug",
             status = parseCardStatus(card, badge),
-            soldOut = badge.equals(SOLD_OUT_BADGE, ignoreCase = true),
+            soldOut = badge.equals(SOLD_OUT_BADGE, ignoreCase = true) || cleanedTitle.soldOut,
             artists = buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name)
         )
     }

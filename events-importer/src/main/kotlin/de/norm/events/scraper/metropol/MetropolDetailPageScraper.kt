@@ -62,7 +62,7 @@ class MetropolDetailPageScraper {
         val relocationNote = parseRelocationNote(document)
 
         return ScrapedEvent(
-            title = cleanEventTitle(stripRelocationPrefix(rawTitle)),
+            title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text,
             subtitle = document.textAt(".event-info p.tour"),
             description = description,
             eventType = metropolEventType(document.textAt(".event-details ul.event-categories"), description),
@@ -75,6 +75,7 @@ class MetropolDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt("a.button.ticket"),
+            soldOut = cleanEventTitle(rawTitle).soldOut,
             status = parseEventStatus("${document.textAt(".alert-red").orEmpty()} $rawTitle ${relocationNote.orEmpty()}"),
             statusNote = relocationNote ?: rawTitle,
             promoters = listOfNotNull(parsePromoter(document))

@@ -94,7 +94,7 @@ class SilentGreenMonthPageScraper {
             return null
         }
 
-        val title = cleanEventTitle(rawTitle)
+        val title = cleanEventTitle(rawTitle).text
         val categories = row.textAt(".eventList-event-cat")
         if (isSilentGreenTour(categories, title)) {
             logger.info { "Skipping silent green guided tour '$title' on $sourceUrl: out of scope" }

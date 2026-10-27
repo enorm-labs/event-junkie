@@ -52,7 +52,8 @@ class WeltwirtschaftApiScraper {
         val descriptionHtml = event.path("description").asString("")
         val allDay = event.path("all_day").asBoolean(false)
         val end = event.tecDateTime("end_date")
-        val lines = rawTitle.split(LINE_BREAK).mapNotNull { cleanEventTitle(it).blankToNull() }
+        val cleanedLines = rawTitle.split(LINE_BREAK).map(::cleanEventTitle)
+        val lines = cleanedLines.mapNotNull { it.text.blankToNull() }
         val title = lines.firstOrNull() ?: return null
         val subtitle = lines.drop(1).joinToString(" – ").blankToNull()
         val description = event.tecDescription()
@@ -84,6 +85,7 @@ class WeltwirtschaftApiScraper {
                     .firstOrNull(::isTicketLink)
                     ?.absUrl("href")
                     ?.blankToNull(),
+            soldOut = cleanedLines.any { it.soldOut },
             artists = djsOf(lines)
         )
     }

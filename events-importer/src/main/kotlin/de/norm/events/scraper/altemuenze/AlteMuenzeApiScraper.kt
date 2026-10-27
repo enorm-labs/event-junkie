@@ -55,7 +55,8 @@ class AlteMuenzeApiScraper {
         }
         val statusMarker = STATUS_PREFIX.find(rawTitle)?.groupValues?.get(1)
         val cancelled = statusMarker != null && CANCELLED.containsMatchIn(statusMarker)
-        val title = cleanEventTitle(rawTitle.replace(STATUS_PREFIX, ""))
+        val cleanedTitle = cleanEventTitle(rawTitle.replace(STATUS_PREFIX, ""))
+        val title = cleanedTitle.text
         val allDay = event.path("all_day").asBoolean(false)
         val end = event.tecDateTime("end_date")?.takeIf { it.isAfter(start) }
         val prices = event.tecCostAmounts()
@@ -75,7 +76,7 @@ class AlteMuenzeApiScraper {
             pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
-            soldOut = statusMarker != null && !cancelled,
+            soldOut = (statusMarker != null && !cancelled) || cleanedTitle.soldOut,
             status = if (cancelled) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
             // The house's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { it.equals(HOUSE_NAME, ignoreCase = true) }

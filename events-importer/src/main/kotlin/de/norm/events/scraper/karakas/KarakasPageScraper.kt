@@ -2,11 +2,11 @@ package de.norm.events.scraper.karakas
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.EventType
+import de.norm.events.scraper.CleanedTitle
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PADDED_GERMAN_DATE
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
@@ -66,8 +66,8 @@ class KarakasPageScraper(
         val title = card.textAt(TOUR_HEADLINE)?.let(::cleanEventTitle)
         val text = card.selectFirst(TOUR_TEXT)
         val date = text?.let { FULL_DATE.find(it.text()) }?.value?.let { LocalDate.parse(it, PADDED_GERMAN_DATE) }
-        if (title.isNullOrBlank() || date == null) {
-            logger.warn { "Karakas tour card '$title' has no title or date, skipping" }
+        if (title == null || title.text.isBlank() || date == null) {
+            logger.warn { "Karakas tour card '${title?.text}' has no title or date, skipping" }
             return null
         }
         return dated(title, date, pageUrl, eventType).copy(
@@ -85,8 +85,8 @@ class KarakasPageScraper(
         val title = section.textAt(SECTION_TITLE)?.let(::cleanEventTitle)
         val day = WHEN_LINE.find(description.text())?.destructured
         val monthDay = day?.let { (dayOfMonth, month) -> runCatching { MonthDay.parse("$month $dayOfMonth", MONTH_DAY) }.getOrNull() }
-        if (title.isNullOrBlank() || monthDay == null) {
-            logger.warn { "Karakas announcement '$title' has no title or readable date, skipping" }
+        if (title == null || title.text.isBlank() || monthDay == null) {
+            logger.warn { "Karakas announcement '${title?.text}' has no title or readable date, skipping" }
             return null
         }
         val lines = description.select("p").map { it.text().trim() }.filter { it.isNotEmpty() && !WHEN_LINE.containsMatchIn(it) }
@@ -98,17 +98,17 @@ class KarakasPageScraper(
     }
 
     private fun dated(
-        title: String,
+        title: CleanedTitle,
         date: LocalDate,
         pageUrl: String,
         eventType: EventType
     ) = ScrapedEvent(
-        title = title,
+        title = title.text,
         eventType = eventType.name,
         eventDate = date,
         sourceUrl = pageUrl,
-        sourceId = "${EventSource.KARAKAS.sourceIdPrefix}$date-${SlugGenerator.slugify(title)}",
-        soldOut = hasSoldOutMarker(title)
+        sourceId = "${EventSource.KARAKAS.sourceIdPrefix}$date-${SlugGenerator.slugify(title.text)}",
+        soldOut = title.soldOut
     )
 
     /** The full-size image: the part after `/:/` is a resize instruction. */

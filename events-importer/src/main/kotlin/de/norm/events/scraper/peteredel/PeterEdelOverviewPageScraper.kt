@@ -205,7 +205,8 @@ class PeterEdelOverviewPageScraper {
 
         val heading = main.selectFirst("h3") ?: return null
         val rawTitle = heading.text().trim()
-        val title = cleanEventTitle(rawTitle.replace(CANCELLED_TITLE_MARKER, ""))
+        val cleanedTitle = cleanEventTitle(rawTitle.replace(CANCELLED_TITLE_MARKER, ""))
+        val title = cleanedTitle.text
         if (title.isBlank()) {
             logger.warn { "No title in Peter Edel event box, skipping" }
             return null
@@ -247,7 +248,9 @@ class PeterEdelOverviewPageScraper {
             pricePresale = parsePriceValue(ticketColumn?.textAt("h3")),
             priceBoxOffice = parseLabelledPrices(note).boxOffice,
             priceNote = note,
-            soldOut = ticketColumn?.text()?.contains(SOLD_OUT_MARKER, ignoreCase = true) == true,
+            soldOut =
+                ticketColumn?.text()?.contains(SOLD_OUT_MARKER, ignoreCase = true) == true ||
+                    cleanedTitle.soldOut,
             status = resolveStatus(rawTitle, ticketColumn),
             statusNote = extraShowNote,
             promoters =

@@ -48,17 +48,29 @@ class ColosseumOverviewPageScraperTest {
     private fun typeOf(
         title: String,
         subtitle: String
-    ): String? {
+    ): String? = scrapeOne(mapOf("title" to title, "description" to subtitle)).eventType
+
+    /** The one event a payload of [fields], over a slug and a start date, yields. */
+    private fun scrapeOne(fields: Map<String, Any>): ScrapedEvent {
         val event =
             mapOf(
                 "slug" to "probe",
-                "title" to title,
-                "description" to subtitle,
                 "scheduling" to mapOf("config" to mapOf("startDate" to "2026-10-05T17:00:00.000Z", "timeZoneId" to "Europe/Berlin"))
-            )
+            ) + fields
         val payload = mapOf("appsWarmupData" to mapOf(WIX_EVENTS_APP to mapOf("widget" to mapOf("events" to mapOf("events" to listOf(event))))))
         val html = "<script id=\"wix-warmup-data\" type=\"application/json\">${JsonMapper.builder().build().writeValueAsString(payload)}</script>"
-        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().eventType
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+    }
+
+    @Test
+    fun `reads a tail sold-out marker on an externally ticketed event before the title is cleaned`() {
+        // Wix ticketing is ignored for an external sale (#2710); the title is the only signal (#4031).
+        val external = mapOf("type" to 3, "external" to mapOf("registration" to "https://tickets.example.de/podcast"))
+        val event = scrapeOne(mapOf("title" to "Podcast-Tour 2026  AUSVERKAUFT", "registration" to external))
+        event.title shouldBe "Podcast-Tour 2026"
+        event.sourceId shouldBe "colosseum:probe"
+        event.soldOut shouldBe true
+        scrapeOne(mapOf("title" to "Podcast-Tour 2026", "registration" to external)).soldOut shouldBe false
     }
 
     @Test

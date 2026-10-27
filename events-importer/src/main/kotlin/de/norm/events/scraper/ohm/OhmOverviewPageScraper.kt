@@ -74,7 +74,8 @@ class OhmOverviewPageScraper(
             logger.warn { "OHM event item has no title, skipping" }
             return null
         }
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         val eventDate = parseEventDate(item.textAt(".event-date"))
         if (eventDate == null) {
             logger.warn { "OHM event '$title' has no parseable date, skipping" }
@@ -92,6 +93,7 @@ class OhmOverviewPageScraper(
             // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.OHM.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
+            soldOut = cleanedTitle.soldOut,
             artists = parseLineup(item)
         )
     }

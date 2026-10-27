@@ -54,7 +54,8 @@ class VelomaxDetailPageScraper {
             logger.warn { "Detail page has no schema.org Event block, skipping" }
             return null
         }
-        val title = event.textAt("[itemprop=name]")?.let(::cleanEventTitle)
+        val cleanedTitle = event.textAt("[itemprop=name]")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title == null) {
             logger.warn { "Detail page has no event name, skipping" }
             return null
@@ -68,6 +69,7 @@ class VelomaxDetailPageScraper {
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             subtitle = subtitle,
             // Scoped to the single-event block: the teaser strip carries other events' prose.
             description = document.textAt(".eventSingle .event-content"),

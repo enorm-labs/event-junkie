@@ -66,7 +66,8 @@ class QuasimodoOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/events/")
 
-        val title = card.textAt("h4.event-title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = card.textAt("h4.event-title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Quasimodo card '$slug' has no title, skipping" }
             return null
@@ -86,6 +87,7 @@ class QuasimodoOverviewPageScraper {
             sourceId = "${EventSource.QUASIMODO.sourceIdPrefix}$slug",
             ticketUrl = card.hrefAt("a.ticket"),
             genre = genre,
+            soldOut = cleanedTitle.soldOut,
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }

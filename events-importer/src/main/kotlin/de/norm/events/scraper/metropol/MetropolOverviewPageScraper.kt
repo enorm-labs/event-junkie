@@ -83,7 +83,7 @@ class MetropolOverviewPageScraper {
                 .selectFirst("h2.artist")
                 ?.ownText()
                 ?.blankToNull() ?: return null
-        val title = cleanEventTitle(stripRelocationPrefix(rawTitle))
+        val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
         val support = row.textAt("h2.artist small.support")
         val eventType = mapEventType(row.textAt("ul.event-categories"))
 
@@ -101,6 +101,7 @@ class MetropolOverviewPageScraper {
             startTime = parseMetropolTime(row.selectFirst(".date .time")?.ownText()),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
+            soldOut = cleanEventTitle(rawTitle).soldOut,
             // Cancellation is the `.attention` badge; a relocation *away* from the house is the title
             // prefix. The `.changes` prose is not read: the detail page's note wins over the overview.
             status = parseEventStatus("${row.textAt(".info .attention").orEmpty()} $rawTitle"),

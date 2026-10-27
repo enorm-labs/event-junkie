@@ -58,7 +58,9 @@ class ClubOstDetailPageScraper {
             return null
         }
 
-        val title = content.textAt("h1")?.let(::cleanEventTitle)
+        val cleanedTitle = content.textAt("h1")?.let(::cleanEventTitle)
+
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Club OST detail page has no title, skipping" }
             return null
@@ -74,6 +76,7 @@ class ClubOstDetailPageScraper {
         val endTime = parseClubOstTime(content.valueForLabel(END_TIME_LABEL))
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             eventDate = eventDate,
             startTime = startTime,
             endDate = endTime?.let { endOn(eventDate, startTime, it) },

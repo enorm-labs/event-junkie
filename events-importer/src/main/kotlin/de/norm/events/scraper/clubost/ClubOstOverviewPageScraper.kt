@@ -77,7 +77,9 @@ class ClubOstOverviewPageScraper {
             return null
         }
 
-        val title = card.textAt("h3")?.let(::cleanEventTitle)
+        val cleanedTitle = card.textAt("h3")?.let(::cleanEventTitle)
+
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Club OST card at '$href' has no title, skipping" }
             return null
@@ -93,6 +95,7 @@ class ClubOstOverviewPageScraper {
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             eventDate = eventDate,
             startTime = parseClubOstTime(info.substringAfter(INFO_SEPARATOR, "")),
             eventType = EventType.PARTY.name,

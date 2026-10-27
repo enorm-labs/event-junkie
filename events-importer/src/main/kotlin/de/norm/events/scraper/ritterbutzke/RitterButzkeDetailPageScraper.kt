@@ -67,9 +67,10 @@ class RitterButzkeDetailPageScraper(
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
+        val cleanedTitle = cleanEventTitle(rawTitle)
 
         return ScrapedEvent(
-            title = cleanEventTitle(rawTitle),
+            title = cleanedTitle.text,
             eventType = EventType.PARTY.name,
             // The header renders the date with a four-digit year here, unlike the listing card.
             eventDate = parseGermanDate(document.textAt(DATE_SELECTOR)) ?: UNRESOLVED_EVENT_DATE,
@@ -78,6 +79,7 @@ class RitterButzkeDetailPageScraper(
             sourceUrl = sourceUrl,
             sourceId = "${eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
+            soldOut = cleanedTitle.soldOut,
             description = if (readsDescription) htmlParagraphText(document.selectFirst(DESCRIPTION_SELECTOR)?.html()) else null,
             artists = if (lineupFromJsonLd) parseJsonLdLineup(document).ifEmpty { parseLineup(document) } else parseLineup(document)
         )

@@ -134,7 +134,8 @@ class ZennerApiScraper(
             return null
         }
 
-        val title = node.title.blankToNull()?.let { cleanEventTitle(it) }
+        val cleanedTitle = node.title.blankToNull()?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title == null) {
             logger.warn { "Zenner event '$id' has no title, skipping" }
             return null
@@ -174,6 +175,7 @@ class ZennerApiScraper(
             ticketUrl = node.linkEvent.blankToNull()?.takeIf { it.startsWith("http") },
             // The venue announces a cancellation only in the blurb ("Wegen schlechten Wetters abgesagt!").
             status = description?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name,
+            soldOut = cleanedTitle.soldOut,
             artists = buildArtists(title, eventType)
         )
     }

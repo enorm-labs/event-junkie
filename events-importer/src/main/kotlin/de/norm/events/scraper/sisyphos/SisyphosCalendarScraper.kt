@@ -80,8 +80,9 @@ class SisyphosCalendarScraper {
         val end = node.stringOrNull("endRaw")?.let { Instant.parse(it).atZone(BERLIN) }
         val subtitle = node.stringOrNull("subtitle")
         val eventDate: LocalDate = start.toLocalDate()
+        val cleanedTitle = cleanEventTitle(rawTitle)
         return ScrapedEvent(
-            title = cleanEventTitle(rawTitle),
+            title = cleanedTitle.text,
             // "Party" is the calendar's default subtitle and says nothing the type does not.
             subtitle = subtitle?.takeUnless { it.equals(PARTY_SUBTITLE, ignoreCase = true) || hasFreeEntryPhrase(it) },
             description = sisyphosHtmlToText(node.stringOrNull("content")),
@@ -94,7 +95,8 @@ class SisyphosCalendarScraper {
             sourceUrl = HOMEPAGE_URL,
             sourceId = "${EventSource.SISYPHOS.sourceIdPrefix}$eventDate",
             ticketUrl = node.stringOrNull("ticketLink")?.takeIf { it.startsWith("http") },
-            free = hasFreeEntryPhrase(subtitle)
+            free = hasFreeEntryPhrase(subtitle),
+            soldOut = cleanedTitle.soldOut
         )
     }
 

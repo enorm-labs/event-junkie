@@ -89,12 +89,13 @@ class InterkosmosApiScraper {
     ): ScrapedEvent? {
         val type = node.stringOrNull("ik_event_type")
         if (type in PARTICIPATION) return null
-        val title =
+        val cleanedTitle =
             node
                 .path("title")
                 .stringOrNull("rendered")
                 ?.let(::decodeHtmlEntities)
                 ?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         val author =
             BUCHBAR
                 .matchEntire(title)
@@ -107,6 +108,7 @@ class InterkosmosApiScraper {
         val amount = price?.replace(',', '.')?.toBigDecimalOrNull() ?: parsePriceValue(price)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = node.path("content").stringOrNull("rendered")?.let(::descriptionOf),
             eventType = TYPES[type] ?: EventType.READING.name.takeIf { author != null } ?: EventType.OTHER.name,
             typeIsFallback = type !in TYPES && author == null,

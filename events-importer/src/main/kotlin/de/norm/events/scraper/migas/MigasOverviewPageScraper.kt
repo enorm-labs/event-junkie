@@ -92,7 +92,8 @@ class MigasOverviewPageScraper {
         }
 
         val rawTitle = item.textAt(TITLE_SELECTOR) ?: popup.textAt(POPUP_TITLE_SELECTOR)
-        val title = rawTitle?.let { cleanEventTitle(it) }?.takeIf { it.isNotBlank() }
+        val cleanedTitle = rawTitle?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text?.takeIf { it.isNotBlank() }
         if (title == null) {
             logger.warn { "migas event $sourceUrl has no title" }
             return null
@@ -112,7 +113,8 @@ class MigasOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MIGAS.sourceIdPrefix}${extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)}",
             artists = artistsFor(title),
-            free = hasFreeEntryPhrase(description)
+            free = hasFreeEntryPhrase(description),
+            soldOut = cleanedTitle.soldOut
         )
     }
 

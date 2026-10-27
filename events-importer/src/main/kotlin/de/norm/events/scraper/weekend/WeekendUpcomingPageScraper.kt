@@ -49,7 +49,8 @@ class WeekendUpcomingPageScraper {
         sourceUrl: String
     ): ScrapedEvent? {
         val link = article.selectFirst("a.eventlist-title-link[href]") ?: error("No event link found")
-        val title = cleanEventTitle(link.text())
+        val cleanedTitle = cleanEventTitle(link.text())
+        val title = cleanedTitle.text
         if (title.isBlank()) {
             logger.warn { "Weekend event on $sourceUrl has no title, skipping" }
             return null
@@ -78,6 +79,7 @@ class WeekendUpcomingPageScraper {
             sourceUrl = url,
             sourceId = "${EventSource.WEEKEND.sourceIdPrefix}${extractEventSlug(url, "/upcoming/")}",
             ticketUrl = article.attrAt(".eventlist-description iframe[src*=xceed.me]", "src"),
+            soldOut = cleanedTitle.soldOut,
             artists = text?.let(::lineup).orEmpty()
         )
     }

@@ -70,7 +70,9 @@ class HuxleysOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
 
-        val title = card.textAt(".eventname")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = card.textAt(".eventname")?.let(::cleanEventTitle) ?: return null
+
+        val title = cleanedTitle.text
         val support = card.textAt(".support")
         val times = card.textAt(".time").orEmpty()
         val eventType = inferConcertVenueType(title)
@@ -86,7 +88,7 @@ class HuxleysOverviewPageScraper {
             startTime = labelledClock(times, START_LABELS),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HUXLEYS.sourceIdPrefix}$slug",
-            soldOut = card.hasClass(SOLD_OUT_CLASS),
+            soldOut = card.hasClass(SOLD_OUT_CLASS) || cleanedTitle.soldOut,
             status = parseHuxleysStatus(card),
             statusNote = card.textAt(".anderungen"),
             artists = buildArtistsForEventType(title, support, eventType)

@@ -44,7 +44,8 @@ class UraniaEventPageScraper {
         document: Document,
         sourceUrl: String
     ): ScrapedEvent? {
-        val title = document.textAt("h1.c-event-article_content_title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = document.textAt("h1.c-event-article_content_title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Urania event page at $sourceUrl has no heading, skipping" }
             return null
@@ -71,6 +72,7 @@ class UraniaEventPageScraper {
             pricePresale = price,
             priceNote = admissionLine,
             free = detectFree(pricePresale = price, priceNote = admissionLine, title = title),
+            soldOut = cleanedTitle.soldOut,
             artists = uraniaSpeakers(document.textAt("p.c-event-article_content_artist"), eventType)
         )
     }

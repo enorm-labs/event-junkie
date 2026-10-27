@@ -52,7 +52,8 @@ class ModusDetailPageScraper {
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         val eventType = modusEventType(title)
         val dateLine = document.textAt(".event-view-right h2")
         val description = document.textAt(".event-description")?.replace(INVISIBLE_FORMAT_CHARS, "")
@@ -68,6 +69,7 @@ class ModusDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MODUS.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt(".all-events-button a"),
+            soldOut = cleanedTitle.soldOut,
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
             artists = modusLineup(title, eventType, document.selectFirst(".event-description"))

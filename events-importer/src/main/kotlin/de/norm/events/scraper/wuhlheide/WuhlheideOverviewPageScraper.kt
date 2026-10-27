@@ -65,7 +65,8 @@ class WuhlheideOverviewPageScraper {
 
         // Jsoup renders the act's <wbr> word-break hint away, so "AnnenMay<wbr>Kantereit" comes back
         // as the unbroken "AnnenMayKantereit".
-        val title = show.textAt("h2 a")?.let { cleanEventTitle(it) }
+        val cleanedTitle = show.textAt("h2 a")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Parkbühne Wuhlheide show '$slug' has no title, skipping" }
             return null
@@ -86,7 +87,7 @@ class WuhlheideOverviewPageScraper {
             // Anchored on the ticket icon: the sibling share buttons are also target="_blank".
             ticketUrl = show.hrefAt(".buttons a.button:has(i.fa-ticket)"),
             // "Ausverkauft" is a flag, not a status — the venue publishes no cancellations.
-            soldOut = statusLabel.contains(SOLD_OUT_LABEL, ignoreCase = true),
+            soldOut = statusLabel.contains(SOLD_OUT_LABEL, ignoreCase = true) || cleanedTitle.soldOut,
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
     }

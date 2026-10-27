@@ -59,7 +59,8 @@ class EightMmProgramPageScraper(
         sourceUrl: String
     ): ScrapedEvent? {
         val link = item.selectFirst("> h1 > a[href]") ?: error("No event link found")
-        val title = cleanEventTitle(link.text())
+        val cleanedTitle = cleanEventTitle(link.text())
+        val title = cleanedTitle.text
         if (title.isBlank()) {
             logger.warn { "8MM event on $sourceUrl has no title, skipping" }
             return null
@@ -80,6 +81,7 @@ class EightMmProgramPageScraper(
             imageUrl = item.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
             sourceUrl = url,
             sourceId = "${EventSource.EIGHT_MM.sourceIdPrefix}${extractEventSlug(url, "/program/").replace('/', '-')}",
+            soldOut = cleanedTitle.soldOut,
             artists = residencyDj(title, eventType)?.let { listOf(it) } ?: concertBill(title, eventType)
         )
     }

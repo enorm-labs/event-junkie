@@ -59,7 +59,8 @@ class KitKatClubProgrammePageScraper(
         row: Element,
         sourceUrl: String
     ): ScrapedEvent? {
-        val title = row.textAt("h4.ClubTermineTitel")?.let(::cleanEventTitle)
+        val cleanedTitle = row.textAt("h4.ClubTermineTitel")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "KitKatClub night on $sourceUrl has no title, skipping" }
             return null
@@ -82,6 +83,7 @@ class KitKatClubProgrammePageScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description =
                 (special.filterNot { BARE_URL.matches(it) } + listOfNotNull(fields["dresscode"]?.joinToString(" ")?.let { "Dresscode: $it" }))
                     .joinToString("\n")

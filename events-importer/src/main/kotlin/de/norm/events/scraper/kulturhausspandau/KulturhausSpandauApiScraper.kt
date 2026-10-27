@@ -57,7 +57,7 @@ class KulturhausSpandauApiScraper {
                 .mapNotNull { it.stringOrNull("name") }
                 .toSet()
         if (isOutOfScope(categories, rawTitle)) return null
-        val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')), subtitle?.trim())
+        val (title, kicker) = headline(cleanEventTitle(stripSoldOutMarker(rawTitle).trim(' ', '-', '–')).text, subtitle?.trim())
         val start = node.stringOrNull("start")?.let { LocalDateTime.parse(it, API_TIME) } ?: return null
         val end = node.stringOrNull("end")?.let { LocalDateTime.parse(it, API_TIME) }?.takeIf { it.isAfter(start) }
         val admission = node.path("ticketprices").toList().firstOrNull { it.path("active").asBoolean(false) && it.stringOrNull("title") == "Eintritt" }

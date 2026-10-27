@@ -50,7 +50,8 @@ class TheDoorEventsPageScraper {
     ): ScrapedEvent? {
         val spans = card.select(".ct-span").map { it.text().trim() }
         val date = spans.firstOrNull { DATE.matches(it) }?.let(::parseGermanDate)
-        val title = card.textAt("h2")?.let(::cleanEventTitle).blankToNull()
+        val cleanedTitle = card.textAt("h2")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text.blankToNull()
         if (date == null || title == null) {
             logger.warn { "The Door card without a date or a title ($spans), skipping" }
             return null
@@ -58,6 +59,7 @@ class TheDoorEventsPageScraper {
         val lineup = lineupOf(card)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle?.soldOut == true,
             eventType = inferUnmarkedTitleType(title).takeUnless { it == EventType.OTHER.name } ?: EventType.PARTY.name,
             eventDate = date,
             startTime = spans.firstOrNull { CLOCK.matches(it) }?.let(::parseTime),

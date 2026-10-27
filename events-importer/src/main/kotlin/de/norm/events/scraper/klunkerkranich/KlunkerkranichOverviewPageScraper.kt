@@ -92,7 +92,8 @@ class KlunkerkranichOverviewPageScraper(
         val href = card.attrAt(EVENT_LINK, "href") ?: return null
         val eventUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(eventUrl)
-        val title = card.textAt(".o-card__title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = card.textAt(".o-card__title")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
 
         val eventDate = parseSlugDate(slug) ?: parseRenderedDate(card.textAt(".o-card__meta--primary"))
         if (eventDate == null) {
@@ -103,6 +104,7 @@ class KlunkerkranichOverviewPageScraper(
         val hours = parseOpeningHours(card.textAt(".o-card__meta--secondary"))
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             // The venue states no category; see the class KDoc for why every night is a PARTY.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,

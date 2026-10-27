@@ -80,7 +80,8 @@ class KaterOverviewPageScraper(
         baseUrl: String
     ): ScrapedEvent? {
         val eventId = EVENT_ID_PATTERN.find(article.id())?.groupValues?.get(1) ?: return null
-        val title = article.textAt(".date-title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = article.textAt(".date-title")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
 
         val lines = summaryLines(article)
         val schedule = lines.firstOrNull()?.let(::parseSchedule)
@@ -95,6 +96,7 @@ class KaterOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = description,
             // A techno club with no category field; only an unambiguous title keyword overrides the party default.
             eventType = if (isScreeningTitle(title)) EventType.SCREENING.name else EventType.PARTY.name,

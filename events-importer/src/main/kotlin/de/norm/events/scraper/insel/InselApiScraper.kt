@@ -136,7 +136,8 @@ class InselApiScraper(
             logger.warn { "Insel event at '${node.time}' has no name, skipping" }
             return null
         }
-        val title = cleanEventTitle(rawName.replace(SOLD_OUT_PREFIX, ""))
+        val cleanedTitle = cleanEventTitle(rawName.replace(SOLD_OUT_PREFIX, ""))
+        val title = cleanedTitle.text
 
         val start = node.time.parseOffsetToBerlin()
         if (start == null) {
@@ -170,7 +171,10 @@ class InselApiScraper(
             sourceId = "${EventSource.INSEL.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = ticketUrl(node.description),
             free = lines.any(::hasFreeEntryPhrase),
-            soldOut = SOLD_OUT_PREFIX.containsMatchIn(rawName) || lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
+            soldOut =
+                SOLD_OUT_PREFIX.containsMatchIn(rawName) ||
+                    cleanedTitle.soldOut ||
+                    lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
             artists = buildArtists(styleCityTail?.first ?: title, performers(lines), supportNames, eventType)
         )

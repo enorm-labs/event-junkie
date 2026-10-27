@@ -92,7 +92,8 @@ class GartnOverviewPageScraper(
         baseUrl: String
     ): ScrapedEvent? {
         val heading = block.selectFirst("h3")?.let { lineHost(it).textLines() }.orEmpty()
-        val title = cleanEventTitle(heading.firstOrNull().orEmpty())
+        val cleanedTitle = cleanEventTitle(heading.firstOrNull().orEmpty())
+        val title = cleanedTitle.text
         if (title.isBlank()) {
             logger.warn { "gART.n block '${block.selectFirst("h2")?.text()}' has no title, skipping" }
             return null
@@ -129,8 +130,11 @@ class GartnOverviewPageScraper(
             ticketUrl = ticketLink?.attr("href")?.takeIf { it.isNotBlank() }?.let { resolveUrl(baseUrl, it) },
             priceNote = ticketNote?.takeIf { it.isNotBlank() },
             soldOut =
-                SOLD_OUT_LABEL.containsMatchIn(ticketLink?.text().orEmpty()) &&
-                    !DOOR_TICKETS_NOTE.containsMatchIn(ticketNote.orEmpty()),
+                (
+                    SOLD_OUT_LABEL.containsMatchIn(ticketLink?.text().orEmpty()) &&
+                        !DOOR_TICKETS_NOTE.containsMatchIn(ticketNote.orEmpty())
+                ) ||
+                    cleanedTitle.soldOut,
             artists = parseLineup(lineup)
         )
     }

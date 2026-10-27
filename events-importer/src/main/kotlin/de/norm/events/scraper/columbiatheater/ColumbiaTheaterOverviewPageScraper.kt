@@ -81,7 +81,9 @@ class ColumbiaTheaterOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
 
-        val title = card.textAt("h2.item-title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = card.textAt("h2.item-title")?.let(::cleanEventTitle) ?: return null
+
+        val title = cleanedTitle.text
         val supportRows = supportRowTexts(card)
         val eventType = inferConcertVenueType(title)
 
@@ -95,7 +97,7 @@ class ColumbiaTheaterOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             status = parseColumbiaTheaterStatus(card, card.textAt(".item-status")),
-            soldOut = card.selectFirst(".item-sold-out") != null,
+            soldOut = card.selectFirst(".item-sold-out") != null || cleanedTitle.soldOut,
             artists = columbiaTheaterArtists(title, supportRows, eventType)
         )
     }

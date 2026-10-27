@@ -68,11 +68,13 @@ class MorphineOverviewPageScraper {
 
         // A blank date span marks the ARCHIVE link rather than a night with an unknown date.
         val eventDate = parseGermanShortDate(spans[DATE_SPAN].text()) ?: return null
-        val title = spans[TITLE_SPAN].text().takeIf { it.isNotBlank() }?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = spans[TITLE_SPAN].text().takeIf { it.isNotBlank() }?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
 
         val sourceUrl = resolveUrl(baseUrl, row.attr("href"))
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             eventType = inferConcertVenueType(title),
             eventDate = eventDate,
             sourceUrl = sourceUrl,

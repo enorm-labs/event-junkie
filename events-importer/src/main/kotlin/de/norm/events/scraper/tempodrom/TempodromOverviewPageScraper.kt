@@ -83,7 +83,8 @@ class TempodromOverviewPageScraper {
 
     /** Maps one schema.org `Event` onto a [ScrapedEvent], or `null` without a name or date. */
     private fun parseEvent(event: JsonNode): ScrapedEvent? {
-        val title = event.schemaName()?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = event.schemaName()?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         val eventDate = event.schemaDate("startDate") ?: return null
         // Every event carries an `endDate`, and 140 of 145 repeat the start date without a time — a
         // same-day, date-only end says nothing. The five that differ are the runs: a circus over
@@ -125,7 +126,7 @@ class TempodromOverviewPageScraper {
             ticketUrl = offers.path("url").asString(null)?.takeIf { it.startsWith("http") && it != url },
             pricePresale = presale,
             priceNote = priceNote,
-            soldOut = event.schemaSoldOut(),
+            soldOut = event.schemaSoldOut() || cleanedTitle.soldOut,
             status = event.schemaStatus(),
             artists = production?.artists ?: tempodromArtists(title, subtitle, eventType)
         )

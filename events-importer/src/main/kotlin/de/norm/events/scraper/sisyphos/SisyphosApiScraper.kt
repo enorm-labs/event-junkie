@@ -101,7 +101,7 @@ class SisyphosApiScraper {
             sourceId = "${EventSource.SISYPHOS.sourceIdPrefix}$eventDate",
             ticketUrl = productUrl,
             pricePresale = variants.mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
-            soldOut = variants.isNotEmpty() && variants.none { it.path("available").asBoolean(false) }
+            soldOut = (variants.isNotEmpty() && variants.none { it.path("available").asBoolean(false) }) || cleanEventTitle(rawTitle).soldOut
         )
     }
 
@@ -116,10 +116,10 @@ class SisyphosApiScraper {
         val inTitle = DATE_PATTERN.find(rawTitle)?.let { it to parseDate(it) }
         if (inTitle?.second != null) {
             val title = rawTitle.removeRange(inTitle.first.range).trim(' ', '-', '–', '|', ',')
-            return cleanEventTitle(title.ifBlank { rawTitle }) to inTitle.second
+            return cleanEventTitle(title.ifBlank { rawTitle }).text to inTitle.second
         }
         val inBody = description?.let { DATE_PATTERN.findAll(it).firstNotNullOfOrNull(::parseDate) }
-        return cleanEventTitle(rawTitle) to inBody
+        return cleanEventTitle(rawTitle).text to inBody
     }
 
     /** Turns one [DATE_PATTERN] match into a date, accepting `10. OKT 2026`, `10. Oktober 2026` and `10.10.2026`. */

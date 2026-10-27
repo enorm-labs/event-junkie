@@ -109,7 +109,8 @@ class ColumbiahalleOverviewPageScraper {
             logger.warn { "Event card without a Contao event id, skipping" }
             return null
         }
-        val title = card.textAt("h2")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = card.textAt("h2")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
 
         val eventDate = month?.let { resolveDayOfMonth(card.textAt(".event_datum_tag"), it) }
         if (eventDate == null) {
@@ -146,7 +147,7 @@ class ColumbiahalleOverviewPageScraper {
             pricePresale = presale,
             priceBoxOffice = boxOffice,
             priceNote = priceNote,
-            soldOut = sticker.contains(SOLD_OUT_TEXT, ignoreCase = true),
+            soldOut = sticker.contains(SOLD_OUT_TEXT, ignoreCase = true) || cleanedTitle.soldOut,
             status = parseEventStatus(sticker),
             // A relocation sticker names the new house: "in das huxleys verlegt".
             statusNote = sticker.ifBlank { null },

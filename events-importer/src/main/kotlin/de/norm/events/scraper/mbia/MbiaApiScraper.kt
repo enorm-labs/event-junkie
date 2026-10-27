@@ -76,7 +76,8 @@ class MbiaApiScraper(
             return null
         }
         if (date < today) return null
-        val title = decodeHtmlEntities(post.path("title").path("rendered").asString("")).blankToNull()?.let(::cleanEventTitle)
+        val cleanedTitle = decodeHtmlEntities(post.path("title").path("rendered").asString("")).blankToNull()?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title == null) {
             logger.warn { "M-BIA post $id has no title, skipping" }
             return null
@@ -87,6 +88,7 @@ class MbiaApiScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = htmlParagraphText(body.body().html()),
             eventType = EventType.PARTY.name,
             eventDate = date,

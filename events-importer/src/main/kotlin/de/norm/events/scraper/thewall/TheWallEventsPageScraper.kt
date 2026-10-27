@@ -47,7 +47,8 @@ class TheWallEventsPageScraper {
     }
 
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
-        val title = event.schemaName()?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = event.schemaName()?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         val eventDate = event.schemaDate("startDate") ?: return null
         val slug =
             event
@@ -57,6 +58,7 @@ class TheWallEventsPageScraper {
         val endDate = event.schemaDate("endDate")
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = event.stringOrNull("description"),
             eventType = EventType.COMEDY.name,
             eventDate = eventDate,

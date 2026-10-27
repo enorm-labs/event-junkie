@@ -62,7 +62,8 @@ class PasApiScraper {
             logger.debug { "Skipping PAS event '$slug': filed only under ${categories.joinToString()}" }
             return null
         }
-        val title = cleanEventTitle(rawTitle.replace(HOUSE_SUFFIX, ""))
+        val cleanedTitle = cleanEventTitle(rawTitle.replace(HOUSE_SUFFIX, ""))
+        val title = cleanedTitle.text
         val eventType = typeOf(categories)
         val description = event.tecDescription()
         val doors = labelledClock(description, DOORS_LABELS)
@@ -92,6 +93,7 @@ class PasApiScraper {
                     .ifEmpty { null },
             pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
+            soldOut = cleanedTitle.soldOut,
             artists = if (eventType == EventType.CONCERT.name) billedActs(title, event.path("description").asString("")) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { HOUSE_NAME.containsMatchIn(it) }

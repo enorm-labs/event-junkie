@@ -60,7 +60,8 @@ class DstrktOverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent? {
         val id = record.stringOrNull("_id") ?: return null.also { logger.warn { "DSTRKT record has no _id, skipping" } }
-        val title = record.stringOrNull("title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = record.stringOrNull("title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "DSTRKT record '$id' has no title, skipping" }
             return null
@@ -82,6 +83,7 @@ class DstrktOverviewPageScraper {
             endDate = endDate,
             sourceUrl = baseUrl,
             sourceId = "${EventSource.DSTRKT.sourceIdPrefix}$id",
+            soldOut = cleanedTitle.soldOut,
             ticketUrl = record.stringOrNull("tickets")
         )
     }

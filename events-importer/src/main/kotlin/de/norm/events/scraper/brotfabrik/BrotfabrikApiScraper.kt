@@ -7,7 +7,6 @@ import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.forChildrenIf
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
@@ -41,7 +40,8 @@ class BrotfabrikApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val url = event.stringOrNull("url") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let(::cleanEventTitle)
+        val cleanedTitle = event.tecText("title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Brotfabrik event '$url' has no title, skipping" }
             return null
@@ -67,7 +67,7 @@ class BrotfabrikApiScraper {
             pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size != 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
-            soldOut = hasSoldOutMarker(title)
+            soldOut = cleanedTitle.soldOut
         ).forChildrenIf(childrensPhrase(title, description))
     }
 

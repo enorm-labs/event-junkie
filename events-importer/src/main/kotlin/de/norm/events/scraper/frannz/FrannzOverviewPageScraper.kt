@@ -6,7 +6,6 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -45,8 +44,8 @@ import java.util.Locale
  * - **No structured status markers.** The *description* is deliberately not read for one:
  * "ausverkauft" turns up in ordinary prose ("ihrer restlos *ausverkauften* Tour"), a false
  * positive. The **title** is different — the venue appends the note tersely ("MAD TSAI -verlegt
- * ins Gretchen-", "Haken -ausverkauft-"), so the status and the sold-out marker ([hasSoldOutMarker]) are read from the raw
- * title before [cleanEventTitle] strips that note, the way Metropol reads its `"Verlegt ins
+ * ins Gretchen-", "Haken -ausverkauft-"), so the status is read from the raw title and the sold-out marker
+ * comes from [cleanEventTitle], before it strips that note, the way Metropol reads its `"Verlegt ins
  * <venue> –"` prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a
  * venue it will not play.
  *
@@ -112,7 +111,8 @@ class FrannzOverviewPageScraper(
         val status = parseEventStatus(rawTitle)
         val statusNote = rawTitle
         // Strip a trailing "Nachholtermin vom …" reschedule note the venue appends to moved shows.
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
 
         val eventDate = parseEventDate(article)
         if (eventDate == null) {
@@ -154,7 +154,7 @@ class FrannzOverviewPageScraper(
             priceBoxOffice = priceBoxOffice,
             status = status,
             statusNote = statusNote,
-            soldOut = hasSoldOutMarker(rawTitle),
+            soldOut = cleanedTitle.soldOut,
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )

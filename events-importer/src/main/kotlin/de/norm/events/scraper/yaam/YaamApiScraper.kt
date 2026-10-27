@@ -35,7 +35,8 @@ class YaamApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let { cleanEventTitle(it.replace(TRAILING_DATE, "")) }
+        val cleanedTitle = event.tecText("title")?.replace(TRAILING_DATE, "")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "YAAM event '$slug' has no title, skipping" }
             return null
@@ -55,7 +56,8 @@ class YaamApiScraper {
             imageUrl = event.tecImageUrl() ?: flyerUrl(event),
             sourceUrl = event.stringOrNull("url") ?: return null,
             sourceId = event.tecSourceId(EventSource.YAAM, slug),
-            ticketUrl = event.stringOrNull("website")
+            ticketUrl = event.stringOrNull("website"),
+            soldOut = cleanedTitle.soldOut
         )
     }
 

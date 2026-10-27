@@ -2,6 +2,7 @@ package de.norm.events.scraper.tresor
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.CleanedTitle
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
@@ -59,11 +60,12 @@ class TresorDetailPageScraper {
             return null
         }
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
-        val title = parseTitle(document)
-        if (title == null) {
+        val cleanedTitle = parseTitle(document)
+        if (cleanedTitle == null) {
             logger.warn { "Event page has no title, skipping" }
             return null
         }
+        val title = cleanedTitle.text
 
         // Every event page repeats the whole programme in its footer as `article.event-item` blocks —
         // the listing's markup — so parsing must stay inside this event's own section.
@@ -72,6 +74,7 @@ class TresorDetailPageScraper {
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = parseDescription(content),
             eventType = EventType.PARTY.name,
             eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
@@ -135,7 +138,7 @@ class TresorDetailPageScraper {
      * The event's name from the document title with the site suffix stripped — the page renders no
      * heading. Only when this page stands alone; a successful merge keeps the listing's `.event-title`.
      */
-    private fun parseTitle(document: Document): String? =
+    private fun parseTitle(document: Document): CleanedTitle? =
         (document.selectFirst("meta[property=og:title]")?.attr("content") ?: document.title())
             .substringBefore(SITE_TITLE_SEPARATOR)
             .blankToNull()
