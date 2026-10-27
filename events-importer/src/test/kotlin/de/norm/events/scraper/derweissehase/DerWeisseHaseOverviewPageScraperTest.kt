@@ -178,6 +178,47 @@ class DerWeisseHaseOverviewPageScraperTest {
         parsed.priceNote.shouldBeNull()
     }
 
+    // Production stored only `Marre` for the 27 Oct night: the CMS wrote one `<p>` per act (#4030).
+    @Test
+    fun `reads a roster written as one paragraph per act`() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/derweissehase/derweissehase-overview-2026-10-27.html")!!
+                .bufferedReader()
+                .readText()
+        val nights = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        val tuesdayRave = nights.single { it.eventDate == LocalDate.of(2026, 10, 27) }
+        tuesdayRave.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("MARRE", "DJ"),
+                ScrapedArtist("JUICY (DE)", "DJ"),
+                ScrapedArtist("PASSIX", "DJ")
+            )
+        tuesdayRave.priceNote shouldBe "free entry until midnight*"
+        tuesdayRave.description.shouldBeNull()
+
+        // The same snapshot's `<br>` roster still splits per line.
+        nights.single { it.eventDate == LocalDate.of(2026, 10, 29) }.artists.map { it.name } shouldContainExactly
+            listOf("Wiebke Roose", "Slave Owner", "BISK")
+    }
+
+    @Test
+    fun `ends a paragraph-per-act roster at the next heading`() {
+        val night =
+            block(
+                """<p class="dater">Dienstag 27.10.2026 23:00</p><h1>Tuesday Rave</h1><h4>LINE UP</h4>
+                   |<p>MARRE &nbsp;</p><p>JUICY (DE) &nbsp;</p><p>&nbsp;</p><p>PASSIX</p><h4>Open Air Garden from 18:00</h4><p>Garden DJs</p>
+                """.trimMargin()
+            )
+
+        scraper
+            .scrape(night, baseUrl)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly listOf("MARRE", "JUICY (DE)", "PASSIX")
+    }
+
     @Test
     fun `distinguishes a recurring night by its date`() {
         val straff = events.filter { it.title == "straff / thursday techno" }
