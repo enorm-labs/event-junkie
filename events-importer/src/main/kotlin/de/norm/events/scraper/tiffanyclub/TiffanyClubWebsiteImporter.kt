@@ -46,7 +46,7 @@ val TIFFANY_CLUB_LIMITATIONS =
         EventSource.TIFFANY_CLUB,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site names no category; the type is read from the title and defaults to a party"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site prints one start time per night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no ticket price, only a guest-list discount inside a form"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the night's name"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),

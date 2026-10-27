@@ -48,7 +48,7 @@ val AUSLAND_LIMITATIONS =
             LimitedAspect.EVENT_TYPE,
             "the venue names no category, so a night without a format word in its title is a concert, which mislabels a performance or a talk"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "only concert nights state a doors time; the other formats give one clock"),
         AcceptedLimitation(LimitedAspect.END_DATE, "a residency, workshop or installation over several days is listed once, on its first day"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the listing gives one clock per event, and an end only appears in some texts"),

@@ -32,7 +32,7 @@ val VOID_CLUB_LIMITATIONS =
         EventSource.VOID_CLUB,
         AcceptedLimitation(LimitedAspect.START_TIME, "the venue publishes no times; every night stores a bare date"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no times; every night stores a bare date"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
         AcceptedLimitation(

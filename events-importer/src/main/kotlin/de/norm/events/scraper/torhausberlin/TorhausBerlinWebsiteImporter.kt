@@ -34,7 +34,7 @@ val TORHAUS_BERLIN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.IMAGE, "the event cards show no image"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the site sells no tickets"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes one opening time per event"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no style per night"),
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the show name"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),

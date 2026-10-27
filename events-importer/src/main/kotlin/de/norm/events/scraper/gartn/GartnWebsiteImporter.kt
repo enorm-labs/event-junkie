@@ -32,7 +32,7 @@ class GartnWebsiteImporter(
 val GARTN_LIMITATIONS =
     VenueLimitations(
         EventSource.GARTN,
-        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the site prints no entry price"),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the club's Techno default"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the venue publishes no per-event image"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
