@@ -88,7 +88,9 @@ class VelomaxOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
 
-        val title = entry.textAt(".event-title .title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = entry.textAt(".event-title .title")?.let(::cleanEventTitle) ?: return null
+
+        val title = cleanedTitle.text
         val subtitleLines = entry.textLinesAt(".eventSubtitle")
         val subtitle = subtitleLines.firstOrNull()
         val signal = entry.textAt(".ticketSignal").orEmpty()
@@ -108,7 +110,7 @@ class VelomaxOverviewPageScraper {
             // colon (`-1830`) so the id is one token, as Admiralspalast, Uber and Heimathafen do. An
             // entry with no published time keeps the bare slug — nothing to disambiguate with.
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug${sessionSuffix(startTime)}",
-            soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true),
+            soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true) || cleanedTitle.soldOut,
             artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType)
         )
     }

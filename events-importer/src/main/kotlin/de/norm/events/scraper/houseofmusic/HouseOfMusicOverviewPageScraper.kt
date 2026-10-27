@@ -55,7 +55,8 @@ class HouseOfMusicOverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent {
         val slug = requireNotNull(node.stringOrNull("slug")) { "House of Music event has no slug" }
-        val title = cleanEventTitle(node.stringOrNull("title").orEmpty())
+        val cleanedTitle = cleanEventTitle(node.stringOrNull("title").orEmpty())
+        val title = cleanedTitle.text
         require(title.isNotBlank()) { "House of Music event '$slug' has no title" }
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val date = requireNotNull(schedule.date) { "House of Music event '$slug' has no start date" }
@@ -76,6 +77,7 @@ class HouseOfMusicOverviewPageScraper {
                     .path("external")
                     .stringOrNull("registration")
                     ?.takeIf { sellsTickets(it, baseUrl) },
+            soldOut = cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status")),
             artists = actsOf(title, type)
         )

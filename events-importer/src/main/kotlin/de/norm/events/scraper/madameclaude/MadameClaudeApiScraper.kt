@@ -114,7 +114,7 @@ class MadameClaudeApiScraper {
             return null
         }
 
-        val title =
+        val cleanedTitle =
             node.title
                 ?.rendered
                 .blankToNull()
@@ -123,7 +123,7 @@ class MadameClaudeApiScraper {
                 // shared cleanup collapses whitespace runs and strips the trailing notes every other scraper
                 // routes its title through.
                 ?.let(::cleanEventTitle)
-                .blankToNull()
+        val title = cleanedTitle?.text.blankToNull()
         if (title == null) {
             logger.warn { "Madame Claude event '$slug' has no title, skipping" }
             return null
@@ -147,6 +147,7 @@ class MadameClaudeApiScraper {
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle?.soldOut == true,
             subtitle = acf?.eventCardSubtitle.blankToNull(),
             description = htmlToText(acf?.eventDescription),
             eventType = eventType,

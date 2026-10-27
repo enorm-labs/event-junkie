@@ -109,13 +109,16 @@ internal fun urbanSpreeStatus(title: String): String =
         ?.let { parseEventStatus(it.groupValues[1]) }
         ?: EventStatus.SCHEDULED.name
 
-/** Whether the title leads with the venue's `SOLD OUT -` marker (`SOLD OUT - Otha`). */
+/**
+ * Whether the title leads with the venue's `SOLD OUT -` marker (`SOLD OUT - Otha`), or carries a
+ * marker [cleanEventTitle] strips (#4031).
+ */
 internal fun urbanSpreeSoldOut(title: String): Boolean =
     STATUS_PREFIX_PATTERN
         .find(title)
         ?.groupValues
         ?.get(1)
-        ?.let { SOLD_OUT_MARKER.matches(it) } == true
+        ?.let { SOLD_OUT_MARKER.matches(it) } == true || cleanEventTitle(title).soldOut
 
 private val SOLD_OUT_MARKER = Regex("""sold\s+out|ausverkauft""", RegexOption.IGNORE_CASE)
 
@@ -132,7 +135,7 @@ internal fun cleanUrbanSpreeTitle(title: String): String {
         if (stripped.isBlank() || stripped == current) break
         current = stripped
     }
-    return cleanEventTitle(current).ifBlank { title.trim() }
+    return cleanEventTitle(current).text.ifBlank { title.trim() }
 }
 
 /** A `Live Berlin` or `Live in Berlin` billing after the act: `DIAMONDSONYMYDICK LIVE BERLIN` (#3704). */

@@ -110,7 +110,8 @@ class AdmiralspalastDetailPageScraper {
         category: String?,
         promoters: List<String>
     ): ScrapedEvent? {
-        val title = row.textAt(TITLE)?.let(::cleanEventTitle)
+        val cleanedTitle = row.textAt(TITLE)?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title == null) {
             logger.warn { "Performance row on $sourceUrl has no title, skipping" }
             return null
@@ -135,7 +136,7 @@ class AdmiralspalastDetailPageScraper {
             startTime = startTime,
             imageUrl = row.attrAt("img", "src")?.let { resolveUrl(siteRoot(sourceUrl), it) },
             ticketUrl = row.hrefAt("$TICKET_CELL a"),
-            soldOut = row.textAt(TICKET_CELL)?.let { SOLD_OUT.containsMatchIn(it) } == true,
+            soldOut = row.textAt(TICKET_CELL)?.let { SOLD_OUT.containsMatchIn(it) } == true || cleanedTitle.soldOut,
             status = parseScheduleNote(note),
             sourceUrl = sourceUrl,
             // One production, many nights — and on a matinee day, two performances in one night's slot.

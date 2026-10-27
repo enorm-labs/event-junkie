@@ -92,7 +92,8 @@ class DerWeisseHaseOverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent? {
         val content = block.selectFirst(".eventrahm") ?: return null
-        val title = content.textAt("h1")?.let(::cleanEventTitle)
+        val cleanedTitle = content.textAt("h1")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "No title in Der Weiße Hase event block, skipping" }
             return null
@@ -109,6 +110,7 @@ class DerWeisseHaseOverviewPageScraper {
         val (entryLines, otherLines) = noteBefore(content, lineupHeading).partition { ENTRY_NOTE.containsMatchIn(it) }
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = otherLines.joinToString("\n").ifBlank { null },
             priceNote = entryLines.joinToString("\n").ifBlank { null },
             // The club programmes nothing but DJ nights and states no category, so the type is fixed, not

@@ -13,34 +13,62 @@ class EventFieldMappingTest {
 
     @Test
     fun `cleanEventTitle folds a backtick typed as an apostrophe`() {
-        cleanEventTitle("MissVergnügen presents Dingo`s Dream - live!") shouldBe "MissVergnügen presents Dingo's Dream - live!"
+        cleanEventTitle("MissVergnügen presents Dingo`s Dream - live!").text shouldBe "MissVergnügen presents Dingo's Dream - live!"
     }
 
     @Test
     fun `cleanEventTitle strips a stray dash but keeps a scheduling note for the status`() {
-        cleanEventTitle("Some Show -") shouldBe "Some Show"
+        cleanEventTitle("Some Show -").text shouldBe "Some Show"
         // The note carries the status; only stripTitleStatusMarker removes it, once it is read (#2008).
-        cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly Nachholtermin vom 28.04.26-"
+        cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-").text shouldBe "Iggi Kelly Nachholtermin vom 28.04.26-"
     }
 
     @Test
     fun `stripTitleStatusMarker strips a trailing scheduling note and stray dash`() {
         stripTitleStatusMarker("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
         stripTitleStatusMarker("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
-        stripTitleStatusMarker(cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN")) shouldBe
+        stripTitleStatusMarker(cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN").text) shouldBe
             "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
+    }
+
+    @Test
+    fun `cleanEventTitle flags the tail marker it strips`() {
+        // cleanEventTitle keeps stripping it, because scrapers key sourceId on the cleaned title (#4031).
+        cleanEventTitle("Podcast-Tour 2026 AUSVERKAUFT").text shouldBe "Podcast-Tour 2026"
+        cleanEventTitle("Podcast-Tour 2026 AUSVERKAUFT").soldOut shouldBe true
+        // A CMS writes a non-breaking space before the marker, which `\s` does not match.
+        cleanEventTitle("Some Act  AUSVERKAUFT").soldOut shouldBe true
+        cleanEventTitle("Haken -ausverkauft-").soldOut shouldBe true
+        cleanEventTitle("Singalong (ausverkauft)").soldOut shouldBe true
+        cleanEventTitle("Die ausverkauften Jahre").soldOut shouldBe false
+        cleanEventTitle("Some Act").soldOut shouldBe false
+    }
+
+    @Test
+    fun `a tail marker read before cleaning is stored as the flag, with the clean title`() {
+        val cleaned = cleanEventTitle("Podcast-Tour 2026 AUSVERKAUFT")
+        val row =
+            ScrapedEvent(
+                title = cleaned.text,
+                eventDate = LocalDate.of(2026, 10, 27),
+                sourceUrl = "https://example.de/event",
+                sourceId = "probe:1",
+                soldOut = cleaned.soldOut
+            ).toEventEntity(venueId = 1L, venueSlug = "probe", eventSourceId = 1L)
+        row.title shouldBe "Podcast-Tour 2026"
+        row.soldOut shouldBe true
     }
 
     @Test
     fun `cleanEventTitle strips a trailing sold-out annotation`() {
         // The status suffix is dropped so "… (ausverkauft)" and its non-sold-out twin
         // collapse to the same title (and the same title-derived headliner artist).
-        cleanEventTitle("Singalong -Das große Mitsing-Event (ausverkauft)") shouldBe "Singalong -Das große Mitsing-Event"
-        cleanEventTitle("Singalong -Das große Mitsing-Event") shouldBe "Singalong -Das große Mitsing-Event"
-        cleanEventTitle("Some Show ausverkauft") shouldBe "Some Show"
-        cleanEventTitle("Some Show - AUSVERKAUFT!") shouldBe "Some Show"
+        cleanEventTitle("Singalong -Das große Mitsing-Event (ausverkauft)").text shouldBe "Singalong -Das große Mitsing-Event"
+        cleanEventTitle("Singalong -Das große Mitsing-Event").text shouldBe "Singalong -Das große Mitsing-Event"
+        cleanEventTitle("Some Show ausverkauft").text shouldBe "Some Show"
+        cleanEventTitle("Some Show - AUSVERKAUFT!").text shouldBe "Some Show"
         // Frannz sets the note between two dashes (#1840).
-        cleanEventTitle("Haken -ausverkauft-") shouldBe "Haken"
+        cleanEventTitle("Haken -ausverkauft-").text shouldBe "Haken"
     }
 
     @Test
@@ -56,21 +84,21 @@ class EventFieldMappingTest {
 
     @Test
     fun `cleanEventTitle leaves a clean title and mid-title dash untouched`() {
-        cleanEventTitle("Freshlyground") shouldBe "Freshlyground"
-        cleanEventTitle("Tannz im Frannz -auf 2 Floors") shouldBe "Tannz im Frannz -auf 2 Floors"
+        cleanEventTitle("Freshlyground").text shouldBe "Freshlyground"
+        cleanEventTitle("Tannz im Frannz -auf 2 Floors").text shouldBe "Tannz im Frannz -auf 2 Floors"
         // "ausverkauft" only mid-title (never a real case, but proves the end-anchor) is kept.
-        cleanEventTitle("Ausverkauft Tour Show") shouldBe "Ausverkauft Tour Show"
+        cleanEventTitle("Ausverkauft Tour Show").text shouldBe "Ausverkauft Tour Show"
     }
 
     // Audit T-13: a venue's own markup decides how much space lands between two words — a stray
     // double space in the CMS ("Adventurous Juan  (DJ-Set)") or a line break inside the heading.
     @Test
     fun `cleanEventTitle collapses runs of whitespace`() {
-        cleanEventTitle("Adventurous Juan  (DJ-Set)") shouldBe "Adventurous Juan (DJ-Set)"
-        cleanEventTitle("Lucas Lauriente –  Stand Up 2026") shouldBe "Lucas Lauriente – Stand Up 2026"
-        cleanEventTitle("Some\nAct\tName") shouldBe "Some Act Name"
+        cleanEventTitle("Adventurous Juan  (DJ-Set)").text shouldBe "Adventurous Juan (DJ-Set)"
+        cleanEventTitle("Lucas Lauriente –  Stand Up 2026").text shouldBe "Lucas Lauriente – Stand Up 2026"
+        cleanEventTitle("Some\nAct\tName").text shouldBe "Some Act Name"
         // Collapsing runs first keeps the tail patterns keyed on a single space.
-        stripTitleStatusMarker(cleanEventTitle("Iggi Kelly  Nachholtermin vom 28.04.26-")) shouldBe "Iggi Kelly"
+        stripTitleStatusMarker(cleanEventTitle("Iggi Kelly  Nachholtermin vom 28.04.26-").text) shouldBe "Iggi Kelly"
     }
 
     // Java's `\s` matches ASCII whitespace only, so a non-breaking space a CMS editor produced
@@ -78,12 +106,12 @@ class EventFieldMappingTest {
     // otherwise survive the collapse: the title looks right but stops matching a word search.
     @Test
     fun `cleanEventTitle collapses non-breaking spaces`() {
-        cleanEventTitle("Wer singt\u00A0dann Lieder?") shouldBe "Wer singt dann Lieder?"
-        cleanEventTitle("babywho\u00A0CONNECT") shouldBe "babywho CONNECT"
+        cleanEventTitle("Wer singt\u00A0dann Lieder?").text shouldBe "Wer singt dann Lieder?"
+        cleanEventTitle("babywho\u00A0CONNECT").text shouldBe "babywho CONNECT"
         // The narrow no-break space too, which a German CMS emits before a unit or an abbreviation.
-        cleanEventTitle("Some\u202FAct") shouldBe "Some Act"
+        cleanEventTitle("Some\u202FAct").text shouldBe "Some Act"
         // A non-breaking space adjacent to an ordinary one collapses to a single space, not two.
-        cleanEventTitle("Some \u00A0 Act") shouldBe "Some Act"
+        cleanEventTitle("Some \u00A0 Act").text shouldBe "Some Act"
     }
 
     // A zero-width character is invisible, so it is never part of a name — an editor pasted it in
@@ -91,11 +119,11 @@ class EventFieldMappingTest {
     // the collapse unless it is removed outright.
     @Test
     fun `cleanEventTitle drops zero-width characters`() {
-        cleanEventTitle("HOMECOMING DJ WORKSHOP\u200B") shouldBe "HOMECOMING DJ WORKSHOP"
-        cleanEventTitle("\uFEFFSome Act") shouldBe "Some Act"
-        cleanEventTitle("Some\u200COther\u200DAct") shouldBe "SomeOtherAct"
+        cleanEventTitle("HOMECOMING DJ WORKSHOP\u200B").text shouldBe "HOMECOMING DJ WORKSHOP"
+        cleanEventTitle("\uFEFFSome Act").text shouldBe "Some Act"
+        cleanEventTitle("Some\u200COther\u200DAct").text shouldBe "SomeOtherAct"
         // Removing it before the collapse leaves a single space, not two.
-        cleanEventTitle("Some \u200B Act") shouldBe "Some Act"
+        cleanEventTitle("Some \u200B Act").text shouldBe "Some Act"
     }
 
     // --- hasFreeEntryPhrase ---

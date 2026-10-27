@@ -77,7 +77,8 @@ class MorphineDetailPageScraper {
             logger.warn { "Detail page has no event title, skipping" }
             return null
         }
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
 
         // The day header's own text; the nested `ul.lineup` is read separately.
         val dayLine = overlay.selectFirst("div.block.day")?.ownText()
@@ -100,6 +101,7 @@ class MorphineDetailPageScraper {
             pricePresale = readPaypalPrice(overlay),
             priceBoxOffice = parseDoorPrice(priceNote),
             priceNote = priceNote,
+            soldOut = cleanedTitle.soldOut,
             artists =
                 readPerformers(overlay).ifEmpty {
                     val starts = setStarts(lineup, eventDate)

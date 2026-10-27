@@ -74,10 +74,12 @@ class TresorOverviewPageScraper {
         val href = item.attrAt("a[href*=/event/]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
-        val title = item.textAt(".event-title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = item.textAt(".event-title")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             // A techno club that states no category; every listing is a club night.
             eventType = EventType.PARTY.name,
             // The site names no style, but all three rooms programme techno, so the venue is the default (as Berghain's floors are).

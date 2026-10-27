@@ -47,7 +47,8 @@ class FriedrichstadtPalastGastspielePageScraper {
         val text = section.selectFirst(".text") ?: return null
         val anchor = text.selectFirst("a[name]")?.attr("name").blankToNull()
         val heading = text.selectFirst("p:has(a[name]) strong") ?: text.selectFirst("p strong")
-        val (title, subtitle) = splitHeading(heading?.text().orEmpty())
+        val cleanedHeading = cleanEventTitle(heading?.text().orEmpty())
+        val (title, subtitle) = splitHeading(cleanedHeading.text)
         if (title == null || anchor == null) {
             logger.warn { "Friedrichstadt-Palast guest show '${heading?.text()}' has no title or no anchor, skipping" }
             return null
@@ -70,7 +71,7 @@ class FriedrichstadtPalastGastspielePageScraper {
                 sourceUrl = resolveUrl(baseUrl, "#$anchor"),
                 sourceId = "${EventSource.FRIEDRICHSTADTPALAST.sourceIdPrefix}$anchor-${performance.date}$timeSuffix",
                 ticketUrl = performance.ticketUrl,
-                soldOut = SOLD_OUT.containsMatchIn(performance.label),
+                soldOut = SOLD_OUT.containsMatchIn(performance.label) || cleanedHeading.soldOut,
                 status = parseEventStatus(performance.label),
                 promoters = listOfNotNull(promoter(paragraphs)),
                 artists = artists(title, subtitle, eventType)
@@ -163,7 +164,7 @@ class FriedrichstadtPalastGastspielePageScraper {
         val CONDUCTOR_CREDIT = Regex("""\s+(?:directed by|unter der leitung von)\s+.*$""", RegexOption.IGNORE_CASE)
 
         fun splitHeading(heading: String): Pair<String?, String?> {
-            val parts = cleanEventTitle(heading).split(HEADING_SEPARATOR, limit = 2)
+            val parts = heading.split(HEADING_SEPARATOR, limit = 2)
             val title = parts[0].replace(TRAILING_YEAR, "").blankToNull() ?: parts[0].blankToNull()
             val subtitle = parts.getOrNull(1)?.replace(TRAILING_YEAR, "").blankToNull()
             return title to subtitle

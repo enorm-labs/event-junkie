@@ -68,7 +68,7 @@ class MikropolDetailPageScraper {
             logger.warn { "Detail page has no event title, skipping" }
             return null
         }
-        val title = cleanEventTitle(stripRelocationPrefix(rawTitle))
+        val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
 
         val slug = extractEventSlug(sourceUrl, "/event/")
         val support = content.textAt("h2.support")
@@ -99,7 +99,7 @@ class MikropolDetailPageScraper {
             priceBoxOffice = boxOffice,
             free = detectFree(priceBoxOffice = boxOffice) || hasFreeEntryPhrase(description),
             // Sold-out and cancelled render in the `.canceledsoldout` badge; a relocation lives in the title.
-            soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true),
+            soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true) || cleanEventTitle(rawTitle).soldOut,
             status = parseEventStatus("$statusBadge $rawTitle"),
             statusNote = rawTitle,
             artists = buildArtistsForEventType(withoutTrailingSupport(title, support), support, eventType),

@@ -103,8 +103,8 @@ private fun titleBadge(title: String): String? =
         ?.get(1)
         ?.lowercase()
 
-/** Whether [title] is badged as fully booked. */
-internal fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES
+/** Whether [title] is badged as fully booked, or carries a marker [cleanEventTitle] strips (#4031). */
+internal fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES || cleanEventTitle(title).soldOut
 
 /**
  * Reads the [EventStatus] a title badge announces, defaulting to [EventStatus.SCHEDULED]. A
@@ -120,7 +120,7 @@ internal fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.le
  */
 internal fun cleanGaertenDerWeltTitle(title: String): String {
     val stripped = title.replaceFirst(TITLE_BADGE_PATTERN, "").trim().ifBlank { title.trim() }
-    return cleanEventTitle(stripped).ifBlank { title.trim() }
+    return cleanEventTitle(stripped).text.ifBlank { title.trim() }
 }
 
 /**

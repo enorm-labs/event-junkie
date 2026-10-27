@@ -8,7 +8,6 @@ import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -53,7 +52,8 @@ class PandaPlatformaApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let { cleanEventTitle(it.replace(SERIES_PREFIX, "")) }
+        val cleanedTitle = event.tecText("title")?.replace(SERIES_PREFIX, "")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "PANDA platforma event '$slug' has no title, skipping" }
             return null
@@ -84,7 +84,7 @@ class PandaPlatformaApiScraper {
             pricePresale = tecFromPrice(prices),
             priceNote = event.tecText("cost")?.takeIf { prices.size > 1 },
             free = prices.singleOrNull()?.compareTo(BigDecimal.ZERO) == 0,
-            soldOut = hasSoldOutMarker(title),
+            soldOut = cleanedTitle.soldOut,
             artists = if (eventType == EventType.CONCERT.name) concertActs(title, event) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { it.startsWith(HOUSE_NAME, ignoreCase = true) }

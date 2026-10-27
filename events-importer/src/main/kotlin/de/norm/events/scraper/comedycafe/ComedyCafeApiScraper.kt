@@ -5,7 +5,6 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
@@ -37,7 +36,8 @@ class ComedyCafeApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let(::cleanEventTitle)
+        val cleanedTitle = event.tecText("title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Comedy Café Berlin event '$slug' has no title, skipping" }
             return null
@@ -69,7 +69,7 @@ class ComedyCafeApiScraper {
             sourceId = event.tecSourceId(EventSource.COMEDY_CAFE, slug),
             pricePresale = price?.takeIf { it.signum() > 0 },
             free = price?.compareTo(BigDecimal.ZERO) == 0,
-            soldOut = hasSoldOutMarker(title)
+            soldOut = cleanedTitle.soldOut
         )
     }
 

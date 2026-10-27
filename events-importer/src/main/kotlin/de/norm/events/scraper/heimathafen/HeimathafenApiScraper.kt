@@ -104,7 +104,8 @@ class HeimathafenApiScraper(
         today: LocalDate
     ): List<ScrapedEvent> {
         val postId = post.path("id").asInt(0).takeIf { it > 0 } ?: return emptyList()
-        val title = htmlToText(post.path("title").path("rendered").asString(""))?.let(::cleanEventTitle) ?: return emptyList()
+        val cleanedTitle = htmlToText(post.path("title").path("rendered").asString(""))?.let(::cleanEventTitle) ?: return emptyList()
+        val title = cleanedTitle.text
 
         val acf = post.path("acf")
         val classes = post.path("class_list").mapNotNull { it.asString(null) }
@@ -116,6 +117,7 @@ class HeimathafenApiScraper(
         val shared =
             SharedPostFields(
                 title = title,
+                titleSoldOut = cleanedTitle.soldOut,
                 subtitle = subtitle,
                 description = htmlToText(post.path("content").path("rendered").asString("")),
                 eventType = eventType,
@@ -196,7 +198,7 @@ class HeimathafenApiScraper(
             priceBoxOffice = shared.priceBoxOffice,
             priceNote = shared.priceNote,
             genre = shared.genre,
-            soldOut = status == SOLD_OUT_STATUS,
+            soldOut = status == SOLD_OUT_STATUS || shared.titleSoldOut,
             free = status == FREE_ENTRY_STATUS,
             status = mapPerformanceStatus(status),
             artists = shared.artists,
@@ -314,6 +316,7 @@ class HeimathafenApiScraper(
     /** The post-level fields every performance of one event post shares. */
     private data class SharedPostFields(
         val title: String,
+        val titleSoldOut: Boolean,
         val subtitle: String?,
         val description: String?,
         val eventType: String,

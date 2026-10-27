@@ -177,7 +177,7 @@ internal class Bogen47ApiScraper(
 
         val soldOut = hasSoldOutMarker(rawTitle)
         val status = parseTitleStatus(rawTitle) ?: EventStatus.SCHEDULED.name
-        val title = cleanEventTitle(stripStatusMarkers(rawTitle))
+        val title = cleanEventTitle(stripStatusMarkers(rawTitle)).text
 
         val acf = post.path("acf")
         val description =

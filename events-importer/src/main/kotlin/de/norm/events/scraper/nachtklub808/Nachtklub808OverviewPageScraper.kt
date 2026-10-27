@@ -59,7 +59,9 @@ class Nachtklub808OverviewPageScraper {
         opens: Map<DayOfWeek, LocalTime>
     ): ScrapedEvent {
         val date = Instant.parse(node.value("date")).atZone(BERLIN).toLocalDate()
-        val title = cleanEventTitle(Jsoup.parseBodyFragment(node.value("name")).text())
+        val rawTitle = Jsoup.parseBodyFragment(node.value("name")).text()
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         require(title.isNotBlank()) { "808 Nachtklub night on $date has no name" }
         val clubNight = !node.path("isSummerEvent").path(1).asBoolean(false)
         return ScrapedEvent(
@@ -70,6 +72,7 @@ class Nachtklub808OverviewPageScraper {
             sourceUrl = baseUrl,
             sourceId = "${EventSource.NACHTKLUB_808.sourceIdPrefix}$date",
             ticketUrl = node.value("url").ifBlank { null },
+            soldOut = cleanedTitle.soldOut,
             artists = artistsOf(node.value("djs"))
         )
     }

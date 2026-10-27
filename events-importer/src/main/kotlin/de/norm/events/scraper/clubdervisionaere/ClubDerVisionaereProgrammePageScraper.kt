@@ -112,11 +112,12 @@ class ClubDerVisionaereProgrammePageScraper(
         sourceUrl: String,
         room: ClubDerVisionaereRoom
     ): ScrapedEvent? {
-        val title =
+        val cleanedTitle =
             block.textAt(TITLE_SELECTOR)?.let(::cleanEventTitle) ?: run {
                 logger.warn { "Club der Visionäre block ${block.id()} has no title, skipping" }
                 return null
             }
+        val title = cleanedTitle.text
 
         val postId = block.id().removePrefix(POST_ID_PREFIX).takeIf { it.isNotBlank() && it != block.id() }
         if (postId == null) {
@@ -131,6 +132,7 @@ class ClubDerVisionaereProgrammePageScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             // Every listing is a club night; the venue publishes no category.
             eventType = EventType.PARTY.name,
             genre = room.genre,

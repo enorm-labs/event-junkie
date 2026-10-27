@@ -78,7 +78,8 @@ class HeidegluehenMonthPageScraper {
         val schedule = lines.firstNotNullOfOrNull { parseSchedule(it) } ?: return null
 
         val marks = paragraph.select("mark").mapNotNull { it.text().trim().takeIf(String::isNotEmpty) }.distinct()
-        val title = marks.firstOrNull()?.let { cleanEventTitle(it) }
+        val cleanedTitle = marks.firstOrNull()?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Heideglühen paragraph for ${schedule.date} names no event, skipping" }
             return null
@@ -96,7 +97,8 @@ class HeidegluehenMonthPageScraper {
             imageUrl = monthImageUrl,
             sourceUrl = sourceUrl,
             // One party per date and no per-event page, so the date is the identity.
-            sourceId = "${EventSource.HEIDEGLUEHEN.sourceIdPrefix}${schedule.date}"
+            sourceId = "${EventSource.HEIDEGLUEHEN.sourceIdPrefix}${schedule.date}",
+            soldOut = cleanedTitle.soldOut
         )
     }
 }

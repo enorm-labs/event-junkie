@@ -37,7 +37,8 @@ class TheCloudApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let(::cleanEventTitle)
+        val cleanedTitle = event.tecText("title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "The Cloud event '$slug' has no title, skipping" }
             return null
@@ -49,6 +50,7 @@ class TheCloudApiScraper {
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = description,
             eventType = if (liveAct != null) EventType.CONCERT.name else partyUnlessTitled(title),
             eventDate = start.toLocalDate(),

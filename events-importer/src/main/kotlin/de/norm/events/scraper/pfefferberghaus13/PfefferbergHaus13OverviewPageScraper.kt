@@ -43,7 +43,8 @@ class PfefferbergHaus13OverviewPageScraper(
     ): ScrapedEvent {
         val link = requireNotNull(row.selectFirst("h2.event-arc-title a")) { "Listing row has no title link" }
         val url = resolveUrl(baseUrl, link.attr("href"))
-        val title = cleanEventTitle(link.text())
+        val cleanedTitle = cleanEventTitle(link.text())
+        val title = cleanedTitle.text
         val month = requireNotNull(parseGermanMonthAbbreviation(row.textAt(".event-arc-month"))) { "'$title' has no readable month" }
         val day = requireNotNull(row.textAt(".event-arc-day")?.toIntOrNull()) { "'$title' has no readable day" }
         val type = eventTypeOf(title)
@@ -57,6 +58,7 @@ class PfefferbergHaus13OverviewPageScraper(
             sourceId = sourceIdOf(url),
             ticketUrl = row.selectFirst(".event-tickets a[href]")?.absUrl("href"),
             free = isFreeEntry(row.textAt(".event-tickets-pw-fix")),
+            soldOut = cleanedTitle.soldOut,
             artists = actsOf(title, type, lineup = emptyList())
         )
     }

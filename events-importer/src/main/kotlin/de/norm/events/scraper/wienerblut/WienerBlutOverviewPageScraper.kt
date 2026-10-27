@@ -38,7 +38,8 @@ class WienerBlutOverviewPageScraper {
         baseUrl: String
     ): ScrapedEvent? {
         val slug = node.stringOrNull("slug") ?: return null.also { logger.warn { "Wiener Blut event has no slug, skipping" } }
-        val title = node.stringOrNull("title")?.let(::cleanEventTitle)
+        val cleanedTitle = node.stringOrNull("title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         if (title.isNullOrBlank() || schedule.date == null) {
             logger.warn { "Wiener Blut event '$slug' has no title or no start date, skipping" }
@@ -48,6 +49,7 @@ class WienerBlutOverviewPageScraper {
         val type = inferConcertVenueType(title)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = description,
             eventType = type,
             typeIsFallback = type == EventType.CONCERT.name,

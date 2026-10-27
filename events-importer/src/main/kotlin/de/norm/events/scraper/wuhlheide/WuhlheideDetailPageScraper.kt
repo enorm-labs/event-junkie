@@ -50,7 +50,8 @@ class WuhlheideDetailPageScraper {
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/programm/")
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
 
         return ScrapedEvent(
             title = title,
@@ -64,6 +65,7 @@ class WuhlheideDetailPageScraper {
             // Anchored on the ticket icon: the sibling share buttons are also target="_blank".
             ticketUrl = document.hrefAt(".details .buttons a.button:has(i.fa-ticket)"),
             pricePresale = parsePriceValue(document.detailTableCell(PRICE_LABEL)),
+            soldOut = cleanedTitle.soldOut,
             promoters = listOfNotNull(document.textAt(".promoter a"))
         )
     }

@@ -38,7 +38,8 @@ class PfefferbergHaus13DetailPageScraper {
         url: String
     ): ScrapedEvent? {
         val text = document.selectFirst("div.event-text")
-        val title = text?.textAt("h2.event-title")?.let(::cleanEventTitle)
+        val cleanedTitle = text?.textAt("h2.event-title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         val date = document.selectFirst("div.event-cover")?.let(::dateOf)
         if (text == null || title.isNullOrBlank() || date == null) {
             logger.warn { "Pfefferberg Haus 13 event page $url has no title or date" }
@@ -50,6 +51,7 @@ class PfefferbergHaus13DetailPageScraper {
         val type = eventTypeOf(title)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             description = descriptionOf(text),
             eventType = type,
             eventDate = date,

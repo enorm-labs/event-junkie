@@ -187,7 +187,8 @@ private val TITLE_STATUS_TAIL =
  * Trailing noise that is no status: a "(ausverkauft)" / "-ausverkauft-" annotation, which would
  * split the act and its twin into two artists, and any stray trailing dash. Word- or
  * end-anchored, so "ausverkauften" mid-title is never touched. The stored title loses every marker
- * shape through [stripSoldOutMarker]; this arm stays because scrapers key `sourceId` on the cleaned title.
+ * shape through [stripSoldOutMarker]; this arm stays because scrapers key `sourceId` on the cleaned title,
+ * so [cleanEventTitle] reads the marker off the raw title into [CleanedTitle.soldOut] first (#4031).
  */
 private val TITLE_NOISE_PATTERN =
     Regex(
@@ -195,6 +196,16 @@ private val TITLE_NOISE_PATTERN =
             """|\s+[-–—]\s*$""",
         RegexOption.IGNORE_CASE
     )
+
+/**
+ * A title after [cleanEventTitle]: the [text] to store and key on, and whether the raw title carried
+ * a sold-out marker, which the cleaning can strip (#4031). A scraper that stores [text] passes
+ * [soldOut] on to [ScrapedEvent.soldOut].
+ */
+data class CleanedTitle(
+    val text: String,
+    val soldOut: Boolean
+)
 
 /**
  * Strips trailing noise and a stray dash: "Some Show -" to "Some Show". A scheduling note stays,
@@ -205,9 +216,10 @@ private val TITLE_NOISE_PATTERN =
  * (DJ-Set)", "Lucas Lauriente – Stand Up 2026"), and the tail patterns key on a single space. A
  * [ZERO_WIDTH] character reaches a title when an editor pastes one (MAAYA's "HOMECOMING DJ
  * WORKSHOP"); `\s` does not match it, so it is dropped. A backtick typed as an apostrophe is folded
- * ([foldTypedApostrophes]).
+ * ([foldTypedApostrophes]). The sold-out flag is read off [title] before any of this, with
+ * non-breaking spaces read as spaces, because a CMS writes one before the marker (Colosseum).
  */
-fun cleanEventTitle(title: String): String {
+fun cleanEventTitle(title: String): CleanedTitle {
     val collapsed =
         title
             .replace(ZERO_WIDTH, "")
@@ -215,7 +227,7 @@ fun cleanEventTitle(title: String): String {
             .replace(WHITESPACE_RUN, " ")
             .foldTypedApostrophes()
     val stripped = collapsed.replace(TITLE_NOISE_PATTERN, "").trim()
-    return stripped.ifBlank { collapsed }
+    return CleanedTitle(stripped.ifBlank { collapsed }, hasSoldOutMarker(title.replace(WHITESPACE_RUN, " ")))
 }
 
 /**

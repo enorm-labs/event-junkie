@@ -70,7 +70,7 @@ class MikropolOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
 
         val rawTitle = card.textAt("span.eventname") ?: return null
-        val title = cleanEventTitle(stripRelocationPrefix(rawTitle))
+        val title = cleanEventTitle(stripRelocationPrefix(rawTitle)).text
         val support = card.textAt("span.support")
 
         val eventType = inferConcertVenueType(title)
@@ -88,7 +88,7 @@ class MikropolOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MIKROPOL.sourceIdPrefix}$slug",
             // Sold-out and cancelled are CSS classes on the anchor; a relocation lives in the title.
-            soldOut = card.hasClass(SOLD_OUT_CLASS),
+            soldOut = card.hasClass(SOLD_OUT_CLASS) || cleanEventTitle(rawTitle).soldOut,
             status = parseEventStatus("${card.className()} $rawTitle"),
             statusNote = rawTitle,
             artists = buildArtistsForEventType(withoutTrailingSupport(title, support), support, eventType)

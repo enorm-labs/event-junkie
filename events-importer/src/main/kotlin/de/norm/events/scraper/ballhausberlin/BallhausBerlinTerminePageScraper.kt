@@ -49,7 +49,8 @@ class BallhausBerlinTerminePageScraper {
         val top = item.selectFirst(".terminTopSchrift") ?: return null
         val stamp = top.selectFirst(".terminDatetime[data-olddatum]")?.attr("data-olddatum") ?: return null
         val start = LocalDateTime.parse(stamp, STAMP)
-        val title = top.textNodes().firstNotNullOfOrNull { it.text().blankToNull() }?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = top.textNodes().firstNotNullOfOrNull { it.text().blankToNull() }?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         if (OUT_OF_SCOPE.containsMatchIn(title)) return null
         val subtitle =
             top
@@ -67,6 +68,7 @@ class BallhausBerlinTerminePageScraper {
                 .associate(::field)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             subtitle = subtitle,
             description = bottom?.select("> p")?.paragraphText(),
             eventType = inferVenueFormatType(title, subtitle, FORMATS),

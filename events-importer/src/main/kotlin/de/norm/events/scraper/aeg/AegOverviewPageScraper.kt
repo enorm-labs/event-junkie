@@ -94,7 +94,7 @@ class AegOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/events/detail/")
 
         val rawTitle = row.textAt("h3.event-title")
-        val title = rawTitle?.let { stripTitleStatusMarker(it) }?.let { cleanEventTitle(it) }
+        val title = rawTitle?.let { stripTitleStatusMarker(it) }?.let { cleanEventTitle(it).text }
         if (title.isNullOrBlank()) {
             logger.warn { "$eventSource row '$slug' has no title, skipping" }
             return null
@@ -111,6 +111,7 @@ class AegOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${eventSource.sourceIdPrefix}$slug",
             status = parseEventStatus(rawTitle),
+            soldOut = cleanEventTitle(rawTitle).soldOut,
             // The venues quote a cheapest-ticket price ("ab 83,50 €"); the note keeps the "from".
             pricePresale = parsePriceValue(price),
             priceNote = price,

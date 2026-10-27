@@ -93,7 +93,8 @@ class PankeProgrammePageScraper {
             logger.warn { "Panke article '$postId' states no date, skipping" }
             return null
         }
-        val title = article.textAt("h2.entry-title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = article.textAt("h2.entry-title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Panke article '$postId' has no title, skipping" }
             return null
@@ -121,6 +122,7 @@ class PankeProgrammePageScraper {
             ticketUrl = pankeTicketUrl(paragraphs),
             // No per-event page, so the WordPress post id is the identity.
             sourceId = "${EventSource.PANKE.sourceIdPrefix}$postId",
+            soldOut = cleanedTitle.soldOut,
             artists = lineup
         )
     }

@@ -89,7 +89,8 @@ class CrackBellmerOverviewPageScraper(
         sourceUrl: String
     ): ScrapedEvent? {
         val href = item.attrAt("a[href*=/events/]", "href") ?: error("No event link found")
-        val title = item.textAt("[fs-list-field=title]")?.let(::cleanEventTitle) ?: error("No title found")
+        val cleanedTitle = item.textAt("[fs-list-field=title]")?.let(::cleanEventTitle) ?: error("No title found")
+        val title = cleanedTitle.text
         // Closed days are programme entries. They name no event, so storing one would put a night
         // titled "CLOSED" in the calendar.
         if (title.equals(CLOSED_MARKER, ignoreCase = true)) return null
@@ -103,6 +104,7 @@ class CrackBellmerOverviewPageScraper(
         val genre = item.textAt("[fs-list-field=genre]")
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             eventType = classifyEventType(title, genre),
             eventDate = eventDate,
             startTime = parseTime(item.textAt(".main-heading.is-time"), TIME_FORMATTER),

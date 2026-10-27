@@ -61,7 +61,9 @@ class ZitadelleDetailPageScraper {
         document: Document,
         sourceUrl: String
     ): ScrapedEvent? {
-        val heading = document.textAt(".event-hero h1")?.let { cleanEventTitle(it) }
+        val rawHeading = document.textAt(".event-hero h1")
+        val cleanedHeading = rawHeading?.let { cleanEventTitle(it) }
+        val heading = cleanedHeading?.text
         if (heading.isNullOrBlank()) {
             logger.warn { "Zitadelle detail page has no heading, skipping" }
             return null
@@ -85,7 +87,9 @@ class ZitadelleDetailPageScraper {
             sourceId = "${EventSource.ZITADELLE.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt(".ticket-links a.ticket"),
             status = parseDetailStatus(document, changeNote),
-            soldOut = document.textAt(".abgesagtausverkauft")?.equals(SOLD_OUT_BADGE, ignoreCase = true) == true,
+            soldOut =
+                document.textAt(".abgesagtausverkauft")?.equals(SOLD_OUT_BADGE, ignoreCase = true) == true ||
+                    cleanedHeading.soldOut,
             artists = buildArtistsForEventType(heading, subtitle, eventType),
             promoters = document.select(".event-presenters li a").mapNotNull { it.text().takeIf(String::isNotBlank) }
         )

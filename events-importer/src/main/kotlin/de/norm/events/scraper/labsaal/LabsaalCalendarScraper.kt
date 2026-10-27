@@ -36,12 +36,12 @@ class LabsaalCalendarScraper {
     }
 
     private fun parseEntry(entry: Map<String, CalendarProperty>): ScrapedEvent? {
-        val title =
+        val cleanedTitle =
             entry["SUMMARY"]
                 ?.text
                 ?.let(::decodeHtmlEntities)
                 ?.let(::cleanEventTitle)
-                .blankToNull()
+        val title = cleanedTitle?.text.blankToNull()
         val url = entry["URL"]?.value.blankToNull()
         val start = entry["DTSTART"]?.siteTime()?.dateTime
         if (title == null || url == null || start == null) {
@@ -63,6 +63,7 @@ class LabsaalCalendarScraper {
         val eventType = eventType(title, description)
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle?.soldOut == true,
             description = description,
             eventType = eventType,
             typeIsFallback = eventType == EventType.OTHER.name && MARKET.containsMatchIn(title).not(),

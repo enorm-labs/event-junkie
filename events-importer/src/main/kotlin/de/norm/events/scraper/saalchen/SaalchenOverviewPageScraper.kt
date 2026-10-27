@@ -91,7 +91,8 @@ class SaalchenOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/veranstaltung/")
 
-        val title = row.textAt("h2 a span")?.let { cleanEventTitle(it) }
+        val cleanedTitle = row.textAt("h2 a span")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Säälchen row '$slug' has no title, skipping" }
             return null
@@ -134,6 +135,7 @@ class SaalchenOverviewPageScraper {
             // The Eintritt line is free-form (tiered prices, "+ fees", a bare "30,00"), so the venue's own
             // wording is kept whenever it names one.
             priceNote = entrance,
+            soldOut = cleanedTitle.soldOut,
             artists =
                 (buildArtistsForEventType(saalchenActs(title), subtitle = null, eventType = eventType) + parseLineupSentence(row))
                     .distinctBy { it.name.lowercase() }

@@ -77,7 +77,8 @@ class UraniaCalendarPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
-        val title = item.textAt("h3.o-h3")?.let { cleanEventTitle(it) }
+        val cleanedTitle = item.textAt("h3.o-h3")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Urania calendar item '$slug' has no title, skipping" }
             return null
@@ -99,6 +100,7 @@ class UraniaCalendarPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.URANIA.sourceIdPrefix}$slug",
             ticketUrl = item.hrefAt(".c-event-calendar-item_ticket-link a"),
+            soldOut = cleanedTitle.soldOut,
             artists = uraniaSpeakers(item.textAt(".c-event-calendar-item_content_text"), eventType)
         )
     }

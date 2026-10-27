@@ -87,6 +87,7 @@ class Donau115ApiScraper(
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.DONAU115.sourceIdPrefix}$date",
             free = acts.any { hasFreeEntryPhrase(it.description) },
+            soldOut = acts.any { it.soldOut },
             artists = acts.filterNot { SERIES.containsMatchIn(it.name) }.flatMap { artistsOf(it.name) }
         )
     }
@@ -114,7 +115,9 @@ class Donau115ApiScraper(
         val description: String?,
         val node: JsonNode
     ) {
-        val name: String = cleanEventTitle(rawName.replace(TIMED_PARENTHESIS, ""))
+        private val cleanedName = cleanEventTitle(rawName.replace(TIMED_PARENTHESIS, ""))
+        val name: String = cleanedName.text
+        val soldOut: Boolean = cleanedName.soldOut
     }
 
     private companion object {

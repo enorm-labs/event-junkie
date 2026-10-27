@@ -110,7 +110,9 @@ class SupamollyOverviewPageScraper {
             return null
         }
 
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+
+        val title = cleanedTitle.text
         val nightDjs = blocks.mapNotNull(::nightDj)
         val artists =
             buildArtists(blocks.filter { nightDj(it) == null }.mapNotNull { it.name }) +
@@ -129,6 +131,7 @@ class SupamollyOverviewPageScraper {
             sourceUrl = resolveUrl(baseUrl, "#$stamp"),
             sourceId = "${EventSource.SUPAMOLLY.sourceIdPrefix}$stamp",
             status = parseEventStatus(rawTitle),
+            soldOut = cleanedTitle.soldOut,
             artists = artists
         )
     }

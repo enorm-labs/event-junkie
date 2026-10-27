@@ -65,7 +65,8 @@ class RitterButzkeOverviewPageScraper(
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
-        val title = card.textAt(TITLE_SELECTOR)?.let { cleanEventTitle(it) }
+        val cleanedTitle = card.textAt(TITLE_SELECTOR)?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "$eventSource card '$slug' has no title, skipping" }
             return null
@@ -80,7 +81,8 @@ class RitterButzkeOverviewPageScraper(
             eventDate = parseGermanShortDate(card.textAt(DATE_SELECTOR)) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = card.imgSrcAt("a.event-link img"),
             sourceUrl = sourceUrl,
-            sourceId = "${eventSource.sourceIdPrefix}$slug"
+            sourceId = "${eventSource.sourceIdPrefix}$slug",
+            soldOut = cleanedTitle.soldOut
         )
     }
 }

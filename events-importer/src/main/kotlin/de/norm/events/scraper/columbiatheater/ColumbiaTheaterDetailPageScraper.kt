@@ -54,7 +54,8 @@ class ColumbiaTheaterDetailPageScraper {
             logger.warn { "Detail page has no event content block, skipping" }
             return null
         }
-        val title = content.textAt("h1.header-title")?.let(::cleanEventTitle)
+        val cleanedTitle = content.textAt("h1.header-title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         if (title == null) {
             logger.warn { "Detail page has no event title, skipping" }
             return null
@@ -80,7 +81,7 @@ class ColumbiaTheaterDetailPageScraper {
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt(".event-tickets .ticket-links a")?.let(::firstTicketUrl),
             // Only a notice that says sold out counts; another ticket status is not one.
-            soldOut = hasSoldOutMarker(content.textAt(".event-tickets .ticket-status")),
+            soldOut = hasSoldOutMarker(content.textAt(".event-tickets .ticket-status")) || cleanedTitle.soldOut,
             status = parseColumbiaTheaterStatus(content, statusNotice),
             // A relocation notice names the new house: "Das Konzert wurde ins METROPOL verlegt."
             statusNote = statusNotice,

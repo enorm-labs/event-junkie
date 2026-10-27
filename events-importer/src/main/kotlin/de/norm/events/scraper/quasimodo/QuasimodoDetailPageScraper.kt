@@ -58,7 +58,8 @@ class QuasimodoDetailPageScraper {
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/events/")
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         val eventType = parseCategory(document) ?: inferConcertVenueType(title)
         val presale = document.detailTableCell(PRESALE_LABEL)
 
@@ -80,6 +81,7 @@ class QuasimodoDetailPageScraper {
             // The presale is written "ab 30€ (zzgl. Gebühr)"; the numeric field cannot carry the "from" or
             // the booking-fee caveat, so the venue's own wording is kept alongside it.
             priceNote = presale,
+            soldOut = cleanedTitle.soldOut,
             genre = document.select(".tags a").joinToString(", ") { it.text().trim() }.takeIf { it.isNotBlank() },
             promoters = parsePromoters(document),
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)

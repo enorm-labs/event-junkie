@@ -86,7 +86,8 @@ class EschschloraqueOverviewPageScraper {
             logger.warn { "Eschschloraque event node has no title, skipping" }
             return null
         }
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
 
         // Drupal stamps the node's path alias on the wrapper's RDFa `about` attribute. It is the
         // identity even for the first node, whose title the front-page view renders without a link,
@@ -133,6 +134,7 @@ class EschschloraqueOverviewPageScraper {
             // "eschschloraque:20-jahre-missvergnügen-12082026" rather than "…missvergn%C3%BCgen…".
             sourceId = "${EventSource.ESCHSCHLORAQUE.sourceIdPrefix}${extractSlug(path)}",
             free = hasFreeEntryPhrase(description),
+            soldOut = cleanedTitle.soldOut,
             artists = lineup
         )
     }

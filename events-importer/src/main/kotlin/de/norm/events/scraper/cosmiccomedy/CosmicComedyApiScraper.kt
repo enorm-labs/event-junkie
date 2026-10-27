@@ -7,7 +7,6 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
@@ -52,7 +51,8 @@ class CosmicComedyApiScraper {
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
         val slug = event.stringOrNull("slug") ?: return null
         val start = event.tecDateTime("start_date") ?: return null
-        val title = event.tecText("title")?.let { cleanEventTitle(it) }
+        val cleanedTitle = event.tecText("title")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Cosmic Comedy event '$slug' has no title, skipping" }
             return null
@@ -70,7 +70,7 @@ class CosmicComedyApiScraper {
             sourceUrl = event.path("url").asString(""),
             sourceId = event.tecSourceId(EventSource.COSMIC_COMEDY, slug),
             ticketUrl = ticketUrl(event),
-            soldOut = hasSoldOutMarker(title),
+            soldOut = cleanedTitle.soldOut,
             artists = headlinerOf(title, categories),
             promoters = event.tecOrganizerNames()
         )

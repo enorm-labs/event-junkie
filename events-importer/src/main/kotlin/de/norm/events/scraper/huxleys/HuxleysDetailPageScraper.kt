@@ -1,5 +1,6 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.scraper.CleanedTitle
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
@@ -65,11 +66,12 @@ class HuxleysDetailPageScraper {
             logger.warn { "Detail page has no event article, skipping" }
             return null
         }
-        val title = parseTitle(document)
-        if (title == null) {
+        val cleanedTitle = parseTitle(document)
+        if (cleanedTitle == null) {
             logger.warn { "Detail page has no derivable title, skipping" }
             return null
         }
+        val title = cleanedTitle.text
 
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
         val details = article.textAt(".event-info").orEmpty()
@@ -94,7 +96,7 @@ class HuxleysDetailPageScraper {
             priceBoxOffice = boxOffice,
             priceNote = priceNote,
             genre = parseTaxonomy(article, GENRE_CLASS_PREFIX).joinToString(", ").takeIf { it.isNotBlank() },
-            soldOut = article.textAt(".canceledsoldout")?.contains(SOLD_OUT_TEXT, ignoreCase = true) == true,
+            soldOut = article.textAt(".canceledsoldout")?.contains(SOLD_OUT_TEXT, ignoreCase = true) == true || cleanedTitle.soldOut,
             status = parseHuxleysStatus(article),
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(document, article)
@@ -146,7 +148,7 @@ class HuxleysDetailPageScraper {
      * The act's name from `og:title` with the site suffix stripped — the page renders no heading.
      * Only when this page stands alone; a successful merge keeps the overview's cleaner `.eventname`.
      */
-    private fun parseTitle(document: Document): String? {
+    private fun parseTitle(document: Document): CleanedTitle? {
         val raw =
             document.attrAt("meta[property=og:title]", "content")
                 ?: document.title().takeIf { it.isNotBlank() }

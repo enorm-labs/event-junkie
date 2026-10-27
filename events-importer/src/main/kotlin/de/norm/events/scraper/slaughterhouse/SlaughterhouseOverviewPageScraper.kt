@@ -68,7 +68,8 @@ class SlaughterhouseOverviewPageScraper {
             return null
         }
         val (kind, rawTitle) = heading.destructured
-        val title = cleanEventTitle(rawTitle)
+        val cleanedTitle = cleanEventTitle(rawTitle)
+        val title = cleanedTitle.text
         val type = if (kind.contains("konzert", ignoreCase = true)) EventType.CONCERT.name else EventType.PARTY.name
         val lines = blocks.filter { it.tagName() == "p" && it !== header }.flatMap { it.textLines() }
         val ticketLink =
@@ -108,6 +109,7 @@ class SlaughterhouseOverviewPageScraper {
                     ?.filter { it.isNotEmpty() }
                     ?.joinToString(", "),
             priceBoxOffice = entry?.let(::parsePriceValue),
+            soldOut = cleanedTitle.soldOut,
             artists = actsOf(title, type, djs)
         )
     }

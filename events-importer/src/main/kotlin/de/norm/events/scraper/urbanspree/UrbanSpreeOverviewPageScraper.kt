@@ -104,7 +104,8 @@ class UrbanSpreeOverviewPageScraper {
             pricePresale = price,
             // "Free" is the venue's own label in the price slot, so the note is pricing-scoped.
             free = detectFree(pricePresale = price, priceNote = priceText),
-            status = urbanSpreeStatus(rawTitle)
+            status = urbanSpreeStatus(rawTitle),
+            soldOut = urbanSpreeSoldOut(rawTitle)
         )
     }
 

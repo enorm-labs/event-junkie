@@ -7,7 +7,6 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -51,7 +50,8 @@ class SpeakeazyOverviewPageScraper {
         sourceUrl: String
     ): ScrapedEvent? {
         val link = article.selectFirst("a.eventlist-title-link[href]") ?: error("No event link found")
-        val title = cleanEventTitle(link.text()).replace(SPACED_COLON, ": ")
+        val cleanedTitle = cleanEventTitle(link.text())
+        val title = cleanedTitle.text.replace(SPACED_COLON, ": ")
         if (title.isBlank()) {
             logger.warn { "Speakeazy event on $sourceUrl has no title, skipping" }
             return null
@@ -83,7 +83,7 @@ class SpeakeazyOverviewPageScraper {
             imageUrl = article.attrAt("img[data-src]", "data-src")?.takeIf { it.startsWith("http") },
             sourceUrl = url,
             sourceId = "${EventSource.SPEAKEAZY.sourceIdPrefix}${extractEventSlug(url)}",
-            soldOut = hasSoldOutMarker(title),
+            soldOut = cleanedTitle.soldOut,
             artists = if (HOUSE_SESSION.containsMatchIn(title)) emptyList() else buildArtistsForEventType(title.substringBefore(": "), null, eventType)
         )
     }

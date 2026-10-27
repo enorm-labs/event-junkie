@@ -196,7 +196,7 @@ data class ScrapedEvent(
      * builds `sourceId` or artists from the title still cleans it first, so that identity does not
      * depend on this step.
      */
-    fun storedTitle(): String = stripTitleStatusMarker(stripSoldOutMarker(cleanEventTitle(title)))
+    fun storedTitle(): String = stripTitleStatusMarker(stripSoldOutMarker(cleanEventTitle(title).text))
 
     /**
      * The genre as stored: null when it only repeats the title, which says nothing about the music.

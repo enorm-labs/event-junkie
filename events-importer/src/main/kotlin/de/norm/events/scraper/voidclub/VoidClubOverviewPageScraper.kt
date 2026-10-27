@@ -84,7 +84,8 @@ class VoidClubOverviewPageScraper(
         baseUrl: String,
         teasers: Map<String, String>
     ): ScrapedEvent? {
-        val title = card.textAt(".void-event-title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = card.textAt(".void-event-title")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         val eventDate = parseCardDate(card, title)
         if (eventDate == null) {
             logger.warn { "No parseable date for VOID Club event '$title', skipping" }
@@ -97,6 +98,7 @@ class VoidClubOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             subtitle =
                 notes
                     .firstOrNull()

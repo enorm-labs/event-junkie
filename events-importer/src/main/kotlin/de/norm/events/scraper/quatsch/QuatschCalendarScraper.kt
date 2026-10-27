@@ -74,7 +74,8 @@ class QuatschCalendarScraper {
             logger.warn { "Quatsch Comedy Club show on $date has no title, skipping" }
             return null
         }
-        val title = cleanEventTitle(rawTitle.replace(HOUSE_PREFIX, ""))
+        val cleanedTitle = cleanEventTitle(rawTitle.replace(HOUSE_PREFIX, ""))
+        val title = cleanedTitle.text
         val subtitles = listOf("event_subtitle_1", "event_subtitle_2").flatMap { show.lines(it) }
         val adLines = (1..AD_TEXT_FIELDS).flatMap { show.lines("ad_text_$it") }
         val ticketUrl = ticketUrl(show)
@@ -92,6 +93,7 @@ class QuatschCalendarScraper {
             sourceUrl = ticketUrl ?: CALENDAR_URL,
             sourceId = "${EventSource.QUATSCH.sourceIdPrefix}$key",
             ticketUrl = ticketUrl,
+            soldOut = cleanedTitle.soldOut,
             artists = artists(title, subtitles)
         )
     }

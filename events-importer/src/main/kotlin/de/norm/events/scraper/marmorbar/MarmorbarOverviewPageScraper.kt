@@ -44,7 +44,8 @@ class MarmorbarOverviewPageScraper {
     ): ScrapedEvent {
         val id = requireNotNull(node.stringOrNull("id")) { "Marmorbar event has no id" }
         val slug = requireNotNull(node.stringOrNull("slug")) { "Marmorbar event '$id' has no slug" }
-        val title = requireNotNull(node.stringOrNull("title")?.let(::cleanEventTitle)?.blankToNull()) { "Marmorbar event '$slug' has no title" }
+        val cleanedTitle = node.stringOrNull("title")?.let(::cleanEventTitle)
+        val title = requireNotNull(cleanedTitle?.text?.blankToNull()) { "Marmorbar event '$slug' has no title" }
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val date = requireNotNull(schedule.date) { "Marmorbar event '$slug' has no start date" }
         val registration = node.path("registration")
@@ -67,7 +68,7 @@ class MarmorbarOverviewPageScraper {
             ticketUrl =
                 registration.path("external").stringOrNull("registration")
                     ?: eventPage.takeIf { soldByWix && registration.path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS },
-            soldOut = soldByWix && registration.path("ticketing").path("soldOut").asBoolean(false),
+            soldOut = (soldByWix && registration.path("ticketing").path("soldOut").asBoolean(false)) || cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status"))
         )
     }

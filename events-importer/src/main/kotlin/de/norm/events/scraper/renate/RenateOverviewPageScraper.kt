@@ -86,7 +86,8 @@ class RenateOverviewPageScraper(
         row: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val title = row.textAt(".prog-title")?.let(::cleanEventTitle) ?: return null
+        val cleanedTitle = row.textAt(".prog-title")?.let(::cleanEventTitle) ?: return null
+        val title = cleanedTitle.text
         val eventDate = parseRowDate(row)
         if (eventDate == null) {
             logger.warn { "No parseable date for Renate event '$title', skipping" }
@@ -96,6 +97,7 @@ class RenateOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
+            soldOut = cleanedTitle.soldOut,
             // A techno club stating no category; `.cat-btn` names the spaces in use (CLUB / GARTEN), not a
             // kind of event.
             eventType = EventType.PARTY.name,

@@ -107,7 +107,8 @@ class DelphiProgrammePageScraper {
         // The venue links its own `index.php?prod=…`, which redirects; store where it lands.
         val sourceUrl = resolveUrl(baseUrl, "?prod=$productionId")
 
-        val title = row.textAt("h3.eventTitel")?.let { cleanEventTitle(it) }
+        val cleanedTitle = row.textAt("h3.eventTitel")?.let { cleanEventTitle(it) }
+        val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
             logger.warn { "Delphi row for production '$productionId' has no title, skipping" }
             return null
@@ -149,6 +150,7 @@ class DelphiProgrammePageScraper {
             pricePresale = record?.pricePresale,
             priceNote = record?.priceNote,
             free = record?.free == true,
+            soldOut = cleanedTitle.soldOut,
             artists =
                 if (eventType == EventType.CONCERT.name) {
                     creditedActs(row, teaser).ifEmpty {

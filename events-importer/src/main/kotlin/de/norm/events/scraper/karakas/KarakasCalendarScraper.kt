@@ -8,7 +8,6 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOfStringLiteral
 import de.norm.events.scraper.endOn
-import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.stringOrNull
@@ -55,7 +54,8 @@ class KarakasCalendarScraper {
         eventType: EventType
     ): ScrapedEvent? {
         val id = node.stringOrNull("id") ?: return null
-        val title = node.stringOrNull("title")?.let(::cleanEventTitle)
+        val cleanedTitle = node.stringOrNull("title")?.let(::cleanEventTitle)
+        val title = cleanedTitle?.text
         val date = node.stringOrNull("date")?.let { LocalDate.parse(it, PADDED_GERMAN_DATE) }
         if (title.isNullOrBlank() || date == null) {
             logger.warn { "Karakas calendar event '$id' has no title or date, skipping" }
@@ -81,7 +81,7 @@ class KarakasCalendarScraper {
             sourceUrl = pageUrl,
             sourceId = "${EventSource.KARAKAS.sourceIdPrefix}$id",
             ticketUrl = ticketLine?.let { TICKET_LINE.find(it)?.groupValues?.get(1) },
-            soldOut = hasSoldOutMarker(title)
+            soldOut = cleanedTitle.soldOut
         )
     }
 
