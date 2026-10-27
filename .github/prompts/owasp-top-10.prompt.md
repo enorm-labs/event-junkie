@@ -37,6 +37,7 @@ git --no-pager log --since="$SINCE days ago" --format='%h %ad %s' --date=short -
   events-bff/src/main/kotlin/de/norm/events/event/EventSearchRepository.kt \
   events-bff/src/main/kotlin/de/norm/events/image \
   events-importer/src/main/kotlin/de/norm/events/importing/EventImportService.kt \
+  events-bff/src/main/kotlin/de/norm/events/account \
   'events-importer/src/main/kotlin/**/*Controller.kt' 'events-bff/src/main/kotlin/**/*Controller.kt'
 ```
 
@@ -113,11 +114,12 @@ when the window moved it; read the last commit's diff when it did not, and say `
 
 ### A07 · Authentication Failures
 
-- **Evidence:** ADR-023, `grep -rn 'spring-security\|spring-boot-starter-security' */build.gradle.kts`, `grep -rn '@PreAuthorize\|/login\|/auth' */src/main`.
-- **Question:** is there still no login, and did the window add one? A login that arrives without a rate-limit middleware in front and without the threat
-  model's B7 rewritten is the finding.
-- **ZAP covers:** nothing today; there is nothing to authenticate against.
-- **Finding shape:** the route and the missing control. Row B7.
+- **Evidence:** ADR-023 (the operator), ADR-053 (visitors), `events-bff/src/main/kotlin/de/norm/events/account/`, and every row of the threat model's
+  B13. `grep -rn '@PreAuthorize\|/login\|/auth' */src/main` finds a login the window added elsewhere.
+- **Question:** does each B13 _mitigated_ row still name a file that does what it says, and does each _accepted_ row's reason still hold? A route under
+  `/api/auth/**` or `/api/me/**` that no row covers, or a second login anywhere, is the finding.
+- **ZAP covers:** the cookie attributes of `XSRF-TOKEN` and `__Host-ej_session`, on the pages the baseline reaches.
+- **Finding shape:** the route or the file, the row, and the control that is missing. Rows B7, B13.
 
 ### A08 · Software or Data Integrity Failures
 
