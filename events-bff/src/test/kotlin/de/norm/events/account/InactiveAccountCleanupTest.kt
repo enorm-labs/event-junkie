@@ -11,6 +11,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -28,6 +29,7 @@ import java.net.ServerSocket
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 /** The daily cleanup of inactive accounts, expired links and sessions (#3905), on a fixed clock, with the mail caught by GreenMail. */
@@ -70,16 +72,19 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
 
     private fun cleanup(
         at: Instant = now,
-        mailer: Mailer? = mailer()
+        mailer: Mailer? = mailer(),
+        clock: Clock = Clock.fixed(at, BERLIN),
+        metrics: AccountMetrics = this.metrics,
+        rsvps: RsvpStore = RsvpStore(databaseClient)
     ) = InactiveAccountCleanup(
         accounts,
         sessions,
         follows,
-        RsvpStore(databaseClient),
+        rsvps,
         PasskeyStore(databaseClient),
         StaticListableBeanFactory(if (mailer == null) emptyMap() else mapOf("mailer" to mailer)).getBeanProvider(Mailer::class.java),
         metrics,
-        Clock.fixed(at, BERLIN),
+        clock,
         "https://test.event-junkie.example"
     )
 
@@ -262,6 +267,61 @@ class InactiveAccountCleanupTest : BaseControllerTest() {
                     .toList()
             }
         left shouldContainExactlyInAnyOrder listOf("live", "recent-link")
+    }
+
+    @Test
+    fun `the last-success gauge starts at the job's creation and moves only on a pass with no failed step`() {
+        val registry = SimpleMeterRegistry()
+        val own = AccountMetrics(registry)
+        val clock = SteppingClock(now)
+        val failing =
+            object : RsvpStore(databaseClient) {
+                override suspend fun deleteOrphans(): Long = error("database gone")
+            }
+
+        val broken = cleanup(clock = clock, metrics = own, rsvps = failing)
+        lastSuccess(registry) shouldBe now.epochSecond.toDouble()
+
+        clock.instant = now.plus(1, ChronoUnit.DAYS)
+        runBlocking { broken.run() }
+        lastSuccess(registry) shouldBe now.epochSecond.toDouble()
+        failedSteps(registry) shouldBe 1.0
+
+        clock.instant = now.plus(2, ChronoUnit.DAYS)
+        runBlocking { cleanup(clock = clock, metrics = own).run() }
+        lastSuccess(registry) shouldBe clock.instant.epochSecond.toDouble()
+    }
+
+    @Test
+    fun `a pass with no mail sender is still a success`() {
+        val registry = SimpleMeterRegistry()
+        val clock = SteppingClock(now)
+        val job = cleanup(mailer = null, clock = clock, metrics = AccountMetrics(registry))
+
+        clock.instant = now.plus(1, ChronoUnit.HOURS)
+        runBlocking { job.run() }
+
+        lastSuccess(registry) shouldBe clock.instant.epochSecond.toDouble()
+    }
+
+    private fun lastSuccess(registry: MeterRegistry) = registry.find(AccountMetrics.CLEANUP_LAST_SUCCESS).gauge()!!.value()
+
+    private fun failedSteps(registry: MeterRegistry) =
+        registry
+            .find(AccountMetrics.CLEANUP)
+            .tag(AccountMetrics.TAG_OUTCOME, CleanupOutcome.FAILED.tag)
+            .counter()!!
+            .count()
+
+    /** A clock the test moves, so the seed and the stamp can differ. */
+    private class SteppingClock(
+        var instant: Instant
+    ) : Clock() {
+        override fun getZone(): ZoneId = BERLIN
+
+        override fun withZone(zone: ZoneId): Clock = this
+
+        override fun instant(): Instant = instant
     }
 
     companion object {

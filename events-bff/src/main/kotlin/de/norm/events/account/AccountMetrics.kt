@@ -3,6 +3,7 @@ package de.norm.events.account
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -29,6 +30,9 @@ class AccountMetrics(
     private val accounts = AccountState.entries.associateWith { gauge(ACCOUNTS, Tags.of(TAG_STATE, it.tag)) }
     private val sessions = gauge(SESSIONS, Tags.empty())
     private val followed = FollowKind.entries.associateWith { gauge(FOLLOWS, Tags.of(TAG_KIND, it.tag)) }
+
+    /** Epoch seconds of the last cleanup pass with no failed step. The counters move only on deleted rows, so they cannot tell quiet from dead. */
+    private val cleanupLastSuccess = gauge(CLEANUP_LAST_SUCCESS, Tags.empty())
 
     private fun gauge(
         name: String,
@@ -67,6 +71,14 @@ class AccountMetrics(
         count: Long = 1
     ) = cleanup.getValue(outcome).increment(count.toDouble())
 
+    /**
+     * Stamps a cleanup pass that ended at [at] with no failed step. The job also stamps its creation time, so a release
+     * that breaks the job still ages and fires `ej-account-cleanup-stale`; at 0 the rule would stay quiet. Never moves back.
+     */
+    fun stampCleanup(at: Instant) {
+        cleanupLastSuccess.accumulateAndGet(at.epochSecond, ::maxOf)
+    }
+
     companion object {
         /** `bff.auth.link{outcome}`: requests for a sign-in link. */
         const val LINK = "bff.auth.link"
@@ -76,6 +88,9 @@ class AccountMetrics(
 
         /** `bff.accounts.cleanup{outcome}`: what the daily cleanup of inactive accounts, links and sessions did (#3905). */
         const val CLEANUP = "bff.accounts.cleanup"
+
+        /** `bff_accounts_cleanup_last_success`: epoch seconds of the last cleanup pass with no failed step, for `ej-account-cleanup-stale` (#4034). */
+        const val CLEANUP_LAST_SUCCESS = "bff.accounts.cleanup.last_success"
 
         /** `bff.account.saved_search{action}`: saved searches saved, renamed and deleted (#3890). */
         const val SAVED_SEARCH = "bff.account.saved_search"

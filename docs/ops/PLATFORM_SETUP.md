@@ -860,6 +860,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.auth.link{outcome}`                         | Counter                               | sent / address_throttled / ip_throttled / mail_unavailable / mail_failed (ADR-053)   |
 | `bff.auth.sign_in{outcome}`                      | Counter                               | ok / invalid — an unknown, used and expired link are one outcome, as to the caller   |
 | `bff.accounts.cleanup{outcome}`                  | Counter                               | links/sessions/follows_purged, warned, warn_failed, deleted, failed (#3905, #3889)   |
+| `bff.accounts.cleanup.last_success`              | Gauge                                 | Epoch seconds of the last cleanup pass with no failed step; the start time first     |
 | `bff.account.follow{action,kind}`                | Counter                               | follow / unfollow, per artist / venue / promoter (#3889)                             |
 | `bff.accounts.count{state}`                      | Gauge                                 | all / active — active is used in the last 30 days. Same on every replica: take `max` |
 | `bff.accounts.sessions`                          | Gauge                                 | Live sessions, one per signed-in browser. Refreshed every 5 minutes                  |
