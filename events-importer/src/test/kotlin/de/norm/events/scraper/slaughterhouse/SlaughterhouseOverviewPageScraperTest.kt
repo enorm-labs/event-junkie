@@ -20,7 +20,8 @@ class SlaughterhouseOverviewPageScraperTest {
 
     @Test
     fun `reads one event per entry between the separators`() {
-        events.map { it.eventDate.dayOfMonth } shouldBe listOf(10, 16, 17, 30, 31)
+        events.map { it.eventDate.toString() } shouldBe
+            listOf("2026-10-10", "2026-10-16", "2026-10-17", "2026-10-30", "2026-10-31", "2026-11-06", "2026-12-19")
         val concert = on(16)
         concert.title shouldBe "Tyske Ludder + To Avoid"
         concert.eventType shouldBe EventType.CONCERT.name
@@ -40,14 +41,46 @@ class SlaughterhouseOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a time line without a colon`() {
+        val satisfactory = events.single { it.eventDate == LocalDate.of(2026, 12, 19) }
+        satisfactory.startTime shouldBe LocalTime.of(22, 0)
+        satisfactory.doorsTime.shouldBeNull()
+        satisfactory.description!! shouldNotContain "Beginn"
+        val madness = events.single { it.eventDate == LocalDate.of(2026, 11, 6) }
+        madness.doorsTime shouldBe LocalTime.of(21, 0)
+        madness.startTime.shouldBeNull()
+        madness.description!! shouldNotContain "doors open"
+    }
+
+    @Test
+    fun `reads the start from a doors line's caption that names the time before Beginn`() {
+        val factory = on(31)
+        factory.doorsTime shouldBe LocalTime.of(22, 0)
+        factory.startTime shouldBe LocalTime.of(22, 0)
+    }
+
+    @Test
+    fun `keeps a description line that opens with Beginn but names no time`() {
+        val html =
+            """
+            <div class="entry-content">
+            <p class="wp-block-paragraph">13.11.2026<br><strong>Konzert: Tyske Ludder</strong></p>
+            <p class="wp-block-paragraph">Doors 20.30<br>Beginn der Tour in Berlin.<br>Tickets: 5 vor 12! Bis 12 Uhr 5 Euro</p>
+            </div>
+            """.trimIndent()
+        val night = SlaughterhouseOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        night.doorsTime shouldBe LocalTime.of(20, 30)
+        night.startTime.shouldBeNull()
+        night.description shouldBe "Beginn der Tour in Berlin."
+    }
+
+    @Test
     fun `reads a party's style line and DJs, and its doors`() {
         val party = on(10)
         party.eventType shouldBe EventType.PARTY.name
         party.genre shouldBe "minimal, synth, wave"
         party.artists.map { it.name } shouldBe listOf("marko könig", "andre s.", "hazi")
         val factory = on(31)
-        factory.doorsTime shouldBe LocalTime.of(22, 0)
-        factory.startTime.shouldBeNull()
         factory.artists.shouldBeEmpty()
         factory.imageUrl shouldBe "https://slaughterhouse-berlin.de/wp-content/uploads/2024/02/image-1.png"
         factory.description!! shouldNotContain "– – –"
