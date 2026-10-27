@@ -15,6 +15,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
@@ -83,9 +84,11 @@ class AdmiralspalastDetailPageScraper {
                     ?.replaceFirst(PROMOTER_LABEL, "")
                     ?.blankToNull()
             )
+        // The blurb is the production's too (#4032). Not `.field.apzusatz` above it: that is the house's admission notice.
+        val description = document.select("$DESCRIPTION > *").paragraphText()
 
         return rows.mapSkippingFailures(logger, "an Admiralspalast performance on $sourceUrl") { row ->
-            parsePerformance(row, sourceUrl, slug, category, promoters)
+            parsePerformance(row, sourceUrl, slug, category, promoters)?.copy(description = description)
         }
     }
 
@@ -237,6 +240,9 @@ class AdmiralspalastDetailPageScraper {
 
         /** The production's promoter, once per page: `Veranstalter: d2m berlin GmbH`. */
         const val PROMOTER = ".field.promap .value .text"
+
+        /** The production's blurb, once per page; its block children are its paragraphs. */
+        const val DESCRIPTION = ".field.description .value .text"
 
         /** The label in front of the promoter's name. */
         val PROMOTER_LABEL = Regex("""^\s*Veranstalter(?:\*in)?\s*:\s*""", RegexOption.IGNORE_CASE)

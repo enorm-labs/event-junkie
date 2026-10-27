@@ -6,8 +6,11 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -94,6 +97,45 @@ class AdmiralspalastDetailPageScraperTest {
     fun `every night of a run carries the production's promoter`() {
         val events = scrape("admiralspalast-detail-matinee.html", "mamma-mia")
         events.map { it.promoters }.distinct() shouldBe listOf(listOf("Live Nation GmbH"))
+    }
+
+    @Test
+    fun `every night of a run carries the production's blurb`() {
+        val events = scrape("admiralspalast-detail-matinee.html", "mamma-mia")
+        val description =
+            events
+                .map { it.description }
+                .distinct()
+                .single()
+                .shouldNotBeNull()
+        description shouldStartWith "Die Magie von MAMMA MIA! Live!"
+        description shouldContain "Das sensationelle Feel-Good-Musical MAMMA MIA!"
+        // Each paragraph is its own line.
+        description.lines().size shouldBeGreaterThan 1
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("pagesWithAnAdmissionNotice")
+    fun `leaves the house's admission notice out of the blurb`(
+        fixture: String,
+        opening: String
+    ) {
+        val description = scrape(fixture, "fixture").first().description.shouldNotBeNull()
+        description shouldStartWith opening
+        description shouldNotContain "Einlassbestimmungen"
+        description shouldNotContain "--------"
+        description shouldNotContain "Veranstalter:"
+    }
+
+    @Test
+    fun `reads a blurb that opens with a heading`() {
+        scrape("admiralspalast-detail-single.html", "bodo-wartke-antigone").single().description.shouldNotBeNull() shouldStartWith
+            "Antigone - das neue Theaterstück von Bodo Wartke!"
+    }
+
+    @Test
+    fun `stores no description for a production page without a blurb`() {
+        scrape("admiralspalast-detail-abba.html", "abba-gold-the-concert-show-emotion").map { it.description }.distinct() shouldBe listOf(null)
     }
 
     @Test
@@ -192,6 +234,14 @@ class AdmiralspalastDetailPageScraperTest {
     ): List<String> = scrapeTitle(title, category).artists.map { it.name }
 
     private companion object {
+        /** Production pages whose admission notice sits above the blurb, and how the blurb opens. */
+        @JvmStatic
+        fun pagesWithAnAdmissionNotice(): List<Arguments> =
+            listOf(
+                Arguments.of("admiralspalast-detail-matinee.html", "Die Magie von MAMMA MIA! Live!"),
+                Arguments.of("admiralspalast-detail-sold-out.html", "Der preisgekrönte Künstler")
+            )
+
         /** Each production of #3150 as the venue titles it, and the acts it bills; the last rows must not change. */
         @JvmStatic
         fun billedTitles(): List<Arguments> =
