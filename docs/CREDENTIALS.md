@@ -139,7 +139,7 @@ These are files, not strings. **Attach the file itself to the KeePass entry** ra
 | 16  | **SOPS age key pair** ⚠️         | **Every encrypted secret in the repository.** With it, the repository restores everything; without it, the ciphertext in git is noise | `~/.config/sops/age/event-junkie.txt`                                                                    | **Yes — this is the recovery story** |
 | 17  | **SSH key for the nodes**        | `ops@` on every server. Root by `sudo` from there                                                                                     | `~/.ssh/id_ed25519_hetzner` (+ its passphrase)                                                           | Yes                                  |
 | 18  | **WireGuard client private key** | The tunnel. **Staging has no other way in** — no public 80/443/22/6443                                                                | `~/.wireguard/staging.conf`                                                                              | Yes                                  |
-| 18a | **WireGuard key, production**    | Production's tunnel. A separate keypair on a separate subnet (`10.10.0.x` vs staging's `10.10.1.x`) so both can be up at once         | `~/.wireguard/production.conf` + `production.key`                                                        | Yes                                  |
+| 18a | **WireGuard key, production**    | Production's tunnel. A separate keypair on a separate subnet (`10.10.0.x` vs staging's `10.10.1.x`) so both can be up at once         | `~/.wireguard/production.conf`                                                                           | Yes                                  |
 | 19  | **Kubeconfig**                   | Cluster-admin. Only usable through the tunnel                                                                                         | `~/.kube/event-junkie-staging`, `~/.kube/event-junkie-production`, and both merged into `~/.kube/config` | No — re-fetchable over SSH           |
 
 **#16 is the single most important entry in the database.** The public half is committed in `.sops.yaml` and is safe
@@ -150,6 +150,10 @@ recipient. Two recipients exist briefly, so nothing is undecryptable mid-flight.
 
 **#18 has a second half worth storing beside it.** The node's WireGuard _public_ key and endpoint address are what you
 need to rebuild a client config without going back to the node.
+
+**#18 and #18a are one entry for each Mac.** Each Mac has its own keypair and its own tunnel address. Two Macs with one
+key take the tunnel from each other. A new Mac gets a new peer, not a copy of an old Mac's config. The steps are in
+[CLUSTER_BOOTSTRAP.md](ops/CLUSTER_BOOTSTRAP.md#adding-a-mac-to-the-tunnel).
 
 ---
 

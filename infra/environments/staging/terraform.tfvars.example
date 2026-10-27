@@ -14,11 +14,12 @@ ssh_public_keys = [
 # is rejected at plan time, because a wrong one boots a node with no tunnel and no open port.
 #
 #   umask 077 && mkdir -p ~/.wireguard
-#   wg genkey > ~/.wireguard/staging.key    # private: stays on the device, never here
+#   wg genkey > ~/.wireguard/staging.key    # private: into staging.conf, then delete the file
 #   wg pubkey < ~/.wireguard/staging.key    # public: paste below
 #
 # Addresses are 10.10.1.x here, production's peers on 10.10.0.x, and both tunnels are up at once;
-# they must sit inside `wireguard_subnet` and be unique, checked at plan time.
+# they must sit inside `wireguard_subnet` and be unique, checked at plan time. One entry for each Mac:
+# two Macs on one key take the tunnel from each other.
 wireguard_peers = [
   {
     name       = "macbook"

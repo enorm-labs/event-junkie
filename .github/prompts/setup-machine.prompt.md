@@ -41,15 +41,18 @@ missing, go to Step 5.
 ## Step 3 — The operator tier
 
 1. The operator saves each missing key file from its KeePass attachment to the path the report names: the age key (#16), the SSH key (#17), the WireGuard
-   configs (#18, #18a).
+   configs (#18, #18a). The WireGuard configs come from this Mac's own entry. A Mac without one gets a new peer instead, by
+   [CLUSTER_BOOTSTRAP.md § Adding a Mac to the tunnel](../../docs/ops/CLUSTER_BOOTSTRAP.md#adding-a-mac-to-the-tunnel).
 2. The operator runs `scripts/setup-mac.sh operator`. It asks for each missing Keychain item, writes the node block into `~/.ssh/config` and creates both
    `.envrc` files from their templates.
 3. The `/etc/hosts` line, if the report lists it, as the report prints it.
 4. For each environment: `sudo wg-quick up ~/.wireguard/staging.conf`, then `scripts/setup-mac.sh kubeconfig staging`. The second command fetches the
    kubeconfig over SSH and merges it into `~/.kube/config`.
 
-**One WireGuard key on two Macs works, but not at the same time.** The node accepts the most recent address of a key, so two tunnels with the same key take
-the connection from each other. Bring the tunnel down on the old Mac first.
+**Never copy another Mac's WireGuard config.** The node accepts the most recent address of a key, so two tunnels with the same key take the connection from
+each other. The tunnel interface stays up and the node stops answering. `scripts/ej.sh status` then reports `interface up, 10.10.1.1 does not answer`.
+
+**Never print a WireGuard config or key file.** To check a key, compare public halves: `wg pubkey < file`, or the `PrivateKey` value piped into `wg pubkey`.
 
 ## Step 4 — What the script does not carry
 
