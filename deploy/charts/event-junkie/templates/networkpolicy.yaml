@@ -17,6 +17,7 @@
      importer -> PostgreSQL:5432
      importer -> the internet     scraping venue sites, which is the product
      bff      -> the internet:443 reading cached images out of the bucket, while serving them
+     bff      -> SMTP relay:587    the sign-in mail through Scaleway TEM, while a mail Secret is set
      all      -> CoreDNS:53
      test pod -> bff, frontend    the helm test hook, only while tests are enabled
 
