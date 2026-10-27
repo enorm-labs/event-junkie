@@ -85,8 +85,8 @@ lists what that includes and what it excludes.
 - Mark an event **Interested** or **Going** on its page. Only the visitor sees it, on the cards and in the **Following** feed.
   **My calendar** shows these plans as a list or a calendar, and keeps the past ones as history.
 - Turn on **notifications** in a browser, from the account page. A bell on each follow sends a push to those browsers when the artist,
-  venue or promoter has a new date. Every bell starts off, and turning notifications on offers to ring them all. On iPhone and iPad
-  this works from the Home Screen.
+  venue or promoter has a new date. The bell is on its page and on the **Following** page. Every bell starts off, and turning
+  notifications on offers to ring them all. On iPhone and iPad this works from the Home Screen.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**

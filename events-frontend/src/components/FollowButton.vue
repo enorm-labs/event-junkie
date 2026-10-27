@@ -3,15 +3,25 @@
  * Follow or unfollow an artist, venue or promoter (#3889). Signed out, it is a link to sign-in that
  * comes back to this page. Signed in, a toggle between "Follow" and "Following": a press on
  * "Following" unfollows. It changes at once and goes back with a message if the BFF refuses.
+ * Given a `name`, the bell (#4077) stands beside it while followed, as on the Following page.
  */
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import { Check, Plus } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { follow, type FollowKind, isFollowing, prepareCsrf, unfollow } from '@/api/account'
+import FollowBell from '@/components/FollowBell.vue'
+import {
+  fetchFollowNotify,
+  follow,
+  type FollowKind,
+  type Notify,
+  prepareCsrf,
+  unfollow,
+} from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
 
 // `initiallyFollowing` defaults to undefined, not to Vue's false for an absent boolean: undefined means "ask".
@@ -23,6 +33,8 @@ const props = withDefaults(
     initiallyFollowing?: boolean
     /** No link to the Following page after a follow: the page itself. */
     noHint?: boolean
+    /** What is followed, for the bell's label. Without it, no bell: the Following page draws its own. */
+    name?: string
   }>(),
   { initiallyFollowing: undefined },
 )
@@ -32,12 +44,25 @@ const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
 const { account } = useSession()
+const push = usePush()
 
 const following = ref<boolean | null>(null)
 const busy = ref(false)
 const problem = ref('')
 /** Set by a follow in this visit, so the hint answers "where does it go?" when the question arises. */
 const justFollowed = ref(false)
+/** The stored bell. A new follow starts with it off. */
+const notify = ref<Notify>('off')
+/** The bell went on, but this browser has no subscription: the opt-in is on the account page (ADR-055). */
+const pushHint = ref(false)
+/** As on the Following page: the bell shows once the site is known to send push. */
+const bell = computed(
+  () =>
+    props.name !== undefined &&
+    following.value === true &&
+    !busy.value &&
+    !['loading', 'unavailable'].includes(push.state.value),
+)
 let csrfReady: Promise<void> | null = null
 
 watch(
@@ -46,19 +71,35 @@ watch(
     following.value = null
     problem.value = ''
     justFollowed.value = false
+    notify.value = 'off'
+    pushHint.value = false
     if (!signedIn) return
     if (props.initiallyFollowing !== undefined) {
       following.value = props.initiallyFollowing
       return
     }
     try {
-      following.value = await isFollowing(props.kind, props.slug)
+      const stored = await fetchFollowNotify(props.kind, props.slug)
+      following.value = stored !== null
+      notify.value = stored ?? 'off'
     } catch {
       following.value = false
     }
   },
   { immediate: true },
 )
+
+// Asked once a bell could show, so a page nobody follows sends no extra request.
+watch(following, (now) => {
+  if (now && props.name !== undefined && push.state.value === 'loading') {
+    push.load().catch(() => undefined)
+  }
+})
+
+function bellChanged(now: Notify) {
+  notify.value = now
+  pushHint.value = now === 'instant' && push.state.value !== 'on'
+}
 
 async function toggle() {
   if (busy.value || following.value === null) return
@@ -71,6 +112,8 @@ async function toggle() {
     await csrfReady
     await (was ? unfollow : follow)(props.kind, props.slug)
     justFollowed.value = !was
+    notify.value = 'off'
+    pushHint.value = false
     emit('change', !was)
   } catch (e) {
     following.value = was
@@ -105,10 +148,25 @@ async function toggle() {
       {{ following ? t('account.follow.following') : t('account.follow.follow') }}
       <span v-if="following" class="sr-only">{{ t('account.follow.unfollowHint') }}</span>
     </Button>
+    <FollowBell
+      v-if="bell && name"
+      :key="slug"
+      :initially="notify"
+      :kind="kind"
+      :name="name"
+      :slug="slug"
+      @change="bellChanged"
+    />
     <p v-if="problem" class="text-meta text-destructive" role="alert">{{ problem }}</p>
     <p v-else-if="!noHint && justFollowed" class="text-meta text-muted-foreground" role="status">
       <RouterLink class="underline underline-offset-2" :to="localePath('/following')">
         {{ t('account.follow.shown') }}
+      </RouterLink>
+    </p>
+    <p v-if="bell && pushHint" class="basis-full text-meta text-muted-foreground" role="status">
+      {{ t('account.push.bellHint') }}
+      <RouterLink class="underline underline-offset-2" :to="localePath('/account')">
+        {{ t('account.push.bellHintLink') }}
       </RouterLink>
     </p>
   </div>

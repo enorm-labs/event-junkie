@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.await
 import org.springframework.test.web.reactive.server.WebTestClient
 import java.time.Duration
@@ -94,6 +95,8 @@ class FollowFlowTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.following")
             .isEqualTo(true)
+            .jsonPath("$.notify")
+            .isEqualTo("off")
         get("/me/follows")
             .expectStatus()
             .isOk
@@ -112,6 +115,30 @@ class FollowFlowTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.following")
             .isEqualTo(false)
+            .jsonPath("$.notify")
+            .doesNotExist()
+    }
+
+    @Test
+    fun `the check carries the bell, so a detail page shows it without asking twice`() {
+        runBlocking { insertVenue("Sisyphos", "sisyphos") }
+        put("/me/follows/venue/sisyphos").expectStatus().isNoContent
+
+        webTestClient
+            .put()
+            .uri("/me/follows/venue/sisyphos/notify")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(NotifyRequest("instant"))
+            .signedIn()
+            .exchange()
+            .expectStatus()
+            .isNoContent
+        get("/me/follows/venue/sisyphos")
+            .expectBody()
+            .jsonPath("$.following")
+            .isEqualTo(true)
+            .jsonPath("$.notify")
+            .isEqualTo("instant")
     }
 
     @Test

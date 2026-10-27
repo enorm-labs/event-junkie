@@ -70,18 +70,19 @@ class FollowStore(
             .await()
     }
 
-    suspend fun follows(
+    /** The bell of the follow, `off` or `instant`, or null when the account does not follow it. */
+    suspend fun notify(
         accountId: UUID,
         kind: FollowKind,
         entityId: Long
-    ): Boolean =
+    ): String? =
         db
-            .sql("SELECT 1 AS hit FROM accounts.follow WHERE account_id = :account AND kind = :kind AND entity_id = :entity")
+            .sql("SELECT notify FROM accounts.follow WHERE account_id = :account AND kind = :kind AND entity_id = :entity")
             .bind("account", accountId)
             .bind("kind", kind.tag)
             .bind("entity", entityId)
-            .map { _ -> true }
-            .awaitOneOrNull() ?: false
+            .map { row -> row.required("notify", String::class.java) }
+            .awaitOneOrNull()
 
     /** Sets the bell of one follow (#3894). Answers false when the account does not follow it. */
     suspend fun setNotify(
