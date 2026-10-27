@@ -10,7 +10,6 @@ import org.springframework.security.web.server.csrf.CookieServerCsrfTokenReposit
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.server.firewall.ServerWebExchangeFirewall
 import org.springframework.security.web.server.firewall.StrictServerWebExchangeFirewall
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers
 import reactor.core.publisher.Mono
 
 /**
@@ -41,7 +40,7 @@ class AccountSecurityConfiguration {
                 }
             }
         return http
-            .securityMatcher(pathMatchers("/api/auth/**", "/api/me", "/api/me/**"))
+            .securityMatcher(accountPathMatcher())
             .securityContextRepository(sessions)
             .csrf { it.csrfTokenRepository(csrfTokens).csrfTokenRequestHandler(ServerCsrfTokenRequestAttributeHandler()) }
             .authorizeExchange {
@@ -72,9 +71,5 @@ class AccountSecurityConfiguration {
         return ServerWebExchangeFirewall { exchange ->
             if (isAccountPath(exchange.request.path.value())) strict.getFirewalledExchange(exchange) else Mono.just(exchange)
         }
-    }
-
-    private companion object {
-        fun isAccountPath(path: String) = path.startsWith("/api/auth/") || path == "/api/me" || path.startsWith("/api/me/")
     }
 }
