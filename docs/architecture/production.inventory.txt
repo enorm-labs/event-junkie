@@ -56,6 +56,8 @@ NetworkPolicy/event-junkie-allow-metrics-scrape
   types Ingress  selector app.kubernetes.io/component In [bff,importer]
 NetworkPolicy/event-junkie-allow-object-storage
   types Egress  selector app.kubernetes.io/component=bff
+NetworkPolicy/event-junkie-allow-push
+  types Egress  selector app.kubernetes.io/component=bff
 NetworkPolicy/event-junkie-allow-scraping
   types Egress  selector app.kubernetes.io/component=importer
 NetworkPolicy/event-junkie-allow-smoke-hook-to-ingress

@@ -97,6 +97,9 @@ spec:
     # The sign-in mail through Scaleway TEM (ADR-054). Out of band in this namespace (docs/ops/SECRETS.md).
     mail:
       existingSecret: "event-junkie-mail"
+    # Web Push signed with this cluster's own VAPID pair (ADR-055). Out of band in this namespace (docs/ops/SECRETS.md).
+    push:
+      existingSecret: "event-junkie-push"
     # Both stateless services drop to one replica — the one place staging is not production-shaped, and
     # a capacity fact: the node also carries PostgreSQL, which production keeps on a cx23 of its own.
     # Measured at 51% of memory, ~300 MB of it Flux.

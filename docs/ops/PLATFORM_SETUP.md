@@ -67,6 +67,7 @@ flowchart TB
         hc["healthchecks.io"]
         sm["Hetzner SMTP<br/>alerts@"]
         tem["Scaleway TEM<br/>sign-in mail"]
+        wp["Browser push services<br/>Google · Mozilla · Apple · Microsoft"]
     end
 
     vis -->|"80 / 443"| f1
@@ -84,6 +85,7 @@ flowchart TB
     k3s -->|"conditional heartbeat"| hc
     k3s -->|"alerts, 587"| sm
     k3s -->|"BFF mail, 587"| tem
+    k3s -->|"BFF push, 443"| wp
 ```
 
 **Staging is the same picture with both nodes collapsed into one.** It has no public `A` record and no public 80/443 at all — see §6.
