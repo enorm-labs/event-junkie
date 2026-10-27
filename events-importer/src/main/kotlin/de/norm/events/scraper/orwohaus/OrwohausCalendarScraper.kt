@@ -15,6 +15,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
@@ -29,8 +30,9 @@ import java.time.ZoneOffset
  * Pure parser for the Events Manager iCalendar feed of the ORWOhaus. **The site's clock is a fixed
  * UTC+1** all year: the feed's UTC times plus one hour are the times the listing prints, also in
  * summer. Workshops are classes, not shows, and are skipped. The weekly-or-so jam session is
- * published years ahead, so events past [HORIZON_MONTHS] are left for a later run. Only a title
- * that bills acts with `mit …` or names a tour mints artists: the house and promoter nights
+ * published years ahead, so events past [HORIZON_MONTHS] are left for a later run. A `Line-Up:`
+ * list in the description bills its acts, one per line (`Berlin Grindfest 2026`). Otherwise only a
+ * title that bills acts with `mit …` or names a tour mints artists: the house and promoter nights
  * (`NECROMANIA 2026`, `BE NOISE - Live Battle`) name the night, not an act.
  */
 class OrwohausCalendarScraper(
@@ -87,7 +89,7 @@ class OrwohausCalendarScraper(
             genre = categories.filterNot { normalize(it) in NON_GENRE_CATEGORIES }.joinToString(", ").blankToNull(),
             pricePresale = prices.presale,
             priceBoxOffice = prices.boxOffice,
-            artists = artists(title, eventType)
+            artists = lineup(description).ifEmpty { artists(title, eventType) }
         )
     }
 
@@ -112,6 +114,19 @@ class OrwohausCalendarScraper(
         } else {
             emptyList()
         }
+
+    /** The lines under a `Line-Up:` heading, up to the next `-` rule or blank line; a rule right under the heading is skipped. */
+    private fun lineup(description: String?): List<ScrapedArtist> {
+        val lines = description?.lines()?.map { it.trim() } ?: return emptyList()
+        val heading = lines.indexOfFirst { LINEUP_HEADING.matches(it) }
+        if (heading < 0) return emptyList()
+        return lines
+            .drop(heading + 1)
+            .dropWhile { it.isEmpty() || it == RULE }
+            .takeWhile { it.isNotEmpty() && it != RULE }
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(it) }
+    }
 
     /** The room a `LOCATION` names before its address, without the house's own name: `ORWOhaus e.V. - Showroom 104` is `Showroom 104`. */
     private fun room(location: String): String? = location.substringBefore(',').replace(HOUSE_NAME, "").blankToNull()
@@ -142,6 +157,11 @@ class OrwohausCalendarScraper(
             )
 
         val HOUSE_NAME = Regex("""^\s*ORWOhaus(?:\s+e\.V\.)?(?:\s*-\s*)?""", RegexOption.IGNORE_CASE)
+
+        val LINEUP_HEADING = Regex("""line[\s-]?up:?""", RegexOption.IGNORE_CASE)
+
+        /** The `-` line the house separates the description's blocks with. */
+        const val RULE = "-"
 
         /** A title that bills acts: `<night> mit <acts>`, or `<act> – <name> Tour 2026`. */
         val BILLS_ACTS = Regex("""\smit\s|tour\b""", RegexOption.IGNORE_CASE)

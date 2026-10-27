@@ -86,6 +86,22 @@ class KulturhausSpandauApiScraperTest {
     }
 
     @Test
+    fun `a title that is only the tag takes the subtitle, and an auction is dropped whichever line names it`() {
+        val json =
+            """
+            [{"ID":1,"title":"<p hidden_Simply Tina>","subtitle":"Simply Tina","start":"2026-12-03 20:00:00",
+              "permalink":"https://kulturhaus-spandau.de/ev_event/1/","place":{"street":"Mauerstr. 6"},"categories":[{"name":"Konzert"}]},
+             {"ID":2,"title":"<p-hidden_Benefiz-Kunst-Auktion>","subtitle":"Benefiz-Kunst-Auktion","start":"2026-12-04 18:00:00",
+              "permalink":"https://kulturhaus-spandau.de/ev_event/2/","place":{"street":"Mauerstr. 6"},"categories":[]}]
+            """.trimIndent()
+
+        val parsed = KulturhausSpandauApiScraper().scrape(json, SOURCE_URL).single()
+
+        parsed.title shouldBe "Simply Tina"
+        parsed.subtitle.shouldBeNull()
+    }
+
+    @Test
     fun `joins the slam's bare place to its kicker and lifts a show's name over its list of disciplines`() {
         event(2648).title shouldBe "Poetry Slam Spandau"
         event(2648).subtitle.shouldBeNull()

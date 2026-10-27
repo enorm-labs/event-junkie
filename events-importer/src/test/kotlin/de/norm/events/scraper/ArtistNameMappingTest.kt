@@ -1350,6 +1350,8 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Thomas Anders sings MODERN TALKING") shouldBe "Thomas Anders"
         stripArtistSuffix("Hawt Coco Album Release") shouldBe "Hawt Coco"
         stripArtistSuffix("Some Band EP Release Show") shouldBe "Some Band"
+        // Schokoladen, production 2026-12-02.
+        stripArtistSuffix("Saba Lou Rec Release") shouldBe "Saba Lou"
         stripArtistSuffix("Some Band Release Party") shouldBe "Some Band"
     }
 

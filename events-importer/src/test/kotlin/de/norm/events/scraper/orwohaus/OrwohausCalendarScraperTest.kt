@@ -113,6 +113,30 @@ class OrwohausCalendarScraperTest {
     }
 
     @Test
+    fun `a Line-Up list in the description bills its acts, up to the next rule`() {
+        val calendar =
+            """
+            BEGIN:VCALENDAR
+            BEGIN:VEVENT
+            DTSTART:20261205T170000Z
+            URL:https://www.orwohaus.de/events/berlin-grindfest-2026/
+            SUMMARY:Berlin Grindfest 2026
+            CATEGORIES:Externe Veranstaltungen
+            DESCRIPTION:Line-Up:\n-\nAttack of the Mad Axeman\nCancer Clan\nPure Deceit\n-\nweitere In
+             fos bei info@example.de\n-\nDoors: 5 pm\nStart: 6 pm
+            END:VEVENT
+            END:VCALENDAR
+            """.trimIndent()
+
+        scraper
+            .scrape(calendar)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly
+            listOf("Attack of the Mad Axeman", "Cancer Clan", "Pure Deceit")
+    }
+
+    @Test
     fun `an entry without a URL is skipped and an all-day date carries no time`() {
         val calendar =
             """

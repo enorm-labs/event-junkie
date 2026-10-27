@@ -159,14 +159,16 @@ class AdmiralspalastDetailPageScraper {
      * carries the reschedule note, which would be minted as a performer.
      *
      * A concert title bills its act before the dash, without the house's act tails, and a tribute
-     * or score frame bills none but an ensemble named after it. These rules stay here and out of
-     * the shared lists, which other venues read (#3150).
+     * or score frame bills none but an ensemble named after it. A ballet names its work before the
+     * dash and bills only a company named after it: `Der Nussknacker - Imperial Ballet & Live Orchestra`.
+     * These rules stay here and out of the shared lists, which other venues read (#3150).
      */
     private fun billedActs(
         title: String,
         eventType: String
     ): List<ScrapedArtist> {
         if (SLAM.containsMatchIn(title)) return emptyList()
+        if (BALLET_AFTER_WORK.containsMatchIn(title)) return balletCompany(title)
         if (eventType != EventType.CONCERT.name) return buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         TRIBUTE_FRAME.find(title)?.let { frame -> return ensembleAfter(title.substring(frame.range.last + 1)) }
         // The shared builder still decides on the whole title whether it bills anyone: `Top Gun: Maverick – in Concert`.
@@ -180,6 +182,15 @@ class AdmiralspalastDetailPageScraper {
                 .trim()
         return if (act == title) asWritten else buildArtistsForEventType(act, subtitle = null, eventType = eventType)
     }
+
+    /** The company a ballet's title names after its work, before any `&` or `mit`; `Ballett mit Orchester` names none. */
+    private fun balletCompany(title: String): List<ScrapedArtist> =
+        title
+            .split(PROGRAMME_DASH)
+            .drop(1)
+            .map { it.substringBefore(" & ").substringBefore(" mit ").trim() }
+            .filter { BALLET_COMPANY.matches(it) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
 
     /** The ensemble a tribute frame names after a closing `&`: `… to Billy Joel & St. Konrad Gospelchor Berlin`. */
     private fun ensembleAfter(rest: String): List<ScrapedArtist> =
@@ -269,6 +280,12 @@ class AdmiralspalastDetailPageScraper {
 
         /** The dash between the act and its programme: `Soweto Gospel Choir - JOY!`. */
         val PROGRAMME_DASH = Regex("""\s+[-–—]\s+""")
+
+        /** A dash, then `Ballet` or `Ballett`: the title opens with the work, not the company. */
+        val BALLET_AFTER_WORK = Regex("""\s[-–—]\s.*\bballett?\b""", RegexOption.IGNORE_CASE)
+
+        /** `Imperial Ballet`, `International Festival Ballet`: capitalised words ending in the noun. */
+        val BALLET_COMPANY = Regex("""(?:\p{Lu}[\p{L}.'-]*\s+)+Ballett?""")
 
         /** The house's act tails: `Helmut Lotti goes Classic`, `Alexander Eder Unplugged`, `Karat 50+1`. */
         val ACT_TAIL = Regex("""\s+(?:goes\s+classic|unplugged|\d+\+\d+)\s*$""", RegexOption.IGNORE_CASE)

@@ -124,34 +124,34 @@ is a recurring night (§5).
 swamped the actual programme — the Arena concerts, the open-air cinema, the park festivals. It would present a concert
 venue as a tour operator. Each venue that mixes these into its programme has one predicate, on the signal its page gives:
 
-| Venue               | Predicate                                                | Signal                                                                                         |
-| ------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Gärten der Welt     | `GaertenDerWeltFieldMapping.isProgrammeCategory`         | The park's activity categories                                                                 |
-| Urania              | `UraniaEventFields.isParticipationFormat`                | The format names a `Workshop`, `Spaziergang` or `Rundgang`                                     |
-| Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop`     | The `Workshops` category, or a title that opens with `Workshop`                                |
-| silent green        | `SilentGreenEventFields.isSilentGreenTour`               | No category, and a title that names a `Führung` or `Rundgang`                                  |
-| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`            | The Eventfrog category `kurse-seminare`: the swing course                                      |
-| Baiz                | `BaizWebsiteImporter.isProgramme`                        | An uncategorised radar row that names `Schach`, `Beratung` or `Messer`                         |
-| HAU1, HAU2, HAU3    | `HauScheduleScraper.isOutOfScope`                        | The `Workshop` category, and an `Online` piece (§5)                                            |
-| Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion`               |
-| Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                                          |
-| Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                                        |
-| LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und` |
-| Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                |
-| Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`             |
-| ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course          |
-| Passionskirche      | `isOutOfScope` (`PassionskircheOverviewPageScraper.kt`)  | A caption or teaser that names a `Pop-up-Chor`, a sing-along, a `Gottesdienst` or an `Andacht` |
-| Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title or format line that names a `Workshop`                                                 |
-| Volksbühne          | `VolksbuehneSpielplanScraper.isOutOfScope`               | A `Workshop` format label, or a title that opens with `Theaterführung`                         |
-| Renaissance-Theater | `RenaissanceTheaterSpielplanPageScraper.isOutOfScope`    | A title that names a `Führung`: the tour of the house                                          |
-| Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` tour of the house, a `Workshop`, the `Weinmahl` dinner, or a sing-along choir    |
-| Kulturhaus Spandau  | `KulturhausSpandauApiScraper.isOutOfScope`               | The `Führung`, `Workshop` and `Ausstellung` categories, or a `Mitsing…` sing-along title       |
-| 800A Bar & Cabaret  | `EightHundredAHomePageScraper.toEvent`                   | The `workshop` category: the paid improv and songwriting courses                               |
-| Interkosmos         | `InterkosmosApiScraper.event`                            | The `Yoga` event type: the weekly Hatha class                                                  |
-| Ballhaus Berlin     | `BallhausBerlinTerminePageScraper.OUT_OF_SCOPE`          | The `Vintage Market`, a `Geschlossene Gesellschaft` and the `Yes Choir !` sing-along           |
-| ausland             | `AuslandOverviewPageScraper.parseItem`                   | A title that names a `workshop`                                                                |
-| Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                        | A title that names a `Brunch`                                                                  |
-| Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under              |
+| Venue               | Predicate                                                | Signal                                                                                                                          |
+| ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Gärten der Welt     | `GaertenDerWeltFieldMapping.isProgrammeCategory`         | The park's activity categories                                                                                                  |
+| Urania              | `UraniaEventFields.isParticipationFormat`                | The format names a `Workshop`, `Spaziergang` or `Rundgang`                                                                      |
+| Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop`     | The `Workshops` category, or a title that opens with `Workshop`                                                                 |
+| silent green        | `SilentGreenEventFields.isSilentGreenTour`               | No category, and a title that names a `Führung` or `Rundgang`                                                                   |
+| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`            | The Eventfrog category `kurse-seminare`: the swing course                                                                       |
+| Baiz                | `BaizWebsiteImporter.isProgramme`                        | An uncategorised radar row that names `Schach`, `Beratung` or `Messer`                                                          |
+| HAU1, HAU2, HAU3    | `HauScheduleScraper.isOutOfScope`                        | The `Workshop` category, and an `Online` piece (§5)                                                                             |
+| Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion`                                                |
+| Alte Münze          | `AlteMuenzeApiScraper.typeOf`                            | No category, or only `Führung`, `Workshop` or `Sport`                                                                           |
+| Alte Münze          | `AlteMuenzeApiScraper.isProgramme`                       | The `Brunch` category, beside any other                                                                                         |
+| LabSaal             | `LabsaalCalendarScraper.isProgramme`                     | A feed entry outside `Alle Veranstaltungen`, or a `Workshop` or `…kurs` named before any `und`                                  |
+| Brotfabrik          | `BrotfabrikApiScraper.isStageProgramme`                  | Only the categories `Bühne` and `Literatur`: no cinema, courses or gallery days                                                 |
+| Café Köpenick       | `programmeType` in `CafeKoepenickCalendarScraper.kt`     | A title with no band bill, open stage or format word, such as `Küfa` or `Beratung`                                              |
+| ZK/U                | `isZkuParticipationFormat` (`ZkuCalendarScraper.kt`)     | A market, `Workshop`, `OPENHAUS` open studios, a meeting, a reading group or a course                                           |
+| Passionskirche      | `isOutOfScope` (`PassionskircheOverviewPageScraper.kt`)  | A caption or teaser that names a `Pop-up-Chor`, a sing-along, a `Gottesdienst` or an `Andacht`                                  |
+| Pastiche            | `PasticheProgrammePageScraper.isOutOfScope`              | A title or format line that names a `Workshop`                                                                                  |
+| Volksbühne          | `VolksbuehneSpielplanScraper.isOutOfScope`               | A `Workshop` format label, or a title that opens with `Theaterführung`                                                          |
+| Renaissance-Theater | `RenaissanceTheaterSpielplanPageScraper.isOutOfScope`    | A title that names a `Führung`: the tour of the house                                                                           |
+| Clärchens Ballhaus  | `ClaerchensBallhausCalendarScraper.isOutOfScope`         | The `Vortrag` tour of the house, a `Workshop`, the `Weinmahl` dinner, or a sing-along choir                                     |
+| Kulturhaus Spandau  | `KulturhausSpandauApiScraper.isOutOfScope`               | The `Führung`, `Workshop` and `Ausstellung` categories, a `Mitsing…` sing-along title, or an `Auktion` in the title or subtitle |
+| 800A Bar & Cabaret  | `EightHundredAHomePageScraper.toEvent`                   | The `workshop` category: the paid improv and songwriting courses                                                                |
+| Interkosmos         | `InterkosmosApiScraper.event`                            | The `Yoga` event type: the weekly Hatha class                                                                                   |
+| Ballhaus Berlin     | `BallhausBerlinTerminePageScraper.OUT_OF_SCOPE`          | The `Vintage Market`, a `Geschlossene Gesellschaft` and the `Yes Choir !` sing-along                                            |
+| ausland             | `AuslandOverviewPageScraper.parseItem`                   | A title that names a `workshop`                                                                                                 |
+| Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                        | A title that names a `Brunch`                                                                                                   |
+| Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                               |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
