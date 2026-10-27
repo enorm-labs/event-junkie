@@ -759,6 +759,42 @@ Four lines: `node_reboot_required_age_seconds`, `node_service_restart_pending_ag
 `node_patch_state_timestamp_seconds`. Then, from the
 repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-reboot-pending`, not `NO DATA`. `NO DATA` means the gateway is not reaching 9100. The place to look is the `node-patch-state` job in `up`.
 
+### Adding a Mac to the tunnel
+
+**Each Mac is its own peer, with its own keypair and its own address.** The node sends a key's traffic to the address that used the key last. Two Macs with
+one key take the tunnel from each other, and neither one sees an error. The peers live in `wireguard_peers`, which is part of `user_data`. So add a peer by
+hand on the running node, and also in `terraform.tfvars`. Do not apply to add a peer, because an apply rebuilds the node.
+
+Use the next free address: `10.10.1.3`, `10.10.1.4` and so on for staging, `10.10.0.x` for production. Do these steps once for each environment. The
+commands show staging.
+
+1. On the new Mac, make the keypair and write the client config from §4 with the new address. Delete the `.key` file after this step. The config holds the
+   private key.
+
+    ```sh
+    umask 077 && mkdir -p ~/.wireguard && wg genkey > ~/.wireguard/staging.key
+    wg pubkey < ~/.wireguard/staging.key     # the public half, for the next steps
+    ```
+
+2. From a Mac that has a tunnel, add the peer to the node. The peer goes into the running interface and into both files. `wg-quick` reads `wg0.conf` at boot,
+   and `wireguard.sh` writes `wg0.conf` from `peers.conf`. Keep each command on one line. A line break in the middle makes the shell run the second file
+   path as a command.
+
+    ```sh
+    ssh 10.10.1.1
+    PUB='<public key>'; ADDR=10.10.1.3
+    printf '\n[Peer]\n# <mac name>\nPublicKey = %s\nAllowedIPs = %s/32\n' "$PUB" "$ADDR" | sudo tee -a /etc/wireguard/peers.conf /etc/wireguard/wg0.conf >/dev/null
+    sudo wg set wg0 peer "$PUB" allowed-ips "$ADDR/32"
+    sudo grep -c "$PUB" /etc/wireguard/peers.conf /etc/wireguard/wg0.conf     # 1 and 1
+    sudo wg-quick strip wg0 >/dev/null && echo parses
+    ```
+
+3. Add the same peer to `wireguard_peers` in `terraform.tfvars`. The next rebuild then keeps it.
+4. Attach the new Mac's config to its own KeePass entry, next to #18 and #18a ([CREDENTIALS.md](../CREDENTIALS.md) §3).
+5. On the new Mac, bring the tunnel up. Then `sudo wg show` on the node must show a `latest handshake` for each peer.
+
+To remove a peer, use `sudo wg set wg0 peer <public key> remove`. Then delete its block from both files and from `terraform.tfvars`.
+
 ### Rebooting a node
 
 **Reboot a node when `ej-reboot-pending` or `ej-service-restart-pending` fires.** Nothing reboots a node automatically. [PLATFORM_SETUP.md](PLATFORM_SETUP.md)

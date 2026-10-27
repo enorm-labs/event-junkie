@@ -67,7 +67,6 @@ KEY_FILES=(
     "$HOME/.ssh/id_ed25519_hetzner #17"
     "$HOME/.wireguard/staging.conf #18"
     "$HOME/.wireguard/production.conf #18a"
-    "$HOME/.wireguard/production.key #18a"
 )
 
 SSH_HOSTS="Host 10.10.0.1 10.10.1.1 10.0.1.20"
