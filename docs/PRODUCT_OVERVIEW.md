@@ -132,7 +132,7 @@ the first column. It fails in two cases:
 | `/sign-in/check-mail`                  | Says the link is on its way                                                          |
 | `/sign-in/confirm`                     | The page the mail links to; signs in on a click                                      |
 | `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion     |
-| `/following`                           | Today and upcoming events of what the visitor follows, and the list to unfollow from |
+| `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, to unfollow |
 | `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar         |
 | `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                     |
 | `/calendar.ics`                        | iCalendar subscription to the next 90 days, with every events-list filter            |

@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 /**
  * "Following" (#3889): today's events of everything the visitor follows, as on the home page (#3922),
- * then the upcoming ones by date, and the list of what they follow. No ranking, so not "For you". Signed out, it sends the visitor to sign-in and
- * back. Empty, it suggests the venues with the most events in the next 30 days.
+ * then the upcoming ones by date; what they follow is a tab of its own, `?tab=follows` (#4080). No ranking, so not "For you". Signed out, it
+ * sends the visitor to sign-in and back. Empty, it suggests the venues with the most events in the next 30 days.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
-import FollowBell from '@/components/FollowBell.vue'
 import FollowButton from '@/components/FollowButton.vue'
+import FollowedList, { type Followed } from '@/components/FollowedList.vue'
 import ListPage from '@/components/ListPage.vue'
 import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -30,9 +30,10 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
 import { useSession } from '@/composables/useSession'
 import { tomorrowIso } from '@/lib/format'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { account, ready } = useSession()
@@ -44,14 +45,6 @@ const todayExpanded = ref(false)
 const events = ref<EventSummary[]>([])
 const page = ref(0)
 const hasMore = ref(false)
-/** One followed entity, with the fields the generated type leaves optional checked. */
-interface Followed {
-  kind: FollowKind
-  slug: string
-  name: string
-  notify: Notify
-}
-
 const follows = ref<Followed[] | null>(null)
 const suggestions = ref<{ slug: string; name: string }[]>([])
 const loadingMore = ref(false)
@@ -62,6 +55,46 @@ const ROUTE: Record<FollowKind, string> = {
   venue: 'venues',
   promoter: 'promoters',
 }
+
+type Tab = 'events' | 'follows'
+const TABS: Tab[] = ['events', 'follows']
+// Events is the default, so its URL stays bare and its own query stays alone.
+const tab = computed<Tab>(() => (route.query.tab === 'follows' ? 'follows' : 'events'))
+const tabButtons = ref<HTMLButtonElement[]>([])
+const followedCount = computed(() => follows.value?.filter((item) => item.following).length ?? 0)
+
+function selectTab(next: Tab, focus = false) {
+  void router.replace({ query: { ...route.query, tab: next === 'events' ? undefined : next } })
+  if (focus) tabButtons.value[TABS.indexOf(next)]?.focus()
+}
+
+/** Arrow keys, Home and End move between the tabs, as the WAI-ARIA tabs pattern has them. */
+function onTabKey(event: KeyboardEvent) {
+  const index = TABS.indexOf(tab.value)
+  const moves: Record<string, number> = {
+    ArrowRight: (index + 1) % TABS.length,
+    ArrowLeft: (index - 1 + TABS.length) % TABS.length,
+    Home: 0,
+    End: TABS.length - 1,
+  }
+  const next = moves[event.key]
+  if (next === undefined) return
+  event.preventDefault()
+  selectTab(TABS[next]!, true)
+}
+
+// A row unfollowed on the tab stays for an undo; leaving the tab reloads, which drops it and its events.
+let followsChanged = false
+function onFollowChange(item: Followed, following: boolean) {
+  item.following = following
+  if (!following) item.notify = 'off'
+  followsChanged = true
+}
+watch(tab, (_, before) => {
+  if (before !== 'follows' || !followsChanged) return
+  followsChanged = false
+  void load()
+})
 
 /** The bells show once the site is known to send push (#3894); unknown or off, they would promise nothing. */
 const bells = computed(() => !['loading', 'unavailable'].includes(push.state.value))
@@ -93,6 +126,7 @@ async function load() {
               slug: item.slug,
               name: item.name,
               notify: (item.notify === 'instant' ? 'instant' : 'off') as Notify,
+              following: true,
             },
           ]
         : [],
@@ -162,62 +196,107 @@ onMounted(async () => {
     </p>
 
     <template v-else>
-      <section v-if="empty" class="space-y-4">
-        <p class="text-body">{{ t('account.follow.page.empty') }}</p>
-        <SectionLabel v-if="suggestions.length" as="h2">{{
-          t('account.follow.page.suggestions')
-        }}</SectionLabel>
-        <ul class="divide-y divide-border border-y border-border">
-          <li
-            v-for="venue in suggestions"
-            :key="venue.slug"
-            class="flex items-center justify-between gap-4 py-3"
-          >
-            <RouterLink
-              class="text-body font-medium hover:underline"
-              :to="localePath(`/venues/${venue.slug}`)"
+      <div
+        :aria-label="t('pageTitle.following')"
+        class="flex gap-4 border-b border-border"
+        role="tablist"
+      >
+        <button
+          v-for="name in TABS"
+          :id="`following-tab-${name}`"
+          :key="name"
+          ref="tabButtons"
+          :aria-controls="`following-panel-${name}`"
+          :aria-selected="tab === name"
+          :class="
+            cn(
+              '-mb-px border-b-2 py-2 text-body font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              tab === name
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground',
+            )
+          "
+          role="tab"
+          :tabindex="tab === name ? 0 : -1"
+          type="button"
+          @click="selectTab(name)"
+          @keydown="onTabKey"
+        >
+          {{
+            name === 'events'
+              ? t('common.nav.events')
+              : t('account.follow.page.list', { count: followedCount })
+          }}
+        </button>
+      </div>
+
+      <div
+        v-show="tab === 'events'"
+        id="following-panel-events"
+        aria-labelledby="following-tab-events"
+        class="space-y-6"
+        role="tabpanel"
+      >
+        <section v-if="empty" class="space-y-4">
+          <p class="text-body">{{ t('account.follow.page.empty') }}</p>
+          <SectionLabel v-if="suggestions.length" as="h2">{{
+            t('account.follow.page.suggestions')
+          }}</SectionLabel>
+          <ul class="divide-y divide-border border-y border-border">
+            <li
+              v-for="venue in suggestions"
+              :key="venue.slug"
+              class="flex items-center justify-between gap-4 py-3"
             >
-              {{ venue.name }}
-            </RouterLink>
-            <FollowButton
-              no-hint
-              :initially-following="false"
-              kind="venue"
-              :slug="venue.slug"
-              @change="load"
-            />
-          </li>
-        </ul>
-      </section>
+              <RouterLink
+                class="text-body font-medium hover:underline"
+                :to="localePath(`/venues/${venue.slug}`)"
+              >
+                {{ venue.name }}
+              </RouterLink>
+              <FollowButton
+                no-hint
+                :initially-following="false"
+                kind="venue"
+                :slug="venue.slug"
+                @change="load"
+              />
+            </li>
+          </ul>
+        </section>
 
-      <!-- Left out when empty: a heading over nothing says less than no heading. -->
-      <section v-if="!empty && today.length" class="space-y-4">
-        <SectionLabel as="h2">{{ t('home.today') }}</SectionLabel>
-        <TodayEvents v-model:expanded="todayExpanded" :events="today" />
-      </section>
+        <!-- Left out when empty: a heading over nothing says less than no heading. -->
+        <section v-if="!empty && today.length" class="space-y-4">
+          <SectionLabel as="h2">{{ t('home.today') }}</SectionLabel>
+          <TodayEvents v-model:expanded="todayExpanded" :events="today" />
+        </section>
 
-      <section v-if="!empty" class="space-y-4">
-        <SectionLabel as="h2">{{ t('common.upcomingEvents') }}</SectionLabel>
-        <p v-if="!events.length" class="text-body text-muted-foreground">
-          {{ t('account.follow.page.none') }}
-        </p>
-        <div v-else-if="compact" :class="CARD_LIST_CLASS">
-          <EventRow v-for="event in events" :key="event.slug" :event="event" />
-        </div>
-        <div v-else :class="CARD_GRID_CLASS">
-          <EventCard v-for="event in events" :key="event.slug" :event="event" />
-        </div>
-        <Button v-if="hasMore" :disabled="loadingMore" variant="outline" @click="loadMore">
-          {{ t('common.actions.showMore') }}
-        </Button>
-      </section>
+        <section v-if="!empty" class="space-y-4">
+          <SectionLabel as="h2">{{ t('common.upcomingEvents') }}</SectionLabel>
+          <p v-if="!events.length" class="text-body text-muted-foreground">
+            {{ t('account.follow.page.none') }}
+          </p>
+          <div v-else-if="compact" :class="CARD_LIST_CLASS">
+            <EventRow v-for="event in events" :key="event.slug" :event="event" />
+          </div>
+          <div v-else :class="CARD_GRID_CLASS">
+            <EventCard v-for="event in events" :key="event.slug" :event="event" />
+          </div>
+          <Button v-if="hasMore" :disabled="loadingMore" variant="outline" @click="loadMore">
+            {{ t('common.actions.showMore') }}
+          </Button>
+        </section>
 
-      <SavedSearchList @loaded="searchCount = $event" />
+        <SavedSearchList @loaded="searchCount = $event" />
+      </div>
 
-      <section v-if="follows.length" class="space-y-4">
-        <SectionLabel as="h2">{{
-          t('account.follow.page.list', { count: follows.length })
-        }}</SectionLabel>
+      <div
+        v-if="tab === 'follows'"
+        id="following-panel-follows"
+        aria-labelledby="following-tab-follows"
+        class="space-y-4"
+        role="tabpanel"
+      >
         <!-- The bells only where the site sends push. Off in this browser, they still reach the others. -->
         <p v-if="bells && push.state.value !== 'on'" class="text-meta text-muted-foreground">
           {{ t('account.push.bellHint') }}
@@ -225,40 +304,8 @@ onMounted(async () => {
             {{ t('account.push.bellHintLink') }}
           </RouterLink>
         </p>
-        <ul class="divide-y divide-border border-y border-border">
-          <li
-            v-for="item in follows"
-            :key="`${item.kind}/${item.slug}`"
-            class="flex items-center justify-between gap-4 py-3"
-          >
-            <div class="min-w-0">
-              <RouterLink
-                class="text-body font-medium hover:underline"
-                :to="localePath(`/${ROUTE[item.kind]}/${item.slug}`)"
-              >
-                {{ item.name }}
-              </RouterLink>
-              <p class="text-meta text-muted-foreground">{{ t(`detail.${item.kind}.kind`) }}</p>
-            </div>
-            <div class="flex items-center gap-1">
-              <FollowBell
-                v-if="bells"
-                :initially="item.notify"
-                :kind="item.kind"
-                :name="item.name"
-                :slug="item.slug"
-              />
-              <FollowButton
-                no-hint
-                :initially-following="true"
-                :kind="item.kind"
-                :slug="item.slug"
-                @change="load"
-              />
-            </div>
-          </li>
-        </ul>
-      </section>
+        <FollowedList :bells="bells" :follows="follows" @change="onFollowChange" />
+      </div>
     </template>
   </ListPage>
 </template>

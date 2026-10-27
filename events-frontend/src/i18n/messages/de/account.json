@@ -62,7 +62,15 @@
     },
     "shown": "Erscheint auf deiner Seite „Gefolgt“",
     "following": "Gefolgt",
-    "unfollowHint": "(zum Entfolgen drücken)"
+    "unfollowHint": "(zum Entfolgen drücken)",
+    "followed": {
+      "artists": "Acts ({count})",
+      "venues": "Locations ({count})",
+      "promoters": "Veranstalter ({count})",
+      "search": "Suchen, wem du folgst",
+      "noMatch": "Nichts, dem du folgst, passt zu „{query}“.",
+      "empty": "Du folgst noch keinem Act, keiner Location und keinem Veranstalter. Drück auf ihrer Seite auf Folgen."
+    }
   },
   "search": {
     "save": "Suche speichern",

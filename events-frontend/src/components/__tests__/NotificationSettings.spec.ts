@@ -102,6 +102,8 @@ describe('NotificationSettings', () => {
     account.fetchPushKey.mockResolvedValue(null)
     const view = await mountSettings()
     expect(view.text()).toContain('not available')
+    // The bells sit on the Following page's tab of what the account follows (#4080).
+    expect(view.find('a[href="/en/following?tab=follows"]').exists()).toBe(true)
     expect(view.find('[data-testid="push-toggle"]').exists()).toBe(false)
   })
 
