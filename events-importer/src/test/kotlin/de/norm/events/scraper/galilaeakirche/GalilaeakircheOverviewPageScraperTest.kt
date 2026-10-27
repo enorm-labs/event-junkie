@@ -63,22 +63,28 @@ class GalilaeakircheOverviewPageScraperTest {
 
     @Test
     fun `an event filed under two types takes the one its title names`() {
-        // The D.I.Y. market nights of Nov–Dec 2026 were stored as concerts billing `D.I.Y. Kunst` and `Wintermarkt`.
-        val both = """<div class="vsel-meta-cats"><span><a href="/event_cat/konzert/">Konzert</a>, <a href="/event_cat/sonstiges/">Sonstiges</a></span></div>"""
+        val reading = scrape(page(item("lesung-am-abend", "Lesung am Abend", "Konzert", "Lesung"))).single()
+        reading.eventType shouldBe EventType.READING.name
+        reading.artists.shouldBeEmpty()
 
-        fun item(
-            slug: String,
-            title: String
-        ) = """<div class="vsel-content vsel-upcoming vsel-future"><h3 class="vsel-meta-title"><a href="/event/$slug/">$title</a></h3>""" +
-            """<div class="vsel-meta-date vsel-meta-single-date"><span>Sa. 19.12.26</span></div><div class="vsel-meta-time"><span>15:00 Uhr</span></div>$both</div>"""
-
-        val market = scrape("<html><body>${item("d-i-y-kunst-und-wintermarkt-6", "D.I.Y. Kunst und Wintermarkt")}</body></html>").single()
-        market.eventType shouldBe EventType.OTHER.name
-        market.artists.shouldBeEmpty()
-
-        val concert = scrape("<html><body>${item("zea-live", "Zea – Live")}</body></html>").single()
+        val concert = scrape(page(item("zea-live", "Zea – Live", "Konzert", "Lesung"))).single()
         concert.eventType shouldBe EventType.CONCERT.name
         concert.artists.map { it.name } shouldBe listOf("Zea")
+    }
+
+    @Test
+    fun `skips a market or an auction, whatever it is filed under`() {
+        // The D.I.Y. market Saturdays of Nov–Dec 2026 are filed under `Konzert` and `Sonstiges` (#4041).
+        val html =
+            page(
+                item("d-i-y-kunst-und-wintermarkt-6", "D.I.Y. Kunst und Wintermarkt", "Konzert", "Sonstiges"),
+                item("czentrifuga-siebdruck-auktion", "CZentrifuga Siebdruck Auktion", "Sonstiges"),
+                item("zea-live", "Zea – Live", "Konzert")
+            )
+
+        scrape(html).map { it.title } shouldContainExactly listOf("Zea – Live")
+        isOutOfScope("Flohmarkt im Kirchhof") shouldBe true
+        isOutOfScope("Jimi Tenor “Wormhole Mystic” Record Release Show") shouldBe false
     }
 
     @Test
@@ -118,6 +124,19 @@ class GalilaeakircheOverviewPageScraperTest {
     @Test
     fun `returns nothing for a page without events`() {
         scrape("<html><body><p class=\"vsel-no-events\">Es wurden keine Ereignisse gefunden.</p></body></html>").shouldBeEmpty()
+    }
+
+    private fun page(vararg items: String) = "<html><body>${items.joinToString("")}</body></html>"
+
+    private fun item(
+        slug: String,
+        title: String,
+        vararg categories: String
+    ): String {
+        val cats = categories.joinToString(", ") { """<a href="/event_cat/${it.lowercase()}/">$it</a>""" }
+        return """<div id="event-$slug" class="vsel-content vsel-upcoming vsel-future"><h3 class="vsel-meta-title"><a href="/event/$slug/">$title</a></h3>""" +
+            """<div class="vsel-meta-date vsel-meta-single-date"><span>Sa. 19.12.26</span></div><div class="vsel-meta-time"><span>15:00 Uhr</span></div>""" +
+            """<div class="vsel-meta-cats"><span>$cats</span></div></div>"""
     }
 
     private fun row(
