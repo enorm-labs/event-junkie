@@ -222,6 +222,41 @@ class FollowFlowTest : BaseControllerTest() {
     }
 
     @Test
+    fun `following takes the events list's filters and its sort, and still lists only followed events`() {
+        runBlocking {
+            val club = insertVenue("Club", "club")
+            val bar = insertVenue("Bar", "bar")
+            insertEvent(club, "Band", "band", today.plusDays(2), eventType = "CONCERT")
+            insertEvent(club, "Rave", "rave", today.plusDays(1), eventType = "PARTY")
+            insertEvent(club, "Late band", "late-band", today.plusDays(9), eventType = "CONCERT")
+            insertEvent(bar, "Elsewhere band", "elsewhere-band", today.plusDays(1), eventType = "CONCERT")
+            databaseClient.sql("UPDATE events.event SET created_at = now() - interval '1 day' WHERE slug = 'late-band'").await()
+            databaseClient.sql("UPDATE events.event SET created_at = now() - interval '2 days' WHERE slug = 'band'").await()
+        }
+        put("/me/follows/venue/club").expectStatus().isNoContent
+
+        get("/me/following?eventType=concert")
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(listOf("band", "late-band"))
+        get("/me/following?eventType=concert&to=${today.plusDays(3)}")
+            .expectBody()
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(listOf("band"))
+        get("/me/following?sort=createdAt,desc")
+            .expectBody()
+            .jsonPath("$.content[*].slug")
+            .isEqualTo(listOf("rave", "late-band", "band"))
+    }
+
+    @Test
+    fun `following rejects a parameter the events list does not take`() {
+        get("/me/following?evnetType=concert").expectStatus().isBadRequest
+    }
+
+    @Test
     fun `today without a session is a 401`() {
         webTestClient
             .get()

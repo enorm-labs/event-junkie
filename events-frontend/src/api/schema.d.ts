@@ -565,7 +565,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Upcoming events of everything the account follows, by date */
+        /**
+         * Upcoming events of everything the account follows, by date
+         * @description Takes the filters and the range of `GET /api/events` (#4079), so each one means the same on both lists, and its sorts: `sort=eventDate` (the default) or `sort=createdAt,desc` (newest added first).
+         */
         get: operations["following"];
         put?: never;
         post?: never;
@@ -3536,8 +3539,46 @@ export interface operations {
     following: {
         parameters: {
             query?: {
-                /** @description First day (inclusive), ISO-8601. Without it, everything not over yet, today included. */
+                /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
                 from?: string;
+                /** @description Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30). */
+                to?: string;
+                /** @description When true, 'from' keeps every event still running on that day: one that ends on or after 'from' and starts on or before 'to'. An event that started before 'from' and ends on 'from' before 12:00 stays with the day it started. Without it, 'from' is the earliest start date. Defaults to false. */
+                running?: boolean;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
+                eventType?: string[];
+                /** @description Venue slug filter. Repeatable: an event at any given venue matches. An unknown slug matches nothing. */
+                venue?: string[];
+                /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
+                district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
+                venueType?: string[];
+                /** @description Artist slug filter — only events featuring the matching artist. */
+                artist?: string;
+                /** @description Promoter slug filter — only events from the matching promoter. */
+                promoter?: string;
+                /** @description Genre tag (style) slug filter. Repeatable: an event tagged with any given style matches. Beside family it narrows. An unknown slug matches nothing. */
+                genre?: string[];
+                /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
+                family?: string[];
+                /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
+                minPrice?: number;
+                /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
+                maxPrice?: number;
+                /** @description Search over the event title, subtitle, venue name, lineup and promoters: ignores case, accents and spaces, and forgives small typos. */
+                q?: string;
+                /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
+                excludeSoldOut?: boolean;
+                /** @description When true, returns only events flagged as free to attend. Defaults to false. */
+                free?: boolean;
+                /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                timeOfDay?: string[];
+                /** @description Spoken language, an ISO 639-1 code (e.g. en). Repeatable: an event performed in any given language matches. An event whose language is not known is left out. Subtitles do not count. An unknown code matches nothing. */
+                language?: string[];
+                /** @description Event feature slug (e.g. flinta-only), as the event's own text or its venue's page states it. Repeatable: only an event with every given feature matches. The venue's character tags do not count. An unknown feature matches nothing. A for-children event is listed only with feature=for-children or a venue, artist, promoter, festival or q filter. */
+                feature?: string[];
+                /** @description Festival slug filter: only the events an operator linked to the festival. An unknown slug matches nothing. */
+                festival?: string;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */

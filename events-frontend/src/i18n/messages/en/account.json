@@ -58,6 +58,9 @@
       "empty": "You do not follow anything yet. Follow an artist, a venue or a promoter on their page, or start with one of these venues.",
       "suggestions": "Venues with the most events",
       "none": "No upcoming events right now.",
+      "noneFiltered": "Nothing you follow matches these filters.",
+      "filter": "Filter",
+      "filterCount": "Filter ({n})",
       "list": "You follow ({count})"
     },
     "shown": "Shown on your Following page",
