@@ -300,12 +300,11 @@ A system user token is not an option without App Review. Business Discovery refu
 business portfolio for the day App Review grants Advanced Access.
 
 ```sh
-kubectl --context event-junkie-staging -n event-junkie create secret generic event-junkie-instagram \
+kubectl --context event-junkie-production -n event-junkie create secret generic event-junkie-instagram \
   --from-literal=APP_INSTAGRAM_ACCESS_TOKEN="$(security find-generic-password -s instagram-token -w)"
 ```
 
-The same command against `event-junkie-production`. One token serves both clusters, and Meta's rate limit counts per app, so the two passes share about
-200 calls an hour. Rotating is `scripts/instagram-page-token.sh`, then `kubectl delete secret`, this command again, and a restart of the importer. An
+Only production runs the pass. Staging has the pass off and needs no Secret. Meta's rate limit is about 200 calls an hour per app. Rotating is `scripts/instagram-page-token.sh`, then `kubectl delete secret`, this command again, and a restart of the importer. An
 expired or revoked token fires `ej-instagram-access-refused`.
 
 ### `postgres-exporter` — a monitoring role, not the application's
