@@ -46,8 +46,9 @@ import java.time.LocalTime
  * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which
  * no HTML parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and
  * hoisting note, heading and roster to siblings of `h1` inside `.eventrahm`. This parser walks
- * `.eventrahm`'s children as one ordered stream keyed off content — the roster is the element
- * after the [LINE_UP_HEADING], and everything between the title and it is the note.
+ * `.eventrahm`'s children as one ordered stream keyed off content — the roster is every element
+ * after the [LINE_UP_HEADING] up to the next heading, and everything between the title and it is
+ * the note. Most nights put the whole roster in one `<p>`, but some write one `<p>` per act.
  *
  * The roster splits on commas, `+` and `<br>` only, never `&` ([LINEUP_SEPARATOR]): the club
  * writes back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf &
@@ -123,7 +124,7 @@ class DerWeisseHaseOverviewPageScraper {
             sourceUrl = baseUrl,
             sourceId = "${EventSource.DER_WEISSE_HASE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = block.selectFirst("a.eventlistlink")?.absUrl("href")?.takeIf { RA_EVENT_URL.matches(it) },
-            artists = parseLineup(lineupHeading?.nextElementSibling())
+            artists = parseLineup(rosterAfter(lineupHeading))
         )
     }
 
@@ -159,15 +160,23 @@ class DerWeisseHaseOverviewPageScraper {
     }
 
     /**
-     * The DJs billed for the night, in listing order: one element whose names are separated by
-     * `<br>` or [LINEUP_SEPARATOR] punctuation. Placeholders ([isNonArtistName]) and unbooked slots
-     * ([UNANNOUNCED_SLOT_PATTERN]) are dropped rather than minted.
+     * The roster elements: every sibling after [lineupHeading] up to the next heading or the end of
+     * `.eventrahm`. One `<p>` on most nights, one `<p>` per act on some (#4030).
      */
-    private fun parseLineup(lineup: Element?): List<ScrapedArtist> =
-        lineup
-            ?.takeUnless { isLineUpHeading(it) }
-            ?.textLines()
-            .orEmpty()
+    private fun rosterAfter(lineupHeading: Element?): List<Element> =
+        generateSequence(lineupHeading?.nextElementSibling()) { it.nextElementSibling() }
+            .takeWhile { !HEADING_TAG.matches(it.tagName()) }
+            .toList()
+
+    /**
+     * The DJs billed for the night, in listing order: the lines of the [roster] elements, whose names
+     * are separated by `<br>` or [LINEUP_SEPARATOR] punctuation. The `&nbsp;` spacers read as blank
+     * and drop out. Placeholders ([isNonArtistName]) and unbooked slots ([UNANNOUNCED_SLOT_PATTERN])
+     * are dropped rather than minted.
+     */
+    private fun parseLineup(roster: List<Element>): List<ScrapedArtist> =
+        roster
+            .flatMap { it.textLines() }
             .flatMap { it.split(LINEUP_SEPARATOR) }
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) && !isUnannouncedSlot(it) }
@@ -186,6 +195,9 @@ class DerWeisseHaseOverviewPageScraper {
         private const val WEEKDAY_GROUP = 1
         private const val DATE_GROUP = 2
         private const val TIME_GROUP = 3
+
+        /** A heading tag, which ends the roster: a note after it is never an act. */
+        private val HEADING_TAG = Regex("h[1-6]")
 
         /**
          * The heading the club puts above a roster: `LINE UP` on most nights, `Musikanten:` on some. Matched whole and
