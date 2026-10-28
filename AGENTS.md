@@ -16,16 +16,17 @@ cd events-frontend && npm run type-check && npm run lint && npm run test:unit
 
 Skip the Gradle build for Markdown-only or frontend-only changes. `/verify` runs the full pre-PR sequence, including the infra and chart gates.
 
-| Always-loaded section                                                             | When to read it                                                       |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [Agent Instructions](#agent-instructions)                                         | Always. Git, formatting, ADR numbering, what never to run             |
-| [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change) | Any change to infrastructure, third-party requests, or what is logged |
-| [Project Overview](#project-overview)                                             | The module split, and which project owns what                         |
-| [Build & Dev Commands](#build--dev-commands)                                      | Running anything locally, and the local traps                         |
-| [Project skills](#project-skills)                                                 | Which slash command does what                                         |
-| [Automating GitHub with `gh`](#automating-github-with-gh)                         | Scripting issues, pull requests or the board                          |
-| [The Backlog](#the-backlog--github-issues)                                        | Filing, claiming or closing an issue                                  |
-| [Key Files](#key-files)                                                           | The files that carry a rule, and the documents that carry a runbook   |
+| Always-loaded section                                                                            | When to read it                                                       |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| [Agent Instructions](#agent-instructions)                                                        | Always. Git, formatting, ADR numbering, what never to run             |
+| [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change)                | Any change to infrastructure, third-party requests, or what is logged |
+| [Deployed-system suites](#deployed-system-suites--re-check-when-a-route-or-account-data-changes) | A new route, a row an account owns, or a change to sign-in            |
+| [Project Overview](#project-overview)                                                            | The module split, and which project owns what                         |
+| [Build & Dev Commands](#build--dev-commands)                                                     | Running anything locally, and the local traps                         |
+| [Project skills](#project-skills)                                                                | Which slash command does what                                         |
+| [Automating GitHub with `gh`](#automating-github-with-gh)                                        | Scripting issues, pull requests or the board                          |
+| [The Backlog](#the-backlog--github-issues)                                                       | Filing, claiming or closing an issue                                  |
+| [Key Files](#key-files)                                                                          | The files that carry a rule, and the documents that carry a runbook   |
 
 **The rest is path-scoped and loads itself.** The detail that only matters for one kind of file lives in [`.github/instructions/`](.github/instructions), one
 file per topic, each declaring the paths it applies to. Claude Code reads them through [`.claude/rules/`](.claude/rules) and GitHub Copilot reads them
@@ -153,6 +154,21 @@ one into an issue, a pull request, a commit message, a fixture or a test: name t
 uses `example.de` and `030 12345678`. A local sweep that reads stored text prints its matches masked too, because its output ends up in a report.
 
 When in doubt, flag it in the PR. Raising it costs a sentence; missing it is a legal defect on a public site.
+
+## Deployed-system suites — re-check when a route or account data changes
+
+The suites that run against a deployed BFF see only what their fixtures and lists name: ZAP and Nuclei in `dast.yml`, the k6 smoke hook, Lighthouse and
+`scripts/account-isolation.sh`. A new route reaches the ZAP API scan through `/v3/api-docs` by itself; nothing else follows on its own, and a suite that
+misses a feature stays green. **If your change is in a row below, update the suite in the same PR, or file the follow-up and name it in the PR.**
+
+| The change                                                             | What to update                                                                                                                     |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| A row an account owns, addressed by id, slug or endpoint               | A seeded row in `fixtures/accounts.sql` and `accounts.json`, read back in `AccountFixtureTest`, attacked in `account-isolation.sh` |
+| A route that answers 5xx on k3d by design (mail, a key, a third party) | A `globalexcludeurl` in the API scan in `dast.yml`, with the reason beside it                                                      |
+| Sign-in, the session, a cookie or CSRF                                 | The checks in `perf/smoke.js`, and the ZAP replacer in `dast.yml`                                                                  |
+| A public read route on the hot path                                    | A group in `perf/load.js`                                                                                                          |
+| A page type visitors land on                                           | A cell in `scripts/lighthouse.sh`                                                                                                  |
+| A scan that reaches fewer URLs or rules                                | `scripts/scan-coverage-baseline.txt`, lowered only with the reason in the PR                                                       |
 
 ## Project Overview
 

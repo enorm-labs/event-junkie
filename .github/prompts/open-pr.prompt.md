@@ -49,6 +49,8 @@ This is the standard "ship it" flow — the manual equivalent of
     - `## Checks`: the `/verify` result block, or what ran instead, or "not tested" with the reason. Never claim a check that did not run.
     - **Delete every section that does not apply**, as the template's comments say. An empty `## After deploy` fails `label-pr.yml`.
     - `## Privacy & legal`: tick the box, or name the AGENTS.md § Privacy category the change is in and what this PR updates for it.
+    - `## Test suites`: tick the box, or name the AGENTS.md § Deployed-system suites row the change is in and what this PR updates for it. When the
+      update is a follow-up, file it with [`/new-issue`](new-issue.prompt.md) first and link it here.
     - `## Contributor Licence Agreement`: delete it. The section is for a contributor from a fork; the maintainer's own PRs, and an agent's working for
       the maintainer, do not carry it.
     - **If the change closes an issue, put `Closes #<n>` in the PR body** — on its own line, near the top of `## What and why`. This repo allows only
