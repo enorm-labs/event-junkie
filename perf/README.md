@@ -254,7 +254,8 @@ The number to watch is LCP on mobile.
 `smoke.js` is also the chart's second `helm test` hook (#1697): `deploy/charts/event-junkie/templates/tests/smoke-test.yaml` runs it from a `grafana/k6` pod
 after every install and upgrade on staging and production, and Flux rolls the release back when it fails. The chart carries no copy of the script.
 `deploy/charts/event-junkie/files/perf/` holds symlinks into this directory, so a change here is a change to the hook, and the hook is the reason to keep this
-script cheap and deterministic.
+script cheap and deterministic. It also asks `/auth/session` and `/auth/csrf` signed out, so a deploy that breaks the account schema's grants or
+the session filter rolls back (#4103).
 
 Three things differ from a run on a laptop, and each is a value in the chart:
 

@@ -54,6 +54,16 @@ export default function (data) {
     checkOk(api.genres(), 'GET /genres')
     checkOk(api.meta(), 'GET /meta')
 
+    // The account path, signed out (#4103): the session filter, the `accounts` grants and the CSRF
+    // repository. No other check here reaches them, and a broken grant otherwise shows at a sign-in.
+    const session = api.session()
+    checkOk(session, 'GET /auth/session')
+    check(session, {'GET /auth/session: signed out': (r) => r.status === 200 && r.json('account') === null})
+    check(api.csrf(), {
+        'GET /auth/csrf: status is 204': (r) => r.status === 204,
+        'GET /auth/csrf: sets XSRF-TOKEN': (r) => (r.cookies['XSRF-TOKEN'] || []).some((c) => c.value !== ''),
+    })
+
     // The filter combinations most likely to hide a query bug: text search, a date window, and a
     // relational filter. Each takes a different path through the query builder.
     checkPage(api.searchEvents('?q=techno&size=20'), 'GET /events?q=')
