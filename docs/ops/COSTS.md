@@ -8,15 +8,15 @@ and confidently.
 
 ## The short answer
 
-|                                                                   | Per month         | Per year    | Source            |
-| ----------------------------------------------------------------- | ----------------- | ----------- | ----------------- |
-| **Hetzner Cloud** — servers, backups, volumes, addresses          | **€33.21**        | €398.52     | Measured, the API |
-| **Hetzner Webhosting S** + external domain — role mailboxes       | €2.66             | €31.92      | Contracted        |
-| **Postflex** — the imprint address                                | €3.33             | **€39.90**  | Contracted        |
-| healthchecks.io                                                   | €0.00 (free tier) | €0.00       | Free tier         |
-| Hetzner Object Storage                                            | _to confirm_      |             | —                 |
-| Domains (`event-junkie.de`, `event-junkie.com`, `eventjunkie.de`) | €1.16             | **€13.95**  | Contracted        |
-| **Known total**                                                   | **€40.36**        | **€484.29** |                   |
+|                                                                   | Per month         | Per year      | Source            |
+| ----------------------------------------------------------------- | ----------------- | ------------- | ----------------- |
+| **Hetzner Cloud** — servers, backups, volumes, addresses          | **€91.76**        | €1,101.12     | Measured, the API |
+| **Hetzner Webhosting S** + external domain — role mailboxes       | €2.66             | €31.92        | Contracted        |
+| **Postflex** — the imprint address                                | €3.33             | **€39.90**    | Contracted        |
+| healthchecks.io                                                   | €0.00 (free tier) | €0.00         | Free tier         |
+| Hetzner Object Storage                                            | _to confirm_      |               | —                 |
+| Domains (`event-junkie.de`, `event-junkie.com`, `eventjunkie.de`) | €1.16             | **€13.95**    | Contracted        |
+| **Known total**                                                   | **€98.91**        | **€1,186.89** |                   |
 
 **The `Source` column is the point of this page.** _Measured_ means re-derivable from the API by the script at the bottom. _Contracted_ means a price agreed when the thing
 was ordered. It is a fact, but one that lives on an order confirmation rather than in any system this repository can query. Re-check it against an
@@ -24,7 +24,7 @@ invoice once. The `_to confirm_` row is neither, and are marked rather than gues
 
 **Postflex and the domains are billed annually and the monthly figures are derived**, which is why their year is bold. Postflex is also the only line here that
 buys a legal capability rather than compute. It is a _ladungsfähige Anschrift_ for § 5 DDG, without which the site cannot lawfully be published at all
-([LEGAL.md](../LEGAL.md) §8.3, [#273](https://github.com/enorm-labs/event-junkie/issues/273)). At €39.90 it is 8% of the annual bill and the cheapest go-live
+([LEGAL.md](../LEGAL.md) §8.3, [#273](https://github.com/enorm-labs/event-junkie/issues/273)). At €39.90 it is 3% of the annual bill and the cheapest go-live
 blocker to clear — no engineering, no dependency, just an order.
 
 ## Hetzner Cloud, line by line
@@ -32,15 +32,15 @@ blocker to clear — no engineering, no dependency, just an order.
 | Resource                                | Type          | Monthly    | Note                                                                                  |
 | --------------------------------------- | ------------- | ---------- | ------------------------------------------------------------------------------------- |
 | `staging-k3s`                           | `cx33`        | €10.10     | 4 vCPU / 8 GB. No backups — staging is the environment that gets destroyed on purpose |
-| `production-k3s`                        | `cx33`        | €10.10     | Same machine, different job                                                           |
-| ↳ backups                               | 20%           | €2.02      | Hetzner's automated daily snapshots                                                   |
-| `production-postgres`                   | `cx23`        | €6.53      | 2 vCPU / 4 GB, dedicated database node                                                |
-| ↳ backups                               | 20%           | €1.31      |                                                                                       |
+| `production-k3s`                        | `cpx32`       | €42.23     | 4 vCPU / 8 GB. `cx33` could not be placed when the node was last built                |
+| ↳ backups                               | 20%           | €8.45      | Hetzner's automated daily snapshots                                                   |
+| `production-postgres`                   | `cpx22`       | €23.19     | 2 vCPU / 4 GB, dedicated database node. `cx23` could not be placed either             |
+| ↳ backups                               | 20%           | €4.64      |                                                                                       |
 | `staging-pgdata`                        | Volume, 10 GB | €0.68      | `PGDATA`, so the database outlives the node (#460)                                    |
 | `production-pgdata`                     | Volume, 10 GB | €0.68      |                                                                                       |
-| Primary IPv4 × 3                        |               | €1.79      | €0.595 each. **IPv6 is free**, which is why every node has one                        |
+| Primary IPv4 × 3                        |               | €1.78      | €0.595 each. **IPv6 is free**, which is why every node has one                        |
 | Networks, subnets, firewalls, DNS zones |               | €0.00      | Not billed                                                                            |
-| **Total**                               |               | **€33.21** |                                                                                       |
+| **Total**                               |               | **€91.76** |                                                                                       |
 
 **Two things worth noticing in that table.**
 
@@ -76,16 +76,16 @@ than one with a gap, because nobody knows which rows to trust.
 
 ## What changes the number
 
-| Change                      | Effect                                                                                                                                 |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Go-live**                 | **Nothing.** Publishing DNS costs €0. The full production stack is already running and billed — that is what standing it up dark means |
-| Observability on production | Roughly staging's shape again — no new servers, but memory pressure on the `cx33` is what would eventually force a bigger one          |
-| `cx33` → `cx43`             | +€8.93/month for 8 vCPU / 16 GB. Currently out of stock in `nbg1`; `check-capacity.sh --probe` is how you find out                     |
-| Returning to ARM            | **Costs more**, as of 2026-08-21: `cax21` + `cax11` is €19.61 against `cx33` + `cx23`'s €16.63                                         |
-| A second production node    | +€6.53 and up. Nothing needs one; #460's volume already decouples the database from the node                                           |
-| Object Storage past 1 TB    | The first line item that would grow on its own. #625's stream reduction is the lever                                                   |
+| Change                      | Effect                                                                                                                                  |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Go-live**                 | **Nothing.** Publishing DNS costs €0. The full production stack is already running and billed — that is what standing it up dark means  |
+| Observability on production | Roughly staging's shape again — no new servers, but memory pressure on the k3s node is what would eventually force a bigger one         |
+| Back to `cx33` + `cx23`     | −€58.55/month with backups. A rebuild of both nodes, because a rescale cannot shrink the `cpx` disks. `check-capacity.sh --probe` first |
+| Returning to ARM            | **Costs more**, as of 2026-08-21: `cax21` + `cax11` is €19.61 against `cx33` + `cx23`'s €16.63                                          |
+| A second production node    | +€6.53 and up. Nothing needs one; #460's volume already decouples the database from the node                                            |
+| Object Storage past 1 TB    | The first line item that would grow on its own. #625's stream reduction is the lever                                                    |
 
-**The cheapest thing here is the thing most likely to be cut first, and it should not be.** Staging is €10.10 of €33.21, under a third, and it is where the
+**The cheapest thing here is the thing most likely to be cut first, and it should not be.** Staging is €10.10 of €91.76, about a ninth, and it is where the
 destroy/apply cycle, the rebuild drill and every risky change get proven. The production apply hit three separate faults that staging had already taught us how
 to read.
 

@@ -101,7 +101,7 @@ spec:
     push:
       existingSecret: "event-junkie-push"
     # Both stateless services drop to one replica — the one place staging is not production-shaped, and
-    # a capacity fact: the node also carries PostgreSQL, which production keeps on a cx23 of its own.
+    # a capacity fact: the node also carries PostgreSQL, which production keeps on a node of its own.
     # Measured at 51% of memory, ~300 MB of it Flux.
     bff:
       replicaCount: 1
