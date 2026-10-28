@@ -10,7 +10,7 @@
 #   up [service…] [--scheduling] Start service(s) in the background, wait until they answer
 #   down [service…] [--db]       Stop service(s) (and with --db the database too)
 #   status                       Show database + service state
-#   seed-fixture                 Load fixtures/events.sql — the fixed dataset, no network (#272)
+#   seed-fixture                 Load fixtures/events.sql and accounts.sql — the fixed dataset, no network (#272)
 #   seed-all                     Regenerate and run http/importer/dev-seed.http via ijhttp (all sources)
 #   seed-one <venue.json> <source.json>
 #                                POST one venue + one event source, print the source slug
@@ -335,7 +335,9 @@ cmd_seed_fixture() {
         die "No schema yet — run 'dev-env.sh up importer' once so Flyway applies the migrations"
     log "Loading fixtures/events.sql"
     run_psql -q -f "$REPO_ROOT/fixtures/events.sql"
-    log "Loaded: $(query "SELECT count(*) || ' events, ' || (SELECT count(*) FROM venue) || ' venues, ' || (SELECT count(*) FROM artist) || ' artists' FROM event")"
+    log "Loading fixtures/accounts.sql — sign in with a cookie from fixtures/accounts.json"
+    run_psql -q -f "$REPO_ROOT/fixtures/accounts.sql"
+    log "Loaded: $(query "SELECT count(*) || ' events, ' || (SELECT count(*) FROM venue) || ' venues, ' || (SELECT count(*) FROM artist) || ' artists, ' || (SELECT count(*) FROM accounts.account) || ' accounts' FROM event")"
 }
 
 cmd_seed_all() {

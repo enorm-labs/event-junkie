@@ -202,6 +202,12 @@ scan use. Three venues and 44 events. One event per shape the site renders diffe
 `source_id = 'fixture-<shape>'`. The file's header lists the shapes. It needs the schema,
 so run `up importer` once first. For this week's real programme, `seed-all` and `import` are still the way.
 
+The same command loads [`fixtures/accounts.sql`](../fixtures/accounts.sql) (#4102). It adds two signed-in accounts with
+follows, a saved search and RSVPs. To sign in, send the cookie `__Host-ej_session=fixture-session-ada`.
+[`fixtures/accounts.json`](../fixtures/accounts.json) lists the tokens and ids. The tokens are public.
+**Never load this file into staging or production.** A write also needs the same value in the `XSRF-TOKEN` cookie and the
+`X-XSRF-TOKEN` header. Any value works.
+
 ## The `local` profile — logging to a file
 
 Both services define a `local` Spring profile whose only effect is to mirror console output to a file. An import or a

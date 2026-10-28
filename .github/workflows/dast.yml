@@ -80,6 +80,9 @@ env:
   # The shared dataset (#272). Its row count is asserted through the API before the scan, so a seed
   # that no longer matches the schema fails as a PostgreSQL error, not as a spider that found one page.
   FIXTURE: fixtures/events.sql
+  # Two signed-in accounts on top of it (#4102), for the suites that reach `/api/me/*`. Their tokens
+  # are public and in `fixtures/accounts.json`, which is why this file goes only into the k3d database.
+  ACCOUNTS_FIXTURE: fixtures/accounts.sql
 
 jobs:
   dast-k3d:
@@ -151,6 +154,16 @@ jobs:
             exit 1
           fi
           echo "/api/events serves $total seeded events"
+          psql < "$ACCOUNTS_FIXTURE"
+          for account in $(jq -r '.accounts[] | "\(.session)=\(.email)"' fixtures/accounts.json); do
+            signed_in="$(curl -sS -H 'Host: event-junkie.localhost' -b "__Host-ej_session=${account%%=*}" \
+              'http://localhost:8080/api/auth/session' | jq -r '.account.email')"
+            if [ "$signed_in" != "${account#*=}" ]; then
+              echo "::error::The seeded session for ${account#*=} signs in as '$signed_in'."
+              exit 1
+            fi
+          done
+          echo "Both seeded sessions sign in"
 
       # ZAP runs as uid 1000 and the runner is not, so the work directory is opened before mounting. The
       # rules files are copied in so ZAP reads them from the mount it writes the reports to.
@@ -374,6 +387,16 @@ jobs:
             exit 1
           fi
           echo "/api/events serves $total seeded events"
+          psql < "$ACCOUNTS_FIXTURE"
+          for account in $(jq -r '.accounts[] | "\(.session)=\(.email)"' fixtures/accounts.json); do
+            signed_in="$(curl -sS -H 'Host: event-junkie.localhost' -b "__Host-ej_session=${account%%=*}" \
+              'http://localhost:8080/api/auth/session' | jq -r '.account.email')"
+            if [ "$signed_in" != "${account#*=}" ]; then
+              echo "::error::The seeded session for ${account#*=} signs in as '$signed_in'."
+              exit 1
+            fi
+          done
+          echo "Both seeded sessions sign in"
 
       # **The BFF caches a response for 60 seconds, and the seed does not invalidate it.** The chart's
       # own smoke hook (#1697) asks for `/api/events?free=true&size=20` while the database is still
