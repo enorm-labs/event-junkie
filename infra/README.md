@@ -308,6 +308,8 @@ credentials that own your infrastructure.
 cd infra && ./check-capacity.sh              # every environment
 cd infra && ./check-capacity.sh staging      # one — exits 0 when it can be applied
 cd infra && ./check-capacity.sh --all        # inventory of everything available in eu-central
+cd infra && ./check-capacity.sh cx33@nbg1,cx23@nbg1           # the advertisement for these types only
+cd infra && ./check-capacity.sh --probe cx33@nbg1,cx23@nbg1   # orders exactly these types, then deletes them
 ```
 
 **Hetzner sells out of server types**, and when it does `tofu apply` fails at the very last step — after the network, firewall and Primary IPs already exist.

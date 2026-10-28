@@ -7,9 +7,15 @@
 #   cd infra && ./check-capacity.sh --all        # inventory: everything advertised in eu-central
 #   cd infra && ./check-capacity.sh --probe      # ORDERS one bare server per type and deletes it
 #   cd infra && ./check-capacity.sh --probe production
+#   cd infra && ./check-capacity.sh cx33@nbg1,cx23@nbg1           # the advertisement for any type: free
+#   cd infra && ./check-capacity.sh --probe cx33@nbg1,cx23@nbg1   # any type, before an environment uses it
 #
-# The default mode reports what Hetzner advertises in `datacenters`, which is not what an order
-# will do; the two disagreed three times out of four, in both directions. `--probe` answers the
+# Waiting for a type costs nothing on the advertisement, and an order only once it says yes:
+#
+#   until ./check-capacity.sh cx33@nbg1,cx23@nbg1 && ./check-capacity.sh --probe cx33@nbg1,cx23@nbg1; do sleep 900; done
+#
+# The default mode reports what Hetzner advertises, `server_types[].locations[].available` since
+# `/v1/datacenters` answered 410 (#4159). That is not what an order will do; the two disagreed three times out of four, in both directions. `--probe` answers the
 # question: a real order per type (no IPs, no network, `start_after_create: false`), deleted on
 # success and the deletion verified. A refusal costs nothing and returns in ~0.1 s; a success is
 # billed by the hour and lives for seconds.
@@ -37,8 +43,8 @@ export ENVIRONMENTS="staging=nbg1:cx33;production=nbg1:cpx32,cpx22"
 # that turns the script red makes the `until` loop above permanently false, as the old `cx43`
 # entry did. staging: cx43 (16 GB, €19.03) is supported in nbg1 and out of stock there, orderable
 # in fsn1 where the location-bound Primary IPs and volume make it useless (#460). production: the
-# ARM pair, if it became buyable and still cheaper.
-export WATCH="staging=nbg1:cx43;production=nbg1:cax21,cax11"
+# cx pair it ran on until cx could not be placed (#4128), and the ARM pair, if it became buyable and still cheaper.
+export WATCH="staging=nbg1:cx43;production=nbg1:cx33,cx23,cax21,cax11"
 
 export NETWORK_ZONE=eu-central
 
@@ -83,6 +89,19 @@ def parse(spec):
 
 required = parse(os.environ["ENVIRONMENTS"])
 watched = {(name, loc): types for name, loc, types in parse(os.environ["WATCH"])}
+
+# `<type>@<location>[,…]` probes exactly those, so a type no environment uses yet can be settled.
+if "@" in target:
+    by_location = {}
+    for item in target.split(","):
+        wanted, _, location = item.partition("@")
+        if not wanted or not location:
+            print("expected <type>@<location>, got '%s'" % item, file=sys.stderr)
+            sys.exit(2)
+        by_location.setdefault(location, []).append(wanted)
+    required = [("requested", location, types) for location, types in by_location.items()]
+    watched = {}
+    target = ""
 
 if target:
     known = ", ".join(sorted(name for name, _, _ in required))
@@ -180,25 +199,32 @@ PYTHON
     exit $?
 fi
 
-python3 - "$(fetch 'server_types?per_page=100')" "$(fetch datacenters)" <<'PYTHON'
+# 50 is the API's page cap; the catalogue has 26 types. More than one page fails loudly below.
+python3 - "$(fetch 'server_types?per_page=50')" "$(fetch locations)" <<'PYTHON'
 import json
 import os
 import sys
 
-names = {t["id"]: t["name"] for t in json.loads(sys.argv[1])["server_types"]}
-datacenters = json.loads(sys.argv[2])["datacenters"]
+types_page = json.loads(sys.argv[1])
+locations_page = json.loads(sys.argv[2])
+for page in (types_page, locations_page):
+    if "error" in page:
+        print("Hetzner API error: %s" % json.dumps(page["error"])[:200], file=sys.stderr)
+        sys.exit(2)
+if types_page["meta"]["pagination"]["next_page"]:
+    print("server_types has a second page now; read it before trusting this", file=sys.stderr)
+    sys.exit(2)
 
 zone = os.environ["NETWORK_ZONE"]
 target = os.environ.get("TARGET", "")
+in_zone = {loc["name"] for loc in locations_page["locations"] if loc["network_zone"] == zone}
 
 # location -> the types Hetzner currently advertises as available there
-available = {}
-for dc in datacenters:
-    if dc["location"]["network_zone"] != zone:
-        continue
-    available.setdefault(dc["location"]["name"], set()).update(
-        names[i] for i in dc["server_types"]["available"] if i in names
-    )
+available = {loc: set() for loc in in_zone}
+for server_type in types_page["server_types"]:
+    for loc in server_type.get("locations", []):
+        if loc["name"] in in_zone and loc.get("available"):
+            available[loc["name"]].add(server_type["name"])
 
 
 def parse(spec):
@@ -214,6 +240,18 @@ def parse(spec):
 
 environments = parse(os.environ["ENVIRONMENTS"])
 watched = {(name, loc): types for name, loc, types in parse(os.environ["WATCH"])}
+
+# `<type>@<location>[,…]`: exit 0 only when Hetzner advertises every one of them, a free check
+# to wait on before paying for a --probe.
+if "@" in target:
+    missing = []
+    for item in target.split(","):
+        wanted, _, location = item.partition("@")
+        state = "advertised available" if wanted in available.get(location, set()) else "not advertised"
+        print(f"  {wanted:<8} {location:<5} {state}")
+        if state != "advertised available":
+            missing.append(item)
+    sys.exit(1 if missing else 0)
 
 if target == "--all":
     for location in sorted(available):

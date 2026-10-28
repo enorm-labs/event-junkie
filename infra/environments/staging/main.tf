@@ -19,7 +19,7 @@ module "environment" {
   # network and the firewall, loses the k3s cluster, and costs ~40 minutes (CLUSTER_BOOTSTRAP.md
   # §Rebuilding).
   #
-  # Availability is advertised, not promised: cx33 is missing from nbg1's `datacenters` list and
+  # Availability is advertised, not promised: cx33 was missing from nbg1's advertised list and
   # orders fine; cax11/cax21 are listed and refuse with `HTTP 422 unsupported location for server
   # type`. `./check-capacity.sh --probe` settles it; its WATCH list names the ARM pair production
   # would return to (PLATFORM_SETUP.md § Why the nodes are x86 and not ARM).

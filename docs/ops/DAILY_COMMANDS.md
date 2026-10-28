@@ -261,6 +261,7 @@ Expect `ok: newest <timestamp>, disk N%`. **`systemctl status` is not the check*
 ```sh
 cd infra && ./check-capacity.sh --probe staging      # orders a server and deletes it
 cd infra && ./check-capacity.sh --all                # advertised inventory
+cd infra && ./check-capacity.sh --probe cx33@nbg1    # one type, before an environment uses it
 scripts/upstream-node-pins.sh                        # are k3s and wal-g behind upstream?
 ```
 
