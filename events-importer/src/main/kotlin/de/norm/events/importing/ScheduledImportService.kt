@@ -53,8 +53,6 @@ class ScheduledImportService(
         // One timestamp for the whole tick, so every source is evaluated against the same moment.
         val now = Instant.now(clock)
         val candidates = eventSourceRepository.findDueForImport(now).toList()
-
-        // Filter to sources that are actually due based on their individual interval + backoff
         val dueSources = candidates.filter { isDue(it, now) }
 
         if (dueSources.isEmpty()) return
