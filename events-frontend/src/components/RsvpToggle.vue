@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { CalendarCheck, Star } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
 import type { RsvpStatus } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useRsvps } from '@/composables/useRsvps'
@@ -38,34 +39,37 @@ async function press(status: RsvpStatus) {
 </script>
 
 <template>
-  <div :aria-label="t('account.rsvp.label')" class="flex flex-wrap items-center gap-2" role="group">
-    <template v-if="account">
-      <Button
-        v-for="option in OPTIONS"
-        :key="option.status"
-        :aria-pressed="statuses[slug] === option.status"
-        :variant="statuses[slug] === option.status ? 'default' : 'outline'"
-        :data-testid="`rsvp-${option.status}`"
-        @click="press(option.status)"
-      >
-        <component :is="option.icon" aria-hidden="true" />
-        {{ t(`account.rsvp.${option.status}`) }}
-      </Button>
-    </template>
-    <template v-else>
-      <Button v-for="option in OPTIONS" :key="option.status" as-child variant="outline">
-        <RouterLink
-          :title="t('account.rsvp.signIn')"
-          :to="{
-            path: localePath('/sign-in'),
-            query: { next: localePath(`/events/${slug}`) },
-          }"
+  <div class="flex flex-wrap items-center gap-3">
+    <!-- One either/or choice, so one control. Pressed is a violet edge, not the fill Buy tickets has. -->
+    <ButtonGroup :aria-label="t('account.rsvp.label')">
+      <template v-if="account">
+        <Button
+          v-for="option in OPTIONS"
+          :key="option.status"
+          :aria-pressed="statuses[slug] === option.status"
+          :data-testid="`rsvp-${option.status}`"
+          variant="outline"
+          @click="press(option.status)"
         >
           <component :is="option.icon" aria-hidden="true" />
           {{ t(`account.rsvp.${option.status}`) }}
-        </RouterLink>
-      </Button>
-    </template>
-    <span class="text-body text-destructive" role="status">{{ problem }}</span>
+        </Button>
+      </template>
+      <template v-else>
+        <Button v-for="option in OPTIONS" :key="option.status" as-child variant="outline">
+          <RouterLink
+            :title="t('account.rsvp.signIn')"
+            :to="{
+              path: localePath('/sign-in'),
+              query: { next: localePath(`/events/${slug}`) },
+            }"
+          >
+            <component :is="option.icon" aria-hidden="true" />
+            {{ t(`account.rsvp.${option.status}`) }}
+          </RouterLink>
+        </Button>
+      </template>
+    </ButtonGroup>
+    <span class="text-body text-destructive empty:hidden" role="status">{{ problem }}</span>
   </div>
 </template>
