@@ -43,6 +43,16 @@ widget, an analytics snippet, or anything newly stored on the visitor's device.
 - [ ] This change does **not** affect data processing, third-party requests, or storage on the visitor's device — **or** it does, this description says so,
       and the privacy notice (both languages) and `docs/LEGAL.md` §7 are updated in this PR.
 
+## Test suites
+
+<!--
+See "Deployed-system suites — re-check when a route or account data changes" in AGENTS.md. ZAP, k6, Lighthouse and the
+account isolation check test only what their fixtures and lists name, so a suite that misses a new feature stays green.
+-->
+
+- [ ] This change adds no route, no row an account owns and no change to sign-in — **or** it does, and the suites that AGENTS.md names for it are
+      updated in this PR, or the follow-up issue is linked here.
+
 ## Contributor Licence Agreement
 
 <!-- For a contribution from a fork. The maintainer's own pull requests, and an agent's working for the maintainer, delete this section. -->
