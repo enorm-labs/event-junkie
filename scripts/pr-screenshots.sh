@@ -17,6 +17,8 @@
 #     --full-page            the whole page instead of the viewport
 #     --out <dir>            default build/pr-screenshots
 #   Then, from the repository root: gh pr edit <n> --body-file <body.md> --attach <png>...
+#   Signed-in pages such as /en/following show sign-in: production's API sees no session. Mock /api/auth and /api/me
+#   with page.route, as e2e/following.spec.ts does. Match on url.pathname: on a dev server, /\/api\// also catches /src/api/.
 #
 # Requires: Node, git and the frontend's node_modules with Playwright's Chromium (`npx playwright install chromium`).
 # Reaches https://event-junkie.de through each preview server's /api and /map/ proxy, as a visitor's browser does.
