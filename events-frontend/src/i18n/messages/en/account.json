@@ -92,7 +92,9 @@
     "cancel": "Cancel",
     "kind": "Saved search",
     "renameLabel": "New name for {name}",
-    "list": "Saved searches ({count})"
+    "list": "Saved searches ({count})",
+    "chips": "Your saved searches",
+    "all": "All {count} saved searches"
   },
   "rsvp": {
     "interested": "Interested",

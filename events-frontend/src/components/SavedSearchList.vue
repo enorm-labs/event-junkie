@@ -1,56 +1,29 @@
 <script setup lang="ts">
 /**
- * The saved searches on the Following page (#3890): one row each, with how many events match from
- * today and a link to the list with its filters. The matches stay out of the feed above, so a
- * genre does not flood it. The counts come from the public list, one small request per search.
+ * The saved searches on the Following page's follows tab (#3890, #4099): one row each, with how many
+ * events match from today, a link to the list with its filters, and Rename and Delete. The matches
+ * stay out of the feed, so a genre does not flood it.
  */
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
-import {
-  deleteSearch,
-  fetchSearches,
-  prepareCsrf,
-  renameSearch,
-  type SavedSearch,
-} from '@/api/account'
-import { searchEvents } from '@/composables/useEvents'
+import type { SavedSearch } from '@/api/account'
 import { useLocalePath } from '@/composables/useLocalePath'
-import { listQuery, searchParams } from '@/lib/savedSearch'
+import type { SavedSearches } from '@/composables/useSavedSearches'
+import { listQuery } from '@/lib/savedSearch'
 
-const emit = defineEmits<{ loaded: [count: number] }>()
+const props = defineProps<{ saved: SavedSearches }>()
+const { searches, counts } = props.saved
 
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const searches = ref<SavedSearch[]>([])
-const counts = ref<Record<string, number>>({})
 const editing = ref<string | null>(null)
 const draft = ref('')
 const problem = ref('')
-
-async function load() {
-  try {
-    searches.value = await fetchSearches()
-  } catch {
-    // A help beside the follows, not the page: without it the page still works.
-    searches.value = []
-  }
-  emit('loaded', searches.value.length)
-  for (const search of searches.value) void count(search)
-}
-
-async function count(search: SavedSearch) {
-  try {
-    const page = await searchEvents({ ...searchParams(search.query), size: 1 })
-    counts.value = { ...counts.value, [search.id]: page.totalElements ?? 0 }
-  } catch {
-    // The row stays, without its count.
-  }
-}
 
 function startRename(search: SavedSearch) {
   editing.value = search.id
@@ -62,9 +35,7 @@ async function rename(search: SavedSearch) {
   if (!name) return
   problem.value = ''
   try {
-    await prepareCsrf()
-    await renameSearch(search.id, name)
-    search.name = name
+    await props.saved.rename(search, name)
     editing.value = null
   } catch {
     problem.value = t('account.search.failed')
@@ -74,16 +45,11 @@ async function rename(search: SavedSearch) {
 async function remove(search: SavedSearch) {
   problem.value = ''
   try {
-    await prepareCsrf()
-    await deleteSearch(search.id)
-    searches.value = searches.value.filter((s) => s.id !== search.id)
-    emit('loaded', searches.value.length)
+    await props.saved.remove(search)
   } catch {
     problem.value = t('account.search.failed')
   }
 }
-
-onMounted(load)
 </script>
 
 <template>

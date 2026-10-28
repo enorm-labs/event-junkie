@@ -5,6 +5,7 @@
  * sends the visitor to sign-in and back. Empty, it suggests the venues with the most events in the next 30 days. The upcoming list takes the
  * events page's filters and sort from the URL, behind one Filter button (#4079); Today stays as it is. Below `sm` the bar shows without that
  * button, since its own Filters button already hides it in a sheet. The count and the sort sit under the open bar, as on the events page.
+ * Saved searches show as chips beside the filters, and as a list to rename and delete on the follows tab (#4099).
  */
 import { SlidersHorizontal } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -17,6 +18,7 @@ import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import FollowedList, { type Followed } from '@/components/FollowedList.vue'
 import ListPage from '@/components/ListPage.vue'
+import SavedSearchChips from '@/components/SavedSearchChips.vue'
 import SavedSearchList from '@/components/SavedSearchList.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
@@ -37,6 +39,7 @@ import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useNarrowViewport } from '@/composables/useNarrowViewport'
 import { usePush } from '@/composables/usePush'
+import { useSavedSearches } from '@/composables/useSavedSearches'
 import { useSession } from '@/composables/useSession'
 import { tomorrowIso } from '@/lib/format'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn, RESULTS_BAR_CLASS } from '@/lib/utils'
@@ -48,6 +51,7 @@ const localePath = useLocalePath()
 const { account, ready } = useSession()
 const { compact } = useCompactView()
 const push = usePush()
+const saved = useSavedSearches()
 
 const { filters, dateRange, queryString, applyFilters } = useEventFilters()
 
@@ -116,7 +120,10 @@ const TABS: Tab[] = ['events', 'follows']
 // Events is the default, so its URL stays bare and its own query stays alone.
 const tab = computed<Tab>(() => (route.query.tab === 'follows' ? 'follows' : 'events'))
 const tabButtons = ref<HTMLButtonElement[]>([])
-const followedCount = computed(() => follows.value?.filter((item) => item.following).length ?? 0)
+// Saved searches count as following something (#3890), and the tab lists them too.
+const followedCount = computed(
+  () => (follows.value?.filter((item) => item.following).length ?? 0) + saved.searches.value.length,
+)
 
 function selectTab(next: Tab, focus = false) {
   void router.replace({ query: { ...route.query, tab: next === 'events' ? undefined : next } })
@@ -154,10 +161,8 @@ watch(tab, (_, before) => {
 /** The bells show once the site is known to send push (#3894); unknown or off, they would promise nothing. */
 const bells = computed(() => !['loading', 'unavailable'].includes(push.state.value))
 
-// Saved searches count as following something (#3890), so they end the empty state too.
-const searchCount = ref(0)
 const empty = computed(
-  () => follows.value !== null && follows.value.length === 0 && searchCount.value === 0,
+  () => follows.value !== null && follows.value.length === 0 && saved.searches.value.length === 0,
 )
 
 /** Counts the upcoming loads, so a slower answer to an older filter never replaces a newer one. */
@@ -257,7 +262,7 @@ function toSignIn() {
 onMounted(async () => {
   await ready()
   if (!account.value) await toSignIn()
-  else await Promise.all([load(), push.load().catch(() => undefined)])
+  else await Promise.all([load(), saved.load(), push.load().catch(() => undefined)])
 })
 </script>
 
@@ -356,6 +361,7 @@ onMounted(async () => {
 
         <section v-if="!empty" class="space-y-4">
           <SectionLabel as="h2">{{ t('common.upcomingEvents') }}</SectionLabel>
+          <SavedSearchChips :counts="saved.counts.value" :searches="saved.searches.value" />
           <!-- Wide screens only: a phone shows the bar directly. Nothing to narrow or order until something is upcoming, or a filter emptied it. -->
           <div
             v-if="!narrow && (events.length || filterCount)"
@@ -425,8 +431,6 @@ onMounted(async () => {
             {{ t('common.actions.showMore') }}
           </Button>
         </section>
-
-        <SavedSearchList @loaded="searchCount = $event" />
       </div>
 
       <div
@@ -444,6 +448,7 @@ onMounted(async () => {
           </RouterLink>
         </p>
         <FollowedList :bells="bells" :follows="follows" @change="onFollowChange" />
+        <SavedSearchList :saved="saved" />
       </div>
     </template>
   </ListPage>

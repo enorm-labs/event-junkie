@@ -14,6 +14,7 @@ vi.mock('@/api/account', () => account)
 vi.mock('@/composables/useEvents', () => events)
 
 const { default: SavedSearchList } = await import('@/components/SavedSearchList.vue')
+const { useSavedSearches } = await import('@/composables/useSavedSearches')
 
 let wrapper: VueWrapper | undefined
 
@@ -40,7 +41,9 @@ async function mountList() {
     ],
   })
   await router.push('/en/following')
-  wrapper = mount(SavedSearchList, { global: { plugins: [router] } })
+  const saved = useSavedSearches()
+  await saved.load()
+  wrapper = mount(SavedSearchList, { props: { saved }, global: { plugins: [router] } })
   await flushPromises()
   return wrapper
 }
@@ -53,7 +56,6 @@ describe('SavedSearchList', () => {
     expect(view.find('a').attributes('href')).toBe('/en/events?free=true&genre=techno')
     expect(view.text()).toContain('12 upcoming')
     expect(events.searchEvents).toHaveBeenCalledWith({ free: true, genre: ['techno'], size: 1 })
-    expect(view.emitted('loaded')).toEqual([[1]])
   })
 
   it('renames a search in place', async () => {
@@ -80,6 +82,18 @@ describe('SavedSearchList', () => {
 
     expect(account.deleteSearch).toHaveBeenCalledWith('a')
     expect(view.find('section').exists()).toBe(false)
-    expect(view.emitted('loaded')).toEqual([[1], [0]])
+  })
+
+  it('keeps the row and says so when the delete fails', async () => {
+    account.deleteSearch.mockRejectedValue(new Error('down'))
+    const view = await mountList()
+    await view
+      .findAll('button')
+      .find((b) => b.text() === 'Delete')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(view.find('[role=alert]').text()).toBe('That did not work. Please try again.')
+    expect(view.find('a').text()).toBe('Free techno')
   })
 })

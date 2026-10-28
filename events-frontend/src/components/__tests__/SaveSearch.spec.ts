@@ -71,6 +71,8 @@ describe('SaveSearch', () => {
 
     expect(account.saveSearch).toHaveBeenCalledWith('Techno', 'genre=techno')
     expect(view.find('[role="status"]').text()).toContain('Saved.')
+    // The follows tab lists the new search; the events tab would open on the feed.
+    expect(view.find('[role="status"] a').attributes('href')).toBe('/en/following?tab=follows')
   })
 
   it('suggests a name from the filters, which the visitor can change', async () => {

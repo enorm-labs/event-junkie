@@ -128,7 +128,10 @@ async function save(chosen: string) {
     <span class="text-muted-foreground" role="status">
       <template v-if="status === 'saved'">
         {{ t('account.search.saved') }}
-        <RouterLink :to="localePath('/following')" class="text-primary hover:underline">
+        <RouterLink
+          :to="{ path: localePath('/following'), query: { tab: 'follows' } }"
+          class="text-primary hover:underline"
+        >
           {{ t('account.search.open') }}
         </RouterLink>
       </template>
