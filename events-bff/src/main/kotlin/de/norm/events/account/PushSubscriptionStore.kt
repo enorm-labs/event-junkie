@@ -38,7 +38,11 @@ data class PushSubscriptionInfo(
 class PushSubscriptionStore(
     private val db: DatabaseClient
 ) {
-    /** Saves the browser's subscription. The same browser signed in to another account moves the row to this one. */
+    /**
+     * Saves the browser's subscription. The same browser signed in to another account moves the row to this one: it sends
+     * the same `auth` secret, because the secret belongs to the subscription. An endpoint sent without it changes nothing,
+     * so knowing another browser's endpoint is not enough to take its pushes (#4136).
+     */
     suspend fun subscribe(
         accountId: UUID,
         target: PushTarget,
@@ -47,7 +51,8 @@ class PushSubscriptionStore(
         db
             .sql(
                 "INSERT INTO accounts.push_subscription (account_id, endpoint, p256dh, auth, created_at) VALUES (:account, :endpoint, :p256dh, :auth, :now) " +
-                    "ON CONFLICT (endpoint) DO UPDATE SET account_id = EXCLUDED.account_id, p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth"
+                    "ON CONFLICT (endpoint) DO UPDATE SET account_id = EXCLUDED.account_id, p256dh = EXCLUDED.p256dh " +
+                    "WHERE push_subscription.auth = EXCLUDED.auth"
             ).bind("account", accountId)
             .bind("endpoint", target.endpoint)
             .bind("p256dh", target.p256dh)
