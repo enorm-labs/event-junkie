@@ -85,12 +85,13 @@ class PushFlowTest : BaseControllerTest() {
     private fun subscribe(
         endpoint: String = endpoint(),
         p256dh: String = BROWSER_POINT,
-        who: String = session
+        who: String = session,
+        auth: String = BROWSER_AUTH
     ) = webTestClient
         .put()
         .uri("/me/push")
         .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(PushSubscriptionRequest(endpoint, PushKeys(p256dh, BROWSER_AUTH)))
+        .bodyValue(PushSubscriptionRequest(endpoint, PushKeys(p256dh, auth)))
         .signedIn(who)
         .exchange()
 
@@ -113,6 +114,14 @@ class PushFlowTest : BaseControllerTest() {
             .exchange()
             .expectStatus()
             .isNoContent
+
+    private fun owner(endpoint: String = endpoint()): String? =
+        databaseClient
+            .sql("SELECT a.email FROM accounts.push_subscription s JOIN accounts.account a ON a.id = s.account_id WHERE s.endpoint = :endpoint")
+            .bind("endpoint", endpoint)
+            .map { row -> row.get("email", String::class.java)!! }
+            .one()
+            .block()
 
     private fun subscriptions(): Long =
         databaseClient
@@ -152,6 +161,24 @@ class PushFlowTest : BaseControllerTest() {
                 .expectStatus()
                 .isNoContent
             subscriptions() shouldBe 0
+        }
+
+    @Test
+    fun `the same browser signed in to another account moves its subscription there`() =
+        runBlocking<Unit> {
+            subscribe().expectStatus().isNoContent
+            subscribe(who = sessionFor("partner@example.org")).expectStatus().isNoContent
+            owner() shouldBe "partner@example.org"
+            subscriptions() shouldBe 1
+        }
+
+    @Test
+    fun `an endpoint without its auth secret does not take the subscription over (#4136)`() =
+        runBlocking<Unit> {
+            subscribe().expectStatus().isNoContent
+            subscribe(who = sessionFor("intruder@example.org"), auth = OTHER_AUTH).expectStatus().isNoContent
+            owner() shouldBe "fan@example.org"
+            subscriptions() shouldBe 1
         }
 
     @Test
@@ -338,6 +365,7 @@ class PushFlowTest : BaseControllerTest() {
         private const val SERVER_SCALAR = "yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw"
         private const val BROWSER_POINT = "BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4"
         private val BROWSER_AUTH = WebPushCrypto.base64Url(ByteArray(16) { it.toByte() })
+        private val OTHER_AUTH = WebPushCrypto.base64Url(ByteArray(16) { (it + 100).toByte() })
 
         @JvmStatic
         @DynamicPropertySource
