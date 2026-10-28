@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { ExternalLink, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
@@ -577,29 +578,37 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         show left — the house it moved to sells the tickets (#1551). The source page stays: it says
         where refunds go. Share closes the row.
       -->
-      <!-- Private plans (#3892), above the links that leave the site. -->
-      <RsvpToggle v-if="event.slug" :slug="event.slug" />
+      <!--
+        Private plans (#3892) first, then the links that leave the site (#4117). One row where it
+        fits; a phone keeps the two groups on two rows, so neither breaks in the middle.
+      -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
+        <RsvpToggle v-if="event.slug" :slug="event.slug" />
 
-      <EventShareActions :event="event">
-        <Button
-          v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"
-          as-child
-        >
-          <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.buyTickets')
-          }}</a>
-        </Button>
-        <Button v-if="event.sourceUrl" as-child variant="outline">
-          <a :href="withReferral(event.sourceUrl)" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.eventPage')
-          }}</a>
-        </Button>
-        <Button v-if="event.facebookEventUrl" as-child variant="outline">
-          <a :href="event.facebookEventUrl" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.facebook')
-          }}</a>
-        </Button>
-      </EventShareActions>
+        <EventShareActions :event="event">
+          <Button
+            v-if="event.ticketUrl && !isPast && event.status !== 'CANCELLED' && !event.relocatedTo"
+            as-child
+          >
+            <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">
+              <Ticket aria-hidden="true" />
+              {{ t('events.detail.buyTickets') }}
+            </a>
+          </Button>
+          <Button v-if="event.sourceUrl" as-child variant="outline">
+            <a :href="withReferral(event.sourceUrl)" rel="noopener noreferrer" target="_blank">
+              <ExternalLink aria-hidden="true" />
+              {{ t('events.detail.eventPage') }}
+            </a>
+          </Button>
+          <Button v-if="event.facebookEventUrl" as-child variant="outline">
+            <a :href="event.facebookEventUrl" rel="noopener noreferrer" target="_blank">
+              <ExternalLink aria-hidden="true" />
+              {{ t('events.detail.facebook') }}
+            </a>
+          </Button>
+        </EventShareActions>
+      </div>
 
       <p v-if="enrichmentCredits.length" class="text-meta text-muted-foreground">
         {{ t('events.detail.detailsFrom') }}
