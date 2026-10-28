@@ -129,13 +129,13 @@ class ZennerApiScraperTest {
 
     @Test
     fun `scrape leaves a Biergarten open air to the title cue rather than typing it a party`() {
-        // The same "Open Air" label covers the beer garden's ice-skating sessions and festival
+        // The same "Open Air" label covers the beer garden's ice disco and festival
         // days, so the room — not the label — decides. (Synthetic: the snapshot's Biergarten
         // programme is unpublished, and an absent flags block treats every room as published.)
         val payload =
             """
             {"result":{"data":{"queryKultur":{"nodes":[
-              {"id":"-ice","title":"Eislaufen","typeOfEvent":"Open Air","place":"Biergarten","eventDate":"2026-09-01T18:00:00.000Z"},
+              {"id":"-ice","title":"Eisdisko","typeOfEvent":"Open Air","place":"Biergarten","eventDate":"2026-09-01T18:00:00.000Z"},
               {"id":"-fest","title":"TU.PI Festival","typeOfEvent":"Open Air","place":"Biergarten","eventDate":"2026-09-02T18:00:00.000Z"},
               {"id":"-sip","title":"SIP!","typeOfEvent":"Open Air","place":"Weingarten","eventDate":"2026-09-03T18:00:00.000Z"}
             ]}}}}
@@ -143,7 +143,7 @@ class ZennerApiScraperTest {
 
         val byTitle = scraper.scrape(payload, SOURCE_URL).associateBy { it.title }
 
-        byTitle.getValue("Eislaufen").eventType shouldBe EventType.OTHER.name
+        byTitle.getValue("Eisdisko").eventType shouldBe EventType.OTHER.name
         byTitle.getValue("SIP!").eventType shouldBe EventType.PARTY.name
         // A festival title stays OTHER so the persistence boundary can promote it to FESTIVAL,
         // which it only does for CONCERT/OTHER — a PARTY here would suppress that.
@@ -239,18 +239,43 @@ class ZennerApiScraperTest {
     }
 
     @Test
+    fun `scrape skips a flea market and an ice-skating slot, and keeps the ice disco`() {
+        // Events 3894 and 11807.
+        val payload =
+            """
+            {"result":{"data":{"queryKultur":{"nodes":[
+              {"id":"-m","title":"Indoor Flohmarkt - Freier Eintritt","typeOfEvent":"Event","place":"Saal","eventDate":"2026-11-08T10:00:00.000Z"},
+              {"id":"-s","title":"Eislaufen","typeOfEvent":"Event","place":"Biergarten","eventDate":"2026-11-14T10:00:00.000Z"},
+              {"id":"-d","title":"Eisdisko","typeOfEvent":"Open Air","place":"Biergarten","eventDate":"2026-11-14T18:00:00.000Z"}
+            ]}}}}
+            """.trimIndent()
+
+        scraper.scrape(payload, SOURCE_URL).map { it.title } shouldContainExactly listOf("Eisdisko")
+        // The snapshot's two "Pop-Up Flohmarkt (Indoor)" dates in the Saal.
+        val archive = ZennerApiScraper(fixedClock("2023-01-01T00:00:00Z")).scrape(fixtureJson, SOURCE_URL).map { it.title }
+        archive.filter { "Flohmarkt" in it } shouldHaveSize 0
+    }
+
+    @Test
     fun `scrape drops the bare placeholder blurb the venue leaves on an event with no text`() {
         scrape().single { it.title == "SIP! Closing" }.description.shouldBeNull()
     }
 
     @Test
     fun `scrape ignores a mailto enquiry address rather than storing it as a ticket link`() {
-        // "Pop-Up Flohmarkt" links `mailto:gastro@zenner.berlin`; a clock before it proves the point.
-        val archive = ZennerApiScraper(fixedClock("2023-01-01T00:00:00Z")).scrape(fixtureJson, SOURCE_URL)
+        // The venue links its dinners and room bookings to a `mailto:` address.
+        val payload =
+            """
+            {"result":{"data":{"queryKultur":{"nodes":[
+              {"id":"-g","title":"Martinsgansessen im Zenner","typeOfEvent":"Event","place":"Saal","eventDate":"2026-11-13T18:00:00.000Z","linkEvent":"mailto:info@example.de"},
+              {"id":"-y","title":"Yeule","typeOfEvent":"Konzert","place":"Saal","eventDate":"2026-11-14T19:00:00.000Z","linkEvent":"https://dice.fm/event/yeule"}
+            ]}}}}
+            """.trimIndent()
 
-        archive.first { it.title == "Pop-Up Flohmarkt (Indoor)" }.ticketUrl.shouldBeNull()
-        // A ticket-shop link on the same run is still kept.
-        archive.single { it.title == "Yeule" }.ticketUrl.shouldNotBeNull()
+        val byTitle = scraper.scrape(payload, SOURCE_URL).associateBy { it.title }
+
+        byTitle.getValue("Martinsgansessen im Zenner").ticketUrl.shouldBeNull()
+        byTitle.getValue("Yeule").ticketUrl shouldBe "https://dice.fm/event/yeule"
     }
 
     @Test
