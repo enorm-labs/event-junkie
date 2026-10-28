@@ -278,7 +278,7 @@ reached 99 on two cores ([#271](https://github.com/enorm-labs/event-junkie/issue
 
 **The upgrade path is a single step:** `CX43` (8 vCPU / 16 GB) if OpenObserve outgrows ADR-015's footprint test, or if Grafana joins it. Nothing else in the
 design changes. `cx43` is supported in `eu-central` but frequently out of stock. `infra/check-capacity.sh --probe` is the only way to find out, because
-Hetzner's `datacenters` endpoint both advertises types it will not sell and omits types it will (§11).
+Hetzner's advertised availability both lists types it will not sell and omits types it will (§11).
 
 **Keep the two production nodes in one _location_.** Every query crosses that link and inter-location latency lands on every request. The network _zone_ is a
 different thing: Hetzner charges nothing for traffic within `eu-central`, so the buckets pin the servers nowhere.

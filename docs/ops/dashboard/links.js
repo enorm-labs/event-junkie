@@ -1327,6 +1327,10 @@ window.EJ_LINKS = {
           "note": "advertised inventory"
         },
         {
+          "command": "cd infra && ./check-capacity.sh --probe cx33@nbg1",
+          "note": "one type, before an environment uses it"
+        },
+        {
           "command": "scripts/upstream-node-pins.sh",
           "note": "are k3s and wal-g behind upstream?"
         }
