@@ -24,12 +24,15 @@ class AccountFixtureTest : BaseControllerTest() {
         val savedSearchId: String
     )
 
-    private val accounts: Map<String, FixtureAccount> =
+    private val fixture =
         JsonMapper
             .builder()
             .build()
             .readTree(File(System.getProperty("fixture.accounts.json")))
             .get("accounts")
+
+    private val accounts: Map<String, FixtureAccount> =
+        fixture
             .associate {
                 it.get("email").asString() to
                     FixtureAccount(it.get("email").asString(), it.get("session").asString(), it.get("savedSearchId").asString())
@@ -82,6 +85,13 @@ class AccountFixtureTest : BaseControllerTest() {
                 .returnResult()
                 .responseBody!!
         statuses.values shouldContainExactlyInAnyOrder listOf("going", "interested")
+    }
+
+    @Test
+    fun `bob's passkey and push subscription come back, for the isolation check to aim at`() {
+        val bobFixture = fixture.single { it.get("email").asString() == bob.email }
+        get("/me/passkeys", bob).jsonPath("$[0].id").isEqualTo(bobFixture.get("passkeyId").asString())
+        get("/me/export", bob).jsonPath("$.pushSubscriptions[*].pushService").value<List<String>> { it.size shouldBe 1 }
     }
 
     @Test

@@ -12,6 +12,7 @@
 -- client sends any value in both.
 --
 -- Two accounts and not one, so a scan can try one account's ids with the other's cookie (#4105).
+-- Bob holds one row of every kind an id or an endpoint addresses, for `scripts/account-isolation.sh`.
 
 INSERT INTO accounts.account (id, email, locale)
 VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de'),
@@ -42,3 +43,12 @@ UNION ALL
 SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, id, 'interested' FROM events.event WHERE source_id = 'fixture-free'
 UNION ALL
 SELECT 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'going' FROM events.event WHERE source_id = 'fixture-sold-out';
+
+-- Placeholders, not key material: nothing verifies this passkey or encrypts to this subscription.
+-- k3d and a local stack have no VAPID key, so no push is ever sent to the endpoint.
+INSERT INTO accounts.passkey (id, account_id, credential_id, credential, sign_count, name)
+VALUES ('b0b00000-0000-4000-8000-000000000021', 'b0b00000-0000-4000-8000-000000000002',
+        convert_to('fixture-passkey-bob', 'UTF8'), convert_to('fixture', 'UTF8'), 0, 'Fixture key');
+
+INSERT INTO accounts.push_subscription (account_id, endpoint, p256dh, auth)
+VALUES ('b0b00000-0000-4000-8000-000000000002', 'https://fcm.googleapis.com/fcm/send/fixture-bob', 'fixture', 'fixture');

@@ -209,12 +209,24 @@ jobs:
             -config replacer.full_list(0).regex=false
             -config replacer.full_list(0).replacement=event-junkie.localhost
 
+      # Before the API scan, which fuzzes as Ada and may delete her rows: here both sessions are fresh,
+      # so a pass means Ada's session reached Bob's ids and changed nothing (#4105).
+      - name: One account cannot reach another's rows
+        run: scripts/account-isolation.sh http://localhost:8080 event-junkie.localhost
+
       # The OpenAPI document is on the BFF port, not routed through Traefik, so a port-forward exposes it —
       # on every interface, because the container reaches the runner through the bridge. The scan fuzzes
       # the BFF directly, deliberately past the rate limiter, which would otherwise hide every finding
       # behind 429s; this is where `sort`, `page`, `size`, `q` and the slugs get hostile values. Its rules
       # file ignores the headers Traefik adds. Runs even when the full scan failed: one red step should not
       # hide the other's report.
+      #
+      # **Signed in as Ada** (#4105), or every `/api/me` operation answers 401 and nothing behind it is
+      # fuzzed. Two replacer rules put her cookie and a matching CSRF header on every request. Three URLs
+      # are excluded, because each ends the session the rest of the scan needs: `DELETE /api/me` (the
+      # regex takes `GET /api/me` with it), sign-out and sign-out-everywhere. Two more answer 503 on k3d
+      # before they read a parameter, so a fuzzer reaches nothing behind them and rule 100000 would
+      # fail every night: `POST /api/auth/link` (no mail) and `/api/me/push` (no VAPID key).
       - name: API scan against the BFF
         if: ${{ !cancelled() }}
         timeout-minutes: 15
@@ -232,11 +244,38 @@ jobs:
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-api-scan.py -t http://host.docker.internal:18080/v3/api-docs -f openapi -T 40 -I \
               -c rules-k3d-api.tsv -J api.json -r api.html \
-              -z "-config scanner.maxScanDurationInMins=10 -config scanner.maxRuleDurationInMins=3" \
+              -z "-config scanner.maxScanDurationInMins=10 -config scanner.maxRuleDurationInMins=3 $SESSION_REPLACER $SESSION_EXCLUDES" \
             | tee build/zap/api.txt || status=$?
           scripts/scan-coverage.sh baseline zap-k3d-api-urls build/zap/api.txt
           scripts/scan-coverage.sh baseline zap-k3d-api-rules build/zap/api.txt
           exit "$status"
+        env:
+          SESSION_REPLACER: >-
+            -config replacer.full_list(0).description=session
+            -config replacer.full_list(0).enabled=true
+            -config replacer.full_list(0).matchtype=REQ_HEADER
+            -config replacer.full_list(0).matchstr=Cookie
+            -config replacer.full_list(0).regex=false
+            -config replacer.full_list(0).replacement=__Host-ej_session=fixture-session-ada;XSRF-TOKEN=zap
+            -config replacer.full_list(1).description=csrf
+            -config replacer.full_list(1).enabled=true
+            -config replacer.full_list(1).matchtype=REQ_HEADER
+            -config replacer.full_list(1).matchstr=X-XSRF-TOKEN
+            -config replacer.full_list(1).regex=false
+            -config replacer.full_list(1).replacement=zap
+          SESSION_EXCLUDES: >-
+            -config globalexcludeurl.url_list.url(0).regex=^https?://[^/]+/api/me$
+            -config globalexcludeurl.url_list.url(0).description=delete-account
+            -config globalexcludeurl.url_list.url(0).enabled=true
+            -config globalexcludeurl.url_list.url(1).regex=^https?://[^/]+/api/me/sign-out.*
+            -config globalexcludeurl.url_list.url(1).description=sign-out
+            -config globalexcludeurl.url_list.url(1).enabled=true
+            -config globalexcludeurl.url_list.url(2).regex=^https?://[^/]+/api/auth/link$
+            -config globalexcludeurl.url_list.url(2).description=no-mail
+            -config globalexcludeurl.url_list.url(2).enabled=true
+            -config globalexcludeurl.url_list.url(3).regex=^https?://[^/]+/api/me/push$
+            -config globalexcludeurl.url_list.url(3).description=no-push
+            -config globalexcludeurl.url_list.url(3).enabled=true
 
       # On the runner, not in a container: the load balancer is on the host's :8080 and `Host` does the
       # routing. `-type http` keeps out the network, code, javascript and headless templates; `-ni` drops
