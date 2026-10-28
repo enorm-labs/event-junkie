@@ -132,7 +132,15 @@ scan() { { ssh-keyscan -T 5 -t ed25519 "$1" 2>/dev/null || true; } | awk '!/^#/ 
 
 # --- 1. The server key ----------------------------------------------------------------------------
 
-if [ -z "$SERVER_KEY" ] && tunnel_up && node_answers; then
+BROUGHT_UP=0
+TUNNEL_ANSWERS=0
+if [ -z "$SERVER_KEY" ] && ! tunnel_up; then
+    echo "tunnel $ENV: down, bringing it up with the current config to read the server key"
+    sudo wg-quick up "$CONF"
+    BROUGHT_UP=1
+fi
+if [ -z "$SERVER_KEY" ] && node_answers; then
+    TUNNEL_ANSWERS=1
     refresh_host_key "$TUNNEL_IP" "$(scan "$TUNNEL_IP")"
     SERVER_KEY="$(node_ssh "$TUNNEL_IP" sudo cat /etc/wireguard/public.key 2>/dev/null || true)"
     [ -n "$SERVER_KEY" ] && echo "server key: read over the tunnel"
@@ -146,8 +154,15 @@ if [ -z "$SERVER_KEY" ]; then
         [ -n "$SERVER_KEY" ] && echo "server key: read from $PUBLIC_IP"
     fi
 fi
-[ -n "$SERVER_KEY" ] || die "cannot read the server key: the tunnel does not answer, and $PUBLIC_IP refuses SSH from here.
+if [ -z "$SERVER_KEY" ]; then
+    # Leave the tunnel as it was found.
+    [ "$BROUGHT_UP" = 0 ] || sudo wg-quick down "$CONF"
+    # BatchMode cannot ask for a passphrase, so a key outside the agent fails like a closed port.
+    [ "$TUNNEL_ANSWERS" = 0 ] || die "cannot read the server key: $TUNNEL_IP answers over the tunnel, but SSH as ops fails.
+Load the key into the agent with 'ssh-add $SSH_KEY', then run this again."
+    die "cannot read the server key: the tunnel does not answer, and $PUBLIC_IP refuses SSH from here.
 Pass --server-key <key> from KeePass #18, or read /etc/wireguard/public.key from a Mac whose tunnel works."
+fi
 SERVER_KEY="$(tr -d '[:space:]' <<<"$SERVER_KEY")"
 
 # --- 2. The client config and the tunnel ---------------------------------------------------------

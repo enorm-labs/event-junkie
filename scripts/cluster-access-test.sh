@@ -92,6 +92,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 reachable "$host" || exit 255
+[ ! -e "$FAKE_STATE/ssh-refused" ] || exit 255
 case "$*" in
     "sudo cat /etc/wireguard/public.key") cat "$FAKE_STATE/server-key" ;;
     "sudo cat /etc/rancher/k3s/k3s.yaml") cat "$FAKE_STATE/k3s.yaml" ;;
@@ -188,6 +189,7 @@ mv "$WORK/conf.saved" "$HOME/.wireguard/production.conf"
 if run; then fail "2: ran without a server key"; elif grep -q -- '--server-key' "$WORK/out"; then
     pass "2: no server key anywhere, names --server-key"
 else fail "2: no hint in: $(cat "$WORK/out")"; fi
+if [ ! -e "$WORK/run/production.name" ]; then pass "2: the tunnel it brought up is down again"; else fail "2: left the tunnel up"; fi
 
 # --- 3. After a rebuild, with admin_cidrs open and a stray KUBECONFIG ------------------------------
 
@@ -233,6 +235,22 @@ rm -f "$STATE/public-ssh-open"
 echo "THIRDKEY=" >"$STATE/server-key"
 if run --server-key THIRDKEY=; then pass "6: --server-key repairs a stale tunnel"; else fail "6: exit $?: $(cat "$WORK/out")"; fi
 if grep -q '^PublicKey  = THIRDKEY=$' "$HOME/.wireguard/production.conf"; then pass "6: key from the flag"; else fail "6: key not written"; fi
+
+# --- 7. A tunnel that is only down is brought up to read the key -----------------------------------
+
+wg-quick down "$HOME/.wireguard/production.conf"
+if run; then pass "7: a down tunnel needs no --server-key"; else fail "7: exit $?: $(cat "$WORK/out")"; fi
+if grep -q 'server key: read over the tunnel' "$WORK/out"; then pass "7: key read over the tunnel"; else fail "7: $(cat "$WORK/out")"; fi
+
+# --- 8. The tunnel answers but SSH fails: the hint is the agent, not --server-key -------------------
+
+wg-quick down "$HOME/.wireguard/production.conf"
+touch "$STATE/ssh-refused"
+if run; then fail "8: ran without SSH"; elif grep -q 'ssh-add' "$WORK/out"; then
+    pass "8: SSH refused over the tunnel, names ssh-add"
+else fail "8: no hint in: $(cat "$WORK/out")"; fi
+if [ ! -e "$WORK/run/production.name" ]; then pass "8: the tunnel it brought up is down again"; else fail "8: left the tunnel up"; fi
+rm -f "$STATE/ssh-refused"
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "$FAILURES assertion(s) failed" >&2
