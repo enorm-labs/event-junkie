@@ -466,7 +466,7 @@ exist because the failure they prevent is a node reachable only through the brow
 | Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
 | Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |
 | A `staging` address record                         | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/ops/PLATFORM_SETUP.md)                                                                 |
-| A 301 from `event-junkie.com`                      | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
+| A 301 from a redirect domain                       | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
 
 ## Local checks
 

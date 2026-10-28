@@ -45,20 +45,20 @@ variable "domain" {
   nullable    = false
 }
 
-variable "redirect_domain" {
+variable "redirect_domains" {
   description = <<-EOT
-    The domain that 301s to `domain`, rather than serving anything of its own. Its zone is owned by
-    the bootstrap stack; only the address records are written from here.
+    The domains that 301 to `domain`, rather than serving anything of their own. Their zones are
+    owned by the bootstrap stack; only the address records are written from here.
 
-    **It has to resolve even though it serves nothing.** Production solves HTTP-01, which reaches
+    **Each has to resolve even though it serves nothing.** Production solves HTTP-01, which reaches
     the host *by name*, so a redirect domain pointing nowhere cannot be certified — the redirect
     Ingress then answers TLS errors while every other object on the cluster is green (#634). That
     the redirect is a 301 and not a second origin is ADR-014's decision and unaffected by this.
 
     Empty disables it, which is what any environment that is not production wants.
   EOT
-  type        = string
-  default     = "event-junkie.com"
+  type        = list(string)
+  default     = ["event-junkie.com", "eventjunkie.de"]
   nullable    = false
 }
 

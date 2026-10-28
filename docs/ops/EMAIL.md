@@ -182,13 +182,13 @@ existing does not make that untrue. Add it when someone will actually open the a
 
 ### The shape of the change
 
-`local.zone_records` is applied to **every** domain via `setproduct`, and `event-junkie.com` is a defensive registration that must keep saying _I send and
+`local.zone_records` is applied to **every** domain via `setproduct`, and each defensive registration must keep saying _I send and
 receive nothing_. So the mail records cannot go in that map. Merge a primary-domain-only map **after** it — the `"${domain}/${record}"` keys make the SPF
 override a clean replacement rather than a duplicate:
 
 ```hcl
 locals {
-  # Only the domain that actually receives mail. event-junkie.com keeps `v=spf1 -all`, no MX and the
+  # Only the domain that actually receives mail. The defensive domains keep `v=spf1 -all`, no MX and the
   # DKIM revoke — the correct posture for a name that exists so nobody else has it.
   mail_records = {
     mx = {

@@ -30,7 +30,7 @@ this table:
 | Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
 | kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
 | PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
-| Public web      | none — no `A` record, no 80/443                  | 80/443 open; the apex, `www` and `event-junkie.com` resolve    |
+| Public web      | none — no `A` record, no 80/443                  | 80/443 open; the apex, `www` and both redirect domains resolve |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
 | Observability   | OpenObserve, see §6b                             | OpenObserve too, since #880 — same §, different context        |
 
@@ -59,9 +59,8 @@ Host 10.10.0.1 10.10.1.1 10.0.1.20
 
 `ssh-add ~/.ssh/id_ed25519_hetzner` also works, because the agent offers the key to both hops. It lasts until the agent forgets the key.
 
-**Production is public.** `publish_dns` in `infra/environments/production/variables.tf` is `true`, so the apex, `www` and `event-junkie.com` resolve to the
-k3s node. Setting it back to `false` takes the site dark again, and CLUSTER_BOOTSTRAP.md §12 is the procedure.
-CLUSTER_BOOTSTRAP.md §12.
+**Production is public.** `publish_dns` in `infra/environments/production/variables.tf` is `true`, so the apex, `www`, `event-junkie.com` and `eventjunkie.de`
+resolve to the k3s node. Setting it back to `false` takes the site dark again, and CLUSTER_BOOTSTRAP.md §12 is the procedure.
 
 ---
 

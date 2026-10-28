@@ -10,13 +10,13 @@ variable "defensive_domains" {
     Domains registered defensively. They get a zone and the anti-spoofing records, and nothing else
     — no address record, because nothing is served on them.
 
-    Pointing `event-junkie.com` at the node as a 301 is go-live work (PLATFORM_SETUP.md §10, step
+    Pointing one at the node as a 301 is go-live work (PLATFORM_SETUP.md §10, step
     23), not provisioning: a redirect needs a certificate, which needs the name to resolve, which
     needs the site to be up. Registering the name is what stops a squatter; serving it is a
     separate decision with duplicate-content consequences ADR-014 would rather not have.
   EOT
   type        = list(string)
-  default     = ["event-junkie.com"]
+  default     = ["event-junkie.com", "eventjunkie.de"]
   nullable    = false
 }
 

@@ -275,6 +275,14 @@ window.EJ_LINKS = {
           "statusText": "Live since 2026-09-24"
         },
         {
+          "url": "https://eventjunkie.de",
+          "label": "eventjunkie.de",
+          "what": "Defensive registration. Resolves to the node; the chart does not redirect it yet",
+          "whatText": "Defensive registration. Resolves to the node; the chart does not redirect it yet",
+          "status": "Registered 2026-10-28",
+          "statusText": "Registered 2026-10-28"
+        },
+        {
           "url": "https://search.google.com/search-console?resource_id=sc-domain%3Aevent-junkie.de&hl=de",
           "label": "search.google.com/search-console?resource_id=sc-domain%3Aevent-junkie.de&hl=de",
           "what": "<strong>Google Search Console</strong>, domain property for <code>event-junkie.de</code>: indexing, the sitemap, rich results (#288)",
