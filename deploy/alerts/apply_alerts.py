@@ -26,6 +26,12 @@ PUT as a new rule state and restarts its silence window, so a PUT of an unchange
 can mail a firing again inside the silence it was in. The comparison is the one
 `diff_alerts.py` makes for `--diff`, imported rather than copied.
 
+**A rule whose stream does not exist yet is skipped, not fatal.** OpenObserve refuses
+it with a 404 until the stream's first point arrives, which on a fresh cluster is
+after the first import cycle for a counter like `importer_translations_total`. The
+rest of the rules are still applied, the skipped ones are listed, and the run exits
+non-zero, so a mistyped stream stays visible. Any other refusal stops the run at once.
+
 **The recipient has to be a member of the org**, or the destination is refused with
 `UserNotPermitted`. It is created once as a service account, which has no password.
 The API token OpenObserve returns is never printed or stored. An existing member is
@@ -126,9 +132,14 @@ def stored_alert(alert_id):
     return stored if isinstance(stored, dict) else None
 
 
+def missing_stream(code, body):
+    return code == 404 and "Stream" in body and "not found" in body
+
+
 def apply_rules(alerts):
-    """Create, update or recreate each rule. A rule that already matches gets no call."""
+    """Create, update or recreate each rule. Returns the names skipped for a missing stream."""
     known = existing_alerts()
+    skipped = []
     for alert in alerts:
         name = alert["name"]
         if name in known and known[name]:
@@ -163,9 +174,14 @@ def apply_rules(alerts):
             code, body = call("POST", "http://%s:5080/api/v2/%s/alerts" % (svc, org), alert)
             verb = "created"
         ok = 200 <= code < 300
+        if missing_stream(code, body):
+            print("%-30s skipped  %s  <-- stream %s does not exist yet" % (name, code, alert.get("stream_name")))
+            skipped.append(name)
+            continue
         print("%-30s %-8s %s%s" % (name, verb, code, "" if ok else "  <-- " + body[:160]))
         if not ok:
             sys.exit(1)
+    return skipped
 
 
 def main():
@@ -176,7 +192,11 @@ def main():
     ensure("destinations", EMAIL_DESTINATION_NAME, email_destination_payload())
 
     with open(path) as f:
-        apply_rules(json.load(f))
+        skipped = apply_rules(json.load(f))
+    if skipped:
+        print("\n%d rule(s) skipped, their stream does not exist yet: %s" % (len(skipped), ", ".join(skipped)))
+        print("Run apply.sh again after the first import cycle. A stream that never appears is a wrong name.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

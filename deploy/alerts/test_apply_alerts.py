@@ -50,8 +50,8 @@ def check(description, condition):
         failures.append(description)
 
 
-def run(stored_rules):
-    """Apply `RULES` against a cluster that holds `stored_rules`. Returns (calls, output)."""
+def run(stored_rules, absent_streams=()):
+    """Apply `RULES` against a cluster that holds `stored_rules`. Returns (calls, output, skipped)."""
     ids = {rule["name"]: "id-" + rule["name"] for rule in stored_rules}
     by_id = {ids[rule["name"]]: rule for rule in stored_rules}
     calls = []
@@ -65,13 +65,15 @@ def run(stored_rules):
             # What the server adds on top of what was sent, which the comparison ignores.
             stored.update({"id": url.rsplit("/", 1)[1], "owner": "root@example.org", "last_triggered_at": 1})
             return 200, json.dumps(stored)
+        if method == "POST" and payload and payload.get("stream_name") in absent_streams:
+            return 404, json.dumps({"code": 404, "message": "Stream %s not found" % payload["stream_name"]})
         return 200, "{}"
 
     apply_alerts.call = fake_call
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        apply_alerts.apply_rules(copy.deepcopy(RULES))
-    return calls, out.getvalue()
+        skipped = apply_alerts.apply_rules(copy.deepcopy(RULES))
+    return calls, out.getvalue(), skipped
 
 
 def writes(calls):
@@ -79,14 +81,14 @@ def writes(calls):
 
 
 # 1. Every rule matches: no write at all, and each says `unchanged`.
-calls, out = run(copy.deepcopy(RULES))
+calls, out, _ = run(copy.deepcopy(RULES))
 check("matching rules send no PUT, POST or DELETE", writes(calls) == [])
 check("each matching rule prints 'unchanged'", all("%-30s unchanged" % r["name"] in out for r in RULES))
 
 # 2. One field differs in one rule: that rule alone is PUT.
 drifted = copy.deepcopy(RULES)
 drifted[1]["query_condition"]["promql"] = "count(kube_pod_info) > 1"
-calls, out = run(drifted)
+calls, out, _ = run(drifted)
 put = writes(calls)
 check(
     "a rule that differs in one field is PUT", len(put) == 1 and put[0][0] == "PUT" and put[0][1].endswith("/id-ej-two")
@@ -96,12 +98,17 @@ check("the other rule is still left alone", "%-30s unchanged" % "ej-one" in out)
 # 3. A changed stream is still a delete and a recreate.
 moved = copy.deepcopy(RULES)
 moved[0]["stream_name"] = "kube_deployment_status_replicas_available"
-calls, out = run(moved)
+calls, out, _ = run(moved)
 check("a changed stream is deleted and recreated", [c[0] for c in writes(calls)] == ["DELETE", "POST"])
 
 # 4. A rule absent from the cluster is created.
-calls, out = run(RULES[:1])
+calls, out, _ = run(RULES[:1])
 check("a missing rule is created", [c[0] for c in writes(calls)] == ["POST"] and "ej-two" in out)
+
+# 5. A fresh cluster lacks the first rule's stream: it is skipped and the next rule is still created.
+calls, out, skipped = run([], absent_streams=("up",))
+check("a rule with a missing stream is skipped", skipped == ["ej-one"] and "skipped" in out)
+check("the rule after it is still created", "%-30s created" % "ej-two" in out)
 
 print("\n%d checks, %d failed" % (checks, len(failures)))
 sys.exit(1 if failures else 0)
