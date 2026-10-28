@@ -27,3 +27,8 @@ output "next_steps" {
   description = "The parts of bring-up that cannot be declared — collecting the WireGuard key, closing the firewall, fetching the kubeconfig — in the order they have to happen."
   value       = module.environment.next_steps
 }
+
+output "next_pair" {
+  description = "The second pair a cutover moves to, or null. See the module's output of the same name."
+  value       = module.environment.next_pair
+}

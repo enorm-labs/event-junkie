@@ -719,6 +719,27 @@ The production rebuild in #4125 met each of these. Read them before the first co
 
 **Do not define a `k()` helper where `k` is an alias.** zsh expands the alias first. The function then gets the wrong name.
 
+### Building a second pair beside the running one
+
+**A change of server type does not need a rebuild in place.** The module builds a second pair beside the running pair when `next_pair` is set. The old
+cluster serves while the new one is built, and the cutover takes minutes (#4128).
+
+```sh
+infra/apply.sh production -var 'next_pair={k3s_server_type="cx33",postgres_server_type="cx23"}'   # 6 to add, 0 to change, 0 to destroy
+infra/apply.sh staging -var 'next_pair={k3s_server_type="cx33"}'                                    # 3 to add
+```
+
+- **What it creates:** `<env>-k3s-next` and, in production, `<env>-postgres-next`, each with temporary Primary IPs. It changes nothing that exists.
+- **The private addresses** are host `.11` and `.21` of the subnet unless `next_pair` names others. The running pair keeps `.10` and `.20`.
+- **cloud-init** is the running pair's, with the new private addresses. The hostname is the running node's, because it becomes the Kubernetes node name.
+  `PUBLIC_IPV4` is the real Primary IP, which the node holds after the cutover.
+- **PostgreSQL does not start at boot** on the new pair. The volume reaches the new node only at the database cutover, which then runs
+  `step.sh postgres` and `step.sh backups`.
+- **Pass `next_pair` on every apply until the cutover.** An apply without it plans to destroy the new pair. `apply.sh` refuses that without `--allow-replace`.
+- `tofu output next_pair` prints the temporary IPv4. It is the WireGuard endpoint of the new node until the cutover.
+
+The build on the new pair (#4134) and the cutover are not scripted yet. The plan is in #4128.
+
 ### Applying a `cloud-init` fix without rebuilding
 
 **A change under `cloud-init/` reaches a running node only by hand or at its next rebuild.** `servers.tf` ignores `user_data` (#4129), so the corrected

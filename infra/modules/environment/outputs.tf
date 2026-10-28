@@ -91,3 +91,14 @@ output "next_steps" {
     database, both secrets and flux bootstrap, in the order that avoids the failures we hit.
   EOT
 }
+
+output "next_pair" {
+  description = "The second pair's names and addresses, or null without `next_pair`. Its temporary IPv4 is the WireGuard endpoint until the cutover."
+  value = local.next_pair ? {
+    k3s_name            = hcloud_server.k3s_next[0].name
+    k3s_temporary_ipv4  = hcloud_primary_ip.k3s_next_ipv4[0].ip_address
+    k3s_private_ip      = local.next_k3s_private_ip
+    postgres_name       = local.dedicated_postgres ? hcloud_server.postgres_next[0].name : null
+    postgres_private_ip = local.dedicated_postgres ? local.next_postgres_private_ip : null
+  } : null
+}

@@ -93,3 +93,14 @@ variable "publish_dns" {
   default     = true
   nullable    = false
 }
+
+variable "next_pair" {
+  description = "A second pair of nodes to cut over to. Pass it with -var for that apply only. See the module's variable of the same name."
+  type = object({
+    k3s_server_type      = string
+    postgres_server_type = optional(string)
+    k3s_private_ip       = optional(string)
+    postgres_private_ip  = optional(string)
+  })
+  default = null
+}
