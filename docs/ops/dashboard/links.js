@@ -277,8 +277,8 @@ window.EJ_LINKS = {
         {
           "url": "https://eventjunkie.de",
           "label": "eventjunkie.de",
-          "what": "Defensive registration. Resolves to the node; the chart does not redirect it yet",
-          "whatText": "Defensive registration. Resolves to the node; the chart does not redirect it yet",
+          "what": "Defensive registration. Redirects to <code>event-junkie.de</code>, as does its <code>www</code>",
+          "whatText": "Defensive registration. Redirects to event-junkie.de, as does its www",
           "status": "Registered 2026-10-28",
           "statusText": "Registered 2026-10-28"
         },

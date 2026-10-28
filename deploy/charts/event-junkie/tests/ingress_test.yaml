@@ -62,7 +62,7 @@ tests:
           value: http
 
   # --- the redirect hosts -----------------------------------------------------------------------
-  # `redirectHosts` is a list that behaves like a scalar — production lists three names, staging and
+  # `redirectHosts` is a list that behaves like a scalar — production lists five names, staging and
   # k3d none — so the `range` needs a multi-entry case to be exercised at all (#634). **Named hosts are
   # set here rather than taken from values**: `cluster-assertions.sh` re-runs this against every
   # cluster, where staging and k3d set `redirectHosts: []`.
