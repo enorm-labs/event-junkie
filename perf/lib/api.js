@@ -87,6 +87,12 @@ export const api = {
 
     /** `GET /meta` — build info for the footer. Cheap, and the best liveness probe here. */
     meta: () => get('/meta', {group: 'detail', name: '/meta'}),
+
+    /** `GET /auth/session` — the signed-in account or `null`; every page load asks it (#3887). */
+    session: () => get('/auth/session', {group: 'detail', name: '/auth/session'}),
+
+    /** `GET /auth/csrf` — a 204 that sets the `XSRF-TOKEN` cookie the sign-in page echoes. */
+    csrf: () => get('/auth/csrf', {group: 'detail', name: '/auth/csrf'}),
 }
 
 // --- Discovery ---------------------------------------------------------------------------------
