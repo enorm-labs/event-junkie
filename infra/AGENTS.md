@@ -13,6 +13,9 @@ them change things people depend on. If a task appears to require one, stop and 
 
 - **Show the plan first and check it against what you expect.** `tofu plan -destroy` before a destroy, `plan` before an apply. State the resource count you
   expect _before_ running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
+- **Apply the plan file you checked, never a second plan.** `tofu plan -out=tfplan <flags>`, then `tofu apply tfplan`. A plain `tofu apply` plans again,
+  and drops every flag the checked plan had. That is how a `-target`ed DNS change replaced both production nodes (#4125). Give an operator the same two
+  commands, never "now apply".
 - **Never widen the instruction.** "Destroy staging" is not permission to destroy production, and an instruction given once does not carry to the next
   environment or the next session.
 
@@ -57,16 +60,16 @@ all-in-one, with no DNS records. Production is a `cpx32` k3s node and a `cpx22` 
 a PGDATA volume, and a node replacement has been proven to bring the database back with zero rows lost (#460). **Production is public**: `publish_dns` is
 `true`, and setting it to `false` takes the site dark — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §12 first.
 
-> **`user_data` has drifted on staging and on both production nodes, and an apply REBUILDS THEM.** `servers.tf` forces replacement on it, and `cloud-init/`
-> has changed since the last apply. Any apply made for an unrelated reason rebuilds the nodes too, and looks like the unrelated change's doing. The volume,
+> **`user_data` has drifted on staging, and an apply REBUILDS THE NODE.** `servers.tf` forces replacement on it, and `cloud-init/` has changed since the
+> last apply. Production's nodes booted the current `cloud-init/` when #4125 rebuilt them, so the next edit under it sets the same trap there (#4129). Any apply made for an unrelated reason rebuilds the nodes too, and looks like the unrelated change's doing. The volume,
 > the Primary IPs, the network and the firewall survive; the k3s cluster does not.
 >
 > **There is no targeted way out.** `hcloud_volume_attachment.postgres` names both servers in one ternary, so `-target` pulls the k3s node in. The address
 > records are the exception (#883): they read the Primary IPs, so `-target=hcloud_zone_rrset.address` — the go-live flip — touches DNS alone. Fixes reach the
 > running nodes by hand, [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding.
 
-Two things a rebuild teaches: **the database survives, its credential does not** — the `events` role's password lived only in a Secret that dies with the
-cluster, so a rebuild needs `ALTER ROLE events PASSWORD …`, not `CREATE ROLE`; and **the `hetzner` Secret holds the same token this stack authenticates
+Two things a rebuild teaches: **the database survives, and so do its roles.** The `events` password matches the encrypted `events-db`. The `metrics` and
+`bff` passwords lived only in Secrets, so a rebuild sets new ones with `ALTER ROLE`, not `CREATE ROLE`. And **the `hetzner` Secret holds the same token this stack authenticates
 with**, so revoking it breaks `tofu apply` and DNS-01 together.
 
 **Still unproven, so do not describe as verified:** the destroy/apply cycle — a replacement is not a destroy, and a destroy takes the volume. The
