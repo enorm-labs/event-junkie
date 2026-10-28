@@ -102,7 +102,7 @@ resource "hcloud_zone_rrset" "address" {
 }
 
 # ---------------------------------------------------------------------------
-# The redirect domain. `event-junkie.com` serves nothing (the chart 301s it, ADR-014) but must
+# The redirect domains. `event-junkie.com` and `eventjunkie.de` serve nothing (the chart 301s it, ADR-014) but must
 # resolve: production solves HTTP-01 over the name being certified, and a domain that answers
 # nothing leaves a Certificate stuck in pending with every other object green (#634). `www` is
 # here because it is redirected at Traefik, not in DNS. No `prod-check` equivalent: a rehearsal
@@ -110,29 +110,41 @@ resource "hcloud_zone_rrset" "address" {
 # ---------------------------------------------------------------------------
 
 data "hcloud_zone" "redirect" {
-  count = var.redirect_domain == "" ? 0 : 1
+  for_each = toset(var.redirect_domains)
 
-  name = var.redirect_domain
+  name = each.value
 }
 
 locals {
-  publish_redirect   = var.publish_dns && var.redirect_domain != ""
-  redirect_hostnames = local.publish_redirect ? ["@", "www"] : []
+  redirect_domains = var.publish_dns ? var.redirect_domains : []
 
   # A only, for the same reason as the apex (#1941).
   redirect_records = {
-    for name in local.redirect_hostnames : "${name}/A" => {
-      name  = name
+    for pair in setproduct(local.redirect_domains, ["@", "www"]) : "${pair[0]}/${pair[1]}/A" => {
+      zone  = pair[0]
+      name  = pair[1]
       type  = "A"
       value = module.environment.k3s_ipv4
     }
   }
 }
 
+# The keys gained the domain when a second redirect domain arrived; without these the `.com`
+# records are destroyed and re-created, and resolve to nothing in between.
+moved {
+  from = hcloud_zone_rrset.redirect["@/A"]
+  to   = hcloud_zone_rrset.redirect["event-junkie.com/@/A"]
+}
+
+moved {
+  from = hcloud_zone_rrset.redirect["www/A"]
+  to   = hcloud_zone_rrset.redirect["event-junkie.com/www/A"]
+}
+
 resource "hcloud_zone_rrset" "redirect" {
   for_each = local.redirect_records
 
-  zone = data.hcloud_zone.redirect[0].name
+  zone = data.hcloud_zone.redirect[each.value.zone].name
   name = each.value.name
   type = each.value.type
   ttl  = var.dns_ttl

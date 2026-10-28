@@ -604,8 +604,8 @@ Practical notes that cost a day each:
 - **The redirect certificate covers three names** — `www.event-junkie.de`, `event-junkie.com`, `www.event-junkie.com` — each an explicit SAN rather than a
   wildcard. `www.event-junkie.de` is on that list because the apex is canonical and `www` is redirected **at Traefik, not in DNS**.
 - **Every one of those names has to resolve to the node before the certificate can issue.** A redirect domain pointing nowhere leaves a Certificate stuck
-  pending and an Ingress answering TLS errors — with everything else on the cluster green. The `.com` records are `publish_dns`-gated in the same apply as the
-  `.de` ones, so all four appear together or not at all.
+  pending and an Ingress answering TLS errors — with everything else on the cluster green. The redirect domains' records are `publish_dns`-gated in the same apply as the
+  primary's, so they appear together or not at all.
 - **Set the CAA record first** (`0 issue "letsencrypt.org"`).
 
 **Use Hetzner's own DNS webhook, and check which one you are looking at.** Hetzner shut down the old `dns.hetzner.com` API and console in **May 2026**, and every

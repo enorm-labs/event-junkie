@@ -7,8 +7,8 @@
 locals {
   all_domains = concat([var.primary_domain], var.defensive_domains)
 
-  # A domain that sends no mail and says so is not spoofable. Still true of `event-junkie.com`, no
-  # longer of the primary (`mail_records` below).
+  # A domain that sends no mail and says so is not spoofable. Still true of the defensive
+  # domains, no longer of the primary (`mail_records` below).
   #
   # The DKIM wildcard revoke does not shadow a real selector: a wildcard answers only names with no
   # record of their own, so `default2608._domainkey` returns konsoleH's key. That record is
@@ -47,8 +47,8 @@ locals {
 
   zone_records = merge(local.antispoofing, { caa = local.caa })
 
-  # Records for the one domain that receives mail (#274), NOT in `zone_records`: `event-junkie.com`
-  # is defensive and must go on saying it neither sends nor receives.
+  # Records for the one domain that receives mail (#274), NOT in `zone_records`: the defensive
+  # domains and must go on saying it neither sends nor receives.
   #
   # `include:` and not `ip4:`, and not `_spf.hetzner.com`, which lists Hetzner's corporate relays
   # and not this account's server. The hosting server publishes its own policy,

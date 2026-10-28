@@ -12,5 +12,5 @@ ssh_public_keys = {
 }
 
 # primary_domain    = "event-junkie.de"
-# defensive_domains = ["event-junkie.com"]
+# defensive_domains = ["event-junkie.com", "eventjunkie.de"]
 # dns_ttl           = 300
