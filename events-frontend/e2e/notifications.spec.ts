@@ -43,11 +43,12 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 const fallthrough = failUnmockedGets()
 
 /** Answers the BFF for one visitor, signed in with two unread notifications, or signed out. */
-async function mockBff(page: Page, signedIn = true) {
+async function mockBff(page: Page, signedIn = true, extra: ReturnType<typeof entry>[] = []) {
   const writes: string[] = []
   const entries = [
     entry('00000000-0000-4000-8000-000000000001', 'mock-night', 'Mock Venue'),
     entry('00000000-0000-4000-8000-000000000002', 'other-night', 'Other Club'),
+    ...extra,
   ]
   await page
     .context()
@@ -108,6 +109,20 @@ test('Mark all as read clears the badge', async ({ page }) => {
   await expect(page.getByTestId('notification-badge')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Notifications', exact: true })).toBeVisible()
   expect(writes).toEqual(['/api/me/notifications/read'])
+})
+
+test('a change to an event marked as going names what changed', async ({ page }) => {
+  const change = {
+    ...entry('00000000-0000-4000-8000-000000000003', 'mock-night', 'Mock Night'),
+    kind: 'change',
+    aboutKind: 'rsvp',
+    change: 'cancelled',
+  }
+  await mockBff(page, true, [change])
+  await page.goto('/en/about')
+
+  await page.getByRole('button', { name: 'Notifications, 3 unread' }).click()
+  await expect(page.getByRole('link', { name: /Cancelled/ })).toHaveAttribute('href', '/en/events/mock-night')
 })
 
 test.describe('on a phone', () => {

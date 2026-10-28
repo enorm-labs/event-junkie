@@ -106,6 +106,25 @@ describe('NotificationBell', () => {
     expect(links[1]!.textContent).not.toContain('Unread')
   })
 
+  it('names a change to a marked event by what changed', async () => {
+    account.fetchUnreadCount.mockResolvedValue(1)
+    account.fetchNotifications.mockResolvedValue([
+      {
+        ...entry('3'),
+        kind: 'change',
+        aboutKind: 'rsvp',
+        aboutName: 'Night 3',
+        change: 'cancelled',
+      },
+    ])
+    await mountAt('/en/events')
+    await openMenu()
+
+    const link = document.body.querySelector('[data-testid="notification"]')!
+    expect(link.textContent).toContain('Cancelled')
+    expect(link.textContent).toContain('Night 3')
+  })
+
   it('opening an unread entry marks it read, and the count asked after the mark is lower', async () => {
     account.fetchUnreadCount.mockResolvedValueOnce(1).mockResolvedValue(0)
     account.fetchNotifications.mockResolvedValue([entry('1')])

@@ -10,6 +10,7 @@ const account = vi.hoisted(() => ({
   forgetPushSubscription: vi.fn<(endpoint: string) => Promise<void>>(),
   fetchFollows: vi.fn<() => Promise<{ notify?: string }[]>>(),
   setAllNotify: vi.fn<(notify: string) => Promise<number>>(),
+  setChangePush: vi.fn<(enabled: boolean) => Promise<void>>(),
 }))
 vi.mock('@/api/account', () => account)
 
@@ -74,6 +75,7 @@ beforeEach(() => {
   account.forgetPushSubscription.mockResolvedValue()
   account.fetchFollows.mockResolvedValue([])
   account.setAllNotify.mockResolvedValue(0)
+  account.setChangePush.mockResolvedValue()
 })
 afterEach(() => {
   wrapper?.unmount()
@@ -83,7 +85,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function mountSettings() {
+async function mountSettings(changePush = true) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -91,7 +93,7 @@ async function mountSettings() {
     ],
   })
   await router.push('/en/account')
-  wrapper = mount(NotificationSettings, { global: { plugins: [router] } })
+  wrapper = mount(NotificationSettings, { props: { changePush }, global: { plugins: [router] } })
   await flushPromises()
   return wrapper
 }
@@ -195,5 +197,31 @@ describe('NotificationSettings', () => {
     expect(registration.unregister).toHaveBeenCalled()
     expect(view.find('[role="alert"]').text()).toContain('did not work')
     expect(view.text()).toContain('off in this browser')
+  })
+
+  it('"Changes to my plans" shows the account\'s setting and saves a change', async () => {
+    browser()
+    const view = await mountSettings(false)
+    const box = view.get<HTMLInputElement>('[data-testid="change-push"]')
+    expect(box.element.checked).toBe(false)
+
+    await box.setValue(true)
+    await flushPromises()
+
+    expect(account.setChangePush).toHaveBeenCalledWith(true)
+    expect(box.element.checked).toBe(true)
+  })
+
+  it('"Changes to my plans" goes back and says so when the change is not saved', async () => {
+    browser()
+    account.setChangePush.mockRejectedValue(new Error('offline'))
+    const view = await mountSettings()
+    const box = view.get<HTMLInputElement>('[data-testid="change-push"]')
+
+    await box.setValue(false)
+    await flushPromises()
+
+    expect(box.element.checked).toBe(true)
+    expect(view.find('[role="alert"]').text()).toContain('did not work')
   })
 })

@@ -31,6 +31,7 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Account", description = "The signed-in visitor's account")
 class PushController(
     private val store: PushSubscriptionStore,
+    private val changes: PlanChangeStore,
     private val sender: ObjectProvider<PushSender>,
     private val endpoints: PushEndpoints,
     private val metrics: AccountMetrics,
@@ -62,6 +63,17 @@ class PushController(
     ): ResponseEntity<Unit> {
         store.unsubscribe(account.id, request.endpoint)
         record(PushAction.UNSUBSCRIBE)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PutMapping("/changes")
+    @Operation(summary = "Turns the account's pushes about changes to events it marked as interested or going on or off")
+    suspend fun changes(
+        @AuthenticationPrincipal account: Account,
+        @RequestBody request: ChangePushRequest
+    ): ResponseEntity<Unit> {
+        changes.setChangePush(account.id, request.enabled)
+        logger.info { "Push changes ${if (request.enabled) "on" else "off"}" }
         return ResponseEntity.noContent().build()
     }
 
@@ -117,6 +129,11 @@ data class PushSubscriptionRequest(
 data class PushKeys(
     val p256dh: String,
     val auth: String
+)
+
+/** "Changes to my plans" (#4045), for the account rather than the browser. */
+data class ChangePushRequest(
+    val enabled: Boolean
 )
 
 data class PushUnsubscribeRequest(

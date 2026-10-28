@@ -266,7 +266,8 @@ CREATE TABLE accounts.account (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     last_sign_in_at timestamp with time zone DEFAULT now() NOT NULL,
     deletion_warned_at timestamp with time zone,
-    passkey_user_handle bytea
+    passkey_user_handle bytea,
+    change_push boolean DEFAULT true NOT NULL
 );
 
 --
@@ -301,8 +302,11 @@ CREATE TABLE accounts.notification (
     about_id bigint NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     read_at timestamp with time zone,
-    CONSTRAINT notification_about_kind_check CHECK ((about_kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text]))),
-    CONSTRAINT notification_kind_check CHECK ((kind = 'new_date'::text))
+    change text,
+    CONSTRAINT notification_about_kind_check CHECK ((about_kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text, 'rsvp'::text]))),
+    CONSTRAINT notification_change_check CHECK ((change = ANY (ARRAY['cancelled'::text, 'postponed'::text, 'relocated'::text, 'date'::text, 'time'::text, 'venue'::text]))),
+    CONSTRAINT notification_change_kind_check CHECK (((kind = 'change'::text) = (change IS NOT NULL))),
+    CONSTRAINT notification_kind_check CHECK ((kind = ANY (ARRAY['new_date'::text, 'change'::text])))
 );
 
 --
@@ -354,6 +358,7 @@ CREATE TABLE accounts.passkey_challenge (
 CREATE TABLE accounts.push_cursor (
     id boolean DEFAULT true NOT NULL,
     sent_until timestamp with time zone DEFAULT now() NOT NULL,
+    changes_until timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT push_cursor_id_check CHECK (id)
 );
 

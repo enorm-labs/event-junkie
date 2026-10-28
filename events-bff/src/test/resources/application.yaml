@@ -84,6 +84,9 @@ app:
     new-dates-lag: PT15M
     # Long, so the scheduler never runs the job during a test that calls `run()` itself.
     new-dates-initial-delay: PT10M
+    changes-delay: PT10M
+    changes-lag: PT15M
+    changes-initial-delay: PT10M
   api:
     max-page-size: 100
     cache:

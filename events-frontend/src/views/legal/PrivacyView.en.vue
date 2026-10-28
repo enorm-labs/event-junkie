@@ -375,15 +375,19 @@ const { t } = useI18n()
       <p>
         <strong>What is new:</strong> when something you follow gets a new date, I store a note for
         your account: which event, which artist, venue or promoter it came from, when I made the
-        note and when you opened it. The bell in the header lists the newest 20 and counts those you
-        have not opened. Only you can see them. I delete each note after <strong>30 days</strong>,
-        read or not, and sooner if its event leaves the calendar.
+        note and when you opened it. When the venue marks an event you plan to go to as cancelled,
+        postponed or relocated, or changes its date, start or venue, I store a note too: which event
+        and what changed. The bell in the header lists the newest 20 and counts those you have not
+        opened. Only you can see them. I delete each note after <strong>30 days</strong>, read or
+        not, and sooner if its event leaves the calendar.
       </p>
       <p>
         <strong>Notifications:</strong> if you turn notifications on in a browser, I store that
         browser's subscription: an address at its push service and two keys, with the time you
         turned it on and when the last notification went out. The bell on an artist, a venue or a
-        promoter you follow decides what a notification is about: a new date of it. A notification
+        promoter you follow decides what a notification is about: a new date of it. Your plans add
+        one more: a change to an event you marked, as in "What is new". It is on until you turn off
+        "Changes to my plans" on your account page, which I store with your account. A notification
         carries a title, one line and a link, nothing else, and it is encrypted so that only your
         browser can read it. The subscription is deleted when you turn notifications off, when the
         push service reports it gone, and with your account.

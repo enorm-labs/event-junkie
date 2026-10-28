@@ -11,7 +11,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-/** One entry under the header's bell: a new date of something the account follows. */
+/** One entry under the header's bell: a new date of something the account follows, or a change to an event it marked. */
 data class Notification(
     val id: UUID,
     val kind: String,
@@ -20,6 +20,7 @@ data class Notification(
     val date: LocalDate,
     val aboutKind: String,
     val aboutName: String,
+    val change: String?,
     val createdAt: Instant,
     val readAt: Instant?
 )
@@ -30,7 +31,7 @@ data class RecordedNotifications(
     val accounts: Int
 )
 
-/** The rows of `accounts.notification` (V205, #4078). An account reads and changes only its own. */
+/** The rows of `accounts.notification` (V205, #4078). An account reads and changes only its own. [PlanChangeStore] writes the changes. */
 @Component
 class NotificationStore(
     private val db: DatabaseClient
@@ -77,7 +78,7 @@ class NotificationStore(
     ): List<Notification> =
         db
             .sql(
-                "SELECT n.id, n.kind, e.slug, e.title, e.event_date, n.about_kind, n.created_at, n.read_at, " +
+                "SELECT n.id, n.kind, e.slug, e.title, e.event_date, n.about_kind, n.change, n.created_at, n.read_at, " +
                     "COALESCE(a.name, p.name, v.name) AS about_name " +
                     "FROM accounts.notification n JOIN $EVENTS_SCHEMA.event e ON e.id = n.event_id " +
                     "LEFT JOIN $EVENTS_SCHEMA.artist a ON n.about_kind = 'artist' AND a.id = n.about_id " +
@@ -96,6 +97,7 @@ class NotificationStore(
                     aboutKind = row.required("about_kind", String::class.java),
                     // A merged-away artist or venue leaves the event's title to name it.
                     aboutName = row.get("about_name", String::class.java) ?: row.required("title", String::class.java),
+                    change = row.get("change", String::class.java),
                     createdAt = row.required("created_at", Instant::class.java),
                     readAt = row.get("read_at", Instant::class.java)
                 )

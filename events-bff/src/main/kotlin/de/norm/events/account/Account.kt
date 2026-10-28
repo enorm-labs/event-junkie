@@ -5,14 +5,15 @@ import java.util.UUID
 
 /**
  * A row of `accounts.account`. [locale] is the language of every mail to it, `de` or `en`. [lastSignInAt] is the last use: a sign-in,
- * or a session renewed at most daily (#3905).
+ * or a session renewed at most daily (#3905). [changePush] is the "Changes to my plans" switch (#4045).
  */
 data class Account(
     val id: UUID,
     val email: String,
     val locale: String,
     val createdAt: Instant,
-    val lastSignInAt: Instant
+    val lastSignInAt: Instant,
+    val changePush: Boolean = true
 ) {
     /** The address stays out of `toString`, so an account logged by accident does not carry it. */
     override fun toString(): String = "Account(id=$id)"
