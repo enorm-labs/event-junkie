@@ -13,9 +13,10 @@ them change things people depend on. If a task appears to require one, stop and 
 
 - **Show the plan first and check it against what you expect.** `tofu plan -destroy` before a destroy, `plan` before an apply. State the resource count you
   expect _before_ running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
-- **Apply the plan file you checked, never a second plan.** `tofu plan -out=tfplan <flags>`, then `tofu apply tfplan`. A plain `tofu apply` plans again,
-  and drops every flag the checked plan had. That is how a `-target`ed DNS change replaced both production nodes (#4125). Give an operator the same two
-  commands, never "now apply".
+- **Apply with `infra/apply.sh <stack> <flags>`, never a bare `tofu apply`.** It plans to a file, prints the counts and every replace or destroy, refuses
+  one of a server, volume, Primary IP or zone without `--allow-replace`, and applies exactly that file. A plain `tofu apply` plans again and drops every
+  flag the checked plan had. That is how a `-target`ed DNS change replaced both production nodes (#4125). Give an operator the `infra/apply.sh` line,
+  never "now apply".
 - **Never widen the instruction.** "Destroy staging" is not permission to destroy production, and an instruction given once does not carry to the next
   environment or the next session.
 

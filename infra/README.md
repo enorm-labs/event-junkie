@@ -134,8 +134,7 @@ Then:
 cd bootstrap
 cp terraform.tfvars.example terraform.tfvars   # then edit — your SSH public key goes here
 tofu init                                       # first contact with the S3 backend
-tofu plan                                       # expect 11 resources: 2 zones, 8 rrsets, 1 SSH key
-tofu apply
+../apply.sh bootstrap                           # expect 11 to add: 2 zones, 8 rrsets, 1 SSH key
 ```
 
 **Start with `bootstrap`, and note that it is free.** It creates only DNS zones and an SSH key, neither of which Hetzner charges for — so it is a zero-euro
@@ -148,7 +147,7 @@ Then the same in `environments/production` (or `staging`), filling `ssh_key_ids`
 
 ```sh
 ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"
+../../apply.sh production -var "admin_cidrs=$ADMIN"
 ```
 
 **Two addresses, not one, if you are behind a corporate HTTP proxy.** `ifconfig.me` reports the address the _proxy_ egresses from, because that request was
