@@ -1108,5 +1108,35 @@
       "record-only",
       "email"
     ]
+  },
+  {
+    "name": "ej-patch-state-missing",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The gateway has not reached a node's node_exporter on 9100 for 30 minutes, so the three patch rules cannot see that node. Usually `harden.sh` did not finish: look for `harden: done` in `/var/log/event-junkie/harden.log` on that node, and run `systemctl is-active prometheus-node-exporter`. Which node: the `node` label.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (node) (max_over_time(up{node=~\".+:9100\"}[30m])) == bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 30,
+      "frequency": 10,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
   }
 ]

@@ -31,6 +31,7 @@ it produces an alert that never fires rather than an error.
     account cleanup failing or stopped -> ej-account-cleanup-failing, ej-account-cleanup-stale (#4034)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
+    a node's patch state not read  -> ej-patch-state-missing       (#4141)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
     the rate limiter rejecting     -> ej-rate-limit-storm           (#1455)
     someone enumerating paths      -> ej-4xx-flood                  (#1455)
@@ -1130,6 +1131,27 @@ rule(
     stream_name="node_unattended_upgrades_last_run_age_seconds",
     period_minutes=60,
     frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# The three rules above read a series that only exists while node_exporter answers. A node
+# whose `harden.sh` stopped before the install has no series, and `bool` turns that into a
+# quiet 0 (#4141). `up` is written by the gateway for every listed target, reachable or not,
+# so a target that stays at 0 is a node nobody is watching. `node` is a stored label on `up`:
+# a filter to a value that matches nothing returns no series, per trap 3. A whole window at 0,
+# so a reboot does not fire it.
+rule(
+    "ej-patch-state-missing",
+    "The gateway has not reached a node's node_exporter on 9100 for 30 minutes, so the three "
+    "patch rules cannot see that node. Usually `harden.sh` did not finish: look for "
+    "`harden: done` in `/var/log/event-junkie/harden.log` on that node, and run "
+    "`systemctl is-active prometheus-node-exporter`. Which node: the `node` label.",
+    'sum(max by (node) (max_over_time(up{node=~".+:9100"}[30m])) == bool 0)',
+    ">",
+    0,
+    stream_name="up",
+    period_minutes=30,
+    frequency_minutes=10,
     silence_minutes=24 * 60,
 )
 

@@ -12,6 +12,7 @@ locals {
     # Runs before everything, on both roles: on a first apply cloud-init does not bring the private
     # network up. See the script.
     private-net = file("${local.cloud_init_dir}/private-net.sh")
+    step        = file("${local.cloud_init_dir}/step.sh")
     harden      = file("${local.cloud_init_dir}/harden.sh")
     wireguard   = file("${local.cloud_init_dir}/wireguard.sh")
     k3s         = file("${local.cloud_init_dir}/k3s.sh")
@@ -63,14 +64,20 @@ locals {
       content     = local.apt_lock_timeout
     },
     local.script_file["private-net"],
+    local.script_file.step,
   ]
 
   base_runcmd = [
     "install -d -m 0750 /opt/event-junkie",
     # First, on both roles: k3s registers with `--node-ip` and PostgreSQL binds the private address,
     # and neither exists until this has run.
-    "/opt/event-junkie/private-net.sh",
-    "/opt/event-junkie/harden.sh",
+    "/opt/event-junkie/step.sh private-net",
+    "/opt/event-junkie/step.sh harden",
+  ]
+
+  # Last on both roles: step.sh keeps going past a failed script, so this is what fails the boot.
+  final_runcmd = [
+    "/opt/event-junkie/step.sh --result",
   ]
 
   script_file = {
@@ -137,11 +144,12 @@ locals {
     runcmd = concat(
       local.base_runcmd,
       # WireGuard before k3s: it is how you get back in if anything after it fails.
-      ["/opt/event-junkie/wireguard.sh"],
+      ["/opt/event-junkie/step.sh wireguard"],
       # backups.sh immediately after postgres.sh, only where PostgreSQL runs: it turns on
       # `archive_mode`, which needs a restart, so the cluster has to exist first.
-      local.dedicated_postgres ? [] : ["/opt/event-junkie/postgres.sh", "/opt/event-junkie/backups.sh"],
-      ["/opt/event-junkie/k3s.sh"],
+      local.dedicated_postgres ? [] : ["/opt/event-junkie/step.sh postgres", "/opt/event-junkie/step.sh backups"],
+      ["/opt/event-junkie/step.sh k3s"],
+      local.final_runcmd,
     )
   })
 }
@@ -185,8 +193,8 @@ locals {
       local.script_file.backups,
     ])
     runcmd = concat(local.base_runcmd, [
-      "/opt/event-junkie/postgres.sh",
-      "/opt/event-junkie/backups.sh",
-    ])
+      "/opt/event-junkie/step.sh postgres",
+      "/opt/event-junkie/step.sh backups",
+    ], local.final_runcmd)
   })
 }

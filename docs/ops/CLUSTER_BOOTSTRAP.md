@@ -87,10 +87,13 @@ Give it **3–4 minutes** (207 s on the first real run). Port 22 is not open the
 
 ```sh
 IP=$(tofu output -raw k3s_ipv4)
-ssh -i ~/.ssh/id_ed25519_hetzner ops@"$IP" 'sudo tail -5 /var/log/cloud-init-output.log; systemctl is-active k3s postgresql wg-quick@wg0'
+ssh -i ~/.ssh/id_ed25519_hetzner ops@"$IP" 'sudo tail -5 /var/log/cloud-init-output.log; sudo tail -1 /var/log/event-junkie/harden.log; systemctl is-active k3s postgresql wg-quick@wg0 prometheus-node-exporter'
 ```
 
-Expect `cloud-init finished after …` and three × `active`. **Do not use `cloud-init status`** — see traps.
+Expect `boot: every step succeeded`, `cloud-init finished after …`, `harden: done` and four × `active`. **Do not use `cloud-init status`** — see traps.
+
+`boot: failed: harden` names each script that failed. The other scripts still ran, so the tunnel is usually up. Each script's output is in
+`/var/log/event-junkie/<name>.log`, and `harden.sh` names its failed line. Fix the cause, then run the script again by hand: every script here is idempotent.
 
 ## 4 · Collect the server's public key and write your client config
 
