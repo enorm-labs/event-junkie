@@ -3,6 +3,7 @@ package de.norm.events.scraper.cassiopeia
 import de.norm.events.common.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
@@ -202,16 +203,7 @@ class CassiopeiaOverviewPageScraper(
      */
     private fun parseImageUrl(item: Element): String? {
         val wrapper = item.selectFirst(".event-image-wrapper") ?: return null
-        val style = wrapper.attr("style")
-
-        // Primary: extract from CSS background-image property
-        val fromStyle =
-            style
-                .takeUnless { it.isBlank() || it.contains("background-image:none", ignoreCase = true) }
-                ?.let { IMAGE_URL_PATTERN.find(it)?.groupValues?.get(1) }
-                ?.replace("&quot;", "")
-                ?.replace("\"", "")
-                ?.takeIf { it.isNotBlank() }
+        val fromStyle = cssUrlValue(wrapper.attr("style"))
 
         // Fallback: look for an <img> element inside the wrapper
         val fromImg =
@@ -238,9 +230,6 @@ class CassiopeiaOverviewPageScraper(
 
         /** Regex to match numeric-only strings (day, month, year). */
         private val NUMERIC_PATTERN = Regex("""\d+""")
-
-        /** Regex to extract the URL from a CSS `background-image: url(...)` property. */
-        private val IMAGE_URL_PATTERN = Regex("""url\(([^)]+)\)""")
 
         /** Regex matching a Webflow CMS numeric ID suffix at the end of a slug. */
         private val CMS_NUMERIC_SUFFIX = Regex("""-\d{6,}$""")

@@ -6,6 +6,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -96,18 +97,9 @@ class QuasimodoOverviewPageScraper {
      * The poster from the card's `.event-image` CSS `background-image` — a 300×300 thumbnail here;
      * the detail page's full-size original replaces it at merge time.
      */
-    private fun parseBackgroundImage(card: Element): String? {
-        val style = card.attrAt(".event-image", "style") ?: return null
-        return BACKGROUND_IMAGE_PATTERN
-            .find(style)
-            ?.groupValues
-            ?.get(1)
-            ?.takeIf { it.startsWith("http") }
-    }
+    private fun parseBackgroundImage(card: Element): String? =
+        cssUrlValue(card.attrAt(".event-image", "style"), "background-image")?.takeIf { it.startsWith("http") }
 }
-
-/** The URL inside a CSS `background-image: url(...)` declaration, with or without quotes. */
-private val BACKGROUND_IMAGE_PATTERN = Regex("""background-image:\s*url\(['"]?([^'")]+)['"]?\)""", RegexOption.IGNORE_CASE)
 
 /** The separator the mobile date block puts between the date and the start time. */
 private const val DATE_TIME_SEPARATOR = " - "

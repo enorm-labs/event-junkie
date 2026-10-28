@@ -10,6 +10,7 @@ import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.isFestivalTitle
@@ -139,7 +140,7 @@ class KesselhausCalendarScraper(
             eventType = eventType,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
-            imageUrl = card.selectFirst(".section-cover [style*=background-image]")?.attr("style")?.let(::backgroundUrl),
+            imageUrl = card.selectFirst(".section-cover [style*=background-image]")?.attr("style")?.let { cssUrlValue(it, "background-image") },
             sourceUrl = "${baseUrl.substringBefore("/calendar")}/calendar/$id",
             sourceId = "${room.eventSource.sourceIdPrefix}$id",
             ticketUrl = tickets.firstNotNullOfOrNull { ticket -> ticket.stringOrNull("url")?.takeIf { it.startsWith("http") } },
@@ -215,8 +216,6 @@ class KesselhausCalendarScraper(
         } catch (_: DateTimeParseException) {
             null
         }
-
-    private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)
 
     /**
      * The calendar's prices. Each ticket entry has an amount `A` and a label `alt`, and the label is read when the amount is
@@ -312,7 +311,6 @@ class KesselhausCalendarScraper(
         /** An amount with cents in a ticket label that no currency follows; a whole number may be a date or a time. */
         private val BARE_AMOUNT = Regex("""(?<![\d.,])(\d+,\d{2})(?![\d.,]|\s*(?:€|eur))""", RegexOption.IGNORE_CASE)
 
-        private val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
         private val SUBTITLE_BILL = Regex("""^mit\s+(.+)""", RegexOption.IGNORE_CASE)
 
         /** One act and its unnamed guests, `Jonathan Blues Band & Gäste`; unsplit, because the act's own name can hold an `&`. */

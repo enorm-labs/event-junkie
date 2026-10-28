@@ -171,6 +171,23 @@ fun resolveUrl(
 }
 
 /**
+ * The URL inside a CSS `url(…)` value, with or without quotes. Without a [property] the first `url(…)` in [style] answers,
+ * whichever declaration carries it — a `background-image`, a `--bg` custom property. With one, only that property's value
+ * does, so a `--bg-mobil: url(…)` beside the `background-image` is never read whatever the order. `null` when [style] is
+ * absent, carries no such `url(…)`, or renders an empty `url()`.
+ */
+fun cssUrlValue(
+    style: String?,
+    property: String? = null
+): String? {
+    val pattern =
+        property?.let { Regex("""${Regex.escape(it)}\s*:\s*${CSS_URL_VALUE.pattern}""", RegexOption.IGNORE_CASE) } ?: CSS_URL_VALUE
+    return pattern.find(style.orEmpty())?.groupValues?.get(1)
+}
+
+private val CSS_URL_VALUE = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
+
+/**
  * Extracts the event slug from a Kulturhäuser-platform detail URL by stripping
  * the path [prefix] (default `/events/`) and any trailing slash.
  *

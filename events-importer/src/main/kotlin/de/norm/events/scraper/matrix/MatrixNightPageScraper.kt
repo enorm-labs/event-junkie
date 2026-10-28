@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
@@ -101,8 +102,7 @@ class MatrixNightPageScraper {
     ): String? =
         document
             .attrAt(".nd-hero-art", "style")
-            ?.let { BACKGROUND_URL.find(it)?.groupValues?.get(1) }
-            ?.trim('"', '\'')
+            ?.let { cssUrlValue(it, "background-image") }
             ?.let { resolveUrl(url, it) }
 
     private fun parseGenre(document: Document): String? =
@@ -150,8 +150,6 @@ class MatrixNightPageScraper {
 
         /** `24 Uhr` is midnight. */
         const val HOURS_PER_DAY = 24
-
-        val BACKGROUND_URL = Regex("""background-image:\s*url\(([^)]+)\)""")
 
         const val GENRE_SEPARATOR = "·"
 

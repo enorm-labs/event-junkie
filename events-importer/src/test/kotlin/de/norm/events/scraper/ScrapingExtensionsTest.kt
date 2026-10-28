@@ -343,4 +343,35 @@ class ScrapingExtensionsTest {
             el.select("h1").paragraphText() shouldBe null
         }
     }
+
+    @Nested
+    inner class CssUrlValue {
+        @Test
+        fun `reads the URL out of a background-image declaration`() {
+            cssUrlValue("background-image: url(https://x.test/a.png); background-size: cover;") shouldBe "https://x.test/a.png"
+        }
+
+        @Test
+        fun `reads the URL out of any other declaration, quoted either way`() {
+            cssUrlValue("""--bg: url('https://x.test/b.png')""") shouldBe "https://x.test/b.png"
+            cssUrlValue("""--bg: url("https://x.test/c.png")""") shouldBe "https://x.test/c.png"
+        }
+
+        @Test
+        fun `returns null without a url value, and for the empty one a template may render`() {
+            cssUrlValue("background-size: cover;") shouldBe null
+            cssUrlValue("background-image: url(); background-size: cover;") shouldBe null
+            cssUrlValue(null) shouldBe null
+        }
+
+        @Test
+        fun `reads only the named property's url, whatever the order`() {
+            val style = "--bg-mobil:url(/m.jpg); background-image:url(/d.jpg)"
+
+            cssUrlValue(style) shouldBe "/m.jpg"
+            cssUrlValue(style, "background-image") shouldBe "/d.jpg"
+            cssUrlValue("Background-Image: URL('/e.jpg')", "background-image") shouldBe "/e.jpg"
+            cssUrlValue("--bg: url(/f.jpg)", "background-image") shouldBe null
+        }
+    }
 }
