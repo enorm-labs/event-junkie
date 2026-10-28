@@ -8,6 +8,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
@@ -82,7 +83,8 @@ class ZitadelleOverviewPageScraper {
             eventType = EventType.CONCERT.name,
             eventDate = card.attrAt("time[datetime]", "datetime")?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
             startTime = parseTime(card.textAt(".cmf-time")),
-            imageUrl = parseBackgroundImageUrl(card.attrAt(".cmf-media", "style")),
+            // The listing carries the poster only as a `--bg: url('…')` custom property, never as an `<img>`.
+            imageUrl = cssUrlValue(card.attrAt(".cmf-media", "style")),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.ZITADELLE.sourceIdPrefix}$slug",
             status = parseCardStatus(card, badge),
@@ -107,15 +109,6 @@ class ZitadelleOverviewPageScraper {
             parseEventStatus(badge)
         }
 }
-
-/**
- * The poster URL out of an inline `style="--bg: url('…')"` custom property, the only place the
- * listing carries one. `null` when absent or without a `url(…)`.
- */
-internal fun parseBackgroundImageUrl(style: String?): String? = BACKGROUND_URL_PATTERN.find(style.orEmpty())?.groupValues?.get(1)
-
-/** The URL inside a CSS `url('…')` value, with or without quotes. */
-private val BACKGROUND_URL_PATTERN = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
 
 /** The `data-status` badge marking a sold-out date; captured as the flag, not as a status. */
 private const val SOLD_OUT_BADGE = "Ausverkauft"

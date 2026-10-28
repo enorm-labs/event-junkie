@@ -7,6 +7,7 @@ import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.commaListActs
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.mapSkippingFailures
@@ -95,7 +96,7 @@ class OrangerieOverviewPageScraper {
                 card
                     ?.selectFirst(".card-img[style]")
                     ?.attr("style")
-                    ?.let(::backgroundUrl)
+                    ?.let { cssUrlValue(it, "background-image") }
                     ?.let { resolveUrl(baseUrl, it) },
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ORANGERIE_NEUKOELLN.sourceIdPrefix}$date-${SlugGenerator.slugify(name)}",
@@ -128,14 +129,11 @@ class OrangerieOverviewPageScraper {
     /** A bilingual tag holds a `lang="de"` and a `lang="en"` span, which `text()` would run together. */
     private fun tagText(tag: Element): String = (tag.selectFirst("[lang=en]") ?: tag).text().trim()
 
-    private fun backgroundUrl(style: String): String? = BACKGROUND_URL.find(style)?.groupValues?.get(1)
-
     private companion object {
         const val ITEM_LIST = "ItemList"
         const val CONCERT_TAG = "Concert"
         const val FOOD_TAG = "tag-food"
         const val LIVE_SERIES = "Parkside Sessions"
         const val WITH = " w/ "
-        val BACKGROUND_URL = Regex("""background-image:url\(([^)]+)\)""")
     }
 }

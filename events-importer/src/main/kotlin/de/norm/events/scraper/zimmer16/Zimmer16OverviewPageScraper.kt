@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.forChildrenIf
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.mapSkippingFailures
@@ -70,7 +71,7 @@ class Zimmer16OverviewPageScraper {
             eventType = eventType,
             typeIsFallback = true,
             eventDate = date,
-            imageUrl = card.selectFirst(".ytp-event-card-image[style]")?.attr("style")?.let { BACKGROUND_URL.find(it)?.groupValues?.get(1) },
+            imageUrl = card.selectFirst(".ytp-event-card-image[style]")?.attr("style")?.let { cssUrlValue(it, "background-image") },
             sourceUrl = url,
             ticketUrl = url,
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
@@ -106,7 +107,6 @@ class Zimmer16OverviewPageScraper {
         val SUPPORT = Regex("""\s*\(support:\s*([^)]+)\)""", RegexOption.IGNORE_CASE)
         val TAGLINE = Regex("""[–—:"„“”]| - |&|\+\+""")
         val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
-        val BACKGROUND_URL = Regex("""background-image:\s*url\('?([^')]+)'?\)""")
 
         /** The open stage: live music with no billed act, so a concert that names nobody (#2992). */
         const val OPEN_STAGE = "offene bühne"

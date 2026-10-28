@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -326,12 +327,7 @@ private fun tierFigures(line: String): List<BigDecimal> =
  * The poster out of an article's inline `background-image: url(…)`, the only place the listing
  * carries one — the template renders no `<img>` for an event.
  */
-internal fun parseBackgroundImageUrl(style: String?): String? =
-    BACKGROUND_URL_PATTERN
-        .find(style.orEmpty())
-        ?.groupValues
-        ?.get(1)
-        ?.takeIf { it.startsWith("http") }
+internal fun parseBackgroundImageUrl(style: String?): String? = cssUrlValue(style)?.takeIf { it.startsWith("http") }
 
 /** The venue's own "upcoming" list, as opposed to the identically templated past one. */
 private const val UPCOMING_MODULE = ".et_pb_events_0"
@@ -410,9 +406,6 @@ private val DONATION = Regex("""\bdonation\b""", RegexOption.IGNORE_CASE)
 
 /** A Resident Advisor artist profile, the page's one unambiguous artist marker. */
 private val RESIDENT_ADVISOR_PROFILE = Regex("""^https?://(?:www\.)?ra\.co/(?:dj|artist)/""", RegexOption.IGNORE_CASE)
-
-/** The URL inside a CSS `url(…)` value, with or without quotes. */
-private val BACKGROUND_URL_PATTERN = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
 
 /** The `feat.` / `ft.` marker that ends a night's name and starts its acts. */
 private val FEATURED_FRAME = Regex("""\s(?:feat\.?|ft\.)\s+""", RegexOption.IGNORE_CASE)
