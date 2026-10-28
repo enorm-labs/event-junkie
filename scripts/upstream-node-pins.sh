@@ -15,8 +15,8 @@
 # failure this exists to close.
 #
 # **Both versions are read out of the Terraform file, never restated here**, and an extraction that
-# matches nothing is an error. **A bump is not routine**: both values feed `user_data`, which is
-# force-new, and both also install in place on a running node (docs/ops/K3S_UPGRADE.md, BACKUPS.md
+# matches nothing is an error. **A bump is not routine**: both values feed `user_data`, which reaches a
+# node only at a rebuild, and both also install in place on a running node (docs/ops/K3S_UPGRADE.md, BACKUPS.md
 # §8). A person decides; nothing here opens a pull request. **`walg_checksums` moves with
 # `walg_version` or the node does not boot** — backups.sh verifies the tarball against the pinned
 # SHA-256 — so this prints the two replacement checksums.

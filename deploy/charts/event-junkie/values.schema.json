@@ -433,7 +433,7 @@
           "type": "boolean"
         },
         "httpsRedirect": {
-          "description": "Sends plain HTTP on ingress.host to HTTPS with a 301, through a Traefik Middleware on the app Ingress only (#1891). Applies only with tls.enabled.",
+          "description": "Sends plain HTTP on ingress.host to HTTPS with a 308, through a Traefik Middleware on the app Ingress only (#1891). Applies only with tls.enabled.",
           "type": "boolean"
         },
         "tls": {

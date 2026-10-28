@@ -658,8 +658,8 @@ DNS first means Traefik answers 404 for minutes, until Flux reconciles the new h
 names a host that does not resolve, and no certificate can issue until DNS propagates. Do not publish both names for
 one apply. `variables.tf` rejects it, because a record that could be temporary becomes permanent.
 
-**Target the records, and read the plan.** `user_data` on both production nodes differs from the code, so an untargeted
-plan replaces them (`infra/AGENTS.md`). `-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans
+**Target the records, and read the plan.** `servers.tf` ignores `user_data` drift (#4129), so an untargeted plan no
+longer replaces the nodes. Target anyway: `-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans
 DNS alone. Going live adds four A records and removes `prod-check`. Going dark does the opposite. Stop if a server
 appears. Then reconcile rather than wait for the poll:
 
@@ -686,7 +686,7 @@ You end up here for four reasons, and three of them are not optional:
 
 |                                 |                                                                          |
 | ------------------------------- | ------------------------------------------------------------------------ |
-| Any edit under `cloud-init/`    | `user_data` is a force-new attribute                                     |
+| A `cloud-init/` change to take  | `-replace` boots the current scripts; an apply alone delivers none       |
 | **Changing architecture**       | `cpx*` ↔ `cax*` — see below                                              |
 | The destroy/apply cycle         | [#424](https://github.com/enorm-labs/event-junkie/issues/424)'s last box |
 | Something is broken past fixing | The reason a node is meant to be disposable                              |
@@ -730,11 +730,12 @@ The production rebuild in #4125 met each of these. Read them before the first co
 
 ### Applying a `cloud-init` fix without rebuilding
 
-**A change under `cloud-init/` reaches a running node only at its next rebuild.** `user_data` is a force-new attribute, so the corrected script is what the
-_next_ node boots with. A node that is up keeps the old behaviour until then.
+**A change under `cloud-init/` reaches a running node only by hand or at its next rebuild.** `servers.tf` ignores `user_data` (#4129), so the corrected
+script is what the _next_ node boots with. A node that is up keeps the old behaviour until then. Every plan warns `booted another user_data` for it.
 
 For a defect that is already causing harm, do both. Correct the script, and apply the same change by hand to every node that runs today. The two must not
-drift. A hand-applied change that the script does not also make is lost at the next rebuild, and nothing reports it.
+drift. A hand-applied change that the script does not also make is lost at the next rebuild. The plan warning does not report it, because it compares the
+script with what the node booted, not with what runs.
 
 This is the sequence for the PostgreSQL bind fix ([#813](https://github.com/enorm-labs/event-junkie/issues/813)). Run it on each node that runs PostgreSQL.
 That is the k3s node on staging, and `10.0.1.20` on production:
@@ -793,7 +794,7 @@ repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-r
 
 **Each Mac is its own peer, with its own keypair and its own address.** The node sends a key's traffic to the address that used the key last. Two Macs with
 one key take the tunnel from each other, and neither one sees an error. The peers live in `wireguard_peers`, which is part of `user_data`. So add a peer by
-hand on the running node, and also in `terraform.tfvars`. Do not apply to add a peer, because an apply rebuilds the node.
+hand on the running node, and also in `terraform.tfvars`. An apply does not add it, because `servers.tf` ignores `user_data`.
 
 Use the next free address: `10.10.1.3`, `10.10.1.4` and so on for staging, `10.10.0.x` for production. Do these steps once for each environment. The
 commands show staging.
@@ -933,9 +934,9 @@ the `wireguard_peers` entry stay valid.
 cd infra/environments/staging
 ../../check-capacity.sh --probe staging   # ordering is the only real test — see the script's header
 
-# 1. Edit main.tf if the point is to change hardware. Any edit under cloud-init/ already forces
-#    replacement on its own; if nothing has drifted and you want one anyway, that is what
-#    -replace='module.environment.hcloud_server.k3s' is for. Do NOT reach for `tofu destroy`.
+# 1. Edit main.tf if the point is to change hardware. A cloud-init/ edit does not replace the node
+#    (servers.tf ignores user_data): add -replace='module.environment.hcloud_server.k3s' to the
+#    plan below. Do NOT reach for `tofu destroy`.
 
 # 2. The tunnel dies with the node, so the firewall has to admit you directly for the duration.
 #    -4 ON BOTH: unforced, `curl https://ifconfig.me` can return an IPv6 address, which makes the
@@ -945,7 +946,7 @@ ADMIN="[\"$(curl -4 -s https://ifconfig.me)/32\",\"$(dig -4 +short myip.opendns.
 # 3. PLAN FIRST, AND READ IT. Expect the server and hcloud_volume_attachment.postgres replaced,
 #    the firewall changed in place, and NOTHING ELSE. `hcloud_volume.postgres` must not appear in
 #    the plan at all — if it does, stop. That is the check this whole runbook exists for.
-tofu plan -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan   # Plan: 2 to add, 1 to change, 2 to destroy
+tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan   # Plan: 2 to add, 1 to change, 2 to destroy
 
 # 4. A SAVED PLAN RE-READS terraform.tfvars AND REFUSES IF IT DISAGREES — "Mismatch between input
 #    and plan variable value", because admin_cidrs is [] there and the plan was built with -var.
@@ -961,7 +962,7 @@ Then **§3 onward**, in full: cloud-init, the _new_ server key, your client conf
 Two things are cheaper the second time. Nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
 publishes **multi-arch** images. So the chart, its tags and its digests-per-platform need no attention at all, which is what makes the architecture reversible.
 
-### Production has two nodes, and you cannot rebuild one of them
+### Production has two nodes
 
 Everything above is written for staging's single node. Production runs PostgreSQL on its own machine,
 and that changes three things.
@@ -970,8 +971,9 @@ and that changes three things.
 (#460). A `tofu destroy` still loses it, because the provider lifts its own locks. Restore from the
 bucket is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md). The drill passes on both clusters.
 
-**Which node drifts is checkable without a credential.** Each node keeps its scripts at
-`/opt/event-junkie/`. Compare them against the repository:
+**Which node drifts is in every plan.** The `user_data_drift` check warns once for each node that booted
+another `user_data`. Without a credential, compare the scripts each node keeps at `/opt/event-junkie/`
+against the repository:
 
 ```sh
 shasum -a 256 infra/modules/environment/cloud-init/*.sh
@@ -981,30 +983,28 @@ ssh -J ops@10.10.0.1 ops@10.0.1.20 "sudo sh -c 'sha256sum /opt/event-junkie/*.sh
 The directory is `0750` and owned by root, so the glob must expand inside the root shell. A plain
 `sudo sha256sum /opt/event-junkie/*.sh` passes the pattern through unexpanded.
 
-#### You cannot replace the database node on its own
+#### Replacing the database node on its own is expected to work, and is unproven
 
-This looks like a job for `-target` and is not. Two edges in the graph prevent it, and both are easy
-to miss because neither is visible in the file you are editing.
+**`-target` is not the way.** `hcloud_volume_attachment.postgres` names both servers in one ternary.
+OpenTofu builds the graph from the expression, not from the branch it evaluates. So `-target` on the
+attachment pulls the k3s node in as a dependency.
 
-**`hcloud_volume_attachment.postgres` names both servers in one ternary.** OpenTofu builds the graph
-from the expression, not from the branch it evaluates. So the attachment depends on the k3s node too,
-and `-target` pulls in a target's dependencies:
+**`-replace` on the database node alone should be.** Before #4129, the k3s node's `user_data` drift
+replaced it in that same plan. `servers.tf` now ignores `user_data`, so the k3s node has nothing to
+change:
 
-```
-tofu plan -target=module.environment.hcloud_volume_attachment.postgres \
-          -target=module.environment.hcloud_server.postgres
-  ->  Plan: 3 to add, 0 to change, 3 to destroy
-      module.environment.hcloud_server.k3s must be replaced
+```sh
+tofu plan -replace='module.environment.hcloud_server.postgres[0]' -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan
 ```
 
-Dropping the attachment from the target list does not help. The volume detaches when its server is
-deleted, and the replacement boots with no data device.
+Expect `2 to add, 0 to change, 2 to destroy`: the database node and its volume attachment. This plan is
+not tested yet. **Stop if `hcloud_server.k3s` appears in the plan.**
 
 **The address records read the Primary IPs, not the k3s node** (#883), so `-target=hcloud_zone_rrset.address` —
 the go-live flip — is a DNS-only apply. An output that read a `hcloud_server.k3s` attribute instead would pull the
 node into that plan. **Read the plan and confirm that before you trust it.**
 
-#### So patch the running node instead
+#### Or patch the running node instead
 
 For a defect that is already causing harm, use § Applying a `cloud-init` fix without rebuilding above.
 Correct the script and apply the same change by hand. The repository stays right, so a later rebuild
@@ -1012,6 +1012,7 @@ converges. #813 reached production this way.
 
 #### When you do rebuild both
 
+Name both servers: `-replace=module.environment.hcloud_server.k3s -replace='module.environment.hcloud_server.postgres[0]'`.
 Expect `4 to add, 0 to change, 4 to destroy`: both servers and the volume attachment, each replaced.
 Stop if `hcloud_volume.postgres`, a `hcloud_primary_ip`, the network or the firewall appears.
 
@@ -1048,8 +1049,8 @@ ssh ops@<tunnel-address> "sudo -u postgres psql -c \
 # 2. Note what the volume is and where it is mounted, so step 5 compares against something.
 ssh ops@<tunnel-address> "findmnt /var/lib/postgresql; ls /var/lib/postgresql/18/main/PG_VERSION"
 
-# 3. Force a replacement of the server, and nothing else. Any cloud-init edit does it; so does
-#    -replace, which is the honest way to do it without a spurious diff.
+# 3. Force a replacement of the server, and nothing else. -replace is the only way: servers.tf
+#    ignores user_data, so a cloud-init edit does not do it.
 cd infra/environments/staging
 ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
 tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN"

@@ -59,8 +59,8 @@ cohesive responsibility is finished, and splitting it produces churn and a worse
   how a load-bearing _why_ leaves without anyone reading it.
 - **A deliberate, documented decision.** The ADRs and the scrapers' KDoc record why things are the shape they are. Something an ADR decided is not a smell; if
   the ADR is wrong, that is an issue, said out loud and separately.
-- **Anything under `infra/` that reaches `user_data`.** `walg_version` and `k3s_version` are force-new attributes — editing what feeds `bootstrap.env` plans a
-  node replacement, production included. That is not a refactor whatever the diff looks like.
+- **Anything under `infra/` that reaches `user_data`.** `walg_version` and `k3s_version` feed it — editing what feeds `bootstrap.env` changes what the next
+  rebuild boots, production included, and makes every plan warn about drift. That is not a refactor whatever the diff looks like.
 
 ## The one that costs an afternoon
 

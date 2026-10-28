@@ -218,7 +218,7 @@ tests:
 
   # --- plain HTTP to HTTPS (#1891) ---------------------------------------------------------------
   # Per Ingress and not global, so cert-manager's HTTP-01 solver still answers on port 80. First in the
-  # list, so a plain-HTTP request gets its 301 before any other middleware runs.
+  # list, so a plain-HTTP request gets its 308 before any other middleware runs.
   - it: redirects plain HTTP to HTTPS with a permanent redirect when TLS is on
     set:
       database.host: "10.0.1.2"

@@ -71,7 +71,7 @@ jobs:
             // `production` earns the badge on the front page; `url` is the "View deployment" link. An unknown env
             // is a failure, not a default. **Staging has no url on purpose**: it answers only through the tunnel,
             // and a link that resolves for nobody reads as a broken deploy. Production's is the chart's
-            // `ingress.host`; `event-junkie.com` is only a 301.
+            // `ingress.host`; `event-junkie.com` is only a 308.
             const ENVIRONMENTS = {
               staging: { production: false, url: null },
               production: { production: true, url: 'https://event-junkie.de' },

@@ -142,7 +142,7 @@ is the map and the traps.
   Its daily `dispatch-records` job (#1003) opens an issue per environment when the newest green publish older than two hours has no deployment record after
   it, and closes it once one appears: the effect of a `github-dispatch` PAT that cannot write, which Actions cannot probe because it does not hold the PAT.
 - `node-pin-reminder.yml` (#1068) — when `k3s_version` or `walg_version` falls behind upstream. **Refuses to open a PR, load-bearing**: both pins feed
-  `user_data`, so a bump replaces the node, and `walg_checksums` must move with the version or `backups.sh` aborts the boot. `scripts/upstream-node-pins.sh`
+  `user_data`, so a merged bump changes nothing on a running node until its next rebuild, and `walg_checksums` must move with the version or `backups.sh` aborts the boot. `scripts/upstream-node-pins.sh`
   holds the comparison (exit 0 current, 1 behind, 2 could not check — only 2 fails the job); titles carry the pinned version so upstream moving cannot pile
   up issues. What to do with the issue is `docs/ops/K3S_UPGRADE.md`, and it is not a rebuild.
 

@@ -26,12 +26,12 @@ metadata:
        silently drops every middleware, which looks like a working deployment. Order matters: the
        rate limit comes after the header middlewares so a 429 still carries the security headers.
 
-       Only on this Ingress, not the redirect one, which answers every request with a 301 to the
-       host that carries the headers. The exception: a 301 carries no HSTS, so `event-junkie.com`
+       Only on this Ingress, not the redirect one, which answers every request with a 308 to the
+       host that carries the headers. The exception: a 308 carries no HSTS, so `event-junkie.com`
        is not pinned to HTTPS, only `event-junkie.de` is. Pinning a host we merely redirect from
        would be a long-lived promise about a name we do not serve. */}}
     {{- $middlewares := list }}
-    {{- /* First, so plain HTTP gets its 301 before any other middleware runs. On HTTPS it is a no-op. */}}
+    {{- /* First, so plain HTTP gets its 308 before any other middleware runs. On HTTPS it is a no-op. */}}
     {{- if and .Values.ingress.tls.enabled .Values.ingress.httpsRedirect }}
     {{- $middlewares = append $middlewares (printf "%s-%s-https-redirect@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- end }}

@@ -3,8 +3,9 @@
 # declares them, Renovate's allow-list excludes them (ADR-024), and k3s is not apt-managed, so a k3s
 # security release went unnoticed by every mechanism (#1068).
 #
-# **A reminder rather than a bot** because both values feed `user_data`, which is force-new: a
-# routine-looking patch pull request that means "rebuild production" is worse than the drift. For
+# **A reminder rather than a bot** because both values feed `user_data`, which no apply delivers
+# (servers.tf ignores it, #4129): a green patch pull request that changes nothing on the node is
+# worse than the drift. For
 # wal-g, `walg_checksums` must move with the version or `backups.sh` aborts the boot, and no updater
 # can compute it — such a pull request would be green and break the next rebuild.
 #
@@ -74,13 +75,12 @@ jobs:
             const blob = `https://github.com/${owner}/${repo}/blob/main`;
             const variables = 'infra/modules/environment/variables.tf';
 
-            // WHAT MERGING MEANS, in every body this opens: `user_data` is force-new, so either edit destroys and
-            // recreates the server.
+            // WHAT MERGING MEANS, in every body this opens: nothing on the node until its next rebuild.
             const rebuild = [
               '## Not a routine version bump',
               '',
-              '`user_data` is a force-new attribute in the Hetzner provider, and both pins feed cloud-init, ' +
-                'so the OpenTofu plan says **destroy and recreate the server**. A rebuild loses the k3s cluster, ' +
+              'Both pins feed cloud-init, and `servers.tf` ignores `user_data` after creation, ' +
+                'so merging a bump **changes nothing on the running node**. Only a rebuild boots it, and a rebuild loses the k3s cluster, ' +
                 'Flux, the six hand-made Secrets, `/etc/wal-g/credentials.env` and OpenObserve\'s dashboards.',
               '',
               `**Take it in place instead.** [\`K3S_UPGRADE.md\`](${blob}/docs/ops/K3S_UPGRADE.md) ` +

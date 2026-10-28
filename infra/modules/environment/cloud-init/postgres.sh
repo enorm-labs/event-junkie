@@ -5,8 +5,8 @@
 # application's lifecycle (#261), and `wal-g` is in backups.sh (#270) because `archive_mode`
 # needs a restart, so a cluster that already exists.
 #
-# THE VOLUME IS THE POINT (#460). `user_data` is a force-new attribute, so any edit under
-# cloud-init/ rebuilds the node. This script adopts the cluster on the volume and never re-creates
+# THE VOLUME IS THE POINT (#460). Nodes are disposable: `-replace` rebuilds one from the current
+# cloud-init/. This script adopts the cluster on the volume and never re-creates
 # it: there is no `mkfs` here at all (the provider formats once, `format = "ext4"` in volume.tf),
 # the seed step copies only into a volume with no cluster, and a cluster of another major version
 # stops the boot. The package installs first and creates its cluster on the local disk, so

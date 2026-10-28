@@ -198,3 +198,18 @@ locals {
     ], local.final_runcmd)
   })
 }
+
+# What the provider keeps in state for `user_data`: base64 of the raw SHA-1, not the script
+# (hcloud's `userDataHashSum`). HCL has only the hex digest, so this re-encodes it, three bytes at
+# a time. servers.tf compares it with what each node booted (#4129).
+locals {
+  base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  user_data_hash = { for name, user_data in { k3s = local.k3s_user_data, postgres = local.postgres_user_data } :
+    name => "${substr(join("", [
+      for i in range(7) : join("", [
+        for shift in [262144, 4096, 64, 1] :
+        substr(local.base64_alphabet, floor(parseint(substr("${sha1(user_data)}00", i * 6, 6), 16) / shift) % 64, 1)
+      ])
+    ]), 0, 27)}="
+  }
+}

@@ -105,7 +105,7 @@ resource "hcloud_zone_rrset" "address" {
 }
 
 # ---------------------------------------------------------------------------
-# The redirect domains. `event-junkie.com` and `eventjunkie.de` serve nothing (the chart 301s it, ADR-014) but must
+# The redirect domains. `event-junkie.com` and `eventjunkie.de` serve nothing (the chart 308s it, ADR-014) but must
 # resolve: production solves HTTP-01 over the name being certified, and a domain that answers
 # nothing leaves a Certificate stuck in pending with every other object green (#634). `www` is
 # here because it is redirected at Traefik, not in DNS. No `prod-check` equivalent: a rehearsal

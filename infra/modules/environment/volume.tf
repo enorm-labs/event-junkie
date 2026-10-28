@@ -1,6 +1,6 @@
 # PGDATA lives here so the database outlives the node (#460). Declared standalone, `location`
 # and never `server_id`, and attached separately: nothing about the volume references a server, so
-# no edit to a server can plan to replace it, and `user_data` is a force-new attribute. Volumes
+# replacing a server never plans to replace it. Volumes
 # are location-bound like the Primary IPs: moving an environment means dealing with the volume
 # first.
 resource "hcloud_volume" "postgres" {

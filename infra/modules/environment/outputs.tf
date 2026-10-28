@@ -1,7 +1,7 @@
 # These read the Primary IPs and not `hcloud_server.k3s` (#883): reading the address off the
 # server made every consumer depend on the server, so `tofu apply -target=hcloud_zone_rrset.address`,
-# meant to be the whole of a go-live, pulled both nodes into the plan and replaced them on any
-# pending `user_data` drift. The graph is built from the expression, not the value.
+# meant to be the whole of a go-live, pulled both nodes into the plan along with any change
+# pending on them. The graph is built from the expression, not the value.
 
 output "k3s_ipv4" {
   description = "Public IPv4 of the k3s node. The A record's value, and the SSH target for the very first login."

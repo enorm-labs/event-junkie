@@ -26,8 +26,9 @@ cd infra && ./check-capacity.sh --probe staging   # orders a server and deletes 
 > **`plan`, `apply`, `destroy` and `import` are not on that list.** They reach live servers that people depend on.
 > [`AGENTS.md`](AGENTS.md) next to this file opens with that rule; read it before changing anything here.
 
-**The one that will bite:** `user_data` is a force-new attribute, so **any** edit under `modules/environment/cloud-init/` replaces the node. That is survivable
-— `PGDATA` is on a volume and the Primary IPs have `auto_delete = false` — but it is a rebuild, and the runbook for it is
+**The one that will bite:** an edit under `modules/environment/cloud-init/` does **not** reach a running node. `servers.tf` ignores `user_data` (#4129), so the
+plan stays quiet about the servers and warns `booted another user_data` instead. The fix goes in by hand, or with a rebuild by `-replace`. A rebuild is
+survivable — `PGDATA` is on a volume and the Primary IPs have `auto_delete = false` — and the runbook for it is
 [CLUSTER_BOOTSTRAP.md §Rebuilding a node](../docs/ops/CLUSTER_BOOTSTRAP.md). **Never `tofu destroy` to achieve one**: it takes the volume, and the database
 with it.
 
@@ -211,8 +212,8 @@ export fails loudly, merged means the safety rests entirely on `--context`.
 
 ### Why the database is on a volume, and what that does and does not buy
 
-The nodes here are meant to be disposable, and the configuration makes them so: `user_data` is a force-new attribute, so **every** edit under `cloud-init/`
-replaces the node. That is the property the design wants. It is also, until #460, the property that destroyed the database each time it was exercised.
+The nodes here are meant to be disposable, and the configuration makes them so: `tofu apply -replace` boots a fresh node from the current `cloud-init/`.
+That is the property the design wants. It is also, until #460, the property that destroyed the database each time it was exercised.
 
 So `PGDATA` sits on an `hcloud_volume` mounted at `/var/lib/postgresql`, and the volume is declared **standalone** — `location`, never `server_id` — with a
 separate `hcloud_volume_attachment`. Both forms create the same two objects; this one states the lifetimes. Nothing about the volume references a server, so no
@@ -412,8 +413,8 @@ deliberately the only such lock in the repository: `prevent_destroy` cannot be m
 config, and a safety rail people routinely edit around is worse than none. The zone earns it because destroying it is the one action here that can take the
 domain off the internet entirely.
 
-**Editing anything under `cloud-init/` replaces the node.** `user_data` is a force-new attribute. Correct for disposable nodes, and worth knowing before a
-one-word comment fix rebuilds production. `tofu plan` says so in red.
+**Editing anything under `cloud-init/` does not replace the node.** `user_data` is force-new in the provider and ignored in `servers.tf` (#4129), because a
+DNS apply once rebuilt production through it. Every plan warns which node booted older scripts. Apply the fix by hand, or rebuild with `-replace`.
 
 **`cloud-init status` reports `error` on a perfectly good node, and it is not ours.** Observed on the first real boot, 2026-08-13:
 
@@ -466,7 +467,7 @@ exist because the failure they prevent is a node reachable only through the brow
 | Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
 | Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |
 | A `staging` address record                         | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/ops/PLATFORM_SETUP.md)                                                                 |
-| A 301 from a redirect domain                       | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
+| A 308 from a redirect domain                       | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
 
 ## Local checks
 

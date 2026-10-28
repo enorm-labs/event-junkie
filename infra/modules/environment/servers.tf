@@ -20,8 +20,10 @@ resource "hcloud_primary_ip" "k3s_ipv6" {
   labels            = local.labels
 }
 
-# `user_data` forces replacement, so an edit under cloud-init/ rebuilds the node, production
-# included. `tofu plan` says so in red; read it before typing yes.
+# `user_data` is force-new in the provider, and ignored here: an edit under cloud-init/ replaced
+# both production nodes as a side effect of a DNS apply (#4129). A rebuild is now asked for by name,
+# `tofu apply -replace=module.environment.hcloud_server.k3s`, and boots the current cloud-init/.
+# The check at the end of this file keeps the drift visible.
 resource "hcloud_server" "k3s" {
   name         = "${var.environment}-k3s"
   server_type  = var.k3s_server_type
@@ -55,7 +57,7 @@ resource "hcloud_server" "k3s" {
     # `ssh_keys` cannot be updated in place. Injected into root at creation and worthless once
     # harden.sh disables root login minutes later, so rebuilding production to add a laptop would be a
     # pure loss; day-to-day access is the `ops` user and the tunnel.
-    ignore_changes = [ssh_keys]
+    ignore_changes = [ssh_keys, user_data]
   }
 }
 
@@ -116,6 +118,21 @@ resource "hcloud_server" "postgres" {
   }
 
   lifecycle {
-    ignore_changes = [ssh_keys]
+    ignore_changes = [ssh_keys, user_data]
+  }
+}
+
+# A warning, never a failure: a node that booted older cloud-init/ is drift to fix by hand or by
+# -replace (CLUSTER_BOOTSTRAP.md § Applying a `cloud-init` fix without rebuilding), not a reason
+# to block an unrelated apply.
+check "user_data_drift" {
+  assert {
+    condition     = hcloud_server.k3s.user_data == local.user_data_hash.k3s
+    error_message = "${hcloud_server.k3s.name} booted another user_data than cloud-init/ renders. Apply the fix by hand, or rebuild with -replace=module.environment.hcloud_server.k3s."
+  }
+
+  assert {
+    condition     = !local.dedicated_postgres || one(hcloud_server.postgres[*].user_data) == local.user_data_hash.postgres
+    error_message = "${var.environment}-postgres booted another user_data than cloud-init/ renders. Apply the fix by hand, or rebuild with -replace='module.environment.hcloud_server.postgres[0]'."
   }
 }

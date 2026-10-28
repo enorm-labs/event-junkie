@@ -7,7 +7,7 @@
    What each one buys:
 
    - **HSTS** is the only one that changes what an attacker can do: without it the first request
-     of a session is plaintext and strippable. A 301 is obeyed only after the plaintext request was
+     of a session is plaintext and strippable. A 308 is obeyed only after the plaintext request was
      made; HSTS is what makes the redirect Ingress unnecessary after the first visit.
    - **X-Content-Type-Options: nosniff** — the BFF serves JSON; a sniffed JSON response rendered as
      HTML is the shape of the attack.
