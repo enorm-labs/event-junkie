@@ -11,13 +11,15 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Pushes new dates to the browsers of accounts that follow an artist, venue or promoter with the bell on (#3894,
- * ADR-055). New is `events.event.created_at`, which an update keeps, past a cursor that each run moves.
+ * Announces new dates of what accounts follow: a notification under the header's bell for every follow (#4078), and a
+ * push to the browsers of accounts that follow with the bell on (#3894, ADR-055). New is `events.event.created_at`,
+ * which an update keeps, past a cursor that each run moves. The cursor moves also where no push is configured.
  *
  * Every replica runs it, and [PushSubscriptionStore.claimWindow] hands each window to one of them, so a date goes out
  * once. A window is claimed before it is sent, so a run that fails halfway loses the rest of its window rather than
@@ -31,6 +33,8 @@ private val logger = KotlinLogging.logger {}
 @Component
 class NewDatesJob(
     private val store: PushSubscriptionStore,
+    private val notifications: NotificationStore,
+    private val metrics: NotificationMetrics,
     private val sender: ObjectProvider<PushSender>,
     private val clock: Clock,
     @Value("\${app.push.new-dates-lag}") private val lag: Duration
@@ -38,7 +42,6 @@ class NewDatesJob(
     @Scheduled(fixedDelayString = "\${app.push.new-dates-delay}", initialDelayString = "\${app.push.new-dates-initial-delay}")
     @Suppress("TooGenericExceptionCaught") // Any failure ends this run with a WARN; the next run claims the next window.
     suspend fun run() {
-        val push = sender.ifAvailable ?: return
         try {
             val upTo = clock.instant().minus(lag)
             val from = store.claimWindow(upTo)
@@ -46,7 +49,10 @@ class NewDatesJob(
                 logger.debug { "New-dates push: the window up to $upTo is claimed already" }
                 return
             }
-            val dates = store.newDates(from, upTo, LocalDate.now(clock.withZone(BERLIN)))
+            val today = LocalDate.now(clock.withZone(BERLIN))
+            notify(from, upTo, today)
+            val push = sender.ifAvailable ?: return
+            val dates = store.newDates(from, upTo, today)
             if (dates.isEmpty()) {
                 logger.info { "New-dates push: no new dates from $from up to $upTo" }
                 return
@@ -63,6 +69,24 @@ class NewDatesJob(
             throw e
         } catch (e: Exception) {
             logger.warn(e) { "New-dates push failed" }
+        }
+    }
+
+    /** Writes the window's notifications. A failure is logged, and the pushes still go out. */
+    @Suppress("TooGenericExceptionCaught") // The pushes of the window must not depend on the notifications.
+    private suspend fun notify(
+        from: Instant,
+        upTo: Instant,
+        today: LocalDate
+    ) {
+        try {
+            val recorded = notifications.record(from, upTo, today, clock.instant())
+            metrics.record(NotificationAction.CREATED, recorded.rows.toLong())
+            logger.info { "New-dates notifications: ${recorded.rows} for ${recorded.accounts} accounts, from $from up to $upTo" }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(e) { "New-dates notifications failed, from $from up to $upTo" }
         }
     }
 

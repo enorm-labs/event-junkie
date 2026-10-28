@@ -50,6 +50,7 @@ async function mockBff(page: Page, signedIn: boolean): Promise<{ path: string; b
     if (request.method() !== 'GET' && request.postData()) writes.push({ path, body: request.postDataJSON() })
     if (path === '/api/auth/csrf') return route.fulfill({ status: 204 })
     if (path === '/api/auth/session') return json(route, { account: signedIn ? me : null, signUpOpen: true })
+    if (path === '/api/me/notifications/unread-count') return json(route, { count: 0 })
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)
     if (path === '/api/me/passkeys/options') {
       return json(route, {

@@ -152,5 +152,17 @@
     "delete": "Delete",
     "limit": "This account has ten passkeys already. Delete one first.",
     "failed": "That did not work. Try again."
+  },
+  "notifications": {
+    "label": "Notifications",
+    "labelUnread": "Notifications, {count} unread",
+    "title": "What is new",
+    "empty": "Nothing new yet. New dates of what you follow show up here.",
+    "markAllRead": "Mark all as read",
+    "unread": "Unread",
+    "artist": "New date: {name}",
+    "venue": "New date at {name}",
+    "promoter": "New date by {name}",
+    "failed": "Could not load notifications. Try again later."
   }
 }

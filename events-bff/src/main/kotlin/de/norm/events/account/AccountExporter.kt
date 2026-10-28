@@ -14,6 +14,7 @@ class AccountExporter(
     private val follows: FollowStore,
     private val searches: SavedSearchStore,
     private val rsvps: RsvpStore,
+    private val notifications: NotificationStore,
     private val pushes: PushSubscriptionStore,
     private val passkeys: PasskeyStore,
     private val clock: Clock
@@ -29,6 +30,7 @@ class AccountExporter(
             follows = follows.list(account.id).map(FollowResponse::of),
             searches = searches.list(account.id).map(SavedSearchResponse::of),
             rsvps = rsvps.list(account.id).map(RsvpResponse::of),
+            notifications = notifications.list(account.id, Int.MAX_VALUE).map(NotificationResponse::of),
             pushSubscriptions = pushes.list(account.id),
             passkeys = passkeys.list(account.id)
         )

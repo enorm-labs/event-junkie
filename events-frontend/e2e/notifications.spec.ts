@@ -1,0 +1,138 @@
+import { expect, type Page, type Route, test } from '@playwright/test'
+import { failUnmockedGets } from './unmocked'
+
+/**
+ * The header's bell (#4078) with a mocked BFF: the badge, the menu by keyboard, an opened entry
+ * turning read, "Mark all as read", and where display settings go on a phone when the bell needs
+ * their place.
+ *
+ * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/events/:slug · GET /api/events/:slug/related
+ * · GET /api/me/notifications · GET /api/me/notifications/unread-count · POST /api/me/notifications/:id/read
+ * · POST /api/me/notifications/read · GET /api/me/rsvps
+ */
+
+const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
+const day = (offset: number) =>
+  new Date(Date.now() + offset * 86_400_000).toLocaleDateString('sv-SE', {
+    timeZone: 'Europe/Berlin',
+  })
+const event = {
+  slug: 'mock-night',
+  title: 'Mock Night',
+  eventDate: day(3),
+  startTime: '22:00',
+  eventType: 'PARTY',
+  venue: { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' },
+}
+const entry = (id: string, slug: string, aboutName: string) => ({
+  id,
+  kind: 'new_date',
+  event: slug,
+  title: `${aboutName} night`,
+  date: day(7),
+  aboutKind: 'venue',
+  aboutName,
+  createdAt: '2026-10-28T10:00:00Z',
+  readAt: null as string | null,
+})
+
+function json(route: Route, body: unknown, status = 200): Promise<void> {
+  return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+}
+
+const fallthrough = failUnmockedGets()
+
+/** Answers the BFF for one visitor, signed in with two unread notifications, or signed out. */
+async function mockBff(page: Page, signedIn = true) {
+  const writes: string[] = []
+  const entries = [
+    entry('00000000-0000-4000-8000-000000000001', 'mock-night', 'Mock Venue'),
+    entry('00000000-0000-4000-8000-000000000002', 'other-night', 'Other Club'),
+  ]
+  await page
+    .context()
+    .addCookies([{ name: 'XSRF-TOKEN', value: 'csrf-1', url: 'http://localhost' }])
+  await page.route(/\/api\/events\/mock-night\/related/, (route) => json(route, []))
+  await page.route(/\/api\/events\/mock-night(\?|$)/, (route) => json(route, event))
+  await page.route(/\/api\/(auth|me)(\/|$|\?)/, (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    if (path === '/api/auth/session') return json(route, { account: signedIn ? me : null })
+    if (path === '/api/auth/csrf') return route.fulfill({ status: 204 })
+    if (path === '/api/me/notifications/unread-count') {
+      return json(route, { count: entries.filter((e) => !e.readAt).length })
+    }
+    if (path === '/api/me/notifications') return json(route, entries)
+    if (request.method() === 'POST' && path.startsWith('/api/me/notifications/')) {
+      writes.push(path)
+      const id = path.split('/')[4]
+      entries.forEach((e) => {
+        if (path.endsWith('/notifications/read') || e.id === id)
+          e.readAt ??= new Date().toISOString()
+      })
+      return route.fulfill({ status: 204 })
+    }
+    if (path === '/api/me/rsvps') return json(route, {})
+    return fallthrough(route)
+  })
+  return writes
+}
+
+test('the bell counts the unread, and an entry opened by keyboard turns read', async ({ page }) => {
+  const writes = await mockBff(page)
+  await page.goto('/en/about')
+
+  const bell = page.getByRole('button', { name: 'Notifications, 2 unread' })
+  await expect(bell).toBeVisible()
+  await expect(page.getByTestId('notification-badge')).toHaveText('2')
+
+  await bell.focus()
+  await page.keyboard.press('Enter')
+  const first = page.getByRole('link', { name: /New date at Mock Venue/ })
+  await expect(first).toContainText('Unread')
+  await first.focus()
+  await page.keyboard.press('Enter')
+
+  await expect(page).toHaveURL(/\/en\/events\/mock-night$/)
+  await expect(page.getByRole('button', { name: 'Notifications, 1 unread' })).toBeVisible()
+  expect(writes).toEqual(['/api/me/notifications/00000000-0000-4000-8000-000000000001/read'])
+})
+
+test('Mark all as read clears the badge', async ({ page }) => {
+  const writes = await mockBff(page)
+  await page.goto('/en/about')
+
+  await page.getByRole('button', { name: 'Notifications, 2 unread' }).click()
+  await page.getByRole('button', { name: 'Mark all as read' }).click()
+
+  await expect(page.getByTestId('notification-badge')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Notifications', exact: true })).toBeVisible()
+  expect(writes).toEqual(['/api/me/notifications/read'])
+})
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('signed in, the bell takes the settings button place, and the settings are in the menu', async ({
+    page,
+  }) => {
+    await mockBff(page)
+    await page.goto('/en/about')
+
+    await expect(page.getByRole('button', { name: 'Notifications, 2 unread' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Display settings' })).toBeHidden()
+
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await expect(page.getByRole('group', { name: 'Theme' })).toBeVisible()
+    await page.getByRole('group', { name: 'Theme' }).getByRole('button', { name: 'Dark' }).click()
+    await expect(page.locator('html')).toHaveClass(/dark/)
+  })
+
+  test('signed out, the header keeps the settings button and has no bell', async ({ page }) => {
+    await mockBff(page, false)
+    await page.goto('/en/about')
+
+    await expect(page.getByRole('button', { name: 'Display settings' })).toBeVisible()
+    await expect(page.getByTestId('notification-bell')).toHaveCount(0)
+  })
+})

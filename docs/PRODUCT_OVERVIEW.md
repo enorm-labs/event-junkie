@@ -89,6 +89,8 @@ lists what that includes and what it excludes.
 - Turn on **notifications** in a browser, from the account page. A bell on each follow sends a push to those browsers when the artist,
   venue or promoter has a new date. The bell is on its page and on the **Following** page. Every bell starts off, and turning
   notifications on offers to ring them all. On iPhone and iPad this works from the Home Screen.
+- See what is new in the header. A bell beside the account menu counts the new dates of everything the account follows, bell
+  on or off, and lists the newest 20. An entry stays unread until it is opened. Each one goes after 30 days.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**
@@ -175,6 +177,10 @@ the first column. It fails in two cases:
 | `/api/me/follows/{kind}/{slug}/notify` | The bell of one follow: push its new dates, or not                                             |
 | `/api/me/push`                         | The key a browser subscribes with, and storing this browser's push subscription                |
 | `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                                    |
+| `/api/me/notifications`                | The newest 20 notifications under the header's bell, read or not                               |
+| `/api/me/notifications/unread-count`   | How many notifications are unread, for the bell's badge                                        |
+| `/api/me/notifications/{id}/read`      | Marking one notification read                                                                  |
+| `/api/me/notifications/read`           | Marking every notification read                                                                |
 | `/api/me/passkeys`                     | The account's passkeys, and storing a new one                                                  |
 | `/api/me/passkeys/options`             | A challenge for adding a passkey                                                               |
 | `/api/me/passkeys/{id}`                | Renaming or deleting a passkey                                                                 |
@@ -202,6 +208,7 @@ the first column. It fails in two cases:
 | `sign-in.spec.ts`                      | e2e: sign-in by link, the account page, deletion, CSRF header                                  |
 | `following.spec.ts`                    | e2e: the Follow button signed out and in, the header entry, the Following page and its filters |
 | `rsvp.spec.ts`                         | e2e: Interested and Going on an event page, the card mark, My calendar                         |
+| `notifications.spec.ts`                | e2e: the header's bell, its menu by keyboard, Mark all as read, the phone header               |
 | `share-calendar.spec.ts`               | e2e: share and add to calendar                                                                 |
 | `card-poster.spec.ts`                  | e2e: drawn posters                                                                             |
 | `compact-view.spec.ts`                 | e2e: compact list                                                                              |

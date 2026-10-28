@@ -42,6 +42,8 @@ data class AccountExport(
     val follows: List<FollowResponse>,
     val searches: List<SavedSearchResponse>,
     val rsvps: List<RsvpResponse>,
+    /** What the header's bell listed (#4078), read or not, for 30 days. */
+    val notifications: List<NotificationResponse>,
     /** One per browser with push notifications on (#3894): the push service's host, never the endpoint. */
     val pushSubscriptions: List<PushSubscriptionInfo>,
     /** The passkeys (#3888): name and dates, never the key. */

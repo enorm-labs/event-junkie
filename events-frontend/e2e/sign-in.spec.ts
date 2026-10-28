@@ -30,6 +30,7 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     }
     if (path === '/api/auth/csrf') return route.fulfill({ status: 204 })
     if (path === '/api/auth/session') return json(route, { account: null })
+    if (path === '/api/me/notifications/unread-count') return json(route, { count: 0 })
     if (path === '/api/auth/link') return route.fulfill({ status: 202 })
     if (path === '/api/auth/sign-in') return json(route, me)
     if (path === '/api/me' && request.method() === 'GET') return json(route, me)

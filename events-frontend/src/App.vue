@@ -12,9 +12,11 @@ import GitHubMark from '@/components/GitHubMark.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import HeaderMenu from '@/components/HeaderMenu.vue'
 import LocaleMenu from '@/components/LocaleMenu.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { pageTitle } from '@/composables/usePageMeta'
 import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useSession } from '@/composables/useSession'
 import { useViewLoaded } from '@/composables/useViewLoaded'
 
 // Screen-reader route announcer: client-side navigations do not move focus or re-read the page,
@@ -37,6 +39,7 @@ watch(pageTitle, (title) => {
 const betaLabel = computed(() => t('common.nav.betaLabel'))
 
 const localePath = useLocalePath()
+const { account } = useSession()
 
 const viewLoaded = useViewLoaded()
 
@@ -128,9 +131,14 @@ const sectionLinks = computed(() =>
           >
             <GitHubMark />
           </Button>
-          <DisplaySettings />
+          <!-- Signed in, the bell takes this button's place below `sm`, and the settings move into
+               HeaderMenu's sheet (#4078). Signed out, the header is the same at every width. -->
+          <div :class="account ? 'hidden sm:block' : undefined">
+            <DisplaySettings />
+          </div>
+          <NotificationBell v-if="account" />
           <AccountEntry />
-          <HeaderMenu :links="sectionLinks" class="md:hidden" />
+          <HeaderMenu :display-settings="!!account" :links="sectionLinks" class="md:hidden" />
         </div>
       </nav>
     </header>

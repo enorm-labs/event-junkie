@@ -18,11 +18,13 @@ import {
 import { Menu, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
+import DisplaySettingsGroups from '@/components/DisplaySettingsGroups.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { REPOSITORY_URL } from '@/lib/links'
 
-defineProps<{ links: { to: string; label: string }[] }>()
+// `displaySettings`: signed in, the bell takes the settings button's place below `sm` (#4078).
+defineProps<{ links: { to: string; label: string }[]; displaySettings?: boolean }>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -94,6 +96,9 @@ watch(
             </RouterLink>
           </li>
         </ul>
+        <section v-if="displaySettings" class="border-t border-border pt-4 sm:hidden">
+          <DisplaySettingsGroups />
+        </section>
         <!-- The header row has no room for it below `md`, so it lives here. -->
         <a
           :href="REPOSITORY_URL"
