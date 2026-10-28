@@ -26,10 +26,12 @@ Ingress/event-junkie
   event-junkie.de/ -> event-junkie-frontend:http
 Ingress/event-junkie-redirect
   class traefik
-  tls www.event-junkie.de,event-junkie.com,www.event-junkie.com -> secret/event-junkie-tls-redirect
+  tls www.event-junkie.de,event-junkie.com,www.event-junkie.com,eventjunkie.de,www.eventjunkie.de -> secret/event-junkie-tls-redirect
   www.event-junkie.de/ -> event-junkie-frontend:http
   event-junkie.com/ -> event-junkie-frontend:http
   www.event-junkie.com/ -> event-junkie-frontend:http
+  eventjunkie.de/ -> event-junkie-frontend:http
+  www.eventjunkie.de/ -> event-junkie-frontend:http
 Middleware/event-junkie-https-redirect
   redirectScheme
 Middleware/event-junkie-in-flight-req

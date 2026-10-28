@@ -282,6 +282,8 @@ ingress:
     - "www.event-junkie.de"
     - "event-junkie.com"
     - "www.event-junkie.com"
+    - "eventjunkie.de"
+    - "www.eventjunkie.de"
   # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
   annotations: {}
   # ingress.noindex marks an environment as not-production and renders a Traefik Middleware adding

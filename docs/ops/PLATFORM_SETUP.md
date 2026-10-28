@@ -601,8 +601,8 @@ Practical notes that cost a day each:
   the same registered domain in both environments, so burning it from staging locks production out too. That is why the chart's default ACME endpoint is the
   staging CA in **every** values file, staging's included.
 - **HTTP-01 needs port 80 reachable and the A record already resolving.** The order is DNS → deploy → certificate, and it cannot be reordered.
-- **The redirect certificate covers three names** — `www.event-junkie.de`, `event-junkie.com`, `www.event-junkie.com` — each an explicit SAN rather than a
-  wildcard. `www.event-junkie.de` is on that list because the apex is canonical and `www` is redirected **at Traefik, not in DNS**.
+- **The redirect certificate covers five names** — `www.event-junkie.de`, `event-junkie.com`, `www.event-junkie.com`, `eventjunkie.de`,
+  `www.eventjunkie.de` — each an explicit SAN rather than a wildcard. `www.event-junkie.de` is on that list because the apex is canonical and `www` is redirected **at Traefik, not in DNS**.
 - **Every one of those names has to resolve to the node before the certificate can issue.** A redirect domain pointing nowhere leaves a Certificate stuck
   pending and an Ingress answering TLS errors — with everything else on the cluster green. The redirect domains' records are `publish_dns`-gated in the same apply as the
   primary's, so they appear together or not at all.
