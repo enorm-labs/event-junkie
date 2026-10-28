@@ -5,7 +5,7 @@ checks afterwards.
 
 **A rebuild is not required and is the expensive way to take a bump.** The OpenTofu plan does not
 replace the server, because `servers.tf` ignores `user_data` (#4129). It warns that the node booted
-another `user_data`. k3s upgrades in place through the same installer the node booted with. A rebuild destroys the cluster, Flux, the six hand-made Secrets,
+another `user_data`. k3s upgrades in place through the same installer the node booted with. A rebuild destroys the cluster, Flux, the 14 hand-made Secrets,
 `/etc/wal-g/credentials.env`, the WireGuard server key and OpenObserve's dashboards.
 [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ is that procedure, for when one is
 happening anyway.

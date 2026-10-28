@@ -30,7 +30,8 @@ sudo wg-quick up ~/.wireguard/staging.conf && sudo wg show      # `latest handsh
 ../../apply.sh staging                                          # admin_cidrs back to []
 ssh … sudo cat /etc/rancher/k3s/k3s.yaml | sed 's|127.0.0.1|10.10.1.1|' > ~/.kube/event-junkie-staging
 
-# 8    the role, the database, and the secrets nothing in the repo creates
+# 8    the role, the database, then the secrets nothing in the repo creates
+scripts/cluster-secrets.sh staging                              # again after §9, for flux-system
 # 8b   /etc/wal-g/credentials.env — until this exists the node backs up nothing
 
 # 9-11 Flux, then verify: reconciliation, the GitHub deployment record, the certificate
@@ -206,33 +207,22 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Seven hand-made objects are left.** A rebuild that restores fewer than
-all seven brings the cluster back with part of the observability stack dead and no obvious cause:
+`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Fourteen hand-made objects are left, and one command creates them**
+from the Keychain:
 
-| Secret                    | Namespace       | Recreated from                                  | In this document                                  |
-| ------------------------- | --------------- | ----------------------------------------------- | ------------------------------------------------- |
-| `hetzner`                 | `cert-manager`  | `HCLOUD_TOKEN` — Keychain                       | below                                             |
-| `github-dispatch`         | `flux-system`   | **the PAT, and nothing can re-derive it**       | below                                             |
-| `sops-age`                | `flux-system`   | `~/.config/sops/age/event-junkie.txt`           | [SECRETS.md](SECRETS.md) §3                       |
-| `openobserve-credentials` | `flux-system`   | a **fresh** root password + an `-o2` S3 keypair | [SECRETS.md](SECRETS.md) §openobserve-credentials |
-| `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why   | as above                                          |
-| `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                | as above                                          |
-| `openobserve-smtp`        | `observability` | the `alerts@` mailbox password                  | [SECRETS.md](SECRETS.md) §openobserve-smtp        |
+```sh
+scripts/cluster-secrets.sh staging --check   # what the cluster lacks or holds differently; changes nothing
+scripts/cluster-secrets.sh staging           # create or update all of them
+```
 
-**Production's `openobserve-credentials` is not staging's, and that is deliberate** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Its own
-root password and its own `-o2` S3 keypair, so either can be rotated without touching the other cluster. Copying staging's across is the shortcut that
-undoes it, and nothing would report it — both clusters would work.
+1. **Create the database roles first.** `postgres-exporter` and `events-bff-db` log in as `metrics` and `bff`, and those are `psql` by hand
+   ([SECRETS.md](SECRETS.md) §postgres-exporter and §events-bff-db). The passwords go into the Keychain items the script reads.
+2. **Run it before §9, then again after.** `flux-system` exists only after `flux bootstrap`. The first run skips the Secrets there and says so.
+3. **A missing Keychain item stops the run before it writes anything.** The message names the item and the Secret. The items are listed in
+   [CREDENTIALS.md](../CREDENTIALS.md) § What is in the macOS Keychain.
 
-**Only `github-dispatch` has to be carried across a rebuild.** Everything else is derivable from the Keychain, a local file, or a role you can re-password.
-That is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new, because its PVC is
-`local-path` on the node's disk. The metadata DB dies with the node, and the Secret re-seeds the root user at first boot.
-
-**Two traps that produce a credential that looks right and authenticates against nothing:**
-
-- **`security find-generic-password -w` appends a newline.** `--from-file=token=<(kc …)` welds it into the value. Pipe through `tr -d '\n'`. Then check with
-  `kubectl get secret … -o json` that the decoded length is what you expect: 64 bytes for an hcloud token, 20 and 40 for the S3 pair.
-- **`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded.** A generated password containing `@`, `#`, `%` or `&` silently produces a DSN that
-  parses as something else. `urllib.parse.quote(pw, safe='')`.
+The script strips the newline that `security find-generic-password -w` appends, and it percent-encodes the password in `DATA_SOURCE_NAME`. Both traps once
+produced a credential that looked right and authenticated against nothing. A hand-typed Secret still meets them, so read the script before you type one.
 
 The two below are hand-made for the same deliberate reason. This repository is public, and encrypting a secret into it publishes the ciphertext for good:
 
@@ -241,7 +231,7 @@ The two below are hand-made for the same deliberate reason. This repository is p
 | `hetzner`         | `cert-manager` | Read+write on the whole Hetzner account, and it takes two minutes to recreate                     | **No** — production solves HTTP-01  |
 | `github-dispatch` | `flux-system`  | `contents: write` on this repository, which under ADR-016 is one ruleset away from cluster access | **Yes** — with its own separate PAT |
 
-**Order matters for `github-dispatch` and only for it.** It lives in `flux-system`, which does not exist until `flux bootstrap` runs in §9. So create it after that step, not with the others. Until it exists, the `github-dispatch` Provider reconciles into a failed state and records no deployment. Nothing else is affected, and nothing needs restarting once it lands.
+**Order matters for the `flux-system` Secrets.** `flux-system` does not exist until `flux bootstrap` runs in §9, so the second run of the script creates them. Until it exists, the `github-dispatch` Provider reconciles into a failed state and records no deployment. Nothing else is affected, and nothing needs restarting once it lands.
 
 ### Prove the dispatch token's scope, because existence is not the check
 
@@ -719,8 +709,9 @@ The production rebuild in #4125 met each of these. Read them before the first co
    `get nodes`. Your own key and the peer list do not change.
 4. Close `admin_cidrs` again once the tunnel works on this Mac. Another Mac then reads the server key over its own tunnel, or takes `--server-key`.
 5. Check `events-db` against the role with `SOPS_AGE_KEY_FILE=~/.config/sops/age/event-junkie.txt`. sops does not look for that file name.
-6. Set the `metrics` and `bff` passwords with `ALTER ROLE`. The roles survive on the volume.
-7. Create the 14 hand-made objects from [SECRETS.md](SECRETS.md). Create the three namespaces first, `flux-system` included.
+6. Set the `metrics` and `bff` passwords to their Keychain values with `ALTER ROLE`. The roles survive on the volume.
+7. Run `kubectl create namespace flux-system`, then `scripts/cluster-secrets.sh <env>`. It creates the other namespaces and the 14 hand-made
+   objects, and `--check` confirms them.
 8. Do not run `flux bootstrap`. The repository holds the cluster's `flux-system` already. Create the `flux-system` Secret with `flux create secret git`.
    Replace the cluster's deploy key with `gh repo deploy-key`. Then run `kubectl apply -k deploy/clusters/<env>/flux-system`. Nothing pushes to `main`,
    so the ruleset stays on.
@@ -900,7 +891,7 @@ another variable when the prefix changes.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | **The database** — `PGDATA` is on a volume, and the volume is not part of the server ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) | **The k3s cluster** — new CA, new kubeconfig, new node identity            |
 | **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged                                      | **The WireGuard server key** — regenerated at first boot                   |
-| The network, subnet and firewall                                                                                                                     | **Flux, and all six hand-made Secrets** — the cluster is new (§8)          |
+| The network, subnet and firewall                                                                                                                     | **Flux, and all 14 hand-made Secrets** — the cluster is new (§8)           |
 | Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`              |
 | The backups already in the bucket — they are off-server, which is the point                                                                          | **`/etc/wal-g/credentials.env`**, so the node comes back archiving nothing |
 | The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      | **Dashboards and alert rules** — OpenObserve metadata, on the node's disk  |

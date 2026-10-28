@@ -220,24 +220,34 @@ Small facts that are annoying to re-derive and are needed exactly when something
 Keychain is a working copy, not the record.** It lives on one laptop and is not versioned. The 2026-08-21 rebuild
 proved what happens when something exists only in a place that gets destroyed.
 
-| Keychain item                                | Which entry        | Loaded by                                                  |
-| -------------------------------------------- | ------------------ | ---------------------------------------------------------- |
-| `event-junkie-hcloud-token`                  | #9                 | `infra/.envrc`                                             |
-| `event-junkie-s3-access-key` / `-secret-key` | #10                | `infra/.envrc`, and `MINIO_*` for the bucket provider      |
-| `event-junkie-o2-access-key` / `-secret-key` | #10a               | by hand, when rebuilding `openobserve-credentials`         |
-| `event-junkie-staging-github-dispatch`       | #15                | by hand                                                    |
-| `event-junkie-production-github-dispatch`    | #15a               | by hand                                                    |
-| `event-junkie-staging-healthcheck-url`       | #21                | by hand, into `/etc/wal-g/credentials.env`                 |
-| `event-junkie-production-healthcheck-url`    | #21                | as above                                                   |
-| `event-junkie-production-events-db`          | #20                | by hand, and encrypted into git                            |
-| `event-junkie-staging-o2-root-password`      | #8                 | by hand, into `openobserve-credentials`                    |
-| `event-junkie-staging-metrics-password`      | the `metrics` role | by hand, into `postgres-exporter`                          |
-| `event-junkie-production-o2-root-password`   | #8                 | by hand, into `openobserve-credentials`                    |
-| `event-junkie-production-metrics-password`   | the `metrics` role | by hand, into `postgres-exporter`                          |
-| `event-junkie-production-bff-password`       | the `bff` role     | by hand, into `events-bff-db`                              |
-| `event-junkie-anthropic-api-key`             | #26                | the repository-root `.envrc`, and `event-junkie-anthropic` |
-| `discogs-consumer-key`, `-secret`            | #27                | by hand, into `event-junkie-discogs`                       |
-| `instagram-token`                            | #28                | `scripts/instagram-posts.sh`, and `event-junkie-instagram` |
+| Keychain item                                          | Which entry        | Loaded by                                                       |
+| ------------------------------------------------------ | ------------------ | --------------------------------------------------------------- |
+| `event-junkie-hcloud-token`                            | #9                 | `infra/.envrc`, and `scripts/cluster-secrets.sh` into `hetzner` |
+| `event-junkie-s3-access-key` / `-secret-key`           | #10                | `infra/.envrc`, and `MINIO_*` for the bucket provider           |
+| `event-junkie-o2-access-key` / `-secret-key`           | #10a               | `scripts/cluster-secrets.sh`, into `openobserve-credentials`    |
+| `event-junkie-staging-github-dispatch`                 | #15                | `scripts/cluster-secrets.sh`, into `github-dispatch`            |
+| `event-junkie-production-github-dispatch`              | #15a               | `scripts/cluster-secrets.sh`, into `github-dispatch`            |
+| `event-junkie-staging-healthcheck-url`                 | #21                | by hand, into `/etc/wal-g/credentials.env`                      |
+| `event-junkie-production-healthcheck-url`              | #21                | as above                                                        |
+| `event-junkie-production-events-db`                    | #20                | by hand, and encrypted into git                                 |
+| `event-junkie-staging-o2-root-password`                | #8                 | `scripts/cluster-secrets.sh`, into `openobserve-credentials`    |
+| `event-junkie-staging-metrics-password`                | the `metrics` role | `scripts/cluster-secrets.sh`, into `postgres-exporter`          |
+| `event-junkie-production-o2-root-password`             | #8                 | `scripts/cluster-secrets.sh`, into `openobserve-credentials`    |
+| `event-junkie-production-metrics-password`             | the `metrics` role | `scripts/cluster-secrets.sh`, into `postgres-exporter`          |
+| `event-junkie-production-bff-password`                 | the `bff` role     | `scripts/cluster-secrets.sh`, into `events-bff-db`              |
+| `event-junkie-anthropic-api-key`                       | #26                | the repository-root `.envrc`, and `scripts/cluster-secrets.sh`  |
+| `discogs-consumer-key`, `-secret`                      | #27                | `scripts/cluster-secrets.sh`, into `event-junkie-discogs`       |
+| `instagram-token`                                      | #28                | `scripts/instagram-posts.sh`, and `scripts/cluster-secrets.sh`  |
+| `event-junkie-staging-bff-password`                    | the `bff` role     | `scripts/cluster-secrets.sh`, into `events-bff-db`              |
+| `event-junkie-alerts-smtp-password`                    | #7a                | `scripts/cluster-secrets.sh`, into `openobserve-smtp`           |
+| `event-junkie-scaleway-project-id`                     | #29                | `scripts/cluster-secrets.sh`, the `event-junkie-mail` username  |
+| `event-junkie-<env>-tem-secret-key`                    | #29                | `scripts/cluster-secrets.sh`, into `event-junkie-mail`          |
+| `event-junkie-<env>-vapid-private-key` / `-public-key` | #30                | `scripts/cluster-secrets.sh`, into `event-junkie-push`          |
+| `event-junkie-images-access-key` / `-secret-key`       | the images keypair | `scripts/cluster-secrets.sh`, into `event-junkie-images`        |
+| `event-junkie-<env>-imgproxy-key` / `-salt`            | none, regenerable  | `scripts/cluster-secrets.sh`, into `event-junkie-imgproxy`      |
+
+**`scripts/cluster-secrets.sh <env>` creates a cluster's hand-made Secrets from these items.** `<env>` is `staging` or `production`, one item each.
+`--import` fills an absent item from the live cluster once, and never overwrites one.
 
 **Every one of these belongs in KeePass too.** The two OpenObserve and metrics passwords were regenerated during the
 2026-08-21 rebuild rather than recovered, because the old values died with the node's PVC. If the password manager
