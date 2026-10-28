@@ -38,7 +38,7 @@ Store the password, the TOTP seed, **and the recovery codes** for each. The reco
 | 8a  | **Anthropic Console** (`platform.claude.com`) | The `event-junkie` workspace and the API key the importer translates with (#26)                           | **In use** — since 2026-09-08          | Yes        |
 | 8b  | **Instagram** `eventjunkie.berlin`            | The business account Business Discovery reads as (ADR-048). Login `hello@`                                | **In use** — since 2026-10-15          | Yes        |
 | 8c  | **Meta** — Page, business portfolio, app      | The Page "Event Junkie", the portfolio and the app "Event Junkie Importer" (#28)                          | **In use** — since 2026-10-15          | Yes        |
-| 8d  | **Scaleway** (`console.scaleway.com`)         | The project `event-junkie`, its Transactional Email domain `notify.event-junkie.de` and the DPA (ADR-054) | **Planned** — #3886                    | Yes        |
+| 8d  | **Scaleway** (`console.scaleway.com`)         | The project `event-junkie`, its Transactional Email domain `notify.event-junkie.de` and the DPA (ADR-054) | **In use** — since 2026-10-24          | Yes        |
 
 **On the Hetzner account specifically:** it is the single point of total failure here. It holds the infrastructure, the DNS, the backups and the state file.
 Treat its 2FA recovery codes with the same care as the age key in §3.
