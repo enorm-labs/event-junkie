@@ -1,0 +1,18 @@
+{
+  "accounts": [
+    {
+      "email": "ada@example.de",
+      "locale": "de",
+      "id": "ada00000-0000-4000-8000-000000000001",
+      "session": "fixture-session-ada",
+      "savedSearchId": "ada00000-0000-4000-8000-000000000011"
+    },
+    {
+      "email": "bob@example.de",
+      "locale": "en",
+      "id": "b0b00000-0000-4000-8000-000000000002",
+      "session": "fixture-session-bob",
+      "savedSearchId": "b0b00000-0000-4000-8000-000000000012"
+    }
+  ]
+}

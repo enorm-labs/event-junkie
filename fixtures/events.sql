@@ -3,6 +3,7 @@
 -- below through the API and so fails the build when a migration breaks this file, and `dast.yml`,
 -- which spiders these rows on k3d (#1421). A fixture and not an import, on purpose: `seed-all` and
 -- `k3d-rehearsal.sh import` fetch real venue pages, and a scanner or a test should not.
+-- `accounts.sql` adds two signed-in accounts on these rows (#4102); every consumer loads it after this file.
 --
 -- Two halves. The generated half is volume: thirty events over fourteen days, rows on both sides of
 -- every filter. The named half is one event per shape, `source_id = 'fixture-<shape>'`, so a test
