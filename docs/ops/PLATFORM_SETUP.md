@@ -1086,7 +1086,7 @@ WireGuard arrive unproxied from another.
 
 ```sh
 ADMIN="[\"$(curl -s -4 https://ifconfig.me)/32\",\"$(dig -4 +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"
+infra/apply.sh production -var "admin_cidrs=$ADMIN"
 ```
 
 **Force IPv4 on both.** `curl -s https://ifconfig.me` can return an IPv6 address, which makes the `/32` meaningless, and the unforced `dig` can return

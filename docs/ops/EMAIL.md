@@ -228,9 +228,7 @@ Three details in that snippet each cost something to discover:
 Receiving needs only the MX. Sending needs an SPF value nobody can know until something was sent. So:
 
 ```sh
-cd infra/bootstrap
-tofu plan -out=mx.tfplan            # 1 to add: the MX rrset. Nothing else.
-tofu apply mx.tfplan
+infra/apply.sh bootstrap            # 1 to add: the MX rrset. Nothing else.
 ```
 
 That alone ends the dead-address problem. Mail arrives, and `v=spf1 -all` stays true because nothing sent yet. **A domain that receives and does not send
@@ -239,8 +237,7 @@ is a coherent posture**, not a half-finished one. What `dns.tf` warns against is
 Then create the mailboxes (§4), run §7 step 2, read the sending IP off the headers, and only then:
 
 ```sh
-tofu plan -out=spf.tfplan           # 1 to change: the SPF rrset. DKIM is konsoleH's, _dmarc unchanged
-tofu apply spf.tfplan
+infra/apply.sh bootstrap            # 1 to change: the SPF rrset. DKIM is konsoleH's, _dmarc unchanged
 ```
 
 **Stop if either count differs.** `bootstrap/` holds the zones, `delete_protection` and `prevent_destroy`. A plan that proposes to destroy anything here ends with an

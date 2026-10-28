@@ -114,6 +114,10 @@ jobs:
       - name: Assert what cluster-access.sh replaces after a rebuild
         run: scripts/cluster-access-test.sh
 
+      # A checked plan and the applied plan were two runs, and the second replaced both production nodes (#4132).
+      - name: Assert what infra/apply.sh refuses and applies
+        run: infra/apply-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'

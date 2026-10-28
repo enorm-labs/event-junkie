@@ -20,14 +20,14 @@ Twelve steps, about 40 minutes. **Each one is expanded below, and every step wit
 ```sh
 # 1-2  keypair, then apply with your address admitted for this run only
 wg genkey > ~/.wireguard/staging.key && wg pubkey < ~/.wireguard/staging.key   # public half -> terraform.tfvars
-cd infra/environments/staging && tofu apply -var "admin_cidrs=$ADMIN"
+cd infra/environments/staging && ../../apply.sh staging -var "admin_cidrs=$ADMIN"
 
 # 3-5  wait ~4 min, take the node's WireGuard key, write the client config, bring the tunnel up
 ssh -i ~/.ssh/id_ed25519_hetzner ops@"$IP" sudo cat /etc/wireguard/public.key
 sudo wg-quick up ~/.wireguard/staging.conf && sudo wg show      # `latest handshake` or nothing worked
 
 # 6-7  close 22 and 6443, then take the kubeconfig
-tofu apply                                                      # admin_cidrs back to []
+../../apply.sh staging                                          # admin_cidrs back to []
 ssh … sudo cat /etc/rancher/k3s/k3s.yaml | sed 's|127.0.0.1|10.10.1.1|' > ~/.kube/event-junkie-staging
 
 # 8    the role, the database, and the secrets nothing in the repo creates
@@ -75,7 +75,7 @@ wg pubkey < ~/.wireguard/staging.key     # public  — paste into terraform.tfva
 ```sh
 cd infra/environments/staging
 ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"     # 8: network, subnet, firewall, 2 Primary IPs, server, PGDATA volume, its attachment
+../../apply.sh staging -var "admin_cidrs=$ADMIN"     # 8 to add: network, subnet, firewall, 2 Primary IPs, server, PGDATA volume, its attachment
 ```
 
 Two addresses, not one: behind an HTTP proxy `ifconfig.me` reports the proxy's egress while SSH and WireGuard arrive from elsewhere. The `dig` goes over
@@ -128,7 +128,7 @@ No handshake almost always means outbound UDP/51820 is blocked. **Test from a ph
 Only once step 5 works.
 
 ```sh
-tofu apply                     # no -var: admin_cidrs falls back to [] — 0 to add, 1 to change
+../../apply.sh staging         # no -var: admin_cidrs falls back to [] — 0 to add, 1 to change
 ```
 
 ```sh
@@ -659,8 +659,8 @@ names a host that does not resolve, and no certificate can issue until DNS propa
 one apply. `variables.tf` rejects it, because a record that could be temporary becomes permanent.
 
 **Target the records, and read the plan.** `servers.tf` ignores `user_data` drift (#4129), so an untargeted plan no
-longer replaces the nodes. Target anyway: `-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans
-DNS alone. Going live adds four A records and removes `prod-check`. Going dark does the opposite. Stop if a server
+longer replaces the nodes. Target anyway: `infra/apply.sh production -target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect`
+plans DNS alone. Going live adds four A records and removes `prod-check`. Going dark does the opposite. Stop if a server
 appears. Then reconcile rather than wait for the poll:
 
 ```sh
@@ -708,8 +708,8 @@ The production rebuild in #4125 met each of these. Read them before the first co
 **Before the apply:**
 
 1. Copy the `event-junkie-push` key pair into the password manager. A new pair ends every Web Push subscription on that cluster.
-2. Run `infra/check-capacity.sh --probe`. A destroyed server type that Hetzner cannot place again leaves the site down.
-3. Plan with `-out=tfplan` and apply that file. A second plain `tofu apply` plans again, without the flags.
+2. Apply with `infra/apply.sh <env> --allow-replace`. It probes `check-capacity.sh` first, because a server type that Hetzner cannot place again leaves the
+   site down. It also applies the file it planned, so no second plan can drop the flags.
 
 **After the apply:**
 
@@ -932,28 +932,22 @@ the `wireguard_peers` entry stay valid.
 
 ```sh
 cd infra/environments/staging
-../../check-capacity.sh --probe staging   # ordering is the only real test — see the script's header
 
 # 1. Edit main.tf if the point is to change hardware. A cloud-init/ edit does not replace the node
-#    (servers.tf ignores user_data): add -replace='module.environment.hcloud_server.k3s' to the
-#    plan below. Do NOT reach for `tofu destroy`.
+#    (servers.tf ignores user_data), so step 3 names the server with -replace. Do NOT reach for
+#    `tofu destroy`.
 
 # 2. The tunnel dies with the node, so the firewall has to admit you directly for the duration.
 #    -4 ON BOTH: unforced, `curl https://ifconfig.me` can return an IPv6 address, which makes the
 #    /32 below meaningless, and the unforced `dig` can return nothing at all.
 ADMIN="[\"$(curl -4 -s https://ifconfig.me)/32\",\"$(dig -4 +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
 
-# 3. PLAN FIRST, AND READ IT. Expect the server and hcloud_volume_attachment.postgres replaced,
-#    the firewall changed in place, and NOTHING ELSE. `hcloud_volume.postgres` must not appear in
-#    the plan at all — if it does, stop. That is the check this whole runbook exists for.
-tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan   # Plan: 2 to add, 1 to change, 2 to destroy
-
-# 4. A SAVED PLAN RE-READS terraform.tfvars AND REFUSES IF IT DISAGREES — "Mismatch between input
-#    and plan variable value", because admin_cidrs is [] there and the plan was built with -var.
-#    Put the same value in terraform.tfvars before applying (and take it out again at §6), or skip
-#    -out and let `tofu apply -var …` prompt. A saved plan is worth the detour: it applies exactly
-#    what you read, with no second plan in between and no confirmation prompt to mis-type.
-tofu apply rebuild.tfplan
+# 3. READ THE PLAN BEFORE YOU TYPE yes. apply.sh probes the capacity, then lists every replace.
+#    Expect the server and hcloud_volume_attachment.postgres replaced, the firewall changed in
+#    place, and NOTHING ELSE. `hcloud_volume.postgres` must not appear in the list at all — if it
+#    does, stop. That is the check this whole runbook exists for. It passes -var to the apply too,
+#    so terraform.tfvars keeps admin_cidrs = [] (not yet proven on a rebuild).
+../../apply.sh staging --allow-replace -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN"   # 2 to add, 1 to change, 2 to destroy
 ```
 
 Then **§3 onward**, in full: cloud-init, the _new_ server key, your client config, the tunnel, the door, the kubeconfig, the database, both secrets, and
@@ -994,7 +988,7 @@ replaced it in that same plan. `servers.tf` now ignores `user_data`, so the k3s 
 change:
 
 ```sh
-tofu plan -replace='module.environment.hcloud_server.postgres[0]' -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan
+../../apply.sh production --allow-replace -replace='module.environment.hcloud_server.postgres[0]' -var "admin_cidrs=$ADMIN"
 ```
 
 Expect `2 to add, 0 to change, 2 to destroy`: the database node and its volume attachment. This plan is
@@ -1012,7 +1006,7 @@ converges. #813 reached production this way.
 
 #### When you do rebuild both
 
-Name both servers: `-replace=module.environment.hcloud_server.k3s -replace='module.environment.hcloud_server.postgres[0]'`.
+Name both servers: `infra/apply.sh production --allow-replace -replace=module.environment.hcloud_server.k3s -replace='module.environment.hcloud_server.postgres[0]'`.
 Expect `4 to add, 0 to change, 4 to destroy`: both servers and the volume attachment, each replaced.
 Stop if `hcloud_volume.postgres`, a `hcloud_primary_ip`, the network or the firewall appears.
 
@@ -1053,10 +1047,10 @@ ssh ops@<tunnel-address> "findmnt /var/lib/postgresql; ls /var/lib/postgresql/18
 #    ignores user_data, so a cloud-init edit does not do it.
 cd infra/environments/staging
 ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN"
+../../apply.sh staging --allow-replace -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN"
 ```
 
-**Read that plan before applying it.** Expect exactly one `-/+` on the server and one `-/+` on `hcloud_volume_attachment.postgres`, which follows the server it
+**Read that plan before you type `yes`.** Expect exactly one `-/+` on the server and one `-/+` on `hcloud_volume_attachment.postgres`, which follows the server it
 points at. **`hcloud_volume.postgres` must not appear in the plan at all.** If it does, stop. That is the failure this whole issue exists to prevent, and applying
 would destroy the thing you are trying to prove survives.
 
@@ -1110,7 +1104,7 @@ node. Proving adoption needs the volume populated first. Two ways:
 
 - **Two rebuilds.** Apply once to create and seed the volume (today's data is lost — `pg_dump` first), write the sentinel, then `-replace` the server to prove
   adoption. Simple, and it throws away a working database.
-- **One rebuild, keeping the data.** Create the volume alone with `tofu apply -target=module.environment.hcloud_volume.postgres` and attach it out-of-band.
+- **One rebuild, keeping the data.** Create the volume alone with `infra/apply.sh staging -target=module.environment.hcloud_volume.postgres` and attach it out-of-band.
   Run the new `postgres.sh` by hand on the live node, so it seeds from the running cluster. Write the sentinel, detach, then apply normally. The node is
   replaced once and adopts a volume that already holds the real dataset. That is a stronger proof than a sentinel alone, and a rehearsal of the live migration
   production would otherwise require.
