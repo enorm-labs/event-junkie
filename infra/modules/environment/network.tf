@@ -10,6 +10,11 @@ locals {
   # A dedicated PostgreSQL node, or PostgreSQL co-located on the k3s node.
   dedicated_postgres = var.postgres_server_type != null
 
+  # The second pair a cutover moves to (#4128).
+  next_pair                = var.next_pair != null
+  next_k3s_private_ip      = local.next_pair ? coalesce(var.next_pair.k3s_private_ip, cidrhost(var.subnet_ip_range, 11)) : null
+  next_postgres_private_ip = local.next_pair ? coalesce(var.next_pair.postgres_private_ip, cidrhost(var.subnet_ip_range, 21)) : null
+
   # Whichever address PostgreSQL ends up listening on. The bff's connection string points here in
   # both topologies, which is what keeps staging a fair rehearsal of production.
   postgres_ip = local.dedicated_postgres ? var.postgres_private_ip : var.k3s_private_ip

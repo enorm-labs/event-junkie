@@ -47,6 +47,7 @@ module "environment" {
   ssh_public_keys = var.ssh_public_keys
   admin_cidrs     = var.admin_cidrs
   wireguard_peers = var.wireguard_peers
+  next_pair       = var.next_pair
 
   k3s_extra_tls_sans = ["staging.event-junkie.de"]
 }

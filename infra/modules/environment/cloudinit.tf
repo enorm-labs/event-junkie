@@ -40,16 +40,6 @@ locals {
     ])
   ])
 
-  # Every address a kubeconfig might name: public IPv4 (break-glass), tunnel address, private address.
-  k3s_tls_sans = concat(
-    [
-      hcloud_primary_ip.k3s_ipv4.ip_address,
-      cidrhost(var.wireguard_subnet, 1),
-      var.k3s_private_ip,
-    ],
-    var.k3s_extra_tls_sans,
-  )
-
   # Every apt invocation on the box, so `package_upgrade` and the unattended-upgrades timer cannot
   # collide with the scripts below and fail the boot.
   apt_lock_timeout = <<-EOT
@@ -94,17 +84,49 @@ locals {
 # ---------------------------------------------------------------------------
 
 locals {
-  k3s_env = <<-EOT
+  # The running node, and the one built beside it (#4128). The next node boots with the real
+  # Primary IPv4, which it holds after the cutover, and skips PostgreSQL until the volume reaches it.
+  # Its temporary IPv4 is no SAN: kubectl reaches it over the tunnel, and the render stays plannable.
+  k3s_nodes = merge(
+    {
+      current = {
+        private_ip    = var.k3s_private_ip
+        postgres_ip   = local.postgres_ip
+        boot_postgres = !local.dedicated_postgres
+      }
+    },
+    local.next_pair ? {
+      next = {
+        private_ip    = local.next_k3s_private_ip
+        postgres_ip   = local.dedicated_postgres ? local.next_postgres_private_ip : local.next_k3s_private_ip
+        boot_postgres = false
+      }
+    } : {},
+  )
+
+  # Every address a kubeconfig might name: public IPv4 (break-glass), tunnel address, private address.
+  k3s_tls_sans = {
+    for name, node in local.k3s_nodes : name => concat(
+      [
+        hcloud_primary_ip.k3s_ipv4.ip_address,
+        cidrhost(var.wireguard_subnet, 1),
+        node.private_ip,
+      ],
+      var.k3s_extra_tls_sans,
+    )
+  }
+
+  k3s_env = { for name, node in local.k3s_nodes : name => <<-EOT
     PUBLIC_IPV4=${hcloud_primary_ip.k3s_ipv4.ip_address}
-    PRIVATE_IPV4=${var.k3s_private_ip}
+    PRIVATE_IPV4=${node.private_ip}
     PRIVATE_SUBNET=${var.subnet_ip_range}
     POD_CIDR=${local.pod_cidr}
     WIREGUARD_ADDRESS=${local.wireguard_address}
     WIREGUARD_PORT=${var.wireguard_port}
     K3S_VERSION=${var.k3s_version}
-    K3S_TLS_SANS="${join(" ", local.k3s_tls_sans)}"
+    K3S_TLS_SANS="${join(" ", local.k3s_tls_sans[name])}"
     POSTGRES_VERSION=${var.postgres_version}
-    POSTGRES_LISTEN_IP=${local.postgres_ip}
+    POSTGRES_LISTEN_IP=${node.postgres_ip}
     POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
     WALG_VERSION=${var.walg_version}
     WALG_SHA256_AMD64=${var.walg_checksums.amd64}
@@ -115,6 +137,7 @@ locals {
     BACKUP_REGION=${var.backup_region}
     BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
+  }
 
   # Only shipped where the database is on the k3s node: `user_data` is capped at 32 KiB, these two
   # are more than half of what this node renders, and the co-located node is where the cap binds.
@@ -123,14 +146,14 @@ locals {
     local.script_file.backups,
   ]
 
-  k3s_user_data = templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
+  k3s_user_data_by_node = { for name, node in local.k3s_nodes : name => templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
     hostname        = "${var.environment}-k3s"
     ssh_public_keys = var.ssh_public_keys
     files = concat(local.base_files, [
       {
         path        = "/etc/event-junkie/bootstrap.env"
         permissions = "0640"
-        content     = local.k3s_env
+        content     = local.k3s_env[name]
       },
       {
         path        = "/etc/wireguard/peers.conf"
@@ -147,11 +170,13 @@ locals {
       ["/opt/event-junkie/step.sh wireguard"],
       # backups.sh immediately after postgres.sh, only where PostgreSQL runs: it turns on
       # `archive_mode`, which needs a restart, so the cluster has to exist first.
-      local.dedicated_postgres ? [] : ["/opt/event-junkie/step.sh postgres", "/opt/event-junkie/step.sh backups"],
+      node.boot_postgres ? ["/opt/event-junkie/step.sh postgres", "/opt/event-junkie/step.sh backups"] : [],
       ["/opt/event-junkie/step.sh k3s"],
       local.final_runcmd,
     )
-  })
+  }) }
+
+  k3s_user_data = local.k3s_user_data_by_node.current
 }
 
 # ---------------------------------------------------------------------------
@@ -159,13 +184,19 @@ locals {
 # ---------------------------------------------------------------------------
 
 locals {
-  postgres_env = <<-EOT
+  # As for k3s above: the next node boots without PostgreSQL, which the database cutover starts.
+  postgres_nodes = merge(
+    { current = { private_ip = var.postgres_private_ip, boot_postgres = true } },
+    local.next_pair && local.dedicated_postgres ? { next = { private_ip = local.next_postgres_private_ip, boot_postgres = false } } : {},
+  )
+
+  postgres_env = { for name, node in local.postgres_nodes : name => <<-EOT
     PUBLIC_IPV4=
-    PRIVATE_IPV4=${var.postgres_private_ip}
+    PRIVATE_IPV4=${node.private_ip}
     PRIVATE_SUBNET=${var.subnet_ip_range}
     POD_CIDR=${local.pod_cidr}
     POSTGRES_VERSION=${var.postgres_version}
-    POSTGRES_LISTEN_IP=${var.postgres_private_ip}
+    POSTGRES_LISTEN_IP=${node.private_ip}
     POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
     WALG_VERSION=${var.walg_version}
     WALG_SHA256_AMD64=${var.walg_checksums.amd64}
@@ -176,27 +207,30 @@ locals {
     BACKUP_REGION=${var.backup_region}
     BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
+  }
 
   # No WireGuard: no public IPv4 to run an endpoint on, and it is reached over the private network
   # from the k3s node, which is behind the tunnel.
-  postgres_user_data = templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
+  postgres_user_data_by_node = { for name, node in local.postgres_nodes : name => templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
     hostname        = "${var.environment}-postgres"
     ssh_public_keys = var.ssh_public_keys
     files = concat(local.base_files, [
       {
         path        = "/etc/event-junkie/bootstrap.env"
         permissions = "0640"
-        content     = local.postgres_env
+        content     = local.postgres_env[name]
       },
       local.script_file.harden,
       local.script_file.postgres,
       local.script_file.backups,
     ])
-    runcmd = concat(local.base_runcmd, [
+    runcmd = concat(local.base_runcmd, node.boot_postgres ? [
       "/opt/event-junkie/step.sh postgres",
       "/opt/event-junkie/step.sh backups",
-    ], local.final_runcmd)
-  })
+    ] : [], local.final_runcmd)
+  }) }
+
+  postgres_user_data = local.postgres_user_data_by_node.current
 }
 
 # What the provider keeps in state for `user_data`: base64 of the raw SHA-1, not the script
@@ -204,7 +238,11 @@ locals {
 # a time. servers.tf compares it with what each node booted (#4129).
 locals {
   base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  user_data_hash = { for name, user_data in { k3s = local.k3s_user_data, postgres = local.postgres_user_data } :
+  user_data_hash = { for name, user_data in merge(
+    { k3s = local.k3s_user_data, postgres = local.postgres_user_data },
+    { for node, user_data in local.k3s_user_data_by_node : "k3s_next" => user_data if node == "next" },
+    { for node, user_data in local.postgres_user_data_by_node : "postgres_next" => user_data if node == "next" },
+    ) :
     name => "${substr(join("", [
       for i in range(7) : join("", [
         for shift in [262144, 4096, 64, 1] :

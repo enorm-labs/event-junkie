@@ -105,6 +105,31 @@ variable "postgres_private_ip" {
   nullable    = false
 }
 
+variable "next_pair" {
+  description = <<-EOT
+    A second pair of nodes, built beside the running pair, so a change of server type is a cutover
+    of minutes instead of a rebuild in place (#4128). `null` builds nothing.
+
+    The new pair gets temporary Primary IPs and its own private addresses, host .11 and .21 of
+    `subnet_ip_range` unless given. It uses the volume and the real Primary IPs only after the
+    cutover moves them. Set it with `-var`, never in tfvars.
+  EOT
+  type = object({
+    k3s_server_type      = string
+    postgres_server_type = optional(string)
+    k3s_private_ip       = optional(string)
+    postgres_private_ip  = optional(string)
+  })
+  default = null
+
+  validation {
+    condition = var.next_pair == null || (
+      (var.next_pair.postgres_server_type == null) == (var.postgres_server_type == null)
+    )
+    error_message = "next_pair.postgres_server_type must be set exactly when postgres_server_type is: the new pair keeps the running pair's topology."
+  }
+}
+
 variable "postgres_public_ipv4" {
   description = <<-EOT
     Whether the dedicated PostgreSQL node gets a public IPv4.
