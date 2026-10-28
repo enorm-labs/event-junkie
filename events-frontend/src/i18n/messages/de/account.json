@@ -92,7 +92,9 @@
     "cancel": "Abbrechen",
     "kind": "Gespeicherte Suche",
     "renameLabel": "Neuer Name für {name}",
-    "list": "Gespeicherte Suchen ({count})"
+    "list": "Gespeicherte Suchen ({count})",
+    "chips": "Deine gespeicherten Suchen",
+    "all": "Alle {count} gespeicherten Suchen"
   },
   "rsvp": {
     "interested": "Interessiert",

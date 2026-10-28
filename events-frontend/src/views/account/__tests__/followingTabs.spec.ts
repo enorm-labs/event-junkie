@@ -165,6 +165,26 @@ describe('FollowingView tabs (#4080)', () => {
     expect(account.fetchFollows).toHaveBeenCalledTimes(1)
   })
 
+  it('runs saved searches from chips beside the filters and manages them on the follows tab (#4099)', async () => {
+    account.fetchSearches.mockResolvedValue([
+      { id: 'a', name: 'Free techno', query: 'free=true&genre=techno' },
+    ])
+    const view = await mountAt('/en/following')
+
+    expect(tabs(view)[1]!.text()).toBe('You follow (3)')
+    const chips = view.find('#following-panel-events ul[aria-label="Your saved searches"]')
+    expect(chips.find('a').attributes('href')).toBe('/en/events?free=true&genre=techno')
+    expect(view.find('#following-panel-events').text()).not.toContain('Saved searches (1)')
+
+    await tabs(view)[1]!.trigger('click')
+    await flushPromises()
+    expect(
+      followsPanel(view)
+        .findAll('h2')
+        .map((h) => h.text()),
+    ).toEqual(['Artists (1)', 'Venues (1)', 'Saved searches (1)'])
+  })
+
   it('says so on the tab when the account follows nothing', async () => {
     account.fetchFollows.mockResolvedValue([])
     getMock.mockResolvedValue({ content: [] })

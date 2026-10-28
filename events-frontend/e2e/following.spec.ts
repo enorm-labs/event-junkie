@@ -309,12 +309,20 @@ test('one genre alone saves with a single press, and Following lists it with its
 
   await page.getByRole('link', { name: 'See it on your Following page' }).click()
   await expect(page.getByRole('heading', { name: 'Saved searches (1)' })).toBeVisible()
-  await expect(page.getByText('7 upcoming')).toBeVisible()
+  // The open tab's panel: the hidden Events tab names the count too, on its chip.
+  await expect(page.getByRole('tabpanel').getByText('Saved search · 7 upcoming')).toBeVisible()
   await expect(page.getByRole('link', { name: 'techno', exact: true })).toHaveAttribute(
     'href',
     '/en/events?genre=techno',
   )
 
+  // The Events tab runs it from a chip beside the filters (#4099).
+  await page.getByRole('tab', { name: 'Events' }).click()
+  await expect(
+    page.getByRole('list', { name: 'Your saved searches' }).getByRole('link'),
+  ).toHaveAttribute('href', '/en/events?genre=techno')
+
+  await page.getByRole('tab', { name: 'You follow (1)' }).click()
   await page.getByRole('button', { name: 'Delete' }).click()
   await expect(page.getByRole('heading', { name: 'Saved searches (1)' })).toHaveCount(0)
 })
