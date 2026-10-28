@@ -91,7 +91,15 @@ connection.
 
 ## 2 · Get the kubeconfig — once
 
-k3s writes one on the node for `127.0.0.1`. This rewrites it to the tunnel address, which works because `10.10.1.1` is one of the API server's certificate SANs.
+```sh
+scripts/cluster-access.sh staging            # --merge also adds the context to ~/.kube/config (§3 B)
+```
+
+**Run it again after every rebuild, on every Mac.** It replaces the server key in `~/.wireguard/<env>.conf`, the node's host keys and the kubeconfig,
+each one only when it changed, with a dated backup. It also replaces a stale `event-junkie-<env>` entry in `~/.kube/config`. A second run changes nothing.
+It needs the client config to exist already. A Mac without one has no peer: CLUSTER_BOOTSTRAP.md § Adding a Mac to the tunnel.
+
+What it does by hand follows. k3s writes one on the node for `127.0.0.1`. This rewrites it to the tunnel address, which works because `10.10.1.1` is one of the API server's certificate SANs.
 
 ```sh
 mkdir -p ~/.kube
