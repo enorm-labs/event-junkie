@@ -1055,6 +1055,10 @@ cd deploy/alerts     && ./apply.sh --diff
 **Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
 succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
+**On a new OpenObserve, the alerts `apply.sh` skips some rules and exits non-zero.** A rule cannot be created before its stream has a first point. On
+production that was `importer_translations_total`, which appears with the first translation. The script lists the skipped rules. Run it again after
+the first import cycle, then run `--diff`. A stream that never appears is a wrong name in `gen_alerts.py`.
+
 **A `NO DATA` from a dashboard query is a finding.** A collector exports some series only after a failure
 (`enqueue_failed`, `send_failed`). A query on such a series is blank on a healthy cluster. Since collector 0.158 no
 collector counter carries `_total` (#1964). The

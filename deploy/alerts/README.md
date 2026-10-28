@@ -51,6 +51,10 @@ therefore reports `quiet` on a healthy cluster, like `ej-translations-failing`, 
 staging drill proved it is the right counter: with the collector cut off from OpenObserve for 10 minutes, 9973 points were dropped through `send_failed`,
 the queue reached 10% and `receiver_refused` stayed 0.
 
+**An apply skips a rule whose stream does not exist yet.** OpenObserve answers `404 Stream … not found` until a stream's first point arrives.
+`apply_alerts.py` applies the other rules, lists the skipped ones and exits non-zero. On a new cluster, run `apply.sh` again after the first import
+cycle. Any other refusal still stops the run at once.
+
 ## What `--diff` answers that `--check` cannot
 
 **`--check` validates the file. `--diff` validates the deployment.** They read alike and the difference is the whole of
