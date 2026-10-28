@@ -4,12 +4,14 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Fifteen objects.** One, `events-db`, is encrypted into git and restored by Flux. The other fourteen are typed by a human and exist nowhere else.
+- **Fifteen objects.** One, `events-db`, is encrypted into git and restored by Flux. `scripts/cluster-secrets.sh <env>` creates the other fourteen from the
+  Keychain, and `--check` compares them with it.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
 
 ```sh
+scripts/cluster-secrets.sh staging --check                    # every hand-made key against the Keychain, by length
 sops -d deploy/clusters/staging/secrets/events-db.yaml | head  # can I still decrypt?
 flux --context event-junkie-staging get helmreleases -A       # a missing credential fails the release, by design
 ```
@@ -38,6 +40,9 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | §events-bff-db, below                                          |
 | `event-junkie-push`       | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with        | §event-junkie-push, below                                      |
 
+**`scripts/cluster-secrets.sh` carries the same list, with the Keychain item behind each key.** The sections below say why each Secret exists and how to make
+its value. A rebuild runs the script, not the commands below. Add a Secret to the table and to the script in the same change.
+
 **All fifteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
@@ -49,7 +54,7 @@ _different_ values on purpose: `github-dispatch`, so revoking one does not take 
 `postgres-exporter` is an `ALTER ROLE` away. OpenObserve's root password can be brand new, because its PVC is `local-path` on the node's disk. The metadata DB
 dies with the node, and the Secret re-seeds the root user at first boot. Worth knowing before copying secrets out of a cluster you are about to destroy.
 
-They are typed once by a human and exist nowhere else. **That is the whole problem**, and it is the same shape as the backup credential in §8b. A cluster
+Their values live in the cluster and in the Keychain, and nowhere in this repository. **That is the whole problem**, and it is the same shape as the backup credential in §8b. A cluster
 rebuild silently loses them, and everything comes back looking healthy. The failure is a `CrashLoopBackOff` at best, and a certificate that quietly stops
 renewing at worst.
 

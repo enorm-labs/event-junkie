@@ -114,6 +114,10 @@ jobs:
       - name: Assert what cluster-access.sh replaces after a rebuild
         run: scripts/cluster-access-test.sh
 
+      # Four values were in no Keychain item when the production rebuild needed them (#4133).
+      - name: Assert what cluster-secrets.sh writes, checks and imports
+        run: scripts/cluster-secrets-test.sh
+
       # A checked plan and the applied plan were two runs, and the second replaced both production nodes (#4132).
       - name: Assert what infra/apply.sh refuses and applies
         run: infra/apply-test.sh
