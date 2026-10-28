@@ -232,6 +232,9 @@ proved what happens when something exists only in a place that gets destroyed.
 | `event-junkie-production-events-db`          | #20                | by hand, and encrypted into git                            |
 | `event-junkie-staging-o2-root-password`      | #8                 | by hand, into `openobserve-credentials`                    |
 | `event-junkie-staging-metrics-password`      | the `metrics` role | by hand, into `postgres-exporter`                          |
+| `event-junkie-production-o2-root-password`   | #8                 | by hand, into `openobserve-credentials`                    |
+| `event-junkie-production-metrics-password`   | the `metrics` role | by hand, into `postgres-exporter`                          |
+| `event-junkie-production-bff-password`       | the `bff` role     | by hand, into `events-bff-db`                              |
 | `event-junkie-anthropic-api-key`             | #26                | the repository-root `.envrc`, and `event-junkie-anthropic` |
 | `discogs-consumer-key`, `-secret`            | #27                | by hand, into `event-junkie-discogs`                       |
 | `instagram-token`                            | #28                | `scripts/instagram-posts.sh`, and `event-junkie-instagram` |

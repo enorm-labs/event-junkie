@@ -698,6 +698,33 @@ scripts/upstream-node-pins.sh
 `node-pin-reminder.yml` runs the same check weekly and opens an issue. [BACKUPS.md](BACKUPS.md) §8 has the wal-g rules, and
 [ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md) has the reason nothing proposes these as a pull request.
 
+### What a rebuild of a running cluster adds to §3–§9
+
+The production rebuild in #4125 met each of these. Read them before the first command.
+
+**Before the apply:**
+
+1. Copy the `event-junkie-push` key pair into the password manager. A new pair ends every Web Push subscription on that cluster.
+2. Run `infra/check-capacity.sh --probe`. A destroyed server type that Hetzner cannot place again leaves the site down.
+3. Plan with `-out=tfplan` and apply that file. A second plain `tofu apply` plans again, without the flags.
+
+**After the apply:**
+
+1. In a worktree, copy `terraform.tfvars` from the main checkout first. It is gitignored, and `tofu` asks for every variable without it.
+2. Open `admin_cidrs` for the address SSH really leaves from. A corporate proxy shows a different address to `curl`. Turn the proxy off first.
+3. Remove the old host keys: `ssh-keygen -R` for the public address, the tunnel address and `10.0.1.20`.
+4. Put the node's new WireGuard key into the existing client config. Your own key and the peer list do not change.
+5. Close `admin_cidrs` again once the tunnel works.
+6. Check `events-db` against the role with `SOPS_AGE_KEY_FILE=~/.config/sops/age/event-junkie.txt`. sops does not look for that file name.
+7. Set the `metrics` and `bff` passwords with `ALTER ROLE`. The roles survive on the volume.
+8. Create the 14 hand-made objects from [SECRETS.md](SECRETS.md). Create the three namespaces first, `flux-system` included.
+9. Do not run `flux bootstrap`. The repository holds the cluster's `flux-system` already. Create the `flux-system` Secret with `flux create secret git`.
+   Replace the cluster's deploy key with `gh repo deploy-key`. Then run `kubectl apply -k deploy/clusters/<env>/flux-system`. Nothing pushes to `main`,
+   so the ruleset stays on.
+10. Push the alerts and the dashboards with `EJ_NODE`, as below.
+
+**Do not define a `k()` helper where `k` is an alias.** zsh expands the alias first. The function then gets the wrong name.
+
 ### Applying a `cloud-init` fix without rebuilding
 
 **A change under `cloud-init/` reaches a running node only at its next rebuild.** `user_data` is a force-new attribute, so the corrected script is what the
