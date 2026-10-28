@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+echo "harden: start"
+trap 'echo "harden: failed at line ${LINENO}: ${BASH_COMMAND}" >&2' ERR
+
 readonly OPS_AUTHORIZED_KEYS=/home/ops/.ssh/authorized_keys
 
 # Refuse to disable root login until the unprivileged account can be logged into: Hetzner injects
@@ -28,9 +31,12 @@ ClientAliveInterval 300
 ClientAliveCountMax 2
 EOF
 
-# Ubuntu 24.04 socket-activates sshd; `ssh` is the unit either way.
+# Ubuntu 24.04 socket-activates sshd, so at first boot `ssh.service` has not run: its
+# `RuntimeDirectory` is missing, which fails `sshd -t`, and there is nothing to reload. The
+# socket starts the next sshd with the drop-in (#4141).
+install -d -m 0755 /run/sshd
 sshd -t
-systemctl reload ssh
+systemctl try-reload-or-restart ssh
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get install -y --no-install-recommends unattended-upgrades

@@ -76,6 +76,7 @@ ROLES = {
     "k3s, co-located database (staging)": [
         ("/etc/apt/apt.conf.d/99-event-junkie", "0644", APT_CONF),
         script("private-net"),
+        script("step"),
         env_file(SAMPLE_ENV.keys()),
         ("/etc/wireguard/peers.conf", "0600", PEERS),
         script("harden"),
@@ -87,6 +88,7 @@ ROLES = {
     "PostgreSQL, dedicated (production)": [
         ("/etc/apt/apt.conf.d/99-event-junkie", "0644", APT_CONF),
         script("private-net"),
+        script("step"),
         env_file([k for k in SAMPLE_ENV if not k.startswith(("WIREGUARD", "K3S"))]),
         script("harden"),
         script("postgres"),
@@ -95,12 +97,13 @@ ROLES = {
 }
 RUNCMD = [
     "install -d -m 0750 /opt/event-junkie",
-    "/opt/event-junkie/private-net.sh",
-    "/opt/event-junkie/harden.sh",
-    "/opt/event-junkie/wireguard.sh",
-    "/opt/event-junkie/postgres.sh",
-    "/opt/event-junkie/backups.sh",
-    "/opt/event-junkie/k3s.sh",
+    "/opt/event-junkie/step.sh private-net",
+    "/opt/event-junkie/step.sh harden",
+    "/opt/event-junkie/step.sh wireguard",
+    "/opt/event-junkie/step.sh postgres",
+    "/opt/event-junkie/step.sh backups",
+    "/opt/event-junkie/step.sh k3s",
+    "/opt/event-junkie/step.sh --result",
 ]
 
 
