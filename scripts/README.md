@@ -104,6 +104,7 @@ Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes 
 | `readme-screenshots.sh`                   | The README's four screenshots of the events list, desktop and phone in both themes, from production                              | `docs/screenshots/`                                     |
 | `pr-screenshots.sh`                       | Before and after screenshots of a pull request's pages, from two builds served on free ports                                     | `/open-pr`, `/afk`                                      |
 | `admin-screenshots.sh`                    | The same for `events-admin`, its admin API answered from `events-admin/screenshot-fixtures/`, never an importer                  | `/open-pr`, `/afk`                                      |
+| `pr-screenshots-account.mjs`              | The signed-in test account behind `pr-screenshots.sh --signed-in`: answers `/api/auth` and `/api/me` in the browser              | `pr-screenshots.sh`                                     |
 | `admin-fixture-server.mjs`                | Serves an `events-admin` build and those fixtures on one port, for `admin-screenshots.sh`                                        | `admin-screenshots.sh`                                  |
 
 ## Ops
