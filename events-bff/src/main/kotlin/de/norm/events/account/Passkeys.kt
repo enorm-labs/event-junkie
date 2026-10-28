@@ -3,6 +3,7 @@ package de.norm.events.account
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.AttestedCredentialDataConverter
+import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.credential.CredentialRecordImpl
 import com.webauthn4j.data.AuthenticationParameters
@@ -21,6 +22,7 @@ import com.webauthn4j.util.exception.WebAuthnException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import tools.jackson.core.JacksonException
 import java.net.URI
 import java.security.SecureRandom
 import java.time.Clock
@@ -81,7 +83,7 @@ class Passkeys(
     ): RegisterOutcome {
         val passkey =
             try {
-                val data = manager.parseRegistrationResponseJSON(json(credential))
+                val data = parsed(credential, manager::parseRegistrationResponseJSON)
                 val challenge = data.collectedClientData?.challenge?.value
                 if (challenge == null || !store.consumeChallenge(challenge, account.id, clock.instant())) return RegisterOutcome.INVALID.recorded()
                 manager.verify(data, RegistrationParameters(server(challenge), ALGORITHMS, true, true))
@@ -114,7 +116,7 @@ class Passkeys(
     /** The account the browser's answer to [requestOptions] signs in, or null. */
     suspend fun signIn(credential: Map<String, Any?>): Account? =
         try {
-            val data = manager.parseAuthenticationResponseJSON(json(credential))
+            val data = parsed(credential, manager::parseAuthenticationResponseJSON)
             val challenge = data.collectedClientData?.challenge?.value
             val row = data.credentialId?.let { store.find(it) }
             val handle = data.userHandle
@@ -168,8 +170,22 @@ class Passkeys(
         logger.info { "Passkey: ${outcome.tag}" }
     }
 
-    /** `PublicKeyCredential.toJSON()` as the browser sent it, back to the text webauthn4j parses. */
-    private fun json(credential: Map<String, Any?>): String = converter.jsonMapper.writeValueAsString(credential)
+    /**
+     * `PublicKeyCredential.toJSON()` as the browser sent it, parsed by webauthn4j. A malformed answer must be a refusal, but
+     * webauthn4j dereferences a missing `response` unchecked and lets a bad base64 field out as Jackson's exception, and
+     * both were a 500 (#4105). Here each becomes the [WebAuthnException] the callers already refuse.
+     */
+    private fun <T> parsed(
+        credential: Map<String, Any?>,
+        parse: (String) -> T
+    ): T {
+        if (credential["response"] !is Map<*, *>) throw DataConversionException("The answer carries no response object")
+        return try {
+            parse(converter.jsonMapper.writeValueAsString(credential))
+        } catch (e: JacksonException) {
+            throw DataConversionException(e)
+        }
+    }
 
     private fun RegisterOutcome.recorded() = also { record(metric) }
 

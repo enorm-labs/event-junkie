@@ -30,6 +30,15 @@ class PasskeyFlowTest : BaseControllerTest() {
     private lateinit var session: String
     private lateinit var csrf: String
 
+    /** The OpenAPI example ZAP sends (#4105), an empty object, and fields of the wrong type. */
+    private val malformedCredentials =
+        listOf(
+            mapOf("additionalProp1" to emptyMap<String, String>()),
+            emptyMap(),
+            mapOf("id" to 1, "rawId" to "x", "type" to "public-key", "response" to "x"),
+            mapOf("id" to "AAAA", "rawId" to "AAAA", "type" to "public-key", "response" to mapOf("clientDataJSON" to "not base64!"))
+        )
+
     /** A client address of its own per test: the per-client limit lives in the bean, across tests. */
     private val client = "203.0.113.${(1..254).random()}-${UUID.randomUUID()}"
 
@@ -177,6 +186,15 @@ class PasskeyFlowTest : BaseControllerTest() {
             .isNoContent
         list().size() shouldBe 0
         signInWith(device).expectStatus().isUnauthorized
+    }
+
+    @Test
+    fun `an answer that is not a credential is a refusal, not a server error`() {
+        malformedCredentials.forEach { credential ->
+            post("/auth/passkey/sign-in", mapOf("credential" to credential), signedIn = false).expectStatus().isUnauthorized
+            post("/me/passkeys", mapOf("credential" to credential)).expectStatus().isBadRequest
+        }
+        list().size() shouldBe 0
     }
 
     @Test
