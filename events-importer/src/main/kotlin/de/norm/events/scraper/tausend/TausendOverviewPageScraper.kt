@@ -100,8 +100,9 @@ class TausendOverviewPageScraper {
     }
 
     /**
-     * A live night bills its act as one headliner, because a band name carries `&`. A DJ night splits a
-     * shared bill into its DJs. A night whose act is its own series names nobody.
+     * A live night bills its act as one headliner, because a band name carries `&`, unless the `&` adds a
+     * DJ: `Desney Bailey & DJ Jauche` is a singer and a DJ set (11778). A DJ night splits a shared bill
+     * into its DJs. A night whose act is its own series names nobody.
      */
     private fun artists(
         act: String,
@@ -109,6 +110,12 @@ class TausendOverviewPageScraper {
         eventType: String
     ): List<ScrapedArtist> {
         if (act.equals(series, ignoreCase = true)) return emptyList()
+        if (eventType == EventType.CONCERT.name) {
+            LIVE_WITH_DJ.matchEntire(act)?.let { match ->
+                val (live, dj) = match.destructured
+                return listOf(ScrapedArtist(name = live, role = ArtistRole.HEADLINER), ScrapedArtist(name = dj, role = ArtistRole.DJ))
+            }
+        }
         val names = if (eventType == EventType.CONCERT.name) listOf(act) else splitSegmentOnConjunctions(act)
         val role = if (eventType == EventType.CONCERT.name) ArtistRole.HEADLINER else ArtistRole.DJ
         return names.filterNot { isNonArtistName(it) }.map { ScrapedArtist(name = it, role = role) }
@@ -145,6 +152,7 @@ class TausendOverviewPageScraper {
     companion object {
         private const val NAME_SEPARATOR = "·"
         private const val LIVE_SERIES = "Live"
+        private val LIVE_WITH_DJ = Regex("""(.+?)\s+&\s+(DJ\s+.+)""")
         private const val LOCAL_DATE_TIME_LENGTH = 19
         private val END_OF_NIGHT: LocalTime = LocalTime.of(23, 59)
     }

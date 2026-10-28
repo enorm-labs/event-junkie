@@ -64,6 +64,21 @@ class TausendOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits a Tausend Live act that adds a DJ into the singer and the DJ`() {
+        val night =
+            scraper
+                .scrape(Jsoup.parse(liveNight("Desney Bailey & DJ Jauche"), baseUrl), baseUrl)
+                .single()
+
+        night.title shouldBe "Desney Bailey & DJ Jauche"
+        night.artists shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Desney Bailey", role = ArtistRole.HEADLINER),
+                ScrapedArtist(name = "DJ Jauche", role = ArtistRole.DJ)
+            )
+    }
+
+    @Test
     fun `splits a shared DJ bill`() {
         val night = events.first { it.subtitle == "Yacht Week Party" }
 
@@ -94,6 +109,15 @@ class TausendOverviewPageScraperTest {
     fun `returns nothing for a page without a lineup`() {
         scraper.scrape(Jsoup.parse("<html><body></body></html>", baseUrl), baseUrl).shouldBeEmpty()
     }
+
+    /** Event 11778's graph entry, cut to the fields the parser reads. */
+    private fun liveNight(act: String): String =
+        """
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"MusicEvent","name":"$act · Tausend Live",
+         "startDate":"2026-12-09T21:00:00+01:00","url":"https://tausendberlin.com/lineup/#act-desney-bailey-dj-jauche-20261209"}
+        </script>
+        """.trimIndent()
 
     private fun fixture(name: String): String =
         javaClass.classLoader
