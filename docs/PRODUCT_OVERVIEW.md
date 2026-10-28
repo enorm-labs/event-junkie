@@ -81,8 +81,9 @@ lists what that includes and what it excludes.
 - **Follow** artists, venues and promoters on their pages. The **Following** page shows today's events first, as the home page
   does, then what is coming up from all of them, by date. Behind a Filter button, the events list's filters and sort narrow the upcoming list, and
   the URL keeps them.
-- **Save a search** on the events list, under a name the page suggests. One genre or one district saves with a single press. The **Following**
-  page lists each saved search with how many events match.
+- **Save a search** on the events list, under a name the page suggests. One genre or one district saves with a single press. On the
+  **Following** page, a chip above the upcoming list opens each saved search and shows how many events match. The _You follow_ tab lists them
+  to rename or delete.
 - Mark an event **Interested** or **Going** on its page. Only the visitor sees it, on the cards and in the **Following** feed.
   **My calendar** shows these plans as a list or a calendar, and keeps the past ones as history.
 - Turn on **notifications** in a browser, from the account page. A bell on each follow sends a push to those browsers when the artist,
