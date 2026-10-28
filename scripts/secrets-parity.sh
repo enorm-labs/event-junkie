@@ -77,7 +77,7 @@ expect() {
 }
 
 expect "$SECRETS" "\\*\\*[A-Z][a-z]+ objects\\.\\*\\*" "$count"
-expect "$SECRETS" "The other $N are typed by a human" "$hand_made"
+expect "$SECRETS" "creates the other $N from the" "$hand_made"
 expect "$SECRETS" "^## The $N objects, and where each comes from" "$count"
 expect "$SECRETS" "\\*\\*All $N belong in that table\\.\\*\\*" "$count"
 expect "$SECRETS" "The table lists $N objects, not $N values" "$count"
