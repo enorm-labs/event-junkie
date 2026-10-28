@@ -66,12 +66,10 @@ class EventService(
 
         val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
-        // Batch-fetch all associations in 3 queries, grouped by event ID
         val artistsByEventId = eventArtistRepository.findByEventIdIn(eventIds).toList().groupBy { it.eventId }
         val promotersByEventId = eventPromoterRepository.findByEventIdIn(eventIds).toList().groupBy { it.eventId }
         val genreTagsByEventId = eventGenreTagRepository.findByEventIdIn(eventIds).toList().groupBy { it.eventId }
 
-        // Resolve genre tag IDs to names in a single batch query
         val allGenreTagIds =
             genreTagsByEventId.values
                 .flatten()
@@ -140,7 +138,6 @@ class EventService(
      */
     @Transactional
     suspend fun create(request: EventRequest): EventResponse {
-        // Validate that referenced venue exists and retrieve its slug for event slug generation
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
         festivalRepository.ensureFestivalOf(request)
         request.requireRelocationFitsStatus()
