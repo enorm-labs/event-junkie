@@ -121,6 +121,8 @@
     "off": "Benachrichtigungen sind in diesem Browser aus.",
     "turnOn": "Benachrichtigungen einschalten",
     "turnOff": "Benachrichtigungen ausschalten",
+    "changes": "Änderungen an meinen Plänen",
+    "changesHint": "Eine Push-Nachricht, wenn ein Event, das du als Interessiert oder Dabei markiert hast, abgesagt, verlegt oder verschoben wird. Sie geht an jeden Browser, in dem Benachrichtigungen an sind.",
     "homeScreen": "Auf iPhone und iPad funktionieren Benachrichtigungen nur vom Home-Bildschirm. Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“, und öffne Event Junkie von dort.",
     "unsupported": "Dieser Browser kann keine Push-Nachrichten empfangen.",
     "unavailable": "Benachrichtigungen sind gerade nicht verfügbar.",
@@ -157,12 +159,20 @@
     "label": "Benachrichtigungen",
     "labelUnread": "Benachrichtigungen, {count} ungelesen",
     "title": "Was neu ist",
-    "empty": "Noch nichts Neues. Neue Termine von dem, dem du folgst, erscheinen hier.",
+    "empty": "Noch nichts Neues. Neue Termine von dem, dem du folgst, und Änderungen an Events, die du vorhast, erscheinen hier.",
     "markAllRead": "Alle als gelesen markieren",
     "unread": "Ungelesen",
     "artist": "Neuer Termin: {name}",
     "venue": "Neuer Termin bei {name}",
     "promoter": "Neuer Termin von {name}",
+    "change": {
+      "cancelled": "Abgesagt",
+      "postponed": "Verschoben",
+      "relocated": "Verlegt",
+      "date": "Neues Datum",
+      "time": "Neue Uhrzeit",
+      "venue": "Neuer Ort"
+    },
     "failed": "Benachrichtigungen konnten nicht geladen werden. Versuch es später noch einmal."
   }
 }

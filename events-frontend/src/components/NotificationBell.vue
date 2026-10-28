@@ -97,6 +97,7 @@ async function readAll() {
 }
 
 function line(entry: AccountNotification) {
+  if (entry.kind === 'change') return t(`account.notifications.change.${entry.change}`)
   return t(`account.notifications.${entry.aboutKind}`, { name: entry.aboutName })
 }
 

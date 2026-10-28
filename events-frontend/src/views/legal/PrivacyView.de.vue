@@ -408,8 +408,10 @@ const { t } = useI18n()
         <strong>Was neu ist:</strong> Bekommt etwas, dem du folgst, einen neuen Termin, speichere
         ich dazu einen Hinweis zu deinem Konto: welche Veranstaltung, von welchem Act, welcher
         Location oder welchem Veranstalter er stammt, wann ich ihn angelegt habe und wann du ihn
-        geöffnet hast. Die Glocke im Kopf der Seite zeigt die neuesten 20 und zählt die, die du noch
-        nicht geöffnet hast. Nur du siehst sie. Ich lösche jeden Hinweis nach
+        geöffnet hast. Sagt die Location ein Event ab, das du vorhast, verschiebt oder verlegt sie
+        es, oder ändert sie Datum, Beginn oder Ort, speichere ich ebenfalls einen Hinweis: welches
+        Event und was sich geändert hat. Die Glocke im Kopf der Seite zeigt die neuesten 20 und
+        zählt die, die du noch nicht geöffnet hast. Nur du siehst sie. Ich lösche jeden Hinweis nach
         <strong>30 Tagen</strong>, gelesen oder nicht, und früher, wenn seine Veranstaltung aus dem
         Kalender verschwindet.
       </p>
@@ -418,10 +420,13 @@ const { t } = useI18n()
         speichere ich dessen Abonnement: eine Adresse beim Push-Dienst des Browsers und zwei
         Schlüssel, dazu den Zeitpunkt des Einschaltens und der letzten Benachrichtigung. Die Glocke
         an einem Act, einer Location oder einem Veranstalter, dem du folgst, legt fest, worum es
-        geht: einen neuen Termin. Eine Benachrichtigung enthält einen Titel, eine Zeile und einen
-        Link, sonst nichts, und sie ist verschlüsselt, sodass nur dein Browser sie lesen kann. Das
-        Abonnement wird gelöscht, wenn du Benachrichtigungen ausschaltest, wenn der Push-Dienst es
-        als erloschen meldet, und mit deinem Konto.
+        geht: einen neuen Termin. Deine Pläne fügen eines hinzu: eine Änderung an einem Event, das
+        du markiert hast, wie unter „Was neu ist“. Das ist an, bis du „Änderungen an meinen Plänen“
+        auf deiner Kontoseite ausschaltest; die Einstellung speichere ich mit deinem Konto. Eine
+        Benachrichtigung enthält einen Titel, eine Zeile und einen Link, sonst nichts, und sie ist
+        verschlüsselt, sodass nur dein Browser sie lesen kann. Das Abonnement wird gelöscht, wenn du
+        Benachrichtigungen ausschaltest, wenn der Push-Dienst es als erloschen meldet, und mit
+        deinem Konto.
       </p>
       <p>
         <strong>Der Push-Dienst:</strong> Eine Benachrichtigung läuft über den Push-Dienst des

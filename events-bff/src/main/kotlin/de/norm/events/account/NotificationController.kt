@@ -73,14 +73,16 @@ class NotificationController(
 /** One notification, in the bell's menu and in the export. */
 data class NotificationResponse(
     val id: UUID,
-    /** `new_date`. */
+    /** `new_date`, or `change` for an event the account marked (#4045). */
     val kind: String,
     val event: String,
     val title: String,
     val date: LocalDate,
-    /** What the account follows that made it: `artist`, `venue` or `promoter`. */
+    /** What made it: the follow's `artist`, `venue` or `promoter`, or `rsvp` for a change. */
     val aboutKind: String,
     val aboutName: String,
+    /** For a change, what changed: `cancelled`, `postponed`, `relocated`, `date`, `time` or `venue`. */
+    val change: String?,
     val createdAt: Instant,
     val readAt: Instant?
 ) {
@@ -94,6 +96,7 @@ data class NotificationResponse(
                 date = notification.date,
                 aboutKind = notification.aboutKind,
                 aboutName = notification.aboutName,
+                change = notification.change,
                 createdAt = notification.createdAt,
                 readAt = notification.readAt
             )

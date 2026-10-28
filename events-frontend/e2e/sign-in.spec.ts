@@ -7,7 +7,7 @@ import { failUnmockedGets } from './unmocked'
  * a POST body, the token leaves the address bar, and every write carries the CSRF header.
  *
  * Endpoints: GET /api/auth/csrf · GET /api/auth/session · POST /api/auth/link · POST /api/auth/sign-in
- * · GET /api/me · DELETE /api/me, and the GETs of the account and Following pages
+ * · GET /api/me · DELETE /api/me · PUT /api/me/push/changes, and the GETs of the account and Following pages
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
@@ -39,6 +39,7 @@ async function mockAccount(page: Page): Promise<{ path: string; csrf: string | n
     if (path === '/api/me/follows') return json(route, [])
     if (path === '/api/me/passkeys') return json(route, [])
     if (path === '/api/me/push') return json(route, { publicKey: null })
+    if (path === '/api/me/push/changes') return route.fulfill({ status: 204 })
     if (path === '/api/me/searches') return json(route, [])
     return fallthrough(route)
   })
@@ -86,6 +87,20 @@ test('the account is deleted only after the confirmation', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Endgültig löschen' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Dein Konto ist gelöscht.' })).toBeVisible()
   expect(writes).toEqual([{ path: '/api/me', csrf: 'csrf-1', body: null }])
+})
+
+test('"Changes to my plans" is on by default and turns off with one click', async ({ page }) => {
+  const writes = await mockAccount(page)
+  await page.goto('/en/account')
+
+  const box = page.getByRole('checkbox', { name: /Changes to my plans/ })
+  await expect(box).toBeChecked()
+  await box.uncheck()
+
+  await expect(box).not.toBeChecked()
+  await expect
+    .poll(() => writes)
+    .toEqual([{ path: '/api/me/push/changes', csrf: 'csrf-1', body: JSON.stringify({ enabled: false }) }])
 })
 
 test('the privacy link on the sign-in page opens the account section', async ({ page }) => {

@@ -3,17 +3,20 @@
  * The account page's "Notifications" section (#3894, ADR-055): push on or off for this browser. Each browser
  * has its own switch, because a push subscription belongs to one browser. What a push is for is the bell on
  * each follow, on the Following page. Every bell starts off, so the first "on" offers to ring them all at once,
- * and the visitor chooses (ADR-055 rule 4).
+ * and the visitor chooses (ADR-055 rule 4). "Changes to my plans" is the account's, not the browser's: pushes about
+ * events marked as interested or going (#4045), on by default.
  */
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
-import { fetchFollows, prepareCsrf, setAllNotify } from '@/api/account'
+import { fetchFollows, prepareCsrf, setAllNotify, setChangePush } from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
+
+const props = defineProps<{ changePush: boolean }>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -22,6 +25,19 @@ const problem = ref('')
 /** Follows with the bell off, offered once right after notifications go on; null when there is no offer. */
 const offer = ref<number | null>(null)
 const rung = ref<number | null>(null)
+const changes = ref(props.changePush)
+
+async function toggleChanges(enabled: boolean) {
+  const before = changes.value
+  changes.value = enabled
+  try {
+    await prepareCsrf()
+    await setChangePush(enabled)
+  } catch (e) {
+    changes.value = before
+    throw e
+  }
+}
 
 async function enable() {
   await turnOn()
@@ -99,6 +115,21 @@ onMounted(() => run(load))
     <p v-if="rung !== null" class="text-body" role="status">
       {{ t('account.push.ringAllDone', { count: rung }) }}
     </p>
+    <label class="flex items-start gap-2 text-body">
+      <input
+        :checked="changes"
+        class="mt-1 size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        data-testid="change-push"
+        type="checkbox"
+        @change="run(() => toggleChanges(($event.target as HTMLInputElement).checked))"
+      />
+      <span>
+        <span class="block">{{ t('account.push.changes') }}</span>
+        <span class="block text-meta text-muted-foreground">{{
+          t('account.push.changesHint')
+        }}</span>
+      </span>
+    </label>
     <p v-if="problem" class="text-meta text-destructive" role="alert">{{ problem }}</p>
   </section>
 </template>

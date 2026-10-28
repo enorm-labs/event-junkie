@@ -128,6 +128,11 @@ export async function savePushSubscription(subscription: PushSubscriptionJSON): 
   )
 }
 
+/** "Changes to my plans" (#4045): pushes about events the account marked, for the account rather than the browser. */
+export async function setChangePush(enabled: boolean): Promise<void> {
+  await unwrap(api.PUT('/api/me/push/changes', { body: { enabled } }))
+}
+
 export async function forgetPushSubscription(endpoint: string): Promise<void> {
   await unwrap(api.POST('/api/me/push/unsubscribe', { body: { endpoint } }))
 }

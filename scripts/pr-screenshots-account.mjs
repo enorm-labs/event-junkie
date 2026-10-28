@@ -3,7 +3,7 @@
 // account request.
 //
 // The account follows production's busiest venue, an artist and a promoter, keeps two saved searches and two RSVPs,
-// has four notifications, two of them unread, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
+// has four notifications, two of them unread and the first a change to the event marked going, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
 // changes nothing. An /api/me path this file does not know answers 404 and is logged once, so a new endpoint shows.
 
 const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T10:00:00Z' }
@@ -52,6 +52,8 @@ async function loadAccount(context, origin) {
     date: event.eventDate,
     aboutKind: 'venue',
     aboutName: event.venue?.name ?? event.title,
+    // The first is a change to the event marked going (#4045).
+    ...(index === 0 ? { kind: 'change', aboutKind: 'rsvp', change: 'cancelled' } : {}),
     createdAt: new Date(Date.now() - index * 3_600_000).toISOString(),
     readAt: index < 2 ? null : new Date().toISOString(),
   }))

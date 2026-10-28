@@ -40,6 +40,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/push/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Turns the account's pushes about changes to events it marked as interested or going on or off */
+        put: operations["changes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/follows/{kind}/{slug}": {
         parameters: {
             query?: never;
@@ -945,6 +962,9 @@ export interface components {
             endpoint?: string;
             keys?: components["schemas"]["PushKeys"];
         };
+        ChangePushRequest: {
+            enabled?: boolean;
+        };
         NotifyRequest: {
             notify?: string;
         };
@@ -1015,6 +1035,7 @@ export interface components {
             locale?: string;
             /** Format: date-time */
             createdAt?: string;
+            changePush?: boolean;
         };
         PasskeySignIn: {
             credential?: {
@@ -1983,6 +2004,7 @@ export interface components {
             date?: string;
             aboutKind?: string;
             aboutName?: string;
+            change?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -2013,6 +2035,7 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             lastSignInAt?: string;
+            changePush?: boolean;
             sessions?: components["schemas"]["SessionInfo"][];
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
@@ -2765,6 +2788,28 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PushSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    changes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePushRequest"];
             };
         };
         responses: {

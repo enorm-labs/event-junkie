@@ -96,6 +96,10 @@ app:
     new-dates-lag: PT15M
     # The first run after boot. Short, so a rollout does not hold the pushes back by a full delay (#4068).
     new-dates-initial-delay: PT1M
+    # The same for changes to events that accounts marked (#4045): the job reads `event_change` up to `lag` before now.
+    changes-delay: PT10M
+    changes-lag: PT15M
+    changes-initial-delay: PT1M
 
 # `info` joins the default `health`. It must NOT be routed through the public ingress: the
 # browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets

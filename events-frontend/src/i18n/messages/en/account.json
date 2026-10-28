@@ -121,6 +121,8 @@
     "off": "Notifications are off in this browser.",
     "turnOn": "Turn on notifications",
     "turnOff": "Turn off notifications",
+    "changes": "Changes to my plans",
+    "changesHint": "A push when an event you marked as Interested or Going is cancelled, moved or re-timed. It goes to every browser with notifications on.",
     "homeScreen": "On iPhone and iPad, notifications work only from the Home Screen. In Safari, tap Share, then \"Add to Home Screen\", and open Event Junkie from there.",
     "unsupported": "This browser cannot receive push notifications.",
     "unavailable": "Notifications are not available right now.",
@@ -157,12 +159,20 @@
     "label": "Notifications",
     "labelUnread": "Notifications, {count} unread",
     "title": "What is new",
-    "empty": "Nothing new yet. New dates of what you follow show up here.",
+    "empty": "Nothing new yet. New dates of what you follow, and changes to events you plan to go to, show up here.",
     "markAllRead": "Mark all as read",
     "unread": "Unread",
     "artist": "New date: {name}",
     "venue": "New date at {name}",
     "promoter": "New date by {name}",
+    "change": {
+      "cancelled": "Cancelled",
+      "postponed": "Postponed",
+      "relocated": "Relocated",
+      "date": "Date changed",
+      "time": "Time changed",
+      "venue": "Venue changed"
+    },
     "failed": "Could not load notifications. Try again later."
   }
 }

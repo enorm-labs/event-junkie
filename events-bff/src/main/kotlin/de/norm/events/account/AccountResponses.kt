@@ -17,10 +17,12 @@ data class SignInRequest(
 data class AccountResponse(
     val email: String,
     val locale: String,
-    val createdAt: Instant
+    val createdAt: Instant,
+    /** "Changes to my plans" (#4045): a push when an event marked as interested or going changes. */
+    val changePush: Boolean
 ) {
     companion object {
-        fun of(account: Account) = AccountResponse(account.email, account.locale, account.createdAt)
+        fun of(account: Account) = AccountResponse(account.email, account.locale, account.createdAt, account.changePush)
     }
 }
 
@@ -38,6 +40,7 @@ data class AccountExport(
     val locale: String,
     val createdAt: Instant,
     val lastSignInAt: Instant,
+    val changePush: Boolean,
     val sessions: List<SessionInfo>,
     val follows: List<FollowResponse>,
     val searches: List<SavedSearchResponse>,
