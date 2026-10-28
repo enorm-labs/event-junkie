@@ -15,10 +15,10 @@
 #     --focus <selector>     focus the first match as the keyboard would, so its focus-visible ring shows
 #     --label <name>         added to the file names, so a second run with --click does not overwrite the first
 #     --full-page            the whole page instead of the viewport
+#     --signed-in            signed in as a test account: scripts/pr-screenshots-account.mjs answers /api/auth and /api/me
 #     --out <dir>            default build/pr-screenshots
 #   Then, from the repository root: gh pr edit <n> --body-file <body.md> --attach <png>...
-#   Signed-in pages such as /en/following show sign-in: production's API sees no session. Mock /api/auth and /api/me
-#   with page.route, as e2e/following.spec.ts does. Match on url.pathname: on a dev server, /\/api\// also catches /src/api/.
+#   Without --signed-in, an account page such as /en/following shows sign-in: production's API sees no session.
 #
 # Requires: Node, git and the frontend's node_modules with Playwright's Chromium (`npx playwright install chromium`).
 # Reaches https://event-junkie.de through each preview server's /api and /map/ proxy, as a visitor's browser does.
@@ -54,6 +54,7 @@ SCROLL=""
 FOCUS=""
 LABEL=""
 FULL_PAGE="false"
+SIGNED_IN="false"
 PATHS=()
 
 die() {
@@ -105,6 +106,10 @@ while (($#)); do
             ;;
         --full-page)
             FULL_PAGE="true"
+            shift
+            ;;
+        --signed-in)
+            SIGNED_IN="true"
             shift
             ;;
         -*) die "unknown option $1 (see --help)" ;;
@@ -209,10 +214,16 @@ echo "Serving before ($BASE_REF) on $BEFORE_URL, after ($AFTER_NAME) on $AFTER_U
 # Node resolves `@playwright/test` from the working directory when the module comes from stdin.
 cd "$TREE/events-frontend"
 OUT="$OUT" BEFORE_URL="$BEFORE_URL" AFTER_URL="$AFTER_URL" PATHS="$(printf '%s\n' "${PATHS[@]}")" \
-WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" FOCUS="$FOCUS" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" \
+WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" FOCUS="$FOCUS" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" SIGNED_IN="$SIGNED_IN" \
 BASE_REF="$BASE_REF" AFTER_NAME="$AFTER_NAME" REPO_ROOT="$REPO_ROOT" node --input-type=module - <<'EOF'
 import { relative } from 'node:path'
 import { chromium } from '@playwright/test'
+import { pathToFileURL } from 'node:url'
+
+const signIn =
+  process.env.SIGNED_IN === 'true'
+    ? (await import(pathToFileURL(`${process.env.REPO_ROOT}/scripts/pr-screenshots-account.mjs`).href)).signIn
+    : null
 
 const env = process.env
 const list = (value) => value.split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
@@ -278,6 +289,7 @@ try {
               },
               [theme, view],
             )
+            if (signIn) await signIn(context, origin)
             const page = await context.newPage()
             await page.goto(origin + path, { waitUntil: 'networkidle' })
             await settle(page, viewport.height)
