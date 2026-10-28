@@ -204,14 +204,15 @@ done
 The `aarch64` asset name maps to the `arm64` key in `walg_checksums`. The script picks by `dpkg --print-architecture`. Pinning the checksum in Terraform rather
 than fetching it beside the tarball is the point. A checksum fetched from the host that served the file verifies only that the download completed.
 
-**It changes `user_data`, which replaces the node.** This is the one that matters. Bumping Trivy edits a workflow. Bumping `wal-g` plans a rebuild of every node that
-runs PostgreSQL, production included. So:
+**It changes `user_data`, which no apply delivers.** This is the one that matters. Bumping Trivy edits a workflow. Bumping `wal-g` changes what every node that
+runs PostgreSQL boots with, production included. `servers.tf` ignores `user_data` (#4129), so the new version reaches a running node only by hand or at its
+next rebuild. So:
 
 - **Do not take it because it is available.** The reminder says a newer release exists, and that is all it says. Bump for a reason — a fix you need, an
-  advisory — and take the rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
+  advisory — and install it by hand (below) or take a rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
 - **Or install ahead of the rebuild.** Bump the variable, put the new binary on the node by hand, and let the next natural rebuild find the work already done.
-  _Installing ahead of the rebuild_ below is the procedure, and it is not the one line it looks like. The plan still shows a replacement, which is honest,
-  because `user_data` genuinely differs.
+  _Installing ahead of the rebuild_ below is the procedure, and it is not the one line it looks like. Every plan warns `booted another user_data` after the
+  bump, which is honest, because `user_data` genuinely differs.
 - **Never let the pin drift from what is installed.** A node rebuilt six months later would silently downgrade to whatever the variable still says.
 
 ### Installing ahead of the rebuild

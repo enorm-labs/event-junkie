@@ -165,7 +165,8 @@ variable "k3s_version" {
 
     Watched weekly by `.github/workflows/node-pin-reminder.yml` against the `update.k3s.io` stable
     channel, because no manifest declares this string and no ecosystem owns it. It opens an issue and
-    never a pull request: `user_data` is force-new, so a bump replaces the node.
+    never a pull request: a merged bump reaches a running node only at its next rebuild, so the
+    upgrade itself is by hand (K3S_UPGRADE.md).
   EOT
   type        = string
   default     = "v1.36.5+k3s1"

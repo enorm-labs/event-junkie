@@ -11,7 +11,7 @@ The site:
     http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}{{ .Values.bff.basePath }}/events   the API
 {{- if .Values.ingress.redirectHosts }}
 {{ range .Values.ingress.redirectHosts }}
-    https://{{ . }}/  301s to {{ $.Values.ingress.host }}
+    https://{{ . }}/  308s to {{ $.Values.ingress.host }}
 {{- end }}
 {{- end }}
 {{- if not .Values.ingress.tls.enabled }}

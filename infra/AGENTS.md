@@ -60,13 +60,10 @@ all-in-one, with no DNS records. Production is a `cpx32` k3s node and a `cpx22` 
 a PGDATA volume, and a node replacement has been proven to bring the database back with zero rows lost (#460). **Production is public**: `publish_dns` is
 `true`, and setting it to `false` takes the site dark — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §12 first.
 
-> **`user_data` has drifted on staging, and an apply REBUILDS THE NODE.** `servers.tf` forces replacement on it, and `cloud-init/` has changed since the
-> last apply. Production's nodes booted the current `cloud-init/` when #4125 rebuilt them, so the next edit under it sets the same trap there (#4129). Any apply made for an unrelated reason rebuilds the nodes too, and looks like the unrelated change's doing. The volume,
-> the Primary IPs, the network and the firewall survive; the k3s cluster does not.
->
-> **There is no targeted way out.** `hcloud_volume_attachment.postgres` names both servers in one ternary, so `-target` pulls the k3s node in. The address
-> records are the exception (#883): they read the Primary IPs, so `-target=hcloud_zone_rrset.address` — the go-live flip — touches DNS alone. Fixes reach the
-> running nodes by hand, [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding.
+**An edit under `cloud-init/` does not rebuild a node, and does not reach one either.** `servers.tf` ignores `user_data` (#4129), after a DNS apply replaced
+both production nodes because their `user_data` had drifted. The `user_data_drift` check warns on every plan, once per node that booted other scripts. A fix
+reaches a running node by hand, [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding. A rebuild is asked
+for by name: `-replace=module.environment.hcloud_server.k3s`, which boots the current `cloud-init/`.
 
 Two things a rebuild teaches: **the database survives, and so do its roles.** The `events` password matches the encrypted `events-db`. The `metrics` and
 `bff` passwords lived only in Secrets, so a rebuild sets new ones with `ALTER ROLE`, not `CREATE ROLE`. And **the `hetzner` Secret holds the same token this stack authenticates
@@ -92,13 +89,14 @@ network. Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR
 
 ## Things that will bite
 
-- **A `k3s_version` bump is not a rebuild.** The plan says replace (`user_data` is force-new), but k3s upgrades in place through the installer the node booted
-  with: [K3S_UPGRADE.md](../docs/ops/K3S_UPGRADE.md), bump the pin in the same change. Same shape for `walg_version`, BACKUPS.md §8.
-- **`user_data` forces replacement and is capped at 32 KiB.** Every `.sh` travels `gz+b64` through `node.yaml.tftpl`; `check_user_data.py` mirrors the
+- **A `k3s_version` bump is not a rebuild.** The plan only warns that the node booted another `user_data`. k3s upgrades in place through the installer the
+  node booted: [K3S_UPGRADE.md](../docs/ops/K3S_UPGRADE.md), bump the pin in the same change. Same shape for `walg_version`, BACKUPS.md §8.
+- **`user_data` is read once, at creation, and is capped at 32 KiB.** `servers.tf` ignores later changes, so a node keeps what it booted until a `-replace`.
+  Every `.sh` travels `gz+b64` through `node.yaml.tftpl`; `check_user_data.py` mirrors the
   template and the two file lists in `cloudinit.tf` and asserts every `.sh` under `cloud-init/` is shipped by some role. `postgres.sh` and `backups.sh` are not
   shipped to a k3s node with a database next door — that conditional keeps production's k3s node smallest.
-- **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture, and the plan still
-  replaced the node because `user_data` had drifted. **Read the plan; do not reason from the schema.**
+- **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture, and a plan once
+  replaced the node anyway, because `user_data` had drifted before `servers.tf` ignored it. **Read the plan; do not reason from the schema.**
 - **`server_type` cannot cross architectures, and `plan` will not warn you.** Between `cpx*`/`cx*` (x86) and `cax*` (ARM) Hetzner refuses at **apply**,
   partway through. An architecture change is a rebuild: CLUSTER_BOOTSTRAP.md § Rebuilding a node.
 - **Rebuilding a node keeps its database; destroying an environment does not.** PGDATA is an `hcloud_volume` declared standalone (`location`, never

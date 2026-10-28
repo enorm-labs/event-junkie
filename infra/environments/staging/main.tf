@@ -13,10 +13,9 @@ module "environment" {
   # 8 GB is the floor for this stack (PLATFORM_SETUP §1.5, #271). `keep_disk` is unset, so growing
   # the disk would foreclose a smaller type.
   #
-  # This line does not rebuild the node: `server_type` is in-place within one architecture, but
-  # `user_data` forces replacement, so any commit touching `cloud-init/` leaves staging one
-  # `tofu apply` away from a rebuild. Crossing architectures rebuilds too, rendered as an in-place
-  # update and refused mid-apply. Read the plan. A rebuild keeps the volume (#460), the IPs, the
+  # This line does not rebuild the node: `server_type` is in-place within one architecture, and
+  # `user_data` is ignored after creation (#4129). Crossing architectures rebuilds, rendered as an
+  # in-place update and refused mid-apply. Read the plan. A rebuild keeps the volume (#460), the IPs, the
   # network and the firewall, loses the k3s cluster, and costs ~40 minutes (CLUSTER_BOOTSTRAP.md
   # §Rebuilding).
   #

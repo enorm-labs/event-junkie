@@ -143,7 +143,7 @@ spec:
       # Does not resolve on the public internet, by design (PLATFORM_SETUP §4a): resolution happens over
       # the WireGuard tunnel.
       host: "staging.event-junkie.de"
-      # No redirect domain on staging — the .com 301 is a production concern.
+      # No redirect domain on staging — the .com 308 is a production concern.
       redirectHosts: []
       # `X-Robots-Tag: noindex, nofollow` on every response (#286). Defence in depth: the real control is
       # that this host has no public address record. It costs the property that an empty `redirectHosts`

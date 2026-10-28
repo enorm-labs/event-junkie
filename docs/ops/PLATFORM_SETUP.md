@@ -288,8 +288,8 @@ different thing: Hetzner charges nothing for traffic within `eu-central`, so the
 `PGDATA` is on a 10 GB volume mounted at `/var/lib/postgresql`, one per environment. **Capacity was never the problem. The node being replaced was**
 ([#460](https://github.com/enorm-labs/event-junkie/issues/460)).
 
-`user_data` is a force-new attribute, so any edit under `infra/modules/environment/cloud-init/` replaces the node. So does a `server_type` change across
-architectures, and so does the destroy/apply cycle. Each is correct behaviour for a node meant to be disposable, and the volume is what keeps the database out of it.
+A rebuild replaces the node: `tofu apply -replace`, a `server_type` change across architectures, or the destroy/apply cycle. An edit under
+`infra/modules/environment/cloud-init/` does not, because `servers.tf` ignores `user_data` (#4129). Each is correct behaviour for a node meant to be disposable, and the volume is what keeps the database out of it.
 
 **Hetzner recommends against this shape, and we do it anyway.**
 [Which storage is right for me](https://docs.hetzner.com/storage/general/which-storage-is-right-for-me/) marks _storing my
@@ -297,8 +297,8 @@ database_ as not recommended for every product it compares, volumes included. A 
 file system and caching guarantees that network storage does not make. It names the local disk of the server as the
 alternative.
 
-We accept that, because the alternative is worse here. The local disk belongs to a node that `user_data` replaces on
-purpose. Losing `PGDATA` on every cloud-init edit costs more than the latency does, and the paragraph above is the
+We accept that, because the alternative is worse here. The local disk belongs to a node that is replaced on
+purpose. Losing `PGDATA` at every rebuild costs more than the latency does, and the paragraph above is the
 evidence.
 
 **What we accept is not only speed.** A storage layer that ignores `fsync` corrupts a database rather than slowing it. We
@@ -1115,8 +1115,8 @@ checks after each one.
 release. That is what the weekly reminder is for — see
 [ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md).
 
-**Moving it does not have to replace the node.** `user_data` is force-new, so the OpenTofu plan says rebuild — but k3s upgrades in place through the same
-installer the node booted with. [K3S_UPGRADE.md](K3S_UPGRADE.md) is the cheap path, and it is the one to take unless a rebuild is happening anyway.
+**Moving it does not replace the node.** `servers.tf` ignores `user_data` (#4129). The plan only warns that the node booted an older one. k3s upgrades in
+place through the same installer the node booted with. [K3S_UPGRADE.md](K3S_UPGRADE.md) is the cheap path, and it is the one to take unless a rebuild is happening anyway.
 
 **The trap worth knowing about is `needrestart`.** It decides whether a service running an updated library actually gets restarted, and its default is
 interactive. Run non-interactively from `unattended-upgrades`, that silently falls back to _list only_. The result is a machine that reports itself fully

@@ -52,7 +52,7 @@ ATTEMPTS="${ATTEMPTS:-3}"
 CHROME_FLAGS="${CHROME_FLAGS:---headless=new}"
 LIGHTHOUSE="$REPO_ROOT/perf/lighthouse/node_modules/.bin/lighthouse"
 
-# The apex is the only host that must score 100 on SEO. `www` is a 301 to it and never audited directly.
+# The apex is the only host that must score 100 on SEO. `www` is a 308 to it and never audited directly.
 APEX_HOST='event-junkie.de'
 
 for tool in curl jq; do

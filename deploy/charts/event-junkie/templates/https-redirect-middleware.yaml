@@ -12,7 +12,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      Sends plain HTTP to HTTPS with a 301. A request that already arrives over HTTPS passes through
+      Sends plain HTTP to HTTPS with a 308. A request that already arrives over HTTPS passes through
       unchanged. On the app Ingress only, so cert-manager's HTTP-01 challenges still answer on port 80.
 spec:
   redirectScheme:

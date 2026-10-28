@@ -3,9 +3,9 @@
 How to move `k3s_version` without replacing the node. One command on the node, four rules, and three
 checks afterwards.
 
-**A rebuild is not required and is the expensive way to take a bump.** `user_data` is force-new, so
-the OpenTofu plan says replace the server — but k3s upgrades in place through the same installer the
-node booted with. A rebuild destroys the cluster, Flux, the six hand-made Secrets,
+**A rebuild is not required and is the expensive way to take a bump.** The OpenTofu plan does not
+replace the server, because `servers.tf` ignores `user_data` (#4129). It warns that the node booted
+another `user_data`. k3s upgrades in place through the same installer the node booted with. A rebuild destroys the cluster, Flux, the six hand-made Secrets,
 `/etc/wal-g/credentials.env`, the WireGuard server key and OpenObserve's dashboards.
 [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ is that procedure, for when one is
 happening anyway.
