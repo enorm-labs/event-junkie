@@ -45,6 +45,8 @@ import java.time.Clock
  * 3. A sibling `queryShowHidePlaces` block carries per-room publish flags
  * ([ZennerPlaceVisibility]), honoured so an unpublished programme is not imported.
  *
+ * A flea market or an ice-skating slot is skipped ([isOutOfScope]).
+ *
  * `place` (Saal / Klub / Biergarten / Weingarten) is a room with no field in the model, not
  * stored, but read for the visibility filter and to disambiguate "Open Air", a DJ day party in
  * the Weingarten and ice skating in the Biergarten ([resolveEventType]).
@@ -140,6 +142,10 @@ class ZennerApiScraper(
             logger.warn { "Zenner event '$id' has no title, skipping" }
             return null
         }
+        if (isOutOfScope(title)) {
+            logger.info { "Zenner: '$title' is a flea market or an ice-skating slot, skipping" }
+            return null
+        }
 
         val start = node.eventDate.parseOffsetToBerlin()
         if (start == null) {
@@ -184,8 +190,8 @@ class ZennerApiScraper(
      * Types the event from `typeOfEvent`, two of whose values name a format or location. "Open Air"
      * in the Weingarten is the SIP! day-party series, always a DJ line-up, so the room disambiguates
      * and the event is [PARTY][EventType.PARTY]; the same label in the Biergarten is not, since that
-     * room's Open Airs are ice-skating sessions (`Eisdisko`, `Eislaufen`), a Fête de la Musique and
-     * a festival day. "Event" is the catch-all (a flea market, a wine tasting, a World Cup public
+     * room's Open Airs are the `Eisdisko` on the ice rink, a Fête de la Musique and
+     * a festival day. "Event" is the catch-all (a wine tasting, a World Cup public
      * viewing) and falls with any other Open Air to [inferUnmarkedTitleType]. A title that
      * unambiguously names a festival is exempted from the Weingarten rule and left `OTHER`, because
      * the `FESTIVAL` promotion in [ScrapedEvent.toEventEntity] overrides only `CONCERT`/`OTHER`.
@@ -256,6 +262,13 @@ class ZennerApiScraper(
         const val PLACES_QUERY = "queryShowHidePlaces"
     }
 }
+
+/**
+ * A flea market or an ice-skating slot, which EVENT_SCOPE.md §3.2 leaves out. The `Eisdisko` stays: a DJ plays on the ice.
+ */
+internal fun isOutOfScope(title: String): Boolean = OUT_OF_SCOPE.containsMatchIn(title)
+
+private val OUT_OF_SCOPE = Regex("""flohmarkt|\beislaufen\b""", RegexOption.IGNORE_CASE)
 
 /** The venue's "Open Air" format label. */
 private const val OPEN_AIR_LABEL = "open air"
