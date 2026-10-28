@@ -110,6 +110,10 @@ jobs:
       - name: Assert what ej.sh status lists as not ready
         run: scripts/ej-status-test.sh
 
+      # An exported KUBECONFIG sent three deletes to the wrong file during the production rebuild (#4146).
+      - name: Assert what cluster-access.sh replaces after a rebuild
+        run: scripts/cluster-access-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'
