@@ -12,7 +12,9 @@
       "locale": "en",
       "id": "b0b00000-0000-4000-8000-000000000002",
       "session": "fixture-session-bob",
-      "savedSearchId": "b0b00000-0000-4000-8000-000000000012"
+      "savedSearchId": "b0b00000-0000-4000-8000-000000000012",
+      "passkeyId": "b0b00000-0000-4000-8000-000000000021",
+      "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob"
     }
   ]
 }
