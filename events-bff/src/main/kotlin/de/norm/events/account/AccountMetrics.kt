@@ -177,6 +177,9 @@ enum class CleanupOutcome(
     /** RSVPs whose event the importer removed (#3892). */
     RSVPS_PURGED("rsvps_purged"),
 
+    /** Notifications older than 30 days, or whose event the importer removed (#4078). */
+    NOTIFICATIONS_PURGED("notifications_purged"),
+
     /** Passkey challenges nobody answered (#3888). */
     CHALLENGES_PURGED("challenges_purged"),
 

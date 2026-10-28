@@ -405,6 +405,15 @@ const { t } = useI18n()
         lösche ich auch deinen Plan dafür.
       </p>
       <p>
+        <strong>Was neu ist:</strong> Bekommt etwas, dem du folgst, einen neuen Termin, speichere
+        ich dazu einen Hinweis zu deinem Konto: welche Veranstaltung, von welchem Act, welcher
+        Location oder welchem Veranstalter er stammt, wann ich ihn angelegt habe und wann du ihn
+        geöffnet hast. Die Glocke im Kopf der Seite zeigt die neuesten 20 und zählt die, die du noch
+        nicht geöffnet hast. Nur du siehst sie. Ich lösche jeden Hinweis nach
+        <strong>30 Tagen</strong>, gelesen oder nicht, und früher, wenn seine Veranstaltung aus dem
+        Kalender verschwindet.
+      </p>
+      <p>
         <strong>Benachrichtigungen:</strong> Schaltest du Benachrichtigungen in einem Browser ein,
         speichere ich dessen Abonnement: eine Adresse beim Push-Dienst des Browsers und zwei
         Schlüssel, dazu den Zeitpunkt des Einschaltens und der letzten Benachrichtigung. Die Glocke
@@ -453,7 +462,8 @@ const { t } = useI18n()
         <strong>24 Monate</strong> lang nicht, lösche ich es; einen Monat vorher bekommst du eine
         Mail. Als Nutzung zählt jede Anmeldung und jeder Besuch, bei dem du angemeldet bist. Eine
         Sitzung endet 30 Tage nach ihrer letzten Nutzung oder wenn du dich abmeldest. Ein Link
-        verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich.
+        verfällt nach 15 Minuten. Abgelaufene Links und Sitzungen lösche ich täglich, Hinweise unter
+        der Glocke nach 30 Tagen.
       </p>
       <p>
         <strong>Selbst erledigen:</strong> Auf deiner Kontoseite kannst du alle gespeicherten Daten

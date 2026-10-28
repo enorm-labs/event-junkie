@@ -1,7 +1,7 @@
 import type { Locale } from '@/i18n/locales'
 import { api, unwrap } from './client'
 import type { operations } from './schema'
-import type { Account, EventSummary, EventSummaryPage, Follow } from './types'
+import type { Account, AccountNotification, EventSummary, EventSummaryPage, Follow } from './types'
 import {
   creationOptions,
   credentialJson,
@@ -264,4 +264,21 @@ export async function signInWithPasskey(
   return unwrap(
     api.POST('/api/auth/passkey/sign-in', { body: { credential: credentialJson(credential) } }),
   )
+}
+
+/** The newest 20 notifications under the header's bell (#4078), read or not. */
+export async function fetchNotifications(): Promise<AccountNotification[]> {
+  return unwrap(api.GET('/api/me/notifications'))
+}
+
+export async function fetchUnreadCount(): Promise<number> {
+  return (await unwrap(api.GET('/api/me/notifications/unread-count'))).count ?? 0
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await unwrap(api.POST('/api/me/notifications/{id}/read', { params: { path: { id } } }))
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await unwrap(api.POST('/api/me/notifications/read'))
 }

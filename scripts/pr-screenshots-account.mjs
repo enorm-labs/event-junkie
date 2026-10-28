@@ -2,8 +2,8 @@
 // /api/auth/** and /api/me/** in the browser, before the preview server's proxy, so production never sees an
 // account request.
 //
-// The account follows production's busiest venue, an artist and a promoter, keeps two saved searches and two RSVPs, and
-// has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
+// The account follows production's busiest venue, an artist and a promoter, keeps two saved searches and two RSVPs,
+// has four notifications, two of them unread, and has no push. Its feeds come from the public /api/events, so the cards are real events. A write answers 204 and
 // changes nothing. An /api/me path this file does not know answers 404 and is logged once, so a new endpoint shows.
 
 const ACCOUNT = { email: 'ada@example.de', locale: 'en', createdAt: '2026-10-01T10:00:00Z' }
@@ -30,7 +30,7 @@ async function loadAccount(context, origin) {
     publicJson(context, origin, '/api/venues?sort=upcomingEvents,desc&size=1'),
     publicJson(context, origin, '/api/artists?size=1'),
     publicJson(context, origin, '/api/promoters?size=1'),
-    publicJson(context, origin, `/api/events?from=${berlinDay()}&size=2`),
+    publicJson(context, origin, `/api/events?from=${berlinDay()}&size=4`),
   ])
   const follow = (kind, item) => (item?.slug ? [{ kind, slug: item.slug, name: item.name, notify: 'off' }] : [])
   const follows = [
@@ -38,12 +38,24 @@ async function loadAccount(context, origin) {
     ...follow('artist', artists.content?.[0]),
     ...follow('promoter', promoters.content?.[0]),
   ]
-  const [going, interested] = upcoming.content ?? []
+  const events = upcoming.content ?? []
+  const [going, interested] = events
   const rsvps = {
     ...(going ? { [going.slug]: 'going' } : {}),
     ...(interested ? { [interested.slug]: 'interested' } : {}),
   }
-  return { follows, rsvps, rsvpEvents: [going, interested].filter(Boolean) }
+  const notifications = events.map((event, index) => ({
+    id: `00000000-0000-4000-8000-00000000010${index}`,
+    kind: 'new_date',
+    event: event.slug,
+    title: event.title,
+    date: event.eventDate,
+    aboutKind: 'venue',
+    aboutName: event.venue?.name ?? event.title,
+    createdAt: new Date(Date.now() - index * 3_600_000).toISOString(),
+    readAt: index < 2 ? null : new Date().toISOString(),
+  }))
+  return { follows, rsvps, rsvpEvents: [going, interested].filter(Boolean), notifications }
 }
 
 /** Signs every page of [context] in, against the preview server at [origin]. */
@@ -99,6 +111,10 @@ export async function signIn(context, origin) {
       if (path === '/api/me/rsvps/calendar') return json(route, account.rsvpEvents)
       if (path === '/api/me/passkeys') return json(route, PASSKEYS)
       if (path === '/api/me/push') return json(route, { publicKey: null })
+      if (path === '/api/me/notifications') return json(route, account.notifications)
+      if (path === '/api/me/notifications/unread-count') {
+        return json(route, { count: account.notifications.filter((n) => !n.readAt).length })
+      }
 
       if (!unknown.has(path)) {
         unknown.add(path)

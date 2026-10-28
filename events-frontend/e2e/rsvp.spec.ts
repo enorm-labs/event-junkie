@@ -43,6 +43,7 @@ async function mockBff(page: Page) {
     const request = route.request()
     const path = new URL(request.url()).pathname
     if (path === '/api/auth/session') return json(route, { account: me, signUpOpen: true })
+    if (path === '/api/me/notifications/unread-count') return json(route, { count: 0 })
     if (path === '/api/auth/csrf') return route.fulfill({ status: 204 })
     if (path === '/api/me/rsvps/mock-night') {
       writes.push({ method: request.method(), path, body: request.postDataJSON() })

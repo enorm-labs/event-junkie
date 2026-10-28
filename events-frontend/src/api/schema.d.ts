@@ -203,6 +203,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks one notification read. One that is not the account's answers 404 */
+        post: operations["read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks every notification read */
+        post: operations["readAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/sign-in": {
         parameters: {
             query?: never;
@@ -541,6 +575,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The newest 20 notifications, read or not */
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many notifications are unread, for the badge */
+        get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/follows": {
         parameters: {
             query?: never;
@@ -549,7 +617,7 @@ export interface paths {
             cookie?: never;
         };
         /** Everything the account follows, by name */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -637,7 +705,7 @@ export interface paths {
             cookie?: never;
         };
         /** List all genre tags alphabetically */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -677,7 +745,7 @@ export interface paths {
          * Search events with optional filters and pagination
          * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended. The first page carries `lead`, the featured event that leads it, when one matches the filters.
          */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -836,7 +904,7 @@ export interface paths {
          * List artists with pagination and optional name search, sorted by name
          * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
          */
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1905,6 +1973,25 @@ export interface components {
             /** Format: date-time */
             lastUsedAt?: string | null;
         };
+        NotificationResponse: {
+            /** Format: uuid */
+            id?: string;
+            kind?: string;
+            event?: string;
+            title?: string;
+            /** Format: date */
+            date?: string;
+            aboutKind?: string;
+            aboutName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            readAt?: string | null;
+        };
+        UnreadCountResponse: {
+            /** Format: int64 */
+            count?: number;
+        };
         FollowResponse: {
             kind?: string;
             slug?: string;
@@ -1930,6 +2017,7 @@ export interface components {
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
             rsvps?: components["schemas"]["RsvpResponse"][];
+            notifications?: components["schemas"]["NotificationResponse"][];
             pushSubscriptions?: components["schemas"]["PushSubscriptionInfo"][];
             passkeys?: components["schemas"]["PasskeyInfo"][];
         };
@@ -2967,6 +3055,44 @@ export interface operations {
             };
         };
     };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     signIn: {
         parameters: {
             query?: never;
@@ -3531,6 +3657,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "*/*": components["schemas"]["NotificationResponse"][];
+                };
+            };
+        };
+    };
+    unreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnreadCountResponse"];
+                };
+            };
+        };
+    };
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "*/*": components["schemas"]["FollowResponse"][];
                 };
             };
@@ -3671,7 +3837,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3711,7 +3877,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
@@ -4072,7 +4238,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */

@@ -54,6 +54,7 @@ async function mockBff(
       })
     }
     if (path === '/api/auth/session') return json(route, { account: signedIn ? me : null })
+    if (path === '/api/me/notifications/unread-count') return json(route, { count: 0 })
     if (path === '/api/auth/csrf') return route.fulfill({ status: 204 })
     if (!signedIn) return json(route, { message: 'sign in' }, 401)
     if (path === '/api/me/follows/venue/mock-venue') {

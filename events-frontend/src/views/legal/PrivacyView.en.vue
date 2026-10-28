@@ -373,6 +373,13 @@ const { t } = useI18n()
         leaves the calendar, I delete your plan for it too.
       </p>
       <p>
+        <strong>What is new:</strong> when something you follow gets a new date, I store a note for
+        your account: which event, which artist, venue or promoter it came from, when I made the
+        note and when you opened it. The bell in the header lists the newest 20 and counts those you
+        have not opened. Only you can see them. I delete each note after <strong>30 days</strong>,
+        read or not, and sooner if its event leaves the calendar.
+      </p>
+      <p>
         <strong>Notifications:</strong> if you turn notifications on in a browser, I store that
         browser's subscription: an address at its push service and two keys, with the time you
         turned it on and when the last notification went out. The bell on an artist, a venue or a
@@ -417,7 +424,7 @@ const { t } = useI18n()
         <strong>24 months</strong>, I delete it, and you get a mail one month before. Every sign-in
         counts as use, and so does every visit while you are signed in. A session ends 30 days after
         its last use, or when you sign out. A link expires after 15 minutes. Expired links and
-        sessions are deleted daily.
+        sessions are deleted daily, and notes under the bell after 30 days.
       </p>
       <p>
         <strong>Do it yourself:</strong> on your account page you can download everything stored as

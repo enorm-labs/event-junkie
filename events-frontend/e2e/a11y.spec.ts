@@ -320,9 +320,51 @@ test('the header account menu, open, has no detectable accessibility violations'
   await page.route(/\/api\/auth\/session/, (route) =>
     json(route, { account: { email: 'ada@example.com', locale: 'de', createdAt: '2026-10-24T10:00:00Z' } }),
   )
+  await page.route(/\/api\/me\/notifications\/unread-count/, (route) => json(route, { count: 0 }))
   await page.goto('/de/about')
   await page.getByRole('button', { name: 'Dein Konto' }).click()
   await expect(page.getByText('Angemeldet als ada@example.com')).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
+/** The header's bell, open with an unread and a read entry, in German (#4078): the static pass is signed out. */
+test('the header notification menu, open, has no detectable accessibility violations', async ({
+  page,
+}) => {
+  const entry = (id: string, readAt: string | null) => ({
+    id,
+    kind: 'new_date',
+    event: `night-${id}`,
+    title: 'Mock Night',
+    date: '2026-11-07',
+    aboutKind: 'venue',
+    aboutName: 'Mock Venue',
+    createdAt: '2026-10-28T10:00:00Z',
+    readAt,
+  })
+  await page.route(/\/api\/auth\/session/, (route) =>
+    json(route, {
+      account: { email: 'ada@example.com', locale: 'de', createdAt: '2026-10-24T10:00:00Z' },
+    }),
+  )
+  await page.route(/\/api\/me\/notifications\/unread-count/, (route) => json(route, { count: 1 }))
+  await page.route(/\/api\/me\/notifications$/, (route) =>
+    json(route, [entry('1', null), entry('2', '2026-10-28T11:00:00Z')]),
+  )
+  await page.goto('/de/about')
+  await page.getByRole('button', { name: 'Benachrichtigungen, 1 ungelesen' }).click()
+  await expect(page.getByRole('link', { name: /Neuer Termin bei Mock Venue/ }).first()).toBeVisible()
+  await transitionsSettled(page)
 
   const results = await buildScan(page).analyze()
 

@@ -289,6 +289,23 @@ CREATE TABLE accounts.follow (
 );
 
 --
+-- Name: notification; Type: TABLE; Schema: accounts; Owner: -
+--
+
+CREATE TABLE accounts.notification (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    account_id uuid NOT NULL,
+    event_id bigint NOT NULL,
+    kind text NOT NULL,
+    about_kind text NOT NULL,
+    about_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    read_at timestamp with time zone,
+    CONSTRAINT notification_about_kind_check CHECK ((about_kind = ANY (ARRAY['artist'::text, 'venue'::text, 'promoter'::text]))),
+    CONSTRAINT notification_kind_check CHECK ((kind = 'new_date'::text))
+);
+
+--
 -- Name: one_time_token; Type: TABLE; Schema: accounts; Owner: -
 --
 
@@ -1063,6 +1080,20 @@ ALTER TABLE ONLY accounts.follow
     ADD CONSTRAINT follow_pkey PRIMARY KEY (id);
 
 --
+-- Name: notification notification_account_id_event_id_kind_key; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.notification
+    ADD CONSTRAINT notification_account_id_event_id_kind_key UNIQUE (account_id, event_id, kind);
+
+--
+-- Name: notification notification_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.notification
+    ADD CONSTRAINT notification_pkey PRIMARY KEY (id);
+
+--
 -- Name: one_time_token one_time_token_pkey; Type: CONSTRAINT; Schema: accounts; Owner: -
 --
 
@@ -1471,6 +1502,18 @@ CREATE INDEX follow_kind_entity_idx ON accounts.follow USING btree (kind, entity
 CREATE UNIQUE INDEX follow_search_key ON accounts.follow USING btree (account_id, query) WHERE (kind = 'search'::text);
 
 --
+-- Name: notification_account_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX notification_account_idx ON accounts.notification USING btree (account_id, created_at DESC);
+
+--
+-- Name: notification_event_idx; Type: INDEX; Schema: accounts; Owner: -
+--
+
+CREATE INDEX notification_event_idx ON accounts.notification USING btree (event_id);
+
+--
 -- Name: one_time_token_email_created_idx; Type: INDEX; Schema: accounts; Owner: -
 --
 
@@ -1806,6 +1849,13 @@ CREATE TRIGGER trg_venue_updated_at BEFORE UPDATE ON events.venue FOR EACH ROW E
 
 ALTER TABLE ONLY accounts.follow
     ADD CONSTRAINT follow_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
+
+--
+-- Name: notification notification_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
+--
+
+ALTER TABLE ONLY accounts.notification
+    ADD CONSTRAINT notification_account_id_fkey FOREIGN KEY (account_id) REFERENCES accounts.account(id) ON DELETE CASCADE;
 
 --
 -- Name: passkey passkey_account_id_fkey; Type: FK CONSTRAINT; Schema: accounts; Owner: -
