@@ -21,12 +21,12 @@ class DatesMovedByRekeyTest {
             .copy(id = id)
 
     @Test
-    fun `pairs a future removal with its insert, the change on the inserted row`() {
+    fun `pairs a future removal with its insert`() {
         val new = row(2, today.plusDays(9))
 
         val pairs = datesMovedByRekey(listOf(row(1, today.plusDays(3))), listOf(new), listOf(new), today)
 
-        pairs.single().first.id shouldBe 2
+        pairs.single().first.id shouldBe 1
         pairs.single().first.eventDate shouldBe today.plusDays(3)
         pairs.single().second shouldBe new
     }

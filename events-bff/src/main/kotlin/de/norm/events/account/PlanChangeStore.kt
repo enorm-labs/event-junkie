@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitOneOrNull
+import org.springframework.r2dbc.core.awaitRowsUpdated
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -67,6 +68,46 @@ class PlanChangeStore(
             .bind("upTo", upTo)
             .map { row -> row.required("previous", Instant::class.java) }
             .awaitOneOrNull()
+
+    /**
+     * Moves the RSVPs and notifications of an event removed by a date move across a re-keyed source id to the event that
+     * replaced it: `event_change.previous_event_id` (#4139). Reads every kept change up to [upTo], not only the window, so
+     * a run that failed after its claim loses nothing, and a second pass finds nothing left to move. A row the account
+     * already has on the new event wins, and the old one is deleted. Answers how many RSVPs and notifications moved.
+     */
+    suspend fun carryOver(upTo: Instant): Pair<Long, Long> {
+        val rsvps = moveThenDrop("accounts.rsvp", "event_id = m.new_id", "k.account_id = t.account_id AND k.event_id = m.new_id", upTo)
+        val notifications =
+            moveThenDrop(
+                "accounts.notification",
+                "event_id = m.new_id, about_id = CASE WHEN t.about_kind = 'rsvp' THEN m.new_id ELSE t.about_id END",
+                "k.account_id = t.account_id AND k.event_id = m.new_id AND k.kind = t.kind",
+                upTo
+            )
+        return rsvps to notifications
+    }
+
+    /** Points [table]'s rows on a removed event at its replacement, unless [taken] finds one there, then drops the rest. */
+    private suspend fun moveThenDrop(
+        table: String,
+        set: String,
+        taken: String,
+        upTo: Instant
+    ): Long {
+        val moved =
+            db
+                .sql(
+                    "WITH m AS ($MOVES) UPDATE $table t SET $set FROM m WHERE t.event_id = m.old_id " +
+                        "AND NOT EXISTS (SELECT 1 FROM $table k WHERE $taken)"
+                ).bind("upTo", upTo)
+                .fetch()
+                .awaitRowsUpdated()
+        db
+            .sql("WITH m AS ($MOVES) DELETE FROM $table t USING m WHERE t.event_id = m.old_id")
+            .bind("upTo", upTo)
+            .await()
+        return moved
+    }
 
     /**
      * Writes one notification per account and event for the changes seen in the window `(from, to]` of events starting
@@ -141,6 +182,11 @@ class PlanChangeStore(
         }
 
     private companion object {
+        /** Each removed event beside the one that replaced it. */
+        const val MOVES =
+            "SELECT DISTINCT previous_event_id AS old_id, event_id AS new_id FROM $EVENTS_SCHEMA.event_change " +
+                "WHERE previous_event_id IS NOT NULL AND seen_at <= :upTo"
+
         private val ORDER = PlanChange.entries.joinToString(",") { "'${it.tag}'" }
 
         fun severity(column: String) = "array_position(ARRAY[$ORDER], $column)"

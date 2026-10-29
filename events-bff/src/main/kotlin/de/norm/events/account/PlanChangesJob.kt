@@ -22,7 +22,7 @@ private val logger = KotlinLogging.logger {}
  * as [NewDatesJob] reads new events, and its notes on replicas, the lag and the first run hold here too.
  *
  * A change the venue makes by deleting the event leaves no row, and is not announced. A date move on a re-keyed source
- * is logged on the new event while the RSVP sits on the old one (#4139).
+ * is logged on the new event while the RSVP sits on the old one, so each run first carries the RSVPs across (#4139).
  */
 @Component
 class PlanChangesJob(
@@ -42,6 +42,10 @@ class PlanChangesJob(
             if (from == null) {
                 logger.debug { "Plan changes: the window up to $upTo is claimed already" }
                 return
+            }
+            val (rsvps, notifications) = store.carryOver(upTo)
+            if (rsvps + notifications > 0) {
+                logger.info { "Plan changes: carried $rsvps RSVP(s) and $notifications notification(s) across re-keyed date moves" }
             }
             val today = LocalDate.now(clock.withZone(BERLIN))
             val fresh = store.record(from, upTo, today, today.atStartOfDay(BERLIN).toInstant(), clock.instant())

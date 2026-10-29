@@ -272,7 +272,8 @@ class EventUpsertService(
     /**
      * Logs a moved date on a source whose `sourceId` carries the date (#3067): there a move arrives
      * as a stale removal plus an insert, which [recordChanges] never sees. [datesMovedByRekey] decides
-     * which pairs are one event. The `sourceSlug` comes from the run's log context.
+     * which pairs are one event. The change lands on the inserted row and names the removed one, so the
+     * BFF moves the RSVPs and notifications across (#4139). The `sourceSlug` comes from the run's log context.
      */
     private suspend fun recordDateMoves(
         removed: List<EventEntity>,
@@ -286,7 +287,10 @@ class EventUpsertService(
         val remaining = eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, today).toList()
         val pairs = datesMovedByRekey(removed, inserted, remaining, today)
         if (pairs.isEmpty()) return
-        changeLog.record(pairs)
+        changeLog.record(
+            pairs.map { (old, new) -> old.copy(id = new.id) to new },
+            pairs.associate { (old, new) -> requireNotNull(new.id) to requireNotNull(old.id) }
+        )
         logger.info { "Logged ${pairs.size} date move(s) across a re-keyed source id on event source $eventSourceId" }
     }
 
@@ -656,8 +660,7 @@ private fun ScrapedEvent.setsOf(row: EventEntity): Set<PinnedField> =
 
 /**
  * The removed and inserted rows of one import that are one event whose date moved (#3067), each as
- * the removed row beside the inserted one. The removed row carries the inserted row's id, so the
- * change lands on the event that stays. A pair has one normalised title, a removed date after
+ * the removed row beside the inserted one. A pair has one normalised title, a removed date after
  * [today], no other row with that title on either side or in [remaining], and two different dates.
  * One source is one venue, so the venue always matches.
  *
@@ -675,7 +678,7 @@ internal fun datesMovedByRekey(
         val old = olds.singleOrNull() ?: return@mapNotNull null
         val new = insertedByTitle[title]?.singleOrNull() ?: return@mapNotNull null
         val others = remaining.any { it.id != new.id && it.title.normalizedTitle() == title }
-        if (others || !old.eventDate.isAfter(today) || old.eventDate == new.eventDate) null else old.copy(id = new.id) to new
+        if (others || !old.eventDate.isAfter(today) || old.eventDate == new.eventDate) null else old to new
     }
 }
 

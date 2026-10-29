@@ -138,12 +138,16 @@ class NotificationStore(
             .fetch()
             .awaitRowsUpdated()
 
-    /** Notifications older than [before], read or not, and those whose event the importer removed. */
+    /**
+     * Notifications older than [before], read or not, and those whose event the importer removed. One whose event a date
+     * move replaced stays for [PlanChangesJob] to carry across (#4139).
+     */
     suspend fun deleteExpired(before: Instant): Long =
         db
             .sql(
                 "DELETE FROM accounts.notification n WHERE n.created_at < :before " +
-                    "OR NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id)"
+                    "OR (NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = n.event_id) " +
+                    "AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_change c WHERE c.previous_event_id = n.event_id))"
             ).bind("before", before)
             .fetch()
             .awaitRowsUpdated()
