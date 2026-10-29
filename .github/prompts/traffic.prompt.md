@@ -2,6 +2,7 @@
 
 How many people used the public site over the days OpenObserve keeps, whether a crawler is posing as them, and how the accounts grow. **Read-only**: the logs are the input,
 a short answer in the terminal is the deliverable, and the only change it may propose is a new entry in `RENDERERS` in `scripts/o2-query.sh`.
+[`/daily-check`](daily-check.prompt.md) runs Steps 1 to 3 in its Step 4. It also runs alone.
 
 ## Important
 

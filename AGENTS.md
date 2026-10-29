@@ -240,7 +240,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
 - `/commit-message` — a commit message from the staged changes
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
-- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, `/admin-review`; merges the ready bot PRs, drafts the rest
+- `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs, traffic, `/admin-review`; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/fix-events <url> ["<note>"]…` — events the operator saw wrong on the site, each to a verdict: a parser fix with a test in one PR, a scope rule, an accepted limitation, or a numbered hand fix applied only on the operator's word
@@ -269,7 +269,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/security-triage` — work the Security tab to zero: fix, file or dismiss; the mutating counterpart to `/security-report`
 - `/setup-machine` — a new Mac to a working checkout: `scripts/setup-mac.sh` and the `Brewfile`, contributor or operator tier; hands over every step that installs, prompts or needs `sudo`
 - `/squash-commit-message` — a squash commit message for the current branch
-- `/traffic [production|staging] [--hours N]` — sessions and page loads per day for the 14 days kept, less the crawlers that run the SPA; finds a new one by its night-time sessions; adds the account counts
+- `/traffic [production|staging] [--hours N]` — sessions and page loads per day for the 14 days kept, less the crawlers that run the SPA; finds a new one by its night-time sessions; adds the account counts; `/daily-check` runs it
 - `/ui-check` — every public page at four widths, both locales and both themes, probed against the design rules; drafts issues, files none
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/update-docs` — find documentation that stopped being true; correct, delete or leave it, with the proving check
