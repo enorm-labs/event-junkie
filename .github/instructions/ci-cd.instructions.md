@@ -60,7 +60,7 @@ is the map and the traps.
   `--offline` on a PR (relative links and anchors), external links weekly; `lychee.toml` holds the exclusions. The weekly run skips
   `docs/EVENT_DATA_SOURCES.md`: a crawler over a hundred venue sites is automated access ADR-007 does not cover. None of the three is required.
 - `label-pr.yml` — type labels from the Conventional Commits title (`fix(api)!:` → `fix` + `breaking-change`), `importer` from an added `*Importer.kt` under
-  `scraper/`, `after-deploy` while the body has an unticked `## After deploy` step (#2380), red when that section has no `- [ ]` step at all. **Required, and red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
+  `scraper/`, `migration` from an added Flyway `V<n>__*.sql`, `after-deploy` while the body has an unticked `## After deploy` step (#2380), red when that section has no `- [ ]` step at all. **Required, and red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
   `bff`, `images`, `branding`) — a `feat` earns a minor, and `feat(ci)` once did (v0.17.0); `scripts/scope-parity.sh` holds every copy of that list.
   `pull_request_target`, no checkout, `github-script`. `milestone-dependabot.yml` — same shape; gives every bot PR (Dependabot, Renovate, the release App
   should it open one again) the **oldest open milestone**, never overwrites one, and its dispatch sweeps the backlog. Both match on the bot's login, so a new
