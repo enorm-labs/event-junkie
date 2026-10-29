@@ -203,7 +203,7 @@ scan use. Three venues and 44 events. One event per shape the site renders diffe
 so run `up importer` once first. For this week's real programme, `seed-all` and `import` are still the way.
 
 The same command loads [`fixtures/accounts.sql`](../fixtures/accounts.sql) (#4102). It adds two signed-in accounts with
-follows, a saved search and RSVPs. To sign in, send the cookie `__Host-ej_session=fixture-session-ada`.
+follows, a saved search and RSVPs. Bob also has a passkey, a push subscription and an unread notification. To sign in, send the cookie `__Host-ej_session=fixture-session-ada`.
 [`fixtures/accounts.json`](../fixtures/accounts.json) lists the tokens and ids. The tokens are public.
 **Never load this file into staging or production.** A write also needs the same value in the `XSRF-TOKEN` cookie and the
 `X-XSRF-TOKEN` header. Any value works.

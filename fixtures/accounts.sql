@@ -52,3 +52,8 @@ VALUES ('b0b00000-0000-4000-8000-000000000021', 'b0b00000-0000-4000-8000-0000000
 
 INSERT INTO accounts.push_subscription (account_id, endpoint, p256dh, auth)
 VALUES ('b0b00000-0000-4000-8000-000000000002', 'https://fcm.googleapis.com/fcm/send/fixture-bob', 'fixture', 'fixture');
+
+-- What `PlanChangesJob` writes when an RSVP'd event is cancelled (#4144), unread, so the isolation check can try to mark it read.
+INSERT INTO accounts.notification (id, account_id, event_id, kind, about_kind, about_id, change)
+SELECT 'b0b00000-0000-4000-8000-000000000031'::uuid, 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'change', 'rsvp', id, 'cancelled'
+FROM events.event WHERE source_id = 'fixture-sold-out';
