@@ -17,13 +17,14 @@ k6 run perf/ratelimit.js              # the ingress limit — deployed environme
 
 They answer different questions, and reading one's output as if it were another's is the main way to draw a wrong conclusion from them.
 
-| Script         | Shape                     | Question it answers                                                                  |
-| -------------- | ------------------------- | ------------------------------------------------------------------------------------ |
-| `smoke.js`     | 1 VU, 1 iteration         | Does every endpoint still work, and is anything catastrophically slow?               |
-| `load.js`      | ramp to N VUs, hold       | Does latency stay flat as concurrency rises, or does something serialise?            |
-| `spike.js`     | quiet → surge → quiet     | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
-| `ratelimit.js` | one visitor, then a flood | Does the per-source limit stop abuse without ever rejecting a visitor?               |
-| `search.js`    | ramp to N typists, hold   | Does the header search keep up when people type, at the SPA's 250 ms debounce?       |
+| Script         | Shape                         | Question it answers                                                                  |
+| -------------- | ----------------------------- | ------------------------------------------------------------------------------------ |
+| `smoke.js`     | 1 VU, 1 iteration             | Does every endpoint still work, and is anything catastrophically slow?               |
+| `load.js`      | ramp to N VUs, hold           | Does latency stay flat as concurrency rises, or does something serialise?            |
+| `spike.js`     | quiet → surge → quiet         | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
+| `ratelimit.js` | one visitor, then a flood     | Does the per-source limit stop abuse without ever rejecting a visitor?               |
+| `search.js`    | ramp to N typists, hold       | Does the header search keep up when people type, at the SPA's 250 ms debounce?       |
+| `account.js`   | ramp to N signed-in VUs, hold | Do the signed-in routes, which no cache answers, keep up? k3d and local only         |
 
 **`smoke.js` is the one to reach for by default.** It puts no meaningful load on anything, finishes in about a second, and tolerates an empty database, so it is
 safe to run anywhere at any time. Use it after a dependency bump, after a query change, or to check an environment is alive.
@@ -155,6 +156,21 @@ first minute, and no run failed a request. `THRESHOLD_SEARCH_MS` overrides it fo
 |      50 | 47 ms | 280 ms | 721 ms |
 
 Before the trigram indexes the same script measured 441 ms at 20 typists and 1.0 to 1.7 s at 50, with the database node's CPU at its limit.
+
+**`account.js` has its own budget, 50 ms**, by the same rule, measured on **k3d** on 2026-10-29 (#4104), not on staging. Staging has no seeded
+accounts, and the fixture tokens must never reach it. The cluster ran the published snapshot through Flux on a laptop, with one BFF replica,
+`fixtures/events.sql` and `accounts.sql` loaded, 5 VUs, 30 s ramp and 2 min hold. No run failed a request.
+`THRESHOLD_ACCOUNT_MS` overrides it.
+
+| account p50 | account p95 | account max | list p95 | Requests |
+| ----------: | ----------: | ----------: | -------: | -------: |
+|      7.3 ms |     19.9 ms |      110 ms |   3.8 ms |     2963 |
+|      6.0 ms |     21.4 ms |      121 ms |   5.2 ms |     2991 |
+|      7.2 ms |     19.3 ms |       29 ms |   2.8 ms |     3007 |
+
+A fourth run overlapped a Flux rollout of a newer snapshot and failed 0.7 % of its requests; it was discarded and repeated. The `list` row is the
+saved-search counts, `GET /events?…&size=1`, which `ResponseCache` answers. **These are one laptop's numbers with a 44-event fixture**, so they
+catch a regression in the session lookup or a query that stops using its index, not a production capacity question.
 
 ## Where the session mix comes from
 

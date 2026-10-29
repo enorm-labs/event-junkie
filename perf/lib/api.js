@@ -95,6 +95,75 @@ export const api = {
     csrf: () => get('/auth/csrf', {group: 'detail', name: '/auth/csrf'}),
 }
 
+// --- Signed in ---------------------------------------------------------------------------------
+
+/**
+ * A seeded session from `fixtures/accounts.json` (#4102), sent as headers. Each request gets an
+ * empty cookie jar, so a cookie the BFF sets never joins the one the script names. Any XSRF pair
+ * passes: the BFF compares the cookie with the header only.
+ */
+export function signedIn(account) {
+    return {
+        jar: new http.CookieJar(),
+        headers: {
+            Cookie: `__Host-ej_session=${account.session}; XSRF-TOKEN=k6`,
+            'X-XSRF-TOKEN': 'k6',
+            'Content-Type': 'application/json',
+        },
+    }
+}
+
+/** A tagged write in the `account` group; every one answers 204, a repeated removal too. */
+function write(method, path, account, {name, body = null} = {}) {
+    return http.request(method, `${BASE_URL}${path}`, body === null ? null : JSON.stringify(body), {
+        ...signedIn(account),
+        tags: {group: 'account', name: `${method} ${name}`},
+    })
+}
+
+/**
+ * The signed-in routes. None goes through `ResponseCache`, and each looks the session up in
+ * PostgreSQL, so they are the load the account features added.
+ */
+export const me = {
+    session: (a) => get('/auth/session', {group: 'account', name: '/auth/session (signed in)', params: signedIn(a)}),
+    unreadCount: (a) => get('/me/notifications/unread-count', {group: 'account', name: '/me/notifications/unread-count', params: signedIn(a)}),
+    follows: (a) => get('/me/follows', {group: 'account', name: '/me/follows', params: signedIn(a)}),
+    following: (a) => get('/me/following', {group: 'account', name: '/me/following', params: signedIn(a)}),
+    followingToday: (a) => get('/me/following/today', {group: 'account', name: '/me/following/today', params: signedIn(a)}),
+    searches: (a) => get('/me/searches', {group: 'account', name: '/me/searches', params: signedIn(a)}),
+    rsvps: (a) => get('/me/rsvps', {group: 'account', name: '/me/rsvps', params: signedIn(a)}),
+
+    follow: (a, slug) => write('PUT', `/me/follows/venue/${slug}`, a, {name: '/me/follows/venue/{slug}'}),
+    unfollow: (a, slug) => write('DELETE', `/me/follows/venue/${slug}`, a, {name: '/me/follows/venue/{slug}'}),
+    rsvp: (a, slug) => write('PUT', `/me/rsvps/${slug}`, a, {name: '/me/rsvps/{slug}', body: {status: 'interested'}}),
+    unrsvp: (a, slug) => write('DELETE', `/me/rsvps/${slug}`, a, {name: '/me/rsvps/{slug}'}),
+}
+
+/** `when` as `dateRanges.ts` turns it into dates: today, the coming weekend, or the next seven days. */
+function whenRange(when) {
+    const weekday = new Date().getUTCDay() || 7
+    if (when === 'today') return [0, 0]
+    if (when === 'weekend') return [Math.max(5 - weekday, 0), 7 - weekday]
+    if (when === 'week') return [0, 6]
+    return null
+}
+
+/**
+ * A saved search's count, asked as `useSavedSearches.ts` asks it: the events list at size 1. The
+ * stored query keeps `when`, which `/events` refuses, so it becomes `from`, `to` and `running`.
+ */
+export function savedSearchCount(query) {
+    const params = []
+    for (const pair of query.split('&')) {
+        const [name, value] = pair.split('=')
+        const range = name === 'when' ? whenRange(value) : null
+        if (range) params.push(`from=${isoDate(range[0])}`, `to=${isoDate(range[1])}`, 'running=true')
+        else if (name !== 'when') params.push(pair)
+    }
+    return api.searchEvents(`?${[...params, 'size=1'].join('&')}`)
+}
+
 // --- Discovery ---------------------------------------------------------------------------------
 
 /** Every status counts as expected, the failed dial (`0`) included, so a wait is not a failure. */
