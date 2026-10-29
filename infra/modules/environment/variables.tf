@@ -113,20 +113,33 @@ variable "next_pair" {
     The new pair gets temporary Primary IPs and its own private addresses, host .11 and .21 of
     `subnet_ip_range` unless given. It uses the volume and the real Primary IPs only after the
     cutover moves them. Set it with `-var`, never in tfvars.
+
+    Each node is created once its type is set, so either one can be ordered first.
+    `colocated = true` means the new k3s node takes PostgreSQL at the cutover and there is no
+    new database node. Unset, the new pair keeps the running pair's layout.
   EOT
   type = object({
-    k3s_server_type      = string
+    k3s_server_type      = optional(string)
     postgres_server_type = optional(string)
+    colocated            = optional(bool)
     k3s_private_ip       = optional(string)
     postgres_private_ip  = optional(string)
   })
   default = null
 
   validation {
-    condition = var.next_pair == null || (
-      (var.next_pair.postgres_server_type == null) == (var.postgres_server_type == null)
-    )
-    error_message = "next_pair.postgres_server_type must be set exactly when postgres_server_type is: the new pair keeps the running pair's topology."
+    condition     = var.next_pair == null || try(var.next_pair.k3s_server_type, null) != null || try(var.next_pair.postgres_server_type, null) != null
+    error_message = "next_pair needs k3s_server_type, postgres_server_type or both."
+  }
+
+  validation {
+    condition     = var.next_pair == null || try(var.next_pair.colocated, null) != true || try(var.next_pair.postgres_server_type, null) == null
+    error_message = "next_pair.colocated puts PostgreSQL on the new k3s node, so it takes no postgres_server_type."
+  }
+
+  validation {
+    condition     = var.next_pair == null || try(var.next_pair.postgres_server_type, null) == null || var.postgres_server_type != null
+    error_message = "next_pair.postgres_server_type needs a running database node: its firewall is the one the new node joins."
   }
 }
 

@@ -725,25 +725,43 @@ The production rebuild in #4125 met each of these. Read them before the first co
 cluster serves while the new one is built, and the cutover takes minutes (#4128).
 
 ```sh
-infra/order-next-pair.sh production     # waits for cx33 + cx23 in nbg1, then orders the pair; keep the terminal tab open
+infra/order-next-pair.sh production    # every 2 minutes; keep the terminal tab open
 ```
 
-The script checks the free advertisement every 15 minutes. When it says yes, the script runs the apply below at once. It needs no person while the plan only
-creates the six `*_next` resources. Any other plan stops the script with exit 3, and nothing is applied. A failed order, such as `resource_unavailable`, is
-tried again. To order by hand instead:
+Each round, the script reads which `*_next` servers the state holds. Then it asks the free advertisement for each type that is still missing, and it orders
+what is for sale at once:
+
+| Held now         | For sale      | The script orders                                            |
+| ---------------- | ------------- | ------------------------------------------------------------ |
+| nothing, or cx23 | cx33          | the cx33 as the k3s node                                     |
+| nothing, or cx33 | cx23          | the cx23 as the database node                                |
+| cx23             | cx43, no cx33 | the cx43 as the k3s node, beside the cx23                    |
+| nothing          | cx43, no cx33 | the cx43 alone, with PostgreSQL on it after the cutover      |
+| a complete pair  | —             | nothing more. The script says the pair is complete and stops |
+
+A complete pair is cx33 + cx23, cx43 + cx23, or a cx43 alone. A held cx33 waits for its cx23, and it is never swapped for a cx43.
+`--fallback-after <date>` allows a cx43 only from that day on, and `--no-fallback` never.
+
+The apply needs no person while the plan only creates `*_next` servers and Primary IPs. Any other plan stops the script with exit 3, and nothing is applied.
+A failed order, such as `resource_unavailable`, is tried again in the next round. A server that the failed apply created counts as held. To order by hand
+instead:
 
 ```sh
 infra/apply.sh production -var 'next_pair={k3s_server_type="cx33",postgres_server_type="cx23"}'   # 6 to add, 0 to change, 0 to destroy
+infra/apply.sh production -var 'next_pair={postgres_server_type="cx23"}'                          # 3 to add: the database node only
+infra/apply.sh production -var 'next_pair={k3s_server_type="cx43",colocated=true}'                # 3 to add: one node, PostgreSQL on it
 infra/apply.sh staging -var 'next_pair={k3s_server_type="cx33"}'                                    # 3 to add
 ```
 
-- **What it creates:** `<env>-k3s-next` and, in production, `<env>-postgres-next`, each with temporary Primary IPs. It changes nothing that exists.
+- **What it creates:** `<env>-k3s-next` when `k3s_server_type` is set, and `<env>-postgres-next` when `postgres_server_type` is set. Each one has temporary
+  Primary IPs. It changes nothing that exists.
+- **`colocated = true`** puts PostgreSQL on the new k3s node at the cutover, with no new database node. Unset, the new pair keeps the running pair's layout.
 - **The private addresses** are host `.11` and `.21` of the subnet unless `next_pair` names others. The running pair keeps `.10` and `.20`.
 - **cloud-init** is the running pair's, with the new private addresses. The hostname is the running node's, because it becomes the Kubernetes node name.
   `PUBLIC_IPV4` is the real Primary IP, which the node holds after the cutover.
-- **PostgreSQL does not start at boot** on the new pair. The volume reaches the new node only at the database cutover, which then runs
-  `step.sh postgres` and `step.sh backups`.
-- **Pass `next_pair` on every apply until the cutover.** An apply without it plans to destroy the new pair. `apply.sh` refuses that without `--allow-replace`.
+- **PostgreSQL does not start at boot** on the new pair. The volume reaches the new database node, or the new k3s node when `colocated`, only at the database
+  cutover. The cutover then runs `step.sh postgres` and `step.sh backups` on it.
+- **Pass the whole `next_pair` on every apply until the cutover,** with every type that is held. An apply without one of them plans to destroy that node. `apply.sh` refuses that without `--allow-replace`.
 - `tofu output next_pair` prints the temporary IPv4. It is the WireGuard endpoint of the new node until the cutover.
 
 The build on the new pair (#4134) and the cutover are not scripted yet. The plan is in #4128.

@@ -93,12 +93,15 @@ output "next_steps" {
 }
 
 output "next_pair" {
-  description = "The second pair's names and addresses, or null without `next_pair`. Its temporary IPv4 is the WireGuard endpoint until the cutover."
+  description = "The second pair's servers and addresses, or null without `next_pair`. The k3s node's temporary IPv4 is its WireGuard endpoint until the cutover."
   value = local.next_pair ? {
-    k3s_name            = hcloud_server.k3s_next[0].name
-    k3s_temporary_ipv4  = hcloud_primary_ip.k3s_next_ipv4[0].ip_address
-    k3s_private_ip      = local.next_k3s_private_ip
-    postgres_name       = local.dedicated_postgres ? hcloud_server.postgres_next[0].name : null
-    postgres_private_ip = local.dedicated_postgres ? local.next_postgres_private_ip : null
+    k3s_name             = one(hcloud_server.k3s_next[*].name)
+    k3s_server_type      = one(hcloud_server.k3s_next[*].server_type)
+    k3s_temporary_ipv4   = one(hcloud_primary_ip.k3s_next_ipv4[*].ip_address)
+    k3s_private_ip       = local.next_k3s ? local.next_k3s_private_ip : null
+    colocated            = local.next_colocated
+    postgres_name        = one(hcloud_server.postgres_next[*].name)
+    postgres_server_type = one(hcloud_server.postgres_next[*].server_type)
+    postgres_private_ip  = local.next_postgres ? local.next_postgres_private_ip : null
   } : null
 }

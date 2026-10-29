@@ -3,7 +3,7 @@
 # and the volume, which is why none of them is referenced here.
 
 resource "hcloud_primary_ip" "k3s_next_ipv4" {
-  count = local.next_pair ? 1 : 0
+  count = local.next_k3s ? 1 : 0
 
   name              = "${var.environment}-k3s-next-ipv4"
   type              = "ipv4"
@@ -14,7 +14,7 @@ resource "hcloud_primary_ip" "k3s_next_ipv4" {
 }
 
 resource "hcloud_primary_ip" "k3s_next_ipv6" {
-  count = local.next_pair ? 1 : 0
+  count = local.next_k3s ? 1 : 0
 
   name              = "${var.environment}-k3s-next-ipv6"
   type              = "ipv6"
@@ -27,7 +27,7 @@ resource "hcloud_primary_ip" "k3s_next_ipv6" {
 # The hostname is `<env>-k3s`, as on the running node: it becomes the Kubernetes node name, which
 # outlives the cutover.
 resource "hcloud_server" "k3s_next" {
-  count = local.next_pair ? 1 : 0
+  count = local.next_k3s ? 1 : 0
 
   name         = "${var.environment}-k3s-next"
   server_type  = var.next_pair.k3s_server_type
@@ -58,26 +58,19 @@ resource "hcloud_server" "k3s_next" {
     ignore_changes = [ssh_keys, user_data]
 
     precondition {
-      condition = length(setintersection(
-        [local.next_k3s_private_ip, local.next_postgres_private_ip],
-        [var.k3s_private_ip, var.postgres_private_ip],
-      )) == 0
+      condition     = local.next_ips_distinct
       error_message = "next_pair's private addresses must differ from the running pair's: both pairs share one network."
     }
 
     precondition {
-      condition = alltrue([
-        for ip in [local.next_k3s_private_ip, local.next_postgres_private_ip] :
-        can(cidrhost("${ip}/32", 0)) &&
-        cidrhost("${ip}/${split("/", var.subnet_ip_range)[1]}", 0) == cidrhost(var.subnet_ip_range, 0)
-      ])
+      condition     = local.next_ips_in_subnet
       error_message = "next_pair's private addresses must be plain IPs inside subnet_ip_range."
     }
   }
 }
 
 resource "hcloud_primary_ip" "postgres_next_ipv4" {
-  count = local.next_pair && local.dedicated_postgres && var.postgres_public_ipv4 ? 1 : 0
+  count = local.next_postgres && var.postgres_public_ipv4 ? 1 : 0
 
   name              = "${var.environment}-postgres-next-ipv4"
   type              = "ipv4"
@@ -88,7 +81,7 @@ resource "hcloud_primary_ip" "postgres_next_ipv4" {
 }
 
 resource "hcloud_primary_ip" "postgres_next_ipv6" {
-  count = local.next_pair && local.dedicated_postgres ? 1 : 0
+  count = local.next_postgres ? 1 : 0
 
   name              = "${var.environment}-postgres-next-ipv6"
   type              = "ipv6"
@@ -99,7 +92,7 @@ resource "hcloud_primary_ip" "postgres_next_ipv6" {
 }
 
 resource "hcloud_server" "postgres_next" {
-  count = local.next_pair && local.dedicated_postgres ? 1 : 0
+  count = local.next_postgres ? 1 : 0
 
   name         = "${var.environment}-postgres-next"
   server_type  = var.next_pair.postgres_server_type
@@ -127,17 +120,27 @@ resource "hcloud_server" "postgres_next" {
 
   lifecycle {
     ignore_changes = [ssh_keys, user_data]
+
+    precondition {
+      condition     = local.next_ips_distinct
+      error_message = "next_pair's private addresses must differ from the running pair's: both pairs share one network."
+    }
+
+    precondition {
+      condition     = local.next_ips_in_subnet
+      error_message = "next_pair's private addresses must be plain IPs inside subnet_ip_range."
+    }
   }
 }
 
 check "next_pair_user_data_drift" {
   assert {
-    condition     = !local.next_pair || one(hcloud_server.k3s_next[*].user_data) == lookup(local.user_data_hash, "k3s_next", "")
+    condition     = !local.next_k3s || one(hcloud_server.k3s_next[*].user_data) == lookup(local.user_data_hash, "k3s_next", "")
     error_message = "${var.environment}-k3s-next booted another user_data than cloud-init/ renders. Apply the fix by hand before the cutover."
   }
 
   assert {
-    condition     = !(local.next_pair && local.dedicated_postgres) || one(hcloud_server.postgres_next[*].user_data) == lookup(local.user_data_hash, "postgres_next", "")
+    condition     = !local.next_postgres || one(hcloud_server.postgres_next[*].user_data) == lookup(local.user_data_hash, "postgres_next", "")
     error_message = "${var.environment}-postgres-next booted another user_data than cloud-init/ renders. Apply the fix by hand before the cutover."
   }
 }
