@@ -122,6 +122,10 @@ jobs:
       - name: Assert what infra/apply.sh refuses and applies
         run: infra/apply-test.sh
 
+      # It applies to production with no person present, so what makes it stop is the point (#4128).
+      - name: Assert when infra/order-next-pair.sh orders, retries and stops
+        run: infra/order-next-pair-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'

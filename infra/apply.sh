@@ -3,10 +3,13 @@
 # apply.sh — plan an OpenTofu stack to a file, refuse an unasked replacement, and apply exactly that file (#4132).
 #
 # Usage:
-#   infra/apply.sh <bootstrap|staging|production> [--allow-replace] [tofu plan flags…]
+#   infra/apply.sh <bootstrap|staging|production> [--allow-replace] [--yes-if-only-creates <regex>] [tofu plan flags…]
 #
 #   --allow-replace   permit a replace or destroy of an hcloud_server, hcloud_volume, hcloud_primary_ip
 #                     or hcloud_zone. With a server among them, check-capacity.sh --probe runs first
+#   --yes-if-only-creates <regex>
+#                     apply without the prompt when every change is a create of an address matching
+#                     <regex>. Any other plan exits 3 and applies nothing. order-next-pair.sh uses it
 #
 #   infra/apply.sh production -target=hcloud_zone_rrset.redirect
 #   infra/apply.sh staging --allow-replace -replace=module.environment.hcloud_server.k3s -var "admin_cidrs=$ADMIN"
@@ -49,11 +52,17 @@ esac
 shift
 
 ALLOW_REPLACE=0
+CREATES_ONLY=""
 PLAN_ARGS=()
 VAR_ARGS=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --allow-replace) ALLOW_REPLACE=1 ;;
+        --yes-if-only-creates)
+            [ $# -ge 2 ] || die "$1 needs a regex"
+            CREATES_ONLY="$2"
+            shift
+            ;;
         -var | -var-file)
             [ $# -ge 2 ] || die "$1 needs a value"
             PLAN_ARGS+=("$1" "$2")
@@ -123,9 +132,20 @@ if [ -n "$guarded" ]; then
     esac
 fi
 
-printf 'apply: Apply exactly this plan to %s? Type yes: ' "$STACK"
-answer=""
-read -r answer || true
-[ "$answer" = yes ] || die "not applied"
+if [ -n "$CREATES_ONLY" ]; then
+    others="$(jq -r --arg re "$CREATES_ONLY" '[.resource_changes[]?
+        | select(.change.actions != ["no-op"] and .change.actions != ["read"])
+        | select(.change.actions != ["create"] or (.address | test($re) | not)) | .address] | join(" ")' "$SHOW")"
+    if [ -n "$others" ]; then
+        echo "apply: the plan holds more than creates matching ${CREATES_ONLY}: ${others}. Nothing was applied; it needs a person." >&2
+        exit 3
+    fi
+    echo "apply: every change is a create matching ${CREATES_ONLY}, so no prompt."
+else
+    printf 'apply: Apply exactly this plan to %s? Type yes: ' "$STACK"
+    answer=""
+    read -r answer || true
+    [ "$answer" = yes ] || die "not applied"
+fi
 
 tf apply -input=false ${VAR_ARGS[@]+"${VAR_ARGS[@]}"} "$PLAN"

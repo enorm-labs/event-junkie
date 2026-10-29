@@ -725,6 +725,14 @@ The production rebuild in #4125 met each of these. Read them before the first co
 cluster serves while the new one is built, and the cutover takes minutes (#4128).
 
 ```sh
+infra/order-next-pair.sh production     # waits for cx33 + cx23 in nbg1, then orders the pair; keep the terminal tab open
+```
+
+The script checks the free advertisement every 15 minutes. When it says yes, the script runs the apply below at once. It needs no person while the plan only
+creates the six `*_next` resources. Any other plan stops the script with exit 3, and nothing is applied. A failed order, such as `resource_unavailable`, is
+tried again. To order by hand instead:
+
+```sh
 infra/apply.sh production -var 'next_pair={k3s_server_type="cx33",postgres_server_type="cx23"}'   # 6 to add, 0 to change, 0 to destroy
 infra/apply.sh staging -var 'next_pair={k3s_server_type="cx33"}'                                    # 3 to add
 ```
