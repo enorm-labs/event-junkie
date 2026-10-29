@@ -50,6 +50,23 @@ async function load() {
   }
 }
 
+/**
+ * What went wrong adding one (#4154). The browser refuses before the BFF hears of it, so the page has to say why. An
+ * error it does not name gets its `name` in brackets for a report: a fixed exception name, never the message, which
+ * can carry device details.
+ */
+function addFailure(e: unknown): string {
+  if (e instanceof ApiError && e.status === 409) return t('account.passkeys.limit')
+  const name = e instanceof DOMException || e instanceof Error ? e.name : ''
+  if (name === 'InvalidStateError') return t('account.passkeys.exists')
+  if (name === 'SecurityError' || name === 'NotSupportedError') {
+    return t('account.passkeys.unsupported')
+  }
+  return /^[A-Za-z]{1,40}$/.test(name) && !(e instanceof ApiError)
+    ? t('account.passkeys.failedNamed', { name })
+    : t('account.passkeys.failed')
+}
+
 async function add() {
   if (busy.value) return
   busy.value = true
@@ -59,10 +76,7 @@ async function add() {
     await load()
   } catch (e) {
     if (cancelled(e)) return
-    problem.value =
-      e instanceof ApiError && e.status === 409
-        ? t('account.passkeys.limit')
-        : t('account.passkeys.failed')
+    problem.value = addFailure(e)
   } finally {
     busy.value = false
   }

@@ -153,7 +153,10 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "limit": "This account has ten passkeys already. Delete one first.",
-    "failed": "That did not work. Try again."
+    "failed": "That did not work. Try again.",
+    "failedNamed": "That did not work. Try again. ({name})",
+    "exists": "This device already holds a passkey for your account. Sign in with that one.",
+    "unsupported": "This browser cannot make a passkey on this page."
   },
   "notifications": {
     "label": "Notifications",

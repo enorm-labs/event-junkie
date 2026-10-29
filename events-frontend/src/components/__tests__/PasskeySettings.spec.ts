@@ -81,6 +81,28 @@ describe('PasskeySettings', () => {
     expect(view.find('[role="alert"]').exists()).toBe(false)
   })
 
+  it.each([
+    ['InvalidStateError', 'already holds a passkey'],
+    ['SecurityError', 'cannot make a passkey'],
+    ['NotSupportedError', 'cannot make a passkey'],
+  ])('names a %s from the browser', async (name, text) => {
+    account.addPasskey.mockRejectedValue(new DOMException('refused', name))
+    const view = await mountSettings()
+    await button(view, 'Add a passkey').trigger('click')
+    await flushPromises()
+    expect(view.find('[role="alert"]').text()).toContain(text)
+  })
+
+  it('adds the name of an error it does not know, never its message', async () => {
+    account.addPasskey.mockRejectedValue(new TypeError('Mac mini of someone'))
+    const view = await mountSettings()
+    await button(view, 'Add a passkey').trigger('click')
+    await flushPromises()
+    const alert = view.find('[role="alert"]').text()
+    expect(alert).toContain('That did not work. Try again. (TypeError)')
+    expect(alert).not.toContain('Mac mini')
+  })
+
   it('names the limit at ten', async () => {
     account.addPasskey.mockRejectedValue(new ApiError(409, 'Conflict'))
     const view = await mountSettings()
