@@ -95,6 +95,23 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
+    fun `bob's bell holds one unread cancellation of his RSVP, and ada's is empty`() {
+        val bobFixture = fixture.single { it.get("email").asString() == bob.email }
+        get("/me/notifications", bob)
+            .jsonPath("$.length()")
+            .isEqualTo(1)
+            .jsonPath("$[0].id")
+            .isEqualTo(bobFixture.get("notificationId").asString())
+            .jsonPath("$[0].kind")
+            .isEqualTo("change")
+            .jsonPath("$[0].change")
+            .isEqualTo("cancelled")
+            .jsonPath("$[0].readAt")
+            .isEmpty
+        get("/me/notifications", ada).jsonPath("$").isEmpty
+    }
+
+    @Test
     fun `the saved queries are stored as the BFF normalises them`() {
         listOf(ada, bob).forEach { account ->
             get("/me/searches", account).jsonPath("$[0].query").value<String> { SavedSearchQuery.normalise(it).getOrThrow() shouldBe it }

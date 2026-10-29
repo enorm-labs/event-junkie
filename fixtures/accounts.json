@@ -14,7 +14,8 @@
       "session": "fixture-session-bob",
       "savedSearchId": "b0b00000-0000-4000-8000-000000000012",
       "passkeyId": "b0b00000-0000-4000-8000-000000000021",
-      "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob"
+      "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob",
+      "notificationId": "b0b00000-0000-4000-8000-000000000031"
     }
   ]
 }
