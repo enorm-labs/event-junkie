@@ -85,9 +85,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
 
-    // SpringDoc OpenAPI – provides Swagger UI and OpenAPI spec generation for WebFlux
-    // See: https://springdoc.org/#getting-started
-    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springdoc.version")}")
+    // SpringDoc OpenAPI – the spec generation ships; Swagger UI is for `bootRun` and the tests only,
+    // so its webjar stays out of the jar and the OWASP scan. See: https://springdoc.org/#getting-started
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-api:${property("springdoc.version")}")
+    testAndDevelopmentOnly("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springdoc.version")}")
 
     // Kotlin
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")

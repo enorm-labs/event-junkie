@@ -1,5 +1,5 @@
 {
-  "componentCount": 376,
+  "componentCount": 373,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -666,12 +666,6 @@
           "ecosystem": "backend"
         },
         {
-          "name": "org.springdoc:springdoc-openapi-starter-webflux-ui",
-          "version": "3.2.0",
-          "url": null,
-          "ecosystem": "backend"
-        },
-        {
           "name": "org.springframework:spring-aop",
           "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
@@ -1089,12 +1083,6 @@
           "name": "org.springframework.security:spring-security-web",
           "version": "7.1.1",
           "url": "https://spring.io/projects/spring-security",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.webjars:swagger-ui",
-          "version": "5.34.0",
-          "url": "https://www.webjars.org",
           "ecosystem": "backend"
         },
         {
@@ -1875,12 +1863,6 @@
           "name": "org.slf4j:slf4j-api",
           "version": "2.0.18",
           "url": "http://www.slf4j.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.webjars:webjars-locator-lite",
-          "version": "1.1.4",
-          "url": "https://webjars.org",
           "ecosystem": "backend"
         },
         {
