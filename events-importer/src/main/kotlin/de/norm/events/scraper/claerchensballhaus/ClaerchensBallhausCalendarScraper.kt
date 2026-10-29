@@ -119,8 +119,8 @@ private val VOICE_TYPE = Regex("""\s+(?:Soprano|Sopran|Mezzosopran|Tenor|Bariton
 
 private val OUT_OF_SCOPE = Regex("""Vortrag|Führung|Workshop|Weinmahl|Dinner|Menü""", RegexOption.IGNORE_CASE)
 
-/** The audience is the choir: `Singt in dreistimmiger Harmonie und werdet Teil des … Konzerts`. */
-private val SING_ALONG = Regex("""werdet Teil|Mitsing|Sing-?along""", RegexOption.IGNORE_CASE)
+/** The audience is the choir: `Singt in dreistimmiger Harmonie und werdet Teil des … Konzerts`. A sing-along with acts stays. */
+private val SING_ALONG = Regex("""werdet Teil""", RegexOption.IGNORE_CASE)
 
 /** The YesChoir! sing-along by its title, because some of its entries carry no text; a concert's text may name it. */
 private val YES_CHOIR = Regex("""\bYes\s?Choir\b""", RegexOption.IGNORE_CASE)

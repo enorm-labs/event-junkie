@@ -24,8 +24,8 @@ class KulturhausSpandauWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events.size shouldBe 136
-            result.events.count { !it.isForChildren } shouldBe 75
+            result.events.size shouldBe 141
+            result.events.count { !it.isForChildren } shouldBe 80
             result.etag shouldBe null
         }
 

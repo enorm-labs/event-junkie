@@ -116,6 +116,14 @@ class ClaerchensBallhausCalendarScraperTest {
     }
 
     @Test
+    fun `keeps a concert the audience sings along to`() {
+        val page =
+            """<script>var c = { eventSources: [[{"title":"SingAlong – Das große Mitsing-Konzert","start":"2026-11-20T20:00:00","details":"<p>Ein Sing-along mit Band</p>","permalink":"https://claerchensball.haus/singalong/"}]] };</script>"""
+
+        ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse(page, BASE_URL), BASE_URL).single().eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `returns nothing for a page without the calendar`() {
         ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse("<script>let x = 1;</script>", BASE_URL), BASE_URL).shouldBeEmpty()
     }

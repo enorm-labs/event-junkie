@@ -29,8 +29,8 @@ class KulturhausSpandauApiScraperTest {
 
     @Test
     fun `keeps the house's own rooms and its stage programme`() {
-        upcoming shouldHaveSize 63
-        upcoming.filterNot { it.isForChildren } shouldHaveSize 38
+        upcoming shouldHaveSize 64
+        upcoming.filterNot { it.isForChildren } shouldHaveSize 39
         events.map { it.sourceId }.toSet().size shouldBe events.size
     }
 
@@ -71,13 +71,19 @@ class KulturhausSpandauApiScraperTest {
     }
 
     @Test
-    fun `drops the Zitadelle and Altstadt events, tours, exhibitions and the sing-along, and marks the children's shows`() {
+    fun `drops the Zitadelle and Altstadt events, tours and exhibitions, and marks the children's shows`() {
         val titles = upcoming.map { it.title }
 
         titles shouldNotContain "Gambenconsort Phantasm"
         titles shouldNotContain "Blindmalen mit Künstler Aydin Öztek."
         upcoming.filter { it.isForChildren }.map { it.title }.shouldContainAll("Wind im Gummistiefel", "Hops, der Oberkellner")
-        titles shouldNotContain "Das Mitsingding"
+    }
+
+    // Two musicians play, and the audience sings along: a show, not a choir (EVENT_SCOPE.md §3.2).
+    @Test
+    fun `keeps the Mitsingding sing-along as a concert`() {
+        event(14195).title shouldBe "Das Mitsingding"
+        event(14195).eventType shouldBe EventType.CONCERT.name
     }
 
     @Test
