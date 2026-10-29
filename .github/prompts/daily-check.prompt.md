@@ -2,7 +2,7 @@
 
 The start of a maintainer's day: read every place that can hold something new since yesterday, sort it, merge the bot pull requests that are ready, and write
 one report with an action list on top. The GitHub half comes from `scripts/daily-check.sh`. The cluster half is `scripts/ej.sh`,
-[`/log-check`](log-check.prompt.md) and [`/admin-review`](admin-review.prompt.md). A maintainer without an agent reads the same list in [DAILY_COMMANDS.md § Start of the day](../../docs/ops/DAILY_COMMANDS.md#start-of-the-day).
+[`/log-check`](log-check.prompt.md), [`/traffic`](traffic.prompt.md) and [`/admin-review`](admin-review.prompt.md). A maintainer without an agent reads the same list in [DAILY_COMMANDS.md § Start of the day](../../docs/ops/DAILY_COMMANDS.md#start-of-the-day).
 
 ## Important
 
@@ -24,7 +24,7 @@ one report with an action list on top. The GitHub half comes from `scripts/daily
 ```
 
 - **`--hours N`** — what counts as new (default `24`; `72` on a Monday).
-- **`--no-logs`** — skip `/log-check`, the slow step.
+- **`--no-logs`** — skip `/log-check` and `/traffic`, the slow steps.
 
 ## Step 1 — The state now
 
@@ -94,11 +94,16 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   `released: false` is waiting for a release: one line each.
 - **Unreleased commits**: say whether they hold a product change. When they do, suggest a cut: `gh workflow run cut-release.yml -f dry_run=false`. Never cut.
 
-## Step 4 — The logs
+## Step 4 — The logs and the traffic
 
 Unless `--no-logs`, or the tunnel is down: run [`/log-check`](log-check.prompt.md) for both environments over the same window, as that prompt says. Its
 report is its own file. Carry its verdict lines and its NEW items into this report, and link the file. It reads the same `alert_history` against the logs:
 where its alert rows give a cause Step 3 did not, its answer replaces Step 3's line.
+
+Then run [`/traffic production`](traffic.prompt.md) Steps 1 to 3 with its default window: the week-on-week change needs the 14 days. Carry four
+lines into the report: yesterday's sessions and page loads (a full day, never today), the week-on-week change, the accounts total and active now with
+yesterday's sign-ins and follows, and anything its Step 2 or Step 3 flags. A crawler counted as sessions, a `mail_unavailable`, a `mail_failed` or a
+cleanup `failed` is ACT. Everything else is a State line.
 
 ## Step 5 — The data: new artists and promoters, the admin review pages and the manual venues
 
@@ -159,7 +164,8 @@ For each open pull request by `dependabot[bot]`, `renovate[bot]` or `claude[bot]
 Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/daily-check-<YYYY-MM-DD>.md`. Use this shape:
 
 1. **Action list**, most urgent first: every BLOCKER and ACT, one line each, with the link and the one thing to do.
-2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, and the alerts that fired, one line per rule and cluster.
+2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, the alerts that fired, one line per rule and cluster, and
+   the `/traffic` lines.
 3. **Merged**: each pull request merged in Step 6, with its subject.
 4. **Data**: the flagged new artists and promoters with their verdicts, the `/admin-review` lines with the link to its report, and the manual venues: the overdue
    line.

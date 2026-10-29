@@ -40,6 +40,7 @@ scripts/new-artists.sh production                  # artists created in the last
 scripts/new-artists.sh production --kind promoters # promoters created in the last day; `near` names an older one it may duplicate
 scripts/worklist.sh production --summary           # the data-quality worklist, one line per issue and venue
 curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&size=100' | jq '.totalElements'  # open suggested fixes
+scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .frontend.page_loads, .bff.sessions, .bff.night_sessions] | @tsv'  # sessions per day
 ```
 
 `/daily-check` does all of this and more, and writes one report with an action list. Without an agent, check these in this order:
@@ -56,6 +57,8 @@ curl -s 'http://localhost:28081/api/admin/data-quality/suggestions?status=OPEN&s
 5. **Security.** Look at new code-scanning alerts, Dependabot alerts and Code Quality findings. `/security-report` gives the detail.
 6. **Bot pull requests.** Read each diff. Merge the green ones with `gh pr merge <n> --rebase`. A `claude[bot]` pull request needs your approval first.
 7. **Logs.** `/log-check` sorts both clusters' logs and alerts into noise, known, explained and new.
+   **Traffic.** Compare yesterday's sessions with the same day last week. Night sessions above about 60 on two nights can be a crawler that runs the SPA.
+   `/traffic` checks for one and adds the account counts.
 8. **The data.** Read each flagged row of `new-artists.sh`, for artists and for promoters. Then read the worklist summary, one row per issue and venue. `/worklist` gives each row a
    verdict, writes issue drafts and proposes hand fixes. It changes nothing until you name the fixes to apply.
    Then work the admin app's review pages: "Suggested fixes", "Instagram drafts", "Artists to review" and "Venues to review". `/admin-review` gives
