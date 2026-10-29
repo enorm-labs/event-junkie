@@ -94,8 +94,8 @@ test('header nav lists the sections in the intended order', async ({ page }) => 
   await expect(await sectionLink(page, 'About')).toBeVisible()
   const labels = await nav.getByRole('link').allInnerTexts()
 
-  // Filtered to the section links: the header also carries the brand, the beta badge, the locale
-  // links and an icon-only GitHub button.
+  // Filtered to the section links: the header also carries the brand, the beta badge and the locale
+  // links.
   const sections = ['Events', 'Calendar', 'Map', 'Venues', 'Promoters', 'About']
   const rendered = labels.map((label) => label.trim()).filter((label) => sections.includes(label))
 
@@ -183,13 +183,32 @@ test('app shell marks the app as beta and explains what that means', async ({ pa
   await expect(page.getByRole('heading', { name: 'Why it says beta' })).toBeInViewport()
 })
 
-test('app shell links to the source repository on GitHub', async ({ page }) => {
-  await page.goto('/about')
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
 
-  const link = await sectionLink(page, 'Source code on GitHub')
-  await expect(link).toBeVisible()
-  await expect(link).toHaveAttribute('href', 'https://github.com/enorm-labs/event-junkie')
-  await expect(link).toHaveAttribute('title', 'Source code on GitHub')
+  test('the menu sheet links to the source repository on GitHub', async ({ page }) => {
+    await page.goto('/about')
+
+    const link = await sectionLink(page, 'Source code on GitHub')
+    await expect(link).toBeVisible()
+    await expect(link).toHaveAttribute('href', 'https://github.com/enorm-labs/event-junkie')
+    await expect(link).toHaveAttribute('title', 'Source code on GitHub')
+  })
+})
+
+test.describe('on desktop', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  // An outbound icon among the header's controls read as one more setting; the footer's link
+  // is the one there (footer.spec.ts).
+  test('the header carries no GitHub link', async ({ page }) => {
+    await page.goto('/about')
+
+    const nav = page.getByRole('navigation', { name: 'Main' })
+    // Rendered first, so the zero below is not a count taken before the header mounted.
+    await expect(nav.getByRole('link', { name: 'About', exact: true })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Source code on GitHub' })).toHaveCount(0)
+  })
 })
 
 test('app shell exposes the display settings, and only there', async ({ page }) => {
@@ -208,7 +227,10 @@ test('app shell exposes the display settings, and only there', async ({ page }) 
 
   // New visitors start in System (dark, on the suite's dark OS) and posters, and each group says so.
   await expect(page.locator('html')).toHaveClass(/dark/)
-  await expect(theme.getByRole('button', { name: 'System' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(theme.getByRole('button', { name: 'System' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await expect(events.getByRole('button', { name: 'Posters' })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -224,7 +246,7 @@ test('app shell exposes the display settings, and only there', async ({ page }) 
   await expect(settings).toBeFocused()
 
   // Neither preference keeps a header icon or a menu-sheet entry of its own (#2568). Asking for
-  // the GitHub link opens the sheet on a phone, so both places are checked.
-  await expect(await sectionLink(page, 'Source code on GitHub')).toBeVisible()
+  // a section link opens the sheet on a phone, so both places are checked.
+  await expect(await sectionLink(page, 'About')).toBeVisible()
   await expect(nav.getByRole('button', { name: /mode|compact|poster/i })).toHaveCount(0)
 })

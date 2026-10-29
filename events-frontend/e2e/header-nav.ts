@@ -4,7 +4,7 @@ import type { Locator, Page } from '@playwright/test'
 const MD_PX = 768
 
 /**
- * A link from HeaderMenu's sheet: a section, or GitHub. On a phone-width viewport the burger is opened first, so a
+ * A link from HeaderMenu's sheet: a section, or GitHub (phone only). On a phone-width viewport the burger is opened first, so a
  * test reads the same in every Playwright project.
  */
 export async function sectionLink(

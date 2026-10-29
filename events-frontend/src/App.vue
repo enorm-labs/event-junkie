@@ -2,19 +2,16 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { Button } from '@/components/ui/button'
 import AccountEntry from '@/components/AccountEntry.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import DisplaySettings from '@/components/DisplaySettings.vue'
-import GitHubMark from '@/components/GitHubMark.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import HeaderMenu from '@/components/HeaderMenu.vue'
 import LocaleMenu from '@/components/LocaleMenu.vue'
 import NotificationBell from '@/components/NotificationBell.vue'
 import { pageTitle } from '@/composables/usePageMeta'
-import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useSession } from '@/composables/useSession'
 import { useViewLoaded } from '@/composables/useViewLoaded'
@@ -116,21 +113,6 @@ const sectionLinks = computed(() =>
         <div class="ml-auto flex items-center gap-2">
           <GlobalSearch />
           <LocaleMenu />
-          <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. Below
-               `md` the link is in HeaderMenu's sheet. -->
-          <Button
-            :aria-label="t('common.nav.sourceOnGitHub')"
-            :href="REPOSITORY_URL"
-            :title="t('common.nav.sourceOnGitHub')"
-            as="a"
-            class="hidden md:inline-flex"
-            rel="noopener"
-            size="icon"
-            target="_blank"
-            variant="outline"
-          >
-            <GitHubMark />
-          </Button>
           <!-- Signed in, the bell takes this button's place below `sm`, and the settings move into
                HeaderMenu's sheet (#4078). Signed out, the header is the same at every width. -->
           <div :class="account ? 'hidden sm:block' : undefined">
