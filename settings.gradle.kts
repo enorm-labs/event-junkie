@@ -18,7 +18,7 @@ pluginManagement {
     plugins {
         kotlin("jvm") version "2.4.21"
         kotlin("plugin.spring") version "2.4.21"
-        id("org.springframework.boot") version "4.1.1"
+        id("org.springframework.boot") version "4.1.2"
         id("io.spring.dependency-management") version "1.1.7"
         // At least 0.9.10: before it, parallel report and verify tasks shared the reporter's state, and
         // koverVerify failed a module on another module's filters (Kover #822, #657). 0.9.10 itself
