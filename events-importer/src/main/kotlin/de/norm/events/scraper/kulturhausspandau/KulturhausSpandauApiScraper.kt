@@ -28,7 +28,8 @@ import java.time.format.DateTimeFormatter
  * - **Only the house's own rooms are read.** The list also carries the district's events at the Zitadelle, which has its own
  *   importer, and in the Altstadt churches. A place counts when its street is the house's, `Mauerstr. 6`.
  * - **The categories type the event and set the scope.** Tours, workshops and exhibitions are out (EVENT_SCOPE.md §3.2), and so
- *   are the `Mitsingding` sing-along and an auction. `Kinder und Familie` or a show for an age range under thirteen is marked `for-children` (§3.5).
+ *   is an auction. `Das Mitsingding` stays: two musicians play and the audience sings along. `Kinder und Familie` or a show
+ *   for an age range under thirteen is marked `for-children` (§3.5).
  * - **A title can carry an editor's tag**, `<p hidden KreativWerk_2.12.26>` or `<p-hidden_…>`, and a `<br>-AUSVERKAUFT` tail.
  *   A title that is only the tag leaves the subtitle as the headline.
  * - The `Eintritt` tier is the price. `ermäßigt` and `Kinder` are concessions, and a tier with `active: false` is unused.
@@ -149,8 +150,8 @@ private val PARTICIPATION = setOf("Führung", "Workshop", "Ausstellung")
 private val STAGE = setOf("Show", "Theater", "Zauberei", "Konzert")
 private val API_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-/** A sing-along, whose audience is the choir (Passionskirche's precedent), or an auction (EVENT_SCOPE.md §3.2). */
-private val NOT_A_SHOW = Regex("""mitsing|auktion""", RegexOption.IGNORE_CASE)
+/** An auction (EVENT_SCOPE.md §3.2). */
+private val NOT_A_SHOW = Regex("""auktion""", RegexOption.IGNORE_CASE)
 
 /** An editor's hidden `<p hidden …>` tag, or a `<br>`, inside a title. */
 private val EDITOR_TAG = Regex("""<p[\s_-]+hidden[^>]*>|<br\s*/?>""", RegexOption.IGNORE_CASE)

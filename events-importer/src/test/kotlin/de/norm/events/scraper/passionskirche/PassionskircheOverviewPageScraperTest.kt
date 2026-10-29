@@ -86,10 +86,11 @@ class PassionskircheOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops a church service and a sing-along`() {
+    fun `drops a church service and the pop-up choir, and keeps a concert the audience sings along to`() {
         isOutOfScope("Ökumenischer Gottesdienst am 24.12.2026 um 15.00 Uhr", null) shouldBe true
         isOutOfScope("Christmas Extravaganza - Yes Choir! am 05. Dezember 2026", "mit Deutschlands spannendstem Pop-up-Chor!") shouldBe true
         isOutOfScope("The High Kings am 16.11.2026 um 20.00 Uhr", "Irlands führende Folk-Gruppe") shouldBe false
+        isOutOfScope("SingAlong – Das große Mitsing-Konzert am 12.12.2026 um 20.00 Uhr", "Ein Sing-along mit Band") shouldBe false
     }
 
     private fun fixture(name: String): String =

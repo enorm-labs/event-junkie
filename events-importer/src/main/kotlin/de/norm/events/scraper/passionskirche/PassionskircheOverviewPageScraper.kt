@@ -26,7 +26,7 @@ import java.time.MonthDay
  * comes as `27. Oktober 2026`, `06. November` or `16.11.2026`; a date without a year takes the nearest one.
  *
  * Halle-Luja also lists the Heilig-Kreuz-Kirche on the page, so a picture counts only under the `PASSIONSKIRCHE`
- * heading. A caption without a readable date is skipped, as is a sing-along or a service ([isOutOfScope]).
+ * heading. A caption without a readable date is skipped, as is a pop-up choir or a service ([isOutOfScope]).
  */
 class PassionskircheOverviewPageScraper(
     private val clock: Clock
@@ -68,7 +68,7 @@ class PassionskircheOverviewPageScraper(
         val caption = item.selectFirst("p.image-gallery-title")?.text().blankToNull() ?: return null
         val teaser = item.selectFirst(".glightbox-desc p")?.text().blankToNull()
         if (isOutOfScope(caption, teaser)) {
-            logger.info { "Passionskirche: '$caption' is a sing-along or a service, skipping" }
+            logger.info { "Passionskirche: '$caption' is a pop-up choir or a service, skipping" }
             return null
         }
         val schedule = CAPTION_DATE.find(caption)
@@ -134,15 +134,16 @@ class PassionskircheOverviewPageScraper(
 }
 
 /**
- * A sing-along or a church service, which EVENT_SCOPE.md §3.2 leaves out: things a visitor takes part in. The Yes Choir
- * evening teaches the audience a song to sing together and calls itself a `Pop-up-Chor`.
+ * A pop-up choir or a church service, which EVENT_SCOPE.md §3.2 leaves out: things a visitor takes part in. The Yes Choir
+ * evening teaches the audience a song to sing together and calls itself a `Pop-up-Chor`. A concert the audience sings
+ * along to stays, so `Mitsing` alone does not drop a caption.
  */
 internal fun isOutOfScope(
     caption: String,
     teaser: String?
 ): Boolean = OUT_OF_SCOPE.containsMatchIn("$caption ${teaser.orEmpty()}")
 
-private val OUT_OF_SCOPE = Regex("""pop-?up-?chor|mitsing|sing-?along|gottesdienst|andacht""", RegexOption.IGNORE_CASE)
+private val OUT_OF_SCOPE = Regex("""pop-?up-?chor|gottesdienst|andacht""", RegexOption.IGNORE_CASE)
 
 /** The event page's path, `/the-high-kings`, the same in the listing link and on the page. */
 internal fun passionskircheSourceId(url: String): String = "${EventSource.PASSIONSKIRCHE.sourceIdPrefix}${URI(url).path.trim('/')}"
