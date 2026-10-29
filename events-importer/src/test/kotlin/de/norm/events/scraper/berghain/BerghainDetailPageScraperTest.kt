@@ -59,6 +59,35 @@ class BerghainDetailPageScraperTest {
     }
 
     @Test
+    fun `drops an organiser line that names a billed act or the title`() {
+        // Moritz Simon Geist at Kantine am Berghain credits the night to himself (#4184). The fixture bills
+        // Aircraft and Dima & Pasha, with no set times yet, so the acts come from the slots alone.
+        fun promotersOf(
+            line: String,
+            title: String = "Aircraft"
+        ): List<String> {
+            val html =
+                loadFixture("scraper/berghain/berghain-detail-organiser.html")
+                    .replace("Eine Veranstaltung von <a href=\"https://dynamitekonzerte.com\">Dynamite Konzerte</a>", line)
+                    .replace("  Aircraft\n</h1>", "  $title\n</h1>")
+            val url = "https://www.berghain.berlin/de/event/1/"
+            return scraper.scrape(Jsoup.parse(html, url), url)!!.promoters
+        }
+
+        // A billed act, also when the title differs, and in another case and spacing.
+        promotersOf("Eine Veranstaltung von  AIRCRAFT ", title = "Aircraft Album Release") shouldBe emptyList()
+        // The title, when no act carries its name.
+        promotersOf("An event by nightshift   COLLECTIVE", title = "Nightshift Collective") shouldBe emptyList()
+        val longTitle = "Moritz Simon Geist presents Robotic Techno and Sonic Machines Live"
+        promotersOf("Eine Veranstaltung von ${longTitle.uppercase()}", title = longTitle) shouldBe emptyList()
+        // Another company stays, and so does the co-promoter beside a billed act.
+        promotersOf("Eine Veranstaltung von Dynamite Konzerte") shouldBe listOf("Dynamite Konzerte")
+        promotersOf("Eine Veranstaltung von Aircraft und Dynamite Konzerte") shouldBe listOf("Dynamite Konzerte")
+        promotersOf("Eine Veranstaltung von Gesellschaft für experimentelle elektronische Musik Berlin-Brandenburg") shouldBe
+            listOf("Gesellschaft für experimentelle elektronische Musik Berlin-Brandenburg")
+    }
+
+    @Test
     fun `parses a fully-populated detail page`() {
         val url = "https://www.berghain.berlin/de/event/80835/"
         val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!
