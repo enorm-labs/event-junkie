@@ -34,11 +34,16 @@ scripts/ej.sh versions                               # 1b: what each cluster run
 for env in staging production; do                    # 1c: every alert that fired in the window
   scripts/o2-query.sh "$env" sql "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200" --hours "$HOURS"
 done
+scripts/tem-quota.sh                                 # 1d: the month's product mail against the Scaleway quota
 ```
 
 A pod not Ready, a Flux object not reconciled, or staging behind the newest snapshot is a finding. `scripts/cluster-state.sh <env>` is the full picture of
 one environment — nodes, Flux, secrets, certificates, row counts, backups. Run it for an environment that Step 1 shows unwell. **Step 1c runs even with
 `--no-logs`**: every firing was already mailed to `alerts@`, so the report accounts for each one whether or not the logs are read.
+
+**Step 1d's line goes under State.** Exit 3 means 80 % or more of the month's quota is used, and is an ACT: ask Scaleway to raise the quota
+([ADR-054](../../docs/adr/ADR-054_TRANSACTIONAL_MAIL_THROUGH_SCALEWAY_TEM.md)), or pause sign-up if the mail is not from real visitors
+([EMAIL.md § Pausing sign-up](../../docs/ops/EMAIL.md#pausing-sign-up)). Exit 1 or 2 goes under Not checked.
 
 ## Step 2 — The GitHub sweep
 
