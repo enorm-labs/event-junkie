@@ -192,7 +192,7 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * The promoters from the header's `span.promoter`. The span is cut at its "presents" word or at a
+     * The promoters from the header's `span.promoter`. The span is cut at its "presents" word (or "laden ein") or at a
      * ": " tagline, because the night's own billing may follow (`"m:soundtrack prsnts: Falling into
      * Autumn: Dreamy Indie"`). Co-promoters are joined by ",", "&" and "+" (`"beav boloney, wild wax &
      * little league shows prsnt:"`), each its own promoter row (#328). [JOINED_PROMOTERS] carry an
@@ -219,8 +219,9 @@ class SchokoladenOverviewPageScraper {
      * before the shared [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
      * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK WONDER`). A bracketed
      * note ("[ausverkauft]") is the venue's, not the act's, and goes the same way, as does a
-     * trailing "& more". A `"<night> mit <acts>"` / `"<night> w/ <acts>"` title bills the acts only
-     * (`15 Jahre Gut Drauf – … mit mOck & Petula`). The title is stored verbatim — only the derived
+     * trailing "& more" or "& more live acts". A `"<night> mit <acts>"` / `"<night> mit: <acts>"` /
+     * `"<night> w/ <acts>"` title bills the acts only (`15 Jahre Gut Drauf – … mit mOck & Petula`,
+     * `Weihnachtstrinken mit: Klinge Komplex`, #4183). The title is stored verbatim — only the derived
      * names are cleaned. Non-concert events (readings, specials) yield no artists unless a
      * "Support:" line is present. The subtitle's aftershow DJs follow, from [aftershowDjs].
      */
@@ -236,6 +237,7 @@ class SchokoladenOverviewPageScraper {
                 .replace(TITLE_NOTE, " ")
                 .replace(WHITESPACE, " ")
                 .replace(MORE_ACTS_TAIL, "")
+                .replace(MIT_COLON, " mit ")
                 .replace(RELEASE_SHOW_OF, "")
                 .replace(QUOTED_WORK, "")
                 .trim()
@@ -279,8 +281,14 @@ class SchokoladenOverviewPageScraper {
         /** A bracketed venue note in a title — "[ausverkauft]", "[pre-sale sold out, 10 tix on the doors]". */
         private val TITLE_NOTE = Regex("""\s*\[([^\]]*)]""")
 
-        /** A trailing "& more" / "+ more": the co-bill split takes the joiner and would bill "more", which is also a band's name. */
-        private val MORE_ACTS_TAIL = Regex("""\s*[&+]\s*more\s*$""", RegexOption.IGNORE_CASE)
+        /**
+         * A trailing "& more" / "+ more" / "& more live acts": the co-bill split takes the joiner and would bill "more", which is
+         * also a band's name, or "more live acts" (#4183).
+         */
+        private val MORE_ACTS_TAIL = Regex("""\s*[&+]\s*more(?:\s+(?:live\s+)?acts?)?\s*$""", RegexOption.IGNORE_CASE)
+
+        /** The colon after a night's `mit`, which the shared with-frame reads only bare: `Weihnachtstrinken mit: Klinge Komplex` (#4183). */
+        private val MIT_COLON = Regex("""\s+mit:\s+""", RegexOption.IGNORE_CASE)
 
         /** The night's name before its act: "Berlin Release Show von Angela Aux" bills Angela Aux (#2099). */
         private val RELEASE_SHOW_OF =
@@ -301,8 +309,12 @@ class SchokoladenOverviewPageScraper {
         /** The venue's short forms for a promoter it credits in full elsewhere. */
         private val PROMOTER_ABBREVIATIONS = mapOf("lls" to "little league shows")
 
-        /** The "presents" word and anything after it — "prsnts:", "present:", "pres.:", "prsnts a … festival:". */
-        private val PRESENTS_TAIL = Regex("""\s*\b(?:presents?|prsnts?|pres\.?)(?!\w).*$""", RegexOption.IGNORE_CASE)
+        /**
+         * The "presents" word and anything after it — "prsnts:", "present:", "pres.:", "prsnts a … festival:" — or its German
+         * invitation, "Beatz aus der Kurve & Else Jahn Kurve laden ein zum" (#4183).
+         */
+        private val PRESENTS_TAIL =
+            Regex("""\s*\b(?:presents?|prsnts?|pres\.?|laden\s+ein|lädt\s+ein)(?!\w).*$""", RegexOption.IGNORE_CASE)
 
         /** A tagline after the name, "m:soundtrack: bridging the psychedelic traditions …"; a colon inside a name has no space after it. */
         private val TAGLINE_TAIL = Regex(""":(?:[\s\u00A0].*)?$""")
