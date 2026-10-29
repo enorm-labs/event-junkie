@@ -90,6 +90,8 @@ app:
     changes-delay: PT10M
     changes-lag: PT15M
     changes-initial-delay: PT10M
+    reminders-delay: PT10M
+    reminders-initial-delay: PT10M
   api:
     max-page-size: 100
     cache:

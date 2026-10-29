@@ -109,7 +109,10 @@ function since(createdAt?: string): string {
           }}</RouterLink>
         </Button>
 
-        <NotificationSettings :change-push="account.changePush ?? true" />
+        <NotificationSettings
+          :change-push="account.changePush ?? true"
+          :reminder-push="account.reminderPush ?? true"
+        />
 
         <PasskeySettings />
 

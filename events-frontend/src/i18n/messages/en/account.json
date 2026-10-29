@@ -123,6 +123,8 @@
     "turnOff": "Turn off notifications",
     "changes": "Changes to my plans",
     "changesHint": "A push when an event you marked as Interested or Going is cancelled, moved or re-timed. It goes to every browser with notifications on.",
+    "reminders": "Reminders on the day",
+    "remindersHint": "A push at 10 a.m. on the day of an event you marked as Interested or Going. It goes to every browser with notifications on.",
     "homeScreen": "On iPhone and iPad, notifications work only from the Home Screen. In Safari, tap Share, then \"Add to Home Screen\", and open Event Junkie from there.",
     "unsupported": "This browser cannot receive push notifications.",
     "unavailable": "Notifications are not available right now.",

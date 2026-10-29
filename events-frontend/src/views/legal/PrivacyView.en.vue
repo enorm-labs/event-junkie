@@ -386,10 +386,11 @@ const { t } = useI18n()
         browser's subscription: an address at its push service and two keys, with the time you
         turned it on and when the last notification went out. The bell on an artist, a venue or a
         promoter you follow decides what a notification is about: a new date of it. Your plans add
-        one more: a change to an event you marked, as in "What is new". It is on until you turn off
-        "Changes to my plans" on your account page, which I store with your account. A notification
-        carries a title, one line, a link and the kind of message (a new date or a change to your
-        plans), nothing else, and it is encrypted so that only your browser can read it. The
+        two more: a change to an event you marked, as in "What is new", and a reminder at 10 a.m. on
+        the day of such an event. Both are on until you turn off "Changes to my plans" or "Reminders
+        on the day" on your account page, which I store with your account. A notification carries a
+        title, one line, a link and the kind of message (a new date, a change to your plans or a
+        reminder), nothing else, and it is encrypted so that only your browser can read it. The
         subscription is deleted when you turn notifications off, when the push service reports it
         gone, and with your account.
       </p>

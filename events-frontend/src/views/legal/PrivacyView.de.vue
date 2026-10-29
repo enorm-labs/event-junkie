@@ -420,14 +420,15 @@ const { t } = useI18n()
         speichere ich dessen Abonnement: eine Adresse beim Push-Dienst des Browsers und zwei
         Schlüssel, dazu den Zeitpunkt des Einschaltens und der letzten Benachrichtigung. Die Glocke
         an einem Act, einer Location oder einem Veranstalter, dem du folgst, legt fest, worum es
-        geht: einen neuen Termin. Deine Pläne fügen eines hinzu: eine Änderung an einem Event, das
-        du markiert hast, wie unter „Was neu ist“. Das ist an, bis du „Änderungen an meinen Plänen“
-        auf deiner Kontoseite ausschaltest; die Einstellung speichere ich mit deinem Konto. Eine
+        geht: einen neuen Termin. Deine Pläne fügen zwei hinzu: eine Änderung an einem Event, das du
+        markiert hast, wie unter „Was neu ist“, und eine Erinnerung um 10 Uhr am Tag eines solchen
+        Events. Beides ist an, bis du „Änderungen an meinen Plänen“ oder „Erinnerung am Tag“ auf
+        deiner Kontoseite ausschaltest; die Einstellungen speichere ich mit deinem Konto. Eine
         Benachrichtigung enthält einen Titel, eine Zeile, einen Link und die Art der Nachricht (ein
-        neuer Termin oder eine Änderung an deinen Plänen), sonst nichts, und sie ist verschlüsselt,
-        sodass nur dein Browser sie lesen kann. Das Abonnement wird gelöscht, wenn du
-        Benachrichtigungen ausschaltest, wenn der Push-Dienst es als erloschen meldet, und mit
-        deinem Konto.
+        neuer Termin, eine Änderung an deinen Plänen oder eine Erinnerung), sonst nichts, und sie
+        ist verschlüsselt, sodass nur dein Browser sie lesen kann. Das Abonnement wird gelöscht,
+        wenn du Benachrichtigungen ausschaltest, wenn der Push-Dienst es als erloschen meldet, und
+        mit deinem Konto.
       </p>
       <p>
         <strong>Der Push-Dienst:</strong> Eine Benachrichtigung läuft über den Push-Dienst des

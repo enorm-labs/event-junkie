@@ -91,6 +91,8 @@ lists what that includes and what it excludes.
   notifications on offers to ring them all. On iPhone and iPad this works from the Home Screen.
 - Get a push when an event marked **Interested** or **Going** is cancelled, postponed, relocated, or gets a new date, start or
   venue. It is on by default, and **Changes to my plans** on the account page turns it off. At most one push per event a day.
+- Get a push at 10:00 on the day of the events marked **Interested** or **Going**, one per day for all of them. It is on by
+  default, and **Reminders on the day** on the account page turns it off.
 - See what is new in the header. A bell beside the account menu counts the new dates of everything the account follows, bell
   on or off. It counts the changes to its marked events too, and lists the newest 20. An entry stays unread until it is opened. Each one goes after 30 days.
 - Download everything stored about the account, or delete it.
@@ -180,6 +182,7 @@ the first column. It fails in two cases:
 | `/api/me/push`                         | The key a browser subscribes with, and storing this browser's push subscription                |
 | `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                                    |
 | `/api/me/push/changes`                 | "Changes to my plans": push about changes to marked events, or not                             |
+| `/api/me/push/reminders`               | "Reminders on the day": push on the day of marked events, or not                               |
 | `/api/me/notifications`                | The newest 20 notifications under the header's bell, read or not                               |
 | `/api/me/notifications/unread-count`   | How many notifications are unread, for the bell's badge                                        |
 | `/api/me/notifications/{id}/read`      | Marking one notification read                                                                  |

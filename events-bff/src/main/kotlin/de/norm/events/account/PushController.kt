@@ -29,9 +29,11 @@ private val logger = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/me/push")
 @Tag(name = "Account", description = "The signed-in visitor's account")
+@Suppress("LongParameterList") // The subscriptions, the two account switches, the sender, its endpoints, the metrics and the clock.
 class PushController(
     private val store: PushSubscriptionStore,
     private val changes: PlanChangeStore,
+    private val reminders: ReminderStore,
     private val sender: ObjectProvider<PushSender>,
     private val endpoints: PushEndpoints,
     private val metrics: AccountMetrics,
@@ -74,6 +76,17 @@ class PushController(
     ): ResponseEntity<Unit> {
         changes.setChangePush(account.id, request.enabled)
         logger.info { "Push changes ${if (request.enabled) "on" else "off"}" }
+        return ResponseEntity.noContent().build()
+    }
+
+    @PutMapping("/reminders")
+    @Operation(summary = "Turns the account's reminders on the day of events it marked as interested or going on or off")
+    suspend fun reminders(
+        @AuthenticationPrincipal account: Account,
+        @RequestBody request: ChangePushRequest
+    ): ResponseEntity<Unit> {
+        reminders.setReminderPush(account.id, request.enabled)
+        logger.info { "Push reminders ${if (request.enabled) "on" else "off"}" }
         return ResponseEntity.noContent().build()
     }
 
@@ -131,7 +144,7 @@ data class PushKeys(
     val auth: String
 )
 
-/** "Changes to my plans" (#4045), for the account rather than the browser. */
+/** "Changes to my plans" (#4045) and "Reminders on the day" (#4253), for the account rather than the browser. */
 data class ChangePushRequest(
     val enabled: Boolean
 )

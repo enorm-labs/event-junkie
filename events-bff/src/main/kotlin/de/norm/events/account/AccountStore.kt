@@ -179,7 +179,7 @@ data class AccountCounts(
     val sessions: Long
 )
 
-internal const val ACCOUNT_COLUMNS = "id, email, locale, created_at, last_sign_in_at, change_push"
+internal const val ACCOUNT_COLUMNS = "id, email, locale, created_at, last_sign_in_at, change_push, reminder_push"
 
 /** A column the schema declares NOT NULL. A null is a schema change this code has not caught up with. */
 internal fun <T : Any> Readable.required(
@@ -194,5 +194,6 @@ internal fun toAccount(row: Readable) =
         locale = row.required("locale", String::class.java),
         createdAt = row.required("created_at", Instant::class.java),
         lastSignInAt = row.required("last_sign_in_at", Instant::class.java),
-        changePush = row.required("change_push", Boolean::class.javaObjectType)
+        changePush = row.required("change_push", Boolean::class.javaObjectType),
+        reminderPush = row.required("reminder_push", Boolean::class.javaObjectType)
     )

@@ -267,7 +267,8 @@ CREATE TABLE accounts.account (
     last_sign_in_at timestamp with time zone DEFAULT now() NOT NULL,
     deletion_warned_at timestamp with time zone,
     passkey_user_handle bytea,
-    change_push boolean DEFAULT true NOT NULL
+    change_push boolean DEFAULT true NOT NULL,
+    reminder_push boolean DEFAULT true NOT NULL
 );
 
 --
@@ -359,6 +360,7 @@ CREATE TABLE accounts.push_cursor (
     id boolean DEFAULT true NOT NULL,
     sent_until timestamp with time zone DEFAULT now() NOT NULL,
     changes_until timestamp with time zone DEFAULT now() NOT NULL,
+    reminders_until date DEFAULT ((now() AT TIME ZONE 'Europe/Berlin'::text))::date NOT NULL,
     CONSTRAINT push_cursor_id_check CHECK (id)
 );
 

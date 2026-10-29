@@ -112,6 +112,14 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
+    fun `each account's reminder switch comes back as the fixture states it`() {
+        fixture.forEach { row ->
+            val account = accounts.getValue(row.get("email").asString())
+            get("/me", account).jsonPath("$.reminderPush").isEqualTo(row.get("reminderPush").asBoolean())
+        }
+    }
+
+    @Test
     fun `the saved queries are stored as the BFF normalises them`() {
         listOf(ada, bob).forEach { account ->
             get("/me/searches", account).jsonPath("$[0].query").value<String> { SavedSearchQuery.normalise(it).getOrThrow() shouldBe it }
