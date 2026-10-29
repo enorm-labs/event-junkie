@@ -22,6 +22,7 @@ class NewDatesPushTest {
         message.title shouldBe "New date"
         message.body shouldBe "Moderat · Sat 14 Nov"
         message.url shouldBe "/en/events/moderat-2026-11-14"
+        message.tag shouldBe "new-dates"
     }
 
     @Test
@@ -31,6 +32,7 @@ class NewDatesPushTest {
         message.title shouldBe "2 neue Termine"
         message.body shouldBe "Moderat, Apparat"
         message.url shouldBe "/de/following"
+        message.tag shouldBe "new-dates"
     }
 
     @Test

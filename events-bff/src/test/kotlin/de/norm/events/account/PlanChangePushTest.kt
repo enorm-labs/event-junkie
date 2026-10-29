@@ -21,6 +21,7 @@ class PlanChangePushTest {
         message.title shouldBe "Cancelled"
         message.body shouldBe "Moderat · Fri 6 Nov"
         message.url shouldBe "/en/events/moderat"
+        message.tag shouldBe "plan-changes"
     }
 
     @Test
@@ -32,5 +33,6 @@ class PlanChangePushTest {
         message.title shouldBe "2 Änderungen an deinen Plänen"
         message.body shouldBe "Moderat, Kraftklub"
         message.url shouldBe "/de/my-calendar"
+        message.tag shouldBe "plan-changes"
     }
 }
