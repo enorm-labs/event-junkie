@@ -32,22 +32,22 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 
 ## The shape of it
 
-|              |                                                                                                                                                           |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chart        | `openobserve-standalone`, pinned at **1.0.1** on both clusters. A major goes to staging first and holds a night there                                     |
-| Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it                             |
-| Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                                                     |
-| Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging/`. A new instance takes the next generation. **Changing it needs the PVC wiped**, §Changing the prefix |
-| Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                                            |
-| Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                                                       |
-| Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                                                      |
-| Environments | **Both**, since [#880](https://github.com/enorm-labs/event-junkie/issues/880). Separate instances, one shared bucket                                      |
+|              |                                                                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chart        | `openobserve-standalone`, pinned at **1.0.1** on both clusters. A major goes to staging first and holds a night there                                       |
+| Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it                               |
+| Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                                                       |
+| Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging-2/`. A new instance takes the next generation. **Changing it needs the PVC wiped**, §Changing the prefix |
+| Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                                              |
+| Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                                                         |
+| Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                                                        |
+| Environments | **Both**, since [#880](https://github.com/enorm-labs/event-junkie/issues/880). Separate instances, one shared bucket                                        |
 
 ### Two instances, and where they differ
 
 |                       | Staging                                                      | Production                                                                                                      |
 | --------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)                           | `production/` (`ZO_S3_BUCKET_PREFIX`)                                                                           |
+| Bucket keys           | `staging-2/` (`ZO_S3_BUCKET_PREFIX`)                         | `production/` (`ZO_S3_BUCKET_PREFIX`)                                                                           |
 | S3 credential         | the OpenObserve keypair, shared with production              | the same; it still reaches all three buckets                                                                    |
 | Alert destinations    | `record-only` into `alert_history`, and `email` to `alerts@` | the same                                                                                                        |
 | Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route: deferred ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)) |
@@ -443,7 +443,7 @@ Bucket-side check, which is the one that settles "is it actually storing anythin
 
 ```sh
 cd infra && direnv exec . sh -c \
-  'aws s3api list-objects-v2 --bucket event-junkie-o2 --prefix staging/files/default/ --query "Contents[].Key" --output text' \
+  'aws s3api list-objects-v2 --bucket event-junkie-o2 --prefix staging-2/files/default/ --query "Contents[].Key" --output text' \
   | tr '\t' '\n' | grep -oE '2026/[0-9]{2}/[0-9]{2}/[0-9]{2}' | sort | uniq -c | tail -6
 ```
 

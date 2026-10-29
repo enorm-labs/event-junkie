@@ -29,7 +29,7 @@ this table:
 | Tunnel config   | `~/.wireguard/staging.conf`                      | `~/.wireguard/production.conf`                                 |
 | Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
 | kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
-| PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
+| PostgreSQL      | **on the k3s node**, `10.1.1.11`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
 | Public web      | none — no `A` record, no 80/443                  | 80/443 open; the apex, `www` and both redirect domains resolve |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
 | Observability   | OpenObserve, see §6b                             | OpenObserve too, since #880 — same §, different context        |
@@ -366,7 +366,7 @@ reconcile error is the first thing to read, not the last.
 
 ## 7 · The PostgreSQL database
 
-**The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.10` — the
+**The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.11` — the
 private network — and `pg_hba.conf` admits exactly two ranges:
 
 ```

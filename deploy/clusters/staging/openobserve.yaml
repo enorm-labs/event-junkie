@@ -98,10 +98,11 @@ spec:
       # proves it: `files/default/metrics/…` under `ZO_S3_BUCKET_PREFIX: "production/"`), so the prefix is
       # applied at the S3 client. **This line cannot be changed on its own**: adding it points every entry
       # already in the list at a key that does not exist, and the corpus goes unreadable while new ingest
-      # carries on. It landed together with a wipe of the file-list PVC — docs/ops/OPENOBSERVE.md
-      # §Changing the prefix has the sequence. In `config:` rather than `extraEnv` because the chart lists
+      # carries on. It lands together with a wipe of the file-list PVC — docs/ops/OPENOBSERVE.md
+      # §Changing the prefix has the sequence. Each new instance takes the next generation, so the old
+      # prefix can expire as a whole (#4302). In `config:` rather than `extraEnv` because the chart lists
       # this key; **verify the objects, not this comment**.
-      ZO_S3_BUCKET_PREFIX: "staging/"
+      ZO_S3_BUCKET_PREFIX: "staging-2/"
       # Path style, not virtual-hosted: Hetzner's endpoint serves `<endpoint>/<bucket>`.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
 

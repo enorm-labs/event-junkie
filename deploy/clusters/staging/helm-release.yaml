@@ -65,11 +65,11 @@ spec:
       # placeholder does NOT fail the render**: `REPLACE-ME…/32` templates and the API server rejects it,
       # rolling the release back several steps from anything mentioning a CIDR. Confirm with
       # `tofu -chdir=infra/environments/staging output postgres_ip`.
-      databaseCidr: "10.1.1.10/32"
+      databaseCidr: "10.1.1.11/32"
     database:
       # The k3s node's own private address — PostgreSQL is co-located on staging but reached over the
       # network, so the path has production's shape. Matches `k3s_private_ip` in the staging stack.
-      host: "10.1.1.10"
+      host: "10.1.1.11"
       # Created out of band before the first reconcile, in the TARGET namespace (`event-junkie`), not
       # flux-system: `kubectl create secret generic events-db -n event-junkie --from-literal=username=events
       # --from-literal=password=…`.
