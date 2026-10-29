@@ -118,6 +118,10 @@ jobs:
       - name: Assert what cluster-secrets.sh writes, checks and imports
         run: scripts/cluster-secrets-test.sh
 
+      # The key is a credential: it must reach curl on stdin, never in an argument (#4016).
+      - name: Assert what tem-quota.sh prints and exits with
+        run: scripts/tem-quota-test.sh
+
       # A rebuild took 30 minutes of hand steps after the servers existed (#4134); `--next` must not touch the running cluster.
       - name: Assert the steps rebuild-node.sh runs, and what --next keeps away from the running cluster
         run: scripts/rebuild-node-test.sh
