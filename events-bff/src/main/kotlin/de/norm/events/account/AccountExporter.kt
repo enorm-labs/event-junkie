@@ -27,6 +27,7 @@ class AccountExporter(
             createdAt = account.createdAt,
             lastSignInAt = account.lastSignInAt,
             changePush = account.changePush,
+            reminderPush = account.reminderPush,
             sessions = sessionRows.sessions(account.id),
             follows = follows.list(account.id).map(FollowResponse::of),
             searches = searches.list(account.id).map(SavedSearchResponse::of),

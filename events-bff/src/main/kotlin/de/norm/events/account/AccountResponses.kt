@@ -19,10 +19,12 @@ data class AccountResponse(
     val locale: String,
     val createdAt: Instant,
     /** "Changes to my plans" (#4045): a push when an event marked as interested or going changes. */
-    val changePush: Boolean
+    val changePush: Boolean,
+    /** "Reminders on the day" (#4253): a push on the day of an event marked as interested or going. */
+    val reminderPush: Boolean
 ) {
     companion object {
-        fun of(account: Account) = AccountResponse(account.email, account.locale, account.createdAt, account.changePush)
+        fun of(account: Account) = AccountResponse(account.email, account.locale, account.createdAt, account.changePush, account.reminderPush)
     }
 }
 
@@ -41,6 +43,7 @@ data class AccountExport(
     val createdAt: Instant,
     val lastSignInAt: Instant,
     val changePush: Boolean,
+    val reminderPush: Boolean,
     val sessions: List<SessionInfo>,
     val follows: List<FollowResponse>,
     val searches: List<SavedSearchResponse>,

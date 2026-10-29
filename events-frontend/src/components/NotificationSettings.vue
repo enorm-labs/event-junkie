@@ -4,19 +4,26 @@
  * has its own switch, because a push subscription belongs to one browser. What a push is for is the bell on
  * each follow, on the Following page. Every bell starts off, so the first "on" offers to ring them all at once,
  * and the visitor chooses (ADR-055 rule 4). "Changes to my plans" is the account's, not the browser's: pushes about
- * events marked as interested or going (#4045), on by default.
+ * events marked as interested or going (#4045), on by default. "Reminders on the day" (#4253) is the account's too:
+ * a push on the day of such an event, on by default.
  */
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { Button } from '@/components/ui/button'
-import { fetchFollows, prepareCsrf, setAllNotify, setChangePush } from '@/api/account'
+import {
+  fetchFollows,
+  prepareCsrf,
+  setAllNotify,
+  setChangePush,
+  setReminderPush,
+} from '@/api/account'
 import { ApiError } from '@/api/client'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePush } from '@/composables/usePush'
 
-const props = defineProps<{ changePush: boolean }>()
+const props = defineProps<{ changePush: boolean; reminderPush: boolean }>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -26,18 +33,27 @@ const problem = ref('')
 const offer = ref<number | null>(null)
 const rung = ref<number | null>(null)
 const changes = ref(props.changePush)
+const reminders = ref(props.reminderPush)
 
-async function toggleChanges(enabled: boolean) {
-  const before = changes.value
-  changes.value = enabled
+/** Shows [enabled] at once, saves it, and goes back when the save fails. */
+async function toggle(
+  setting: Ref<boolean>,
+  save: (enabled: boolean) => Promise<void>,
+  enabled: boolean,
+) {
+  const before = setting.value
+  setting.value = enabled
   try {
     await prepareCsrf()
-    await setChangePush(enabled)
+    await save(enabled)
   } catch (e) {
-    changes.value = before
+    setting.value = before
     throw e
   }
 }
+
+const toggleChanges = (enabled: boolean) => toggle(changes, setChangePush, enabled)
+const toggleReminders = (enabled: boolean) => toggle(reminders, setReminderPush, enabled)
 
 async function enable() {
   await turnOn()
@@ -127,6 +143,21 @@ onMounted(() => run(load))
         <span class="block">{{ t('account.push.changes') }}</span>
         <span class="block text-meta text-muted-foreground">{{
           t('account.push.changesHint')
+        }}</span>
+      </span>
+    </label>
+    <label class="flex items-start gap-2 text-body">
+      <input
+        :checked="reminders"
+        class="mt-1 size-4 shrink-0 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        data-testid="reminder-push"
+        type="checkbox"
+        @change="run(() => toggleReminders(($event.target as HTMLInputElement).checked))"
+      />
+      <span>
+        <span class="block">{{ t('account.push.reminders') }}</span>
+        <span class="block text-meta text-muted-foreground">{{
+          t('account.push.remindersHint')
         }}</span>
       </span>
     </label>

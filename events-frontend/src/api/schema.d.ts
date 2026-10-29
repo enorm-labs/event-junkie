@@ -40,6 +40,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/push/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Turns the account's reminders on the day of events it marked as interested or going on or off */
+        put: operations["reminders"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/push/changes": {
         parameters: {
             query?: never;
@@ -1036,6 +1053,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             changePush?: boolean;
+            reminderPush?: boolean;
         };
         PasskeySignIn: {
             credential?: {
@@ -2036,6 +2054,7 @@ export interface components {
             /** Format: date-time */
             lastSignInAt?: string;
             changePush?: boolean;
+            reminderPush?: boolean;
             sessions?: components["schemas"]["SessionInfo"][];
             follows?: components["schemas"]["FollowResponse"][];
             searches?: components["schemas"]["SavedSearchResponse"][];
@@ -2788,6 +2807,28 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PushSubscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reminders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePushRequest"];
             };
         };
         responses: {

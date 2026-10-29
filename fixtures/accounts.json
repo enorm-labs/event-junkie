@@ -5,7 +5,8 @@
       "locale": "de",
       "id": "ada00000-0000-4000-8000-000000000001",
       "session": "fixture-session-ada",
-      "savedSearchId": "ada00000-0000-4000-8000-000000000011"
+      "savedSearchId": "ada00000-0000-4000-8000-000000000011",
+      "reminderPush": true
     },
     {
       "email": "bob@example.de",
@@ -15,7 +16,8 @@
       "savedSearchId": "b0b00000-0000-4000-8000-000000000012",
       "passkeyId": "b0b00000-0000-4000-8000-000000000021",
       "pushEndpoint": "https://fcm.googleapis.com/fcm/send/fixture-bob",
-      "notificationId": "b0b00000-0000-4000-8000-000000000031"
+      "notificationId": "b0b00000-0000-4000-8000-000000000031",
+      "reminderPush": false
     }
   ]
 }

@@ -14,9 +14,10 @@
 -- Two accounts and not one, so a scan can try one account's ids with the other's cookie (#4105).
 -- Bob holds one row of every kind an id or an endpoint addresses, for `scripts/account-isolation.sh`.
 
-INSERT INTO accounts.account (id, email, locale)
-VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de'),
-       ('b0b00000-0000-4000-8000-000000000002', 'bob@example.de', 'en');
+-- Bob has "Reminders on the day" off (#4253), so a client reads both values of the switch.
+INSERT INTO accounts.account (id, email, locale, reminder_push)
+VALUES ('ada00000-0000-4000-8000-000000000001', 'ada@example.de', 'de', true),
+       ('b0b00000-0000-4000-8000-000000000002', 'bob@example.de', 'en', false);
 
 INSERT INTO accounts.session (token_hash, account_id, expires_at)
 SELECT encode(sha256(convert_to(t.token, 'UTF8')), 'hex'), t.account_id::uuid, now() + interval '30 days'

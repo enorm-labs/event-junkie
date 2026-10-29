@@ -123,6 +123,8 @@
     "turnOff": "Benachrichtigungen ausschalten",
     "changes": "Änderungen an meinen Plänen",
     "changesHint": "Eine Push-Nachricht, wenn ein Event, das du als Interessiert oder Dabei markiert hast, abgesagt, verlegt oder verschoben wird. Sie geht an jeden Browser, in dem Benachrichtigungen an sind.",
+    "reminders": "Erinnerung am Tag",
+    "remindersHint": "Eine Push-Nachricht um 10 Uhr am Tag eines Events, das du als Interessiert oder Dabei markiert hast. Sie geht an jeden Browser, in dem Benachrichtigungen an sind.",
     "homeScreen": "Auf iPhone und iPad funktionieren Benachrichtigungen nur vom Home-Bildschirm. Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“, und öffne Event Junkie von dort.",
     "unsupported": "Dieser Browser kann keine Push-Nachrichten empfangen.",
     "unavailable": "Benachrichtigungen sind gerade nicht verfügbar.",

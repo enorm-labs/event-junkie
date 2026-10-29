@@ -133,6 +133,11 @@ export async function setChangePush(enabled: boolean): Promise<void> {
   await unwrap(api.PUT('/api/me/push/changes', { body: { enabled } }))
 }
 
+/** "Reminders on the day" (#4253): a push on the day of an event the account marked, for the account rather than the browser. */
+export async function setReminderPush(enabled: boolean): Promise<void> {
+  await unwrap(api.PUT('/api/me/push/reminders', { body: { enabled } }))
+}
+
 export async function forgetPushSubscription(endpoint: string): Promise<void> {
   await unwrap(api.POST('/api/me/push/unsubscribe', { body: { endpoint } }))
 }

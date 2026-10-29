@@ -11,6 +11,7 @@ const account = vi.hoisted(() => ({
   fetchFollows: vi.fn<() => Promise<{ notify?: string }[]>>(),
   setAllNotify: vi.fn<(notify: string) => Promise<number>>(),
   setChangePush: vi.fn<(enabled: boolean) => Promise<void>>(),
+  setReminderPush: vi.fn<(enabled: boolean) => Promise<void>>(),
 }))
 vi.mock('@/api/account', () => account)
 
@@ -76,6 +77,7 @@ beforeEach(() => {
   account.fetchFollows.mockResolvedValue([])
   account.setAllNotify.mockResolvedValue(0)
   account.setChangePush.mockResolvedValue()
+  account.setReminderPush.mockResolvedValue()
 })
 afterEach(() => {
   wrapper?.unmount()
@@ -85,7 +87,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function mountSettings(changePush = true) {
+async function mountSettings(changePush = true, reminderPush = true) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -93,7 +95,10 @@ async function mountSettings(changePush = true) {
     ],
   })
   await router.push('/en/account')
-  wrapper = mount(NotificationSettings, { props: { changePush }, global: { plugins: [router] } })
+  wrapper = mount(NotificationSettings, {
+    props: { changePush, reminderPush },
+    global: { plugins: [router] },
+  })
   await flushPromises()
   return wrapper
 }
@@ -217,6 +222,33 @@ describe('NotificationSettings', () => {
     account.setChangePush.mockRejectedValue(new Error('offline'))
     const view = await mountSettings()
     const box = view.get<HTMLInputElement>('[data-testid="change-push"]')
+
+    await box.setValue(false)
+    await flushPromises()
+
+    expect(box.element.checked).toBe(true)
+    expect(view.find('[role="alert"]').text()).toContain('did not work')
+  })
+
+  it('"Reminders on the day" shows the account\'s setting and saves a change', async () => {
+    browser()
+    const view = await mountSettings(true, false)
+    const box = view.get<HTMLInputElement>('[data-testid="reminder-push"]')
+    expect(box.element.checked).toBe(false)
+
+    await box.setValue(true)
+    await flushPromises()
+
+    expect(account.setReminderPush).toHaveBeenCalledWith(true)
+    expect(account.setChangePush).not.toHaveBeenCalled()
+    expect(box.element.checked).toBe(true)
+  })
+
+  it('"Reminders on the day" goes back and says so when the change is not saved', async () => {
+    browser()
+    account.setReminderPush.mockRejectedValue(new Error('offline'))
+    const view = await mountSettings()
+    const box = view.get<HTMLInputElement>('[data-testid="reminder-push"]')
 
     await box.setValue(false)
     await flushPromises()
