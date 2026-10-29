@@ -13,7 +13,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** The two `wp/v2/events` answers saved on 2026-10-23: the one-off events from that day, and the rules. */
+/** The two `wp/v2/events` answers saved on 2026-10-23, the one-off events from that day and the rules, plus row 2679 from 2026-10-29. */
 fun interkosmosFixture(name: String): String =
     InterkosmosApiScraperTest::class.java.classLoader
         .getResourceAsStream("scraper/interkosmos/$name")!!
@@ -29,6 +29,7 @@ class InterkosmosApiScraperTest {
         events shouldHaveSize 19
         events.filter { it.eventType == EventType.COMEDY.name } shouldHaveSize 11
         events.filter { "Yoga" in it.title }.shouldBeEmpty()
+        events.filter { it.eventDate == LocalDate.of(2026, 11, 10) }.shouldBeEmpty()
         events.map { it.sourceId }.toSet().size shouldBe events.size
     }
 
@@ -83,4 +84,27 @@ class InterkosmosApiScraperTest {
         events.single { it.title == "PracTease Burlesque Open Stage" }.eventType shouldBe EventType.SHOW.name
         events.single { it.title.startsWith("Nerds of Beats") }.endTime.shouldBeNull()
     }
+
+    @Test
+    fun `drops a title that names a workshop or crafting, whatever its type`() {
+        val titles =
+            listOf(
+                "Laternen basteln mit dem Kiezteam" to "Infoveranstaltung",
+                "Bastelnachmittag für Groß und Klein" to "",
+                "WORKSHOP: Siebdruck" to "Party",
+                "Songwriting-Workshops ${"mit viel Zeit zum Ausprobieren ".repeat(8)}" to "Konzert",
+                "Bastille Day Disco" to "Party",
+                "Basteln" to "Yoga"
+            )
+        val json = titles.mapIndexed { i, (title, type) -> oneOffRow(9000 + i, title, type) }.joinToString(",", "[", "]")
+
+        InterkosmosApiScraper().scrape(json, "[]", today).map { it.title } shouldContainExactly listOf("Bastille Day Disco")
+    }
+
+    private fun oneOffRow(
+        id: Int,
+        title: String,
+        type: String
+    ) =
+        """{"id": $id, "title": {"rendered": "$title"}, "ik_event_type": "$type", "ik_date": "2026-11-10", "link": "https://www.interkosmos.cc/ik_event/$id/"}"""
 }
