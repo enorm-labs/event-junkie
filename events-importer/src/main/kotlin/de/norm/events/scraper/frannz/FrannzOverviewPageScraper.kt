@@ -50,7 +50,9 @@ import java.util.Locale
  * venue it will not play.
  *
  * A closure notice ("Frannz Biergarten bleibt heute geschlossen!") is published as an article too,
- * and is skipped by its title ([CLOSURE_NOTICE], #3669).
+ * and is skipped by its title ([CLOSURE_NOTICE], #3669). So is a dance class ([PARTICIPATION_FORMAT],
+ * EVENT_SCOPE.md §3.2): Swing Patrol's weekly class. The swing night that follows it is its own
+ * article and stays, and so does the SingAlong night, a show sung along like karaoke (#1902).
  *
  * The stable identity is the WordPress post id (`<article id="post-9874">`), used for the
  * `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
@@ -104,6 +106,10 @@ class FrannzOverviewPageScraper(
         }
         if (CLOSURE_NOTICE.containsMatchIn(rawTitle)) {
             logger.debug { "Frannz article '$rawTitle' is a closure notice, skipping" }
+            return null
+        }
+        if (PARTICIPATION_FORMAT.containsMatchIn(rawTitle)) {
+            logger.debug { "Frannz article '$rawTitle' is a participation format, skipping" }
             return null
         }
         // Read the status off the *raw* title first — cleanEventTitle strips the very note it comes
@@ -370,6 +376,9 @@ class FrannzOverviewPageScraper(
          */
         private val CLOSURE_NOTICE =
             Regex("""\b(?:bleibt|bleiben)\b.*\b(?:geschlossen|zu)\W*$""", RegexOption.IGNORE_CASE)
+
+        /** `Learn to Swing Dance mit Swing Patrol`, or a `Tanzkurs`. */
+        private val PARTICIPATION_FORMAT = Regex("""^Learn to\b.*\bDance\b|\bTanzkurs""", RegexOption.IGNORE_CASE)
 
         private const val EVENT_TYP_PREFIX = "event_typ-"
         private const val HIGHLIGHT_CLASS = "event_typ-highlight"

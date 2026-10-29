@@ -153,6 +153,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Weltwirtschaft      | `WeltwirtschaftApiScraper.BRUNCH`                        | A title that names a `Brunch`                                                                                                   |
 | Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                               |
 | Zenner              | `isOutOfScope` (`ZennerApiScraper.kt`)                   | A title that names a `Flohmarkt` or `Eislaufen`: the indoor flea market and the ice-skating slots                               |
+| Frannz Club         | `PARTICIPATION_FORMAT` (`FrannzOverviewPageScraper.kt`)  | A title that opens `Learn to … Dance`, or names a `Tanzkurs`: the Swing Patrol class                                            |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
