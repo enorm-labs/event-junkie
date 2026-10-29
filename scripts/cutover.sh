@@ -284,7 +284,7 @@ step_freeze() {
 step_switch() {
     local host=""
     tunnel_to "$ENV-next"
-    log "merge the switch PR for $ENV now: the database host becomes $TARGET_IP. Waiting for $NEXT_CTX to read it"
+    log "remove the hold label from the switch PR for $ENV and merge it now: the database host becomes $TARGET_IP. Waiting for $NEXT_CTX to read it"
     for _ in $(seq 1 "$SWITCH_TRIES"); do
         flux --context "$NEXT_CTX" reconcile kustomization flux-system -n flux-system --with-source >/dev/null 2>&1 || true
         host="$(kn get helmrelease "$APP_HR" -n flux-system -o jsonpath='{.spec.values.database.host}')"

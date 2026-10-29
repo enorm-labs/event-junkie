@@ -799,7 +799,7 @@ infra/apply.sh production --allow-replace # no -var next_pair; compare the count
 ```
 
 1. **The switch PR** names the new private addresses: `.21` for the database and `.11` for the k3s node. It changes `deploy/clusters/<env>`, the
-   scripts and the docs. Merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
+   scripts and the docs. It carries the `hold` label, so the merge gate stops it. Remove the label and merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
 2. **`cutover` stops the importer and PostgreSQL on the old pair.** Then it shuts down the old pair and the new k3s node. It moves the k3s IPv4 and the
    `pgdata` volume, and powers on. It runs `step.sh postgres` and `step.sh backups` on the new database node. Then it brings the tunnel up with the
    new server key. It resumes the app, waits for the site and prints the downtime.

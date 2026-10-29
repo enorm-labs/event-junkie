@@ -72,8 +72,8 @@ is the map and the traps.
   only the API; the checkout is that one script. A fork PR's read-only token writes no status, so its run fails on a collision instead, and the status
   arrives with the next push sweep or `workflow_dispatch`. **Residual race**: two colliding PRs merged within one run both stay green; `release.yml`'s
   `migration-versions.sh` stops that tree before a cluster.
-- `merge-gate.yml` (#1424) — required; fails when the author is a Bot outside `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` **unless a
-  User has approved the current head**. A push after approval turns it red again; the `claude` App's approval does not count. Runs on `pull_request_target`
+- `merge-gate.yml` (#1424) — required; fails while the PR carries the **`hold` label**, whoever opened it, and reruns on `labeled`/`unlabeled`. It also
+  fails when the author is a Bot outside `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` **unless a User has approved the current head**. A push after approval turns it red again; the `claude` App's approval does not count. Runs on `pull_request_target`
   and `pull_request_review` **on purpose**: the file executes as it stands on `main`, so an App with `workflows: write` cannot edit it green from the PR it
   gates. It checks out nothing. **An approval does not clear an earlier red run**: the failed `synchronize` run stays on the same head beside the passing
   review run, and the ruleset counts both. `gh run rerun <run id> --failed` replaces it.
