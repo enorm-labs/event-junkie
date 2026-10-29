@@ -185,7 +185,7 @@ jobs:
       # needed.
       - name: Log in to GHCR
         if: steps.version.outputs.publish == 'true'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -543,19 +543,19 @@ jobs:
       # upload cannot take the others down; the `hashFiles` guard skips a report the scan never produced.
       - name: Upload Trivy SARIF (bff)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-bff.sarif') != ''
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: trivy-bff.sarif
           category: trivy-bff
       - name: Upload Trivy SARIF (importer)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-importer.sarif') != ''
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: trivy-importer.sarif
           category: trivy-importer
       - name: Upload Trivy SARIF (frontend)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-frontend.sarif') != ''
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
