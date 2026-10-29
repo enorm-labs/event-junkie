@@ -10,5 +10,8 @@ class DelphiBilledTitleTest {
         delphiBilledTitle("Delphis Orakel – Stroum") shouldBe "Stroum"
         delphiBilledTitle("Schwanensee – Jenseits der Bühne") shouldBe "Schwanensee – Jenseits der Bühne"
         delphiBilledTitle("Delphis Orakel") shouldBe "Delphis Orakel"
+        // Event 11842: the band brings its All Stars formation.
+        // The house misspells the band; its production page spells it Savoy Satellites.
+        delphiBilledTitle("SAVOY SATTELITES – All Stars feat. Emil Wahlgren") shouldBe "SAVOY SATELLITES feat. Emil Wahlgren"
     }
 }

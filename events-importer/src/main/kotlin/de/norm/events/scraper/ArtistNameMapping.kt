@@ -380,15 +380,23 @@ fun buildArtistList(
  * The `"<Performer> – <Show>"` idiom every variety and comedy house bills a solo act with (#315):
  * a person-shaped head — two to four capitalised words — before a dash or colon, and a show after
  * it. Cosmic Comedy derives its `Comedy Special` acts the same way; a production title
- * (`DIE KLIMA-MONOLOGE`) has no such head and yields nothing.
+ * (`DIE KLIMA-MONOLOGE`) has no such head and yields nothing, and neither does a head whose show
+ * names a staging format ([STAGING_FORMAT]).
  */
-private val SOLO_BILL = Regex("""^(\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3})\s*(?:[-–—]|:)\s+\S.*$""")
+private val SOLO_BILL = Regex("""^(\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3})\s*(?:[-–—]|:)\s+(\S.*)$""")
+
+/**
+ * A format after the dash that makes the head a production, not a performer: `Die Bettwurst – Das Musical!`,
+ * `Der Nussknacker – Grand Classic Ballet mit Orchester`.
+ */
+private val STAGING_FORMAT = Regex("""\b(?:musical|ballett?|oper|operette|revue|tanztheater)\b""", RegexOption.IGNORE_CASE)
 
 /** The solo act a show title bills, or none: a shouted head (`FOTZENSCHLEIMPOWER GEGEN RAUBTIER – …`) is a production's title, not a name. */
 private fun soloBillOf(title: String): List<ScrapedArtist> =
     SOLO_BILL
         .find(stripTitleStatusMarker(title).trim())
         ?.groupValues
+        ?.takeUnless { STAGING_FORMAT.containsMatchIn(it[2]) }
         ?.get(1)
         ?.trim()
         ?.takeIf { performer -> performer.any { it.isLowerCase() } && !isNonArtistName(performer) }

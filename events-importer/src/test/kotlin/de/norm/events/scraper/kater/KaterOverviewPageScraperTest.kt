@@ -182,6 +182,33 @@ class KaterOverviewPageScraperTest {
     }
 
     @Test
+    fun `ends a floor at the blurb printed under its DJ`() {
+        // Event 11857 (Kater post 1987), from the homepage on 2026-10-29.
+        val html =
+            """
+            <article class="post-1987 event type-event" id="event-1987">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">13.11.</span><span class="date-title">Hot Mess with Gallinger</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Fr. 13.11 17:00 — Fr. 13.11 22:00</p>
+                    <p>__________________<br />
+                    ACID BOGEN</p>
+                    <p>Gallinger</p>
+                    <p>Friday evenings there’s a Hot Mess in Kater – our evening program running parallell to the HeissaHolzmarkt Winterfestival.<br />
+                    This time we invite Gallinger for some bouncy, minimal vinyl selections.<br />
+                    Music from 17-22h before the night continues with Tipping Point<br />
+                    Entrance via Holzmarkt: 3€ Kulturbeitrag</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
+
+        artists shouldContainExactly listOf(ScrapedArtist("Gallinger", ArtistRole.DJ, "ACID BOGEN"))
+    }
+
+    @Test
     fun `strips the presenter suffix so a floor groups across nights`() {
         // The rule reads "ACID BOGEN by Wabi-Sabi & Flirt Records" on this night and plain
         // "ACID BOGEN" on others; both must land on the same stage.

@@ -21,7 +21,8 @@ import tools.jackson.databind.JsonNode
  * website, venue or organizer. So the title is read for everything:
  *
  * - **`DJ Krawallisch – 60s RnB, Soul & Blues`**: the part before the first dash names the DJs, split
- * on `&`, and the parts after it are the genre.
+ * on `&`, and the parts after it are the genre. The `DJ` is a role, except for a DJ whose alias
+ * carries it ([DJ_IN_ALIAS]).
  * - **`60s RnB & Soul & Blues & RocknRoll – Bartenders Choice`**: a head without `DJ` names no act, and
  * is itself the genre, unless it is the whole title (`60s RnB & Soul`). The house genre `Soul` covers that.
  * - **The tail markers** `VINYL ONLY!`, `FREE ENTRY!` and `Dancers Welcome :)` are cut from the title.
@@ -60,7 +61,7 @@ class SoulcatApiScraper {
             sourceId = event.tecSourceId(EventSource.SOULCAT, slug),
             genre = genreOf(title, parts, djs != null),
             free = FREE_ENTRY.containsMatchIn(rawTitle),
-            artists = djs?.split(NAME_SEPARATOR)?.map { ScrapedArtist(name = it.trim(), role = ArtistRole.DJ) }.orEmpty()
+            artists = djs?.split(NAME_SEPARATOR)?.map { ScrapedArtist(name = withAliasPrefix(it.trim()), role = ArtistRole.DJ) }.orEmpty()
         )
     }
 
@@ -102,3 +103,8 @@ private val SEGMENT_DASH = Regex("""\s+[–—]>?\s+""")
 private val DJ_HEAD = Regex("""DJs?\s+(.+)""")
 
 private val NAME_SEPARATOR = Regex("""\s+&\s+""")
+
+/** DJs whose alias is `DJ <name>`, confirmed by the operator: `DJ Kassettendeck` (event 7255). */
+private val DJ_IN_ALIAS: Set<String> = setOf("kassettendeck")
+
+private fun withAliasPrefix(name: String): String = if (name.lowercase() in DJ_IN_ALIAS) "DJ $name" else name

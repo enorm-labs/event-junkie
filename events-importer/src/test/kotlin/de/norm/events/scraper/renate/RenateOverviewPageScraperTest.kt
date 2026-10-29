@@ -104,6 +104,25 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
+    fun `skips a dated row that announces a series rather than a night`() {
+        // Event 11884, as renate.cc published it on 2026-10-29, cut to its opening and its timetable.
+        val html =
+            """
+            <div class="prog-row">
+              <div class="prog-day">Fri.</div><div class="prog-date">13.11.</div>
+              <div class="prog-title">OUR HOUSE IS YOUR HOUSE: Free winter events</div>
+              <div class="prog-cat"><span class="cat-btn">CLUB</span></div>
+              <div class="prog-text">
+                <h4>From Friday 13.11, we’ll continue this in a new way! Green floor will open early to host warm up events before the klubnacht.</h4>
+                <p>Join us every Friday and Saturday till 10PM, or come early and stay all night! </p>
+                <table><tbody><tr><td><strong>FR</strong></td><td><strong>18:00 - 22:00</strong></td></tr></tbody></table>
+              </div>
+            </div>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    @Test
     fun `reads the OPENS-at form of a floor heading`() {
         // The 2026-09-26 Klubnacht, as renate.cc published it, cut to its floor headings.
         val html =

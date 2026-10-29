@@ -1763,6 +1763,7 @@ class ArtistNameMappingTest {
     fun `splitHeadlinerTitle keeps a band named as a comma list, and a tail marker after the conjunction`() {
         splitHeadlinerTitle("Kitty, Daisy & Lewis") shouldContainExactly listOf("Kitty, Daisy & Lewis")
         splitHeadlinerTitle("Frost, Pisse & Elend") shouldContainExactly listOf("Frost, Pisse & Elend")
+        splitHeadlinerTitle("Andy, Kamran & Hooman") shouldContainExactly listOf("Andy", "Kamran & Hooman")
         splitHeadlinerTitle("Earth, Wind & Fire") shouldContainExactly listOf("Earth, Wind & Fire")
         splitHeadlinerTitle("Ana, Nick Cave & The Bad Seeds") shouldContainExactly listOf("Ana", "Nick Cave & The Bad Seeds")
         // No comma, no list: `A & B` keeps the per-boundary rules.
@@ -2351,6 +2352,9 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Marta Warelis (PL/USA)") shouldBe "Marta Warelis"
         stripArtistSuffix("NIGHT NAIL (Dark Wave US/DE)") shouldBe "NIGHT NAIL"
         stripArtistSuffix("Apichat Pakwan (Thailand-Live)") shouldBe "Apichat Pakwan"
+        stripArtistSuffix("WhatWhy Art (Seoul)") shouldBe "WhatWhy Art"
+        headlinersFromTitle("Solistenensemble Kaleidoskop x WhatWhy Art (Seoul) x Konstantin Heuer").map { it.name } shouldBe
+            listOf("Solistenensemble Kaleidoskop", "WhatWhy Art", "Konstantin Heuer")
         stripArtistSuffix("Sickboyrari (Black Kray)") shouldBe "Sickboyrari (Black Kray)"
         stripArtistSuffix("Brazen Barbie (Hip Hop aus Australien)") shouldBe "Brazen Barbie"
         stripArtistSuffix("Kofi (from Ghana)") shouldBe "Kofi"
@@ -2544,6 +2548,10 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("DIE KLIMA-MONOLOGE", null, "SHOW").shouldBeEmpty()
         buildArtistsForEventType("Berlin Burlesque Festival - Gala", null, "SHOW").shouldBeEmpty()
         buildArtistsForEventType("FOTZENSCHLEIMPOWER GEGEN RAUBTIER – Ein Abend", null, "SHOW").shouldBeEmpty()
+        // A staging format after the dash makes the head the production (Bar jeder Vernunft, Uber Eats Music Hall).
+        buildArtistsForEventType("Die Bettwurst – Das Musical!", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Der Nussknacker – Grand Classic Ballet mit Orchester", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Der Tod: Geisterstunde", null, "SHOW").map { it.name } shouldBe listOf("Der Tod")
         // A `Support:` line still wins, and a concert keeps its own path.
         buildArtistsForEventType("Some Act - Summer Tour", "Support: Other Act", "SHOW").map { it.name } shouldBe listOf("Some Act", "Other Act")
     }

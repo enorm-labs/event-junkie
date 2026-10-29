@@ -370,7 +370,7 @@ internal const val COUNTRY_NAMES =
         "|denmark|dänemark|sweden|schweden|norway|norwegen|finland|finnland|iceland|island|poland|polen|czechia|tschechien" +
         "|hungary|ungarn|greece|griechenland|turkey|türkei|israel|russia|russland|ukraine|georgia|georgien" +
         "|japan|korea|china|india|indien|thailand|indonesia|indonesien|australia|australien|new zealand|neuseeland" +
-        "|south africa|südafrika|nigeria|ghana|senegal|mali|berlin|hamburg|köln|münchen|wien|zürich|london|paris"
+        "|south africa|südafrika|nigeria|ghana|senegal|mali|berlin|hamburg|köln|münchen|wien|zürich|london|paris|seoul"
 
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
 private const val MIN_SHOUTED_TAIL_WORDS = 2
