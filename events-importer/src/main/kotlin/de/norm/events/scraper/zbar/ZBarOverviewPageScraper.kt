@@ -25,7 +25,8 @@ import java.time.LocalDate
  * without a year takes the line's year. A line with no `dd.MM` date (`Every Sunday`, `30 Ekim
  * Cuma`) is skipped. A night with no heading takes its title from its Eventbrite event link, and
  * one with neither is skipped, since its name is only on the flyer. An Arabic line beside the
- * Latin one repeats the date and has no Latin letter, so it opens no night.
+ * Latin one repeats the date and has no Latin letter, so it opens no night. A night whose heading opens
+ * with `Private Veranstaltung` or `Geschlossene Gesellschaft` is a private booking, and is skipped.
  */
 class ZBarOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -54,6 +55,10 @@ class ZBarOverviewPageScraper {
         val title = blocks.firstNotNullOfOrNull { it.selectFirst("h1, h2, h3, h4, h5, h6")?.text()?.blankToNull() } ?: ticketUrl?.let(::titleFromEventbrite)
         if (title == null) {
             logger.warn { "Z Bar night '$line' has no title, skipping" }
+            return null
+        }
+        if (PRIVATE_BOOKING.containsMatchIn(title)) {
+            logger.info { "Z Bar night '$line' is a private booking ('$title'), skipping" }
             return null
         }
         val description =
@@ -157,6 +162,8 @@ class ZBarOverviewPageScraper {
         val TRAILING_CITY = Regex("""[,\s]+Berlin$""")
         val URL = Regex("""https?://\S+""")
         val LINK_TEXT = Regex("""https?://|www\.""")
+
+        val PRIVATE_BOOKING = Regex("""^(?:Private Veranstaltung|Privatveranstaltung|Geschlossene Gesellschaft)\b""", RegexOption.IGNORE_CASE)
 
         val READING_TITLE = Regex("""lesebühne|lesung|\bslam\b""", RegexOption.IGNORE_CASE)
         val SCREENING_TITLE = Regex("""kurzfilm|\bfilm""", RegexOption.IGNORE_CASE)
