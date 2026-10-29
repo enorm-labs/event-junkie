@@ -10,7 +10,8 @@
 # `scripts/ej.sh status` and `/log-check`.
 #
 # --hours defaults to 24 and sets what counts as new. The keys: `failed_runs` (per workflow, whether
-# the latest finished run is still red), `release_main` (the latest release.yml on main, whatever its
+# the latest finished run is still red), `stuck_runs` (any run unfinished after six hours),
+# `disabled_workflows`, `release_main` (the latest release.yml on main, whatever its
 # age), `bot_issues` (every open issue automation opened), `reports` (whether the latest plausibility
 # and OWASP report was answered or filed), `security`, `pull_requests`, `release`, `unclosed` and
 # `after_deploy` (merged pull requests whose after-deploy steps are still unticked, and whether the
@@ -72,6 +73,25 @@ failed_runs() {
                    still_red: ($done[-1].conclusion | test("failure|timed_out|startup_failure")),
                    last_failure: ($red[-1] | {at: .createdAt, event, branch: .headBranch, url})})
             | sort_by(.still_red | not)'
+}
+
+# A hosted job ends at six hours, so a run unfinished after that waits on a runner, an approval or an
+# environment. Every event counts, because a stuck pull-request run also blocks its merge.
+stuck_runs() {
+    local cutoff
+    cutoff="$(date -u -v-6H +%FT%TZ 2>/dev/null || date -u -d "-6 hours" +%FT%TZ)"
+    for status in queued in_progress waiting pending requested; do
+        gh run list -R "$REPO" --status "$status" --limit 100 \
+            --json databaseId,workflowName,status,event,headBranch,createdAt,url
+    done | jq -s --arg cutoff "$cutoff" \
+        'add | map(select(.createdAt < $cutoff) | {workflow: .workflowName, status, event, branch: .headBranch, since: .createdAt, url})
+             | sort_by(.since)'
+}
+
+# A disabled workflow fails nothing: its schedule just stops.
+disabled_workflows() {
+    gh workflow list -R "$REPO" --all --limit 200 --json name,path,state |
+        jq 'map(select(.state != "active"))'
 }
 
 release_main() {
@@ -204,6 +224,8 @@ after_deploy() {
 
 jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson failed_runs "$(failed_runs)" \
+    --argjson stuck_runs "$(stuck_runs)" \
+    --argjson disabled_workflows "$(disabled_workflows)" \
     --argjson release_main "$(release_main)" \
     --argjson bot_issues "$(bot_issues)" \
     --argjson plausibility "$(report 'Plausibility check — nightly reports')" \
@@ -214,7 +236,8 @@ jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson release "$(release)" \
     --argjson unclosed "$(unclosed)" \
     --argjson after_deploy "$(after_deploy)" \
-    '{repo: $repo, since: $since, hours: $hours, failed_runs: $failed_runs, release_main: $release_main,
+    '{repo: $repo, since: $since, hours: $hours, failed_runs: $failed_runs, stuck_runs: $stuck_runs,
+      disabled_workflows: $disabled_workflows, release_main: $release_main,
       bot_issues: $bot_issues, reports: [$plausibility, $owasp], security: $security,
       pull_requests: $pull_requests, renovate_dashboard: $renovate_dashboard, release: $release, unclosed: $unclosed,
       after_deploy: $after_deploy}'

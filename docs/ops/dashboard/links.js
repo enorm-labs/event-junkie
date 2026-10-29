@@ -1081,7 +1081,7 @@ window.EJ_LINKS = {
           "note": "every alert that fired in the last day"
         },
         {
-          "command": "scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'",
+          "command": "scripts/daily-check.sh | jq '.failed_runs, .stuck_runs, .disabled_workflows, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'",
           "note": ""
         },
         {
