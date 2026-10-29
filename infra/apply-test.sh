@@ -131,6 +131,26 @@ applied || fail "unguarded: not applied"
 run "out flag" 1 "yes" staging -out=mine.tfplan
 expect_out "out flag" "the plan file is this script's own"
 
+# 9. Creates that all match --yes-if-only-creates apply with no answer on stdin.
+NEXT_RE='_next(_ipv[46])?\[0\]$'
+NEXT_SERVER="$(change hcloud_server 'module.environment.hcloud_server.k3s_next[0]' '["create"]')"
+NEXT_IP="$(change hcloud_primary_ip 'module.environment.hcloud_primary_ip.k3s_next_ipv4[0]' '["create"]')"
+plan_of "$NEXT_SERVER" "$NEXT_IP" "$UNCHANGED"
+run "creates only" 0 "" production --yes-if-only-creates "$NEXT_RE"
+expect_out "creates only" "so no prompt"
+applied || fail "creates only: not applied"
+
+# 10. An update beside those creates needs a person: exit 3, nothing applied.
+plan_of "$NEXT_SERVER" "$FIREWALL"
+run "creates and an update" 3 "yes" production --yes-if-only-creates "$NEXT_RE"
+expect_out "creates and an update" "module.environment.hcloud_firewall.k3s"
+applied && fail "creates and an update: applied"
+
+# 11. A create the regex does not match needs a person too.
+plan_of "$NEXT_SERVER" "$(change hcloud_server module.environment.hcloud_server.k3s '["create"]')"
+run "unmatched create" 3 "yes" production --yes-if-only-creates "$NEXT_RE"
+applied && fail "unmatched create: applied"
+
 if [ "$FAILURES" -gt 0 ]; then
     echo "apply-test: $FAILURES failure(s)" >&2
     exit 1
