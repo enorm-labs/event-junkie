@@ -91,13 +91,17 @@ was lost, not that a convention changed. This sweep is for taking everything at 
 No bot watches these two files. CI's `setup-java` and `setup-node` and the runtime images take the newest patch of the major by themselves, so only a local
 checkout falls behind.
 
-1. **JDK patch.** `.sdkmanrc` pins an exact Temurin build. Read the newest patch of its major and take it, `-tem` suffix kept:
+1. **JDK patch.** `.sdkmanrc` pins an exact Temurin build by its SDKMAN identifier. Take a newer one only when SDKMAN can download it. SDKMAN can
+   list a build that its download broker answers with 404: on 2026-10-29 that was every identifier with a `+`, such as `25.0.5.0+8-tem`.
 
     ```sh
-    curl -s 'https://api.foojay.io/disco/v3.0/packages?distribution=temurin&version=<major>&latest=available&package_type=jdk&os=macos&architecture=aarch64&archive_type=tar.gz' | jq -r '.result[0].java_version'
+    v=$(curl -s 'https://api.foojay.io/disco/v3.0/packages?distribution=temurin&version=<major>&latest=available&package_type=jdk&os=macos&architecture=aarch64&archive_type=tar.gz' | jq -r '.result[0].java_version | sub("\\+.*"; "")')
+    ids="$v-tem $(curl -s 'https://api.sdkman.io/2/candidates/java/darwinarm64/versions/all' | tr ',' '\n' | grep -E "^${v}[.+0-9]*-tem$")"
+    for id in ${=ids}; do echo "$id $(curl -s -o /dev/null -w '%{http_code}' "https://api.sdkman.io/2/broker/download/java/$id/darwinarm64")"; done
     ```
 
-    `sdk install java <version>-tem`, then the backend gate (Step 6). A patch moves nothing else.
+    Take the first identifier that answers 302: `sdk install java <identifier>`, then the backend gate (Step 6). A patch moves nothing else. When none
+    answers 302, keep the pin and name the newer patch in the summary.
 
 2. **Node.** Each `.nvmrc` holds a major only, so a patch needs no edit. Check that `engines` in both `package.json` files and the `node-version:` lines in
    `.github/workflows/` name the same major.
