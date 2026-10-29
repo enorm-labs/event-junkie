@@ -5,6 +5,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.collapseWhitespace
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -94,21 +95,40 @@ class BerghainDetailPageScraper {
             priceBoxOffice = tickets.boxOffice,
             soldOut = tickets.soldOut,
             artists = parseRunningOrder(content),
-            promoters = parsePromoters(content)
+            promoters = parsePromoters(content, title)
         )
     }
 
     /**
      * The organiser line a hired night ends with, `Eine Veranstaltung von Dynamite Konzerte` (or the
      * English `An event by …`), split into co-promoters by [splitPromoterCredit]. The club's own
-     * nights carry no such line.
+     * nights carry no such line. An act that books its own night credits itself (#4184): a name
+     * equal to the title or to a billed act is the act, not a promoter.
      */
-    private fun parsePromoters(content: Element): List<String> =
+    private fun parsePromoters(
+        content: Element,
+        title: String
+    ): List<String> {
+        val credited =
+            content
+                .select("p")
+                .firstNotNullOfOrNull { ORGANISER_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
+                ?.let(::splitPromoterCredit)
+                .orEmpty()
+        if (credited.isEmpty()) return credited
+        val acts = (billedActs(content) + title).map(::comparable).toSet()
+        val (dropped, kept) = credited.partition { comparable(it) in acts }
+        if (dropped.isNotEmpty()) logger.debug { "Dropping organiser $dropped of '$title': a billed act or the title" }
+        return kept
+    }
+
+    /** Every act of the running order, with or without a published set time. */
+    private fun billedActs(content: Element): List<String> =
         content
-            .select("p")
-            .firstNotNullOfOrNull { ORGANISER_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
-            ?.let(::splitPromoterCredit)
-            .orEmpty()
+            .select("[data-set-floor] li[data-set-item]")
+            .flatMap { splitSlot(it.selectFirst(SLOT_NAME_SELECTOR)?.ownText().orEmpty()) }
+
+    private fun comparable(name: String): String = name.collapseWhitespace().lowercase()
 
     /**
      * Every act of the running order with its set's start and end (#2002), or none before the venue
