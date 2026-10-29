@@ -783,8 +783,40 @@ scripts/rebuild-node.sh production --next          # boot tls access secrets flu
    `~/.ssh/known_hosts.<env>-next` and the kube context `event-junkie-<env>-next`. The last step brings the running tunnel back up.
 3. **The app does not run on the new cluster before the cutover.** The script creates its HelmRelease with `suspend: true` before Flux applies it. Otherwise
    the BFF's jobs would send every push and e-mail twice, and two importers would run against one database (ADR-008).
-4. **The cutover does the rest.** It sets the database roles and the wal-g credential, and it pushes the alerts and dashboards. It also creates
-   `github-dispatch` and resumes the app. The cutover is not scripted yet. The plan is in #4128.
+4. **The cutover does the rest.** It writes the wal-g credential, pushes the alerts and dashboards, creates `github-dispatch` and resumes the app.
+
+### Cutting over to the second pair
+
+**One window of about 8 minutes, in a quiet hour.** The database address in `deploy/clusters/<env>` changes with the database, and both clusters read
+that path. So the old cluster's Flux is frozen first, and the address change merges before the window opens.
+
+```sh
+scripts/cutover.sh production prepare     # the site serves: freezes Flux on the old cluster, waits for the switch PR
+git pull
+scripts/cutover.sh production cutover     # type yes: the site is down until step site
+scripts/cutover.sh production finish      # after the switch PR's infra part: moves the state
+infra/apply.sh production --allow-replace # no -var next_pair; compare the count that finish prints
+```
+
+1. **The switch PR** names the new private addresses: `.21` for the database and `.11` for the k3s node. It changes `deploy/clusters/<env>`, the
+   scripts and the docs. Merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
+2. **`cutover` stops the importer and PostgreSQL on the old pair.** Then it shuts down the old pair and the new k3s node. It moves the k3s IPv4 and the
+   `pgdata` volume, and powers on. It runs `step.sh postgres` and `step.sh backups` on the new database node. Then it brings the tunnel up with the
+   new server key. It resumes the app, waits for the site and prints the downtime.
+3. **Then it runs `rebuild-node.sh <env> --from secrets`.** That step creates `github-dispatch`, writes the wal-g credential and runs `walg check`. It
+   deletes the old deploy key and pushes the alerts and dashboards. Last, `cutover` renames the old servers and their own Primary IPs to `-old`. It
+   removes their delete protection.
+4. **Only the k3s IPv4 moves.** No AAAA record exists. So each new node keeps its own IPv6, and the new database node keeps its own IPs.
+5. **`finish` needs the infra part of the switch PR merged and pulled.** `main.tf` names the new types and the private addresses. `finish` copies the
+   state to `~/.event-junkie/cutover-<env>/`. Then `tofu state mv` moves the old pair to `*_old` addresses and the new pair to the running ones. The
+   apply deletes the `*_old` orphans and the temporary IPv4. It renames the new servers in place. On production, expect 0 to add, 5 to change and 6
+   to destroy.
+
+**`scripts/cutover.sh <env> rollback`** powers off the new pair and moves the IPv4 and the volume back. Then it starts the old pair with its old server
+key and resumes the app there. It works until `finish`. Flux on the old cluster stays frozen: revert the switch PR before
+`flux resume kustomization flux-system`.
+
+Every step checks what is already done. After a failure, run the same phase again, or start at a step with `--from <step>`.
 
 ### Applying a `cloud-init` fix without rebuilding
 

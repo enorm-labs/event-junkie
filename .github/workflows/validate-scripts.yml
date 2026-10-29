@@ -122,6 +122,10 @@ jobs:
       - name: Assert the steps rebuild-node.sh runs, and what --next keeps away from the running cluster
         run: scripts/rebuild-node-test.sh
 
+      # A Primary IP moved while a server ran, or a volume left a running node, fails the cutover halfway (#4128).
+      - name: Assert what cutover.sh moves, in which order, and what it refuses
+        run: scripts/cutover-test.sh
+
       # A checked plan and the applied plan were two runs, and the second replaced both production nodes (#4132).
       - name: Assert what infra/apply.sh refuses and applies
         run: infra/apply-test.sh
