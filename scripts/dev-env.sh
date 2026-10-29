@@ -10,7 +10,7 @@
 #   up [service…] [--scheduling] Start service(s) in the background, wait until they answer
 #   down [service…] [--db]       Stop service(s) (and with --db the database too)
 #   status                       Show database + service state
-#   seed-fixture                 Load fixtures/events.sql and accounts.sql — the fixed dataset, no network (#272)
+#   seed-fixture                 Load fixtures/events.sql and accounts.sql into an empty database, no network (#272)
 #   seed-all                     Regenerate and run http/importer/dev-seed.http via ijhttp (all sources)
 #   seed-one <venue.json> <source.json>
 #                                POST one venue + one event source, print the source slug
@@ -333,10 +333,12 @@ cmd_seed_fixture() {
     db_ready || die "Database is not running — run 'dev-env.sh db-reset' first"
     [[ "$(query "SELECT to_regclass('events.event') IS NOT NULL")" == "t" ]] ||
         die "No schema yet — run 'dev-env.sh up importer' once so Flyway applies the migrations"
-    log "Loading fixtures/events.sql"
-    run_psql -q -f "$REPO_ROOT/fixtures/events.sql"
-    log "Loading fixtures/accounts.sql — sign in with a cookie from fixtures/accounts.json"
-    run_psql -q -f "$REPO_ROOT/fixtures/accounts.sql"
+    # The fixture's slugs collide with real rows. No migration inserts a venue or an event (#4212).
+    [[ "$(query "SELECT count(*) FROM venue") $(query "SELECT count(*) FROM event")" == "0 0" ]] ||
+        die "seed-fixture needs an empty database — run 'dev-env.sh db-reset', then 'dev-env.sh up importer'"
+    log "Loading fixtures/events.sql and accounts.sql — sign in with a cookie from fixtures/accounts.json"
+    # One transaction for both files, so a failure leaves nothing behind.
+    run_psql -q --single-transaction -f "$REPO_ROOT/fixtures/events.sql" -f "$REPO_ROOT/fixtures/accounts.sql"
     log "Loaded: $(query "SELECT count(*) || ' events, ' || (SELECT count(*) FROM venue) || ' venues, ' || (SELECT count(*) FROM artist) || ' artists, ' || (SELECT count(*) FROM accounts.account) || ' accounts' FROM event")"
 }
 
