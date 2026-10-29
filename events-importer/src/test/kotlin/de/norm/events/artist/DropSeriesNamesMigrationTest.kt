@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -15,7 +16,7 @@ import java.sql.DriverManager
 /** Runs V070 (#2072) against planted artist rows on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DropSeriesNamesMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

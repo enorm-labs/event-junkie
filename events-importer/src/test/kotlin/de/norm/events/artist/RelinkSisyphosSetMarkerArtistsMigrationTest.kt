@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import io.kotest.matchers.collections.shouldContainExactly
@@ -19,7 +20,7 @@ import java.sql.Statement
 /** Plants production's marked rows, runs V196's drop, then V197 (#3938) on top of it, and V197 a second time. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RelinkSisyphosSetMarkerArtistsMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
     private lateinit var afterFirstRun: List<String>
 

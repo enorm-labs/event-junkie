@@ -1,6 +1,7 @@
 package de.norm.events.docs
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.POSTGRES_TEST_IMAGE
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.flywaydb.core.Flyway
@@ -37,7 +38,7 @@ class SchemaDumpTest {
     }
 
     private fun dump(): String =
-        PostgreSQLContainer(POSTGRES_IMAGE).use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             Flyway
                 .configure()
@@ -85,7 +86,6 @@ class SchemaDumpTest {
     }
 
     private companion object {
-        const val POSTGRES_IMAGE = "postgres:18.3-alpine"
         const val UPDATE_PROPERTY = "updateSchemaDump"
 
         const val HEADER =

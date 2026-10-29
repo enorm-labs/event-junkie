@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -16,7 +17,7 @@ import java.sql.Statement
 /** Runs V145 (#3159) against a past Badehaus night that bills the fused `meets` row before another act. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SplitBadehausMeetsArtistMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

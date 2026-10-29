@@ -1,5 +1,6 @@
 package de.norm.events.promoter
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import de.norm.events.slug.SlugGenerator
@@ -24,7 +25,7 @@ class RepairPromoterCleanupBatch2MigrationTest {
 
     @Test
     fun `merges, renames, unlinks and splits the rows the second cleanup judged`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "198").migrate()

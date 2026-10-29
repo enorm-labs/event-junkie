@@ -45,7 +45,7 @@ class ReadinessWithoutSchemaTest {
         @Bean
         @ServiceConnection(name = "postgres")
         fun unmigratedPostgres(): PostgreSQLContainer =
-            PostgreSQLContainer("postgres:18.3-alpine")
+            PostgreSQLContainer(POSTGRES_TEST_IMAGE)
                 .withDatabaseName("never_migrated")
                 .withReuse(false)
     }

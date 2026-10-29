@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -18,7 +19,7 @@ import java.sql.DriverManager
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RestoreJaxxTmsCapitalsMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
     private lateinit var renamed: Connection
 

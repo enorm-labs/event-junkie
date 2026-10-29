@@ -1,5 +1,6 @@
 package de.norm.events.common
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterAll
@@ -13,7 +14,7 @@ import java.sql.DriverManager
 /** Runs V072 (#2174) against planted artist, promoter and event rows on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FoldTypedApostrophesMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

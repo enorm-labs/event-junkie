@@ -21,6 +21,9 @@ version they watch produces a second pull request against the same file (ADR-024
 Read the CI tool pins without touching them: `grep -rn '_VERSION:' .github/workflows/ | grep -vE 'VERSION: \$\{\{'`. A stale one is a Dependency Dashboard
 question.
 
+**A Dependabot `docker-compose` pull request that moves `postgres` fails the backend build** until `POSTGRES_TEST_IMAGE` in
+`events-core/src/testFixtures/` moves with it (#4222). Push that one-line edit onto the Dependabot branch; `PostgresTestImageTest` holds the two equal.
+
 **A zero still needs its evidence.** Two runs of this prompt minutes apart once disagreed about whether a pattern existed; both reports were confident and one
 was wrong. Every count in the summary carries the command that produced it.
 

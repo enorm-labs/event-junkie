@@ -17,8 +17,8 @@ Extend what is already here rather than repeating its boilerplate.
   AssertJ or `kotlin.test`; four libraries once meant a test that failed to _compile_ across a module boundary. Kotest is never the runner. A failure message
   goes in `withClue("…") { … }`; `assertSoftly` replaces `assertAll`. Backtick test names. MockK for mocks.
 - **`BaseControllerTest`** (importer) extends the Testcontainers setup, provides a `WebTestClient` bound to `@LocalServerPort`, and truncates every domain
-  table in `@BeforeEach`; extend it. Each Boot module has its own `PostgresTestcontainersConfiguration` (`@ServiceConnection`, `postgres:18.3-alpine`, the
-  compose image). **Reuse is deliberately off** (#954): 13 seconds locally, nothing in CI, and every context would share one database. Each runtime starter
+  table in `@BeforeEach`; extend it. Each Boot module has its own `PostgresTestcontainersConfiguration` (`@ServiceConnection`). Every test starts
+  `POSTGRES_TEST_IMAGE` from the `events-core` fixtures, never a literal tag; `PostgresTestImageTest` holds it equal to `compose.yaml`. **Reuse is deliberately off** (#954): 13 seconds locally, nothing in CI, and every context would share one database. Each runtime starter
   gets its `-test` companion. `events-core` publishes fixtures via `java-test-fixtures` (`testImplementation(testFixtures(project(":events-core")))`); each
   importer feature has a `*RequestFixtures` object with defaults.
 - **Every distinct test-context configuration costs a cached Spring context, a container and an R2DBC pool for the whole task.** Count them with

@@ -1,5 +1,6 @@
 package de.norm.events.account
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.rows
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
@@ -27,7 +28,7 @@ import java.sql.DriverManager
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class CreateAccountsSchemaMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var admin: Connection
 
     @BeforeAll

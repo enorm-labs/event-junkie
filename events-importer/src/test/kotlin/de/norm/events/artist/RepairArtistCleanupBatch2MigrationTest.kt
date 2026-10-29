@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -48,7 +49,7 @@ class RepairArtistCleanupBatch2MigrationTest {
         existing: List<Pair<String, String>> = emptyList(),
         check: (Connection) -> Unit
     ) {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "149").migrate()
