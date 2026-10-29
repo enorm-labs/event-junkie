@@ -36,6 +36,7 @@ import java.time.MonthDay
  *
  * Line-up lines are split into DJs. A line with "by" credits an installation or a curator, and a
  * ticket line is a notice: both become the description. A night with only credits is an exhibition.
+ * A note the page's editor forgot in the line-up bills nobody.
  */
 class StudioIiiiOverviewPageScraper(
     private val clock: Clock = Clock.system(BERLIN)
@@ -129,7 +130,9 @@ class StudioIiiiOverviewPageScraper(
     /** The acts of the line-up lines, which may break a comma list across lines; a `(CLUBROOM)` tail is the act's room. */
     private fun lineupActs(lines: List<String>): List<ScrapedArtist> =
         lines
-            .joinToString(" / ") { it.trim().trimEnd(',', '/') }
+            .map { unwrapLine(it.trim().trimEnd(',', '/')) }
+            .filterNot(::isEditorNote)
+            .joinToString(" / ")
             .split(ACT_SEPARATOR)
             .map { it.replace(MORE_TBA, "").trim() }
             .flatMap(::splitSegmentOnConjunctions)
@@ -144,6 +147,17 @@ class StudioIiiiOverviewPageScraper(
                         ?.replaceFirstChar { it.titlecase() }
                 name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
             }.distinctBy { it.name }
+
+    /** A line in a bracket of its own, with a closing stop, bills what the bracket holds: `(A FEAT. B & C).` (event 11929). */
+    private fun unwrapLine(line: String): String {
+        val unstopped = line.removeSuffix(".").takeUnless { ABBREVIATION_END.containsMatchIn(line) } ?: line
+        val wrapped = unstopped.startsWith('(') && unstopped.endsWith(')') && unstopped.indexOf(')') == unstopped.lastIndex
+        return if (wrapped) unwrapLine(unstopped.substring(1, unstopped.lastIndex).trim()) else unstopped
+    }
+
+    /** A note the page's editor left in the line-up, two sentences run together: `Clarify the DJ set lineupUse consistent …` (event 11928). */
+    private fun isEditorNote(line: String): Boolean =
+        JOINED_WORDS.containsMatchIn(line) && line.split(' ').count { LOWERCASE_WORD.matches(it) } >= MIN_NOTE_LOWERCASE_WORDS
 
     /** The type a cue names: credits alone for an installation, a title keyword, or a DJ line-up; `null` leaves the club's default. */
     private fun cuedType(
@@ -174,7 +188,15 @@ class StudioIiiiOverviewPageScraper(
         val NOTICE = Regex("""^(?:tickets?|free|entry|doors?|sold\s+out|cancell?ed)\b""", RegexOption.IGNORE_CASE)
         val SAVE_THE_DATE = Regex("""save\s+the\s+date\.?""", RegexOption.IGNORE_CASE)
         val EXHIBITION = Regex("""\b(?:installations?|exhibition)\b""", RegexOption.IGNORE_CASE)
-        val ACT_SEPARATOR = Regex("""\s+/\s+|\s*,\s*""")
+        val ACT_SEPARATOR = Regex("""\s+/\s+|\s*,\s*|\s+(?:feat\.?|ft\.|featuring)\s+""", RegexOption.IGNORE_CASE)
+
+        /** A stop that ends an initial, a dotted name or an abbreviation, `J.`, `A.A.`, `Jr.`, and stays. */
+        val ABBREVIATION_END = Regex("""(?:^|[\s.(])(?:\p{L}|jr|sr|dr|st|mr|mrs|ms|bros|feat|ft|vs|inc|co)\.$|\.\S+\.$""", RegexOption.IGNORE_CASE)
+
+        /** Two words with no space between them, `lineupUse`; one lowercase letter before the capital keeps `McCarthy` and `DeWalt` out. */
+        val JOINED_WORDS = Regex("""\p{Ll}{2}\p{Lu}\p{Ll}""")
+        val LOWERCASE_WORD = Regex("""\p{Ll}{2,}""")
+        const val MIN_NOTE_LOWERCASE_WORDS = 2
         val MORE_TBA = Regex("""\s*(?:&|\+|and)\s*more(?:\s+tba)?\.*$""", RegexOption.IGNORE_CASE)
         val ROOM = Regex("""\s*\((\p{L}*room)\)""", RegexOption.IGNORE_CASE)
     }

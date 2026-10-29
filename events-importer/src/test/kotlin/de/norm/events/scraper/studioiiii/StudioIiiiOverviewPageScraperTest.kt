@@ -122,6 +122,25 @@ class StudioIiiiOverviewPageScraperTest {
         event.artists.shouldBeEmpty()
     }
 
+    private fun lineup(vararg lines: String) = scrapeOne(cover("FRI 23 OCTOBER 9PM", descr = lines.joinToString("<br>"))).artists.map { it.name }
+
+    @Test
+    fun `an editor note left in the line-up bills nobody`() {
+        lineup("DJ ONE", "Clarify the DJ set lineupUse consistent DJ capitalization") shouldContainExactly listOf("DJ ONE")
+    }
+
+    @Test
+    fun `a bracketed line with an end stop bills the acts inside it`() {
+        lineup("(Anna Mccarthy FEAT. Philip Errico & Michael TAPPER).") shouldContainExactly
+            listOf("Anna Mccarthy", "Philip Errico", "Michael TAPPER")
+    }
+
+    @Test
+    fun `an act keeps its own bracket, an abbreviation stop and a joined name`() {
+        lineup("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph.") shouldContainExactly
+            listOf("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph")
+    }
+
     @Test
     fun `the year comes from the weekday across new year`() {
         scrapeOne(cover("FRI 1 JANUARY 11PM")).eventDate shouldBe LocalDate.of(2027, 1, 1)
