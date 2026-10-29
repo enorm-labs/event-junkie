@@ -12,11 +12,14 @@ visitor's browser never contacts the venue.**
 **How the derivatives get generated is [ADR-020](ADR-020_IMAGE_PROCESSING.md).** That question follows from this one and
 reverses independently, so it has its own record.
 
-**Not implemented.** The site still hotlinks. [#364](https://github.com/enorm-labs/event-junkie/issues/364) closes with this
-ADR, and [#792](https://github.com/enorm-labs/event-junkie/issues/792) closes when the work lands.
+**Implemented on 2026-08-28.** The importer caches each image in a bucket, and the BFF serves it from this domain. Both
+are enabled in staging and in production. [#364](https://github.com/enorm-labs/event-junkie/issues/364) closed with this
+ADR, and [#792](https://github.com/enorm-labs/event-junkie/issues/792) closed when the work landed.
 
-**[#283](https://github.com/enorm-labs/event-junkie/issues/283) is now a blocker.** A stored copy needs a per-source licence
-position. The embedding we do today does not. No caching code starts before #283 records one.
+**Amended (2026-10-29, [#4246](https://github.com/enorm-labs/event-junkie/issues/4246)):
+[#283](https://github.com/enorm-labs/event-junkie/issues/283) is resolved, and it no longer blocks.** A stored copy needs a
+per-source licence position. #283 recorded one on 2026-08-28, before the first caching commit. Only `PROHIBITED` withholds
+an image. §When to revisit has the rule.
 
 **It supersedes nothing.** Three neighbouring ADRs touch the area and none of them decided it:
 
@@ -68,11 +71,12 @@ Privacy and load point the same way. Copyright points the other way. That is the
 - **The notice must describe what the system does** (`docs/LEGAL.md` §7.7). Both options change the notice. Neither leaves it
   alone.
 - **German is authoritative and both locales ship together** (ADR-013 §2, `LEGAL.md` §6.1).
-- **A new processor needs an Art. 28 contract** (`AGENTS.md` § Privacy & GDPR). Hetzner is the only processor today, under a
-  contract concluded on 2026-08-19.
-- **`INFRASTRUCTURE_IS_PROPOSED` is still `true`.** Nothing runs yet.
-- **Per-source licence status is not decided.** [#283](https://github.com/enorm-labs/event-junkie/issues/283) owns it and is
-  open.
+- **A new processor needs an Art. 28 contract** (`AGENTS.md` § Privacy & GDPR). There are three processors today: Hetzner,
+  Anthropic and Scaleway (`LEGAL.md` §7.3a). The image bucket is at Hetzner, under the contract of 2026-08-19, so it
+  adds no processor.
+- **`INFRASTRUCTURE_IS_PROPOSED` is `false`** (`events-frontend/src/lib/legal.ts`). Staging and production run.
+- **A stored copy needs a per-source licence position.** [#283](https://github.com/enorm-labs/event-junkie/issues/283)
+  records it in `event_source.image_licence`.
 - **The guiding principle is to aggregate and link back, and not to republish** (`SCRAPING_POSITION.md` § The short version).
 
 ## Candidate options
@@ -150,8 +154,8 @@ That reasoning holds at any size, and a cost argument would not. Object Storage 
 holds 736 MB today ([`docs/ops/COSTS.md`](../ops/COSTS.md)), so price does not decide this.
 
 **What we accept by choosing B.** Caching is a reproduction under § 16 UrhG, and embedding is not. We give up the strongest
-part of our copyright position on purpose. The privacy property is what we buy with it. #283 is the work that limits the
-exposure, and that is why it now blocks.
+part of our copyright position on purpose. The privacy property is what we buy with it. The per-source licence of #283
+limits the exposure.
 
 **What did not decide it.** Format control, image freshness and broken-image behaviour all favour B. None of them would
 justify the copyright cost on its own.
@@ -170,8 +174,9 @@ control, and with it a DNS record, a certificate to renew and an ingress rule.
 
 ### What this obliges
 
-- **[#283](https://github.com/enorm-labs/event-junkie/issues/283) must land first.** It changes from a neighbour to a
-  blocker, and no storage code starts before it.
+- **Every stored image needs a per-source licence position.** [#283](https://github.com/enorm-labs/event-junkie/issues/283)
+  records it. Only `PROHIBITED` withholds an image. The importer then stores no image URL for that source's events, and it
+  clears the URLs it already holds ([#807](https://github.com/enorm-labs/event-junkie/issues/807)).
 - **A deletion route must work before the notice describes one.** The venue opt-out in `SCRAPING_POSITION.md` §5 has to
   remove stored objects, and `ForVenuesView` already promises that route to venues.
 - §4 of both privacy notices must say that we store venue imagery. §5 keeps its no-third-party claim, which becomes true.
@@ -198,14 +203,15 @@ control, and with it a DNS record, a certificate to renew and an ingress rule.
 
 ### What becomes possible
 
-- `Content-Security-Policy: img-src 'self'` becomes available. Hotlinking blocks that value today, and the header is not set
-  yet.
+- `Content-Security-Policy: img-src 'self'` is enforced in staging and production (#854). The chart derives `img-src` from
+  `images.serving.enabled` (`security-headers-middleware.yaml`), so the header cannot block images that the site still
+  hotlinks.
 - We control format and size, so a 4 MB flyer stops reaching an 80 px card.
 
 ## When to revisit
 
-- **If #283 finds that a source forbids a stored copy.** That source keeps no image at all. It does not return to
-  hotlinking, because the privacy property is the point.
+- **If a source forbids a stored copy.** #283 records it as `PROHIBITED`, and that source's events keep no image at all.
+  It does not return to hotlinking, because the privacy property is the point.
 - **If storage or egress cost becomes visible.** The load argument here is reasoning, not measurement. Real numbers would
   test it.
 - **If a legal opinion arrives.** [#282](https://github.com/enorm-labs/event-junkie/issues/282) deferred one. § 16 UrhG is
