@@ -1117,9 +1117,10 @@ rule(
 
 # The updater's own silence looks exactly like a fully patched node, which is the
 # fourth line of #419. `apt.systemd.daily` touches the stamp after every run, so an age
-# past two days is a timer that stopped or a run that has failed daily since — and a
-# stamp that was never written reports the whole epoch, so a fresh node whose
-# `unattended-upgrades` never started fires too.
+# past two days is a timer that stopped or a run that has failed daily since. The age
+# counts from the later of the stamp and the node's first `ej-patch-state` run, because
+# the image ships the stamp weeks old (#4181). A fresh node whose `unattended-upgrades`
+# never started still fires two days after that first run.
 rule(
     "ej-patching-stalled",
     "A node's `unattended-upgrades` has not completed a run in two days; it runs daily. Read "
