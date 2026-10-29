@@ -74,6 +74,9 @@ app:
     origin: https://event-junkie.de
   mail:
     from: Event Junkie <noreply@notify.event-junkie.de>
+    # No key, so no reader: MailQuotaRefreshTest builds one against a local server.
+    quota:
+      limit: 10000
   push:
     # No VAPID keys, so no sender: PushFlowTest adds them with a local push service.
     subject: mailto:hello@event-junkie.de

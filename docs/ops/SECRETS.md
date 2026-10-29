@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Fifteen objects.** One, `events-db`, is encrypted into git and restored by Flux. `scripts/cluster-secrets.sh <env>` creates the other fourteen from the
+- **Sixteen objects.** One, `events-db`, is encrypted into git and restored by Flux. `scripts/cluster-secrets.sh <env>` creates the other fifteen from the
   Keychain, and `--check` compares them with it.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
@@ -20,7 +20,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The fifteen objects, and where each comes from
+## The sixteen objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -39,14 +39,15 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `event-junkie-mail`       | `event-junkie`                                    | the Scaleway TEM login the BFF sends mail with        | §event-junkie-mail, below                                      |
 | `events-bff-db`           | `event-junkie`                                    | the `bff` role's password, the BFF's own login        | §events-bff-db, below                                          |
 | `event-junkie-push`       | `event-junkie`                                    | the VAPID key pair the BFF signs Web Push with        | §event-junkie-push, below                                      |
+| `event-junkie-mail-quota` | `event-junkie`                                    | the read-only Scaleway key — production only          | §event-junkie-mail-quota, below                                |
 
 **`scripts/cluster-secrets.sh` carries the same list, with the Keychain item behind each key.** The sections below say why each Secret exists and how to make
 its value. A rebuild runs the script, not the commands below. Add a Secret to the table and to the script in the same change.
 
-**All fifteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All sixteen belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists fifteen objects, not fifteen values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists sixteen objects, not sixteen values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -107,7 +108,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the fifteen on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the sixteen on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -490,6 +491,17 @@ scripts/vapid-keys.sh production    # a second pair, not the first one again
 
 Then set `push.existingSecret: event-junkie-push` in each cluster's `helm-release.yaml`. The key pair has no expiry. **Replace it only when the private key
 leaks**: a new pair, a patched Secret and a BFF restart.
+
+### `event-junkie-mail-quota` — the read-only key the BFF reads the mail count with
+
+The read-only Scaleway key ([CREDENTIALS.md](../CREDENTIALS.md) #29a) and the project ID, as `api-key` and `project-id`. The BFF reads the month's mail
+count with it every hour, for `ej-mail-quota-high` (#4017). It reads and sends nothing else.
+
+**Production only.** Both clusters send from one Scaleway project, so one cluster reading the count is enough. The chart sets the two variables and opens
+egress to the Scaleway API only when `mailQuota.existingSecret` names this Secret. Without it the BFF builds no reader, and the gauges stay at 0.
+
+`scripts/cluster-secrets.sh production` creates it from the Keychain items `event-junkie-tem-read-key` and `event-junkie-scaleway-project-id`. **A
+rotation** is a new key in the console, a new Keychain item, the script, and a BFF restart.
 
 ### Registering Signal — deferred, and not a Secret
 

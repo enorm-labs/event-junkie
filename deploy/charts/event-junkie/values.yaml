@@ -466,6 +466,17 @@ push:
     privateKey: "APP_PUSH_VAPID_PRIVATE_KEY"
     publicKey: "APP_PUSH_VAPID_PUBLIC_KEY"
 
+# mailQuota.existingSecret names the hand-made Secret with the read-only Scaleway key and the project ID (#4017).
+# Set means the BFF reads the month's mail count hourly for `ej-mail-quota-high`. Both clusters send from one project,
+# so only production sets it. Empty means no reader and no egress to the Scaleway API. mailQuota.limit is the quota
+# that stops sending, which the API does not return: ADR-054's 10,000, raised with the quota.
+mailQuota:
+  existingSecret: ""
+  secretKeys:
+    apiKey: "api-key"
+    projectId: "project-id"
+  limit: 10000
+
 networkPolicy:
   enabled: true
   # networkPolicy.databaseCidr is the /32 of `postgres_ip`. Required when enabled, and SEPARATELY FROM
@@ -534,6 +545,18 @@ networkPolicy:
     # networkPolicy.pushEgress lets the BFF reach the browsers' push services (ADR-055), rendered only while
     # `push.existingSecret` is set. Google, Mozilla, Apple and Microsoft publish no stable range, so the internet
     # minus the private ranges, on 443 alone. The BFF itself refuses any host but those four (PushEndpoints).
+    enabled: true
+    ports:
+      - 443
+    exceptCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+      - "169.254.0.0/16"
+  scalewayApiEgress:
+    # networkPolicy.scalewayApiEgress lets the BFF read the mail count from the Scaleway API, rendered only while
+    # `mailQuota.existingSecret` is set. Scaleway publishes no stable range, so the internet minus the private ranges,
+    # on 443 alone.
     enabled: true
     ports:
       - 443

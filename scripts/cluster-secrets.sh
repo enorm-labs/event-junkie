@@ -100,6 +100,9 @@ spec() {
     echo "event-junkie event-junkie-discogs APP_DISCOGS_CONSUMER_SECRET kc:discogs-consumer-secret"
     if [ "$ENV" = production ]; then
         echo "event-junkie event-junkie-instagram APP_INSTAGRAM_ACCESS_TOKEN kc:instagram-token"
+        # Production only: both clusters send from one Scaleway project, so one cluster reads its count (#4017).
+        echo "event-junkie event-junkie-mail-quota api-key kc:event-junkie-tem-read-key"
+        echo "event-junkie event-junkie-mail-quota project-id kc:event-junkie-scaleway-project-id"
     fi
 }
 

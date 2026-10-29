@@ -157,6 +157,8 @@ next evaluation if its condition is true when the apply runs (#3445). `test_appl
 | `ej-signin-abuse`              | more than 50 sign-in link requests were refused with a 429 in an hour ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))            | —                  |
 | `ej-account-cleanup-failing`   | the daily account cleanup had a failed step or a refused warning in 24 hours ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))     | —                  |
 | `ej-account-cleanup-stale`     | the daily account cleanup has not ended a clean pass in 26 hours ([#4034](https://github.com/enorm-labs/event-junkie/issues/4034))                 | —                  |
+| `ej-mail-quota-high`           | the Scaleway project has sent 80 % of the month's mail quota ([#4017](https://github.com/enorm-labs/event-junkie/issues/4017))                     | —                  |
+| `ej-mail-quota-stale`          | the BFF has not read the Scaleway mail count in 26 hours ([#4017](https://github.com/enorm-labs/event-junkie/issues/4017))                         | —                  |
 | `ej-rate-limit-storm`          | Traefik's rate limits rejected more than 100 requests in 15 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455))              | —                  |
 | `ej-4xx-flood`                 | client errors other than 429 and 499 average more than 5 a second for 30 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455)) | —                  |
 

@@ -102,6 +102,23 @@ spec:
                   key: {{ .secretKeys.publicKey | quote }}
             {{- end }}
             {{- end }}
+            {{- with .Values.mailQuota }}
+            {{- if .existingSecret }}
+            {{- /* Without the key the BFF builds no quota reader and starts anyway (#4017). */}}
+            - name: APP_MAIL_QUOTA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | quote }}
+                  key: {{ .secretKeys.apiKey | quote }}
+            - name: APP_MAIL_QUOTA_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | quote }}
+                  key: {{ .secretKeys.projectId | quote }}
+            - name: APP_MAIL_QUOTA_LIMIT
+              value: {{ .limit | quote }}
+            {{- end }}
+            {{- end }}
             {{- if and .Values.images.enabled .Values.images.serving.enabled }}
             {{- /* The half of ADR-019 a visitor sees: the API hands out a path on our own origin and the
                browser stops contacting the venue (#792). Needs `images.enabled` too, since there is
