@@ -58,6 +58,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "pauken & planeten",
         "maël & jonas",
         "mael & jonas",
+        // The Persian pop duo Uber Eats Music Hall co-bills with Andy as `Andy, Kamran & Hooman` (event 11866).
+        "kamran & hooman",
         "nie & nimmer",
         // A project whose name holds a padded `meets`, so [splitOnMeets] must leave it whole (#3573).
         "where the river meets the sea",

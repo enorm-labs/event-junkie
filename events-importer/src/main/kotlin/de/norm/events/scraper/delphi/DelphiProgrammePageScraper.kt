@@ -272,9 +272,20 @@ private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Elektronische Musik")
 
 /**
  * The part of [title] that bills an act: `"Delphis Orakel – Stroum"` is the house's bar series presenting
- * Stroum, and only Stroum is billed (#2072).
+ * Stroum, and only Stroum is billed (#2072). A band's `– All Stars` line-up label goes too: the act is the band.
  */
-internal fun delphiBilledTitle(title: String): String = title.replaceFirst(HOUSE_SERIES, "").ifBlank { title }
+internal fun delphiBilledTitle(title: String): String =
+    title
+        .replaceFirst(HOUSE_SERIES, "")
+        .replaceFirst(ALL_STARS_LABEL, "")
+        .replace(SATELLITES_TYPO) { if (it.value == it.value.uppercase()) "SATELLITES" else "Satellites" }
+        .ifBlank { title }
+
+/** The house misspells the Savoy Satellites in its titles; the band's own text on the production page does not. */
+private val SATELLITES_TYPO = Regex("""\bSattelites\b""", RegexOption.IGNORE_CASE)
+
+/** The formation a band brings, between its name and the guest: `SAVOY SATTELITES – All Stars feat. Emil Wahlgren`. */
+private val ALL_STARS_LABEL = Regex("""\s+[–—-]\s*all[\s-]?stars\b""", RegexOption.IGNORE_CASE)
 
 /** The house's own series in front of the act it presents: `"Delphis Orakel – Stroum"`. */
 private val HOUSE_SERIES = Regex("""^\s*delphis\s+orakel\s*[–—-]\s*""", RegexOption.IGNORE_CASE)

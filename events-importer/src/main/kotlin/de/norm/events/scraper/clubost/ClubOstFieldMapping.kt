@@ -32,6 +32,20 @@ internal fun withoutPlaceholder(text: String?): String? =
         ?.takeIf { it.isNotBlank() && it.lowercase() !in PLACEHOLDER_VALUES }
 
 /**
+ * [title] split from the door note the venue prints in front of it in square brackets:
+ * `[FREE ENTRY TILL 00:30] SAVORY` (event 11876) is the night `SAVORY` and the note `FREE ENTRY TILL
+ * 00:30`. The note is an entry condition, kept as the price note. Unchanged when nothing follows
+ * the brackets.
+ */
+internal fun splitDoorNote(title: String): Pair<String, String?> {
+    val match = DOOR_NOTE.find(title) ?: return title to null
+    val rest = title.substring(match.range.last + 1).trim()
+    return if (rest.isBlank()) title to null else rest to match.groupValues[1].trim()
+}
+
+private val DOOR_NOTE = Regex("""^\s*\[([^\]]+)]\s*""")
+
+/**
  * Month names as Django's `N` format renders them: AP-style, shortening only the seven long
  * names and leaving March through July spelled out. Keyed without the trailing period; `Sept.`
  * is AP's four-letter form, and `Sep.` is accepted too. The English rendering deliberately: the

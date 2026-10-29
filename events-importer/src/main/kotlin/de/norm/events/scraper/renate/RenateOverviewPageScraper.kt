@@ -34,7 +34,8 @@ import java.time.MonthDay
  * Each night is a `.prog-row`: a `.prog-day` weekday, a year-less `.prog-date`, a
  * `.prog-title`, the spaces in use (`.cat-btn`), a Resident Advisor `.ticket-link`, and a
  * `.prog-text` block with the per-floor lineup. The trailing `.prog-row.blog-row` is a news
- * post, excluded by requiring a date.
+ * post, excluded by requiring a date. A dated row that announces a series (`OUR HOUSE IS YOUR
+ * HOUSE: Free winter events`, event 11884) bills nobody and names no night, so it is skipped too.
  *
  * **The lineup needs two guards, because the venue reuses `<strong>` for prose.** A `<strong>`
  * heading opens a floor only when it starts with one of the actual floor names
@@ -94,6 +95,11 @@ class RenateOverviewPageScraper(
             return null
         }
         val lines = row.selectFirst(".prog-text")?.let(::lineupLines).orEmpty()
+        val artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+        if (artists.isEmpty() && SERIES_ANNOUNCEMENT.containsMatchIn(title)) {
+            logger.info { "Renate row '$title' announces a series, not a night, skipping" }
+            return null
+        }
 
         return ScrapedEvent(
             title = title,
@@ -109,7 +115,7 @@ class RenateOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = row.hrefAt(".ticket-link"),
-            artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = ArtistRole.DJ) }
+            artists = artists
         )
     }
 
@@ -267,6 +273,9 @@ class RenateOverviewPageScraper(
         const val MIN_BARE_LINEUP_LINES = 3
 
         val SENTENCE_END = Regex("""[.!?:,]$""")
+
+        /** A title naming events in the plural: a programme announcement, never one night. */
+        val SERIES_ANNOUNCEMENT = Regex("""\b(?:events|veranstaltungen)\b""", RegexOption.IGNORE_CASE)
 
         /** A `hosted by …` credit for the collective curating a floor. */
         val HOST_CREDIT = Regex("""\bhosted\s+by\b""", RegexOption.IGNORE_CASE)

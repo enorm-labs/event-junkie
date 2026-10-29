@@ -11,6 +11,14 @@ import java.time.LocalTime
  */
 class ClubOstFieldMappingTest {
     @Test
+    fun `splitDoorNote moves a bracketed entry note out of the title`() {
+        // Event 11876.
+        splitDoorNote("[FREE ENTRY TILL 00:30] SAVORY") shouldBe ("SAVORY" to "FREE ENTRY TILL 00:30")
+        splitDoorNote("Slave to the rave") shouldBe ("Slave to the rave" to null)
+        splitDoorNote("[TBA]") shouldBe ("[TBA]" to null)
+    }
+
+    @Test
     fun `parseClubOstDate reads the abbreviated month names Django shortens`() {
         parseClubOstDate("Jan. 9, 2027") shouldBe LocalDate.of(2027, 1, 9)
         parseClubOstDate("Aug. 7, 2026") shouldBe LocalDate.of(2026, 8, 7)

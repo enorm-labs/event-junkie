@@ -7,6 +7,7 @@ import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hostedActsFromTitle
@@ -43,6 +44,7 @@ import java.time.MonthDay
  * block under the same rule is the night's side programme and bills nobody. A summary
  * with no rule is a description — a garden evening, a film night, a residency's schedule notes
  * — and yields **no** artists, rather than minting "free entry till 20:00" or a film synopsis.
+ * A sentence under a floor ends that floor: Hot Mess bills one DJ, then its blurb (event 11857).
  *
  * Dates carry a weekday but no year, so the year comes from the weekday ([inferYearForWeekday]).
  *
@@ -153,6 +155,10 @@ class KaterOverviewPageScraper(
                     expectFloorName = false
                 }
 
+                stage != null && readsAsProse(line) -> {
+                    stage = null
+                }
+
                 // Two kinds of line inside a floor block that bill nobody: `+ Darkroom` and
                 // `+ Daytime Market`, what else the floor offers (#1564); and `Saturday by Muting
                 // The Noise`, a second floor's own heading printed without the floor rule above it,
@@ -164,6 +170,14 @@ class KaterOverviewPageScraper(
         }
         return artists.distinctBy { it.name.lowercase() to it.stage }
     }
+
+    /**
+     * A sentence, or an act piece too long to be a name: the floor's acts are over and its blurb begins.
+     * A short line keeps a full stop as a name does (`arkadiusz.` at FOREVER 25).
+     */
+    private fun readsAsProse(line: String): Boolean =
+        (SENTENCE_END.containsMatchIn(line) && line.split(WHITESPACE).size >= MIN_SENTENCE_WORDS) ||
+            splitActs(line).any { it.split(WHITESPACE).size > MAX_ACT_WORDS }
 
     /** The lines that are not part of a floor block — the event's own blurb, if it has one. */
     private fun describe(body: List<String>): String {
@@ -251,6 +265,14 @@ class KaterOverviewPageScraper(
          */
         val WEEKDAY_HEADING =
             Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day(?:\s+by\s+\S|(?:\s+night)?\s*$)""", RegexOption.IGNORE_CASE)
+
+        val SENTENCE_END = Regex("""[.!?]$""")
+
+        /** Longest an act may be before it reads as prose rather than a name, as at Renate. */
+        const val MAX_ACT_WORDS = 6
+
+        /** Fewest words in a line ending in a full stop before it reads as a sentence. */
+        const val MIN_SENTENCE_WORDS = 4
 
         /** A bracketed performance-format marker appended to an act ("Vovolectr0 [LIVE]"). */
         val FORMAT_MARKER = Regex("""\s*\[[^\]]*]\s*$""")

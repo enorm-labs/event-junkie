@@ -99,6 +99,18 @@ class SoulcatApiScraperTest {
     }
 
     @Test
+    fun `keeps the DJ in an alias that carries it`() {
+        // Event 7255; the operator confirmed the alias.
+        val night =
+            """{ "slug": "dj-kassettendeck-soul-rnb-vinyl-only", "title": "DJ Kassettendeck – Soul & RnB –> VINYL ONLY!",
+                 "start_date": "2026-10-29 18:30:00", "url": "https://soulcat-berlin.com/events/dj-kassettendeck-soul-rnb-vinyl-only/" }"""
+
+        val page = SoulcatApiScraper().scrapePage("""{ "events": [$night] }""")
+
+        page.events.single().artists shouldContainExactly listOf(ScrapedArtist(name = "DJ Kassettendeck", role = ArtistRole.DJ))
+    }
+
+    @Test
     fun `keeps apart two dates of a recurring night that share one slug`() {
         val recurring =
             listOf("2026-10-20", "2026-10-27").joinToString(",") { date ->

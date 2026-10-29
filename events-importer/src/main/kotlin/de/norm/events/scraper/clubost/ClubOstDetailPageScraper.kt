@@ -58,7 +58,8 @@ class ClubOstDetailPageScraper {
             return null
         }
 
-        val cleanedTitle = content.textAt("h1")?.let(::cleanEventTitle)
+        val (heading, doorNote) = splitDoorNote(content.textAt("h1").orEmpty())
+        val cleanedTitle = heading.takeIf { it.isNotBlank() }?.let(::cleanEventTitle)
 
         val title = cleanedTitle?.text
         if (title.isNullOrBlank()) {
@@ -77,6 +78,7 @@ class ClubOstDetailPageScraper {
         return ScrapedEvent(
             title = title,
             soldOut = cleanedTitle.soldOut,
+            priceNote = doorNote,
             eventDate = eventDate,
             startTime = startTime,
             endDate = endTime?.let { endOn(eventDate, startTime, it) },
