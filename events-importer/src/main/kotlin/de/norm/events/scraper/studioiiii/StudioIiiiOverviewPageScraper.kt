@@ -36,8 +36,9 @@ import java.time.MonthDay
  *
  * Line-up lines are split into DJs. A line with "by" credits an installation or a curator, and a
  * ticket line is a notice: both become the description. A credit line still bills the names after
- * `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that sentence. A night with only
- * credits is an exhibition. A note the page's editor forgot in the line-up bills nobody.
+ * `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that sentence, and the names between
+ * `JOINED BY` and `ON THE DECKS`. A title line `INVITES <act>` bills that act first. A night with
+ * only credits is an exhibition. A note the page's editor forgot in the line-up bills nobody.
  *
  * Accepted limitation: `and` always splits a set list, so an act named with one (`Sun and Moon`)
  * bills as two unless it is a known single act. The venue joins its acts with `AND` in prose.
@@ -87,7 +88,8 @@ class StudioIiiiOverviewPageScraper(
                 .orEmpty()
                 .filterNot { SAVE_THE_DATE.matches(it) }
         val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) }
-        val djs = (lineupActs(lineup) + notes.flatMap(::setActs)).distinctBy { it.name }
+        val invited = lineupActs(titleLines.mapNotNull { INVITES.matchEntire(it.trim())?.groupValues?.get(1) })
+        val djs = (invited + lineupActs(lineup) + notes.flatMap(::setActs)).distinctBy { it.name.lowercase() }
         val cuedType = cuedType(title, notes, djs)
         return ScrapedEvent(
             title = title,
@@ -158,19 +160,28 @@ class StudioIiiiOverviewPageScraper(
     /**
      * The acts a credit line names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`: `… AND DJ SETS BY
      * DOUNIA AND MATHIS AND DJ SALIVA.` (event 11928). The list ends at the sentence's stop, and a
-     * later credit in it, `…, AN INSTALLATION BY X`, is cut off with its separator.
+     * later credit in it, `…, AN INSTALLATION BY X`, is cut off with its separator. `JOINED BY` bills
+     * only up to `ON THE DECKS` (event 11930), and nobody without it.
      */
     private fun setActs(line: String): List<ScrapedArtist> =
         SET_CREDIT.findAll(line).toList().flatMap { credit ->
             val tail = line.substring(credit.range.last + 1)
             val sentence = tail.substring(0, SENTENCE_END.find(tail)?.range?.first ?: tail.length)
-            val names =
-                CREDIT.find(sentence)?.let { nested ->
-                    val cut = SET_SEPARATOR.findAll(sentence.substring(0, nested.range.first)).lastOrNull()
-                    sentence.substring(0, cut?.range?.first ?: 0)
-                } ?: sentence
             val role = if (credit.groupValues[1].equals("LIVE", ignoreCase = true)) ArtistRole.LIVE else ArtistRole.DJ
-            lineupActs(listOf(names), role)
+            listedNames(sentence, joined = credit.groups[JOINED_GROUP] != null)?.let { lineupActs(listOf(it), role) }.orEmpty()
+        }
+
+    private fun listedNames(
+        sentence: String,
+        joined: Boolean
+    ): String? =
+        if (joined) {
+            ON_THE_DECKS.find(sentence)?.let { sentence.substring(0, it.range.first) }
+        } else {
+            CREDIT.find(sentence)?.let { nested ->
+                val cut = SET_SEPARATOR.findAll(sentence.substring(0, nested.range.first)).lastOrNull()
+                sentence.substring(0, cut?.range?.first ?: 0)
+            } ?: sentence
         }
 
     /** A line in a bracket of its own, with a closing stop, bills what the bracket holds: `(A FEAT. B & C).` (event 11929). */
@@ -211,8 +222,11 @@ class StudioIiiiOverviewPageScraper(
         const val TITLE_SEPARATOR = " – "
         val CREDIT = Regex("""\bby\b""", RegexOption.IGNORE_CASE)
 
-        /** The credits that name acts; group 1 tells a live set from a DJ set. */
-        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+SETS?|MUSIC)\s+BY\s+""", RegexOption.IGNORE_CASE)
+        /** The credits that name acts; group 1 tells a live set from a DJ set, and group 2 is a `JOINED BY` that needs [ON_THE_DECKS]. */
+        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+SETS?|MUSIC|(JOINED))\s+BY\s+""", RegexOption.IGNORE_CASE)
+        const val JOINED_GROUP = 2
+        val ON_THE_DECKS = Regex("""\s+ON\s+THE\s+DECKS\b""", RegexOption.IGNORE_CASE)
+        val INVITES = Regex("""INVITES\s+(.+)""", RegexOption.IGNORE_CASE)
 
         /** The stop that ends a sentence: after a word of two letters that is not `FEAT.`, `JR.` and the like; or a colon or `//`. */
         val SENTENCE_END = Regex("""(?<=\p{L}{2})(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$)|[:;]|\s//\s""", RegexOption.IGNORE_CASE)
@@ -220,7 +234,7 @@ class StudioIiiiOverviewPageScraper(
         val NOTICE = Regex("""^(?:tickets?|free|entry|doors?|sold\s+out|cancell?ed)\b""", RegexOption.IGNORE_CASE)
         val SAVE_THE_DATE = Regex("""save\s+the\s+date\.?""", RegexOption.IGNORE_CASE)
         val EXHIBITION = Regex("""\b(?:installations?|exhibition)\b""", RegexOption.IGNORE_CASE)
-        val ACT_SEPARATOR = Regex("""\s+/\s+|\s*,\s*|\s+(?:feat\.?|ft\.|featuring)\s+""", RegexOption.IGNORE_CASE)
+        val ACT_SEPARATOR = Regex("""\s+/\s+|\s*,\s*|\s+(?:feat\.|ft\.|featuring)\s+""", RegexOption.IGNORE_CASE)
 
         /** A stop that ends an initial, a dotted name or an abbreviation, `J.`, `A.A.`, `Jr.`, and stays. */
         val ABBREVIATION_END = Regex("""(?:^|[\s.(])(?:\p{L}|jr|sr|dr|st|mr|mrs|ms|bros|feat|ft|vs|inc|co)\.$|\.\S+\.$""", RegexOption.IGNORE_CASE)
