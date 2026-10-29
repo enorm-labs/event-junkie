@@ -701,7 +701,14 @@ The production rebuild in #4125 met each of these. Read them before the first co
 2. Apply with `infra/apply.sh <env> --allow-replace`. It probes `check-capacity.sh` first, because a server type that Hetzner cannot place again leaves the
    site down. It also applies the file it planned, so no second plan can drop the flags.
 
-**After the apply:**
+**After the apply, one command runs the steps below and checks each one:**
+
+```sh
+scripts/rebuild-node.sh production                 # boot access database secrets backups flux ready alerts verify
+scripts/rebuild-node.sh production --from flux     # again from one step; every step is safe to repeat
+```
+
+The list stays as the explanation of each step:
 
 1. In a worktree, copy `terraform.tfvars` from the main checkout first. It is gitignored, and `tofu` asks for every variable without it.
 2. Open `admin_cidrs` for the address SSH really leaves from. A corporate proxy shows a different address to `curl`. Turn the proxy off first.
@@ -764,7 +771,20 @@ infra/apply.sh staging -var 'next_pair={k3s_server_type="cx33"}'                
 - **Pass the whole `next_pair` on every apply until the cutover,** with every type that is held. An apply without one of them plans to destroy that node. `apply.sh` refuses that without `--allow-replace`.
 - `tofu output next_pair` prints the temporary IPv4. It is the WireGuard endpoint of the new node until the cutover.
 
-The build on the new pair (#4134) and the cutover are not scripted yet. The plan is in #4128.
+**Then build the new cluster while the running one serves:**
+
+```sh
+scripts/rebuild-node.sh production --next          # boot tls access secrets flux ready verify tunnel
+```
+
+1. **It needs the running tunnel up.** The boot check and the new node's WireGuard key go through `ops@10.10.0.1` over the private network, so
+   `admin_cidrs` stays closed.
+2. **The new node is `10.10.0.1` in the tunnel too,** so only one tunnel is up at a time. `cluster-access.sh --next` writes `~/.wireguard/<env>-next.conf`,
+   `~/.ssh/known_hosts.<env>-next` and the kube context `event-junkie-<env>-next`. The last step brings the running tunnel back up.
+3. **The app does not run on the new cluster before the cutover.** The script creates its HelmRelease with `suspend: true` before Flux applies it. Otherwise
+   the BFF's jobs would send every push and e-mail twice, and two importers would run against one database (ADR-008).
+4. **The cutover does the rest.** It sets the database roles and the wal-g credential, and it pushes the alerts and dashboards. It also creates
+   `github-dispatch` and resumes the app. The cutover is not scripted yet. The plan is in #4128.
 
 ### Applying a `cloud-init` fix without rebuilding
 

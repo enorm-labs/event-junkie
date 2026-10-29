@@ -4,10 +4,15 @@
 #
 # Usage:
 #   scripts/cluster-access.sh <staging|production> [--server-key <key>] [--merge]
+#   scripts/cluster-access.sh <staging|production> --next --endpoint <ip> [--db-node <ip>] [--server-key <key>] [--merge]
 #
 #   --server-key <key>   the node's WireGuard public key, when neither the tunnel nor the public
 #                        IPv4 can fetch it (KeePass #18 keeps it beside the client config)
 #   --merge              also add the context to ~/.kube/config when it is not there yet
+#   --next               the second pair of #4128, built beside the running one: its own client config
+#                        `<env>-next.conf`, known_hosts file and kube context `event-junkie-<env>-next`
+#   --endpoint <ip>      the new node's temporary IPv4; writes it into `<env>-next.conf`
+#   --db-node <ip>       the new database node's private address, when there is one
 #
 # After a rebuild the node has a new WireGuard server key, new SSH host keys and a new cluster CA, and
 # every Mac holds the old ones. This replaces each one that changed and leaves the rest: a second run
@@ -16,6 +21,11 @@
 # It needs a client config that already exists, `~/.wireguard/<env>.conf`, because a Mac without one
 # has no peer on the node. Adding a peer is a hand step: CLUSTER_BOOTSTRAP.md § Adding a Mac to the
 # tunnel.
+#
+# Both nodes are the same address in the tunnel, so only one of `<env>.conf` and `<env>-next.conf`
+# is up at a time: this takes the other one down first, and says so. The first `--next` run copies
+# the interface of `<env>.conf` and needs `--server-key`, which `rebuild-node.sh` reads through the
+# running node.
 #
 # `KUBECONFIG` is unset and every `kubectl config` call names its file: during the production
 # rebuild an exported `KUBECONFIG` sent three deletes meant for ~/.kube/config to the new file.
@@ -45,8 +55,20 @@ esac
 shift
 SERVER_KEY=""
 MERGE=0
+NEXT=0
+ENDPOINT=""
+DB_NODE_ARG=""
 while [ $# -gt 0 ]; do
     case "$1" in
+        --next)
+            NEXT=1
+            shift
+            ;;
+        --endpoint | --db-node)
+            [ $# -ge 2 ] || die "$1 needs an address"
+            if [ "$1" = --endpoint ]; then ENDPOINT="$2"; else DB_NODE_ARG="$2"; fi
+            shift 2
+            ;;
         --server-key)
             [ $# -ge 2 ] || die "--server-key needs a value"
             SERVER_KEY="$2"
@@ -63,19 +85,48 @@ done
 unset KUBECONFIG
 umask 077
 
-NAME="event-junkie-$ENV"
-WG_DIR="${EJ_WG_DIR:-$HOME/.wireguard}"
-CONF="$WG_DIR/$ENV.conf"
-SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
+[ "$NEXT" = 1 ] || [ -z "$ENDPOINT$DB_NODE_ARG" ] || die "--endpoint and --db-node go with --next"
+IFACE="$ENV"
+OTHER="$ENV-next"
 KNOWN_HOSTS="$HOME/.ssh/known_hosts"
+if [ "$NEXT" = 1 ]; then
+    IFACE="$ENV-next"
+    OTHER="$ENV"
+    KNOWN_HOSTS="$HOME/.ssh/known_hosts.$IFACE"
+fi
+NAME="event-junkie-$IFACE"
+WG_DIR="${EJ_WG_DIR:-$HOME/.wireguard}"
+CONF="$WG_DIR/$IFACE.conf"
+SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
 KUBE_FILE="$HOME/.kube/$NAME"
 KUBE_CONFIG="$HOME/.kube/config"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 # Production's database node has no tunnel address and no public one; it is reached through the k3s node.
 DB_NODE=""
 [ "$ENV" = production ] && DB_NODE=10.0.1.20
+[ "$NEXT" = 0 ] || DB_NODE="$DB_NODE_ARG"
 
+if [ "$NEXT" = 1 ] && [ ! -f "$CONF" ]; then
+    BASE="$WG_DIR/$ENV.conf"
+    [ -f "$BASE" ] || die "no $BASE to copy the interface from: CLUSTER_BOOTSTRAP.md § Adding a Mac to the tunnel"
+    [ -n "$SERVER_KEY" ] && [ -n "$ENDPOINT" ] || die "the first --next run needs --server-key and --endpoint"
+    port="$(awk '/^[[:space:]]*Endpoint/ { sub(/.*:/, ""); print; exit }' "$BASE")"
+    awk -v key="$SERVER_KEY" -v ep="$ENDPOINT:${port:-51820}" '
+        /^\[/ { peer = ($0 ~ /^\[Peer\]/) }
+        peer && /^[[:space:]]*PublicKey/ { print "PublicKey  = " key; next }
+        peer && /^[[:space:]]*Endpoint/ { print "Endpoint   = " ep; next }
+        { print }
+    ' "$BASE" >"$CONF"
+    echo "client config: $CONF written from $BASE, endpoint $ENDPOINT"
+fi
 [ -f "$CONF" ] || die "no $CONF. This Mac has no peer on the $ENV node yet: CLUSTER_BOOTSTRAP.md § Adding a Mac to the tunnel"
+
+if [ -n "$ENDPOINT" ] && ! grep -Eq "^[[:space:]]*Endpoint[[:space:]]*=[[:space:]]*$ENDPOINT:" "$CONF"; then
+    cp -p "$CONF" "$CONF.bak.$STAMP"
+    awk -v ip="$ENDPOINT" '/^[[:space:]]*Endpoint/ { n = split($0, a, ":"); print "Endpoint   = " ip ":" a[n]; next } { print }' "$CONF" >"$CONF.new"
+    mv "$CONF.new" "$CONF"
+    echo "client config: endpoint set to $ENDPOINT, old file kept as $CONF.bak.$STAMP"
+fi
 
 PUBLIC_IP="$(awk '/^[[:space:]]*Endpoint/ { sub(/^[^=]*=[[:space:]]*/, ""); sub(/:[0-9]+[[:space:]]*$/, ""); print; exit }' "$CONF")"
 [ -n "$PUBLIC_IP" ] || die "$CONF has no Endpoint line"
@@ -83,16 +134,18 @@ PUBLIC_IP="$(awk '/^[[:space:]]*Endpoint/ { sub(/^[^=]*=[[:space:]]*/, ""); sub(
 node_ssh() {
     local host="$1"
     shift
-    ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5 "ops@$host" "$@"
+    ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5 -o UserKnownHostsFile="$KNOWN_HOSTS" "ops@$host" "$@"
 }
 
-tunnel_up() {
+# $1 is the interface, `<env>` or `<env>-next`; wg-quick names it after the config file.
+iface_up() {
     if [ -n "${EJ_WG_RUN_DIR:-}" ] || [ "$(uname -s)" = Darwin ]; then
-        [ -e "${EJ_WG_RUN_DIR:-/var/run/wireguard}/$ENV.name" ]
+        [ -e "${EJ_WG_RUN_DIR:-/var/run/wireguard}/$1.name" ]
     else
-        ip link show "$ENV" >/dev/null 2>&1
+        ip link show "$1" >/dev/null 2>&1
     fi
 }
+tunnel_up() { iface_up "$IFACE"; }
 
 node_answers() {
     local _
@@ -129,6 +182,12 @@ refresh_host_key() {
 }
 
 scan() { { ssh-keyscan -T 5 -t ed25519 "$1" 2>/dev/null || true; } | awk '!/^#/ { print; exit }'; }
+
+# The other tunnel answers on the same address, so a key or a host key read through it would be the wrong node's.
+if iface_up "$OTHER"; then
+    echo "tunnel $OTHER: up on the same address, taking it down first"
+    sudo wg-quick down "$WG_DIR/$OTHER.conf"
+fi
 
 # --- 1. The server key ----------------------------------------------------------------------------
 

@@ -50,7 +50,8 @@ hostkey() {
 # The tunnel answers only when it is up with the key the node really has.
 cat >"$BIN/ping" <<'EOF'
 #!/usr/bin/env bash
-[ -e "$EJ_WG_RUN_DIR/production.name" ] && cmp -s "$FAKE_STATE/tunnel-key" "$FAKE_STATE/server-key"
+{ [ -e "$EJ_WG_RUN_DIR/production.name" ] || [ -e "$EJ_WG_RUN_DIR/production-next.name" ]; } &&
+    cmp -s "$FAKE_STATE/tunnel-key" "$FAKE_STATE/server-key"
 EOF
 cat >"$BIN/sudo" <<'EOF'
 #!/usr/bin/env bash
@@ -251,6 +252,31 @@ if run; then fail "8: ran without SSH"; elif grep -q 'ssh-add' "$WORK/out"; then
 else fail "8: no hint in: $(cat "$WORK/out")"; fi
 if [ ! -e "$WORK/run/production.name" ]; then pass "8: the tunnel it brought up is down again"; else fail "8: left the tunnel up"; fi
 rm -f "$STATE/ssh-refused"
+
+# --- 9. --next: the first run needs the server key and the endpoint -------------------------------------
+
+if run --next --endpoint 203.0.113.20; then fail "9: --next ran without --server-key"; elif grep -q -- '--server-key and --endpoint' "$WORK/out"; then
+    pass "9: first --next run names --server-key"
+else fail "9: no hint in: $(cat "$WORK/out")"; fi
+
+# --- 10. --next beside a running tunnel: its own config, known_hosts and context ----------------------------
+
+wg-quick up "$HOME/.wireguard/production.conf"
+cp "$HOME/.ssh/known_hosts" "$WORK/known_hosts.before"
+echo "NEXTKEY=" >"$STATE/server-key"
+hostkey next-10.10.0.1 >"$STATE/hostkey-10.10.0.1"
+k3s_yaml next
+if run --next --endpoint 203.0.113.20 --server-key NEXTKEY= --merge; then pass "10: --next succeeds"; else fail "10: exit $?: $(cat "$WORK/out")"; fi
+NEXT_CONF="$HOME/.wireguard/production-next.conf"
+if grep -q 'taking it down first' "$WORK/out" && [ ! -e "$WORK/run/production.name" ]; then pass "10: the running tunnel went down first"; else fail "10: running tunnel: $(cat "$WORK/out")"; fi
+if grep -q '^PublicKey  = NEXTKEY=$' "$NEXT_CONF" && grep -q '^Endpoint   = 203.0.113.20:51820$' "$NEXT_CONF" &&
+    grep -q '^PrivateKey = CLIENTPRIVATEKEY=$' "$NEXT_CONF"; then pass "10: next config written from the running one"; else fail "10: next config: $(cat "$NEXT_CONF")"; fi
+if grep -q "THIRDKEY=" "$HOME/.wireguard/production.conf"; then pass "10: running config untouched"; else fail "10: running config changed"; fi
+if cmp -s "$HOME/.ssh/known_hosts" "$WORK/known_hosts.before"; then pass "10: known_hosts untouched"; else fail "10: known_hosts changed"; fi
+if ssh-keygen -F 10.10.0.1 -f "$HOME/.ssh/known_hosts.production-next" | grep -q "$(cat "$STATE/hostkey-10.10.0.1")"; then pass "10: next host key in its own file"; else fail "10: no next host key"; fi
+next_ca() { kubectl --kubeconfig "$1" config view --raw -o 'jsonpath={.clusters[?(@.name=="event-junkie-production-next")].cluster.certificate-authority-data}' | base64 -d; }
+if [ "$(next_ca "$HOME/.kube/event-junkie-production-next")" = CA-next ]; then pass "10: next kubeconfig file"; else fail "10: next kubeconfig: $(next_ca "$HOME/.kube/event-junkie-production-next")"; fi
+if [ "$(next_ca "$HOME/.kube/config")" = CA-next ] && [ "$(ca "$HOME/.kube/config")" = CA-new ]; then pass "10: both contexts in ~/.kube/config"; else fail "10: ~/.kube/config contexts"; fi
 
 if [ "$FAILURES" -gt 0 ]; then
     echo "$FAILURES assertion(s) failed" >&2
