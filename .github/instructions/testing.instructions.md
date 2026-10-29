@@ -55,7 +55,8 @@ Extend what is already here rather than repeating its boilerplate.
   from `e2e-k3d` in `dast.yml` (#1699). **The project exists only when `E2E_BASE_URL` is set**, or a
   bare `npm run test:e2e` would run it against a runner with no cluster behind it. A spec belongs there
   only when it asserts something a deployment has and a dev server does not — nginx serving the bundle,
-  Traefik's middlewares and the CSP, the SPA fallback, the rows `fixtures/events.sql` seeded (#272).
+  Traefik's middlewares and the CSP, the SPA fallback, the rows `fixtures/events.sql` seeded (#272),
+  and the signed-in accounts `fixtures/accounts.sql` seeded, through their session cookie (#4106).
   **A `page.route` under `real-data/` fails `npm run lint`** (`no-restricted-syntax`, scoped to that
   directory), because it would put a mock back in front of the thing under test. Chromium only there: what is under test is the deployment, not five engines.
 - **`/verify` is chromium desktop and will not see a mobile break** — a header nav overflowing 390 px pushed a control off-screen once. When touching the
