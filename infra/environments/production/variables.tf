@@ -97,8 +97,9 @@ variable "publish_dns" {
 variable "next_pair" {
   description = "A second pair of nodes to cut over to. Pass it with -var for that apply only. See the module's variable of the same name."
   type = object({
-    k3s_server_type      = string
+    k3s_server_type      = optional(string)
     postgres_server_type = optional(string)
+    colocated            = optional(bool)
     k3s_private_ip       = optional(string)
     postgres_private_ip  = optional(string)
   })

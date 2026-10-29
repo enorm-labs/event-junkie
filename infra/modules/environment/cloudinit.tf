@@ -90,16 +90,18 @@ locals {
   k3s_nodes = merge(
     {
       current = {
-        private_ip    = var.k3s_private_ip
-        postgres_ip   = local.postgres_ip
-        boot_postgres = !local.dedicated_postgres
+        private_ip     = var.k3s_private_ip
+        postgres_ip    = local.postgres_ip
+        ships_postgres = !local.dedicated_postgres
+        boot_postgres  = !local.dedicated_postgres
       }
     },
-    local.next_pair ? {
+    local.next_k3s ? {
       next = {
-        private_ip    = local.next_k3s_private_ip
-        postgres_ip   = local.dedicated_postgres ? local.next_postgres_private_ip : local.next_k3s_private_ip
-        boot_postgres = false
+        private_ip     = local.next_k3s_private_ip
+        postgres_ip    = local.next_colocated ? local.next_k3s_private_ip : local.next_postgres_private_ip
+        ships_postgres = local.next_colocated
+        boot_postgres  = false
       }
     } : {},
   )
@@ -141,7 +143,7 @@ locals {
 
   # Only shipped where the database is on the k3s node: `user_data` is capped at 32 KiB, these two
   # are more than half of what this node renders, and the co-located node is where the cap binds.
-  colocated_postgres_files = local.dedicated_postgres ? [] : [
+  colocated_postgres_files = [
     local.script_file.postgres,
     local.script_file.backups,
   ]
@@ -163,7 +165,7 @@ locals {
       local.script_file.harden,
       local.script_file.wireguard,
       local.script_file.k3s,
-    ], local.colocated_postgres_files)
+    ], node.ships_postgres ? local.colocated_postgres_files : [])
     runcmd = concat(
       local.base_runcmd,
       # WireGuard before k3s: it is how you get back in if anything after it fails.
@@ -187,7 +189,7 @@ locals {
   # As for k3s above: the next node boots without PostgreSQL, which the database cutover starts.
   postgres_nodes = merge(
     { current = { private_ip = var.postgres_private_ip, boot_postgres = true } },
-    local.next_pair && local.dedicated_postgres ? { next = { private_ip = local.next_postgres_private_ip, boot_postgres = false } } : {},
+    local.next_postgres ? { next = { private_ip = local.next_postgres_private_ip, boot_postgres = false } } : {},
   )
 
   postgres_env = { for name, node in local.postgres_nodes : name => <<-EOT

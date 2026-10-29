@@ -321,8 +321,8 @@ have been applied.
 until ./check-capacity.sh staging; do sleep 1800; done && say "staging can be applied"
 ```
 
-**To move to other server types, order the second pair the moment it can be placed:** `infra/order-next-pair.sh production` waits on the advertisement and
-then creates the pair with no prompt, as long as the plan only creates it (#4128). docs/ops/CLUSTER_BOOTSTRAP.md § Building a second pair beside the
+**To move to other server types, order the second pair the moment it can be placed:** `infra/order-next-pair.sh production` orders each server of the pair the
+moment its type is advertised, with a cx43 when cx33 is not for sale, and with no prompt as long as the plan only creates the pair (#4128). docs/ops/CLUSTER_BOOTSTRAP.md § Building a second pair beside the
 running one has the rest.
 
 **A green result means "worth trying", not "will work", and that distinction cost a failed apply on 2026-08-13.** The script reports what Hetzner _advertises_.
