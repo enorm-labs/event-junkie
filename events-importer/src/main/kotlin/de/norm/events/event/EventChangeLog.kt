@@ -19,19 +19,25 @@ class EventChangeLog(
      * Stores one row per tracked field that differs between each stored row and the row written over it.
      *
      * @param pairs each stored row beside the row written over it.
+     * @param previousEventIds for a date move across a re-keyed source id, the removed event's id by the
+     * inserted one's (#4139). The BFF moves the account rows on it to the event that stays.
      * @return how many changes were stored.
      */
-    suspend fun record(pairs: Collection<Pair<EventEntity, EventEntity>>): Int {
+    suspend fun record(
+        pairs: Collection<Pair<EventEntity, EventEntity>>,
+        previousEventIds: Map<Long, Long> = emptyMap()
+    ): Int {
         val rows = pairs.flatMap { (stored, written) -> changesBetween(stored, written) }
         if (rows.isEmpty()) return 0
         template.databaseClient
             .sql(
-                "INSERT INTO $EVENTS_SCHEMA.event_change (event_id, field, old_value, new_value) " +
-                    "SELECT * FROM unnest(:ids::bigint[], :fields::text[], :olds::text[], :news::text[])"
+                "INSERT INTO $EVENTS_SCHEMA.event_change (event_id, field, old_value, new_value, previous_event_id) " +
+                    "SELECT * FROM unnest(:ids::bigint[], :fields::text[], :olds::text[], :news::text[], :previous::bigint[])"
             ).bind("ids", rows.map { it.eventId }.toTypedArray())
             .bind("fields", rows.map { it.field.name }.toTypedArray())
             .bind("olds", rows.map { it.oldValue }.toTypedArray())
             .bind("news", rows.map { it.newValue }.toTypedArray())
+            .bind("previous", rows.map { previousEventIds[it.eventId] }.toTypedArray())
             .fetch()
             .rowsUpdated()
             .awaitFirstOrNull()

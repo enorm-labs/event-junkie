@@ -27,7 +27,7 @@ import java.time.LocalTime
  * `event_change` against a real PostgreSQL (#2725): an insert logs nothing, an update logs each
  * tracked field it moves, a pinned field the source would move logs nothing, an admin edit logs what
  * it pins, and a deleted event takes its changes with it. A source that keys by date logs a move
- * as a removal plus an insert, but not a series or a re-key (#3067).
+ * as a removal plus an insert, naming the removed event (#4139), but not a series or a re-key (#3067).
  */
 class EventChangeLogIntegrationTest : BaseControllerTest() {
     @Autowired
@@ -104,6 +104,16 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
             .awaitFirstOrNull()
             .orEmpty()
 
+    /** Each change's `previous_event_id`, 0 when it has none. */
+    private suspend fun previousEventIds(): List<Long> =
+        databaseClient
+            .sql("SELECT COALESCE(previous_event_id, 0) AS previous FROM events.event_change ORDER BY id")
+            .map { row -> requireNotNull(row.get("previous", Long::class.javaObjectType)) }
+            .all()
+            .collectList()
+            .awaitFirstOrNull()
+            .orEmpty()
+
     private suspend fun storedId(): Long =
         requireNotNull(
             eventRepository
@@ -139,6 +149,7 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
             import(published(startTime = LocalTime.of(23, 0), endTime = LocalTime.of(6, 0)))
             changes() shouldContainExactlyInAnyOrder
                 listOf(Triple("START_TIME", "22:00", "23:00"), Triple("END_TIME", "05:00", "06:00"))
+            previousEventIds() shouldBe listOf(0L, 0L)
         }
 
     @Test
@@ -215,9 +226,15 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
         }
 
     @Test
-    fun `a date in the source id logs a move on the new event when the old one is removed`(): Unit =
+    fun `a date in the source id logs a move on the new event, naming the removed one`(): Unit =
         runBlocking {
             importAll(keyedByDate(date))
+            val removedId =
+                eventRepository
+                    .findBySourceIdIn(listOf("festsaal:long-night-$date"))
+                    .toList()
+                    .single()
+                    .id
             importAll(keyedByDate(date.plusDays(2)))
 
             changes() shouldContainExactlyInAnyOrder
@@ -227,6 +244,7 @@ class EventChangeLogIntegrationTest : BaseControllerTest() {
                 )
             val moved = eventRepository.findBySourceIdIn(listOf("festsaal:long-night-${date.plusDays(2)}")).toList().single()
             changedEventIds().distinct() shouldBe listOf(moved.id)
+            previousEventIds().distinct() shouldBe listOf(removedId)
         }
 
     @Test

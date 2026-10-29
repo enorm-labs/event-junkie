@@ -94,11 +94,16 @@ class RsvpStore(
             .flow()
             .toList()
 
-    /** RSVPs whose event no longer exists: removed by the importer, or merged away. */
+    /**
+     * RSVPs whose event no longer exists: removed by the importer, or merged away. One whose event a date move replaced
+     * stays for [PlanChangesJob] to carry across (#4139).
+     */
     suspend fun deleteOrphans(): Long =
         db
-            .sql("DELETE FROM accounts.rsvp r WHERE NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = r.event_id)")
-            .fetch()
+            .sql(
+                "DELETE FROM accounts.rsvp r WHERE NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.id = r.event_id) " +
+                    "AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_change c WHERE c.previous_event_id = r.event_id)"
+            ).fetch()
             .awaitRowsUpdated()
 }
 

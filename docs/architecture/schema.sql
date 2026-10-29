@@ -549,6 +549,7 @@ CREATE TABLE events.event_change (
     old_value text NOT NULL,
     new_value text NOT NULL,
     seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    previous_event_id bigint,
     CONSTRAINT event_change_field_check CHECK ((field = ANY (ARRAY['EVENT_DATE'::text, 'START_TIME'::text, 'END_DATE'::text, 'END_TIME'::text, 'STATUS'::text, 'VENUE'::text])))
 );
 
@@ -1631,6 +1632,12 @@ CREATE INDEX idx_event_artist_event_id ON events.event_artist USING btree (event
 --
 
 CREATE INDEX idx_event_change_event_seen ON events.event_change USING btree (event_id, seen_at DESC);
+
+--
+-- Name: idx_event_change_previous_event; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_change_previous_event ON events.event_change USING btree (previous_event_id) WHERE (previous_event_id IS NOT NULL);
 
 --
 -- Name: idx_event_event_date; Type: INDEX; Schema: events; Owner: -

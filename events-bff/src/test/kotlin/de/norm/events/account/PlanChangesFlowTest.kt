@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.common.BERLIN
 import de.norm.events.push.WebPushCrypto
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -21,7 +22,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-/** Changes to events an account marked (#4045): the job reads `event_change`, writes the bell's rows and pushes. */
+/**
+ * Changes to events an account marked (#4045): the job reads `event_change`, writes the bell's rows and pushes. A date
+ * move on a re-keyed source carries the account's rows to the new event first (#4139).
+ */
 class PlanChangesFlowTest : BaseControllerTest() {
     @Autowired
     private lateinit var accounts: AccountStore
@@ -31,6 +35,12 @@ class PlanChangesFlowTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var job: PlanChangesJob
+
+    @Autowired
+    private lateinit var rsvpRows: RsvpStore
+
+    @Autowired
+    private lateinit var notificationRows: NotificationStore
 
     private lateinit var session: String
     private lateinit var csrf: String
@@ -117,6 +127,32 @@ class PlanChangesFlowTest : BaseControllerTest() {
                     "VALUES ($event, '$field', '$from', '$to', now() - interval '1 minute')"
             ).await()
     }
+
+    /**
+     * A date move on a re-keyed source (#4139): the importer removed [old], inserted the night under [slug] on a new date,
+     * and logged the move on the new row with the removed id beside it.
+     */
+    private suspend fun rekeyed(
+        old: Long,
+        slug: String
+    ): Long {
+        databaseClient.sql("DELETE FROM events.event WHERE id = $old").await()
+        val new = insertEvent(club, "Moderat", slug, today.plusDays(9))
+        databaseClient
+            .sql(
+                "INSERT INTO events.event_change (event_id, field, old_value, new_value, seen_at, previous_event_id) " +
+                    "VALUES ($new, 'EVENT_DATE', '${today.plusDays(7)}', '${today.plusDays(9)}', now() - interval '1 minute', $old)"
+            ).await()
+        return new
+    }
+
+    private suspend fun eventIdsOf(table: String): List<Long> =
+        databaseClient
+            .sql("SELECT event_id FROM $table ORDER BY event_id")
+            .map { row -> row.get("event_id", Long::class.javaObjectType)!! }
+            .all()
+            .collectList()
+            .awaitSingle()
 
     private fun list() =
         webTestClient
@@ -282,6 +318,79 @@ class PlanChangesFlowTest : BaseControllerTest() {
             job.run()
 
             list().jsonPath("$.length()").isEqualTo(0)
+        }
+
+    @Test
+    fun `a date move on a re-keyed source carries the RSVP and the notification to the new event, and pushes it`() =
+        runBlocking<Unit> {
+            val old = insertEvent(club, "Moderat", "moderat-old", today.plusDays(7))
+            going("moderat-old")
+            subscribe()
+            databaseClient
+                .sql(
+                    "INSERT INTO accounts.notification (account_id, event_id, kind, about_kind, about_id, created_at) " +
+                        "SELECT id, $old, 'new_date', 'venue', $club, now() - interval '1 day' FROM accounts.account"
+                ).await()
+            val new = rekeyed(old, "moderat")
+            accepted()
+
+            job.run()
+            job.run()
+
+            pushes() shouldBe 1
+            eventIdsOf("accounts.rsvp") shouldBe listOf(new)
+            eventIdsOf("accounts.notification") shouldBe listOf(new, new)
+            list()
+                .jsonPath("$.length()")
+                .isEqualTo(2)
+                .jsonPath("$[?(@.kind == 'change')].change")
+                .isEqualTo("date")
+                .jsonPath("$[?(@.kind == 'change')].event")
+                .isEqualTo("moderat")
+        }
+
+    @Test
+    fun `an RSVP already on the new event wins, and the one on the removed event goes`() =
+        runBlocking<Unit> {
+            val old = insertEvent(club, "Moderat", "moderat-old", today.plusDays(7))
+            going("moderat-old")
+            val new = rekeyed(old, "moderat")
+            going("moderat")
+
+            job.run()
+
+            eventIdsOf("accounts.rsvp") shouldBe listOf(new)
+        }
+
+    @Test
+    fun `a removal the importer did not pair moves nothing, and the cleanup then deletes the RSVP`() =
+        runBlocking<Unit> {
+            val gone = insertEvent(club, "Moderat", "moderat", today.plusDays(7))
+            going("moderat")
+            databaseClient.sql("DELETE FROM events.event WHERE id = $gone").await()
+
+            job.run()
+
+            eventIdsOf("accounts.rsvp") shouldBe listOf(gone)
+            rsvpRows.deleteOrphans() shouldBe 1L
+        }
+
+    @Test
+    fun `the daily cleanup keeps the rows on a removed event until the job carries them across`() =
+        runBlocking<Unit> {
+            val old = insertEvent(club, "Moderat", "moderat-old", today.plusDays(7))
+            going("moderat-old")
+            databaseClient
+                .sql(
+                    "INSERT INTO accounts.notification (account_id, event_id, kind, about_kind, about_id, created_at) " +
+                        "SELECT id, $old, 'new_date', 'venue', $club, now() FROM accounts.account"
+                ).await()
+            rekeyed(old, "moderat")
+
+            rsvpRows.deleteOrphans() shouldBe 0L
+            notificationRows.deleteExpired(Instant.now().minus(Duration.ofDays(30))) shouldBe 0L
+            eventIdsOf("accounts.rsvp") shouldBe listOf(old)
+            eventIdsOf("accounts.notification") shouldBe listOf(old)
         }
 
     companion object {
