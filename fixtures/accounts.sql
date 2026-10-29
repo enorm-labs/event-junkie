@@ -12,7 +12,8 @@
 -- client sends any value in both.
 --
 -- Two accounts and not one, so a scan can try one account's ids with the other's cookie (#4105).
--- Bob holds one row of every kind an id or an endpoint addresses, for `scripts/account-isolation.sh`.
+-- Bob holds one row of every kind an id or an endpoint addresses, for `scripts/account-isolation.sh`. Ada holds the
+-- notifications that need a second page.
 
 -- Bob has "Reminders on the day" off (#4253), so a client reads both values of the switch.
 INSERT INTO accounts.account (id, email, locale, reminder_push)
@@ -58,3 +59,11 @@ VALUES ('b0b00000-0000-4000-8000-000000000002', 'https://fcm.googleapis.com/fcm/
 INSERT INTO accounts.notification (id, account_id, event_id, kind, about_kind, about_id, change)
 SELECT 'b0b00000-0000-4000-8000-000000000031'::uuid, 'b0b00000-0000-4000-8000-000000000002'::uuid, id, 'change', 'rsvp', id, 'cancelled'
 FROM events.event WHERE source_id = 'fixture-sold-out';
+
+-- More new dates than one page of the bell holds (#4169), so a client walks `before` and `unread=true` on Ada's list.
+-- One per event, two to an hour, so a page boundary falls between equal `created_at`. Every third is read.
+INSERT INTO accounts.notification (account_id, event_id, kind, about_kind, about_id, created_at, read_at)
+SELECT 'ada00000-0000-4000-8000-000000000001'::uuid, e.id, 'new_date', 'venue', e.venue_id,
+       date_trunc('hour', now()) - (e.n / 2) * interval '1 hour',
+       CASE WHEN e.n % 3 = 0 THEN date_trunc('hour', now()) END
+FROM (SELECT id, venue_id, row_number() OVER (ORDER BY source_id) AS n FROM events.event WHERE venue_id IS NOT NULL) AS e;

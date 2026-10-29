@@ -94,7 +94,8 @@ lists what that includes and what it excludes.
 - Get a push at 10:00 on the day of the events marked **Interested** or **Going**, one per day for all of them. It is on by
   default, and **Reminders on the day** on the account page turns it off.
 - See what is new in the header. A bell beside the account menu counts the new dates of everything the account follows, bell
-  on or off. It counts the changes to its marked events too, and lists the newest 20. An entry stays unread until it is opened. Each one goes after 30 days.
+  on or off. It counts the changes to its marked events too, and lists the newest 20. **Show all** opens the notifications page, which lists
+  every entry by day, 50 at a time, all or only the unread ones. An entry stays unread until it is opened. Each one goes after 30 days.
 - Download everything stored about the account, or delete it.
 
 **Everywhere**
@@ -142,6 +143,7 @@ the first column. It fails in two cases:
 | `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion               |
 | `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, to unfollow           |
 | `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar                   |
+| `/notifications`                       | Every notification by day, all or only the unread ones, 50 at a time                           |
 | `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                               |
 | `/calendar.ics`                        | iCalendar subscription to the next 90 days, with every events-list filter                      |
 | `/robots.txt`                          | Allows search and answer crawlers, refuses AI training crawlers                                |
@@ -183,7 +185,7 @@ the first column. It fails in two cases:
 | `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                                    |
 | `/api/me/push/changes`                 | "Changes to my plans": push about changes to marked events, or not                             |
 | `/api/me/push/reminders`               | "Reminders on the day": push on the day of marked events, or not                               |
-| `/api/me/notifications`                | The newest 20 notifications under the header's bell, read or not                               |
+| `/api/me/notifications`                | The newest 20 notifications, read or not; `limit`, `before` and `unread` page the full list    |
 | `/api/me/notifications/unread-count`   | How many notifications are unread, for the bell's badge                                        |
 | `/api/me/notifications/{id}/read`      | Marking one notification read                                                                  |
 | `/api/me/notifications/read`           | Marking every notification read                                                                |
@@ -214,7 +216,7 @@ the first column. It fails in two cases:
 | `sign-in.spec.ts`                      | e2e: sign-in by link, the account page, deletion, CSRF header                                  |
 | `following.spec.ts`                    | e2e: the Follow button signed out and in, the header entry, the Following page and its filters |
 | `rsvp.spec.ts`                         | e2e: Interested and Going on an event page, the card mark, My calendar                         |
-| `notifications.spec.ts`                | e2e: the bell, its menu by keyboard, Mark all as read, a change entry, the phone header        |
+| `notifications.spec.ts`                | e2e: the bell by keyboard, Mark all as read, a change entry, the phone header, the page        |
 | `share-calendar.spec.ts`               | e2e: share and add to calendar                                                                 |
 | `card-poster.spec.ts`                  | e2e: drawn posters                                                                             |
 | `compact-view.spec.ts`                 | e2e: compact list                                                                              |
