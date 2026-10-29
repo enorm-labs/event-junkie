@@ -317,6 +317,21 @@ class SignInFlowTest : BaseControllerTest() {
 
         get("/me", session).expectHeader().valueEquals(HttpHeaders.CACHE_CONTROL, "private, no-store")
         get("/auth/session", null).expectHeader().valueEquals(HttpHeaders.CACHE_CONTROL, "private, no-store")
+        // Spring Security writes these two itself, ahead of every handler.
+        get("/me", null)
+            .expectStatus()
+            .isUnauthorized
+            .expectHeader()
+            .valueEquals(HttpHeaders.CACHE_CONTROL, "private, no-store")
+        webTestClient
+            .put()
+            .uri("/me/follows/venue/any")
+            .cookie(SessionSecurityContextRepository.COOKIE, session)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+            .expectHeader()
+            .valueEquals(HttpHeaders.CACHE_CONTROL, "private, no-store")
         get("/festivals/current", session)
             .expectStatus()
             .isOk

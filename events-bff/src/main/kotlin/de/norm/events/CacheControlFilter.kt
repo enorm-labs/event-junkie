@@ -2,6 +2,8 @@ package de.norm.events
 
 import de.norm.events.account.isAccountPath
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -26,8 +28,11 @@ import java.time.Duration
  * `Vary: Accept-Encoding`, because Netty gzips it for some clients only and does not say so (#1206).
  * Actuator responses are left alone, as [RequestLoggingFilter] leaves them, with the base path
  * read from the property.
+ *
+ * Ordered ahead of Spring Security's chain: a 401 or a CSRF 403 is written there and never reaches a later filter.
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 class CacheControlFilter(
     @Value("\${app.api.cache.ttl-seconds}") ttlSeconds: Long,
     @Value("\${management.endpoints.web.base-path:/actuator}") private val actuatorBasePath: String

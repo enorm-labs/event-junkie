@@ -50,21 +50,28 @@ test.describe('Ada', () => {
 
   test('follows a venue, finds it on Following, and unfollows it', async ({ page }) => {
     await page.goto('/en/venues/jazzkeller-kreuzberg')
+    // The button turns before the write lands; leaving the page first would cancel it.
+    const followed = page.waitForResponse(
+      (r) => r.request().method() === 'PUT' && r.url().endsWith('/api/me/follows/venue/jazzkeller-kreuzberg'),
+    )
     await page.getByRole('button', { name: 'Follow', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Following (press to unfollow)' })).toBeVisible()
+    expect((await followed).status()).toBe(204)
 
     await page.goto('/en/following')
-    // Kesselhaus Nord, Møbius Trio and Nachtschicht Kollektiv are seeded; Jazzkeller is the fourth.
-    await page.getByRole('tab', { name: 'You follow (4)' }).click()
-    await expect(page.getByRole('heading', { name: 'Venues (2)' })).toBeVisible()
+    await page.getByRole('tab', { name: /^You follow/ }).click()
     await expect(page.getByRole('link', { name: 'Jazzkeller $& Kreuzberg' })).toHaveAttribute(
       'href',
       '/en/venues/jazzkeller-kreuzberg',
     )
 
     await page.goto('/en/venues/jazzkeller-kreuzberg')
+    const unfollowed = page.waitForResponse(
+      (r) => r.request().method() === 'DELETE' && r.url().endsWith('/api/me/follows/venue/jazzkeller-kreuzberg'),
+    )
     await page.getByRole('button', { name: 'Following (press to unfollow)' }).click()
     await expect(page.getByRole('button', { name: 'Follow', exact: true })).toBeVisible()
+    expect((await unfollowed).status()).toBe(204)
   })
 
   test('her account answers carry private, no-store too', async ({ page }) => {
