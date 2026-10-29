@@ -890,6 +890,8 @@ class ArtistNameMappingTest {
         headlinersFromTitle("ABSAGE: Green Lung") shouldBe listOf(ScrapedArtist("Green Lung", ArtistRole.HEADLINER, titleDerived = true))
         headlinersFromTitle("Olga Myko - Abgesagt") shouldBe listOf(ScrapedArtist("Olga Myko", ArtistRole.HEADLINER, titleDerived = true))
         headlinersFromTitle("Canceled: Modern English") shouldBe listOf(ScrapedArtist("Modern English", ArtistRole.HEADLINER, titleDerived = true))
+        headlinersFromTitle("----ABGESAGT----- Jeff Lorber Fusion") shouldBe
+            listOf(ScrapedArtist("Jeff Lorber Fusion", ArtistRole.HEADLINER, titleDerived = true))
     }
 
     @Test
