@@ -6,9 +6,11 @@ import java.util.Locale
 
 /**
  * The text of a push about a changed event the account marked (#4045), in the account's language. One change links
- * to the event, several to My calendar. Only what ADR-055 rule 3 allows: a title, one line, a link.
+ * to the event, several to My calendar. Only what ADR-055 rule 3 allows: a title, one line, a link
+ * and the kind.
  */
 object PlanChangePush {
+    const val TAG = "plan-changes"
     private const val MAX_BODY = 120
     private val germanDate = DateTimeFormatter.ofPattern("EE d.M.", Locale.GERMAN)
     private val englishDate = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
@@ -21,13 +23,15 @@ object PlanChangePush {
             PushMessage(
                 title = title(first.change, german),
                 body = "${first.title} · ${first.date.format(format)}",
-                url = "/${first.locale}/events/${first.slug}"
+                url = "/${first.locale}/events/${first.slug}",
+                tag = TAG
             )
         } else {
             PushMessage(
                 title = if (german) "${changes.size} Änderungen an deinen Plänen" else "${changes.size} changes to your plans",
                 body = shorten(changes.joinToString(", ") { it.title }),
-                url = "/${first.locale}/my-calendar"
+                url = "/${first.locale}/my-calendar",
+                tag = TAG
             )
         }
     }

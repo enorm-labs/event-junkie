@@ -423,8 +423,9 @@ const { t } = useI18n()
         geht: einen neuen Termin. Deine Pläne fügen eines hinzu: eine Änderung an einem Event, das
         du markiert hast, wie unter „Was neu ist“. Das ist an, bis du „Änderungen an meinen Plänen“
         auf deiner Kontoseite ausschaltest; die Einstellung speichere ich mit deinem Konto. Eine
-        Benachrichtigung enthält einen Titel, eine Zeile und einen Link, sonst nichts, und sie ist
-        verschlüsselt, sodass nur dein Browser sie lesen kann. Das Abonnement wird gelöscht, wenn du
+        Benachrichtigung enthält einen Titel, eine Zeile, einen Link und die Art der Nachricht (ein
+        neuer Termin oder eine Änderung an deinen Plänen), sonst nichts, und sie ist verschlüsselt,
+        sodass nur dein Browser sie lesen kann. Das Abonnement wird gelöscht, wenn du
         Benachrichtigungen ausschaltest, wenn der Push-Dienst es als erloschen meldet, und mit
         deinem Konto.
       </p>

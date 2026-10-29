@@ -16,6 +16,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, {
       body: typeof message.body === 'string' ? message.body : '',
       icon: '/icon-192.png',
+      // One word per kind: a new push replaces the open one of its kind instead of stacking (#4167).
+      ...(typeof message.tag === 'string' && message.tag ? { tag: message.tag, renotify: true } : {}),
       // Only a path on this site: the payload is ours, but a link elsewhere is never opened.
       data: { url: typeof message.url === 'string' && message.url.startsWith('/') ? message.url : '/' },
     }),

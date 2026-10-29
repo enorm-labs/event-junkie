@@ -28,11 +28,15 @@ data class PushTarget(
     override fun toString(): String = "PushTarget(host=${URI(endpoint).host})"
 }
 
-/** What the service worker shows: a title, one line, and a path on our own site that a click opens. */
+/**
+ * What the service worker shows: a title, one line, and a path on our own site that a click opens. [tag] is one fixed
+ * word per kind of push, so a device replaces the open push of that kind instead of stacking a new one (#4167).
+ */
 data class PushMessage(
     val title: String,
     val body: String,
-    val url: String
+    val url: String,
+    val tag: String
 )
 
 enum class PushResult(

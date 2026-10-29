@@ -48,7 +48,8 @@ The rules:
    it on page load. Turning notifications off unsubscribes and unregisters the worker on that device.
 2. **Push and notification clicks only.** The worker has no `fetch` handler and does not use the Cache API, IndexedDB or any other storage. It does not
    change how a page loads.
-3. **A minimal payload.** A title, one line and a link to a page on the site, encrypted. No artist list, no account data, no tracking parameter.
+3. **A minimal payload.** A title, one line and a link to a page on the site, encrypted. A fixed word names the kind of message. No artist list, no
+   account data, no tracking parameter.
 4. **Only what the visitor chose.** A message goes out for a follow set to _instant_. It also goes out for a change to an event the visitor marked. No
    announcement, no reminder to come back, no message the visitor did not choose.
 5. **One subscription per browser.** The BFF stores the endpoint and its keys in the `accounts` schema, keyed to the account. A deleted account

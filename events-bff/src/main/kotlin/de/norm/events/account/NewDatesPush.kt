@@ -6,9 +6,11 @@ import java.util.Locale
 
 /**
  * The text of a push about new dates (#3894), in the account's language. One date links to the event, several to
- * Following, so a whole tour imported at once is one push. Only what ADR-055 rule 3 allows: a title, one line, a link.
+ * Following, so a whole tour imported at once is one push. Only what ADR-055 rule 3 allows: a title, one line, a link
+ * and the kind.
  */
 object NewDatesPush {
+    const val TAG = "new-dates"
     private const val MAX_BODY = 120
     private val germanDate = DateTimeFormatter.ofPattern("EE d.M.", Locale.GERMAN)
     private val englishDate = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
@@ -21,13 +23,15 @@ object NewDatesPush {
             PushMessage(
                 title = if (german) "Neuer Termin" else "New date",
                 body = "${first.title} · ${first.date.format(format)}",
-                url = "/${first.locale}/events/${first.slug}"
+                url = "/${first.locale}/events/${first.slug}",
+                tag = TAG
             )
         } else {
             PushMessage(
                 title = if (german) "${dates.size} neue Termine" else "${dates.size} new dates",
                 body = shorten(dates.joinToString(", ") { it.title }),
-                url = "/${first.locale}/following"
+                url = "/${first.locale}/following",
+                tag = TAG
             )
         }
     }
