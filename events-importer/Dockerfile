@@ -22,7 +22,7 @@
 #
 # **The two backend images must pin the same base**, which is also why Dependabot groups all three
 # Dockerfiles into one PR — see `.github/dependabot.yml`.
-FROM bellsoft/liberica-openjre-alpine:25@sha256:33b92304b3abdad54fb937224adcab07febad199180867d51be0fcd9da340ee4
+FROM bellsoft/liberica-openjre-alpine:25@sha256:6e37a10866f46514a2439295cecaec5666ab817bfcb961d2fc6bcb8001335b61
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
@@ -33,12 +33,6 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="BUSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-
-# The openssl upgrade, for the reason and the deletion condition written out in
-# `events-bff/Dockerfile` (#770). The two images pin the same base, so they carry the same layer
-# and lose it together.
-USER 0
-RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application
 
