@@ -1,61 +1,53 @@
 package de.norm.events.scraper.mbia
 
-import de.norm.events.common.BERLIN
-import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FetchResult
+import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.jsoup.Jsoup
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.Clock
-import java.time.LocalDate
 
-/** Unit tests for [MbiaWebsiteImporter] with a mocked [ApiClient]. */
+/** Unit tests for [MbiaWebsiteImporter]. */
 class MbiaWebsiteImporterTest {
-    private val apiClient: ApiClient = mockk()
-    private val clock: Clock = Clock.fixed(LocalDate.of(2026, 10, 17).atStartOfDay(BERLIN).toInstant(), BERLIN)
-    private val importer = MbiaWebsiteImporter(apiClient, clock)
-    private val baseUrl = "https://www.m-bia.de/wp-json/wp/v2/posts"
+    private lateinit var importer: MbiaWebsiteImporter
+    private val htmlFetcher: HtmlFetcher = mockk()
+    private val sourceUrl = "https://www.m-bia.de/veranstaltungen"
 
-    private fun fixture(): String =
+    private fun fixture() =
         javaClass.classLoader
-            .getResourceAsStream("scraper/mbia/mbia-posts.json")!!
+            .getResourceAsStream("scraper/mbia/mbia-veranstaltungen.html")!!
             .bufferedReader()
             .readText()
 
+    @BeforeEach
+    fun setUp() {
+        importer = MbiaWebsiteImporter(htmlFetcher)
+        coEvery { htmlFetcher.fetch(sourceUrl, any(), any(), any()) } returns
+            FetchResult.Success(
+                document = Jsoup.parse(fixture(), sourceUrl),
+                etag = "\"wix-mbia\"",
+                lastModified = "Thu, 29 Oct 2026 10:00:00 GMT"
+            )
+    }
+
     @Test
-    fun `importEvents returns the upcoming nights from one request`() =
+    fun `importEvents reads every night from one page and keeps its validators`() =
         runTest {
-            val urls = mutableListOf<String>()
-            coEvery { apiClient.fetchJson(capture(urls)) } returns fixture()
+            val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
 
-            val result = importer.importEvents(baseUrl, etag = "\"x\"", lastModified = "Sat, 17 Oct 2026 00:00:00 GMT")
-
-            result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 7
+            result.events shouldHaveSize 9
             result.complete shouldBe true
-            result.etag.shouldBeNull()
-            result.lastModified.shouldBeNull()
-            urls shouldBe
-                listOf(
-                    "$baseUrl?per_page=100&page=1&_fields=id,date,link,title,content,_links.wp:featuredmedia,_embedded&_embed=wp:featuredmedia"
-                )
-        }
-
-    @Test
-    fun `importEvents returns an empty success for an empty listing`() =
-        runTest {
-            coEvery { apiClient.fetchJson(any()) } returns "[]"
-
-            val result = importer.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
-
-            result.events.shouldBeEmpty()
+            result.etag shouldBe "\"wix-mbia\""
+            result.lastModified shouldBe "Thu, 29 Oct 2026 10:00:00 GMT"
+            coVerify(exactly = 1) { htmlFetcher.fetch(any(), any(), any(), any()) }
         }
 
     @Test

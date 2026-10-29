@@ -142,7 +142,7 @@ schema change.
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                                            | Club         | Next.js; one page per night format; next date only        |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                                            | Arena        | Shared VELOMAX listing; no sport imported                 |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                                      | Club         | Wix Events warmup JSON; UTC dates; prices inline          |
-| M-BIA                            | https://www.m-bia.de/                                                    | Techno Club  | WordPress posts; the post date is the night               |
+| M-BIA                            | https://www.m-bia.de/                                                    | Techno Club  | Wix; the `Events` collection in the warmup JSON           |
 | Mehringhof-Theater               | https://www.mehringhoftheater.de/programm/                               | Theater      | IONOS month tables; tickettoaster JSON-LD                 |
 | Metropol                         | https://metropol-berlin.de/events                                        | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"        |
 | migas                            | https://migas.berlin/program/                                            | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+      |
