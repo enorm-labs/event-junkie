@@ -16,7 +16,7 @@ version they watch produces a second pull request against the same file (ADR-024
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Dependabot**  | `gradle`, `npm`, `github-actions`, `opentofu`, `docker`, `docker-compose`                                                                                      |
 | **Renovate**    | Flux and the charts it installs, images in plain Kubernetes manifests, the CI tool pins in `.github/workflows/`, `.pre-commit-config.yaml`, the Gradle wrapper |
-| **This prompt** | the judgement the bots cannot make: which major to take, whether a BOM override is obsolete, the whole picture in one report                                   |
+| **This prompt** | the judgement the bots cannot make: which major to take, whether a BOM override is obsolete, the toolchain pins no bot reads, the whole picture in one report  |
 
 Read the CI tool pins without touching them: `grep -rn '_VERSION:' .github/workflows/ | grep -vE 'VERSION: \$\{\{'`. A stale one is a Dependency Dashboard
 question.
@@ -86,6 +86,24 @@ was lost, not that a convention changed. This sweep is for taking everything at 
 5. `npm audit`, in `events-frontend/` and in `events-admin/`. Report the count before and after the sweep. A finding the sweep did not remove goes to
    [`/security-triage`](security-triage.prompt.md); this prompt does not pin a transitive package for a CVE.
 
+## Toolchains (`.sdkmanrc`, `.nvmrc`)
+
+No bot watches these two files. CI's `setup-java` and `setup-node` and the runtime images take the newest patch of the major by themselves, so only a local
+checkout falls behind.
+
+1. **JDK patch.** `.sdkmanrc` pins an exact Temurin build. Read the newest patch of its major and take it, `-tem` suffix kept:
+
+    ```sh
+    curl -s 'https://api.foojay.io/disco/v3.0/packages?distribution=temurin&version=<major>&latest=available&package_type=jdk&os=macos&architecture=aarch64&archive_type=tar.gz' | jq -r '.result[0].java_version'
+    ```
+
+    `sdk install java <version>-tem`, then the backend gate (Step 6). A patch moves nothing else.
+
+2. **Node.** Each `.nvmrc` holds a major only, so a patch needs no edit. Check that `engines` in both `package.json` files and the `node-version:` lines in
+   `.github/workflows/` name the same major.
+3. **Majors are reported, never applied.** The JDK stays on its LTS line, and Node follows the LTS line (the `node` ignore in `dependabot.yml` says why).
+   When a newer LTS major exists, name it in the summary with its date. Moving the JDK also moves the runtime image (ADR-017), so it needs its own issue.
+
 ## Step 11: README badges and the Kotlin link
 
 The badge row in [`README.md`](../../README.md) hardcodes versions and nothing fails when they rot. `Kotlin` and `Spring Boot` to the exact version from
@@ -104,7 +122,7 @@ body. **One pull request per sweep. Nothing under `.github/workflows/`. If nothi
 | Dependency | Previous Version | New Version | Location |
 | ---------- | ---------------- | ----------- | -------- |
 
-Then: which README badges were refreshed; what was skipped for lacking a stable release; each major applied, with its breaking changes; **What the release
+Then: the toolchains, the JDK patch taken and any newer LTS major of the JDK or Node; which README badges were refreshed; what was skipped for lacking a stable release; each major applied, with its breaking changes; **What the release
 gives us** per minor or major ("Nothing for us" is valid; skip patches); what was already current; **CVE overrides removed** because the BOM caught up, and
 **kept**, naming the CVE. **Nothing about cluster components, CI tool pins or anything Renovate and Dependabot own** — a list invites the duplicate PR.
 
