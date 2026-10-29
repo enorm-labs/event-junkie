@@ -552,8 +552,13 @@ dependencyCheck {
     // the list above exists to keep out — and `compileOnly` cannot be skipped globally without
     // narrowing the scan for the modules that ship. Matched by `project.path`, like `scanProjects`.
     skipProjects = listOf(":detekt-rules")
+    // `runtimeClasspath` and `developmentOnly` are skipped because Boot adds the dev-only jars
+    // (devtools, docker-compose, Swagger UI) to them. `productionRuntimeClasspath` is what
+    // `bootJar` packages, and it is still scanned, so everything that ships is covered.
     skipConfigurations =
         listOf(
+            "runtimeClasspath",
+            "developmentOnly",
             "detekt",
             "detektPlugins",
             "ktlint",
