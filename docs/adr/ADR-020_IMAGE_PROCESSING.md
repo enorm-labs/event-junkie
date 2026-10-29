@@ -5,8 +5,13 @@
 **Accepted (2026-08-28) — imgproxy generates the derivatives. The importer calls it over HTTP during an import, and it
 never serves a visitor.**
 
-**Not implemented.** [ADR-019](ADR-019_VENUE_IMAGE_DELIVERY.md) decided to cache venue images and nothing is built yet.
-[#283](https://github.com/enorm-labs/event-junkie/issues/283) blocks that work, so it blocks this too.
+**Implemented on 2026-08-28.** The importer runs imgproxy as a sidecar and calls it during an import. The sidecar is
+enabled in staging and in production. The chart pins `ghcr.io/imgproxy/imgproxy` by digest.
+
+**Amended (2026-10-29, [#4188](https://github.com/enorm-labs/event-junkie/issues/4188)): a fixable finding in the
+imgproxy image is waived and waited out, and the waiver has an expiry.** When the waiver reaches its revisit date with
+no upstream fix, we build imgproxy ourselves. Option B is no longer the exit for a scan finding. §When to revisit has
+the rule.
 
 **It supersedes nothing, and it depends on one thing.** ADR-019 decided _that_ we store images. This decides _how_ we
 produce the sizes we store. The two reverse independently, which is why they are two documents.
@@ -78,10 +83,10 @@ processor time for each visitor.
 | -------------------------- | ------------------------------------------------- | --------------------------- | ------------------------------------- |
 | Decodes hostile bytes      | In a separate program                             | **In the importer process** | **In the importer process**           |
 | Writes AVIF and WebP       | Yes                                               | No. JPEG and PNG            | Yes                                   |
-| Reads what venues serve    | Widest, WebP included                             | ImageIO formats only        | Wide                                  |
+| Reads what venues serve    | Widest, WebP included                             | ImageIO formats, no WebP    | Wide                                  |
 | Native dependency          | None of ours. It is their image                   | None                        | **Needs a `RUN` layer**               |
 | Deployables added          | **One**                                           | None                        | None                                  |
-| Images we cannot rebuild   | **One more in the nightly scan**                  | None                        | None                                  |
+| Third-party images         | **One more in the nightly scan**                  | None                        | None                                  |
 | Originals must be kept     | **Yes, it derives from a source**                 | No                          | No                                    |
 | Container work             | A sidecar, a limit, URL signing, one network rule | None                        | A Dockerfile that breaks its own rule |
 | Exit cost if it goes wrong | Fall back to B                                    | Already the fallback        | High                                  |
@@ -102,11 +107,11 @@ Two supporting reasons, and neither would have decided it alone:
 2. **imgproxy reads more formats than ImageIO does.** Venues increasingly serve WebP, and a source we cannot read is an
    image we lose.
 
-**What we accept.** A fourth deployable, and a third-party image that we cannot rebuild when a finding has no upstream
-fix. ADR-017 is the record of what that costs, and this accepts it a second time with open eyes.
+**What we accept.** A fourth deployable, and a third-party image that can carry a finding before upstream fixes it.
+ADR-017 is the record of what that costs, and this accepts it a second time with open eyes.
 
-**Option B stays the exit rather than the loser.** It is one jar and it works. If imgproxy becomes a liability, taking B
-costs the modern formats and returns the decoding to our process, and nothing else in ADR-019 changes.
+**Option B stays recorded, but it is not the exit for a scan finding.** It is one jar and it works. Taking B costs AVIF
+and WebP output and WebP input. It also returns the decoding to our process. Nothing else in ADR-019 changes.
 
 ## Consequences
 
@@ -129,8 +134,15 @@ costs the modern formats and returns the decoding to our process, and nothing el
 
 ## When to revisit
 
-- **If imgproxy takes a finding with no upstream fix.** We cannot rebuild another project's image. Option B is the exit,
-  and it is recorded for that reason.
+- **If the imgproxy image carries a fixable finding that its newest release does not fix.** Waive the finding in
+  `.trivyignore` with a revisit date, and wait for the upstream release. Then bump the chart digest and delete the
+  waiver. Each of the first three episodes ended this way within weeks: [#1273](https://github.com/enorm-labs/event-junkie/issues/1273), [#3071](https://github.com/enorm-labs/event-junkie/issues/3071) and
+  [#3703](https://github.com/enorm-labs/event-junkie/issues/3703).
+- **If a waiver reaches its revisit date with no upstream release that carries the fix.** The waiver expires. Then we
+  build imgproxy ourselves on a current Go toolchain and pin our own image by digest. A new issue records that work. It
+  also amends ADR-017, because the arm64 half of that build is build work.
+- Only `image-scan-scheduled.yml` scans the imgproxy image. `release.yml` does not, so an episode does not block a
+  release.
 - **If the sidecar's memory cost is out of proportion.** libvips trades memory for speed, and speed is not needed here.
 - **If a pure-JVM encoder for AVIF or WebP appears.** That removes the only reason to prefer a separate program, other
   than the isolation, which would still stand.
