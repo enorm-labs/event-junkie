@@ -538,6 +538,29 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `stripTitleStatusMarker removes a marker wrapped in a run of dashes, stars or brackets`() {
+        // Zig-Zag (#4219): the run defeated the single optional dash, and the marker reached the title and the act.
+        stripTitleStatusMarker("----ABGESAGT----- Jeff Lorber Fusion") shouldBe "Jeff Lorber Fusion"
+        parseTitleStatus("----ABGESAGT----- Jeff Lorber Fusion") shouldBe "CANCELLED"
+        stripTitleStatusMarker("Jeff Lorber Fusion ----ABGESAGT-----") shouldBe "Jeff Lorber Fusion"
+        stripTitleStatusMarker("**Abgesagt** The Act") shouldBe "The Act"
+        stripTitleStatusMarker("The Act ((cancelled))") shouldBe "The Act"
+        stripTitleStatusMarker("[[ABSAGE!]] The Act") shouldBe "The Act"
+        stripTitleStatusMarker("--POSTPONED-- Nina") shouldBe "Nina"
+        stripTitleStatusMarker("Jazeek ---VENUE ÄNDERUNG---") shouldBe "Jazeek"
+        val long = "The Long Night of Jazz Fusion with the Jeff Lorber Fusion and Friends from Los Angeles, Berlin and Elsewhere"
+        stripTitleStatusMarker("----ABGESAGT----- $long") shouldBe long
+    }
+
+    @Test
+    fun `stripTitleStatusMarker leaves a dash-wrapped marker in the middle of a title, and the marker alone, as they are`() {
+        stripTitleStatusMarker("Jeff Lorber ----ABGESAGT----- Fusion") shouldBe "Jeff Lorber ----ABGESAGT----- Fusion"
+        parseTitleStatus("Jeff Lorber ----ABGESAGT----- Fusion") shouldBe "CANCELLED"
+        stripTitleStatusMarker("----ABGESAGT-----") shouldBe "----ABGESAGT-----"
+        stripTitleStatusMarker("----Abgesagte----- Lesung") shouldBe "----Abgesagte----- Lesung"
+    }
+
+    @Test
     fun `stripTitleStatusMarker leaves a sentence that is the notice, and a marker-free title, alone`() {
         stripTitleStatusMarker("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe
             "Da Konzert von Scarfold und Los Mierda faellt leider aus!"
