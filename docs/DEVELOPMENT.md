@@ -13,7 +13,7 @@ project's conventions written down, and it is more complete than any other docum
 scripts/setup-mac.sh contributor          # macOS: Brewfile, JDK, Node, npm ci, commit hooks; `check` reports what is missing
 
 scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
-scripts/dev-env.sh seed-fixture           # the fixed dataset, no network — or the two lines below for real data
+scripts/dev-env.sh seed-fixture           # the fixed dataset into an empty database, no network — or the two lines below for real data
 scripts/dev-env.sh seed-all               # register all event sources (needs ijhttp; see "The seed venues")
 scripts/dev-env.sh import <slug>          # import one source, polling until it settles
 scripts/dev-env.sh status                 # database / importer / bff / frontend
@@ -200,7 +200,8 @@ The next `bootRun` recreates it and re-runs the Flyway migrations. Note that an 
 [`fixtures/events.sql`](../fixtures/events.sql) (#272), the same file the BFF's `FixtureTest` and the DAST
 scan use. Three venues and 44 events. One event per shape the site renders differently, with
 `source_id = 'fixture-<shape>'`. The file's header lists the shapes. It needs the schema,
-so run `up importer` once first. For this week's real programme, `seed-all` and `import` are still the way.
+so run `up importer` once first. It also needs an empty database: it refuses one with venues or events, so run
+`db-reset` first. Both files load in one transaction, so a failure leaves nothing behind. For this week's real programme, `seed-all` and `import` are still the way.
 
 The same command loads [`fixtures/accounts.sql`](../fixtures/accounts.sql) (#4102). It adds two signed-in accounts with
 follows, a saved search and RSVPs. Bob also has a passkey, a push subscription and an unread notification. To sign in, send the cookie `__Host-ej_session=fixture-session-ada`.
