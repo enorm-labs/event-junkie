@@ -30,6 +30,8 @@ import java.time.temporal.TemporalAdjusters
  *   rule carries no exceptions, so a night the house cancels still shows.
  * - **`ik_event_type` types the event and sets the scope.** Yoga is out (EVENT_SCOPE.md §3.2). The `BuchBar` readings
  *   sometimes have no type, so the title types them and names the author.
+ * - **A title that names a `Workshop` or `basteln` is out** too, whatever its type: the lantern crafting for a campaign
+ *   group came as an `Infoveranstaltung`.
  * - `ik_url` is the ticket link, and `ik_price` a bare number such as `10`, which `parsePriceValue` does not read.
  */
 class InterkosmosApiScraper {
@@ -96,6 +98,10 @@ class InterkosmosApiScraper {
                 ?.let(::decodeHtmlEntities)
                 ?.let(::cleanEventTitle) ?: return null
         val title = cleanedTitle.text
+        if (PARTICIPATION_TITLE.containsMatchIn(title)) {
+            logger.info { "Skipping Interkosmos event ${node.path("id").asLong(0)} on $date: the title names a workshop or crafting (EVENT_SCOPE.md §3.2)" }
+            return null
+        }
         val author =
             BUCHBAR
                 .matchEntire(title)
@@ -133,6 +139,9 @@ class InterkosmosApiScraper {
         const val RULE_HORIZON_WEEKS = 13L
 
         val PARTICIPATION = setOf("Yoga")
+
+        /** A word that opens with either: `Workshops`, `Laternen basteln`, `Bastelnachmittag`. */
+        val PARTICIPATION_TITLE = Regex("""\b(workshop|bastel)""", RegexOption.IGNORE_CASE)
         val BUCHBAR = Regex("""BuchBar mit (.+)""")
 
         val TYPES =

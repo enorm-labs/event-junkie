@@ -190,6 +190,101 @@
     }
   },
   {
+    "id": 2679,
+    "date": "2026-10-27T17:20:59",
+    "date_gmt": "2026-10-27T16:20:59",
+    "guid": {
+      "rendered": "https://www.interkosmos.cc/?post_type=ik_event&#038;p=2679"
+    },
+    "modified": "2026-10-27T17:20:59",
+    "modified_gmt": "2026-10-27T16:20:59",
+    "slug": "laternen-basteln-mit-dem-dwe-kiezteam-lichtenberg",
+    "status": "publish",
+    "type": "ik_event",
+    "link": "https://www.interkosmos.cc/ik_event/laternen-basteln-mit-dem-dwe-kiezteam-lichtenberg/",
+    "title": {
+      "rendered": "Laternen basteln mit dem DWe-Kiezteam Lichtenberg"
+    },
+    "content": {
+      "rendered": "<p>Rot-Grün-Rot haben einen großen Schritt in Richtung Vergesellschaftung gemacht. Aber bisher sind das alles nur Lippenbekenntnisse. Wir von DWe setzen die Politik weiterhin unter Druck, endlich etwas gegen Mietenwahnsinn und Verdrängung in dieser Stadt zu unternehmen.</p>\n<p>Deshalb: Kommt zum Warm-up am 10. November, bastelt mit uns Lampions für unseren Laternen-Umzug am 13. November ab 17:30 Uhr durch den Weitlingkiez. Ob kleine, große, runde oder eckige Laternen – anything goes. Bastelmaterialien stellen wir. Kommt vorbei, bringt Freunde mit und erfahrt mehr über den aktuellen Stand unserer Kampagne.</p>\n<p>Denn eins ist klar: Wir kämpfen weiter für bezahlbaren Wohnraum, bleiben solidarisch und setzen uns für eine vielfältige Stadtgesellschaft ein.</p>\n",
+      "protected": false
+    },
+    "featured_media": 2680,
+    "template": "",
+    "ik_event_types": [
+      104
+    ],
+    "ik_event_type": "Infoveranstaltung",
+    "ik_location": "interkosmos ",
+    "ik_street": "Fanningerstr. ",
+    "ik_streetnumber": "47",
+    "ik_zip": "10365",
+    "ik_city": "Berlin",
+    "ik_time_start": "19:00",
+    "ik_time_end": "",
+    "ik_date": "2026-11-10",
+    "ik_price": "",
+    "ik_url": "",
+    "ik_event_thumbnail": "https://www.interkosmos.cc/app/uploads/2026/10/Share_Pic_DWe_Basteln.png",
+    "ik_repetition": "never",
+    "ik_weekday": "monday",
+    "ik_monthweek": "1",
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2679"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/types/ik_event"
+        }
+      ],
+      "version-history": [
+        {
+          "count": 2,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2679/revisions"
+        }
+      ],
+      "predecessor-version": [
+        {
+          "id": 2682,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/events/2679/revisions/2682"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media/2680"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/media?parent=2679"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "ik_event_types",
+          "embeddable": true,
+          "href": "https://www.interkosmos.cc/wp-json/wp/v2/ik_event_types?post=2679"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
     "id": 2556,
     "date": "2026-02-03T20:00:24",
     "date_gmt": "2026-02-03T19:00:24",
