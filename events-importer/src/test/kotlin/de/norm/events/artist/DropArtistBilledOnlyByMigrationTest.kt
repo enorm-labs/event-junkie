@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -15,7 +16,7 @@ import java.sql.Statement
 /** Calls the V092 function (#2467) against planted rows, each case on its own slug so the calls stay independent. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DropArtistBilledOnlyByMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

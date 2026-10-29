@@ -22,5 +22,5 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 class PostgresTestcontainersConfiguration {
     @Bean
     @ServiceConnection(name = "postgres")
-    fun postgresContainer(): PostgreSQLContainer = PostgreSQLContainer("postgres:18.3-alpine")
+    fun postgresContainer(): PostgreSQLContainer = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
 }

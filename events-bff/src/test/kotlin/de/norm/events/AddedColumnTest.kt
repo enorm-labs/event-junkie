@@ -75,7 +75,7 @@ class AddedColumnTest {
         private const val WARM_UP_ROUNDS = 3
         private const val SLUG = "probe"
 
-        private val postgres: PostgreSQLContainer = PostgreSQLContainer("postgres:18.3-alpine")
+        private val postgres: PostgreSQLContainer = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
 
         @JvmStatic
         @DynamicPropertySource

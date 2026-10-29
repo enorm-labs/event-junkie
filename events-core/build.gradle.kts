@@ -110,6 +110,19 @@ tasks.test {
         .file(rootProject.layout.projectDirectory.file("docs/DATA_MODEL.md"))
         .withPropertyName("data-model-document")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // PostgresTestImageTest holds the test image equal to compose.yaml's and scans every module's
+    // sources for a literal tag (#4222), so a Dependabot bump or a new migration test reruns it.
+    inputs
+        .file(rootProject.layout.projectDirectory.file("compose.yaml"))
+        .withPropertyName("compose-file")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    listOf("events-bff", "events-importer").forEach { module ->
+        inputs
+            .files(fileTree(rootProject.layout.projectDirectory.dir("$module/src/test")))
+            .withPropertyName("$module-test-sources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }
 
 // The one command that rewrites the diagram in docs/DATA_MODEL.md. It is the same test, told to

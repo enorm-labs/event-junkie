@@ -262,6 +262,9 @@ updates:
   # These are development services. A stale pin here never reaches production, and it does decide
   # what a local run and a Testcontainers test exercise — so a Postgres that drifts from the
   # cluster's is a difference nobody sees until a deploy.
+  #
+  # A `postgres` bump here fails the backend build until `POSTGRES_TEST_IMAGE` in events-core's test
+  # fixtures moves in the same pull request: no updater reads that Kotlin constant (#4222).
   - package-ecosystem: "docker-compose"
     directory: "/"
     schedule:

@@ -1,5 +1,6 @@
 package de.norm.events.promoter
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import de.norm.events.slug.SlugGenerator
@@ -28,7 +29,7 @@ class SplitLarkOrganiserPromotersMigrationTest {
 
     @Test
     fun `credits each promoter on the fused row's events and drops the row`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "152").migrate()

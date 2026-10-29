@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -15,7 +16,7 @@ import java.sql.Statement
 /** Runs V184 (#3669) against planted event rows on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeleteFrannzClosureNoticeEventMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

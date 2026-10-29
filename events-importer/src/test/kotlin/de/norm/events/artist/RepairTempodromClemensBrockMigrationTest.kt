@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -19,7 +20,7 @@ class RepairTempodromClemensBrockMigrationTest {
 
     @Test
     fun `moves the past night's link onto Clemens Brock and leaves another venue's row alone`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "154").migrate()
@@ -42,7 +43,7 @@ class RepairTempodromClemensBrockMigrationTest {
 
     @Test
     fun `creates nothing on a database without the night`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "154").migrate()

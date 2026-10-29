@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -23,7 +24,7 @@ import java.sql.Statement
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SplitOhmB2bArtistsMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

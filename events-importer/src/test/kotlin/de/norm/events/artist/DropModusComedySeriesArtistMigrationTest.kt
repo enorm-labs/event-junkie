@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import org.junit.jupiter.api.AfterAll
@@ -14,7 +15,7 @@ import java.sql.Statement
 /** Runs V085 (#2398) against planted artist rows on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DropModusComedySeriesArtistMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll
@@ -47,7 +48,7 @@ class DropModusComedySeriesArtistMigrationTest {
 
     @Test
     fun `keeps a same-slug row that another venue bills`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { other ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { other ->
             other.start()
             DriverManager.getConnection(other.jdbcUrl, other.username, other.password).use { conn ->
                 flyway(other, "84").migrate()

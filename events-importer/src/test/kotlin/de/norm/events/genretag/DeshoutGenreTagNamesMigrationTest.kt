@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterAll
@@ -13,7 +14,7 @@ import java.sql.DriverManager
 /** Runs V124 (#2924) against planted genre tags on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeshoutGenreTagNamesMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

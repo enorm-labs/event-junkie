@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.rows
 import io.kotest.assertions.withClue
@@ -28,7 +29,7 @@ class RepairArtistCleanup20261016MigrationTest {
 
     @Test
     fun `splits a row in place, renames onto a stored act, merges, drops and tidies, each on its own source`() {
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "166").migrate()
@@ -89,7 +90,7 @@ class RepairArtistCleanup20261016MigrationTest {
 
     /** The `gomez` row after V167, planted before it as an enriched EXACT match to [mbid]. */
     private fun gomezAfterMigration(mbid: String): Map<String, Any?> =
-        PostgreSQLContainer("postgres:18.3-alpine").use { postgres ->
+        PostgreSQLContainer(POSTGRES_TEST_IMAGE).use { postgres ->
             postgres.start()
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 flyway(postgres, "166").migrate()

@@ -1,5 +1,6 @@
 package de.norm.events.artist
 
+import de.norm.events.POSTGRES_TEST_IMAGE
 import de.norm.events.flyway
 import de.norm.events.slug.SlugGenerator
 import io.kotest.matchers.collections.shouldContainExactly
@@ -17,7 +18,7 @@ import java.sql.Statement
 /** Runs V144 (#3150) against the past Admiralspalast night it relinks, on a database migrated to before it. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RelinkAdmiralspalastAlexanderEderMigrationTest {
-    private val postgres = PostgreSQLContainer("postgres:18.3-alpine")
+    private val postgres = PostgreSQLContainer(POSTGRES_TEST_IMAGE)
     private lateinit var connection: Connection
 
     @BeforeAll

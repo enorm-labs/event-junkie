@@ -128,7 +128,7 @@ class ConnectionResetTest {
         private val network: Network = Network.newNetwork()
 
         private val postgres: PostgreSQLContainer =
-            PostgreSQLContainer("postgres:18.3-alpine").withNetwork(network).withNetworkAliases(POSTGRES_ALIAS)
+            PostgreSQLContainer(POSTGRES_TEST_IMAGE).withNetwork(network).withNetworkAliases(POSTGRES_ALIAS)
 
         private val toxiproxy: ToxiproxyContainer = ToxiproxyContainer("ghcr.io/shopify/toxiproxy:2.12.0").withNetwork(network)
 
