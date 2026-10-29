@@ -19,6 +19,10 @@
 # request's copy, so an App with `workflows: write` cannot edit the gate green from the pull request
 # it gates. **Never add a `paths:` filter**: a required check that never runs is Pending forever.
 #
+# **The `hold` label stops any pull request**, a person's too, until someone removes it. It is for a
+# change that must land at a planned moment and not earlier, such as #4128's switch PRs: armed
+# auto-merge merged at the first green run otherwise. Removing it runs the gate again.
+#
 # **What it does not stop**: an App with `contents: write` pushing onto a person's open branch with
 # auto-merge armed. THREAT_MODEL.md B9 carries that as an accepted row.
 name: Merge Gate
@@ -29,7 +33,7 @@ on:
   # this reads `pull_request.user` from the payload and exits. `synchronize`, because a required check
   # reports on every head.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
-    types: [ opened, reopened, synchronize ]
+    types: [ opened, reopened, synchronize, labeled, unlabeled ]
   # A review is the event that can turn a red gate green, so the check runs again on each one, on the
   # same head.
   pull_request_review:
@@ -50,6 +54,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
+      # The live labels, not the payload's: a review run carries the labels of the moment it was submitted.
+      - name: Refuse a pull request labelled hold
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${REPO}/issues/${NUMBER}/labels" --jq '.[].name' | grep -qx hold; then
+            echo "::error::This pull request carries the hold label: it must not merge yet. Remove the label at the planned moment; the gate runs again."
+            exit 1
+          fi
+
       - name: Refuse a pull request from an App that is not on the list, unless a person approved this head
         env:
           GH_TOKEN: ${{ github.token }}
