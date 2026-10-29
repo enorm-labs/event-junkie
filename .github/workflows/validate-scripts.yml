@@ -130,6 +130,10 @@ jobs:
       - name: Assert what cutover.sh moves, in which order, and what it refuses
         run: scripts/cutover-test.sh
 
+      # A local pg_dump 17 refuses the 18 server, and a copy nobody compared is no backup.
+      - name: Assert where db-dump.sh dumps, and that it keeps only a checked copy
+        run: scripts/db-dump-test.sh
+
       # A checked plan and the applied plan were two runs, and the second replaced both production nodes (#4132).
       - name: Assert what infra/apply.sh refuses and applies
         run: infra/apply-test.sh
