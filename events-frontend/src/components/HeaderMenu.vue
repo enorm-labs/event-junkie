@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 /**
- * The header's section links and GitHub link on a phone (#2291): a burger and a side sheet. Rendered
+ * The header's section links on a phone (#2291), and a GitHub link: a burger and a side sheet. Rendered
  * without a portal, so the sheet stays inside the header's navigation landmark and its links are
  * still "Main" navigation to assistive tech and to the e2e selectors.
  */
@@ -99,7 +99,8 @@ watch(
         <section v-if="displaySettings" class="border-t border-border pt-4 sm:hidden">
           <DisplaySettingsGroups />
         </section>
-        <!-- The header row has no room for it below `md`, so it lives here. -->
+        <!-- Only here: on desktop the footer's link is enough, and an outbound icon among the header's
+             controls read as one more setting. -->
         <a
           :href="REPOSITORY_URL"
           :title="t('common.nav.sourceOnGitHub')"
