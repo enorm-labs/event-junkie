@@ -38,7 +38,10 @@ test('the other security headers are on the response', async ({ page }) => {
   expect(headers['permissions-policy']).toContain('geolocation=(self)')
 })
 
-test('this environment tells crawlers to stay away, by header and by robots.txt', async ({ page, request }) => {
+test('this environment tells crawlers to stay away, by header and by robots.txt', async ({
+  page,
+  request,
+}) => {
   // k3d stands in for every non-production environment here: `ingress.noindex` renders the header,
   // the disallow-all robots.txt and an empty sitemap, and all three have to agree (#286).
   const headers = (await page.goto('/'))!.headers()
@@ -51,4 +54,34 @@ test('this environment tells crawlers to stay away, by header and by robots.txt'
   // The image's copy disallows the AI training crawlers too, so only its production `Sitemap:`
   // tells it apart (#2642).
   expect(body).not.toContain('Sitemap:')
+})
+
+test('the CSRF cookie is readable by the bundle and nothing else', async ({ request }) => {
+  // The SPA copies `XSRF-TOKEN` into the `X-XSRF-TOKEN` header, so it cannot be HttpOnly; Strict and
+  // Secure keep it to this origin.
+  const response = await request.get('/api/auth/csrf')
+  expect(response.status()).toBe(204)
+  const cookie = response
+    .headersArray()
+    .find((h) => h.name.toLowerCase() === 'set-cookie' && h.value.startsWith('XSRF-TOKEN='))
+  expect(cookie, 'GET /api/auth/csrf sets XSRF-TOKEN').toBeDefined()
+  const attributes = cookie!.value.toLowerCase()
+  expect(attributes).toContain('path=/')
+  expect(attributes).toContain('secure')
+  expect(attributes).toContain('samesite=strict')
+  expect(attributes).not.toContain('httponly')
+})
+
+test('the account routes signed out answer, and no cache may keep the answer', async ({
+  request,
+}) => {
+  // `CacheControlFilter` (ADR-053): a shared cache in front of Traefik must never store an account answer.
+  const me = await request.get('/api/me')
+  expect(me.status()).toBe(401)
+  expect(me.headers()['cache-control']).toBe('private, no-store')
+
+  const session = await request.get('/api/auth/session')
+  expect(session.status()).toBe(200)
+  expect(session.headers()['cache-control']).toBe('private, no-store')
+  expect((await session.json()).account).toBeNull()
 })
