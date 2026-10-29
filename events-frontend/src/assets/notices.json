@@ -1477,7 +1477,7 @@
         },
         {
           "name": "@maplibre/vt-pbf",
-          "version": "4.3.2",
+          "version": "4.3.3",
           "url": "https://github.com/maplibre/vt-pbf",
           "ecosystem": "frontend"
         },
@@ -2059,7 +2059,7 @@
         },
         {
           "name": "maplibre-gl",
-          "version": "6.15.0",
+          "version": "6.16.0",
           "url": "https://github.com/maplibre/maplibre-gl-js",
           "ecosystem": "frontend"
         },
@@ -2107,7 +2107,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.60.0",
+          "version": "1.61.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
