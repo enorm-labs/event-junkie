@@ -58,7 +58,7 @@
     "@playwright/test": "1.64.1",
     "@shadcn/lint": "0.2.3",
     "@tailwindcss/vite": "4.3.3",
-    "@tsconfig/node24": "24.0.5",
+    "@tsconfig/node26": "26.0.1",
     "@types/estree": "1.0.9",
     "@types/jsdom": "30.0.0",
     "@types/node": "26.6.5",
@@ -94,7 +94,7 @@
     "stylus": "0.64.0"
   },
   "engines": {
-    "node": ">=24.15.0"
+    "node": ">=26.0.0"
   },
   "//version": "A placeholder. No file carries the version (ADR-032), and no release changes this field. The version the site displays comes from GET /meta, never from here. See docs/LEGAL.md §4.6.",
   "allowScripts": {

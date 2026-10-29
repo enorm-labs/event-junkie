@@ -26,7 +26,7 @@ export default defineConfig({
   build: {
     ssr: 'injector/server.ts',
     outDir: 'dist-injector',
-    target: 'node24',
+    target: 'node26',
     emptyOutDir: true,
     // Readable output on purpose: the file is inspected inside the container when something is
     // wrong, and there is no browser to shave bytes for.

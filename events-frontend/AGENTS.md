@@ -2,7 +2,7 @@
 
 The conventions every change to the Vue SPA is held to. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under
 `events-frontend/`. The project is npm-managed, not a Gradle subproject, with its own workflow (`build-frontend.yml`: `npm ci`, lint, build, unit, e2e, on
-Node 24).
+Node 26).
 
 ## The short version
 
@@ -27,8 +27,9 @@ Stack: Vue 3 (`<script setup lang="ts">` only, no Options API), TypeScript 6 str
 eslint + oxfmt, Vitest (jsdom), Playwright. **Do not add Prettier.** Path alias `@/` → `src/`; no semicolons, single quotes, no file extensions on imports
 except the four below.
 
-**Node `>=24.15.0` — a patch floor, forced by jsdom 30** (`^22.22.2 || ^24.15.0 || >=26`); a bare `>=24` would let `npm install` succeed on a Node jsdom does
-not support, with only an `EBADENGINE` warning. The floor moved before, for `vue-i18n` (ADR-013), and each move was forced, not chosen. **A stale local Node
+**Node `>=26.0.0` — the LTS line**, which `.nvmrc`, the workflows' `node-version`, `@tsconfig/node26` and the injector image all follow. jsdom 30
+(`^22.22.2 || ^24.15.0 || >=26`) accepts every 26 release. A floor below what a dependency declares lets `npm install` succeed with only an `EBADENGINE`
+warning, so the floor moves when a dependency's does, as it did for `vue-i18n` (ADR-013). **A stale local Node
 silently hides dependency updates**: `npm outdated` filters out versions whose `engines` your interpreter fails, which is how jsdom 30 stayed invisible. A
 quiet report means check `node --version` against `.nvmrc` first.
 

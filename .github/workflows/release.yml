@@ -160,7 +160,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.0  # zizmor: ignore[cache-poisoning]
         with:
-          node-version: '24' # should match the version specified in .nvmrc
+          node-version: '26' # should match the version specified in .nvmrc
           # No `cache: 'npm'` here, for the same cache-poisoning reason as Gradle above.
 
       - name: Install frontend dependencies
