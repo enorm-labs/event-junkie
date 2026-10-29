@@ -199,7 +199,7 @@ Installed in `events-frontend/` per the
       TypeScript 6.x. `paths` resolves without it.
     - **ESLint**: `src/components/ui/**` is exempted from `vue/multi-word-component-names` because shadcn components are vendored and single-word by design.
 - **Conventions**:
-    - Add components with `npx shadcn-vue@latest add <name>`. They land in `src/components/ui/<name>/`
+    - Add components with `npx shadcn-vue add <name>`. They land in `src/components/ui/<name>/`
       and are **owned by us**: edit them freely, and no package manager upgrades them.
     - Re-theme by editing the CSS-variable tokens in `src/assets/main.css`. Dark mode comes from the `.dark` class.
 - **Verified**: `type-check`, `build` (CSS ~4.3 KB gzip), `lint` and `vitest run` all pass.
