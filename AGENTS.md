@@ -184,8 +184,8 @@ Event Junkie discovers music events in Berlin. A **Gradle multi-project build** 
   `src/main/resources/db/migration/`.
 - **`detekt-rules`** — this repository's own detekt rules, on every module's `detektPlugins` classpath, configured under the `event-junkie` key in
   `detekt.yml`. Ships nothing, so it is out of Kover, the licence report and the OWASP scan; each exclusion sits next to its reason in `build.gradle.kts`.
-- **`events-frontend`** — Vue 3 SPA (Vite 8, TypeScript 6, Vue Router), managed by npm, not Gradle. Node `>=24.15.0`: a **patch** floor forced by jsdom 30;
-  `events-frontend/AGENTS.md` records both moves.
+- **`events-frontend`** — Vue 3 SPA (Vite 8, TypeScript 6, Vue Router), managed by npm, not Gradle. Node `>=26.0.0`, the LTS line;
+  `events-frontend/AGENTS.md` says why the floor sits where it does.
 - **`events-admin`** — the operator's Vue app (Vite, shadcn-vue), npm-managed. Local only: never built into an image or deployed (ADR-045). Its dev server
   proxies `/api/admin` to the forward `scripts/ej.sh up <env>` opens; `npm run dev -- --mode staging`. `build-admin.yml` type-checks, lints and tests it.
 

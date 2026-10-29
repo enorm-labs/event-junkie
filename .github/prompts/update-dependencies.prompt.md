@@ -103,9 +103,10 @@ checkout falls behind.
     Take the first identifier that answers 302: `sdk install java <identifier>`, then the backend gate (Step 6). A patch moves nothing else. When none
     answers 302, keep the pin and name the newer patch in the summary.
 
-2. **Node.** Each `.nvmrc` holds a major only, so a patch needs no edit. Check that `engines` in both `package.json` files and the `node-version:` lines in
-   `.github/workflows/` name the same major.
-3. **Majors are reported, never applied.** The JDK stays on its LTS line, and Node follows the LTS line (the `node` ignore in `dependabot.yml` says why).
+2. **Node.** Each `.nvmrc` holds a major only, so a patch needs no edit. Check that `engines` in the three `package.json` files (both apps and
+   `perf/lighthouse`), the `@tsconfig/node*` pin, the injector's Vite `target` and image, and the `node-version:` lines in `.github/workflows/` name the
+   same major.
+3. **Majors are reported, never applied.** The JDK stays on its LTS line, and Node follows the LTS line.
    When a newer LTS major exists, name it in the summary with its date. Moving the JDK also moves the runtime image (ADR-017), so it needs its own issue.
 
 ## Step 11: README badges and the Kotlin link

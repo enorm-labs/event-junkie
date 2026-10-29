@@ -274,7 +274,7 @@
     {
       // **`custom.regex` is not only ours.** Enabling it also activates every regex manager an
       // extended preset defines — measured on #1071, where `config:recommended` contributed one that
-      // picked `@tsconfig/node24` out of two `tsconfig.json` files. Dependabot's `npm` ecosystem
+      // picked the `@tsconfig/node*` pin out of two `tsconfig.json` files. Dependabot's `npm` ecosystem
       // already owns those in its `typescript` group, so letting them through would be the exact
       // duplication this file's allow-list exists to prevent.
       //

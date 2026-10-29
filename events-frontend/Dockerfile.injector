@@ -10,12 +10,12 @@
 #     docker buildx build events-frontend -f events-frontend/Dockerfile.injector \
 #       --platform linux/amd64,linux/arm64 --build-arg VERSION=… --build-arg REVISION=…
 #
-# Pinned by tag and digest; `24-alpine` because Node 24 is the engine `package.json` declares.
+# Pinned by tag and digest; `26-alpine` because Node 26 is the engine `package.json` declares.
 # Verify the package, never the digest (#770): this pin has to satisfy `libssl3 >= 3.5.8-r0`,
 # checked with `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E
 # "^libssl3"'` on `--platform linux/amd64`, the architecture the gate scans. No `apk upgrade`
 # layer: kept past its purpose it hides that the base has caught up.
-FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+FROM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
