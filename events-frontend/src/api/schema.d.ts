@@ -616,7 +616,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The newest 20 notifications, read or not */
+        /**
+         * The newest notifications, read or not, 20 unless `limit` says otherwise
+         * @description Pages with the `Next-Cursor` header: send its value as `before` for the entries after the last one listed. The header is absent on the last page.
+         */
         get: operations["list_4"];
         put?: never;
         post?: never;
@@ -3730,7 +3733,14 @@ export interface operations {
     };
     list_4: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description How many entries, 1 to 50 */
+                limit?: number;
+                /** @description The `Next-Cursor` of the previous page */
+                before?: string;
+                /** @description Only the unread entries */
+                unread?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3740,6 +3750,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /** @description The `before` of the next page */
+                    "Next-Cursor"?: string;
                     [name: string]: unknown;
                 };
                 content: {

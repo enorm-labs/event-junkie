@@ -16,6 +16,10 @@
 # verdict is Bob's export before and after, because a 404 and a 204 that touched nothing are both
 # correct, and only the rows say which happened. Ada's export must name none of Bob's ids either.
 #
+# The notifications list pages by a `Next-Cursor` header (#4169). Ada's list needs more than one page of 10, so the script
+# walks it, all and `unread=true`, and every id on every page must be one her own export lists. Bob's unread list must
+# hold only his. A cursor positions a list and never names the account, so this is the check that it stays that way.
+#
 # **Both sessions are checked first.** An expired or missing fixture turns every request into a 401,
 # and a 401 changes nothing, so the check would pass while testing nothing.
 
@@ -122,4 +126,34 @@ for id in "$BOB_SEARCH" "$BOB_PASSKEY" "$BOB_NOTIFICATION" bob@example.de; do
     [[ "$ada_export" != *"$id"* ]] || fail "Ada's export names Bob's $id"
 done
 
-echo "account-isolation: Bob's rows are unchanged, and Ada's export names none of them"
+# Every notification id on every page of one account's list, one per line. Prints the page count to stderr.
+notification_pages() {
+    local session="$1" filter="$2" next="" pages=0 headers
+    headers="$(mktemp)"
+    while :; do
+        local args=(-sS -f -D "$headers" -b "__Host-ej_session=$session")
+        [[ -n "$HOST_HEADER" ]] && args+=(-H "Host: $HOST_HEADER")
+        curl "${args[@]}" "$ORIGIN/api/me/notifications?limit=10$filter${next:+&before=$next}" | jq -r '.[].id'
+        pages=$((pages + 1))
+        next="$(awk 'tolower($1) == "next-cursor:" { print $2 }' "$headers" | tr -d '\r')"
+        [[ -n "$next" ]] || break
+    done
+    rm -f "$headers"
+    echo "$pages" >&2
+}
+
+ada_own="$(jq -r '.notifications[].id' <<<"$ada_export" | sort)"
+bob_own="$(call "$BOB_SESSION" GET /api/me/export | jq -r '.notifications[].id' | sort)"
+for filter in "" "&unread=true"; do
+    pages="$({ notification_pages "$ADA_SESSION" "$filter" | sort >"${TMPDIR:-/tmp}/ada-pages.$$"; } 2>&1)"
+    [[ "$pages" -gt 1 ]] || fail "Ada's notifications${filter:+ ($filter)} fit on one page, so paging is not tested; load fixtures/accounts.sql"
+    stray="$(comm -23 "${TMPDIR:-/tmp}/ada-pages.$$" <(echo "$ada_own"))"
+    rm -f "${TMPDIR:-/tmp}/ada-pages.$$"
+    [[ -z "$stray" ]] || fail "Ada's paged notifications${filter:+ ($filter)} list ids her export does not: $stray"
+    echo "  Ada's notifications${filter:+ ($filter)}: $pages pages, all her own"
+done
+bob_unread="$({ notification_pages "$BOB_SESSION" "&unread=true" | sort; } 2>/dev/null)"
+[[ -n "$bob_unread" ]] || fail "Bob has no unread notification, so there is nothing to aim at"
+[[ -z "$(comm -23 <(echo "$bob_unread") <(echo "$bob_own"))" ]] || fail "Bob's unread notifications list an id his export does not"
+
+echo "account-isolation: Bob's rows are unchanged, Ada's export names none of them, and each paged notification list holds only its own"

@@ -16,5 +16,6 @@
   "confirmSignIn": "Sign in",
   "account": "Your account",
   "following": "Following",
-  "myCalendar": "My calendar"
+  "myCalendar": "My calendar",
+  "notifications": "Notifications"
 }

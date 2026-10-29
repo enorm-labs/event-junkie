@@ -175,6 +175,12 @@ const router = createRouter({
           meta: { titleKey: 'pageTitle.myCalendar', noindex: true },
           component: () => import('../views/account/MyCalendarView.vue'),
         },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          meta: { titleKey: 'pageTitle.notifications', noindex: true },
+          component: () => import('../views/account/NotificationsView.vue'),
+        },
         // The five long-form pages have one component per language (views/localisedView.ts), the
         // exception to user-facing text living in the message catalogue.
         {

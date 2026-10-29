@@ -24,6 +24,7 @@
     "pastEvents": "past events",
     "account": "your account",
     "following": "what you follow",
-    "myCalendar": "your calendar"
+    "myCalendar": "your calendar",
+    "notifications": "your notifications"
   }
 }

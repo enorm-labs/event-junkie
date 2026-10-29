@@ -33,7 +33,7 @@ const ROW =
   'block rounded-md px-2 py-1.5 text-body hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden disabled:opacity-50'
 
 /** The pages that show the account itself; signed out, they have nothing left to show. */
-const ACCOUNT_PAGE = /^\/(de|en)\/(following|my-calendar|account)\/?$/
+const ACCOUNT_PAGE = /^\/(de|en)\/(following|my-calendar|notifications|account)\/?$/
 
 async function leave() {
   if (busy.value) return

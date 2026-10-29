@@ -178,6 +178,16 @@
       "time": "Time changed",
       "venue": "Venue changed"
     },
-    "failed": "Could not load notifications. Try again later."
+    "failed": "Could not load notifications. Try again later.",
+    "showAll": "Show all",
+    "page": {
+      "intro": "New dates of what you follow, and changes to events you plan to go to. Each entry goes after 30 days.",
+      "filter": "Which notifications",
+      "all": "All",
+      "unread": "Unread",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "noneUnread": "Nothing unread. Everything here has been opened."
+    }
   }
 }

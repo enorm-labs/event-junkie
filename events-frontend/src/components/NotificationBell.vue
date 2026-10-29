@@ -2,7 +2,8 @@
 /**
  * The header's bell, signed in only (#4078): new dates of what the account follows, unread until
  * opened. The count is asked on each page load and route change, and when the tab comes back into
- * view. No polling. Built as `AccountEntry` is: an icon button and a popover of plain links.
+ * view, and when the notifications page has marked something read. No polling. Built as
+ * `AccountEntry` is: an icon button and a popover of plain links, the last one to the page (#4169).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -16,12 +17,13 @@ import {
   prepareCsrf,
 } from '@/api/account'
 import type { AccountNotification } from '@/api/types'
+import NotificationEntry from '@/components/NotificationEntry.vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useLocalePath } from '@/composables/useLocalePath'
-import { formatShortDate } from '@/lib/format'
+import { NOTIFICATIONS_READ } from '@/lib/notifications'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
 
@@ -96,11 +98,6 @@ async function readAll() {
   }
 }
 
-function line(entry: AccountNotification) {
-  if (entry.kind === 'change') return t(`account.notifications.change.${entry.change}`)
-  return t(`account.notifications.${entry.aboutKind}`, { name: entry.aboutName })
-}
-
 const onVisible = () => {
   if (document.visibilityState === 'visible') refresh()
 }
@@ -112,8 +109,12 @@ watch(() => route.fullPath, refresh)
 onMounted(() => {
   refresh()
   document.addEventListener('visibilitychange', onVisible)
+  window.addEventListener(NOTIFICATIONS_READ, refresh)
 })
-onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible))
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', onVisible)
+  window.removeEventListener(NOTIFICATIONS_READ, refresh)
+})
 </script>
 
 <template>
@@ -153,39 +154,26 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisible
         >
           {{ t('account.notifications.empty') }}
         </p>
-        <ul v-else-if="entries" :aria-label="t('account.notifications.label')">
+        <ul
+          v-else-if="entries"
+          :aria-label="t('account.notifications.label')"
+          class="max-h-96 overflow-y-auto"
+        >
           <li v-for="entry in entries" :key="entry.id">
-            <RouterLink
-              :class="ROW"
-              :to="localePath(`/events/${entry.event}`)"
-              data-testid="notification"
-              @click="opened(entry)"
-            >
-              <span class="flex items-start gap-2">
-                <!-- The dot marks unread; the sr-only word says it, so colour is not the only carrier. -->
-                <span
-                  :class="entry.readAt ? 'invisible' : 'bg-primary'"
-                  aria-hidden="true"
-                  class="mt-1.5 size-2 shrink-0 rounded-full"
-                />
-                <span class="min-w-0">
-                  <span v-if="!entry.readAt" class="sr-only"
-                    >{{ t('account.notifications.unread') }}:
-                  </span>
-                  <span
-                    :class="entry.readAt ? 'font-normal' : 'font-medium'"
-                    class="block truncate text-body"
-                  >
-                    {{ line(entry) }}
-                  </span>
-                  <span class="block truncate text-meta text-muted-foreground">
-                    {{ formatShortDate(entry.date, locale) }} · {{ entry.title }}
-                  </span>
-                </span>
-              </span>
-            </RouterLink>
+            <NotificationEntry :class="ROW" :entry="entry" @click="opened(entry)" />
           </li>
         </ul>
+        <div class="border-t pt-2">
+          <RouterLink
+            :class="ROW"
+            :to="localePath('/notifications')"
+            class="text-body"
+            data-testid="notification-show-all"
+            @click="open = false"
+          >
+            {{ t('account.notifications.showAll') }}
+          </RouterLink>
+        </div>
       </div>
     </PopoverContent>
   </Popover>

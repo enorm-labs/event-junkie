@@ -2,6 +2,9 @@ package de.norm.events.account
 
 import de.norm.events.BaseControllerTest
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -95,7 +98,7 @@ class AccountFixtureTest : BaseControllerTest() {
     }
 
     @Test
-    fun `bob's bell holds one unread cancellation of his RSVP, and ada's is empty`() {
+    fun `bob's bell holds one unread cancellation of his RSVP`() {
         val bobFixture = fixture.single { it.get("email").asString() == bob.email }
         get("/me/notifications", bob)
             .jsonPath("$.length()")
@@ -108,7 +111,37 @@ class AccountFixtureTest : BaseControllerTest() {
             .isEqualTo("cancelled")
             .jsonPath("$[0].readAt")
             .isEmpty
-        get("/me/notifications", ada).jsonPath("$").isEmpty
+    }
+
+    @Test
+    fun `ada's notifications need a second page, all and unread, and none of them is bob's`() {
+        fun walk(filter: String): List<String> {
+            val ids = mutableListOf<String>()
+            var next: String? = null
+            do {
+                val result =
+                    webTestClient
+                        .get()
+                        .uri("/me/notifications?limit=20$filter" + next?.let { "&before=$it" }.orEmpty())
+                        .signedInAs(ada)
+                        .exchange()
+                        .expectBody(object : ParameterizedTypeReference<List<Map<String, Any?>>>() {})
+                        .returnResult()
+                ids += result.responseBody!!.map { it["id"] as String }
+                next = result.responseHeaders.getFirst("Next-Cursor")
+            } while (next != null)
+            return ids
+        }
+
+        val all = walk("")
+        val unread = walk("&unread=true")
+        all.size shouldBeGreaterThan 20
+        all.toSet().size shouldBe all.size
+        // scripts/account-isolation.sh walks both lists 10 at a time and needs a second page of each.
+        unread.size shouldBeGreaterThan 10
+        unread.size shouldBeLessThan all.size
+        all.containsAll(unread) shouldBe true
+        all shouldNotContain fixture.single { it.get("email").asString() == bob.email }.get("notificationId").asString()
     }
 
     @Test

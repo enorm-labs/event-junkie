@@ -71,22 +71,41 @@ class NotificationStore(
         return RecordedNotifications(accounts.size, accounts.toSet().size)
     }
 
-    /** The newest [limit] notifications whose event still exists. */
+    /**
+     * The newest [limit] notifications whose event still exists, after [after] when it is given, and only the unread ones
+     * when [unreadOnly]. The order is total, so the cursor of one page's last row starts the next without a gap or a repeat.
+     */
     suspend fun list(
         accountId: UUID,
-        limit: Int
-    ): List<Notification> =
-        db
-            .sql(
-                "SELECT n.id, n.kind, e.slug, e.title, e.event_date, n.about_kind, n.change, n.created_at, n.read_at, " +
-                    "COALESCE(a.name, p.name, v.name) AS about_name " +
-                    "FROM accounts.notification n JOIN $EVENTS_SCHEMA.event e ON e.id = n.event_id " +
-                    "LEFT JOIN $EVENTS_SCHEMA.artist a ON n.about_kind = 'artist' AND a.id = n.about_id " +
-                    "LEFT JOIN $EVENTS_SCHEMA.promoter p ON n.about_kind = 'promoter' AND p.id = n.about_id " +
-                    "LEFT JOIN $EVENTS_SCHEMA.venue v ON n.about_kind = 'venue' AND v.id = n.about_id " +
-                    "WHERE n.account_id = :account ORDER BY n.created_at DESC, e.event_date, n.id LIMIT :limit"
-            ).bind("account", accountId)
-            .bind("limit", limit)
+        limit: Int,
+        after: NotificationCursor? = null,
+        unreadOnly: Boolean = false
+    ): List<Notification> {
+        val conditions =
+            listOfNotNull(
+                "n.account_id = :account",
+                "n.read_at IS NULL".takeIf { unreadOnly },
+                (
+                    "(n.created_at < :createdAt OR (n.created_at = :createdAt AND " +
+                        "(e.event_date > :eventDate OR (e.event_date = :eventDate AND n.id > :id))))"
+                ).takeIf { after != null }
+            )
+        var spec =
+            db
+                .sql(
+                    "SELECT n.id, n.kind, e.slug, e.title, e.event_date, n.about_kind, n.change, n.created_at, n.read_at, " +
+                        "COALESCE(a.name, p.name, v.name) AS about_name " +
+                        "FROM accounts.notification n JOIN $EVENTS_SCHEMA.event e ON e.id = n.event_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.artist a ON n.about_kind = 'artist' AND a.id = n.about_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.promoter p ON n.about_kind = 'promoter' AND p.id = n.about_id " +
+                        "LEFT JOIN $EVENTS_SCHEMA.venue v ON n.about_kind = 'venue' AND v.id = n.about_id " +
+                        "WHERE ${conditions.joinToString(" AND ")} ORDER BY n.created_at DESC, e.event_date, n.id LIMIT :limit"
+                ).bind("account", accountId)
+                .bind("limit", limit)
+        if (after != null) {
+            spec = spec.bind("createdAt", after.createdAt).bind("eventDate", after.eventDate).bind("id", after.id)
+        }
+        return spec
             .map { row ->
                 Notification(
                     id = row.required("id", UUID::class.java),
@@ -103,6 +122,7 @@ class NotificationStore(
                 )
             }.flow()
             .toList()
+    }
 
     suspend fun unreadCount(accountId: UUID): Long =
         db

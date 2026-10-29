@@ -8,7 +8,7 @@ import { failUnmockedGets } from './unmocked'
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/events/:slug · GET /api/events/:slug/related
  * · GET /api/me/notifications · GET /api/me/notifications/unread-count · POST /api/me/notifications/:id/read
- * · POST /api/me/notifications/read · GET /api/me/rsvps
+ * · POST /api/me/notifications/read · GET /api/me/rsvps. The list pages by `limit`, `before` and `unread`.
  */
 
 const me = { email: 'ada@example.com', locale: 'en', createdAt: '2026-10-24T10:00:00Z' }
@@ -63,7 +63,20 @@ async function mockBff(page: Page, signedIn = true, extra: ReturnType<typeof ent
     if (path === '/api/me/notifications/unread-count') {
       return json(route, { count: entries.filter((e) => !e.readAt).length })
     }
-    if (path === '/api/me/notifications') return json(route, entries)
+    if (path === '/api/me/notifications') {
+      // The BFF's keyset cursor stands in as an index: the page only hands it back.
+      const query = new URL(request.url()).searchParams
+      const listed = query.get('unread') === 'true' ? entries.filter((e) => !e.readAt) : entries
+      const from = Number(query.get('before') ?? 0)
+      const limit = Number(query.get('limit') ?? 20)
+      const next = from + limit < listed.length ? String(from + limit) : null
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: next ? { 'Next-Cursor': next } : {},
+        body: JSON.stringify(listed.slice(from, from + limit)),
+      })
+    }
     if (request.method() === 'POST' && path.startsWith('/api/me/notifications/')) {
       writes.push(path)
       const id = path.split('/')[4]
@@ -123,6 +136,42 @@ test('a change to an event marked as going names what changed', async ({ page })
 
   await page.getByRole('button', { name: 'Notifications, 3 unread' }).click()
   await expect(page.getByRole('link', { name: /Cancelled/ })).toHaveAttribute('href', '/en/events/mock-night')
+})
+
+test('Show all opens the page, Show more loads the next 50, and Unread keeps to the unread ones', async ({
+  page,
+}) => {
+  const older = Array.from({ length: 58 }, (_, i) => ({
+    ...entry(`00000000-0000-4000-8000-${String(100 + i).padStart(12, '0')}`, `night-${i}`, `Club ${i}`),
+    createdAt: '2026-09-01T10:00:00Z',
+    readAt: i % 2 === 0 ? '2026-09-02T10:00:00Z' : null,
+  }))
+  await mockBff(page, true, older)
+  await page.goto('/en/about')
+
+  await page.getByRole('button', { name: /^Notifications/ }).click()
+  await page.getByRole('link', { name: 'Show all' }).click()
+
+  await expect(page).toHaveURL(/\/en\/notifications$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Notifications' })).toBeVisible()
+  await expect(page.getByTestId('notification')).toHaveCount(50)
+  await page.getByRole('button', { name: 'Show more' }).click()
+  await expect(page.getByTestId('notification')).toHaveCount(60)
+  await expect(page.getByRole('button', { name: 'Show more' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Unread', exact: true }).click()
+  await expect(page).toHaveURL(/\/en\/notifications\?unread=1$/)
+  await expect(page.getByTestId('notification')).toHaveCount(31)
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Unread', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('notification')).toHaveCount(31)
+})
+
+test('signed out, the page sends the visitor to sign-in', async ({ page }) => {
+  await mockBff(page, false)
+  await page.goto('/en/notifications')
+
+  await expect(page).toHaveURL(/\/en\/sign-in\?next=/)
 })
 
 test.describe('on a phone', () => {

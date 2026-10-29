@@ -1,5 +1,5 @@
 import type { Locale } from '@/i18n/locales'
-import { api, unwrap } from './client'
+import { api, ApiError, unwrap } from './client'
 import type { operations } from './schema'
 import type { Account, AccountNotification, EventSummary, EventSummaryPage, Follow } from './types'
 import {
@@ -279,6 +279,23 @@ export async function signInWithPasskey(
 /** The newest 20 notifications under the header's bell (#4078), read or not. */
 export async function fetchNotifications(): Promise<AccountNotification[]> {
   return unwrap(api.GET('/api/me/notifications'))
+}
+
+/** One page of the notifications page (#4169), and the cursor of the next one, or null on the last. */
+export async function fetchNotificationPage(options: {
+  limit: number
+  before?: string
+  unread?: boolean
+}): Promise<{ entries: AccountNotification[]; next: string | null }> {
+  const { data, error, response } = await api.GET('/api/me/notifications', {
+    params: {
+      query: { limit: options.limit, before: options.before, unread: options.unread || undefined },
+    },
+  })
+  if (!response.ok || error !== undefined) {
+    throw new ApiError(response.status, `Request failed with status ${response.status}`)
+  }
+  return { entries: data ?? [], next: response.headers.get('Next-Cursor') }
 }
 
 export async function fetchUnreadCount(): Promise<number> {

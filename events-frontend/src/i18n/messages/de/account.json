@@ -178,6 +178,16 @@
       "time": "Neue Uhrzeit",
       "venue": "Neuer Ort"
     },
-    "failed": "Benachrichtigungen konnten nicht geladen werden. Versuch es später noch einmal."
+    "failed": "Benachrichtigungen konnten nicht geladen werden. Versuch es später noch einmal.",
+    "showAll": "Alle anzeigen",
+    "page": {
+      "intro": "Neue Termine von dem, dem du folgst, und Änderungen an Events, die du vorhast. Jeder Eintrag verschwindet nach 30 Tagen.",
+      "filter": "Welche Benachrichtigungen",
+      "all": "Alle",
+      "unread": "Ungelesen",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "noneUnread": "Nichts Ungelesenes. Alles hier ist schon geöffnet."
+    }
   }
 }

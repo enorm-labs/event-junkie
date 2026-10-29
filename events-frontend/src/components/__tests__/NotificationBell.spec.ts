@@ -14,6 +14,8 @@ vi.mock('@/api/account', () => account)
 
 const { default: NotificationBell } = await import('@/components/NotificationBell.vue')
 
+const { NOTIFICATIONS_READ } = await import('@/lib/notifications')
+
 const Page = defineComponent({ render: () => h('p') })
 
 const entry = (id: string, readAt: string | null = null) => ({
@@ -157,6 +159,33 @@ describe('NotificationBell', () => {
     expect(account.markAllNotificationsRead).toHaveBeenCalledOnce()
     expect(wrapper!.find('[data-testid="notification-badge"]').exists()).toBe(false)
     expect(document.body.textContent).not.toContain('Unread')
+  })
+
+  it('ends the menu with a link to the notifications page, which closes the menu', async () => {
+    account.fetchUnreadCount.mockResolvedValue(0)
+    account.fetchNotifications.mockResolvedValue([entry('1')])
+    await mountAt('/en/events')
+    await openMenu()
+
+    const link = document.body.querySelector<HTMLElement>('[data-testid="notification-show-all"]')!
+    expect(link.getAttribute('href')).toBe('/en/notifications')
+    expect(link.textContent?.trim()).toBe('Show all')
+    link.click()
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/en/notifications')
+    expect(document.body.querySelector('[data-testid="notification-show-all"]')).toBeNull()
+  })
+
+  it('counts again when the notifications page has marked something read', async () => {
+    account.fetchUnreadCount.mockResolvedValueOnce(3).mockResolvedValue(0)
+    await mountAt('/en/events')
+
+    window.dispatchEvent(new Event(NOTIFICATIONS_READ))
+    await flushPromises()
+
+    expect(account.fetchUnreadCount).toHaveBeenCalledTimes(2)
+    expect(wrapper!.find('[data-testid="notification-badge"]').exists()).toBe(false)
   })
 
   it('says so when there is nothing yet', async () => {

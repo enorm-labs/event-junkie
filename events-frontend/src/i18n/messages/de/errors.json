@@ -24,6 +24,7 @@
     "pastEvents": "der vergangenen Events",
     "account": "deines Kontos",
     "following": "deine Follows",
-    "myCalendar": "deinen Kalender"
+    "myCalendar": "deinen Kalender",
+    "notifications": "deiner Benachrichtigungen"
   }
 }
