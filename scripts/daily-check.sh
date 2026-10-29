@@ -11,7 +11,8 @@
 #
 # --hours defaults to 24 and sets what counts as new. The keys: `failed_runs` (per workflow, whether
 # the latest finished run is still red), `stuck_runs` (any run unfinished after six hours),
-# `disabled_workflows`, `release_main` (the latest release.yml on main, whatever its
+# `disabled_workflows`, `missed_schedules` (an active workflow whose last scheduled run is older than
+# its cron period plus DAILY_CHECK_GRACE_HOURS, default 8), `release_main` (the latest release.yml on main, whatever its
 # age), `bot_issues` (every open issue automation opened), `reports` (whether the latest plausibility
 # and OWASP report was answered or filed), `security`, `pull_requests`, `release`, `unclosed` and
 # `after_deploy` (merged pull requests whose after-deploy steps are still unticked, and whether the
@@ -92,6 +93,49 @@ stuck_runs() {
 disabled_workflows() {
     gh workflow list -R "$REPO" --all --limit 200 --json name,path,state |
         jq 'map(select(.state != "active"))'
+}
+
+# A schedule that never fired fails nothing either. Its period comes from the cron fields, not a full
+# parse: day of month or month set is quarterly at most, day of week set is weekly over the days named,
+# else daily. Cron fires 4.5 to 7 h late here, so the grace is 8 h. The file is read from main, which is
+# what GitHub schedules.
+schedule_lines() {
+    local path file cron last
+    gh workflow list -R "$REPO" --limit 200 --json name,path,state |
+        jq -r '.[] | select(.state == "active" and (.path | startswith(".github/workflows/"))) | [.name, .path] | @tsv' |
+        while IFS=$'\t' read -r name path; do
+            # A workflow whose file left main stays listed as active, and has no schedule.
+            if ! file=$(gh api -H 'Accept: application/vnd.github.raw' "repos/$REPO/contents/$path?ref=main" 2>&1); then
+                [[ "$file" == *"HTTP 404"* ]] && continue
+                echo "$file" >&2
+                return 1
+            fi
+            cron=$(printf '%s\n' "$file" | sed -nE "s/^[[:space:]]*- cron:[[:space:]]*['\"]([^'\"]+)['\"].*/\1/p")
+            [ -n "$cron" ] || continue
+            last=$(gh run list -R "$REPO" --workflow "$path" --event schedule --limit 1 --json createdAt,url --jq '.[0] // null')
+            jq -n --arg name "$name" --arg path "$path" --arg cron "$cron" --argjson last "${last:-null}" \
+                '{workflow: $name, path: $path, crons: ($cron | split("\n")), last_run: (if $last then {at: $last.createdAt, url: $last.url} else null end)}'
+        done
+}
+
+missed_schedules() {
+    local lines err
+    err=$(mktemp)
+    if ! lines=$(schedule_lines 2>"$err"); then
+        jq -n --arg e "$(head -c 200 "$err")" '{error: $e}'
+        rm -f "$err"
+        return
+    fi
+    rm -f "$err"
+    printf '%s' "$lines" | jq -s --argjson grace "${DAILY_CHECK_GRACE_HOURS:-8}" '
+        map(.period_hours = ([.crons[] | split(" ") |
+                if .[2] != "*" or .[3] != "*" then 2232
+                elif .[4] != "*" then 168 / ([.[4] | split(",")[] | if test("-") then (split("-") | (.[1] | tonumber) - (.[0] | tonumber) + 1) else 1 end] | add)
+                else 24 end] | min)
+            | .overdue_hours = (if .last_run then ((now - (.last_run.at | fromdateiso8601)) / 3600 - .period_hours | floor) else null end)
+            | select(.last_run == null or .overdue_hours >= $grace)
+            | del(.crons))
+        | sort_by(-(.overdue_hours // 1e9))'
 }
 
 release_main() {
@@ -226,6 +270,7 @@ jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson failed_runs "$(failed_runs)" \
     --argjson stuck_runs "$(stuck_runs)" \
     --argjson disabled_workflows "$(disabled_workflows)" \
+    --argjson missed_schedules "$(missed_schedules)" \
     --argjson release_main "$(release_main)" \
     --argjson bot_issues "$(bot_issues)" \
     --argjson plausibility "$(report 'Plausibility check — nightly reports')" \
@@ -237,7 +282,8 @@ jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson unclosed "$(unclosed)" \
     --argjson after_deploy "$(after_deploy)" \
     '{repo: $repo, since: $since, hours: $hours, failed_runs: $failed_runs, stuck_runs: $stuck_runs,
-      disabled_workflows: $disabled_workflows, release_main: $release_main,
+      disabled_workflows: $disabled_workflows,
+      missed_schedules: $missed_schedules, release_main: $release_main,
       bot_issues: $bot_issues, reports: [$plausibility, $owasp], security: $security,
       pull_requests: $pull_requests, renovate_dashboard: $renovate_dashboard, release: $release, unclosed: $unclosed,
       after_deploy: $after_deploy}'
