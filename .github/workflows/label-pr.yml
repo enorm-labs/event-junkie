@@ -15,6 +15,10 @@
 # scopes carry infrastructure work too (#1162) — and a new venue is a `*Importer.kt` added in its
 # own package under `scraper/`.
 #
+# `migration` comes from the files too: an added Flyway `V<n>__*.sql`. Two open pull requests can claim
+# the same number, and a released number cannot move, so the label is how a reviewer and a release cut
+# find every pull request that adds one before merging it (`scripts/migration-versions.sh`).
+#
 # `after-deploy` comes from the body: an `## After deploy` section with an unticked `- [ ] ` step is the
 # queue `/post-release` reads, and the label is how it finds the queue. Unticked, not merely present —
 # `/post-release` ticks steps by editing the body, and the last tick must drop the label, not keep it.
@@ -66,6 +70,7 @@ jobs:
               'breaking-change': { color: 'b60205', description: 'Contains a breaking change' },
               importer:          { color: '5319e7', description: 'Adds a venue event importer' },
               'after-deploy':    { color: 'd4c5f9', description: 'Unticked steps under ## After deploy wait for a release' },
+              migration:         { color: 'f29513', description: 'Adds a Flyway migration' },
               feat:              { color: '0e8a16', description: 'New feature' },
               fix:               { color: 'd73a4a', description: 'Bug fix' },
               perf:              { color: 'fbca04', description: 'Performance improvement' },
@@ -88,6 +93,9 @@ jobs:
             // A new event source: an importer class added in its own package under `scraper/`. A renamed or
             // modified importer is not a new source.
             const IMPORTER_CLASS = /^events-importer\/src\/main\/kotlin\/de\/norm\/events\/scraper\/[^/]+\/[A-Za-z0-9]+Importer\.kt$/;
+
+            // A versioned Flyway migration. A changed one is never this label's case: Flyway refuses a changed checksum.
+            const MIGRATION = /^events-importer\/src\/main\/resources\/db\/migration\/V\d+__[^/]+\.sql$/;
 
             const pr = context.payload.pull_request;
             const match = /^\s*([a-zA-Z]+)\s*(?:\(([^)]*)\))?\s*(!)?:/.exec(pr.title);
@@ -127,11 +135,13 @@ jobs:
               owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, per_page: 100,
             });
             const addsImporter = files.some((file) => file.status === 'added' && IMPORTER_CLASS.test(file.filename));
+            const addsMigration = files.some((file) => file.status === 'added' && MIGRATION.test(file.filename));
 
             const wanted = new Set();
             if (TYPES.has(type)) wanted.add(type);
             if (breaking) wanted.add('breaking-change');
             if (addsImporter) wanted.add('importer');
+            if (addsMigration) wanted.add('migration');
             if (pendingSteps) wanted.add('after-deploy');
 
             if (wanted.size === 0) {

@@ -303,7 +303,7 @@ write to — is in [ci-cd.instructions.md](.github/instructions/ci-cd.instructio
     Empty: open the PR in a browser or attempt the merge instead of hunting for a rule that is gone.
 
 - **Pace bulk mutations**: `sleep 0.45` between calls. The _secondary_ rate limit bites long before the hourly one.
-- **No `--label` on `gh pr create`.** `label-pr.yml` sets a PR's labels from the title, an added `*Importer.kt`, the `!`/footer and an unticked `## After deploy`
+- **No `--label` on `gh pr create`.** `label-pr.yml` sets a PR's labels from the title, an added `*Importer.kt` or migration, the `!`/footer and an unticked `## After deploy`
   step, and removes a managed label set by hand. On a PR `importer` means one thing, a new venue, and `release.yml` files it under "New Event Sources" (#1546).
 - **Screenshots go on the pull request through `gh`, not by hand.** `gh` 2.102 and later upload an image with `--attach` on `pr create`, `pr edit` and
   `pr comment`, and rewrite a `![alt](./file.png)` in the body to the uploaded URL. A change a visitor can see carries before and after, which
