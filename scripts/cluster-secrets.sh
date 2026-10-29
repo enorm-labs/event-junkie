@@ -21,6 +21,10 @@
 # Secrets there are skipped, and a second run after §9 adds them. The database roles `metrics` and
 # `bff` are `psql` by hand first (SECRETS.md). `events-db` is not here: Flux restores it from git.
 #
+# EJ_KUBE_CONTEXT names another context, such as event-junkie-<env>-next for the second pair of
+# #4128. EJ_SKIP_SECRETS lists `<namespace>/<name>` Secrets to leave out, which rebuild-node.sh
+# uses so the second pair records no deployment before the cutover.
+#
 # Requires: kubectl with the context event-junkie-<env>, jq, security (macOS), base64,
 # and ~/.config/sops/age/event-junkie.txt.
 
@@ -51,7 +55,7 @@ case "$MODE" in
 esac
 [ $# -le 2 ] || die "too many arguments"
 
-CTX="event-junkie-$ENV"
+CTX="${EJ_KUBE_CONTEXT:-event-junkie-$ENV}"
 AGE_KEY="${EJ_AGE_KEY:-$HOME/.config/sops/age/event-junkie.txt}"
 O2_ROOT_EMAIL=hello@event-junkie.de
 command -v jq >/dev/null || die "needs jq"
@@ -149,7 +153,7 @@ umask 077
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 SPEC="$WORK/spec"
-spec >"$SPEC"
+spec | awk -v skip=" ${EJ_SKIP_SECRETS:-} " 'index(skip, " " $1 "/" $2 " ") == 0' >"$SPEC"
 
 flux_ready() { k get namespace flux-system >/dev/null 2>&1; }
 

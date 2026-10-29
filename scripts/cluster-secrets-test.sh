@@ -166,6 +166,15 @@ expect_out "import" "imported 1 Keychain item(s)"
     fail "import: the imported value differs"
 [ "$(cat "$FAKE_KC/event-junkie-images-access-key")" = zq9x-kept ] || fail "import: overwrote a present item"
 
+# 8. Another context, and a skipped Secret: nothing written there, every other one is.
+rm -rf "${FAKE_CLUSTER:?}"/*
+: >"$FAKE_LOG"
+FAKE_FLUX=1 EJ_KUBE_CONTEXT=event-junkie-staging-next EJ_SKIP_SECRETS="flux-system/github-dispatch" run "skip and context" 0 staging
+secret flux-system-github-dispatch && fail "skip and context: github-dispatch was written"
+secret flux-system-sops-age || fail "skip and context: sops-age missing"
+grep -q -- '--context event-junkie-staging-next' "$FAKE_LOG" || fail "skip and context: wrong context: $(head -1 "$FAKE_LOG")"
+grep -q -- '--context event-junkie-staging ' "$FAKE_LOG" && fail "skip and context: reached the running cluster"
+
 if [ "$FAILURES" -gt 0 ]; then
     echo "cluster-secrets-test: $FAILURES failure(s)" >&2
     exit 1
