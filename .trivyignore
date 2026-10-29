@@ -58,9 +58,19 @@
 # the very binary whose eight waivers taught the lesson above. v4.0.20 ships without it. A release
 # that fixes the finding you are chasing can arrive with a second copy of one you already closed.
 #
-# **imgproxy has now been the cause three times** — #1273 (grpc-go), #3071 and #3703 (the Go
-# stdlib). The third episode asked the question the note above names, and on 2026-10-21 the answer
-# was to waive and wait: each episode ended with an upstream release within weeks, and the
-# alternatives (our own build of imgproxy, or ADR-020's option B) cost more than a dated waiver. A
-# fourth episode is where our own build on a current Go toolchain becomes the default.
+# **imgproxy has now been the cause four times** — #1273 (grpc-go), #3071 and #3703 (the Go
+# stdlib), and go-jose below. The third episode asked the question the note above names, and the
+# answer was to waive and wait: each episode ended with an upstream release within weeks. This note
+# then made our own build the default for a fourth episode, while ADR-020 names its option B as the
+# exit. #4188 decides between them, and until it does, the fourth episode is waived like the third.
 # ---------------------------------------------------------------------------------------------
+
+# 2026-10-29 — CVE-2026-116587, `github.com/go-jose/go-jose/v4` 4.1.4, in the imgproxy sidecar
+# (#4188). Fixed in 4.1.6. The fix cannot be taken: v4.0.20 is the newest imgproxy release and the
+# chart already pins it. The advisory is a DoS when go-jose parses a JWK with an RSA key.
+# Reachability: imgproxy binds to localhost in the importer pod and only the importer calls it
+# (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage, and nothing we configure gives
+# it a JWK. That is a reading of our configuration, not of imgproxy's code.
+# Delete when an imgproxy release carries go-jose 4.1.6 or later, by bumping the chart digest.
+# Revisit on 2026-11-26 if no such release exists by then, or when #4188 is decided.
+CVE-2026-116587
