@@ -203,11 +203,13 @@ scripts/o2-query.sh production sql "SELECT path, COUNT(*) AS n FROM default WHER
 
 Lighthouse measures the page a visitor gets, which k6 cannot: rendering, layout shift, image delivery, compression as the browser sees it. It runs on demand
 against the live origin, never a dev server, because caching and compression are deployment properties (#292). Three runs per cell, the median reported,
-because one run is not a measurement. The command, from any directory:
+because one run is not a measurement. The command runs the CLI pinned in `perf/lighthouse/package.json`, the one `scripts/lighthouse.sh` uses, from the
+repository root:
 
 ```bash
+npm ci --prefix perf/lighthouse
 CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-npx --yes lighthouse@12 https://prod-check.event-junkie.de/de/events --preset=desktop \
+perf/lighthouse/node_modules/.bin/lighthouse https://prod-check.event-junkie.de/de/events --preset=desktop \
   --output=json --output-path=./list-desktop-1.json --quiet --chrome-flags="--headless=new"
 ```
 

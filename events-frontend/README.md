@@ -165,8 +165,8 @@ npm run check:lint     # the same without --fix, as CI runs it: a fixable findin
 
 ```sh
 # Add a component — it is generated into src/components/ui/<name>/ and owned by us (edit freely)
-npx shadcn-vue@latest add button
-npx shadcn-vue@latest add card dialog
+npx shadcn-vue add button
+npx shadcn-vue add card dialog
 ```
 
 The theme (colours, radius, typography, light/dark mode) is defined as CSS variables in
@@ -180,10 +180,10 @@ upstream version, use git as a safety net — `--overwrite` replaces the file wh
 
 ```sh
 # 1. Check whether the registry version differs from ours
-npx shadcn-vue@latest diff button
+npx shadcn-vue diff button
 
 # 2. On a clean working tree, overwrite with the latest version
-npx shadcn-vue@latest add button --overwrite
+npx shadcn-vue add button --overwrite
 
 # 3. Review what changed (and what it clobbered), then reconcile
 git diff src/components/ui/button
