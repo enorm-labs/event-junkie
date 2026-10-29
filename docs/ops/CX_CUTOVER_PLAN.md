@@ -46,6 +46,7 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
 
 - [ ] `infra/order-next-pair.sh staging --no-fallback`
 - [ ] `scripts/rebuild-node.sh staging --next`. Record the time it takes. The target is under 15 minutes after the server exists.
+- [ ] `scripts/db-dump.sh staging`. It rehearses the production copy.
 - [ ] `scripts/cutover.sh staging prepare`. Merge #4196 while it waits. Then `git pull`.
 - [ ] `scripts/cutover.sh staging cutover`. Record the downtime that the script prints.
 - [ ] Check `https://staging.event-junkie.de/` through the tunnel, and `scripts/cluster-state.sh staging`.
@@ -68,9 +69,17 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
     ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo systemctl start walg-basebackup && sudo -u postgres walg check'
     ```
 
+- [ ] Copy the database to this Mac. It is a second copy, outside Hetzner:
+
+    ```sh
+    scripts/db-dump.sh production
+    ```
+
 - [ ] `scripts/cutover.sh production prepare`. Merge #4197 while it waits. Then `git pull`.
 - [ ] `scripts/cutover.sh production cutover`. Type `yes`. The site is down until step `site`.
 - [ ] Check `https://event-junkie.de/`, healthchecks.io and `scripts/cluster-state.sh production`.
+- [ ] Compare the row counts with the dump: `scripts/db-dump.sh production --check <the .counts file it printed>`. The importer writes after `resume`, so
+      a difference in `events.event` or `events.event_source` after that is expected.
 
 **If a step fails,** run `scripts/cutover.sh production cutover --from <step>` after the fix. Every step checks what is already done. **To go back,**
 run `scripts/cutover.sh production rollback`. Rollback works until `finish`. Then revert #4197 before you resume Flux on the old cluster.
@@ -84,6 +93,7 @@ run `scripts/cutover.sh production rollback`. Rollback works until `finish`. The
     - A line adds or replaces a server: answer no.
 - [ ] Re-derive `docs/ops/COSTS.md` with its API script.
 - [ ] Measure the downtime with healthchecks.io and the uptime probes. The target is under 10 minutes.
+- [ ] Delete the dumps in `~/.event-junkie/dumps/` when the restore drill and the counts pass. A production dump holds personal data.
 - [ ] Tick the boxes in #4128, close it, and delete this file.
 
 ## Why the database is safe
