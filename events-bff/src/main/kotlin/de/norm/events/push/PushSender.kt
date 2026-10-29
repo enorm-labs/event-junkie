@@ -60,7 +60,7 @@ enum class PushResult(
  * set, so a cluster without the push Secret starts, and a caller sees no bean rather than a failure at the first send.
  *
  * The endpoint is never logged: it identifies a browser. The line and the timer carry the push service's host and
- * the outcome.
+ * the outcome, and a refusal adds the push service's own reason.
  */
 @Component
 @ConditionalOnProperty("app.push.vapid.private-key")
@@ -88,13 +88,15 @@ class PushSender(
         val host = URI(target.endpoint).host
         val result =
             try {
-                val status = post(target, message)
+                val (status, reason) = post(target, message)
                 when {
                     status.is2xxSuccessful -> PushResult.SENT
                     status.value() == NOT_FOUND || status.value() == GONE -> PushResult.GONE
                     status.value() == TOO_MANY_REQUESTS || status.is5xxServerError -> PushResult.FAILED
                     else -> PushResult.REJECTED
-                }.also { if (it == PushResult.REJECTED || it == PushResult.FAILED) logger.warn { "Push to $host answered ${status.value()}" } }
+                }.also {
+                    if (it == PushResult.REJECTED || it == PushResult.FAILED) logger.warn { "Push to $host answered ${status.value()}: $reason" }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -108,7 +110,7 @@ class PushSender(
     private suspend fun post(
         target: PushTarget,
         message: PushMessage
-    ): HttpStatusCode {
+    ): Pair<HttpStatusCode, String> {
         val endpoint = URI(target.endpoint)
         val audience = "${endpoint.scheme}://${endpoint.authority}"
         val body =
@@ -126,10 +128,26 @@ class PushSender(
             .header("Urgency", "normal")
             .header("Authorization", keys.authorization(audience, subject, clock.instant().plus(TOKEN_LIFETIME)))
             .bodyValue(body)
-            .exchangeToMono { response -> response.releaseBody().thenReturn(response.statusCode()) }
-            .timeout(TIMEOUT)
+            .exchangeToMono { response ->
+                if (response.statusCode().is2xxSuccessful) {
+                    response.releaseBody().thenReturn(response.statusCode() to "")
+                } else {
+                    response
+                        .bodyToMono(String::class.java)
+                        .defaultIfEmpty("")
+                        .map { response.statusCode() to reason(it) }
+                }
+            }.timeout(TIMEOUT)
             .awaitSingle()
     }
+
+    /** The push service's own words for a refusal: FCM names a VAPID key mismatch, Apple a reason code. One line, capped. */
+    private fun reason(body: String): String =
+        body
+            .replace(WHITESPACE, " ")
+            .trim()
+            .take(REASON_LENGTH)
+            .ifEmpty { "no body" }
 
     companion object {
         /** `bff.push.sent{outcome}`: a count and a duration in one meter, as `bff.mail.sent`. */
@@ -145,5 +163,7 @@ class PushSender(
         private const val NOT_FOUND = 404
         private const val GONE = 410
         private const val TOO_MANY_REQUESTS = 429
+        private const val REASON_LENGTH = 200
+        private val WHITESPACE = Regex("\\s+")
     }
 }

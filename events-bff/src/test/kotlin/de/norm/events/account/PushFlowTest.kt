@@ -322,6 +322,30 @@ class PushFlowTest : BaseControllerTest() {
         }
 
     @Test
+    @ExtendWith(OutputCaptureExtension::class)
+    fun `a refused push logs the push service's reason on one line, never the endpoint`(output: CapturedOutput) =
+        runBlocking<Unit> {
+            follow()
+            bell("instant").expectStatus().isNoContent
+            subscribe().expectStatus().isNoContent
+            insertEvent(club(), "Moderat", "moderat", today.plusDays(10))
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(403)
+                    .body("the key in the authorization header does not\ncorrespond to the sender")
+                    .build()
+            )
+
+            job.run()
+
+            server.takeRequest(5, TimeUnit.SECONDS).shouldNotBeNull()
+            output.out shouldContain "answered 403: the key in the authorization header does not correspond to the sender"
+            output.out shouldNotContain "/push/browser-1"
+            subscriptions() shouldBe 1
+        }
+
+    @Test
     fun `the export lists the push service, never the endpoint`() {
         subscribe().expectStatus().isNoContent
 
