@@ -92,7 +92,9 @@ class ClaerchensBallhausCalendarScraper {
         title: String,
         permalink: String,
         text: String?
-    ): Boolean = OUT_OF_SCOPE.containsMatchIn(title) || "/tour-" in permalink || SING_ALONG.containsMatchIn(text.orEmpty())
+    ): Boolean =
+        OUT_OF_SCOPE.containsMatchIn(title) || "/tour-" in permalink || YES_CHOIR.containsMatchIn(title) ||
+            SING_ALONG.containsMatchIn(text.orEmpty())
 
     private fun typeOf(
         title: String,
@@ -119,6 +121,9 @@ private val OUT_OF_SCOPE = Regex("""Vortrag|Führung|Workshop|Weinmahl|Dinner|Me
 
 /** The audience is the choir: `Singt in dreistimmiger Harmonie und werdet Teil des … Konzerts`. */
 private val SING_ALONG = Regex("""werdet Teil|Mitsing|Sing-?along""", RegexOption.IGNORE_CASE)
+
+/** The YesChoir! sing-along by its title, because some of its entries carry no text; a concert's text may name it. */
+private val YES_CHOIR = Regex("""\bYes\s?Choir\b""", RegexOption.IGNORE_CASE)
 private val READING = Regex("""\bSlam\b|\bSalon\b|\bLesung\b""", RegexOption.IGNORE_CASE)
 private val CONCERT = Regex("""Konzert|Kammermusik|Soprano|Tenors|Choir""", RegexOption.IGNORE_CASE)
 private val DANCE_NIGHT = Regex("""Tanzabend|Milonga|Übungsstunde|\bParty\b""", RegexOption.IGNORE_CASE)

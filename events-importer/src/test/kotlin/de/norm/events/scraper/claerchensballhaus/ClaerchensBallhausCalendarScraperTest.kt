@@ -106,6 +106,15 @@ class ClaerchensBallhausCalendarScraperTest {
         events.filter { it.isForChildren }.map { it.title }.shouldContainExactlyInAnyOrder("Kinderkonzert im Spiegelsaal", "Familienkonzert im Spiegelsaal")
     }
 
+    // The entries for 2026-11-15 and 2026-12-13 carry no text, and both were stored as concerts.
+    @Test
+    fun `drops a YesChoir entry that carries no text`() {
+        val page =
+            """<script>var c = { eventSources: [[{"title":"YesChoir!","start":"2026-11-15T16:30:00","details":"","permalink":"https://claerchensball.haus/yeschoir-2/"}]] };</script>"""
+
+        ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse(page, BASE_URL), BASE_URL).shouldBeEmpty()
+    }
+
     @Test
     fun `returns nothing for a page without the calendar`() {
         ClaerchensBallhausCalendarScraper().scrape(Jsoup.parse("<script>let x = 1;</script>", BASE_URL), BASE_URL).shouldBeEmpty()

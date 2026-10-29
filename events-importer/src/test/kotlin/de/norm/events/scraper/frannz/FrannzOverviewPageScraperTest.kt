@@ -52,10 +52,11 @@ class FrannzOverviewPageScraperTest {
     private fun scrape() = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
     // 89 plain articles and 11 the venue flags `highlight` while giving them full event data; the
-    // 7 carousel teasers carry neither a title nor a date and stay out (#1797).
+    // 7 carousel teasers carry neither a title nor a date and stay out (#1797). Three Swing Patrol
+    // classes are participation formats and stay out too.
     @Test
     fun `scrape extracts every article carrying an event, whatever its class`() {
-        scrape() shouldHaveSize 100
+        scrape() shouldHaveSize 97
     }
 
     // The class says which nights the venue promotes, not which markup it rendered. Excluding it
@@ -205,6 +206,38 @@ class FrannzOverviewPageScraperTest {
             event.eventType shouldBe "CONCERT"
             event.artists.shouldBeEmpty()
         }
+
+        // Event 4674 is a class, taken part in rather than watched (EVENT_SCOPE.md §3.2).
+        @Test
+        fun `skips a dance class`() {
+            listOf("Learn to Swing Dance mit Swing Patrol", "Tanzkurs Standard").forEach { title ->
+                scraper.scrape(Jsoup.parse(article(title), baseUrl), baseUrl).shouldBeEmpty()
+            }
+        }
+
+        @Test
+        fun `keeps the swing night after the class, the sing-along and a party with a sing-along floor`() {
+            val titles =
+                listOf(
+                    "Red RHYTHM – Swing Dance Night",
+                    "SingAlong – Das große Mitsing-Konzert in Berlin",
+                    "Die Schöne Silvesterparty 2026 – Sing it back! & SingAlong Special im Salon!",
+                    "Dirty Dancing Party"
+                )
+
+            titles.forEach { title ->
+                scraper.scrape(Jsoup.parse(article(title), baseUrl), baseUrl).single().title shouldBe title
+            }
+        }
+
+        private fun article(title: String) =
+            """
+            <article id="post-1" class="events event_typ-ballroomparty">
+                <h2 class="event-title">$title</h2>
+                <div class="event-day">29</div>
+                <div class="event-month">Oktober</div>
+            </article>
+            """.trimIndent()
 
         // Production stored "Haken -ausverkauft" as the act and the show as on sale (#1840).
         @Test
