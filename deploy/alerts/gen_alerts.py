@@ -29,6 +29,7 @@ it produces an alert that never fires rather than an error.
     classification budget running out -> ej-classification-budget (#3645)
     sign-in mail failing or abused -> ej-signin-mail-failing, ej-signin-abuse (#4034)
     account cleanup failing or stopped -> ej-account-cleanup-failing, ej-account-cleanup-stale (#4034)
+    mail quota nearly used or unread -> ej-mail-quota-high, ej-mail-quota-stale (#4017)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     a node's patch state not read  -> ej-patch-state-missing       (#4141)
@@ -965,6 +966,49 @@ rule(
     ">",
     26,
     stream_name="bff_accounts_cleanup_last_success",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# --- The Scaleway mail quota (#4017) ---------------------------------------------
+#
+# The quota stops all mail when it is used up, sign-in links included. The BFF reads
+# the project's count hourly on production only, because both clusters send from one
+# project. `MailQuotaMetrics` registers the gauges on every cluster, so both rules have
+# a stream on staging too and read 0 there. The limit is a setting, because Scaleway's
+# API does not return it. The 300 mails the plan includes are free, and past them
+# each mail is billed and still sent, so they are not a rule.
+rule(
+    "ej-mail-quota-high",
+    "The Scaleway project has sent 80 % of this month's mail quota (ADR-054). At 100 % "
+    "Scaleway stops every mail, sign-in links included, until the 1st. Ask Scaleway to raise "
+    "the quota, then raise `mailQuota.limit`. If the mail is not from real visitors, pause "
+    "sign-up (docs/ops/EMAIL.md, Pausing sign-up). `scripts/tem-quota.sh` shows the count.",
+    "max(bff_mail_quota_sent) / max(bff_mail_quota_limit)",
+    ">=",
+    0.8,
+    stream_name="bff_mail_quota_limit",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# Hourly reads, so a day without one is a broken key, a refused egress or a dead
+# job, and the rule above reads an old count. Staging never reads, and `> bool 0`
+# keeps its zero gauge quiet, as in `ej-account-cleanup-stale`.
+rule(
+    "ej-mail-quota-stale",
+    "The BFF has not read the Scaleway mail count in 26 hours, so `ej-mail-quota-high` "
+    "watches an old number. Read the BFF log for `Mail quota`: a failed read is a WARN with "
+    "its exception. A 403 is the read-only key (docs/CREDENTIALS.md #29a), a timeout the "
+    "`-allow-scaleway-api` network policy.",
+    "((timestamp(max(bff_mail_quota_last_success)) "
+    "- max(bff_mail_quota_last_success)) / 3600) "
+    "* (max(bff_mail_quota_last_success) > bool 0)",
+    ">",
+    26,
+    stream_name="bff_mail_quota_last_success",
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,

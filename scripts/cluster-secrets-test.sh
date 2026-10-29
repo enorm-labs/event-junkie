@@ -79,7 +79,8 @@ fail() {
 
 ITEMS="event-junkie-hcloud-token event-junkie-o2-access-key event-junkie-o2-secret-key
 event-junkie-alerts-smtp-password event-junkie-scaleway-project-id event-junkie-images-access-key
-event-junkie-images-secret-key event-junkie-anthropic-api-key discogs-consumer-key discogs-consumer-secret instagram-token"
+event-junkie-images-secret-key event-junkie-anthropic-api-key discogs-consumer-key discogs-consumer-secret instagram-token
+event-junkie-tem-read-key"
 for env in staging production; do
     for suffix in github-dispatch o2-root-password metrics-password bff-password tem-secret-key vapid-private-key \
         vapid-public-key imgproxy-key imgproxy-salt; do
@@ -112,6 +113,7 @@ FAKE_FLUX=1 run "staging write" 0 staging
 expect_out "staging write" "event-junkie/event-junkie-push: APP_PUSH_VAPID_PRIVATE_KEY=43 APP_PUSH_VAPID_PUBLIC_KEY=42"
 secret cert-manager-hetzner || fail "staging write: no hetzner"
 secret event-junkie-event-junkie-instagram && fail "staging write: an Instagram Secret on staging"
+secret event-junkie-event-junkie-mail-quota && fail "staging write: a mail quota Secret on staging"
 secret observability-openobserve-credentials || fail "staging write: no observability copy of openobserve-credentials"
 [ "$(jq -r '.data | has("O2_BASIC_AUTH_HEADER")' "$FAKE_CLUSTER/observability-openobserve-credentials.json")" = false ] ||
     fail "staging write: the header is in the observability copy"
@@ -139,12 +141,14 @@ run "check differs" 1 staging --check
 expect_out "check differs" "ZO_SMTP_PASSWORD             differs (cluster 38 bytes, Keychain 12 bytes)"
 printf 'zq9x-event-junkie-alerts-smtp-password' >"$FAKE_KC/event-junkie-alerts-smtp-password"
 
-# 5. Production: no hetzner, an Instagram Secret, its own database host, and a percent-encoded DSN password.
+# 5. Production: no hetzner, an Instagram and a mail quota Secret, its own database host, and a percent-encoded DSN password.
 rm -rf "${FAKE_CLUSTER:?}"/*
 printf 'zq9x@p#w' >"$FAKE_KC/event-junkie-production-metrics-password"
 FAKE_FLUX=1 run "production write" 0 production
 secret cert-manager-hetzner && fail "production write: a hetzner Secret on production"
 secret event-junkie-event-junkie-instagram || fail "production write: no Instagram Secret"
+[ "$(key_of event-junkie-event-junkie-mail-quota api-key)" = zq9x-event-junkie-tem-read-key ] ||
+    fail "production write: no mail quota Secret, or the wrong key in it"
 key_of observability-postgres-exporter DATA_SOURCE_NAME | grep -qF 'metrics:zq9x%40p%23w@10.0.1.20:5432/' ||
     fail "production write: the DSN host or encoding is wrong"
 

@@ -80,6 +80,15 @@ app:
   mail:
     # The sending subdomain keeps its MX apart from the Hetzner mailboxes (ADR-054).
     from: ${APP_MAIL_FROM:Event Junkie <noreply@notify.event-junkie.de>}
+    # The month's count against the quota, read hourly from Scaleway (#4017). No key here: without APP_MAIL_QUOTA_API_KEY
+    # the BFF builds no reader. The chart sets the key and the project ID on production only, from `mailQuota.existingSecret`.
+    # The API does not return the quota that stops sending, so `limit` is ADR-054's, raised with it.
+    quota:
+      project-id: ""
+      limit: ${APP_MAIL_QUOTA_LIMIT:10000}
+      base-url: https://api.scaleway.com/transactional-email/v1alpha1/regions/fr-par
+      initial-delay: PT2M
+      refresh: PT1H
   push:
     # Web Push (ADR-055). The VAPID keys, `app.push.vapid.private-key` and `.public-key`, are not set here: without
     # them the BFF builds no sender, and the account page says notifications are not available. The chart sets them

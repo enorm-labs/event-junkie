@@ -103,6 +103,9 @@ spec:
     # Web Push signed with this cluster's own VAPID pair (ADR-055). Out of band in this namespace (docs/ops/SECRETS.md).
     push:
       existingSecret: "event-junkie-push"
+    # The month's mail count for `ej-mail-quota-high` (#4017). Production only: both clusters send from one Scaleway project.
+    mailQuota:
+      existingSecret: "event-junkie-mail-quota"
     # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
     # repeating them here would be a second place to look with nothing to say. The HPA's bounds are
     # defaults too, and only its switch is here (#1774).

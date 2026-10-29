@@ -18,6 +18,7 @@
      importer -> the internet     scraping venue sites, which is the product
      bff      -> the internet:443 reading cached images out of the bucket, while serving them
      bff      -> SMTP relay:587    the sign-in mail through Scaleway TEM, while a mail Secret is set
+     bff      -> Scaleway API:443  the month's mail count, while a mail quota Secret is set
      all      -> CoreDNS:53
      test pod -> bff, frontend    the helm test hook, only while tests are enabled
 
@@ -337,6 +338,35 @@ spec:
               {{- toYaml $np.pushEgress.exceptCidrs | nindent 14 }}
       ports:
         {{- range $np.pushEgress.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+{{- end }}
+{{- if and $np.scalewayApiEgress.enabled .Values.mailQuota.existingSecret }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-scaleway-api" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The BFF reads the month's mail count from the Scaleway API (#4017). Rendered only while a mail quota Secret is configured.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $bffSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $np.scalewayApiEgress.exceptCidrs | nindent 14 }}
+      ports:
+        {{- range $np.scalewayApiEgress.ports }}
         - protocol: TCP
           port: {{ . }}
         {{- end }}

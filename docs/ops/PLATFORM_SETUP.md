@@ -66,7 +66,7 @@ flowchart TB
         le["Let's Encrypt"]
         hc["healthchecks.io"]
         sm["Hetzner SMTP<br/>alerts@"]
-        tem["Scaleway TEM<br/>sign-in mail"]
+        tem["Scaleway TEM<br/>sign-in mail · mail count"]
         wp["Browser push services<br/>Google · Mozilla · Apple · Microsoft"]
     end
 
@@ -85,6 +85,7 @@ flowchart TB
     k3s -->|"conditional heartbeat"| hc
     k3s -->|"alerts, 587"| sm
     k3s -->|"BFF mail, 587"| tem
+    k3s -->|"BFF mail count, 443, production"| tem
     k3s -->|"BFF push, 443"| wp
 ```
 
