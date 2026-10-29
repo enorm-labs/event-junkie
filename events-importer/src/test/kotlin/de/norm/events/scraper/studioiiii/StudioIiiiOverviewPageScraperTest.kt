@@ -186,6 +186,43 @@ class StudioIiiiOverviewPageScraperTest {
     }
 
     @Test
+    fun `an invited act and the acts joined on the decks bill as djs and make the night a party`() {
+        val line = "JOINED BY JJYUN KIM AND NICOLAS M ON THE DECKS, WITH VISUAL INSTALLATIONS BY STUDIO HARDKOR AND LUSIA KOR."
+        val event = scrapeOne(cover("SAT 7 NOVEMBER 9PM", title = "STUDIO NIGHT<br>INVITES JAXX TMS", descr = line))
+
+        event.title shouldBe "STUDIO NIGHT – INVITES JAXX TMS"
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("JAXX TMS" to ArtistRole.DJ, "JJYUN KIM" to ArtistRole.DJ, "NICOLAS M" to ArtistRole.DJ)
+        event.eventType shouldBe "PARTY"
+        event.description shouldBe line
+    }
+
+    @Test
+    fun `joined by without on the decks stays a credit that bills nobody`() {
+        val event = credited("JOINED BY STUDIO HARDKOR WITH VISUAL INSTALLATIONS.")
+
+        event.artists.shouldBeEmpty()
+        event.eventType shouldBe "EXHIBITION"
+    }
+
+    @Test
+    fun `lowercase cues bill too, and an act invited and joined bills once`() {
+        val event = scrapeOne(cover("SAT 7 NOVEMBER 9PM", title = "Studio Night<br>invites Jaxx TMS", descr = "joined by JAXX TMS & Ana on the decks."))
+
+        event.artists.map { it.name } shouldContainExactly listOf("Jaxx TMS", "Ana")
+    }
+
+    @Test
+    fun `invites inside a title line or a credit line bills nobody new`() {
+        scrapeOne(cover("SAT 7 NOVEMBER 9PM", title = "STUDIO INVITES JAXX", descr = "CURATED BY ANA, WHO INVITES BEN")).artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `feat without its stop is part of a name`() {
+        lineup("Little Feat Revival", "ANA feat. BEN") shouldContainExactly listOf("Little Feat Revival", "ANA", "BEN")
+    }
+
+    @Test
     fun `an act named with and bills as two, the accepted limitation`() {
         credited("DJ SETS BY SUN AND MOON").artists.map { it.name } shouldContainExactly listOf("SUN", "MOON")
     }
