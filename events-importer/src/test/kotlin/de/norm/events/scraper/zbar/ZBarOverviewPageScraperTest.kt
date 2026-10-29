@@ -117,6 +117,23 @@ class ZBarOverviewPageScraperTest {
     }
 
     @Test
+    fun `a private booking is skipped and the comedy night after it stays`() {
+        val page =
+            page(
+                dateLine("So. 01.11.2026, 18:00 Uhr"),
+                "<h6><strong>Private Veranstaltung, Bar offen ab 18 Uhr</strong></h6>",
+                dateLine("Sa. 07.11.2026, 18:00 Uhr"),
+                "<h6>Geschlossene Gesellschaft</h6>",
+                dateLine("Mo. 02.11.2026, 20:00 Uhr"),
+                "<h6>Open Mic Comedy Night – no private veranstaltung, everyone welcome to the longest open mic in town</h6>"
+            )
+
+        val event = scraper.scrape(page, baseUrl).single()
+        event.eventDate shouldBe LocalDate.of(2026, 11, 2)
+        event.eventType shouldBe "COMEDY"
+    }
+
+    @Test
     fun `a month header ends the night before it and opens none`() {
         val page =
             page(
