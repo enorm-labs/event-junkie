@@ -68,7 +68,7 @@ done
 SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
 # Production keeps the database on its own node, reachable only by jump through k3s.
 if [ "$ENVIRONMENT" = production ]; then
-    DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 -J ops@10.10.0.1 ops@10.0.1.20)
+    DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 -J ops@10.10.0.1 ops@10.0.1.21)
 else
     DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 ops@10.10.1.1)
 fi

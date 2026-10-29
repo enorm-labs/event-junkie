@@ -253,7 +253,7 @@ contents, created twice, until that asymmetry is worth solving properly.
 and its own `-o2` keypair. Four copies in total across the two clusters, which is the cost of `valuesFrom` and `existingRootUserSecret` resolving in
 different namespaces.
 
-**Nothing there needs a bucket name or a prefix.** Each cluster writes under its own key prefix in the shared `event-junkie-o2`: `production/` and
+**Nothing there needs a bucket name or a prefix.** Each cluster writes under its own key prefix in the shared `event-junkie-o2`: `production-2/` and
 `staging/`. Each is set in that cluster's `openobserve.yaml`, where it is reviewable, rather than in the Secret. A credential decides _whether_ it can
 write, never _where_.
 
@@ -349,7 +349,7 @@ sudo -u postgres psql
 CLUSTER_ACCESS.md §Two environments has the `~/.ssh/config` block that fixes it:
 
 ```sh
-ssh -J ops@10.10.0.1 ops@10.0.1.20
+ssh -J ops@10.10.0.1 ops@10.0.1.21
 sudo -u postgres psql
 ```
 
@@ -375,7 +375,7 @@ Production, with its own role password and its own address:
 
 ```sh
 kubectl --context event-junkie-production create secret generic postgres-exporter -n observability \
-  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.0.1.20:5432/events?sslmode=require"
+  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.0.1.21:5432/events?sslmode=require"
 ```
 
 **That address appears twice on production and both copies must agree**: here, and as an `ipBlock` in
@@ -428,7 +428,7 @@ On each database node, as in §postgres-exporter:
 
 ```sh
 ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1     # staging
-ssh -J ops@10.10.0.1 ops@10.0.1.20                 # production
+ssh -J ops@10.10.0.1 ops@10.0.1.21                 # production
 sudo -u postgres psql -d events
 ```
 

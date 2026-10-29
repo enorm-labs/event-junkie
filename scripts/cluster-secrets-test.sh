@@ -149,7 +149,7 @@ secret cert-manager-hetzner && fail "production write: a hetzner Secret on produ
 secret event-junkie-event-junkie-instagram || fail "production write: no Instagram Secret"
 [ "$(key_of event-junkie-event-junkie-mail-quota api-key)" = zq9x-event-junkie-tem-read-key ] ||
     fail "production write: no mail quota Secret, or the wrong key in it"
-key_of observability-postgres-exporter DATA_SOURCE_NAME | grep -qF 'metrics:zq9x%40p%23w@10.0.1.20:5432/' ||
+key_of observability-postgres-exporter DATA_SOURCE_NAME | grep -qF 'metrics:zq9x%40p%23w@10.0.1.21:5432/' ||
     fail "production write: the DSN host or encoding is wrong"
 
 # 6. Before flux bootstrap, flux-system is skipped and said so.

@@ -166,7 +166,7 @@ grep -q "order-next-pair.sh production" <<<"$OUT" || fail "no next pair: no hint
 # 4. In place on production: roles and wal-g over stdin, the old deploy key deleted, the site checked.
 run "in place" 0 production
 has "in place" "-o StrictHostKeyChecking=accept-new ops@203.0.113.10"
-has "in place" "-J ops@203.0.113.10 ops@10.0.1.20"
+has "in place" "-J ops@203.0.113.10 ops@10.0.1.21"
 has "in place" "cluster-access production --merge"
 has "in place" "cluster-secrets production ctx=event-junkie-production skip="
 has "in place" "gh api -X DELETE repos/enorm-labs/event-junkie/keys/11"

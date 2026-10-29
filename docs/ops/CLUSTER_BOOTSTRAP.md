@@ -830,7 +830,7 @@ drift. A hand-applied change that the script does not also make is lost at the n
 script with what the node booted, not with what runs.
 
 This is the sequence for the PostgreSQL bind fix ([#813](https://github.com/enorm-labs/event-junkie/issues/813)). Run it on each node that runs PostgreSQL.
-That is the k3s node on staging, and `10.0.1.20` on production:
+That is the k3s node on staging, and `10.0.1.21` on production:
 
 ```bash
 sudo tee /etc/sysctl.d/99-event-junkie-postgres.conf >/dev/null <<'EOF'
@@ -866,7 +866,7 @@ is where the two would drift. Staging's single node first, then production's k3s
 ```bash
 scp infra/modules/environment/cloud-init/harden.sh ops@10.10.1.1:/tmp/harden.sh && ssh ops@10.10.1.1 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
 scp infra/modules/environment/cloud-init/harden.sh ops@10.10.0.1:/tmp/harden.sh && ssh ops@10.10.0.1 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
-scp -J ops@10.10.0.1 infra/modules/environment/cloud-init/harden.sh ops@10.0.1.20:/tmp/harden.sh && ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
+scp -J ops@10.10.0.1 infra/modules/environment/cloud-init/harden.sh ops@10.0.1.21:/tmp/harden.sh && ssh -J ops@10.10.0.1 ops@10.0.1.21 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
 ```
 
 **Each line ends with `harden: done`, or it did not finish.** The first run can stop at `Connection to 10.0.1.20 closed by remote host` instead. needrestart restarts dbus after the install, and that cuts the SSH session. Nothing after the install
@@ -1063,7 +1063,7 @@ against the repository:
 
 ```sh
 shasum -a 256 infra/modules/environment/cloud-init/*.sh
-ssh -J ops@10.10.0.1 ops@10.0.1.20 "sudo sh -c 'sha256sum /opt/event-junkie/*.sh'"
+ssh -J ops@10.10.0.1 ops@10.0.1.21 "sudo sh -c 'sha256sum /opt/event-junkie/*.sh'"
 ```
 
 The directory is `0750` and owned by root, so the glob must expand inside the root shell. A plain
@@ -1107,7 +1107,7 @@ Then §3 onward, with four differences from staging:
 1. **The tunnel dies with the k3s node.** Open `admin_cidrs` for the duration, as staging does.
 2. **The database node needs no break-glass.** Its firewall admits nothing inbound at any address, so
    it is reached by jump through the k3s node either way.
-3. **Both nodes get a new SSH host key.** Run `ssh-keygen -R 10.0.1.20` before the first connection.
+3. **Both nodes get a new SSH host key.** Run `ssh-keygen -R 10.0.1.21` before the first connection.
 4. **`hetzner` is not needed.** Production solves HTTP-01 and holds no Hetzner token.
 
 **`flux bootstrap` hits a deadlock on a rebuilt cluster, every time.** The repository already carries

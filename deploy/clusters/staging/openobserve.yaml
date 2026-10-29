@@ -94,8 +94,8 @@ spec:
       ZO_S3_BUCKET_NAME: "event-junkie-o2"
 
       # **One bucket, two environments, and this line is what keeps them apart** — the same separation the
-      # backups and images buckets make. The file list stores keys **relative** to the prefix (production
-      # proves it: `files/default/metrics/…` under `ZO_S3_BUCKET_PREFIX: "production/"`), so the prefix is
+      # backups and images buckets make. The file list stores keys **relative** to the prefix (the first
+      # production instance proved it: `files/default/metrics/…` under `production/`), so the prefix is
       # applied at the S3 client. **This line cannot be changed on its own**: adding it points every entry
       # already in the list at a key that does not exist, and the corpus goes unreadable while new ingest
       # carries on. It landed together with a wipe of the file-list PVC — docs/ops/OPENOBSERVE.md

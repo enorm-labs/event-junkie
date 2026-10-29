@@ -1260,7 +1260,7 @@ window.EJ_LINKS = {
           "note": "staging"
         },
         {
-          "command": "ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.20:5432 ops@10.10.0.1",
+          "command": "ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.21:5432 ops@10.10.0.1",
           "note": "production"
         },
         {
@@ -1314,7 +1314,7 @@ window.EJ_LINKS = {
           "note": ""
         },
         {
-          "command": "ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo -u postgres walg check'",
+          "command": "ssh -J ops@10.10.0.1 ops@10.0.1.21 'sudo -u postgres walg check'",
           "note": ""
         }
       ]

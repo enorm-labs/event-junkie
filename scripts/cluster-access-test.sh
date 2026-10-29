@@ -97,7 +97,7 @@ reachable "$host" || exit 255
 case "$*" in
     "sudo cat /etc/wireguard/public.key") cat "$FAKE_STATE/server-key" ;;
     "sudo cat /etc/rancher/k3s/k3s.yaml") cat "$FAKE_STATE/k3s.yaml" ;;
-    "ssh-keyscan -T 5 -t ed25519 10.0.1.20") echo "10.0.1.20 ssh-ed25519 $(cat "$FAKE_STATE/hostkey-10.0.1.20")" ;;
+    "ssh-keyscan -T 5 -t ed25519 10.0.1.21") echo "10.0.1.21 ssh-ed25519 $(cat "$FAKE_STATE/hostkey-10.0.1.21")" ;;
     *) echo "fake ssh: unexpected command: $*" >&2; exit 2 ;;
 esac
 EOF
@@ -133,7 +133,7 @@ EOF
 }
 
 # A Mac set up before the rebuild: the old server key, the old host keys, the old CA in both kubeconfigs.
-for h in 10.10.0.1 203.0.113.10 10.0.1.20; do
+for h in 10.10.0.1 203.0.113.10 10.0.1.21; do
     old="$(hostkey "old-$h")"
     echo "$h ssh-ed25519 $old" >>"$HOME/.ssh/known_hosts"
     hostkey "new-$h" >"$STATE/hostkey-$h"
@@ -199,7 +199,7 @@ if KUBECONFIG="$WORK/stray" run; then pass "3: the rebuild run succeeds"; else f
 if grep -q '^PublicKey  = NEWSERVERKEY=$' "$HOME/.wireguard/production.conf"; then pass "3: server key replaced"; else fail "3: server key not replaced"; fi
 if grep -q '^PrivateKey = CLIENTPRIVATEKEY=$' "$HOME/.wireguard/production.conf"; then pass "3: private key kept"; else fail "3: private key lost"; fi
 if compgen -G "$HOME/.wireguard/production.conf.bak.*" >/dev/null; then pass "3: client config backed up"; else fail "3: no client config backup"; fi
-for h in 10.10.0.1 203.0.113.10 10.0.1.20; do
+for h in 10.10.0.1 203.0.113.10 10.0.1.21; do
     if ssh-keygen -F "$h" -f "$HOME/.ssh/known_hosts" | grep -q "$(cat "$STATE/hostkey-$h")"; then pass "3: host key $h replaced"; else fail "3: host key $h not replaced"; fi
 done
 if [ "$(grep -c . "$HOME/.ssh/known_hosts")" = 3 ]; then pass "3: known_hosts holds three keys"; else fail "3: known_hosts: $(cat "$HOME/.ssh/known_hosts")"; fi
