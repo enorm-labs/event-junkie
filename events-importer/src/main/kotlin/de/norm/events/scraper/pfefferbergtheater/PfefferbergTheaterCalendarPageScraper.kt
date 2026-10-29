@@ -136,7 +136,7 @@ internal fun categoryType(
  * series a title that opens with a short name and a colon names its author (`Stefan Schwarz: Oops`).
  * Any other title names a production and bills nobody: the ensemble line is a company or a series.
  */
-internal fun pfefferbergActs(
+private fun pfefferbergActs(
     title: String,
     readingSeries: Boolean
 ): List<ScrapedArtist> {

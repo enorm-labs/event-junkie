@@ -49,7 +49,7 @@ private fun withoutSeriesName(
 }
 
 /** Whether [title] is the venue's own comedy series, whose name is never an act. */
-internal fun isModusComedySeries(title: String): Boolean = COMEDY_SERIES.containsMatchIn(title)
+private fun isModusComedySeries(title: String): Boolean = COMEDY_SERIES.containsMatchIn(title)
 
 /**
  * The comedians a `Modus Comedy` page bills: its description is the lineup, one name per line,
