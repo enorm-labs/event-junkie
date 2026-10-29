@@ -159,7 +159,9 @@ private val ACRONYMS: Set<String> =
         "D'CO",
         "LVFT",
         // The songwriter and comedian FIL (Philip Tägert), billed `FIL - MIT NEUER SHOW`; no other act uses the token.
-        "FIL"
+        "FIL",
+        // Studio IIII's `JAXX TMS` (#4224).
+        "TMS"
     )
 
 /**
