@@ -59,10 +59,11 @@
 # that fixes the finding you are chasing can arrive with a second copy of one you already closed.
 #
 # **imgproxy has now been the cause four times** — #1273 (grpc-go), #3071 and #3703 (the Go
-# stdlib), and go-jose below. The third episode asked the question the note above names, and the
-# answer was to waive and wait: each episode ended with an upstream release within weeks. This note
-# then made our own build the default for a fourth episode, while ADR-020 names its option B as the
-# exit. #4188 decides between them, and until it does, the fourth episode is waived like the third.
+# stdlib), and go-jose below. #4188 answered the question the note above names, and ADR-020
+# § When to revisit records the answer: waive each episode and wait, because each earlier one ended
+# with an upstream release within weeks. **The revisit date is the expiry.** A waiver that reaches
+# it with no imgproxy release carrying the fix triggers our own build of imgproxy on a current Go
+# toolchain, as a new issue. ADR-020's option B (Thumbnailator) is not the exit.
 # ---------------------------------------------------------------------------------------------
 
 # 2026-10-29 — CVE-2026-116587, `github.com/go-jose/go-jose/v4` 4.1.4, in the imgproxy sidecar
@@ -72,5 +73,6 @@
 # (THREAT_MODEL.md B10). Its one TLS peer is Hetzner Object Storage, and nothing we configure gives
 # it a JWK. That is a reading of our configuration, not of imgproxy's code.
 # Delete when an imgproxy release carries go-jose 4.1.6 or later, by bumping the chart digest.
-# Revisit on 2026-11-26 if no such release exists by then, or when #4188 is decided.
+# Revisit on 2026-11-26. Waived by the #4188 decision (ADR-020 § When to revisit): if no such
+# release exists by then, this waiver expires and our own imgproxy build starts as a new issue.
 CVE-2026-116587
