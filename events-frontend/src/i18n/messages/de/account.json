@@ -153,7 +153,10 @@
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "limit": "Dieses Konto hat schon zehn Passkeys. Lösche zuerst einen.",
-    "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+    "failed": "Das hat nicht geklappt. Versuch es noch einmal.",
+    "failedNamed": "Das hat nicht geklappt. Versuch es noch einmal. ({name})",
+    "exists": "Dieses Gerät hat schon einen Passkey für dein Konto. Melde dich mit diesem an.",
+    "unsupported": "Dieser Browser kann auf dieser Seite keinen Passkey anlegen."
   },
   "notifications": {
     "label": "Benachrichtigungen",
