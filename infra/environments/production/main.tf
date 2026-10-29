@@ -23,18 +23,20 @@ module "environment" {
   # architectures, and the plan renders an in-place update the API refuses mid-apply. #460's volume
   # means the database survives, the k3s cluster does not (CLUSTER_BOOTSTRAP.md §Rebuilding a node).
   # Images are multi-arch (#264).
-  # CPX32 and CPX22, not CX: an apply replaced both nodes while cx33 and cx23 were
-  # `resource_unavailable` in every eu-central location. Same cores and memory, larger disks,
-  # about €65/month against €17. Back to CX is a rebuild, because a rescale cannot shrink a disk.
-  k3s_server_type = "cpx32"
+  k3s_server_type = "cx33"
 
   # CX23: 2 x86 vCPU / 4 GB / 40 GB disk, spec-for-spec what CAX11 was.
   #
   # IPv6-only cannot be (#270): github.com publishes no AAAA record, wal-g ships only as a GitHub
   # release, and `backups.sh` stops the boot rather than coming up without it. ~€0.50/month for the
   # address; the firewall still admits nothing inbound, so this buys egress and not exposure.
-  postgres_server_type = "cpx22"
+  postgres_server_type = "cx23"
   postgres_public_ipv4 = true
+
+  # Host .11 and .21, not the module's .10 and .20: this pair was built beside the cpx pair it
+  # replaced, on one network, and a node keeps the private address it booted with (#4128).
+  k3s_private_ip      = "10.0.1.11"
+  postgres_private_ip = "10.0.1.21"
 
   # Locks the addresses and the database volume against a console mis-click. Both still false after
   # go-live (#284 listed turning them on with `publish_dns`), because moving location has to delete

@@ -64,7 +64,7 @@ case "$ENV" in
         ;;
     production)
         TUNNEL_IP=10.10.0.1
-        DB_IP=10.0.1.20
+        DB_IP=10.0.1.21
         DEDICATED_DB=1
         SITE=event-junkie.de
         ;;

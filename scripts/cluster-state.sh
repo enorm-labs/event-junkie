@@ -60,7 +60,7 @@ SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
 # same machine; production keeps the database on its own node, reachable only by jump through k3s.
 if [ "$ENVIRONMENT" = production ]; then
     NODE=ops@10.10.0.1
-    DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 -J "$NODE" ops@10.0.1.20)
+    DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 -J "$NODE" ops@10.0.1.21)
     # cert-manager/hetzner is staging's alone: production solves HTTP-01 and holds no Hetzner token.
     EXPECTED_SECRETS="flux-system/github-dispatch flux-system/sops-age flux-system/openobserve-credentials observability/openobserve-smtp event-junkie/events-db event-junkie/event-junkie-images event-junkie/event-junkie-imgproxy event-junkie/event-junkie-anthropic"
 else
