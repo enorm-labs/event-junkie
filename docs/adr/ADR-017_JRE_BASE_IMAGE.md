@@ -9,10 +9,10 @@ emptied `.trivyignore`. This ADR exists because the reasoning generalises past t
 **what an unfixable finding in a base layer costs**, and that will come up again.
 
 **Amended (2026-09-05): the "no `RUN`" constraint below is narrowed to "no `RUN` that does build work"**
-([#770](https://github.com/enorm-labs/event-junkie/issues/770)). The decision is unaffected. Both backend Dockerfiles now
-carry a named `apk upgrade` for an openssl fix that Alpine published and that the Liberica base does not carry yet. The
-arm64 half of that layer runs under the emulation the CI runner already has. The frontend image published this way under
-[#964](https://github.com/enorm-labs/event-junkie/issues/964) and does again under
+([#770](https://github.com/enorm-labs/event-junkie/issues/770)). The decision is unaffected. Both backend Dockerfiles
+carried a named `apk upgrade` for an openssl fix that Alpine published before the Liberica base did, until the base
+caught up. The arm64 half of such a layer runs under the emulation the CI runner already has. The frontend image
+published this way under [#964](https://github.com/enorm-labs/event-junkie/issues/964) and does again under
 [#1118](https://github.com/enorm-labs/event-junkie/pull/1118). So the single-runner property still holds. What the
 constraint protected was architecture-specific _output_. A package upgrade does not produce that, and an AOT cache does.
 `events-bff/Dockerfile` states the narrowed rule and the conditions such a layer must meet.
