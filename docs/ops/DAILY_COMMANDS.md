@@ -34,7 +34,7 @@ each for the importer admin API, the BFF's Swagger UI and OpenObserve, and one S
 ```sh
 scripts/ej.sh status && scripts/ej.sh versions     # both clusters whole, and on the expected versions
 for env in staging production; do scripts/o2-query.sh "$env" sql "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200"; done  # every alert that fired in the last day
-scripts/daily-check.sh | jq '.failed_runs, .stuck_runs, .disabled_workflows, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'
+scripts/daily-check.sh | jq '.failed_runs, .stuck_runs, .disabled_workflows, .missed_schedules, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'
 gh pr list --state open                            # bot pull requests to read and merge, and your own
 scripts/new-artists.sh production                  # artists created in the last day; a flag marks a name that looks like no act
 scripts/new-artists.sh production --kind promoters # promoters created in the last day; `near` names an older one it may duplicate

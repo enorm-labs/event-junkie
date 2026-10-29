@@ -51,20 +51,21 @@ one environment — nodes, Flux, secrets, certificates, row counts, backups. Run
 scripts/daily-check.sh --hours "$HOURS" > temp/daily-check-$(date +%F).json
 ```
 
-| Key                  | What it holds, and what makes it a finding                                                                                                      |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `failed_runs`        | Per workflow on `main` or a schedule, the failures in the window and whether the latest finished run is `still_red`                             |
-| `stuck_runs`         | Every run still queued or running six hours after it started, any event. A hosted job ends at six hours, so it waits on a runner or an approval |
-| `disabled_workflows` | Every workflow not `active`. A disabled schedule fails nothing, it stops                                                                        |
-| `release_main`       | The latest `release.yml` on `main`. Red blocks every release: [RELEASING.md § Publishing is blocked](../../docs/ops/RELEASING.md)               |
-| `bot_issues`         | Every open issue a workflow opened: the reminders, a publish failure, seed drift, the monthly report issues. `new` is inside the window         |
-| `reports`            | The latest plausibility and OWASP report: a person's comment since, and `filed_since`, the issues that cite it. `unanswered` means neither      |
-| `security`           | Open Dependabot and code-scanning alerts with what is `new`, and open Code Quality findings                                                     |
-| `pull_requests`      | Every open pull request, bots first: merge state, review decision, failed checks, pending checks, size                                          |
-| `renovate_dashboard` | Unticked boxes on the Dependency Dashboard: updates Renovate holds for a person                                                                 |
-| `release`            | Commits on `main` since the last release, with their subjects                                                                                   |
-| `unclosed`           | Issues still open although a pull request merged in the window says `Closes #N`: GitHub registered no closing reference                         |
-| `after_deploy`       | Merged pull requests labelled `after-deploy` with unticked steps, and whether the latest release carries them                                   |
+| Key                  | What it holds, and what makes it a finding                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `failed_runs`        | Per workflow on `main` or a schedule, the failures in the window and whether the latest finished run is `still_red`                                      |
+| `stuck_runs`         | Every run still queued or running six hours after it started, any event. A hosted job ends at six hours, so it waits on a runner or an approval          |
+| `disabled_workflows` | Every workflow not `active`. A disabled schedule fails nothing, it stops                                                                                 |
+| `missed_schedules`   | Every active workflow whose last scheduled run is older than its cron period plus 8 h, or that never ran on a schedule. `overdue_hours` says by how much |
+| `release_main`       | The latest `release.yml` on `main`. Red blocks every release: [RELEASING.md § Publishing is blocked](../../docs/ops/RELEASING.md)                        |
+| `bot_issues`         | Every open issue a workflow opened: the reminders, a publish failure, seed drift, the monthly report issues. `new` is inside the window                  |
+| `reports`            | The latest plausibility and OWASP report: a person's comment since, and `filed_since`, the issues that cite it. `unanswered` means neither               |
+| `security`           | Open Dependabot and code-scanning alerts with what is `new`, and open Code Quality findings                                                              |
+| `pull_requests`      | Every open pull request, bots first: merge state, review decision, failed checks, pending checks, size                                                   |
+| `renovate_dashboard` | Unticked boxes on the Dependency Dashboard: updates Renovate holds for a person                                                                          |
+| `release`            | Commits on `main` since the last release, with their subjects                                                                                            |
+| `unclosed`           | Issues still open although a pull request merged in the window says `Closes #N`: GitHub registered no closing reference                                  |
+| `after_deploy`       | Merged pull requests labelled `after-deploy` with unticked steps, and whether the latest release carries them                                            |
 
 A key that holds `{"error": …}` is an API that refused. Report it as not checked, never as clean.
 
@@ -77,6 +78,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   the repository. A recovered run is one line.
 - **A stuck run or a disabled workflow**: ACT. Open the run and name what it waits on: a runner, an environment approval, a concurrency group.
   Cancel it only on the operator's word. A disabled workflow is enabled again with `gh workflow enable <path>`, also only on the operator's word.
+- **A missed schedule**: ACT. Name the workflow, its last scheduled run and `overdue_hours`, and check its `on.schedule` on `main`. A manual run is
+  `gh workflow run <path>`, only on the operator's word.
 - **A new bot issue**: read it. A reminder names its own action. A publish failure is a BLOCKER.
 - **An unanswered report**: read the report comment. Check each finding against the open issues (`gh issue list --state all --search '<words>'`) and
   against what production runs now: a fix released since the report is KNOWN, naming the issue. **Re-measure every new finding before drafting it** —
