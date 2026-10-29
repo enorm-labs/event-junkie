@@ -306,6 +306,16 @@ jobs:
           fi
           exit "$status"
 
+      # Last, because it spends the counts: a scan after it would meet 429s. The scans above spent
+      # some too, and they live in the BFF's memory, so a restart empties them first (#4107).
+      - name: The sign-in limits engage
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          kubectl --context k3d-event-junkie -n event-junkie rollout restart deploy/event-junkie-bff
+          kubectl --context k3d-event-junkie -n event-junkie rollout status deploy/event-junkie-bff --timeout=3m
+          scripts/sign-in-limits.sh http://localhost:8080 event-junkie.localhost
+
       # A stalled step leaves no trace of whether the BFF restarted, so the pod state is kept before teardown.
       - name: Record the pod state
         if: failure()
