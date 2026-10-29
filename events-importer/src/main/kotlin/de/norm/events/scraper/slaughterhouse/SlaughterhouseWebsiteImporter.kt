@@ -25,6 +25,7 @@ val SLAUGHTERHOUSE_LIMITATIONS =
     VenueLimitations(
         EventSource.SLAUGHTERHOUSE,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "an entry names one time, mostly the start"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a party entry may name only doors, and a festival no time"),
         AcceptedLimitation(LimitedAspect.END_TIME, "the page names a start or doors, no end"),
         AcceptedLimitation(LimitedAspect.PRICE, "most entries name no price, and none a presale price"),
         AcceptedLimitation(LimitedAspect.GENRE, "only a party's style line names one"),

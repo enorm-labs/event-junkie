@@ -842,6 +842,7 @@ says so.
 | `SISYPHOS`             | `CANCELLATION`     | neither the calendar nor the shop marks a cancelled night                                                                                        | —     |
 | `SISYPHOS`             | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SLAUGHTERHOUSE`       | `DOORS_TIME`       | an entry names one time, mostly the start                                                                                                        | —     |
+| `SLAUGHTERHOUSE`       | `START_TIME`       | a party entry may name only doors, and a festival no time                                                                                        | —     |
 | `SLAUGHTERHOUSE`       | `END_TIME`         | the page names a start or doors, no end                                                                                                          | —     |
 | `SLAUGHTERHOUSE`       | `PRICE`            | most entries name no price, and none a presale price                                                                                             | —     |
 | `SLAUGHTERHOUSE`       | `GENRE`            | only a party's style line names one                                                                                                              | —     |
