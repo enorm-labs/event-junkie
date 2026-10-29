@@ -153,7 +153,7 @@ Stack only when an issue needs code from a PR of this run that is not merged yet
 ## Parking
 
 Park an issue when it cannot be finished without the user. Park; do not guess. Record it in the handover: what was done, the branch if one was pushed,
-and the exact question. Leave the issue assigned and set its board status back: `scripts/issue-board.sh status <n> Todo`. An unassigned card with a pushed
+and the exact question. Leave the issue assigned and set its board status back: `scripts/issue-board.sh status <n> Ready`. An unassigned card with a pushed
 branch reads as abandoned work.
 
 ## The handover
