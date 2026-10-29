@@ -35,7 +35,7 @@
 # Alpine, so musl: nothing here depends on `netty-transport-native-*`, so Netty runs NIO on
 # both. The musl difference that matters is DNS, which the k3d rehearsal and the chart's
 # `helm test` exercise.
-FROM bellsoft/liberica-openjre-alpine:25@sha256:33b92304b3abdad54fb937224adcab07febad199180867d51be0fcd9da340ee4
+FROM bellsoft/liberica-openjre-alpine:25@sha256:6e37a10866f46514a2439295cecaec5666ab817bfcb961d2fc6bcb8001335b61
 
 # Supplied by the build; both default to something obviously wrong rather than a plausible lie.
 ARG VERSION=unspecified
@@ -49,18 +49,6 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="BUSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-
-# A base-image CVE fix that has not arrived upstream (#770): CVE-2026-14456, an unbounded
-# allocation in OpenSSL's QUIC listener, is fixed in Alpine 3.24's `openssl 3.5.8-r0`, but the
-# Liberica base still ships 3.5.7-r0. Not reachable (the JVM does not link libssl), but a
-# fixable finding is fixed rather than waived, and this line let `.trivyignore` go back to empty.
-#
-# Delete this once the base ships 3.5.8-r0 or later, by the BOM-override rule: an upgrade kept
-# past its purpose hides that the base has caught up. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^libssl3"'` on the
-# pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is unaffected.
-USER 0
-RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application
 
