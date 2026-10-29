@@ -103,7 +103,7 @@ KUBE_CONFIG="$HOME/.kube/config"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 # Production's database node has no tunnel address and no public one; it is reached through the k3s node.
 DB_NODE=""
-[ "$ENV" = production ] && DB_NODE=10.0.1.20
+[ "$ENV" = production ] && DB_NODE=10.0.1.21
 [ "$NEXT" = 0 ] || DB_NODE="$DB_NODE_ARG"
 
 if [ "$NEXT" = 1 ] && [ ! -f "$CONF" ]; then

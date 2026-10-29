@@ -95,13 +95,14 @@ spec:
 
       # **One bucket, two environments, and this line is what keeps them apart** (#880), the same
       # separation the backups and images buckets make. The file list stores keys **relative** to the
-      # prefix — this instance is the proof, recording `files/default/…` while writing under `production/`
+      # prefix — the first production instance proved it, recording `files/default/…` under `production/`
       # — so adding a prefix to a store that already holds indexed Parquet is what breaks it, and staging's
-      # move was paired with a wipe of the PVC holding that list. **Nothing writes at the root any more**:
+      # move was paired with a wipe of the PVC holding that list. Each new instance takes the next
+      # generation, so the old prefix can expire as a whole (#4302). **Nothing writes at the root any more**:
       # an object appearing there is a dropped setting on either cluster, and the 90-day backstop in
       # `infra/bootstrap/storage.tf` clears what staging left behind. In `config:` rather than `extraEnv`
       # because the chart lists this key; **verify the objects, not this comment**.
-      ZO_S3_BUCKET_PREFIX: "production/"
+      ZO_S3_BUCKET_PREFIX: "production-2/"
       # Path style, not virtual-hosted: Hetzner's endpoint serves `<endpoint>/<bucket>`.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
 

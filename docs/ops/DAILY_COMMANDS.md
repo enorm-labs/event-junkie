@@ -212,7 +212,7 @@ Without `ej.sh`, open the tunnel by hand. Production's database is a **separate 
 
 ```sh
 ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1     # staging
-ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.20:5432 ops@10.10.0.1     # production
+ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15433:10.0.1.21:5432 ops@10.10.0.1     # production
 ```
 
 A superuser shell, for anything `CREATE ROLE`-shaped — the forward above connects as `events`, which cannot:
@@ -250,7 +250,7 @@ Operating it, including the stream-count trap that causes ingestion to stop: [OP
 
 ```sh
 ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo -u postgres walg check'
-ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo -u postgres walg check'
+ssh -J ops@10.10.0.1 ops@10.0.1.21 'sudo -u postgres walg check'
 ```
 
 The second line carries no `-i` on purpose. A jump host never receives it, so the key belongs in `~/.ssh/config` —
