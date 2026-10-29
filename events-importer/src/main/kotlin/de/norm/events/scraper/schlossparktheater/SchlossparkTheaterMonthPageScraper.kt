@@ -117,7 +117,7 @@ class SchlossparkTheaterMonthPageScraper {
  * A row's heading split at its `<br>`: the act and its programme for a guest, or the production
  * title alone. A programme in quotes marks the first line as the act.
  */
-internal class SchlossparkBilling private constructor(
+private class SchlossparkBilling private constructor(
     private val first: String,
     private val programme: String?
 ) {
