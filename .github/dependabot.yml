@@ -301,6 +301,13 @@ updates:
       # re-draw the base-image comparison, so this is a deferral to that decision, not a veto.
       - dependency-name: "bellsoft/liberica-openjre-alpine"
         update-types: ["version-update:semver-major"]
+      # **The Node major follows `.nvmrc`, for the same reason.** `node:*-alpine` is the injector's
+      # runtime (`Dockerfile.injector`), and `.nvmrc`, `engines` and every workflow `node-version`
+      # pin the LTS line. #1328 proposed 24 -> 26 while 26 was still Current, months before its LTS
+      # promotion, and would have passed CI. The Node upgrade moves every pin by hand and keeps this
+      # ignore; patch and minor image bumps keep coming through.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
     groups:
       docker:
         patterns:
