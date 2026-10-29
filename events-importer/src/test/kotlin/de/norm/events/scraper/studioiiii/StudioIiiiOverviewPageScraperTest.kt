@@ -136,6 +136,61 @@ class StudioIiiiOverviewPageScraperTest {
     }
 
     @Test
+    fun `a dj-set credit in prose bills the names after by and stays in the description`() {
+        val line = "FILM SCREENING WITH A, FOLLOWED BY A PERFORMANCE BY B AND DJ SETS BY DOUNIA AND MATHIS AND DJ SALIVA."
+        val event = scrapeOne(cover("THUR 5 NOVEMBER 8PM", title = "MOLT", descr = "$line<br>Clarify the DJ set lineupUse consistent DJ capitalization"))
+
+        event.artists.map { it.name } shouldContainExactly listOf("DOUNIA", "MATHIS", "DJ SALIVA")
+        event.artists.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.DJ)
+        event.description shouldBe line
+    }
+
+    @Test
+    fun `a night with an installation credit and dj sets is a party, not an exhibition`() {
+        val event =
+            scrapeOne(
+                cover(
+                    "FRI 6 NOVEMBER 9PM",
+                    title = "ART JAM",
+                    descr = "WITH AN IMMERSIVE INSTALLATION BY SARAH ILLENBERGER AND DJ SETS BY KAPOTE, CLEEEO, STUMP VALLEY AND RUBBERMAIDXXX"
+                )
+            )
+
+        event.artists.map { it.name } shouldContainExactly listOf("KAPOTE", "CLEEEO", "STUMP VALLEY", "RUBBERMAIDXXX")
+        event.eventType shouldBe "PARTY"
+    }
+
+    private fun credited(vararg lines: String) = scrapeOne(cover("FRI 23 OCTOBER 9PM", descr = lines.joinToString("<br>")))
+
+    @Test
+    fun `installation and curator credits bill nobody and keep a night an exhibition`() {
+        val event = credited("DIGITAL INSTALLATION BY VISUAL NOTES", "CURATED BY ANNA & BEN", "MUSIC CURATED BY CLARA")
+
+        event.artists.shouldBeEmpty()
+        event.eventType shouldBe "EXHIBITION"
+    }
+
+    @Test
+    fun `a set list ends at its sentence or at the next credit`() {
+        credited("DJ SETS BY LUCIA LU & RAGE. SPECIAL GUESTS: MADAME X.").artists.map { it.name } shouldContainExactly listOf("LUCIA LU", "RAGE")
+        credited("DJ SETS BY OLAF, DISCOTOPIAN, AN INSTALLATION BY ALISA").artists.map { it.name } shouldContainExactly listOf("OLAF", "DISCOTOPIAN")
+        credited("DJ SETS BY OLAF AND A LIGHT SHOW BY ALISA").artists.map { it.name } shouldContainExactly listOf("OLAF")
+    }
+
+    @Test
+    fun `lowercase, music and live-set credits bill their acts and a more tail bills nobody`() {
+        val event = credited("dj set by Ana & more", "MUSIC BY BEN", "LIVE SETS BY CARA AND DANI AND MORE")
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Ana" to ArtistRole.DJ, "BEN" to ArtistRole.DJ, "CARA" to ArtistRole.LIVE, "DANI" to ArtistRole.LIVE)
+    }
+
+    @Test
+    fun `an act named with and bills as two, the accepted limitation`() {
+        credited("DJ SETS BY SUN AND MOON").artists.map { it.name } shouldContainExactly listOf("SUN", "MOON")
+    }
+
+    @Test
     fun `an act keeps its own bracket, an abbreviation stop and a joined name`() {
         lineup("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph.") shouldContainExactly
             listOf("SOLO", "SICKBOYRARI (BLACK KRAY)", "Harry Connick Jr.", "DJ SoundCloud b2b McCarthy", "BabyNymph")

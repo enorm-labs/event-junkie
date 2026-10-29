@@ -35,8 +35,12 @@ import java.time.MonthDay
  * lines and a line-up text. The year comes from the English weekday, or the nearest date without one.
  *
  * Line-up lines are split into DJs. A line with "by" credits an installation or a curator, and a
- * ticket line is a notice: both become the description. A night with only credits is an exhibition.
- * A note the page's editor forgot in the line-up bills nobody.
+ * ticket line is a notice: both become the description. A credit line still bills the names after
+ * `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`, up to the end of that sentence. A night with only
+ * credits is an exhibition. A note the page's editor forgot in the line-up bills nobody.
+ *
+ * Accepted limitation: `and` always splits a set list, so an act named with one (`Sun and Moon`)
+ * bills as two unless it is a known single act. The venue joins its acts with `AND` in prose.
  */
 class StudioIiiiOverviewPageScraper(
     private val clock: Clock = Clock.system(BERLIN)
@@ -83,7 +87,7 @@ class StudioIiiiOverviewPageScraper(
                 .orEmpty()
                 .filterNot { SAVE_THE_DATE.matches(it) }
         val (notes, lineup) = text.partition { CREDIT.containsMatchIn(it) || NOTICE.containsMatchIn(it) }
-        val djs = lineupActs(lineup)
+        val djs = (lineupActs(lineup) + notes.flatMap(::setActs)).distinctBy { it.name }
         val cuedType = cuedType(title, notes, djs)
         return ScrapedEvent(
             title = title,
@@ -128,7 +132,10 @@ class StudioIiiiOverviewPageScraper(
     }
 
     /** The acts of the line-up lines, which may break a comma list across lines; a `(CLUBROOM)` tail is the act's room. */
-    private fun lineupActs(lines: List<String>): List<ScrapedArtist> =
+    private fun lineupActs(
+        lines: List<String>,
+        role: ArtistRole = ArtistRole.DJ
+    ): List<ScrapedArtist> =
         lines
             .map { unwrapLine(it.trim().trimEnd(',', '/')) }
             .filterNot(::isEditorNote)
@@ -145,8 +152,26 @@ class StudioIiiiOverviewPageScraper(
                         ?.get(1)
                         ?.lowercase()
                         ?.replaceFirstChar { it.titlecase() }
-                name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = ArtistRole.DJ, stage = stage) }
+                name?.takeUnless(::isNonArtistName)?.let { ScrapedArtist(name = it, role = role, stage = stage) }
             }.distinctBy { it.name }
+
+    /**
+     * The acts a credit line names after `DJ SETS BY`, `LIVE SETS BY` or `MUSIC BY`: `… AND DJ SETS BY
+     * DOUNIA AND MATHIS AND DJ SALIVA.` (event 11928). The list ends at the sentence's stop, and a
+     * later credit in it, `…, AN INSTALLATION BY X`, is cut off with its separator.
+     */
+    private fun setActs(line: String): List<ScrapedArtist> =
+        SET_CREDIT.findAll(line).toList().flatMap { credit ->
+            val tail = line.substring(credit.range.last + 1)
+            val sentence = tail.substring(0, SENTENCE_END.find(tail)?.range?.first ?: tail.length)
+            val names =
+                CREDIT.find(sentence)?.let { nested ->
+                    val cut = SET_SEPARATOR.findAll(sentence.substring(0, nested.range.first)).lastOrNull()
+                    sentence.substring(0, cut?.range?.first ?: 0)
+                } ?: sentence
+            val role = if (credit.groupValues[1].equals("LIVE", ignoreCase = true)) ArtistRole.LIVE else ArtistRole.DJ
+            lineupActs(listOf(names), role)
+        }
 
     /** A line in a bracket of its own, with a closing stop, bills what the bracket holds: `(A FEAT. B & C).` (event 11929). */
     private fun unwrapLine(line: String): String {
@@ -185,6 +210,13 @@ class StudioIiiiOverviewPageScraper(
         val TRAILING_SEPARATOR = Regex("""\s*[-–—:]+\s*$""")
         const val TITLE_SEPARATOR = " – "
         val CREDIT = Regex("""\bby\b""", RegexOption.IGNORE_CASE)
+
+        /** The credits that name acts; group 1 tells a live set from a DJ set. */
+        val SET_CREDIT = Regex("""\b(?:(DJ|LIVE)\s+SETS?|MUSIC)\s+BY\s+""", RegexOption.IGNORE_CASE)
+
+        /** The stop that ends a sentence: after a word of two letters that is not `FEAT.`, `JR.` and the like; or a colon or `//`. */
+        val SENTENCE_END = Regex("""(?<=\p{L}{2})(?<!\b(?:feat|ft|vs|jr|sr|dr|st|mr|mrs|ms|bros|inc|co))\.(?=\s|$)|[:;]|\s//\s""", RegexOption.IGNORE_CASE)
+        val SET_SEPARATOR = Regex("""\s*,\s*|\s+(?:&|and)\s+""", RegexOption.IGNORE_CASE)
         val NOTICE = Regex("""^(?:tickets?|free|entry|doors?|sold\s+out|cancell?ed)\b""", RegexOption.IGNORE_CASE)
         val SAVE_THE_DATE = Regex("""save\s+the\s+date\.?""", RegexOption.IGNORE_CASE)
         val EXHIBITION = Regex("""\b(?:installations?|exhibition)\b""", RegexOption.IGNORE_CASE)
