@@ -160,6 +160,15 @@ class SchokoladenOverviewPageScraperTest {
                 "15 Jahre Gut Drauf – Jubiläum der Jubiläen mit mOck (math-rock, comeback!) &amp; Petula (lofi-indie-pop, 25 years!)"
             ) shouldContainExactly listOf("mOck", "Petula")
             artistsOf("halloween special w/ Nothing Works (post-hc, bln) &amp; more") shouldContainExactly listOf("Nothing Works")
+            // 25 December 2026: "mit:" frames the bill like "mit", and "& more live acts" is a placeholder like "& more" (#4183).
+            artistsOf("Weihnachtstrinken mit: Klinge Komplex (rap, le) &amp; more live acts") shouldContainExactly listOf("Klinge Komplex")
+            artistsOf("Winterfest mit: Act One (punk, bln), Act Two &amp; Act Three + more acts") shouldContainExactly
+                listOf("Act One", "Act Two", "Act Three")
+            artistsOf("Soli-Abend mit Act One &amp; Act Two (punk, bln) &amp; more live acts") shouldContainExactly listOf("Act One", "Act Two")
+            // "mit" or "more" inside an act's own name is no frame and no placeholder.
+            artistsOf("Mitski Tribute (indie, bln) + Moretti (folk, bln)") shouldContainExactly listOf("Mitski Tribute", "Moretti")
+            // "& friends" is the act's own company, kept on its name by the shared splitter, not a placeholder.
+            artistsOf("Weihnachtstrinken mit: Klinge Komplex &amp; friends") shouldContainExactly listOf("Klinge Komplex & friends")
             // 9 December 2026: the act follows "Release Show von", and the quoted part after "w/" is the album (#2099).
             artistsOf("Berlin Release Show von Angela Aux w/ \"Das Nichts macht Kopien von sich selbst\" + TBA") shouldContainExactly
                 listOf("Angela Aux")
@@ -401,6 +410,10 @@ class SchokoladenOverviewPageScraperTest {
                 promotersOf("n.e.s.t.a. &amp; little league shows prsnt: &nbsp;") shouldContainExactly listOf("n.e.s.t.a.", "little league shows")
                 promotersOf("offbeatclub prsnts &nbsp;") shouldContainExactly listOf("offbeatclub")
                 promotersOf("Sonic Boom &nbsp;") shouldContainExactly listOf("Sonic Boom")
+                // 25 December 2026: the German invitation, cut like a presents word (#4183).
+                promotersOf("Beatz aus der Kurve &amp; Else Jahn Kurve laden ein zum &nbsp;") shouldContainExactly
+                    listOf("Beatz aus der Kurve", "Else Jahn Kurve")
+                promotersOf("Kiezkollektiv lädt ein zur Soliparty: &nbsp;") shouldContainExactly listOf("Kiezkollektiv")
             }
         }
 
