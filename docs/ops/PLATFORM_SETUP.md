@@ -1129,7 +1129,7 @@ replaces Ubuntu's exclusions, `dbus` and the apt units among them.
 node `harden.sh` installs `prometheus-node-exporter` bound to the private address, textfile collector only. A timer (`ej-patch-state.timer`, every ten
 minutes) writes three ages. `node_reboot_required_age_seconds` is the age of `/var/run/reboot-required`, or 0 when it is absent.
 `node_service_restart_pending_age_seconds` is the time since `needrestart -b -r l` first listed a service it did not restart, or 0 when it lists none.
-`node_unattended_upgrades_last_run_age_seconds` is the age of the updater's stamp file. The collector gateway scrapes both nodes on 9100: `prometheus/nodes`
+`node_unattended_upgrades_last_run_age_seconds` is the age of the updater's stamp file, or of the timer's first run when that is later. The image ships the stamp weeks old, so without the second date a new node fires at once (#4181). The collector gateway scrapes both nodes on 9100: `prometheus/nodes`
 in `collector.yaml`, one target per node in each cluster's `kustomization.yaml`. Three rules in `deploy/alerts/gen_alerts.py` read them: `ej-reboot-pending`
 and `ej-service-restart-pending` at three days, `ej-patching-stalled` at two. A fourth, `ej-patch-state-missing`, fires when a node's 9100 target is down for
 30 minutes. The other three are silent for a node with no series (#4141). Three days of grace, because the flag appears after most kernel updates. An immediate alert is one that gets

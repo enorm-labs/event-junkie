@@ -82,12 +82,17 @@ cat >/etc/default/prometheus-node-exporter <<EOF
 ARGS="--web.listen-address=${PRIVATE_IPV4}:9100 --collector.disable-defaults --collector.textfile --collector.textfile.directory=/var/lib/prometheus/node-exporter"
 EOF
 install -d -m 0755 /var/lib/prometheus/node-exporter
-# A missing flag is a node that needs no reboot, so 0. A missing updater stamp is the whole epoch,
-# so the alert fires rather than staying quiet.
+# A missing flag is a node that needs no reboot, so 0. The image ships the updater's stamp weeks
+# old, so its age counts from the later of the stamp and this script's first run (#4181). A stamp
+# that never moves past that still fires, and so does one never written.
 cat >/usr/local/sbin/ej-patch-state <<'EOF'
 #!/bin/sh
 d=/var/lib/prometheus/node-exporter; now=$(date +%s)
 age() { if [ -e "$1" ]; then echo $((now - $(stat -c %Y "$1"))); else echo "$2"; fi; }
+first="$d/.first-run"
+[ -e "$first" ] || touch "$first"
+stamp=$(stat -c %Y /var/lib/apt/periodic/unattended-upgrades-stamp 2>/dev/null || echo 0)
+since=$(stat -c %Y "$first")
 # needrestart lists an excluded service it did not restart as NEEDRESTART-SVC. The stamp marks the
 # first run that saw one, so the age grows until a reboot clears the list.
 pending="$d/.restart-pending-since"
@@ -99,7 +104,7 @@ fi
 {
   echo "node_reboot_required_age_seconds $(age /var/run/reboot-required 0)"
   echo "node_service_restart_pending_age_seconds $(age "$pending" 0)"
-  echo "node_unattended_upgrades_last_run_age_seconds $(age /var/lib/apt/periodic/unattended-upgrades-stamp "$now")"
+  echo "node_unattended_upgrades_last_run_age_seconds $((now - (stamp > since ? stamp : since)))"
   echo "node_patch_state_timestamp_seconds $now"
 } >"$d/.patch-state.prom" && mv "$d/.patch-state.prom" "$d/patch-state.prom"
 EOF
