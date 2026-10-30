@@ -168,7 +168,7 @@ scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .fr
 | Column                          | What it counts                                                                                                       |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `frontend.page_loads`           | nginx answers 200 to a GET for an HTML route from a browser user agent. Scanners and Lighthouse desktop stay in      |
-| `frontend.in_burst`             | Lines in an hour above `burst_threshold` (600). The weekly DAST run and a crawler that walks the sitemap cause these |
+| `frontend.in_burst`             | Lines in an hour with over `burst_threshold` (600) lines not from a crawler or own monitoring. DAST runs cause these |
 | `frontend.own_monitoring`       | Better Stack, Lighthouse, headless Chrome, the injector and the `node` health check                                  |
 | `frontend.crawlers`             | Search and AI crawlers that name themselves                                                                          |
 | `frontend.rendered_by_crawlers` | Pages that a crawler in `RENDERERS` fetched. It runs the SPA on them, so they also call the BFF                      |

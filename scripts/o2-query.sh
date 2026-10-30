@@ -166,13 +166,16 @@ case "$VERB" in
               unstructured: $unstructured, http5xx: $http5xx, k8s_warnings: $k8s_warnings, alerts: $alerts}'
         ;;
     traffic)
-        # An hour above this many nginx lines is a scan or a crawl: the weekly DAST run, or a crawler
-        # walking the sitemap. Such an hour counts as requests and never as a visitor.
+        # An hour whose nginx lines, less named crawlers and our own monitoring, exceed this is a scan
+        # or a crawl under a browser agent: the weekly DAST run, or a rotating-agent crawl. Such an hour
+        # counts as requests and never as a visitor. Named crawlers alone fill 550-1,500 lines an hour.
         BURST=600
+        CRAWLER='(?i)bot|spider|crawl|slurp'
         FRONTEND=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
             sum(CASE WHEN NOT regexp_like(body, '$NOT_A_PERSON') AND regexp_like(body, '$PAGE_LOAD') THEN 1 ELSE 0 END) AS pages,
             sum(CASE WHEN regexp_like(body, '$OURS') THEN 1 ELSE 0 END) AS ours,
-            sum(CASE WHEN regexp_like(body, '(?i)bot|spider|crawl|slurp') AND NOT str_match(body, 'Better Stack') THEN 1 ELSE 0 END) AS crawlers,
+            sum(CASE WHEN regexp_like(body, '$CRAWLER') AND NOT str_match(body, 'Better Stack') THEN 1 ELSE 0 END) AS crawlers,
+            sum(CASE WHEN NOT regexp_like(body, '$CRAWLER') AND NOT regexp_like(body, '$OURS') THEN 1 ELSE 0 END) AS rest,
             sum(CASE WHEN regexp_like(body, '$RENDERER') AND regexp_like(body, '$PAGE_LOAD') THEN 1 ELSE 0 END) AS renders,
             sum(CASE WHEN regexp_like(body, '$RENDERER') AND regexp_like(body, '$DETAIL_PAGE') THEN 1 ELSE 0 END) AS rendered_details,
             sum(CASE WHEN regexp_like(body, '$NOT_A_PERSON') AND regexp_like(body, '$DETAIL_PAGE') THEN 1 ELSE 0 END) AS injected_details
@@ -205,7 +208,7 @@ case "$VERB" in
             def total(f): map(f) | add // 0;
             def epoch: fromdateiso8601;
             def hour: . - . % 3600 | todate | .[0:19];
-            ($fe | map(select(.total > $burst) | .h)) as $bursts
+            ($fe | map(select(.rest > $burst) | .h)) as $bursts
             | def quiet: (.h as $h | $bursts | index($h)) == null;
             def night: (.h[11:13] | tonumber) < 4;
             (reduce $renders[0][] as $r ({};
