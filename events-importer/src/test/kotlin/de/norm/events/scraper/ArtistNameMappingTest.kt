@@ -342,6 +342,9 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Hoffest") shouldBe true
         isNonArtistEvent("40 Jahre SO36") shouldBe true
         isNonArtistEvent("10 Years Anniversary") shouldBe true
+        isNonArtistEvent("1 Year Anniversary") shouldBe true
+        // A singular `Year` after any other number is a band name, not an anniversary (Neue Zukunft, event 3847).
+        isNonArtistEvent("13 Year Cicada") shouldBe false
         // A real act whose name merely contains "Jahre" mid-title is kept.
         isNonArtistEvent("Fettes Brot") shouldBe false
     }
@@ -1890,6 +1893,8 @@ class ArtistNameMappingTest {
                 "Anchors & Hearts",
                 "Maël & Jonas",
                 "Mael & Jonas",
+                // Max-Schmeling-Halle spells it with a macron (event 2386).
+                "Maēl & Jonas",
                 "Nie und Nimmer",
                 // Morphine Raum (#3565).
                 "Mitch & Mitch"

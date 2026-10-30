@@ -42,9 +42,13 @@ internal val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
 /** The park's games night, `Spieleabend` or `Spieletreff`: a [EventType.QUIZ] (EVENT_SCOPE.md §2, #2992). */
 private val GAMES_NIGHT_PATTERN = Regex("""spiele(?:abend|treff|nacht)""", RegexOption.IGNORE_CASE)
 
+/** An age-group party (`DIE MEGA Ü30 PARTY`): a DJ night the park files under "Konzerte". */
+private val AGE_GROUP_PARTY_PATTERN = Regex("""(?<!\p{L})(?:ü|ue)\s?\d0\b.*\bparty\b""", RegexOption.IGNORE_CASE)
+
 /**
  * A row's event type: its [category] label, else the cues in its [title]. The park files readings
  * under "Bühne/Theater" too, so a reading, screening or exhibition cue in the title beats [EventType.SHOW].
+ * An age-group party filed as a concert is a [EventType.PARTY].
  */
 internal fun gaertenDerWeltEventType(
     category: String?,
@@ -53,6 +57,7 @@ internal fun gaertenDerWeltEventType(
     when (val mapped = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS)) {
         null -> gamesNightOrTitleType(title)
         EventType.SHOW.name -> classifyByGenreKeyword(title) ?: mapped
+        EventType.CONCERT.name -> if (AGE_GROUP_PARTY_PATTERN.containsMatchIn(title)) EventType.PARTY.name else mapped
         else -> mapped
     }
 

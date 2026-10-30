@@ -75,7 +75,7 @@ class CrackBellmerWebsiteImporterTest {
             val result = importer.importEvents(listingUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 31
+            result.events shouldHaveSize 27
             result.etag shouldBe "\"crack-bellmer-etag\""
             result.lastModified shouldBe "Tue, 04 Aug 2026 03:00:00 GMT"
         }
@@ -101,8 +101,8 @@ class CrackBellmerWebsiteImporterTest {
 
             importer.importEvents(listingUrl)
 
-            // 67 items on the page, 35 of them past and one a closed-day marker.
-            coVerify(exactly = 31) { htmlFetcher.fetchDocument(any()) }
+            // 67 items on the page: 35 past, one a closed-day marker and four upcoming bar openings.
+            coVerify(exactly = 27) { htmlFetcher.fetchDocument(any()) }
         }
 
     @Test
@@ -114,7 +114,7 @@ class CrackBellmerWebsiteImporterTest {
             val result = importer.importEvents(listingUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 31
+            result.events shouldHaveSize 27
             result.events
                 .first()
                 .description

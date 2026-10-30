@@ -34,6 +34,12 @@ abstract class RadarGroupImporter(
     /** The acts and the genre a row bills. */
     protected open fun lineup(event: RadarEvent): Lineup = Lineup()
 
+    /** The row's title; a venue whose titles name only the format ("Konzert") overrides it to name the bill. */
+    protected open fun title(
+        event: RadarEvent,
+        lineup: Lineup
+    ): String = event.title
+
     /** Whether a row is programme; a venue that files talks or theatre under other categories overrides it. */
     protected open fun isProgramme(event: RadarEvent): Boolean = isRadarProgramme(event)
 
@@ -60,7 +66,7 @@ abstract class RadarGroupImporter(
     private fun toScrapedEvent(event: RadarEvent): ScrapedEvent {
         val lineup = lineup(event)
         return ScrapedEvent(
-            title = event.title,
+            title = title(event, lineup),
             description = event.description,
             eventType = eventType(event),
             eventDate = event.start.toLocalDate(),

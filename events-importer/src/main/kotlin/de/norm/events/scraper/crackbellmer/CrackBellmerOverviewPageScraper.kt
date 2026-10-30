@@ -91,9 +91,8 @@ class CrackBellmerOverviewPageScraper(
         val href = item.attrAt("a[href*=/events/]", "href") ?: error("No event link found")
         val cleanedTitle = item.textAt("[fs-list-field=title]")?.let(::cleanEventTitle) ?: error("No title found")
         val title = cleanedTitle.text
-        // Closed days are programme entries. They name no event, so storing one would put a night
-        // titled "CLOSED" in the calendar.
-        if (title.equals(CLOSED_MARKER, ignoreCase = true)) return null
+        // Closed days and the bar's opening hours are programme entries that name no event.
+        if (title.equals(CLOSED_MARKER, ignoreCase = true) || title.equals(BAR_OPENING, ignoreCase = true)) return null
 
         val eventDate = parseDate(item)
         if (eventDate == null) {
@@ -201,6 +200,12 @@ class CrackBellmerOverviewPageScraper(
 
         /** The title the venue gives a closed day, a programme entry but not an event. */
         const val CLOSED_MARKER = "CLOSED"
+
+        /**
+         * The title of the bar's 19:00 opening, listed on most Thursdays to Saturdays with no genre and no
+         * lineup: opening hours, not programme (EVENT_SCOPE.md §5).
+         */
+        const val BAR_OPENING = "BELLMER BAR"
 
         /** The `data-date` rendering, e.g. `August 7, 2026`. */
         val DATE_FORMATTER: DateTimeFormatter =

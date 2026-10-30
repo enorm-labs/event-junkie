@@ -57,7 +57,6 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "anchors & hearts",
         "pauken & planeten",
         "maël & jonas",
-        "mael & jonas",
         // The Persian pop duo Uber Eats Music Hall co-bills with Andy as `Andy, Kamran & Hooman` (event 11866).
         "kamran & hooman",
         "nie & nimmer",
@@ -115,12 +114,20 @@ internal val CONJUNCTION_SEPARATOR = Regex("""\s+(?:&|and|und)\s+|(?<=\S{2})\s+e
 private val PROSE_END = Regex("""\s(?:in|im|mit|für|von|of|the|for|to|at|on|aus|bei)\s.*[!?]\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * True when [name] is a [KNOWN_SINGLE_ACTS] entry, conjunctions normalized to `&` first. Checked
- * at segment level, so `"BLOOD & SUN + SOCIETY OF THE SILVER CROSS"` splits at the `+` into two
- * acts, and "Support: Simon & Garfunkel" is protected. Public because a venue parser with its own
- * act separator asks the same question before splitting (Klunkerkranich, #1760).
+ * [KNOWN_SINGLE_ACTS] without accents: venues spell `Maël & Jonas` as `Maēl`, `Mael` or `Maël`
+ * (event 2386). Lazy because [COMBINING_MARKS] is declared further down the file.
  */
-fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase() in KNOWN_SINGLE_ACTS
+private val KNOWN_SINGLE_ACTS_FOLDED: Set<String> by lazy { KNOWN_SINGLE_ACTS.mapTo(HashSet(), ::withoutAccents) }
+
+/**
+ * True when [name] is a [KNOWN_SINGLE_ACTS] entry, conjunctions normalized to `&` and accents
+ * stripped first. Checked at segment level, so `"BLOOD & SUN + SOCIETY OF THE SILVER CROSS"`
+ * splits at the `+` into two acts, and "Support: Simon & Garfunkel" is protected. Public because a
+ * venue parser with its own act separator asks the same question before splitting (Klunkerkranich, #1760).
+ */
+fun isKnownSingleAct(name: String): Boolean = withoutAccents(name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase()) in KNOWN_SINGLE_ACTS_FOLDED
+
+private fun withoutAccents(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFD).replace(COMBINING_MARKS, "")
 
 /**
  * The back-to-back marker joining two DJs into one slot. Padding keeps it off a name that merely

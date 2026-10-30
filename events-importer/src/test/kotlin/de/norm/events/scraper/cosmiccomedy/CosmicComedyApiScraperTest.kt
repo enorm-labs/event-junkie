@@ -111,17 +111,48 @@ class CosmicComedyApiScraperTest {
     }
 
     @Test
-    fun `names the performer only on a Comedy Special`() {
+    fun `names the performer from the title only on a Comedy Special`() {
         // The club's own marker for a named act; those titles are all "<Performer> – <Show>".
-        events.filter { it.artists.isNotEmpty() }.map { it.artists.single().name } shouldBe
+        events.filter { event -> event.artists.any { event.title.startsWith(it.name) } }.map { it.artists.single().name } shouldBe
             listOf("TURBOPAOLO", "Lucas Lauriente", "Mike Rice", "Chris Andrade", "Dan Docimo", "Tereza Hossa")
     }
 
     @Test
-    fun `leaves the recurring house nights without an artist`() {
+    fun `bills a house night's acts, never its series title`() {
         // "Comedy, Pizza and Shots – SHOWCASE FRIDAY" names a series, not an act.
-        event("cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17").artists.shouldBeEmpty()
+        event("cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17").artists.map { it.name } shouldBe
+            listOf("Maya Upchurch", "Roc Roc It", "Willy", "Ayla Merino")
         event("cosmic_comedy:comedy-pizza-and-shots-open-mic-thursday-6").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the comedians a house night lists under THE ACTS`() {
+        // Event 1506: the host line is not read, and the country codes are dropped.
+        val description =
+            "<p>The host: Dharmander Singh</p><p>★★★★★ THE ACTS ★★★★★</p>" +
+                "<p>Ayla Merino (MEX)<br />Willy (NZL)<br />Roc Roc It (???)</p>" +
+                "<p>★★★★★ OPENING TIMES ★★★★★</p><p>Doors: 19:00</p>"
+        val json =
+            """{"events":[{"slug":"comedy-pizza-and-shots-showcase-friday-32","start_date":"2026-10-30 19:00:00",""" +
+                """"title":"Comedy, Pizza and Shots – SHOWCASE FRIDAY","categories":[{"name":"Showcase"}],""" +
+                """"description":"$description"}]}"""
+        scraper
+            .scrapePage(json)
+            .events
+            .single()
+            .artists
+            .map { it.name } shouldBe listOf("Ayla Merino", "Willy", "Roc Roc It")
+    }
+
+    @Test
+    fun `bills no comedian on a house night whose acts are to be announced`() {
+        event("cosmic_comedy:comedy-pizza-and-shots-open-mic-thursday-25").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads an act list whose markup is divs, not paragraphs`() {
+        event("cosmic_comedy:comedy-pizza-and-shots-showcase-saturday-18").artists.map { it.name } shouldBe
+            listOf("Tommy Ferrari", "Cosmo", "David Adams", "Harshat Lingam")
     }
 
     @Test

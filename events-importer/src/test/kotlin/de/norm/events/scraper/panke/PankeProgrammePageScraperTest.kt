@@ -43,8 +43,8 @@ class PankeProgrammePageScraperTest {
 
     @Test
     fun `reads the venue's upcoming list and leaves its past one alone`() {
-        // The page renders 29 articles from one template; only the 9 under UPCOMING EVENTS count.
-        events shouldHaveSize 9
+        // The page renders 29 articles from one template; 9 sit under UPCOMING EVENTS, one of them the market.
+        events shouldHaveSize 8
         events.map { it.eventDate }.min() shouldBe LocalDate.of(2026, 8, 5)
         events.none { it.eventDate < LocalDate.of(2026, 8, 5) } shouldBe true
     }
@@ -62,7 +62,7 @@ class PankeProgrammePageScraperTest {
 
     @Test
     fun `identifies an event by its WordPress post id, there being no per-event page`() {
-        events.map { it.sourceId }.toSet() shouldHaveSize 9
+        events.map { it.sourceId }.toSet() shouldHaveSize 8
         events.map { it.sourceUrl }.toSet() shouldBe setOf(sourceUrl)
         events.none { it.eventDate == UNRESOLVED_EVENT_DATE } shouldBe true
     }
@@ -86,7 +86,6 @@ class PankeProgrammePageScraperTest {
     @Test
     fun `types what the title unambiguously names`() {
         // The venue states no type at all, so an unmistakable title keyword decides first.
-        event("panke:17348").eventType shouldBe EventType.OTHER.name // Code Green x Panke Markt
         event("panke:17365").eventType shouldBe EventType.PARTY.name // (c)rave
     }
 
@@ -103,7 +102,7 @@ class PankeProgrammePageScraperTest {
     fun `leaves an event with neither signal untyped`() {
         // A series name is not a format, so these stay OTHER rather than being guessed a concert.
         event("panke:17378").eventType shouldBe EventType.OTHER.name
-        events.count { it.eventType == EventType.OTHER.name } shouldBe 5
+        events.count { it.eventType == EventType.OTHER.name } shouldBe 4
     }
 
     @Test
@@ -132,23 +131,31 @@ class PankeProgrammePageScraperTest {
             articleTitled("Bassism 5.0 feat. N-Type & Slowie", "Deep dubstep, grime, and futuristic halftime pressure all night long.")
                 .eventType shouldBe EventType.PARTY.name
             articleTitled("FLIGHTMODE", "~ Our favorite live bands from the Berlin scene FLIGHTMODE ~").eventType shouldBe EventType.CONCERT.name
-            // A market stays a market, whatever its body says.
-            articleTitled("Code Green x Grüne Markt", "Vinyl and plants by the dancefloor").eventType shouldBe EventType.OTHER.name
         }
     }
 
     private fun articleTitled(
         title: String,
         body: String? = null
-    ): ScrapedEvent {
+    ): ScrapedEvent = scraper.scrape(Jsoup.parse(articleHtml(title, body), sourceUrl), sourceUrl).single()
+
+    private fun articleHtml(
+        title: String,
+        body: String? = null
+    ): String {
         val full = body?.let { "<div class=\"post-content-full\"><div class=\"et_pb_column_3_4\"><p>$it</p></div></div>" }.orEmpty()
-        val html =
-            """
+        return """
             <div class="et_pb_events_0"><article id="post-1">
               <div class="event-content-wrapper" data-date="2026-10-17"><h2 class="entry-title">$title</h2>$full</div>
             </article></div>
             """.trimIndent()
-        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl).single()
+    }
+
+    @Test
+    fun `drops the Sunday market, which is out of scope`() {
+        // Event 11976, "Code Green x Grüne Markt", and the fixture's "Code Green x Panke Markt".
+        events.none { it.sourceId == "panke:17348" } shouldBe true
+        scraper.scrape(Jsoup.parse(articleHtml("Code Green x Grüne Markt"), sourceUrl), sourceUrl).shouldBeEmpty()
     }
 
     @Test
@@ -235,7 +242,6 @@ class PankeProgrammePageScraperTest {
                 "panke:17224" to BigDecimal("15"),
                 "panke:17227" to BigDecimal("12"),
                 "panke:17337" to null,
-                "panke:17348" to null,
                 "panke:17361" to null,
                 "panke:17314" to BigDecimal("15"),
                 "panke:17363" to null,
@@ -253,7 +259,7 @@ class PankeProgrammePageScraperTest {
     @Test
     fun `reads the poster out of the article's inline background image`() {
         // The template renders no <img> for an event at all, only this inline style.
-        events.count { it.imageUrl != null } shouldBe 8
+        events.count { it.imageUrl != null } shouldBe 7
         parseBackgroundImageUrl("background-image: url(https://x.test/a.png); background-size: cover;") shouldBe
             "https://x.test/a.png"
         parseBackgroundImageUrl("background-size: cover;").shouldBeNull()

@@ -32,6 +32,7 @@ import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.splitBilingualDescription
 import de.norm.events.scraper.splitSupportActs
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -99,7 +100,7 @@ class So36DetailPageScraper {
                     .ifEmpty { descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)) }
                     .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
             } else {
-                parseArtists(document, title, subtitle, eventType)
+                parseArtists(document, showNamedAct(title, description) ?: title, subtitle, eventType)
             }
         val merchantPromoter = merchant?.takeUnless { billsAct(artists, it) }
         if (!houseNight && merchantPromoter == null) logger.debug { "Dropping merchant '$merchant' of '$sourceUrl': it is a billed act" }
@@ -309,6 +310,32 @@ private const val VENUE_NAME = "SO36"
 private fun subtitleCredit(subtitle: String): String? =
     promoterFromCredit(subtitle.takeIf { SUBTITLE_CREDIT.containsMatchIn(it) })
         ?.takeUnless { it.equals(VENUE_NAME, ignoreCase = true) }
+
+/**
+ * The act of a `<show> - <act>` title, when the description names the act on its own and never
+ * the show: `HERE WE ARE - BRIGADE LOCO` celebrates "10 years of Brigade Loco" (event 12027). Null
+ * for any other title. A tour name is never the act, so `DOMINIUM - NIGHT IS CALLING TOUR 2026` keeps Dominium.
+ */
+private fun showNamedAct(
+    title: String,
+    description: String?
+): String? {
+    val parts = title.split(SPACED_DASH).map { it.trim() }
+    if (parts.size != 2 || parts.any { it.isBlank() } || description == null) return null
+    val prose = description.replace(title, "", ignoreCase = true)
+    val (show, act) = parts
+    val namesAnAct = stripArtistSuffix(act) == act && !isNonArtistName(act)
+    return act.takeIf { namesAnAct && standsAlone(act, prose) && !standsAlone(show, prose) }
+}
+
+/** Whether [name] occurs in [text] as a whole phrase, ignoring case. */
+private fun standsAlone(
+    name: String,
+    text: String
+): Boolean = Regex("""(?<![\p{L}\d])${Regex.escape(name)}(?![\p{L}\d])""", RegexOption.IGNORE_CASE).containsMatchIn(text)
+
+/** The one space-padded dash between a show's name and its act. */
+private val SPACED_DASH = Regex("""\s+[-–—]\s+""")
 
 /** Whether [name] is one of [artists], ignoring case and runs of whitespace. */
 private fun billsAct(

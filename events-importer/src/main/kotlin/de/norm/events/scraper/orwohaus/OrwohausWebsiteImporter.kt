@@ -44,7 +44,7 @@ val ORWOHAUS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "a doors time appears only in the prose of a few nights"),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "only a `Line-Up:` list in the prose is read; other nights name acts in running text, and a series title names none"
+            "only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the feed files most nights by room or series and names a style on few"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "an outside promoter is named only in the prose"),

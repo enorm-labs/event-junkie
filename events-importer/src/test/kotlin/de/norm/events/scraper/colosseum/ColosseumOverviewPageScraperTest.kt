@@ -1,5 +1,6 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -202,6 +203,14 @@ class ColosseumOverviewPageScraperTest {
     @Test
     fun `derives no artists because the subtitles carry no support billing`() {
         events.forEach { it.artists.shouldBeEmpty() }
+    }
+
+    @Test
+    fun `bills both halves of a title that names its own special guest`() {
+        // Event 12025.
+        val event = scrapeOne(mapOf("title" to "Peter Broderick & The Winterage Men with special guest Marlais"))
+        event.artists.map { it.name to it.role } shouldBe
+            listOf("Peter Broderick & The Winterage Men" to ArtistRole.HEADLINER, "Marlais" to ArtistRole.SUPPORT)
     }
 
     @Test

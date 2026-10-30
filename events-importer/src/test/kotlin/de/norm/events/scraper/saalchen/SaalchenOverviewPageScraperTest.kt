@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -90,6 +91,38 @@ class SaalchenOverviewPageScraperTest {
         events.any { it.title == "Jimmy Sax" } shouldBe true
         events.none { it.title.contains("FLOHMARKT") } shouldBe true
         events.none { it.title.contains("BREAKFAST") } shouldBe true
+    }
+
+    @Test
+    fun `drops the emoji frame from the title and bills the acts under the Live and DJs headings`() {
+        // Event 3771 as the calendar printed it on 2026-10-30, the prose trimmed after the line-up.
+        val html =
+            """
+            <div class="views-row"><article class="node-event">
+              <h2><a href="/veranstaltung/cumbia-fest-berlin-dia-de-los-muertos-1"><span>🖤 ☠️ 🌼 CUMBIA FEST BERLIN - DÍA DE LOS MUERTOS 🌼 ☠️ 🖤</span></a></h2>
+              <div class="event-category"><a href="/kalender/party">Party</a></div>
+              <span class="location">Säälchen</span>
+              <var class="atc_date_start">2026-10-30 20:00:00</var>
+              <div class="body-content"><div><p><strong>Datum: </strong>30.10.2026<br><strong>Beginn:</strong> 21:00<br><br><br>
+              <strong>Live: &nbsp;</strong><br>❤️‍🔥 KUMBIA BORUKA (Mexiko/Frankreich)&nbsp;<br>❤️‍🔥 iLLBiLLY HiTEC ft. Longfingah (Berlin)&nbsp;<br><br>
+              <strong>DJs:&nbsp;</strong><br>❤️‍🔥 Anacaona, Selektor Bony, Don Eule &amp; Dr. Calavera<br><br>
+              Auch dieses Jahr feiern wir in Berlin wieder das Cumbia Fest.</p></div></div>
+            </article></div>
+            """.trimIndent()
+        val cumbia = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        cumbia.title shouldBe "CUMBIA FEST BERLIN - DÍA DE LOS MUERTOS"
+        cumbia.eventType shouldBe EventType.PARTY.name
+        cumbia.artists.map { it.name to it.role } shouldContainExactly
+            listOf(
+                "KUMBIA BORUKA" to ArtistRole.LIVE,
+                "iLLBiLLY HiTEC" to ArtistRole.LIVE,
+                "Longfingah" to ArtistRole.LIVE,
+                "Anacaona" to ArtistRole.DJ,
+                "Selektor Bony" to ArtistRole.DJ,
+                "Don Eule" to ArtistRole.DJ,
+                "Dr. Calavera" to ArtistRole.DJ
+            )
     }
 
     @Test

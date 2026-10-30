@@ -89,7 +89,6 @@ class OrwohausCalendarScraperTest {
     @Test
     fun `a series or house night bills no act, a tour title bills its act`() {
         event("necromania-2026").artists.shouldBeEmpty()
-        event("be-noise-live-battle-vorrunde-3-4").artists.shouldBeEmpty()
         event("halloween-im-orwohaus-2").artists.shouldBeEmpty()
         event("jamsession-im-orwohaus-2026-10-24").artists.shouldBeEmpty()
         event("arsen-fahrtenbuch-clubtour-2026").artists.map { it.name } shouldContainExactly listOf("ARSEN")
@@ -134,6 +133,12 @@ class OrwohausCalendarScraperTest {
             .artists
             .map { it.name } shouldContainExactly
             listOf("Attack of the Mad Axeman", "Cancer Clan", "Pure Deceit")
+    }
+
+    @Test
+    fun `the band contest's list for a heat bills its bands and drops the TBA slot`() {
+        event("be-noise-live-battle-vorrunde-3-4").artists.map { it.name } shouldContainExactly
+            listOf("Augenkraut", "Them Spirals", "Klappstuhl", "Spezialeffekt", "Franky von Tide", "Marions Männer", "Lucerna")
     }
 
     @Test

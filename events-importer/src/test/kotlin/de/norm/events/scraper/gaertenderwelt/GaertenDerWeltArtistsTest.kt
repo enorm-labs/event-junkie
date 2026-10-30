@@ -59,5 +59,6 @@ class GaertenDerWeltArtistsTest {
             .map { it.name to it.role } shouldBe
             listOf("Haddaway" to ArtistRole.HEADLINER, "Loona" to ArtistRole.HEADLINER, "Mütze Katze" to ArtistRole.SUPPORT)
         gaertenDerWeltArtists("Spieleabend", "Spiele mit Freunden, Nachbarn & Familie.", EventType.QUIZ.name) shouldBe emptyList()
+        gaertenDerWeltArtists("DIE MEGA Ü30 PARTY", "BERLINS GRÖSSTE Ü30 OPEN AIR PARTY!", EventType.PARTY.name) shouldBe emptyList()
     }
 }

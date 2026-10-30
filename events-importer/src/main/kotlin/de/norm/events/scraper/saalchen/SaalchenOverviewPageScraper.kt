@@ -2,6 +2,7 @@ package de.norm.events.scraper.saalchen
 
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -22,6 +23,7 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitOnEmoji
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -54,7 +56,9 @@ import java.time.format.DateTimeParseException
  * `.body-content` renders the same prose in full where `atc_description` holds only its first
  * paragraph, so the description comes from there; a festival names its acts there in one
  * sentence ending `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
- * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), read as the line-up (#1584).
+ * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), read as the line-up (#1584). A party
+ * lists its acts under `Live:` and `DJs:` heading lines instead, one emoji bullet each. An emoji frame
+ * around the title goes.
  *
  * @see SaalchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.holzmarkt.com/kalender">Holzmarkt calendar</a>
@@ -92,7 +96,8 @@ class SaalchenOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/veranstaltung/")
 
         val cleanedTitle = row.textAt("h2 a span")?.let { cleanEventTitle(it) }
-        val title = cleanedTitle?.text
+        // `🖤 ☠️ 🌼 CUMBIA FEST BERLIN - DÍA DE LOS MUERTOS 🌼 ☠️ 🖤`: the emoji frame decorates the name.
+        val title = cleanedTitle?.text?.replace(EMOJI_FRAME, "")?.ifBlank { cleanedTitle.text }
         if (title.isNullOrBlank()) {
             logger.warn { "Säälchen row '$slug' has no title, skipping" }
             return null
@@ -137,21 +142,13 @@ class SaalchenOverviewPageScraper {
             priceNote = entrance,
             soldOut = cleanedTitle.soldOut,
             artists =
-                (buildArtistsForEventType(saalchenActs(title), subtitle = null, eventType = eventType) + parseLineupSentence(row))
-                    .distinctBy { it.name.lowercase() }
+                (
+                    buildArtistsForEventType(saalchenActs(title), subtitle = null, eventType = eventType) +
+                        parseLineupSentence(row) +
+                        parseLineupSections(row, eventType)
+                ).distinctBy { it.name.lowercase() }
         )
     }
-
-    /** The acts a `… mit: A, B und C.` sentence in the row's rendered prose names, as headliners. */
-    private fun parseLineupSentence(row: Element): List<ScrapedArtist> =
-        LINEUP_SENTENCE
-            .find(row.textAt(".body-content").orEmpty())
-            ?.groupValues
-            ?.get(1)
-            ?.let(::splitSupportActs)
-            .orEmpty()
-            .filterNot(::isNonArtistName)
-            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
 
     /** The labelled `Datum` when it parses, else the widget's date; a disagreement is logged. */
     private fun resolveDate(
@@ -211,16 +208,7 @@ class SaalchenOverviewPageScraper {
      * widget and the ticket button sit inside the same div, so they are cut from a copy first —
      * their `<var>` values would otherwise read as prose.
      */
-    private fun bodyLines(row: Element): List<String> =
-        row
-            .selectFirst(".body-content")
-            ?.clone()
-            ?.also { it.select(".service-links, .addtocalendar, var, a.link-ticket").remove() }
-            ?.html()
-            ?.split(LINE_BREAK_PATTERN)
-            ?.map { Jsoup.parse(it).text().trim() }
-            ?.filter { it.isNotBlank() }
-            .orEmpty()
+    private fun bodyLines(row: Element): List<String> = rawBodyLines(row).filter { it.isNotBlank() }
 
     /**
      * The AddToCalendar description split into rendered lines. Double-escaped HTML, re-parsed
@@ -333,6 +321,15 @@ private val TICKET_URL_PATTERN = Regex("""https?://\S+""", RegexOption.IGNORE_CA
 /** The `Tagesticket: 13 €` figure of a tiered festival tariff — the day's own price, not a concession. */
 private val DAY_TICKET_PATTERN = Regex("""(?<!\d-)\btagesticket:?\s*(\d+(?:[.,]\d{1,2})?)\s*€""", RegexOption.IGNORE_CASE)
 
+/** A heading line that opens a list of acts: `Live:` or `DJs:`. */
+private val SECTION_HEADING = Regex("""(live|djs?)\s*:""", RegexOption.IGNORE_CASE)
+
+/** An origin in brackets at the end of a line-up line: `(Mexiko/Frankreich)`, `(Berlin)`. */
+private val TRAILING_BRACKET = Regex("""\s*\([^()]*\)\s*$""")
+
+/** A run of emoji and spaces at either end of a title. */
+private val EMOJI_FRAME = Regex("""^[\p{IsExtended_Pictographic}\x{FE0F}\x{200D}\s]+|[\p{IsExtended_Pictographic}\x{FE0F}\x{200D}\s]+$""")
+
 /** The prose sentence that names a festival's line-up, up to its full stop. */
 private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", RegexOption.IGNORE_CASE)
 
@@ -353,3 +350,62 @@ private val NOTICE_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})|(\d{1,2})\s*Uhr""",
 
 /** A whole value that is nothing but a bare amount, the venue's `"30,00"` spelling. */
 private val BARE_AMOUNT_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)""")
+
+/** The acts a `… mit: A, B und C.` sentence in the row's rendered prose names, as headliners. */
+private fun parseLineupSentence(row: Element): List<ScrapedArtist> =
+    LINEUP_SENTENCE
+        .find(row.textAt(".body-content").orEmpty())
+        ?.groupValues
+        ?.get(1)
+        ?.let(::splitSupportActs)
+        .orEmpty()
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
+
+/**
+ * The acts under a `Live:` or `DJs:` heading line in the row's prose, up to the next blank line. Each line
+ * opens with an emoji bullet and can end in an origin (`❤️‍🔥 KUMBIA BORUKA (Mexiko/Frankreich)`); a DJ line
+ * can list several. On a party night the live acts play beside the DJs, so they bill as [ArtistRole.LIVE].
+ */
+private fun parseLineupSections(
+    row: Element,
+    eventType: String
+): List<ScrapedArtist> {
+    val liveRole = if (eventType == EventType.PARTY.name) ArtistRole.LIVE else ArtistRole.HEADLINER
+    var role: ArtistRole? = null
+    return rawBodyLines(row).flatMap { line ->
+        val heading = SECTION_HEADING.matchEntire(line)
+        when {
+            heading != null -> {
+                role = if (heading.groupValues[1].startsWith("dj", ignoreCase = true)) ArtistRole.DJ else liveRole
+                emptyList()
+            }
+
+            line.isBlank() -> {
+                role = null
+                emptyList()
+            }
+
+            else -> {
+                role
+                    ?.let { sectionRole ->
+                        splitOnEmoji(line)
+                            .flatMap { splitSupportActs(it.replace(TRAILING_BRACKET, "")) }
+                            .filterNot(::isNonArtistName)
+                            .map { ScrapedArtist(name = it, role = sectionRole) }
+                    }.orEmpty()
+            }
+        }
+    }
+}
+
+/** [bodyLines] with the blank lines kept, which end a [parseLineupSections] section. */
+private fun rawBodyLines(row: Element): List<String> =
+    row
+        .selectFirst(".body-content")
+        ?.clone()
+        ?.also { it.select(".service-links, .addtocalendar, var, a.link-ticket").remove() }
+        ?.html()
+        ?.split(LINE_BREAK_PATTERN)
+        ?.map { Jsoup.parse(it).text().trim() }
+        .orEmpty()

@@ -51,7 +51,7 @@ class CrackBellmerOverviewPageScraperTest {
     @Test
     fun `keeps only the upcoming nights of the listing`() {
         // The three month tabs serve one list holding the whole programme, past nights included.
-        upcoming shouldHaveSize 31
+        upcoming shouldHaveSize 27
         upcoming.first().eventDate shouldBe LocalDate.of(2026, 8, 4)
         upcoming.last().eventDate shouldBe LocalDate.of(2026, 8, 30)
     }
@@ -82,14 +82,20 @@ class CrackBellmerOverviewPageScraperTest {
 
     @Test
     fun `nulls the Webflow placeholder poster`() {
-        everything.on(LocalDate.of(2026, 8, 6), "BELLMER BAR").imageUrl.shouldBeNull()
+        everything.on(LocalDate.of(2026, 8, 20), "PULSO").imageUrl.shouldBeNull()
     }
 
     @Test
     fun `skips the venue's closed-day entries`() {
-        // 9 July is a "CLOSED" entry in the listing; the other 66 items are real nights.
-        everything shouldHaveSize 66
+        // 9 July is a "CLOSED" entry in the listing; the other 66 items carry 8 bar openings and 58 nights.
+        everything shouldHaveSize 58
         everything.map { it.title } shouldNotContain "CLOSED"
+    }
+
+    @Test
+    fun `skips the bar's opening hours`() {
+        // Event 4901: "BELLMER BAR" at 19:00, no genre and no lineup, on most Thursdays to Saturdays.
+        everything.map { it.title } shouldNotContain "BELLMER BAR"
     }
 
     @Test

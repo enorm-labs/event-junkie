@@ -40,9 +40,9 @@ import tools.jackson.databind.JsonNode
  * itself sells the tickets ([WIX_REGISTRATION_TICKETS]). The ticket URL is the external shop,
  * or the event's own page, where an open Wix sale has its checkout.
  *
- * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a
+ * [buildArtistList] bills a title only when it names a `with special guest` (event 12025): a
  * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
- * a performer's, so minting it as a headliner would create artists that are not people.
+ * a performer's, so minting every title as a headliner would create artists that are not people.
  *
  * Typing: [VENUE_FORMATS] first, then a sing-along named in the title ([SING_ALONG_TITLE]), then
  * [inferUnmarkedTitleType] over title and subtitle with [CINEMA_AS_PLACE] removed, else `OTHER` —
@@ -122,8 +122,18 @@ class ColosseumOverviewPageScraper {
             priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true || cleanedTitle.soldOut,
             status = mapWixEventStatus(node.path("status")),
-            artists = buildArtistList(title, extractSupportFromSubtitle(subtitle))
+            artists =
+                titleGuestBill(title)?.let { (acts, guest) -> buildArtistList(acts, listOf(guest)) }
+                    ?: buildArtistList(title, extractSupportFromSubtitle(subtitle))
         )
+    }
+
+    /** A `<acts> with special guest <guest>` title split into its two halves, or `null` without the marker. */
+    private fun titleGuestBill(title: String): Pair<String, String>? {
+        val marker = SPECIAL_GUEST_MARKER.find(title) ?: return null
+        val acts = title.substring(0, marker.range.first).trim()
+        val guest = title.substring(marker.range.last + 1).trim()
+        return (acts to guest).takeIf { acts.isNotEmpty() && guest.isNotEmpty() }
     }
 
     private fun eventType(
@@ -137,6 +147,9 @@ class ColosseumOverviewPageScraper {
     }
 
     private companion object {
+        /** The title's own support billing, `Peter Broderick & The Winterage Men with special guest Marlais`. */
+        private val SPECIAL_GUEST_MARKER = Regex("""\s+(?:with|mit)\s+special\s+guests?:?\s+""", RegexOption.IGNORE_CASE)
+
         /** Path prefix of a Colosseum event's own page, e.g. `/details-registrierung/irvine-welsh-live`. */
         private const val DETAILS_PATH = "/details-registrierung/"
 

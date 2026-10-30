@@ -17,7 +17,7 @@ says so.
 | `A_TRANE`              | `PROMOTERS`        | the club presents every night itself                                                                                                             | —     |
 | `A_TRANE`              | `SOLD_OUT`         | the sold-out line is printed on every night, booked out or not                                                                                   | —     |
 | `A_TRANE`              | `ARTISTS`          | the sidemen lines (`Feat:`, `WITH:`) bill no artists: double-barrelled names share their hyphens                                                 | —     |
-| `ABSTAND`              | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
+| `ABSTAND`              | `ARTISTS`          | the bands are named only in prose, and a name without a bracket after it is not read                                                             | —     |
 | `ABSTAND`              | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
 | `ABSTAND`              | `TICKET_URL`       | the bar sells no tickets online                                                                                                                  | —     |
 | `ABSTAND`              | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
@@ -679,7 +679,7 @@ says so.
 | `ORANIA`               | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ORWOHAUS`             | `PRICE`            | prices appear only in the prose, and a house night often names none                                                                              | —     |
 | `ORWOHAUS`             | `DOORS_TIME`       | a doors time appears only in the prose of a few nights                                                                                           | —     |
-| `ORWOHAUS`             | `ARTISTS`          | only a `Line-Up:` list in the prose is read; other nights name acts in running text, and a series title names none                               | —     |
+| `ORWOHAUS`             | `ARTISTS`          | only a line-up list in the prose is read; other nights name acts in running text or run them together on one line, and a series title names none | —     |
 | `ORWOHAUS`             | `GENRE`            | the feed files most nights by room or series and names a style on few                                                                            | —     |
 | `ORWOHAUS`             | `PROMOTERS`        | an outside promoter is named only in the prose                                                                                                   | —     |
 | `ORWOHAUS`             | `SOLD_OUT`         | the feed marks no night sold out                                                                                                                 | —     |

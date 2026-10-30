@@ -235,6 +235,27 @@ class InselApiScraperTest {
     }
 
     @Test
+    fun `bills every band of a LINEUP block, the ones the title does not name as support`() {
+        // Event 4649, in the venue's Facebook markup: `<br class="html-br">` between the bands.
+        val json =
+            """
+            {"data":{"allDatoCmsEvent":{"edges":[{"node":{"name":"The Risen Dread & Syridas | When Death Comes From Above Tour | Berlin",
+              "time":"2026-10-30T19:00:00+01:00",
+              "description":"<div>ATOK prs.<br><strong>The Risen Dread (IE) &amp; Syridas (CZ)</strong><br>Einlass 19.00 Uhr</div><div>Get down early!<br class=\"html-br\"><span><img alt=\"🔥\"></span> LINEUP:<br class=\"html-br\">The Risen Dread (Death/Groove Metal - Ireland)<br class=\"html-br\">Syridas (Melodic Death Metal - Czech Republic)<br class=\"html-br\">Sokomb (Progressive Melodic Death Metal - Germany)</div><div>ABOUT THE BANDS:<br class=\"html-br\">The Risen Dread: Delivering a massive wall of sound.</div>"}}]}}}
+            """.trimIndent()
+        scraper
+            .scrape(json, sourceUrl)
+            .shouldNotBeNull()
+            .single()
+            .artists shouldContainExactly
+            listOf(
+                ScrapedArtist("The Risen Dread", ArtistRole.HEADLINER),
+                ScrapedArtist("Syridas", ArtistRole.HEADLINER),
+                ScrapedArtist("Sokomb", ArtistRole.SUPPORT)
+            )
+    }
+
+    @Test
     fun `reads a support billing in both of the venue's colon spellings`() {
         val feePenafiel = events.single { it.title == "Fee Penafiel" }
         feePenafiel.subtitle shouldBe "+ support: Karwendel"

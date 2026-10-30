@@ -160,6 +160,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Galiläakirche       | `isOutOfScope` (`GalilaeakircheOverviewPageScraper.kt`)  | A title that names a `Markt` or an `Auktion`, whatever category it is filed under                                            |
 | Zenner              | `isOutOfScope` (`ZennerApiScraper.kt`)                   | A title that names a `Flohmarkt` or `Eislaufen`: the indoor flea market and the ice-skating slots                            |
 | Frannz Club         | `PARTICIPATION_FORMAT` (`FrannzOverviewPageScraper.kt`)  | A title that opens `Learn to … Dance`, or names a `Tanzkurs`: the Swing Patrol class                                         |
+| Panke Culture       | `MARKET_TITLE` (`PankeProgrammePageScraper.kt`)          | A title that names a `Markt` or a `Market`: the Code Green market on Sunday afternoons                                       |
 
 A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
 quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
@@ -259,6 +260,9 @@ The one that is still open is open on _sequencing_, not on principle.
 | **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
 | **Children's shows?** (Kita mornings, family afternoons)                                     | ✅ **Marked**                 | nothing          | Imported as `for-children` and kept out of the default lists (#3796). §3.5 holds the rule                                |
 | **Online-only livestream?**                                                                  | ❌ **No**                     | —                | Settled. There is no venue to go to. A public viewing at a venue is a `SCREENING` and stays in                           |
+
+**The opening hours of a bar are not a night.** Crack Bellmer lists its bar opening as `BELLMER BAR` at 19:00, with no
+genre and no lineup. `BAR_OPENING` in `CrackBellmerOverviewPageScraper.kt` drops it.
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and
 scaffolded like any other source. No ADR, no model change, no further discussion. Prioritise them by programme richness

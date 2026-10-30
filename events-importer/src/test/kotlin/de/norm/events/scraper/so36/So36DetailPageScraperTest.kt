@@ -165,6 +165,45 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `bills the act of a show-dash-act title that the description names alone`() {
+        // Event 12027: "HERE WE ARE - BRIGADE LOCO" celebrates "10 years of Brigade Loco", 6 February 2027.
+        val url = "https://www.so36.com/produkte/97728-tickets-here-we-are-brigade-loco-so36-berlin-am-06-02-2027"
+        val event = scraper.scrape(fixture("so36-detail-show-named-act.html", url), url)
+        event.shouldNotBeNull()
+
+        event.title shouldBe "HERE WE ARE - BRIGADE LOCO"
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "BRIGADE LOCO" to ArtistRole.HEADLINER,
+                "CRIM" to ArtistRole.SUPPORT,
+                "BULL BRIGADE" to ArtistRole.SUPPORT,
+                "AÑUBE" to ArtistRole.SUPPORT,
+                "STREETWISE" to ArtistRole.SUPPORT
+            )
+    }
+
+    @Test
+    fun `keeps the act first when the part after the dash is a tour name`() {
+        // Event 2909: the description names the tour on its own, and the act only as `Dominum`.
+        val url = "https://www.so36.com/produkte/1-tickets-dominium-so36-berlin-am-01-12-2026"
+        val document =
+            Jsoup.parse(
+                """
+                <h1><span itemprop="name">DOMINIUM - NIGHT IS CALLING TOUR 2026</span></h1>
+                <small class="supertitle">Konzert</small>
+                <div class="product_description"><p>Die Night Is Calling Tour 2026 kommt. Dominum spielen.</p></div>
+                """.trimIndent(),
+                url
+            )
+
+        scraper
+            .scrape(document, url)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name } shouldBe listOf("DOMINIUM")
+    }
+
+    @Test
     fun `reads a support line that opens with its label instead of a plus`() {
         // "PÖBEL & GESOCKS" with the subtitle "Support: GRENZER & BIERTOIFEL" (#1903).
         val url = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"

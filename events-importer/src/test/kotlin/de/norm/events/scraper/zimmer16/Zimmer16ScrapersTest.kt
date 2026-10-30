@@ -57,7 +57,7 @@ class Zimmer16ScrapersTest {
     }
 
     @Test
-    fun `bills a comma co-bill and the act after mit, but not a release tour or the open stage`() {
+    fun `bills a comma co-bill, the act after mit and the name before a style list, but not a release tour or the open stage`() {
         val billed =
             Zimmer16OverviewPageScraper()
                 .scrape(Jsoup.parse(cards(PRODUCTION_TITLES), baseUrl), baseUrl)
@@ -71,6 +71,8 @@ class Zimmer16ScrapersTest {
         billed["Die offene Liederbühne – Singer-Songwriter-Forum"] shouldBe (EventType.CONCERT.name to emptyList())
         billed.getValue("Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht").second.shouldBeEmpty()
         billed.getValue("Lea Willms and MUD/O").second.map { it.first } shouldBe listOf("Lea Willms", "MUD/O")
+        // Event 7182: a name before a colon and a list of styles bills the name.
+        billed["Jörg Bobrik: Folk – Blues – Americana"] shouldBe (EventType.CONCERT.name to listOf("Jörg Bobrik" to ArtistRole.HEADLINER))
     }
 
     @Test
@@ -180,7 +182,8 @@ class Zimmer16ScrapersTest {
                 "Offene Bühne",
                 "Die offene Liederbühne – Singer-Songwriter-Forum",
                 "Vicki Vomit, Musikalische Lesung mit einem reißerischen Titel, der Zuschauer zieht",
-                "Lea Willms and MUD/O"
+                "Lea Willms and MUD/O",
+                "Jörg Bobrik: Folk – Blues – Americana"
             )
     }
 }
