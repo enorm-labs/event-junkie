@@ -8,7 +8,7 @@
  * would receive every visitor's address, and the privacy notice says no third party does.
  */
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Minus, Plus, X } from '@lucide/vue'
+import { Minus, Plus } from '@lucide/vue'
 import { layers, namedFlavor } from '@protomaps/basemaps'
 import {
   addProtocol,
@@ -33,10 +33,11 @@ import {
   watch,
 } from 'vue'
 import { useI18n } from 'vue-i18n'
+import MapPanel from '@/components/MapPanel.vue'
 import { Button } from '@/components/ui/button'
 import { circlePolygon, type Position } from '@/lib/geo'
 import { type MapPin, overlapGroups } from '@/lib/mapPins'
-import { CARD_LIST_CLASS, MAP_PANEL_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 const props = defineProps<{
   pins: MapPin[]
@@ -531,22 +532,11 @@ onBeforeUnmount(() => {
     <!-- Whatever the view lays over the map, such as the selected venue's panel. The wrapper is
          static, so its child still positions against the map. -->
     <div ref="overlay">
-      <section v-if="group" aria-live="polite" :class="MAP_PANEL_CLASS">
-        <div class="flex items-start gap-2">
-          <h2 class="min-w-0 flex-1 truncate text-card-title font-bold tracking-tight">
-            {{ t('map.groupHeading', { count: group.length }) }}
-          </h2>
-          <Button
-            :aria-label="t('map.closePanel')"
-            :title="t('map.closePanel')"
-            size="icon-xs"
-            type="button"
-            variant="ghost"
-            @click="closeGroup"
-          >
-            <X aria-hidden="true" />
-          </Button>
-        </div>
+      <MapPanel
+        v-if="group"
+        :title="t('map.groupHeading', { count: group.length })"
+        @close="closeGroup"
+      >
         <ul :class="CARD_LIST_CLASS">
           <li v-for="pin in group" :key="pin.slug">
             <button
@@ -563,7 +553,7 @@ onBeforeUnmount(() => {
             </button>
           </li>
         </ul>
-      </section>
+      </MapPanel>
       <slot />
     </div>
   </div>
