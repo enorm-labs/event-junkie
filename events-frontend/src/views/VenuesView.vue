@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { LocateFixed, X } from '@lucide/vue'
+import { LocateFixed } from '@lucide/vue'
 import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import type { VenueListItem } from '@/api/types'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import ListFilterBar from '@/components/ListFilterBar.vue'
 import ListPage from '@/components/ListPage.vue'
+import MapPanel from '@/components/MapPanel.vue'
 import LocateStatus from '@/components/LocateStatus.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
@@ -37,7 +38,7 @@ import { coarseAccuracy } from '@/lib/nearOrigin'
 import { CONTROLLER } from '@/lib/legal'
 import { type MapPin, nearby, radiusFromQuery, radiusQuery, venuePin } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, MAP_PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -428,32 +429,13 @@ const localePath = useLocalePath()
       >
         <!-- Over the map, as on the events map: the filters and "near me" above push the map's
              lower edge to the fold, so a panel under it changed nothing in view (#2391). -->
-        <section v-if="selectedVenue" aria-live="polite" :class="MAP_PANEL_CLASS">
-          <div class="flex items-start gap-2">
-            <div class="min-w-0 flex-1">
-              <h2 class="truncate text-card-title font-bold tracking-tight">
-                <RouterLink
-                  :to="localePath(`/venues/${selectedVenue.slug}`)"
-                  class="hover:text-primary"
-                >
-                  {{ selectedVenue.name }}
-                </RouterLink>
-              </h2>
-              <p v-if="selectedLocation" class="truncate text-meta text-muted-foreground">
-                {{ selectedLocation }}
-              </p>
-            </div>
-            <Button
-              :aria-label="t('map.closePanel')"
-              :title="t('map.closePanel')"
-              size="icon-xs"
-              type="button"
-              variant="ghost"
-              @click="closePanel"
-            >
-              <X aria-hidden="true" />
-            </Button>
-          </div>
+        <MapPanel
+          v-if="selectedVenue"
+          :subtitle="selectedLocation"
+          :title="selectedVenue.name"
+          :to="localePath(`/venues/${selectedVenue.slug}`)"
+          @close="closePanel"
+        >
           <p v-if="selectedVenue.imported === false" class="text-body text-muted-foreground">
             {{ t('venues.notImported') }}
           </p>
@@ -464,7 +446,7 @@ const localePath = useLocalePath()
           >
             {{ t('venues.whatsOn') }}
           </RouterLink>
-        </section>
+        </MapPanel>
       </VenueMap>
 
       <p

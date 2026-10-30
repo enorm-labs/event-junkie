@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { LocateFixed, MapPin as MapPinIcon, X } from '@lucide/vue'
+import { LocateFixed, MapPin as MapPinIcon } from '@lucide/vue'
 import {
   computed,
   defineAsyncComponent,
@@ -20,6 +20,7 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import ListPage from '@/components/ListPage.vue'
+import MapPanel from '@/components/MapPanel.vue'
 import LocateStatus from '@/components/LocateStatus.vue'
 import NearOriginControls from '@/components/NearOriginControls.vue'
 import { fetchCalendarEvents } from '@/composables/useEvents'
@@ -43,7 +44,7 @@ import {
   venuePin,
   venuePosition,
 } from '@/lib/mapPins'
-import { CARD_LIST_CLASS, MAP_PANEL_CLASS } from '@/lib/utils'
+import { CARD_LIST_CLASS } from '@/lib/utils'
 
 // MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
@@ -428,30 +429,13 @@ function distance(km: number): string {
     >
       <!-- Over the map, not below it: at 1280×900 the map ends near the fold, so a pin's events
            under it changed nothing a visitor could see (#2347). -->
-      <section v-if="selectedVenue" aria-live="polite" :class="MAP_PANEL_CLASS">
-        <div class="flex items-start gap-2">
-          <div class="min-w-0 flex-1">
-            <h2 class="truncate text-card-title font-bold tracking-tight">
-              <RouterLink
-                :to="localePath(`/venues/${selectedVenue.slug}`)"
-                class="hover:text-primary"
-              >
-                {{ selectedVenue.name }}
-              </RouterLink>
-            </h2>
-            <p v-if="location" class="truncate text-meta text-muted-foreground">{{ location }}</p>
-          </div>
-          <Button
-            :aria-label="t('map.closePanel')"
-            :title="t('map.closePanel')"
-            size="icon-xs"
-            type="button"
-            variant="ghost"
-            @click="closePanel"
-          >
-            <X aria-hidden="true" />
-          </Button>
-        </div>
+      <MapPanel
+        v-if="selectedVenue"
+        :subtitle="location"
+        :title="selectedVenue.name"
+        :to="localePath(`/venues/${selectedVenue.slug}`)"
+        @close="closePanel"
+      >
         <div v-if="selectedGroup" :class="CARD_LIST_CLASS">
           <EventRow v-for="event in preview" :key="event.slug" :event="event" />
         </div>
@@ -471,7 +455,7 @@ function distance(km: number): string {
         >
           {{ t('map.allEvents', { count: selectedGroup.events.length }) }}
         </RouterLink>
-      </section>
+      </MapPanel>
     </VenueMap>
 
     <p
