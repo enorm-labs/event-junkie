@@ -99,6 +99,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "downbeat" to "Downtempo",
         // Whole-token, so `progressive` alone stays a vetoed descriptor (#4044).
         "deepprogressive" to "Progressive House",
+        // M-BIA's Wix `musicStyle`; whole-token for the same reason (#4230).
+        "progressivepsytrance" to "Psytrance",
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)
         "drumnbass" to "Drum & Bass",
         "dnb" to "Drum & Bass",

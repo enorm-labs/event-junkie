@@ -401,6 +401,12 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `Progressive Psytrance maps to Psytrance`() {
+        normalizeGenre("Progressive Psytrance").shouldContainExactly("Psytrance")
+        nonGenreTokens("Progressive Psytrance").shouldBeEmpty()
+    }
+
+    @Test
     fun `genuinely distinct genres are still kept as their own tag`() {
         // Moderate folding must not swallow standalone genres that have no parent tag.
         normalizeGenre("Amapiano").shouldContainExactly("Amapiano")
