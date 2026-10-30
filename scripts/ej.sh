@@ -28,7 +28,8 @@
 # interface on Linux), not from a ping; the ping is the handshake check after `up`, because an
 # interface appears whether or not UDP/51820 is open and a missing handshake is the only symptom.
 # Everything started is recorded under ej/ in the git common dir, which every worktree shares, so `up`
-# in one finds what another started and `down` in any stops it (#3411). `down` kills only pids it wrote.
+# in one finds what another started and `down` in any stops it (#3411). `down` kills only pids it wrote,
+# and only while the start time written beside the pid still matches the process's (#4151).
 # Each kubectl forward runs under a watchdog that starts a new one when a rollout replaces the pod
 # (#2976); `status` counts the restarts.
 # `up`, `status` and `versions` also write docs/ops/dashboard/status.js for the local operations page
@@ -178,15 +179,66 @@ hosts_check() {
 
 # --- forwards -----------------------------------------------------------------------------------
 
-# live_state_dirs <env> <name> → every state dir whose pid file names a live process
+# start_time_of <pid> → when the process started, single-spaced; empty when there is no such process
+start_time_of() { ps -o lstart= -p "$1" 2>/dev/null | awk '{ $1 = $1; print }' || true; }
+
+# pid_file_state <file> → live, gone, reused, or legacy for a pid file with no start time and a live pid.
+# A pid is not an identity: macOS gives a dead watchdog's number to the next process, and `kill -0`
+# then succeeds for something this script never started (#4151).
+pid_file_state() {
+    local pid="" started="" now
+    read -r pid started <"$1" || true
+    now="$(start_time_of "$pid")"
+    if [ -z "$now" ]; then
+        echo gone
+    elif [ -z "$started" ]; then
+        echo legacy
+    elif [ "$now" = "$started" ]; then
+        echo live
+    else
+        echo reused
+    fi
+}
+
+pid_of() {
+    local pid=""
+    read -r pid _ <"$1" || true
+    echo "$pid"
+}
+
+state_dirs() { printf '%s\n' "$STATE_DIR" ${LEGACY_STATE_DIRS[@]+"${LEGACY_STATE_DIRS[@]}"}; }
+
+# live_state_dirs <env> <name> → every state dir whose pid file names a live forward of this script
 live_state_dirs() {
-    local d pid
-    for d in "$STATE_DIR" ${LEGACY_STATE_DIRS[@]+"${LEGACY_STATE_DIRS[@]}"}; do
+    local d
+    while IFS= read -r d; do
         [ -f "$d/$1-$2.pid" ] || continue
-        pid="$(cat "$d/$1-$2.pid")"
-        kill -0 "$pid" 2>/dev/null && echo "$d"
-    done
+        [ "$(pid_file_state "$d/$1-$2.pid")" = live ] && echo "$d"
+    done < <(state_dirs)
     return 0
+}
+
+# stale_pid_files <env> <name> → a line per pid file that names no live forward, and removes it. A
+# legacy file is only named: its pid may still be a forward an older ej.sh started, which `down`
+# cannot stop now, and the line is the one place its pid is shown.
+stale_pid_files() {
+    local d f pid
+    while IFS= read -r d; do
+        f="$d/$1-$2.pid"
+        [ -f "$f" ] || continue
+        pid="$(pid_of "$f")"
+        case "$(pid_file_state "$f")" in
+            reused)
+                echo "forward $1/$2: stale pid file (pid $pid now runs something else), removed"
+                rm -f "$f"
+                ;;
+            gone)
+                echo "forward $1/$2: stale pid file (pid $pid is gone), removed"
+                rm -f "$f"
+                ;;
+            legacy) echo "forward $1/$2: pid file without a start time (pid $pid, from an older ej.sh), not trusted — 'ps -p $pid', and stop it by hand if it is the forward" ;;
+        esac
+    done < <(state_dirs)
 }
 
 state_dir() {
@@ -202,7 +254,7 @@ forward_pid() {
     local d
     d="$(live_state_dirs "$1" "$2" | head -1)"
     [ -n "$d" ] || return 1
-    cat "$d/$1-$2.pid"
+    pid_of "$d/$1-$2.pid"
 }
 
 port_answers() { curl -s -o /dev/null --max-time 2 "http://localhost:$1/" 2>/dev/null; }
@@ -306,7 +358,7 @@ forward_start() {
         (forward_supervise "$env" "$name" "$port" "$ns" "$svc" "$remote") >/dev/null 2>&1 </dev/null &
     fi
     pid=$!
-    echo "$pid" >"$(pidfile "$env" "$name")"
+    echo "$pid $(start_time_of "$pid")" >"$(pidfile "$env" "$name")"
     for _ in $(seq 1 10); do
         if forward_answers "$name" "$port"; then
             echo "forward $env/$name: $(url_of "$env" "$name")"
@@ -322,15 +374,21 @@ forward_start() {
 }
 
 forward_stop() {
-    local env="$1" name="$2" pid port ns listener d
+    local env="$1" name="$2" pid port ns listener d f
     while IFS= read -r d; do
-        pid="$(cat "$d/$env-$name.pid")"
-        kill "$pid" 2>/dev/null || true
-        echo "forward $env/$name: stopped (pid $pid)"
-    done < <(live_state_dirs "$env" "$name")
-    for d in "$STATE_DIR" ${LEGACY_STATE_DIRS[@]+"${LEGACY_STATE_DIRS[@]}"}; do
-        rm -f "$d/$env-$name.pid"
-    done
+        f="$d/$env-$name.pid"
+        [ -f "$f" ] || continue
+        pid="$(pid_of "$f")"
+        case "$(pid_file_state "$f")" in
+            live)
+                kill "$pid" 2>/dev/null || true
+                echo "forward $env/$name: stopped (pid $pid)"
+                ;;
+            reused) echo "forward $env/$name: stale pid file removed, pid $pid not stopped — it now runs something else" ;;
+            legacy) echo "forward $env/$name: pid file without a start time removed, pid $pid not stopped — 'ps -p $pid', and stop it by hand if it is the forward" ;;
+        esac
+        rm -f "$f"
+    done < <(state_dirs)
     read -r port ns _ <<<"$(forward_spec "$env" "$name")"
     [ "$ns" = ssh ] && return 0
     # The loop's trap stops its kubectl. One that outlived a `kill -9` of the loop still holds the
@@ -558,6 +616,7 @@ cmd_status() {
         for name in "${FORWARDS[@]}"; do
             spec="$(forward_spec "$env" "$name")"
             read -r port ns _ <<<"$spec"
+            stale_pid_files "$env" "$name"
             if pid="$(forward_pid "$env" "$name")"; then
                 restarts="$(forward_restarts "$env" "$name")"
                 note=""
