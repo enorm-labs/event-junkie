@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -14,6 +15,8 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -96,6 +99,29 @@ class MigasOverviewPageScraperTest {
         playback.title shouldBe "Kyuss – Blues for the Red Sun (Elektra/Asylum Records, 1992 • 52 min • vinyl)"
         playback.eventType shouldBe EventType.OTHER.name
         playback.artists.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "Led Zeppelin: Led Zeppelin IV (Atlantic Recording Corporations, 1971 • 42min • vinyl)",
+            "Dolly Parton: Jolene (Sony, 1974 • 25min • lossess)",
+            "B O D I E S, Kat Frankie: B O D I E S (Groenland Records, 2024 • 30min • lossless)",
+            "Apollo: Atmospheres And Soundtracks (Extended Edition) (Universal, 1983 • 1h 30min • vinyl)",
+            "Vangelis: Blade Runner (Music From The Original Soundtrack) (Warner music, 1994 • 58min • vinyl)",
+            "Mac Miller – Swimming (Warner Records Inc., 2018 • 58 min • vinyl)"
+        ]
+    )
+    fun `scrape mints no artist for an album playback with a colon or a dash`(title: String) {
+        val playback = scrapeOne(title = title, category = "listening session")
+
+        playback.title shouldBe title
+        playback.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `scrape keeps billing an act whose title has a colon but no release year`() {
+        scrapeOne(title = "Borga Highlife: listening beyond the Default", category = "listening session").artists.shouldNotBeEmpty()
     }
 
     @Test

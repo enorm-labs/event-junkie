@@ -202,14 +202,15 @@ class MigasOverviewPageScraper {
             )
 
         /**
-         * A full-album playback title: an act/album separator followed by a trailing release
-         * parenthetical with a four-digit year — `"SBTRKT – SBTRKT (Young, 2011 • 43 min • vinyl)"`,
-         * `"Kyuss – Blues for the Red Sun (Elektra/Asylum Records, 1992 • 52 min • vinyl)"`. Requiring
-         * *both* halves keeps it off a booked act whose name contains a dash, and off a title ending
-         * in a parenthetical without a year.
+         * A full-album playback title: an act/album separator — a spaced dash or a colon — followed
+         * by a trailing release parenthetical with a four-digit year:
+         * `"Kyuss – Blues for the Red Sun (Elektra/Asylum Records, 1992 • 52 min • vinyl)"`,
+         * `"Dolly Parton: Jolene (Sony, 1974 • 25min • lossess)"`. Requiring *both* halves keeps it
+         * off a booked act whose name contains a dash or a colon, and off a title ending in a
+         * parenthetical without a year.
          */
         val ALBUM_PLAYBACK_PATTERN =
-            Regex("""\s[–—-]\s.*\([^()]*\b(?:19|20)\d{2}\b[^()]*\)\s*$""")
+            Regex("""(?:\s[–—-]|:)\s.*\([^()]*\b(?:19|20)\d{2}\b[^()]*\)\s*$""")
 
         fun isAlbumPlayback(title: String): Boolean = ALBUM_PLAYBACK_PATTERN.containsMatchIn(title)
 
