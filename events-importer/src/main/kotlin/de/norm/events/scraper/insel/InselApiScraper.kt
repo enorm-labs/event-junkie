@@ -55,7 +55,8 @@ import java.time.LocalTime
  *
  * The title is trusted as the act: a concert house whose titles are usually the artist's name,
  * so `CONCERT` by default and the title minted as headliner. A programme concert names its players
- * on a `///WER: Interpreten:` line instead, and that line wins over the title ([performers]). Two frames are unpacked first: `…
+ * on a `///WER: Interpreten:` line instead ([performers]), a metal night its bands in a `LINEUP:`
+ * block ([lineupActs]), and either wins over the title. Two frames are unpacked first: `…
  * w/ <acts>` yields the acts after the marker, a `•`-separated title its first segment. A
  * trailing origin tag ("pinkpool (Bln)") is stripped from the act ([ORIGIN_TAG_PATTERN]) so it
  * resolves onto another venue's booking; the stored title keeps the venue's spelling. A closed
@@ -176,7 +177,7 @@ class InselApiScraper(
                     cleanedTitle.soldOut ||
                     lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
-            artists = buildArtists(styleCityTail?.first ?: title, performers(lines), supportNames, eventType)
+            artists = buildArtists(styleCityTail?.first ?: title, performers(lines), lineupActs(lines, title), supportNames, eventType)
         )
     }
 
@@ -197,12 +198,13 @@ class InselApiScraper(
     }
 
     /**
-     * The lineup by resolved type: a concert's [performers] line, else its title, is the act; a
-     * closed function or a poetry slam bills no performer this parser can trust.
+     * The lineup by resolved type: a concert's [performers] line, else its [lineupActs] block, else
+     * its title, is the act; a closed function or a poetry slam bills no performer this parser can trust.
      */
     private fun buildArtists(
         title: String,
         performerNames: List<String>,
+        lineup: List<ScrapedArtist>,
         supportNames: List<String>,
         eventType: String
     ): List<ScrapedArtist> {
@@ -217,7 +219,7 @@ class InselApiScraper(
                 .filterNot { isNonArtistName(it) }
                 .distinctBy { it.lowercase() }
                 .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER) }
-        return performers.ifEmpty { headliners(title) } + supportActs
+        return performers.ifEmpty { lineup }.ifEmpty { headliners(title) } + supportActs
     }
 
     /**
@@ -315,6 +317,31 @@ private fun performers(lines: List<String>): List<String> =
         ?.filter { it.isNotBlank() }
         .orEmpty()
 
+/**
+ * The bands of a `LINEUP:` block, one per line with a `(style - country)` aside, up to the first
+ * line that is not a band (`ABOUT THE BANDS:`). The title names the headliners, so a band it does
+ * not name is billed as support (event 4649).
+ */
+private fun lineupActs(
+    lines: List<String>,
+    title: String
+): List<ScrapedArtist> {
+    val start = lines.indexOfFirst { LINEUP_LABEL.matches(it) }
+    if (start < 0) return emptyList()
+    return lines
+        .drop(start + 1)
+        .takeWhile { it.length <= MAX_METADATA_LINE && ':' !in it }
+        .map { it.replace(BRACKETED, "").trim() }
+        .filter { it.isNotBlank() && !isNonArtistName(it) }
+        .map { name ->
+            val role = if (title.contains(name, ignoreCase = true)) ArtistRole.HEADLINER else ArtistRole.SUPPORT
+            ScrapedArtist(name = name, role = role)
+        }
+}
+
+/** A line that is only the `LINEUP:` label; the colon keeps a `THE LINEUP` prose heading out. */
+private val LINEUP_LABEL = Regex("""^\W*line-?up\s*:\s*$""", RegexOption.IGNORE_CASE)
+
 /** The venue's `///WER: Interpreten: …` data-sheet line, capturing the names after the label. */
 private val PERFORMER_LINE = Regex("""^/*\s*WER\s*:\s*Interpret\S*\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
 
@@ -347,7 +374,7 @@ private fun descriptionLines(html: String?): List<String> {
 }
 
 /** The tags that end a line in the venue's pasted HTML: an explicit break, or the close of any block element. */
-private val BLOCK_END_PATTERN = Regex("""<br\s*/?>|</(?:p|div|h[1-6]|li)>""", RegexOption.IGNORE_CASE)
+private val BLOCK_END_PATTERN = Regex("""<br\b[^>]*>|</(?:p|div|h[1-6]|li)>""", RegexOption.IGNORE_CASE)
 
 /** The `!!SOLD OUT!!` or `!!AUSVERKAUFT!!` prefix the venue puts in front of a sold-out show's name. */
 private val SOLD_OUT_PREFIX = Regex("""^\s*!*\s*(?:sold\s*out|ausverkauft)\s*!*\s*""", RegexOption.IGNORE_CASE)

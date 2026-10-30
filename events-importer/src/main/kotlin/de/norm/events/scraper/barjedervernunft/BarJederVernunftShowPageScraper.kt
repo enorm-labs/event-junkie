@@ -1,6 +1,8 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.buildArtistsForEventType
@@ -107,8 +109,8 @@ data class BarJederVernunftShow(
      * The type is resolved here, not in the calendar scraper, because the genre — the only signal
      * this venue gives — lives on the show page. It also decides the lineup:
      * [buildArtistsForEventType] mints the billed name as headliner for a `CONCERT` and nothing for
-     * a `SHOW`. "Tim Fischer" (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is a
-     * production and must not become an artist row.
+     * a `SHOW`, unless the blurb names the show's performer ([performerOfShow]). "Tim Fischer"
+     * (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is a production and must not become an artist row.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val eventType = resolveEventType(genre)
@@ -118,10 +120,30 @@ data class BarJederVernunftShow(
             pricePresale = pricePresale ?: event.pricePresale,
             priceNote = priceNote ?: event.priceNote,
             description = description ?: event.description,
-            artists = buildArtistsForEventType(event.title, event.subtitle, eventType)
+            artists =
+                buildArtistsForEventType(event.title, event.subtitle, eventType)
+                    .ifEmpty { performerOfShow(event.title, eventType, description ?: event.description) }
         )
     }
 }
+
+/**
+ * The performer a `SHOW` is named for, when the blurb opens with that name as its subject:
+ * `Rainald Grebe ist Autor, …` (event 11998). A production's blurb opens with something else, so
+ * `Oh What A Night!` and `SAGO Song Salon` stay unbilled.
+ */
+private fun performerOfShow(
+    title: String,
+    eventType: String,
+    description: String?
+): List<ScrapedArtist> {
+    val opensWithTitle = description?.startsWith("$title ") == true || description?.startsWith("$title,") == true
+    if (eventType != EventType.SHOW.name || !PERFORMER_NAME.matches(title) || !opensWithTitle) return emptyList()
+    return listOf(ScrapedArtist(name = title, role = ArtistRole.HEADLINER, titleDerived = true))
+}
+
+/** Two or three capitalised words, none of them shouted: `Katharine Mehrling`, not `SAGO Song Salon`. */
+private val PERFORMER_NAME = Regex("""^\p{Lu}\p{Ll}[\p{L}'-]*(?:\s+\p{Lu}\p{Ll}[\p{L}'-]*){1,2}$""")
 
 /**
  * Maps a `Genre` label to an [EventType] name.

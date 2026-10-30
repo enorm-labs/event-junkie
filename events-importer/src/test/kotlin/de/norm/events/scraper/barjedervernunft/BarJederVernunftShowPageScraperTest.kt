@@ -110,6 +110,37 @@ class BarJederVernunftShowPageScraperTest {
     }
 
     @Test
+    fun `applyTo bills the performer a show is named for when the blurb opens with the name`() {
+        // Event 11998: a Musik-Show billed under the performer's own name.
+        val show =
+            BarJederVernunftShow(
+                genre = "Musik-Show",
+                pricePresale = null,
+                priceNote = null,
+                description = "Rainald Grebe ist Autor, Dramaturg, Regisseur, Schauspieler, Comedian, Komponist, Liedersänger."
+            )
+
+        val enriched = show.applyTo(occurrence(title = "Rainald Grebe"))
+
+        enriched.eventType shouldBe "SHOW"
+        enriched.artists.map { it.name to it.role } shouldBe listOf("Rainald Grebe" to ArtistRole.HEADLINER)
+    }
+
+    @Test
+    fun `applyTo bills no performer for a production whose blurb opens elsewhere`() {
+        val show =
+            BarJederVernunftShow(
+                genre = "Show",
+                pricePresale = null,
+                priceNote = null,
+                description = "Chanson-Titan Sebastian Krämer und Matthias Binner präsentieren im SAGO Song Salon …"
+            )
+
+        show.applyTo(occurrence(title = "SAGO Song Salon")).artists shouldHaveSize 0
+        show.copy(description = "SAGO Song Salon ist ein Abend.").applyTo(occurrence(title = "SAGO Song Salon")).artists shouldHaveSize 0
+    }
+
+    @Test
     fun `applyTo defaults an unknown genre to SHOW rather than inventing an artist`() {
         val show = BarJederVernunftShow(genre = "Puppenspiel", pricePresale = null, priceNote = null, description = null)
 

@@ -33,7 +33,8 @@ import java.time.format.DateTimeFormatter
  * series' own clock time: the jazz series' December `RDATE`s read `08:30`, a 12-hour slip for the
  * 20:30 every other date and the description name. The title's `KONZERT // ` style prefix repeats
  * the category and is dropped where the category maps to a type; a recurring concert names its
- * series, not an act, so only a one-off concert mints artists.
+ * series, not an act, so only a one-off concert mints artists. A `MITSINGKONZERT //` night is filed
+ * as `KONZERT` but names its sing-along series (`Montagsmucke am Freitag`), so it mints none either.
  */
 class KallaschCalendarScraper(
     private val clock: Clock
@@ -62,7 +63,8 @@ class KallaschCalendarScraper(
         val dates = occurrenceDates(entry, start.toLocalDate(), title)
         val recurring = entry.containsKey("RRULE") || entry.containsKey("RDATE")
         val slug = extractEventSlug(url, PATH_PREFIX)
-        val artists = if (eventType == EventType.CONCERT.name && category != OPEN_MIC && !recurring) headlinersFromTitle(title) else emptyList<ScrapedArtist>()
+        val billsAct = eventType == EventType.CONCERT.name && category != OPEN_MIC && !recurring && !SING_ALONG_HEAD.containsMatchIn(summary)
+        val artists = if (billsAct) headlinersFromTitle(title) else emptyList<ScrapedArtist>()
         return dates.map { date ->
             val end = duration?.let { date.atTime(start.toLocalTime()).plus(it) }
             ScrapedEvent(
@@ -154,6 +156,9 @@ class KallaschCalendarScraper(
 
         /** The `<CATEGORY> // ` head every title carries. */
         val CATEGORY_PREFIX = Regex("""^[^/]+?\s*//\s*""")
+
+        /** The `MITSINGKONZERT //` head of a sing-along series, led by the house's guitarist. */
+        val SING_ALONG_HEAD = Regex("""^\s*mitsing""", RegexOption.IGNORE_CASE)
 
         /** The open stage: a concert with no act (EVENT_SCOPE.md §2), whose title keeps the `OPEN MIC //` head that names it. */
         const val OPEN_MIC = "open mic"

@@ -46,6 +46,13 @@ class GaertenDerWeltFieldMappingTest {
     }
 
     @Test
+    fun `types an age-group party the park files under Konzerte as a party`() {
+        gaertenDerWeltEventType("Konzerte", "DIE MEGA Ü30 PARTY") shouldBe EventType.PARTY.name
+        gaertenDerWeltEventType("Konzerte", "Stereoact: Ich liebe das Leben Party 2027 feat. Lena Marie Engel") shouldBe EventType.CONCERT.name
+        gaertenDerWeltEventType("Konzerte", "Das Mega 90er Live Open Air") shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `keeps the park's staged programme in scope`() {
         isProgrammeCategory("Konzerte") shouldBe true
         isProgrammeCategory("Open-Air Kino") shouldBe true

@@ -27,7 +27,8 @@ import java.time.LocalDate
  * a concert unless its title names the house's other formats, the reading stage or a revue.
  *
  * There is no line-up field either. A title is billed as its act only when it is a bare name, a `+` or `, ` co-bill,
- * or `<programme> mit <act>`. A `<record> Release Tour` part names the record, not the act (#3164). A tagline,
+ * `<programme> mit <act>`, or a name before a colon and a list of styles (`Jörg Bobrik: Folk – Blues – Americana`).
+ * A `<record> Release Tour` part names the record, not the act (#3164). Any other tagline,
  * a programme name or an `&` (`Calum Baird – Scottish Singer-Songwriter Live`, `Kaléko - Friederike
  * Ziegler`, `Bossa Nova Duo Kommerell & Komoll`) puts the act in a different place each time, so it names nobody.
  * Nor does the weekly `Offene Bühne`, whose stage is open to anyone.
@@ -75,7 +76,13 @@ class Zimmer16OverviewPageScraper {
             sourceUrl = url,
             ticketUrl = url,
             sourceId = "${EventSource.ZIMMER_16.sourceIdPrefix}${url.trimEnd('/').substringAfterLast('/')}",
-            artists = if (TAGLINE.containsMatchIn(title) || OPEN_STAGE in title.lowercase()) emptyList() else artistsOf(title, subtitle, eventType)
+            artists =
+                when {
+                    OPEN_STAGE in title.lowercase() -> emptyList()
+                    STYLE_TAGLINE.matches(title) -> artistsOf(title.substringBefore(':'), subtitle, eventType)
+                    TAGLINE.containsMatchIn(title) -> emptyList()
+                    else -> artistsOf(title, subtitle, eventType)
+                }
         ).forChildrenIf(childrens)
     }
 
@@ -106,6 +113,9 @@ class Zimmer16OverviewPageScraper {
         val CONCERT_WORD = Regex("""konzert""", RegexOption.IGNORE_CASE)
         val SUPPORT = Regex("""\s*\(support:\s*([^)]+)\)""", RegexOption.IGNORE_CASE)
         val TAGLINE = Regex("""[–—:"„“”]| - |&|\+\+""")
+
+        /** `<act>: <style> – <style> – …`, a name before a colon and a dashed list of one-word styles. */
+        val STYLE_TAGLINE = Regex("""[^:–—"„“”&+]+:\s+\p{L}[\p{L}-]*(?:\s+[–—/,]\s+\p{L}[\p{L}-]*)+""")
         val RELEASE_TOUR = Regex("""\sRelease[- ]Tour$""", RegexOption.IGNORE_CASE)
 
         /** The open stage: live music with no billed act, so a concert that names nobody (#2992). */

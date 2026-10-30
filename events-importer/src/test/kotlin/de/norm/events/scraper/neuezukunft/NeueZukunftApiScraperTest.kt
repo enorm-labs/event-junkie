@@ -133,6 +133,12 @@ class NeueZukunftApiScraperTest {
     }
 
     @Test
+    fun `bills a band whose name opens with a number and a singular Year`() {
+        // Event 3847, the widget's title on 2026-10-30: `13 Year Cicada` read as an anniversary and was dropped.
+        headlinersFromTitle("13 Year Cicada + Teamwork").map { it.name } shouldContainExactly listOf("13 Year Cicada", "Teamwork")
+    }
+
+    @Test
     fun `drops the Im Anschluss label in front of the act that plays after`() {
         // The stored title; it billed `Im Anschlusz: Constant Disappointment` until V167 (#3415).
         headlinersFromTitle("Im Anschlusz: Constant Disappointment + Dosenstolz (feat. Tancred) + Mangel").map { it.name } shouldContainExactly

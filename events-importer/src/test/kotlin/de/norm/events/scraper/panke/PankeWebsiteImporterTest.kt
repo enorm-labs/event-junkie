@@ -49,7 +49,7 @@ class PankeWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 9
+            result.events shouldHaveSize 8
         }
 
     @Test

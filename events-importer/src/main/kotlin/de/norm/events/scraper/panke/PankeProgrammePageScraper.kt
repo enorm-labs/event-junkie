@@ -100,6 +100,8 @@ class PankeProgrammePageScraper {
             logger.warn { "Panke article '$postId' has no title, skipping" }
             return null
         }
+        // The Sunday afternoon market is out of scope (EVENT_SCOPE.md §3.2).
+        if (MARKET_TITLE.containsMatchIn(title)) return null
         val residentAdvisor = residentAdvisorLineup(article)
         val lineup = withTimetable(residentAdvisor.ifEmpty { featuredActs(title) }, article, eventDate)
         val times = parseTimes(article)
@@ -130,13 +132,13 @@ class PankeProgrammePageScraper {
 
     /**
      * The event's type; the venue states none, so two signals decide. An unmistakable title
-     * keyword wins first — a market is not a club night, a rave is. Where the title says nothing,
+     * keyword wins first — a rave is a club night. Where the title says nothing,
      * **an event that bills DJs on Resident Advisor is a club night**: the venue links a profile
      * only for the acts on its floor, a far better signal than the name, a series title rather
      * than a format. Then a live show is a concert: a title that names one (`… MIT LIVE BANDS`,
      * `… Tour`, `… Live at Panke`, #2398) or a body that bills `live bands`. Last, a `Disko` or
      * `Fiesta` title, or a body that names a dancefloor, is a club night (#2992). An event with none
-     * of these, or a market, stays `OTHER` rather than being guessed.
+     * of these stays `OTHER` rather than being guessed.
      */
     private fun eventTypeOf(
         title: String,
@@ -146,7 +148,7 @@ class PankeProgrammePageScraper {
         val fromTitle = inferUnmarkedTitleType(title)
         val body = description.orEmpty()
         return when {
-            fromTitle != EventType.OTHER.name || MARKET_TITLE.containsMatchIn(title) -> fromTitle
+            fromTitle != EventType.OTHER.name -> fromTitle
             lineup.isNotEmpty() -> EventType.PARTY.name
             LIVE_SHOW_TITLE.containsMatchIn(title) || LIVE_BANDS.containsMatchIn(body) -> EventType.CONCERT.name
             PARTY_TITLE.containsMatchIn(title) || CLUB_NIGHT_BODY.containsMatchIn(body) -> EventType.PARTY.name
@@ -348,7 +350,7 @@ private const val MINUTE_GROUP = 2
 /** A title word that names a live show rather than a series: `live`, `tour`. */
 private val LIVE_SHOW_TITLE = Regex("""\b(?:live|tour)\b""", RegexOption.IGNORE_CASE)
 
-/** The Sunday market, whatever its body says: a market is no club night. */
+/** The Code Green Sunday market, `Grüne Markt` or `Panke Market`: a market, not a programme item. */
 private val MARKET_TITLE = Regex("""markt|market""", RegexOption.IGNORE_CASE)
 
 /** A disco or a fiesta in the title, the venue's own words for a dance night. */

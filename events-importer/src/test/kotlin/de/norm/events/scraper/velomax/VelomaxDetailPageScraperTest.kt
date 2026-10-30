@@ -93,6 +93,23 @@ class VelomaxDetailPageScraperTest {
     }
 
     @Test
+    fun `keeps a duo billed as support with und as one act`() {
+        // Event 2386: `Maēl und Jonas` is the duo Maël & Jonas, not two support acts.
+        val url = "https://www.max-schmeling-halle.de/events/event/nico-santos-max-schmeling-halle-2026-10-30"
+        val html =
+            """
+            <html><body><div itemtype="https://schema.org/Event" itemscope>
+              <h1 itemprop="name">Nico Santos</h1>
+              <p class="subheader h2" itemprop="alternateName">POV: ARENA TOUR 2026<br />Support: Maēl und Jonas</p>
+              <time itemprop="startDate" datetime="2026-10-30 20:00:00">20:00 Uhr</time>
+            </div></body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, url), url, VelomaxHall.MAX_SCHMELING_HALLE).shouldNotBeNull()
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Nico Santos" to ArtistRole.HEADLINER, "Maēl und Jonas" to ArtistRole.SUPPORT)
+    }
+
+    @Test
     fun `parses a page from the UFO domain`() {
         val reezy =
             scrape(

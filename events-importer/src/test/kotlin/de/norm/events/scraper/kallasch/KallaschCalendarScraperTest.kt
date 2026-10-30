@@ -145,6 +145,27 @@ class KallaschCalendarScraperTest {
     }
 
     @Test
+    fun `a sing-along concert names its series, not an act`() {
+        val calendar =
+            """
+            BEGIN:VCALENDAR
+            BEGIN:VEVENT
+            DTSTART;TZID=Europe/Berlin:20261120T200000
+            SUMMARY:MITSINGKONZERT // Montagsmucke am Freitag
+            URL:https://kallasch.berlin/programm/mitsingkonzert-montagsmucke-261-176-351-609/
+            CATEGORIES:KONZERT
+            END:VEVENT
+            END:VCALENDAR
+            """.trimIndent()
+
+        val event = scraper.scrape(calendar).single()
+
+        event.title shouldBe "Montagsmucke am Freitag"
+        event.eventType shouldBe "CONCERT"
+        event.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `scrape skips an entry without a URL`() {
         val calendar = "BEGIN:VCALENDAR\nBEGIN:VEVENT\nDTSTART;TZID=Europe/Berlin:20261105T200000\nSUMMARY:KONZERT // X\nEND:VEVENT\nEND:VCALENDAR\n"
 

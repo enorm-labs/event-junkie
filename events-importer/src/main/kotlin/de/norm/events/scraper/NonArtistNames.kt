@@ -106,7 +106,8 @@ fun isEventSegmentLabel(name: String): Boolean {
  * leading "<n> Jahre/Years …" anniversary ("36 Jahre Schokoladen - Hoffest"). The
  * `fest`/`festival` markers are word-anchored with any trailing content, so "Infest",
  * "Manifest" and "Sommerfest" stay safe. The anniversary marker is anchored to the title start,
- * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches. An
+ * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches. A
+ * singular `Year` counts only after a 1, so the band `13 Year Cicada` stays an act. An
  * organiser credit is no act either: `Eine Veranstaltung des …`, `In Kooperation mit …` (#1843).
  * A sing-along names its format, not who leads it: `SingAlong – Das große Mitsing-Event` (#1902),
  * and so does a `…singen` compound (`Weihnachtssingen im Kiez`).
@@ -132,7 +133,7 @@ private val NON_ARTIST_EVENT_PATTERN =
             """|.*\bhoffest\b.*""" +
             """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*|.*\p{L}singen(?!\p{L}).*""" +
             """|\d+\.\s+\S.*|.*\bvol\.\s*(?:\d+|[ivx]+)\b.*|tribute[\s-]?(?:concert|konzert)\s*:.*""" +
-            """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
+            """|(?:\d+\.?\s+(?:jahre|jahr|years)|1\.?\s+year)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""" +
             """|(?:die\s+)?(?:lange\s+)?nacht\s+der\s+\S.*|(?:die\s+)?\S*nacht\s+des\s+jahres\b.*""" +
             """|\S.*\s(?:20\d{2}|edition|special)|.*\blabel\s+night\b.*""" +

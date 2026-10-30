@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTecPage
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.tecDateTime
@@ -17,6 +18,7 @@ import de.norm.events.scraper.tecSourceId
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
 
 /**
@@ -37,6 +39,8 @@ import tools.jackson.databind.JsonNode
  * - **Sold out is only in the title** (`LATE SHOW (SOLD OUT!!!)`): the API has no stock field.
  * - **The description opens with an embedded Universe ticket widget**, whose target id is the
  * ticket link where the event sets no `website`.
+ * - **A house night bills its comedians in the description**, one per line under a
+ * `★★★★★ THE ACTS ★★★★★` heading, each with a country code: `Ayla Merino (MEX)`.
  *
  * @see CosmicComedyWebsiteImporter for the HTTP fetch orchestrator.
  * @see de.norm.events.scraper.parseTecPage for the page shape and the field readers.
@@ -71,7 +75,7 @@ class CosmicComedyApiScraper {
             sourceId = event.tecSourceId(EventSource.COSMIC_COMEDY, slug),
             ticketUrl = ticketUrl(event),
             soldOut = cleanedTitle.soldOut,
-            artists = headlinerOf(title, categories),
+            artists = headlinerOf(title, categories).ifEmpty { billedActs(event) },
             promoters = event.tecOrganizerNames()
         )
     }
@@ -80,7 +84,7 @@ class CosmicComedyApiScraper {
      * The performer, for nights filed as a `Comedy Special` — the club's marker for a named act
      * rather than the house showcase. Those titles are all `"<Performer> – <Show>"`, so the part
      * before the dash is the act; a special without one yields no artist rather than a guess. The
-     * recurring showcase and open-mic nights name no performer and get none.
+     * recurring showcase and open-mic nights name no performer in the title; [billedActs] reads theirs.
      *
      * **A night filed as both a special and a [SHOWCASE_CATEGORY] is the house showcase**, whatever
      * the marker says, and it names no performer either. The club's own recurring night is titled
@@ -102,6 +106,32 @@ class CosmicComedyApiScraper {
                 ?.first()
                 ?.blankToNull()
         return listOfNotNull(performer?.let { ScrapedArtist(name = it) })
+    }
+
+    /**
+     * The comedians a house night lists under its [ACTS_HEADING], up to the next `★` heading, each
+     * without its country code. The markup is `<p>` or `<div>` with `<br>`, and the heading's own
+     * element can carry the next heading, so the description is read as lines first. `To be
+     * announced` yields nothing. The host line above the heading is not read: one MC hosts every night.
+     */
+    private fun billedActs(event: JsonNode): List<ScrapedArtist> {
+        val html = event.stringOrNull("description") ?: return emptyList()
+        val lines =
+            Jsoup
+                .parseBodyFragment(html.replace(LINE_BREAKS, "\n"))
+                .body()
+                .wholeText()
+                .lines()
+                .map { it.trim() }
+        val heading = lines.indexOfFirst { ACTS_HEADING.containsMatchIn(it) }
+        if (heading < 0) return emptyList()
+        return lines
+            .drop(heading + 1)
+            .takeWhile { HEADING_STARS !in it }
+            .map { it.replace(COUNTRY_CODE, "").trim() }
+            .filter { it.isNotBlank() && !UNANNOUNCED.matches(it) && !isNonArtistName(it) }
+            .distinctBy { it.lowercase() }
+            .map { ScrapedArtist(name = it) }
     }
 
     /** Whether [categories] mark a named act: a [SPECIAL_CATEGORY] that is not also a showcase. */
@@ -129,6 +159,21 @@ private const val SPECIAL_CATEGORY = "Comedy Special"
 
 /** The category of the club's recurring house night, which names a format and never an act. */
 private const val SHOWCASE_CATEGORY = "Showcase"
+
+/** The heading the house nights list their comedians under. */
+private val ACTS_HEADING = Regex("""★\s*THE ACTS\s*★""", RegexOption.IGNORE_CASE)
+
+/** The stars every description heading is framed with; the next one ends the act list. */
+private const val HEADING_STARS = "★"
+
+/** The tags that end a line of the description: a `<br>`, and an opening or closing `<p>` or `<div>`. */
+private val LINE_BREAKS = Regex("""<br[^>]*>|</?(?:p|div)\b[^>]*>""", RegexOption.IGNORE_CASE)
+
+/** The country code after a comedian's name, `(MEX)`, or `(???)` where the club does not know it. */
+private val COUNTRY_CODE = Regex("""\s*\((?:[A-Z]{2,3}|\?+)\)\s*$""")
+
+/** The club's placeholder for a night whose acts are not yet booked. */
+private val UNANNOUNCED = Regex("""to be announced\.?""", RegexOption.IGNORE_CASE)
 
 /** The dashes the club separates a performer from their show title with. */
 private val TITLE_DASHES = Regex("[–—]")

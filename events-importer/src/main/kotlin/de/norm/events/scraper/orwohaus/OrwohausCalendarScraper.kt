@@ -31,9 +31,10 @@ import java.time.ZoneOffset
  * UTC+1** all year: the feed's UTC times plus one hour are the times the listing prints, also in
  * summer. Workshops are classes, not shows, and are skipped. The weekly-or-so jam session is
  * published years ahead, so events past [HORIZON_MONTHS] are left for a later run. A `Line-Up:`
- * list in the description bills its acts, one per line (`Berlin Grindfest 2026`). Otherwise only a
- * title that bills acts with `mit …` or names a tour mints artists: the house and promoter nights
- * (`NECROMANIA 2026`, `BE NOISE - Live Battle`) name the night, not an act.
+ * list in the description bills its acts, one per line (`Berlin Grindfest 2026`), and so does the
+ * band contest's `Bands für diese Vorrunde:` list. Otherwise only a title that bills acts with
+ * `mit …` or names a tour mints artists: the house and promoter nights (`NECROMANIA 2026`,
+ * `BE NOISE - Live Battle`) name the night, not an act.
  */
 class OrwohausCalendarScraper(
     private val clock: Clock
@@ -115,7 +116,7 @@ class OrwohausCalendarScraper(
             emptyList()
         }
 
-    /** The lines under a `Line-Up:` heading, up to the next `-` rule or blank line; a rule right under the heading is skipped. */
+    /** The lines under a line-up heading, up to the next `-` rule or blank line; a rule right under the heading is skipped. */
     private fun lineup(description: String?): List<ScrapedArtist> {
         val lines = description?.lines()?.map { it.trim() } ?: return emptyList()
         val heading = lines.indexOfFirst { LINEUP_HEADING.matches(it) }
@@ -158,7 +159,7 @@ class OrwohausCalendarScraper(
 
         val HOUSE_NAME = Regex("""^\s*ORWOhaus(?:\s+e\.V\.)?(?:\s*-\s*)?""", RegexOption.IGNORE_CASE)
 
-        val LINEUP_HEADING = Regex("""line[\s-]?up:?""", RegexOption.IGNORE_CASE)
+        val LINEUP_HEADING = Regex("""(?:line[\s-]?up|bands\s+für\s+diese\s+vorrunde):?""", RegexOption.IGNORE_CASE)
 
         /** The `-` line the house separates the description's blocks with. */
         const val RULE = "-"
