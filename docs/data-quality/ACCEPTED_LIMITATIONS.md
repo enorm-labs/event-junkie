@@ -584,8 +584,8 @@ says so.
 | `MAXXIM`               | `ARTISTS`          | the DJ is named only in the event prose                                                                                                          | —     |
 | `M_BIA`                | `SUBTITLE`         | a night carries only its name                                                                                                                    | —     |
 | `M_BIA`                | `EVENT_TYPE`       | the site names no category; every night is a club night                                                                                          | —     |
-| `M_BIA`                | `DOORS_TIME`       | the site shows only the date of a night                                                                                                          | —     |
-| `M_BIA`                | `START_TIME`       | the site shows only the date; every record carries the same unshown 22:00                                                                        | —     |
+| `M_BIA`                | `DOORS_TIME`       | most nights state no time                                                                                                                        | —     |
+| `M_BIA`                | `START_TIME`       | a start time appears only in prose; every record carries the same unshown 22:00                                                                  | —     |
 | `M_BIA`                | `END_TIME`         | the site prints no end time                                                                                                                      | —     |
 | `M_BIA`                | `PRICE`            | the site prints no entry price; tickets link to RA, Eventbrite or ticket.io                                                                      | —     |
 | `M_BIA`                | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |

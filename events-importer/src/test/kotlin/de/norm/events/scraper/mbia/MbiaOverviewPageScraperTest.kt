@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 class MbiaOverviewPageScraperTest {
     private val scraper = MbiaOverviewPageScraper()
@@ -139,6 +140,29 @@ class MbiaOverviewPageScraperTest {
         mbiaGenre(listOf("Hard Trance"), "Goanautika Nikolaus Special") shouldBe "Hard Trance, Goa"
         mbiaGenre(listOf("Techno"), "Goalkeeper Rave") shouldBe "Techno"
         mbiaGenre(emptyList(), "Inception").shouldBeNull()
+    }
+
+    @Test
+    fun `reads the doors time a description line states`() {
+        events.getValue("GOA MAGIC pres. REVERENCE").doorsTime shouldBe LocalTime.of(23, 0)
+        events.getValue("Sanctus pres. Diztorted [Belfast]").doorsTime shouldBe LocalTime.of(23, 0)
+        events.getValue("Nyctophilia Halloween SPCL").doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `reads a doors line in each spelling the club writes`() {
+        mbiaDoorsTime("Am 20. November.\n🕚 Einlass: 23:00 Uhr") shouldBe LocalTime.of(23, 0)
+        mbiaDoorsTime("🕚 Doors Open: 23:00 Uhr") shouldBe LocalTime.of(23, 0)
+        mbiaDoorsTime("🕚 Doors Open: 23:00") shouldBe LocalTime.of(23, 0)
+        mbiaDoorsTime("🚪 Doors: 22.30") shouldBe LocalTime.of(22, 30)
+    }
+
+    @Test
+    fun `leaves a clock in prose and a text without a time unread`() {
+        mbiaDoorsTime("📅 21.11. ab 23 Uhr").shouldBeNull()
+        mbiaDoorsTime("The party starts at 11:00 PM, we open our doors at 23:00").shouldBeNull()
+        mbiaDoorsTime("Alle VVK-Tickets bieten bevorzugten Einlass").shouldBeNull()
+        mbiaDoorsTime(null).shouldBeNull()
     }
 
     @Test
