@@ -308,12 +308,33 @@ jobs:
 
       # Last, because it spends the counts: a scan after it would meet 429s. The scans above spent
       # some too, and they live in the BFF's memory, so a restart empties them first (#4107).
+      #
+      # `rollout status` returns while Traefik still routes to the old pod, which answers 502 or 429 (#4263).
+      # So the old pods must be gone and `/api/events` must answer through Traefik before the first POST.
+      # Not the readiness probe: the Ingress routes no `/actuator`. A GET spends no sign-in count.
       - name: The sign-in limits engage
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
-          kubectl --context k3d-event-junkie -n event-junkie rollout restart deploy/event-junkie-bff
-          kubectl --context k3d-event-junkie -n event-junkie rollout status deploy/event-junkie-bff --timeout=3m
+          k() { kubectl --context k3d-event-junkie -n event-junkie "$@"; }
+          old="$(k get pods -l app.kubernetes.io/component=bff -o name)"
+          k rollout restart deploy/event-junkie-bff
+          k rollout status deploy/event-junkie-bff --timeout=3m
+          for i in $(seq 1 60); do
+            # shellcheck disable=SC2086 # one argument per pod name
+            [ -z "$old" ] || [ -z "$(k get $old --ignore-not-found -o name)" ] && break
+            [ "$i" = 60 ] && { echo "::error::the old BFF pods were still there after 2 minutes: $old"; exit 1; }
+            sleep 2
+          done
+          ok=0
+          for i in $(seq 1 30); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: event-junkie.localhost' \
+              'http://localhost:8080/api/events?size=1' || true)"
+            if [ "$code" = 200 ]; then ok=$((ok + 1)); else ok=0; fi
+            [ "$ok" = 3 ] && break
+            [ "$i" = 30 ] && { echo "::error::/api/events did not answer 200 three times in a row through Traefik in 60 seconds (last: $code)"; exit 1; }
+            sleep 2
+          done
           scripts/sign-in-limits.sh http://localhost:8080 event-junkie.localhost
 
       # A stalled step leaves no trace of whether the BFF restarted, so the pod state is kept before teardown.
