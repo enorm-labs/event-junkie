@@ -38,6 +38,9 @@ class GenreFamiliesTest {
         genreFamily("prog") shouldBe GenreFamily.ROCK
         genreFamily("country-trash") shouldBe GenreFamily.FOLK
         genreFamily("swana") shouldBe GenreFamily.LATIN_WORLD
+        listOf("goa", "fullon", "proggy", "offbeat", "harder-styles", "hardtekk", "tekkno", "uptempo").forEach {
+            genreFamily(it) shouldBe GenreFamily.ELECTRONIC
+        }
     }
 
     @Test

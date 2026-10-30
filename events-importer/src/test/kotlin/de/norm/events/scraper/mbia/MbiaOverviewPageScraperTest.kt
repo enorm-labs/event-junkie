@@ -134,6 +134,14 @@ class MbiaOverviewPageScraperTest {
     }
 
     @Test
+    fun `a Goa night named in the title gets the Goa style`() {
+        mbiaGenre(listOf("Progressive Psytrance", "Proggy"), "GOA MAGIC pres. REVERENCE") shouldBe "Progressive Psytrance, Proggy, Goa"
+        mbiaGenre(listOf("Hard Trance"), "Goanautika Nikolaus Special") shouldBe "Hard Trance, Goa"
+        mbiaGenre(listOf("Techno"), "Goalkeeper Rave") shouldBe "Techno"
+        mbiaGenre(emptyList(), "Inception").shouldBeNull()
+    }
+
+    @Test
     fun `reads a Wix media reference as its static URL`() {
         imageUrl("wix:image://v1/f2ae2b_ab~mv2.png/Flyer%201.png#originWidth=1080&originHeight=1350") shouldBe
             "https://static.wixstatic.com/media/f2ae2b_ab~mv2.png"

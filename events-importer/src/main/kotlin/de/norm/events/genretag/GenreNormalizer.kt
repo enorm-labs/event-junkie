@@ -101,6 +101,12 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "deepprogressive" to "Progressive House",
         // M-BIA's Wix `musicStyle`; whole-token for the same reason (#4230).
         "progressivepsytrance" to "Psytrance",
+        // Goa trance, the psytrance root; "Goa Trance" collapses to `goatrance`.
+        "goa" to "Goa",
+        "goatrance" to "Goa",
+        // The spaced spellings M-BIA's Wix styles use fold onto the tags that already have a family (#4230).
+        "hardtrance" to "Hardtrance",
+        "hardbounce" to "Hardbounce",
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)
         "drumnbass" to "Drum & Bass",
         "dnb" to "Drum & Bass",
