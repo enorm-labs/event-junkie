@@ -51,6 +51,25 @@ class AcudMachtNeuEventPageScraperTest {
     }
 
     @Test
+    fun `bills a festival's acts written on one line between slashes`() {
+        // Event 12148.
+        val url = "https://acudmachtneu.de/events/2395/8mm-fest-2"
+        val html =
+            """
+            <article class="event-article">
+              <h1 class="t-title-header--event">8MM Fest</h1>
+              <div class="event-article__content">
+                <p>Line up :<br />
+                ABIGAIL TOLL / BLACK BORDELLO /CALVIN LOVE / FADE EVARE /I WANT POETRY / MAKARA  / AC/DC / JAAKKO EINO KALEVI + MORE</p>
+              </div>
+            </article>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, url), url)!!.artists.map { it.name } shouldContainExactly
+            listOf("ABIGAIL TOLL", "BLACK BORDELLO", "CALVIN LOVE", "FADE EVARE", "I WANT POETRY", "MAKARA", "AC/DC", "JAAKKO EINO KALEVI + MORE")
+    }
+
+    @Test
     fun `reads doors equal to the header's time as the start, a price range as a note, and the act before a track`() {
         val event = scrape("acudmachtneu-event-renatura.html", "https://acudmachtneu.de/events/2385/renatura-06-%e2%80%93-hexapoda-release-event")
 

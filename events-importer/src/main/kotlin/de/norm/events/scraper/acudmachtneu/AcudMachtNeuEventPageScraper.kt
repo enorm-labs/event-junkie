@@ -22,7 +22,8 @@ import java.time.LocalTime
  * Pure parser for one ACUD event page. The header line names the room and one time, `ACUD CLUB 20h → Concert`. The
  * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
  * the doors time. `Doors:` and `Entrance:` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
- * paragraph of one act per line are read where present.
+ * paragraph are read where present. The paragraph names one act per line, or a festival's acts on one line between
+ * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`).
  */
 class AcudMachtNeuEventPageScraper {
     fun scrape(
@@ -103,7 +104,7 @@ class AcudMachtNeuEventPageScraper {
     /** Blank text or a line break between a label and its link. */
     private fun Node.isSpacing(): Boolean = (this is TextNode && isBlank) || (this is Element && normalName() == "br")
 
-    /** The acts of the paragraph headed `Line up` or `LINE UP`, one per line; `Name – Track` bills the name. */
+    /** The acts of the paragraph headed `Line up` or `LINE UP`; `Name – Track` bills the name. */
     private fun lineUp(content: Element): List<ScrapedArtist> {
         val paragraph = content.select("p").firstOrNull { LINE_UP.containsMatchIn(it.text()) } ?: return emptyList()
         return htmlParagraphText(paragraph.html())
@@ -111,6 +112,7 @@ class AcudMachtNeuEventPageScraper {
             .lines()
             .dropWhile { !LINE_UP.containsMatchIn(it) }
             .map { it.replace(LINE_UP, "") }
+            .flatMap { it.split(SLASH_SEPARATOR) }
             .map { it.split(TRACK_TAIL, limit = 2).first() }
             .flatMap(::splitBackToBack)
             .mapNotNull { it.blankToNull() }
@@ -134,5 +136,8 @@ class AcudMachtNeuEventPageScraper {
         val LINE_UP = Regex("""^\s*line[\s-]?up\s*:?\s*""", RegexOption.IGNORE_CASE)
 
         val TRACK_TAIL = Regex("""\s+[–—-]\s+""")
+
+        /** A slash with a space on at least one side; a bare one stays inside a name (`AC/DC`). */
+        val SLASH_SEPARATOR = Regex("""\s+/\s*|/\s+""")
     }
 }

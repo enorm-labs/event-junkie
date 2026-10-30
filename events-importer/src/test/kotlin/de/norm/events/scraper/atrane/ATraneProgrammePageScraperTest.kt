@@ -150,6 +150,15 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `bills the host of the weekly session without its unnamed friends`() {
+        // Event 12155: an empty "HEUTE MIT:" leaves the host as the only act.
+        val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT:", "EINTRITT FREI & ENTRANCE FREE")
+
+        night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
+        night.artists.map { it.name to it.role } shouldBe listOf("ANDREAS SCHMIDT" to ArtistRole.HEADLINER)
+    }
+
+    @Test
     fun `keeps the weekly session's act and bills the guests it names`() {
         // #2706: a filled "HEUTE MIT:" under the act names guests; it is not a festival's act line.
         val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: ROLAND SCHNEIDER- CHRISTIAN KÖGEL")
@@ -157,7 +166,7 @@ class ATraneProgrammePageScraperTest {
         night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
         night.subtitle shouldBe "Heute mit: Roland Schneider, Christian Kögel"
         night.artists.map { it.name to it.role } shouldBe
-            listOf("ANDREAS SCHMIDT & FRIENDS" to ArtistRole.HEADLINER, "Roland Schneider" to ArtistRole.SUPPORT, "Christian Kögel" to ArtistRole.SUPPORT)
+            listOf("ANDREAS SCHMIDT" to ArtistRole.HEADLINER, "Roland Schneider" to ArtistRole.SUPPORT, "Christian Kögel" to ArtistRole.SUPPORT)
     }
 
     @Test
@@ -175,7 +184,7 @@ class ATraneProgrammePageScraperTest {
 
         night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
         night.subtitle shouldBe "Heute mit: Roland Schneider · JAM SESSION AB 22 UHR"
-        night.artists.map { it.name } shouldBe listOf("ANDREAS SCHMIDT & FRIENDS", "Roland Schneider")
+        night.artists.map { it.name } shouldBe listOf("ANDREAS SCHMIDT", "Roland Schneider")
     }
 
     @Test
@@ -274,7 +283,7 @@ class ATraneProgrammePageScraperTest {
 
         night.title shouldBe "DAVID HAYNES AND FRIENDS"
         night.subtitle!! shouldStartWith "«SOULFUL FALL» · WITH SPECIAL GUESTS"
-        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES AND FRIENDS" to ArtistRole.HEADLINER)
+        night.artists.map { it.name to it.role } shouldBe listOf("DAVID HAYNES" to ArtistRole.HEADLINER)
     }
 
     @Test

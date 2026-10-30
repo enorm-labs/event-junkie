@@ -175,7 +175,7 @@ class DerWeisseHaseOverviewPageScraper {
      * The DJs billed for the night, in listing order: the lines of the [roster] elements, whose names
      * are separated by `<br>` or [LINEUP_SEPARATOR] punctuation. The `&nbsp;` spacers read as blank
      * and drop out. Placeholders ([isNonArtistName]) and unbooked slots ([UNANNOUNCED_SLOT_PATTERN])
-     * are dropped rather than minted.
+     * are dropped rather than minted, and an act listed twice is billed once.
      */
     private fun parseLineup(roster: List<Element>): List<ScrapedArtist> =
         roster
@@ -183,6 +183,7 @@ class DerWeisseHaseOverviewPageScraper {
             .flatMap { it.split(LINEUP_SEPARATOR) }
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) && !isUnannouncedSlot(it) }
+            .distinctBy { it.lowercase() }
             .map { ScrapedArtist(name = it, role = ArtistRole.DJ) }
 
     /** True when [name] is an unbooked billing slot rather than a performer — see [UNANNOUNCED_SLOT_PATTERN]. */
@@ -215,12 +216,12 @@ class DerWeisseHaseOverviewPageScraper {
         private val ENTRY_NOTE = Regex("""\b(?:free|frei\w*|eintritt|entry|admission)\b""", RegexOption.IGNORE_CASE)
 
         /**
-         * Separators inside a roster line: comma and `+`. Deliberately **not** `&` — act names
-         * contain one ("Drauf & Dran DJ Team") — and not `/`, never used to separate two DJs. A
-         * number tag glued to the next name (`Emma (8)Youston`) also ends an act: the club's markup
-         * puts no space between two names there.
+         * Separators inside a roster line: comma, `+` and a dash with a space on each side (`Tragik - DefJam - Kenny`).
+         * Deliberately **not** `&` — act names contain one ("Drauf & Dran DJ Team") — and not `/`, never used to separate
+         * two DJs. A number tag glued to the next name (`Emma (8)Youston`) also ends an act: the club's markup puts no
+         * space between two names there.
          */
-        private val LINEUP_SEPARATOR = Regex("""\s*[,+]\s*|(?<=\(\d{1,2}\))(?=\S)""")
+        private val LINEUP_SEPARATOR = Regex("""\s*[,+]\s*|\s+[-–]\s+|(?<=\(\d{1,2}\))(?=\S)""")
 
         /**
          * An unbooked billing slot printed in place of a name: the residents ("Residents", "Resident

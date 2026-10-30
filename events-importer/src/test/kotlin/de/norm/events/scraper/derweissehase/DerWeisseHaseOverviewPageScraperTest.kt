@@ -306,4 +306,25 @@ class DerWeisseHaseOverviewPageScraperTest {
         val tuesdayRave = scraper.scrape(Jsoup.parse(glued, baseUrl), baseUrl).single { it.eventDate == LocalDate.of(2026, 8, 11) }
         tuesdayRave.artists.map { it.name } shouldContainExactly listOf("Cat Vermillion", "Emma (8)", "Youston")
     }
+
+    @Test
+    fun `splits a roster at a spaced dash, keeps a hyphenated name and bills a repeated act once`() {
+        // Event 12133.
+        val html =
+            """
+            <div class="event50"><a href="https://de.ra.co/events/1" class="eventlistlink"><div class="eventrahm">
+              <p class="dater">Samstag 07.11.2026 23:00</p>
+              <h1>F𝝨HLZ𝝨:T &#40;Kopie&#41;</h1>
+              <p class="text"><h4>LINE UP</h4>
+              <p>Tragik - DefJam - Kenny - Fran-Cee - Tragik – Andy M</p></p>
+            </div></a></div>
+            """.trimIndent()
+
+        scraper
+            .scrape(Jsoup.parse(html, baseUrl), baseUrl)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly
+            listOf("Tragik", "DefJam", "Kenny", "Fran-Cee", "Andy M")
+    }
 }
