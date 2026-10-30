@@ -145,7 +145,13 @@ importer:
       cpu: "1000m"
       # Has to cover `max-in-memory-size: 8MB` × concurrency 4.
       memory: "1Gi"
-  maxRamPercentage: 75
+  # importer.maxRamPercentage is the heap as a share of the limit, half for the BFF's reason. At 75 the
+  # heap could reach 742 Mi beside 255 Mi of metaspace and code cache, and the kernel killed an
+  # import (#4265). The live set after GC peaked at 245 Mi, so 512 Mi is twice what it holds.
+  maxRamPercentage: 50
+  # importer.maxDirectMemorySize caps Netty's buffers: twice the 32 MB that `max-in-memory-size` ×
+  # concurrency 4 can hold. Past it one fetch fails and its import is FAILED; the pod survives.
+  maxDirectMemorySize: "64m"
   serviceAccount:
     create: true
     name: ""

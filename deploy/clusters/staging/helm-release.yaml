@@ -136,7 +136,9 @@ spec:
           memory: "384Mi"
         limits:
           cpu: "1000m"
-          memory: "768Mi"
+          # Production's limit, so both run the chart's memory budget: at 768Mi half the limit as heap left
+          # 87 Mi for native memory, against the 130 Mi the BFF needed under load (#1766, #4265).
+          memory: "1Gi"
     frontend:
       replicaCount: 1
     ingress:

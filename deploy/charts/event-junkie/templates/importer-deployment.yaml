@@ -128,7 +128,7 @@ spec:
             - name: MANAGEMENT_SERVER_PORT
               value: {{ .Values.importer.service.managementPort | quote }}
             - name: JAVA_TOOL_OPTIONS
-              value: "-XX:MaxRAMPercentage={{ .Values.importer.maxRamPercentage }}"
+              value: "-XX:MaxRAMPercentage={{ .Values.importer.maxRamPercentage }} -XX:MaxDirectMemorySize={{ .Values.importer.maxDirectMemorySize }}"
             {{- include "event-junkie.databaseEnv" (dict "ctx" $) | nindent 12 }}
             {{- /* The importer owns the schema (ADR-005), and Flyway has no reactive driver, so this one workload
                holds two connection configurations. Locally Docker Compose support supplies both; in a cluster
