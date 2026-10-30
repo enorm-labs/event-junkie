@@ -110,6 +110,10 @@ jobs:
       - name: Assert what ej.sh status lists as not ready
         run: scripts/ej-status-test.sh
 
+      # A reused pid read as a live forward, and `down` would have killed an IntelliJ process (#4151).
+      - name: Assert which pid files ej.sh trusts
+        run: scripts/ej-pid-test.sh
+
       # An exported KUBECONFIG sent three deletes to the wrong file during the production rebuild (#4146).
       - name: Assert what cluster-access.sh replaces after a rebuild
         run: scripts/cluster-access-test.sh
