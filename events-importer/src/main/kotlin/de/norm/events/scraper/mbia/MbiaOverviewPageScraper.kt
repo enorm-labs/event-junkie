@@ -3,6 +3,7 @@ package de.norm.events.scraper.mbia
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SCRAPER_JSON
 import de.norm.events.scraper.ScrapedArtist
@@ -11,6 +12,8 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
@@ -19,6 +22,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import java.time.Instant
+import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
 /**
@@ -27,8 +31,9 @@ import java.time.format.DateTimeParseException
  * A record holds the night's name, a UTC `dateStart`, its styles, one rich-text lineup per floor,
  * a description, a flyer and a ticket link. The record's `_id` is the night's identity.
  *
- * Every `dateStart` carries 22:00, New Year's Eve 21:00, and no page prints a time, so only the
- * date is kept. A lineup is one paragraph per act, opened by a style line (`Hardtechno • Schranz`).
+ * Every `dateStart` carries 22:00, New Year's Eve 21:00, and no page prints it, so only the date
+ * is kept. A few descriptions state the doors on a line of their own ([mbiaDoorsTime]). A lineup
+ * is one paragraph per act, opened by a style line (`Hardtechno • Schranz`).
  */
 class MbiaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -84,12 +89,14 @@ class MbiaOverviewPageScraper {
             return null
         }
         val path = record.stringOrNull("link-events-1-title_fld")?.takeIf { it.startsWith("/") }
+        val description = htmlParagraphText(record.path("descriptionLong").asString(""))
         return ScrapedEvent(
             title = title,
             soldOut = cleanedTitle.soldOut,
-            description = htmlParagraphText(record.path("descriptionLong").asString("")),
+            description = description,
             eventType = EventType.PARTY.name,
             eventDate = date,
+            doorsTime = mbiaDoorsTime(description),
             imageUrl = record.stringOrNull("image_fld")?.let(::imageUrl),
             sourceUrl = path?.let { "$SITE_URL$it" } ?: baseUrl,
             sourceId = "${EventSource.M_BIA.sourceIdPrefix}$id",
@@ -198,6 +205,16 @@ internal fun mbiaGenre(
 ): String? = (styles + listOfNotNull(GOA.takeIf { GOA_NIGHT.containsMatchIn(title) })).distinct().joinToString(", ").blankToNull()
 
 private const val GOA = "Goa"
+
+/**
+ * The doors time of a description line that opens with its label (`🕚 Einlass: 23:00 Uhr`,
+ * `Doors Open: 23:00`). A clock in prose (`📅 21.11. ab 23 Uhr`) is not read.
+ */
+internal fun mbiaDoorsTime(description: String?): LocalTime? =
+    description?.lines()?.firstNotNullOfOrNull { line -> DOORS_LINE.find(line)?.let { labelledClock(it.value, DOORS_LABELS) } }
+
+/** A doors label and its clock at the start of a line, after any emoji. */
+private val DOORS_LINE = Regex("^[^\\p{L}\\p{N}]*" + labelledClockPattern(DOORS_LABELS).pattern, RegexOption.IGNORE_CASE)
 
 /** `GOA` or `Goanautika` as a word of the title. */
 private val GOA_NIGHT = Regex("""\bgoa(?:nautika)?\b""", RegexOption.IGNORE_CASE)
