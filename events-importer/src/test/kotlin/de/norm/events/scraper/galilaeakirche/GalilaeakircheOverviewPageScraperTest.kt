@@ -1,5 +1,6 @@
 package de.norm.events.scraper.galilaeakirche
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
@@ -50,6 +51,19 @@ class GalilaeakircheOverviewPageScraperTest {
         bySlug("aniqo-pre-album-releaseshow-featuring-love-supreme-jonny").artists.map { it.name } shouldContainExactly listOf("ANIQO")
         bySlug("chorlibri-frauenchor-berlin-soloartists-2").artists.map { it.name } shouldContainExactly listOf("Chorlibri")
         bySlug("borderless-creatures-praesentiert-hybrid-concert-series-tag-3").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills each act of a pipe co-bill in title order`() {
+        fun acts(title: String) = scrape(page(item("x", title, "Konzert"))).single().artists
+
+        val duo = acts("Maurizio Ravalico | Isambard Khroustaliov – XX anniversary re-release concert")
+        duo.map { it.name } shouldContainExactly listOf("Maurizio Ravalico", "Isambard Khroustaliov")
+        duo.map { it.role }.distinct() shouldContainExactly listOf(ArtistRole.HEADLINER)
+
+        acts("Zea | Jimi Tenor | Mikail Yakut – Live").map { it.name } shouldContainExactly listOf("Zea", "Jimi Tenor", "Mikail Yakut")
+        acts("Zea – Live | Berlin").map { it.name } shouldContainExactly listOf("Zea")
+        acts("Mikail Yakut: Kinto’s Dance – Album Release").map { it.name } shouldContainExactly listOf("Mikail Yakut")
     }
 
     @Test
