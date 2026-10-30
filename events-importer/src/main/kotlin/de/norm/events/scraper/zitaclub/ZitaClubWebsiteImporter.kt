@@ -8,7 +8,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.withEventPageOrFlagged
+import de.norm.events.scraper.withEventPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.net.URI
@@ -42,7 +42,7 @@ class ZitaClubWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val listing = calendarScraper.scrape(apiClient.fetchJson(URI(url).resolve(FEED_PATH).toString()))
-        val events = listing.map { event -> htmlFetcher.withEventPageOrFlagged(event) { document -> eventPageScraper.enrich(event, document) } }
+        val events = htmlFetcher.withEventPages(listing) { event, document -> eventPageScraper.enrich(event, document) }
         logger.info { "Scraped ${events.size} event(s) from Zita Club" }
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }

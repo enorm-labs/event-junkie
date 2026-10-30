@@ -31,6 +31,9 @@ abstract class AbstractMonthPagesWebsiteImporter(
     /** Whether [event] links a page of its own rather than the month page it was listed on. */
     protected open fun hasEventPage(event: ScrapedEvent): Boolean = true
 
+    /** The fields a good run takes from the event page over the month page's, see [withEventPageOrFlagged]. */
+    protected open val eventPageOwns: Set<ScrapedField> = emptySet()
+
     /** The month pages [entry] names; a venue whose months are form values rather than links builds them here. */
     protected open fun monthPageUrls(
         entry: Document,
@@ -52,17 +55,9 @@ abstract class AbstractMonthPagesWebsiteImporter(
             readEach(monthUrls, { "Failed to read the $venueName month page $it, importing the other months" }) { monthUrl ->
                 scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
             }
-        val events = withSharedPages(withEventPages(months.items.distinctBy { it.sourceId }))
+        val enriched = htmlFetcher.withEventPages(months.items.distinctBy { it.sourceId }, eventPageOwns, ::hasEventPage, enrichFromEventPage)
+        val events = htmlFetcher.withSharedPages(enriched, sharedPages)
         logger.info { "Scraped ${events.size} $venueName event(s) across ${monthUrls.size} month page(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = months.complete)
-    }
-
-    private suspend fun withSharedPages(events: List<ScrapedEvent>): List<ScrapedEvent> = sharedPages?.applyTo(htmlFetcher, events) ?: events
-
-    private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val enrich = enrichFromEventPage ?: return events
-        return events.map { event ->
-            if (hasEventPage(event)) htmlFetcher.withEventPageOrFlagged(event) { document -> enrich(event, document) } else event
-        }
     }
 }
