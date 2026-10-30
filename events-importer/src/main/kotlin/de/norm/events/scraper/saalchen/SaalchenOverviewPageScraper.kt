@@ -3,6 +3,7 @@ package de.norm.events.scraper.saalchen
 import de.norm.events.common.BERLIN
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventType
+import de.norm.events.scraper.CONCESSION_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -269,20 +270,46 @@ private fun parseNoticeTime(text: String?): LocalTime? =
     }
 
 /**
- * The free-form `Eintritt:` line as a number, **only when it names exactly one amount** — or
- * labels one as the day ticket. `"17,00 €"`, `"€40 + fees"`, `"30,00"` and `"36,95€"` resolve,
- * as does `"Tagesticket: 13 € / 2-Tagesticket: 20 €"`, where the `Tagesticket` figure is one
- * day's cost (#1584). The three-tier `"15€ ermäßigt … 25€ Normalpreis … 35€ Förderticket"`
- * deliberately does not: the first of three would store the concession as the ticket price.
- * The raw line is kept in [ScrapedEvent.priceNote] either way.
+ * The free-form `Eintritt:` line as a number. A line that names exactly one amount resolves to it:
+ * `"17,00 €"`, `"€40 + fees"`, `"30,00"` and `"36,95€"`. So does `"Tagesticket: 13 € / 2-Tagesticket:
+ * 20 €"`, where the `Tagesticket` figure is one day's cost (#1584). A sale-phase tariff such as
+ * `"Early Bird: 15€, Reguläres Ticket: 27,50€"` resolves to its lowest tier, the "from" price
+ * (#2083), when a sale-phase label leads every amount and no concession is named. The three-tier
+ * `"15€ ermäßigt … 25€ Normalpreis … 35€ Förderticket"` deliberately does not: the lowest of three
+ * would store the concession as the ticket price. The raw line is kept in [ScrapedEvent.priceNote]
+ * either way.
  */
-private fun parseSinglePrice(text: String?): BigDecimal? {
+internal fun parseSinglePrice(text: String?): BigDecimal? {
     val value = text?.trim().orEmpty()
     val amount =
         DAY_TICKET_PATTERN.find(value)?.groupValues?.get(1)
             ?: BARE_AMOUNT_PATTERN.matchEntire(value)?.groupValues?.get(1)
-    return amount?.replace(',', '.')?.toBigDecimalOrNull() ?: euroAmounts(value).singleOrNull()
+    return amount?.replace(',', '.')?.toBigDecimalOrNull() ?: euroAmounts(value).singleOrNull() ?: salePhaseFromPrice(value)
 }
+
+/** The lowest tier of a tariff whose every amount follows a [SALE_PHASE_TIER] label; `null` beside a [CONCESSION] word. */
+private fun salePhaseFromPrice(value: String): BigDecimal? {
+    val amounts = euroAmounts(value)
+    if (amounts.size < 2 || CONCESSION.containsMatchIn(value)) return null
+    val tiers = SALE_PHASE_TIER.findAll(value).mapNotNull { euroAmounts(it.groupValues[1]).singleOrNull() }.toList()
+    return if (tiers.size == amounts.size) tiers.min() else null
+}
+
+/** A sale-phase label and the one amount it prices: `Early Bird: 15€`, `Reguläres Ticket: 27,50€`, `VVK 20 €`. */
+private val SALE_PHASE_TIER =
+    Regex(
+        """(?<!\p{L})(?:$SALE_PHASE_LABELS)(?:[\s-]*tickets?)?\s*:?\s*(€\s*$AMOUNT|$AMOUNT\s*€)""",
+        RegexOption.IGNORE_CASE
+    )
+
+/** The words that name a sale phase rather than a kind of guest: early, regular, last, or presale. */
+private const val SALE_PHASE_LABELS = """early[\s-]*bird|regul(?:ä|ae)r\p{L}*|standard|last[\s-]*call|vorverkauf|vvk"""
+
+/** A number with an optional one- or two-digit decimal part, either separator. */
+private const val AMOUNT = """\d+(?:[.,]\d{1,2})?"""
+
+/** A concession or support tier, whose amount is not the ticket price: the shared words plus `Förder…` and `Soli…`. */
+private val CONCESSION = Regex("""(?<!\p{L})(?:$CONCESSION_LABELS|f(?:ö|oe)rder|soli)""", RegexOption.IGNORE_CASE)
 
 /** The `.location` value identifying this venue among the Holzmarkt site's shared calendar rows. */
 private const val VENUE_LOCATION = "Säälchen"

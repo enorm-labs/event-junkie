@@ -108,7 +108,7 @@ private const val PRESALE_LABELS = """vorverkauf|vvk|pre-?sale|advance"""
 private const val BOX_OFFICE_LABELS = """abendkasse|tageskasse|ak|box\s*office|at\s+the\s+door|door\s+price"""
 
 /** A concession or member rate after a label, which is not the label's price. */
-private const val CONCESSION_LABELS = """erm(?:ä|ae)(?:ss|ß)igt|erm\.|reduced|concessions?|studierende|sch(?:ü|ue)ler|mitglieder"""
+internal const val CONCESSION_LABELS = """erm(?:ä|ae)(?:ss|ß)igt|erm\.|reduced|concessions?|studierende|sch(?:ü|ue)ler|mitglieder"""
 
 private const val PRESALE_GROUP = "presale"
 private const val BOX_OFFICE_GROUP = "boxoffice"
