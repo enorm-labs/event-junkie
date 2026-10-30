@@ -239,6 +239,31 @@ class SaalchenOverviewPageScraperTest {
     }
 
     @Test
+    fun `stores the lowest tier of a sale-phase tariff and keeps the line as the note`() {
+        // Event 3771's Eintritt line on 2026-10-30 (#4269).
+        val cumbia = rowWithNotice("<p>Eintritt: Early Bird: 15€, Reguläres Ticket: 27,50€</p>").shouldNotBeNull()
+
+        cumbia.pricePresale shouldBe BigDecimal("15")
+        cumbia.priceNote shouldBe "Early Bird: 15€, Reguläres Ticket: 27,50€"
+    }
+
+    @Test
+    fun `reads the Eintritt line by its shape`() {
+        parseSinglePrice("Early Bird 25€ / Standard 30€ / Last Call 35€") shouldBe BigDecimal("25")
+        parseSinglePrice("VVK: 18,50 € / Regulär: 22 €") shouldBe BigDecimal("18.50")
+        // A concession label on the line keeps the sale-phase rule out, so the cheapest tier is not taken for the price.
+        parseSinglePrice("Early Bird: 10€ ermäßigt, Reguläres Ticket: 20€").shouldBeNull()
+        parseSinglePrice("Regulär: 25€ / Soli: 35€").shouldBeNull()
+        // An amount without its own sale-phase label is not a tier of the tariff.
+        parseSinglePrice("Early Bird: 15€, 25€ an der Tür").shouldBeNull()
+        parseSinglePrice("17,00 €") shouldBe BigDecimal("17.00")
+        parseSinglePrice("30,00") shouldBe BigDecimal("30.00")
+        parseSinglePrice("Early Bird 15, Regulär 20").shouldBeNull()
+        parseSinglePrice("frei").shouldBeNull()
+        parseSinglePrice("Eintritt frei").shouldBeNull()
+    }
+
+    @Test
     fun `types an event from the venue category and falls back to the title`() {
         event("saalchen:jimmy-sax").eventType shouldBe EventType.CONCERT.name
         // "Kunst & Kultur" is not a known category, so the title decides: this one is a party.
