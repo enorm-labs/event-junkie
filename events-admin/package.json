@@ -18,7 +18,7 @@
     "format": "oxfmt src"
   },
   "dependencies": {
-    "@lucide/vue": "1.61.0",
+    "@lucide/vue": "1.62.0",
     "@tanstack/vue-table": "9.3.1",
     "@vueuse/core": "15.0.0",
     "class-variance-authority": "0.7.1",
