@@ -272,7 +272,8 @@ data class ScrapedEvent(
         // (#1551).
         val notes = listOfNotNull(statusNote, title, subtitle, description, descriptionAlt)
         val relocation = notes.firstNotNullOfOrNull(::parseRelocation)
-        val (relocatedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
+        // A cancelled badge beside "verlegt auf <later date>" is a move of the date (#4268).
+        val (relocatedStatus, relocatedTo) = resolveRelocation(resolveMovedCancellation(badgeStatus, notes, eventDate), relocation, venueSlug)
         // A "verschoben" note sits on both dates of a move too; the row the show moved to takes place (#2206).
         val postponedStatus = resolvePostponement(resolveDatedRelocation(relocatedStatus, relocatedTo, notes), notes, eventDate)
         // A new date can come with a new house; on the date the show left, that is a move (#2708).

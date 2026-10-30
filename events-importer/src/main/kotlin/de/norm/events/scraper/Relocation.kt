@@ -157,7 +157,8 @@ private val POSTPONED_TO_HOUSE =
 /** A two-digit year in a note is this century's. */
 private const val CENTURY = 2000
 
-private fun targetDate(match: MatchResult): LocalDate? {
+/** The date a match names in its day, month and year groups, or null for an impossible one. */
+internal fun targetDate(match: MatchResult): LocalDate? {
     val (day, month, year) = match.destructured
     val fullYear = year.toInt().let { if (year.length == 2) CENTURY + it else it }
     return runCatching { LocalDate.of(fullYear, month.toInt(), day.toInt()) }.getOrNull()

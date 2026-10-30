@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventStatus
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -507,6 +508,32 @@ class EventFieldMappingTest {
         resolveDatedRelocation("RELOCATED", null, listOf("verlegt auf 31.02.27")) shouldBe "RELOCATED"
         resolveDatedRelocation("RELOCATED", "Hole 44", listOf("verlegt auf den 13.04.27 ins Hole 44")) shouldBe "RELOCATED"
         resolveDatedRelocation("CANCELLED", null, listOf("verlegt auf 17.08.27")) shouldBe "CANCELLED"
+    }
+
+    @Test
+    fun `resolveMovedCancellation postpones a cancelled row that names a later date, and nothing else`() {
+        val day = LocalDate.of(2026, 10, 31)
+        val note = listOf("Solo-Theater-Comedy mit Nebenwirkungen - VERLEGT auf den 24.04.2027")
+        resolveMovedCancellation("CANCELLED", note, day) shouldBe "POSTPONED"
+        resolveMovedCancellation("CANCELLED", listOf("Verschoben auf den 31.05.2027 | Rocking & Symphonic"), day) shouldBe "POSTPONED"
+        resolveMovedCancellation("CANCELLED", listOf("Die Show muss krankheitsbedingt verlegt werden auf den 24.04.27 um 15:00 Uhr."), day) shouldBe
+            "POSTPONED"
+        // Wühlmäuse's Hatzius run names each night's new date in the present tense.
+        resolveMovedCancellation("CANCELLED", listOf("Der 05.11.2026, 20 Uhr verschiebt sich auf den 04.11.2027 (!), 20 Uhr"), day) shouldBe "POSTPONED"
+        // Only a cancellation is read; the new date's own row and every other badge pass through.
+        resolveMovedCancellation("SCHEDULED", note, LocalDate.of(2027, 4, 24)) shouldBe "SCHEDULED"
+        EventStatus.entries.filter { it != EventStatus.CANCELLED }.forEach { resolveMovedCancellation(it.name, note, day) shouldBe it.name }
+        // The same day, or a date before the row's own, is no move ahead.
+        resolveMovedCancellation("CANCELLED", note, LocalDate.of(2027, 4, 24)) shouldBe "CANCELLED"
+        resolveMovedCancellation("CANCELLED", note, LocalDate.of(2027, 5, 1)) shouldBe "CANCELLED"
+        // A merge into a date the show already had, a house move, a bare word: no "auf <date>".
+        val merged = "Die Vorstellung wird verschoben und mit dem bereits bestehenden Termin am Mittwoch, den 16.06.2027 zusammengelegt."
+        resolveMovedCancellation("CANCELLED", listOf(merged), day) shouldBe "CANCELLED"
+        resolveMovedCancellation("CANCELLED", listOf("verlegt ins Huxley's neue Welt"), day) shouldBe "CANCELLED"
+        resolveMovedCancellation("CANCELLED", listOf("VERLEGT!"), day) shouldBe "CANCELLED"
+        // A date with no move word, or in the next sentence, is not this move's.
+        resolveMovedCancellation("CANCELLED", listOf("Tickets gelten auf den 24.04.2027"), day) shouldBe "CANCELLED"
+        resolveMovedCancellation("CANCELLED", listOf("Die Show wird verlegt. Der Vorverkauf startet auf den 24.04.2027 hin"), day) shouldBe "CANCELLED"
     }
 
     @Test
