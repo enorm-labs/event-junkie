@@ -183,6 +183,8 @@
         "image",
         "service",
         "resources",
+        "maxRamPercentage",
+        "maxDirectMemorySize",
         "anthropic",
         "translation"
       ],
@@ -198,6 +200,11 @@
           "type": "integer",
           "minimum": 25,
           "maximum": 90
+        },
+        "maxDirectMemorySize": {
+          "description": "A JVM size such as 64m. Netty's buffers default to the heap's size without it, and the kernel kills the pod first (#4265).",
+          "type": "string",
+          "pattern": "^[0-9]+[kKmMgG]$"
         },
         "anthropic": {
           "type": "object",

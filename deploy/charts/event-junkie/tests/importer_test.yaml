@@ -10,6 +10,23 @@ templates:
   - configmap.yaml
 
 tests:
+  # --- Memory budget (#4265) ------------------------------------------------------------------
+  # Heap and Netty's buffers are both capped, as the BFF's are (#1766), so the pod fits its limit.
+  - it: caps the heap and the direct memory in JAVA_TOOL_OPTIONS
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_TOOL_OPTIONS
+            value: "-XX:MaxRAMPercentage=50 -XX:MaxDirectMemorySize=64m"
+
   # --- The single replica is a correctness constraint, not a cost one -------------------------
   # Two schedulers means two concurrent imports of one source; the RUNNING check has no lock. A rolling
   # update briefly runs two pods, the same failure by another route — hence Recreate.
