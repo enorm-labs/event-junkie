@@ -174,16 +174,42 @@ class HuxleysDetailPageScraperTest {
         scrapeInline(slug = "9743", dateLine = null).shouldNotBeNull().eventDate shouldBe UNRESOLVED_EVENT_DATE
     }
 
+    @Test
+    fun `reads 00 00 for doors and start as no time`() {
+        // Event 11982: the editor left both fields at 00:00 on a Saturday night.
+        val event = scrapeInline(slug = "2026-10-31-la-casa-del-perreo-halloween-2", dateLine = null, times = "<b>Beginn:</b> 00:00 <b>Einlass:</b> 00:00")
+        event.shouldNotBeNull()
+        event.startTime.shouldBeNull()
+        event.doorsTime.shouldBeNull()
+    }
+
+    @Test
+    fun `types a night tagged party as a party, with no act made from its name`() {
+        // Event 11982: "LA CASA DEL PERREO HALLOWEEN" is a club night, not an act.
+        val event = scrapeInline(slug = "2026-10-31-la-casa-del-perreo-halloween-2", dateLine = null, tags = "event-tags-party event-tags-reggaeton")
+        event.shouldNotBeNull()
+        event.eventType shouldBe "PARTY"
+        event.genre shouldBe "Party, Reggaeton"
+        event.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `keeps a concert tagged with a genre a concert`() {
+        scrapeInline(slug = "2026-09-05-some-act", dateLine = null, tags = "event-tags-indie-pop").shouldNotBeNull().eventType shouldBe "CONCERT"
+    }
+
     private fun scrapeInline(
         slug: String,
-        dateLine: String?
+        dateLine: String?,
+        times: String = "<b>Beginn:</b> 20:00",
+        tags: String = ""
     ): ScrapedEvent? {
         val url = "https://huxleysneuewelt.de/event/$slug"
         val datum = dateLine?.let { "<b>Datum:</b> $it<br>" }.orEmpty()
         val html =
             """
             <html><head><meta property="og:title" content="Some Act - Huxleys Neue Welt"></head>
-            <body><article class="event"><div class="event-info"><p>$datum<b>Beginn:</b> 20:00</p></div></article></body></html>
+            <body><article class="event $tags"><div class="event-info"><p>$datum$times</p></div></article></body></html>
             """.trimIndent()
         return scraper.scrape(Jsoup.parse(html, url), url)
     }

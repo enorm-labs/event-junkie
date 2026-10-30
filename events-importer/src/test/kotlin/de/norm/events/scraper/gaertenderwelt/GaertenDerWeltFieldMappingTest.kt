@@ -126,6 +126,16 @@ class GaertenDerWeltFieldMappingTest {
     }
 
     @Test
+    fun `reads a 0000 stamp as no start time, and keeps it in the identity`() {
+        // Event 11795: an exhibition run the listing shows with no time.
+        val path = parseEventPath("$DETAIL_BASE/2026-11-04_0000/bestehendes-bewahren-neues-schaffen-umbaukultur-in-berlin/")
+
+        path?.date shouldBe LocalDate.of(2026, 11, 4)
+        path?.startTime.shouldBeNull()
+        path?.identity shouldBe "2026-11-04_0000/bestehendes-bewahren-neues-schaffen-umbaukultur-in-berlin"
+    }
+
+    @Test
     fun `returns null for a path that carries no stamp`() {
         parseEventPath("https://www.gaertenderwelt.de/events/veranstaltungen/").shouldBeNull()
         parseEventPath("$DETAIL_BASE/agnes-obel/").shouldBeNull()

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.CleanedTitle
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -15,7 +16,6 @@ import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseIsoDate
@@ -38,8 +38,8 @@ import java.time.LocalDate
  *
  * Two things live only here. The **taxonomies** are slugs on the `article` element —
  * `event-tags-*` are real music genres (`electronic`, `indietronica`, unlike other venues' mixed
- * vocabularies) and `promoters-*` the booking agency — read from the class list at no extra
- * request. The promoter comes from the hero's visible `<promoter> presents` credit first, since
+ * vocabularies), except `party`, which marks a club night and types it, and `promoters-*` the booking agency — read from the
+ * class list at no extra request. The promoter comes from the hero's visible `<promoter> presents` credit first, since
  * the slug loses what the editor left out (`promoters-schoneberg` for "Konzertbüro Schoneberg",
  * #1139). And the page has **no heading of its own**: the act's name is only in the document
  * title with a site suffix, so the overview's `.eventname` stays authoritative and this scraper
@@ -76,7 +76,8 @@ class HuxleysDetailPageScraper {
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
         val details = article.textAt(".event-info").orEmpty()
         val subtitle = article.textAt(".tourtitel")
-        val eventType = inferConcertVenueType(title)
+        val genres = parseTaxonomy(article, GENRE_CLASS_PREFIX)
+        val eventType = inferConcertVenueType(title).let { if (it == EventType.CONCERT.name && PARTY_TAG in genres) EventType.PARTY.name else it }
         val (presale, boxOffice, priceNote) = parsePrices(article)
 
         return ScrapedEvent(
@@ -85,8 +86,8 @@ class HuxleysDetailPageScraper {
             description = article.textAt(".event-content"),
             eventType = eventType,
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: parseLabelledDate(details) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = labelledClock(details, DOORS_LABELS),
-            startTime = labelledClock(details, START_LABELS),
+            doorsTime = huxleysClock(details, DOORS_LABELS),
+            startTime = huxleysClock(details, START_LABELS),
             // The linked file is the full-size poster; the nested <img> is a scaled-down variant.
             imageUrl = article.hrefAt("a.event-image"),
             sourceUrl = sourceUrl,
@@ -95,7 +96,7 @@ class HuxleysDetailPageScraper {
             pricePresale = presale,
             priceBoxOffice = boxOffice,
             priceNote = priceNote,
-            genre = parseTaxonomy(article, GENRE_CLASS_PREFIX).joinToString(", ").takeIf { it.isNotBlank() },
+            genre = genres.joinToString(", ").takeIf { it.isNotBlank() },
             soldOut = article.textAt(".canceledsoldout")?.contains(SOLD_OUT_TEXT, ignoreCase = true) == true || cleanedTitle.soldOut,
             status = parseHuxleysStatus(article),
             artists = buildArtistsForEventType(title, subtitle, eventType),
@@ -179,6 +180,9 @@ class HuxleysDetailPageScraper {
     private companion object {
         /** The `article` class prefix carrying the venue's music-genre taxonomy. */
         const val GENRE_CLASS_PREFIX = "event-tags-"
+
+        /** The genre tag of a club night with no act in its title, such as event 11982: it types the night a party. */
+        const val PARTY_TAG = "Party"
 
         /**
          * The `article` class prefix carrying the booking agency. The sibling `presenters-*` taxonomy
