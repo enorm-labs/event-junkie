@@ -20,6 +20,7 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.time.LocalTime
 
 /**
  * Pure HTML parser for Huxleys Neue Welt's `/events` listing (overview) page.
@@ -84,8 +85,8 @@ class HuxleysOverviewPageScraper {
             // The `.date` cell prints day and month abbreviation but no year; the slug's ISO prefix is
             // the only per-card date that states one.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = labelledClock(times, DOORS_LABELS),
-            startTime = labelledClock(times, START_LABELS),
+            doorsTime = huxleysClock(times, DOORS_LABELS),
+            startTime = huxleysClock(times, START_LABELS),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HUXLEYS.sourceIdPrefix}$slug",
             soldOut = card.hasClass(SOLD_OUT_CLASS) || cleanedTitle.soldOut,
@@ -98,6 +99,15 @@ class HuxleysOverviewPageScraper {
 
 /** Path prefix of an event permalink, stripped to obtain the `YYYY-MM-DD-<slug>` (or bare post id) identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"
+
+/**
+ * The clock under one of [labels], or `null` for `00:00`: the editor leaves that in a time it never set. Event 11982 printed
+ * it as both doors and start, on a Saturday night whose own text names the Saturday.
+ */
+internal fun huxleysClock(
+    text: String,
+    labels: String
+): LocalTime? = labelledClock(text, labels)?.takeUnless { it == LocalTime.MIDNIGHT }
 
 /** The CSS class on a sold-out card's `li` (and its badge text). */
 private const val SOLD_OUT_CLASS = "Ausverkauft"

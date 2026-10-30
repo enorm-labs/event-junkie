@@ -151,11 +151,22 @@ internal data class GaertenDerWeltEventPath(
  * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly). The exception is an exhibition, one
  * run under one slug ([gaertenDerWeltRunId]). A rescheduled event changes stamp and therefore
  * `sourceId`: the old row is cleaned up as stale, the correct outcome for a different date.
+ *
+ * A `0000` stamp is a run saved without a time, and the park is closed at midnight, so it gives no start time (event 11795).
+ * The stamp stays in the identity.
  */
 internal fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->
         parseIsoDate(stamp)?.let { date ->
-            GaertenDerWeltEventPath(date = date, startTime = parseTime(time, FOUR_DIGIT_CLOCK), identity = "${stamp}_$time/$slug", slug = slug)
+            GaertenDerWeltEventPath(
+                date = date,
+                startTime =
+                    parseTime(time, FOUR_DIGIT_CLOCK)?.takeUnless {
+                        it == LocalTime.MIDNIGHT
+                    },
+                identity = "${stamp}_$time/$slug",
+                slug = slug
+            )
         }
     }
 
