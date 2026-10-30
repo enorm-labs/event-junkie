@@ -50,6 +50,8 @@ cohesive responsibility is finished, and splitting it produces churn and a worse
 | **Inline a needless hop**   | A one-line wrapper that only forwards, named no better than the thing it forwards |
 | **Narrow a public surface** | `internal` or `private` where nothing outside the module calls it                 |
 
+Before a deduplication, grep for the constant or string the copies share. A scan reports pairs, and the map panel it reported twice had a third copy (#4275).
+
 ## What is not in scope, and why each one bites
 
 - **Anything that changes an API shape.** A BFF response field, a database column, a public function signature another module calls. Those are features or
@@ -75,6 +77,9 @@ and a day.
 So: **if the change reaches `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping` (with `NonArtistNames`, `ArtistNameCleanup`, `ActSplitting`, `SupportLines`), `MoneyExtensions` or anything else every importer calls, the re-seed is
 part of the work.** If you cannot run one, the honest move is to stop and say which finding you left, not to ship the edit and hope.
 
+A change to their tests alone does not reach them. Moving tests between test files, with no test body edited and no production file in the diff, needs no
+re-seed: the JUnit count per class, before and after, proves it (#4279).
+
 ## Steps
 
 1. **Take the before numbers.** `./gradlew koverLog` and the detekt finding count. A refactor that quietly drops coverage is one that deleted a tested branch.
@@ -94,7 +99,8 @@ part of the work.** If you cannot run one, the honest move is to stop and say wh
 made. Three of the rules above stop being advice and become hard limits.
 
 - **Nothing that reaches shared normalization.** The re-seed above is the only check that would catch a regression there, it needs a database and a network
-  scrape, and the runner has neither. Findings in that code get reported, never applied.
+  scrape, and the runner has neither. Findings in that code get reported, never applied. A move-only split of their tests does not reach them, but the size
+  limit below still applies.
 - **One concern per run — one commit, one pull request — and a small one.** Step 2's "one concern per commit" does not license several commits here. A rename, an extraction, a deduplication, a dead-code deletion. Not a class split, not a package move, not a reshaping that
   touches more than a handful of files — a large diff that nobody watched being made is one a reviewer has to re-derive from scratch, and that costs more than
   the finding was worth.
