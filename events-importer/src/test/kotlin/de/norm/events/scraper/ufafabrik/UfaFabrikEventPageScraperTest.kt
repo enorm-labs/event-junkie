@@ -5,6 +5,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 
@@ -57,6 +58,14 @@ class UfaFabrikEventPageScraperTest {
         val event = scrapeBody("""<p>Ein Abend.<br>Ticket-Link: https://shop.example/tickets/2</p>""")!!
         event.ticketUrl shouldBe "https://shop.example/tickets/2"
         event.description shouldBe "Ein Abend."
+    }
+
+    @Test
+    fun `a move note set as a heading is read, and the link to the new date is not`() {
+        val krumbiegel = "https://ufafabrik.de/veranstaltung/39793/sebastian-krumbiegel"
+        val description = scraper.scrape(Jsoup.parse(fixture("ufafabrik-detail-krumbiegel.html"), krumbiegel), krumbiegel)!!.description.orEmpty()
+        description shouldStartWith "Verlegt auf den 02.04.2027. Tickets behalten NICHT ihre Gültigkeit.\nSebastian Krumbiegel ist"
+        description shouldNotContain "Link zum neuen Termin"
     }
 
     @Test

@@ -52,6 +52,26 @@ class ScrapedEventRelocatedOnTest {
     }
 
     @Test
+    fun `toEventEntity postpones a cancelled show whose note names a later date, and keeps the new date's row scheduled`() {
+        // Wühlmäuse: the programme line carries the move.
+        val programme = "Solo-Theater-Comedy mit Nebenwirkungen - VERLEGT auf den 24.04.2027"
+        val left = scrapedEvent(status = "CANCELLED", subtitle = programme, eventDate = LocalDate.of(2026, 10, 31)).toEntity()
+        left.status shouldBe "POSTPONED"
+        left.relocatedTo.shouldBeNull()
+        scrapedEvent(status = "SCHEDULED", subtitle = programme, eventDate = LocalDate.of(2027, 4, 24)).toEntity().status shouldBe "SCHEDULED"
+        // Tempodrom: JSON-LD says cancelled, the subtitle says moved.
+        val subtitle = "Verschoben auf den 31.05.2027 | Rocking & Symphonic"
+        scrapedEvent(status = "CANCELLED", subtitle = subtitle, eventDate = LocalDate.of(2026, 11, 17)).toEntity().status shouldBe "POSTPONED"
+        // A note naming a date before the row's own is no move ahead.
+        val earlier = scrapedEvent(status = "CANCELLED", subtitle = "verlegt auf den 01.09.2026", eventDate = LocalDate.of(2026, 10, 31))
+        earlier.toEntity().status shouldBe "CANCELLED"
+        // A new date and another house: the row it left is a relocation.
+        val moved = scrapedEvent(status = "CANCELLED", statusNote = "verlegt auf den 18.03.27 im Säälchen", eventDate = LocalDate.of(2026, 10, 6)).toEntity()
+        moved.status shouldBe "RELOCATED"
+        moved.relocatedTo shouldBe "Säälchen"
+    }
+
+    @Test
     fun `toEventEntity stores no new date on any status but RELOCATED`() {
         val note = "auf den 13.04.27 verschoben"
         EventStatus.entries.filter { it != EventStatus.RELOCATED }.forEach { status ->

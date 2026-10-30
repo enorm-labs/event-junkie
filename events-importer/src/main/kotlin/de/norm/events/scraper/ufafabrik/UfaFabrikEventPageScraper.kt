@@ -10,8 +10,10 @@ import org.jsoup.nodes.TextNode
 
 /**
  * Pure parser for one show page, `/veranstaltung/<node>/<slug>`: the blurb in the article's
- * `field--name-body`, one paragraph per line. A bare link, a photo credit and the house's line on
- * which vouchers it does not take are dropped; they are not about the show. A guest production that
+ * `field--name-body`, one paragraph or heading per line. A move is set as a heading — "Verlegt auf den
+ * 02.04.2027." — and `toEventEntity` reads the new date from it (#4268). A bare link, a photo credit,
+ * the link to the new date's page and the house's line on which vouchers it does not take are dropped;
+ * they are not about the show. A guest production that
  * sells through its own shop writes `Ticketlink: <url>` or `Zum Ticket-Vorverkauf: <url>` in the
  * blurb instead of the month row's "Karten kaufen" banner (#2626). That URL becomes the ticket link,
  * and a line holding only label and URL leaves the blurb. The month row owns every other field, and
@@ -22,7 +24,7 @@ class UfaFabrikEventPageScraper {
         document: Document,
         url: String
     ): ScrapedEvent? {
-        val paragraphs = document.select("article .field--name-body p")
+        val paragraphs = document.select("article .field--name-body p, article .field--name-body h2")
         val description = description(paragraphs)
         val ticketUrl = paragraphs.firstNotNullOfOrNull(::ticketUrl)
         if (description == null && ticketUrl == null) return null
@@ -60,7 +62,8 @@ class UfaFabrikEventPageScraper {
         }
 
     private companion object {
-        val NOT_ABOUT_THE_SHOW = Regex("""^(?:https?://\S+|fotos?\s*:.*)$|können nicht eingelöst werden""", RegexOption.IGNORE_CASE)
+        val NOT_ABOUT_THE_SHOW =
+            Regex("""^(?:https?://\S+|fotos?\s*:.*|link zum neuen termin\s*:.*)$|können nicht eingelöst werden""", RegexOption.IGNORE_CASE)
         const val TICKET_LABEL = """(?:zum\s+)?ticket(?:-?link|-?vorverkauf|s)?\s*:"""
         val TICKET_LINE = Regex("""^$TICKET_LABEL\s*(https?://\S+)$""", RegexOption.IGNORE_CASE)
         val TICKET_LABEL_BEFORE_LINK = Regex("""$TICKET_LABEL\s*$""", RegexOption.IGNORE_CASE)
