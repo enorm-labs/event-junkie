@@ -77,8 +77,9 @@ abstract class AbstractSinglePageWebsiteImporter(
 
                 val events =
                     secondLanguage?.let { htmlFetcher.withSecondLanguageListing(listing.events, fetchResult.document, it) } ?: listing.events
+                val enriched = htmlFetcher.withEventPages(events, eventPageOwns, ::hasEventPage, enrichFromEventPage)
                 ImportResult.Success(
-                    events = withSharedPages(withEventPages(events)),
+                    events = htmlFetcher.withSharedPages(enriched, sharedPages),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete
@@ -95,15 +96,6 @@ abstract class AbstractSinglePageWebsiteImporter(
         } else {
             ListingPages(scrape(document, url), complete = true)
         }
-
-    private suspend fun withSharedPages(events: List<ScrapedEvent>): List<ScrapedEvent> = sharedPages?.applyTo(htmlFetcher, events) ?: events
-
-    private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val enrich = enrichFromEventPage ?: return events
-        return events.map { event ->
-            if (hasEventPage(event)) htmlFetcher.withEventPageOrFlagged(event, eventPageOwns) { document -> enrich(event, document) } else event
-        }
-    }
 }
 
 /**
@@ -122,3 +114,9 @@ class SharedPages<T : Any>(
         events: List<ScrapedEvent>
     ): List<ScrapedEvent> = htmlFetcher.enrichFromSharedPages(events, parse, apply, pageOwns, secondLanguage = secondLanguage)
 }
+
+/** [events] read through [pages], or [events] unchanged for a venue whose rows have no shared page. */
+internal suspend fun HtmlFetcher.withSharedPages(
+    events: List<ScrapedEvent>,
+    pages: SharedPages<*>?
+): List<ScrapedEvent> = pages?.applyTo(this, events) ?: events

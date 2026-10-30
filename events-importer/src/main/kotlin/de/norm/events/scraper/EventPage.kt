@@ -12,13 +12,30 @@ private val logger = KotlinLogging.logger {}
  * [event] enriched from its own page by [enrich], or [event] flagged [ScrapedEvent.detailUnavailable]
  * when the page yields nothing. The flag makes the upsert keep the fields the page stored last time.
  * [eventPageOwns] names the fields the page supplies over the listing's; a stored value wins for those (#2505).
- * An importer that fetches event pages calls this, or [AbstractSinglePageWebsiteImporter.enrichFromEventPage].
+ * An importer that fetches event pages calls this, or [withEventPages] for a whole listing.
  */
 suspend fun HtmlFetcher.withEventPageOrFlagged(
     event: ScrapedEvent,
     eventPageOwns: Set<ScrapedField> = emptySet(),
     enrich: (Document) -> ScrapedEvent?
 ): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true, detailPageOwns = eventPageOwns)
+
+/**
+ * [events] enriched one by one from the page each links, through [withEventPageOrFlagged]. Only the
+ * rows [hasEventPage] accepts are fetched; a null [enrich] reads no page at all, for a venue whose
+ * listing is the whole record. [eventPageOwns] is as there.
+ */
+internal suspend fun HtmlFetcher.withEventPages(
+    events: List<ScrapedEvent>,
+    eventPageOwns: Set<ScrapedField> = emptySet(),
+    hasEventPage: (ScrapedEvent) -> Boolean = { true },
+    enrich: ((ScrapedEvent, Document) -> ScrapedEvent?)?
+): List<ScrapedEvent> {
+    val read = enrich ?: return events
+    return events.map { event ->
+        if (hasEventPage(event)) withEventPageOrFlagged(event, eventPageOwns) { document -> read(event, document) } else event
+    }
+}
 
 /**
  * [event]'s own page read by [parse], or null when the fetch or the parse fails or [parse] returns null.

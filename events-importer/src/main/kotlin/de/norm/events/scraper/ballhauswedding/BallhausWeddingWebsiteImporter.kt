@@ -9,7 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.withEventPageOrFlagged
+import de.norm.events.scraper.withEventPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -46,12 +46,8 @@ class BallhausWeddingWebsiteImporter(
     ): ImportResult {
         val listing = overviewPageScraper.scrape(htmlFetcher.fetchDocument(url), url, LocalDate.now(clock))
         val events =
-            listing.map { event ->
-                if (event.sourceUrl == url) {
-                    event
-                } else {
-                    htmlFetcher.withEventPageOrFlagged(event, EVENT_PAGE_OWNS) { document -> eventPageScraper.enrich(event, document) }
-                }
+            htmlFetcher.withEventPages(listing, EVENT_PAGE_OWNS, hasEventPage = { it.sourceUrl != url }) { event, document ->
+                eventPageScraper.enrich(event, document)
             }
         logger.info { "Scraped ${events.size} Ballhaus Wedding event(s), ${events.count { it.sourceUrl != url }} with an event page" }
         return ImportResult.Success(events = events, etag = null, lastModified = null)
