@@ -129,7 +129,7 @@ DETAIL_PAGE='^\[[^]]+\] "GET /(de|en)/(events|venues|artists|promoters)/[^ /?]+/
 DETAIL_CALL='^/api/(events|venues|artists|promoters)/[^/]+$'
 # The crawlers that run the SPA on the pages they fetch, as `renderers` measures them, each with the
 # seconds after the page load in which its SPA calls the BFF.
-RENDERERS=(AhrefsBot:0:1 Reflectionbot:1:6 Baiduspider:3:23 Googlebot:2:12)
+RENDERERS=(AhrefsBot:0:1 Reflectionbot:1:6 Baiduspider:3:23 Googlebot:2:12 ExaSearchBot:1:5)
 RENDERER=$(printf '%s\n' "${RENDERERS[@]}" | cut -d: -f1 | paste -sd '|' -)
 
 case "$VERB" in

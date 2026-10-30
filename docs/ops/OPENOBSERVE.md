@@ -196,6 +196,7 @@ same slug within 60 seconds comes from the SPA. `renderers` counts these per age
 | Reflectionbot | 1,000       | 93%            | 1–6        |
 | Baiduspider   | 700         | 87%            | 3–23       |
 | Googlebot     | 230         | 67%            | 2–12       |
+| ExaSearchBot  | 200         | 89%            | 1–5        |
 
 **A crawler that fetches every few seconds covers most of the hour.** AhrefsBot loads a page every 15 seconds, so its window alone covers 13% of the
 time. The scaling keeps the estimate unbiased, but its noise grows with the share covered. Read `frontend.page_loads` beside it.
