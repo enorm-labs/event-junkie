@@ -1,11 +1,14 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -183,6 +186,32 @@ class AstraWebsiteImporterTest {
         }
 
     @Test
+    fun `keeps the overview's acts over a Line-Up block on the event page`() =
+        runTest {
+            val greenLungUrl = "https://www.astra-berlin.de/events/2026-05-18-green-lung"
+            coEvery { htmlFetcher.fetchDocument(greenLungUrl) } returns
+                Jsoup.parse(lineupDetail("/events/2026-05-18-green-lung", "GREEN LUNG"), greenLungUrl)
+
+            val greenLung = events(importer.importEvents(sourceUrl)).first { it.title == "GREEN LUNG" }
+
+            greenLung.artists shouldHaveSize 3
+            greenLung.artists.map { it.name } shouldNotContain "Someone Else"
+        }
+
+    @Test
+    fun `bills the event page's Line-Up block when the overview names nobody`() =
+        runTest {
+            val day3Url = "https://www.astra-berlin.de/events/2027-05-08-out-of-line-weekender-2027"
+            coEvery { htmlFetcher.fetchDocument(day3Url) } returns
+                Jsoup.parse(lineupDetail("/events/2027-05-08-out-of-line-weekender-2027", "OUT OF LINE WEEKENDER 2027"), day3Url)
+
+            val day3 = events(importer.importEvents(sourceUrl)).first { it.sourceUrl == day3Url }
+
+            day3.artists.map { it.name } shouldContainExactly listOf("Someone Else")
+            day3.artists.single().role shouldBe ArtistRole.HEADLINER
+        }
+
+    @Test
     fun `keeps the sold-out flag from both pages`() =
         runTest {
             val chapo = events(importer.importEvents(sourceUrl)).first { it.title == "CHAPO102" }
@@ -191,6 +220,16 @@ class AstraWebsiteImporterTest {
 
     private companion object {
         private const val EMPTY_DETAIL = "<html><body><main class=\"page-content\"></main></body></html>"
+
+        private fun lineupDetail(
+            path: String,
+            title: String
+        ): String =
+            """
+            <html><body><main class="page-content"><article><header class="event"><div class="event__middle-col">
+            <h1 class="event__title"><a class="event__title-link" href="$path">$title</a></h1></div></header>
+            <div class="gig__description"><p>Ein Abend.<br><br>Line-Up:<br>Someone Else</p></div></article></main></body></html>
+            """.trimIndent()
 
         private val TEASER_DETAIL =
             """

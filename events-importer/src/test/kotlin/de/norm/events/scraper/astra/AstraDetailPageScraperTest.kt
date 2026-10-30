@@ -1,5 +1,6 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -81,6 +82,63 @@ class AstraDetailPageScraperTest {
         // The detail page renders neither the kind label nor the artist roster.
         greenLung.eventType.shouldBeNull()
         greenLung.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the Line-Up block of the description, the first act as headliner`() {
+        // Alle Farben, 31 October 2026: the overview types the night a party and names nobody (#4270).
+        val alleFarben = parseFixture("astra-detail-alle-farben.html", "https://www.astra-berlin.de/events/2026-10-31-alle-farben")
+
+        alleFarben.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Alle Farben" to ArtistRole.HEADLINER, "Lahos" to ArtistRole.SUPPORT)
+    }
+
+    @Test
+    fun `reads a Line-Up block of one act`() {
+        lineupOf("Line-Up:<br>Alle Farben") shouldContainExactly listOf("Alle Farben")
+    }
+
+    @Test
+    fun `reads acts on the label's own line`() {
+        lineupOf("Lineup: Alle Farben, Lahos") shouldContainExactly listOf("Alle Farben", "Lahos")
+    }
+
+    @Test
+    fun `splits a back-to-back and a co-billed line into their acts`() {
+        lineupOf("Line-Up:<br>Lahos b2b Alle Farben<br>High On Fire &amp; Gnome") shouldContainExactly
+            listOf("Lahos", "Alle Farben", "High On Fire", "Gnome")
+    }
+
+    @Test
+    fun `takes the set times off the acts`() {
+        lineupOf("Line-Up:<br>Alle Farben 23:30 - 01:00<br>Lahos (22:00 Uhr)<br>21:00 Kiddo") shouldContainExactly
+            listOf("Alle Farben", "Lahos", "Kiddo")
+    }
+
+    @Test
+    fun `keeps a long act name whole and ends the block at a blank line or a sentence`() {
+        lineupOf(
+            "Line-Up:<br>The Mighty Mighty Bosstones Tribute Orchestra<br>" +
+                "und viele weitere Gäste, die wir euch bald hier vorstellen werden!<br>Nobody"
+        ) shouldContainExactly listOf("The Mighty Mighty Bosstones Tribute Orchestra")
+        lineupOf("Line-Up:<br>Lahos<br><br>Tickets an der Abendkasse") shouldContainExactly listOf("Lahos")
+    }
+
+    @Test
+    fun `bills nobody from a description without a Line-Up block`() {
+        lineupOf("Mit Line-up und Liebe.<br>Alle Farben spielt.").shouldBeEmpty()
+        lineupOf("Line-Up:<br>TBA").shouldBeEmpty()
+    }
+
+    private fun lineupOf(paragraph: String): List<String> {
+        val url = "https://www.astra-berlin.de/events/2026-10-31-x"
+        val html =
+            """
+            <main class="page-content"><article><header class="event">
+            <h1 class="event__title"><a class="event__title-link" href="/events/2026-10-31-x">X</a></h1>
+            </header><div class="gig__description"><p>Ein Abend.</p><p>$paragraph</p></div></article></main>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, url), url)!!.artists.map { it.name }
     }
 
     @Test

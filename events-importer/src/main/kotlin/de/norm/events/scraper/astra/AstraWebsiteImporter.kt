@@ -43,6 +43,9 @@ class AstraWebsiteImporter(
      * [AstraOverviewPageScraper]'s festival-day normalization, so the overview type wins and the
      * detail value is only a fallback when the overview had no label. A `Sonstiges` night whose prose
      * calls it a party is one: `BINGO LOCO`, "the best bingo party" (#4009).
+     *
+     * The overview's acts win over a detail page's `Line-Up:` block, which bills only a night the
+     * overview names nobody for (#4270).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -51,7 +54,10 @@ class AstraWebsiteImporter(
         primary.withGapsFrom(fallback).let { merged ->
             // Overview is authoritative for the type (it normalizes mislabeled festival days); the detail
             // kind only when the overview had no label.
-            merged.copy(eventType = astraEventType(fallback.eventType ?: primary.eventType, merged.description))
+            merged.copy(
+                eventType = astraEventType(fallback.eventType ?: primary.eventType, merged.description),
+                artists = fallback.artists.ifEmpty { primary.artists }
+            )
         }
 }
 
