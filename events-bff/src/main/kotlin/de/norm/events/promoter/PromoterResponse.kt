@@ -18,15 +18,15 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @Schema(description = "Compact promoter summary")
 data class PromoterSummaryResponse(
-    @Schema(description = "Database primary key", example = "3")
+    @Schema(description = ID_DESCRIPTION, example = "3")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "36-concerts")
+    @Schema(description = SLUG_DESCRIPTION, example = "36-concerts")
     val slug: String,
-    @Schema(description = "Display name of the promoter", example = "36 Concerts")
+    @Schema(description = NAME_DESCRIPTION, example = "36 Concerts")
     val name: String,
-    @Schema(description = "URL of the promoter's website or social page")
+    @Schema(description = WEBSITE_URL_DESCRIPTION)
     val websiteUrl: String?,
-    @Schema(description = "URL of the promoter's logo image")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -70,15 +70,15 @@ data class PromoterSummaryResponse(
  */
 @Schema(description = "Full promoter detail")
 data class PromoterDetailResponse(
-    @Schema(description = "Database primary key", example = "3")
+    @Schema(description = ID_DESCRIPTION, example = "3")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "36-concerts")
+    @Schema(description = SLUG_DESCRIPTION, example = "36-concerts")
     val slug: String,
-    @Schema(description = "Display name of the promoter", example = "36 Concerts")
+    @Schema(description = NAME_DESCRIPTION, example = "36 Concerts")
     val name: String,
-    @Schema(description = "URL of the promoter's website or social page")
+    @Schema(description = WEBSITE_URL_DESCRIPTION)
     val websiteUrl: String?,
-    @Schema(description = "URL of the promoter's logo image")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -92,9 +92,9 @@ data class PromoterDetailResponse(
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
-    @Schema(description = "Short prose description of the promoter")
+    @Schema(description = DESCRIPTION_DESCRIPTION)
     val description: String?,
-    @Schema(description = "Language of `description`: `de` or `en`. Null when the language is unknown.", example = "en")
+    @Schema(description = DESCRIPTION_LANGUAGE_DESCRIPTION, example = "en")
     val descriptionLanguage: String?,
     @Schema(
         description =
@@ -103,7 +103,7 @@ data class PromoterDetailResponse(
         example = "Die Hausagentur von Lido, Astra und Bi Nuu."
     )
     val descriptionAlt: String?,
-    @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
+    @Schema(description = DESCRIPTION_ALT_LANGUAGE_DESCRIPTION, example = "de")
     val descriptionAltLanguage: String?
 ) {
     companion object {
@@ -138,21 +138,21 @@ data class PromoterDetailResponse(
  */
 @Schema(description = "Promoter list row")
 data class PromoterListItemResponse(
-    @Schema(description = "Database primary key", example = "3")
+    @Schema(description = ID_DESCRIPTION, example = "3")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "36-concerts")
+    @Schema(description = SLUG_DESCRIPTION, example = "36-concerts")
     val slug: String,
-    @Schema(description = "Display name of the promoter", example = "36 Concerts")
+    @Schema(description = NAME_DESCRIPTION, example = "36 Concerts")
     val name: String,
-    @Schema(description = "URL of the promoter's website or social page")
+    @Schema(description = WEBSITE_URL_DESCRIPTION)
     val websiteUrl: String?,
-    @Schema(description = "Short prose description of the promoter")
+    @Schema(description = DESCRIPTION_DESCRIPTION)
     val description: String?,
-    @Schema(description = "Language of `description`: `de` or `en`. Null when the language is unknown.", example = "en")
+    @Schema(description = DESCRIPTION_LANGUAGE_DESCRIPTION, example = "en")
     val descriptionLanguage: String?,
     @Schema(description = "The same description in the other language, written by hand (#328).")
     val descriptionAlt: String?,
-    @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
+    @Schema(description = DESCRIPTION_ALT_LANGUAGE_DESCRIPTION, example = "de")
     val descriptionAltLanguage: String?,
     @Schema(description = "Events from today on that credit this promoter", example = "220")
     val upcomingEventCount: Int,
@@ -181,3 +181,12 @@ data class PromoterListItemResponse(
             )
     }
 }
+
+private const val ID_DESCRIPTION = "Database primary key"
+private const val SLUG_DESCRIPTION = "URL-friendly identifier"
+private const val NAME_DESCRIPTION = "Display name of the promoter"
+private const val WEBSITE_URL_DESCRIPTION = "URL of the promoter's website or social page"
+private const val IMAGE_URL_DESCRIPTION = "URL of the promoter's logo image"
+private const val DESCRIPTION_DESCRIPTION = "Short prose description of the promoter"
+private const val DESCRIPTION_LANGUAGE_DESCRIPTION = "Language of `description`: `de` or `en`. Null when the language is unknown."
+private const val DESCRIPTION_ALT_LANGUAGE_DESCRIPTION = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is."
