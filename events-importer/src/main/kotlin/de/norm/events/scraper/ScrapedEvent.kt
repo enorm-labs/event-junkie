@@ -15,6 +15,8 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import java.math.BigDecimal
+import java.net.URI
+import java.net.URISyntaxException
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -334,7 +336,7 @@ data class ScrapedEvent(
             imageWithheld = licences.withholdsImage() && !imageUrl.isNullOrBlank(),
             sourceUrl = stripClickIdentifiers(sourceUrl),
             lineupSourceUrl = lineupSourceUrl,
-            ticketUrl = ticketUrl?.let(::stripClickIdentifiers),
+            ticketUrl = ticketUrl?.let(::linkWithHost)?.let(::stripClickIdentifiers),
             genre = storedGenre(),
             pricePresale = pricePresale?.normalizeMoneyScale(),
             priceBoxOffice = priceBoxOffice?.normalizeMoneyScale(),
@@ -346,6 +348,29 @@ data class ScrapedEvent(
             .withSecondLanguage(publisherAlt(storedDescription, detected), existing)
     }
 }
+
+/**
+ * [url] when it names a host. A scheme alone (`https://`), a relative path or a `mailto:` gives a Tickets button that
+ * leads nowhere (#4140). The authority, not [URI.getHost], decides, so a host with an underscore stays. A link
+ * [URI] refuses (a space in the path) is dropped only when nothing follows its `://`.
+ */
+private fun ScrapedEvent.linkWithHost(url: String): String? {
+    val hasHost =
+        try {
+            !URI(url).rawAuthority.isNullOrBlank()
+        } catch (_: URISyntaxException) {
+            !EMPTY_AUTHORITY.matches(url)
+        }
+    if (!hasHost) {
+        logger.at(Level.DEBUG) {
+            message = "Ticket URL '$url' of '$title' names no host; not stored"
+            payload = mapOf(LogFields.EVENT_SOURCE_ID to sourceId)
+        }
+    }
+    return url.takeIf { hasHost }
+}
+
+private val EMPTY_AUTHORITY = Regex("""\s*[A-Za-z][A-Za-z0-9+.-]*://\s*(?:[/?#].*)?""")
 
 /**
  * Whether the row is stored sold out. A marker in the title or subtitle is the venue's word, whether or
