@@ -1,13 +1,19 @@
 package de.norm.events.scraper.astra
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.paragraphText
 import de.norm.events.scraper.parsePresaleAndBoxOfficePrices
+import de.norm.events.scraper.splitBackToBack
+import de.norm.events.scraper.splitSupportActs
+import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -21,7 +27,9 @@ import org.jsoup.nodes.Element
  * (`.gig__description`, `.detail__description`).
  *
  * No artist roster here, so `artists` is left to the overview via
- * [AstraWebsiteImporter.fillGapsFromOverview]. A `kind` label may render, but as the raw
+ * [AstraWebsiteImporter.fillGapsFromOverview]. The one exception is a `Line-Up:` block in the
+ * description ([parseLineup]), which the importer uses only when the overview billed nobody (#4270).
+ * A `kind` label may render, but as the raw
  * per-day value without the overview's festival-day normalization, so the overview type wins
  * and the detail value is only a fallback.
  *
@@ -70,8 +78,36 @@ class AstraDetailPageScraper {
             soldOut = block.soldOut,
             status = block.status,
             promoters = parsePromoters(content),
-            promoterWebsites = parsePromoterWebsites(content)
+            promoterWebsites = parsePromoterWebsites(content),
+            artists = parseLineup(content)
         )
+    }
+
+    /**
+     * The acts of a `Line-Up:` block in the description (#4270): the label on its own `<br>` line or
+     * leading the first act, then one act per line up to a blank line or the paragraph's end. A line
+     * too long for a name is prose and ends the block too. Set times come off. The first act heads
+     * the bill and the rest support, as [artistsOf] bills a subtitle line-up (#3154).
+     */
+    private fun parseLineup(content: Element): List<ScrapedArtist> =
+        content
+            .select(".gig__description p, .detail__description p")
+            .firstNotNullOfOrNull { lineupLines(it.textLines(keepBlankLines = true)) }
+            .orEmpty()
+            .map { it.replace(SET_TIME, "").trim() }
+            .flatMap(::splitBackToBack)
+            .flatMap(::splitSupportActs)
+            .filterNot(::isNonArtistName)
+            .distinctBy { it.lowercase() }
+            .mapIndexed { i, name -> ScrapedArtist(name = name, role = if (i == 0) ArtistRole.HEADLINER else ArtistRole.SUPPORT) }
+
+    /** The lines after the `Line-Up:` label in one paragraph's [lines], or `null` without a label. */
+    private fun lineupLines(lines: List<String>): List<String>? {
+        val labelIndex = lines.indexOfFirst { LINEUP_LABEL.containsMatchIn(it) }
+        if (labelIndex < 0) return null
+        val sameLine = lines[labelIndex].replaceFirst(LINEUP_LABEL, "").trim()
+        return (listOfNotNull(sameLine.ifBlank { null }) + lines.drop(labelIndex + 1))
+            .takeWhile { it.isNotBlank() && it.split(WHITESPACE).size <= MAX_NAME_WORDS }
     }
 
     /**
@@ -102,4 +138,20 @@ class AstraDetailPageScraper {
         content
             .select(".gig__description p, .detail__description p")
             .paragraphText(distinct = true)
+
+    private companion object {
+        /** `Line-Up:`, `Lineup:` or `Line up:` opening a line; the colon keeps prose that starts so out. */
+        val LINEUP_LABEL = Regex("""^\s*line\s*-?\s*up\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** One printed slot: `23:30`, `22.00 Uhr`, `(23:30 - 01:00)`. */
+        const val SLOT = """\(?\d{1,2}[:.]\d{2}(?:\s*[-–]\s*\d{1,2}[:.]\d{2})?(?:\s*uhr)?\)?"""
+
+        /** A set time before or after the act: `22:00 Alle Farben`, `Lahos (23:30 - 01:00 Uhr)`. */
+        val SET_TIME = Regex("""^$SLOT\s*[-–|:]?\s*|\s*[-–|]?\s*$SLOT\s*$""", RegexOption.IGNORE_CASE)
+
+        val WHITESPACE = Regex("""\s+""")
+
+        /** More words than this on one line is a sentence, not an act. */
+        const val MAX_NAME_WORDS = 8
+    }
 }
