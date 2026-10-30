@@ -20,23 +20,23 @@ import java.time.LocalDate
  */
 @Schema(description = "Compact venue summary")
 data class VenueSummaryResponse(
-    @Schema(description = "Database primary key", example = "42")
+    @Schema(description = ID_DESCRIPTION, example = "42")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "astra-kulturhaus")
+    @Schema(description = SLUG_DESCRIPTION, example = "astra-kulturhaus")
     val slug: String,
-    @Schema(description = "Display name of the venue", example = "Astra Kulturhaus")
+    @Schema(description = NAME_DESCRIPTION, example = "Astra Kulturhaus")
     val name: String,
-    @Schema(description = "City where the venue is located", example = "Berlin")
+    @Schema(description = CITY_DESCRIPTION, example = "Berlin")
     val city: String,
-    @Schema(description = "Street address of the venue", example = "Revaler Str. 99")
+    @Schema(description = ADDRESS_DESCRIPTION, example = "Revaler Str. 99")
     val address: String?,
-    @Schema(description = "Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug", example = "kreuzberg")
+    @Schema(description = DISTRICT_DESCRIPTION, example = "kreuzberg")
     val district: String?,
-    @Schema(description = "Geographic latitude for map display", example = "52.507242")
+    @Schema(description = LATITUDE_DESCRIPTION, example = "52.507242")
     val latitude: BigDecimal?,
-    @Schema(description = "Geographic longitude for map display", example = "13.451803")
+    @Schema(description = LONGITUDE_DESCRIPTION, example = "13.451803")
     val longitude: BigDecimal?,
-    @Schema(description = "URL of the venue's logo or photo")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -86,23 +86,23 @@ data class VenueSummaryResponse(
  */
 @Schema(description = "Venue on the venue list")
 data class VenueListItemResponse(
-    @Schema(description = "Database primary key", example = "42")
+    @Schema(description = ID_DESCRIPTION, example = "42")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "astra-kulturhaus")
+    @Schema(description = SLUG_DESCRIPTION, example = "astra-kulturhaus")
     val slug: String,
-    @Schema(description = "Display name of the venue", example = "Astra Kulturhaus")
+    @Schema(description = NAME_DESCRIPTION, example = "Astra Kulturhaus")
     val name: String,
-    @Schema(description = "City where the venue is located", example = "Berlin")
+    @Schema(description = CITY_DESCRIPTION, example = "Berlin")
     val city: String,
-    @Schema(description = "Street address of the venue", example = "Revaler Str. 99")
+    @Schema(description = ADDRESS_DESCRIPTION, example = "Revaler Str. 99")
     val address: String?,
-    @Schema(description = "Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug", example = "kreuzberg")
+    @Schema(description = DISTRICT_DESCRIPTION, example = "kreuzberg")
     val district: String?,
-    @Schema(description = "Geographic latitude for map display", example = "52.507242")
+    @Schema(description = LATITUDE_DESCRIPTION, example = "52.507242")
     val latitude: BigDecimal?,
-    @Schema(description = "Geographic longitude for map display", example = "13.451803")
+    @Schema(description = LONGITUDE_DESCRIPTION, example = "13.451803")
     val longitude: BigDecimal?,
-    @Schema(description = "URL of the venue's logo or photo")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -182,23 +182,23 @@ data class VenueListItemResponse(
  */
 @Schema(description = "Full venue detail")
 data class VenueDetailResponse(
-    @Schema(description = "Database primary key", example = "42")
+    @Schema(description = ID_DESCRIPTION, example = "42")
     val id: Long,
-    @Schema(description = "URL-friendly identifier", example = "astra-kulturhaus")
+    @Schema(description = SLUG_DESCRIPTION, example = "astra-kulturhaus")
     val slug: String,
-    @Schema(description = "Display name of the venue", example = "Astra Kulturhaus")
+    @Schema(description = NAME_DESCRIPTION, example = "Astra Kulturhaus")
     val name: String,
-    @Schema(description = "Street address of the venue", example = "Revaler Str. 99")
+    @Schema(description = ADDRESS_DESCRIPTION, example = "Revaler Str. 99")
     val address: String?,
-    @Schema(description = "City where the venue is located", example = "Berlin")
+    @Schema(description = CITY_DESCRIPTION, example = "Berlin")
     val city: String,
     @Schema(description = "Postal code of the venue's address", example = "10245")
     val postalCode: String?,
-    @Schema(description = "Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug", example = "kreuzberg")
+    @Schema(description = DISTRICT_DESCRIPTION, example = "kreuzberg")
     val district: String?,
-    @Schema(description = "Geographic latitude for map display", example = "52.507242")
+    @Schema(description = LATITUDE_DESCRIPTION, example = "52.507242")
     val latitude: BigDecimal?,
-    @Schema(description = "Geographic longitude for map display", example = "13.451803")
+    @Schema(description = LONGITUDE_DESCRIPTION, example = "13.451803")
     val longitude: BigDecimal?,
     @Schema(description = "URL of the venue's official website")
     val websiteUrl: String?,
@@ -212,7 +212,7 @@ data class VenueDetailResponse(
         example = "https://www.facebook.com/astrakulturhaus/"
     )
     val facebookUrl: String?,
-    @Schema(description = "URL of the venue's logo or photo")
+    @Schema(description = IMAGE_URL_DESCRIPTION)
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = IMAGE_ATTRIBUTION_EXAMPLE)
     val imageAttribution: String?,
@@ -327,3 +327,12 @@ private const val PROGRAMME_FAMILIES_DESCRIPTION =
     "Genre family slugs the venue mostly programmes, most frequent first, derived from its events of the last year and ahead."
 private const val PROGRAMME_EVENT_TYPES_DESCRIPTION =
     "Event types the venue hosts, most frequent first, derived from its events like `programmeFamilies`."
+private const val ID_DESCRIPTION = "Database primary key"
+private const val SLUG_DESCRIPTION = "URL-friendly identifier"
+private const val NAME_DESCRIPTION = "Display name of the venue"
+private const val CITY_DESCRIPTION = "City where the venue is located"
+private const val ADDRESS_DESCRIPTION = "Street address of the venue"
+private const val DISTRICT_DESCRIPTION = "Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug"
+private const val LATITUDE_DESCRIPTION = "Geographic latitude for map display"
+private const val LONGITUDE_DESCRIPTION = "Geographic longitude for map display"
+private const val IMAGE_URL_DESCRIPTION = "URL of the venue's logo or photo"

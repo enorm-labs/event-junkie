@@ -26,17 +26,17 @@ import java.time.OffsetDateTime
  */
 @Schema(description = "Compact event summary for lists and calendar")
 data class EventSummaryResponse(
-    @Schema(description = "Database primary key", example = "101")
+    @Schema(description = ID_DESCRIPTION, example = "101")
     val id: Long,
-    @Schema(description = "URL-friendly identifier (format: {date}-{venue}-{title})", example = "2026-06-18-lido-sam-prekop-john-mcentire")
+    @Schema(description = SLUG_DESCRIPTION, example = "2026-06-18-lido-sam-prekop-john-mcentire")
     val slug: String,
-    @Schema(description = "Main headline or name of the event", example = "THE ADICTS")
+    @Schema(description = TITLE_DESCRIPTION, example = "THE ADICTS")
     val title: String,
-    @Schema(description = "Secondary line, often a tour name or support acts")
+    @Schema(description = SUBTITLE_DESCRIPTION)
     val subtitle: String?,
-    @Schema(description = "Kind of event", example = "CONCERT")
+    @Schema(description = EVENT_TYPE_DESCRIPTION, example = "CONCERT")
     val eventType: EventType,
-    @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
+    @Schema(description = STATUS_DESCRIPTION, example = "SCHEDULED")
     val status: EventStatus,
     @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
@@ -46,11 +46,11 @@ data class EventSummaryResponse(
     val spokenLanguages: List<String>? = null,
     @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
     val subtitleLanguage: String? = null,
-    @Schema(description = "Calendar date of the event", example = "2026-06-12")
+    @Schema(description = EVENT_DATE_DESCRIPTION, example = "2026-06-12")
     val eventDate: LocalDate,
-    @Schema(description = "Time when doors open to the public", example = "19:00")
+    @Schema(description = DOORS_TIME_DESCRIPTION, example = "19:00")
     val doorsTime: LocalTime?,
-    @Schema(description = "Time when the show/performance starts", example = "20:00")
+    @Schema(description = START_TIME_DESCRIPTION, example = "20:00")
     val startTime: LocalTime?,
     @Schema(description = END_DATE_DESCRIPTION, example = "2026-06-15")
     val endDate: LocalDate?,
@@ -68,23 +68,23 @@ data class EventSummaryResponse(
     val intrinsicHeight: Int?,
     @Schema(description = IMAGE_WITHHELD_DESCRIPTION, example = "false")
     val imageWithheld: Boolean,
-    @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
+    @Schema(description = PRICE_PRESALE_DESCRIPTION, example = "38.00")
     val pricePresale: BigDecimal?,
-    @Schema(description = "Box office ticket price (Abendkasse)", example = "45.00")
+    @Schema(description = PRICE_BOX_OFFICE_DESCRIPTION, example = "45.00")
     val priceBoxOffice: BigDecimal?,
-    @Schema(description = "ISO 4217 currency code for prices", example = "EUR")
+    @Schema(description = PRICE_CURRENCY_DESCRIPTION, example = "EUR")
     val priceCurrency: String,
-    @Schema(description = "Free-form pricing note for non-standard pricing")
+    @Schema(description = PRICE_NOTE_DESCRIPTION)
     val priceNote: String?,
-    @Schema(description = "Whether all tickets for this event are sold out", example = "false")
+    @Schema(description = SOLD_OUT_DESCRIPTION, example = "false")
     val soldOut: Boolean,
-    @Schema(description = "Whether the event is free to attend (free entry)", example = "false")
+    @Schema(description = FREE_DESCRIPTION, example = "false")
     val free: Boolean,
-    @Schema(description = "The venue where this event takes place")
+    @Schema(description = VENUE_DESCRIPTION)
     val venue: VenueSummaryResponse,
     @Schema(description = "Artist names in billing order (headliner first)", example = "[\"The Adicts\", \"Maid Of Ace\"]")
     val artistNames: List<String>,
-    @Schema(description = "Normalized genre tags", example = "[\"Punk\"]")
+    @Schema(description = GENRE_TAGS_DESCRIPTION, example = "[\"Punk\"]")
     val genreTags: List<String>,
     @Schema(description = FESTIVAL_DESCRIPTION)
     val festival: FestivalSummaryResponse? = null,
@@ -177,13 +177,13 @@ data class EventListPage(
  */
 @Schema(description = "Full event detail with embedded associations")
 data class EventDetailResponse(
-    @Schema(description = "Database primary key", example = "101")
+    @Schema(description = ID_DESCRIPTION, example = "101")
     val id: Long,
-    @Schema(description = "URL-friendly identifier (format: {date}-{venue}-{title})", example = "2026-06-18-lido-sam-prekop-john-mcentire")
+    @Schema(description = SLUG_DESCRIPTION, example = "2026-06-18-lido-sam-prekop-john-mcentire")
     val slug: String,
-    @Schema(description = "Main headline or name of the event", example = "THE ADICTS")
+    @Schema(description = TITLE_DESCRIPTION, example = "THE ADICTS")
     val title: String,
-    @Schema(description = "Secondary line, often a tour name or support acts")
+    @Schema(description = SUBTITLE_DESCRIPTION)
     val subtitle: String?,
     @Schema(description = "Longer description or artist biography")
     val description: String?,
@@ -209,9 +209,9 @@ data class EventDetailResponse(
         example = "PUBLISHER"
     )
     val descriptionAltOrigin: String?,
-    @Schema(description = "Kind of event", example = "CONCERT")
+    @Schema(description = EVENT_TYPE_DESCRIPTION, example = "CONCERT")
     val eventType: EventType,
-    @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
+    @Schema(description = STATUS_DESCRIPTION, example = "SCHEDULED")
     val status: EventStatus,
     @Schema(description = RELOCATED_TO_DESCRIPTION, example = "Hole44")
     val relocatedTo: String? = null,
@@ -221,11 +221,11 @@ data class EventDetailResponse(
     val spokenLanguages: List<String>? = null,
     @Schema(description = SUBTITLE_LANGUAGE_DESCRIPTION, example = "de")
     val subtitleLanguage: String? = null,
-    @Schema(description = "Calendar date of the event", example = "2026-06-12")
+    @Schema(description = EVENT_DATE_DESCRIPTION, example = "2026-06-12")
     val eventDate: LocalDate,
-    @Schema(description = "Time when doors open to the public", example = "19:00")
+    @Schema(description = DOORS_TIME_DESCRIPTION, example = "19:00")
     val doorsTime: LocalTime?,
-    @Schema(description = "Time when the show/performance starts", example = "20:00")
+    @Schema(description = START_TIME_DESCRIPTION, example = "20:00")
     val startTime: LocalTime?,
     @Schema(description = END_DATE_DESCRIPTION, example = "2026-06-15")
     val endDate: LocalDate?,
@@ -265,19 +265,19 @@ data class EventDetailResponse(
     val facebookEventUrl: String?,
     @Schema(description = "Music genre or style tag (raw text from source)", example = "Punk")
     val genre: String?,
-    @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
+    @Schema(description = PRICE_PRESALE_DESCRIPTION, example = "38.00")
     val pricePresale: BigDecimal?,
-    @Schema(description = "Box office ticket price (Abendkasse)", example = "45.00")
+    @Schema(description = PRICE_BOX_OFFICE_DESCRIPTION, example = "45.00")
     val priceBoxOffice: BigDecimal?,
-    @Schema(description = "ISO 4217 currency code for prices", example = "EUR")
+    @Schema(description = PRICE_CURRENCY_DESCRIPTION, example = "EUR")
     val priceCurrency: String,
-    @Schema(description = "Free-form pricing note for non-standard pricing")
+    @Schema(description = PRICE_NOTE_DESCRIPTION)
     val priceNote: String?,
-    @Schema(description = "Whether all tickets for this event are sold out", example = "false")
+    @Schema(description = SOLD_OUT_DESCRIPTION, example = "false")
     val soldOut: Boolean,
-    @Schema(description = "Whether the event is free to attend (free entry)", example = "false")
+    @Schema(description = FREE_DESCRIPTION, example = "false")
     val free: Boolean,
-    @Schema(description = "The venue where this event takes place")
+    @Schema(description = VENUE_DESCRIPTION)
     val venue: VenueSummaryResponse,
     @Schema(
         description =
@@ -290,7 +290,7 @@ data class EventDetailResponse(
     val lineup: List<LineupEntryResponse>,
     @Schema(description = "Promoters or presenters responsible for this event")
     val promoters: List<PromoterSummaryResponse>,
-    @Schema(description = "Normalized genre tags", example = "[\"Punk\"]")
+    @Schema(description = GENRE_TAGS_DESCRIPTION, example = "[\"Punk\"]")
     val genreTags: List<String>,
     @Schema(
         description =
@@ -500,3 +500,20 @@ private const val POSTER_SOURCES_DESCRIPTION =
 private const val IMAGE_WITHHELD_DESCRIPTION =
     "True when a licence prohibition removed the image. False both when the venue " +
         "published none and when one is shown — a placeholder renders either way."
+private const val ID_DESCRIPTION = "Database primary key"
+private const val SLUG_DESCRIPTION = "URL-friendly identifier (format: {date}-{venue}-{title})"
+private const val TITLE_DESCRIPTION = "Main headline or name of the event"
+private const val SUBTITLE_DESCRIPTION = "Secondary line, often a tour name or support acts"
+private const val EVENT_TYPE_DESCRIPTION = "Kind of event"
+private const val STATUS_DESCRIPTION = "Scheduling status of the event"
+private const val EVENT_DATE_DESCRIPTION = "Calendar date of the event"
+private const val DOORS_TIME_DESCRIPTION = "Time when doors open to the public"
+private const val START_TIME_DESCRIPTION = "Time when the show/performance starts"
+private const val PRICE_PRESALE_DESCRIPTION = "Presale ticket price (Vorverkauf)"
+private const val PRICE_BOX_OFFICE_DESCRIPTION = "Box office ticket price (Abendkasse)"
+private const val PRICE_CURRENCY_DESCRIPTION = "ISO 4217 currency code for prices"
+private const val PRICE_NOTE_DESCRIPTION = "Free-form pricing note for non-standard pricing"
+private const val SOLD_OUT_DESCRIPTION = "Whether all tickets for this event are sold out"
+private const val FREE_DESCRIPTION = "Whether the event is free to attend (free entry)"
+private const val VENUE_DESCRIPTION = "The venue where this event takes place"
+private const val GENRE_TAGS_DESCRIPTION = "Normalized genre tags"
