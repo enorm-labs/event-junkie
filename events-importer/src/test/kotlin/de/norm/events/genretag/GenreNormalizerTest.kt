@@ -401,6 +401,13 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `Goa and Goa Trance map to Goa, and the spaced hard styles fold onto their tags`() {
+        normalizeGenre("Goa, Goa Trance").shouldContainExactly("Goa")
+        normalizeGenre("Hard Trance, Hard Bounce").shouldContainExactly("Hardtrance", "Hardbounce")
+        normalizeGenre("Hardtrance").shouldContainExactly("Hardtrance")
+    }
+
+    @Test
     fun `Progressive Psytrance maps to Psytrance`() {
         normalizeGenre("Progressive Psytrance").shouldContainExactly("Psytrance")
         nonGenreTokens("Progressive Psytrance").shouldBeEmpty()

@@ -94,12 +94,7 @@ class MbiaOverviewPageScraper {
             sourceUrl = path?.let { "$SITE_URL$it" } ?: baseUrl,
             sourceId = "${EventSource.M_BIA.sourceIdPrefix}$id",
             ticketUrl = record.stringOrNull("ticketUrl")?.trim()?.takeIf { url -> EVENT_TICKET.any { it.containsMatchIn(url) } },
-            genre =
-                record
-                    .path("musicStyle")
-                    .mapNotNull { it.asString("").trim().blankToNull() }
-                    .joinToString(", ")
-                    .blankToNull(),
+            genre = mbiaGenre(record.path("musicStyle").mapNotNull { it.asString("").trim().blankToNull() }, title),
             artists = lineup(record).ifEmpty { actsFromTitle(title) }
         )
     }
@@ -192,6 +187,20 @@ internal fun actsFromTitle(title: String): List<ScrapedArtist> {
         .distinct()
         .map { ScrapedArtist(name = it, role = ArtistRole.DJ, titleDerived = true) }
 }
+
+/**
+ * The record's styles, plus `Goa` when the title names a Goa night (`GOA MAGIC`, `Goanautika`):
+ * the styles never list Goa, and the series names are the only place the club says it.
+ */
+internal fun mbiaGenre(
+    styles: List<String>,
+    title: String
+): String? = (styles + listOfNotNull(GOA.takeIf { GOA_NIGHT.containsMatchIn(title) })).distinct().joinToString(", ").blankToNull()
+
+private const val GOA = "Goa"
+
+/** `GOA` or `Goanautika` as a word of the title. */
+private val GOA_NIGHT = Regex("""\bgoa(?:nautika)?\b""", RegexOption.IGNORE_CASE)
 
 /** `[pres. <acts>]` in brackets. */
 private val PRESENTED_ACTS = Regex("""\[\s*pres(?:ents)?\.?\s+([^\]]+)\]""", RegexOption.IGNORE_CASE)
