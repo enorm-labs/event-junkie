@@ -85,13 +85,14 @@ class GalilaeakircheOverviewPageScraper {
     /**
      * A concert bills its act at the head of the title, before the programme's name for the night: `Mikail Yakut: Kinto’s
      * Dance – Album Release`, `Jimi Tenor “Wormhole Mystic” Record Release Show`. A `präsentiert` title names a series.
+     * A ` | ` in the head is a co-bill (`Maurizio Ravalico | Isambard Khroustaliov – …`), so it splits there as a `+` does.
      */
     private fun titleActs(
         title: String,
         eventType: String
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name || PRESENTS.containsMatchIn(title)) return emptyList()
-        return headlinersFromTitle(title.split(TITLE_TAIL, limit = 2).first())
+        return headlinersFromTitle(title.split(TITLE_TAIL, limit = 2).first().replace(CO_BILL, " + "))
     }
 
     private companion object {
@@ -105,6 +106,8 @@ class GalilaeakircheOverviewPageScraper {
 
         /** Where the night's name begins: a colon, a spaced dash, a bracket or quote, or a release-show tag. */
         val TITLE_TAIL = Regex("""\s*:\s|\s+[–—-]\s+|\s+[(“"„]|\s+(?:pre-)?(?:album|record)[- ]?release""", RegexOption.IGNORE_CASE)
+
+        val CO_BILL = Regex("""\s+\|\s+""")
 
         val DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{2,4}""")
 
