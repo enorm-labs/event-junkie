@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
@@ -12,6 +13,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Optional
+
+/**
+ * An http or https link whose host is not empty (#4288). Anything may follow the host, because an imported
+ * ticket link can carry a space in its path and a PATCH re-validates the stored value.
+ */
+private const val LINK_WITH_HOST = "^https?://[^\\s/?#].*$"
 
 /**
  * Request body for creating or updating an event.
@@ -62,9 +69,11 @@ data class EventRequest(
     )
     val sourceId: String,
     @field:Size(max = 2048, message = "Ticket URL must not exceed 2048 characters")
+    @field:Pattern(regexp = LINK_WITH_HOST, message = "Ticket URL must be an http or https URL with a host")
     @Schema(description = "URL to the external ticket shop", example = "https://www.eventim.de/event/...")
     val ticketUrl: String? = null,
     @field:Size(max = 2048, message = "Facebook event URL must not exceed 2048 characters")
+    @field:Pattern(regexp = LINK_WITH_HOST, message = "Facebook event URL must be an http or https URL with a host")
     @Schema(description = "Direct link to the Facebook event page", example = "https://fb.me/e/60JFqXAUr")
     val facebookEventUrl: String? = null,
     @field:Size(max = 255, message = "Genre must not exceed 255 characters")
