@@ -56,7 +56,7 @@ describe('AccountEntry', () => {
     expect(view.find('a').attributes('aria-label')).toBe('Sign in')
   })
 
-  it('signed in, opens a menu with the address, Following, My calendar and the account page', async () => {
+  it('signed in, opens a menu with the address, My calendar and the account page', async () => {
     setSession(me as never)
     await mountAt('/en/events')
     await openMenu()
@@ -67,7 +67,6 @@ describe('AccountEntry', () => {
       a.getAttribute('href'),
     ])
     expect(links).toEqual([
-      ['Following', '/en/following'],
       ['My calendar', '/en/my-calendar'],
       ['Your account', '/en/account'],
     ])

@@ -40,9 +40,13 @@ const { account } = useSession()
 
 const viewLoaded = useViewLoaded()
 
-// One list for the inline row and the phone sheet, so the two cannot drift.
+// One list for the inline row and the phone sheet, so the two cannot drift. Signed in, Following
+// sits beside Events: it is the same list, narrowed to what the visitor follows.
 const sectionLinks = computed(() =>
-  (['events', 'calendar', 'map', 'venues', 'promoters', 'about'] as const).map((section) => ({
+  (account.value
+    ? (['events', 'following', 'calendar', 'map', 'venues', 'promoters', 'about'] as const)
+    : (['events', 'calendar', 'map', 'venues', 'promoters', 'about'] as const)
+  ).map((section) => ({
     to: localePath(`/${section}`),
     label: t(`common.nav.${section}`),
   })),
@@ -69,7 +73,8 @@ const sectionLinks = computed(() =>
          through, and z-30: below HeaderMenu's overlay and sheet and the skip link. -->
     <header class="sticky top-0 z-30 border-b border-border bg-background">
       <!-- Below `lg` the links drop to a second line: one row needs about 810px in German, and the
-           guard in e2e/smoke.spec.ts checks the widths in between in both languages. -->
+           guard in e2e/smoke.spec.ts checks the widths in between in both languages. Signed in, with
+           Following and the bell, e2e/following.spec.ts checks the same widths. -->
       <!-- Named because the footer contributes a second navigation landmark; e2e selectors address
            it by this name. -->
       <nav
@@ -95,8 +100,9 @@ const sectionLinks = computed(() =>
           <BaseBadge variant="outline">{{ t('common.nav.beta') }}</BaseBadge>
         </RouterLink>
         <!-- Order is deliberate: /events, /calendar and /map are three views of the same data, /venues and
-             /promoters the other entities, /about is meta. e2e/smoke.spec.ts pins it. -->
-        <!-- The row wraps below `lg` so "Über das Projekt" never breaks across two lines. Below `md`
+             /promoters the other entities, /about is meta. Signed in, /following follows /events.
+             e2e/smoke.spec.ts and e2e/following.spec.ts pin it. -->
+        <!-- The row wraps below `lg` so no label breaks across two lines. Below `md`
              the links move into HeaderMenu's sheet (#2291). -->
         <div
           class="order-last hidden w-full flex-wrap items-center gap-x-4 gap-y-1 md:flex lg:order-none lg:w-auto lg:flex-nowrap lg:gap-6"

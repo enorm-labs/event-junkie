@@ -76,8 +76,8 @@ lists what that includes and what it excludes.
 
 **With an account**
 
-- **Sign in** with a link by e-mail or with a passkey, without a password. The account is optional. Signed in, the header icon opens a menu with Following,
-  the account page and sign-out.
+- **Sign in** with a link by e-mail or with a passkey, without a password. The account is optional. Signed in, Following is a header link after Events, and the
+  header icon opens a menu with My calendar, the account page and sign-out.
 - **Follow** artists, venues and promoters on their pages. The **Following** page shows today's events first, as the home page
   does, then what is coming up from all of them, by date. Behind a Filter button, the events list's filters and sort narrow the upcoming list, and
   the URL keeps them.
@@ -117,120 +117,120 @@ the first column. It fails in two cases:
 1. A route, a public API path, a public file or an e2e spec exists and has no row.
 2. A row names a surface that does not exist.
 
-| Surface                                | What it is                                                                                     |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `/`                                    | Home page: Today and Upcoming                                                                  |
-| `/events`                              | The events list and its filter bar                                                             |
-| `/events/:slug`                        | Event page: When block, line-up, set times, share, calendar, related events                    |
-| `/calendar`                            | Month calendar with the same filters                                                           |
-| `/week`                                | Redirects to this week's page; linked from the home page and the footer                        |
-| `/week/:isoWeek`                       | One week day by day, up to 12 events a day, to share or bookmark                               |
-| `/map`                                 | Events map, near me and On now                                                                 |
-| `/venues`                              | Venues list and venues map, with character-tag filters                                         |
-| `/venues/:slug`                        | Venue page                                                                                     |
-| `/artists/:slug`                       | Artist page                                                                                    |
-| `/promoters`                           | Promoters list                                                                                 |
-| `/promoters/:slug`                     | Promoter page                                                                                  |
-| `/search`                              | All results for a header search, not indexed                                                   |
-| `/about`                               | About page                                                                                     |
-| `/legal/imprint`                       | Imprint                                                                                        |
-| `/legal/privacy`                       | Privacy notice                                                                                 |
-| `/legal/notices`                       | Open-source notices                                                                            |
-| `/legal/for-venues`                    | The opt-out route for venues                                                                   |
-| `/sign-in`                             | Sends a sign-in link by e-mail, or signs in with a passkey; not indexed                        |
-| `/sign-in/check-mail`                  | Says the link is on its way                                                                    |
-| `/sign-in/confirm`                     | The page the mail links to; signs in on a click                                                |
-| `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion               |
-| `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, to unfollow           |
-| `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar                   |
-| `/notifications`                       | Every notification by day, all or only the unread ones, 50 at a time                           |
-| `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                               |
-| `/calendar.ics`                        | iCalendar subscription to the next 90 days, with every events-list filter                      |
-| `/robots.txt`                          | Allows search and answer crawlers, refuses AI training crawlers                                |
-| `/manifest.webmanifest`                | Makes the site installable as an app; nothing stored                                           |
-| `/push-sw.js`                          | The push-only service worker, registered only when a visitor turns on notifications            |
-| `/api/events`                          | Event search with the full filter set, paged and sorted                                        |
-| `/api/events/{slug}`                   | One event                                                                                      |
-| `/api/events/{slug}/related`           | Upcoming events like this one                                                                  |
-| `/api/events/today`                    | Today's events                                                                                 |
-| `/api/events/calendar`                 | Events in a date range, for the calendar and the map                                           |
-| `/api/events/feed`                     | The RSS feed behind `/feed.xml`                                                                |
-| `/api/events/calendar.ics`             | The calendar subscription behind `/calendar.ics`                                               |
-| `/api/venues`                          | Venue list with its filters                                                                    |
-| `/api/venues/{slug}`                   | One venue                                                                                      |
-| `/api/venues/feature-counts`           | How many venues each character tag leaves                                                      |
-| `/api/artists`                         | Artist list                                                                                    |
-| `/api/artists/{slug}`                  | One artist                                                                                     |
-| `/api/promoters`                       | Promoter list                                                                                  |
-| `/api/promoters/{slug}`                | One promoter                                                                                   |
-| `/api/genres`                          | Genre tags and their families                                                                  |
-| `/api/search`                          | The header search across all four kinds                                                        |
-| `/api/sitemaps/{kind}.xml`             | The detail sitemaps                                                                            |
-| `/api/images/{contentHash}/{file}`     | Cached venue images                                                                            |
-| `/api/meta`                            | Version and commit of the running backend, for the footer                                      |
-| `/api/festivals/current`               | Up to 3 festivals the home page announces, running first; `[]` for none                        |
-| `/api/auth/csrf`                       | Sets the CSRF cookie the sign-in and account pages need                                        |
-| `/api/auth/session`                    | Who the browser is signed in as, or nobody                                                     |
-| `/api/auth/link`                       | Sends a sign-in link by e-mail                                                                 |
-| `/api/auth/sign-in`                    | Uses a sign-in link and starts a session                                                       |
-| `/api/auth/passkey/options`            | A challenge for signing in with a passkey                                                      |
-| `/api/auth/passkey/sign-in`            | Signs in with a passkey and starts a session                                                   |
-| `/api/me`                              | The signed-in account                                                                          |
-| `/api/me/export`                       | Everything stored about the account, as a download                                             |
-| `/api/me/follows`                      | What the account follows: artists, venues, promoters                                           |
-| `/api/me/follows/{kind}/{slug}`        | Whether it follows one, and follow or unfollow it                                              |
-| `/api/me/follows/notify`               | Every bell at once, as the account page offers when notifications first go on                  |
-| `/api/me/follows/{kind}/{slug}/notify` | The bell of one follow: push its new dates, or not                                             |
-| `/api/me/push`                         | The key a browser subscribes with, and storing this browser's push subscription                |
-| `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                                    |
-| `/api/me/push/changes`                 | "Changes to my plans": push about changes to marked events, or not                             |
-| `/api/me/push/reminders`               | "Reminders on the day": push on the day of marked events, or not                               |
-| `/api/me/notifications`                | The newest 20 notifications, read or not; `limit`, `before` and `unread` page the full list    |
-| `/api/me/notifications/unread-count`   | How many notifications are unread, for the bell's badge                                        |
-| `/api/me/notifications/{id}/read`      | Marking one notification read                                                                  |
-| `/api/me/notifications/read`           | Marking every notification read                                                                |
-| `/api/me/passkeys`                     | The account's passkeys, and storing a new one                                                  |
-| `/api/me/passkeys/options`             | A challenge for adding a passkey                                                               |
-| `/api/me/passkeys/{id}`                | Renaming or deleting a passkey                                                                 |
-| `/api/me/following`                    | Upcoming events of everything the account follows, with the events list's filters and sort     |
-| `/api/me/following/today`              | Today's events of everything the account follows, a running night included                     |
-| `/api/me/searches`                     | The account's saved searches, and saving one                                                   |
-| `/api/me/searches/{id}`                | Renaming or deleting a saved search                                                            |
-| `/api/me/rsvps`                        | The account's RSVPs, event slug to status                                                      |
-| `/api/me/rsvps/{slug}`                 | Set, change or withdraw "interested" or "going" for an event                                   |
-| `/api/me/rsvps/upcoming`               | RSVPed events not over yet, by date                                                            |
-| `/api/me/rsvps/past`                   | RSVPed events that are over, latest first                                                      |
-| `/api/me/rsvps/calendar`               | RSVPed events within a date range, for the calendar view                                       |
-| `/api/me/sign-out`                     | Ends this browser's session                                                                    |
-| `/api/me/sign-out-everywhere`          | Ends every session of the account                                                              |
-| `home-feeds.spec.ts`                   | e2e: Today and Upcoming                                                                        |
-| `events-filters.spec.ts`               | e2e: the filter bar                                                                            |
-| `filter-sheet.spec.ts`                 | e2e: the filter bar's sheet on a phone                                                         |
-| `calendar.spec.ts`                     | e2e: the calendar                                                                              |
-| `map-near.spec.ts`                     | e2e: near me on the map                                                                        |
-| `venues.spec.ts`                       | e2e: venues list, filters and map                                                              |
-| `promoters.spec.ts`                    | e2e: promoters list                                                                            |
-| `detail-routes.spec.ts`                | e2e: the four detail pages                                                                     |
-| `search.spec.ts`                       | e2e: header search                                                                             |
-| `passkeys.spec.ts`                     | e2e: add a passkey and sign in with it, on Chromium's virtual authenticator                    |
-| `sign-in.spec.ts`                      | e2e: sign-in by link, the account page, deletion, CSRF header                                  |
-| `following.spec.ts`                    | e2e: the Follow button signed out and in, the header entry, the Following page and its filters |
-| `rsvp.spec.ts`                         | e2e: Interested and Going on an event page, the card mark, My calendar                         |
-| `notifications.spec.ts`                | e2e: the bell by keyboard, Mark all as read, a change entry, the phone header, the page        |
-| `share-calendar.spec.ts`               | e2e: share and add to calendar                                                                 |
-| `card-poster.spec.ts`                  | e2e: drawn posters                                                                             |
-| `compact-view.spec.ts`                 | e2e: compact list                                                                              |
-| `dark-mode.spec.ts`                    | e2e: theme                                                                                     |
-| `i18n.spec.ts`                         | e2e: German and English                                                                        |
-| `footer.spec.ts`                       | e2e: footer, feed and feedback links                                                           |
-| `legal.spec.ts`                        | e2e: legal pages                                                                               |
-| `seo.spec.ts`                          | e2e: head tags, sitemaps, structured data                                                      |
-| `a11y.spec.ts`                         | e2e quality check: accessibility, not a feature                                                |
-| `keyboard-flows.spec.ts`               | e2e quality check: main flows by keyboard alone, not a feature                                 |
-| `layout-shift.spec.ts`                 | e2e quality check: layout shift, not a feature                                                 |
-| `page-title.spec.ts`                   | e2e quality check: page titles, not a feature                                                  |
-| `scroll-restoration.spec.ts`           | e2e quality check: scroll position, not a feature                                              |
-| `smoke.spec.ts`                        | e2e quality check: every page renders, not a feature                                           |
+| Surface                                | What it is                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/`                                    | Home page: Today and Upcoming                                                                           |
+| `/events`                              | The events list and its filter bar                                                                      |
+| `/events/:slug`                        | Event page: When block, line-up, set times, share, calendar, related events                             |
+| `/calendar`                            | Month calendar with the same filters                                                                    |
+| `/week`                                | Redirects to this week's page; linked from the home page and the footer                                 |
+| `/week/:isoWeek`                       | One week day by day, up to 12 events a day, to share or bookmark                                        |
+| `/map`                                 | Events map, near me and On now                                                                          |
+| `/venues`                              | Venues list and venues map, with character-tag filters                                                  |
+| `/venues/:slug`                        | Venue page                                                                                              |
+| `/artists/:slug`                       | Artist page                                                                                             |
+| `/promoters`                           | Promoters list                                                                                          |
+| `/promoters/:slug`                     | Promoter page                                                                                           |
+| `/search`                              | All results for a header search, not indexed                                                            |
+| `/about`                               | About page                                                                                              |
+| `/legal/imprint`                       | Imprint                                                                                                 |
+| `/legal/privacy`                       | Privacy notice                                                                                          |
+| `/legal/notices`                       | Open-source notices                                                                                     |
+| `/legal/for-venues`                    | The opt-out route for venues                                                                            |
+| `/sign-in`                             | Sends a sign-in link by e-mail, or signs in with a passkey; not indexed                                 |
+| `/sign-in/check-mail`                  | Says the link is on its way                                                                             |
+| `/sign-in/confirm`                     | The page the mail links to; signs in on a click                                                         |
+| `/account`                             | The address, notifications, passkeys, data export, sign-out and account deletion                        |
+| `/following`                           | Two tabs: the events of what the visitor follows, and that list by kind, to unfollow                    |
+| `/my-calendar`                         | The events the visitor is interested in or going to, as a list or a calendar                            |
+| `/notifications`                       | Every notification by day, all or only the unread ones, 50 at a time                                    |
+| `/feed.xml`                            | RSS feed of newly imported events, with every events-list filter                                        |
+| `/calendar.ics`                        | iCalendar subscription to the next 90 days, with every events-list filter                               |
+| `/robots.txt`                          | Allows search and answer crawlers, refuses AI training crawlers                                         |
+| `/manifest.webmanifest`                | Makes the site installable as an app; nothing stored                                                    |
+| `/push-sw.js`                          | The push-only service worker, registered only when a visitor turns on notifications                     |
+| `/api/events`                          | Event search with the full filter set, paged and sorted                                                 |
+| `/api/events/{slug}`                   | One event                                                                                               |
+| `/api/events/{slug}/related`           | Upcoming events like this one                                                                           |
+| `/api/events/today`                    | Today's events                                                                                          |
+| `/api/events/calendar`                 | Events in a date range, for the calendar and the map                                                    |
+| `/api/events/feed`                     | The RSS feed behind `/feed.xml`                                                                         |
+| `/api/events/calendar.ics`             | The calendar subscription behind `/calendar.ics`                                                        |
+| `/api/venues`                          | Venue list with its filters                                                                             |
+| `/api/venues/{slug}`                   | One venue                                                                                               |
+| `/api/venues/feature-counts`           | How many venues each character tag leaves                                                               |
+| `/api/artists`                         | Artist list                                                                                             |
+| `/api/artists/{slug}`                  | One artist                                                                                              |
+| `/api/promoters`                       | Promoter list                                                                                           |
+| `/api/promoters/{slug}`                | One promoter                                                                                            |
+| `/api/genres`                          | Genre tags and their families                                                                           |
+| `/api/search`                          | The header search across all four kinds                                                                 |
+| `/api/sitemaps/{kind}.xml`             | The detail sitemaps                                                                                     |
+| `/api/images/{contentHash}/{file}`     | Cached venue images                                                                                     |
+| `/api/meta`                            | Version and commit of the running backend, for the footer                                               |
+| `/api/festivals/current`               | Up to 3 festivals the home page announces, running first; `[]` for none                                 |
+| `/api/auth/csrf`                       | Sets the CSRF cookie the sign-in and account pages need                                                 |
+| `/api/auth/session`                    | Who the browser is signed in as, or nobody                                                              |
+| `/api/auth/link`                       | Sends a sign-in link by e-mail                                                                          |
+| `/api/auth/sign-in`                    | Uses a sign-in link and starts a session                                                                |
+| `/api/auth/passkey/options`            | A challenge for signing in with a passkey                                                               |
+| `/api/auth/passkey/sign-in`            | Signs in with a passkey and starts a session                                                            |
+| `/api/me`                              | The signed-in account                                                                                   |
+| `/api/me/export`                       | Everything stored about the account, as a download                                                      |
+| `/api/me/follows`                      | What the account follows: artists, venues, promoters                                                    |
+| `/api/me/follows/{kind}/{slug}`        | Whether it follows one, and follow or unfollow it                                                       |
+| `/api/me/follows/notify`               | Every bell at once, as the account page offers when notifications first go on                           |
+| `/api/me/follows/{kind}/{slug}/notify` | The bell of one follow: push its new dates, or not                                                      |
+| `/api/me/push`                         | The key a browser subscribes with, and storing this browser's push subscription                         |
+| `/api/me/push/unsubscribe`             | Forgetting this browser's push subscription                                                             |
+| `/api/me/push/changes`                 | "Changes to my plans": push about changes to marked events, or not                                      |
+| `/api/me/push/reminders`               | "Reminders on the day": push on the day of marked events, or not                                        |
+| `/api/me/notifications`                | The newest 20 notifications, read or not; `limit`, `before` and `unread` page the full list             |
+| `/api/me/notifications/unread-count`   | How many notifications are unread, for the bell's badge                                                 |
+| `/api/me/notifications/{id}/read`      | Marking one notification read                                                                           |
+| `/api/me/notifications/read`           | Marking every notification read                                                                         |
+| `/api/me/passkeys`                     | The account's passkeys, and storing a new one                                                           |
+| `/api/me/passkeys/options`             | A challenge for adding a passkey                                                                        |
+| `/api/me/passkeys/{id}`                | Renaming or deleting a passkey                                                                          |
+| `/api/me/following`                    | Upcoming events of everything the account follows, with the events list's filters and sort              |
+| `/api/me/following/today`              | Today's events of everything the account follows, a running night included                              |
+| `/api/me/searches`                     | The account's saved searches, and saving one                                                            |
+| `/api/me/searches/{id}`                | Renaming or deleting a saved search                                                                     |
+| `/api/me/rsvps`                        | The account's RSVPs, event slug to status                                                               |
+| `/api/me/rsvps/{slug}`                 | Set, change or withdraw "interested" or "going" for an event                                            |
+| `/api/me/rsvps/upcoming`               | RSVPed events not over yet, by date                                                                     |
+| `/api/me/rsvps/past`                   | RSVPed events that are over, latest first                                                               |
+| `/api/me/rsvps/calendar`               | RSVPed events within a date range, for the calendar view                                                |
+| `/api/me/sign-out`                     | Ends this browser's session                                                                             |
+| `/api/me/sign-out-everywhere`          | Ends every session of the account                                                                       |
+| `home-feeds.spec.ts`                   | e2e: Today and Upcoming                                                                                 |
+| `events-filters.spec.ts`               | e2e: the filter bar                                                                                     |
+| `filter-sheet.spec.ts`                 | e2e: the filter bar's sheet on a phone                                                                  |
+| `calendar.spec.ts`                     | e2e: the calendar                                                                                       |
+| `map-near.spec.ts`                     | e2e: near me on the map                                                                                 |
+| `venues.spec.ts`                       | e2e: venues list, filters and map                                                                       |
+| `promoters.spec.ts`                    | e2e: promoters list                                                                                     |
+| `detail-routes.spec.ts`                | e2e: the four detail pages                                                                              |
+| `search.spec.ts`                       | e2e: header search                                                                                      |
+| `passkeys.spec.ts`                     | e2e: add a passkey and sign in with it, on Chromium's virtual authenticator                             |
+| `sign-in.spec.ts`                      | e2e: sign-in by link, the account page, deletion, CSRF header                                           |
+| `following.spec.ts`                    | e2e: the Follow button signed out and in, the header entry and link, the Following page and its filters |
+| `rsvp.spec.ts`                         | e2e: Interested and Going on an event page, the card mark, My calendar                                  |
+| `notifications.spec.ts`                | e2e: the bell by keyboard, Mark all as read, a change entry, the phone header, the page                 |
+| `share-calendar.spec.ts`               | e2e: share and add to calendar                                                                          |
+| `card-poster.spec.ts`                  | e2e: drawn posters                                                                                      |
+| `compact-view.spec.ts`                 | e2e: compact list                                                                                       |
+| `dark-mode.spec.ts`                    | e2e: theme                                                                                              |
+| `i18n.spec.ts`                         | e2e: German and English                                                                                 |
+| `footer.spec.ts`                       | e2e: footer, feed and feedback links                                                                    |
+| `legal.spec.ts`                        | e2e: legal pages                                                                                        |
+| `seo.spec.ts`                          | e2e: head tags, sitemaps, structured data                                                               |
+| `a11y.spec.ts`                         | e2e quality check: accessibility, not a feature                                                         |
+| `keyboard-flows.spec.ts`               | e2e quality check: main flows by keyboard alone, not a feature                                          |
+| `layout-shift.spec.ts`                 | e2e quality check: layout shift, not a feature                                                          |
+| `page-title.spec.ts`                   | e2e quality check: page titles, not a feature                                                           |
+| `scroll-restoration.spec.ts`           | e2e quality check: scroll position, not a feature                                                       |
+| `smoke.spec.ts`                        | e2e quality check: every page renders, not a feature                                                    |
 
 ## Behind the site
 
