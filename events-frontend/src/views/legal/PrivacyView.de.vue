@@ -35,15 +35,15 @@ const { t } = useI18n()
       <h2>Kurz gesagt</h2>
       <p>
         Event Junkie betreibt keine Analyse-Tools und bindet keine Schriften, Karten,
-        Social-Media-Widgets oder Werbung von Dritten ein. Cookies setzt es nur, wenn du dich
-        anmeldest, und ein Konto brauchst du für nichts auf dieser Seite. Nichts von dem, was du
-        hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig bleibt das unvermeidbare
-        Minimum: Ein Webserver protokolliert Anfragen, damit die Seite ausgeliefert und geschützt
-        werden kann, und dein Browser merkt sich, welche Sprache, welches Farbschema und welche
-        Ansicht du gewählt hast. Fragst du eine Karte, was in deiner Nähe läuft, bleibt dein
-        Standort in deinem Browser. Legst du ein Konto an, speichere ich deine E-Mail-Adresse, bis
-        du es löschst (Abschnitt 6). Schaltest du Benachrichtigungen ein, laufen sie verschlüsselt
-        über den Push-Dienst deines Browser-Herstellers (Abschnitt 6).
+        Social-Media-Widgets oder Werbung von Dritten ein. Cookies setzt es erst, wenn du die
+        Anmeldeseite öffnest, und ein Konto brauchst du für nichts auf dieser Seite. Nichts von dem,
+        was du hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig bleibt das
+        unvermeidbare Minimum: Ein Webserver protokolliert Anfragen, damit die Seite ausgeliefert
+        und geschützt werden kann, und dein Browser merkt sich, welche Sprache, welches Farbschema
+        und welche Ansicht du gewählt hast. Fragst du eine Karte, was in deiner Nähe läuft, bleibt
+        dein Standort in deinem Browser. Legst du ein Konto an, speichere ich deine E-Mail-Adresse,
+        bis du es löschst (Abschnitt 6). Schaltest du Benachrichtigungen ein, laufen sie
+        verschlüsselt über den Push-Dienst deines Browser-Herstellers (Abschnitt 6).
       </p>
       <p>
         <strong>Auch die Bilder kommen von Event Junkie.</strong> Event Junkie lädt sie einmal
@@ -119,9 +119,9 @@ const { t } = useI18n()
     <section>
       <h2>3. Lokale Speicherung auf deinem Gerät</h2>
       <p>
-        Ohne Anmeldung setzt diese Seite <strong>keine Cookies</strong>. Sie speichert genau drei
-        Werte im lokalen Speicher deines Browsers, und alle drei halten nur fest, was du selbst
-        eingestellt hast:
+        Solange du die Anmeldeseite nicht öffnest, setzt diese Seite <strong>keine Cookies</strong>.
+        Sie speichert genau drei Werte im lokalen Speicher deines Browsers, und alle drei halten nur
+        fest, was du selbst eingestellt hast:
       </p>
       <ul>
         <li>
@@ -145,16 +145,15 @@ const { t } = useI18n()
         25 Abs. 2 Nr. 2 TDDDG keiner Einwilligung. Deshalb musst du hier auch kein Banner
         wegklicken. Du kannst sie jederzeit über die Einstellungen deines Browsers löschen.
       </p>
-      <!-- LEGAL.md §7.4: the two cookies exist only on the sign-in and account pages. -->
-      <h3>Cookies, wenn du dich anmeldest</h3>
-      <p>
-        Öffnest du die Anmelde- oder die Kontoseite, setzt Event Junkie zwei Cookies, und nur diese:
-      </p>
+      <!-- LEGAL.md §7.4: signed out, only the sign-in page and the link page set a cookie. -->
+      <h3>Cookies der Anmeldung</h3>
+      <p>Für die Anmeldung setzt Event Junkie zwei Cookies, und nur diese:</p>
       <ul>
         <li>
-          <code>XSRF-TOKEN</code>, sobald du eine dieser Seiten öffnest. Es enthält einen
-          Zufallswert und verhindert, dass eine fremde Seite in deinem Namen einen Anmeldelink
-          anfordert oder dein Konto ändert. Es läuft nach 30 Tagen ab.
+          <code>XSRF-TOKEN</code>, sobald du die Anmeldeseite oder den Link aus der Anmeldemail
+          öffnest. Es enthält einen Zufallswert und verhindert, dass eine fremde Seite in deinem
+          Namen einen Anmeldelink anfordert oder dein Konto ändert. Es bleibt auch, wenn du dich
+          nicht anmeldest, und läuft nach 30 Tagen ab.
         </li>
         <li>
           <code>__Host-ej_session</code>, sobald du dich mit dem Link oder einem Passkey anmeldest.

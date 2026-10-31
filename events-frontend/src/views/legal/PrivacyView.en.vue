@@ -33,13 +33,13 @@ const { t } = useI18n()
       <h2>The short version</h2>
       <p>
         Event Junkie runs no analytics and embeds no third-party fonts, maps, social widgets or
-        advertising. It sets cookies only when you sign in, and nothing on this site needs an
-        account. Nothing you do here is tracked or profiled. What remains is the unavoidable
-        minimum: a web server records requests so the site can be delivered and defended, and your
-        browser remembers which language, colour scheme and list view you chose. If you ask a map
-        what is near you, your position stays in your browser. If you create an account, I keep your
-        e-mail address until you delete it (section 6). If you turn on notifications, they pass
-        through your browser maker's push service, encrypted (section 6).
+        advertising. It sets no cookie until you open the sign-in page, and nothing on this site
+        needs an account. Nothing you do here is tracked or profiled. What remains is the
+        unavoidable minimum: a web server records requests so the site can be delivered and
+        defended, and your browser remembers which language, colour scheme and list view you chose.
+        If you ask a map what is near you, your position stays in your browser. If you create an
+        account, I keep your e-mail address until you delete it (section 6). If you turn on
+        notifications, they pass through your browser maker's push service, encrypted (section 6).
       </p>
       <p>
         <strong>Images come from Event Junkie too.</strong> Event Junkie downloads them once and
@@ -108,8 +108,9 @@ const { t } = useI18n()
     <section>
       <h2>3. Local storage on your device</h2>
       <p>
-        Without a sign-in, this site sets <strong>no cookies</strong>. It stores exactly three
-        values in your browser's local storage, and each only records a setting you made yourself:
+        Until you open the sign-in page, this site sets <strong>no cookies</strong>. It stores
+        exactly three values in your browser's local storage, and each only records a setting you
+        made yourself:
       </p>
       <ul>
         <li>
@@ -132,17 +133,15 @@ const { t } = useI18n()
         you are not being asked to dismiss a banner. You can clear them at any time through your
         browser settings.
       </p>
-      <!-- LEGAL.md §7.4: the two cookies exist only on the sign-in and account pages. -->
-      <h3>Cookies when you sign in</h3>
-      <p>
-        When you open the sign-in page or the account page, Event Junkie sets two cookies, and only
-        these:
-      </p>
+      <!-- LEGAL.md §7.4: signed out, only the sign-in page and the link page set a cookie. -->
+      <h3>Cookies for signing in</h3>
+      <p>For signing in, Event Junkie sets two cookies, and only these:</p>
       <ul>
         <li>
-          <code>XSRF-TOKEN</code>, as soon as you open one of these pages. It holds a random value
-          and stops another site from requesting a sign-in link or changing your account in your
-          name. It expires after 30 days.
+          <code>XSRF-TOKEN</code>, as soon as you open the sign-in page or the link in the sign-in
+          mail. It holds a random value and stops another site from requesting a sign-in link or
+          changing your account in your name. It stays if you do not sign in, and expires after 30
+          days.
         </li>
         <li>
           <code>__Host-ej_session</code>, as soon as you sign in with the link or a passkey. It
