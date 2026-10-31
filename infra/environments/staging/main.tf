@@ -30,7 +30,7 @@ module "environment" {
   # overlap looks like a firewall problem until someone reads the routing table.
   network_ip_range = "10.1.0.0/16"
   subnet_ip_range  = "10.1.1.0/24"
-  k3s_private_ip   = "10.1.1.10"
+  k3s_private_ip   = "10.1.1.11"
   wireguard_subnet = "10.10.1.0/24"
 
   # Not on the public internet at all (PLATFORM_SETUP.md §4a): no 80/443, and no address record.

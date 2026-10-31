@@ -52,7 +52,7 @@ patches:
       - op: replace
         path: /spec/values/gateway/receivers/prometheus~1nodes/config/scrape_configs/0/static_configs/0/targets
         value:
-          - 10.1.1.10:9100
+          - 10.1.1.11:9100
   # Twice, because the agent is its own release (#709); two literal targets fail loudly when either is renamed.
   - target:
       kind: HelmRelease
