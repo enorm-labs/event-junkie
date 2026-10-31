@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { VenueListItem, VenueSummary } from '@/api/types'
-import { districtLabel } from '@/lib/districts'
+import { venueLocationLine } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -30,9 +30,7 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const location = computed(() =>
-  [props.venue.address, districtLabel(props.venue.district)].filter(Boolean).join(' · '),
-)
+const location = computed(() => venueLocationLine(props.venue))
 
 const { formatVenueFacts, formatUpcoming } = useFormat()
 // One meta line, as on the card: where it is, then what it is.

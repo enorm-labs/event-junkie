@@ -4,6 +4,7 @@ import type { VenueListItem, VenueSummary } from '@/api/types'
 import EventPoster from '@/components/EventPoster.vue'
 import PosterCardShell from '@/components/PosterCardShell.vue'
 import { districtLabel } from '@/lib/districts'
+import { venueLocationLine } from '@/lib/format'
 import { imageCredit } from '@/lib/imageCredit'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -30,10 +31,7 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-// A single "where" line: street address then district, skipping whatever is missing.
-const location = computed(() =>
-  [props.venue.address, districtLabel(props.venue.district)].filter(Boolean).join(' · '),
-)
+const location = computed(() => venueLocationLine(props.venue))
 
 const { t } = useI18n()
 const { formatVenueFacts, formatUpcoming } = useFormat()

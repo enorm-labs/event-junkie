@@ -33,6 +33,7 @@ import {
 } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
 import { feedbackMailto } from '@/lib/feedback'
+import { venueLocationLine } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import { coarseAccuracy } from '@/lib/nearOrigin'
 import { CONTROLLER } from '@/lib/legal'
@@ -243,10 +244,7 @@ const selectedVenue = computed(
   () => mapVenues.value.find((venue) => venue.slug === selected.value) ?? null,
 )
 
-const selectedLocation = computed(() => {
-  const venue = selectedVenue.value
-  return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
-})
+const selectedLocation = computed(() => venueLocationLine(selectedVenue.value))
 
 // The panel goes with the click, so focus goes back to the pin that opened it.
 function closePanel() {
