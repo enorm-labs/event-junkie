@@ -1,10 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 import { failUnmockedGets } from './unmocked'
 
 /**
  * Following (#3889) with a mocked BFF: the Follow button on a venue page, signed out and signed in,
- * the header entry, and the Following page with its two tabs (#4080).
+ * the header entry and section link, and the Following page with its two tabs (#4080).
  *
  * Endpoints: GET /api/auth/session · GET /api/auth/csrf · GET /api/venues/:slug · GET /api/events?…
  * · GET|PUT|DELETE /api/me/follows/:kind/:slug · GET /api/me/follows · GET /api/me/following
@@ -364,6 +365,67 @@ test('signed in, the header icon opens the account menu, and sign-out leaves the
     .poll(() => writes)
     .toContainEqual({ method: 'POST', path: '/api/me/sign-out', csrf: 'csrf-1' })
 })
+
+test('signed in, Following is a section link beside Events, and out of the account menu', async ({
+  page,
+}) => {
+  await mockBff(page, true)
+  await page.goto('/en/venues/mock-venue')
+  await expect(page.getByRole('button', { name: 'Your account' })).toBeVisible()
+
+  const link = await sectionLink(page, 'Following')
+  await expect(link).toHaveAttribute('href', '/en/following')
+  const sections = ['Events', 'Following', 'Calendar', 'Map', 'Venues', 'Promoters', 'About']
+  const labels = await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link')
+    .allInnerTexts()
+  expect(labels.map((label) => label.trim()).filter((label) => sections.includes(label))).toEqual(
+    sections,
+  )
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('button', { name: 'Your account' }).click()
+  await expect(page.getByRole('dialog').getByRole('link', { name: 'My calendar' })).toBeVisible()
+  await expect(page.getByRole('dialog').getByRole('link', { name: 'Following' })).toHaveCount(0)
+})
+
+test('signed out, the section links carry no Following', async ({ page }) => {
+  await mockBff(page, false)
+  await page.goto('/en/venues/mock-venue')
+  await expect(await sectionLink(page, 'Events')).toBeVisible()
+
+  await expect(
+    page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Following' }),
+  ).toHaveCount(0)
+})
+
+// smoke.spec.ts checks the widths signed out; signed in, the header carries one more link and the bell.
+for (const locale of ['en', 'de']) {
+  test(`signed in, the header nav fits its viewport without overflowing (${locale})`, async ({
+    page,
+  }) => {
+    await mockBff(page, true)
+    await page.goto(`/${locale}/following`)
+    const nav = page.getByRole('navigation', { name: locale === 'de' ? 'Hauptnavigation' : 'Main' })
+    await expect(nav.getByRole('button', { name: locale === 'de' ? 'Dein Konto' : 'Your account' })).toBeVisible()
+
+    for (const width of [320, 390, 640, 720, 800, 900, 1024, 1280]) {
+      await page.setViewportSize({ width, height: 800 })
+      const box = await nav.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
+      expect(box.scroll, `nav content is wider than the nav at ${width}px`).toBeLessThanOrEqual(
+        box.client,
+      )
+      const mark = await nav.locator('.font-wordmark').evaluate((el) => ({
+        height: el.getBoundingClientRect().height,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+      }))
+      expect(mark.height, `wordmark wraps at ${width}px`).toBeLessThan(mark.line * 1.5)
+      const last = await nav.getByRole('button').last().boundingBox()
+      expect(last!.x + last!.width, `last control leaves the viewport at ${width}px`).toBeLessThanOrEqual(width)
+    }
+  })
+}
 
 test('the Following page passes axe', async ({ page }) => {
   await mockBff(page, true)

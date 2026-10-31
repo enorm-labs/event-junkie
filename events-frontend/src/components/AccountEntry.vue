@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 /**
  * The header's way into an account (#3889, #3924). Signed out, a link to sign-in. Signed in, a menu
- * with the address, Following, the account page and sign-out. Built as `LocaleMenu` is: an icon
- * button and a popover of plain links, so each entry stays an address. One icon at every width, so
- * the phone has the same menu and the header keeps its width.
+ * with the address, My calendar, the account page and sign-out; Following is a section link in
+ * App.vue. Built as `LocaleMenu` is: an icon button and a popover of plain links, so each entry stays
+ * an address. One icon at every width, so the phone has the same menu and the header keeps its width.
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -53,7 +53,6 @@ async function leave() {
 }
 
 const MENU = [
-  { path: '/following', label: 'common.nav.following' },
   { path: '/my-calendar', label: 'pageTitle.myCalendar' },
   { path: '/account', label: 'pageTitle.account' },
 ]
@@ -90,7 +89,7 @@ const MENU = [
               {{ t(link.label) }}
             </RouterLink>
           </li>
-          <!-- A row like the links, so the three line up; a button, because it does not go anywhere. -->
+          <!-- A row like the links, so the rows line up; a button, because it does not go anywhere. -->
           <li>
             <button
               :class="[ROW, 'w-full text-left']"
