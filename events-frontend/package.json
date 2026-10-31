@@ -90,8 +90,11 @@
     "vue-tsc": "3.3.13"
   },
   "//overrides": "CVE-2026-45822 remediation, and the only lever that reaches it. `shadcn-vue` needs `vue-metamorph`, which needs `postcss-styl`, which pins `stylus@^0.57.0` — and stylus below 0.59.0 parses CSS through `css@3` and the deprecated `source-map-resolve`, which is what drags in `decode-uri-component`. Pinning that package directly is not an option, because its only fixed release (0.5.0) is ESM-only and `source-map-resolve` requires it from CJS. stylus 0.59.0 replaced `css` with `@adobe/css-tools`, so overriding stylus deletes the branch instead of patching its leaf. `postcss-styl` is at its latest and still pins ^0.57.0; drop this override when it widens the range. Nothing here runs the stylus parser — the project has no .styl files, and the only thing the build takes from shadcn-vue is `dist/tailwind.css`.",
+  "//overrides-glob": "GHSA-3g3m-2fjr-6pw4 (glob, AbortSignal cancellation bypass, fixed in 14.0.2) and GHSA-g3hv-75wg-m249 (minimatch, denial of service via globparts amplification, fixed in 11.0.1). Both arrived four times over in the glob-family build tooling: glob at 13.0.6 hoisted, 11.1.0 under vue-metamorph and 10.5.0 under stylus, minimatch at 10.2.6 hoisted and 9.0.9 under stylus. An override is the only lever, because the fix is a major in each case and no parent declares it — stylus 0.64.0 is its own latest and still pins `glob@^10.4.5`, so the stylus override above cannot reach these. Both are build-time only: `node_modules` never enters the frontend image, which copies `dist/` and `docker/nginx.conf` into nginx. Drop each entry once every parent widens its range to the fixed major.",
   "overrides": {
-    "stylus": "0.64.0"
+    "stylus": "0.64.0",
+    "glob": "^14.0.3",
+    "minimatch": "^11.0.3"
   },
   "engines": {
     "node": ">=26.0.0"
