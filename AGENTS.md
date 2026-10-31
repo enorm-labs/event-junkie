@@ -156,6 +156,9 @@ plus the privacy page in the same PR.**
 one into an issue, a pull request, a commit message, a fixture or a test: name the event by its id, and mask the contact (`w***@…`, digits as `#`). A test
 uses `example.de` and `030 12345678`. A local sweep that reads stored text prints its matches masked too, because its output ends up in a report.
 
+**A request to an outside API names the project, never a person.** A hand-written `curl` to MusicBrainz, Discogs or a venue site sends the `USER_AGENT` of
+`scripts/musicbrainz-match.py`, never an operator's e-mail address or name.
+
 When in doubt, flag it in the PR. Raising it costs a sentence; missing it is a legal defect on a public site.
 
 ## Deployed-system suites — re-check when a route or account data changes
