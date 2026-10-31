@@ -71,7 +71,7 @@ KEY_FILES=(
     "$HOME/.wireguard/production.conf #18a"
 )
 
-SSH_HOSTS="Host 10.10.0.1 10.10.1.1 10.0.1.20"
+SSH_HOSTS="Host 10.10.0.1 10.10.1.1 10.0.1.21"
 
 brew_prefix() { brew --prefix "$1" 2>/dev/null; }
 

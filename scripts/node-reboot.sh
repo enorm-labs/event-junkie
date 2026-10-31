@@ -64,7 +64,7 @@ esac
 
 # name environment ssh-target roles (db: runs PostgreSQL, k3s: runs the cluster)
 NODES=(
-    "production-db production -J,ops@10.10.0.1,ops@10.0.1.20 db"
+    "production-db production -J,ops@10.10.0.1,ops@10.0.1.21 db"
     "production-k3s production ops@10.10.0.1 k3s"
     "staging staging ops@10.10.1.1 k3s,db"
 )

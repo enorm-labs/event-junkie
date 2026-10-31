@@ -17,7 +17,7 @@ EJ_SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
 EJ_REPO="${EJ_REPO:-$HOME/repos/event-junkie}"
 EJ_STAGING="${EJ_STAGING:-10.10.1.1}"
 EJ_PRODUCTION="${EJ_PRODUCTION:-10.10.0.1}"
-EJ_PRODUCTION_DB="${EJ_PRODUCTION_DB:-10.0.1.20}"
+EJ_PRODUCTION_DB="${EJ_PRODUCTION_DB:-10.0.1.21}"
 
 # --- the session --------------------------------------------------------------------------------
 # Short names for scripts/ej.sh, so there is one copy of the mechanics.

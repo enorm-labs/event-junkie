@@ -29,7 +29,7 @@ this table:
 | Tunnel config   | `~/.wireguard/staging.conf`                      | `~/.wireguard/production.conf`                                 |
 | Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
 | kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
-| PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
+| PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.21`, reached through the k3s node |
 | Public web      | none — no `A` record, no 80/443                  | 80/443 open; the apex, `www` and both redirect domains resolve |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
 | Observability   | OpenObserve, see §6b                             | OpenObserve too, since #880 — same §, different context        |
@@ -41,17 +41,17 @@ collide. Overlapping ranges fail in a way that looks like a firewall problem for
 (#270) — and the firewall admits nothing. So it is reached through the k3s node, and every command against it needs a jump:
 
 ```sh
-ssh -J ops@10.10.0.1 ops@10.0.1.20
+ssh -J ops@10.10.0.1 ops@10.0.1.21
 ```
 
 **`-i` does not reach the jump host, so put the key in `~/.ssh/config` instead.** ProxyJump opens a second, separate connection to `10.10.0.1`, and
-`ssh(1)` says that command-line options apply to the destination host and not to a jump host. So `ssh -i <key> -J ops@10.10.0.1 ops@10.0.1.20` offers the key
+`ssh(1)` says that command-line options apply to the destination host and not to a jump host. So `ssh -i <key> -J ops@10.10.0.1 ops@10.0.1.21` offers the key
 to the database node and never to the jump. The result is `ops@10.10.0.1: Permission denied (publickey)`, which reads as a key problem on the wrong machine.
 
 This block fixes it for every command on this page, and is why the jump above carries no `-i`:
 
 ```
-Host 10.10.0.1 10.10.1.1 10.0.1.20
+Host 10.10.0.1 10.10.1.1 10.0.1.21
     User ops
     IdentityFile ~/.ssh/id_ed25519_hetzner
     IdentitiesOnly yes

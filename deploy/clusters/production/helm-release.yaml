@@ -51,11 +51,11 @@ spec:
       # `scripts/cluster-assertions.sh` fails on a real host beside a placeholder CIDR. **A wrong value does
       # NOT fail the render**: it templates and the API server rejects it, rolling the release back several
       # steps from anything mentioning a CIDR.
-      databaseCidr: "10.0.1.20/32"
+      databaseCidr: "10.0.1.21/32"
     database:
       # The dedicated PostgreSQL node, on the private network, reachable from this cluster and from nowhere
       # else: it carries no inbound firewall rule, and its public address exists so it can reach out.
-      host: "10.0.1.20"
+      host: "10.0.1.21"
       # Committed encrypted and decrypted by Flux with the `sops-age` key (docs/ops/SECRETS.md).
       existingSecret: "events-db"
     # Cached venue images (ADR-019). Serving is on: the backfill finished, and the images not cached are
