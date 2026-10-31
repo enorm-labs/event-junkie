@@ -240,6 +240,7 @@ class SchokoladenOverviewPageScraper {
                 .replace(MIT_COLON, " mit ")
                 .replace(RELEASE_SHOW_OF, "")
                 .replace(QUOTED_WORK, "")
+                .replace(QUOTED_TOUR, "")
                 .trim()
         return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true) + aftershowDjs(subtitle)
     }
@@ -296,6 +297,9 @@ class SchokoladenOverviewPageScraper {
 
         /** A quoted album after `w/`: `Angela Aux w/ "Das Nichts macht Kopien von sich selbst"` names a work, not an act. */
         private val QUOTED_WORK = Regex("""\s+w/\s*["„“][^"„“”]*["“”]""", RegexOption.IGNORE_CASE)
+
+        /** A quoted album's tour after the act: `GLUT 'BURN' Tour 2027 + special guest` bills GLUT (event 12195). */
+        private val QUOTED_TOUR = Regex("""\s+['‘’"„“][^'‘’"„“”]+['‘’"“”]\s+tour(?:\s+\d{4})?\b""", RegexOption.IGNORE_CASE)
 
         /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
