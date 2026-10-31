@@ -1,5 +1,6 @@
 package de.norm.events.scraper.acudmachtneu
 
+import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
@@ -81,6 +82,31 @@ class AcudMachtNeuEventPageScraperTest {
     }
 
     @Test
+    fun `reads a door price after an entrance fee, a tickets label in the venue's 16E spelling, and a price at the door`() {
+        // Events 12150, 12147 and 12149.
+        val prices =
+            listOf(
+                "<strong>Entrance fee:</strong> €10<br />Tickets via Resident Advisor &amp; at the door.",
+                "<strong>Presale:</strong><a href=\"https://ra.co/events/1\"> https://ra.co/events/1</a><br />Tickets: 16E",
+                "<strong>Ticket presale:</strong><br /><a href=\"https://ra.co/events/1\">https://ra.co/events/1</a><br />Price at the door will be 15€"
+            ).map { scrapeContent(it).priceBoxOffice?.toPlainString() }
+
+        prices shouldContainExactly listOf("10", "16", "15")
+    }
+
+    @Test
+    fun `keeps a free-entry line as the note, and no tickets link as a price`() {
+        // Event 11964.
+        val free = scrapeContent("<strong>SA 5.11, 21H ACUD CLUB</strong><br />FREE ENTRY TO THE PARTY!")
+        val link = scrapeContent("Tickets: <a href=\"https://ra.co/events/1\">https://ra.co/events/1</a>")
+
+        free.priceNote shouldBe "FREE ENTRY TO THE PARTY!"
+        free.priceBoxOffice.shouldBeNull()
+        link.priceNote.shouldBeNull()
+        link.priceBoxOffice.shouldBeNull()
+    }
+
+    @Test
     fun `reads the gallery as the room of an exhibition`() {
         val event = scrape("acudmachtneu-event-orbital-decay.html", "https://acudmachtneu.de/events/2379/orbital-decay")
 
@@ -92,6 +118,14 @@ class AcudMachtNeuEventPageScraperTest {
     fun `returns null for a page without an event article`() {
         val url = "https://acudmachtneu.de/events/1/gone"
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", url), url).shouldBeNull()
+    }
+
+    private fun scrapeContent(paragraph: String): ScrapedEvent {
+        val url = "https://acudmachtneu.de/events/1/test"
+        val html =
+            """<article class="event-article"><h1 class="t-title-header--event">Test</h1>""" +
+                """<div class="event-article__content"><p>$paragraph</p></div></article>"""
+        return scraper.scrape(Jsoup.parse(html, url), url)!!
     }
 
     private fun document(
