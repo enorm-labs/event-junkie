@@ -21,7 +21,7 @@ import java.time.LocalTime
 /**
  * Pure parser for one ACUD event page. The header line names the room and one time, `ACUD CLUB 20h → Concert`. The
  * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
- * the doors time. `Doors:` and `Entrance:` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
+ * the doors time. `Doors:`, `Entrance:`, `Tickets: 16E` and `FREE ENTRY` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
  * paragraph are read where present. The paragraph names one act per line, or a festival's acts on one line between
  * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`).
  */
@@ -44,14 +44,7 @@ class AcudMachtNeuEventPageScraper {
         val text = content?.let { htmlParagraphText(it.html()) }
         val lines = text?.lines().orEmpty()
         val startTime = lines.firstNotNullOfOrNull { labelledClock(it, START_LABELS) } ?: header?.let(::headerTime)
-        val entrance =
-            lines.firstNotNullOfOrNull {
-                ENTRANCE
-                    .find(it)
-                    ?.groupValues
-                    ?.get(1)
-                    .blankToNull()
-            }
+        val entrance = lines.firstNotNullOfOrNull(::labelledPrice) ?: lines.firstOrNull { FREE_ENTRY.containsMatchIn(it) }?.trim()
         val doorPrice = euroAmounts(entrance).singleOrNull()?.takeUnless { RANGE.containsMatchIn(entrance.orEmpty()) }
         return ScrapedEvent(
             title = title,
@@ -68,6 +61,25 @@ class AcudMachtNeuEventPageScraper {
             sourceId = acudMachtNeuSourceId(sourceUrl),
             artists = content?.let(::lineUp).orEmpty()
         )
+    }
+
+    /**
+     * The text after `Entrance:` or `Entrance fee:`, or after `Tickets:` or `Price at the door` when it holds an amount, since
+     * `Tickets:` also heads a shop link. `16E` is the venue's spelling of `16 €`.
+     */
+    private fun labelledPrice(line: String): String? {
+        val text = line.replace(LETTER_E_EURO, "$1 €")
+        return ENTRANCE
+            .find(text)
+            ?.groupValues
+            ?.get(1)
+            .blankToNull()
+            ?: DOOR_PRICE
+                .find(text)
+                ?.groupValues
+                ?.get(1)
+                ?.takeIf { euroAmounts(it).isNotEmpty() }
+                ?.trim()
     }
 
     private fun headerTime(match: MatchResult): LocalTime? {
@@ -126,7 +138,13 @@ class AcudMachtNeuEventPageScraper {
 
         val ACUD_PREFIX = Regex("""^\s*acud\s*""", RegexOption.IGNORE_CASE)
 
-        val ENTRANCE = Regex("""^\s*(?:entrance|eintritt)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
+        val ENTRANCE = Regex("""^\s*(?:entrance(?:\s+fee)?|eintritt)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
+
+        val DOOR_PRICE = Regex("""^\s*(?:tickets?\s*:|price at the door(?:\s+(?:will be|is))?\s*:?)\s*(.*)$""", RegexOption.IGNORE_CASE)
+
+        val LETTER_E_EURO = Regex("""(\d)\s?E\b""")
+
+        val FREE_ENTRY = Regex("""^\s*(?:free entry|free admission|eintritt frei)\b""", RegexOption.IGNORE_CASE)
 
         /** `15 - 18 €` is a sliding scale, kept as the venue wrote it. */
         val RANGE = Regex("""\d\s*[-–]\s*\d""")
