@@ -24,7 +24,7 @@ npm run type-check && npm run check:lint && npm run check:format && npm run test
 ## Conventions
 
 The versions and the config follow `events-frontend/`. A Dependabot bump to one directory usually needs the same bump in the other. Components under
-`src/components/ui/` are vendored shadcn-vue: add one with `npx shadcn-vue add <name>`. That command can add a Google Fonts `@import` to `src/assets/main.css`.
+`src/components/ui/` are vendored shadcn-vue: add one with `npm run shadcn -- add <name>`. That command can add a Google Fonts `@import` to `src/assets/main.css`.
 Remove it.
 
 The layout comes from shadcn-vue's `dashboard-01` block. The registry has blocks only in the `new-york-v4` style, so the CLI cannot add one here.

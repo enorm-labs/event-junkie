@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@import 'shadcn-vue/tailwind.css';
+@import './shadcn-vue.css';
 
 @custom-variant dark (&:is(.dark *));
 
