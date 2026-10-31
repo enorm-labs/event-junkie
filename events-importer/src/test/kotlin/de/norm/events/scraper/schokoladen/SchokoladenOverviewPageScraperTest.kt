@@ -172,6 +172,8 @@ class SchokoladenOverviewPageScraperTest {
             // 9 December 2026: the act follows "Release Show von", and the quoted part after "w/" is the album (#2099).
             artistsOf("Berlin Release Show von Angela Aux w/ \"Das Nichts macht Kopien von sich selbst\" + TBA") shouldContainExactly
                 listOf("Angela Aux")
+            // 15 February 2027: a quoted album's tour after the act is no act (event 12195).
+            artistsOf("GLUT 'BURN' Tour 2027 + special guest") shouldContainExactly listOf("GLUT")
             // The contracted presents verb and its colon frame the bill, not the promoter (#3213).
             artistsOf("M:Soundtrack prsts: Dark Selbo Release Show (Bln) + CHEEKY (US/Bln)") shouldContainExactly listOf("Dark Selbo", "CHEEKY")
             // A cancelled act the venue brackets ahead of its note is the act, not a genre.

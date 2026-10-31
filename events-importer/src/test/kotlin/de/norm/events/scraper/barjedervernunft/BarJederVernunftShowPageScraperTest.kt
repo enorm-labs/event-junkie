@@ -127,6 +127,26 @@ class BarJederVernunftShowPageScraperTest {
     }
 
     @Test
+    fun `applyTo bills the comedian a comedy night is named for`() {
+        // Event 12189: the programme is the subtitle, and the blurb opens elsewhere.
+        val show =
+            BarJederVernunftShow(
+                genre = "Kabarett",
+                pricePresale = null,
+                priceNote = null,
+                description = "Zu Beginn des Jahres 2027 schickt Bodo Wartke sein fünftes Klavierkabarettprogramm auf Abschiedstour."
+            )
+
+        val enriched = show.applyTo(occurrence(title = "Bodo Wartke"))
+
+        enriched.eventType shouldBe "COMEDY"
+        enriched.artists.map { it.name to it.role } shouldBe listOf("Bodo Wartke" to ArtistRole.HEADLINER)
+        show.applyTo(occurrence(title = "Eckart von Hirschhausen")).artists.map { it.name } shouldBe listOf("Eckart von Hirschhausen")
+        show.applyTo(occurrence(title = "PUPPEN GUCKEN")).artists shouldHaveSize 0
+        show.applyTo(occurrence(title = "Das Geld liegt auf der Fensterbank, Marie")).artists shouldHaveSize 0
+    }
+
+    @Test
     fun `applyTo bills no performer for a production whose blurb opens elsewhere`() {
         val show =
             BarJederVernunftShow(
