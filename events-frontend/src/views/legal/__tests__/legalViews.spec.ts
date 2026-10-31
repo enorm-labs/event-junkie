@@ -241,10 +241,16 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /exactly three values/,
     de: /genau drei Werte/,
   },
+  // Opening the sign-in page sets `XSRF-TOKEN`, signed in or not, so "no cookie without a sign-in" is false (#4036).
   {
-    what: 'absence of cookies without a sign-in',
-    en: /Without a sign-in, this site sets no cookies/,
-    de: /Ohne Anmeldung setzt diese Seite keine Cookies/,
+    what: 'absence of cookies before the sign-in page',
+    en: /Until you open the sign-in page, this site sets no cookies/,
+    de: /Solange du die Anmeldeseite nicht öffnest, setzt diese Seite keine Cookies/,
+  },
+  {
+    what: 'CSRF cookie left by a visit without a sign-in',
+    en: /It stays if you do not sign in/,
+    de: /Es bleibt auch, wenn du dich nicht anmeldest/,
   },
   // The two cookies Spring Security sets on the account paths (#3887). Their names are in
   // `SessionSecurityContextRepository.kt`; a renamed cookie makes the notice name the wrong one.
@@ -394,6 +400,12 @@ for (const locale of ['en', 'de'] as const) {
         expect(textOf(PRIVACY[locale], locale)).toMatch(element[locale])
       })
     }
+
+    it('does not tie the first cookie to the sign-in itself', () => {
+      expect(textOf(PRIVACY[locale], locale)).not.toMatch(
+        /Without a sign-in, this site sets no cookies|only when you sign in|Ohne Anmeldung setzt|nur, wenn du dich anmeldest/,
+      )
+    })
 
     it('does not describe processing that does not happen', () => {
       // A notice claiming cookie consent, analytics or ad partners we do not have is as inaccurate as

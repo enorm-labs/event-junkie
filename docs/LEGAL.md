@@ -151,8 +151,8 @@ both header and footer, `hreflang`, `og:locale` and structured data.
 
 A German controller running a public site with optional accounts, and no analytics, no advertising and no third-party
 embeds. The processing that exists is server logs (Art. 6 (1) (f)), three `localStorage` keys for settings the visitor
-chose, and publicly announced event data (§7.3). A visitor who signs in adds an account (Art. 6 (1) (b)) and two
-cookies (§7.4). The account is optional, and nothing on the site needs one.
+chose, and publicly announced event data (§7.3). A visitor who opens the sign-in page adds a cookie, and one who signs in adds an account
+(Art. 6 (1) (b)) and a second cookie (§7.4). The account is optional, and nothing on the site needs one.
 
 **The account's deletion route is the account page** (#3887). The visitor deletes the account there, and the deletion
 takes the sessions with it. `InactiveAccountCleanup` in the BFF runs daily at 04:30 and does the rest (#3905):
@@ -419,16 +419,17 @@ state them and both must move with it.**
 
 ### 7.4 Device storage — `localStorage`, not just cookies
 
-Without a sign-in, the site sets **no cookies**. It stores exactly three keys: **`theme`** (`App.vue`), **`locale`**
+Until a visitor opens the sign-in page, the site sets **no cookies**. It stores exactly three keys: **`theme`** (`App.vue`), **`locale`**
 (`i18n/locales.ts`) and **`view`** (`composables/useCompactView.ts`). § 25 TDDDG covers _storage on terminal
 equipment_, not cookies specifically. Each item is strictly necessary for a setting the visitor chose, so § 25 (2) 2
 applies and **no consent banner is required**.
 
-**The sign-in and account pages add two cookies** (#3887). Both are strictly necessary for a service the visitor asked
+**The sign-in adds two cookies** (#3887). Both are strictly necessary for a service the visitor asked
 for, so § 25 (2) 2 applies to them too.
 
-- **`XSRF-TOKEN`** holds the CSRF token. Only `GET /api/auth/csrf` sets it, and only the sign-in and account pages call
-  that endpoint. It expires after 30 days.
+- **`XSRF-TOKEN`** holds the CSRF token. Only `GET /api/auth/csrf` sets it. For a visitor who is signed out, only the
+  sign-in page and the link page call that endpoint. Every other caller acts for a signed-in visitor. The cookie expires
+  after 30 days, so a visitor who leaves the sign-in page without a sign-in keeps it (#4036).
 - **`__Host-ej_session`** identifies the session. The sign-in sets it, and it expires 30 days after its last use.
   Signing out deletes it.
 
