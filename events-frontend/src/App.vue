@@ -72,9 +72,9 @@ const sectionLinks = computed(() =>
     <!-- Sticky so the navigation stays in reach on a long feed (#2321). Opaque, so cards do not show
          through, and z-30: below HeaderMenu's overlay and sheet and the skip link. -->
     <header class="sticky top-0 z-30 border-b border-border bg-background">
-      <!-- Below `lg` the links drop to a second line: one row needs about 810px in German, and the
-           guard in e2e/smoke.spec.ts checks the widths in between in both languages. Signed in, with
-           Following and the bell, e2e/following.spec.ts checks the same widths. -->
+      <!-- Below `lg` the links drop to a second line: one row needs about 870px in German signed out,
+           and the guard in e2e/smoke.spec.ts checks the widths in between in both languages. Signed
+           in, with Following and the bell, e2e/following.spec.ts checks the same widths. -->
       <!-- Named because the footer contributes a second navigation landmark; e2e selectors address
            it by this name. -->
       <nav
