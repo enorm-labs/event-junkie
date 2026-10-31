@@ -106,6 +106,8 @@ spec:
     # The month's mail count for `ej-mail-quota-high` (#4017). Production only: both clusters send from one Scaleway project.
     mailQuota:
       existingSecret: "event-junkie-mail-quota"
+      # The #4208 drill: below the month's count, so `ej-mail-quota-high` fires. The next PR reverts it.
+      limit: 20
     # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
     # repeating them here would be a second place to look with nothing to say. The HPA's bounds are
     # defaults too, and only its switch is here (#1774).
