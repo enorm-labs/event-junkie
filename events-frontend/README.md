@@ -165,9 +165,13 @@ npm run check:lint     # the same without --fix, as CI runs it: a fixable findin
 
 ```sh
 # Add a component — it is generated into src/components/ui/<name>/ and owned by us (edit freely)
-npx shadcn-vue add button
-npx shadcn-vue add card dialog
+npm run shadcn -- add button
+npm run shadcn -- add card dialog
 ```
+
+The CLI is not a dependency: its tree carried advisories that no release fixes. The `shadcn` script runs the version it pins
+through `npx`, and `src/assets/shadcn-vue.css` is that version's `tailwind.css`, copied. To move to a newer CLI, change the pin
+in both apps' `shadcn` script and retake the file from the new release.
 
 The theme (colours, radius, typography, light/dark mode) is defined as CSS variables in
 [`src/assets/main.css`](src/assets/main.css). Re-theme by editing those variables — see
@@ -180,10 +184,10 @@ upstream version, use git as a safety net — `--overwrite` replaces the file wh
 
 ```sh
 # 1. Check whether the registry version differs from ours
-npx shadcn-vue diff button
+npm run shadcn -- diff button
 
 # 2. On a clean working tree, overwrite with the latest version
-npx shadcn-vue add button --overwrite
+npm run shadcn -- add button --overwrite
 
 # 3. Review what changed (and what it clobbered), then reconcile
 git diff src/components/ui/button

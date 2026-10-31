@@ -32,12 +32,12 @@ components, one attribute per line past two, logic in `computed()`, `:`/`@`/`#` 
 - **Never two conflicting utilities on one element** (`grid flex`) — stylesheet order decides, not markup order; branch with a ternary or `cn()`.
 - **A class list seen a third time is a component or a `cva` variant, not `@apply`.** `@apply` is reserved for the `@layer base` resets in `main.css`. Two
   sibling primitives sharing a string can share an exported constant (`FIELD_CLASS` in `@/lib/utils`).
-- **Registry primitive versus `Base*` wrapper**: `npx shadcn-vue add <name>` first — from the app's directory, so the pinned devDependency runs — but
+- **Registry primitive versus `Base*` wrapper**: `npm run shadcn -- add <name>` first — from the app's directory, so the version the script pins runs — but
   check what it renders. The registry's `Select` and others are Reka UI listboxes, not native controls, and swapping one in breaks the browser's own picker
   and every Playwright `selectOption`/`fill`. Where native
   behaviour matters, a thin `Base*` around the real element (`BaseInput.vue`, `BaseSelect.vue`), attributes falling through.
-- **`src/components/ui/` is vendored and owned**; edit freely, npm does not manage it. To take a newer registry version: `npx shadcn-vue diff <name>`,
-  commit first, `add <name> --overwrite` (**replaces wholesale, no merge**), reconcile in `git diff`. A customised component is hand-ported instead.
+- **`src/components/ui/` is vendored and owned**; edit freely, npm does not manage it. To take a newer registry version: `npm run shadcn -- diff <name>`,
+  commit first, `npm run shadcn -- add <name> --overwrite` (**replaces wholesale, no merge**), reconcile in `git diff`. A customised component is hand-ported instead.
   Appearance goes into the component's `cva` variants, never a per-call-site `class`; `class` at the call site is for layout (`w-full`, margins).
   Preserve the Reka UI accessibility — do not strip ARIA or `:as`/slot wiring.
 - **Class order is the official Tailwind order** (layout → box model → typography → visual → variants) **by hand** — the ordering tool is a Prettier plugin and
