@@ -791,7 +791,7 @@ scripts/rebuild-node.sh production --next          # boot tls access secrets flu
 that path. So the old cluster's Flux is frozen first, and the address change merges before the window opens.
 
 ```sh
-scripts/cutover.sh production prepare     # the site serves: freezes Flux on the old cluster, waits for the switch PR
+scripts/cutover.sh production prepare     # the site serves: freezes Flux on the old cluster, waits for the switch PR, empties the new OpenObserve
 git pull
 scripts/cutover.sh production cutover     # type yes: the site is down until step site
 scripts/cutover.sh production finish      # after the switch PR's infra part: moves the state
@@ -800,6 +800,8 @@ infra/apply.sh production --allow-replace # no -var next_pair; compare the count
 
 1. **The switch PR** names the new private addresses: `.21` for the database and `.11` for the k3s node. It changes `deploy/clusters/<env>`, the
    scripts and the docs. It carries the `hold` label, so the merge gate stops it. Remove the label and merge it while `prepare` waits. `prepare` stops when the new cluster reads the new address and its app is still suspended.
+   The switch PR also gives OpenObserve the next bucket prefix. `prepare` then wipes the new instance's PVC, so that its file list starts empty
+   (OPENOBSERVE.md § Changing the prefix).
 2. **`cutover` stops the importer and PostgreSQL on the old pair.** Then it shuts down the old pair and the new k3s node. It moves the k3s IPv4 and the
    `pgdata` volume, and powers on. It runs `step.sh postgres` and `step.sh backups` on the new database node. Then it brings the tunnel up with the
    new server key. It resumes the app, waits for the site and prints the downtime.

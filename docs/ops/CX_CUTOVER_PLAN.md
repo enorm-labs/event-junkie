@@ -23,15 +23,15 @@ scripts/cutover.sh production cutover                #    about 8 minutes of dow
 
 ## State
 
-| Item                                                                 | State                                                                          |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `next_pair` in the module (#4165), ordering what is for sale (#4176) | merged                                                                         |
-| `scripts/rebuild-node.sh --next` (#4185)                             | merged, not run on a real cluster                                              |
-| `scripts/cutover.sh` (#4193)                                         | merged, not run on a real cluster                                              |
-| Staging switch PR (#4196)                                            | draft. Merge during `staging prepare`                                          |
-| Production switch PR (#4197)                                         | draft. Merge during `production prepare`                                       |
-| Production pair, cx33 + cx23                                         | ordered 2026-10-30 22:27: `production-k3s-next` and `production-postgres-next` |
-| Staging rehearsal pair, cx33                                         | not ordered: `order-next-pair.sh staging --no-fallback` waits for cx33 stock   |
+| Item                                                                 | State                                                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `next_pair` in the module (#4165), ordering what is for sale (#4176) | merged                                                                                      |
+| `scripts/rebuild-node.sh --next` (#4185)                             | merged, not run on a real cluster                                                           |
+| `scripts/cutover.sh` (#4193)                                         | merged, not run on a real cluster                                                           |
+| Staging switch PR (#4196)                                            | draft, sets OpenObserve's prefix `staging-2/` (#4302). Merge during `staging prepare`       |
+| Production switch PR (#4197)                                         | draft, sets OpenObserve's prefix `production-2/` (#4302). Merge during `production prepare` |
+| Production pair, cx33 + cx23                                         | ordered 2026-10-30 22:27: `production-k3s-next` and `production-postgres-next`              |
+| Staging rehearsal pair, cx33                                         | not ordered: `order-next-pair.sh staging --no-fallback` waits for cx33 stock                |
 
 ## 1. Order the production pair
 
@@ -51,13 +51,15 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
 - [ ] `scripts/cutover.sh staging cutover`. Record the downtime that the script prints.
 - [ ] Check `https://staging.event-junkie.de/` through the tunnel, and `scripts/cluster-state.sh staging`.
 - [ ] `scripts/cutover.sh staging finish`, then `infra/apply.sh staging --allow-replace`. The count must be 0 to add, 2 to change, 3 to destroy.
+- [ ] Add the `retire-staging` rule for `staging/` to `infra/bootstrap/storage.tf`, and apply bootstrap. This proves that Hetzner applies a prefix filter.
+      On 15 days after the apply, check that `staging/` is empty, then remove the rule.
 - [ ] Write the times and every defect into #4128. Fix each defect before step 3.
 
 ## 3. Before the production window
 
 - [x] **Run the restore drill (#4152).** It passed on staging on 2026-10-31. Restore to serving took about 13 seconds. See BACKUPS.md §9.
-- [ ] **Check the OpenObserve prefix.** The new cluster's OpenObserve writes to the same bucket prefix as the running one,
-      `event-junkie-o2/production/`. Find out if two writers damage the stream, before `rebuild-node.sh production --next` runs.
+- [x] **Check the OpenObserve prefix.** Two writers on `production/` do not damage the stream: each instance reads, compacts and expires only
+      what its own file list holds. The old instance's files then need a new prefix and a `retire-*` rule (#4302).
 - [ ] `scripts/rebuild-node.sh production --next`
 - [ ] Choose a quiet hour for the window.
 
@@ -88,6 +90,8 @@ run `scripts/cutover.sh production rollback`. Rollback works until `finish`. The
 
 - [ ] `scripts/cutover.sh production finish`. It copies the state to `~/.event-junkie/cutover-production/` first.
 - [ ] `infra/apply.sh production --allow-replace`, with no `-var next_pair`. Expect 0 to add, 5 to change and 6 to destroy.
+- [ ] Add the `retire-production` rule for `production/` to `infra/bootstrap/storage.tf`, and apply bootstrap. See OPENOBSERVE.md § Changing the prefix.
+      On 15 days after the apply, check that `production/` is empty, then remove the rule.
 - [ ] **Read the plan before you type yes.** The volume has no delete protection on production.
     - A line destroys or replaces `hcloud_volume.postgres`: answer no.
     - A line adds or replaces a server: answer no.
