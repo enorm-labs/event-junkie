@@ -109,6 +109,9 @@ case "$*" in
         echo $((n + 1)) >"$FAKE/host-reads"
         if [ "$n" -ge "${FAKE_SWITCH_AFTER:-1}" ]; then echo "$FAKE_NEW_HOST"; else echo old; fi ;;
     "get helmrelease event-junkie -n flux-system -o jsonpath={.spec.suspend}") echo true ;;
+    "get helmrelease openobserve -n flux-system -o jsonpath={.spec.values.config.ZO_S3_BUCKET_PREFIX}")
+        env="${ctx#event-junkie-}"
+        if [[ "$ctx" == *-next ]]; then echo "${FAKE_NEXT_PREFIX:-${env%-next}-2/}"; else echo "$env/"; fi ;;
 esac
 EOF
 cat >"$BIN/flux" <<'EOF'
@@ -220,6 +223,20 @@ has "prepare" "flux --context event-junkie-production suspend kustomization flux
 [ "$(cat "$WORK/cutover/old-server-key")" = OLDKEY= ] || fail "prepare: old server key not kept"
 [ -e "$WORK/run/production.name" ] && [ ! -e "$WORK/run/production-next.name" ] || fail "prepare: the old tunnel is not the one left up"
 grep -qF "git pull" <<<"$OUT" || fail "prepare: does not say git pull"
+O2="-n observability"
+before "prepare" "kubectl --context event-junkie-production-next delete statefulset openobserve-openobserve-standalone $O2 --cascade=orphan" \
+    "kubectl --context event-junkie-production-next delete pvc data-openobserve-openobserve-standalone-0"
+before "prepare" "kubectl --context event-junkie-production-next delete pvc data-openobserve-openobserve-standalone-0" \
+    "flux --context event-junkie-production-next reconcile helmrelease openobserve -n flux-system --force"
+! grep -qF "kubectl --context event-junkie-production delete" "$WORK/events.log" || fail "prepare: deleted on the old cluster"
+: >"$WORK/events.log"
+run "prepare again" 0 "" production prepare --from logs
+! grep -qF "delete pvc" "$WORK/events.log" || fail "prepare again: wiped the new OpenObserve twice"
+rm -f "$WORK/cutover/logs-production-2"
+: >"$WORK/events.log"
+FAKE_NEXT_PREFIX=production/ run "same prefix" 1 "" production prepare --from logs
+grep -qF "#4302" <<<"$OUT" || fail "same prefix: does not name #4302"
+! grep -qF "delete" "$WORK/events.log" || fail "same prefix: deleted something"
 FAKE_SWITCH_AFTER=9 run "switch never merged" 1 "" production prepare --from switch
 
 # 2. cutover refuses an unpulled checkout, and anything but yes, before it changes anything.
@@ -270,6 +287,7 @@ grep -qF "revert the switch PR" <<<"$OUT" || fail "rollback: does not say to rev
 # 6. Staging has one node: the volume moves with the k3s node, and PostgreSQL is reached over the tunnel alone.
 setup staging
 run "staging prepare" 0 "" staging prepare
+has "staging prepare" "kubectl --context event-junkie-staging-next delete pvc data-openobserve-openobserve-standalone-0"
 merge_switch
 run "staging cutover" 0 "yes" staging cutover
 [ "$(q '.volumes[0].server')" = 3 ] || fail "staging: the volume is not on the new k3s node"

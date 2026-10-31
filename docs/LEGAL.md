@@ -587,6 +587,11 @@ needs the maximum, so the notice leads with 14 days. The rotation comes second.
 without changing the privacy notice and the notice becomes false. `legalViews.spec.ts` asserts the number in both
 languages, so the two cannot drift apart quietly.
 
+**A rebuild must not leave the old instance's files behind (#4302).** The compactor deletes only what its own file
+list names, and a rebuilt instance starts with an empty one. So each new instance writes under a new bucket prefix.
+A `retire-*` lifecycle rule then expires the old prefix 14 days after its last write. The 90-day backstop does not
+keep the promise on its own. OPENOBSERVE.md § Changing the prefix has the steps.
+
 **One stream keeps its rows longer, and it holds no personal data.** On both clusters, `smoke_test` keeps the results of
 the post-deploy smoke test for 60 days (#2393).
 The rows hold k6 metrics and check names. The collector sends a record there only when its container is `smoke-test`

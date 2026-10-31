@@ -28,19 +28,20 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 - **The metadata DB dies with the node.** Dashboards and alerts live in git and are pushed by hand after every rebuild.
 - **Changing the Secret restarts nothing**, and both `flux reconcile` and `rollout status` report success anyway.
 - **Both clusters, one bucket**, each under its own key prefix. Nothing writes at the root any more. §Two instances.
+- **A new instance takes a new prefix**, `<env>-<n>/`, and the old prefix expires as a whole. §Changing the prefix.
 
 ## The shape of it
 
-|              |                                                                                                                               |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Chart        | `openobserve-standalone`, pinned at **1.0.1** on both clusters. A major goes to staging first and holds a night there         |
-| Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it |
-| Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                         |
-| Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging/`. **Changing it needs the PVC wiped**, §Changing the prefix               |
-| Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                |
-| Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                           |
-| Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                          |
-| Environments | **Both**, since [#880](https://github.com/enorm-labs/event-junkie/issues/880). Separate instances, one shared bucket          |
+|              |                                                                                                                                                           |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chart        | `openobserve-standalone`, pinned at **1.0.1** on both clusters. A major goes to staging first and holds a night there                                     |
+| Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it                             |
+| Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                                                     |
+| Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging/`. A new instance takes the next generation. **Changing it needs the PVC wiped**, §Changing the prefix |
+| Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                                            |
+| Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                                                       |
+| Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                                                      |
+| Environments | **Both**, since [#880](https://github.com/enorm-labs/event-junkie/issues/880). Separate instances, one shared bucket                                      |
 
 ### Two instances, and where they differ
 
@@ -98,12 +99,45 @@ cd deploy/alerts && ./apply.sh
 Expect one burst of `ArrowJsonEncodeError` a few seconds after boot. The Arrow schema for a stream is still being inferred while its first rows arrive. It
 resolves on the retry and does not recur. Seen once on 2026-09-01: four lines in one second, and none after.
 
-**The bucket holds three top-level prefixes and no others**: `staging/`, `production/`, and the orphaned `files/` root corpus. A fourth,
+**The bucket holds the live prefixes of both clusters, the retired prefixes that a `retire-*` rule still empties, and the orphaned `files/` root corpus.** One other object,
 `o2_test/check.txt`, was a 19-byte connectivity probe from the ADR-015 setup. It was deleted on 2026-09-01, so the check above has no known exception.
 Its metadata showed `rule-id="backstop-expiry"`. That is the useful part: the 90-day lifecycle rule covers the whole bucket, not only the corpus.
 
-**The old objects are not deleted and do not need to be.** They are orphaned at their old keys, no longer referenced by any file list, and the 90-day
-lifecycle backstop in `infra/bootstrap/storage.tf` clears them. Retention is 14 days, so the history actually lost is at most a fortnight.
+**No compactor ever deletes the old objects.** Retention marks entries in the instance's own file list, and only those objects are removed. It never
+lists the bucket. A rebuilt instance starts with an empty file list, so its predecessor's Parquet is orphaned. The 90-day backstop would clear it, but
+the privacy notice promises 14 days (LEGAL.md §7.5, #4302).
+
+**So a new instance takes a new prefix, and the old prefix expires as a whole.** The prefix carries a generation: `production/` and `staging/` are the
+first, then `production-2/`, `production-3/` and so on. A rebuilt instance has an empty PVC anyway, so the new prefix costs nothing at that moment.
+
+1. The PR that builds or switches to the new instance sets the next `ZO_S3_BUCKET_PREFIX`. For the second pair, that is the switch PR.
+   `scripts/cutover.sh <env> prepare` then wipes the new instance's PVC in its `logs` step. It refuses a switch PR that keeps the old prefix. For a
+   rebuild in place, merge the new prefix just before the apply. The running instance then restarts on a prefix that its file list does not match.
+   Its console can show no data until the rebuild.
+2. When nothing can write to the old prefix any more, add a rule to `minio_s3_bucket_lifecycle.o2` in `infra/bootstrap/storage.tf`. For the second
+   pair, that is after `finish`, because `rollback` needs the old instance until then:
+
+    ```hcl
+    rule {
+      id     = "retire-production"
+      status = "Enabled"
+
+      filter {
+        prefix = "production/"
+      }
+
+      expiration {
+        days = 14
+      }
+    }
+    ```
+
+    Put it after `backstop-expiry`, because the server returns the rules sorted by id. Each object expires 14 days after it was written, and the
+    last one was written before the cutover.
+
+3. After 15 days, list the old prefix. It must be empty. Then remove the rule.
+
+The history lost is at most a fortnight, as before.
 
 **The metadata DB is on that PVC, which means it dies with the node.** Users, dashboards and saved views are metadata. The data is not. A rebuild therefore
 comes back with an empty console and a full bucket. That is why the root password can be regenerated freely: the Secret re-seeds it at first boot. It is

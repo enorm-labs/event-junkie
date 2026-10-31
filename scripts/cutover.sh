@@ -5,7 +5,7 @@
 # Usage:
 #   scripts/cutover.sh <staging|production> <phase> [--from <step>]
 #
-#   prepare    freeze switch                        the site serves; ends with `git pull`
+#   prepare    freeze switch logs                   the site serves; ends with `git pull`
 #   cutover    check confirm stop-app stop-db power-off move-ip move-volume power-on access database resume site
 #              follow-up rename                     the site is down from `stop-app` to `site`
 #   finish     check backup state                   `tofu state mv`, then the apply to type, with its expected count
@@ -16,6 +16,9 @@
 # that path. So `prepare` freezes Flux on the old cluster before the switch PR merges, and the new
 # cluster's app stays suspended until PostgreSQL runs on the new pair. Only the k3s IPv4 moves: no
 # AAAA record exists, so each new node keeps its own IPv6.
+#
+# A new OpenObserve also takes a new bucket prefix, `<env>-<n>/`, which the switch PR sets (#4302).
+# No compactor ever deletes the old instance's files, so its prefix must expire as a whole.
 #
 # `finish` moves the old pair's state to `*_old` addresses and the new pair's to the running ones.
 # The apply then deletes the `*_old` orphans and the temporary IPv4, and renames the new servers in
@@ -49,6 +52,7 @@ SLEEP="${EJ_SLEEP:-5}"
 SWITCH_TRIES="${EJ_SWITCH_TRIES:-120}"
 SWITCH_SLEEP="${EJ_SWITCH_SLEEP:-30}"
 APP_HR=event-junkie
+O2_STS=openobserve-openobserve-standalone
 
 ENV="${1:-}"
 case "$ENV" in
@@ -66,7 +70,7 @@ HELM_RELEASE="${EJ_HELM_RELEASE:-$REPO/deploy/clusters/$ENV/helm-release.yaml}"
 MAIN_TF="${EJ_MAIN_TF:-$REPO/infra/environments/$ENV/main.tf}"
 PHASE="${2:-}"
 case "$PHASE" in
-    prepare) STEPS="freeze switch" ;;
+    prepare) STEPS="freeze switch logs" ;;
     cutover) STEPS="check confirm stop-app stop-db power-off move-ip move-volume power-on access database resume site follow-up rename" ;;
     finish) STEPS="check backup state" ;;
     rollback) STEPS="power-off move-back power-on access resume site" ;;
@@ -295,6 +299,31 @@ step_switch() {
     [ "$(kn get helmrelease "$APP_HR" -n flux-system -o jsonpath='{.spec.suspend}')" = true ] ||
         die "$APP_HR runs on $NEXT_CTX: suspend it at once (flux --context $NEXT_CTX suspend helmrelease $APP_HR)"
     log "$NEXT_CTX names $TARGET_IP, and $APP_HR is still suspended there"
+    tunnel_to "$ENV"
+}
+
+# The file list on the PVC holds keys relative to the prefix, so the new prefix needs an empty PVC
+# (OPENOBSERVE.md § Changing the prefix). The new cluster serves nothing yet, so nothing is lost but
+# its own logs since `--next`; `follow-up` applies the alerts and dashboards again.
+step_logs() {
+    local old new
+    old="$(k get helmrelease openobserve -n flux-system -o jsonpath='{.spec.values.config.ZO_S3_BUCKET_PREFIX}')"
+    tunnel_to "$ENV-next"
+    new="$(kn get helmrelease openobserve -n flux-system -o jsonpath='{.spec.values.config.ZO_S3_BUCKET_PREFIX}')"
+    [ -n "$new" ] && [ "$new" != "$old" ] ||
+        die "OpenObserve on $NEXT_CTX writes under '$new', as the old cluster does: the switch PR must set a new ZO_S3_BUCKET_PREFIX (#4302)"
+    if [ -e "$STATE_DIR/logs-${new%/}" ]; then
+        log "OpenObserve on $NEXT_CTX already started empty under $new"
+    else
+        kn delete statefulset "$O2_STS" -n observability --cascade=orphan --ignore-not-found >/dev/null
+        kn delete pod "$O2_STS-0" -n observability --ignore-not-found --wait >/dev/null
+        kn delete pvc "data-$O2_STS-0" -n observability --ignore-not-found --wait >/dev/null
+        flux --context "$NEXT_CTX" reconcile helmrelease openobserve -n flux-system --force >/dev/null
+        touch "$STATE_DIR/logs-${new%/}"
+    fi
+    kn rollout status "statefulset/$O2_STS" -n observability --timeout=10m >/dev/null ||
+        die "OpenObserve does not start on $NEXT_CTX: kubectl --context $NEXT_CTX -n observability get pods"
+    log "OpenObserve on $NEXT_CTX writes under $new from an empty PVC; the old cluster keeps $old until it stops"
     tunnel_to "$ENV"
     log "next: git pull, then scripts/cutover.sh $ENV cutover"
 }
