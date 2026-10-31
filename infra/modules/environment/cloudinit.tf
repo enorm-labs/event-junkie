@@ -59,8 +59,8 @@ locals {
 
   base_runcmd = [
     "install -d -m 0750 /opt/event-junkie",
-    # First, on both roles: k3s registers with `--node-ip` and PostgreSQL binds the private address,
-    # and neither exists until this has run.
+    # First, on both roles: k3s advertises its API and PostgreSQL binds the private address, and
+    # neither exists until this has run.
     "/opt/event-junkie/step.sh private-net",
     "/opt/event-junkie/step.sh harden",
   ]
