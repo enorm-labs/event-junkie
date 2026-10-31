@@ -23,22 +23,22 @@ scripts/cutover.sh production cutover                #    about 8 minutes of dow
 
 ## State
 
-| Item                                                                 | State                                      |
-| -------------------------------------------------------------------- | ------------------------------------------ |
-| `next_pair` in the module (#4165), ordering what is for sale (#4176) | merged                                     |
-| `scripts/rebuild-node.sh --next` (#4185)                             | merged, not run on a real cluster          |
-| `scripts/cutover.sh` (#4193)                                         | merged, not run on a real cluster          |
-| Staging switch PR (#4196)                                            | draft. Merge during `staging prepare`      |
-| Production switch PR (#4197)                                         | draft. Merge during `production prepare`   |
-| Production pair, cx33 + cx23                                         | not ordered: no cx stock in `nbg1`         |
-| Staging rehearsal pair, cx33                                         | not ordered: waits for the production pair |
+| Item                                                                 | State                                                                          |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `next_pair` in the module (#4165), ordering what is for sale (#4176) | merged                                                                         |
+| `scripts/rebuild-node.sh --next` (#4185)                             | merged, not run on a real cluster                                              |
+| `scripts/cutover.sh` (#4193)                                         | merged, not run on a real cluster                                              |
+| Staging switch PR (#4196)                                            | draft. Merge during `staging prepare`                                          |
+| Production switch PR (#4197)                                         | draft. Merge during `production prepare`                                       |
+| Production pair, cx33 + cx23                                         | ordered 2026-10-30 22:27: `production-k3s-next` and `production-postgres-next` |
+| Staging rehearsal pair, cx33                                         | not ordered: `order-next-pair.sh staging --no-fallback` waits for cx33 stock   |
 
 ## 1. Order the production pair
 
-- [ ] `infra/order-next-pair.sh production`, in a terminal tab that stays open. It checks every 2 minutes.
-- [ ] It announces `complete` with `say`. The state then holds `production-k3s-next` and `production-postgres-next`.
+- [x] `infra/order-next-pair.sh production`, in a terminal tab that stays open. It checks every 2 minutes.
+- [x] It announces `complete` with `say`. The state then holds `production-k3s-next` and `production-postgres-next`.
 
-**A cx43 alone is the fallback.** In that case, change #4197 before you merge it. See the PR body.
+It ordered a cx33, not the cx43 fallback, so #4197 needs no change.
 
 ## 2. Rehearse on staging
 
@@ -55,7 +55,7 @@ Staging has one node, so the rehearsal moves the volume to the new k3s node. It 
 
 ## 3. Before the production window
 
-- [ ] **Run the restore drill (#4152).** The off-server backups were never restored. Until they are, they are not proven.
+- [x] **Run the restore drill (#4152).** It passed on staging on 2026-10-31. Restore to serving took about 13 seconds. See BACKUPS.md §9.
 - [ ] **Check the OpenObserve prefix.** The new cluster's OpenObserve writes to the same bucket prefix as the running one,
       `event-junkie-o2/production/`. Find out if two writers damage the stream, before `rebuild-node.sh production --next` runs.
 - [ ] `scripts/rebuild-node.sh production --next`
