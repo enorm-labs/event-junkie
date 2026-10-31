@@ -42,6 +42,11 @@ install -d -m 0700 /etc/rancher/k3s
     echo 'protect-kernel-defaults: true'
 
     echo "node-external-ip: ${PUBLIC_IPV4}"
+    # k3s advertises the API on node-external-ip unless told otherwise, and the `kubernetes` Service
+    # follows it. A second pair's node boots with the running node's IPv4 there, so every pod's API
+    # call left for the old node's firewall and timed out (#4128). The private address is local on
+    # every node, before and after a cutover.
+    echo "advertise-address: ${PRIVATE_IPV4}"
 
     echo 'kube-apiserver-arg:'
     # Stops a compromised kubelet from editing other nodes or claiming pods it does not run.
