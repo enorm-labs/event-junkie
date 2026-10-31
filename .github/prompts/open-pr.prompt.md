@@ -64,7 +64,7 @@ This is the standard "ship it" flow — the manual equivalent of
       after table. It starts no dev server, so it runs in any worktree. Put the table under the template's `## Screenshots` and pass each referenced
       `./build/pr-screenshots/<file>.png` with `--attach`, from the repository root; `gh` uploads the file and rewrites the link. `--click` opens a menu,
       `--scroll` brings a list end into view, and `--label` keeps a second run from overwriting the first. A map panel opens only on a pin click, never from
-      a query: `--click '.venue-map [aria-label^="<Name>"]' --scroll '.venue-map'` on `/en/map` or `/en/venues?view=map&q=<slug>`. Open one shot before you
+      a query: `--click '.venue-map [aria-label^="<Name>"]' --scroll '.venue-map'` on `/en/map` or `/en/venues?view=map&q=<slug>`. The filter sheet below 768 px opens with `--click 'main button[aria-haspopup="dialog"]'`: without `main` the header's search button matches first. Open one shot before you
       trust an identical pair, because a page that never loaded compares identical too. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
       A change to `events-admin/` gets them too, from `scripts/admin-screenshots.sh <path>...`: the same two builds, its API answered from the fixtures in

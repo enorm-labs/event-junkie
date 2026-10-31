@@ -59,7 +59,7 @@ two of its suggestions are deliberately not: focus is not moved to the top on ro
   to `h3`. **A card grid straight under the page `h1` gets `as="h2"`**; the `heading-order` gate in `e2e/a11y.spec.ts` on the four list routes is what
   pins that — a card's heading level is a property of the page, not the card.
 - **Never remove a focus indicator**; `outline-none` only with a `focus-visible:` ring. **Prefer a reka-ui / shadcn-vue primitive** over a hand-rolled
-  interactive `div`. **Form controls need a label** (`<label>`, or `aria-label` where the design has none, as in `EventFilterBar.vue`).
+  interactive `div`. **Form controls need a label** (`<label>`, or `aria-label` where the design has none, as on the price fields in `EventFilterPanel.vue`).
 - **e2e selectors by role and accessible name** (`getByRole('link', { name: … })`), which makes the Playwright suite an accessibility regression test.
 - **Colour is never the only carrier of meaning**; 4.5:1 body, 3:1 large text and UI boundaries.
 - **The skip link in `App.vue` stays the first focusable element**, and `#main-content` keeps `tabindex="-1"`.
