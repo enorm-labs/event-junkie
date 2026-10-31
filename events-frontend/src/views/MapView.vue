@@ -29,9 +29,8 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { beginContentLoad } from '@/composables/useViewLoaded'
 import { fetchAllVenues } from '@/composables/useVenues'
-import { districtLabel } from '@/lib/districts'
 import { today } from '@/lib/dateRanges'
-import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
+import { addDays, isOnNow, isPastEvent, todayIso, venueLocationLine } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import { coarseAccuracy, describeOrigin } from '@/lib/nearOrigin'
 import {
@@ -228,10 +227,7 @@ const selectedVenue = computed(
     (quietFocus.value?.slug === selected.value ? quietFocus.value : null),
 )
 
-const location = computed(() => {
-  const venue = selectedVenue.value
-  return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
-})
+const location = computed(() => venueLocationLine(selectedVenue.value))
 
 /** What the panel over the map lists; the rest is one link away. */
 const PANEL_PREVIEW = 3

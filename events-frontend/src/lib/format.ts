@@ -1,6 +1,8 @@
 // Formatting helpers for BFF values: ISO dates and times, plain-number prices, rendered for a
 // Berlin/EU audience.
 
+import { districtLabel } from '@/lib/districts'
+
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   weekday: 'short',
   day: 'numeric',
@@ -134,6 +136,16 @@ export function formatPrice(amount?: number | null, currency?: string | null): s
 export function eventLabel(title?: string | null, venueName?: string | null): string {
   if (!title) return venueName ?? ''
   return venueName ? `${title} @ ${venueName}` : title
+}
+
+/**
+ * A venue's "where" line, `"Holzmarktstr. 25 · Friedrichshain"`: a part the venue lacks drops out
+ * with its separator.
+ */
+export function venueLocationLine(
+  venue?: { address?: string | null; district?: string | null } | null,
+): string {
+  return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
 }
 
 /**

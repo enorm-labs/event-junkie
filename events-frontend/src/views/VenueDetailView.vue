@@ -14,7 +14,7 @@ import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { venuePageJsonLd } from '@/lib/structuredData'
 import { inCharacterOrder } from '@/lib/venueCharacters'
-import { districtLabel } from '@/lib/districts'
+import { venueLocationLine } from '@/lib/format'
 import { venuePosition } from '@/lib/mapPins'
 import { programmeLink } from '@/lib/programmeLink'
 import { venueClosure } from '@/lib/venueClosure'
@@ -26,10 +26,7 @@ const { t, locale } = useI18n()
 
 const { entity: venue, detail } = useDetailPage('venue', useVenue, venuePageMeta)
 
-/** "Holzmarktstr. 25 · Friedrichshain": a part the venue lacks drops out with its separator. */
-const addressLine = computed(() =>
-  [venue.value?.address, districtLabel(venue.value?.district)].filter(Boolean).join(' · '),
-)
+const addressLine = computed(() => venueLocationLine(venue.value))
 
 /** The map centred on this venue with its pin open; none without a coordinate to centre on. */
 const mapLink = computed(() =>

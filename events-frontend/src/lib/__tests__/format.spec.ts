@@ -12,6 +12,7 @@ import {
   isRunningEvent,
   todayIso,
   tomorrowIso,
+  venueLocationLine,
   yesterdayIso,
   type EventSpan,
 } from '@/lib/format'
@@ -83,6 +84,25 @@ describe('eventLabel', () => {
     expect(eventLabel(undefined, 'Lido')).toBe('Lido')
     expect(eventLabel('', 'Lido')).toBe('Lido')
     expect(eventLabel(undefined, undefined)).toBe('')
+  })
+})
+
+describe('venueLocationLine', () => {
+  it('reads as the street address then the district label', () => {
+    expect(venueLocationLine({ address: 'Holzmarktstr. 25', district: 'friedrichshain' })).toBe(
+      'Holzmarktstr. 25 · Friedrichshain',
+    )
+  })
+
+  it('drops a part the venue lacks with its separator', () => {
+    expect(venueLocationLine({ address: 'Cuvrystr. 7', district: null })).toBe('Cuvrystr. 7')
+    expect(venueLocationLine({ address: null, district: 'kreuzberg' })).toBe('Kreuzberg')
+    expect(venueLocationLine({})).toBe('')
+  })
+
+  it('is empty when no venue is selected, so a panel renders no stray line', () => {
+    expect(venueLocationLine(null)).toBe('')
+    expect(venueLocationLine(undefined)).toBe('')
   })
 })
 
