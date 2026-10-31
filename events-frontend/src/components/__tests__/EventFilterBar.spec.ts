@@ -107,7 +107,7 @@ describe('EventFilterBar time options', () => {
   it('removes On now when a date is picked', async () => {
     await mountAt('/events?now=1')
 
-    const input = wrapper!.get('input[aria-label="Earliest event date"]')
+    const input = wrapper!.findAll('input[type="date"]')[0]!
     await input.setValue('2026-10-20')
     await input.trigger('change')
     await flushPromises()

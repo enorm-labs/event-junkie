@@ -55,7 +55,7 @@ test('a filtered link keeps the sheet closed and the date inputs off the page', 
   const toggle = page.getByRole('button', { name: 'Filters (1)' })
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
+  await expect(page.getByLabel('From', { exact: true })).toHaveCount(0)
   // The presets stay on the page, in one row.
   const presets = ['On now', 'Today', 'This weekend', 'Next 7 days'].map((name) =>
     page.getByRole('button', { name, exact: true }),
@@ -73,7 +73,7 @@ test('sets a filter in the sheet, counts the results live, and shows them on clo
   await page.getByRole('button', { name: 'Filters', exact: true }).click()
   const sheet = page.getByRole('dialog', { name: 'Filters' })
   await expect(sheet).toBeVisible()
-  await expect(sheet.getByLabel('Earliest event date')).toBeVisible()
+  await expect(sheet.getByLabel('From', { exact: true })).toBeVisible()
   await expect(sheet.getByRole('button', { name: 'Show 2 events' })).toBeVisible()
 
   await venueFilter(sheet).click()

@@ -369,12 +369,12 @@ test('filters by a date range, applying each bound as it is picked', async ({ pa
   const to = isoDaysFromNow(30)
 
   // Native date inputs apply on change, so the earliest bound alone already narrows the list.
-  await page.getByLabel('Earliest event date').fill(from)
+  await page.getByLabel('From', { exact: true }).fill(from)
 
   await expect(page).toHaveURL(new RegExp(`[?&]from=${from}\\b`))
   await expect(eventHeading(page, 'Gig From Date')).toBeVisible()
 
-  await page.getByLabel('Latest event date').fill(to)
+  await page.getByLabel('To', { exact: true }).fill(to)
 
   await expect(page).toHaveURL(new RegExp(`[?&]to=${to}\\b`))
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
@@ -397,7 +397,7 @@ test('applies a date preset, marks it pressed, and clears it on a second click',
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
   await expect(todayPreset).toHaveAttribute('aria-pressed', 'true')
   // The date inputs and the preset are two views of the same state.
-  await expect(page.getByLabel('Earliest event date')).toHaveValue(today)
+  await expect(page.getByLabel('From', { exact: true })).toHaveValue(today)
 
   await todayPreset.click()
 
@@ -431,8 +431,8 @@ test('bounds the date inputs so the range cannot invert', async ({ page }) => {
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
 
   // `min`/`max` come from the sibling bound, so the browser enforces from <= to for us.
-  await expect(page.getByLabel('Earliest event date')).toHaveAttribute('max', '2099-09-30')
-  await expect(page.getByLabel('Latest event date')).toHaveAttribute('min', '2099-09-01')
+  await expect(page.getByLabel('From', { exact: true })).toHaveAttribute('max', '2099-09-30')
+  await expect(page.getByLabel('To', { exact: true })).toHaveAttribute('min', '2099-09-01')
 })
 
 test('leaves both date bounds open into the past, so the archive is reachable', async ({
@@ -441,8 +441,8 @@ test('leaves both date bounds open into the past, so the archive is reachable', 
   await page.goto('/events')
 
   // The default is still upcoming-only, but that is the BFF's doing when no range is sent.
-  await expect(page.getByLabel('Earliest event date')).not.toHaveAttribute('min', /./)
-  await expect(page.getByLabel('Latest event date')).not.toHaveAttribute('min', /./)
+  await expect(page.getByLabel('From', { exact: true })).not.toHaveAttribute('min', /./)
+  await expect(page.getByLabel('To', { exact: true })).not.toHaveAttribute('min', /./)
 })
 
 test('browses past events from an explicit range', async ({ page }) => {

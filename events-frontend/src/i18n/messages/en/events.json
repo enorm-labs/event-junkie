@@ -6,8 +6,8 @@
   "filters": {
     "searchPlaceholder": "Search events…",
     "searchLabel": "“{q}”",
-    "earliestDate": "Earliest event date",
-    "latestDate": "Latest event date",
+    "from": "From",
+    "to": "To",
     "allTypes": "All types",
     "allVenues": "All venues",
     "allDistricts": "All districts",
