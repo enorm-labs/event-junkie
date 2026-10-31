@@ -182,8 +182,8 @@ test('omits the date-range filter, whose job the visible window already does', a
   await openMoreFilters(page)
   // The rest of the shared bar is there; only the date range is suppressed here.
   await expect(venueFilter(page)).toBeVisible()
-  await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
-  await expect(page.getByLabel('Latest event date')).toHaveCount(0)
+  await expect(page.getByLabel('From', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('To', { exact: true })).toHaveCount(0)
   // The presets are shortcuts for that same range, so they go with it. Not Today: the calendar has its own.
   await expect(page.getByRole('button', { name: 'This weekend' })).toHaveCount(0)
 })
