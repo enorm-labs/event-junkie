@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-class CalendarPropertyTest {
+class CalendarPropertiesTest {
     @Test
     fun `siteTime reads a VALUE=DATE property as all-day`() {
         CalendarProperty("20261017", mapOf("VALUE" to "DATE")).siteTime() shouldBe SiteTime(LocalDate.of(2026, 10, 17), null)
