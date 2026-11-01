@@ -105,7 +105,9 @@ scripts/format-markdown.sh check && scripts/ste-lint.sh check    # when a .md un
 ```
 
 Never run Gradle while a local import is in flight (AGENTS.md § Build & Dev Commands). A change to a shared helper also needs
-`/importer-smoke <slug> --full` and a diff, or a statement in the PR of why it acts on future imports only.
+`/importer-smoke <slug> --full` and a diff, or a statement in the PR of why it acts on future imports only. When the helper has a `*PropertyTest`
+(`ActSplittingPropertyTest`, `PriceParsingPropertyTest`, `LabelledClockPropertyTest`, …), a spelling, separator or label the fix teaches it goes into that
+test's generator too, or the properties keep testing the inputs of before the fix.
 
 ## Step 6 — Report, then the PR
 
