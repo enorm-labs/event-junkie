@@ -347,6 +347,24 @@ spec:
               - k8sattributes
               - resource/strip_metric_identity
               - batch
+
+  # **The app pods' sample limit, raised from the chart's 10,000.** Above the limit Prometheus drops the
+  # whole scrape and sets `up` to 0: the production importer passed it with 10,148 samples and sent
+  # nothing at all. By patch because the job sits in the chart's `scrape_configs` list,
+  # which Helm replaces whole. The `test` op fails the render if the chart reorders its jobs.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: OpenTelemetryCollector
+              name: o2c-openobserve-collector-gateway
+            patch: |
+              - op: test
+                path: /spec/config/receivers/prometheus/config/scrape_configs/6/job_name
+                value: prometheus-autodiscovery
+              - op: replace
+                path: /spec/config/receivers/prometheus/config/scrape_configs/6/sample_limit
+                value: 25000
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
