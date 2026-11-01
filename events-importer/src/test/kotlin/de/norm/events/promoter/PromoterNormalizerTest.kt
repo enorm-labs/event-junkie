@@ -131,6 +131,15 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `strips a parenthetical the descriptor strip uncovers, so the name folds whichever comes last`() {
+        assertSoftly {
+            canonicalPromoterName("MIND Enterprises (wf) GmbH") shouldBe "Mind Enterprises"
+            canonicalPromoterName("Live Nation (GSA) –") shouldBe "Live Nation"
+            canonicalPromoterName("Loft Gxhjfyw (Gsa)") shouldBe "Loft Gxhjfyw"
+        }
+    }
+
+    @Test
     fun `flags bare generic labels as non-promoter names`() {
         assertSoftly {
             // Pure descriptor labels a source drops into the promoter slot — not real promoters.
