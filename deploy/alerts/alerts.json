@@ -30,6 +30,66 @@
     ]
   },
   {
+    "name": "ej-scrape-target-down",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "An annotated pod's scrape has failed for **20 of the last 30 minutes**, so none of its metrics reach OpenObserve and every alert on them is blind. The pod itself may be healthy: a scrape over `sample_limit` is dropped whole, and `scrape_samples_scraped` then shows how far over it is (`ej-scrape-near-limit`). Which pod: `scripts/o2-query.sh <env> promql 'up{service_name=\"prometheus-autodiscovery\"} == 0'`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "count((max by (k8s_pod_name) (max_over_time(up{service_name=\"prometheus-autodiscovery\"}[30m])) == 0) and (sum by (k8s_pod_name) (count_over_time(up{service_name=\"prometheus-autodiscovery\"}[30m])) > 40)) or vector(0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 30,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-scrape-near-limit",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "scrape_samples_scraped",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "An annotated pod's scrape returned more than 80% of the `sample_limit` of 25000. Above the limit the whole scrape is dropped and `ej-scrape-target-down` fires. Cut the pod's series, or raise the limit in `deploy/clusters/base/collector.yaml`. Which pod: `max by (k8s_pod_name)` of the same query.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max(scrape_samples_scraped{service_name=\"prometheus-autodiscovery\"})",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 20000
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 15,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-importer-stale",
     "org_id": "default",
     "stream_type": "metrics",

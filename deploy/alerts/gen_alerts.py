@@ -108,7 +108,9 @@ layer on purpose.
 """
 
 import json
+import re
 import sys
+from pathlib import Path
 
 from alert_objects import DESTINATIONS
 
@@ -241,6 +243,57 @@ rule(
     period_minutes=5,
     frequency_minutes=1,
     silence_minutes=30,
+)
+
+
+# The `sample_limit` of the gateway's `prometheus-autodiscovery` job, read from the
+# post-renderer patch that sets it, so the 80% threshold below cannot drift from it.
+_COLLECTOR = Path(__file__).resolve().parents[1] / "clusters" / "base" / "collector.yaml"
+_LIMIT = re.search(r"scrape_configs/\d+/sample_limit\n\s+value: (\d+)", _COLLECTOR.read_text(encoding="utf-8"))
+if not _LIMIT:
+    sys.exit(f"gen_alerts: no sample_limit patch in {_COLLECTOR}")
+SAMPLE_LIMIT = int(_LIMIT.group(1))
+
+# **A target over `sample_limit` loses its whole scrape**, and `up` goes to 0 while
+# the pod is healthy: the production importer went dark that way on 10-29 and 11-01,
+# and nothing fired (#4326). A pod being replaced also reads 0 for about five
+# minutes, as `ej-site-down` says. So a pod counts only when it was scraped for 20 of
+# the last 30 minutes (40 samples at 30s) and never succeeded. Over seven days that
+# matched both outages and none of the deploys on either cluster.
+rule(
+    "ej-scrape-target-down",
+    "An annotated pod's scrape has failed for **20 of the last 30 minutes**, so none of its metrics "
+    "reach OpenObserve and every alert on them is blind. The pod itself may be healthy: a "
+    "scrape over `sample_limit` is dropped whole, and `scrape_samples_scraped` then shows "
+    "how far over it is (`ej-scrape-near-limit`). Which pod: `scripts/o2-query.sh <env> promql "
+    "'up{service_name=\"prometheus-autodiscovery\"} == 0'`.",
+    "count((max by (k8s_pod_name) (max_over_time("
+    'up{service_name="prometheus-autodiscovery"}[30m])) == 0) '
+    "and (sum by (k8s_pod_name) (count_over_time("
+    'up{service_name="prometheus-autodiscovery"}[30m])) > 40)) or vector(0)',
+    ">",
+    0,
+    stream_name="up",
+    period_minutes=30,
+    frequency_minutes=5,
+    silence_minutes=6 * 60,
+)
+
+# Weeks of warning rather than the day it happens: the importer grows by about 50
+# samples a source, so 80% is a few dozen venues before the limit.
+rule(
+    "ej-scrape-near-limit",
+    f"An annotated pod's scrape returned more than 80% of the `sample_limit` of {SAMPLE_LIMIT}. "
+    "Above the limit the whole scrape is dropped and `ej-scrape-target-down` fires. Cut the "
+    "pod's series, or raise the limit in `deploy/clusters/base/collector.yaml`. Which pod: "
+    "`max by (k8s_pod_name)` of the same query.",
+    'max(scrape_samples_scraped{service_name="prometheus-autodiscovery"})',
+    ">",
+    SAMPLE_LIMIT * 8 // 10,
+    stream_name="scrape_samples_scraped",
+    period_minutes=15,
+    frequency_minutes=15,
+    silence_minutes=24 * 60,
 )
 
 # --- The importer, which is what the project is for ---------------------------

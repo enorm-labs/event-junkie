@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicLong
  * query this module can make suspends, so a supplier that asked the database would block a Netty
  * event-loop thread.
  *
- * **No `host` tag anywhere, and no timer.** Per-host fetch latency already exists:
- * `http_client_requests_seconds{client_name}` is published for the throttled WebClient this module
- * fetches through. A second copy would add a histogram per venue to the store that #625 is about.
+ * **No `host` tag anywhere, and no timer.** A series per venue host is what pushed the importer
+ * past the scrape's sample limit (#4326), and [de.norm.events.MetricsConfiguration] drops
+ * `client_name` from `http.client.requests` for that reason.
  */
 @Component
 class ImageCacheMetrics(

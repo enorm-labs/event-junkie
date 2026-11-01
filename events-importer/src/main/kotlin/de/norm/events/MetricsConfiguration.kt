@@ -10,34 +10,42 @@ import org.springframework.context.annotation.Configuration
  * Tunes the auto-configured HTTP client metrics for the scraper workload.
  *
  * The importer fetches an unbounded set of external venue URLs through the
- * instrumented [org.springframework.web.reactive.function.client.WebClient], and
- * each distinct URL becomes its own value of the `uri` tag on the
- * `http.client.requests` meter. That cardinality is unbounded and useless as a
- * metric dimension (one venue import alone produces dozens of one-off URLs), and
- * left unchecked it trips Micrometer's default 100-tag cap — logged as the
- * `MaximumAllowableTagsMeterFilter` "Reached the maximum number of 'uri' tags"
- * warning — and would grow the registry's memory in production.
+ * instrumented [org.springframework.web.reactive.function.client.WebClient]. Two
+ * tags on the `http.client.requests` meter grow with that set, and both are dropped:
  *
- * This filter drops the `uri` tag from `http.client.requests` only. It leaves
- * every other meter — notably `http.server.requests`, whose `uri` is the
- * low-cardinality templated route (e.g. `/api/admin/venues/{id}`) and is worth
- * keeping — untouched.
+ * - `uri`, one value per distinct URL. One venue import alone produces dozens, and
+ *   left unchecked they trip Micrometer's default 100-tag cap (the
+ *   `MaximumAllowableTagsMeterFilter` "Reached the maximum number of 'uri' tags" warning).
+ * - `client.name`, one value per venue host. With six series families per host it was
+ *   ~900 samples, and the importer passed the scrape's sample limit, which drops the
+ *   whole scrape (#4326). `importer_run_duration_seconds{source}` and the import logs
+ *   already say how each source's fetch went, by our slug rather than by host.
+ *
+ * `http.client.requests.active`, the in-flight long-task timer the observation adds,
+ * is denied outright: nothing reads it, and it repeats every series above three times.
+ *
+ * Every other meter is untouched — notably `http.server.requests`, whose `uri` is the
+ * low-cardinality templated route (e.g. `/api/admin/venues/{id}`) and is worth keeping.
  */
 @Configuration
 class MetricsConfiguration {
     @Bean
-    fun ignoreHttpClientUriTag(): MeterFilter =
+    fun dropHttpClientPerTargetTags(): MeterFilter =
         object : MeterFilter {
             override fun map(id: Meter.Id): Meter.Id =
                 if (id.name == HTTP_CLIENT_REQUESTS) {
-                    id.replaceTags(Tags.of(id.tags.filterNot { it.key == URI_TAG }))
+                    id.replaceTags(Tags.of(id.tags.filterNot { it.key in PER_TARGET_TAGS }))
                 } else {
                     id
                 }
         }
 
-    private companion object {
+    @Bean
+    fun denyHttpClientActiveRequests(): MeterFilter = MeterFilter.denyNameStartsWith(HTTP_CLIENT_REQUESTS_ACTIVE)
+
+    internal companion object {
         const val HTTP_CLIENT_REQUESTS = "http.client.requests"
-        const val URI_TAG = "uri"
+        const val HTTP_CLIENT_REQUESTS_ACTIVE = "http.client.requests.active"
+        val PER_TARGET_TAGS = setOf("uri", "client.name")
     }
 }
