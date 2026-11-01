@@ -71,6 +71,40 @@ class AcudMachtNeuEventPageScraperTest {
     }
 
     @Test
+    fun `bills the acts under a qualified heading without their crew tags`() {
+        val event = scrape("acudmachtneu-event-astral-lab.html", "https://acudmachtneu.de/events/2398/astral-lab-x-quake-acud")
+
+        event.artists.map { it.name } shouldContainExactly
+            listOf(
+                "FILTH.y",
+                "FRØSA (Sige Alarcon & Frølar)",
+                "Hassdenteufel",
+                "Hayaku",
+                "Jeroen",
+                "pnk pnthr",
+                "Seahorse (DJ Seaview & Wendy)",
+                "vSto"
+            )
+    }
+
+    @Test
+    fun `keeps a name that is all brackets or has no space before one, and reads a heading with or without a qualifier`() {
+        val tags =
+            scrapeContent(
+                "Line up:<br />[ˈnʊl]<br />Kid[x]<br />Ayla Nightingale-Moreau and the Very Long Name Ensemble [Quake Collective Copenhagen]"
+            )
+        val bare = scrapeContent("Lineup<br />Jeroen [Quake]")
+        val qualifiedOnItsOwnLine = scrapeContent("Lineup (alphabetical)<br />Hayaku")
+        val actInBrackets = scrapeContent("Line up (Hayaku) Jeroen")
+
+        tags.artists.map { it.name } shouldContainExactly
+            listOf("[ˈnʊl]", "Kid[x]", "Ayla Nightingale-Moreau and the Very Long Name Ensemble")
+        bare.artists.map { it.name } shouldContainExactly listOf("Jeroen")
+        qualifiedOnItsOwnLine.artists.map { it.name } shouldContainExactly listOf("Hayaku")
+        actInBrackets.artists.map { it.name } shouldContainExactly listOf("(Hayaku) Jeroen")
+    }
+
+    @Test
     fun `reads doors equal to the header's time as the start, a price range as a note, and the act before a track`() {
         val event = scrape("acudmachtneu-event-renatura.html", "https://acudmachtneu.de/events/2385/renatura-06-%e2%80%93-hexapoda-release-event")
 

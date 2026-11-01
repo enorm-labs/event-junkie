@@ -23,7 +23,8 @@ import java.time.LocalTime
  * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
  * the doors time. `Doors:`, `Entrance:`, `Tickets: 16E` and `FREE ENTRY` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
  * paragraph are read where present. The paragraph names one act per line, or a festival's acts on one line between
- * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`).
+ * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`). A heading can carry a qualifier, `Lineup (A-Z):`, and an act its
+ * crew in brackets, `Hayaku [astral.lab]`: the name is billed without either.
  */
 class AcudMachtNeuEventPageScraper {
     fun scrape(
@@ -116,7 +117,7 @@ class AcudMachtNeuEventPageScraper {
     /** Blank text or a line break between a label and its link. */
     private fun Node.isSpacing(): Boolean = (this is TextNode && isBlank) || (this is Element && normalName() == "br")
 
-    /** The acts of the paragraph headed `Line up` or `LINE UP`; `Name – Track` bills the name. */
+    /** The acts of the paragraph headed `Line up` or `LINE UP`; `Name – Track` bills the name, `Name [crew]` the name. */
     private fun lineUp(content: Element): List<ScrapedArtist> {
         val paragraph = content.select("p").firstOrNull { LINE_UP.containsMatchIn(it.text()) } ?: return emptyList()
         return htmlParagraphText(paragraph.html())
@@ -127,6 +128,7 @@ class AcudMachtNeuEventPageScraper {
             .flatMap { it.split(SLASH_SEPARATOR) }
             .map { it.split(TRACK_TAIL, limit = 2).first() }
             .flatMap(::splitBackToBack)
+            .map { it.replace(CREW_TAG, "") }
             .mapNotNull { it.blankToNull() }
             .filterNot(::isNonArtistName)
             .map { ScrapedArtist(name = it) }
@@ -151,7 +153,11 @@ class AcudMachtNeuEventPageScraper {
 
         val TICKET_LABEL = Regex("""(?:presale|vorverkauf|vvk|tickets?|ticketing)\s*:?\s*$""", RegexOption.IGNORE_CASE)
 
-        val LINE_UP = Regex("""^\s*line[\s-]?up\s*:?\s*""", RegexOption.IGNORE_CASE)
+        /** A qualifier in brackets, `Lineup (A-Z):`, only before a colon or the line's end, so `Line up (band) X` keeps its act. */
+        val LINE_UP = Regex("""^\s*line[\s-]?up\s*(?:\([^()]*\)\s*(?::|$)|:)?\s*""", RegexOption.IGNORE_CASE)
+
+        /** One trailing `[crew]` after a space; a name that is all brackets, or `Name[x]`, stays. */
+        val CREW_TAG = Regex("""(?<=\S)\s+\[[^\[\]]*]\s*$""")
 
         val TRACK_TAIL = Regex("""\s+[–—-]\s+""")
 
