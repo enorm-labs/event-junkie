@@ -235,6 +235,43 @@ class TempodromDetailPageScraperTest {
         }
     }
 
+    private fun wahnsinnRow(subtitle: String) =
+        listingRow.copy(
+            title = "WAHNSINN!",
+            subtitle = subtitle,
+            eventDate = LocalDate.of(2027, 2, 21),
+            sourceUrl = "https://www.tempodrom.de/event/wahnsinn-2027-02-21_19/",
+            sourceId = "tempodrom:wahnsinn-2027-02-21_19",
+            artists = emptyList()
+        )
+
+    @Test
+    fun `keeps no act for a show of another artist's songs whose blurb names no band`() {
+        // Both Wahnsinn blurbs name only "Eine herausragende Band und großartige Solisten" (#4341).
+        listOf(
+            "Die Show - Die beste Wolfgang Petry Party geht weiter - Tour 2026",
+            "Die Show 2027 - Die Jubiläumstournee - Mit den Hits von Wolfgang Petry"
+        ).forEach { subtitle ->
+            val row = wahnsinnRow(subtitle)
+            val blurb =
+                "Da die Musiklegende selbst schon lange nicht mehr live auftritt, soll den Fans damit dennoch die Möglichkeit gegeben werden. " +
+                    "Eine herausragende Band und großartige Solisten bringen das Petry-Feeling authentisch auf die Bühne."
+
+            scraper.addTributeBand(row, descriptionPage(blurb)).artists shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `bills the band the blurb names for a show of another artist's songs`() {
+        val event =
+            scraper.addTributeBand(
+                wahnsinnRow("Die Show 2027 - Mit den Hits von Wolfgang Petry"),
+                descriptionPage("DIE WOLLE BAND gilt als die beste Wolfgang Petry Tribute-Band.")
+            )
+
+        event.artists shouldBe listOf(ScrapedArtist("Die Wolle Band", ArtistRole.HEADLINER))
+    }
+
     @Test
     fun `reads no tribute band for a night whose format line bills no tribute`() {
         val row = listingRow.copy(subtitle = "Live 2027", artists = listOf(ScrapedArtist("Jill Scott", ArtistRole.HEADLINER)))

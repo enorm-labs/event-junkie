@@ -258,6 +258,8 @@ private fun filmOrchestra(subtitle: String): List<ScrapedArtist> =
  * Fire"` billed `Polak - Friendly Fire` (#3415). A tribute show names its band after `performed by`, and the title is
  * the show: "Nights on Broadway" / "A Tribute to the BEE GEES performed by NIGHT FEVER" bills `Night Fever` (#3746).
  * A tribute line without `performed by` bills the title here, and the event page names the band ([TempodromDetailPageScraper.addTributeBand]).
+ * A show of another artist's songs bills no act here, because its title is the show: "WAHNSINN!" / "Die Show 2027 - … - Mit den
+ * Hits von Wolfgang Petry" names no band ([TRIBUTE_SHOW], #4341). The event page bills the band when its blurb names one.
  */
 private fun tempodromArtists(
     title: String,
@@ -267,10 +269,10 @@ private fun tempodromArtists(
     val acts = tempodromActs(title)
     return subtitle?.let(::castFromFormatLine)?.takeIf { it.isNotEmpty() }
         ?: subtitle?.let(::performerFromFormatLine)?.takeIf { it.isNotEmpty() }
-        ?: if (eventType == EventType.COMEDY.name) {
-            buildArtistsForEventType(acts, subtitle = null, eventType = EventType.CONCERT.name)
-        } else {
-            buildArtistsForEventType(acts, subtitle, eventType)
+        ?: when {
+            subtitle != null && TRIBUTE_SHOW.containsMatchIn(subtitle) -> emptyList()
+            eventType == EventType.COMEDY.name -> buildArtistsForEventType(acts, subtitle = null, eventType = EventType.CONCERT.name)
+            else -> buildArtistsForEventType(acts, subtitle, eventType)
         }
 }
 
@@ -308,6 +310,13 @@ private fun performerFromFormatLine(subtitle: String): List<ScrapedArtist> =
         ?.takeUnless { isNonArtistName(it) || BACKING.matches(it) }
         ?.let { listOf(ScrapedArtist(deshout(it), ArtistRole.HEADLINER)) }
         .orEmpty()
+
+/**
+ * A format line that bills a show of another artist's songs: "Die Show - Die beste Wolfgang Petry Party geht weiter",
+ * "Die Show 2027 - … - Mit den Hits von Wolfgang Petry". "Die Show" counts only at the start: a comedian's tour line
+ * also ends in one ("HITVERDÄCHTIG – DIE MUSIK-COMEDY-STAND-UP-SHOW").
+ */
+internal val TRIBUTE_SHOW = Regex("""^\s*die\s+show\b|\bmit\s+den\s+hits\s+von\b|\bparty\s+geht\s+weiter\b""", RegexOption.IGNORE_CASE)
 
 /** The act after `performed by`, to the end of the line. */
 internal val PERFORMED_BY = Regex("""\bperformed\s+by\s+(\S.*)$""", RegexOption.IGNORE_CASE)

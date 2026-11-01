@@ -140,8 +140,8 @@ class TempodromOverviewPageScraperTest {
         // three are the Roncalli gala with an orchestra, a show (#2833). Holiday on Ice and
         // "Eiskönigin 1 & 2" are ice shows, which bill no act in the title. `Die Nacht der Musicals`
         // is a gala named for its night (#3160), and `Berlin Salsacongress 2026` a congress named for its year (#3212).
-        // Six productions bill no act from the title (#3162).
-        events.count { it.artists.isNotEmpty() } shouldBe 125
+        // Six productions bill no act from the title (#3162), and neither do the two Wahnsinn shows of Wolfgang Petry's songs (#4341).
+        events.count { it.artists.isNotEmpty() } shouldBe 123
         events.flatMap { it.artists }.all { it.role == ArtistRole.HEADLINER } shouldBe true
     }
 
@@ -263,6 +263,56 @@ class TempodromOverviewPageScraperTest {
             it.subtitle shouldBe "A Tribute to the BEE GEES performed by NIGHT FEVER"
             it.eventType shouldBe "CONCERT"
             it.artists shouldContainExactly listOf(ScrapedArtist("Night Fever", ArtistRole.HEADLINER))
+        }
+    }
+
+    @Test
+    fun `bills no act for a show of another artist's songs that names no band`() {
+        // "WAHNSINN!" is a Wolfgang Petry show, and its blurb never names the band (#4341).
+        listOf("wahnsinn-2026-11-01_19", "wahnsinn-2027-02-21_19").forEach { id ->
+            val show = event(id)
+            show.title shouldBe "WAHNSINN!"
+            show.eventType shouldBe "CONCERT"
+            show.artists.shouldBeEmpty()
+        }
+        event("wahnsinn-2027-02-21_19").subtitle shouldBe "Die Show 2027 - Die Jubiläumstournee - Mit den Hits von Wolfgang Petry"
+        scrapeOne("Wahnsinn", "Die beste Wolfgang Petry Party geht weiter").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the band a show of another artist's songs names after performed by`() {
+        scrapeOne("WAHNSINN!", "Die Show - Mit den Hits von Wolfgang Petry performed by DIE WOLLE BAND").artists shouldContainExactly
+            listOf(ScrapedArtist("Die Wolle Band", ArtistRole.HEADLINER))
+    }
+
+    @Test
+    fun `keeps the act of a line that only ends in a show or names other hits`() {
+        // A comedian's tour line ends in "-SHOW", and "Die Show" counts only at the start of the line.
+        scrapeOne("DR. POP", "„HITVERDÄCHTIG – DIE MUSIK-COMEDY-STAND-UP-SHOW“!").artists.map { it.name } shouldContainExactly
+            listOf("DR. POP")
+        scrapeOne("Till Reiners", "„DAS IST ALLES TEIL DER SHOW“").artists.map { it.name } shouldContainExactly listOf("Till Reiners")
+        scrapeOne("Dabeull", "Live Band in Berlin - Die Show geht weiter").artists.map { it.name } shouldContainExactly listOf("Dabeull")
+    }
+
+    @Test
+    fun `bills no act for a tribute show under a long title, over several days and in every status`() {
+        val longTitle = "WAHNSINN! Die große Wolfgang Petry Geburtstagsparty zum 75. Geburtstag und 50. Bühnenjubiläum mit allen Hits"
+        val statuses = listOf("EventScheduled", "EventCancelled", "EventPostponed", "EventRescheduled", "EventMovedOnline")
+        statuses.forEach { status ->
+            val html =
+                """
+                <html><body><script type="application/ld+json">[
+                  {"@type": "Event", "name": "$longTitle", "description": "Die Show 2027 - Mit den Hits von Wolfgang Petry | Große Arena",
+                   "startDate": "2027-02-21T23:00:00+01:00", "endDate": "2027-02-23T01:00:00+01:00", "eventStatus": "https://schema.org/$status",
+                   "url": "https://www.tempodrom.de/event/wahnsinn_2027-02-21_23/"}
+                ]</script></body></html>
+                """.trimIndent()
+            val show = scraper.scrape(Jsoup.parse(html, baseUrl)).single()
+
+            show.artists.shouldBeEmpty()
+            show.title shouldBe longTitle
+            show.endDate shouldBe LocalDate.of(2027, 2, 23)
+            show.room shouldBe "Große Arena"
         }
     }
 
