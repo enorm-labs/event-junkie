@@ -41,6 +41,17 @@ class DescriptionGenresTest {
     }
 
     @Test
+    fun `a band in a sounds-like list gives no genre, a genre item in it does`() {
+        // #4359: event 2235 was tagged Disco by "Panic! At The Disco", event 3970 Soul by "De La Soul".
+        descriptionGenres("The Home of Core\nAlternative // Nu Metal // PopPunk\nSounds like: Korn • Panic! At The Disco • Papa Roach") shouldBe
+            listOf("Metal", "Punk")
+        descriptionGenres("Sounds like: A tribe called quest, Nas, De La Soul, Gang Starr").shouldBeEmpty()
+        // Event 2247: the list's own genre items count, its bands do not.
+        descriptionGenres("Sounds like: 80s Party + Pop Hits, 70s Disco / Abba / Iggy Pop / Joy Division") shouldBe listOf("Pop", "Disco")
+        descriptionGenres("We love: Iggy Pop").shouldBeEmpty()
+    }
+
+    @Test
     fun `free text that names no known genre gives nothing`() {
         descriptionGenres("Die Band spielt Lieder aus ihrem neuen Album.").shouldBeEmpty()
         descriptionGenres(null).shouldBeEmpty()
