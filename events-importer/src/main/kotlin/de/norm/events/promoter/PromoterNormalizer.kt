@@ -45,10 +45,20 @@ fun canonicalPromoterName(raw: String): String {
     if (tokens.isEmpty()) return raw.trim()
 
     // Drop the trailing run of strippable tokens, but keep a usable name: "36 Concerts" must not
-    // become "36", nor "HB Music" the bare "HB".
-    while (tokens.size > 1 && tokens.last().isStrippableTrailingWord() && tokens.dropLast(1).isUsableNameWithout(tokens.last())) {
-        tokens.removeAt(tokens.lastIndex)
-    }
+    // become "36", nor "HB Music" the bare "HB". A parenthetical the run uncovers comes off too, and
+    // the strip runs again, so "Foo (wf) GmbH" folds with "Foo GmbH (wf)".
+    do {
+        while (tokens.size > 1 && tokens.last().isStrippableTrailingWord() && tokens.dropLast(1).isUsableNameWithout(tokens.last())) {
+            tokens.removeAt(tokens.lastIndex)
+        }
+        val joined = tokens.joinToString(" ")
+        val uncovered = joined.replace(TRAILING_PAREN_REGEX, "").trim()
+        val shortened = uncovered.isNotEmpty() && uncovered != joined
+        if (shortened) {
+            tokens.clear()
+            tokens += uncovered.split(WHITESPACE_REGEX)
+        }
+    } while (shortened)
 
     // The initialism the guard kept a descriptor for keeps its capitals ("HB Music", not "Hb
     // Music").
