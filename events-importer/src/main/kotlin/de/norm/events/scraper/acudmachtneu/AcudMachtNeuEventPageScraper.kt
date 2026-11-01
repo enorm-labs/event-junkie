@@ -21,8 +21,9 @@ import java.time.LocalTime
 /**
  * Pure parser for one ACUD event page. The header line names the room and one time, `ACUD CLUB 20h → Concert`. The
  * text below repeats the facts in free form: a labelled `Start:` there wins over the header's time, which is sometimes
- * the doors time. `Doors:`, `Entrance:`, `Tickets: 16E` and `FREE ENTRY` lines, a ticket link after `Presale:` or `Ticketing`, and a `Line up`
- * paragraph are read where present. The paragraph names one act per line, or a festival's acts on one line between
+ * the doors time. `Doors:`, `Entrance:`, `Tickets: 16E` and `FREE ENTRY` lines, a ticket link after `Presale:`,
+ * `Ticketing` or `presale link:`, or one that reads `PRESALE ONLY`, and a `Line up` paragraph are read where present.
+ * The paragraph names one act per line, or a festival's acts on one line between
  * slashes (`ABIGAIL TOLL / ACTIVEMIRROR /CALVIN LOVE`). A heading can carry a qualifier, `Lineup (A-Z):`, and an act its
  * crew in brackets, `Hayaku [astral.lab]`: the name is billed without either.
  */
@@ -102,13 +103,17 @@ class AcudMachtNeuEventPageScraper {
             ?.lowercase()
             ?.replaceFirstChar { it.uppercase() }
 
-    /** The first link whose label just before it names a presale or tickets: `Presale: <a>`, `Ticketing<br><a>`. */
-    private fun ticketUrl(content: Element): String? =
-        content
-            .select("a[href]")
-            .firstOrNull { link -> textBefore(link)?.let { TICKET_LABEL.containsMatchIn(it) } == true }
-            ?.absUrl("href")
-            .blankToNull()
+    /**
+     * The first link whose label just before it names a presale or tickets: `Presale: <a>`, `Ticketing<br><a>`,
+     * `Resident Advisor ticket link: <a>`. Failing that, the first link that is itself the label: `<a>PRESALE ONLY</a>`.
+     */
+    private fun ticketUrl(content: Element): String? {
+        val links = content.select("a[href]")
+        val link =
+            links.firstOrNull { link -> textBefore(link)?.let { TICKET_LABEL.containsMatchIn(it) } == true }
+                ?: links.firstOrNull { TICKET_LINK_TEXT.matches(it.text().trim()) }
+        return link?.absUrl("href").blankToNull()
+    }
 
     private fun textBefore(link: Element): String? {
         var node: Node? = link.previousSibling()
@@ -162,7 +167,10 @@ class AcudMachtNeuEventPageScraper {
         /** `15 - 18 €` is a sliding scale, kept as the venue wrote it. */
         val RANGE = Regex("""\d\s*[-–]\s*\d""")
 
-        val TICKET_LABEL = Regex("""(?:presale|vorverkauf|vvk|tickets?|ticketing)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+        val TICKET_LABEL = Regex("""(?:presale|vorverkauf|vvk|tickets?|ticketing)(?:\s+link)?\s*:?\s*$""", RegexOption.IGNORE_CASE)
+
+        /** A link that reads as nothing but a ticket word; `Tickets und Infos` is prose, not a label. */
+        val TICKET_LINK_TEXT = Regex("""(?:presale(?:\s+only)?|tickets?|vorverkauf|vvk)""", RegexOption.IGNORE_CASE)
 
         /** A qualifier in brackets, `Lineup (A-Z):`, only before a colon or the line's end, so `Line up (band) X` keeps its act. */
         val LINE_UP = Regex("""^\s*line[\s-]?up\s*(?:\([^()]*\)\s*(?::|$)|:)?\s*""", RegexOption.IGNORE_CASE)
