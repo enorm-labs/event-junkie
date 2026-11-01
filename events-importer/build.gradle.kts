@@ -142,6 +142,10 @@ dependencies {
     // See: https://kotest.io/docs/assertions/assertions.html
     testImplementation("io.kotest:kotest-assertions-core:${property("kotest.version")}")
 
+    // Kotest property testing – generated inputs for pure functions such as slugs and name normalizers.
+    // Runs under JUnit 5 through `checkAll`, without the Kotest runner. See: https://kotest.io/docs/proptest/property-based-testing.html
+    testImplementation("io.kotest:kotest-property:${property("kotest.version")}")
+
     // MockK – idiomatic Kotlin mocking library, preferred over Mockito for Kotlin tests
     // See: https://mockk.io/
     testImplementation("io.mockk:mockk:${property("mockk.version")}")

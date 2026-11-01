@@ -14,13 +14,13 @@ object SlugGenerator {
     private val slugify =
         Slugify
             .builder()
-            .customReplacements(NON_DECOMPOSING_LATIN)
+            .customReplacements(NON_DECOMPOSING_LATIN + UNDERSCORE)
             .build()
 
     private val transliterating =
         Slugify
             .builder()
-            .customReplacements(NON_DECOMPOSING_LATIN + CYRILLIC + GREEK_ELOT)
+            .customReplacements(NON_DECOMPOSING_LATIN + UNDERSCORE + CYRILLIC + GREEK_ELOT)
             .build()
 
     /**
@@ -52,6 +52,9 @@ object SlugGenerator {
 private val TRANSLITERATED_SCRIPT = Regex("[\\p{IsCyrillic}\\p{IsGreek}]")
 private val LATIN_LETTER = Regex("\\p{IsLatin}")
 private val MARKS = Regex("\\p{M}+")
+
+/** Slugify keeps `_` as a word character, so `DJ_Dave` slugged to `dj_dave`. As a space it becomes the one separator a slug has. */
+private val UNDERSCORE: Map<String, String> = mapOf("_" to " ")
 
 /** The Cyrillic letters whose mark changes the sound, replaced before the marks are stripped. */
 private val MARKED_CYRILLIC: Map<String, String> =

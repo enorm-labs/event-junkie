@@ -118,4 +118,13 @@ class SlugGeneratorTest {
         SlugGenerator.slugify("Funk@delic") shouldBe "funk-delic"
         SlugGenerator.slugify("Z@p") shouldBe "z-p"
     }
+
+    @Test
+    fun `separates words joined by an underscore with a hyphen`() {
+        SlugGenerator.slugify("DJ_Dave") shouldBe "dj-dave"
+        SlugGenerator.slugify("Ballet Sur_Real") shouldBe "ballet-sur-real"
+        SlugGenerator.slugify("REAL_O-_-O_IT") shouldBe "real-o-o-it"
+        SlugGenerator.slugify("Кино_2") shouldBe "kino-2"
+        SlugGenerator.slugify("_") shouldBe ""
+    }
 }
