@@ -72,6 +72,41 @@ class ScrapedEventRelocatedOnTest {
     }
 
     @Test
+    fun `toEventEntity relocates a postponed show whose note names another house, with the new date where it names one`() {
+        // Kantine am Berghain: the date and the house in two clauses of one sentence.
+        val kantine = "Das Konzert wurde vom 29.10.26 auf den 13.03.27 verschoben und aus der Kantine ins Badehaus verlegt!"
+        val left = scrapedEvent(title = "Yosho", status = "POSTPONED", description = kantine, eventDate = LocalDate.of(2026, 10, 29))
+        left.toEntity("kantine-am-berghain").also {
+            it.status shouldBe "RELOCATED"
+            it.relocatedTo shouldBe "Badehaus"
+            it.relocatedOn shouldBe LocalDate.of(2027, 3, 13)
+        }
+        // The new date's row at the other house names its own date, and takes place.
+        left.copy(eventDate = LocalDate.of(2027, 3, 13)).toEntity("badehaus").status shouldBe "SCHEDULED"
+        // UFO im Velodrom: a rescheduled badge, a house and no date, on a show over midnight with a long title.
+        val ufo =
+            scrapedEvent(
+                title = "Tomora — " + "A Very Long Tour Name ".repeat(12).trim(),
+                status = "POSTPONED",
+                description = "Die Show wird vom UFO in die Columbiahalle verlegt.",
+                eventDate = LocalDate.of(2026, 11, 1),
+                endDate = LocalDate.of(2026, 11, 2)
+            )
+        ufo.toEntity("ufo-im-velodrom").also {
+            it.status shouldBe "RELOCATED"
+            it.relocatedTo shouldBe "Columbiahalle"
+            it.relocatedOn.shouldBeNull()
+        }
+        ufo.toEntity("columbiahalle").status shouldBe "POSTPONED"
+        // Max-Schmeling-Halle names only itself, as the house the show left.
+        val msh = scrapedEvent(status = "POSTPONED", description = "Achtung, die Show wurde aus der Max-Schmeling-Halle verlegt.")
+        msh.toEntity("max-schmeling-halle").also {
+            it.status shouldBe "RELOCATED"
+            it.relocatedTo.shouldBeNull()
+        }
+    }
+
+    @Test
     fun `toEventEntity stores no new date on any status but RELOCATED`() {
         val note = "auf den 13.04.27 verschoben"
         EventStatus.entries.filter { it != EventStatus.RELOCATED }.forEach { status ->
@@ -101,5 +136,5 @@ class ScrapedEventRelocatedOnTest {
         description = description
     )
 
-    private fun ScrapedEvent.toEntity() = toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L)
+    private fun ScrapedEvent.toEntity(venueSlug: String = "so36") = toEventEntity(venueId = 1L, venueSlug = venueSlug, eventSourceId = 1L)
 }

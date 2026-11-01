@@ -788,6 +788,9 @@ persistence boundary and stores the destination's name in `relocated_to`. The ro
 own date after "auf", the importer stores `SCHEDULED`, because the show takes place on that date ([#2206](https://github.com/enorm-labs/event-junkie/issues/2206)).
 A note can also name a new house after the new date: "auf den 18.03.27 im Säälchen verschoben". When that house is another venue, the row that the show left
 is `RELOCATED`, with that house in `relocated_to` ([#2708](https://github.com/enorm-labs/event-junkie/issues/2708)).
+A `POSTPONED` row is `RELOCATED` too when a sentence with "verlegt" or "moved" names another house as the destination, with or without a date. UFO
+prints "vom UFO in die Columbiahalle verlegt". A sentence that names only this row's house as the origin gives `RELOCATED` with no house, for example "aus
+der Max-Schmeling-Halle verlegt" ([#4332](https://github.com/enorm-labs/event-junkie/issues/4332)).
 
 A `RELOCATED` row keeps the new date its note states in `relocated_on`. Lido's "verlegt auf den 13.04.27 ins Hole 44" stores `Hole 44` and 13 April 2027. A
 `RELOCATED` row whose note names a new date and no house is stored `POSTPONED`, because only the date moved
