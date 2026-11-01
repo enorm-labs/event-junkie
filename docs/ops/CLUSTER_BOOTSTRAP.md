@@ -566,7 +566,8 @@ Nothing is ever deleted: a row the file does not carry is drift to explain, not 
 
 The dry run answered the ROSA and Sisyphos question from the first day they were merged, and nobody
 asked it for months. `--site` makes the same comparison from outside the cluster, against the public
-`/api/venues` listing, so it needs no port-forward and no credentials:
+`/api/venues` listing, so it needs no port-forward and no credentials. A seed venue with `closedOn`
+must be in the `/api/venues?closed=true` listing instead:
 
 ```sh
 python3 scripts/seed-sources.py --site https://event-junkie.de
