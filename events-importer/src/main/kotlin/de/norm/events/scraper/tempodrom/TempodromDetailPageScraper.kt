@@ -46,15 +46,17 @@ class TempodromDetailPageScraper {
     ): ScrapedEvent = addRelocation(addTributeBand(addComedyType(addPromoter(event, document), document), document), document)
 
     /**
-     * [event] billing the band the Beschreibung names, when the format line bills a tribute and names no band after
-     * `performed by`. [event] unchanged when the blurb names none: a show that names no band keeps what the listing billed.
+     * [event] billing the band the Beschreibung names, when the format line bills a tribute or a show of another artist's
+     * songs ([TRIBUTE_SHOW]) and names no band after `performed by`. [event] unchanged when the blurb names none: a show
+     * that names no band keeps what the listing billed, which is no act for a [TRIBUTE_SHOW] line (#4341).
      */
     fun addTributeBand(
         event: ScrapedEvent,
         document: Document
     ): ScrapedEvent {
         val subtitle = event.subtitle ?: return event
-        if (!TRIBUTE.containsMatchIn(subtitle) || PERFORMED_BY.containsMatchIn(subtitle)) return event
+        val tribute = TRIBUTE.containsMatchIn(subtitle) || TRIBUTE_SHOW.containsMatchIn(subtitle)
+        if (!tribute || PERFORMED_BY.containsMatchIn(subtitle)) return event
         val band =
             description(document)
                 ?.let(TRIBUTE_BAND::find)
