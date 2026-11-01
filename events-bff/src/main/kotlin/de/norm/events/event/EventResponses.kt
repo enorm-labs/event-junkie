@@ -476,7 +476,7 @@ private const val CHANGES_DESCRIPTION =
 private const val RELOCATED_TO_DESCRIPTION =
     "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status"
 private const val RELOCATED_ON_DESCRIPTION =
-    "The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none"
+    "The new date of a RELOCATED or POSTPONED event, as the venue's own note states it. Absent when the note names none"
 private const val SPOKEN_LANGUAGES_DESCRIPTION =
     "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
         "never German by default. Not the language of the description."

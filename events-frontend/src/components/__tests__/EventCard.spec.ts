@@ -236,6 +236,12 @@ describe('EventCard', () => {
       global: { stubs },
     })
     expect(movedOn.text()).toContain('Moved to Hole 44, 13 April 2027')
+    // A postponed one names the date its note gave (#4334).
+    const postponedOn = mount(EventCard, {
+      props: { event: { ...event, status: 'POSTPONED', relocatedOn: '2027-11-04' } },
+      global: { stubs },
+    })
+    expect(postponedOn.text()).toContain('Postponed to Thu, 4 Nov 2027')
 
     // Scheduled says nothing; past says only that.
     const scheduled = mount(EventCard, {

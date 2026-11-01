@@ -368,7 +368,7 @@ Core entity representing a single music event at a venue on a specific date.
 | `subtitle_language`    | `TEXT`          | Yes      | The subtitles of a screening in the original version                             | `de`                                                       |
 | `status`               | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`)                  | `SCHEDULED`                                                |
 | `relocated_to`         | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)                    | `Hole44`                                                   |
-| `relocated_on`         | `DATE`          | Yes      | The new date of a `RELOCATED` show, as its note says (ADR-051)                   | `2027-04-13`                                               |
+| `relocated_on`         | `DATE`          | Yes      | The new date of a `RELOCATED` or `POSTPONED` show, as its note says (ADR-056)    | `2027-04-13`                                               |
 | `slug`                 | `TEXT`          | No       | URL-friendly identifier                                                          | `2026-06-12-the-adicts`                                    |
 | `event_date`           | `DATE`          | No       | Calendar date of the event                                                       | `2026-06-12`                                               |
 | `doors_time`           | `TIME`          | Yes      | When doors open                                                                  | `19:00`                                                    |
@@ -795,6 +795,11 @@ der Max-Schmeling-Halle verlegt" ([#4332](https://github.com/enorm-labs/event-ju
 A `RELOCATED` row keeps the new date its note states in `relocated_on`. Lido's "verlegt auf den 13.04.27 ins Hole 44" stores `Hole 44` and 13 April 2027. A
 `RELOCATED` row whose note names a new date and no house is stored `POSTPONED`, because only the date moved
 ([ADR-051](adr/ADR-051_A_MOVED_SHOW_KEEPS_ITS_NEW_DATE.md)).
+
+A `POSTPONED` row keeps the new date in `relocated_on` too. A note that names this row's date before "auf" pairs the two dates. Die Wühlmäuse writes "Der
+06.11.2026 verschiebt sich auf den 05.11.2027" for each night of a run. Without a pair, the first date after this row's date counts. The BFF links the
+`SCHEDULED` row on that date when one matches. Without one, the page shows the date alone
+([ADR-056](adr/ADR-056_A_POSTPONED_SHOW_KEEPS_ITS_NEW_DATE.md)).
 
 ### `slug` Fields on All Main Entities
 

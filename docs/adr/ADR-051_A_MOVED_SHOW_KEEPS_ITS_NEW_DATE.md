@@ -5,6 +5,9 @@
 **Accepted (2026-10-19) — a `RELOCATED` row gains `relocated_on`, a nullable date beside `relocated_to`. It holds the new date as the venue's note states
 it. A `RELOCATED` row whose note names a new date and no house is stored `POSTPONED`.**
 
+**Amended by [ADR-056](ADR-056_A_POSTPONED_SHOW_KEEPS_ITS_NEW_DATE.md)**, which fills `relocated_on` on a `POSTPONED` row too. The Decision's sentence "A
+`POSTPONED` row needs no column" no longer holds.
+
 **Amends [ADR-030](ADR-030_RELOCATED_IS_THE_ORIGIN.md).** ADR-030 stores where a show went. This decision stores when, under the same rule: the text and the
 date as the venue wrote them, and no match against another row. It does not change which end of a move is `RELOCATED`.
 

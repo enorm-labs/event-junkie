@@ -44,7 +44,7 @@ class ScrapedEventRelocatedOnTest {
         val old = scrapedEvent(title = "Manolito Simonet y su Trabuco", status = "RELOCATED", subtitle = note, eventDate = LocalDate.of(2026, 11, 9)).toEntity()
         old.status shouldBe "POSTPONED"
         old.relocatedTo.shouldBeNull()
-        old.relocatedOn.shouldBeNull()
+        old.relocatedOn shouldBe LocalDate.of(2027, 8, 17)
         val new = scrapedEvent(title = "Manolito Simonet y su Trabuco", status = "RELOCATED", subtitle = note, eventDate = LocalDate.of(2027, 8, 17)).toEntity()
         new.status shouldBe "SCHEDULED"
         // No date at all: a bare move stays a bare move.
@@ -107,13 +107,75 @@ class ScrapedEventRelocatedOnTest {
     }
 
     @Test
-    fun `toEventEntity stores no new date on any status but RELOCATED`() {
+    fun `toEventEntity stores the new date on every status that stores a move, and on no other`() {
         val note = "auf den 13.04.27 verschoben"
-        EventStatus.entries.filter { it != EventStatus.RELOCATED }.forEach { status ->
-            withClue(status) {
-                scrapedEvent(status = status.name, statusNote = note, eventDate = LocalDate.of(2026, 10, 19)).toEntity().relocatedOn.shouldBeNull()
+        EventStatus.entries.forEach { status ->
+            val entity = scrapedEvent(status = status.name, statusNote = note, eventDate = LocalDate.of(2026, 10, 19)).toEntity()
+            withClue("$status stored as ${entity.status}") {
+                if (entity.status in setOf("RELOCATED", "POSTPONED")) {
+                    entity.relocatedOn shouldBe LocalDate.of(2027, 4, 13)
+                } else {
+                    entity.relocatedOn.shouldBeNull()
+                }
             }
         }
+        // The row on the new date takes place, and stores no date.
+        scrapedEvent(status = "POSTPONED", statusNote = note, eventDate = LocalDate.of(2027, 4, 13)).toEntity().also {
+            it.status shouldBe "SCHEDULED"
+            it.relocatedOn.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `toEventEntity stores the new date of a postponed show as its note names it (#4334)`() {
+        // Die Wühlmäuse: the programme line and the prose both name the date.
+        val kassen =
+            scrapedEvent(
+                title = "Alle Kassen, auch privat",
+                status = "POSTPONED",
+                subtitle = "Solo-Theater-Comedy mit Nebenwirkungen – VERLEGT auf den 24.04.2027",
+                description = "Leider müssen wir mitteilen, dass die Veranstaltung krankheitsbedingt verlegt werden muss auf den 24.04.2027.",
+                eventDate = LocalDate.of(2026, 10, 31)
+            ).toEntity("die-wuhlmause")
+        kassen.status shouldBe "POSTPONED"
+        kassen.relocatedOn shouldBe LocalDate.of(2027, 4, 24)
+        // ufaFabrik: one sentence, nothing else.
+        val krumbiegel =
+            scrapedEvent(
+                title = "Sebastian Krumbiegel",
+                status = "POSTPONED",
+                description = "Verlegt auf den 02.04.2027.",
+                eventDate = LocalDate.of(2026, 11, 20)
+            )
+        krumbiegel.toEntity("ufafabrik").relocatedOn shouldBe LocalDate.of(2027, 4, 2)
+        // A long title and a show over midnight change nothing.
+        krumbiegel
+            .copy(title = "Sebastian Krumbiegel – " + "Die Demokratie ist weiblich ".repeat(10).trim(), endDate = LocalDate.of(2026, 11, 21))
+            .toEntity("ufafabrik")
+            .relocatedOn shouldBe LocalDate.of(2027, 4, 2)
+    }
+
+    @Test
+    fun `toEventEntity gives each night of a postponed run the new date its note pairs with it (#4334)`() {
+        // Die Wühlmäuse: a range in the programme line, one sentence per night in the prose.
+        val subtitle = "echsklusiv – VERLEGT auf 04.-07.11.2027 (!), 20 Uhr"
+        val prose =
+            "Leider müssen die Veranstaltungen in der Zeit vom 05.-08.11.2026 krankheitsbedingt verschoben werden. " +
+                "Der 05.11.2026, 20 Uhr verschiebt sich auf den 04.11.2027, " +
+                "Der 06.11.2026, 20 Uhr verschiebt sich auf den 05.11.2027, Der 07.11.2026, 20 Uhr verschiebt sich auf den 06.11.2027, " +
+                "Der 08.11.2026, 20 Uhr verschiebt sich auf den 07.11.2027. Die Karten behalten ihre Gültigkeit."
+        val night = { day: Int ->
+            scrapedEvent(title = "Michael Hatzius", status = "POSTPONED", subtitle = subtitle, description = prose, eventDate = LocalDate.of(2026, 11, day))
+        }
+        (5..8).forEach { day ->
+            withClue("2026-11-0$day") { night(day).toEntity("die-wuhlmause").relocatedOn shouldBe LocalDate.of(2027, 11, day - 1) }
+        }
+        // A night the prose does not name takes the first new date after it.
+        night(4).toEntity("die-wuhlmause").relocatedOn shouldBe LocalDate.of(2027, 11, 4)
+        // The range alone names no date.
+        scrapedEvent(status = "POSTPONED", subtitle = subtitle, eventDate = LocalDate.of(2026, 11, 5)).toEntity().relocatedOn.shouldBeNull()
+        // A date the note names before the row's own is not a postponement's new date.
+        scrapedEvent(status = "POSTPONED", statusNote = "auf den 01.09.2026", eventDate = LocalDate.of(2026, 10, 31)).toEntity().relocatedOn.shouldBeNull()
     }
 
     private fun scrapedEvent(

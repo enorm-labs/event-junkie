@@ -155,6 +155,28 @@ describe('EventWhen', () => {
       expect(when.findAll('p').map((line) => line.text())).toEqual(['Fri, 12 Jun 2026'])
     })
 
+    it('names the date the note gave when no row links it, in English and German (#4334)', () => {
+      const noted: EventDetail = { ...postponed, postponedTo: undefined, relocatedOn: '2027-04-02' }
+
+      const when = mountWhen(noted)
+      expect(when.find('del').text()).toBe('Fri, 12 Jun 2026')
+      expect(when.find('a').exists()).toBe(false)
+      expect(when.findAll('p').map((line) => line.text())).toEqual([
+        'Fri, 12 Jun 2026',
+        'New date: Fri, 2 Apr 2027',
+      ])
+
+      i18n.global.locale.value = 'de'
+      expect(mountWhen(noted).findAll('p')[1]!.text()).toBe('Neuer Termin: Fr., 2. Apr. 2027')
+    })
+
+    it('links the row when it has one, over the date the note gave', () => {
+      const when = mountWhen({ ...postponed, relocatedOn: '2027-05-08' })
+
+      expect(when.find('a').attributes('href')).toBe('/en/events/2027-05-08-lido-alex-mofa-gang')
+      expect(when.findAll('p')).toHaveLength(2)
+    })
+
     it('strikes the old date and points to the venue when no new date is known', () => {
       const when = mountWhen({ ...postponed, postponedTo: undefined })
 

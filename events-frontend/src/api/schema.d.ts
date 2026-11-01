@@ -1522,7 +1522,7 @@ export interface components {
             relocatedTo?: string | null;
             /**
              * Format: date
-             * @description The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none
+             * @description The new date of a RELOCATED or POSTPONED event, as the venue's own note states it. Absent when the note names none
              * @example 2027-04-13
              */
             relocatedOn?: string | null;
@@ -2276,7 +2276,7 @@ export interface components {
             relocatedTo?: string | null;
             /**
              * Format: date
-             * @description The new date of a RELOCATED event, as the venue's own note states it; no row on that date is matched. Absent when the note names none
+             * @description The new date of a RELOCATED or POSTPONED event, as the venue's own note states it. Absent when the note names none
              * @example 2027-04-13
              */
             relocatedOn?: string | null;

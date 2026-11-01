@@ -600,7 +600,25 @@ class EventFieldMappingTest {
         // The row's own date is no new date; the next one is.
         relocatedOn("RELOCATED", listOf("verlegt auf den 19.10.26 ins Hole 44", "auf den 20.10.26"), day) shouldBe LocalDate.of(2026, 10, 20)
         relocatedOn("RELOCATED", listOf("verlegt ins Hole 44"), day).shouldBeNull()
-        relocatedOn("POSTPONED", listOf("auf den 13.04.27 verschoben"), day).shouldBeNull()
+        relocatedOn("SCHEDULED", listOf("auf den 13.04.27 verschoben"), day).shouldBeNull()
+        relocatedOn("CANCELLED", listOf("auf den 13.04.27 verschoben"), day).shouldBeNull()
+    }
+
+    @Test
+    fun `relocatedOn reads the new date of a postponed row, paired with its own date where the note pairs them (#4334)`() {
+        val day = LocalDate.of(2026, 11, 6)
+        relocatedOn("POSTPONED", listOf("auf den 13.04.27 verschoben"), day) shouldBe LocalDate.of(2027, 4, 13)
+        // A run: the nearest date before "auf" names the night, not the range in front of it.
+        val run = "vom 05.-08.11.2026 verschoben. Der 05.11.2026 verschiebt sich auf den 04.11.2027, der 06.11.2026 auf den 05.11.2027."
+        relocatedOn("POSTPONED", listOf(run), day) shouldBe LocalDate.of(2027, 11, 5)
+        relocatedOn("POSTPONED", listOf(run), LocalDate.of(2026, 11, 8)) shouldBe LocalDate.of(2027, 11, 4)
+        // The pair wins over a first date in an earlier note.
+        relocatedOn("POSTPONED", listOf("VERLEGT auf den 04.11.2027", run), day) shouldBe LocalDate.of(2027, 11, 5)
+        // A date before the row's own is a postponement's new date only when the note pairs it.
+        relocatedOn("POSTPONED", listOf("auf den 01.09.2026"), day).shouldBeNull()
+        relocatedOn("POSTPONED", listOf("vom 06.11.2026 auf den 01.09.2026 vorverlegt"), day) shouldBe LocalDate.of(2026, 9, 1)
+        // An impossible date and a range name nothing.
+        relocatedOn("POSTPONED", listOf("auf den 31.02.2027", "VERLEGT auf 04.-07.11.2027"), day).shouldBeNull()
     }
 
     @Test

@@ -242,9 +242,11 @@ export function useFormat() {
         })
       if (status === 'RELOCATED' && relocatedTo)
         return t('events.status.movedTo', { venue: relocatedTo })
-      if (status === 'POSTPONED' && postponedTo)
+      // The linked row's date, else the date the venue's note named (#4334).
+      const newDate = postponedTo ?? relocatedOn
+      if (status === 'POSTPONED' && newDate)
         return t('events.status.postponedTo', {
-          date: formatDate(postponedTo, intlLocale()),
+          date: formatDate(newDate, intlLocale()),
         })
       const key = `events.status.${status}`
       return te(key) ? t(key) : humaniseEventType(status)
