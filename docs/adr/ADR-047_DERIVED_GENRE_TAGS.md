@@ -44,6 +44,8 @@ The rules:
    `GENRE_SYNONYMS`, so the text never creates a new genre. A support or guest marker ends the part of a sentence that counts. The markers
    are "support", "Support von", "special guest", "plus" and "+". It also ignores a key that prose uses in another sense, such as "house", "world" or "swing". It ignores a short quoted
    span. Such a span is usually the title of an album, a song or a tour. Thus the album title "Whiskey Tango Foxtrot" gives no Tango.
+   A line that opens with "Sounds like" or "We love" lists bands. Only an item of genre words in it counts (#4359). Thus "70s Disco" gives Disco, but
+   "Panic! At The Disco" gives nothing.
    The first three genres stay.
 5. **Each import computes the derived tags again** for the events of its source. An event that the admin API pinned keeps its tags (ADR-042).
 6. **A derived tag counts as a tag everywhere else.** "More like this" reads it. The venue programme families and the genre filter read it too.
