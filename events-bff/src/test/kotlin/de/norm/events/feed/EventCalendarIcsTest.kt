@@ -11,6 +11,11 @@ class EventCalendarIcsTest {
     }
 
     @Test
+    fun `drops every control character but tab, which RFC 5545 TEXT does not allow`() {
+        EventCalendarIcs.escapeText("a\u0007b\u000Bc\u0085d\te") shouldBe "abcd\te"
+    }
+
+    @Test
     fun `leaves a line of 75 octets whole and folds the next octet onto a continuation line`() {
         EventCalendarIcs.foldLine("x".repeat(75)) shouldBe "x".repeat(75)
         EventCalendarIcs.foldLine("x".repeat(76)) shouldBe "x".repeat(75) + "\r\n x"

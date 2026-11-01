@@ -124,6 +124,10 @@ dependencies {
     // See: https://kotest.io/docs/assertions/assertions.html
     testImplementation("io.kotest:kotest-assertions-core:${property("kotest.version")}")
 
+    // Kotest property testing – generated inputs for the calendar feed and the notification cursor. Runs under JUnit 5 through `checkAll`.
+    // See: https://kotest.io/docs/proptest/property-based-testing.html
+    testImplementation("io.kotest:kotest-property:${property("kotest.version")}")
+
     // Testcontainers
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")

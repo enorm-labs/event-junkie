@@ -229,13 +229,17 @@ object EventCalendarIcs {
 
     private fun utcStamp(instant: Instant): String = UTC_STAMP.format(instant)
 
-    /** An RFC 5545 TEXT value: backslash, semicolon and comma escaped, every line break as `\n`. */
+    /**
+     * An RFC 5545 TEXT value: backslash, semicolon and comma escaped, every line break as `\n`, and every other control
+     * character but tab dropped, since TEXT allows none and a strict client rejects the whole calendar.
+     */
     fun escapeText(value: String): String =
         value
             .replace("\\", "\\\\")
             .replace(";", "\\;")
             .replace(",", "\\,")
             .replace(Regex("\r\n|\r|\n"), "\\\\n")
+            .filterNot { it.isISOControl() && it != '\t' }
 
     /**
      * Folds a content line at 75 octets, continuing with a leading space (RFC 5545 §3.1). Counts

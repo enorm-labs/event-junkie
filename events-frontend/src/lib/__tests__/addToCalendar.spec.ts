@@ -257,6 +257,10 @@ describe('escapeText', () => {
   it('escapes backslash, semicolon and comma, and writes line breaks as \\n', () => {
     expect(escapeText('a\\b; c, d\r\ne\nf')).toBe('a\\\\b\\; c\\, d\\ne\\nf')
   })
+
+  it('drops every control character but tab, which RFC 5545 TEXT does not allow', () => {
+    expect(escapeText('a\u0007b\u000Bc\u0085d\te')).toBe('abcd\te')
+  })
 })
 
 describe('foldLine', () => {
