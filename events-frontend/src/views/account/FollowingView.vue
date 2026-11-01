@@ -1,3 +1,30 @@
+<script lang="ts">
+import type { SavedSearch } from '@/api/account'
+import type { EventSummary } from '@/api/types'
+import type { Followed } from '@/components/FollowedList.vue'
+
+/** What the page last showed. Back from an event repaints it, so the router's restored scroll has the height to land on (#1111). */
+interface Snapshot {
+  token: number
+  email: string | undefined
+  query: string
+  today: EventSummary[]
+  todayExpanded: boolean
+  filtersOpen: boolean
+  events: EventSummary[]
+  page: number
+  hasMore: boolean
+  total: number | undefined
+  follows: Followed[]
+  searches: SavedSearch[]
+  counts: Record<string, number>
+}
+// Memory only, never stored on the device. The history entry carries just the token, so a fresh visit starts collapsed.
+let snapshot: Snapshot | undefined
+let lastToken = 0
+const SNAPSHOT_STATE_KEY = 'followingSnapshot'
+</script>
+
 <script lang="ts" setup>
 /**
  * "Following" (#3889): today's events of everything the visitor follows, as on the home page (#3922),
@@ -8,7 +35,7 @@
  * Saved searches show as chips beside the filters, and as a list to rename and delete on the follows tab (#4099).
  */
 import { SlidersHorizontal } from '@lucide/vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
@@ -16,7 +43,7 @@ import EventCard from '@/components/EventCard.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import FollowButton from '@/components/FollowButton.vue'
-import FollowedList, { type Followed } from '@/components/FollowedList.vue'
+import FollowedList from '@/components/FollowedList.vue'
 import ListPage from '@/components/ListPage.vue'
 import SavedSearchChips from '@/components/SavedSearchChips.vue'
 import SavedSearchList from '@/components/SavedSearchList.vue'
@@ -33,7 +60,7 @@ import {
   type Notify,
 } from '@/api/account'
 import { api, ApiError, describeError, unwrap } from '@/api/client'
-import type { EventSummary, EventSummaryPage } from '@/api/types'
+import type { EventSummaryPage } from '@/api/types'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -98,13 +125,28 @@ function upcomingQuery(): FollowingQuery {
   }
 }
 
-const today = ref<EventSummary[]>([])
-const todayExpanded = ref(false)
-const events = ref<EventSummary[]>([])
-const page = ref(0)
-const hasMore = ref(false)
-const total = ref<number | undefined>(undefined)
-const follows = ref<Followed[] | null>(null)
+/** The snapshot, when this history entry is the one it was taken on and nothing it depends on has changed. */
+function restorable(): Snapshot | undefined {
+  const last = snapshot
+  if (!last || window.history.state?.[SNAPSHOT_STATE_KEY] !== last.token) return undefined
+  if (last.email !== account.value?.email) return undefined
+  return last.query === JSON.stringify(upcomingQuery()) ? last : undefined
+}
+const restored = restorable()
+const token = restored?.token ?? ++lastToken
+if (restored) {
+  filtersOpen.value = restored.filtersOpen
+  saved.searches.value = restored.searches
+  saved.counts.value = restored.counts
+}
+
+const today = ref<EventSummary[]>(restored?.today ?? [])
+const todayExpanded = ref(restored?.todayExpanded ?? false)
+const events = ref<EventSummary[]>(restored?.events ?? [])
+const page = ref(restored?.page ?? 0)
+const hasMore = ref(restored?.hasMore ?? false)
+const total = ref<number | undefined>(restored?.total)
+const follows = ref<Followed[] | null>(restored?.follows ?? null)
 const suggestions = ref<{ slug: string; name: string }[]>([])
 const loadingMore = ref(false)
 const problem = ref('')
@@ -168,17 +210,18 @@ const empty = computed(
 /** Counts the upcoming loads, so a slower answer to an older filter never replaces a newer one. */
 let upcomingTicket = 0
 
-async function load() {
+/** Loads the page, with as many upcoming pages as `pages`, so a restored list keeps what "Show more" added. */
+async function load(pages = 1) {
   problem.value = ''
   try {
     const ticket = ++upcomingTicket
-    const [day, first, list] = await Promise.all([
+    const [day, list, ...upcoming] = await Promise.all([
       fetchFollowingToday(),
-      fetchFollowing(0, upcomingQuery()),
       fetchFollows(),
+      ...Array.from({ length: pages }, (_, n) => fetchFollowing(n, upcomingQuery())),
     ])
     today.value = day
-    if (ticket === upcomingTicket) showFirst(first)
+    if (ticket === upcomingTicket) showPages(upcoming)
     follows.value = list.flatMap((item) =>
       item.kind && item.kind in ROUTE && item.slug && item.name
         ? [
@@ -199,11 +242,11 @@ async function load() {
   }
 }
 
-function showFirst(first: EventSummaryPage) {
-  events.value = first.content ?? []
-  total.value = first.totalElements
-  page.value = 0
-  hasMore.value = (first.totalPages ?? 0) > 1
+function showPages(pages: EventSummaryPage[]) {
+  events.value = pages.flatMap((one) => one.content ?? [])
+  total.value = pages[0]?.totalElements
+  page.value = pages.length - 1
+  hasMore.value = pages.length < (pages[0]?.totalPages ?? 0)
 }
 
 /** A filter or the sort changed in the URL: only the upcoming list reloads. */
@@ -211,7 +254,7 @@ async function loadUpcoming() {
   const ticket = ++upcomingTicket
   try {
     const first = await fetchFollowing(0, upcomingQuery())
-    if (ticket === upcomingTicket) showFirst(first)
+    if (ticket === upcomingTicket) showPages([first])
   } catch (e) {
     if (ticket === upcomingTicket) problem.value = describeError(e, 'errors.subject.following')
   }
@@ -260,9 +303,34 @@ function toSignIn() {
 }
 
 onMounted(async () => {
+  window.history.replaceState({ ...window.history.state, [SNAPSHOT_STATE_KEY]: token }, '')
   await ready()
   if (!account.value) await toSignIn()
-  else await Promise.all([load(), saved.load(), push.load().catch(() => undefined)])
+  else
+    await Promise.all([
+      load(restored ? page.value + 1 : 1),
+      saved.load(),
+      push.load().catch(() => undefined),
+    ])
+})
+
+onBeforeUnmount(() => {
+  if (problem.value || follows.value === null || !account.value) return
+  snapshot = {
+    token,
+    email: account.value.email,
+    query: JSON.stringify(upcomingQuery()),
+    today: today.value,
+    todayExpanded: todayExpanded.value,
+    filtersOpen: filtersOpen.value,
+    events: events.value,
+    page: page.value,
+    hasMore: hasMore.value,
+    total: total.value,
+    follows: follows.value,
+    searches: saved.searches.value,
+    counts: saved.counts.value,
+  }
 })
 </script>
 
@@ -347,7 +415,7 @@ onMounted(async () => {
                 :initially-following="false"
                 kind="venue"
                 :slug="venue.slug"
-                @change="load"
+                @change="load()"
               />
             </li>
           </ul>

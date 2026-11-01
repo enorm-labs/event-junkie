@@ -408,7 +408,9 @@ for (const locale of ['en', 'de']) {
     await mockBff(page, true)
     await page.goto(`/${locale}/following`)
     const nav = page.getByRole('navigation', { name: locale === 'de' ? 'Hauptnavigation' : 'Main' })
-    await expect(nav.getByRole('button', { name: locale === 'de' ? 'Dein Konto' : 'Your account' })).toBeVisible()
+    await expect(
+      nav.getByRole('button', { name: locale === 'de' ? 'Dein Konto' : 'Your account' }),
+    ).toBeVisible()
 
     for (const width of [320, 390, 640, 720, 800, 900, 1024, 1280]) {
       await page.setViewportSize({ width, height: 800 })
@@ -422,7 +424,10 @@ for (const locale of ['en', 'de']) {
       }))
       expect(mark.height, `wordmark wraps at ${width}px`).toBeLessThan(mark.line * 1.5)
       const last = await nav.getByRole('button').last().boundingBox()
-      expect(last!.x + last!.width, `last control leaves the viewport at ${width}px`).toBeLessThanOrEqual(width)
+      expect(
+        last!.x + last!.width,
+        `last control leaves the viewport at ${width}px`,
+      ).toBeLessThanOrEqual(width)
     }
   })
 }
@@ -500,4 +505,30 @@ test('the Following page passes axe on the tab of what you follow', async ({ pag
     .exclude('#__vue-devtools-container__')
     .analyze()
   expect(results.violations).toEqual([])
+})
+
+test('Back from an event keeps Show all today open and returns to where the visitor was', async ({
+  page,
+}) => {
+  const nights = Array.from({ length: 8 }, (_, n) => ({
+    slug: `night-${n}`,
+    title: `Night ${n} at the venue`,
+    eventDate: day(0),
+    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+  }))
+  await mockBff(page, true, { following: true, today: nights })
+  await page.route(/\/api\/events\/night-7(\?|$)/, (route) => json(route, nights[7]))
+  await page.route(/\/api\/events\/night-7\/related/, (route) => json(route, []))
+  await page.goto('/en/following')
+
+  await page.getByRole('button', { name: 'Show all 8 events today' }).click()
+  const last = page.getByRole('link', { name: /Night 7 at the venue/ }).first()
+  await last.scrollIntoViewIfNeeded()
+  await last.click()
+  await expect(page).toHaveURL(/\/events\/night-7$/)
+
+  await page.goBack()
+  await expect(page.getByRole('button', { name: 'Show all 8 events today' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Night 7 at the venue/ }).first()).toBeInViewport()
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })

@@ -54,6 +54,8 @@ let wrapper: VueWrapper | undefined
 let router: Router
 
 beforeEach(() => {
+  // FollowingView tags the history entry; a memory router never replaces jsdom's, so each test starts as a fresh visit.
+  window.history.replaceState(null, '')
   vi.resetAllMocks()
   account.prepareCsrf.mockResolvedValue()
   account.follow.mockResolvedValue()
