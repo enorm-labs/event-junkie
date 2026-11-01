@@ -92,6 +92,12 @@ fun resolvePostponement(
  * house makes this row `RELOCATED` with that name, as #1867 did for Bi Nuu's `rp`; this row's own
  * house, or no house, leaves it `POSTPONED`. Any other status passes through (#2708).
  *
+ * A note with no house after a date falls back to the sentence that carries a relocation verb.
+ * UFO's "vom UFO in die Columbiahalle verlegt" beside a rescheduled badge names another house, and
+ * MSH's "aus der Max-Schmeling-Halle verlegt" names this one as the origin: both are `RELOCATED`. The
+ * sentence, not the whole text, because a biography's "in den letzten 12 Monaten" is no house. The
+ * word alone does not count, because "verlegt auf <date>" moves only the date (#3576, #4332).
+ *
  * Applied after [resolvePostponement], so the row on the new date is already `SCHEDULED` and never
  * read as a move.
  */
@@ -101,13 +107,34 @@ fun resolvePostponedMove(
     venueSlug: String
 ): Pair<String, String?> {
     if (status != EventStatus.POSTPONED.name) return status to null
-    val to =
+    val here = compactName(venueSlug)
+    val datedHouse = notes.firstNotNullOfOrNull { POSTPONED_TO_HOUSE.find(it) }?.let { venueName(it.groupValues[1]) }
+    // The first sentence with the verb that names a house; null when a house follows the date.
+    val moved =
         notes
-            .firstNotNullOfOrNull { POSTPONED_TO_HOUSE.find(it) }
-            ?.let { venueName(it.groupValues[1]) }
-            ?.takeUnless { namesSameHouse(compactName(it), compactName(venueSlug)) }
-    return if (to != null) EventStatus.RELOCATED.name to to else status to null
+            .asSequence()
+            .takeIf { datedHouse == null }
+            ?.flatMap { SENTENCE_BREAK.split(it) }
+            ?.filter { MOVE_VERB.containsMatchIn(it) }
+            ?.mapNotNull(::parseRelocation)
+            ?.firstOrNull { it.to != null || it.from != null }
+    val to = (datedHouse ?: moved?.to)?.takeUnless { namesSameHouse(compactName(it), here) }
+    val leftHere = moved != null && moved.to == null && moved.from?.let { namesSameHouse(compactName(it), here) } == true
+    return when {
+        to != null -> EventStatus.RELOCATED.name to to
+        leftHere -> EventStatus.RELOCATED.name to null
+        else -> status to null
+    }
 }
+
+/**
+ * The relocation word as a verb. The noun is left out: "Informationen zur Verlegung gibt es unter …"
+ * names no house, and would read "Verlegung gibt es unter" as one.
+ */
+private val MOVE_VERB = Regex("""(?<!vor)verlegt\b|\breloc|\bmoved\b""", RegexOption.IGNORE_CASE)
+
+/** The end of a sentence: punctuation before a space, or a line break. "29.10.26" stays whole. */
+private val SENTENCE_BREAK = Regex("""(?<=[.!?])\s+|\n""")
 
 /**
  * Decides whether a `RELOCATED` row that names no destination moved its date instead: Kesselhaus
@@ -173,10 +200,11 @@ private val RELOCATION_WORD = Regex("""(?<!vor)verlegt\b|\bverlegung\b|\breloc|\
 /**
  * A venue name in a note: starts with a letter and runs to punctuation, a dash, a bracket, a
  * quote, an asterisk, a line break, the relocation word or the next preposition. The relocation
- * word needs no boundary in front, so the lazy body stops short of a glued "verlegt".
+ * word needs no boundary in front, so the lazy body stops short of a glued "verlegt". A hyphen
+ * between two letters is part of the name: "Max-Schmeling-Halle", not "Max" (#4332).
  */
 private const val NAME_BODY =
-    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:[-–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|verschoben\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
+    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:-(?!\p{L})|\s-|[–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|verschoben\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
 
 /** The destination, named with a contracted or articled preposition: "ins Metropol", "in den Privatclub", "nach Kreuzberg", "to Hole 44". */
 private val RELOCATION_TO =

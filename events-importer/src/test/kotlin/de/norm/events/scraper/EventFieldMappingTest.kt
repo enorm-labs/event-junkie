@@ -501,6 +501,62 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `resolvePostponedMove relocates a postponed row whose note moves it to another house with no date`() {
+        fun move(
+            note: String,
+            venueSlug: String
+        ) = resolvePostponedMove("POSTPONED", listOf(note), venueSlug)
+        move("Die Show wird vom UFO in die Columbiahalle verlegt.", "ufo-im-velodrom") shouldBe ("RELOCATED" to "Columbiahalle")
+        move("Aufgrund der großen Nachfrage wurde das Konzert vom Frannz Club in den Festsaal Kreuzberg hochverlegt.", "frannz-club") shouldBe
+            ("RELOCATED" to "Festsaal Kreuzberg")
+        // Only the origin, and it is this house: the show left, to a house the note does not name.
+        move("Achtung, die Show wurde aus der Max-Schmeling-Halle verlegt.", "max-schmeling-halle") shouldBe ("RELOCATED" to null)
+        move("Das Konzert wurde vom 29.10.26 auf den 13.03.27 verschoben und aus der Kantine ins Badehaus verlegt!", "kantine-am-berghain") shouldBe
+            ("RELOCATED" to "Badehaus")
+        // Frannz quotes the whole statement; the sentence carries the move all the same.
+        val frannz =
+            listOf(
+                "Kontrollverlust -in den Festsaal verschoben-",
+                "\"Aufgrund der hohen Nachfrage wurde das Konzert vom Frannz Club in den Festsaal Kreuzberg hochverlegt. " +
+                    "Die bereits gekauften Tickets behalten ihre Gültigkeit.“\n(Foto-Credit: Enis Gülmen)"
+            )
+        resolvePostponedMove("POSTPONED", frannz, "frannz-club") shouldBe ("RELOCATED" to "Festsaal Kreuzberg")
+    }
+
+    @Test
+    fun `resolvePostponedMove keeps a postponed row postponed when the note moves it here, elsewhere from, or only in time`() {
+        fun move(
+            note: String,
+            venueSlug: String
+        ) = resolvePostponedMove("POSTPONED", listOf(note), venueSlug)
+        // The destination is this house: the show arrives here.
+        move("Die Show wird vom UFO in die Columbiahalle verlegt.", "columbiahalle") shouldBe ("POSTPONED" to null)
+        // Only the origin, and it is another house.
+        move("Achtung, die Show wurde aus der Max-Schmeling-Halle verlegt.", "uber-eats-music-hall") shouldBe ("POSTPONED" to null)
+        // The word moves the date, not the house.
+        move("VERLEGT auf 04.-07.11.2027", "die-wuehlmaeuse") shouldBe ("POSTPONED" to null)
+        move("Das Konzert wird auf den 13.03.27 verlegt.", "lido") shouldBe ("POSTPONED" to null)
+        move("Verlegt / Relocated", "lido") shouldBe ("POSTPONED" to null)
+        move("Das Konzert im Bi Nuu wird um eine Stunde vorverlegt", "bi-nuu") shouldBe ("POSTPONED" to null)
+        // A house-like phrase in another sentence of the text is not the move's.
+        move("Verlegt auf den 02.04.2027. Er spielte in den letzten 12 Monaten über 100 Konzerte.", "ufafabrik") shouldBe ("POSTPONED" to null)
+        move("Das Konzert wurde in den März 2027 verschoben. Mehr zur Verlegung unter: example.de/faq", "badehaus") shouldBe ("POSTPONED" to null)
+        move("Die Band kehrt nach Deutschland zurück. Das Konzert wurde verlegt.", "lido") shouldBe ("POSTPONED" to null)
+        // Only a postponement is read; every other status passes through.
+        EventStatus.entries.filter { it != EventStatus.POSTPONED }.forEach {
+            resolvePostponedMove(it.name, listOf("vom UFO in die Columbiahalle verlegt"), "ufo-im-velodrom") shouldBe (it.name to null)
+        }
+    }
+
+    @Test
+    fun `parseRelocation keeps a hyphenated house whole and still ends a name at a spaced or trailing dash`() {
+        parseRelocation("Achtung, die Show wurde aus der Max-Schmeling-Halle verlegt.") shouldBe Relocation(from = "Max-Schmeling-Halle", to = null)
+        parseRelocation("verlegt in die Mercedes-Benz Arena - Tickets behalten ihre Gültigkeit") shouldBe
+            Relocation(from = null, to = "Mercedes-Benz Arena")
+        parseRelocation("verlegt ins Hole 44 -Tickets bleiben gültig") shouldBe Relocation(from = null, to = "Hole 44")
+    }
+
+    @Test
     fun `resolveDatedRelocation postpones a nameless move with a new date, and nothing else`() {
         resolveDatedRelocation("RELOCATED", null, listOf("verlegt auf 17.08.27")) shouldBe "POSTPONED"
         resolveDatedRelocation("RELOCATED", null, listOf("Verlegt / Relocated")) shouldBe "RELOCATED"
