@@ -7,7 +7,8 @@ Read the coverage reports, find the under-tested code that matters, and write th
 1. **Baseline**: `./gradlew koverLog` (per module), `./gradlew koverHtmlReport` (per class, `build/reports/kover/html/index.html`).
 2. **Prioritise**: `@Service` business logic → controller endpoints (status codes, validation, error bodies) → `toDomain()` / `fromDomain()` / `fromEntity()`
    → edge cases (null, empty, validation failure, exception paths) → scraper parsers against their fixtures. Skip configuration classes, entry points,
-   `*Module.kt` markers and logic-free accessors — Kover already excludes most of them.
+   `*Module.kt` markers and logic-free accessors — Kover already excludes most of them. **A pure parser or normalizer without a `*PropertyTest` is a
+   gap Kover does not show**: the slug, act-splitting and price bugs that property tests found were all in lines example tests already covered.
 3. **Read the module's existing tests first**: what is covered, the style, the `*RequestFixtures` available. New tests look like their neighbours;
    [testing.instructions.md](../instructions/testing.instructions.md) loads with them and is the convention — `BaseControllerTest` for integration,
    `WebTestClient` for the full cycle, MockK for isolation, Kotest assertions, backtick names, `runTest` for coroutines, a fixture factory per entity (create

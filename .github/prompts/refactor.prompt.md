@@ -75,7 +75,8 @@ any source as a finding. [`/start-issue`](start-issue.prompt.md) asks the same q
 and a day.
 
 So: **if the change reaches `SlugGenerator`, `GenreNormalizer`, `ArtistNameMapping` (with `NonArtistNames`, `ArtistNameCleanup`, `ActSplitting`, `SupportLines`), `MoneyExtensions` or anything else every importer calls, the re-seed is
-part of the work.** If you cannot run one, the honest move is to stop and say which finding you left, not to ship the edit and hope.
+part of the work.** If you cannot run one, the honest move is to stop and say which finding you left, not to ship the edit and hope. A helper's
+`*PropertyTest` is the strongest local proof that its behaviour held, and still no substitute: a generator holds only the shapes someone thought of.
 
 A change to their tests alone does not reach them. Moving tests between test files, with no test body edited and no production file in the diff, needs no
 re-seed: the JUnit count per class, before and after, proves it (#4279).
