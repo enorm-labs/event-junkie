@@ -264,7 +264,10 @@ fun commaListActs(line: String): List<String>? {
     return parts.flatMap { if (isKnownSingleAct(it)) listOf(it) else cutAtConjunctions(it) }.map { it.trim() }
 }
 
-/** [segment] cut at each conjunction outside brackets whose right-hand side is no tail marker and no bare number. */
+/**
+ * [segment] cut at each conjunction outside brackets whose right-hand side is no tail marker and no bare number. Each piece is
+ * trimmed, and the empty piece a trailing `und ` leaves is dropped, as [splitCrossBilled] does. A segment with no cut stays as given.
+ */
 private fun cutAtConjunctions(segment: String): List<String> {
     val cuts =
         CONJUNCTION_SEPARATOR
@@ -277,7 +280,8 @@ private fun cutAtConjunctions(segment: String): List<String> {
                 nextWord.lowercase() !in CONJUNCTION_TAIL_MARKERS && !isBareNumber(nextWord)
             }.map { it.range }
             .toList()
-    return cutAt(segment, cuts)
+    if (cuts.isEmpty()) return listOf(segment)
+    return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
 }
 
 /**
