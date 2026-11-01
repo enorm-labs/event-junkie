@@ -70,7 +70,13 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         // Duos BKA Theater bills as the act before the colon, beside two-act headings like `Tim Becker & Zauberer Umeno` (#3584).
         "simon & jan",
         "jacky & mahoni",
-        "evers & eichhorn"
+        "evers & eichhorn",
+        // Jazz duos A-Trane bills by first names: Shuteen Erdenebaatar and Nils Kugelmann (event 12321), the brothers Zohar and Adam Cabo.
+        "shuteen & nils",
+        "zohar & adam",
+        // Comedy duos Die Wühlmäuse bills as their whole act line.
+        "emmi & willnowsky",
+        "heißmann & rassau"
     )
 
 /**

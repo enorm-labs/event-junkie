@@ -1,5 +1,7 @@
 package de.norm.events.scraper.eightmm
 
+import de.norm.events.event.ArtistRole
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -39,6 +41,32 @@ class EightMmEventPageScraperTest {
         event.description shouldContain "Aftershow DJ set Liam Carrol"
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 30)
+    }
+
+    @Test
+    fun `bills a festival day from the blurb's line-up list`() {
+        // Event 12287: the title names the day, and the acts are only in the blurb.
+        val html =
+            """
+            <article class="eventitem"><div class="eventitem-column-content"><div class="sqs-html-content">
+            <p>8MM Fest returns for two nights.</p><p>Line up -</p>
+            <p>ABIGAIL TOLL / ACTIVEMIRROR / BLACK BORDELLO /CALVIN LOVE / I WANT POETRY / YARD + MORE</p>
+            </div></div></article>
+            """.trimIndent()
+
+        val event = scraper.enrich(listed("8MM FEST DAY 1"), Jsoup.parse(html))
+
+        event.artists.map { it.name } shouldBe
+            listOf("Abigail Toll", "Activemirror", "Black Bordello", "Calvin Love", "I Want Poetry", "Yard")
+    }
+
+    @Test
+    fun `keeps the acts a house-frame title bills over a line-up list`() {
+        val html =
+            """<article class="eventitem"><div class="eventitem-column-content"><div class="sqs-html-content"><p>Line up: SOMEONE ELSE</p></div></div></article>"""
+        val listed = listed("8MM Live: SOFT PALMS").copy(artists = listOf(ScrapedArtist(name = "SOFT PALMS", role = ArtistRole.HEADLINER)))
+
+        scraper.enrich(listed, Jsoup.parse(html)).artists.map { it.name } shouldBe listOf("SOFT PALMS")
     }
 
     @Test

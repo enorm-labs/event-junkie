@@ -76,6 +76,22 @@ class ShowfensterOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a private party for the theatre's patrons`() {
+        // Event 12300: the payload lists the patrons' party beside the public programme.
+        val html =
+            """
+            <script type="application/json" id="wix-warmup-data">{"appsWarmupData":{"140603ad-af8d-84a5-2c80-a0f60cb47351":{"widget":
+            {"events":{"events":[{"id":"a","slug":"gonnerparty","title":"Gönnerparty (geschlossene Gesellschaft)",
+            "scheduling":{"config":{"startDate":"2026-11-21T17:30:00.000Z","timeZoneId":"Europe/Berlin"}}},
+            {"id":"b","slug":"wunschkonzert","title":"Wunschkonzert mit Rian Es",
+            "scheduling":{"config":{"startDate":"2026-11-22T17:30:00.000Z","timeZoneId":"Europe/Berlin"}}}]}}}}}</script>
+            """.trimIndent()
+
+        ShowfensterOverviewPageScraper().scrape(Jsoup.parse(html, BASE_URL), BASE_URL).map { it.title } shouldBe
+            listOf("Wunschkonzert mit Rian Es")
+    }
+
+    @Test
     fun `reads a cancellation note in the title, then cuts it`() {
         val cancelled = on("2026-09-20", "Lina Lärche")
         val ill = on("2026-10-07", "Melanie Haupt")

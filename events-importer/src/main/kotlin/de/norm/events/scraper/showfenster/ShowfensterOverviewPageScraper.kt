@@ -30,7 +30,8 @@ import tools.jackson.databind.JsonNode
  * The payload names no category, but every event sold elsewhere links its Eventfrog page, whose path is the venue's own
  * filing (`/p/konzerte/jazz-blues/…`, `/p/theater-buehne/comedy-kabarett/…`). That path gives the type and a concert's
  * genre. Children's shows (`kinderveranstaltungen`, EVENT_SCOPE.md §3.5) are marked `for-children`, and the swing course
- * (`kurse-seminare`, §3.2) is dropped. A cancellation or a sold-out night is a note in the title, read and then cut from it.
+ * (`kurse-seminare`, §3.2) and a `geschlossene Gesellschaft` (a private party) are dropped. A cancellation or a sold-out
+ * night is a note in the title, read and then cut from it.
  */
 class ShowfensterOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -93,7 +94,9 @@ class ShowfensterOverviewPageScraper {
         description: String?
     ): String? = CHILDRENS_CATEGORY.takeIf { category?.main == it } ?: childrensShowPhrase(title, description)
 
-    private fun isOutOfScope(node: JsonNode): Boolean = eventfrogCategory(ticketUrlOf(node))?.main in OUT_OF_SCOPE_CATEGORIES
+    private fun isOutOfScope(node: JsonNode): Boolean =
+        eventfrogCategory(ticketUrlOf(node))?.main in OUT_OF_SCOPE_CATEGORIES ||
+            PRIVATE_PARTY.containsMatchIn(node.stringOrNull("title").orEmpty())
 
     private fun ticketUrlOf(node: JsonNode): String? = node.path("registration").path("external").stringOrNull("registration")
 
@@ -151,6 +154,9 @@ private val EVENTFROG_PATH = Regex("""eventfrog\.[a-z]+/[a-z]{2}/p/([^/]+)/([^/]
 
 /** The swing course, a participation format (EVENT_SCOPE.md §3.2). */
 private val OUT_OF_SCOPE_CATEGORIES = setOf("kurse-seminare")
+
+/** `Gönnerparty (geschlossene Gesellschaft)`: a private party for the theatre's patrons, closed to the public. */
+private val PRIVATE_PARTY = Regex("""geschlossene\s+(?:gesellschaft|veranstaltung)""", RegexOption.IGNORE_CASE)
 
 /** Children's shows (EVENT_SCOPE.md §3.5): imported, marked `for-children`. */
 private const val CHILDRENS_CATEGORY = "kinderveranstaltungen"

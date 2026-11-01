@@ -1,10 +1,12 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FOUR_DIGIT_CLOCK
 import de.norm.events.scraper.SCRAPER_JSON
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
@@ -12,8 +14,10 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.childrensShowPhrase
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.forChildrenIf
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.core.JacksonException
@@ -63,6 +67,12 @@ data class WuehlmaeuseTicket(
  * `abgesagt`); the marker leaves the title and sets the status. A family show for small children
  * (`Familien-Zaubershow für Kinder ab 4 Jahre`) is a show, marked `for-children` (EVENT_SCOPE.md §3.5);
  * every other performance is comedy.
+ *
+ * **The act line is the act**, because the shop files every show under its performer: `Alfons`,
+ * `Tiere streicheln Menschen`, `Heißmann & Rassau`. The shared person-shaped rule reads a name of two
+ * to four capitalised words first; [actLineBill] bills the rest. A production names no performer
+ * ([PRODUCTION]); a series names its host (`Lach-Stoff: Tan Caglar & Gäste`), and an interview night
+ * both guests (`Ingmar Stadelmann trifft Ricarda Lang`).
  */
 class WuehlmaeuseApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -103,10 +113,37 @@ class WuehlmaeuseApiScraper {
                     ticketUrl = cheapest.ticketUrl,
                     pricePresale = cheapest.price,
                     status = if (categories.any { it.cancelled }) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
-                    // A performer's "<Name> – <Programme>" bill names the act; a series or a play does not.
-                    artists = buildArtistsForEventType(bill, null, EventType.COMEDY.name)
+                    artists = buildArtistsForEventType(bill, null, EventType.COMEDY.name).ifEmpty { actLineBill(ticket.act) }
                 ).forChildrenIf(childrens)
             }.sortedWith(compareBy({ it.eventDate }, { it.startTime }))
+
+    /**
+     * The performers an act line names, when it is not a production. A presenter (`Marc Weide präsentiert: …`),
+     * a character (`… als Erwin Pelzig`), a tagline (`LaLeLu – a cappella comedy`, `Rosemie…Clownin…`) and a
+     * series frame are cut; a bracket lists the members (`Die Pubertätsdocs (Dr. Jan-Uwe Rogge & Matthias Jung)`).
+     */
+    private fun actLineBill(act: String): List<ScrapedArtist> {
+        if (PRODUCTION.containsMatchIn(act)) return emptyList()
+        val members =
+            MEMBERS
+                .find(act)
+                ?.groupValues
+                ?.get(1)
+                ?.replace(DOCTOR, "")
+        val name =
+            members ?: act
+                .replace(SERIES_HOST, "$1")
+                .substringBefore(" präsentiert:")
+                .substringBefore(" als ")
+                .substringBefore(" – ")
+                .substringBefore("…")
+        return name
+            .split(INTERVIEW)
+            .flatMap(::splitSupportActs)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = ArtistRole.HEADLINER, titleDerived = true) }
+    }
 
     /** The show's slug, date and clock: one show plays many nights, and one night can hold two shows. */
     private fun sourceIdOf(ticket: WuehlmaeuseTicket): String {
@@ -153,6 +190,18 @@ class WuehlmaeuseApiScraper {
         val PERFORMANCE = Regex("""(\d{2}\.\d{2}\.\d{4}) um (\d{1,2}:\d{2})""")
         val DOORS = Regex("""Einlass ab:?\s*(\d{1,2}:\d{2})""")
         val CANCELLED = Regex("""kann leider nicht stattfinden|abgesagt""", RegexOption.IGNORE_CASE)
+
+        /** Productions and formats that name no performer: plays, revues, series, singalongs, candlelight concerts. */
+        val PRODUCTION =
+            Regex(
+                """^(?:caveman|cavewoman|nightwash|der blaue montag|schlachtplatte|alle kassen|rudelsingen|voices of cinema)\b|""" +
+                    """candlelight|mad monkey room""",
+                RegexOption.IGNORE_CASE
+            )
+        val SERIES_HOST = Regex("""^Lach-Stoff:\s*(.+?)\s*&\s*Gäste$""", RegexOption.IGNORE_CASE)
+        val INTERVIEW = Regex("""\s+trifft\s+""")
+        val MEMBERS = Regex("""\(([^)]+)\)\s*$""")
+        val DOCTOR = Regex("""\bDr\.\s*""")
         val CANCELLED_TAIL = Regex("""\s*[-–]\s*(?:ersatzlos\s+)?(?:kann leider nicht stattfinden|abgesagt)\b""", RegexOption.IGNORE_CASE)
     }
 }

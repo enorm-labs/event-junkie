@@ -134,19 +134,55 @@ class PankeProgrammePageScraperTest {
         }
     }
 
+    @Test
+    fun `bills a plus bill whose every act carries a live or style tag`() {
+        assertSoftly {
+            // Event 12333.
+            articleTitled("Firmament Release Ritual: Grafi (live) + Donna Haringwey (live)").artists.map { it.name } shouldBe
+                listOf("Grafi", "Donna Haringwey")
+            // Event 12328: the tags also give the genre.
+            val aantz = articleTitled("Aantz [ambient/drone/Berlin] + UnoX [experimental dub/Berlin] live at Panke")
+            aantz.artists.map { it.name } shouldBe listOf("Aantz", "UnoX")
+            aantz.genre shouldBe "Ambient, Experimental"
+            // An untagged plus joins a series and its guest as often as two acts.
+            articleTitled("VINTENOVE BAILES invites State OFFF + Tekhole").artists.shouldBeEmpty()
+            articleTitled("Grafi (live) + Release Party").artists.shouldBeEmpty()
+        }
+    }
+
+    @Test
+    fun `bills the title a promoter presents, as a concert`() {
+        // Event 12332: "Kingstar präsentiert" above the title, then the band's story.
+        val attic = articleTitled("ATTIC 109", "Kingstar präsentiert<br>ATTIC 109<br>Attic109. Vom Dachboden auf die Live Bühnen.")
+
+        attic.artists.map { it.name to it.role } shouldBe listOf("ATTIC 109" to ArtistRole.HEADLINER)
+        attic.eventType shouldBe EventType.CONCERT.name
+        articleTitled("ATTIC 109", "Attic109. Vom Dachboden auf die Live Bühnen.").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types an unmarked night that starts late as a club night`() {
+        // Event 12327: AFRO-LATIN FUSION at 22:30, with one sentence of body.
+        articleTitled("AFRO-LATIN FUSION", start = "22:30").eventType shouldBe EventType.PARTY.name
+        articleTitled("Outside the BigMac vol.6", start = "19:00").eventType shouldBe EventType.OTHER.name
+    }
+
     private fun articleTitled(
         title: String,
-        body: String? = null
-    ): ScrapedEvent = scraper.scrape(Jsoup.parse(articleHtml(title, body), sourceUrl), sourceUrl).single()
+        body: String? = null,
+        start: String? = null
+    ): ScrapedEvent = scraper.scrape(Jsoup.parse(articleHtml(title, body, start), sourceUrl), sourceUrl).single()
 
     private fun articleHtml(
         title: String,
-        body: String? = null
+        body: String? = null,
+        start: String? = null
     ): String {
         val full = body?.let { "<div class=\"post-content-full\"><div class=\"et_pb_column_3_4\"><p>$it</p></div></div>" }.orEmpty()
+        val info = start?.let { "<div class=\"eventInfo\">The event takes place on the 14th of November starting at $it:00.</div>" }.orEmpty()
         return """
             <div class="et_pb_events_0"><article id="post-1">
-              <div class="event-content-wrapper" data-date="2026-10-17"><h2 class="entry-title">$title</h2>$full</div>
+              <div class="event-content-wrapper" data-date="2026-10-17"><h2 class="entry-title">$title</h2>$info$full</div>
             </article></div>
             """.trimIndent()
     }

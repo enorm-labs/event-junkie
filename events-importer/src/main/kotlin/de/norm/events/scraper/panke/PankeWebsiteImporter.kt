@@ -34,18 +34,18 @@ val PANKE_LIMITATIONS =
         EventSource.PANKE,
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "acts named only in free prose are not read; a Resident Advisor profile link or a `feat.` title bills them"
+            "acts named only in free prose are not read; a Resident Advisor link, a `feat.` or tagged `+` title, or a presenter line bills them"
         ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue expands each event's full text inline and publishes no page per event"),
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
-            "no category is published and titles name a series; a format word in the title or the body, or a Resident Advisor lineup, types an event"
+            "no category is published and titles name a series; a format word, a Resident Advisor lineup, a presenter line or a late start types an event"
         ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
             "only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre field; the style is only in the text, or in a title's `[style]` tag"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose"
