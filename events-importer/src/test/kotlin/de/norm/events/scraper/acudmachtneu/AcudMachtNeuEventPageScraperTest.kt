@@ -166,6 +166,32 @@ class AcudMachtNeuEventPageScraperTest {
     }
 
     @Test
+    fun `reads a ticket link after a presale link or ticket link label, and a link that reads presale only`() {
+        // Events 12146, 12150 and 12151.
+        val presaleLink = scrape("acudmachtneu-event-hyper-fog.html", "https://acudmachtneu.de/events/2394/hyper-fog")
+        val ticketLink = scrape("acudmachtneu-event-kholektiv.html", "https://acudmachtneu.de/events/2396/kholektiv-showcase-with-lola-kay")
+        val presaleOnly = scrape("acudmachtneu-event-sunday-school.html", "https://acudmachtneu.de/events/2397/sunday-school-4th-anniversary")
+
+        presaleLink.ticketUrl shouldBe "https://ra.co/events/2565139"
+        ticketLink.ticketUrl shouldBe "https://de.ra.co/events/2568916"
+        presaleOnly.ticketUrl shouldBe "https://ra.co/events/2564610"
+    }
+
+    @Test
+    fun `reads no ticket link after another link label or from a link whose text only mentions tickets`() {
+        val infoLink = scrapeContent("""more info link: <a href="https://example.de/info">https://example.de/info</a>""")
+        val prose = scrapeContent("""<a href="https://example.de/kino">Tickets und Infos</a>""")
+        val labelFirst =
+            scrapeContent(
+                """<a href="https://example.de/shop">PRESALE ONLY</a><br>Tickets: <a href="https://example.de/ra">https://example.de/ra</a>"""
+            )
+
+        infoLink.ticketUrl.shouldBeNull()
+        prose.ticketUrl.shouldBeNull()
+        labelFirst.ticketUrl shouldBe "https://example.de/ra"
+    }
+
+    @Test
     fun `reads the gallery as the room of an exhibition`() {
         val event = scrape("acudmachtneu-event-orbital-decay.html", "https://acudmachtneu.de/events/2379/orbital-decay")
 
