@@ -98,6 +98,15 @@ class PriceParsingExtensionsTest {
         parseLabelledPrices("VVK ab: 69,99 € zzgl. Gebühr").fromPrice shouldBe true
     }
 
+    // Found by PriceParsingPropertyTest: the fee was the lowest amount after the label, so it was stored as the price.
+    @Test
+    fun `parseLabelledPrices reads past a booking fee added to the price`() {
+        parseLabelledPrices("VVK: 28 € zzgl. 2,50 € Gebühr / AK: 32 €") shouldBe LabelledPrices(BigDecimal("28"), BigDecimal("32"))
+        parseLabelledPrices("Vorverkauf 22,90 € +0,45 € Ticket-Servicegebühr").presale shouldBe BigDecimal("22.90")
+        parseLabelledPrices("Presale 15 € plus 1,50 € fee").presale shouldBe BigDecimal("15")
+        parseLabelledPrices("VVK 12 € + 15 €").presale shouldBe BigDecimal("12")
+    }
+
     @Test
     fun `parseLabelledPrices skips concessions, empty slots and unlabelled amounts`() {
         parseLabelledPrices("Abendkasse 15 € / ermäßigt 10 €").boxOffice shouldBe BigDecimal("15")

@@ -68,9 +68,9 @@ fun isBoxOfficeLabel(label: String?): Boolean = label != null && BOX_OFFICE_LABE
  * `VVK: 28 € (zzgl. Gebühr) / AK: 32 €` or `Vorverkauf 12 €/ 18 €/ 25 € * Abendkasse 30 €`. Each
  * label owns the text up to the next label or concession marker (`ermäßigt`, `reduced`, …). Its
  * lowest amount is the price, so a tiered door or presale stores its cheapest tier
- * (docs/DATA_MODEL.md). The first label of each kind that names an amount wins. An amount before
- * any label is not assigned. [LabelledPrices.fromPrice] tells whether an `ab` (from) qualifier
- * precedes a labelled amount.
+ * (docs/DATA_MODEL.md). A booking fee added to it ([FEE_CLAUSE]) is no tier: `VVK 28 € zzgl. 2,50 € Gebühr`
+ * is 28 €. The first label of each kind that names an amount wins. An amount before any label is not assigned.
+ * [LabelledPrices.fromPrice] tells whether an `ab` (from) qualifier precedes a labelled amount.
  */
 fun parseLabelledPrices(text: String?): LabelledPrices {
     val source = text.orEmpty()
@@ -80,7 +80,7 @@ fun parseLabelledPrices(text: String?): LabelledPrices {
     var fromPrice = false
     markers.forEachIndexed { index, marker ->
         val segment = source.substring(marker.range.last + 1, markers.getOrNull(index + 1)?.range?.first ?: source.length)
-        val lowest = euroAmounts(segment).minOrNull() ?: return@forEachIndexed
+        val lowest = euroAmounts(segment.replace(FEE_CLAUSE, " ")).minOrNull() ?: return@forEachIndexed
         when {
             marker.groups[PRESALE_GROUP] != null -> presale = presale ?: lowest
             marker.groups[BOX_OFFICE_GROUP] != null -> boxOffice = boxOffice ?: lowest
@@ -119,6 +119,16 @@ private val BOX_OFFICE_LABEL = Regex("""(?<!\p{L})(?:$BOX_OFFICE_LABELS)(?!\p{L}
 private val PRICE_SEGMENT_MARKER =
     Regex(
         """(?<!\p{L})(?:(?<$PRESALE_GROUP>$PRESALE_LABELS)|(?<$BOX_OFFICE_GROUP>$BOX_OFFICE_LABELS)|$CONCESSION_LABELS)(?!\p{L})""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
+ * A fee added to a price: `zzgl. 2,50 € Gebühr`, `+0,45 € Ticket-Servicegebühr`, `plus 1,50 € fee`. The fee word is
+ * required, so `12 € + 15 €` stays two tiers.
+ */
+private val FEE_CLAUSE =
+    Regex(
+        """(?:zzgl\.?|plus|\+)\s*(?:ca\.\s*)?(?:€\s*)?\d+(?:[.,]\d{1,2}|,-)?\s*(?:€|eur(?:o|os)?)?\s*[\p{L}-]*(?:geb(?:ü|ue)hr|fee|charge)\p{L}*""",
         RegexOption.IGNORE_CASE
     )
 
