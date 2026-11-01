@@ -118,6 +118,10 @@ private const val CLOCK_AFTER_LABEL =
  * 19:00 Beginn: 20:00"`), so the label is the only thing separating them. Case is ignored, the
  * label may carry a suffix ("Beginnt", "Startzeit"), and the clock is read leniently
  * ([CLOCK_AFTER_LABEL]); a 12-hour clock takes its meridiem ([parseClock]).
+ *
+ * **Accepted limitation:** a date without a year after a label reads as a clock, so
+ * `Vorstellungsbeginn 03.10. um 20 Uhr` gives 03:10. `Beginn 20.10.` can end a sentence with a time,
+ * so the dotted form alone cannot tell the two apart, and no venue page bills a year-less date there.
  */
 fun labelledClock(
     text: String?,

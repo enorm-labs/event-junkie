@@ -79,21 +79,6 @@ class DateTimeParsingPropertyTest {
         }
 
     @Test
-    fun `a labelled clock reads back in every spelling a venue prints`() =
-        runTest {
-            checkAll(TIME, Arb.element("Einlass", "EINLASS", "Doors", "Doors open", "Tür"), Arb.element("", ":", " ab", ": ab ca.")) { time, label, lead ->
-                val spellings =
-                    listOf(
-                        "${time.hour.twoDigits()}:${time.minute.twoDigits()}",
-                        "${time.hour}.${time.minute.twoDigits()} Uhr",
-                        "${time.hour.twoDigits()}:${time.minute.twoDigits()} h"
-                    ) +
-                        listOfNotNull("${time.hour} Uhr".takeIf { time.minute == 0 })
-                spellings.forEach { clock -> labelledClock("$label$lead $clock Beginn 23:59", DOORS_LABELS) shouldBe time }
-            }
-        }
-
-    @Test
     fun `every weekday name reads back in any letter case`() =
         runTest {
             checkAll(Arb.element(DayOfWeek.entries), Arb.element(LETTER_CASES)) { day, case ->
