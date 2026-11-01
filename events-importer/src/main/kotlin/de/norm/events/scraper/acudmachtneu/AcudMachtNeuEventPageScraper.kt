@@ -66,7 +66,8 @@ class AcudMachtNeuEventPageScraper {
 
     /**
      * The text after `Entrance:` or `Entrance fee:`, or after `Tickets:` or `Price at the door` when it holds an amount, since
-     * `Tickets:` also heads a shop link. `16E` is the venue's spelling of `16 €`.
+     * `Tickets:` also heads a shop link, or the amount before `at the door` (`28e at the door`). `16E` and `28e` are the
+     * venue's spellings of `16 €` and `28 €`.
      */
     private fun labelledPrice(line: String): String? {
         val text = line.replace(LETTER_E_EURO, "$1 €")
@@ -81,6 +82,11 @@ class AcudMachtNeuEventPageScraper {
                 ?.get(1)
                 ?.takeIf { euroAmounts(it).isNotEmpty() }
                 ?.trim()
+            ?: AMOUNT_AT_THE_DOOR
+                .find(text)
+                ?.groupValues
+                ?.get(1)
+                ?.takeIf { euroAmounts(it).isNotEmpty() }
     }
 
     private fun headerTime(match: MatchResult): LocalTime? {
@@ -144,7 +150,12 @@ class AcudMachtNeuEventPageScraper {
 
         val DOOR_PRICE = Regex("""^\s*(?:tickets?\s*:|price at the door(?:\s+(?:will be|is))?\s*:?)\s*(.*)$""", RegexOption.IGNORE_CASE)
 
-        val LETTER_E_EURO = Regex("""(\d)\s?E\b""")
+        /** An amount, or a sliding scale, just before `at the door`. */
+        val AMOUNT_AT_THE_DOOR =
+            Regex("""((?:\d+(?:[.,]\d{1,2})?\s*[-–]\s*)?(?:€\s*)?\d+(?:[.,]\d{1,2})?\s*€?)\s+at the door\b""", RegexOption.IGNORE_CASE)
+
+        /** `16E` or `28e`, but not the `E` that starts a word (`3 Ebenen`, `2026 E-Werk`). */
+        val LETTER_E_EURO = Regex("""(\d)\s?[eE](?![\p{L}\d-])""")
 
         val FREE_ENTRY = Regex("""^\s*(?:free entry|free admission|eintritt frei)\b""", RegexOption.IGNORE_CASE)
 

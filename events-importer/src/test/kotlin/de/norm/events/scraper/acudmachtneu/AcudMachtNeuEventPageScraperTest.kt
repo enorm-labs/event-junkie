@@ -141,6 +141,31 @@ class AcudMachtNeuEventPageScraperTest {
     }
 
     @Test
+    fun `reads a door price written before at the door in the venue's 28e spelling`() {
+        // Event 12146.
+        val event = scrape("acudmachtneu-event-hyper-fog.html", "https://acudmachtneu.de/events/2394/hyper-fog")
+
+        event.priceBoxOffice?.toPlainString() shouldBe "28"
+        event.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `reads the amount next to at the door, keeps a sliding scale as the note, and reads no word or year after a number as euros`() {
+        val presaleAndDoor = scrapeContent("Presale 12e, 15e at the door")
+        val slidingScale = scrapeContent("10-15e at the door")
+        val noAmount = scrapeContent("Tickets via Resident Advisor &amp; at the door.")
+        val words = listOf("Tickets: 3 Ebenen", "Tickets: 2026 E-Werk", "Doors at 9pm").map(::scrapeContent)
+
+        presaleAndDoor.priceBoxOffice?.toPlainString() shouldBe "15"
+        slidingScale.priceBoxOffice.shouldBeNull()
+        slidingScale.priceNote shouldBe "10-15 €"
+        noAmount.priceBoxOffice.shouldBeNull()
+        noAmount.priceNote.shouldBeNull()
+        words.map { it.priceBoxOffice } shouldContainExactly listOf(null, null, null)
+        words.map { it.priceNote } shouldContainExactly listOf(null, null, null)
+    }
+
+    @Test
     fun `reads the gallery as the room of an exhibition`() {
         val event = scrape("acudmachtneu-event-orbital-decay.html", "https://acudmachtneu.de/events/2379/orbital-decay")
 
