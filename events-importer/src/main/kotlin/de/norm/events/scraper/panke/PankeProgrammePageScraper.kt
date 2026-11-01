@@ -13,6 +13,7 @@ import de.norm.events.scraper.cssUrlValue
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
@@ -35,8 +36,7 @@ import java.time.LocalTime
  * programme, server-rendered in one WordPress (Divi) page.
  *
  * Two lists from the same template, headed **UPCOMING EVENTS** and **PAST EVENTS**. Only the
- * first is read: the venue's own division is authoritative, and parsing the twenty-odd past
- * entries every run only for the persistence boundary to drop them is waste.
+ * first is read: the venue's own division is authoritative, and the past entries are waste.
  *
  * Each event is an `<article>` identified by its WordPress post id — no per-event page, the full
  * text expands inline, so every event's `sourceUrl` is the programme page. The date is an ISO
@@ -50,9 +50,11 @@ import java.time.LocalTime
  * later. [parseTimes] reads the pair where it exists and falls back to the prose line, which is
  * the only clock the other events publish.
  *
- * **The lineup is read from Resident Advisor links, else from a `feat.` title.** The bodies are free
- * prose with no convention, so an `ra.co/dj/…` anchor is the one unambiguous marker in a body. A night
- * that links none bills its title's `feat.` acts ([featuredActs]); one with neither stores no artists.
+ * **The lineup is read from Resident Advisor links, else from the title or a presenter line.** The bodies
+ * are free prose with no convention, so an `ra.co/dj/…` anchor is the one unambiguous marker in a body. A
+ * night that links none bills its title's `feat.` acts ([featuredActs]), a `+` bill whose every act carries
+ * a `(live)` or a `[style]` tag ([markedBill]), or the title a body line presents ([presentedAct]). One with
+ * none of these stores no artists. A `[style]` tag also gives the genre.
  *
  * Those links also type the event: no category is published, and titles are series names
  * rather than formats, so a billed DJ lineup is the best evidence of a club night. See [eventTypeOf].
@@ -103,9 +105,11 @@ class PankeProgrammePageScraper {
         // The Sunday afternoon market is out of scope (EVENT_SCOPE.md §3.2).
         if (MARKET_TITLE.containsMatchIn(title)) return null
         val residentAdvisor = residentAdvisorLineup(article)
-        val lineup = withTimetable(residentAdvisor.ifEmpty { featuredActs(title) }, article, eventDate)
-        val times = parseTimes(article)
         val paragraphs = article.select("$BODY_COLUMN p")
+        val presented = presentedAct(paragraphs.flatMap { it.textLines() }, title)
+        val billed = residentAdvisor.ifEmpty { featuredActs(title) }.ifEmpty { markedBill(title) }.ifEmpty { presented }
+        val lineup = withTimetable(billed, article, eventDate)
+        val times = parseTimes(article)
         val price = parsePankePrice(paragraphs.flatMap { it.textLines() })
         val description = descriptionOf(article)
 
@@ -113,7 +117,8 @@ class PankeProgrammePageScraper {
             title = title,
             description = description,
             // Only a linked lineup types the night: a `feat.` title bills a concert's guests as well as a DJ's.
-            eventType = eventTypeOf(title, residentAdvisor, description),
+            eventType = eventTypeOf(title, residentAdvisor, description, presented.isNotEmpty(), times.start),
+            genre = knownGenresInStyleTail(STYLE_TAG.findAll(title).joinToString("/") { it.groupValues[1] }),
             eventDate = eventDate,
             doorsTime = times.doors,
             startTime = times.start,
@@ -137,13 +142,17 @@ class PankeProgrammePageScraper {
      * only for the acts on its floor, a far better signal than the name, a series title rather
      * than a format. Then a live show is a concert: a title that names one (`… MIT LIVE BANDS`,
      * `… Tour`, `… Live at Panke`, #2398) or a body that bills `live bands`. Last, a `Disko` or
-     * `Fiesta` title, or a body that names a dancefloor, is a club night (#2992). An event with none
-     * of these stays `OTHER` rather than being guessed.
+     * `Fiesta` title, or a body that names a dancefloor, is a club night (#2992). An act a promoter
+     * presents by the title's name ([presentedAct]) is a concert. Last, a night that starts at
+     * [LATE_START] or later is a club night: every such entry is a `Baile`, a `Fusion` or a DJ night.
+     * An event with none of these stays `OTHER` rather than being guessed.
      */
     private fun eventTypeOf(
         title: String,
         lineup: List<ScrapedArtist>,
-        description: String?
+        description: String?,
+        presented: Boolean,
+        start: LocalTime?
     ): String {
         val fromTitle = inferUnmarkedTitleType(title)
         val body = description.orEmpty()
@@ -152,6 +161,8 @@ class PankeProgrammePageScraper {
             lineup.isNotEmpty() -> EventType.PARTY.name
             LIVE_SHOW_TITLE.containsMatchIn(title) || LIVE_BANDS.containsMatchIn(body) -> EventType.CONCERT.name
             PARTY_TITLE.containsMatchIn(title) || CLUB_NIGHT_BODY.containsMatchIn(body) -> EventType.PARTY.name
+            presented -> EventType.CONCERT.name
+            start != null && start >= LATE_START -> EventType.PARTY.name
             else -> fromTitle
         }
     }
@@ -239,6 +250,42 @@ internal fun featuredActs(title: String): List<ScrapedArtist> {
         .map { stripArtistSuffix(it) }
         .filterNot(::isNonArtistName)
         .map { ScrapedArtist(name = it, role = HEADLINER_ROLE, titleDerived = true) }
+}
+
+/**
+ * The acts of a `+` bill whose every act carries a `(live)` or `[style]` tag, after an optional
+ * `Release Ritual:` lead and before a closing `live at Panke`: `Grafi (live) + Donna Haringwey (live)`
+ * (event 12333), `Aantz [ambient/drone/Berlin] + UnoX [experimental dub/Berlin]` (event 12328). An
+ * untagged `+` joins a series and a guest as often as two acts, so it bills nobody.
+ */
+internal fun markedBill(title: String): List<ScrapedArtist> {
+    val bill = title.substringAfter(": ").replace(LIVE_AT_PANKE, "").trim()
+    val acts =
+        bill.split(PLUS_SEPARATOR).map {
+            MARKED_ACT
+                .matchEntire(it.trim())
+                ?.groupValues
+                ?.get(1)
+                ?.trim()
+        }
+    if (acts.size < 2 || acts.any { it.isNullOrEmpty() }) return emptyList()
+    return acts
+        .filterNotNull()
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = HEADLINER_ROLE, titleDerived = true) }
+}
+
+/**
+ * The title as the act, when a body line presents it: `Kingstar präsentiert` above `ATTIC 109`
+ * (event 12332). A promoter presents a band by name; a series is presented in the title itself.
+ */
+internal fun presentedAct(
+    lines: List<String>,
+    title: String
+): List<ScrapedArtist> {
+    val trimmed = lines.map { it.trim() }.filter { it.isNotEmpty() }
+    val presents = trimmed.zipWithNext().any { (line, next) -> PRESENTER_LINE.matches(line) && next.equals(title, ignoreCase = true) }
+    return if (presents && !isNonArtistName(title)) listOf(ScrapedArtist(name = title, role = HEADLINER_ROLE, titleDerived = true)) else emptyList()
 }
 
 /**
@@ -346,6 +393,24 @@ private const val HOUR_GROUP = 1
 
 /** [START_TIME]'s minute group — empty for a bare hour. */
 private const val MINUTE_GROUP = 2
+
+/** The hour from which an otherwise unmarked night is a club night. */
+private val LATE_START: LocalTime = LocalTime.of(22, 0)
+
+/** A space-padded `+` between two acts of a [markedBill]. */
+private val PLUS_SEPARATOR = Regex("""\s+\+\s+""")
+
+/** One act of a [markedBill]: its name, then a `(live)` or a `[style]` tag. */
+private val MARKED_ACT = Regex("""(.+?)\s*(?:\(live\)|\[[^\]]+])""", RegexOption.IGNORE_CASE)
+
+/** The `[ambient/drone/Berlin]` tag after an act in a title; its known genres are the event's. */
+private val STYLE_TAG = Regex("""\[([^\]]+)]""")
+
+/** The `live at Panke` a [markedBill] title closes with. */
+private val LIVE_AT_PANKE = Regex("""\s+live\s+at\s+panke\s*$""", RegexOption.IGNORE_CASE)
+
+/** `Kingstar präsentiert` or `AFROPUNX presents`, alone on its line. */
+private val PRESENTER_LINE = Regex("""\S.{0,40}\s(?:präsentiert|presents):?""", RegexOption.IGNORE_CASE)
 
 /** A title word that names a live show rather than a series: `live`, `tour`. */
 private val LIVE_SHOW_TITLE = Regex("""\b(?:live|tour)\b""", RegexOption.IGNORE_CASE)

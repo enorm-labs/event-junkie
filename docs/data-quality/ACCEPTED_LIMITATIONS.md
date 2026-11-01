@@ -249,7 +249,7 @@ says so.
 | `EIGHT_MM`             | `DOORS_TIME`       | only a concert blurb states a doors time; a DJ night has none                                                                                    | —     |
 | `EIGHT_MM`             | `SUBTITLE`         | an event carries a title and a blurb, no second title line                                                                                       | —     |
 | `EIGHT_MM`             | `GENRE`            | nothing on the calendar or the event pages names a style                                                                                         | —     |
-| `EIGHT_MM`             | `ARTISTS`          | a DJ night bills nobody but a Name (Band) … DJ Residency; a concert bills only from the house frame                                              | —     |
+| `EIGHT_MM`             | `ARTISTS`          | a DJ night bills nobody but a Name (Band) … DJ Residency; a concert bills only from the house frame, else from a blurb's `Line up -` list        | —     |
 | `EIGHT_MM`             | `PRICE`            | the site states no price; bands keep the door money                                                                                              | —     |
 | `EIGHT_MM`             | `TICKET_URL`       | a blurb points to the venue's Instagram for tickets, never to a shop                                                                             | —     |
 | `EIGHT_MM`             | `SOLD_OUT`         | nothing flags an event sold out                                                                                                                  | —     |
@@ -700,11 +700,11 @@ says so.
 | `PANDA_PLATFORMA`      | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
 | `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
 | `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |
-| `PANKE`                | `ARTISTS`          | acts named only in free prose are not read; a Resident Advisor profile link or a `feat.` title bills them                                        | —     |
+| `PANKE`                | `ARTISTS`          | acts named only in free prose are not read; a Resident Advisor link, a `feat.` or tagged `+` title, or a presenter line bills them               | —     |
 | `PANKE`                | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
-| `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word in the title or the body, or a Resident Advisor lineup, types an event          | —     |
+| `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word, a Resident Advisor lineup, a presenter line or a late start types an event     | —     |
 | `PANKE`                | `DOORS_TIME`       | only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start      | —     |
-| `PANKE`                | `GENRE`            | the venue publishes no genre field; the style is only in the text                                                                                | —     |
+| `PANKE`                | `GENRE`            | the venue publishes no genre field; the style is only in the text, or in a title's `[style]` tag                                                 | —     |
 | `PANKE`                | `PRICE`            | most nights print no figure and sell on Resident Advisor; a figure in a sentence, with no label opening its line, is prose                       | —     |
 | `PANKE`                | `PROMOTERS`        | the collective of a night is named only in its title                                                                                             | —     |
 | `PAS`                  | `START_TIME`       | most concerts print the doors and `music a bit later`, no start                                                                                  | —     |

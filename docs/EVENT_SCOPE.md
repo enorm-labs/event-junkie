@@ -136,7 +136,7 @@ venue as a tour operator. Each venue that mixes these into its programme has one
 | Urania              | `UraniaEventFields.isParticipationFormat`                | The format names a `Workshop`, `Spaziergang` or `Rundgang`                                                                   |
 | Urban Spree         | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop`     | The `Workshops` category, or a title that opens with `Workshop`                                                              |
 | silent green        | `SilentGreenEventFields.isSilentGreenTour`               | No category, and a title that names a `Führung` or `Rundgang`                                                                |
-| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`            | The Eventfrog category `kurse-seminare`: the swing course                                                                    |
+| Showfenster Theater | `ShowfensterOverviewPageScraper.isOutOfScope`            | The Eventfrog category `kurse-seminare`: the swing course, and a `geschlossene Gesellschaft` in the title: a private party   |
 | Baiz                | `BaizWebsiteImporter.isProgramme`                        | An uncategorised radar row that names `Schach`, `Beratung` or `Messer`                                                       |
 | HAU1, HAU2, HAU3    | `HauScheduleScraper.isOutOfScope`                        | The `Workshop` category, and an `Online` piece (§5)                                                                          |
 | Haus der Statistik  | `HausDerStatistikMonthPageScraper.isParticipationFormat` | Every format tag is `Workshop`, `Werkstatt`, `Treffen`, `Kochen` or `Diskussion`                                             |

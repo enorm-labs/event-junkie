@@ -2,6 +2,8 @@ package de.norm.events.scraper.wuehlmaeuse
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.forChildrenPhrase
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,6 +23,22 @@ class WuehlmaeuseApiScraperTest {
             .getResourceAsStream("scraper/wuehlmaeuse/$name")!!
             .bufferedReader()
             .readText()
+
+    private fun ticket(
+        act: String,
+        programme: String
+    ) = WuehlmaeuseTicket(
+        act = act,
+        programme = programme,
+        date = LocalDate.of(2026, 12, 22),
+        start = LocalTime.of(14, 0),
+        doors = null,
+        price = BigDecimal("18.00"),
+        eventUrl = "https://wuehlmaeuse.de/veranstaltung/${act.lowercase().replace(' ', '-')}",
+        ticketUrl = "https://wuehlmaeuse.de/shop/",
+        imageUrl = null,
+        cancelled = false
+    )
 
     private val pageOne by lazy { scraper.scrapePage(readFixture("wuehlmaeuse-shop-page1.json")) }
     private val picked by lazy { scraper.toEvents(scraper.scrapePage(readFixture("wuehlmaeuse-shop-last.json")).tickets) }
@@ -68,9 +86,37 @@ class WuehlmaeuseApiScraperTest {
     }
 
     @Test
-    fun `bills no act for a series or a singalong`() {
-        picked.first { it.title.startsWith("Lach-Stoff") }.artists.shouldBeEmpty()
+    fun `bills a series' host and no act for a singalong`() {
+        picked.first { it.title.startsWith("Lach-Stoff") }.artists.map { it.name } shouldContainExactly listOf("Tan Caglar")
         picked.first { it.title == "Rudelsingen 2027" }.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `bills the act line the shop files a show under, and no production`() {
+        // Events 6263-6265 and the other act lines the person-shaped rule left unbilled on 2026-11-01.
+        fun billed(act: String) =
+            scraper
+                .toEvents(listOf(ticket(act, "Neues Programm")))
+                .single()
+                .artists
+                .map { it.name }
+
+        assertSoftly {
+            billed("Tiere streicheln Menschen") shouldContainExactly listOf("Tiere streicheln Menschen")
+            billed("Alfons") shouldContainExactly listOf("Alfons")
+            billed("Dennis aus Hürth") shouldContainExactly listOf("Dennis aus Hürth")
+            billed("Stephan Graf von Bothmer") shouldContainExactly listOf("Stephan Graf von Bothmer")
+            billed("Heißmann & Rassau") shouldContainExactly listOf("Heißmann & Rassau")
+            billed("Manuel Rubey & Simon Schwarz") shouldContainExactly listOf("Manuel Rubey", "Simon Schwarz")
+            billed("Ingmar Stadelmann trifft Ricarda Lang") shouldContainExactly listOf("Ingmar Stadelmann", "Ricarda Lang")
+            billed("Marc Weide präsentiert: Talents of Magic") shouldContainExactly listOf("Marc Weide")
+            billed("Frank-Markus Barwasser als Erwin Pelzig") shouldContainExactly listOf("Frank-Markus Barwasser")
+            billed("LaLeLu – a cappella comedy") shouldContainExactly listOf("LaLeLu")
+            billed("Rosemie…Clownin…Komikerin…oder Verzauberin…?") shouldContainExactly listOf("Rosemie")
+            billed("Die Pubertätsdocs (Dr. Jan-Uwe Rogge & Matthias Jung)") shouldContainExactly listOf("Jan-Uwe Rogge", "Matthias Jung")
+            listOf("Caveman", "Nightwash", "Candlelight – Die Musik von Abba", "Schlachtplatte", "ALLE KASSEN, AUCH PRIVAT", "10 Jahre Mad Monkey Room")
+                .forEach { withClue(it) { billed(it).shouldBeEmpty() } }
+        }
     }
 
     @Test
@@ -83,22 +129,6 @@ class WuehlmaeuseApiScraperTest {
 
     @Test
     fun `marks a family show for small children and types it a show (#3874)`() {
-        fun ticket(
-            act: String,
-            programme: String
-        ) = WuehlmaeuseTicket(
-            act = act,
-            programme = programme,
-            date = LocalDate.of(2026, 12, 22),
-            start = LocalTime.of(14, 0),
-            doors = null,
-            price = BigDecimal("18.00"),
-            eventUrl = "https://wuehlmaeuse.de/veranstaltung/${act.lowercase().replace(' ', '-')}",
-            ticketUrl = "https://wuehlmaeuse.de/shop/",
-            imageUrl = null,
-            cancelled = false
-        )
-
         scraper
             .toEvents(
                 listOf(

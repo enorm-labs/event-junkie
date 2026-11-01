@@ -269,6 +269,13 @@ class ATraneProgrammePageScraperTest {
     }
 
     @Test
+    fun `bills a duo named for its members' first names as one act`() {
+        // Events 12321 and 5174: the club and the duos bill themselves as one name.
+        session("SHUTEEN & NILS", "«WITH FRIENDS»", "FEAT: RONI EYTAN-LUCA ZAMBITO").artists.map { it.name } shouldBe listOf("SHUTEEN & NILS")
+        session("ZOHAR & ADAM", "«OSMOSIS»").artists.map { it.name } shouldBe listOf("ZOHAR & ADAM")
+    }
+
+    @Test
     fun `bills a special guest the title already names once`() {
         val nights = events.filter { it.title.startsWith("Tony Hurdle") }
 
