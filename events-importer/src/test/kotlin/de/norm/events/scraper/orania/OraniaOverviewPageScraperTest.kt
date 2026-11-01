@@ -68,6 +68,25 @@ class OraniaOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the act after a programme named first`() {
+        // Event 12241, 18 December 2026, as the listing printed it.
+        val url = "https://orania.berlin/concerts"
+        val html =
+            """
+            <div class="calendarize"><div class="event-list-item">
+              <div class="event-date">18</div><div class="event-month">Dec 2026</div><div class="event-time">09:00 pm</div>
+              <span class="event-category">Orania.Piano</span>
+              <div class="media-body"><h2><a href="/oraniaconcerts/event/event/a-charlie-brown-christmas-20261218-2">
+                A Charlie Brown Christmas with the Carolyn del Rosario Trio</a></h2>
+              <p>Thoughtful themes and jazzy scores from the legendary Peanuts cartoon holiday special!</p></div>
+            </div></div>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, url), url).single().artists shouldContainExactly
+            listOf(ScrapedArtist(name = "Carolyn del Rosario Trio", role = ArtistRole.HEADLINER, titleDerived = true))
+    }
+
+    @Test
     fun `skips the programme notices that carry no series tag`() {
         val events = scrape("orania-overview-page-last.html", "https://orania.berlin/concerts/page/3")
 

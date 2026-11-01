@@ -23,7 +23,9 @@ import java.util.Locale
  *
  * An entry without a series tag is a programme notice ("Winter Break", "Holiday Season
  * Special") dated at midnight, not a concert, and is skipped. A title can name the act's
- * programme after it ([PROGRAMME_TAIL]); the artists come from the part before.
+ * programme after it ([PROGRAMME_TAIL]); the artists come from the part before. A title can also
+ * name the programme first and the act after `with the` ([PROGRAMME_LEAD]); the artists come from
+ * the part after.
  */
 class OraniaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
@@ -70,7 +72,7 @@ class OraniaOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = oraniaSourceId(sourceUrl),
             free = true,
-            artists = buildArtistsForEventType(title.replace(PROGRAMME_TAIL, ""), subtitle, eventType)
+            artists = buildArtistsForEventType(title.replace(PROGRAMME_TAIL, "").replaceFirst(PROGRAMME_LEAD, ""), subtitle, eventType)
         )
     }
 
@@ -90,6 +92,12 @@ class OraniaOverviewPageScraper {
          * `Rolf Zielke & Hogir Göregen - Piano meets Percussion`. The bill is the part before it.
          */
         val PROGRAMME_TAIL = Regex("""\s+(?:presents|[-–—])\s+.*$""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A programme named before the act: `A Charlie Brown Christmas with the Carolyn del Rosario Trio` bills the trio
+         * (event 12241). Only `with the` marks it, because a bare `with` can join two acts.
+         */
+        val PROGRAMME_LEAD = Regex("""^.+?\s+with\s+the\s+""", RegexOption.IGNORE_CASE)
 
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
     }

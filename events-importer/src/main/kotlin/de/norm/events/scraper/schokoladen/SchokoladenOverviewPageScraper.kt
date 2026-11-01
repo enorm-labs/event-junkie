@@ -318,7 +318,7 @@ class SchokoladenOverviewPageScraper {
          * invitation, "Beatz aus der Kurve & Else Jahn Kurve laden ein zum" (#4183).
          */
         private val PRESENTS_TAIL =
-            Regex("""\s*\b(?:presents?|prsnts?|pres\.?|laden\s+ein|lädt\s+ein)(?!\w).*$""", RegexOption.IGNORE_CASE)
+            Regex("""\s*\b(?:presents?|prsnts?|prstns|pres\.?|laden\s+ein|lädt\s+ein)(?!\w).*$""", RegexOption.IGNORE_CASE)
 
         /** A tagline after the name, "m:soundtrack: bridging the psychedelic traditions …"; a colon inside a name has no space after it. */
         private val TAGLINE_TAIL = Regex(""":(?:[\s\u00A0].*)?$""")

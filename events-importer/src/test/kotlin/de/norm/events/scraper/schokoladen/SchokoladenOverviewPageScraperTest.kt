@@ -176,6 +176,9 @@ class SchokoladenOverviewPageScraperTest {
             artistsOf("GLUT 'BURN' Tour 2027 + special guest") shouldContainExactly listOf("GLUT")
             // The contracted presents verb and its colon frame the bill, not the promoter (#3213).
             artistsOf("M:Soundtrack prsts: Dark Selbo Release Show (Bln) + CHEEKY (US/Bln)") shouldContainExactly listOf("Dark Selbo", "CHEEKY")
+            // Event 12252, 29 January 2027: the contraction "prstns", and genre notes in square brackets.
+            artistsOf("wello rausch prstns: remine [clickier voodoo noisepop°da] + Emperor X [experimental folk pop°jacksonville°bln]") shouldContainExactly
+                listOf("remine", "Emperor X")
             // A cancelled act the venue brackets ahead of its note is the act, not a genre.
             artistsOf("CANCELLED (Melanie Baker) - Kneipenabend ab 20:00") shouldContainExactly listOf("Melanie Baker")
         }
