@@ -32,9 +32,10 @@ fun canonicalPromoterName(raw: String): String {
     val withoutAnnotation =
         raw
             .trim()
-            .foldTypedApostrophes()
-            .replace(TRAILING_PAREN_REGEX, "")
+            .withoutTrailingParenthetical()
             .replace(DOUBLE_QUOTE_REGEX, "")
+            // After the quotes go, so a backtick a quote stood beside is folded in this pass, not the next.
+            .foldTypedApostrophes()
             .trim()
             .ifBlank { raw.trim() }
     val tokens =
@@ -52,8 +53,8 @@ fun canonicalPromoterName(raw: String): String {
             tokens.removeAt(tokens.lastIndex)
         }
         val joined = tokens.joinToString(" ")
-        val uncovered = joined.replace(TRAILING_PAREN_REGEX, "").trim()
-        val shortened = uncovered.isNotEmpty() && uncovered != joined
+        val uncovered = joined.withoutTrailingParenthetical()
+        val shortened = uncovered != joined
         if (shortened) {
             tokens.clear()
             tokens += uncovered.split(WHITESPACE_REGEX)
@@ -70,6 +71,9 @@ fun canonicalPromoterName(raw: String): String {
             .ifBlank { raw.trim() }
     return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
 }
+
+/** Without a trailing parenthetical, unless it is all that names something ("& (GSA)" keeps it). */
+private fun String.withoutTrailingParenthetical(): String = replace(TRAILING_PAREN_REGEX, "").trim().takeIf { rest -> rest.any(Char::isLetterOrDigit) } ?: this
 
 /**
  * Whether these tokens still name something once [stripped] comes off: a letter-bearing word,

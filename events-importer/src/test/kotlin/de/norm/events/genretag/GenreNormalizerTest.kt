@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
@@ -398,6 +399,31 @@ class GenreNormalizerTest {
         normalizeGenre("Deep Progressive").shouldContainExactly("Progressive House")
         nonGenreTokens("Deep Progressive").shouldBeEmpty()
         normalizeGenre("Progressive").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a canonical name written by a venue keeps its own tag`() {
+        assertSoftly {
+            normalizeGenre("Progressive House").shouldContainExactly("Progressive House")
+            normalizeGenre("garage rock").shouldContainExactly("Garage-Rock")
+            normalizeGenre("garage-rock").shouldContainExactly("Garage-Rock")
+        }
+    }
+
+    @Test
+    fun `strips the floor suffix on both sides of an und`() {
+        assertSoftly {
+            normalizeGenre("Hip Hop Floor und Techno Floor").shouldContainExactly("Hip Hop", "Techno")
+            normalizeGenre("Floor und blues").shouldContainExactly("Blues")
+        }
+    }
+
+    @Test
+    fun `capitalizes an unknown genre before de-shouting it, so a second pass keeps it`() {
+        assertSoftly {
+            normalizeGenre("dUBSTEPPA").shouldContainExactly("Dubsteppa")
+            normalizeGenre("Dubsteppa").shouldContainExactly("Dubsteppa")
+        }
     }
 
     @Test
