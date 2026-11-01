@@ -213,13 +213,21 @@ function dateStamp(isoDate: string): string {
   return isoDate.replace(/-/g, '')
 }
 
-/** An RFC 5545 TEXT value: backslash, semicolon and comma escaped, every line break as `\n`. */
+/** An RFC 5545 TEXT value: backslash, semicolon and comma escaped, every line break as `\n`, every other control character but tab dropped. */
 export function escapeText(value: string): string {
   return value
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
     .replace(/\r\n|\r|\n/g, '\\n')
+    .split('')
+    .filter((char) => !isControlButTab(char.charCodeAt(0)))
+    .join('')
+}
+
+/** TEXT allows no C0 or C1 control character but tab; a strict client rejects the whole file. Line breaks are escaped before this runs. */
+function isControlButTab(code: number): boolean {
+  return (code < 0x20 && code !== 0x09) || (code >= 0x7f && code <= 0x9f)
 }
 
 const encoder = new TextEncoder()
