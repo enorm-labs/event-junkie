@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { defineComponent, h } from 'vue'
+import { todayIso } from '@/lib/format'
 
 const account = vi.hoisted(() => ({
   prepareCsrf: vi.fn<() => Promise<void>>(),
@@ -59,6 +60,8 @@ beforeEach(() => {
   account.fetchFollowing.mockResolvedValue({ content: [adaLive], totalPages: 1 })
   account.fetchFollows.mockResolvedValue([ada, bar])
   setSession(me as never)
+  // The view tags the history entry; a memory router never replaces jsdom's, so each test starts as a fresh visit.
+  window.history.replaceState(null, '')
 })
 
 afterEach(() => {
@@ -194,5 +197,61 @@ describe('FollowingView tabs (#4080)', () => {
     expect(followsPanel(view).text()).toContain(
       'You do not follow an artist, a venue or a promoter yet.',
     )
+  })
+})
+
+describe('FollowingView on Back from an event', () => {
+  const night = (n: number) => ({ slug: `night-${n}`, title: `Night ${n}`, eventDate: todayIso() })
+  const later = (n: number) => ({
+    slug: `later-${n}`,
+    title: `Later ${n}`,
+    eventDate: '2099-01-01',
+  })
+
+  async function expandBoth(view: VueWrapper) {
+    await view
+      .findAll('button')
+      .find((b) => b.text().startsWith('Show all 8'))!
+      .trigger('click')
+    await view
+      .findAll('button')
+      .find((b) => b.text() === 'Show more')!
+      .trigger('click')
+    await flushPromises()
+  }
+
+  beforeEach(() => {
+    account.fetchFollowingToday.mockResolvedValue(Array.from({ length: 8 }, (_, n) => night(n)))
+    account.fetchFollowing.mockImplementation((page) =>
+      Promise.resolve({ content: [later(page as number)], totalPages: 3, totalElements: 3 }),
+    )
+  })
+
+  it('paints Show all today and the pages Show more added before it refetches, then refetches them all', async () => {
+    const first = await mountAt('/en/following')
+    await expandBoth(first)
+    first.unmount()
+    account.fetchFollowing.mockClear()
+
+    wrapper = mount(FollowingView, {
+      global: { plugins: [router], stubs: { EventCard: Card, EventRow: Card } },
+    })
+    expect(wrapper.text()).toContain('Night 7')
+    expect(wrapper.text()).toContain('Later 1')
+    await flushPromises()
+    expect(account.fetchFollowing.mock.calls.map(([page]) => page)).toEqual([0, 1])
+    expect(wrapper.text()).toContain('Night 7')
+    expect(wrapper.text()).toContain('Later 1')
+  })
+
+  it('starts collapsed on a fresh visit', async () => {
+    const first = await mountAt('/en/following')
+    await expandBoth(first)
+    first.unmount()
+    window.history.replaceState(null, '')
+
+    const view = await mountAt('/en/following')
+    expect(view.text()).not.toContain('Night 7')
+    expect(view.text()).not.toContain('Later 1')
   })
 })
