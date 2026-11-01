@@ -192,7 +192,7 @@ fail late, after a node has booted with no working tunnel and no open port to re
 `10.10.1.1`. It also keeps the tunnel a _split_ tunnel — the rest of your traffic keeps going out your own connection.
 
 Widening it to `10.1.1.0/24` (the private network) or `10.42.0.0/16`/`10.43.0.0/16` (pods and services) does work — `wireguard.sh` enables IPv4 and IPv6
-forwarding on the node for exactly that — but you rarely want to: `10.1.1.10` _is_ the node, which you can already reach, and talking to pod IPs directly is a
+forwarding on the node for exactly that — but you rarely want to: `10.1.1.11` _is_ the node, which you can already reach, and talking to pod IPs directly is a
 debugging habit that hides broken Service routing.
 
 ### Why repointing the kubeconfig at `10.10.1.1` does not break TLS

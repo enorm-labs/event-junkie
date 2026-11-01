@@ -203,7 +203,7 @@ kubectl --context event-junkie-staging create secret generic github-dispatch -n 
 
 ```sh
 printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
-  'read -r p; PGPASSWORD="$p" psql -h 10.1.1.10 -U events -d events -tAc "SELECT current_user, current_database()"'
+  'read -r p; PGPASSWORD="$p" psql -h 10.1.1.11 -U events -d events -tAc "SELECT current_user, current_database()"'
 unset PGPASS                                                          # expect: events|events
 ```
 

@@ -58,7 +58,7 @@ ENV="${1:-}"
 case "$ENV" in
     staging)
         TUNNEL_IP=10.10.1.1
-        DB_IP=10.1.1.10
+        DB_IP=10.1.1.11
         DEDICATED_DB=0
         SITE=staging.event-junkie.de
         ;;

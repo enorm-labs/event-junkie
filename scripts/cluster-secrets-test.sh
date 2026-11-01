@@ -121,7 +121,7 @@ secret observability-openobserve-credentials || fail "staging write: no observab
     fail "staging write: the token was not stored exactly"
 [ "$(key_of flux-system-sops-age age.agekey)" = "AGE-SECRET-KEY-1zq9x" ] || fail "staging write: the age key differs"
 [ "$(key_of observability-postgres-exporter DATA_SOURCE_NAME)" = \
-    "postgresql://metrics:zq9x-event-junkie-staging-metrics-password@10.1.1.10:5432/events?sslmode=require" ] ||
+    "postgresql://metrics:zq9x-event-junkie-staging-metrics-password@10.1.1.11:5432/events?sslmode=require" ] ||
     fail "staging write: wrong DSN"
 want_header="Basic $(printf '%s' 'hello@event-junkie.de:zq9x-event-junkie-staging-o2-root-password' | base64 | tr -d '\n')"
 [ "$(key_of flux-system-openobserve-credentials O2_BASIC_AUTH_HEADER)" = "$want_header" ] || fail "staging write: wrong header"

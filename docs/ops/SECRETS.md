@@ -254,7 +254,7 @@ and its own `-o2` keypair. Four copies in total across the two clusters, which i
 different namespaces.
 
 **Nothing there needs a bucket name or a prefix.** Each cluster writes under its own key prefix in the shared `event-junkie-o2`: `production/` and
-`staging/`. Each is set in that cluster's `openobserve.yaml`, where it is reviewable, rather than in the Secret. A credential decides _whether_ it can
+`staging-2/`. Each is set in that cluster's `openobserve.yaml`, where it is reviewable, rather than in the Secret. A credential decides _whether_ it can
 write, never _where_.
 
 Until it exists the release reconciles into a failed state, which is the intended shape. A missing credential should stop the deploy, rather than produce a
@@ -366,7 +366,7 @@ assembled from parts in a manifest:
 printf 'metrics role password: '; read -rs PGPW; echo
 
 kubectl --context event-junkie-staging create secret generic postgres-exporter -n observability \
-  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.1.1.10:5432/events?sslmode=require"
+  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.1.1.11:5432/events?sslmode=require"
 
 unset PGPW
 ```
@@ -390,7 +390,7 @@ or `&` silently yields a DSN that parses as something else. A generator satisfyi
 PGENC="$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.readline().rstrip("\n"), safe=""))' <<<"$PGPW")"
 ```
 
-**`10.1.1.10` is staging's `postgres_ip`**, the same address the application chart's `database.host`
+**`10.1.1.11` is staging's `postgres_ip`**, the same address the application chart's `database.host`
 carries. Staging co-locates PostgreSQL on the k3s node and still reaches it over the network.
 Confirm it with `tofu -chdir=infra/environments/staging output postgres_ip` rather than trusting this
 line. **Production's is different**, which is the whole reason it is a value and not a constant.

@@ -298,7 +298,7 @@ spec:
   egress:
     # The same address the application's own policy uses, kept in step with `database.host` by hand here,
     # because this namespace is not templated by the chart that asserts the pairing. **`10.0.1.20`, not
-    # staging's `10.1.1.10`, and this is the line most likely to be ported wrong** (#880): a copied policy
+    # staging's `10.1.1.11`, and this is the line most likely to be ported wrong** (#880): a copied policy
     # points the exporter at an address that exists in the other environment, it hangs on connect while
     # reporting itself healthy, and the symptom is an empty `pg_*` namespace, not a failing pod.
     - to:
