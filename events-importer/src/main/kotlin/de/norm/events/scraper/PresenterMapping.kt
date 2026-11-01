@@ -9,8 +9,8 @@ package de.norm.events.scraper
  */
 const val PRESENTS_VERBS = """presents|pr(?:ä|ae)sentiert"""
 
-/** The contractions `prsts` and `prsnts` that Schokoladen writes (#3213); unambiguous only before a colon or in a credit. */
-const val PRESENTS_CONTRACTIONS = """prsn?ts"""
+/** The contractions `prsts`, `prsnts` and `prstns` that Schokoladen writes (#3213); unambiguous only before a colon or in a credit. */
+const val PRESENTS_CONTRACTIONS = """prsn?ts|prstns"""
 
 /** [PRESENTS_VERBS] plus the abbreviations `pres.`, `prs.` and the [PRESENTS_CONTRACTIONS], for a credit or a frame that a colon or position already marks. */
 const val PRESENTS_WORDS = """$PRESENTS_VERBS|pres\.|prs\.|$PRESENTS_CONTRACTIONS"""
