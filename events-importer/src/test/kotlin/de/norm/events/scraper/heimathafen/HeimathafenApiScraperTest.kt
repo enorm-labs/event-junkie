@@ -111,6 +111,15 @@ class HeimathafenApiScraperTest {
         events.single().artists.shouldBeEmpty()
     }
 
+    // A recurring youth performance evening filed under `musik`; the cast is empty and no performer is named (#4333).
+    @Test
+    fun `bills no act for a performance evening billed under its own name`() {
+        val events = scraper.scrape(payloadWithCast("SPOT ON! THE SHOW", "")).events
+
+        events.single().eventType shouldBe "CONCERT"
+        events.single().artists.shouldBeEmpty()
+    }
+
     // The `tacheles` strand mixes talks with community meetings; only a talk tag makes a reading (#2992).
     @Test
     fun `types a talk in the tacheles strand as a reading by its tag`() {
